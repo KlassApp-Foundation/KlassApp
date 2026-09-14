@@ -105,7 +105,7 @@ class WizardWhatsAppOtpTest extends TestCase
             ->call('next') // academic year
             ->call('next') // structure checkpoint (optional)
             ->call('next') // teachers skip
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // terms
             ->call('next') // fees
             ->assertSee('WhatsApp verification');

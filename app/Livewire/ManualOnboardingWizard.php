@@ -754,14 +754,15 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        // Optional steps with an empty draft list = skip (parity with Toshi).
+        // Teachers with an empty list can still auto-skip (explicit Skip exists too).
         if (($step['key'] ?? '') === 'teachers' && $this->teacherDrafts === [] && trim($this->teacherName) === '') {
             $this->skipOptionalStep();
 
             return;
         }
+        // Students: never silently skip on Continue — require add or explicit Skip for now.
         if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '') {
-            $this->skipOptionalStep();
+            $this->errorMessage = 'Add at least one student, or click “Skip for now” if you’ll enrol later.';
 
             return;
         }
@@ -898,8 +899,12 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         $this->refreshSteps();
 
-        if (OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
-            $this->errorMessage = 'Finish the remaining setup steps before creating your school.';
+        $blocking = OnboardingStepsService::blockingIncompleteSteps($this->school()->fresh(), Auth::id());
+        if ($blocking !== []) {
+            $labels = collect($blocking)->pluck('label')->filter()->implode(', ');
+            $this->errorMessage = $labels !== ''
+                ? "Finish these incomplete steps before creating your school: {$labels}."
+                : 'Finish the remaining setup steps before creating your school.';
 
             return;
         }
@@ -2180,6 +2185,13 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
+        if (Plan::query()->where('is_active', 1)->doesntExist()) {
+            // Match the empty-state alert — do not also demand "Select a plan".
+            throw ValidationException::withMessages([
+                'plan' => 'No plans are available yet. Contact support.',
+            ]);
+        }
+
         $this->defaultSelectedPlan();
         if (! $this->selectedPlanId) {
             throw ValidationException::withMessages(['plan' => 'Select a plan to continue.']);

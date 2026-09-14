@@ -166,6 +166,11 @@ class OnboardingNameListExtractor
             'admission number',
             'admission no',
             'adm no',
+            // Legacy / EMIS column names — map into school_student_id (not a separate 'lin' key)
+            'lin',
+            'learner_id',
+            'learner identification number',
+            'emis_lin',
         ]);
         $boardRegIdx = $this->findHeaderIndex($lowerHeaders, [
             'uneb reg no.',

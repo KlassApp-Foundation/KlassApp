@@ -265,14 +265,29 @@ class OnboardingEngineParityTest extends TestCase
             $component->call('next');
             $this->assertSame('', $component->get('errorMessage'), 'Wizard students step error');
         } else {
-            $component->call('next'); // skip teachers
-            $component->call('next'); // skip students
+            // After structure checkpoint the wizard is on subjects — exit that, then
+            // explicitly skip both optional steps (Continue no longer silently skips students).
+            $component->call('next'); // subjects → teachers
+            $component->call('skipOptionalStep'); // teachers
+            $component->call('skipOptionalStep'); // students
         }
 
+        // Match Toshi's single-term payload (not the wizard's 3-term UNEB prefill).
+        $this->assertSame(
+            'terms',
+            $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null,
+            'Expected terms step before persisting'
+        );
         $component
-            ->set('termName', $payload['term_name'])
-            ->set('termStartsOn', $payload['term_start'])
-            ->set('termEndsOn', $payload['term_end'])
+            ->set('termDrafts', [
+                [
+                    'name' => $payload['term_name'],
+                    'start' => $payload['term_start'],
+                    'end' => $payload['term_end'],
+                ],
+            ])
+            ->set('currentTermName', $payload['term_name'])
+            ->set('termName', '')
             ->call('next')
             // Empty class → school-wide fee (matches Toshi feesForEngine without class)
             ->set('className', '')

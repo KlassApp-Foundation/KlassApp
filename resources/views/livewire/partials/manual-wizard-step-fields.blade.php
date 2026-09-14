@@ -676,7 +676,7 @@
                 @endif
             </button>
         @empty
-            <p class="text-sm text-red-600" role="alert">No plans are available yet. Contact support.</p>
+            <p class="text-sm text-red-600" role="alert" data-testid="wizard-plan-empty">No plans are available yet. Contact support.</p>
         @endforelse
     </div>
 
