@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — LIN ≠ School Student ID **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)) — prod cutover still pending
+## Current Status: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605)) — prod cutover still pending
+
+- **Cause**: Continue on empty `plan_selection` set shell `errorMessage` to the same string already shown in the step `@empty` alert (`wizard-plan-empty`) — duplicate UI, not a loop.
+- **Merged**: [#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605) `60ba933c` — GitHub API `merged: true`. `next()` short-circuits without setting `errorMessage`; shell banner suppressed if that duplicate string would still appear.
+- **Staging deploy**: `depl-a2bf2035-…` @ `60ba933c` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit `WizardToshiParityBugsTest` 9 PASS (exactly-once assert after Continue); Playwright e2e counts occurrences when empty state is live.
+- **Production**: **NOT deployed**.
+
+## Previous: September 14, 2026 — LIN ≠ School Student ID **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)) — prod cutover still pending
 
 - **Verdict**: `student_academics.lin` already existed separately from `school_student_id`. [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) incorrectly folded upload `lin` into `school_student_id` — **regression**, not a missing-column gap.
 - **Merged**: [#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603) `cc320c98` — GitHub API `merged: true`. Distinct collection + persistence in Toshi, wizard, upload template; engine writes both columns (+ `userprofiles.LIN`).
@@ -2045,6 +2053,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Wizard empty-plan message once — **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605))
+
+- **Work done**: Deduped “No plans are available yet. Contact support.” on wizard plan step — in-step `wizard-plan-empty` only; Continue no longer also fills shell `wizard-error`.
+- **Files**: `ManualOnboardingWizard.php`, `manual-onboarding-wizard.blade.php`, `WizardToshiParityBugsTest.php`, `e2e/wizard-toshi-parity-bugs-verify.cjs`.
+- **Status**: Merged `60ba933c`; staging `depl-a2bf2035-…` **succeeded**. Prod not deployed.
+- **Edge**: Staging demo with active plans skips live once-only assert; PHPUnit covers empty-plan school.
 
 ### 2026-09-14: LIN distinct from School Student ID — **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603))
 - **Work done**: Confirmed `student_academics.lin` ≠ `school_student_id` in schema; reverted #601 fold of upload `lin` into school ID; wired optional LIN in Toshi + wizard + upload template; engine persists both columns independently.
