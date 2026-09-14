@@ -70,19 +70,22 @@ async function login(page) {
         kpiCount: kpiCards.length,
         kpiValueColor: kpiValue ? getComputedStyle(kpiValue).color : null,
         hasToggle: !!toggle,
-        formHidden: form ? form.classList.contains('hidden') : null,
-        hasLedgerOrEmpty: !!(ledger || empty),
-        theadBlur: thead ? getComputedStyle(thead).backdropFilter || getComputedStyle(thead).webkitBackdropFilter : null,
-      };
-    });
+      formHidden: form ? form.hasAttribute('hidden') : null,
+      hasLedgerOrEmpty: !!(ledger || empty),
+      theadBlur: thead ? getComputedStyle(thead).backdropFilter || getComputedStyle(thead).webkitBackdropFilter : null,
+    };
+  });
 
-    // Toggle inline form open
-    await page.click('[data-testid="fees-record-toggle"]');
-    await page.waitForTimeout(200);
-    const formOpen = await page.evaluate(() => {
-      const form = document.querySelector('[data-testid="fees-record-form"]');
-      return form && !form.classList.contains('hidden');
-    });
+  // Toggle inline form open
+  await page.click('[data-testid="fees-record-toggle"]');
+  await page.waitForFunction(() => {
+    const form = document.querySelector('[data-testid="fees-record-form"]');
+    return form && !form.hasAttribute('hidden');
+  }, { timeout: 5000 }).catch(() => null);
+  const formOpen = await page.evaluate(() => {
+    const form = document.querySelector('[data-testid="fees-record-form"]');
+    return form && !form.hasAttribute('hidden');
+  });
 
     await page.screenshot({ path: path.join(OUT, `fees-${vp.name}.png`), fullPage: true });
 
