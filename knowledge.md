@@ -618,7 +618,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 2 Toshi panel PR1 on **STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
+## Current Status: September 14, 2026 — Piece 2 Toshi panel PR2 on **STAGING ONLY** ([#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597))
+
+- **Merged**: [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597) `d68f32a6` (`piece2/chips-plan-confirm-cards`) — GitHub API `merged: true` @ `2026-09-14T17:24:23Z`.
+- **Shipped**: Clay polish for suggestion chips, plan option cards (badge + CSS hover; green inline removed), tool-confirm cards, execution plan cards — overrides in Piece 2 block of `toshi-ui.css` (source≡published). Component testids added.
+- **Pulse canary**: Re-verified after CSS touch — `.ds-table-ledger thead { backdrop-filter: blur(12px) }` + FROZEN banner + sidebar green pill intact.
+- **Staging deploy**: `depl-a2bedef0-…` @ `d68f32a6` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: Playwright `e2e/toshi-piece2-cards-chips-verify.cjs` PASS (Pulse canary + computed clay `rgb(201,100,66)` / warm `rgb(245,244,237)` / radius 16).
+- **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
+- **Next**: Piece 2 docking/pill (≥1280 docked, ≤640 fullscreen). Pulse stays frozen.
+
+## Previous: September 14, 2026 — Piece 2 Toshi panel PR1 on **STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
 
 - **Merged**: [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) `ab89d1cc` (`piece2/toshi-header-composer`) — GitHub API `merged: true`.
 - **Harden/stamp**: [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) **MERGED** `aa819151` — GitHub API `merged: true` @ `2026-09-14T17:18:24Z` (e2e panel-scoped chips + knowledge stamp).
@@ -626,7 +636,6 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded** (PR1). Harden is docs/e2e-only — no redeploy required for #596.
 - **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS (`#toshi-panel` scoped).
 - **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
-- **Next / in flight**: Piece 2 PR2 chips/plan+confirm card polish (`piece2/chips-plan-confirm-cards`) → then docking/pill. Pulse stays frozen.
 
 ## Previous: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
 
@@ -2041,6 +2050,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
 - **Status**: ✅ MERGED via [#581](https://github.com/KlassApp-Foundation/KlassApp/pull/581) `a87b9575`
 - **Edge cases flagged**: None
+
+### 2026-09-14: Piece 2 PR1 harden + stamp — **MERGED** ([#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596))
+- **Work done**: Admin-merged after GitHub API confirmed open; merge SHA `aa819151`. E2e chip asserts scoped to `#toshi-panel`; Livewire chip HTML contract; knowledge stamp for #595.
+- **Files modified**: `e2e/toshi-piece2-header-composer-verify.cjs`, `ToshiPiece2HeaderComposerContractTest.php`, `knowledge.md`
+- **Key decisions**: Confirm every PR with API `merged:true` + real SHA before next chunk (same discipline tonight).
+- **Status**: ✅ MERGED `aa819151` · **prod held**
+- **Edge cases flagged**: None beyond #595 chip-locator note.
 
 ### 2026-09-14: Piece 2 PR1 Toshi header/composer + chip confirms — **MERGED + STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
 - **Work done**: Open Design clay chrome on Toshi panel header/composer; shared `toshi-confirm-chips` partial (panel + modal); composer deferred while awaiting confirm; Pulse freeze banner + ledger blur canary preserved; contract tests (source≡published + Livewire chip HTML); Playwright visual + chip inject.
