@@ -115,4 +115,26 @@ class AuthPreviewTest extends TestCase
         $response->assertRedirect('/preview/login');
         $response->assertSessionHasErrors(['email', 'password']);
     }
+
+    public function test_auth_preview_css_uses_canonical_canvas_ink_and_ds_btn_metrics(): void
+    {
+        $css = file_get_contents(resource_path('css/auth-preview.css'));
+
+        $this->assertMatchesRegularExpression('/--ap-bg:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression('/--ap-ink:\s*#1E293B/i', $css);
+        $this->assertMatchesRegularExpression('/--paper-base:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression('/--ap-focus:\s*#1E6FD9/i', $css);
+        $this->assertMatchesRegularExpression('/--ap-focus-ring:\s*rgba\(\s*30,\s*111,\s*217,\s*0\.25\s*\)/i', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit\s*\{[^}]*padding:\s*8px\s+18px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit\s*\{[^}]*min-height:\s*44px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit\s*\{[^}]*font-size:\s*0\.85rem;/s', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit:focus-visible\s*\{[^}]*outline:\s*2px\s+solid\s+var\(--ap-focus\)/s', $css);
+        $this->assertDoesNotMatchRegularExpression('/--ap-bg:\s*#F5F0E6/i', $css);
+        $this->assertDoesNotMatchRegularExpression('/--ap-ink:\s*#0F172A/i', $css);
+        $this->assertDoesNotMatchRegularExpression('/--paper-base:\s*#F5F0E6/i', $css);
+        $this->assertStringNotContainsString('0 0 0 3px rgba(34, 197, 94', $css);
+        $this->assertStringNotContainsString('0 10px 18px rgba(34, 197, 94, 0.2)', $css);
+        $this->assertDoesNotMatchRegularExpression('/\.ap-submit\s*\{[^}]*padding:\s*14px;/s', $css);
+        $this->assertDoesNotMatchRegularExpression('/\.ap-submit\s*\{[^}]*min-height:\s*50px;/s', $css);
+    }
 }

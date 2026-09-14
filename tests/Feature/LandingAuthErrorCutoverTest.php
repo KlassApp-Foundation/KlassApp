@@ -42,6 +42,11 @@ class LandingAuthErrorCutoverTest extends TestCase
         $login->assertDontSee('ap-preview-badge', false);
         $login->assertSee('family=Sora', false);
 
+        $css = file_get_contents(resource_path('css/auth-preview.css'));
+        $this->assertMatchesRegularExpression('/--paper-base:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression('/--ap-ink:\s*#1E293B/i', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit\s*\{[^}]*padding:\s*8px\s+18px;/s', $css);
+
         $register = $this->get('/register');
         $register->assertOk();
         $register->assertSee('data-ap-screen="register"', false);
