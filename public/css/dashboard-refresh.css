@@ -3227,3 +3227,25 @@ body.toshi-manual-wizard [data-toshi-root] {
     height: 1px;
     background: #E2E8F0;
 }
+
+/* ── Reduced motion ────────────────────────────────────────────────────────
+   Disables the three infinite loops called out in DESIGN_SYSTEM.md:
+   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce.
+   Keep the solid badge / dots visible — only stop the looping animation. */
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-shell--admin .dashboard-live-badge::after {
+        animation: none;
+        content: none;
+    }
+
+    .dashboard-live-dot {
+        animation: none;
+        box-shadow: none;
+    }
+
+    .ds-loading-dot {
+        animation: none;
+        opacity: 0.7;
+        transform: none;
+    }
+}

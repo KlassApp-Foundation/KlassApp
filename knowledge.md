@@ -10255,3 +10255,10 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **GitHub sanity** (post-merge on `main`): DESIGN_SYSTEM.md present (~14KB); 13 brand assets; key strings (`v4.3.3`, `ds-table-ledger`, `#f0eee6`, `resources/assets/brand`) confirmed via raw content fetch.
 - **Status**: ✅ MERGED — no deploy (docs + static SVGs only)
 - **Edge cases flagged**: Favicon PNGs may still be from pre-export icon bytes (#549); optional regen from new `klassapp-icon.svg`. Stacked lockup vertical gap still needs design sign-off.
+
+### 2026-09-14: Dashboard prefers-reduced-motion for three looping animations
+- **Work done**: Confirmed gap was never shipped (only documented in DESIGN_SYSTEM.md). Added `@media (prefers-reduced-motion: reduce)` in `public/css/dashboard-refresh.css` disabling LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce. Documented real onboarding constants (`STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, `ALL_STEPS` order) replacing Claude Design kit placeholders. PHPUnit `ReducedMotionContractTest`; Playwright emulateMedia assert animations → `none` under reduce.
+- **Files modified**: `public/css/dashboard-refresh.css`, `resources/views/components/DESIGN_SYSTEM.md`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `knowledge.md`; OD mirror `~/open-design/design-systems/klassapp/DESIGN.md` (out of repo).
+- **Key decisions**: Only the three DESIGN_SYSTEM-named loops; leave `d-pulse` / `toshi-spin` for a follow-up. Solid badge/dots remain visible — animation only stops.
+- **Status**: 🚧 PR opening / shipping
+- **Edge cases flagged**: Claude Design React kit still has wrong inferred size/category labels until someone edits that dump; grounding is DESIGN_SYSTEM.md + OD `klassapp` DESIGN.md.
