@@ -225,7 +225,8 @@
 .ds-kpi-card:nth-child(4) .ds-kpi-value { animation-delay: 0.20s; }
 
 /* ── Data Tables: Pulse treatment ── */
-.ds-table {
+.ds-table,
+.ds-table-ledger {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
@@ -233,7 +234,8 @@
     border-radius: 12px;
     overflow: hidden;
 }
-.ds-table thead {
+.ds-table thead,
+.ds-table-ledger thead {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -241,7 +243,8 @@
     -webkit-backdrop-filter: blur(12px);
     background: rgba(255,255,255,0.85);
 }
-.ds-table th {
+.ds-table th,
+.ds-table-ledger th {
     padding: 14px 16px;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.75rem;

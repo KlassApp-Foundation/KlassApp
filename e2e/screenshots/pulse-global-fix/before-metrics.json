@@ -1,0 +1,26 @@
+{
+  "phase": "before",
+  "base": "https://klassapp.xyz",
+  "at": "2026-09-14T08:12:11.758Z",
+  "checks": [
+    {
+      "name": "admin_dashboard_kpi",
+      "ok": false,
+      "url": "https://klassapp.xyz/admin/dashboard",
+      "title": "KlassApp",
+      "hasLegacy": true,
+      "hasModern": false,
+      "bodySnippet": "UI Review Demo School\nSelect Academic Year\n2026\nDashboard\nACADEMICS\nOPERATIONS\nFINANCE\nCOMMUNICATION\nSYSTEM\nHelp & Docs\nAdmin\n\nLive school activity, enrollment pulse, and updates in one place.\n\nWHATSAPP\n\nParents get answers without calling the office\n\nAttendance, fees, and results — right in the chat they already use.\n\nK\nKlassApp School\nonline\nHi — is Amina in class today?\nYes ✅ Amina is present ("
+    },
+    {
+      "name": "ledger_thead_blur",
+      "ok": false,
+      "url": "https://klassapp.xyz/admin/fees/payments"
+    },
+    {
+      "name": "css_has_ds-table-ledger_thead",
+      "ok": false,
+      "status": 200
+    }
+  ]
+}
