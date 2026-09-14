@@ -469,10 +469,8 @@
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
                         data-testid="toshi-plan-{{ $plan->id }}"
-                        data-plan-name="{{ $plan->name }}"
-                        onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                        onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
+                        data-plan-name="{{ $plan->name }}">
+                    <div class="toshi-option-card-badge">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                     <div class="flex-1">
                         <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                         <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
@@ -1358,10 +1356,8 @@
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"
                                     data-testid="toshi-plan-{{ $plan->id }}"
-                                    data-plan-name="{{ $plan->name }}"
-                                    onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                                    onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
+                                    data-plan-name="{{ $plan->name }}">
+                                <div class="toshi-option-card-badge">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                                 <div class="flex-1">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                                     <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
