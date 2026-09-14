@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
+## Current Status: September 15, 2026 — **SiteAdmin redirect + spreadsheet placement fixes LOCAL** (not pushed)
+
+- **In progress (local, uncommitted on `docs/cutover-stamp-merged`)**: three investigate/fix items from real QA xlsx uploads.
+  1. **SiteAdmin sidebar gap (real bug)**: Google OAuth always landed SiteAdmin (`usergroup_id=1`, no school) on `/admin/dashboard` (school shell). Fix: shared `AuthRedirectHelper` + Google/password/`RedirectIfAuthenticated` + Admin dashboard redirect to `/superadmin/dashboard`.
+  2. **Student class placement**: not a matching bug — streams in the file (e.g. `Primary One` + `A`) did not exist after wizard seed of base classes only. Fix: `OnboardingEngine::ensureStandardLinkForClass()` auto-creates stream via `ClassStructureService::addStream` when the **base** class exists.
+  3. **Teacher Literacy / Baby Class**: nursery subjects were empty in `SchoolCategorySeeder`; plus UNEB name aliases. Fix: seed Literacy/Numeracy/Motor Skills/Social-Emotional; `resolveOrCreateSubjectForClass()` + aliases; wired in wizard + Toshi.
+- **Verify**: PHPUnit `GoogleSiteAdminRedirectTest` + `RealSpreadsheetUploadPlacementTest` (34/34 students; full teacher fixture incl. David Okello → Literacy/Baby Class) PASS against `tests/fixtures/klassapp-*-test-data.xlsx`. User still does their own manual UI upload.
+- **Production tip unchanged**: four-surface cutover still live at `2e5a382` / stamp `557fb980` until this fix ships.
+
+## Previous: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
 
 - **Milestone**: Coordinated production cutover of the complete four-surface design program — Piece 1 landing/auth/error `--d-*` · Piece 4 dashboard kit · Piece 3 wizard · Piece 2 Toshi panel — plus parity/bugfix stack (#601/#603/#605/#607).
 - **App on production**: `2e5a382` (`depl-a2bf3117-…`) — design program tip. **Knowledge stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` — GitHub API `merged: true`.
@@ -2076,6 +2085,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **LOCAL FIX (not pushed)**
+- **Findings (before fix)**:
+  1. SiteAdmin school sidebar = **real gap**, not intentional: password login used role redirect; Google OAuth always sent ug=1 to `/admin/dashboard`.
+  2. Student placement near-total fail = **setup-order**, not matcher: file streams need `{Class} {Stream}` sections; wizard seeds undivided bases only → 1/34 without streams, 34/34 when streams exist or auto-created.
+  3. `Subject 'Literacy' was not found for class 'Baby Class'` = **seeding mismatch**: `SchoolCategorySeeder` nursery subjects were `[]`; Literacy never existed for Baby Class.
+- **Fixes**: `AuthRedirectHelper`; Google + Login + RedirectIfAuthenticated + Admin\DashboardController; `ensureStandardLinkForClass`; nursery subjects + `subjectNameCandidates` / `resolveOrCreateSubjectForClass` in wizard + Toshi.
+- **Files**: `app/Helpers/AuthRedirectHelper.php`, auth controllers/middleware, `OnboardingEngine.php`, `SchoolCategorySeeder.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, `tests/fixtures/klassapp-*-test-data.xlsx`, `GoogleSiteAdminRedirectTest.php`, `RealSpreadsheetUploadPlacementTest.php`, `SchoolCategorySeederTest.php`.
+- **Verify**: PHPUnit focused suites PASS (SiteAdmin → `/superadmin/dashboard`; 34 students + Literacy/Baby Class teacher fixture). Did **not** upload on the user’s behalf in the live UI.
+- **Status**: Local only — needs branch/PR/ship. Existing schools seeded before this change still lack nursery subjects until re-seed or first teacher assign creates them via `resolveOrCreateSubjectForClass`.
+- **Edge**: Auto-stream only when base class exists; missing Senior on primary-only school still hard-fails (correct).
 
 ### 2026-09-15: Four-surface design program **PRODUCTION CUTOVER** (Pieces 1–4) — LIVE @ `2e5a382`
 - **Work done**: Full PR merge sweep via GitHub API; fresh staging deploy; holistic Playwright across all four surfaces; documented rollback `ca0e114` / `depl-a2be2ae7-…`; production deploy of main tip; real prod verify (register/wizard plans, Admin+Teacher Toshi dock/mobile, Pulse canary); synthetic users flagged inactive; knowledge stamp.

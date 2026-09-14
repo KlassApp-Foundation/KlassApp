@@ -123,7 +123,7 @@ class GoogleAuthController extends Controller
             session()->forget('saas_signup');
             Auth::login($user, true);
 
-            return redirect('/admin/dashboard')
+            return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser($user))
                 ->with('open_toshi_onboarding', true)
                 ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
@@ -147,7 +147,7 @@ class GoogleAuthController extends Controller
             return redirect('/login');
         }
 
-        return redirect('/admin/dashboard')
+        return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser(Auth::user()))
             ->with('open_toshi_onboarding', true);
     }
 
@@ -158,6 +158,13 @@ class GoogleAuthController extends Controller
 
     private function postAuthRedirect(User $user)
     {
+        $path = \App\Helpers\AuthRedirectHelper::dashboardPathForUser($user);
+
+        // SiteAdmin has no school onboarding surface — always platform dashboard.
+        if ((int) $user->usergroup_id === 1) {
+            return redirect($path);
+        }
+
         $school = $user->school;
         $needsSetup = $school && (
             $school->curriculum === null
@@ -166,11 +173,11 @@ class GoogleAuthController extends Controller
         );
 
         if ($needsSetup) {
-            return redirect('/admin/dashboard')
+            return redirect($path)
                 ->with('open_toshi_onboarding', true);
         }
 
-        return redirect('/admin/dashboard');
+        return redirect($path);
     }
 
     private function updateGoogleData(User $user, $googleUser): void

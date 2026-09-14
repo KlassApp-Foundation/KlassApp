@@ -529,6 +529,172 @@ class OnboardingEngine
     }
 
     /**
+     * Resolve a class/stream StandardLink, creating the stream section when the
+     * undivided base class already exists but the named stream does not.
+     *
+     * Spreadsheet uploads often specify Stream=A while the wizard only seeded
+     * "Primary One". Without this, placement fails for every streamed row.
+     * Never invents a missing base class — that remains a hard setup error.
+     */
+    public function ensureStandardLinkForClass(
+        School $school,
+        AcademicYear $year,
+        string $className,
+        ?string $stream = null
+    ): ?StandardLink {
+        $link = $this->resolveStandardLinkForClass($school, $year, $className, $stream);
+        if ($link) {
+            return $link;
+        }
+
+        $stream = trim((string) $stream);
+        if ($stream === '') {
+            return null;
+        }
+
+        $baseLink = $this->resolveStandardLinkForClass($school, $year, $className, null);
+        if (! $baseLink || ! $baseLink->section) {
+            return null;
+        }
+
+        try {
+            $result = app(ClassStructureService::class)->addStream(
+                $school,
+                $year,
+                $baseLink->section,
+                $stream
+            );
+        } catch (ValidationException $e) {
+            return null;
+        }
+
+        if (! empty($result['standard_link']) && $result['standard_link'] instanceof StandardLink) {
+            return StandardLink::with(['standard', 'section'])->find($result['standard_link']->id);
+        }
+
+        return $this->resolveStandardLinkForClass($school, $year, $className, $stream);
+    }
+
+    /**
+     * Subject name aliases for UNEB spreadsheet uploads (English ↔ English Language, …).
+     *
+     * @return list<string>
+     */
+    public static function subjectNameCandidates(string $subjectName): array
+    {
+        $raw = trim($subjectName);
+        if ($raw === '') {
+            return [];
+        }
+
+        $candidates = [$raw];
+        $lower = strtolower($raw);
+
+        $aliases = [
+            'english' => ['English Language', 'English'],
+            'english language' => ['English Language', 'English'],
+            'math' => ['Mathematics', 'General Mathematics'],
+            'maths' => ['Mathematics', 'General Mathematics'],
+            'mathematics' => ['Mathematics', 'General Mathematics'],
+            'general mathematics' => ['General Mathematics', 'Mathematics'],
+            'history' => ['History and Political Education', 'History'],
+            'history and political education' => ['History and Political Education', 'History'],
+            'literature' => ['Literature in English', 'Literature'],
+            'literature in english' => ['Literature in English', 'Literature'],
+            'cre' => ['CRE', 'Religious Education', 'Christian Religious Education'],
+            'religious education' => ['Religious Education', 'CRE', 'Christian Religious Education'],
+            'social/emotional' => ['Social/Emotional', 'Social Emotional'],
+            'social emotional' => ['Social/Emotional', 'Social Emotional'],
+            'pe' => ['Physical Education', 'PE'],
+            'physical education' => ['Physical Education', 'PE'],
+            'computer' => ['Computer Studies', 'ICT'],
+            'computer studies' => ['Computer Studies', 'ICT'],
+            'ict' => ['ICT', 'Computer Studies'],
+            'additional mathematics' => ['Additional Mathematics', 'General Mathematics', 'Mathematics'],
+            'fine art' => ['Fine Art', 'Art'],
+            'agriculture' => ['Agriculture'],
+            'music' => ['Music'],
+        ];
+
+        foreach ($aliases[$lower] ?? [] as $alias) {
+            $candidates[] = $alias;
+        }
+
+        $unique = [];
+        foreach ($candidates as $c) {
+            $trimmed = trim((string) $c);
+            if ($trimmed === '') {
+                continue;
+            }
+            $key = strtolower($trimmed);
+            if (! isset($unique[$key])) {
+                $unique[$key] = $trimmed;
+            }
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * Find a subject on a StandardLink's section (with aliases), or create it
+     * during onboarding teacher assignment when the spreadsheet names a subject
+     * the category seeder did not include (e.g. Literacy on older nursery seeds).
+     */
+    public function resolveOrCreateSubjectForClass(
+        School $school,
+        AcademicYear $year,
+        StandardLink $standardLink,
+        string $subjectName
+    ): ?Subject {
+        $subjectName = trim($subjectName);
+        if ($subjectName === '' || ! $standardLink->section_id) {
+            return null;
+        }
+
+        foreach (self::subjectNameCandidates($subjectName) as $candidate) {
+            $subject = Subject::where('school_id', $school->id)
+                ->where('section_id', $standardLink->section_id)
+                ->whereRaw('LOWER(name) = ?', [strtolower($candidate)])
+                ->first();
+            if ($subject) {
+                return $subject;
+            }
+        }
+
+        foreach (self::subjectNameCandidates($subjectName) as $candidate) {
+            $subject = Subject::where('school_id', $school->id)
+                ->whereRaw('LOWER(name) = ?', [strtolower($candidate)])
+                ->first();
+            if ($subject) {
+                // Replicate onto this section so teacher-link section_id matches.
+                return Subject::firstOrCreate([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $year->id,
+                    'standard_id' => $standardLink->standard_id,
+                    'section_id' => $standardLink->section_id,
+                    'name' => $subject->name,
+                ], [
+                    'code' => $subject->code,
+                    'type' => $subject->type ?: 'core',
+                    'status' => 1,
+                ]);
+            }
+        }
+
+        return Subject::firstOrCreate([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $standardLink->standard_id,
+            'section_id' => $standardLink->section_id,
+            'name' => $subjectName,
+        ], [
+            'code' => null,
+            'type' => 'core',
+            'status' => 1,
+        ]);
+    }
+
+    /**
      * Persist standards (grading tiers), sections (classes), and standard_links
      * for the given academic year.
      *
@@ -1188,7 +1354,7 @@ class OnboardingEngine
             if ($name === '' || $className === '') {
                 continue;
             }
-            if (! $this->resolveStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
+            if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                 $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
                 $unmatchedClasses[] = "{$name} → {$label}";
             }
@@ -1279,7 +1445,7 @@ class OnboardingEngine
             $link = null;
 
             if ($className !== '') {
-                $link = $this->resolveStandardLinkForClass(
+                $link = $this->ensureStandardLinkForClass(
                     $school,
                     $year,
                     $className,

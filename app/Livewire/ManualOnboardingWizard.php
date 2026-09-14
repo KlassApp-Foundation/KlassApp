@@ -1722,13 +1722,7 @@ class ManualOnboardingWizard extends Component
             }
 
             foreach ($subjectNames as $subjectName) {
-                $subject = Subject::where('school_id', $school->id)
-                    ->where('section_id', $standardLink->section_id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                    ->first();
-                $subject ??= Subject::where('school_id', $school->id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                    ->first();
+                $subject = $engine->resolveOrCreateSubjectForClass($school, $year, $standardLink, $subjectName);
                 if (! $subject) {
                     throw ValidationException::withMessages([
                         'teacherName' => "Subject '{$subjectName}' was not found for class '{$className}'.",
