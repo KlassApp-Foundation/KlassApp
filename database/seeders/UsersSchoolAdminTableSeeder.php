@@ -76,7 +76,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
                         'profession'    => $designation,
                         'address'       => 'School Office, ' . $school->name . ', Kampala',
                         'country_id'    => $uganda->id,
-                        'state_id'      => $stateId,
+                        // 'state_id'      => $stateId,
                         'city_id'       => $cityId,
                         'pincode'       => null,
                     ]

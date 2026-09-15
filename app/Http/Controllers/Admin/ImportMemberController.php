@@ -51,6 +51,7 @@ class ImportMemberController extends Controller
 
       try
       {
+        \Session::forget('skippedcount');
         Excel::import(new UsersImport,$request->file('import_file'));
         $count = \Session::get('count');
         if($count != 0)
@@ -62,6 +63,7 @@ class ImportMemberController extends Controller
         $insertedcount = \Session::get('insertedcount');
         if($insertedcount > 0)
         {
+          \Session::forget('skippedcount');
           $message= trans('messages.import_success_msg',['module' => 'Student']);
 
           $ip= $this->getRequestIP();
@@ -76,14 +78,24 @@ class ImportMemberController extends Controller
         }
         else
         {
-          return back()->with('failmessage',trans('messages.insert_failure_msg'));
+          $skipped = \Session::get('skippedcount', 0);
+          $message = $skipped > 0
+            ? "No students were imported. {$skipped} row(s) were skipped because each row needs Name and Class."
+            : 'No students were imported. Check that the file contains data rows with the required Name and Class columns.';
+
+          return back()->with('failmessage', $message);
         }
         \Session::forget('insertedcount');
       }
       catch(Exception $e)
       {
-        Log::error('ImportMemberController@importUsers failed: ' . $e->getMessage());
-        return back()->with('failmessage', 'Import failed due to an error. Please check your file format and try again.');
+        Log::error('ImportMemberController@importUsers failed', [
+          'exception' => $e,
+          'school_id' => $school_id,
+          'filename' => $request->file('import_file')?->getClientOriginalName(),
+        ]);
+
+        return back()->with('failmessage', 'Student import failed: '.$e->getMessage());
       }
     }
 

@@ -27,7 +27,7 @@
     "klassapp/toshi-ui": "*",
     "kreait/laravel-firebase": "^7.0",
     "laracasts/presenter": "dev-master",
-    "laravel/ai": "^0.10",
+    "laravel/ai": "^0.11.2",
     "laravel/framework": "^12.0",
     "laravel/nightwatch": "^1.30",
     "laravel/sanctum": "^4.0",
@@ -88,6 +88,9 @@
   "config": {
     "platform": {
       "php": "8.3.6"
+    },
+    "allow-plugins": {
+      "php-http/discovery": true
     }
   },
   "extra": {

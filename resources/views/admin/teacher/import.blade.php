@@ -14,7 +14,7 @@
             <div class="panel-heading">
                 <div class="flex flex-col">
                     <div class="mt-3">
-                        <a href="{{ url('admin/downloadformat/teacher') }}" id="sample" class="no-underline text-white px-4 my-3 mx-3 flex items-center custom-green py-1 w-11/12 lg:w-1/5">Download Sample Format</a>
+                        <a href="{{ url('admin/downloadformat/teacher') }}" id="sample" class="no-underline text-white px-4 my-3 mx-3 flex items-center custom-green py-1 w-11/12 lg:w-1/5 block">Download Sample Format</a>
                     </div>
                 </div>
                 <form style="padding: 10px;margin-bottom: unset;" action="{{ url('admin/importTeachers') }}" class="form-horizontal" method="post" enctype="multipart/form-data">
@@ -24,7 +24,7 @@
                     {{ session()->forget('insertedcount') }}
                     <div class="flex flex-col">
                         <div>
-                            <input type="file" id="file" name="import_file">
+                            <input type="file" id="file" name="import_file" class="block text-sm text-gray-900 border border-gray-300 rounded-lg p-2 bg-white cursor-pointer">
                         </div>
                         <span class="text-red-500 text-xs font-semibold">{{$errors->first('import_file')}}</span> 
                         <div class="mt-3">

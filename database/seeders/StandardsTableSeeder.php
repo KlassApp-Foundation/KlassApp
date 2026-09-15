@@ -22,7 +22,10 @@ class StandardsTableSeeder extends Seeder
 
      foreach ($schools as $school) {
     foreach ($standards as $data) {
-        Standard::create( [...$data, "school_id" => $school->id] );
+        Standard::updateOrCreate(
+            ['school_id' => $school->id, 'name' => $data['name']],
+            ['order' => $data['order'], 'status' => $data['status']]
+        );
     }
 }
         $this->command->info('Seeded ' . count($standards) . ' national standards.');

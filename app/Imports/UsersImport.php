@@ -13,8 +13,6 @@ use App\Models\StandardLink;
 use App\Models\Qualification;
 use App\Models\AcademicYear;
 use App\Traits\RegisterUser;
-use App\Models\Standard;
-use App\Models\Section;
 use App\Models\Country;
 use App\Traits\Common;
 use App\Models\City;
@@ -34,16 +32,24 @@ class UsersImport implements ToCollection, WithHeadingRow
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
             $insertedcount = 0;
+            $skippedcount = 0;
+            $rowNumber = 1;
 
-            foreach ($rows as $row) {
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
                 $row = collect($row)->filter(fn($value, $key) => is_string($key))->map(fn($v) => is_string($v) ? trim($v) : $v);
                 // $row = collect($row)->filter(function ($value, $key) {
                 //     return is_string($key); // removes numeric keys like 11 => 11
                 // });
             // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
-                if (empty($row['firstname']) || empty($row['class'])) {
+                $name = trim((string) ($row['firstname'] ?? $row['name'] ?? ''));
+                $class = trim((string) ($row['class'] ?? ''));
+                $stream = trim((string) ($row['stream'] ?? ''));
+
+                if ($name === '' || $class === '') {
                     Log::warning('Skipping invalid row', $row->toArray());
+                    $skippedcount++;
                     continue;
                 }
 
@@ -56,7 +62,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | BASIC STUDENT DATA        
                 |--------------------------------------------------------------------------
                 */
-                $student->firstname     = $row['firstname'] ?? null;
+                $student->name          = $name;
+                $student->firstname     = $name;
                 $student->lastname      = $row['lastname'] ?? null;
                 $student->mobile_no = !empty($row['mobile_no']) ? 
                 preg_replace('/[^0-9]/', '', $row['mobile_no']) : null;
@@ -87,40 +94,16 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | CLASS / SECTION (SAFE)
                 |--------------------------------------------------------------------------
                 */
-                $standard = null;
-                $section = null;
-                $sectionVal = strtolower($row["class"]);
+                $sectionVal = trim($class.' '.$stream);
+                $standardLink = StandardLink::where('school_id', $school_id)
+                    ->where('academic_year_id', $academic_year->id ?? null)
+                    ->whereHas('section', function ($query) use ($school_id, $sectionVal) {
+                        $query->where('school_id', $school_id)
+                            ->whereRaw('LOWER(name) = ?', [strtolower($sectionVal)]);
+                    })
+                    ->first();
 
-                if($sectionVal){
-                    // derrive standards from sections
-                    if(str_starts_with($sectionVal, "p")){
-                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'primary')->first();
-                    }
-                    $prefixes = ['b', 'm', 't'];
-                    if (collect($prefixes)->contains(fn($p) => str_starts_with($sectionVal, $p))) {
-                        $standard = Standard::where('school_id', $school_id)->where('name', 'nursery')->first();
-                    }
-                    $alevel = ['Senior Five', 'Senior Six', 's.5', 's.6', 's5', 's6'];
-                    $olevel =  ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'];
-                    if(in_array($sectionVal, $alevel)){
-                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'a-level')->first();
-                    }
-                   if(in_array($sectionVal, $olevel)){
-                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'o-level')->first();
-                    }
-                    $section      = Section::where([['school_id', $school_id], ['name', 'LIKE', $sectionVal]])->first();
-
-                }
-              
-                if ($standard && $section) {
-                    $standardLink = StandardLink::where([
-                        ['school_id', $school_id],
-                        ['standard_id', $standard->id],
-                        ['section_id', $section->id]
-                    ])->first();
-
-                    $student->standard = $standardLink->id ?? null;
-                }
+                $student->standard = $standardLink->id ?? null;
 
                 /*
                 |--------------------------------------------------------------------------
@@ -141,20 +124,21 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | PARENT (SAFE + OPTIONAL)
                 |--------------------------------------------------------------------------
                 */
-                $parent_status = !empty($row['parent_mobile_no'])
+                $parentPhone = $row['parent_mobile_no'] ?? $row['parent_phone'] ?? null;
+                $parent_status = !empty($parentPhone)
                     ? User::where([
                         ['school_id', $school_id],
-                        ['mobile_no', $row['parent_mobile_no']],
+                        ['mobile_no', $parentPhone],
                         ['usergroup_id', 7]
                     ])->first()
                     : null;
 
-                if (!$parent_status && !empty($row['parent_mobile_no'])) {
+                if (!$parent_status && !empty($parentPhone)) {
 
                     $parent->parent        = 'add';
                     $parent->firstname     = $row['parent_firstname'] ?? null;
                     $parent->lastname      = $row['parent_lastname'] ?? null;
-                    $parent->mobile_no     = $row['parent_mobile_no'];
+                    $parent->mobile_no     = $parentPhone;
                     $parent->alternate_no  = $row['parent_alternate_no'] ?? null;
                     $parent->email         = $row['parent_email'] ?? null;
                     $parent->profession    = $row['parent_occupation'] ?? null;
@@ -182,7 +166,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                     6
                 );
 
-                if (!empty($row['parent_mobile_no'])) {
+                if (!empty($parentPhone)) {
                     $this->CreateParent($student->id, $parent, $school_id, 7);
                 }
 
@@ -190,10 +174,16 @@ class UsersImport implements ToCollection, WithHeadingRow
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('skippedcount', $skippedcount);
 
         } catch (Exception $e) {
-            Log::error('Import Error: ' . $e->getMessage());
-            dd($e->getMessage());
+            Log::error('Import Error', [
+                'exception' => $e,
+                'school_id' => $school_id ?? null,
+                'row' => $rowNumber,
+            ]);
+
+            throw new Exception("Row {$rowNumber}: {$e->getMessage()}", 0, $e);
         }
     }
 }
