@@ -17,13 +17,19 @@ trait Common
 {
     public function getFilePath($file)
     {
+        // Null/empty avatars are common; Storage::url() TypeErrors on null and
+        // that escapes the old Exception-only catch (TypeError extends Error).
+        if ($file === null || $file === '') {
+            return '';
+        }
+
         $path = '';
 
         try
         {
             $path = \Storage::url($file);
         }
-        catch(Exception $e)
+        catch(\Throwable $e)
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());

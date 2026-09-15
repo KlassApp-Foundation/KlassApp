@@ -84,5 +84,20 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('https://x.com/klassapp', false);
         $response->assertSee('https://github.com/KlassApp-Foundation', false);
         $this->assertStringNotContainsString('href="#" class="site-footer-social"', $content);
+
+        // Canonical DESIGN_SYSTEM type + parchment (Piece 1 marketing alignment)
+        $response->assertSee('family=Sora', false);
+        $response->assertSee('family=DM+Sans', false);
+        $this->assertStringNotContainsString('Bricolage', $content);
+        $this->assertStringNotContainsString('family=Inter', $content);
+
+        $css = file_get_contents(resource_path('css/landing-preview.css'));
+        $this->assertMatchesRegularExpression('/--text-primary:\s*#1E293B/i', $css);
+        $this->assertMatchesRegularExpression('/--paper-base:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression("/--font-display:\\s*'Sora'/i", $css);
+        $this->assertMatchesRegularExpression("/--font-body:\\s*'DM Sans'/i", $css);
+        $this->assertDoesNotMatchRegularExpression('/Bricolage/i', $css);
+        $this->assertDoesNotMatchRegularExpression("/--font-body:\\s*'Inter'/i", $css);
+        $this->assertDoesNotMatchRegularExpression('/--paper-base:\\s*#F5F0E6/i', $css);
     }
 }

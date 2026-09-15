@@ -116,7 +116,7 @@ class FeePaymentRecordingTest extends TestCase
         $this->assertSame($this->admin->id, (int) $payment->recorded_by);
     }
 
-    public function test_payments_index_shows_recorder_name_and_disambiguated_tuition(): void
+    public function test_payments_index_shows_kit_kpis_and_student_ledger(): void
     {
         FeePayment::create([
             'school_id' => $this->admin->school_id,
@@ -134,9 +134,12 @@ class FeePaymentRecordingTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('Fee Admin', $html);
-        $this->assertStringContainsString('Tuition', $html);
-        $this->assertStringContainsString('nursery', $html);
+        $this->assertStringContainsString('data-testid="fees-kpi-grid"', $html);
+        $this->assertStringContainsString('Collected this term', $html);
+        $this->assertStringContainsString('Fee payments', $html);
+        $this->assertStringContainsString('dt-name-link', $html);
+        $this->assertStringContainsString('Fee Student', $html);
+        $this->assertStringContainsString('ds-save-indicator', file_get_contents(resource_path('views/admin/fees/payments.blade.php')));
         $this->assertStringNotContainsString('recordedBy', $html);
     }
 }

@@ -174,7 +174,7 @@ class AcademicYearCurrentResolutionTest extends TestCase
             ->set('teacherName', 'Ada')
             ->set('teacherEmail', 'ada@ayresolve.sch.ug')
             ->call('next')
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700999111')
@@ -242,10 +242,15 @@ class AcademicYearCurrentResolutionTest extends TestCase
             'openToshiOnboarding' => false,
             'pendingApprovals' => 0,
             'trendPeriod' => 'month',
-            'feeTrend' => ['labels' => [], 'values' => []],
+            'feeTrend' => [],
+            'greeting' => ['phrase' => 'Good morning', 'name' => 'Admin'],
+            'dashboardContextLine' => 'School overview · 0 students enrolled',
+            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ]);
 
         $view->assertDontSee('data-testid="empty-state-product-demo"', false);
-        $view->assertSee('dashboard-kpi-card', false);
+        $view->assertSee('ds-kpi-card', false);
+        $view->assertDontSee('dashboard-kpi-card', false);
+        $view->assertSee('data-testid="dashboard-live-badge"', false);
     }
 }

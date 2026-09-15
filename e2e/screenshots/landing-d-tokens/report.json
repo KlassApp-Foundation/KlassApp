@@ -1,0 +1,131 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "at": "2026-09-14T09:21:02.767Z",
+  "viewports": {
+    "375": {
+      "measured": {
+        "bodyBg": "rgb(250, 250, 245)",
+        "bodyColor": "rgb(30, 41, 59)",
+        "bodyFont": "\"DM Sans\", system-ui, sans-serif",
+        "h1Font": "Sora, system-ui, sans-serif",
+        "paperBase": "#fafaf5",
+        "textPrimary": "#1e293b",
+        "fontDisplay": "\"Sora\", system-ui, sans-serif",
+        "fontBody": "\"DM Sans\", system-ui, sans-serif",
+        "hasBricolageLink": false,
+        "hasInterFamilyLink": false,
+        "hasSoraLink": true,
+        "hasDmSansLink": true
+      },
+      "checks": {
+        "paperBase": true,
+        "textPrimary": true,
+        "fontDisplaySora": true,
+        "fontBodyDmSans": true,
+        "computedBodySoraOrDm": true,
+        "computedH1Sora": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "soraLink": true,
+        "dmLink": true,
+        "bodyBgCanvas": true,
+        "bodyInk": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-d-tokens/375-hero.png"
+    },
+    "414": {
+      "measured": {
+        "bodyBg": "rgb(250, 250, 245)",
+        "bodyColor": "rgb(30, 41, 59)",
+        "bodyFont": "\"DM Sans\", system-ui, sans-serif",
+        "h1Font": "Sora, system-ui, sans-serif",
+        "paperBase": "#fafaf5",
+        "textPrimary": "#1e293b",
+        "fontDisplay": "\"Sora\", system-ui, sans-serif",
+        "fontBody": "\"DM Sans\", system-ui, sans-serif",
+        "hasBricolageLink": false,
+        "hasInterFamilyLink": false,
+        "hasSoraLink": true,
+        "hasDmSansLink": true
+      },
+      "checks": {
+        "paperBase": true,
+        "textPrimary": true,
+        "fontDisplaySora": true,
+        "fontBodyDmSans": true,
+        "computedBodySoraOrDm": true,
+        "computedH1Sora": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "soraLink": true,
+        "dmLink": true,
+        "bodyBgCanvas": true,
+        "bodyInk": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-d-tokens/414-hero.png"
+    },
+    "768": {
+      "measured": {
+        "bodyBg": "rgb(250, 250, 245)",
+        "bodyColor": "rgb(30, 41, 59)",
+        "bodyFont": "\"DM Sans\", system-ui, sans-serif",
+        "h1Font": "Sora, system-ui, sans-serif",
+        "paperBase": "#fafaf5",
+        "textPrimary": "#1e293b",
+        "fontDisplay": "\"Sora\", system-ui, sans-serif",
+        "fontBody": "\"DM Sans\", system-ui, sans-serif",
+        "hasBricolageLink": false,
+        "hasInterFamilyLink": false,
+        "hasSoraLink": true,
+        "hasDmSansLink": true
+      },
+      "checks": {
+        "paperBase": true,
+        "textPrimary": true,
+        "fontDisplaySora": true,
+        "fontBodyDmSans": true,
+        "computedBodySoraOrDm": true,
+        "computedH1Sora": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "soraLink": true,
+        "dmLink": true,
+        "bodyBgCanvas": true,
+        "bodyInk": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-d-tokens/768-hero.png"
+    },
+    "1280": {
+      "measured": {
+        "bodyBg": "rgb(250, 250, 245)",
+        "bodyColor": "rgb(30, 41, 59)",
+        "bodyFont": "\"DM Sans\", system-ui, sans-serif",
+        "h1Font": "Sora, system-ui, sans-serif",
+        "paperBase": "#fafaf5",
+        "textPrimary": "#1e293b",
+        "fontDisplay": "\"Sora\", system-ui, sans-serif",
+        "fontBody": "\"DM Sans\", system-ui, sans-serif",
+        "hasBricolageLink": false,
+        "hasInterFamilyLink": false,
+        "hasSoraLink": true,
+        "hasDmSansLink": true
+      },
+      "checks": {
+        "paperBase": true,
+        "textPrimary": true,
+        "fontDisplaySora": true,
+        "fontBodyDmSans": true,
+        "computedBodySoraOrDm": true,
+        "computedH1Sora": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "soraLink": true,
+        "dmLink": true,
+        "bodyBgCanvas": true,
+        "bodyInk": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-d-tokens/1280-hero.png"
+    }
+  },
+  "ok": true
+}

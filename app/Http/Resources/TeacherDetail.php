@@ -23,7 +23,7 @@ class TeacherDetail extends JsonResource
             'id'                => $this->id,
             'name'              => $this->name,
             'mobile_no'         => $this->mobile_no,
-            'avatar'            => $this->userprofile->AvatarPath,
+            'avatar'            => optional($this->userprofile)->AvatarPath ?: null,
             'fullname'          => $this->FullName,
             'city'              => $this->userprofile->city->name,
             'joining_date'      => $this->userprofile->joining_date=='' ? null:date('Y-m-d',strtotime($this->userprofile->joining_date)),

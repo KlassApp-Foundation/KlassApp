@@ -166,6 +166,10 @@ class AgentToshi extends Component
     public $studentFormClass = '';
     public $studentFormStream = '';
     public $studentFormType = '';
+    public $studentFormGender = '';
+    public $studentFormSchoolStudentId = '';
+    public $studentFormLin = '';
+    public $studentFormBoardRegNumber = '';
     public $studentFormParent = '';
     public $studentFormParentPhone = '';
     public $showFeeForm = false;
@@ -174,6 +178,11 @@ class AgentToshi extends Component
     public $feeFormLevel = '';
     public $feeFormClass = '';
     public $feeFormTerm = '';
+    /** Explicit yearly fee (not tied to a term) — mirrors wizard feeIsYearly. */
+    public bool $feeFormIsYearly = false;
+    /** After terms are confirmed, show mark-current picker (mirrors wizard). */
+    public bool $showTermCurrentPicker = false;
+    public string $currentTermName = '';
     public $showExamForm = false;
     public $examFormTerm = '';
     public $examFormType = '';
@@ -1373,6 +1382,7 @@ class AgentToshi extends Component
             || $this->showStudentForm
             || $this->showFeeForm
             || $this->showExamForm
+            || $this->showTermCurrentPicker
             || (
                 $this->substep === 6
                 && in_array($this->steps[$this->step] ?? null, ['teachers', 'students', 'fees', 'exams'], true)
@@ -1404,6 +1414,11 @@ class AgentToshi extends Component
         }
         if ($this->showExamForm || ($stepName === 'exams' && $this->substep === 6)) {
             $this->doneExams();
+
+            return true;
+        }
+        if ($this->showTermCurrentPicker || ($stepName === 'terms' && $this->substep === 3)) {
+            $this->doneTermsCurrent();
 
             return true;
         }
@@ -1699,16 +1714,12 @@ class AgentToshi extends Component
                 continue;
             }
 
-            $linkSubject = Subject::where('school_id', $school->id)
-                ->where('section_id', $linkStandardLink->section_id)
-                ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                ->first();
-
-            if (! $linkSubject) {
-                $linkSubject = Subject::where('school_id', $school->id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                    ->first();
-            }
+            $linkSubject = $engine->resolveOrCreateSubjectForClass(
+                $school,
+                $academicYear,
+                $linkStandardLink,
+                $subjectName
+            );
 
             if ($teacherUser && $linkStandardLink && $linkSubject) {
                 Teacherlink::firstOrCreate([
@@ -1733,6 +1744,10 @@ class AgentToshi extends Component
         $this->studentFormClass = '';
         $this->studentFormStream = '';
         $this->studentFormType = '';
+        $this->studentFormGender = '';
+        $this->studentFormSchoolStudentId = '';
+        $this->studentFormLin = '';
+        $this->studentFormBoardRegNumber = '';
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
         $this->substep = 6;
@@ -1805,20 +1820,36 @@ class AgentToshi extends Component
             return;
         }
 
-        // Parse optional gender suffix from name — same pattern as actionAddStudent()
-        $gender = null;
+        // Prefer explicit form gender; fall back to optional "(male)/(female)" suffix on name.
+        $gender = strtolower(trim((string) $this->studentFormGender));
         $name = $raw;
-        if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
-            $name = trim($m[1]);
-            $gender = strtolower(trim($m[2]));
+        if (! in_array($gender, ['male', 'female'], true)) {
+            $gender = null;
+            if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
+                $name = trim($m[1]);
+                $gender = strtolower(trim($m[2]));
+            }
         }
 
-        $entry = ['name' => $name, 'gender' => $gender, 'class' => $class, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
+        $entry = [
+            'name' => $name,
+            'gender' => $gender,
+            'class' => $class,
+            'stream' => $this->studentFormStream,
+            'type' => $this->studentFormType,
+            'school_student_id' => trim((string) $this->studentFormSchoolStudentId),
+            'lin' => trim((string) $this->studentFormLin),
+            'board_registration_number' => trim((string) $this->studentFormBoardRegNumber),
+        ];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
         if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
 
         $this->actionData['students'][] = $entry;
         $this->studentFormName = '';
+        $this->studentFormGender = '';
+        $this->studentFormSchoolStudentId = '';
+        $this->studentFormLin = '';
+        $this->studentFormBoardRegNumber = '';
         // Keep class + stream sticky for batch entry (wizard defaults stream when class has streams)
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
@@ -1863,6 +1894,7 @@ class AgentToshi extends Component
         $this->feeFormLevel = '';
         $this->feeFormClass = '';
         $this->feeFormTerm = '';
+        $this->feeFormIsYearly = false;
         $this->substep = 6;
         $this->botSay("Let's add fee categories. Use the form below to add each fee.");
     }
@@ -1877,21 +1909,106 @@ class AgentToshi extends Component
             return;
         }
 
+        $isYearly = (bool) $this->feeFormIsYearly;
         $this->actionData['fees'][] = [
             'name' => $name,
             'amount' => $amount,
             'level' => $this->feeFormLevel,
             'class' => $this->feeFormClass,
-            'term' => $this->feeFormTerm,
+            'term' => $isYearly ? '' : $this->feeFormTerm,
+            'is_yearly' => $isYearly,
         ];
         $this->feeFormName = '';
         $this->feeFormAmount = '';
         $this->feeFormLevel = '';
         $this->feeFormClass = '';
         $this->feeFormTerm = '';
+        $this->feeFormIsYearly = false;
 
         $count = count($this->actionData['fees']);
-        $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$count} so far). Add another or click **Continue**.");
+        $period = $isYearly ? 'yearly' : 'term';
+        $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$period}, {$count} so far). Add another or click **Continue**.");
+    }
+
+    /**
+     * Mark which collected term is current (wizard parity).
+     */
+    public function markTermCurrent(string $name): void
+    {
+        $name = trim($name);
+        if ($name === '' || $this->terms === []) {
+            return;
+        }
+
+        $matched = false;
+        foreach ($this->terms as $term) {
+            if (strcasecmp(trim((string) ($term['name'] ?? '')), $name) === 0) {
+                $matched = true;
+                $name = trim((string) $term['name']);
+                break;
+            }
+        }
+        if (! $matched) {
+            $this->botSay("I don't recognise that term. Choose one of: " . $this->termNamesList() . '.');
+
+            return;
+        }
+
+        $this->currentTermName = $name;
+        $this->applyCurrentStatusToTerms();
+        $this->botSay("**{$name}** marked as the current term. Tap **Continue** when ready.");
+    }
+
+    public function doneTermsCurrent(): void
+    {
+        if ($this->terms === []) {
+            $this->showTermCurrentPicker = false;
+            $this->substep = 0;
+            $this->advance();
+
+            return;
+        }
+
+        if (trim($this->currentTermName) === '') {
+            $this->currentTermName = trim((string) ($this->terms[0]['name'] ?? ''));
+        }
+        $this->applyCurrentStatusToTerms();
+        $this->showTermCurrentPicker = false;
+        $this->botSay('Current term: **'.$this->currentTermName.'**.');
+        $this->substep = 0;
+        $this->advance();
+    }
+
+    private function promptForCurrentTerm(): void
+    {
+        $this->awaitingConfirm = false;
+        $this->showTermCurrentPicker = true;
+        $this->currentTermName = trim((string) ($this->terms[0]['name'] ?? ''));
+        $this->applyCurrentStatusToTerms();
+        $this->substep = 3;
+        $this->botSay(
+            'Which term is **current** right now? Tap **Mark current** on one term, then **Continue**. '
+            .'(Defaults to '.$this->currentTermName.' if you Continue without changing.)'
+        );
+    }
+
+    private function applyCurrentStatusToTerms(): void
+    {
+        $current = trim($this->currentTermName);
+        foreach ($this->terms as $i => $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            $this->terms[$i]['status'] = ($current !== '' && strcasecmp($name, $current) === 0)
+                ? 'current'
+                : 'next';
+        }
+    }
+
+    private function termNamesList(): string
+    {
+        return implode(', ', array_filter(array_map(
+            fn ($t) => trim((string) ($t['name'] ?? '')),
+            $this->terms
+        )));
     }
 
     public function removeFee(int $index): void
@@ -2133,17 +2250,26 @@ class AgentToshi extends Component
                     }
                 } else {
                     $this->studentList = array_values(array_unique($plainNames));
-                    // Try to extract optional LIN (Learner Identification Number) from the file
-                    $linValues = $this->extractColumnFromFile($this->attachment->getRealPath(), $ext, ['lin', 'learner_id', 'learner_identification_number', 'emis_lin']);
-                    $this->actionData['students'] = array_map(fn($i, $r) => [
-                        'name' => $r['name'],
-                        'gender' => null,
-                        'class' => $r['class'] ?? '',
-                        'stream' => $r['stream'] ?? '',
-                        'parent' => $r['parent'] ?? '',
-                        'parent_phone' => $r['parent_phone'] ?? '',
-                        'lin' => $linValues[$i] ?? '',
-                    ], array_keys($nameRows), $nameRows);
+                    // Prefer extractor row shape: school_student_id and lin stay distinct.
+                    $this->actionData['students'] = array_map(function ($r) {
+                        $gender = strtolower(trim((string) ($r['gender'] ?? '')));
+                        if (! in_array($gender, ['male', 'female'], true)) {
+                            $gender = null;
+                        }
+
+                        return [
+                            'name' => $r['name'],
+                            'gender' => $gender,
+                            'class' => $r['class'] ?? '',
+                            'stream' => $r['stream'] ?? '',
+                            'parent' => $r['parent'] ?? '',
+                            'parent_phone' => $r['parent_phone'] ?? '',
+                            'school_student_id' => trim((string) ($r['school_student_id'] ?? '')),
+                            'lin' => trim((string) ($r['lin'] ?? $r['learner_id'] ?? '')),
+                            'board_registration_number' => trim((string) ($r['board_registration_number'] ?? '')),
+                            'date_of_birth' => trim((string) ($r['date_of_birth'] ?? '')),
+                        ];
+                    }, $nameRows);
                     $this->showStudentForm = false;
                 }
                 $label = $stepName === 'teachers' ? 'teachers' : 'students';
@@ -3766,11 +3892,24 @@ class AgentToshi extends Component
             $this->selectPlan($plan->id);
             return;
         }
+        if (\App\Models\Plan::query()->where('is_active', 1)->doesntExist()) {
+            $this->botSay('No plans are available yet. Contact support.');
+
+            return;
+        }
         $this->botSay("Please select a plan using the buttons above (you can pick any tier).");
     }
 
     private function promptPlanSelection(): void
     {
+        $activePlans = \App\Models\Plan::query()->where('is_active', 1)->count();
+        if ($activePlans === 0) {
+            $this->suggestedPlanId = null;
+            $this->botSay('No plans are available yet. Contact support.');
+
+            return;
+        }
+
         $count = 0;
         if ($this->schoolId) {
             $count = \App\Services\OnboardingStepsService::countActiveStudents((int) $this->schoolId);
@@ -5243,8 +5382,7 @@ class AgentToshi extends Component
         if ($this->substep === 1) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->substep = 0;
-                $this->advance();
+                $this->promptForCurrentTerm();
                 return;
             }
             $this->botSay("Please enter your custom terms (e.g. Term I, Term II, Term III):");
@@ -5265,8 +5403,19 @@ class AgentToshi extends Component
                 $this->terms[] = ['name' => $name, 'start' => now()->startOfYear(), 'end' => now()->endOfYear()];
             }
             $this->botSay("**" . count($this->terms) . "** terms saved: " . implode(', ', $names));
-            $this->substep = 0;
-            $this->advance();
+            $this->promptForCurrentTerm();
+            return;
+        }
+
+        // substep 3: explicit current-term selection (wizard parity)
+        if ($this->substep === 3) {
+            $lower = strtolower(trim($text));
+            if (in_array($lower, ['done', 'continue', 'next', 'ok', 'okay'], true)) {
+                $this->doneTermsCurrent();
+
+                return;
+            }
+            $this->markTermCurrent($text);
             return;
         }
     }
@@ -5737,11 +5886,17 @@ class AgentToshi extends Component
             // After completing onboarding: school admin goes to assistant mode for Q&A,
             // super admin stays in create mode to onboard another school.
             $this->mode = $this->mode === 'complete' ? 'assistant' : 'create';
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?: 'Please check the form and try again.';
+            $this->botSay('⚠️ '.$msg);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            \Log::error('Onboarding unique constraint: '.$e->getMessage());
+            $this->botSay('⚠️ '.app(\App\Services\OnboardingEngine::class)->describeUniqueConstraintViolation($e));
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Onboarding DB error: ' . $e->getMessage());
             $code = $e->getCode();
             if ($code == 23000) {
-                $this->botSay("This school or email already exists in the system. Please check for duplicates and try again.");
+                $this->botSay('⚠️ A duplicate value conflicted with an existing record (often email or LIN). Fix the duplicate and try again.');
             } elseif ($code == 2002 || $code == 1045) {
                 $this->botSay("Unable to connect to the database. Please try again in a moment.");
             } else {
@@ -5919,9 +6074,14 @@ class AgentToshi extends Component
                     $entry['level'] = $level;
                 }
 
+                $isYearly = ! empty($fee['is_yearly']);
                 $term = trim((string) ($fee['term'] ?? ''));
-                if ($term !== '') {
+                if ($isYearly) {
+                    $entry['is_yearly'] = true;
+                    // Yearly fees are not tied to a term — do not pass term through.
+                } elseif ($term !== '') {
                     $entry['term'] = $term;
+                    $entry['is_yearly'] = false;
                 }
 
                 $structured[] = $entry;
@@ -5941,6 +6101,50 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     //  Commit everything to the database
     // ════════════════════════════════════════════════
+    /**
+     * Normalize Toshi student drafts for OnboardingEngine::saveStudents().
+     * Passes gender, school_student_id, and lin through as distinct fields
+     * (lin = Uganda national Learner Identification Number).
+     *
+     * @param  list<array<string, mixed>|string>  $studentRecords
+     * @return list<array{name: string, class: string, stream: string, phone: string, school_student_id: string, lin: string, board_registration_number: string, gender: string, date_of_birth: string}>
+     */
+    private function mapStudentRecordsForEngine(array $studentRecords): array
+    {
+        return array_map(function ($record) {
+            if (is_string($record)) {
+                return [
+                    'name' => trim($record),
+                    'class' => '',
+                    'stream' => '',
+                    'phone' => '',
+                    'school_student_id' => '',
+                    'lin' => '',
+                    'board_registration_number' => '',
+                    'gender' => '',
+                    'date_of_birth' => '',
+                ];
+            }
+
+            $gender = strtolower(trim((string) ($record['gender'] ?? '')));
+            if (! in_array($gender, ['male', 'female'], true)) {
+                $gender = '';
+            }
+
+            return [
+                'name' => trim((string) ($record['name'] ?? '')),
+                'class' => trim((string) ($record['class'] ?? '')),
+                'stream' => trim((string) ($record['stream'] ?? '')),
+                'phone' => trim((string) ($record['phone'] ?? $record['parent_phone'] ?? '')),
+                'school_student_id' => trim((string) ($record['school_student_id'] ?? '')),
+                'lin' => trim((string) ($record['lin'] ?? $record['learner_id'] ?? '')),
+                'board_registration_number' => trim((string) ($record['board_registration_number'] ?? '')),
+                'gender' => $gender,
+                'date_of_birth' => trim((string) ($record['date_of_birth'] ?? $record['dob'] ?? '')),
+            ];
+        }, $studentRecords);
+    }
+
     private function commitAll()
     {
         DB::transaction(function () {
@@ -6092,24 +6296,11 @@ class AgentToshi extends Component
                 // Fixes: random password per student (not shared admin password),
                 // is_reset=1 on every account, Userprofile with alternate_no for phone,
                 // email dedup with fallback, proper StandardLink resolution.
-                // Note: gender/LIN fields are passed through in the draft but
-                // OnboardingEngine::saveStudents doesn't use them — they'll be
-                // added when gender/LIN support is added to the engine. The engine
-                // creates StudentAcademic with klassapp_student_id via nextForStudent.
+                // Gender + school_student_id + board_registration_number pass through to the engine.
                 $studentRecords = !empty($this->actionData['students'])
                     ? $this->actionData['students']
                     : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                $studentDrafts = array_map(function ($record) {
-                    $name = is_string($record) ? $record : ($record['name'] ?? '');
-                    return [
-                        'name'  => trim((string) $name),
-                        'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
-                        'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
-                        'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
-                        'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
-                        'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
-                    ];
-                }, $studentRecords);
+                $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
                 app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
 
                 // ── Terms: delegate to OnboardingEngine (idempotent via firstOrCreate) ──
@@ -6245,21 +6436,12 @@ class AgentToshi extends Component
                 // ── Students: delegate to OnboardingEngine ──
                 // Fixes: random password per student, is_reset=1, Userprofile.alternate_no for phone,
                 // proper StandardLink resolution, klassapp_student_id via nextForStudent.
+                // Gender + school_student_id + board_registration_number pass through to the engine.
                 if (!empty($this->studentList) || !empty($this->actionData['students'])) {
                     $studentRecords = !empty($this->actionData['students'])
                         ? $this->actionData['students']
                         : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                    $studentDrafts = array_map(function ($record) {
-                        $name = is_string($record) ? $record : ($record['name'] ?? '');
-                        return [
-                            'name'  => trim((string) $name),
-                            'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
-                            'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
-                            'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
-                            'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
-                            'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
-                        ];
-                    }, $studentRecords);
+                    $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
                     app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
                 }
 

@@ -7,6 +7,7 @@
          wire:click="show"
          onclick="document.body.classList.remove('toshi-collapsed');"
          class="toshi-pill"
+         data-testid="toshi-pill"
          style="{{ $visible || $maximized ? 'display: none;' : '' }}">
         <div class="toshi-pill-avatar">
             <img src="{{ asset('images/klassapp-logo.svg') }}" class="toshi-pill-logo" alt="KlassApp">
@@ -20,7 +21,7 @@
     <div id="toshi-panel"
          class="toshi-panel"
          style="{{ $visible ? 'display: flex;' : 'display: none;' }}">
-        <div class="toshi-header">
+        <div class="toshi-header" data-testid="toshi-header">
             <div class="toshi-header-logo">
                 <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
                 <span>Toshi</span>
@@ -28,13 +29,13 @@
             {{-- Mode dropdown — shared partial --}}
             @include('livewire.partials.toshi-mode-dropdown')
             <div class="toshi-header-actions">
-                <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" style="font-size:11px;font-weight:600;color:#D97706;">
+                <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" data-testid="toshi-restart">
                     ↻ Restart
                 </button>
                 <button wire:click="maximize" class="toshi-header-btn" title="Expand" data-testid="toshi-expand">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                 </button>
-                <button onclick="document.body.classList.add('toshi-collapsed');document.getElementById('toshi-toggle').textContent='◀';" class="toshi-header-btn" title="Close">
+                <button onclick="document.body.classList.add('toshi-collapsed');document.getElementById('toshi-toggle').textContent='◀';" class="toshi-header-btn" title="Close" data-testid="toshi-close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>
@@ -274,6 +275,19 @@
                         <option value="boarding">Boarding</option>
                         <option value="day">Day Scholar</option>
                     </select>
+                    <select wire:model="studentFormGender" class="toshi-input" data-testid="toshi-student-gender">
+                        <option value="">Gender (optional)</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                    <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional, school-internal)"
+                           class="toshi-input" data-testid="toshi-student-school-id">
+                    <input type="text" wire:model="studentFormLin" placeholder="LIN (optional, national learner ID)"
+                           class="toshi-input" data-testid="toshi-student-lin">
+                    @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
+                    <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
+                           class="toshi-input" data-testid="toshi-student-board-reg">
+                    @endif
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                            class="toshi-input">
                     <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -289,6 +303,29 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            @endif
+
+            {{-- Terms: mark which term is current (wizard parity) --}}
+            @if($showTermCurrentPicker && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'terms')
+            <div class="toshi-form-card" data-testid="toshi-term-current-picker">
+                <span class="toshi-section-title">Mark current term</span>
+                <div class="toshi-spacer-8">
+                    @foreach($terms as $ti => $term)
+                    <div class="toshi-list-item" wire:key="toshi-term-{{ $ti }}">
+                        <span class="flex-1">
+                            {{ $term['name'] ?? '' }}
+                            @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) === 0)
+                                <span class="toshi-tag-link" data-testid="toshi-term-current-badge">· Current</span>
+                            @endif
+                        </span>
+                        @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) !== 0)
+                        <button type="button" class="toshi-btn-primary-sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $term['name'] ?? '') }}')" data-testid="toshi-term-mark-current-{{ $ti }}">Mark current</button>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+                <button type="button" class="toshi-btn-done" wire:click="doneTermsCurrent" data-testid="toshi-term-current-continue">Continue</button>
             </div>
             @endif
 
@@ -311,7 +348,7 @@
                 <div class="toshi-spacer-8">
                     @foreach($fees as $fi => $f)
                     <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 class="toshi-remove-btn">✕</button>
                     </div>
@@ -320,9 +357,9 @@
                 @endif
                 <div class="toshi-flex-col">
                     <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                           class="toshi-input">
+                           class="toshi-input" data-testid="toshi-fee-name">
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                           class="toshi-input">
+                           class="toshi-input" data-testid="toshi-fee-amount">
                     <select wire:model="feeFormLevel"
                             class="toshi-input">
                         <option value="">Level (optional)</option>
@@ -340,20 +377,26 @@
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
+                    <label class="toshi-check flex items-center gap-2 text-sm" data-testid="toshi-fee-yearly">
+                        <input type="checkbox" wire:model.live="feeFormIsYearly" />
+                        <span>Yearly fee (not tied to a term)</span>
+                    </label>
+                    @if(! $feeFormIsYearly)
                     <select wire:model="feeFormTerm"
-                            class="toshi-input">
+                            class="toshi-input" data-testid="toshi-fee-term">
                         <option value="">Term (optional)</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
                         <option value="Term III">Term III</option>
                     </select>
+                    @endif
                     <div class="flex gap-2">
                         <button wire:click="saveFee" type="button"
-                                class="toshi-btn-primary-sm">
+                                class="toshi-btn-primary-sm" data-testid="toshi-fee-add">
                             + Add Fee
                         </button>
                         <button wire:click="doneFees" type="button"
-                                class="toshi-btn-done">
+                                class="toshi-btn-done" data-testid="toshi-fee-continue">
                             Continue ({{ count($this->actionData['fees'] ?? []) }})
                         </button>
                     </div>
@@ -465,14 +508,12 @@
             ))
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-plan-cards">
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
-                @foreach($plans as $plan)
+                @forelse($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
                         data-testid="toshi-plan-{{ $plan->id }}"
-                        data-plan-name="{{ $plan->name }}"
-                        onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                        onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
+                        data-plan-name="{{ $plan->name }}">
+                    <div class="toshi-option-card-badge">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                     <div class="flex-1">
                         <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                         <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
@@ -486,7 +527,11 @@
                         </div>
                     </div>
                 </button>
-                @endforeach
+                @empty
+                <p class="text-sm" role="alert" data-testid="toshi-plan-empty" style="color:#b42318; padding: 8px 4px;">
+                    No plans are available yet. Contact support.
+                </p>
+                @endforelse
             </div>
             @endif
 
@@ -797,94 +842,37 @@
         @endif
         @endif
 
-        {{-- Confirmation buttons --}}
+        {{-- Confirmation chips — primary UX (not free-text) --}}
         @if($awaitingConfirm)
-        <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 16px 8px; background: #FFFFFF; border-top: 1px solid #f5f4ed;">
-            <button wire:click="confirmYes" type="button"
-                    style="flex: 1; padding: 10px; background: #22C55E; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#16A34A'"
-                    onmouseout="this.style.background='#22C55E'">
-                Yes ✓
-            </button>
-            <button wire:click="confirmNo" type="button"
-                    class="toshi-btn-outline"
-                    onmouseover="this.style.background='#e8e6dc'"
-                    onmouseout="this.style.background='#f5f4ed'">
-                No
-            </button>
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
-            <button wire:click="confirmCustom" type="button"
-                    class="toshi-btn-primary"
-                   
-                    onmouseout="this.style.background='#c96442'">
-                + Add Subject
-            </button>
-            @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
-            <button wire:click="showTeacherFormFn" type="button"
-                    class="toshi-btn-primary"
-                   
-                    onmouseout="this.style.background='#c96442'">
-                + Add Teacher
-            </button>
-            @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
-            <button wire:click="showStudentFormFn" type="button"
-                    class="toshi-btn-primary"
-                   
-                    onmouseout="this.style.background='#c96442'">
-                + Add Student
-            </button>
-            @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
-            <button wire:click="showFeeFormFn" type="button"
-                    class="toshi-btn-primary"
-                   
-                    onmouseout="this.style.background='#c96442'">
-                + Add Fee
-            </button>
-            @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
-            <button wire:click="showExamFormFn" type="button"
-                    class="toshi-btn-primary"
-                   
-                    onmouseout="this.style.background='#c96442'">
-                + Add Exam
-            </button>
-            @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && ($substep === 5 || ($substep === 0 && $this->shouldUseStructureCheckpoint())))
-            <button wire:click="confirmSkipAll" type="button"
-                    class="toshi-btn-outline"
-                    data-testid="toshi-structure-done"
-                    onmouseover="this.style.background='#e8e6dc'"
-                    onmouseout="this.style.background='#f5f4ed'">
-                {{ $substep === 5 ? 'Skip All' : 'Done with structure' }}
-            </button>
-            @endif
-        </div>
+        @include('livewire.partials.toshi-confirm-chips', ['variant' => 'panel'])
         @endif
         {{-- Skip step button — shared partial --}}
         @include('livewire.partials.toshi-skip-button', ['modal' => false])
-        {{-- Composer — Claude-style unified bar --}}
-        <form wire:submit.prevent="send" class="toshi-composer">
+        {{-- Composer — kit unified bar; deferred while confirm chips are active --}}
+        <form wire:submit.prevent="send"
+              class="toshi-composer{{ $awaitingConfirm ? ' toshi-composer--awaiting-confirm' : '' }}"
+              data-testid="toshi-composer">
             <div class="toshi-composer-inner">
                 <label class="toshi-attach-btn" title="Upload file">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
-                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt" @if($awaitingConfirm) disabled @endif>
                 </label>
                 <textarea rows="1" wire:model.defer="input"
-                          placeholder="Message Toshi…"
+                          placeholder="{{ $awaitingConfirm ? 'Use Yes / No above…' : 'Message Toshi…' }}"
                           id="toshi-input-panel"
-                          x-init="$el.removeAttribute('readonly')"
+                          data-testid="toshi-input-panel"
+                          @if($awaitingConfirm) readonly tabindex="-1" @endif
+                          x-init="if (!$el.hasAttribute('readonly')) { /* keep native focus when interactive */ }"
                           @input="
                               hasText = $el.value.trim().length > 0;
                               $el.style.height = 'auto';
                               $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                           "
-                           @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                           @keydown.enter="if(!$event.shiftKey && !$el.hasAttribute('readonly')) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                            class="toshi-composer-input"></textarea>
                 <button type="submit"
                         :disabled="!hasText"
+                        data-testid="toshi-send"
                         :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
                         style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.15s; margin-right: 2px; border-radius: 8px;"
                         class="active:scale-95"
@@ -897,7 +885,7 @@
 
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}
     <div id="toshi-modal"
-         class="toshi-modal-overlay"
+         class="toshi-modal-overlay{{ $maximized ? ' toshi-modal-overlay--open' : '' }}"
          style="{{ $maximized ? 'display: flex;' : 'display: none;' }} align-items: center; justify-content: center;"
          @click.self="$wire.call('hide')">
         <div class="toshi-modal-box"
@@ -972,7 +960,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; background: #FFFFFF; min-width: 0;">
 
                 {{-- Header --}}
-                <div class="toshi-header">
+                <div class="toshi-header" data-testid="toshi-header-modal">
                     <div class="toshi-header-logo">
                         <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
                         <span>Toshi</span>
@@ -980,10 +968,10 @@
                     {{-- Mode dropdown — shared partial --}}
                     @include('livewire.partials.toshi-mode-dropdown')
                     <div class="toshi-header-actions">
-                        <button wire:click="restore" class="toshi-header-btn" title="Restore">
+                        <button wire:click="restore" class="toshi-header-btn" title="Restore" data-testid="toshi-restore">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2H2v4M12 2h2v4M12 14h2v-4M4 14H2v-4"/></svg>
                         </button>
-                        <button wire:click="hide" class="toshi-header-btn" title="Close">
+                        <button wire:click="hide" class="toshi-header-btn" title="Close" data-testid="toshi-modal-close">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                         </button>
                     </div>
@@ -1220,6 +1208,19 @@
                                                             <option value="boarding">Boarding</option>
                                                             <option value="day">Day Scholar</option>
                                                         </select>
+                                                        <select wire:model="studentFormGender" class="toshi-input" data-testid="toshi-student-gender">
+                                                            <option value="">Gender (optional)</option>
+                                                            <option value="male">Male</option>
+                                                            <option value="female">Female</option>
+                                                        </select>
+                                                        <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional, school-internal)"
+                                                               class="toshi-input" data-testid="toshi-student-school-id">
+                                                        <input type="text" wire:model="studentFormLin" placeholder="LIN (optional, national learner ID)"
+                                                               class="toshi-input" data-testid="toshi-student-lin">
+                                                        @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
+                                                        <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
+                                                               class="toshi-input" data-testid="toshi-student-board-reg">
+                                                        @endif
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                                                                class="toshi-input">
                                                         <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -1237,6 +1238,29 @@
                                                     </div>
                                                 </div>
                                                 @endif
+
+                                    {{-- Terms: mark current (maximized) --}}
+                                    @if($showTermCurrentPicker && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'terms')
+                                    <div class="toshi-form-card" data-testid="toshi-term-current-picker-modal">
+                                        <span class="toshi-section-title">Mark current term</span>
+                                        <div class="toshi-spacer-8">
+                                            @foreach($terms as $ti => $term)
+                                            <div class="toshi-list-item" wire:key="toshi-term-modal-{{ $ti }}">
+                                                <span class="flex-1">
+                                                    {{ $term['name'] ?? '' }}
+                                                    @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) === 0)
+                                                        <span class="toshi-tag-link">· Current</span>
+                                                    @endif
+                                                </span>
+                                                @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) !== 0)
+                                                <button type="button" class="toshi-btn-primary-sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $term['name'] ?? '') }}')">Mark current</button>
+                                                @endif
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                        <button type="button" class="toshi-btn-done" wire:click="doneTermsCurrent">Continue</button>
+                                    </div>
+                                    @endif
 
                                     {{-- Fee inline form (maximized) --}}
                                     @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
@@ -1257,7 +1281,7 @@
                                         <div class="toshi-spacer-8">
                                             @foreach($fees as $fi => $f)
                                             <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         class="toshi-remove-btn">✕</button>
                                             </div>
@@ -1266,9 +1290,9 @@
                                         @endif
                                         <div class="toshi-flex-col">
                                             <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                                                   class="toshi-input">
+                                                   class="toshi-input" data-testid="toshi-fee-name-modal">
                                             <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                                                   class="toshi-input">
+                                                   class="toshi-input" data-testid="toshi-fee-amount-modal">
                                             <select wire:model="feeFormLevel"
                                                     class="toshi-input">
                                                 <option value="">Level (optional)</option>
@@ -1286,13 +1310,19 @@
                                                 <option value="{{ $std['name'] }}">
                                                 @endforeach
                                             </datalist>
+                                            <label class="toshi-check flex items-center gap-2 text-sm" data-testid="toshi-fee-yearly-modal">
+                                                <input type="checkbox" wire:model.live="feeFormIsYearly" />
+                                                <span>Yearly fee (not tied to a term)</span>
+                                            </label>
+                                            @if(! $feeFormIsYearly)
                                             <select wire:model="feeFormTerm"
-                                                    class="toshi-input">
+                                                    class="toshi-input" data-testid="toshi-fee-term-modal">
                                                 <option value="">Term (optional)</option>
                                                 <option value="Term I">Term I</option>
                                                 <option value="Term II">Term II</option>
                                                 <option value="Term III">Term III</option>
                                             </select>
+                                            @endif
                                             <div class="flex gap-2">
                                                 <button wire:click="saveFee" type="button"
                                                         class="toshi-btn-primary-sm">
@@ -1411,14 +1441,12 @@
                         ))
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-plan-cards">
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
-                            @foreach($plans as $plan)
+                            @forelse($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"
                                     data-testid="toshi-plan-{{ $plan->id }}"
-                                    data-plan-name="{{ $plan->name }}"
-                                    onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                                    onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
+                                    data-plan-name="{{ $plan->name }}">
+                                <div class="toshi-option-card-badge">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                                 <div class="flex-1">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                                     <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
@@ -1432,7 +1460,11 @@
                                     </div>
                                 </div>
                             </button>
-                            @endforeach
+                            @empty
+                            <p class="text-sm" role="alert" data-testid="toshi-plan-empty" style="color:#b42318; padding: 8px 4px;">
+                                No plans are available yet. Contact support.
+                            </p>
+                            @endforelse
                         </div>
                         @endif
 
@@ -1632,72 +1664,10 @@
                     </div>
                 </div>
 
-                    {{-- Confirmation buttons (inside right area) --}}
+                    {{-- Confirmation chips — primary UX (not free-text) --}}
                     @if($awaitingConfirm)
-                    <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 24px 12px; background: #FFFFFF;">
-                        <button wire:click="confirmYes" type="button"
-                                style="flex: 1; padding: 10px; background: #22C55E; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#16A34A'"
-                                onmouseout="this.style.background='#22C55E'">
-                            Yes ✓
-                        </button>
-                        <button wire:click="confirmNo" type="button"
-                                class="toshi-btn-outline"
-                                onmouseover="this.style.background='#e8e6dc'"
-                                onmouseout="this.style.background='#f5f4ed'">
-                        No
-                    </button>
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
-                        <button wire:click="confirmCustom" type="button"
-                                class="toshi-btn-primary"
-                               
-                                onmouseout="this.style.background='#c96442'">
-                            + Add Subject
-                        </button>
-                        @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
-                        <button wire:click="showTeacherFormFn" type="button"
-                                class="toshi-btn-primary"
-                               
-                                onmouseout="this.style.background='#c96442'">
-                            + Add Teacher
-                        </button>
-                        @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
-                        <button wire:click="showStudentFormFn" type="button"
-                                class="toshi-btn-primary"
-                               
-                                onmouseout="this.style.background='#c96442'">
-                            + Add Student
-                        </button>
-                        @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
-                        <button wire:click="showFeeFormFn" type="button"
-                                class="toshi-btn-primary"
-                               
-                                onmouseout="this.style.background='#c96442'">
-                            + Add Fee
-                        </button>
-                        @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
-                        <button wire:click="showExamFormFn" type="button"
-                                class="toshi-btn-primary"
-                               
-                                onmouseout="this.style.background='#c96442'">
-                            + Add Exam
-                        </button>
-                        @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && ($substep === 5 || ($substep === 0 && $this->shouldUseStructureCheckpoint())))
-                        <button wire:click="confirmSkipAll" type="button"
-                                class="toshi-btn-outline"
-                                data-testid="toshi-structure-done"
-                                onmouseover="this.style.background='#e8e6dc'"
-                                onmouseout="this.style.background='#f5f4ed'">
-                            {{ $substep === 5 ? 'Skip All' : 'Done with structure' }}
-                        </button>
-                        @endif
-                </div>
-                @endif
+                    @include('livewire.partials.toshi-confirm-chips', ['variant' => 'modal'])
+                    @endif
             {{-- Skip step button — shared partial (modal) --}}
             @include('livewire.partials.toshi-skip-button', ['modal' => true])
             {{-- Suggestion chips (modal) --}}
@@ -1720,27 +1690,32 @@
             ])
             @endif
             @endif
-            {{-- Composer: maximized modal — unified bar matching panel --}}
-                <form wire:submit.prevent="send" style="padding: 0 24px 16px; background: #FFFFFF;">
+            {{-- Composer: maximized modal — kit bar; deferred while confirm chips active --}}
+                <form wire:submit.prevent="send"
+                      class="toshi-composer{{ $awaitingConfirm ? ' toshi-composer--awaiting-confirm' : '' }}"
+                      style="padding: 0 24px 16px; background: #FFFFFF;"
+                      data-testid="toshi-composer-modal">
                     <div class="toshi-composer-box">
                         <div class="toshi-composer-inner" style="padding: 6px 4px 6px 6px;">
                             <label class="toshi-attach-btn" title="Upload file">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
-                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt" @if($awaitingConfirm) disabled @endif>
                             </label>
                             <textarea rows="1" wire:model.defer="input"
-                                      placeholder="Message Toshi..."
+                                      placeholder="{{ $awaitingConfirm ? 'Use Yes / No above…' : 'Message Toshi…' }}"
                                       id="toshi-input-modal"
-                                      x-init="$el.removeAttribute('readonly')"
+                                      data-testid="toshi-input-modal"
+                                      @if($awaitingConfirm) readonly tabindex="-1" @endif
                                       @input="
                                           hasText = $el.value.trim().length > 0;
                                           $el.style.height = 'auto';
                                           $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                                       "
-                                      @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                                      @keydown.enter="if(!$event.shiftKey && !$el.hasAttribute('readonly')) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                                       class="toshi-composer-textarea"></textarea>
                             <button type="submit"
                                     :disabled="!hasText"
+                                    data-testid="toshi-send-modal"
                                     :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
                                     style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.15s; margin-right: 2px; border-radius: 8px;"
                                     class="active:scale-95"

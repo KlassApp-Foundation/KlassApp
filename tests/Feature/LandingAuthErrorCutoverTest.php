@@ -19,6 +19,10 @@ class LandingAuthErrorCutoverTest extends TestCase
         $response->assertDontSee('id="community"', false);
         $response->assertDontSee('noindex,nofollow', false);
         $response->assertSee('build/assets/landing-preview-', false);
+        $response->assertSee('family=Sora', false);
+        $response->assertSee('family=DM+Sans', false);
+        $this->assertStringNotContainsString('Bricolage', $response->getContent());
+        $this->assertStringNotContainsString('family=Inter', $response->getContent());
     }
 
     public function test_legacy_landing_preview_redirects_to_home(): void
@@ -37,6 +41,11 @@ class LandingAuthErrorCutoverTest extends TestCase
         $login->assertSee('href="'.url('/auth/google').'"', false);
         $login->assertDontSee('ap-preview-badge', false);
         $login->assertSee('family=Sora', false);
+
+        $css = file_get_contents(resource_path('css/auth-preview.css'));
+        $this->assertMatchesRegularExpression('/--paper-base:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression('/--ap-ink:\s*#1E293B/i', $css);
+        $this->assertMatchesRegularExpression('/\.ap-submit\s*\{[^}]*padding:\s*8px\s+18px;/s', $css);
 
         $register = $this->get('/register');
         $register->assertOk();
@@ -72,6 +81,8 @@ class LandingAuthErrorCutoverTest extends TestCase
         $notFound->assertSee('data-error-code="404"', false);
         $notFound->assertSee('Page Not Found');
         $notFound->assertDontSee('>Preview<', false);
+        $notFound->assertSee('--paper-base: #FAFAF5', false);
+        $notFound->assertSee('padding: 8px 18px', false);
 
         $expired = $this->get('/preview/errors/419');
         $expired->assertOk();

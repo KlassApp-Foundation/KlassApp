@@ -29,12 +29,12 @@
           ════════════════════════════════════════════════ --}}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         {{-- Schools --}}
-        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
+        <a href="{{ url('/superadmin/academics/schools') }}" class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" ry="2"/><path d="M9 21V14h6v7"/><path d="M12 3L3 10h18L12 3z"/></svg>
             </div>
-            <div class="dashboard-kpi-value">{{ number_format($stats['totalSchools']) }}</div>
-            <div class="dashboard-kpi-label">Schools</div>
+            <div class="ds-kpi-value">{{ number_format($stats['totalSchools']) }}</div>
+            <div class="ds-kpi-label">Schools</div>
             <div class="text-xs text-gray-500 mt-1">
                 <span style="color:#22C55E;">{{ $stats['activeSchools'] }} active</span>
                 @if($stats['inactiveSchools'] > 0)
@@ -45,12 +45,12 @@
         </a>
 
         {{-- Users --}}
-        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(15,23,42,0.08); color: #0F172A;">
+        <a href="{{ url('/superadmin/academics/schools') }}" class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(15,23,42,0.08); color: #0F172A;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
             </div>
-            <div class="dashboard-kpi-value">{{ number_format($stats['totalUsers']) }}</div>
-            <div class="dashboard-kpi-label">Users</div>
+            <div class="ds-kpi-value">{{ number_format($stats['totalUsers']) }}</div>
+            <div class="ds-kpi-label">Users</div>
             <div class="text-xs text-gray-500 mt-1">
                 @php
                     $userDelta = $stats['usersThisMonth'] - ($stats['usersLastMonth'] ?? 0);
@@ -66,12 +66,12 @@
         </a>
 
         {{-- Subscriptions --}}
-        <a href="{{ url('/superadmin/reports/subscriptions') }}" class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(217,119,6,0.10); color: #D97706;">
+        <a href="{{ url('/superadmin/reports/subscriptions') }}" class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(217,119,6,0.10); color: #D97706;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
-            <div class="dashboard-kpi-value">{{ number_format($stats['subscriptionsTotal']) }}</div>
-            <div class="dashboard-kpi-label">Subscriptions</div>
+            <div class="ds-kpi-value">{{ number_format($stats['subscriptionsTotal']) }}</div>
+            <div class="ds-kpi-label">Subscriptions</div>
             <div class="text-xs text-gray-500 mt-1">
                 <span class="text-green-600">{{ $stats['activeSubs'] }} active</span>
                 @if($stats['expiredSubs'] > 0)
@@ -82,36 +82,36 @@
         </a>
 
         {{-- MRR --}}
-        <div class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(34,197,94,0.10); color: #22C55E;">
+        <div class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(34,197,94,0.10); color: #22C55E;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="dashboard-kpi-value">${{ number_format($stats['estimatedMRR'], 0) }}</div>
-            <div class="dashboard-kpi-label">Est. MRR</div>
+            <div class="ds-kpi-value">${{ number_format($stats['estimatedMRR'], 0) }}</div>
+            <div class="ds-kpi-label">Est. MRR</div>
             <div class="text-xs text-gray-500 mt-1">
                 <span class="text-gray-400">Based on active plans</span>
             </div>
         </div>
 
         {{-- WhatsApp Users --}}
-        <div class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(34,197,94,0.10); color: #22C55E;">
+        <div class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(34,197,94,0.10); color: #22C55E;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
             </div>
-            <div class="dashboard-kpi-value">{{ number_format($stats['whatsappUsers']) }}</div>
-            <div class="dashboard-kpi-label">WhatsApp</div>
+            <div class="ds-kpi-value">{{ number_format($stats['whatsappUsers']) }}</div>
+            <div class="ds-kpi-label">WhatsApp</div>
             <div class="text-xs text-gray-500 mt-1">
                 <span class="text-gray-400">{{ $stats['whatsappSuccessRate'] }}% delivered</span>
             </div>
         </div>
 
         {{-- Messages --}}
-        <div class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
+        <div class="ds-kpi-card">
+            <div class="ds-kpi-icon-wrap" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </div>
-            <div class="dashboard-kpi-value">{{ number_format($stats['whatsappMessages']) }}</div>
-            <div class="dashboard-kpi-label">Messages</div>
+            <div class="ds-kpi-value">{{ number_format($stats['whatsappMessages']) }}</div>
+            <div class="ds-kpi-label">Messages</div>
             <div class="text-xs text-gray-500 mt-1">
                 @php
                     $msgDelta = $stats['whatsappMessages'] - ($stats['whatsappLastMonth'] ?? 0);

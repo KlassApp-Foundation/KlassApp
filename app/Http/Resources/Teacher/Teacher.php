@@ -22,7 +22,7 @@ class Teacher extends JsonResource
             'name'              =>  $this->name ?: (string) $this->id,
             'email'             =>  $this->email,
             'mobile_no'         =>  $this->mobile_no,
-            'avatar'            =>  $this->userprofile->AvatarPath,
+            'avatar'            =>  optional($this->userprofile)->AvatarPath ?: null,
             'fullname'          =>  $this->FullName,
             'designation'       =>  $details['designation'],
             'designation_name'  =>  $details['designation_name'],

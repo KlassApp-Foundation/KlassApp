@@ -137,7 +137,56 @@ class StudentController extends Controller
             'standardFilter' => $standardFilter,
             'streamFilter' => $streamFilter,
             'statusFilter' => $statusFilter,
+            'rosterSubtitle' => $this->studentsRosterSubtitle($school_id, $students),
         ]);
+    }
+
+    /**
+     * Kit page-head subtitle: page window of filtered total + current term/year.
+     */
+    private function studentsRosterSubtitle(int $schoolId, $students): string
+    {
+        $parts = [];
+
+        if ($students->total() === 0) {
+            $parts[] = '0 shown';
+        } else {
+            $parts[] = sprintf(
+                '%s–%s of %s shown',
+                number_format($students->firstItem()),
+                number_format($students->lastItem()),
+                number_format($students->total())
+            );
+        }
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year) {
+            $term = \App\Models\AcademicTerm::query()
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where('status', 'current')
+                ->orderByDesc('id')
+                ->first();
+
+            if (! $term) {
+                $today = now()->toDateString();
+                $term = \App\Models\AcademicTerm::query()
+                    ->where('school_id', $schoolId)
+                    ->where('academic_year_id', $year->id)
+                    ->whereDate('starts_on', '<=', $today)
+                    ->whereDate('ends_on', '>=', $today)
+                    ->orderByDesc('id')
+                    ->first();
+            }
+
+            if ($term && $term->name) {
+                $parts[] = $term->name;
+            } elseif ($year->name) {
+                $parts[] = $year->name;
+            }
+        }
+
+        return implode(' · ', array_filter($parts));
     }
 
     /**

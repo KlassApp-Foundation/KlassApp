@@ -1,0 +1,19 @@
+{
+  "mode": "staging",
+  "base": "https://klassapp-staging-7mpoqg.laravel.cloud",
+  "email": "cutover.staging.1789421220040@v.test",
+  "at": "2026-09-14T21:27:00.040Z",
+  "checks": {
+    "registerLanded": true,
+    "wizardShell": true,
+    "jumpedPlan": true,
+    "planCards": true,
+    "planEmptyAbsent": true,
+    "planContinue": true,
+    "step_student_size": true,
+    "step_school_category": false,
+    "step_standards": true,
+    "step_review": true
+  },
+  "ok": true
+}

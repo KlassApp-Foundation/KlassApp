@@ -75,7 +75,10 @@ class DashboardGenderChartTest extends TestCase
             'openToshiOnboarding' => false,
             'pendingApprovals' => 0,
             'trendPeriod' => 'month',
-            'feeTrend' => ['labels' => [], 'values' => []],
+            'feeTrend' => [],
+            'greeting' => ['phrase' => 'Good morning', 'name' => 'Admin'],
+            'dashboardContextLine' => 'School overview · 1,250 students enrolled',
+            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ]);
     }
 

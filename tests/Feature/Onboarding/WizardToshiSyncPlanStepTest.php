@@ -200,6 +200,8 @@ class WizardToshiSyncPlanStepTest extends TestCase
             'registration_country' => 'Uganda',
             'ministry_code' => 'EMIS-SYNC',
             'uneb_center_number' => '',
+            'student_size' => '100-300 students',
+            'school_category' => 'primary',
         ]);
 
         $year = AcademicYear::create([
@@ -273,6 +275,18 @@ class WizardToshiSyncPlanStepTest extends TestCase
             'phone' => '+256700111222',
             'opted_in' => true,
             'verified_at' => now(),
+        ]);
+
+        // Optional students step: seed one active student so mount lands on plan_selection
+        // (not students), matching the "leave only plan incomplete" intent of these tests.
+        User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 6,
+            'name' => 'Seed Student',
+            'email' => 'seed-student@sync.sch.ug',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'email_verified' => 1,
         ]);
     }
 

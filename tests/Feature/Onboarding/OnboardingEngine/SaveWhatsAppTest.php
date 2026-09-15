@@ -113,11 +113,10 @@ class SaveWhatsAppTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Same phone on user 2 should hit the unique constraint and be skipped
-        $result2 = $engine->saveWhatsApp($this->school, $user2->id, '+256700111222');
-        $this->assertNull($result2['linked']);
-        $this->assertNotEmpty($result2['skipped']);
-        $this->assertStringContainsString('already registered', $result2['skipped'][0]['reason']);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessageMatches('/already registered/i');
+
+        $engine->saveWhatsApp($this->school, $user2->id, '+256700111222');
     }
 
     public function test_trims_phone_whitespace(): void

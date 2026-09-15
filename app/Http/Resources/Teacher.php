@@ -22,11 +22,11 @@ class Teacher extends JsonResource
             'name'              =>  $this->name ?: (string) $this->id,
             'email'             =>  $this->email,
             'mobile_no'         =>  $this->mobile_no,
-            'avatar'            =>  $this->userprofile->AvatarPath,
+            'avatar'            =>  optional($this->userprofile)->AvatarPath ?: null,
             'fullname'          =>  $this->FullName,
-            'designation'       =>  $details['designation'],
-            'designation_name'  =>  $details['designation_name'],
-            'sub_designation'   =>  $details['sub_designation'],
+            'designation'       =>  $details['designation'] ?? null,
+            'designation_name'  =>  $details['designation_name'] ?? null,
+            'sub_designation'   =>  $details['sub_designation'] ?? null,
             'date_of_birth'     =>  blank(optional($this->userprofile)->date_of_birth)
                 ? null
                 : date('d M Y', strtotime($this->userprofile->date_of_birth)),

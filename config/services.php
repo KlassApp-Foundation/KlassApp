@@ -54,6 +54,8 @@ return [
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
         'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),
         'parent_link_flow_screen' => env('WHATSAPP_PARENT_LINK_FLOW_SCREEN', 'LINK_REQUEST'),
+        // Inbound "demo" / Try Demo — user whose school_id is written to whatsapp_users
+        'demo_parent_user_id' => env('WHATSAPP_DEMO_PARENT_USER_ID', 104),
     ],
 
     'google' => [

@@ -7,7 +7,10 @@
 
 :root { --nav-height: 83px; }
 
-/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ── */
+/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ──
+   Layout places #toshi-toggle-wrapper as a sibling of [data-toshi-root] (app.blade).
+   Selectors below cover both that real DOM and any nested wrapper. */
+.toshi-toggle-wrapper,
 [data-toshi-root] .toshi-toggle-wrapper {
     width: 0;
     flex-shrink: 0;
@@ -16,10 +19,22 @@
     transition: width 0.25s ease;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PIECE 2 — Docking / pill / fullscreen chrome (≥1280 dock, ≤640 fullscreen)
+   Behavior unchanged: 380px static flex column, collapse → width 0 + pill,
+   independently scrolling sidebar. Visual treatment = clay kit (not Pulse green).
+   Do NOT move Pulse .ds-* rules into this section.
+   ══════════════════════════════════════════════════════════════ */
+
 @media (min-width: 1280px) {
+    /* Toshi mounts as a sibling of #app (outside Vue). Body must be a row flex
+       so the dock sits beside #app — not below it under overflow:hidden. */
     body {
         overflow: hidden !important;
         height: 100vh;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch;
     }
 
     #app {
@@ -27,6 +42,8 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     .navbar {
@@ -64,7 +81,7 @@
 
     body [data-toshi-root] {
         display: flex;
-        height: 100%;
+        height: 100vh;
         flex-shrink: 0;
         width: 380px;
         overflow: hidden;
@@ -74,6 +91,7 @@
         bottom: auto !important;
         right: auto !important;
         z-index: auto !important;
+        align-self: stretch;
     }
 
     [data-toshi-root] .toshi-panel {
@@ -88,10 +106,11 @@
         display: flex !important;
         flex-direction: column;
         border-radius: 0 !important;
-        box-shadow: -4px 0 16px rgba(0,0,0,0.04) !important;
-        border-left: 1px solid #E5E7EB !important;
+        box-shadow: -6px 0 24px rgba(20, 20, 19, 0.06) !important;
+        border-left: 1px solid #e8e6dc !important;
         z-index: auto !important;
         transition: none !important;
+        background: #FFFFFF;
     }
 
     [data-toshi-root] .toshi-messages-area {
@@ -110,20 +129,23 @@
         box-shadow: none !important;
     }
 
-    /* ── Toggle wrapper expands to 28px when collapsed ── */
-    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper {
+    /* ── Toggle wrapper expands to 28px when collapsed (nested or layout sibling) ── */
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper,
+    body.toshi-collapsed .toshi-toggle-wrapper {
         width: 28px !important;
     }
 
-    /* ── Toggle positioned inside wrapper — never overlaps content ── */
-    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    /* ── Toggle tab — clay kit (layout sibling + nested) ── */
+    .toshi-toggle-wrapper .toshi-toggle,
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    #toshi-toggle.toshi-toggle {
         position: absolute;
         right: 0;
         top: 50%;
         transform: translateY(-50%);
         width: 28px;
         height: 64px;
-        background: #22C55E;
+        background: #c96442;
         border: none;
         border-radius: 8px 0 0 8px;
         display: flex;
@@ -133,23 +155,38 @@
         color: #FFFFFF;
         cursor: pointer;
         z-index: 1;
-        box-shadow: -2px 0 10px rgba(34,197,94,0.3);
+        box-shadow: -2px 0 10px rgba(201, 100, 66, 0.28);
         user-select: none;
-        transition: width 0.2s ease, box-shadow 0.2s ease;
+        transition: width 0.2s ease, box-shadow 0.2s ease, background 0.15s ease;
     }
-    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle:hover {
+    .toshi-toggle-wrapper .toshi-toggle:hover,
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle:hover,
+    #toshi-toggle.toshi-toggle:hover {
         width: 36px;
-        box-shadow: -4px 0 16px rgba(34,197,94,0.45);
+        background: #b55738;
+        box-shadow: -4px 0 16px rgba(201, 100, 66, 0.4);
         color: #FFFFFF;
     }
 
+    /* Layout sibling toggle is fixed mid-viewport when collapsed */
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
+        position: fixed !important;
+        right: 0 !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 10000 !important;
+    }
+
     /* ── Override dashboard-refresh.css display rules (higher specificity) ── */
-    body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    body:not(.toshi-collapsed) .toshi-toggle-wrapper .toshi-toggle,
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    body:not(.toshi-collapsed) #toshi-toggle.toshi-toggle {
         display: none !important;
     }
-    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    body.toshi-collapsed .toshi-toggle-wrapper .toshi-toggle,
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
         display: flex !important;
-        right: 0 !important;
     }
 
     [data-toshi-root] .toshi-pill {
@@ -170,10 +207,451 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: #22C55E;
+        background: #c96442;
         z-index: 1;
     }
 }
+
+/* ── Floating pill — clay kit (all breakpoints; docked open hides via rules above) ── */
+[data-toshi-root] .toshi-pill {
+    background: #FFFFFF;
+    border: 2px solid #c96442;
+    border-radius: 100px;
+    box-shadow: 0 4px 24px rgba(20, 20, 19, 0.1);
+}
+
+[data-toshi-root] .toshi-pill:hover {
+    border-color: #b55738;
+    box-shadow: 0 6px 32px rgba(201, 100, 66, 0.22);
+}
+
+[data-toshi-root] .toshi-pill-avatar {
+    border: 1px solid rgba(201, 100, 66, 0.45);
+}
+
+[data-toshi-root] .toshi-pill-badge {
+    background: #c96442;
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-pill-text {
+    color: #5e5d59;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Fullscreen panel ≤640px — same behavior, clay edge treatment ── */
+@media (max-width: 640px) {
+    [data-toshi-root] .toshi-panel {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0 !important;
+        border: none;
+        box-shadow: none !important;
+        z-index: 9998;
+    }
+
+    [data-toshi-root] .toshi-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #c96442;
+        z-index: 2;
+    }
+
+    [data-toshi-root] .toshi-panel .toshi-composer {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        background: #FFFFFF;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PIECE 2 — Toshi panel chrome (header / composer / chips / cards)
+   Clay kit tokens: clay #c96442 · warm #f5f4ed · border #e8e6dc
+   Safe to edit in Piece 2 PRs. Do NOT move Pulse rules into this block.
+   Card/chip overrides here intentionally win over dashboard-refresh.css
+   (toshi-ui.css loads after it). Pulse .ds-* / sidebar rules stay FROZEN.
+   ══════════════════════════════════════════════════════════════ */
+
+[data-toshi-root] {
+    --toshi-clay: #c96442;
+    --toshi-warm: #f5f4ed;
+    --toshi-border-kit: #e8e6dc;
+    --toshi-ink: #141413;
+    --toshi-muted: #5e5d59;
+}
+
+[data-toshi-root] .toshi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    min-height: 56px;
+    background: var(--toshi-warm);
+    border-bottom: 1px solid var(--toshi-border-kit);
+    flex-shrink: 0;
+}
+
+[data-toshi-root] .toshi-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+[data-toshi-root] .toshi-header-logo img {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+}
+
+[data-toshi-root] .toshi-header-logo span {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--toshi-clay);
+    letter-spacing: -0.02em;
+}
+
+[data-toshi-root] .toshi-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+[data-toshi-root] .toshi-header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--toshi-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+[data-toshi-root] .toshi-header-btn:hover {
+    background: rgba(201, 100, 66, 0.1);
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-header-btn[title="Restart onboarding"] {
+    width: auto;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--toshi-clay);
+}
+
+/* Confirm chips — primary interaction when awaitingConfirm */
+[data-toshi-root] .toshi-confirm-chips {
+    flex-shrink: 0;
+    padding: 10px 16px 12px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-confirm-chips-hint {
+    margin: 0 0 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--toshi-muted);
+    line-height: 1.35;
+}
+
+[data-toshi-root] .toshi-confirm-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+[data-toshi-root] .toshi-chip-action {
+    flex: 1 1 120px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--toshi-border-kit);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+[data-toshi-root] .toshi-chip-action:active {
+    transform: scale(0.98);
+}
+
+[data-toshi-root] .toshi-chip-action--yes {
+    background: var(--toshi-clay);
+    border-color: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-chip-action--yes:hover {
+    background: #b55738;
+    border-color: #b55738;
+}
+
+[data-toshi-root] .toshi-chip-action--no {
+    background: var(--toshi-warm);
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-chip-action--no:hover {
+    background: #e8e6dc;
+}
+
+[data-toshi-root] .toshi-chip-action--secondary {
+    flex: 1 1 100%;
+    background: #FFFFFF;
+    color: var(--toshi-clay);
+    border-color: rgba(201, 100, 66, 0.35);
+}
+
+[data-toshi-root] .toshi-chip-action--secondary:hover {
+    background: rgba(201, 100, 66, 0.08);
+}
+
+[data-toshi-root] .toshi-confirm-chips[data-toshi-confirm-variant="modal"] {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* Composer — kit bar; deferred when chips are the primary action */
+[data-toshi-root] .toshi-composer {
+    flex-shrink: 0;
+    padding: 0 16px 14px;
+    background: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-composer-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+    padding: 6px 6px 6px 8px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+[data-toshi-root] .toshi-composer-inner:focus-within {
+    border-color: rgba(201, 100, 66, 0.45);
+    box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-composer-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--toshi-ink);
+    background: transparent;
+    resize: none;
+    padding: 10px 4px;
+    line-height: 1.5;
+    min-height: 24px;
+    max-height: 160px;
+}
+
+[data-toshi-root] .toshi-composer-input::placeholder {
+    color: #87867f;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-inner {
+    opacity: 0.55;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-input {
+    pointer-events: none;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm button[type="submit"] {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-attach-btn {
+    pointer-events: none;
+}
+
+/* Modal composer shares the same kit bar */
+[data-toshi-root] .toshi-composer-box .toshi-composer-inner {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+}
+
+/* ── Suggestion chips (assistant prompts) — clay, not Pulse green ── */
+[data-toshi-root] .toshi-chip-suggestion {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-chip-suggestion:hover {
+    border-color: rgba(201, 100, 66, 0.45);
+    background: rgba(201, 100, 66, 0.08);
+}
+
+[data-toshi-root] .toshi-chip-suggestion:focus-visible {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(201, 100, 66, 0.45);
+}
+
+/* ── Onboarding plan option cards ── */
+[data-toshi-root] .toshi-option-card {
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+[data-toshi-root] .toshi-option-card:hover,
+[data-toshi-root] .toshi-option-card:focus-visible {
+    border-color: var(--toshi-clay);
+    box-shadow: 0 2px 10px rgba(201, 100, 66, 0.14);
+    outline: none;
+}
+
+[data-toshi-root] .toshi-option-card-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    background: var(--toshi-clay);
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+/* ── Tool confirmation card (write-tool pending) ── */
+[data-toshi-root] .toshi-confirm-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid var(--toshi-border-kit);
+    box-shadow: 0 1px 3px rgba(20, 20, 19, 0.04), 0 8px 24px rgba(20, 20, 19, 0.06);
+}
+
+[data-toshi-root] .toshi-confirm-card::before {
+    background: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-confirm-card-icon {
+    background: rgba(201, 100, 66, 0.12);
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-confirm-btn-yes {
+    background: var(--toshi-clay);
+    border-color: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-confirm-btn-yes:hover {
+    background: #b55738;
+    border-color: #b55738;
+}
+
+[data-toshi-root] .toshi-confirm-btn-no {
+    background: var(--toshi-warm);
+    color: var(--toshi-ink);
+    border-color: var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-confirm-btn-no:hover {
+    background: #e8e6dc;
+    border-color: #e8e6dc;
+}
+
+[data-toshi-root] .toshi-confirm-btn:focus-visible {
+    outline: 2px solid var(--toshi-clay);
+    outline-offset: 2px;
+}
+
+/* ── Execution plan card ── */
+[data-toshi-root] .toshi-plan-card {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(20, 20, 19, 0.04);
+}
+
+[data-toshi-root] .toshi-plan-card-title {
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-plan-card-count {
+    color: var(--toshi-clay);
+    background: rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-plan-step.step-active {
+    color: var(--toshi-clay);
+    background: rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-plan-step.step-active .toshi-plan-step-num {
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-plan-btn-execute {
+    background: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-plan-btn-execute:hover {
+    background: #b55738;
+}
+
+[data-toshi-root] .toshi-plan-btn-cancel {
+    background: #FFFFFF;
+    color: var(--toshi-muted);
+    border: 1px solid var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-plan-btn-cancel:hover {
+    background: #e8e6dc;
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-plan-card-processing {
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-plan-card-processing::before {
+    border-color: rgba(201, 100, 66, 0.25);
+    border-top-color: var(--toshi-clay);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FROZEN — Pulse design system (Piece 2 HARD BOUNDARY)
+   Do NOT edit these rules in Piece 2 / Toshi panel PRs.
+   Canary (must remain in published public/vendor/toshi-ui/toshi-ui.css):
+     .ds-table-ledger thead { backdrop-filter: blur(12px); }
+   Includes: .ds-kpi-card*, .ds-table*, .ds-table-ledger*, sidebar green pill.
+   Checklist on every toshi-ui.css PR: confirm this section's Pulse canary
+   still present after publish; diff must not alter Pulse selectors/values.
+   ══════════════════════════════════════════════════════════════ */
 
 /* ── KPI Cards: Pulse treatment ── */
 .ds-kpi-card {
@@ -225,7 +703,8 @@
 .ds-kpi-card:nth-child(4) .ds-kpi-value { animation-delay: 0.20s; }
 
 /* ── Data Tables: Pulse treatment ── */
-.ds-table {
+.ds-table,
+.ds-table-ledger {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
@@ -233,7 +712,8 @@
     border-radius: 12px;
     overflow: hidden;
 }
-.ds-table thead {
+.ds-table thead,
+.ds-table-ledger thead {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -241,7 +721,8 @@
     -webkit-backdrop-filter: blur(12px);
     background: rgba(255,255,255,0.85);
 }
-.ds-table th {
+.ds-table th,
+.ds-table-ledger th {
     padding: 14px 16px;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.75rem;
@@ -253,20 +734,24 @@
     text-align: left;
     white-space: nowrap;
 }
-.ds-table th.sort-active {
+.ds-table th.sort-active,
+.ds-table-ledger th.sort-active {
     color: #22C55E;
     border-bottom-color: #22C55E;
 }
-.ds-table td {
+.ds-table td,
+.ds-table-ledger td {
     padding: 12px 16px;
     font-size: 0.875rem;
     color: #1E293B;
     border-bottom: 1px solid #F1F5F9;
 }
-.ds-table tbody tr:hover {
+.ds-table tbody tr:hover,
+.ds-table-ledger tbody tr:hover {
     background: rgba(34,197,94,0.03);
 }
-.ds-table tbody tr:last-child td {
+.ds-table tbody tr:last-child td,
+.ds-table-ledger tbody tr:last-child td {
     border-bottom: none;
 }
 

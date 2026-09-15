@@ -101,7 +101,8 @@ class WizardTeachersNextAfterAddTest extends TestCase
             ->call('next')
             ->call('next') // uneb
             ->call('next') // academic year seeds classes/subjects
-            ->call('next'); // structure checkpoint (optional) → teachers
+            ->call('next') // structure checkpoint (optional) → subjects
+            ->call('next'); // subjects → teachers
     }
 
     public function test_next_after_add_teacher_persists_even_when_deferred_email_resyncs_blank(): void
@@ -115,12 +116,20 @@ class WizardTeachersNextAfterAddTest extends TestCase
             $component->instance()->steps[$component->get('stepIndex')]['key'] ?? null
         );
 
+        $section = \App\Models\Section::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $subject = \App\Models\Subject::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $this->assertNotEmpty($section);
+        $this->assertNotEmpty($subject);
+
         // Reproduce Agent 2: add teacher, then Next with stale name + blank email
         // (deferred wire:model / type=email morph left email empty on the client).
+        // Class×subject required so Teacherlink rows exist (teachers step completeness).
         $component
             ->set('teacherName', 'Sarah Okello')
             ->set('teacherEmail', 'sarah@bright.sch.ug')
             ->set('teacherPhone', '+256700111222')
+            ->set('teacherSelectedClasses', [$section])
+            ->set('teacherSelectedSubjects', [$subject])
             ->call('addTeacherDraft')
             ->assertCount('teacherDrafts', 1)
             ->set('teacherName', 'Sarah Okello') // stale name re-sync
@@ -142,10 +151,17 @@ class WizardTeachersNextAfterAddTest extends TestCase
         $component = Livewire::test(ManualOnboardingWizard::class);
         $this->advanceToTeachers($component);
 
+        $section = \App\Models\Section::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $subject = \App\Models\Subject::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $this->assertNotEmpty($section);
+        $this->assertNotEmpty($subject);
+
         $component
             ->set('teacherName', 'John Ssali')
             ->set('teacherEmail', '')
             ->set('teacherPhone', '+256700333444')
+            ->set('teacherSelectedClasses', [$section])
+            ->set('teacherSelectedSubjects', [$subject])
             ->call('next');
 
         $this->assertSame(1, Teacherlink::where('school_id', $this->school->id)->count());
