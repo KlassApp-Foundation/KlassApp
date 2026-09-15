@@ -618,7 +618,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **Onboarding unique-constraint audit MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
+## Current Status: September 15, 2026 — **Staging KPI/cache/Toshi/orphan repair MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
+
+- **Merged**: [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) merge `522f4de6` — GitHub API `merged: true` (`--admin` past ruleset block).
+- **Staging deploy**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. **Production: NOT deployed.**
+- **Fixes (school 3 “Mucu Demo Now” + all dashboards)**:
+  1. `x-ds-kpi-card` real `<a href="{{ $link }}">` — no Blade-escaped `/admin/%22https:…%22` 404s.
+  2. `DashboardCache` TTL default 300s when `CACHE_TIME` null/≤0; `forgetRosterCounts` from `UserObserver` + onboarding teacher/student saves.
+  3. `students:repair-orphan-academics` — repaired Grace Mbabazi `user_id=105` → `standardLink_id=26`, `klassapp_student_id=KLS0030010`, academic `id=47`; school 3 orphans=0; KPIs show Students **9** / Teachers **33**.
+  4. Toshi ≥1280: `body` row flex so Livewire sibling of `#app` docks in-viewport; maximize blur only with `.toshi-modal-overlay--open`.
+- **Verify**: PHPUnit DsKpiCard / DashboardRosterCache / RepairOrphan / ToshiPiece2Docking (15). Staging Playwright `e2e/dashboard-kpi-toshi-verify.cjs` as `moemucu@gmail.com` — linked KPIs → **200**; Toshi `top=0` `width=380`; mobile overlay `backdrop-filter: none` when hidden.
+
+## Previous: September 15, 2026 — **Onboarding unique-constraint audit MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
 
 - **Merged**: [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613) `c228a59e` — GitHub API `merged: true`.
 - **Staging deploy**: `depl-a2bf681a-…` @ `c228a59e` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
@@ -2128,6 +2139,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-15: Staging KPI href + roster cache + Toshi dock + orphan academics — **MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
+- **Work done**: Fixed escaped KPI hrefs (`ds-kpi-card`); `DashboardCache` TTL + invalidation; Toshi desktop body-row dock + scoped maximize blur; `students:repair-orphan-academics`; repaired Grace Mbabazi on staging school 3.
+- **Merged**: [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) `522f4de6` — API `merged: true`. Branch `fix/staging-kpi-cache-toshi-orphans`.
+- **Staging**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. Commands: dry-run then repair → user 105 / link 26 / `KLS0030010`; orphans=0; KPIs 9/33. Playwright admin KPI clicks → 200; Toshi in viewport; mobile blur none when overlay hidden. **Production not deployed.**
+- **Files**: `DashboardCache.php`, `RepairOrphanStudentAcademics.php`, `UserObserver.php`, `OnboardingEngine.php`, `Dashboard.php`, `ds-kpi-card.blade.php`, `agent-toshi.blade.php`, `toshi-ui.css` (+ published), `dashboard-refresh.css`, tests, `e2e/dashboard-kpi-toshi-verify.cjs`, `knowledge.md`.
+- **Key decisions**: Prefer CSS body flex over moving Livewire inside `#app` (Vue root conflict); never assemble `href` into a string then `{{ $attrs }}`.
+- **Status**: ✅ Merged + staging verified.
+- **Edge**: Incomplete-setup dashboards (phase4 demo) may hide KPI grid behind setup banner — verify KPI hrefs on a finished school (e.g. school 3). Reception `/reception/dashboard` 404 on staging for this admin.
 
 ### 2026-09-15: Onboarding unique-constraint audit + global email/LIN dedup — **MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
 - **Work done**: Full unique-index audit; retired staging school 14; fixed engine gaps; specific ValidationException / UniqueConstraint messages in wizard + Toshi; PHPUnit + Livewire collision tests.
