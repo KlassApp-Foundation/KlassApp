@@ -2161,6 +2161,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-15: Nightwatch trio — WA demo school_id + fee standardLink + null avatar — **LIVE** ([#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620))
+- **Work done**: Picked up Goose's incomplete Nightwatch fixes. (1) WhatsApp `"demo"` inbound: `school_id` from configured demo parent (`services.whatsapp.demo_parent_user_id` / `WHATSAPP_DEMO_PARENT_USER_ID`, default 104) — never hardcode `1`; graceful when missing. (2) `whatsapp:send-fee-reminders`: students via `whereHas('standardLink', standard_id ∈ fee categories)` (not missing `student_academics.standard_id`); `markAttendance` uses `standardLink_id`; `notifyFeeReminder` via `studentAcademicLatest.standardLink`. (3) Null avatar: `getFilePath` null-guard + `\Throwable`; Teacher resources null-safe. (4) Follow-up #620: `getParentPhones` no longer `wherePivot` on hasMany `StudentParentLink`.
+- **Merged**: [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) `101d2fcd` API `merged: true` @ 2026-09-15T04:25:23Z; [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620) `4fbcbf6f` API `merged: true`.
+- **Staging**: `depl-a2bfcb43-…` @ `101d2fcd` + `depl-a2bfcd2c-…` @ `4fbcbf6f` **succeeded**. Playwright teachers/find 200; fee dry-run 3/3 no column error.
+- **Production**: `depl-a2bfce3d-…` @ `4fbcbf6f` **succeeded**. Rollback tip `e3c308db`. Dry-run school 33: 6 students / would notify parents. Demo parent 104 → school 31. Markers OK.
+- **Files**: `SendFeeReminders.php`, `WhatsAppController.php`, `OutboundWhatsAppService.php`, `Common.php`, `MemberProcess.php`, Teacher resources, `config/services.php`, `tests/Feature/Nightwatch/*`, `e2e/nightwatch-teachers-find-null-avatar.cjs`.
+- **Key decisions**: Fee categories stay on `standards.id`; join through `standards_link` (standing rule #5 — do not treat `standard_id` as `standardLink_id`). Catch `\Throwable` not just `Exception` for Flysystem TypeError.
+- **Status**: ✅ MERGED + staging + production live.
+- **Edge cases flagged**: Staging dry-run after #619 alone surfaced `wherePivot` crash — fixed in #620 before prod. Demo parent 104 must keep a real `school_id`; override via `WHATSAPP_DEMO_PARENT_USER_ID` if remapped. `getFilePathforDownload` optional-before-required param deprecation remains (pre-existing).
+
 ### 2026-09-15: Production ship #611+#613+#615 — **LIVE** @ `e3c308db`
 - **Rollback point**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` (`depl-a2bf3117-…`).
 - **Deploy**: `depl-a2bf8451-…` → `deployment.succeeded` commit `e3c308db` (main tip incl. #611/#613/#615/#616).
