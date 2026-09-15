@@ -648,6 +648,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Previous: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
 
+- **Docs (this session, no deploy)**: `AGENTS.md` aligned to Laravel Cloud ops already recorded in this file — retired DigitalOcean SSH droplet check removed; standing rule #19 requires sync from `origin/main` before any task. Hosting truth: **this file wins**. PR opening on `cursor/agents-md-cloud-sync-4d2e`.
 - **Rollback point (pre-deploy)**: `e3c308dbe53f38d96bd5786899331b516a406ab3` — last succeeded prod deploy `depl-a2bf8451-…` (#611+#613+#615).
 - **Production deploy**: `depl-a2bfce3d-ab94-4e34-8090-675810ba1eaf` @ `4fbcbf6f6f69c69b421d0fa8260fbc6d7a70dea8` (`deployment.succeeded` 2026-09-15T04:35:25Z) — includes [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620).
 - **Live verify (Commands API + staging Playwright)**:
