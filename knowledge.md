@@ -618,7 +618,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **#611+#613+#615 PRODUCTION LIVE** @ `e3c308db`
+## Current Status: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
+
+- **Rollback point (pre-deploy)**: `e3c308dbe53f38d96bd5786899331b516a406ab3` — last succeeded prod deploy `depl-a2bf8451-…` (#611+#613+#615).
+- **Production deploy**: `depl-a2bfce3d-ab94-4e34-8090-675810ba1eaf` @ `4fbcbf6f6f69c69b421d0fa8260fbc6d7a70dea8` (`deployment.succeeded` 2026-09-15T04:35:25Z) — includes [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620).
+- **Live verify (Commands API + staging Playwright)**:
+  1. **Prod markers**: `whereHas` fee reminders + `demo_parent_user_id` + `Throwable` avatar guard + no `wherePivot` in OutboundWhatsAppService → `PROD_MARKERS_OK`.
+  2. **Fee dry-run school 33**: `whatsapp:send-fee-reminders --dry-run --school-id=33` → 6/6 students, `[DRY] Would notify 3 parent(s) of student #116` (no unknown-column crash).
+  3. **Demo parent**: user `104` → `school_id=31` (real school; not hardcoded `1`).
+  4. **Staging teachers/find**: Playwright `e2e/nightwatch-teachers-find-null-avatar.cjs` → HTTP 200 with null/empty avatar rows (no TypeError).
+
+## Previous: September 15, 2026 — **#611+#613+#615 PRODUCTION LIVE** @ `e3c308db`
 
 - **Rollback point (pre-deploy)**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` — last succeeded prod deploy `depl-a2bf3117-…` (docs stamp #607/#608 / four-surface cutover tip).
 - **Production deploy**: `depl-a2bf8451-0452-4a56-a303-5ffc88b4cdff` @ `e3c308dbe53f38d96bd5786899331b516a406ab3` (`deployment.succeeded` 2026-09-15T01:08:46Z) — includes [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611), [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613), [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) + knowledge stamp [#616](https://github.com/KlassApp-Foundation/KlassApp/pull/616).
