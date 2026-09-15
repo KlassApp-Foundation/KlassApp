@@ -37,6 +37,12 @@ class ToshiPiece2DockingPillContractTest extends TestCase
         $this->assertStringContainsString('@media (max-width: 640px)', $css);
         $this->assertStringContainsString('width: 380px', $css);
         $this->assertStringContainsString('body.toshi-collapsed [data-toshi-root]', $css);
+        // Sibling Livewire root docks beside #app (not below fold under overflow:hidden).
+        $this->assertMatchesRegularExpression(
+            '/@media \(min-width: 1280px\)\s*\{[^}]*body\s*\{[^}]*flex-direction:\s*row/s',
+            $css
+        );
+        $this->assertStringContainsString('Toshi mounts as a sibling of #app', $css);
         $this->assertStringContainsString('border-left: 1px solid #e8e6dc', $css);
         $this->assertStringContainsString('background: #c96442', $css);
         $this->assertStringContainsString('[data-toshi-root] .toshi-pill-badge', $css);
@@ -62,5 +68,6 @@ class ToshiPiece2DockingPillContractTest extends TestCase
     {
         $blade = file_get_contents(resource_path('views/livewire/agent-toshi.blade.php'));
         $this->assertStringContainsString('data-testid="toshi-pill"', $blade);
+        $this->assertStringContainsString('toshi-modal-overlay--open', $blade);
     }
 }
