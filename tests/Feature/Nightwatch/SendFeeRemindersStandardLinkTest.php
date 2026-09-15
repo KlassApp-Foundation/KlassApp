@@ -193,6 +193,47 @@ class SendFeeRemindersStandardLinkTest extends TestCase
         $this->assertNull($student->studentAcademicLatest->getAttribute('standard_id'));
     }
 
+    public function test_get_parent_phones_scopes_by_school_without_where_pivot(): void
+    {
+        DB::table('usergroups')->upsert([
+            ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+
+        $school = School::create([
+            'name' => 'Parent Phones School',
+            'email' => 'parent-phones@test.sch.ug',
+            'phone' => '+256700000202',
+            'slug' => 'parent-phones-'.uniqid(),
+            'status' => 1,
+        ]);
+
+        $student = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'email' => 'phones.student@test.sch.ug',
+        ]);
+
+        $parent = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 7,
+            'email' => 'phones.parent@test.sch.ug',
+            'mobile_no' => '+256700555666',
+        ]);
+
+        DB::table('student_parent_links')->insert([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'parent_id' => $parent->id,
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $phones = app(OutboundWhatsAppService::class)->getParentPhones($student);
+        $this->assertContains('+256700555666', $phones);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
