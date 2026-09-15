@@ -379,13 +379,18 @@ class OutboundWhatsAppService
      */
     public function notifyFeeReminder(int $studentId, string $type = 'reminder', ?int $feeId = null): int
     {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        $student = User::with(['studentAcademicLatest.standardLink'])->find($studentId);
         if (!$student) {
             return 0;
         }
 
+        $standardId = $student->studentAcademicLatest?->standardLink?->standard_id;
+        if (! $standardId) {
+            return 0;
+        }
+
         $fees = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', $student->studentAcademic?->standard_id)
+            ->where('standard_id', $standardId)
             ->when($feeId, fn ($q) => $q->where('id', $feeId))
             ->get();
 

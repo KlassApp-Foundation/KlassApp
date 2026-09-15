@@ -25,7 +25,8 @@ class SendFeeReminders extends Command
 
         $this->info("Running fee reminder dispatch (type: {$type})" . ($dryRun ? ' [DRY RUN]' : ''));
 
-        // Get distinct standard_ids that have fee categories
+        // Fee categories are keyed by Standard (grading band), not StandardLink.
+        // student_academics has standardLink_id — join via standards_link.standard_id.
         $feeStandards = FeesCategories::when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
             ->whereNotNull('amount')
             ->where('amount', '>', 0)
@@ -38,9 +39,10 @@ class SendFeeReminders extends Command
             return 0;
         }
 
-        // Get students in those standards, with parents preloaded
-        $students = StudentAcademic::with(['user.parents', 'standard'])
-            ->whereIn('standard_id', $feeStandards)
+        $students = StudentAcademic::with(['user.parents', 'standardLink.standard'])
+            ->whereHas('standardLink', function ($q) use ($feeStandards) {
+                $q->whereIn('standard_id', $feeStandards);
+            })
             ->when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
             ->get()
             ->pluck('user')
