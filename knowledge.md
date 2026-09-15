@@ -618,10 +618,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **Staging KPI/cache/Toshi/orphan repair MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
+## Current Status: September 15, 2026 — **#611+#613+#615 PRODUCTION LIVE** @ `e3c308db`
+
+- **Rollback point (pre-deploy)**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` — last succeeded prod deploy `depl-a2bf3117-…` (docs stamp #607/#608 / four-surface cutover tip).
+- **Production deploy**: `depl-a2bf8451-0452-4a56-a303-5ffc88b4cdff` @ `e3c308dbe53f38d96bd5786899331b516a406ab3` (`deployment.succeeded` 2026-09-15T01:08:46Z) — includes [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611), [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613), [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) + knowledge stamp [#616](https://github.com/KlassApp-Foundation/KlassApp/pull/616).
+- **Live verify on `https://klassapp.xyz`** (synthetic fixtures only; then `status=inactive`):
+  1. **#611 SiteAdmin**: `siteadmin.prodverify.615@klassapp.xyz` password login → `/superadmin/dashboard`; `/admin/dashboard` bounces back; `/auth/google` → Google with `redirect_uri=https://klassapp.xyz/auth/google/callback`.
+  2. **#615 KPI hrefs**: admin dashboard linked KPIs Students/Teachers/Parents/Staff/Approvals → HTTP **200** (no `%22` 404s). Evidence `e2e/screenshots/prod-verify-611-613-615/`.
+  3. **#615 Toshi dock**: ≥1280px `[data-toshi-root]` `top=0`, `width=380`, `position=static`, in viewport; mobile overlay blur scoped when hidden.
+  4. **#613 unique constraint**: live `OnboardingEngine::saveTeachers` duplicate email → specific message `Email '…' is already registered for teacher …` (not generic “Could not save this step”); collision teacher flagged inactive.
+- **Filesystem markers on prod**: `ds-kpi-card` `href="{{ $link }}"`, `DashboardCache.php`, `AuthRedirectHelper.php`, `describeUniqueConstraintViolation`, toshi `flex-direction: row`.
+
+## Previous: September 15, 2026 — **Staging KPI/cache/Toshi/orphan repair MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
 
 - **Merged**: [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) merge `522f4de6` — GitHub API `merged: true` (`--admin` past ruleset block).
-- **Staging deploy**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. **Production: NOT deployed.**
+- **Staging deploy**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. Later **production-deployed** (see Current Status above).
 - **Fixes (school 3 “Mucu Demo Now” + all dashboards)**:
   1. `x-ds-kpi-card` real `<a href="{{ $link }}">` — no Blade-escaped `/admin/%22https:…%22` 404s.
   2. `DashboardCache` TTL default 300s when `CACHE_TIME` null/≤0; `forgetRosterCounts` from `UserObserver` + onboarding teacher/student saves.
@@ -2139,6 +2150,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-15: Production ship #611+#613+#615 — **LIVE** @ `e3c308db`
+- **Rollback point**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` (`depl-a2bf3117-…`).
+- **Deploy**: `depl-a2bf8451-…` → `deployment.succeeded` commit `e3c308db` (main tip incl. #611/#613/#615/#616).
+- **Live verify (`klassapp.xyz`)**: SiteAdmin → `/superadmin/dashboard` + Google OAuth callback URI; KPI cards → 200; Toshi docked at 1280; duplicate teacher email → specific ValidationException message. Synthetic users flagged `inactive` after.
+- **Status**: ✅ Production live + verified.
+- **Edge**: Incomplete-setup schools hide main KPI grid (banner only) — used a school with empty `OnboardingHelper::getMissingSteps` for KPI click-through. Interactive Google account picker not automated; password path + OAuth start URI proven.
 
 ### 2026-09-15: Staging KPI href + roster cache + Toshi dock + orphan academics — **MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
 - **Work done**: Fixed escaped KPI hrefs (`ds-kpi-card`); `DashboardCache` TTL + invalidation; Toshi desktop body-row dock + scoped maximize blur; `students:repair-orphan-academics`; repaired Grace Mbabazi on staging school 3.
