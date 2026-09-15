@@ -417,12 +417,20 @@ class OutboundWhatsAppService
     {
         $phones = [];
 
-        // Load the parent relationship
-        $parents = $student->parents()
-            ->wherePivot('school_id', $student->school_id)
+        // parents() is hasMany StudentParentLink (not belongsToMany) — filter school_id
+        // on the link rows, then resolve the parent User via userParent.
+        $links = $student->parents()
+            ->where('school_id', $student->school_id)
+            ->where('status', 1)
+            ->with('userParent')
             ->get();
 
-        foreach ($parents as $parent) {
+        foreach ($links as $link) {
+            $parent = $link->userParent;
+            if (! $parent) {
+                continue;
+            }
+
             $waUser = WhatsAppUser::optedIn()
                 ->where('user_id', $parent->id)
                 ->first();
@@ -432,7 +440,7 @@ class OutboundWhatsAppService
             }
 
             // Fallback: if parent has a mobile_no in User but no WhatsAppUser yet
-            if (!$waUser && $parent->mobile_no) {
+            if (! $waUser && $parent->mobile_no) {
                 $normalised = WhatsAppPhoneHelper::normalise($parent->mobile_no);
                 if (WhatsAppPhoneHelper::validate($normalised)) {
                     $phones[] = $normalised;
