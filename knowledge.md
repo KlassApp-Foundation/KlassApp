@@ -1858,6 +1858,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-14: Student upload current-template compatibility
+- **Work done**: Traced the legacy `/admin/importUsers` flow against the current school-specific XLSX template. The request accepted CSV only, while the template is XLSX with `Name`, `Class`, `Stream`, `Parent Name`, and `Parent Phone` headers. Updated validation and importer mapping, resolved exact school/year sections from class plus stream, populated the account name, and linked the legacy page to the current template route.
+- **Files modified**: `app/Http/Requests/ImportMemberRequest.php`, `app/Imports/UsersImport.php`, `resources/views/admin/member/import/import.blade.php`, `knowledge.md`
+- **Verification**: PHP syntax, VS Code diagnostics, and `git diff --check` pass. Laravel feature test execution was blocked by local PHP 8.3.6; this checkout requires PHP >= 8.4.1. Local PHP also reports an existing `mysqli.so` startup warning.
+- **Status**: Code change complete; runtime upload test remains pending in PHP 8.4/container or staging.
+
+### 2026-09-14: Student upload failure visibility
+- **Work done**: Removed the importer `dd()` and generic controller error replacement. Failed uploads now report the failing spreadsheet row and underlying exception message; empty or all-skipped files explain that `Name` and `Class` are required. Skipped-row session state is cleared between attempts.
+- **Files modified**: `app/Http/Controllers/Admin/ImportMemberController.php`, `app/Imports/UsersImport.php`, `knowledge.md`
+- **Verification**: PHP lint and `git diff --check` pass. Full runtime verification remains blocked by local PHP 8.3.6 versus the project requirement of PHP >= 8.4.1.
+
 ### 2026-09-13: Landing official brand connector icons — **MERGED+DEPLOYED** ([#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541))
 - **Work done**: Confirmed prior icons were Lucide-style stroke glyphs. Added `<x-brand.whatsapp|slack|google-drive>` with official color marks; wired into hero float, connectors panel/chips, Toshi hub. Neutral brand-well CSS (no recolor). Playwright screenshots confirm recognizable official marks.
 - **Files modified**: `resources/views/components/brand/*`, `landing-v2.blade.php`, `landing-preview.css`, `LandingPreviewV3Test.php`, `e2e/verify-landing-brand-icons.cjs`, screenshots, `public/build/*`, `knowledge.md`

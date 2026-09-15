@@ -14,7 +14,7 @@
             <div class="panel-heading border border-gray-400 bg-white">
                 <div class="flex flex-col">
                     <div class="mt-3">
-                        <a href="{{ url('admin/downloadformat') }}" id="sample" class="no-underline text-white px-4 my-3 mx-3 flex items-center custom-green py-1 w-11/12 lg:w-1/5">Download Sample Format</a>
+                        <a href="{{ route('admin.students.upload-template') }}" id="sample" class="no-underline text-white px-4 my-3 mx-3 flex items-center custom-green py-1 w-11/12 lg:w-1/5">Download Sample Format</a>
                     </div>
                 </div>
                 <form style="padding: 10px;margin-bottom: unset;" action="{{ url('admin/importUsers') }}" class="form-horizontal" method="post" enctype="multipart/form-data">
