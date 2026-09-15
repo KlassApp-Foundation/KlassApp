@@ -27,9 +27,14 @@
    ══════════════════════════════════════════════════════════════ */
 
 @media (min-width: 1280px) {
+    /* Toshi mounts as a sibling of #app (outside Vue). Body must be a row flex
+       so the dock sits beside #app — not below it under overflow:hidden. */
     body {
         overflow: hidden !important;
         height: 100vh;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch;
     }
 
     #app {
@@ -37,6 +42,8 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     .navbar {
@@ -74,7 +81,7 @@
 
     body [data-toshi-root] {
         display: flex;
-        height: 100%;
+        height: 100vh;
         flex-shrink: 0;
         width: 380px;
         overflow: hidden;
@@ -84,6 +91,7 @@
         bottom: auto !important;
         right: auto !important;
         z-index: auto !important;
+        align-self: stretch;
     }
 
     [data-toshi-root] .toshi-panel {

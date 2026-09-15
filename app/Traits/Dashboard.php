@@ -18,6 +18,7 @@ use App\Models\NoticeBoard;
 use App\Models\Userprofile;
 use App\Models\ActivityLog;
 use App\Helpers\SiteHelper;
+use App\Helpers\DashboardCache;
 use App\Models\Attendance;
 use Gegok12\Timetable\Models\Timetable;
 use App\Models\Bulletin;
@@ -85,11 +86,11 @@ trait Dashboard
             return $array;
         }
 
-        $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
+        $array['studentCount'] = Cache::remember('studentCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)  {
                                   return User::ByActive()->BySchool($school_id)->ByRole(6)->count();
                               });
 
-        $array['parentCount']    =  Cache::remember('parentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['parentCount']    =  Cache::remember('parentCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::BySchool($school_id)->ByRole(7)->whereHas('children', function($q) {
 
                 $q->whereHas('userStudent', function($q)
@@ -99,17 +100,17 @@ trait Dashboard
             })->count();
                                 });
 
-        $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::ByActive()->BySchool($school_id)->ByRole(5)->count();
                                 });
 
         $array['nonteachingCount']   = User::ByActive()->where('school_id',$school_id)->whereIn('usergroup_id',[8,10,11,12,13])->count();
 
 
-        $array['maleCount']      = Cache::remember('maleCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['maleCount']      = Cache::remember('maleCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::ByActive()->BySchool($school_id)->ByRole(6)->ByGender('male')->count();
                                 });
-        $array['femaleCount']    = Cache::remember('femaleCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['femaleCount']    = Cache::remember('femaleCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::ByActive()->BySchool($school_id)->ByRole(6)->ByGender('female')->count();
                                 });
 
@@ -119,20 +120,20 @@ trait Dashboard
          * queries above. Count them explicitly so the donut chart can show
          * an "Unspecified" segment and its total agrees with studentCount.
          */
-        $array['unknownCount']   = Cache::remember('unknownCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['unknownCount']   = Cache::remember('unknownCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::ByActive()->BySchool($school_id)->ByRole(6)
                                       ->whereDoesntHave('userprofile', function ($q) {
                                           $q->whereIn('gender', ['male', 'female']);
                                       })->count();
                                 });
 
-        $array['eventCount']     = Cache::remember('eventCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['eventCount']     = Cache::remember('eventCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return Events::where([['school_id',$school_id],['category','!=','holidays']])->count();
                                 });
            $array['videoCount'] =0;
              if (class_exists('App\Models\Video')) {
 
-               $array['videoCount']     = Cache::remember('videoCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+               $array['videoCount']     = Cache::remember('videoCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return Video::where('school_id',$school_id)->count();
                                 });
 
@@ -467,15 +468,15 @@ trait Dashboard
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
+        $array['studentCount'] = Cache::remember('studentCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)  {
                                   return User::BySchool($school_id)->ByRole(6)->count();
                               });
 
-        $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return User::BySchool($school_id)->ByRole(5)->count();
                                 });
 
-        $array['eventCount']     = Cache::remember('eventCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['eventCount']     = Cache::remember('eventCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return Events::where([['school_id',$school_id],['category','!=','holidays']])->count();
                                 });
 
@@ -496,21 +497,21 @@ trait Dashboard
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        $array['bookCount'] =  Cache::remember('bookCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['bookCount'] =  Cache::remember('bookCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return Book::where('school_id',$school_id)->count();
                                 });
 
-        $array['booklendingCount']    =  Cache::remember('booklendingCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['booklendingCount']    =  Cache::remember('booklendingCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return BookLending::whereHas('book' , function($query) use($school_id){
                                         $query->where('school_id',$school_id);
                                     })->count();
                                 });
 
-        $array['cardHolderCount']   = Cache::remember('cardHolderCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['cardHolderCount']   = Cache::remember('cardHolderCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return LibraryCard::where('school_id',$school_id)->count();
                                 });
 
-        $array['categoryCount']      = Cache::remember('categoryCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+        $array['categoryCount']      = Cache::remember('categoryCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id)                          {
                                   return BookCategory::where('school_id',$school_id)->count();
                                    });
 
@@ -536,7 +537,7 @@ trait Dashboard
 
         $array['totalFeesAmount'] = \App\Models\FeesCategories::where('school_id', $school_id)->sum('amount');
 
-        $array['totalStudents'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id) {
+        $array['totalStudents'] = Cache::remember('studentCount_'.$school_id, DashboardCache::ttl(), function () use ($school_id) {
             return User::BySchool($school_id)->ByRole(6)->count();
         });
 

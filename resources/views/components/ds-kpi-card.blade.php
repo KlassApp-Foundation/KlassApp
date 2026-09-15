@@ -1,25 +1,32 @@
-{{-- 
+{{--
   KlassApp KPI Card Component
-  Usage: 
+  Usage:
   <x-ds-kpi-card icon="users" value="42" label="Students" color="blue" :link="url('/admin/students')" />
   Colors: blue, green, amber, red, purple
+
+  IMPORTANT: Never assemble href via a string then {{ $attrs }} — Blade escapes
+  quotes and browsers resolve to /admin/%22https:…%22 (real 404). Pass href
+  through {{ $link }} (or an attribute bag) instead.
 --}}
 @props(['icon' => '', 'value' => '—', 'label' => '', 'color' => 'blue', 'link' => ''])
 
 @php
-$colorMap = [
-    'blue' => ['bg' => 'rgba(30,111,217,0.10)', 'text' => 'var(--d-blue)'],
-    'green' => ['bg' => 'rgba(22,163,74,0.10)', 'text' => '#16A34A'],
-    'amber' => ['bg' => 'rgba(217,119,6,0.10)', 'text' => 'var(--d-amber)'],
-    'red' => ['bg' => 'rgba(220,38,38,0.10)', 'text' => 'var(--d-red)'],
-    'purple' => ['bg' => 'rgba(139,92,246,0.10)', 'text' => '#8B5CF6'],
-];
-$c = $colorMap[$color] ?? $colorMap['blue'];
-$tag = $link ? 'a' : 'div';
-$attrs = $link ? 'href="' . $link . '"' : '';
+    $colorMap = [
+        'blue' => ['bg' => 'rgba(30,111,217,0.10)', 'text' => 'var(--d-blue)'],
+        'green' => ['bg' => 'rgba(22,163,74,0.10)', 'text' => '#16A34A'],
+        'amber' => ['bg' => 'rgba(217,119,6,0.10)', 'text' => 'var(--d-amber)'],
+        'red' => ['bg' => 'rgba(220,38,38,0.10)', 'text' => 'var(--d-red)'],
+        'purple' => ['bg' => 'rgba(139,92,246,0.10)', 'text' => '#8B5CF6'],
+    ];
+    $c = $colorMap[$color] ?? $colorMap['blue'];
+    $hasLink = is_string($link) && $link !== '';
 @endphp
 
-<{{ $tag }} {{ $attrs }} class="ds-kpi-card group">
+@if($hasLink)
+<a href="{{ $link }}" {{ $attributes->merge(['class' => 'ds-kpi-card group']) }}>
+@else
+<div {{ $attributes->merge(['class' => 'ds-kpi-card group']) }}>
+@endif
     <div class="ds-kpi-icon-wrap" style="background: {{ $c['bg'] }}; color: {{ $c['text'] }};">
         @if($icon === 'users')
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
@@ -43,4 +50,8 @@ $attrs = $link ? 'href="' . $link . '"' : '';
     </div>
     <p class="ds-kpi-value">{{ $value }}</p>
     <p class="ds-kpi-label">{{ $label }}</p>
-</{{ $tag }}>
+@if($hasLink)
+</a>
+@else
+</div>
+@endif

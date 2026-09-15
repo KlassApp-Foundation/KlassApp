@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\StudentIdGeneratorService;
+use App\Helpers\DashboardCache;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -1339,7 +1340,10 @@ class OnboardingEngine
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
                 }
 
-                return ['created' => $created, 'skipped' => $skipped];
+                $result = ['created' => $created, 'skipped' => $skipped];
+                DashboardCache::forgetRosterCounts((int) $school->id);
+
+                return $result;
             });
         } catch (UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([
@@ -1553,7 +1557,10 @@ class OnboardingEngine
                     ];
                 }
 
-                return ['created' => $created, 'skipped' => $skipped];
+                $result = ['created' => $created, 'skipped' => $skipped];
+                DashboardCache::forgetRosterCounts((int) $school->id);
+
+                return $result;
             });
         } catch (UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([

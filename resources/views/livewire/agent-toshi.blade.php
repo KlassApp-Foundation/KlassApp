@@ -885,7 +885,7 @@
 
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}
     <div id="toshi-modal"
-         class="toshi-modal-overlay"
+         class="toshi-modal-overlay{{ $maximized ? ' toshi-modal-overlay--open' : '' }}"
          style="{{ $maximized ? 'display: flex;' : 'display: none;' }} align-items: center; justify-content: center;"
          @click.self="$wire.call('hide')">
         <div class="toshi-modal-box"

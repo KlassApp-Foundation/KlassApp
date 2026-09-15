@@ -3071,9 +3071,15 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     color: var(--d-text-secondary);
 }
 
-/* Wave 3: maximized Toshi modal — slightly richer focus surface */
+/* Wave 3: maximized Toshi modal — blur only while open (class toggled with $maximized).
+   Unconditional backdrop-filter on a display:none overlay still composites on mobile Safari. */
 [data-toshi-root] .toshi-modal-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+[data-toshi-root] .toshi-modal-overlay.toshi-modal-overlay--open {
     backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
 }
 [data-toshi-root] .toshi-modal-box {
     width: min(96vw, 1280px);
