@@ -229,7 +229,7 @@ trait MemberProcess
             return $users;
         }
 
-        catch(Exception $e)
+        catch(\Throwable $e)
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
