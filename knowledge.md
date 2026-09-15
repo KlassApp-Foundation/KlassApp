@@ -10743,3 +10743,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Status**: ✅ MERGED #560 (`ca0e1143`) + DEPLOYED `depl-a2be2ae7-…` + prod Playwright verified
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/560
 - **Edge cases flagged**: none remaining for infinite loops in `dashboard-refresh.css`
+
+### 2026-09-15: Staging push-to-deploy probe
+- Cloud API: staging `uses_push_to_deploy=true`; production `uses_push_to_deploy=false` (left manual).
+- This merge exists only to confirm staging auto-deploys on main without a Commands/Deploy POST.
