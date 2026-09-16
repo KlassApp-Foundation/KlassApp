@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Landing Toshi tower + hero X-flip** (PR opening)
+## Current Status: September 16, 2026 — **Landing Toshi tower + hero X-flip MERGED + STAGING** ([#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624))
+
+- **Merged**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) — GitHub API `merged: true`, merge SHA `168a054e2a6309ef63436a1a38fb27b4c42e2fd0` (`merged_by` Mucunguzi256, `merged_at` 2026-09-16T08:29:05Z). Admin merge past ruleset (`REVIEW_REQUIRED` block).
+- **Staging deploy**: `depl-a2c225d3-8c1b-47d7-b788-c45f1a6436a3` @ `168a054e` **succeeded** (`deployment.succeeded` 2026-09-16T08:31:27Z). URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
+- **Staging verify**: Playwright `e2e/landing-tower-hero-flip-verify.cjs` → **ALL OK** at 375/414/768/1280. Six marks HTTP **200**. HTML has `toshiTower` + hero deck; no DeepSeek; no `toshi-visual-hub`. Reduced-motion path exercised in the same script. Evidence `e2e/screenshots/landing-tower-hero-flip/` + `report.json` (`base` staging, `ok: true`).
+- **What shipped**: isometric Toshi tower (in-cube emergence), hero X-flip + K-avatars, `--d-*` remapped to landing tokens, marks from `llm-brand-marks.zip` (6 providers).
+
+## Previous: September 16, 2026 — **Landing Toshi tower + hero X-flip** (PR opening)
 
 - **Branch**: `feat/landing-toshi-tower-hero-flip` off `main` (`fa47cb43`).
 - **Scope**: Replace Meet Toshi hub/connector diagram with isometric tower; replace hero role Y-rotate with X-flip + K-mark avatars; remap `--d-*` → landing `--brand-*`/`--paper-*`; six LLM marks from `llm-brand-marks.zip` (DeepSeek omitted).
@@ -2173,7 +2180,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work**: Synced `origin/main`; extracted `~/Downloads/KlassApp Design System (1).zip` → `/tmp/klassapp-ds-tower`; installed six clean marks from `/tmp/llm-brand-marks.zip` into `resources/assets/brand/models/` + `public/images/brand/models/` (DeepSeek excluded); ported tower partial + X-flip hero CSS/JS/Blade; remapped `--d-*` to landing tokens.
 - **Files**: `resources/views/partials/landing-toshi-tower.blade.php`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `resources/assets/brand/models/*`, `public/images/brand/models/*`, `.gitignore`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-tower-hero-flip-verify.cjs`.
 - **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
-- **Status**: Local verify green; PR [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) open. Staging verify after merge (env branch = `main`).
+- **Status**: ✅ MERGED `168a054e` + staging `depl-a2c225d3-…` verified. Production not deployed.
 - **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
 
 
