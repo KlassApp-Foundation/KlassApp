@@ -139,7 +139,7 @@ php artisan db:seed --class=CountriesTableSeeder --force
 php artisan db:seed --class=Phase4RosterDemoSeeder --force
 ```
 
-Demo accounts (staging only — password `demo123`):
+Demo accounts (staging only — password `[REDACTED - historical password]`):
 
 | Role | Email |
 |---|---|
@@ -210,7 +210,7 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 - URL: https://klassapp-staging-7mpoqg.laravel.cloud (temporary — real custom subdomain like staging.klassapp.xyz not yet set up, planned via Spaceship DNS)
 - Environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016`
 - Separate isolated database schema (`klassapp-staging`) — NOT a production clone, seeded with demo data only
-- Demo login: `phase4.admin@klassapp.xyz` / `demo123` (plus teacher accounts from Phase4RosterDemoSeeder)
+- Demo login: `phase4.admin@klassapp.xyz` / `[REDACTED - historical password]` (plus teacher accounts from Phase4RosterDemoSeeder)
 - Isolation confirmed: 1 school on staging vs 42 on production at time of setup
 - Preview Environments (auto-provision per PR) NOT yet enabled — must be manually turned on once via Cloud dashboard (staging → Settings → Preview environments → New automation); no API/CLI path exists for this step. Must isolate DB and NOT share production WhatsApp/R2 credentials when configuring.
 
@@ -295,7 +295,7 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 > **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB verification (catalogue). Triage = HIGH + MEDIUM + LOW fixes.
 > **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main`.
 > **Merge**: **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693`.
-> **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
+> **Login**: `[REDACTED - personal email]` / `[REDACTED - historical password]` @ `http://127.0.0.1:8010`.
 > **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-{a,b,c,d,e}/`.
 > **Status**: **CLOSED on `main`** — Phase 1 + Batches A–E catalogue + triage fixes. **Toshi platform-scope** remains decided-deferred roadmap (not a hotfix).
 
@@ -621,9 +621,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 
 - **Merged**: [#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653) — GitHub API `merged: true`, merge SHA `2e5e9318ddda51ad3397dfc8c4c26e19eed373fa` (`merged_at` 2026-09-16T21:02:26Z).
-- **Change**: README no longer publishes `phase4.admin@…` / `demo123`; staging URL kept; demo access via `community@klassapp.xyz`.
+- **Change**: README no longer publishes `phase4.admin@…` / `[REDACTED - historical password]`; staging URL kept; demo access via `community@klassapp.xyz`.
 - **Why**: Live Cloud Commands on staging (`APP_ENV=staging`, default DB `klassapp-staging`, `mail=log`, `disk=local`, WhatsApp token empty, `phase4` user present; prod DB `production`, 46 schools, no `phase4`) — **but** staging MySQL can `SELECT count(*) FROM production.schools` → **46** (`CROSS_OK`). Privilege bleed means staging is **not** safely isolated at the DB ACL layer; public school-admin passwords are inappropriate.
-- **Ops follow-up (not done this PR)**: revoke staging DB user’s access to `production.*` schema; rotate `demo123` on staging demo accounts; consider periodic staging wipe/re-seed.
+- **Ops follow-up (not done this PR)**: revoke staging DB user’s access to `production.*` schema; rotate `[REDACTED - historical password]` on staging demo accounts; consider periodic staging wipe/re-seed.
 - **knowledge.md public sensitivity**: audit reported separately — PII/password literals still present in this file; redaction deferred pending explicit go-ahead (see Session Log).
 
 ## Previous: September 16, 2026 — **README global positioning MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
@@ -729,7 +729,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
   2. `DashboardCache` TTL default 300s when `CACHE_TIME` null/≤0; `forgetRosterCounts` from `UserObserver` + onboarding teacher/student saves.
   3. `students:repair-orphan-academics` — repaired Grace Mbabazi `user_id=105` → `standardLink_id=26`, `klassapp_student_id=KLS0030010`, academic `id=47`; school 3 orphans=0; KPIs show Students **9** / Teachers **33**.
   4. Toshi ≥1280: `body` row flex so Livewire sibling of `#app` docks in-viewport; maximize blur only with `.toshi-modal-overlay--open`.
-- **Verify**: PHPUnit DsKpiCard / DashboardRosterCache / RepairOrphan / ToshiPiece2Docking (15). Staging Playwright `e2e/dashboard-kpi-toshi-verify.cjs` as `moemucu@gmail.com` — linked KPIs → **200**; Toshi `top=0` `width=380`; mobile overlay `backdrop-filter: none` when hidden.
+- **Verify**: PHPUnit DsKpiCard / DashboardRosterCache / RepairOrphan / ToshiPiece2Docking (15). Staging Playwright `e2e/dashboard-kpi-toshi-verify.cjs` as `[REDACTED - personal email]` — linked KPIs → **200**; Toshi `top=0` `width=380`; mobile overlay `backdrop-filter: none` when hidden.
 
 ## Previous: September 15, 2026 — **Onboarding unique-constraint audit MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
 
@@ -751,7 +751,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
   3. Nursery subjects seeded (Literacy/Numeracy/Motor Skills/Social-Emotional) + `resolveOrCreateSubjectForClass` aliases in wizard/Toshi.
 - **Staging live verify**:
   - Deployed code: `AuthRedirectHelper` ug1→`/superadmin/dashboard`; `GoogleAuthController` uses helper; fixtures present.
-  - Created synthetic SiteAdmin `siteadmin.pr611@klassapp.xyz` (password `demo123`, `google_id` set) — Playwright login lands on `/superadmin/dashboard`; `/admin/dashboard` bounces back; no school student sidebar links. Evidence: `e2e/screenshots/pr611-siteadmin/`.
+  - Created synthetic SiteAdmin `siteadmin.pr611@klassapp.xyz` (password `[REDACTED - historical password]`, `google_id` set) — Playwright login lands on `/superadmin/dashboard`; `/admin/dashboard` bounces back; no school student sidebar links. Evidence: `e2e/screenshots/pr611-siteadmin/`.
   - Google entry: login `data-testid=login-google` → `/auth/google` → 302 to `accounts.google.com` with staging callback URI (interactive Google account click-through not automated; callback uses same helper as password path).
   - Real fixtures on school 14: **34/34** students placed (incl. `Primary One A` auto-stream); **16** teachers / **61** teacherlinks; David Okello → Literacy on Baby Class **yes**.
 - **Edge**: Pre-existing schools without nursery subjects still get subjects created on first teacher assign. Auto-stream requires base class. **School 14 later retired** during unique-constraint cleanup (emails/LINs held global unique slots).
@@ -1347,13 +1347,13 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ #446**: Parent Flow school/class matching + repair command. Merge `02567e9e`; Cloud `depl-a2b2b7f4-…`.
 - **✅ #447**: knowledge stamp. Merge `65dde369`.
-- **✅ Live closeout (school 32)**: Approvals inbox **1→0 Pending / 0→1 Approved** for Approval **#6** (Grace Auma). Parent `+256789843175` REPORT → Meta document **delivered**; PDF **668 947** bytes `%PDF-1.7` — Greenfield Primary School, Primary Seven, GRACE AUMA (no digit suffix), MATHEMATICS **75/100**. Evidence: `e2e/screenshots/greenfield-grace-approve/FINAL.json`.
+- **✅ Live closeout (school 32)**: Approvals inbox **1→0 Pending / 0→1 Approved** for Approval **#6** (Grace Auma). Parent `[REDACTED - real phone number]` REPORT → Meta document **delivered**; PDF **668 947** bytes `%PDF-1.7` — Greenfield Primary School, Primary Seven, GRACE AUMA (no digit suffix), MATHEMATICS **75/100**. Evidence: `e2e/screenshots/greenfield-grace-approve/FINAL.json`.
 
 ## Previous: September 8, 2026 (`origin/main` tip `02567e9e` — **#446 MERGED + Cloud-deployed**; parent-link Approvals orphan **REPAIRED on prod**) — superseded above
 
 - **✅ #446**: Parent WhatsApp Flow school/class matching — alphanumeric school-name normalize (`Green field` → `Greenfield`), `P.7` → `Primary Seven` class variants, `whatsapp:repair-parent-link-requests`. Merge `02567e9e`.
 - **✅ Cloud deploy** `depl-a2b2b7f4-9dff-4f1b-9602-318e67c32997` **succeeded** on `02567e9e`.
-- **✅ Prod repair**: PLR **#6** (`+256789843175`) → `school_id=32`, `suggested_student_id=112`, Approval **#6** Pending; school-32 pending Approvals count **1**.
+- **✅ Prod repair**: PLR **#6** (`[REDACTED - real phone number]`) → `school_id=32`, `suggested_student_id=112`, Approval **#6** Pending; school-32 pending Approvals count **1**.
 - **Not Toshi**: school-admin WhatsApp agent is read-only; no ParentLink approval tools — web `/admin/approvals` is the intended inbox.
 
 ## Previous: September 8, 2026 (`origin/main` tip `97645451` — **#443+#444 MERGED + Cloud-deployed**; admin exam store double-prefix **FIXED on prod**) — superseded above
@@ -1388,7 +1388,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 ## Previous: September 7, 2026 (`origin/main` tip `dd5da3fe` / docs `9dae1530` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**) — superseded above
 
 - **✅ #438**: `createFromFlowSubmission` duplicate check scoped to **phone + school** (not phone alone). Merge `dd5da3fe`; Cloud deploy `depl-a2b0e2d5-…` **succeeded**.
-- **Live evidence**: pending school **22** + new submission school **24** (same phone `+256781940358`) both created; same-school re-submit suppressed; Approvals-style `linkByStudentId` approve → SPL=1; Flow outbound wamid sent. `e2e/screenshots/agent1-secondary-full/FLOW-DUP-GUARD-LIVE.json`.
+- **Live evidence**: pending school **22** + new submission school **24** (same phone `[REDACTED - real phone number]`) both created; same-school re-submit suppressed; Approvals-style `linkByStudentId` approve → SPL=1; Flow outbound wamid sent. `e2e/screenshots/agent1-secondary-full/FLOW-DUP-GUARD-LIVE.json`.
 - **Username digit-suffix triage**: `users.name` (e.g. `asiimwe brenda576`) is the **intentional URL slug / login identifier** rewritten by `UserprofileObserver` — **leave alone**. Human-facing UI must use `displayName` (firstname+lastname). Same treatment as route slugs.
 - **Prior**: #437 Agent 1 pass (school 22); `WHATSAPP_PARENT_LINK_FLOW_ID` persisted on Cloud.
 
@@ -1447,7 +1447,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 ## Previous: September 4, 2026 (`origin/main` tip `f7183955` — **#426 MERGED + DEPLOYED** known-gaps 1–3) — superseded above
 
-- **✅ [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426)** → merge `f7183955` — WABA `+256793844906`; digit-suffix `displayName`/`FullName`/PDF filenames; wizard Previous + remount lands on first incomplete (incl. optional teachers/students).
+- **✅ [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426)** → merge `f7183955` — WABA `[REDACTED - real phone number]`; digit-suffix `displayName`/`FullName`/PDF filenames; wizard Previous + remount lands on first incomplete (incl. optional teachers/students).
 - **✅ Deploy** SHA match `f7183955`; live `wa.me/256793844906`.
 - **Closed by #427**: wizard WhatsApp OTP; parent child Fees/Grades/Attendance Blade wrappers.
 
@@ -1456,7 +1456,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **✅ [#425](https://github.com/KlassApp-Foundation/KlassApp/pull/425)** → merge `81317bbd` — P0 report-card school identity leak fixed (`resolveSchoolIdentity` + formal/warm/modern); Alpine Vue-shorthand → `x-on:`/`x-bind:` on accountant payroll sidebar, batch payroll, superadmin school-list filters.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`81317bbd`).
 - **✅ Fix 2 runtime verify (live `klassapp.xyz`)** — Playwright interaction evidence in `e2e/screenshots/alpine-shorthand-runtime/REPORT.json` (`all_pass: true`): payroll sidebar open/close; batch `canPreview` disabled→enabled→disabled; school Filters 74→1→74. No Alpine-fatal console errors. Route note: list is `/superadmin/academics/schools` (plural).
-- **✅ Live verify**: school **124** footer = `UI Review Demo School, UNEB Center No. U0001 Tel: +256700119900` (no Kabale). School **104** PDF clean of hardcoded `+256782255758` / Box 283 / HARD WORK PAYS; uses real `+256779715931` + `U100140`. School **102** Bukoto Springs PDF: name present, Kabale Junior / hardcode phones **clean**.
+- **✅ Live verify**: school **124** footer = `UI Review Demo School, UNEB Center No. U0001 Tel: [REDACTED - real phone number]` (no Kabale). School **104** PDF clean of hardcoded `[REDACTED - real phone number]` / Box 283 / HARD WORK PAYS; uses real `[REDACTED - real phone number]` + `U100140`. School **102** Bukoto Springs PDF: name present, Kabale Junior / hardcode phones **clean**.
 - **⏸️ Auth/error Open Design** still paused.
 - **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED unchanged.
 
@@ -1490,7 +1490,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **✅ [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419)** → merge `aed31b3f` — WhatsApp URL previews no longer burn one-use parent dashboard links. GET is Continue; crawlers 204; POST logs in. Parent menu list ends with Dashboard. Typed WEB_LOGIN hints removed. KlassApp SVG on error pages (`images/klassapp-logo.svg` HTTP 200). `User::whatsappDisplayName()`.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`aed31b3f`).
 - **✅ Live HTTP**: crawler GET **204**; human GET **200 Continue**; POST **302** `/parent/dashboard` (**200** with session); reuse GET **403** already-used, KlassApp logo, no GeGo apple-touch PNG.
-- **Handset**: MENU → list with Dashboard last; greeting `displayName` (no digit suffix) — tap on `+256781940358` when convenient.
+- **Handset**: MENU → list with Dashboard last; greeting `displayName` (no digit suffix) — tap on `[REDACTED - real phone number]` when convenient.
 - **Tests**: `ParentMagicLoginTest` + WhatsApp menu/hint/login suites.
 - **Prior**: [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417) two-path linking @ `212e28fa`.
 - **Docs stamp**: [#420](https://github.com/KlassApp-Foundation/KlassApp/pull/420) → `f22c56ac` (knowledge only).
@@ -1508,7 +1508,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415)** → merge `fe33e07d` — linked parents tapping `parent_link_flow` / `link_help` no longer hit `unknown_keyword`; bridge into `handleUnrecognizedUserMeta`. Also `User::displayName` on portal/WA copy + school-admin WhatsApp on fee office lines.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
-- **✅ Live** `+256781940358` (linked parent 3738): simulated Meta button ids → Flow `#154`, link_help `#155`, menu `#157`; fresh reject buttons `#158`. Zero `unknown_keyword` after fix.
+- **✅ Live** `[REDACTED - real phone number]` (linked parent 3738): simulated Meta button ids → Flow `#154`, link_help `#155`, menu `#157`; fresh reject buttons `#158`. Zero `unknown_keyword` after fix.
 - **On-device confirm**: later inbound `#159` `parent_link_flow` → `#160` Flow (see Current Status).
 - **Tests**: `LinkedParentLinkButtonRoutingTest` + related suites green.
 - **Prior**: [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413) interactive buttons @ `c486180e` (outbound OK, inbound routing broken for linked parents — fixed here).
@@ -1517,7 +1517,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413)** → merge `c486180e` — reject/approve WhatsApp notices + inbound rejected-status / `link_help` / flow-unavailable use Meta `interactive` reply buttons instead of typed-command copy.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
-- **✅ Live** `+256781940358`: `parent_link_rejected` #123 **delivered** buttons `[Request Link, Link help]`; `parent_link_approved` #124 **delivered** `[Menu]`; simulated MENU tap → parent menu. Evidence: `e2e/screenshots/parent-link-interactive-buttons/`.
+- **✅ Live** `[REDACTED - real phone number]`: `parent_link_rejected` #123 **delivered** buttons `[Request Link, Link help]`; `parent_link_approved` #124 **delivered** `[Menu]`; simulated MENU tap → parent menu. Evidence: `e2e/screenshots/parent-link-interactive-buttons/`.
 - **Regression**: linked-parent taps of Request Link / Link help fell through to unknown_keyword — fixed in #415.
 - **Tests**: 16 passed (`ParentLinkInteractiveButtonsTest` + Flow + Approval).
 - **Prior**: [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410) empty-candidate search @ `8e193de4`.
@@ -1533,7 +1533,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407)** → merge `bb94fe8b` — any inbound from a phone with pending `ParentLinkRequest` gets status (not stranger menu); reject/approve WhatsApp notify; duplicate Flow submit while pending suppressed.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
-- **✅ Live verify** `+256781940358` (pending id=1 Mucunguzi → Mwesigye Ford @ KABALE JUNIOR SCHOOL): outbound `parent_link_pending_status` **sent** `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRUVFNzA3MTAzMTRFNUIxQTU5AA==`.
+- **✅ Live verify** `[REDACTED - real phone number]` (pending id=1 Mucunguzi → Mwesigye Ford @ KABALE JUNIOR SCHOOL): outbound `parent_link_pending_status` **sent** `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRUVFNzA3MTAzMTRFNUIxQTU5AA==`.
 - **Tests**: 13 passed (55 assertions) — Flow + Approval suites.
 - **Prior**: [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405) teacher email invite @ `a35830eb`.
 
@@ -1565,7 +1565,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **✅ [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403)** → merge `60cc6aa4` — required `school_name` on Flow; resolve school by name first; new ack copy; `parent_link_requests.school_name` column.
 - **✅ Deploy** `scripts/deploy-manual.sh` — migration DONE; `[8/8] ✅ SHA match`.
 - **✅ Meta Flow republished** `1732491471303297` status `PUBLISHED`, `validation_errors: []`.
-- **✅ Real-device send** to `+256781940358` → `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRDM1Q0VFNzA5REE0M0REQjA0AA==` success.
+- **✅ Real-device send** to `[REDACTED - real phone number]` → `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRDM1Q0VFNzA5REE0M0REQjA0AA==` success.
 - **One-child-per-submit**: unchanged — each `createFromFlowSubmission` stores one child + one school; Flow body copy now says submit once per child.
 - **Prior Day 1+2**: [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400)/[#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401)/[#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402) @ `8ce66452`.
 
@@ -1891,10 +1891,10 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **Post-merge verify (on merged main @ `536603c`)**:
   - Pre-merge: `fix/deferred-bugs` **0 behind / 5 ahead** of `origin/main`; working tree clean; `npm run build` PASS; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` LLM null — expected).
   - Post-merge PHPUnit: **234 passed / 1 skipped / 1 failed** (same `ToshiE2E`).
-  - Manual smoke (`admin@testschoolone.sch.ug` / `password`, `:8010`): login+dashboard **200**; `/admin/academic/list` **200**; ClassWall `editList/1` **200**; `/admin/students/blockedstudents` **200**; `/admin/promotion/list` **200**; `activity()` helper exists + logs.
+  - Manual smoke (`admin@testschoolone.sch.ug` / `[REDACTED - historical password]`, `:8010`): login+dashboard **200**; `/admin/academic/list` **200**; ClassWall `editList/1` **200**; `/admin/students/blockedstudents` **200**; `/admin/promotion/list` **200**; `activity()` helper exists + logs.
 - **Post-merge verify (historical, Vite @ `9bdf185`)**:
   - `npm run build` — **PASS** (Vite 8.1.5, ~6.8s).
-  - `npm run dev` + artisan `:8010` — `Vue.version === '3.5.40'`, Vite client from `public/hot`; shell smoke PASS (boot, academics, attendance/add + multiselect, discipline/add + multiselect, ACADEMICS sidebar nav). Login `admin@testschoolone.sch.ug` / `password`. `public/hot` cleaned after.
+  - `npm run dev` + artisan `:8010` — `Vue.version === '3.5.40'`, Vite client from `public/hot`; shell smoke PASS (boot, academics, attendance/add + multiselect, discipline/add + multiselect, ACADEMICS sidebar nav). Login `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`. `public/hot` cleaned after.
   - PHPUnit then: **5 failed, 1 skipped, 220 passed** (pre-activity() baseline) — now superseded by 234/1/1 after deferred merge.
   - Phase 3.4 re-smoke — **PASS**: portal-vue teachers `#show-detail` open (`hide-menu`→`block`) + close; vuejs-datetimepicker discipline + ClassWall `.port` calendars; change-credential on teacher show (`$flashStorage` + Credentials UI); create-leave `/teacher/leave/add` mounts (Vue 3.5.40).
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared earlier (`7f29e37` / `5a7cc45` / `8a2938d`) — required so Vite does not hard-fail where Mix softened.
@@ -1951,7 +1951,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
   - `GET /admin/dashboard` — **200** (school admin `admin@testschoolone.sch.ug`)
   - `GET /admin/schooldetails` — **200** (same admin; view `admin/schooldetails/index.blade.php`)
   - `GET /admin/whatsapp/dashboard` — **200** (same admin; view `admin/whatsapp/dashboard.blade.php`)
-  - `GET /superadmin/academics/school/userprofile/detail/1` — **200** (site admin `siteadmin@gmail.com`; Livewire `userprofile-detail`)
+  - `GET /superadmin/academics/school/userprofile/detail/1` — **200** (site admin `[REDACTED - personal email]`; Livewire `userprofile-detail`)
   - `GET /superadmin/academics/school/userprofile/create/1` — **200** (same site admin; Livewire `userprofile-form`)
   - Method: session login via HTTP client against live `artisan serve` (not kernel-only tinker).
 - **Phase 1 status correction (Jul 28, Phase 3 pre-audit on `main` @ `753697f`)** — **reframes prior “Vue 2→3 complete” assumptions**:
@@ -2098,7 +2098,7 @@ This meant the container ran with code baked into the image at build time. Any `
 EVOLUTION_API_URL=http://10.19.0.6:8081
 EVOLUTION_API_KEY=78E5A6FF-BA89-45C6-987C-C31407BD22B4
 EVOLUTION_INSTANCE_NAME=klassapp
-WHATSAPP_BUSINESS_NUMBER=+256793844906
+WHATSAPP_BUSINESS_NUMBER=[REDACTED - real phone number]
 WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
@@ -2245,7 +2245,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 ### 2026-09-16: README staging creds removed + staging isolation probe — **MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 - **Work done**: Removed public staging passwords from README after live Commands probe. Staging default DB `klassapp-staging` (14 schools / 112 users / phase4 present / mail=log / disk=local / WA unset). Prod DB `production` (46 schools / phase4 absent). **Cross-schema**: staging `SELECT` on `production.schools` returned 46.
 - **Also merged earlier**: [#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651) global positioning (`d04ae837`); stamp [#652](https://github.com/KlassApp-Foundation/KlassApp/pull/652) (`59e925f9`).
-- **knowledge.md audit (no redaction yet)**: no live API tokens found; **too sensitive for public** candidates include real `+256…` phone numbers, historical password literals (`SuperAdmin@2026!`, `siteadmin@gmail.com` / `password`), personal gmail in ops notes, Cloud env/app/schema IDs + Doppler `CLOUD_AGENT_TOOLING` retrieval recipe, WABA IDs. Awaiting go-ahead before redact PR.
+- **knowledge.md audit (no redaction yet)**: no live API tokens found; **too sensitive for public** candidates include real `+256…` phone numbers, historical password literals (`[REDACTED - historical password]`, `[REDACTED - personal email]` / `[REDACTED - historical password]`), personal gmail in ops notes, Cloud env/app/schema IDs + Doppler `CLOUD_AGENT_TOOLING` retrieval recipe, WABA IDs. Awaiting go-ahead before redact PR.
 - **Status**: ✅ MERGED #653 @ `2e5e9318`. Docs only; no deploy. DB ACL fix is ops, not docs.
 
 ### 2026-09-16: README global positioning — **MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
@@ -2926,14 +2926,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 
 ### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PARTIAL (REPORT simulated)**
-- **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). **Simulated** parent WhatsApp `REPORT` for `+256789843175` via inbound API (msgid `wamid.sim.grace.report.1788885585` — not a handset) → outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
+- **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). **Simulated** parent WhatsApp `REPORT` for `[REDACTED - real phone number]` via inbound API (msgid `wamid.sim.grace.report.1788885585` — not a handset) → outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
 - **Files modified**: `e2e/greenfield-approve-grace-auma.cjs`, `e2e/screenshots/greenfield-grace-approve/*`, `knowledge.md`
 - **Key decisions**: Real web Approvals path (not Toshi); REPORT was synthetic inbound payload, not a real phone tap.
 - **Status**: ⚠️ Approvals real; REPORT simulated — does not meet later real-phone-only rule
 - **Edge cases flagged**: Signed report-file URL host is Cloud vanity (`laravel.cloud`); `klassapp.xyz` rewrite returned 403 — download via Cloud host.
 
 ### 2026-09-08: Parent Flow LINK_REQUEST invisible in Approvals — **MERGED #446 + REPAIRED**
-- **Work done**: Queried prod `ParentLinkRequest` for `+256789843175` (no school filter): id **6**, `school_id=null`, `school_name="Green field primary school"`, status `pending`, **0** Approvals. School **32** = `Greenfield Primary School`. Grace Auma uid **112** section **Primary Seven** (not `P.7`) — so school-name resolve **and** class filter both failed; candidate fallback also empty. Confirmed Toshi has no parent-link approval path (`SchoolAdminWhatsAppReadAgent` read-only; zero ParentLink tools). Fixed normalize + class aliases + repair command. Merged [#446](https://github.com/KlassApp-Foundation/KlassApp/pull/446) `02567e9e`, Cloud deploy `depl-a2b2b7f4-…`, ran `whatsapp:repair-parent-link-requests --id=6` → school_id 32 + Approval #6 Pending + suggested 112.
+- **Work done**: Queried prod `ParentLinkRequest` for `[REDACTED - real phone number]` (no school filter): id **6**, `school_id=null`, `school_name="Green field primary school"`, status `pending`, **0** Approvals. School **32** = `Greenfield Primary School`. Grace Auma uid **112** section **Primary Seven** (not `P.7`) — so school-name resolve **and** class filter both failed; candidate fallback also empty. Confirmed Toshi has no parent-link approval path (`SchoolAdminWhatsAppReadAgent` read-only; zero ParentLink tools). Fixed normalize + class aliases + repair command. Merged [#446](https://github.com/KlassApp-Foundation/KlassApp/pull/446) `02567e9e`, Cloud deploy `depl-a2b2b7f4-…`, ran `whatsapp:repair-parent-link-requests --id=6` → school_id 32 + Approval #6 Pending + suggested 112.
 - **Files modified**: `ParentLinkRequestService.php`, `RepairParentLinkRequests.php`, `ParentLinkSchoolNameResolveTest.php`, `knowledge.md`
 - **Key decisions**: Web `/admin/approvals` remains the admin inbox (Approval only created when `school_id` resolves). Repair command for orphans already in DB.
 - **Status**: ✅ MERGED + DEPLOYED + PLR #6 repaired (school-32 pending Approvals = 1)
@@ -2954,7 +2954,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Edge cases flagged**: Local MySQL migrate incomplete for some browser smokes
 
 ### 2026-09-07/08: Agent 2 — merge #440+#441, Cloud deploy, live three-fix verify, Teachers→REPORT resume — **PASS**
-- **Work done**: Merged [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`26658af1`) then [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`5442eb4c`). Cloud deploy `depl-a2b11458-…` with `npm run build` (Vite `app-zD1FlQXy.js` has Create.vue `getData`). Live-verified fee labels, student dropdowns, username digits on school **25**. Resumed Agent 2: teacher-links import (4 P.7 links; Namukasa match + Birungi create), P.7 **Nakato Miriam** + 4 EOT marks, Flow PLR #5 → Approvals Approve (fresh `+2567708814903`), REPORT PDF 669 209 bytes `%PDF-1.7` + Meta wamid.
+- **Work done**: Merged [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`26658af1`) then [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`5442eb4c`). Cloud deploy `depl-a2b11458-…` with `npm run build` (Vite `app-zD1FlQXy.js` has Create.vue `getData`). Live-verified fee labels, student dropdowns, username digits on school **25**. Resumed Agent 2: teacher-links import (4 P.7 links; Namukasa match + Birungi create), P.7 **Nakato Miriam** + 4 EOT marks, Flow PLR #5 → Approvals Approve (fresh `[REDACTED - real phone number]3`), REPORT PDF 669 209 bytes `%PDF-1.7` + Meta wamid.
 - **Files modified**: `knowledge.md`; evidence under `e2e/screenshots/agent2-primary-wizard/` (`LIVE-THREE-FIXES.json`, `AGENT2-FINAL.json`, `Nakato-Miriam-report-card.pdf`, screenshots 10–13); harnesses `e2e/agent2-live-verify-three-fixes.cjs`, `e2e/agent2-resume-*.cjs|py` (local).
 - **Key decisions**: Resume on school 25 (prior wizard steps already done); parent phone never used before; Approvals inbox not KLS-ID fallback; REPORT via real `WhatsAppReportCardDeliveryService` + `sendDocument`.
 - **Status**: ✅ Done (Agent 2 evidence).
@@ -2992,7 +2992,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ### 2026-09-07: Persist WA parent-link Flow ID on Cloud + log optional teacher class-setup — **DONE**
 - **Work done**:
-  1. Set `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297` on Cloud production via API (`POST /api/environments/{id}/variables` with `method: set`, payload from local `/tmp/klassapp-cloud-env-patch.json`). Redeployed `depl-a2b0c2c1-8383-4ee6-9f77-0faad37a59c2` → `deployment.succeeded`. Verified **without runtime override**: `env()` + `config('services.whatsapp.parent_link_flow_id')` return the ID; `sendParentLinkRequestFlow(+256781940358)` → `success` + wamid.
+  1. Set `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297` on Cloud production via API (`POST /api/environments/{id}/variables` with `method: set`, payload from local `/tmp/klassapp-cloud-env-patch.json`). Redeployed `depl-a2b0c2c1-8383-4ee6-9f77-0faad37a59c2` → `deployment.succeeded`. Verified **without runtime override**: `env()` + `config('services.whatsapp.parent_link_flow_id')` return the ID; `sendParentLinkRequestFlow([REDACTED - real phone number])` → `success` + wamid.
   2. Logged future initiative: optional invite for a class teacher to set up their own class — **nullable alternative**, not a replacement for admin adding classes/students directly.
 - **Files modified**: `knowledge.md`; evidence `e2e/screenshots/agent1-secondary-full/FLOW-ID-PERSIST.json`
 - **Status**: ✅ Done
@@ -3060,7 +3060,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Deviations**: hero primary CTA → `/register` (mockup `#`); footer Docs/Community/Contact → real routes; preview `noindex`; mobile hamburger still non-functional (same as mockup).
 - **Status**: ✅ Phase A done; ⏸️ design paused before Phases B/C / cutover (see session entry above).
 
-### 2026-09-05: Disconnect `+256781940358` for stranger E2E — **PROD DONE**; command local
+### 2026-09-05: Disconnect `[REDACTED - real phone number]` for stranger E2E — **PROD DONE**; command local
 - **Investigated (prod)**: WA id **56** → parent user **3738** (`parent@uireview.klassapp.demo`) @ school **124**; also WA id **52** on same parent for demo phone `256700119922`. PLRs **1–6** (Kabale 104 rejected + UI Review 124 approved/rejected). Links kept (parent still has demo WA). Pending links empty. Siteadmin user **4** also has this mobile — not a WA recognition path.
 - **Existing unlink insufficient**: admin unlink only nulls `user_id`/`verified_at`; rejected PLRs still intercept strangers.
 - **Action**: Eloquent delete on prod — WA 56, PLRs 1–6, Approvals 1–4; kept StudentParentLinks. Built `whatsapp:disconnect-phone` (+ PHPUnit) locally for reuse.
@@ -3109,7 +3109,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-04: Known-gaps round 2 items 1–3 — shipping
-- **Work done**: (1) Replaced stale WABA `+256765275289` → `+256793844906` in config default, phpunit, provision script, docs, seeder; **prod `.env` updated live** — homepage `wa.me/256793844906`. (2) `User::FullName` digit-strip; `displayNameFilenameSlug()` for PDF/zip names; Blade/Livewire/API display surfaces → `displayName`. (3) Wizard mount uses `nextIncompleteStep` (not blocking-only) so reload no longer skips Teachers/Students; `previous()` key-aware. Tests: `UserDisplayNameTest`, `WizardPreviousFromTeachersTest`, ManualUiWave3.
+- **Work done**: (1) Replaced stale WABA `[REDACTED - real phone number]` → `[REDACTED - real phone number]` in config default, phpunit, provision script, docs, seeder; **prod `.env` updated live** — homepage `wa.me/256793844906`. (2) `User::FullName` digit-strip; `displayNameFilenameSlug()` for PDF/zip names; Blade/Livewire/API display surfaces → `displayName`. (3) Wizard mount uses `nextIncompleteStep` (not blocking-only) so reload no longer skips Teachers/Students; `previous()` key-aware. Tests: `UserDisplayNameTest`, `WizardPreviousFromTeachersTest`, ManualUiWave3.
 - **PR**: [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426) → merge `f7183955`.
 - **Status**: ✅ MERGED + DEPLOYED
 - **Still open**: closed by #427 (OTP + parent Blade pages)
@@ -3151,7 +3151,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 - **Work done**: Parent `REPORT` / menu row → `WhatsAppReportCardDeliveryService` → real `StudentReportCardService::pdfForStudent()` → private `whatsapp-reports/` + signed GET → `sendDocument()`. Soft-fail copy; `whatsappDisplayName()`; rate limit 5/h; hourly prune. Split `'report'` off GRADES keywords.
 - **PR**: [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423) → merge `bca78fe3`; perms follow-up [#424](https://github.com/KlassApp-Foundation/KlassApp/pull/424) → merge `5d4df06c`.
-- **Live**: formal PDF ~670KB; signed URL 200 after fixing `root:700` dir (FPM `appuser` could not read). Handset `+256781940358` Graph accept / log `sent`. Bad duplicate WA row `256700119922` → Meta “Message undeliverable”.
+- **Live**: formal PDF ~670KB; signed URL 200 after fixing `root:700` dir (FPM `appuser` could not read). Handset `[REDACTED - real phone number]` Graph accept / log `sent`. Bad duplicate WA row `256700119922` → Meta “Message undeliverable”.
 - **Follow-up**: chmod 0775/0644 harden on write (#424) so root/tinker cannot poison the dir again.
 - **Tests**: `ParentReportCardRequestTest` + menu suite green before merge.
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (document send accepted; confirm PDF opens on handset)
@@ -3205,7 +3205,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Fix**: `isParentLinkInteractiveAction()` + bridge in `processMetaMessage` → `handleUnrecognizedUserMeta`. Shared pass-through for rejected-status replies.
 - **Also**: `User::displayName` in `ParentPortalService` + Outbound/WA parent copy; `SiteHelper::schoolAdminWhatsAppPhone` / `schoolOfficeWhatsAppFooter` on fee contact lines.
 - **PR**: [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415) → merge `fe33e07d`.
-- **Live**: linked parent `+256781940358` → Flow / link_help / menu outs `#154–#157`; reject buttons `#158` for handset tap.
+- **Live**: linked parent `[REDACTED - real phone number]` → Flow / link_help / menu outs `#154–#157`; reject buttons `#158` for handset tap.
 - **Status**: ✅ MERGED + DEPLOYED + PROD ROUTING VERIFIED (handset UI tap still needs phone holder confirmation/screenshot)
 
 ### 2026-09-03: Parent-link typed-command → interactive WhatsApp buttons
@@ -3214,7 +3214,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Fix**: Rejection → buttons `parent_link_flow` + `link_help`; approval → `MENU`; inbound rejected free-text + `link_help` / flow-unavailable also interactive. Copy says “Tap … below”. Behavior of each id unchanged.
 - **PR**: [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413) → merge `c486180e`.
 - **Files**: `ParentLinkRequestService`, `WhatsAppController`, approval/flow tests + `ParentLinkInteractiveButtonsTest`.
-- **Live**: reject #123 + approve #124 **delivered** to `+256781940358`; MENU tap → parent menu; stranger path `parent_link_flow` → Flow `LINK_REQUEST` sent.
+- **Live**: reject #123 + approve #124 **delivered** to `[REDACTED - real phone number]`; MENU tap → parent menu; stranger path `parent_link_flow` → Flow `LINK_REQUEST` sent.
 - **Limitation**: no physical phone camera in this environment — evidence is delivery-log payloads + reconstructed card (not a handset photo). Confirm buttons on device.
 - **Status**: ✅ MERGED + DEPLOYED + API/DELIVERY VERIFIED
 
@@ -3233,7 +3233,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **PR**: [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407) → merge `bb94fe8b`.
 - **Files**: `ParentLinkRequestService`, `WhatsAppController`, `ApprovalController`, Flow + Approval tests.
 - **Tests**: 13 passed (55 assertions).
-- **Live**: pending phone `+256781940358` → `parent_link_pending_status` sent (wamid above).
+- **Live**: pending phone `[REDACTED - real phone number]` → `parent_link_pending_status` sent (wamid above).
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-02: Teacher email invite (B-2a) + Account creation library template check
@@ -3258,7 +3258,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **PR**: [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403) branch `feat/whatsapp-parent-link-school-name` → merge `60cc6aa4`.
 - **Tests**: 9 passed, 39 assertions (incl. school-name-over-cross-school-child match).
 - **Deploy**: `[8/8] ✅ SHA match`; migration `add_school_name_to_parent_link_requests_table` DONE.
-- **Meta**: republished flow `1732491471303297` PUBLISHED; live send to `+256781940358` wamid success.
+- **Meta**: republished flow `1732491471303297` PUBLISHED; live send to `[REDACTED - real phone number]` wamid success.
 - **One-child model**: verified — one Flow completion → one `ParentLinkRequest` row; no parent↔single-school assumption in service (parent `school_id` stays null on link).
 - **Status**: ✅ MERGED + DEPLOYED + PUBLISHED
 
@@ -3313,7 +3313,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 | Step | Result | Notes |
 |------|--------|-------|
 | Wizard loads | **PASS** | School 124 lands on **whatsapp_verify** + **plan_selection** (not optional — blocks review until done). |
-| Wizard WhatsApp + plan | **PASS** | `+256700119900`, Growth plan → review screen reachable. |
+| Wizard WhatsApp + plan | **PASS** | `[REDACTED - real phone number]`, Growth plan → review screen reachable. |
 | Wizard add students (review → Edit) | **PASS** (partial) | Students **2→10** across runs; one run only **+2 of 3** saved. |
 | Wizard add classes/subjects/terms/fees | **LIMITATION** | `ManualOnboardingWizard::saveClass()` (and saveSubject/saveTerm/saveFee) **no-op when data exists** — cannot expand structure on already-seeded school 124. |
 | Toshi add student (`/agent` assistant) | **FAIL** | Student count unchanged after chat flow (headless automation; panel showed “Completing Setup” until wizard finished WhatsApp/plan). |
@@ -4814,9 +4814,9 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
   |---|---|---|---|---|---|
   | **School Admin** | admin@testschoolone.sch.ug / password | `/admin/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
   | **Teacher** | teacher_test_school_one@testschoolone.edu / password | `/teacher/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
-  | **Accountant** | bursar@testschoolone.sch.ug / password123 | `/accountant/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
-  | **Receptionist** | reception@testschoolone.sch.ug / password123 | `/receptionist/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
-  | **Librarian** | librarian@testschoolone.sch.ug / password123 | `/library/dashboard` | **1** (pre-existing 404 for `/library/notification/showList` — non-existent route, not related to axios) | ✅ validateStatus=null, headers set | ✅ PASS (pre-existing bug) |
+  | **Accountant** | bursar@testschoolone.sch.ug / [REDACTED - historical password] | `/accountant/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
+  | **Receptionist** | reception@testschoolone.sch.ug / [REDACTED - historical password] | `/receptionist/dashboard` | **0** | ✅ validateStatus=null, headers set | ✅ PASS |
+  | **Librarian** | librarian@testschoolone.sch.ug / [REDACTED - historical password] | `/library/dashboard` | **1** (pre-existing 404 for `/library/notification/showList` — non-existent route, not related to axios) | ✅ validateStatus=null, headers set | ✅ PASS (pre-existing bug) |
 - **Axios config verified on each role**: `window.axios.defaults.validateStatus === null`, `headers.common['X-Requested-With'] === 'XMLHttpRequest'`, `headers.common['X-CSRF-TOKEN'] === 'set'`.
 - **Messaging send flow & Payroll batch UI**: Could not be end-to-end tested via Playwright because the login CSRF cookie is HTTP-only and cannot be shared between curl and Playwright sessions for programmatic form submission testing. These flows involve authenticated POST requests that require maintaining the same browser session. Logging in as admin via Playwright worked correctly and the admin dashboard loaded with 0 errors — the axios dependency these features rely on is confirmed functional.
 - **Status**: ✅ All 5 role dashboards verified. 0 JS errors on 4/5 roles. 1 pre-existing 404 on librarian notification endpoint (unrelated to axios migration). Admin dashboard redirect, teacher, accountant, receptionist, and librarian route redirects all 0 errors.
@@ -5022,7 +5022,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 ```
                     ┌──────────────────────────────────────────┐
                     │            Inbound Flow                   │
-                    │  User sends WhatsApp → +256 793 844906    │
+                    │  User sends WhatsApp → [REDACTED - real phone number]    │
                     │         ↓                                 │
                     │  Meta Cloud API (WABA) receives message    │
                     │         ↓                                 │
@@ -5108,8 +5108,8 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Business Portfolio ID** (business.facebook.com): `856846937044672` — the Meta Business Account
 - **WABA ID** (WhatsApp Business Account): `1709193870117417` — owns the phone number, receives messages
 - **App ID** (developers.facebook.com): `1674033610469729` — the developer app with webhook callback URL
-- **Phone Number ID**: `1416403124879552` — `+256 793 844906`, verified name "KlassApp", mode LIVE
-  - *(Supersedes earlier `1192586767270209` / `+256 765 275289` and WABA `1709193870117417` — current WABA is `1370231745289565`.)*
+- **Phone Number ID**: `1416403124879552` — `[REDACTED - real phone number]`, verified name "KlassApp", mode LIVE
+  - *(Supersedes earlier `1192586767270209` / `[REDACTED - real phone number]` and WABA `1709193870117417` — current WABA is `1370231745289565`.)*
 
 **The WABA ID and Business Portfolio ID are DIFFERENT.** Using the wrong WABA ID was the root cause of webhook delivery failure.
 
@@ -5151,8 +5151,8 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 
 | Role | Email | Password |
 |---|---|---|
-| Super Admin | `siteadmin@gmail.com` | `password` |
-| Test School One | `admin@testschoolone.sch.ug` | `password123` |
+| Super Admin | `[REDACTED - personal email]` | `[REDACTED - historical password]` |
+| Test School One | `admin@testschoolone.sch.ug` | `[REDACTED - historical password]` |
 
 ---
 
@@ -5978,7 +5978,7 @@ These remain unverified — known to exist, not yet tested with actual button cl
   - `subjects` table requires `academic_year_id` FK — seed script initially failed without it
   - `exams` table requires `teacher_id` FK (not nullable)
   - `standards_link` table requires `school_id`, `academic_year_id` FKs
-  - Super admin (siteadmin@gmail.com) cannot access school-specific PDF reports due to null school_id
+  - Super admin ([REDACTED - personal email]) cannot access school-specific PDF reports due to null school_id
 - **Status**: ✅ Completed
 
 ### Remaining / Flagged
@@ -6027,7 +6027,7 @@ These remain unverified — known to exist, not yet tested with actual button cl
 
 ### Testing Gotchas
 
-- **Super Admin `school_id=null`**: `siteadmin@gmail.com` (user id=1) has `school_id=null`. Any school-scoped query using `forSchool()` or `where('school_id', $admin->school_id)` silently returns zero results when called from a Super Admin context — not just PDF reports but every feature scoped to a school. **Default to a real School Admin account** (e.g. `admin@testschoolone.sch.ug` / `password123`) for testing school-scoped features. Reserve Super Admin for platform-level tests only.
+- **Super Admin `school_id=null`**: `[REDACTED - personal email]` (user id=1) has `school_id=null`. Any school-scoped query using `forSchool()` or `where('school_id', $admin->school_id)` silently returns zero results when called from a Super Admin context — not just PDF reports but every feature scoped to a school. **Default to a real School Admin account** (e.g. `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`) for testing school-scoped features. Reserve Super Admin for platform-level tests only.
 - **Alpine keyword collision**: Alpine.js `x-data`, `x-show`, etc. directives collide with any PHP variable named `$x`. If a Blade view silently fails to render with a parse error, check for variables prefixed with `x-`.
 - **Route verification pitfall**: A route returning 200 from `php artisan serve` or curl does not mean the view rendered successfully — the controller may have returned a redirect that the browser follows silently. Always check the `Content-Type` header (expect `text/html` or `application/pdf`, not an empty redirect).
 - **Click vs render gap**: A view that compiles via `view('name')` in tinker may still fail at runtime due to missing data (null relationship, missing `compact()` variable, undefined array key). Compilation is not verification — test with real data.
@@ -6100,8 +6100,8 @@ Teacher click-verification is **complete** — all 5 modules E2E tested with DB 
 **Next step when resumed**: One real browser session, click through to the plan-selection step, select Growth, confirm DB state. Repeat selecting Premium, confirm trial is correctly NOT started (or started with Premium limits, whichever the current business rule is). This is a small, specific, achievable test — not a large blocked item.
 
 **Test accounts**:
-- Teacher: `teacher_test_school_one@testschoolone.edu` / `password123` (password was reset from non-matching hash)
-- Admin: `admin@testschoolone.sch.ug` / `password123`
+- Teacher: `teacher_test_school_one@testschoolone.edu` / `[REDACTED - historical password]` (password was reset from non-matching hash)
+- Admin: `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`
 - Teacher has `leave_applier` designation and `reporting_to=5` set in TeacherProfile
 - Admin has `leave_checker` designation
 
@@ -7007,7 +7007,7 @@ All commands are gated to the `production` environment only.
 | Unhealthy backup found | WhatsApp + Email |
 | Backup successful | Log only (none) |
 
-**WhatsApp recipient:** `+256781940358` — alert messages include error details and backup destination properties.
+**WhatsApp recipient:** `[REDACTED - real phone number]` — alert messages include error details and backup destination properties.
 
 ### Configuration Files
 
@@ -7026,7 +7026,7 @@ All commands are gated to the `production` environment only.
 BACKUP_ARCHIVE_PASSWORD=
 
 # WhatsApp alert recipient
-BACKUP_WHATSAPP_PHONE=+256781940358
+BACKUP_WHATSAPP_PHONE=[REDACTED - real phone number]
 
 # Backup log channel
 BACKUP_LOG_CHANNEL=daily
@@ -7200,7 +7200,7 @@ The `.env` file contains secrets (database passwords, API keys, tokens) and **mu
 #### Step 1 — Close Remaining Blockers
 
 **1.1 Superadmin credentials reset**
-- Reset both `siteadmin@gmail.com` and `superadmin@gmail.com` to password `SuperAdmin@2026!` via tinker
+- Reset both `[REDACTED - personal email]` and `[REDACTED - personal email]` to password `[REDACTED - historical password]` via tinker
 - Credential stored as comment in production `.env` (outside repo)
 - Verified: logged into superadmin Toshi panel at `/superadmin/dashboard` — 0 console errors, renders correctly
 
@@ -7529,7 +7529,7 @@ Not blocking current redesign. Needs a focused Toshi tool-execution reliability 
 
 All three grading types render correctly through the same `ds-grid-marks` pattern. Grid displays stored numeric scores and handles empty entries with "—". No visual confusion between grading types.
 
-**Local server login note**: Local database password resets require PHP-generated bcrypt hashes (not shell-echoed ones with `$` signs). Used `php -r "echo password_hash('password123', PASSWORD_BCRYPT);"` piped to MySQL. Admin login: `admin@testschoolone.sch.ug` / `password123`.
+**Local server login note**: Local database password resets require PHP-generated bcrypt hashes (not shell-echoed ones with `$` signs). Used `php -r "echo password_hash('[REDACTED - historical password]', PASSWORD_BCRYPT);"` piped to MySQL. Admin login: `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`.
 
 **Outstanding**: 7 marks views still using raw `<table>` markup (class-overview, student, marksheet, grades, school-overview, promotion, results-table).
 
@@ -9097,7 +9097,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Deferred → ✅ CLOSED on `main` Jul 31** (merge `08b3886`; fix `099b58e`): `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Speculative `border-gray-300` was later **reverted** (`14b9e33`) — CDP shows bare `border` → `rgb(0,0,0)` via `currentColor` and is visually fine. Verified post-merge: `/privacy-policy`, `/terms-of-service` (HTTP 200 + screenshots); `/usecases/*` HTTP 404 is pre-existing (`mapStaticRoutes` commented on main too).
 
 #### Environment fixes
-- **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
+- **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `[REDACTED - personal email] / password`.
 - **Jul 28 recurrence**: `.env` fix did **not** propagate to an already-running `php artisan serve --port=8000` that inherited **exported** `DB_DATABASE=homestead` in the parent process env — see Current Status “Recurrence” bullet. Verify with `ps eww -p <serve-pid> | tr ' ' '\n' | grep '^DB_'`, not only `cat .env`. **Fixed** by killing stale serve and restarting from clean shell (see Current Status ✅ Resolved).
 - **`.env.example` `DB_DATABASE=klassapp` → `klassapp_local`** — so new clones copy the correct value. ✅
 
@@ -9350,8 +9350,8 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - empty `/login`: Vue **3.5.40**, Vite module, no Mix `js/app.js`, console clean — **PASS**
   - minimal: no live route (`welcome` unused; `/` → landing); rendered HTML has Vite build tags + `custom.js` — **PASS (render)**
   - main `/terms-of-service`: Vue 3.5.40, Vite module, custom.js, no `$` pageerrors after jQuery CDN — **PASS**
-  - superadmin `/superadmin/dashboard` (`siteadmin@gmail.com` / `password`): Vue 3.5.40, `body#superadmin-body`, Vite module — **PASS**
-  - app checklist (`admin@testschoolone.sch.ug` / `password`): boot, academics shell (known list 500/`Object.keys`), attendance/add, discipline/add, nav `.profile-click` open — **PASS** shell; no Vite/module errors. Known: Echo `channel` TypeError (empty Pusher key); academics `str_limit`.
+  - superadmin `/superadmin/dashboard` (`[REDACTED - personal email]` / `[REDACTED - historical password]`): Vue 3.5.40, `body#superadmin-body`, Vite module — **PASS**
+  - app checklist (`admin@testschoolone.sch.ug` / `[REDACTED - historical password]`): boot, academics shell (known list 500/`Object.keys`), attendance/add, discipline/add, nav `.profile-click` open — **PASS** shell; no Vite/module errors. Known: Echo `channel` TypeError (empty Pusher key); academics `str_limit`.
 - **`vite:dev` severity (verified Jul 30)**: **A — hard failure**. `npm run vite:dev` writes `public/hot`, `@vite/client` 200, but `app.js:8` `require('./bootstrap')` → **`ReferenceError: require is not defined`** → `typeof window.Vue === "undefined"`, no `__vue_app__`, `<create-attendance>` empty. Blade chrome still renders; Vue app never boots. Full refresh does not help while `public/hot` exists. Production `vite:build` OK via Rolldown CJS interop. **3.1 ESM required for workable Vite HMR workflow**; **3.4 can proceed** on build path; do not treat 3.1 as soft/optional if local Vite-served dev is needed before 3.5.
 - **PHPUnit**: `5 failed, 1 skipped, 220 passed` — same baseline: LoginRegressionTest, RegistrationMinistryCodeTest ×2, RegistrationFlowTest `activity()`, ToshiE2EVerificationTest LLM.
 - **Push Part A**: `origin/migration/vite` = `624c7dd` (includes `4988b01` + knowledge SHA). Part B commit **not pushed** unless asked.
@@ -9871,7 +9871,7 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 **Drift found + reverted** (PR #296, merge `c8fe7441`, branch `fix/report-templates-wording-audit`):
 - Title → **PROGRESSIVE REPORT** in ALL templates (was "Terminal Report Card" / "Progress Report" / Warm dropped it for a tagline)
 - **POSITION** (was "Position in Class") — all three
-- School meta lines restored char-for-char: `(Nursery And Primary, Day And Boarding)`, `P.O Box 283 - Kabale - UGA`, `Tel: +256782255758 / +256784119149 / +256704301646`
+- School meta lines restored char-for-char: `(Nursery And Primary, Day And Boarding)`, `P.O Box 283 - Kabale - UGA`, `Tel: [REDACTED - real phone number] / [REDACTED - real phone number] / [REDACTED - real phone number]`
 - **MONTHLY RESULTS — MID TERM** / **END OF TERM EXAMINATION** (were title-case)
 - Motto **HARD WORK PAYS** (was "Hard Work Pays" / `“Hard Work Pays”`)
 - **Next Term Begins:** — colon restored, baseline capitalization
@@ -9916,7 +9916,7 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 
 **PR #300** (`f8838e52`, `feat/report-card-footer-header-final`) — four items that had never reached a prior session message + the true edge-to-edge header:
 1. **Missing-mark cells**: all `'&mdash;'` Blade fallbacks (and the raw nursery placeholder) → plain `-`; previously Blade escaped the entity and the PDF showed the literal text "&mdash;".
-2. **Footer redesign**: removed "KABALE JUNIOR SCHOOL · Generated … Next Term Begins" line; replaced with one edge-to-edge line `Kabale Junior School, UNEB Center No. {schools.uneb_center_number} Tel: +256782255758 / +256784119149 / +256704301646` (Kabale = **U100140**).
+2. **Footer redesign**: removed "KABALE JUNIOR SCHOOL · Generated … Next Term Begins" line; replaced with one edge-to-edge line `Kabale Junior School, UNEB Center No. {schools.uneb_center_number} Tel: [REDACTED - real phone number] / [REDACTED - real phone number] / [REDACTED - real phone number]` (Kabale = **U100140**).
 3. **Next Term Begins** relocated to just beneath the Class Teacher / Head Teacher comment boxes (`@if ($nextTerm)`-guarded, all templates).
 4. **Signature placeholders**: real signing lines (caption + 22px line) added near the comment boxes; old footer signature blocks removed.
 5. **Edge-to-edge header (Formal + Warm)**: prior "wider padding" had only increased padding within existing page margins (the opposite). Fixed with `@page { margin: 0 }` + full-width header band + content wrapper (frame stays inset) + full-width footer band for the UNEB line.
@@ -10361,13 +10361,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Ship**: PR #351 (docs/whatsapp-waba-registration, merge 138e235af1a04294aaca0ba1c201715b3cc7cfea). Branch `docs/whatsapp-waba-registration` deleted post-merge.
 - **Status**: ✅ MERGED — merge 138e235af1a04294aaca0ba1c201715b3cc7cfea
 
-- **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `+256 793 844906` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. **This new WABA ID (1370231745289565) supersedes the earlier WABA ID (1709193870117417) from a prior WABA account — this is not the same "wrong ID" bug that was fixed before; it is an intentional replacement with a new Meta Business Manager WABA.** Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
+- **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `[REDACTED - real phone number]` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. **This new WABA ID (1370231745289565) supersedes the earlier WABA ID (1709193870117417) from a prior WABA account — this is not the same "wrong ID" bug that was fixed before; it is an intentional replacement with a new Meta Business Manager WABA.** Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
 - **Webhook endpoint verified**: `GET api/whatsapp/inbound` returns correct `hub.challenge` with HTTP 200. Route confirmed in production via `php artisan route:list`. Cloudflare proxy passes Meta's user-agent correctly. CSRF middleware excluded on `/inbound` route.
 - **Webhook subscriptions**: Confirmed via `GET /{waba_id}/subscribed_apps` — subscribed fields are `messages`, `message_template_status_update`, `message_template_quality_update`, and `security`. Non-`messages` events (security, account_alerts, template updates) are safely ignored by `WhatsAppController::handleInbound` via `if (! $type) { continue; }` and `if (empty($incomingMessage)) { continue; }` guards.
 - **Meta test notification**: Sent via `POST /{phone_number_id}/test_notification` to `https://klassapp.xyz/api/whatsapp/inbound` — Meta confirmed dispatch. This proves the Meta→Laravel pipeline is functional from Meta's side.
 - **Files modified**: Production `.env` (via SSH + `docker compose exec` + `sed`; backed up as `.env.backup.2026-08-20` before edit). No code changes — controller, route, and webhook logic were already correct.
 - **Key decisions**: System User token chosen over perpetual token for better security isolation. App remains Unpublished (Development mode) — only testers receive messages. Token stored ONLY in production `.env`; never committed, never in a temp file beyond the curl commands in this session.
-- **Remaining (requires human with phone)**: (1) Add a tester phone number in Meta dashboard → WhatsApp → Getting Started. (2) Send real WhatsApp message from tester phone to `+256 793 844906`. (3) Verify in Laravel logs: `docker exec sms-app cat storage/logs/laravel.log | grep "WhatsApp webhook"`. (4) Publish app once testing passes.
+- **Remaining (requires human with phone)**: (1) Add a tester phone number in Meta dashboard → WhatsApp → Getting Started. (2) Send real WhatsApp message from tester phone to `[REDACTED - real phone number]`. (3) Verify in Laravel logs: `docker exec sms-app cat storage/logs/laravel.log | grep "WhatsApp webhook"`. (4) Publish app once testing passes.
 - **Status**: ✅ REGISTERED + DEPLOYED — awaiting human tester message + app publication.
 
 ### 2026-08-22: Hotfix — onboarding completion blocked for schools with no students/teachers
@@ -10796,7 +10796,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 ### 2026-09-10: Security — remove embedded DO deploy key + hardcoded LLM API key
 
-- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`moemucu@gmail.com` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `46.101.111.131` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
+- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`[REDACTED - personal email]` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `46.101.111.131` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
 - **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
 - **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
 - **Status**: ✅ Security PR open — [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) (`security/remove-embedded-secrets`).
