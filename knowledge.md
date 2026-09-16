@@ -618,7 +618,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Landing footer X + tagline MERGED + STAGING** ([#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639))
+## Current Status: September 16, 2026 — **Community health files MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
+
+- **Merged**: [#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640) `2900da81` (CoC, CONTRIBUTING, SECURITY, templates) + follow-ups [#641](https://github.com/KlassApp-Foundation/KlassApp/pull/641)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643) for GitHub detection (`.github/SECURITY.md`, markdown issue templates).
+- **Verify**: Community checklist on github.com/…/community = **8/8 Added**. GraphQL: `isSecurityPolicyEnabled=true`, issueTemplates Bug+Feature. REST `health_percentage` rose **37 → 87** (API still lags `issue_template`/`security` fields; web checklist is authoritative). Docs only; **no deploy**.
+
+## Previous: September 16, 2026 — **Landing footer X + tagline MERGED + STAGING** ([#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639))
 
 - **Merged**: [#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639) — GitHub API `merged: true`, merge SHA `61291096b3b9992c76d67f165d0c7a29051017f1` (`merged_at` 2026-09-16T09:17:17Z).
 - **Change**: Footer X → `https://x.com/Klass_App`; tagline → "Educationists' tools connected by intelligence."
@@ -2206,6 +2211,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: Community health files — **MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
+- **Work done**: Added `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `CONTRIBUTING.md` (sync-from-main, external PR review via Elijah #552→#638, PHPUnit/Playwright, community@klassapp.xyz), `SECURITY.md` (+ `.github/SECURITY.md`), markdown issue templates, PR template. Follow-ups fixed GitHub detection (YAML forms were invisible to community checklist/GraphQL).
+- **Files**: listed above under `.github/` and repo root.
+- **Key decisions**: No response-time SLA in SECURITY. Markdown issue templates (not YAML forms) for Community Standards detection. CONTRIBUTING documents real maintainer discipline.
+- **Status**: ✅ MERGED. Community page **8/8 Added**; REST health **37→87** (API field lag). No deploy.
+- **Edge cases flagged**: REST `community/profile` can lag the web checklist on `issue_template`/`security` even when GraphQL and the HTML checklist show complete.
 
 ### 2026-09-16: Landing footer X handle + tagline — **MERGED + STAGING** ([#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639))
 - **Work done**: Updated `landing-v2` footer: X link `https://x.com/klassapp` → `https://x.com/Klass_App`; tagline "Smarter schools start here." → "Educationists' tools connected by intelligence." PHPUnit + dedicated Playwright script at AGENTS viewports; staging verify ALL OK.
