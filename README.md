@@ -125,10 +125,10 @@ PHPUnit is the project standard. UI checks use Playwright scripts under `e2e/`.
 
 ### Try the hosted demo
 
-Staging (demo/seed data only — not production):
+Staging is a separate Laravel Cloud environment with demo/seed data (not a production dump). Public login credentials are **not** published here.
 
-- URL: [https://klassapp-staging-7mpoqg.laravel.cloud](https://klassapp-staging-7mpoqg.laravel.cloud)
-- School admin: `phase4.admin@klassapp.xyz` / `demo123`
+- Staging URL: [https://klassapp-staging-7mpoqg.laravel.cloud](https://klassapp-staging-7mpoqg.laravel.cloud)
+- Request demo access: [community@klassapp.xyz](mailto:community@klassapp.xyz)
 
 ## Resources
 
