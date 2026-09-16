@@ -34,7 +34,6 @@ class UsersTableSeeder extends Seeder
                 'address'       =>  'Kabale Town',
                 'country_id'    =>  '7',
                 'city_id'       =>  '31',
-                'state_id'      =>  '24',
                 'pincode'       =>  '625001'
             ]);
 
@@ -56,7 +55,6 @@ class UsersTableSeeder extends Seeder
                 'address'       =>  'Kabale Town',
                 'country_id'    =>  '7',
                 'city_id'       =>  '31',
-                'state_id'      =>  '24',
                 'pincode'       =>  '625001'
                 ]);
 
@@ -178,7 +176,6 @@ class UsersTableSeeder extends Seeder
                 'address'       =>  'Namakkal,Tamilnadu,India',
                 'country_id'    =>  '7',
                 'city_id'       =>  '31',
-                'state_id'      =>  '24',
                 'pincode'       =>  '625001'
                 ]);
 

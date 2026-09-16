@@ -45,7 +45,9 @@ class ImportMemberRequest extends FormRequest
 
         return [
             //
-            'import_file' => 'required|check_academic_year|file_extension:csv',
+            // Wizard upload path already accepts spreadsheets; admin import
+            // (students + teachers share this FormRequest) must match.
+            'import_file' => 'required|check_academic_year|file_extension:csv,xlsx,xls',
         ];
     }
 
@@ -55,7 +57,7 @@ class ImportMemberRequest extends FormRequest
         [
             'import_file.required'              => 'File is required',
             'import_file.check_academic_year'   => 'Academic Year Is Not Found',
-            'import_file.file_extension'        => 'Choose csv file',
+            'import_file.file_extension'        => 'Choose a csv, xlsx, or xls file',
             'import_file.max'                   => 'Maximum file size to upload is 2MB',
         ];
     }
