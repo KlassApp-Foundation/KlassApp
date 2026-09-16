@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
+## Current Status: September 16, 2026 — **Landing Toshi tower + hero X-flip** (PR opening)
+
+- **Branch**: `feat/landing-toshi-tower-hero-flip` off `main` (`fa47cb43`).
+- **Scope**: Replace Meet Toshi hub/connector diagram with isometric tower; replace hero role Y-rotate with X-flip + K-mark avatars; remap `--d-*` → landing `--brand-*`/`--paper-*`; six LLM marks from `llm-brand-marks.zip` (DeepSeek omitted).
+- **Verify (local)**: PHPUnit `LandingPreviewV3Test` PASS (95 assertions). Playwright `e2e/landing-tower-hero-flip-verify.cjs` PASS at 375/414/768/1280 (tower + marks HTTP 200 + reduced-motion).
+- **Staging**: deploy + verify after push (no production without explicit approval).
+- **PR**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) (`feat/landing-toshi-tower-hero-flip`, tip `1906e5ad`). Awaiting review. Confirm `merged: true` via GitHub API once approved. Staging tracks `main` — Cloud Deploy API ignores feature `commit_hash` and ships `main` tip; staging verify runs after merge.
+
+## Previous: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
 
 - **Rollback point (pre-deploy)**: `e3c308dbe53f38d96bd5786899331b516a406ab3` — last succeeded prod deploy `depl-a2bf8451-…` (#611+#613+#615).
 - **Production deploy**: `depl-a2bfce3d-ab94-4e34-8090-675810ba1eaf` @ `4fbcbf6f6f69c69b421d0fa8260fbc6d7a70dea8` (`deployment.succeeded` 2026-09-15T04:35:25Z) — includes [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620).
@@ -2160,6 +2168,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16 — Landing Toshi tower + hero X-flip integration
+- **Work**: Synced `origin/main`; extracted `~/Downloads/KlassApp Design System (1).zip` → `/tmp/klassapp-ds-tower`; installed six clean marks from `/tmp/llm-brand-marks.zip` into `resources/assets/brand/models/` + `public/images/brand/models/` (DeepSeek excluded); ported tower partial + X-flip hero CSS/JS/Blade; remapped `--d-*` to landing tokens.
+- **Files**: `resources/views/partials/landing-toshi-tower.blade.php`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `resources/assets/brand/models/*`, `public/images/brand/models/*`, `.gitignore`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-tower-hero-flip-verify.cjs`.
+- **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
+- **Status**: Local verify green; PR [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) open. Staging verify after merge (env branch = `main`).
+- **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
+
+
 
 ### 2026-09-15: Nightwatch trio — WA demo school_id + fee standardLink + null avatar — **LIVE** ([#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620))
 - **Work done**: Picked up Goose's incomplete Nightwatch fixes. (1) WhatsApp `"demo"` inbound: `school_id` from configured demo parent (`services.whatsapp.demo_parent_user_id` / `WHATSAPP_DEMO_PARENT_USER_ID`, default 104) — never hardcode `1`; graceful when missing. (2) `whatsapp:send-fee-reminders`: students via `whereHas('standardLink', standard_id ∈ fee categories)` (not missing `student_academics.standard_id`); `markAttendance` uses `standardLink_id`; `notifyFeeReminder` via `studentAcademicLatest.standardLink`. (3) Null avatar: `getFilePath` null-guard + `\Throwable`; Teacher resources null-safe. (4) Follow-up #620: `getParentPhones` no longer `wherePivot` on hasMany `StudentParentLink`.

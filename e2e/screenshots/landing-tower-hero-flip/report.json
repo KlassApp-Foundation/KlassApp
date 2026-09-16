@@ -1,0 +1,311 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "at": "2026-09-16T08:11:53.431Z",
+  "viewports": {
+    "375": {
+      "checks": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHasHeight": true,
+        "hasDeck": true,
+        "threeCards": true,
+        "avatarTransparent": true,
+        "avatarRound": true,
+        "avatarK": true,
+        "noDeepseek": true,
+        "noOldHub": true,
+        "allMarksInDom": true,
+        "marksHttpOk": true,
+        "rmActiveVisible": true,
+        "rmInactiveHidden": true,
+        "rmNoTowerAnim": true
+      },
+      "failed": [],
+      "measured": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHeight": 210.34375,
+        "hasDeck": true,
+        "cardCount": 3,
+        "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
+        "avatarBorder": "rgb(34, 197, 94)",
+        "avatarBg": "rgba(0, 0, 0, 0)",
+        "avatarRadius": "50%",
+        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "hasDeepseek": false,
+        "hasOldHub": false,
+        "markHrefs": [
+          {
+            "mark": "anthropic-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "openai-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "xai-grok-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "google-gemini-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "moonshot-kimi-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "zhipu-zai-mark.svg",
+            "present": true
+          }
+        ],
+        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "cssHasDVar": false
+      },
+      "rm": {
+        "activeOpacity": "1",
+        "activeTransition": "none",
+        "inactiveOpacity": "0",
+        "moAnimation": "none"
+      },
+      "markStatuses": {
+        "anthropic-mark.svg": 200,
+        "openai-mark.svg": 200,
+        "xai-grok-mark.svg": 200,
+        "google-gemini-mark.svg": 200,
+        "moonshot-kimi-mark.svg": 200,
+        "zhipu-zai-mark.svg": 200
+      }
+    },
+    "414": {
+      "checks": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHasHeight": true,
+        "hasDeck": true,
+        "threeCards": true,
+        "avatarTransparent": true,
+        "avatarRound": true,
+        "avatarK": true,
+        "noDeepseek": true,
+        "noOldHub": true,
+        "allMarksInDom": true,
+        "marksHttpOk": true,
+        "rmActiveVisible": true,
+        "rmInactiveHidden": true,
+        "rmNoTowerAnim": true
+      },
+      "failed": [],
+      "measured": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHeight": 235.34375,
+        "hasDeck": true,
+        "cardCount": 3,
+        "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
+        "avatarBorder": "rgb(34, 197, 94)",
+        "avatarBg": "rgba(0, 0, 0, 0)",
+        "avatarRadius": "50%",
+        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "hasDeepseek": false,
+        "hasOldHub": false,
+        "markHrefs": [
+          {
+            "mark": "anthropic-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "openai-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "xai-grok-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "google-gemini-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "moonshot-kimi-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "zhipu-zai-mark.svg",
+            "present": true
+          }
+        ],
+        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "cssHasDVar": false
+      },
+      "rm": {
+        "activeOpacity": "1",
+        "activeTransition": "none",
+        "inactiveOpacity": "0",
+        "moAnimation": "none"
+      },
+      "markStatuses": {
+        "anthropic-mark.svg": 200,
+        "openai-mark.svg": 200,
+        "xai-grok-mark.svg": 200,
+        "google-gemini-mark.svg": 200,
+        "moonshot-kimi-mark.svg": 200,
+        "zhipu-zai-mark.svg": 200
+      }
+    },
+    "768": {
+      "checks": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHasHeight": true,
+        "hasDeck": true,
+        "threeCards": true,
+        "avatarTransparent": true,
+        "avatarRound": true,
+        "avatarK": true,
+        "noDeepseek": true,
+        "noOldHub": true,
+        "allMarksInDom": true,
+        "marksHttpOk": true,
+        "rmActiveVisible": true,
+        "rmInactiveHidden": true,
+        "rmNoTowerAnim": true
+      },
+      "failed": [],
+      "measured": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHeight": 462.296875,
+        "hasDeck": true,
+        "cardCount": 3,
+        "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
+        "avatarBorder": "rgb(34, 197, 94)",
+        "avatarBg": "rgba(0, 0, 0, 0)",
+        "avatarRadius": "50%",
+        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "hasDeepseek": false,
+        "hasOldHub": false,
+        "markHrefs": [
+          {
+            "mark": "anthropic-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "openai-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "xai-grok-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "google-gemini-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "moonshot-kimi-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "zhipu-zai-mark.svg",
+            "present": true
+          }
+        ],
+        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "cssHasDVar": false
+      },
+      "rm": {
+        "activeOpacity": "1",
+        "activeTransition": "none",
+        "inactiveOpacity": "0",
+        "moAnimation": "none"
+      },
+      "markStatuses": {
+        "anthropic-mark.svg": 200,
+        "openai-mark.svg": 200,
+        "xai-grok-mark.svg": 200,
+        "google-gemini-mark.svg": 200,
+        "moonshot-kimi-mark.svg": 200,
+        "zhipu-zai-mark.svg": 200
+      }
+    },
+    "1280": {
+      "checks": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHasHeight": true,
+        "hasDeck": true,
+        "threeCards": true,
+        "avatarTransparent": true,
+        "avatarRound": true,
+        "avatarK": true,
+        "noDeepseek": true,
+        "noOldHub": true,
+        "allMarksInDom": true,
+        "marksHttpOk": true,
+        "rmActiveVisible": true,
+        "rmInactiveHidden": true,
+        "rmNoTowerAnim": true
+      },
+      "failed": [],
+      "measured": {
+        "hasTower": true,
+        "towerVisible": true,
+        "towerHeight": 707.1876220703125,
+        "hasDeck": true,
+        "cardCount": 3,
+        "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
+        "avatarBorder": "rgb(34, 197, 94)",
+        "avatarBg": "rgba(0, 0, 0, 0)",
+        "avatarRadius": "50%",
+        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "hasDeepseek": false,
+        "hasOldHub": false,
+        "markHrefs": [
+          {
+            "mark": "anthropic-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "openai-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "xai-grok-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "google-gemini-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "moonshot-kimi-mark.svg",
+            "present": true
+          },
+          {
+            "mark": "zhipu-zai-mark.svg",
+            "present": true
+          }
+        ],
+        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "cssHasDVar": false
+      },
+      "rm": {
+        "activeOpacity": "1",
+        "activeTransition": "none",
+        "inactiveOpacity": "0",
+        "moAnimation": "none"
+      },
+      "markStatuses": {
+        "anthropic-mark.svg": 200,
+        "openai-mark.svg": 200,
+        "xai-grok-mark.svg": 200,
+        "google-gemini-mark.svg": 200,
+        "moonshot-kimi-mark.svg": 200,
+        "zhipu-zai-mark.svg": 200
+      }
+    }
+  },
+  "ok": true
+}

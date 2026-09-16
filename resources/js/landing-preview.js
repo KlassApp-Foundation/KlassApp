@@ -52,7 +52,8 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
       prev.setAttribute('aria-hidden', 'true');
       if (!reduceMotion) {
         prev.classList.add('is-exit');
-        setTimeout(() => prev.classList.remove('is-exit'), 700);
+        /* Flip duration 0.3s + enter delay 0.15s ≈ 450ms; clear exit class after. */
+        setTimeout(() => prev.classList.remove('is-exit'), 450);
       }
     }
     i = next;
