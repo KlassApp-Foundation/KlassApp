@@ -174,6 +174,8 @@ Staging is a separate Laravel Cloud environment with demo/seed data (not a produ
 
 - [Live product](https://klassapp.xyz)
 - [Docs map](docs/README.md)
+- [Architecture bridge](docs/architecture.md)
+- [Public roadmap](docs/roadmap.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Agent & maintainer rules](AGENTS.md)
 - [Project provenance (GeGoK12 fork)](docs/project-provenance.md)
