@@ -1,6 +1,6 @@
 {
-  "base": "http://127.0.0.1:8000",
-  "at": "2026-09-16T08:11:53.431Z",
+  "base": "https://klassapp-staging-7mpoqg.laravel.cloud",
+  "at": "2026-09-16T08:31:49.934Z",
   "viewports": {
     "375": {
       "checks": {
@@ -27,11 +27,11 @@
         "towerHeight": 210.34375,
         "hasDeck": true,
         "cardCount": 3,
-        "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
+        "activeRotate": "matrix3d(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1)",
         "avatarBorder": "rgb(34, 197, 94)",
         "avatarBg": "rgba(0, 0, 0, 0)",
         "avatarRadius": "50%",
-        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "avatarImgSrc": "https://klassapp-staging-7mpoqg.laravel.cloud/images/klassapp-icon.svg",
         "hasDeepseek": false,
         "hasOldHub": false,
         "markHrefs": [
@@ -60,7 +60,7 @@
             "present": true
           }
         ],
-        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "firstHref": "https://klassapp-staging-7mpoqg.laravel.cloud/images/brand/models/anthropic-mark.svg",
         "cssHasDVar": false
       },
       "rm": {
@@ -107,7 +107,7 @@
         "avatarBorder": "rgb(34, 197, 94)",
         "avatarBg": "rgba(0, 0, 0, 0)",
         "avatarRadius": "50%",
-        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "avatarImgSrc": "https://klassapp-staging-7mpoqg.laravel.cloud/images/klassapp-icon.svg",
         "hasDeepseek": false,
         "hasOldHub": false,
         "markHrefs": [
@@ -136,7 +136,7 @@
             "present": true
           }
         ],
-        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "firstHref": "https://klassapp-staging-7mpoqg.laravel.cloud/images/brand/models/anthropic-mark.svg",
         "cssHasDVar": false
       },
       "rm": {
@@ -183,7 +183,7 @@
         "avatarBorder": "rgb(34, 197, 94)",
         "avatarBg": "rgba(0, 0, 0, 0)",
         "avatarRadius": "50%",
-        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "avatarImgSrc": "https://klassapp-staging-7mpoqg.laravel.cloud/images/klassapp-icon.svg",
         "hasDeepseek": false,
         "hasOldHub": false,
         "markHrefs": [
@@ -212,7 +212,7 @@
             "present": true
           }
         ],
-        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "firstHref": "https://klassapp-staging-7mpoqg.laravel.cloud/images/brand/models/anthropic-mark.svg",
         "cssHasDVar": false
       },
       "rm": {
@@ -252,14 +252,14 @@
       "measured": {
         "hasTower": true,
         "towerVisible": true,
-        "towerHeight": 707.1876220703125,
+        "towerHeight": 707.1873779296875,
         "hasDeck": true,
         "cardCount": 3,
         "activeRotate": "matrix(1, 0, 0, 1, 0, 0)",
         "avatarBorder": "rgb(34, 197, 94)",
         "avatarBg": "rgba(0, 0, 0, 0)",
         "avatarRadius": "50%",
-        "avatarImgSrc": "http://127.0.0.1:8000/images/klassapp-icon.svg",
+        "avatarImgSrc": "https://klassapp-staging-7mpoqg.laravel.cloud/images/klassapp-icon.svg",
         "hasDeepseek": false,
         "hasOldHub": false,
         "markHrefs": [
@@ -288,7 +288,7 @@
             "present": true
           }
         ],
-        "firstHref": "http://127.0.0.1:8000/images/brand/models/anthropic-mark.svg",
+        "firstHref": "https://klassapp-staging-7mpoqg.laravel.cloud/images/brand/models/anthropic-mark.svg",
         "cssHasDVar": false
       },
       "rm": {
