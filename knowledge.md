@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Admin import xlsx/xls + seeder state_id MERGED + STAGING** ([#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638))
+## Current Status: September 16, 2026 — **Landing footer X + tagline MERGED + STAGING** ([#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639))
+
+- **Merged**: [#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639) — GitHub API `merged: true`, merge SHA `61291096b3b9992c76d67f165d0c7a29051017f1` (`merged_at` 2026-09-16T09:17:17Z).
+- **Change**: Footer X → `https://x.com/Klass_App`; tagline → "Educationists' tools connected by intelligence."
+- **Staging deploy**: `depl-a2c236af-f56c-4176-88f3-43815c1e46bb` @ `61291096` **succeeded**. Playwright `e2e/landing-footer-tagline-x-verify.cjs` **ALL OK** at 375/414/768/1280 on staging. **Production: NOT deployed.**
+
+## Previous: September 16, 2026 — **Admin import xlsx/xls + seeder state_id MERGED + STAGING** ([#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638))
 
 - **Merged**: [#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638) — GitHub API `merged: true`, merge SHA `1ecee8a23a7d7504902f19bd9279c5f187b2d585` (`merged_at` 2026-09-16T09:10:17Z). From Elijah [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552) review — safest pieces only.
 - **Staging deploy**: `depl-a2c23438-2b0a-49fb-982e-3365c5ce1f52` @ `1ecee8a2` **succeeded**. Commands verify: `ImportMemberRequest` has `file_extension:csv,xlsx,xls`; school-admin seeder comment confirms no `state_id` write. **Production: NOT deployed.**
@@ -2200,6 +2206,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: Landing footer X handle + tagline — **MERGED + STAGING** ([#639](https://github.com/KlassApp-Foundation/KlassApp/pull/639))
+- **Work done**: Updated `landing-v2` footer: X link `https://x.com/klassapp` → `https://x.com/Klass_App`; tagline "Smarter schools start here." → "Educationists' tools connected by intelligence." PHPUnit + dedicated Playwright script at AGENTS viewports; staging verify ALL OK.
+- **Files**: `resources/views/landing-v2.blade.php`, `LandingPreviewV3Test`, `LandingAuthErrorCutoverTest`, `e2e/landing-footer-tagline-x-verify.cjs`, `e2e/landing-preview-build-verify.cjs`, screenshots, `knowledge.md`.
+- **Key decisions**: Staging-only; live `/` uses `landing-v2` only (WelcomeController).
+- **Status**: ✅ MERGED `61291096` + staging `depl-a2c236af-…` succeeded. Production not deployed.
+- **Edge cases flagged**: Legacy landing/welcome/landing-layout footers still carry the old tagline / `#` X href — not on the live home route.
 
 ### 2026-09-16: Admin import xlsx/xls + seeder state_id — **MERGED + STAGING** ([#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638))
 - **Work done**: Reviewed Elijah [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552); constructive PR comment; closed [#625](https://github.com/KlassApp-Foundation/KlassApp/pull/625) as duplicate; enabled GitHub Issues; filed wishlist [#629](https://github.com/KlassApp-Foundation/KlassApp/issues/629)–[#637](https://github.com/KlassApp-Foundation/KlassApp/issues/637). Landed clean PR: `ImportMemberRequest` accepts csv/xlsx/xls (shared by student+teacher admin import), Blade `accept=`, removed `userprofiles.state_id` from seeders + fixed student seeder city lookup off dropped `cities.state_id`. PHPUnit against real `tests/fixtures/klassapp-*-test-data.xlsx` + generated `.xls`.
