@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/KlassApp-Foundation/KlassApp)
 
-KlassApp is a multi-tenant school management platform for Uganda and beyond. Schools run day-to-day operations in one place, while **Toshi** — KlassApp's AI agent — helps finish setup and keep work moving across the channels educationists already use. Parents get answers on **WhatsApp**. Admins and teachers work in the web dashboard. The product direction is an agentic protocol for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
+KlassApp is a multi-tenant school management platform, built first for the hardest real-world constraints — limited bandwidth, everyday phones — which is what makes it work anywhere schools need it. Schools run day-to-day operations in one place, while **Toshi** — KlassApp's AI agent — helps finish setup and keep work moving across the channels educationists already use. Parents get answers on **WhatsApp**. Admins and teachers work in the web dashboard. The product direction is an agentic protocol for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
 
 Live product: [https://klassapp.xyz](https://klassapp.xyz)
 
