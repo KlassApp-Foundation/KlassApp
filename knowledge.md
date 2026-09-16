@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **AGENTS.md standing rules 21–27 MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
+## Current Status: September 16, 2026 — **Root clutter CI guard** (PR pending)
+
+- **Branch**: `ci/root-clutter-guard` off `origin/main` (`ebd0a34d`).
+- **Change**: GitHub Actions `root-clutter-guard.yml` + `scripts/check-root-clutter.sh` — fails PRs that *add* root screenshots, `*.cjs` outside `e2e/`, typo brand assets (`klassaplogo*` / `klassapplogo*`), or new non-allowlisted top-level dirs. Documented in `CONTRIBUTING.md`. Narrow: does not re-audit legacy files on main. **No deploy.**
+- **PR / merge**: opening now; stamp MERGED only after GitHub API `merged: true`.
+
+## Previous: September 16, 2026 — **AGENTS.md standing rules 21–27 MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
 
 - **Merged**: [#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644) — GitHub API `merged: true`, merge SHA `3d938c16ec8df5311f80123d331ba91801bffd8c` (`merged_at` 2026-09-16T10:21:50Z).
 - **Change**: Standing rules **21–27**; root AI-tool audit table; explicit single-SoT language (`.cursor/` / `.ai/` pointers only). Docs only; **no deploy**.
@@ -2216,6 +2222,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: Root clutter CI guard — **PR opening**
+- **Work done**: Added narrow PR-only Actions workflow + `scripts/check-root-clutter.sh`; documented in CONTRIBUTING.md. Verified PASS on clean PR tip; FAIL on synthetic root PNG / `*.cjs` / `scratch/` / typo brand assets.
+- **Files**: `.github/workflows/root-clutter-guard.yml`, `scripts/check-root-clutter.sh`, `CONTRIBUTING.md`, `knowledge.md`.
+- **Key decisions**: Diff-filter=A only (new mess, not legacy). Allowlist matches AGENTS root audit. `public/images/*` already gitignores most PNGs; typo check still catches force-adds and paths under `resources/`.
+- **Status**: 🚧 PR opening. Docs/CI only; no deploy.
+- **Edge cases flagged**: Existing tracked `klassaplogo-primary.png` on disk is legacy and not failed by this gate until newly added again.
 
 ### 2026-09-16: AGENTS.md standing rules 21–27 + root AI SoT audit — **MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
 - **Work done**: Pulled `origin/main`. Audited repo root + AI dirs. Verdict: keep `.cursor/rules/` + `.ai/rules/` as machine pointers (no content duplicate of AGENTS.md); keep `.design-sync/` durable inputs; keep `.devin/skills/phpstorm-mcp/`; leave gitignored local clutter alone. Consolidated tonight's durable lessons into AGENTS.md standing rules 21–27; explicit SoT language + audit table under "Why one canonical file"; cross-links in Verification / Session workflow.
