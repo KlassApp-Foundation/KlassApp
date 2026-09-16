@@ -621,43 +621,6 @@
           <h2>Not just software. A protocol.</h2>
           <p>KlassApp is open infrastructure : designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
         </div>
-        <div class="protocol-visual reveal reveal-delay-1" aria-hidden="true">
-          <div class="mesh">
-            <div class="mesh-glow"></div>
-            <div class="mesh-stars">
-              <span></span><span></span><span></span>
-              <span></span><span></span><span></span>
-            </div>
-            <svg class="mesh-svg" viewBox="0 0 460 460" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle class="mesh-ring soft" cx="230" cy="230" r="198" />
-              <circle class="mesh-ring dashed" cx="230" cy="230" r="168" />
-              <circle class="mesh-ring soft" cx="230" cy="230" r="92" />
-              <path class="mesh-link oss" d="M230 172 C230 140, 230 110, 230 78" />
-              <path class="mesh-link mcp" d="M186 268 C140 300, 110 330, 88 352" />
-              <path class="mesh-link com" d="M274 268 C320 300, 350 330, 372 352" />
-              <path class="mesh-link-pulse oss" d="M230 172 C230 140, 230 110, 230 78" />
-              <path class="mesh-link-pulse mcp" d="M186 268 C140 300, 110 330, 88 352" />
-              <path class="mesh-link-pulse com" d="M274 268 C320 300, 350 330, 372 352" />
-            </svg>
-            <div class="mesh-hub">
-              <span class="mesh-hub-mark">KA</span>
-              <span class="mesh-hub-label">Protocol</span>
-            </div>
-            <div class="mesh-chip">Open infrastructure</div>
-            <div class="mesh-node oss">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 01</span><span class="title">Open Source</span></div>
-            </div>
-            <div class="mesh-node mcp">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 02</span><span class="title">MCP Compatible</span></div>
-            </div>
-            <div class="mesh-node com">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 03</span><span class="title">Community-Driven</span></div>
-            </div>
-          </div>
-        </div>
       </div>
       <div class="protocol-grid">
         <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>

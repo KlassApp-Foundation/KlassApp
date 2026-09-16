@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Landing Toshi tower + hero X-flip MERGED + STAGING** ([#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624))
+## Current Status: September 16, 2026 — **Landing protocol mesh icon stripped** (PR opening)
+
+- **Branch**: `fix/landing-protocol-strip-icon` off `main` (`2e08c1ab`).
+- **Change**: Removed `#protocol` `.protocol-visual` mesh/icon under "Not just software. A protocol." — heading + lede text kept; protocol cards unchanged.
+- **Verify (local)**: PHPUnit `LandingPreviewV3Test` PASS. Playwright `e2e/landing-protocol-no-mesh-verify.cjs` ALL OK at 375/414/768/1280.
+- **Staging**: pending after merge. **Production: not deployed.**
+
+## Previous: September 16, 2026 — **Landing Toshi tower + hero X-flip MERGED + STAGING** ([#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624))
 
 - **Merged**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) — GitHub API `merged: true`, merge SHA `168a054e2a6309ef63436a1a38fb27b4c42e2fd0` (`merged_by` Mucunguzi256, `merged_at` 2026-09-16T08:29:05Z). Admin merge past ruleset (`REVIEW_REQUIRED` block).
 - **Staging deploy**: `depl-a2c225d3-8c1b-47d7-b788-c45f1a6436a3` @ `168a054e` **succeeded** (`deployment.succeeded` 2026-09-16T08:31:27Z). URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
@@ -2175,6 +2182,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16 — Strip protocol mesh icon under "Not just software. A protocol."
+- **Work**: Synced `main`; removed `protocol-visual` / mesh block from `landing-v2.blade.php`; updated `LandingPreviewV3Test`; added `e2e/landing-protocol-no-mesh-verify.cjs`.
+- **Status**: Local green; PR + staging pending.
+- **Edge**: Protocol card icons retained (Open Source / MCP / Community) — only the left-column decorative mesh under the heading was removed.
 
 ### 2026-09-16 — Landing Toshi tower + hero X-flip integration
 - **Work**: Synced `origin/main`; extracted `~/Downloads/KlassApp Design System (1).zip` → `/tmp/klassapp-ds-tower`; installed six clean marks from `/tmp/llm-brand-marks.zip` into `resources/assets/brand/models/` + `public/images/brand/models/` (DeepSeek excluded); ported tower partial + X-flip hero CSS/JS/Blade; remapped `--d-*` to landing tokens.

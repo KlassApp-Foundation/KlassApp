@@ -51,7 +51,10 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('images/klassapp-logo.svg', false);
         $response->assertSee('Human in the loop', false);
         $response->assertSee('Before consequential writes, Toshi asks for confirmation', false);
-        $response->assertSee('class="mesh"', false);
+        $response->assertDontSee('protocol-visual', false);
+        $response->assertDontSee('class="mesh"', false);
+        $response->assertDontSee('mesh-hub-mark', false);
+        $response->assertSee('Not just software. A protocol.', false);
         $response->assertSee('Open Source', false);
         $response->assertSee('MIT licensed. Source and self-hosting will open publicly after an independent security review', false);
         $response->assertSee('Smarter schools start here.', false);
