@@ -7,7 +7,7 @@ Short map of what lives under `docs/` and what to read instead. No second wiki �
 | New human contributor | [`architecture.md`](architecture.md) → [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp) → [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Public direction | [`roadmap.md`](roadmap.md) |
 | AI / maintainer agents | [`AGENTS.md`](../AGENTS.md) · [`TOOLING.md`](../TOOLING.md) · [`knowledge.md`](../knowledge.md) |
-| Product / schools (community copy) | [`docs/community/`](community/) (Docsify; content refresh pending) |
+| Product / schools (community copy) | [`docs/community/`](community/) (Docsify; content refreshed to shipped facts) |
 | Legacy WhatsApp integration notes | [`docs/dev/`](dev/) — **archived**; see banner there |
 
 Docsify hub (DESIGN_SYSTEM theme): open [`index.html`](index.html) in this folder (or serve `docs/` over HTTP).

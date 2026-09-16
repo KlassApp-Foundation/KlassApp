@@ -19,7 +19,7 @@ Live product: [klassapp.xyz](https://klassapp.xyz). Staging demo access: [commun
 
 | Area | Notes |
 |---|---|
-| **Docs structure** | This architecture bridge + public roadmap; Docsify brand theme shipped; community Docsify *content* refresh still pending. |
+| **Docs structure** | Architecture bridge + public roadmap + Docsify brand theme shipped; community Docsify content refreshed to match shipped product (see community Docsify). |
 | **Kabale Junior School** | Real production school (ongoing ops and onboarding follow-through — not a speculative pilot). |
 
 ## Future (logged initiatives)
