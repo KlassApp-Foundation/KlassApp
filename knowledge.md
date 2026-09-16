@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Landing protocol mesh icon stripped** (PR opening)
+## Current Status: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
+
+- **Merged**: [#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627) — GitHub API `merged: true`, merge SHA `21183487fc2f8221994523d7d2965c514f3df5a1` (`merged_at` 2026-09-16T08:39:45Z). Admin merge past ruleset.
+- **Staging deploy**: `depl-a2c22941-cece-4813-87b7-46dc9eddd0b0` @ `21183487` **succeeded**. URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
+- **Staging verify**: Playwright `e2e/landing-protocol-no-mesh-verify.cjs` → **ALL OK** at 375/414/768/1280. Staging HTML: heading present; `protocol-visual` / `class="mesh"` / `mesh-hub-mark` absent; three protocol cards remain. Evidence `e2e/screenshots/landing-protocol-no-mesh/`.
+
+## Previous: September 16, 2026 — **Landing protocol mesh icon stripped** (PR opening)
 
 - **Branch**: `fix/landing-protocol-strip-icon` off `main` (`2e08c1ab`).
 - **Change**: Removed `#protocol` `.protocol-visual` mesh/icon under "Not just software. A protocol." — heading + lede text kept; protocol cards unchanged.
@@ -2185,7 +2191,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ### 2026-09-16 — Strip protocol mesh icon under "Not just software. A protocol."
 - **Work**: Synced `main`; removed `protocol-visual` / mesh block from `landing-v2.blade.php`; updated `LandingPreviewV3Test`; added `e2e/landing-protocol-no-mesh-verify.cjs`.
-- **Status**: Local green; PR + staging pending.
+- **Status**: ✅ MERGED `21183487` + staging `depl-a2c22941-…` verified. Production not deployed.
 - **Edge**: Protocol card icons retained (Open Source / MCP / Community) — only the left-column decorative mesh under the heading was removed.
 
 ### 2026-09-16 — Landing Toshi tower + hero X-flip integration
