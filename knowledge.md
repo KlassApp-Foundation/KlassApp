@@ -618,10 +618,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **AGENTS.md Cloud sync + design-sync inputs** ([#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) · [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547))
+## Current Status: September 16, 2026 — **AGENTS.md Cloud sync + design-sync inputs MERGED** ([#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) · [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547))
 
 - **[#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) MERGED**: GitHub API `merged: true`, merge SHA `87ad6bd08adf2b3046cb52e903dad27f18c2dbc6` (`merged_at` 2026-09-16T08:58:50Z). Durable `.design-sync/` inputs + `.gitignore` + knowledge stamp. Docs/tooling only; **no deploy**.
-- **[#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623)**: Rebased onto `main` @ `87ad6bd0`. Keeps Cloud ops alignment (no retired DO droplet SSH), standing rule #19 sync-from-main-first, `project-context.mdc` pointer fix. Knowledge restamped here. Docs/rules only; **no deploy**.
+- **[#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) MERGED**: GitHub API `merged: true`, merge SHA `e3113a15c6becec8425af7d049e3034d2f636cda` (`merged_at` 2026-09-16T09:00:58Z). Rebased onto `main` @ `87ad6bd0` first; Cloud ops alignment + standing rule #19 + `project-context.mdc` pointer. Docs/rules only; **no deploy**.
 
 ## Previous: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
 
@@ -2200,7 +2200,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Also this pass**: Merged [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) (design-sync durable inputs) — API `merged: true` @ `87ad6bd0`.
 - **Files**: `AGENTS.md`, `.cursor/rules/project-context.mdc`, `knowledge.md` (this stamp).
 - **Key decisions**: `knowledge.md` remains hosting/ops source of truth; no secrets in `AGENTS.md`; no deploy (docs/rules only). Standing #17/#18 numbering preserved.
-- **Status**: rebased + push; merge when GitHub reports mergeable.
+- **Status**: ✅ MERGED — API `merged: true` @ `e3113a15` (`merged_at` 2026-09-16T09:00:58Z). No deploy.
 - **Edge cases flagged**: Markdown-only; Cloud env IDs stay in this file only.
 
 ### 2026-09-13: Claude Design sync — durable inputs committed (React shim + tokens + previews)
