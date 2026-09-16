@@ -618,7 +618,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
+## Current Status: September 16, 2026 — **AGENTS.md Cloud sync + design-sync inputs** ([#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) · [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547))
+
+- **[#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) MERGED**: GitHub API `merged: true`, merge SHA `87ad6bd08adf2b3046cb52e903dad27f18c2dbc6` (`merged_at` 2026-09-16T08:58:50Z). Durable `.design-sync/` inputs + `.gitignore` + knowledge stamp. Docs/tooling only; **no deploy**.
+- **[#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623)**: Rebased onto `main` @ `87ad6bd0`. Keeps Cloud ops alignment (no retired DO droplet SSH), standing rule #19 sync-from-main-first, `project-context.mdc` pointer fix. Knowledge restamped here. Docs/rules only; **no deploy**.
+
+## Previous: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
 
 - **Merged**: [#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627) — GitHub API `merged: true`, merge SHA `21183487fc2f8221994523d7d2965c514f3df5a1` (`merged_at` 2026-09-16T08:39:45Z). Admin merge past ruleset.
 - **Staging deploy**: `depl-a2c22941-cece-4813-87b7-46dc9eddd0b0` @ `21183487` **succeeded**. URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
@@ -648,6 +653,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Previous: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
 
+- **Docs (this session, no deploy)**: `AGENTS.md` aligned to Laravel Cloud ops already recorded in this file — retired DigitalOcean SSH droplet check removed; standing rule #19 requires sync from `origin/main` before any task. Hosting truth: **this file wins**. PR opening on `cursor/agents-md-cloud-sync-4d2e`.
 - **Rollback point (pre-deploy)**: `e3c308dbe53f38d96bd5786899331b516a406ab3` — last succeeded prod deploy `depl-a2bf8451-…` (#611+#613+#615).
 - **Production deploy**: `depl-a2bfce3d-ab94-4e34-8090-675810ba1eaf` @ `4fbcbf6f6f69c69b421d0fa8260fbc6d7a70dea8` (`deployment.succeeded` 2026-09-15T04:35:25Z) — includes [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620).
 - **Live verify (Commands API + staging Playwright)**:
@@ -2188,6 +2194,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: AGENTS.md Cloud alignment + pull-from-main rule — **docs PR #623** (rebased)
+- **Work done**: Rebased [#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) onto `main` after [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) merge (`87ad6bd0`). Kept intent: rewrite `AGENTS.md` Environment reality check away from retired DigitalOcean droplet SSH (`root@46.101.111.131` / `sms-app`); production = Laravel Cloud; standing rule #19 sync from `origin/main` before any task; session workflow sync → read knowledge → confirm Cloud access; `.cursor/rules/project-context.mdc` pointer no longer claims DigitalOcean. Dropped stale knowledge stamp from pre-rebase tip; restamped here.
+- **Also this pass**: Merged [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) (design-sync durable inputs) — API `merged: true` @ `87ad6bd0`.
+- **Files**: `AGENTS.md`, `.cursor/rules/project-context.mdc`, `knowledge.md` (this stamp).
+- **Key decisions**: `knowledge.md` remains hosting/ops source of truth; no secrets in `AGENTS.md`; no deploy (docs/rules only). Standing #17/#18 numbering preserved.
+- **Status**: rebased + push; merge when GitHub reports mergeable.
+- **Edge cases flagged**: Markdown-only; Cloud env IDs stay in this file only.
 
 ### 2026-09-13: Claude Design sync — durable inputs committed (React shim + tokens + previews)
 
