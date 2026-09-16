@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **README upgrade MERGED** ([#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648))
+## Current Status: September 16, 2026 — **README global positioning MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
+
+- **Merged**: [#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651) — GitHub API `merged: true`, merge SHA `d04ae83773f3543794c191f1014198f6b82c4339` (`merged_at` 2026-09-16T20:55:15Z).
+- **Change**: README opening line no longer Uganda-first; restores locked global positioning (hard constraints / works anywhere). Docs only; **no deploy**.
+- **Verify**: `origin/main` README contains “built first for the hardest real-world constraints” and does **not** contain “for Uganda and beyond.”
+
+## Previous: September 16, 2026 — **README upgrade MERGED** ([#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648))
 
 - **Merged**: [#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648) — GitHub API `merged: true`, merge SHA `5f6d96128babbea6b494b8a54f3563bee08d813f` (`merged_at` 2026-09-16T15:02:31Z).
 - **Change**: README Key Capabilities / Quick Start / Resources / MIT; real staging screenshot `docs/readme/klassapp-screenshot-readme.png`. Docs only; **no deploy**.
@@ -2227,6 +2233,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: README global positioning — **MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
+- **Work done**: Replaced Uganda-first opening line with locked global positioning copy. Confirmed on `origin/main` after merge.
+- **Files**: `README.md`, `knowledge.md` (this stamp).
+- **Status**: ✅ MERGED — API `merged: true` @ `d04ae837` (`merged_at` 2026-09-16T20:55:15Z). Docs only; no deploy.
 
 ### 2026-09-16: README upgrade (n8n structural benchmark) — **MERGED** ([#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648))
 - **Work done**: Rewrote `README.md` with Key Capabilities, real staging screenshot, Quick Start (real Laravel/Docker flow), Resources, MIT License. Captured `docs/readme/klassapp-screenshot-readme.png` from staging admin dashboard with Toshi open (Playwright, Phase 4 demo). Verified GitHub HTML render + raw PNG 200 on `main` after merge.
