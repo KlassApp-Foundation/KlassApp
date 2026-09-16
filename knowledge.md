@@ -626,6 +626,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Password**: All 6 `phase4.*@klassapp.xyz` users **ROTATED** (`OLD_DEMO123=0`). Doppler + Cloud `STAGING_DEMO_PASSWORD` set (not written here). Seeders use `DemoSeedPassword`.
 - **Prior docs**: [#655](https://github.com/KlassApp-Foundation/KlassApp/pull/655) knowledge PII redaction MERGED (`0f31fab0`).
 
+## Previous: September 16, 2026 — **README Mermaid connector diagram PR OPEN** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
+
+- **PR**: [#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650) — branch `docs/readme-mermaid-connector-flow` (rebased onto current `main`). Docs only; **no deploy**.
+- **Change**: `README.md` Mermaid flowchart of the **live** WhatsApp path (Meta Cloud API ↔ `WhatsAppController` / `WhatsAppBusinessService` / `OutboundWhatsAppService` / `MessageDeliveryLog`) + dashed Drive/Slack as product-model UI only.
+- **Front-page Mermaid (investigation only, not implemented)**: CDN `mermaid@11.17.2` `mermaid.min.js` ≈ **3.57 MB** raw / **~980 KB** gzip; landing Vite chunk today ≈ **4.7 KB** (`landing-preview-*.js`, ~1.7 KB gzip). Not worth loading on the marketing page vs GitHub-rendered README (free) or keeping the existing SVG/Blade connector visuals.
+
 ## Previous: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 
 - **Merged**: [#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653) — GitHub API `merged: true`, merge SHA `2e5e9318ddda51ad3397dfc8c4c26e19eed373fa` (`merged_at` 2026-09-16T21:02:26Z).

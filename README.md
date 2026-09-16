@@ -20,6 +20,46 @@ Live product: [https://klassapp.xyz](https://klassapp.xyz)
 - **Multi-tenant by design** — Every query, job, cache key, and UI list is scoped by `school_id`. Cross-school data leaks are treated as bugs, not edge cases.
 - **Hosted or self-run** — Production SaaS on Laravel Cloud (`klassapp.xyz`, EU-West-1). This repository is MIT-licensed so you can read the code and run your own copy.
 
+## Architecture: Toshi connector flow
+
+How channels relate to the Laravel app today. **WhatsApp is the live connector** (Meta Cloud API). Google Drive and Slack appear in the product UI as first-class channels; they are not separate API clients in `app/` yet.
+
+```mermaid
+flowchart TB
+  subgraph people [People]
+    Parent[Parent on WhatsApp]
+    Staff[Admin / Teacher in browser]
+  end
+
+  subgraph meta [Meta]
+    CloudAPI["WhatsApp Cloud API<br/>graph.facebook.com"]
+  end
+
+  subgraph klassapp [KlassApp Laravel app]
+    Inbound["WhatsAppController<br/>POST /api/whatsapp/inbound"]
+    Outbound[OutboundWhatsAppService]
+    Transport[WhatsAppBusinessService]
+    DeliveryLog[(MessageDeliveryLog)]
+    ToshiUI["AgentToshi Livewire"]
+    ToshiSDK["ToshiSdkV2Service<br/>Laravel AI SDK"]
+    DriveUI["Google Drive<br/>product model — UI only"]
+    SlackUI["Slack<br/>product model — UI only"]
+  end
+
+  Parent <--> CloudAPI
+  CloudAPI <--> Inbound
+  CloudAPI <--> Transport
+  Outbound --> Transport
+  Transport --> DeliveryLog
+  Inbound --> DeliveryLog
+  Staff --> ToshiUI
+  ToshiUI --> ToshiSDK
+  Staff -.-> DriveUI
+  Staff -.-> SlackUI
+```
+
+Inbound webhook and outbound Graph sends both go through Meta; delivery status is stored in `MessageDeliveryLog`. Dashboard staff talk to Toshi in-product; parent WhatsApp menus and proactive notices use the Meta path above (not a Drive/Slack API).
+
 ## Quick Start
 
 KlassApp is a Laravel 12 application. There is no one-line install script. Local setup looks like a normal Laravel + Vite project.
