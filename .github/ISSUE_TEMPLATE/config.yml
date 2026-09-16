@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security report
+    url: https://github.com/KlassApp-Foundation/KlassApp/blob/main/SECURITY.md
+    about: Report vulnerabilities privately to community@klassapp.xyz (do not file a public issue).
+  - name: Community email
+    url: mailto:community@klassapp.xyz
+    about: Questions and maintainer contact.
