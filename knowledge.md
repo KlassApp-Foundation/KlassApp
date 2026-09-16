@@ -618,12 +618,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Docsify brand theme + docs map PR OPEN** (branch `docs/docsify-brand-theme`)
+## Current Status: September 17, 2026 — **Docsify brand theme + docs map MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 
-- **PR**: branch `docs/docsify-brand-theme` — Docsify theme from DESIGN_SYSTEM tokens; `docs/dev` archive banner; `docs/README.md` index. Docs only; **no deploy**.
-- **Theme**: shared `docs/shared/docsify-klassapp.css` — `--d-canvas` `#FAFAF5`, green accent `#22C55E`, blue info `#1E6FD9`, **Sora** display / **DM Sans** body, canonical `klassapp-icon.svg`. Applied to `docs/dev/` + `docs/community/`.
-- **Verify**: Playwright evidence under `docs/evidence/docsify-theme/` (before/after community + archived dev banner amber `#D97706`).
-- **Prior**: [#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650) README Mermaid MERGED (`5f236ad8`).
+- **Merged**: [#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659) — GitHub API `merged: true`, merge SHA `97c2fe055c26813c0548d8802c9bbb2ee4713f26` (`merged_at` 2026-09-16T22:12:36Z). Docs only; **no deploy**.
+- **Change**: `docs/dev` archive banner; `docs/README.md` index; shared `docs/shared/docsify-klassapp.css` from DESIGN_SYSTEM `--d-*` (Sora/DM Sans, parchment `#FAFAF5`, green `#22C55E` / blue `#1E6FD9`); themed `docs/dev` + `docs/community` Docsify shells; canonical brand icon.
+- **Verify**: Playwright `docs/evidence/docsify-theme/` before/after; computed canvas `rgb(250,250,245)`, DM Sans body, Sora h1; archive `.ka-banner` amber `rgb(217,119,6)`.
 
 ## Previous: September 16, 2026 — **README Mermaid connector diagram MERGED** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
 
@@ -2264,11 +2263,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-17: Docsify DESIGN_SYSTEM theme + docs/dev archive banner + docs index — shipping
+### 2026-09-17: Docsify DESIGN_SYSTEM theme + docs/dev archive banner + docs index — **MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 - **Work done**: Steps 1–2 of docs plan — archive banner on `docs/dev/README.md`; `docs/README.md` audience map; shared Docsify CSS from DESIGN_SYSTEM `--d-*` tokens (Sora/DM Sans, parchment canvas, green CTA / blue info); themed `docs/dev/index.html` + `docs/community/index.html`; real brand icon copied into both Docsify trees.
 - **Verify**: Playwright screenshots `docs/evidence/docsify-theme/01-before-*.png` vs `02-after-*.png`; computed styles `bg=rgb(250,250,245)`, `font=DM Sans`, `h1=Sora`; archive `.ka-banner` amber border `rgb(217,119,6)`.
 - **Files**: `docs/shared/docsify-klassapp.css`, `docs/{dev,community}/index.html`, logos, `docs/dev/README.md`, `docs/dev/_sidebar.md`, `docs/README.md`, `README.md` Resources link, evidence PNGs, `knowledge.md`.
-- **Status**: 🚧 PR opening.
+- **Status**: ✅ MERGED #659 @ `97c2fe05`. Docs only; no deploy.
 
 ### 2026-09-16: README Mermaid WhatsApp connector diagram — **MERGED** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
 - **Work done**: Rebased `docs/readme-mermaid-connector-flow` onto `origin/main`; resolved `knowledge.md` Current Status conflict (kept staging-isolation status; preserved Mermaid investigation note). Force-pushed; `mergeable: true`. Admin-merged.
