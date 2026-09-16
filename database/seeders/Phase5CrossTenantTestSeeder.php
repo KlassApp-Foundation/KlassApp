@@ -11,6 +11,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
+use App\Support\DemoSeedPassword;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -162,8 +163,9 @@ class Phase5CrossTenantTestSeeder extends Seeder
 
         $this->command?->info('Phase 5 cross-tenant test data seeded.');
         $this->command?->line('School B: ' . $schoolB->name . ' (ID ' . $schoolB->id . ')');
-        $this->command?->line('Admin: phase5.admin@klassapp.xyz / demo123');
-        $this->command?->line('Teacher: phase5.teacher@klassapp.xyz / demo123');
+        $this->command?->line('Admin: phase5.admin@klassapp.xyz');
+        $this->command?->line('Teacher: phase5.teacher@klassapp.xyz');
+        $this->command?->line('Password: not echoed — pin via STAGING_DEMO_PASSWORD / DEMO_SEED_PASSWORD.');
     }
 
     private function user(string $email, string $name, School $school, int $usergroupId): User
@@ -179,7 +181,7 @@ class Phase5CrossTenantTestSeeder extends Seeder
             'school_id' => $school->id,
             'usergroup_id' => $usergroupId,
             'name' => $name,
-            'password' => Hash::make('demo123'),
+            'password' => Hash::make(DemoSeedPassword::resolve()),
             'status' => 'active',
             'email_verified' => 1,
         ])->save();
