@@ -45,6 +45,13 @@ These apply to every change, in every session, regardless of which tool is runni
     4. If you are already on a feature branch that must continue: merge or rebase `origin/main` into it *before* new work, unless the task is explicitly to stay on a detached/historical SHA.
     If fetch/update fails, say so and stop rather than implementing against an unknown stale tree.
 20. **Read `knowledge.md` first in any session, before planning** (after standing rule #19). Update it before ending a phase of work: a Session Log entry (date, work done, files touched, decisions, status, edge cases), PR number/URL/branch when you open one, and the merge commit SHA + refreshed "Current Status" when it merges. Don't leave "not pushed" / "opening PR" stubs once the PR is actually open or merged. On hosting/ops facts, `knowledge.md` wins if this file and that file disagree.
+21. **Confirm `merged: true` via the GitHub API before treating a PR as shipped.** A chat claim, a local `gh pr merge` exit code you did not re-check, or "I think it merged" is not enough. After every merge (including your own admin merge), call `gh api repos/KlassApp-Foundation/KlassApp/pulls/{n} --jq '{merged,merge_commit_sha,merged_at}'` (or equivalent) and record the SHA. Do not update `knowledge.md` Current Status to MERGED until that check returns `merged: true`.
+22. **UI and marketing surfaces need real browser verification, not assertion-only green.** Prefer Playwright (or an equivalent real browser pass) at the project viewports (375 / 414 / 768 / 1280) against local or staging. PHPUnit `assertSee` / "the Blade looks right" is not sufficient alone for landing, auth shells, or other user-visible chrome.
+23. **Never invent or guess at facts you have not verified from a real source.** Hosting IDs, env values, "this is already fixed," file contents, API shapes, and contributor intent are all claims until checked. If you cannot verify, say so and ask or hand off. Do not fabricate a plausible answer to keep moving.
+24. **Cloud deploys use the documented deploy POST, not the read-only Laravel Cloud MCP.** MCP inspect (`list-deployments`, metrics, logs) is not a release. Shipping is an empty-body `POST …/environments/{id}/deployments` (token and env IDs in `knowledge.md`), then poll until `deployment.succeeded` and verify the live URL. Staging and production are different environments; merging to `main` does not ship production.
+25. **External contributor PRs require genuine human review before merge.** Do not self-merge unreviewed outside work on trust of the branch tip. Read the notes and the full diff. Keep useful findings; extract safe pieces into small follow-up PRs when the tip mixes good fixes with unsafe scope. Concrete precedent: Elijah-ug [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552) stayed open as the findings source; duplicate [#625](https://github.com/KlassApp-Foundation/KlassApp/pull/625) was closed; only verified safe pieces shipped in [#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638). See also `CONTRIBUTING.md`.
+26. **Confirm `pwd`, git branch, and worktree before any git write.** This machine often has dozens of KlassApp worktrees (40+ is normal). Running `commit` / `push` / `checkout` in the wrong tree is a real failure mode. `pwd` + `git branch --show-current` + `git worktree list` (when unsure) before mutating git state. Standing rule #15 still applies for production deploys from the dedicated main worktree.
+27. **Periodically audit AI-tool scaffolding at the repo root.** Tool-specific dirs accumulate (`.cursor/`, `.ai/`, `.design-sync/`, `.devin/`, plus gitignored copies under `.agents/`, `.claude/`, `.opencode/`, etc.). Before adding a new one, check whether an existing path already covers it. Tracked rule *content* belongs only in this file; tool dirs may hold pointers, skills, or durable inputs (see "Why one canonical file" and the root audit note below). Do not commit regeneratable caches (`node_modules`, `.playwright-mcp/`, `.ds-sync/`, `ds-bundle/`).
 
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
@@ -93,7 +100,9 @@ Section naming convention: `P.1`–`P.7` = Primary One through Primary Seven; `S
 - After any change: `php artisan optimize:clear` locally (Docker) or via Cloud Commands on the target environment — not via SSH to the retired droplet.
 - CSS/published assets: re-publish (`vendor:publish --force`) then hard-refresh; app CSS/JS: `npm run build` (or `npm run dev` locally).
 - Database changes: confirm with an actual `SELECT`, not an assumption that the migration "should have" worked.
-- Deploy: production is Laravel Cloud; merging to `main` does not ship (push-to-deploy is off on prod). Trigger and poll per `knowledge.md` (empty-body `POST …/environments/{id}/deployments`), then verify on the live site — not just that the HTTP call returned 201. Do not run `scripts/deploy-manual.sh` against the retired droplet.
+- Deploy: production is Laravel Cloud; merging to `main` does not ship (push-to-deploy is off on prod). Trigger and poll per `knowledge.md` (empty-body `POST …/environments/{id}/deployments`), then verify on the live site — not just that the HTTP call returned 201. Do not run `scripts/deploy-manual.sh` against the retired droplet. Standing rule #24.
+- UI chrome: real browser/Playwright at 375 / 414 / 768 / 1280 when the change is user-visible — standing rule #22. Do not close on PHPUnit `assertSee` alone.
+- PR ship claims: confirm GitHub API `merged: true` + record merge SHA before stamping `knowledge.md` — standing rule #21.
 - Env vars: a shell-exported var can silently override `.env` via `Dotenv\Repository` reading `getenv()`/`$_SERVER`/`$_ENV` at boot. If an env value looks wrong, check all three sources, not just the `.env` file. Cloud env vars apply only after a **real deployment** (see `knowledge.md`).
 
 ## PhpStorm MCP direct-HTTP workaround
@@ -133,15 +142,30 @@ Use this direct-HTTP pattern whenever structured PHP/Laravel code access is need
 
 ## Session workflow
 
-1. **Sync to latest `origin/main`** before starting — fetch + fast-forward or branch from `origin/main` (standing rule #19). Do not start work on a stale checkout.
+1. **Sync to latest `origin/main`** before starting — fetch + fast-forward or branch from `origin/main` (standing rule #19). Do not start work on a stale checkout. Confirm `pwd` / branch / worktree first (standing rule #26).
 2. Read `knowledge.md` first — session history, past incidents, current hosting/ops, and current state live there, not here. If this file and `knowledge.md` disagree on infra, `knowledge.md` wins.
-3. Confirm real environment access (Cloud MCP / Commands API / deploy trigger / Doppler — not SSH to the retired droplet) before planning work that depends on it — see "Environment reality check" above.
+3. Confirm real environment access (Cloud MCP / Commands API / deploy trigger / Doppler — not SSH to the retired droplet) before planning work that depends on it — see "Environment reality check" above. Do not invent missing facts (standing rule #23).
 4. Scope the task, report the plan before implementing anything non-trivial.
-5. Ship small atomic PRs with real verification evidence.
-6. Before ending a phase: update `knowledge.md`'s Session Log (work done, files touched, decisions, status, edge cases) and make sure "Current Status" at the top doesn't lag more than one session behind merged `main`. Log PR-open state (number/URL/branch) and merge state (commit SHA) as they happen — don't leave stale "not pushed"/"opening PR" stubs after the PR is actually open or merged.
+5. Ship small atomic PRs with real verification evidence (tests + Playwright where UI; standing rules #11 / #22). External contributor PRs: human review before merge (standing rule #25).
+6. Before ending a phase: update `knowledge.md`'s Session Log (work done, files touched, decisions, status, edge cases) and make sure "Current Status" at the top doesn't lag more than one session behind merged `main`. Log PR-open state (number/URL/branch) and merge state **only after** GitHub API `merged: true` (standing rule #21) — don't leave stale "not pushed"/"opening PR" stubs after the PR is actually open or merged.
 
 ## Why one canonical file
 
 This repo previously had three parallel, overlapping rule systems: `.ai/rules/*.md` (path-scoped, for OpenCode), `.cursor/rules/*.mdc` (path-scoped + always-applied, for Cursor), and this file (for Codex). They drifted — notably, `.cursor/rules/project-context.mdc` still said production hosting was Hetzner and documented the old Evolution API WhatsApp integration. Both of those were already wrong then; current ops truth (see `knowledge.md`) is **Laravel Cloud** (`klassapp.xyz`, EU-West-1) with WhatsApp on the **Meta Cloud API**. The DigitalOcean droplet is retired. A rule three tools can't agree on isn't a rule, it's a trap for whichever agent reads the stale copy.
 
-`.ai/rules/*.md` and `.cursor/rules/*.mdc` are now one-line pointers back to this file, kept only so each tool's native rule-loading mechanism (glob-scoped auto-attach) still fires and lands the agent here. Update rules in exactly one place: this file.
+**`AGENTS.md` is the single source of truth for agent rules.** `.ai/rules/*.md` and `.cursor/rules/*.mdc` are **not** a second rules location. They are thin machine pointers (YAML/frontmatter + a one-line "see AGENTS.md" body) kept only so each tool's native rule-loading mechanism (Cursor `alwaysApply` / globs, OpenCode path globs) still fires and lands the agent here. Do not add standing rules, stack facts, or bug lessons into those pointer files — edit this file only. If a pointer grows past a redirect, it has drifted; shrink it back.
+
+### Root AI-tool audit note (2026-09-16)
+
+| Path | Verdict | Why |
+| --- | --- | --- |
+| `.cursor/rules/*.mdc` | **Keep (pointers)** | Cursor always-apply / glob attach. Content = redirect to this file. |
+| `.ai/rules/*.md` | **Keep (pointers)** | OpenCode path attach + `index.md` map. Content = redirect to this file. |
+| `.design-sync/` | **Keep (durable inputs)** | Claude Design sync sources (`NOTES.md`, shim, previews, conventions). Regeneratable caches stay gitignored (`.cache/`, `ds-bundle/`, `.ds-sync/`). See [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547). |
+| `.devin/skills/phpstorm-mcp/` | **Keep** | Devin-only skill for native PhpStorm MCP over HTTP (platform lacks `phpstorm` server type). Mirrors the PhpStorm section above; not a rules fork. |
+| `.agents/`, `.claude/`, `.opencode/`, `.playwright-mcp/`, `.gemini/`, `.junie/`, `.sisyphus/`, `.history/` | **Local clutter (gitignored)** | Tool caches / generated skill copies. Do not commit. Do not treat as canonical rules. |
+| `CLAUDE.md`, `opencode.json`, `.mcp.json`, `boost.json` | **Local / generated (mostly gitignored)** | Boost guidelines may exist for local install; standing KlassApp rules still live here. |
+
+Legitimate app structure at repo root (keep): `app/`, `bootstrap/`, `config/`, `database/`, `docs/`, `e2e/`, `lang/`, `packages/`, `public/`, `resources/`, `routes/`, `scripts/`, `storage/`, `tests/`, plus committed project docs (`AGENTS.md`, `TOOLING.md`, `README.md`, community health files) and build manifests. Scratch/`tmp/` and `node_modules`/`vendor` are expected local noise.
+
+Standing rule #27: re-run this kind of audit when new tool dirs appear, before adding another parallel rules tree.
