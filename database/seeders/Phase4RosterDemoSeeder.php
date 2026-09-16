@@ -11,6 +11,7 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Support\DemoSeedPassword;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -127,9 +128,10 @@ class Phase4RosterDemoSeeder extends Seeder
 
         $this->command?->info('Phase 4 roster demo seeded.');
         $this->command?->line('School: ' . $school->name . ' (ID ' . $school->id . ')');
-        $this->command?->line('Admin: phase4.admin@klassapp.xyz / demo123');
-        $this->command?->line('Teacher: phase4.teacher@klassapp.xyz / demo123');
-        $this->command?->line('Class teacher: phase4.class-teacher@klassapp.xyz / demo123');
+        $this->command?->line('Admin: phase4.admin@klassapp.xyz');
+        $this->command?->line('Teacher: phase4.teacher@klassapp.xyz');
+        $this->command?->line('Class teacher: phase4.class-teacher@klassapp.xyz');
+        $this->command?->line('Password: not echoed — pin via STAGING_DEMO_PASSWORD / DEMO_SEED_PASSWORD (Doppler/Cloud), or a random value was generated for this run.');
     }
 
     private function user(string $email, string $name, School $school, int $usergroupId): User
@@ -147,7 +149,7 @@ class Phase4RosterDemoSeeder extends Seeder
             'school_id' => $school->id,
             'usergroup_id' => $usergroupId,
             'name' => $name,
-            'password' => Hash::make('demo123'),
+            'password' => Hash::make(DemoSeedPassword::resolve()),
             'status' => 'active',
             'email_verified' => 1,
         ])->save();

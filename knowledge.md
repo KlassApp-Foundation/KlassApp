@@ -120,14 +120,14 @@ Application: **KlassApp** (`app-a2ac7a87-f8aa-42db-8055-ba41bab5be50`, eu-west-1
 
 ### Staging isolation (verified)
 
-- Logical MySQL schema **`klassapp-staging`** on cluster `klassapp-mysql` (`db-schema-a2b86c6f-ceb7-49aa-8d45-0cc891e61e25`) — **empty** at create; **not** restored/cloned from production.
-- Production schema remains `production` on the same cluster (compute shared; **data namespaces separate**).
-- Staging Valkey: same `klassapp-redis` cache with **`CACHE_PREFIX` / `REDIS_PREFIX` = `klassapp_staging_`** so keys do not collide with prod.
-- Staging filesystem: **local** (no prod R2 bucket attached).
-- Staging does **not** carry production WhatsApp Business tokens (mail uses `MAIL_MAILER=log`).
-- Live check after first deploy (`depl-a2b86d10-…` **succeeded**):
-  - Staging: `APP_ENV=staging`, `db=klassapp-staging`, HTTP **200** on `/` and `/login`
-  - Staging school count after demo seed: **1**; production school count unchanged: **42** / `db=production`
+> **2026-09-16 hardening:** Staging was moved off the shared `klassapp-mysql` cluster after proving the shared DB user could `SELECT` from `production.schools` (`CROSS_OK` 46). Staging now uses a **dedicated** MySQL cluster.
+
+- **Staging cluster**: `klassapp-staging-mysql` (`db-a2c339c5-af10-4f85-a540-76ed9c76745c`, eu-west-1) — schema **`klassapp-staging`** (`db-schema-a2c33a13-e1ed-46a9-8ece-3f0556fa5625`).
+- **Production cluster**: `klassapp-mysql` (`db-a2ac7aec-af19-4d0f-87c1-3a5865812228`) — schema **`production`** (`db-schema-a2ac7aec-dcc8-49c6-b0c3-71540d340a62`). Unchanged.
+- Post-cutover verify (Cloud Commands on staging): `SELECT count(*) FROM production.schools` → **`CROSS_BLOCKED`** (`SQLSTATE[42000] 1049 Unknown database 'production'`). Host = staging-only cluster; user ≠ prod user.
+- Staging Valkey: same `klassapp-redis` cache with **`CACHE_PREFIX` / `REDIS_PREFIX` = `klassapp_staging_`**.
+- Staging filesystem: **local** (no prod R2). No production WhatsApp tokens (`mail=log`).
+- Demo passwords: rotated off the briefly public historical password; pin via Cloud/Doppler **`STAGING_DEMO_PASSWORD`** (value not stored in this file). Seeders no longer hardcode/echo that password.
 
 ### Staging demo seed (test data only)
 
@@ -139,7 +139,7 @@ php artisan db:seed --class=CountriesTableSeeder --force
 php artisan db:seed --class=Phase4RosterDemoSeeder --force
 ```
 
-Demo accounts (staging only — password `[REDACTED - historical password]`):
+Demo accounts (staging only — password via `STAGING_DEMO_PASSWORD`, not published):
 
 | Role | Email |
 |---|---|
@@ -210,7 +210,7 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 - URL: https://klassapp-staging-7mpoqg.laravel.cloud (temporary — real custom subdomain like staging.klassapp.xyz not yet set up, planned via Spaceship DNS)
 - Environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016`
 - Separate isolated database schema (`klassapp-staging`) — NOT a production clone, seeded with demo data only
-- Demo login: `phase4.admin@klassapp.xyz` / `[REDACTED - historical password]` (plus teacher accounts from Phase4RosterDemoSeeder)
+- Demo login: `phase4.admin@klassapp.xyz` (plus teacher accounts from Phase4RosterDemoSeeder). Password via `STAGING_DEMO_PASSWORD` / request access at `community@klassapp.xyz` — not published.
 - Isolation confirmed: 1 school on staging vs 42 on production at time of setup
 - Preview Environments (auto-provision per PR) NOT yet enabled — must be manually turned on once via Cloud dashboard (staging → Settings → Preview environments → New automation); no API/CLI path exists for this step. Must isolate DB and NOT share production WhatsApp/R2 credentials when configuring.
 
@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
+## Current Status: September 16, 2026 — **Staging DB isolation FIXED** (dedicated MySQL cluster + demo password rotate)
+
+- **Ops (not a code merge alone)**: Created Cloud MySQL cluster `klassapp-staging-mysql` (`db-a2c339c5-…`); schema `klassapp-staging` (`db-schema-a2c33a13-…`); attached to staging env; deployed `depl-a2c33a34-…` **succeeded**. Deleted unused default `production` schema on the new cluster.
+- **Verify**: Staging Commands `SELECT count(*) FROM production.schools` → **`CROSS_BLOCKED`** (`Unknown database 'production'`). Staging host/user are the new cluster (`fp040yuirglxxs9m` / `klassapp-staging`). Real prod remains on `klassapp-mysql` / `production` (46 schools) — unreachable from staging’s connection.
+- **Password**: Staging Phase4 demo users rotated; historical public demo password hash check **OLD=0**. Secret in Doppler + Cloud env `STAGING_DEMO_PASSWORD` (not written here). Seeders updated to stop hardcoding/echoing it.
+- **Code PR**: seeder/`DemoSeedPassword` change ships with this stamp branch.
+- **Prior docs**: [#655](https://github.com/KlassApp-Foundation/KlassApp/pull/655) knowledge PII redaction MERGED (`0f31fab0`).
+
+## Previous: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 
 - **Merged**: [#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653) — GitHub API `merged: true`, merge SHA `2e5e9318ddda51ad3397dfc8c4c26e19eed373fa` (`merged_at` 2026-09-16T21:02:26Z).
 - **Change**: README no longer publishes `phase4.admin@…` / `[REDACTED - historical password]`; staging URL kept; demo access via `community@klassapp.xyz`.
@@ -2241,6 +2249,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: Staging→production DB cross-query closed + demo password rotate
+- **Work done**: Root cause = shared Laravel Cloud MySQL cluster user with `GRANT … ON *.*` across `production` + `klassapp-staging`. Fix = dedicated staging cluster + schema attach + deploy; drop orphan `production` schema on staging cluster; re-seed Phase4; rotate demo passwords; `DemoSeedPassword` + Phase4/Phase5 seeders stop hardcoding/echoing passwords.
+- **Verify**: `CROSS_BLOCKED` Unknown database `production` from staging; `ROTATED_3 NEW=1 OLD=0` for phase4 users; Doppler/Cloud `STAGING_DEMO_PASSWORD` set.
+- **Files**: `app/Support/DemoSeedPassword.php`, `database/seeders/Phase4RosterDemoSeeder.php`, `database/seeders/Phase5CrossTenantTestSeeder.php`, `knowledge.md`.
+- **Status**: ✅ Ops live on staging; code PR merging with this stamp.
+- **Edge cases flagged**: Cloud still grants `*.*` *within* a cluster — isolation requires separate clusters (or a future per-schema user API). Env var apply needs a staging deploy after set.
 
 ### 2026-09-16: README staging creds removed + staging isolation probe — **MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 - **Work done**: Removed public staging passwords from README after live Commands probe. Staging default DB `klassapp-staging` (14 schools / 112 users / phase4 present / mail=log / disk=local / WA unset). Prod DB `production` (46 schools / phase4 absent). **Cross-schema**: staging `SELECT` on `production.schools` returned 46.
