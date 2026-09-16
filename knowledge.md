@@ -618,11 +618,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Root clutter CI guard** (PR pending)
+## Current Status: September 16, 2026 — **Root clutter CI guard MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
 
-- **Branch**: `ci/root-clutter-guard` off `origin/main` (`ebd0a34d`).
-- **Change**: GitHub Actions `root-clutter-guard.yml` + `scripts/check-root-clutter.sh` — fails PRs that *add* root screenshots, `*.cjs` outside `e2e/`, typo brand assets (`klassaplogo*` / `klassapplogo*`), or new non-allowlisted top-level dirs. Documented in `CONTRIBUTING.md`. Narrow: does not re-audit legacy files on main. **No deploy.**
-- **PR / merge**: opening now; stamp MERGED only after GitHub API `merged: true`.
+- **Merged**: [#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646) — GitHub API `merged: true`, merge SHA `2a7d88e681efb948b20904187b0c539afae3bb3f` (`merged_at` 2026-09-16T10:41:44Z). Actions `check` + conflict `scan` both green on the PR.
+- **Change**: `root-clutter-guard.yml` + `scripts/check-root-clutter.sh` + CONTRIBUTING.md section. CI/docs only; **no deploy**.
 
 ## Previous: September 16, 2026 — **AGENTS.md standing rules 21–27 MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
 
@@ -2223,11 +2222,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-16: Root clutter CI guard — **PR opening**
-- **Work done**: Added narrow PR-only Actions workflow + `scripts/check-root-clutter.sh`; documented in CONTRIBUTING.md. Verified PASS on clean PR tip; FAIL on synthetic root PNG / `*.cjs` / `scratch/` / typo brand assets.
+### 2026-09-16: Root clutter CI guard — **MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
+- **Work done**: Added narrow PR-only Actions workflow + `scripts/check-root-clutter.sh`; documented in CONTRIBUTING.md. Verified PASS on clean PR tip; FAIL on synthetic root PNG / `*.cjs` / `scratch/` / typo brand assets. Actions `check` green on the PR.
 - **Files**: `.github/workflows/root-clutter-guard.yml`, `scripts/check-root-clutter.sh`, `CONTRIBUTING.md`, `knowledge.md`.
 - **Key decisions**: Diff-filter=A only (new mess, not legacy). Allowlist matches AGENTS root audit. `public/images/*` already gitignores most PNGs; typo check still catches force-adds and paths under `resources/`.
-- **Status**: 🚧 PR opening. Docs/CI only; no deploy.
+- **Status**: ✅ MERGED — API `merged: true` @ `2a7d88e6` (`merged_at` 2026-09-16T10:41:44Z). CI/docs only; no deploy.
 - **Edge cases flagged**: Existing tracked `klassaplogo-primary.png` on disk is legacy and not failed by this gate until newly added again.
 
 ### 2026-09-16: AGENTS.md standing rules 21–27 + root AI SoT audit — **MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
