@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **AGENTS.md Cloud sync + design-sync inputs MERGED** ([#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) · [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547))
+## Current Status: September 16, 2026 — **Admin import xlsx/xls + seeder state_id MERGED + STAGING** ([#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638))
+
+- **Merged**: [#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638) — GitHub API `merged: true`, merge SHA `1ecee8a23a7d7504902f19bd9279c5f187b2d585` (`merged_at` 2026-09-16T09:10:17Z). From Elijah [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552) review — safest pieces only.
+- **Staging deploy**: `depl-a2c23438-2b0a-49fb-982e-3365c5ce1f52` @ `1ecee8a2` **succeeded**. Commands verify: `ImportMemberRequest` has `file_extension:csv,xlsx,xls`; school-admin seeder comment confirms no `state_id` write. **Production: NOT deployed.**
+- **Contributor follow-up**: [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552) kept open with review comment; [#625](https://github.com/KlassApp-Foundation/KlassApp/pull/625) closed as duplicate. Wishlist → issues [#629](https://github.com/KlassApp-Foundation/KlassApp/issues/629)–[#637](https://github.com/KlassApp-Foundation/KlassApp/issues/637) (Issues were disabled; enabled for tracking).
+
+## Previous: September 16, 2026 — **AGENTS.md Cloud sync + design-sync inputs MERGED** ([#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) · [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547))
 
 - **[#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) MERGED**: GitHub API `merged: true`, merge SHA `87ad6bd08adf2b3046cb52e903dad27f18c2dbc6` (`merged_at` 2026-09-16T08:58:50Z). Durable `.design-sync/` inputs + `.gitignore` + knowledge stamp. Docs/tooling only; **no deploy**.
 - **[#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) MERGED**: GitHub API `merged: true`, merge SHA `e3113a15c6becec8425af7d049e3034d2f636cda` (`merged_at` 2026-09-16T09:00:58Z). Rebased onto `main` @ `87ad6bd0` first; Cloud ops alignment + standing rule #19 + `project-context.mdc` pointer. Docs/rules only; **no deploy**.
@@ -2194,6 +2200,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: Admin import xlsx/xls + seeder state_id — **MERGED + STAGING** ([#638](https://github.com/KlassApp-Foundation/KlassApp/pull/638))
+- **Work done**: Reviewed Elijah [#552](https://github.com/KlassApp-Foundation/KlassApp/pull/552); constructive PR comment; closed [#625](https://github.com/KlassApp-Foundation/KlassApp/pull/625) as duplicate; enabled GitHub Issues; filed wishlist [#629](https://github.com/KlassApp-Foundation/KlassApp/issues/629)–[#637](https://github.com/KlassApp-Foundation/KlassApp/issues/637). Landed clean PR: `ImportMemberRequest` accepts csv/xlsx/xls (shared by student+teacher admin import), Blade `accept=`, removed `userprofiles.state_id` from seeders + fixed student seeder city lookup off dropped `cities.state_id`. PHPUnit against real `tests/fixtures/klassapp-*-test-data.xlsx` + generated `.xls`.
+- **Files**: `ImportMemberRequest.php`, admin member/teacher import blades, `UsersSchoolAdminTableSeeder` / `UsersStudentTableSeeder` / `UsersTableSeeder`, `ImportMemberSpreadsheetAcceptanceTest`, `UserprofileSeederStateIdRemovalTest`, `knowledge.md`.
+- **Key decisions**: Do not merge #552 as-is (HasConversations / Laratrust / junk files / password homogenization). Class/stream matching deferred to #635. Staging-only.
+- **Status**: ✅ MERGED `1ecee8a2` + staging `depl-a2c23438-…` succeeded; Commands API verified. Production not deployed.
+- **Edge cases flagged**: Admin importer still uses old CSV column heuristics for placement — xlsx acceptance alone does not make wizard-format sheets place correctly (#635).
 
 ### 2026-09-16: AGENTS.md Cloud alignment + pull-from-main rule — **docs PR #623** (rebased)
 - **Work done**: Rebased [#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) onto `main` after [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) merge (`87ad6bd0`). Kept intent: rewrite `AGENTS.md` Environment reality check away from retired DigitalOcean droplet SSH (`root@46.101.111.131` / `sms-app`); production = Laravel Cloud; standing rule #19 sync from `origin/main` before any task; session workflow sync → read knowledge → confirm Cloud access; `.cursor/rules/project-context.mdc` pointer no longer claims DigitalOcean. Dropped stale knowledge stamp from pre-rebase tip; restamped here.
