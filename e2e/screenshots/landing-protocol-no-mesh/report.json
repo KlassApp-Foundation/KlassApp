@@ -1,6 +1,6 @@
 {
-  "base": "http://127.0.0.1:8000",
-  "at": "2026-09-16T08:38:37.173Z",
+  "base": "https://klassapp-staging-7mpoqg.laravel.cloud",
+  "at": "2026-09-16T08:42:19.722Z",
   "viewports": {
     "375": {
       "checks": {
