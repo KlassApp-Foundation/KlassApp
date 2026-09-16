@@ -618,12 +618,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **AGENTS.md standing rules 21–27 + SoT audit** (PR pending)
+## Current Status: September 16, 2026 — **AGENTS.md standing rules 21–27 MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
 
-- **Branch**: `docs/agents-session-standing-rules` off `origin/main` (`6955864f`).
-- **Change**: Root AI-tool audit documented in AGENTS.md; confirmed `.cursor/rules/` and `.ai/rules/` are pointer-only (not a second rules body); no deletes of legitimate pointers / `.design-sync/` / `.devin/skills/phpstorm-mcp/`. Added standing rules **21–27** (merged:true via API, Playwright UI verify, no inventing, Cloud deploy POST, external PR human review, worktree pwd/branch, periodic AI-scaffold audit). Strengthened Verification discipline + Session workflow + "Why one canonical file".
-- **Verify**: Diff is docs-only (`AGENTS.md` + this stamp). Pointer files re-read — all redirect to AGENTS.md. **No deploy.**
-- **PR / merge**: opening now; stamp MERGED only after GitHub API `merged: true`.
+- **Merged**: [#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644) — GitHub API `merged: true`, merge SHA `3d938c16ec8df5311f80123d331ba91801bffd8c` (`merged_at` 2026-09-16T10:21:50Z).
+- **Change**: Standing rules **21–27**; root AI-tool audit table; explicit single-SoT language (`.cursor/` / `.ai/` pointers only). Docs only; **no deploy**.
 
 ## Previous: September 16, 2026 — **Community health files MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
 
@@ -2219,11 +2217,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-16: AGENTS.md standing rules 21–27 + root AI SoT audit — **PR opening**
-- **Work done**: Pulled `origin/main`. Audited repo root + AI dirs. Verdict: keep `.cursor/rules/` + `.ai/rules/` as machine pointers (no content duplicate of AGENTS.md); keep `.design-sync/` durable inputs; keep `.devin/skills/phpstorm-mcp/`; leave gitignored local clutter (`.playwright-mcp/`, `.opencode/`, `.agents/`, `.claude/`, etc.) alone — do not git-delete ignored noise. Consolidated tonight's durable lessons into AGENTS.md standing rules 21–27; explicit SoT language + audit table under "Why one canonical file"; cross-links in Verification / Session workflow.
-- **Files**: `AGENTS.md`, `knowledge.md` (this stamp). No pointer-file content edits needed (already redirects).
-- **Key decisions**: `.cursor/rules/` is **not** redundant in the sense of "delete the dir" — Cursor needs the files for alwaysApply/globs — but it **is** redundant as a *rules content* location. Single source of truth remains AGENTS.md only.
-- **Status**: 🚧 PR opening on `docs/agents-session-standing-rules`. Docs only; no deploy.
+### 2026-09-16: AGENTS.md standing rules 21–27 + root AI SoT audit — **MERGED** ([#644](https://github.com/KlassApp-Foundation/KlassApp/pull/644))
+- **Work done**: Pulled `origin/main`. Audited repo root + AI dirs. Verdict: keep `.cursor/rules/` + `.ai/rules/` as machine pointers (no content duplicate of AGENTS.md); keep `.design-sync/` durable inputs; keep `.devin/skills/phpstorm-mcp/`; leave gitignored local clutter alone. Consolidated tonight's durable lessons into AGENTS.md standing rules 21–27; explicit SoT language + audit table under "Why one canonical file"; cross-links in Verification / Session workflow.
+- **Files**: `AGENTS.md`, `knowledge.md` (this stamp).
+- **Key decisions**: `.cursor/rules/` is required for Cursor alwaysApply/globs but is **not** a second rules *content* location. AGENTS.md is the sole agent-rules SoT.
+- **Status**: ✅ MERGED — API `merged: true` @ `3d938c16` (`merged_at` 2026-09-16T10:21:50Z). Docs only; no deploy.
 - **Edge cases flagged**: ~43 local worktrees; always confirm pwd/branch. `knowledge.md` remains hosting/ops SoT; AGENTS.md is agent-rules SoT.
 
 ### 2026-09-16: Community health files — **MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
