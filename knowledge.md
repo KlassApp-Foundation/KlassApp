@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Root clutter CI guard MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
+## Current Status: September 16, 2026 — **README upgrade (n8n-structure) — PR opening**
+
+- **Branch**: `docs/readme-n8n-structure` — Key Capabilities, real staging screenshot, Quick Start, Resources, clear MIT License.
+- **Screenshot**: `docs/readme/klassapp-screenshot-readme.png` — Playwright capture from staging Phase 4 admin dashboard with Toshi open (not a mockup).
+- **Honest connectors**: WhatsApp Meta Cloud API as the live messaging connector; Drive/Slack as first-class product channels without claiming production Drive/Slack API automation.
+- **Status**: opening PR; merge + GitHub render verify next.
+
+## Previous: September 16, 2026 — **Root clutter CI guard MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
 
 - **Merged**: [#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646) — GitHub API `merged: true`, merge SHA `2a7d88e681efb948b20904187b0c539afae3bb3f` (`merged_at` 2026-09-16T10:41:44Z). Actions `check` + conflict `scan` both green on the PR.
 - **Change**: `root-clutter-guard.yml` + `scripts/check-root-clutter.sh` + CONTRIBUTING.md section. CI/docs only; **no deploy**.
@@ -2221,6 +2228,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: README upgrade (n8n structural benchmark) — PR opening
+- **Work done**: Rewrote `README.md` with Key Capabilities, real staging screenshot, Quick Start (real Laravel/Docker flow), Resources, MIT License. Captured `docs/readme/klassapp-screenshot-readme.png` from staging admin dashboard with Toshi open (Playwright, Phase 4 demo).
+- **Files**: `README.md`, `docs/readme/klassapp-screenshot-readme.png`, `docs/readme/README.md`, `knowledge.md`.
+- **Key decisions**: MIT stated clearly (matches `LICENSE` + `composer.json`); no fair-code language. WhatsApp called live; Drive/Slack as product channels without inventing shipped API connectors.
+- **Status**: 🚧 PR opening on `docs/readme-n8n-structure`.
+- **Edge cases flagged**: Dashboard "Reports filed to Drive · Live" badge has no matching Drive API client in `app/` — README does not treat Drive file sync as a production connector claim.
 
 ### 2026-09-16: Root clutter CI guard — **MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
 - **Work done**: Added narrow PR-only Actions workflow + `scripts/check-root-clutter.sh`; documented in CONTRIBUTING.md. Verified PASS on clean PR tip; FAIL on synthetic root PNG / `*.cjs` / `scratch/` / typo brand assets. Actions `check` green on the PR.
