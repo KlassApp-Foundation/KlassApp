@@ -618,12 +618,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **README upgrade (n8n-structure) — PR opening**
+## Current Status: September 16, 2026 — **README upgrade MERGED** ([#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648))
 
-- **Branch**: `docs/readme-n8n-structure` — Key Capabilities, real staging screenshot, Quick Start, Resources, clear MIT License.
-- **Screenshot**: `docs/readme/klassapp-screenshot-readme.png` — Playwright capture from staging Phase 4 admin dashboard with Toshi open (not a mockup).
-- **Honest connectors**: WhatsApp Meta Cloud API as the live messaging connector; Drive/Slack as first-class product channels without claiming production Drive/Slack API automation.
-- **Status**: opening PR; merge + GitHub render verify next.
+- **Merged**: [#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648) — GitHub API `merged: true`, merge SHA `5f6d96128babbea6b494b8a54f3563bee08d813f` (`merged_at` 2026-09-16T15:02:31Z).
+- **Change**: README Key Capabilities / Quick Start / Resources / MIT; real staging screenshot `docs/readme/klassapp-screenshot-readme.png`. Docs only; **no deploy**.
+- **Verify**: GitHub rendered README on `main` includes Key Capabilities, Quick Start, Resources, MIT License; screenshot HTTP 200 from `raw.githubusercontent.com/.../main/docs/readme/klassapp-screenshot-readme.png`.
 
 ## Previous: September 16, 2026 — **Root clutter CI guard MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
 
@@ -2229,11 +2228,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-16: README upgrade (n8n structural benchmark) — PR opening
-- **Work done**: Rewrote `README.md` with Key Capabilities, real staging screenshot, Quick Start (real Laravel/Docker flow), Resources, MIT License. Captured `docs/readme/klassapp-screenshot-readme.png` from staging admin dashboard with Toshi open (Playwright, Phase 4 demo).
+### 2026-09-16: README upgrade (n8n structural benchmark) — **MERGED** ([#648](https://github.com/KlassApp-Foundation/KlassApp/pull/648))
+- **Work done**: Rewrote `README.md` with Key Capabilities, real staging screenshot, Quick Start (real Laravel/Docker flow), Resources, MIT License. Captured `docs/readme/klassapp-screenshot-readme.png` from staging admin dashboard with Toshi open (Playwright, Phase 4 demo). Verified GitHub HTML render + raw PNG 200 on `main` after merge.
 - **Files**: `README.md`, `docs/readme/klassapp-screenshot-readme.png`, `docs/readme/README.md`, `knowledge.md`.
 - **Key decisions**: MIT stated clearly (matches `LICENSE` + `composer.json`); no fair-code language. WhatsApp called live; Drive/Slack as product channels without inventing shipped API connectors.
-- **Status**: 🚧 PR opening on `docs/readme-n8n-structure`.
+- **Status**: ✅ MERGED — API `merged: true` @ `5f6d9612` (`merged_at` 2026-09-16T15:02:31Z). Docs only; no deploy.
 - **Edge cases flagged**: Dashboard "Reports filed to Drive · Live" badge has no matching Drive API client in `app/` — README does not treat Drive file sync as a production connector claim.
 
 ### 2026-09-16: Root clutter CI guard — **MERGED** ([#646](https://github.com/KlassApp-Foundation/KlassApp/pull/646))
