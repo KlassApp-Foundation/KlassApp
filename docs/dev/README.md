@@ -1,3 +1,11 @@
+<div class="ka-banner" markdown="1">
+
+**Archived (historical).** This Docsify tree documents the **old Evolution API** WhatsApp stack and DigitalOcean-era ops. Production today is **Laravel Cloud** + **Meta WhatsApp Cloud API**. Do not follow these pages for current setup.
+
+Current references: [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp) (architecture) · repo [`README.md`](../../README.md) (Quick Start) · [`docs/README.md`](../README.md) (docs map). Content below is kept for history until a refresh pass; pages will be rewritten or removed then.
+
+</div>
+
 # KlassApp WhatsApp Integration
 
 The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Business Platform through a self-hosted [Evolution API](https://doc.evolution-api.com/) instance. It handles outbound notifications (grades, fees, attendance), inbound interactive menus, a cost-optimized message queue leveraging Meta's 24-hour service window, and an admin delivery dashboard.

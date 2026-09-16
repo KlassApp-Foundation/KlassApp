@@ -7,46 +7,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
         <link
             rel="stylesheet"
             href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
         />
+        <link rel="stylesheet" href="../shared/docsify-klassapp.css" />
         <link rel="icon" type="image/svg+xml" href="klassapp-logo.svg" />
-        <style>
-            :root {
-                --theme-color: #1e6fd9;
-                --base-font-family: "Inter", sans-serif;
-                --code-font-family: "JetBrains Mono", monospace;
-            }
-            .sidebar > h1 {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                padding: 20px;
-            }
-            .sidebar > h1 a.app-name-link {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                text-decoration: none;
-            }
-            .sidebar > h1 img {
-                max-width: 32px;
-                height: auto;
-            }
-            .sidebar > h1 span {
-                font-family: "Inter", sans-serif;
-                font-size: 18px;
-                font-weight: 700;
-                color: #0f172a;
-            }
-        </style>
     </head>
     <body>
         <div id="app"></div>
@@ -54,11 +24,14 @@
             window.$docsify = {
                 name: "KlassApp",
                 logo: "klassapp-logo.svg",
-                repo: "",
+                repo: "https://github.com/KlassApp-Foundation/KlassApp",
                 loadSidebar: true,
                 maxLevel: 3,
                 subMaxLevel: 2,
                 auto2top: true,
+                markdown: {
+                    html: true,
+                },
             };
         </script>
         <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
