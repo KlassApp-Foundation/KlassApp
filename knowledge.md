@@ -624,7 +624,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Scope**: Replace Meet Toshi hub/connector diagram with isometric tower; replace hero role Y-rotate with X-flip + K-mark avatars; remap `--d-*` → landing `--brand-*`/`--paper-*`; six LLM marks from `llm-brand-marks.zip` (DeepSeek omitted).
 - **Verify (local)**: PHPUnit `LandingPreviewV3Test` PASS (95 assertions). Playwright `e2e/landing-tower-hero-flip-verify.cjs` PASS at 375/414/768/1280 (tower + marks HTTP 200 + reduced-motion).
 - **Staging**: deploy + verify after push (no production without explicit approval).
-- **PR**: opening — stamp number/URL when open; confirm `merged: true` via GitHub API once approved.
+- **PR**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) (`feat/landing-toshi-tower-hero-flip`, tip `1906e5ad`). Awaiting review. Confirm `merged: true` via GitHub API once approved. Staging tracks `main` — Cloud Deploy API ignores feature `commit_hash` and ships `main` tip; staging verify runs after merge.
 
 ## Previous: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
 
@@ -2173,7 +2173,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work**: Synced `origin/main`; extracted `~/Downloads/KlassApp Design System (1).zip` → `/tmp/klassapp-ds-tower`; installed six clean marks from `/tmp/llm-brand-marks.zip` into `resources/assets/brand/models/` + `public/images/brand/models/` (DeepSeek excluded); ported tower partial + X-flip hero CSS/JS/Blade; remapped `--d-*` to landing tokens.
 - **Files**: `resources/views/partials/landing-toshi-tower.blade.php`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `resources/assets/brand/models/*`, `public/images/brand/models/*`, `.gitignore`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-tower-hero-flip-verify.cjs`.
 - **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
-- **Status**: Local verify green; PR + staging pending.
+- **Status**: Local verify green; PR [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) open. Staging verify after merge (env branch = `main`).
 - **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
 
 
