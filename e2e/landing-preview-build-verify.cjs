@@ -63,10 +63,13 @@ const absentIds = ['community', 'open-source'];
         protocolMesh: !!document.querySelector('.mesh .mesh-hub'),
         openSourceCard: text.includes('MIT licensed. Source and self-hosting will open publicly after an independent security review'),
         prodFooter: !!document.querySelector('footer.site-footer')
-          && text.includes('Smarter schools start here.')
+          && text.includes("Educationists' tools connected by intelligence.")
+          && !text.includes('Smarter schools start here.')
           && !!document.querySelector('.site-footer-wordmark')
           && !text.includes('Stay in the loop')
-          && !document.querySelector('.footer-columns'),
+          && !document.querySelector('.footer-columns')
+          && !!document.querySelector('a.site-footer-social[href="https://x.com/Klass_App"]')
+          && !document.querySelector('a.site-footer-social[href="https://x.com/klassapp"]'),
         noCommunitySection: !document.getElementById('community') && !document.getElementById('open-source'),
         // Canonical DESIGN_SYSTEM parchment + type (Piece 1)
         paperBase: root.getPropertyValue('--paper-base').trim().toLowerCase() === '#fafaf5',

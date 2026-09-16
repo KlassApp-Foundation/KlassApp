@@ -639,7 +639,7 @@
     <div class="site-footer-row">
       <div class="site-footer-brand">
         <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
-        <p class="site-footer-tagline">Smarter schools start here.</p>
+        <p class="site-footer-tagline">Educationists' tools connected by intelligence.</p>
       </div>
       <nav class="site-footer-links" aria-label="Footer">
         <a href="{{ url('/terms-of-service') }}">Terms</a>
@@ -648,7 +648,7 @@
         <a href="/contact">Contact</a>
       </nav>
       <div class="site-footer-socials">
-        <a href="https://x.com/klassapp" class="site-footer-social" aria-label="KlassApp on X" rel="noopener noreferrer" target="_blank">𝕏</a>
+        <a href="https://x.com/Klass_App" class="site-footer-social" aria-label="KlassApp on X" rel="noopener noreferrer" target="_blank">𝕏</a>
         <a href="https://github.com/KlassApp-Foundation" class="site-footer-social" aria-label="KlassApp on GitHub" rel="noopener noreferrer" target="_blank">GH</a>
         <a href="{{ url('/contact') }}" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
       </div>

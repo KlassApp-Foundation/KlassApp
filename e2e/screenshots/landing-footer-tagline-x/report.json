@@ -1,0 +1,51 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "at": "2026-09-16T09:16:34.005Z",
+  "viewports": {
+    "375": {
+      "hasFooter": true,
+      "taglineText": "Educationists' tools connected by intelligence.",
+      "taglineOk": true,
+      "xHrefOk": true,
+      "xVisible": true,
+      "oldTaglineGone": true,
+      "oldXGone": true,
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-footer-tagline-x/375-footer.png",
+      "ok": true
+    },
+    "414": {
+      "hasFooter": true,
+      "taglineText": "Educationists' tools connected by intelligence.",
+      "taglineOk": true,
+      "xHrefOk": true,
+      "xVisible": true,
+      "oldTaglineGone": true,
+      "oldXGone": true,
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-footer-tagline-x/414-footer.png",
+      "ok": true
+    },
+    "768": {
+      "hasFooter": true,
+      "taglineText": "Educationists' tools connected by intelligence.",
+      "taglineOk": true,
+      "xHrefOk": true,
+      "xVisible": true,
+      "oldTaglineGone": true,
+      "oldXGone": true,
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-footer-tagline-x/768-footer.png",
+      "ok": true
+    },
+    "1280": {
+      "hasFooter": true,
+      "taglineText": "Educationists' tools connected by intelligence.",
+      "taglineOk": true,
+      "xHrefOk": true,
+      "xVisible": true,
+      "oldTaglineGone": true,
+      "oldXGone": true,
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-footer-tagline-x/1280-footer.png",
+      "ok": true
+    }
+  },
+  "ok": true
+}
