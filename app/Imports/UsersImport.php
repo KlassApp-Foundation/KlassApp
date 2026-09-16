@@ -94,7 +94,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | CLASS / SECTION (SAFE)
                 |--------------------------------------------------------------------------
                 */
-                $sectionVal = trim($class.' '.$stream);
+                $sectionVal = $stream !== '' ? trim($class.' '.$stream) : trim($class);
                 $standardLink = StandardLink::where('school_id', $school_id)
                     ->where('academic_year_id', $academic_year->id ?? null)
                     ->whereHas('section', function ($query) use ($school_id, $sectionVal) {
