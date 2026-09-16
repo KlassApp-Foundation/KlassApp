@@ -1,0 +1,146 @@
+[
+  {
+    "page": "01-overview.png",
+    "url": "http://127.0.0.1:8765/community/#/",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "KlassApp Community",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": true,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "02-for-schools.png",
+    "url": "http://127.0.0.1:8765/community/#/for-schools",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "For schools",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": true,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "03-school-onboarding.png",
+    "url": "http://127.0.0.1:8765/community/#/school-onboarding",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "School onboarding",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": true,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "04-book-onboarding.png",
+    "url": "http://127.0.0.1:8765/community/#/book-onboarding",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "Book onboarding",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": true,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "05-for-parents.png",
+    "url": "http://127.0.0.1:8765/community/#/for-parents",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "For parents",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": false,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "06-ecosystem.png",
+    "url": "http://127.0.0.1:8765/community/#/ecosystem",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "Ecosystem",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": false,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "07-faq.png",
+    "url": "http://127.0.0.1:8765/community/#/faq",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "FAQ",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": true,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  },
+  {
+    "page": "08-roadmap-deprecated.png",
+    "url": "http://127.0.0.1:8765/community/#/roadmap",
+    "theme": {
+      "canvas": "#fafaf5",
+      "green": "#22c55e",
+      "blue": "#1e6fd9",
+      "h1Text": "Roadmap (deprecated)",
+      "h1Font": "Sora, \"DM Sans\", sans-serif",
+      "bodyBg": "rgb(250, 250, 245)",
+      "sidebarBg": "rgb(255, 255, 255)",
+      "hasThemeLink": true,
+      "mentions30": false,
+      "mentions35": false,
+      "mentionsUganda": false,
+      "mentionsEvolution": false
+    }
+  }
+]
