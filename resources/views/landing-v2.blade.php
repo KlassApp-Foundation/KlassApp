@@ -6,11 +6,11 @@
     <title>KlassApp : The school platform for tools educationists already use</title>
     <meta name="description" content="KlassApp is an open-source agentic school protocol. It operates in the tools educationists already use: WhatsApp, Drive, Slack, email, and more.">
     <link rel="canonical" href="{{ url()->current() }}">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/klassapp-logo.svg') }}">
+    @include('layouts.partials.favicon')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/landing-preview.css', 'resources/js/landing-preview.js'])
 </head>
@@ -79,7 +79,7 @@
         <div class="hero-stage" id="heroRoleStage">
           <div class="hero-deck" id="heroRoleDeck" data-auto="1">
             <article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
-              <div class="hero-role-hd"><span class="hero-role-avatar">KA</span> Parent · WhatsApp</div>
+              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Parent · WhatsApp</div>
               <div class="hero-role-body">
                 <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
                 <div class="hero-bubble out">Thanks : fee reminder for next week too?</div>
@@ -87,7 +87,7 @@
               </div>
             </article>
             <article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
-              <div class="hero-role-hd"><span class="hero-role-avatar">DR</span> Teacher · Drive</div>
+              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Teacher · Drive</div>
               <div class="hero-role-body">
                 <div class="hero-row"><span>P.4 Midterm report.pdf</span><span>Ready</span></div>
                 <div class="hero-row"><span>Marks sheet · Term 2</span><span>Synced</span></div>
@@ -96,7 +96,7 @@
               </div>
             </article>
             <article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
-              <div class="hero-role-hd"><span class="hero-role-avatar">#</span> Admin · Slack</div>
+              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Admin · Slack</div>
               <div class="hero-role-body">
                 <div class="hero-row"><span>#school-ops</span><span>Today</span></div>
                 <div class="hero-bubble">Fee collection: 86% · 3 reminders left for overdue families.</div>
@@ -204,154 +204,7 @@
       <p>Not a chatbot. An action-taking agent that understands education workflows and orchestrates across every connected tool.</p>
     </div>
 
-    <div class="toshi-visual reveal">
-      <div class="toshi-visual-inner">
-        <div class="toshi-visual-lines" aria-hidden="true">
-          <!-- Geometry is measured from the live DOM by the layout pass at the
-               foot of this file, so connectors stay welded to their nodes at
-               any width. viewBox is set there too. -->
-          <svg preserveAspectRatio="none">
-            <defs>
-              <!-- Bbox-relative so each connector carries its own gradient
-                   regardless of where it sits. Inbound: faint at the channel,
-                   intensifying into the hub. -->
-              <linearGradient id="tInGreen" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-green" stop-opacity="0.18" /><stop offset="0.55" class="stop-green" stop-opacity="0.42" /><stop offset="1" class="stop-green" stop-opacity="0.72" />
-              </linearGradient>
-              <linearGradient id="tInBlue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-blue" stop-opacity="0.18" /><stop offset="0.55" class="stop-blue" stop-opacity="0.42" /><stop offset="1" class="stop-blue" stop-opacity="0.72" />
-              </linearGradient>
-              <linearGradient id="tInViolet" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-violet" stop-opacity="0.18" /><stop offset="0.55" class="stop-violet" stop-opacity="0.44" /><stop offset="1" class="stop-violet" stop-opacity="0.75" />
-              </linearGradient>
-              <linearGradient id="tInAmber" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-amber" stop-opacity="0.16" /><stop offset="0.55" class="stop-amber" stop-opacity="0.38" /><stop offset="1" class="stop-amber" stop-opacity="0.66" />
-              </linearGradient>
-              <!-- Outbound: strong at the hub, easing out to the role node. -->
-              <linearGradient id="tOutGreen" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-green" stop-opacity="0.70" /><stop offset="0.5" class="stop-green" stop-opacity="0.42" /><stop offset="1" class="stop-green" stop-opacity="0.36" />
-              </linearGradient>
-              <linearGradient id="tOutBlue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-blue" stop-opacity="0.70" /><stop offset="0.5" class="stop-blue" stop-opacity="0.42" /><stop offset="1" class="stop-blue" stop-opacity="0.36" />
-              </linearGradient>
-              <linearGradient id="tOutAmber" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="stop-amber" stop-opacity="0.64" /><stop offset="0.5" class="stop-amber" stop-opacity="0.38" /><stop offset="1" class="stop-amber" stop-opacity="0.32" />
-              </linearGradient>
-              <filter id="tGlow" x="-150%" y="-150%" width="400%" height="400%">
-                <feGaussianBlur stdDeviation="2.6" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <filter id="tSoftGlow" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="1.8" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <filter id="tPacketGlow" x="-150%" y="-150%" width="400%" height="400%">
-                <feGaussianBlur stdDeviation="2.8" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-              <marker id="arrowInGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#22C55E" />
-              </marker>
-              <marker id="arrowInBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#1E6FD9" />
-              </marker>
-              <marker id="arrowInViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#8B5CF6" />
-              </marker>
-              <marker id="arrowInAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#D97706" />
-              </marker>
-              <marker id="arrowOutGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#22C55E" />
-              </marker>
-              <marker id="arrowOutBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#1E6FD9" />
-              </marker>
-              <marker id="arrowOutAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
-                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#D97706" />
-              </marker>
-            </defs>
-
-            <!-- Channels → hub. Order matches the channel cards below. -->
-            <g class="t-base-in">
-              <path class="toshi-line" stroke="url(#tInGreen)" marker-end="url(#arrowInGreen)" />
-              <path class="toshi-line" stroke="url(#tInBlue)" marker-end="url(#arrowInBlue)" />
-              <path class="toshi-line" stroke="url(#tInViolet)" marker-end="url(#arrowInViolet)" />
-              <path class="toshi-line" stroke="url(#tInGreen)" marker-end="url(#arrowInGreen)" />
-              <path class="toshi-line" stroke="url(#tInAmber)" marker-end="url(#arrowInAmber)" />
-            </g>
-            <!-- Hub → roles. Order matches the role pills below. -->
-            <g class="t-base-out">
-              <path class="toshi-line" stroke="url(#tOutGreen)" marker-end="url(#arrowOutGreen)" />
-              <path class="toshi-line" stroke="url(#tOutBlue)" marker-end="url(#arrowOutBlue)" />
-              <path class="toshi-line" stroke="url(#tOutAmber)" marker-end="url(#arrowOutAmber)" />
-            </g>
-
-            <!-- Energy streaks, travelling in toward the hub and out to the roles -->
-            <g class="t-flow-in">
-              <path class="toshi-line-flow f-green" />
-              <path class="toshi-line-flow f-blue" style="animation-delay: 1.1s" />
-              <path class="toshi-line-flow f-violet" style="animation-delay: 0.4s" />
-              <path class="toshi-line-flow f-green" style="animation-delay: 1.8s" />
-              <path class="toshi-line-flow f-amber" style="animation-delay: 0.8s" />
-            </g>
-            <g class="t-flow-out">
-              <path class="toshi-line-flow f-green" style="animation-delay: 2.2s" />
-              <path class="toshi-line-flow f-blue" style="animation-delay: 1.5s" />
-              <path class="toshi-line-flow f-amber" style="animation-delay: 2.6s" />
-            </g>
-
-            <g class="t-streak-in">
-              <path class="toshi-line-streak f-green" />
-              <path class="toshi-line-streak f-blue" style="animation-delay: 0.9s" />
-              <path class="toshi-line-streak f-violet" style="animation-delay: 0.35s" />
-              <path class="toshi-line-streak f-green" style="animation-delay: 1.5s" />
-              <path class="toshi-line-streak f-amber" style="animation-delay: 0.65s" />
-            </g>
-            <g class="t-streak-out">
-              <path class="toshi-line-streak f-green" style="animation-delay: 1.8s" />
-              <path class="toshi-line-streak f-blue" style="animation-delay: 1.2s" />
-              <path class="toshi-line-streak f-amber" style="animation-delay: 2.1s" />
-            </g>
-            <g class="toshi-particles">
-              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.4" filter="url(#tPacketGlow)" />
-              <circle class="toshi-particle p-blue"   cx="0" cy="0" r="3.1" filter="url(#tPacketGlow)" style="animation-delay: 0.9s" />
-              <circle class="toshi-particle p-violet" cx="0" cy="0" r="3.5" filter="url(#tPacketGlow)" style="animation-delay: 0.35s" />
-              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.1" filter="url(#tPacketGlow)" style="animation-delay: 1.5s" />
-              <circle class="toshi-particle p-amber"  cx="0" cy="0" r="3.3" filter="url(#tPacketGlow)" style="animation-delay: 0.65s" />
-            </g>
-            <g class="toshi-particles toshi-particles-out">
-              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.2" filter="url(#tPacketGlow)" style="animation-delay: 1.8s" />
-              <circle class="toshi-particle p-blue"   cx="0" cy="0" r="3"   filter="url(#tPacketGlow)" style="animation-delay: 1.2s" />
-              <circle class="toshi-particle p-amber"  cx="0" cy="0" r="3.2" filter="url(#tPacketGlow)" style="animation-delay: 2.1s" />
-            </g>
-          </svg>
-        </div>
-        <div class="toshi-visual-channels">
-          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.whatsapp /></span><span>WhatsApp</span></div>
-          <div class="toshi-visual-channel toshi-node n-blue"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
-          <div class="toshi-visual-channel toshi-node n-violet"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.slack /></span><span>Slack</span></div>
-          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
-          <div class="toshi-visual-channel toshi-node n-amber"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.google-drive /></span><span>Drive</span></div>
-        </div>
-        <div class="toshi-visual-hub">
-          <div class="toshi-visual-core" aria-label="KlassApp · Toshi hub">
-            <span class="hub-ring-mid" aria-hidden="true"></span>
-            <div class="hub-mark" title="KlassApp">
-              <img src="{{ asset('images/klassapp-logo.svg') }}" alt="" width="40" height="40" />
-            </div>
-          </div>
-          <div class="toshi-visual-label">Control Center</div>
-          <div class="hub-sub">Toshi · KlassApp</div>
-        </div>
-        <div class="toshi-visual-roles">
-          <div class="toshi-visual-role toshi-node n-green"><span class="role-dot parent"></span> Parent</div>
-          <div class="toshi-visual-role toshi-node n-blue"><span class="role-dot teacher"></span> Teacher</div>
-          <div class="toshi-visual-role toshi-node n-amber"><span class="role-dot admin"></span> Admin</div>
-        </div>
-      </div>
-    </div>
-
+    @include('partials.landing-toshi-tower')
 
     <div class="toshi-hitl reveal" role="note">
       <div class="toshi-hitl-icon" aria-hidden="true">
@@ -767,43 +620,6 @@
         <div class="protocol-header reveal">
           <h2>Not just software. A protocol.</h2>
           <p>KlassApp is open infrastructure : designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
-        </div>
-        <div class="protocol-visual reveal reveal-delay-1" aria-hidden="true">
-          <div class="mesh">
-            <div class="mesh-glow"></div>
-            <div class="mesh-stars">
-              <span></span><span></span><span></span>
-              <span></span><span></span><span></span>
-            </div>
-            <svg class="mesh-svg" viewBox="0 0 460 460" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle class="mesh-ring soft" cx="230" cy="230" r="198" />
-              <circle class="mesh-ring dashed" cx="230" cy="230" r="168" />
-              <circle class="mesh-ring soft" cx="230" cy="230" r="92" />
-              <path class="mesh-link oss" d="M230 172 C230 140, 230 110, 230 78" />
-              <path class="mesh-link mcp" d="M186 268 C140 300, 110 330, 88 352" />
-              <path class="mesh-link com" d="M274 268 C320 300, 350 330, 372 352" />
-              <path class="mesh-link-pulse oss" d="M230 172 C230 140, 230 110, 230 78" />
-              <path class="mesh-link-pulse mcp" d="M186 268 C140 300, 110 330, 88 352" />
-              <path class="mesh-link-pulse com" d="M274 268 C320 300, 350 330, 372 352" />
-            </svg>
-            <div class="mesh-hub">
-              <span class="mesh-hub-mark">KA</span>
-              <span class="mesh-hub-label">Protocol</span>
-            </div>
-            <div class="mesh-chip">Open infrastructure</div>
-            <div class="mesh-node oss">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 01</span><span class="title">Open Source</span></div>
-            </div>
-            <div class="mesh-node mcp">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 02</span><span class="title">MCP Compatible</span></div>
-            </div>
-            <div class="mesh-node com">
-              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
-              <div class="meta"><span class="kicker">Layer 03</span><span class="title">Community-Driven</span></div>
-            </div>
-          </div>
         </div>
       </div>
       <div class="protocol-grid">

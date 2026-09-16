@@ -78,6 +78,11 @@ class EmptyStateProductDemoTest extends TestCase
         $response->assertSee('data-testid="es-demo-scene-whatsapp"', false);
         $response->assertSee('data-testid="es-demo-scene-toshi"', false);
         $response->assertSee('data-testid="es-demo-scene-connectors"', false);
+        $response->assertSee('data-testid="dashboard-greeting"', false);
+        $response->assertSee('data-testid="dashboard-live-badge"', false);
+        $response->assertSee('data-testid="dashboard-home-head"', false);
+        $response->assertDontSee('data-testid="dashboard-kpi-grid"', false);
+        $response->assertDontSee('data-testid="dashboard-connected-tools"', false);
         $response->assertSee('data-testid="es-demo-connectors-disclaimer"', false);
         $response->assertSee('Coming soon', false);
         $response->assertSee('aspirational', false);
@@ -133,6 +138,7 @@ class EmptyStateProductDemoTest extends TestCase
                 'nonteachingCount' => 1,
                 'femaleCount' => 6,
                 'maleCount' => 6,
+                'unknownCount' => 0,
                 'setupIncomplete' => false,
                 'whatsapp' => ['parentsOptedIn' => 2, 'messagesThisMonth' => 5],
                 'noticeboard' => [],
@@ -161,11 +167,21 @@ class EmptyStateProductDemoTest extends TestCase
             'openToshiOnboarding' => false,
             'pendingApprovals' => 0,
             'trendPeriod' => 'month',
-            'feeTrend' => ['labels' => [], 'values' => []],
+            'feeTrend' => [],
+            'greeting' => ['phrase' => 'Good morning', 'name' => 'Demo'],
+            'dashboardContextLine' => '2026 · Term 1 · 12 students enrolled',
+            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ]);
 
         $view->assertDontSee('data-testid="empty-state-product-demo"', false);
         $view->assertDontSee('empty-state-product-demo.js', false);
-        $view->assertSee('dashboard-kpi-card', false);
+        $view->assertSee('ds-kpi-card', false);
+        $view->assertDontSee('dashboard-kpi-card', false);
+        $view->assertSee('data-testid="dashboard-greeting"', false);
+        $view->assertSee('Good morning, Demo', false);
+        $view->assertSee('data-testid="dashboard-live-badge"', false);
+        $view->assertSee('data-testid="dashboard-connected-tools"', false);
+        $view->assertSee('data-testid="dashboard-topfold-kit"', false);
+        $view->assertSee('Connected tools', false);
     }
 }

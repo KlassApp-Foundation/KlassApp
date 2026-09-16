@@ -511,7 +511,7 @@ class WhatsAppController extends Controller
         $absentIds = $request->input('absent_student_ids', []);
 
         // Get all students in this class
-        $studentsInClass = StudentAcademic::where('standard_id', $classId)
+        $studentsInClass = StudentAcademic::where('standardLink_id', $classId)
             ->pluck('student_id');
 
         $marked = 0;
@@ -1089,10 +1089,17 @@ class WhatsAppController extends Controller
             }
         }
 
-        // ── DEMO: auto-link to demo parent ──
+        // ── DEMO: auto-link to configured demo parent (never hardcode school_id) ──
         if (strtolower($trimmed) === 'demo') {
-            $demoParent = User::find(104);
-            if (!$demoParent) {
+            $demoParentId = (int) config('services.whatsapp.demo_parent_user_id', 104);
+            $demoParent = $demoParentId > 0 ? User::with('school')->find($demoParentId) : null;
+            $demoSchoolId = $demoParent?->school_id;
+
+            if (! $demoParent || ! $demoSchoolId || ! $demoParent->school) {
+                Log::warning('WhatsApp DEMO unavailable: demo parent/school not configured', [
+                    'demo_parent_user_id' => $demoParentId,
+                    'phone' => $phone,
+                ]);
                 $sendText("Demo account not available. Please contact support.");
                 return;
             }
@@ -1100,8 +1107,8 @@ class WhatsAppController extends Controller
             $whatsappUser = WhatsAppUser::firstOrCreate(
                 ['phone' => $phone],
                 [
-                    'user_id'                => 104,
-                    'school_id'              => 1,
+                    'user_id'                => $demoParent->id,
+                    'school_id'              => $demoSchoolId,
                     'opted_in'               => true,
                     'verified_via_schoolpay' => true,
                     'verified_at'            => now(),
@@ -1109,10 +1116,14 @@ class WhatsAppController extends Controller
                 ],
             );
             if (!$whatsappUser->wasRecentlyCreated) {
-                $whatsappUser->update(['demo_name' => $senderName]);
+                $whatsappUser->update([
+                    'demo_name' => $senderName,
+                    'user_id' => $demoParent->id,
+                    'school_id' => $demoSchoolId,
+                ]);
             }
             $whatsappUser->load(['user.userprofile', 'user.school']);
-            Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone})");
+            Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone}) school_id={$demoSchoolId}");
 
             $this->sendMenu($whatsappUser, $phone, $this->businessApi);
             return;

@@ -171,11 +171,10 @@ class SaveTeachersTest extends TestCase
         $this->assertEquals(0, Teacherlink::where('teacher_id', $teacher->id)->count());
     }
 
-    public function test_email_dedup_generates_fallback_email(): void
+    public function test_email_collision_throws_validation_exception(): void
     {
         $engine = app(OnboardingEngine::class);
 
-        // Pre-create a user with the same email in this school
         User::create([
             'school_id' => $this->school->id,
             'usergroup_id' => 5,
@@ -186,16 +185,43 @@ class SaveTeachersTest extends TestCase
             'email_verified' => 1,
         ]);
 
-        $result = $engine->saveTeachers($this->school, $this->year, [
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessageMatches('/already registered/i');
+
+        $engine->saveTeachers($this->school, $this->year, [
             ['name' => 'New Teacher', 'email' => 'dup@test.sch.ug'],
         ]);
+    }
 
-        // The new teacher should have been created with a different email
-        $teachers = User::where('school_id', $this->school->id)->where('usergroup_id', 5)->get();
-        $this->assertCount(2, $teachers);
-        $newTeacher = $teachers->last();
-        $this->assertNotEquals('dup@test.sch.ug', $newTeacher->email);
-        $this->assertStringContainsString('@', $newTeacher->email);
+    public function test_cross_school_email_collision_throws_validation_exception(): void
+    {
+        $otherSchool = School::create([
+            'name' => 'Other School '.Str::random(6),
+            'email' => Str::random(8).'@test.sch.ug',
+            'phone' => '+256700'.random_int(100000, 999999),
+            'slug' => Str::random(10),
+            'status' => 1,
+            'toshi_enabled' => 0,
+        ]);
+
+        User::create([
+            'school_id' => $otherSchool->id,
+            'usergroup_id' => 5,
+            'name' => 'Other School Teacher',
+            'email' => 'global.dup@test.sch.ug',
+            'password' => bcrypt('whatever'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+
+        $engine = app(OnboardingEngine::class);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessageMatches('/global\.dup@test\.sch\.ug/');
+
+        $engine->saveTeachers($this->school, $this->year, [
+            ['name' => 'New Teacher', 'email' => 'global.dup@test.sch.ug'],
+        ]);
     }
 
     public function test_skips_invalid_teacher_entries(): void
@@ -258,12 +284,18 @@ class SaveTeachersTest extends TestCase
 
         $teacher = User::where('email', 'idempotent@test.sch.ug')->first();
 
-        // Call again — should not duplicate the Teacherlink
-        $engine->saveTeachers($this->school, $this->year, [
-            ['name' => 'Idempotent Teacher', 'email' => 'idempotent@test.sch.ug', 'standardLink_id' => $this->link->id, 'subject_id' => $this->subject->id],
-        ]);
+        // Second call with same email must not invent a duplicate teacher — global email unique.
+        try {
+            $engine->saveTeachers($this->school, $this->year, [
+                ['name' => 'Idempotent Teacher', 'email' => 'idempotent@test.sch.ug', 'standardLink_id' => $this->link->id, 'subject_id' => $this->subject->id],
+            ]);
+            $this->fail('Expected ValidationException for duplicate email');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertStringContainsString('already registered', collect($e->errors())->flatten()->first());
+        }
 
-        // Only one Teacherlink for this teacher
+        // Only one Teacherlink for the original teacher
         $this->assertEquals(1, Teacherlink::where('teacher_id', $teacher->id)->count());
+        $this->assertEquals(1, User::where('email', 'idempotent@test.sch.ug')->count());
     }
 }

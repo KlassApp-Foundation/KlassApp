@@ -517,6 +517,15 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 
 Free tier to start (unlimited subscribers/teams, no custom domain), upgrade to paid tier ($20/mo) for a custom domain like `status.klassapp.xyz` later. Purpose: real trust signal for schools depending on the platform daily, lets people check status themselves during an incident instead of messaging individually. Also listed in `TOOLING.md` under Monitoring & reliability.
 
+#### Community docs process — deferred until after the UI phase
+
+**Flagged**: 2026-09-14 — **Deferred** until after the UI phase.
+
+1. Check [github.com/KlassApp-Foundation/KlassApp/community](https://github.com/KlassApp-Foundation/KlassApp/community) for GitHub's real Community Standards checklist to know exactly what's missing (README, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, LICENSE, `SECURITY.md`, issue/PR templates).
+2. Use Claude Cowork to draft the missing files, fed the design system's Content Fundamentals voice guide so community docs match the product's established tone.
+
+**Not the right tool**: DeepWiki — it only reads code and cannot generate values/process documents.
+
 #### Invite class teacher to take ownership of a class (admin-driven)
 
 **Phase 1: Admin CRUD trigger — MERGED** (#485, `5830f747`, 2026-09-09). Admin invites a teacher (new or existing) as CT from the class list. Email-only; schools-scoped; `TeacherInviteMail` backward-compat.
@@ -609,7 +618,344 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
+## Current Status: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
+
+- **Merged**: [#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627) — GitHub API `merged: true`, merge SHA `21183487fc2f8221994523d7d2965c514f3df5a1` (`merged_at` 2026-09-16T08:39:45Z). Admin merge past ruleset.
+- **Staging deploy**: `depl-a2c22941-cece-4813-87b7-46dc9eddd0b0` @ `21183487` **succeeded**. URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
+- **Staging verify**: Playwright `e2e/landing-protocol-no-mesh-verify.cjs` → **ALL OK** at 375/414/768/1280. Staging HTML: heading present; `protocol-visual` / `class="mesh"` / `mesh-hub-mark` absent; three protocol cards remain. Evidence `e2e/screenshots/landing-protocol-no-mesh/`.
+
+## Previous: September 16, 2026 — **Landing protocol mesh icon stripped** (PR opening)
+
+- **Branch**: `fix/landing-protocol-strip-icon` off `main` (`2e08c1ab`).
+- **Change**: Removed `#protocol` `.protocol-visual` mesh/icon under "Not just software. A protocol." — heading + lede text kept; protocol cards unchanged.
+- **Verify (local)**: PHPUnit `LandingPreviewV3Test` PASS. Playwright `e2e/landing-protocol-no-mesh-verify.cjs` ALL OK at 375/414/768/1280.
+- **Staging**: pending after merge. **Production: not deployed.**
+
+## Previous: September 16, 2026 — **Landing Toshi tower + hero X-flip MERGED + STAGING** ([#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624))
+
+- **Merged**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) — GitHub API `merged: true`, merge SHA `168a054e2a6309ef63436a1a38fb27b4c42e2fd0` (`merged_by` Mucunguzi256, `merged_at` 2026-09-16T08:29:05Z). Admin merge past ruleset (`REVIEW_REQUIRED` block).
+- **Staging deploy**: `depl-a2c225d3-8c1b-47d7-b788-c45f1a6436a3` @ `168a054e` **succeeded** (`deployment.succeeded` 2026-09-16T08:31:27Z). URL `https://klassapp-staging-7mpoqg.laravel.cloud`. **Production: NOT deployed.**
+- **Staging verify**: Playwright `e2e/landing-tower-hero-flip-verify.cjs` → **ALL OK** at 375/414/768/1280. Six marks HTTP **200**. HTML has `toshiTower` + hero deck; no DeepSeek; no `toshi-visual-hub`. Reduced-motion path exercised in the same script. Evidence `e2e/screenshots/landing-tower-hero-flip/` + `report.json` (`base` staging, `ok: true`).
+- **What shipped**: isometric Toshi tower (in-cube emergence), hero X-flip + K-avatars, `--d-*` remapped to landing tokens, marks from `llm-brand-marks.zip` (6 providers).
+
+## Previous: September 16, 2026 — **Landing Toshi tower + hero X-flip** (PR opening)
+
+- **Branch**: `feat/landing-toshi-tower-hero-flip` off `main` (`fa47cb43`).
+- **Scope**: Replace Meet Toshi hub/connector diagram with isometric tower; replace hero role Y-rotate with X-flip + K-mark avatars; remap `--d-*` → landing `--brand-*`/`--paper-*`; six LLM marks from `llm-brand-marks.zip` (DeepSeek omitted).
+- **Verify (local)**: PHPUnit `LandingPreviewV3Test` PASS (95 assertions). Playwright `e2e/landing-tower-hero-flip-verify.cjs` PASS at 375/414/768/1280 (tower + marks HTTP 200 + reduced-motion).
+- **Staging**: deploy + verify after push (no production without explicit approval).
+- **PR**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) (`feat/landing-toshi-tower-hero-flip`, tip `1906e5ad`). Awaiting review. Confirm `merged: true` via GitHub API once approved. Staging tracks `main` — Cloud Deploy API ignores feature `commit_hash` and ships `main` tip; staging verify runs after merge.
+
+## Previous: September 15, 2026 — **Nightwatch trio #619+#620 PRODUCTION LIVE** @ `4fbcbf6f`
+
+- **Rollback point (pre-deploy)**: `e3c308dbe53f38d96bd5786899331b516a406ab3` — last succeeded prod deploy `depl-a2bf8451-…` (#611+#613+#615).
+- **Production deploy**: `depl-a2bfce3d-ab94-4e34-8090-675810ba1eaf` @ `4fbcbf6f6f69c69b421d0fa8260fbc6d7a70dea8` (`deployment.succeeded` 2026-09-15T04:35:25Z) — includes [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620).
+- **Live verify (Commands API + staging Playwright)**:
+  1. **Prod markers**: `whereHas` fee reminders + `demo_parent_user_id` + `Throwable` avatar guard + no `wherePivot` in OutboundWhatsAppService → `PROD_MARKERS_OK`.
+  2. **Fee dry-run school 33**: `whatsapp:send-fee-reminders --dry-run --school-id=33` → 6/6 students, `[DRY] Would notify 3 parent(s) of student #116` (no unknown-column crash).
+  3. **Demo parent**: user `104` → `school_id=31` (real school; not hardcoded `1`).
+  4. **Staging teachers/find**: Playwright `e2e/nightwatch-teachers-find-null-avatar.cjs` → HTTP 200 with null/empty avatar rows (no TypeError).
+
+## Previous: September 15, 2026 — **#611+#613+#615 PRODUCTION LIVE** @ `e3c308db`
+
+- **Rollback point (pre-deploy)**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` — last succeeded prod deploy `depl-a2bf3117-…` (docs stamp #607/#608 / four-surface cutover tip).
+- **Production deploy**: `depl-a2bf8451-0452-4a56-a303-5ffc88b4cdff` @ `e3c308dbe53f38d96bd5786899331b516a406ab3` (`deployment.succeeded` 2026-09-15T01:08:46Z) — includes [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611), [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613), [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) + knowledge stamp [#616](https://github.com/KlassApp-Foundation/KlassApp/pull/616).
+- **Live verify on `https://klassapp.xyz`** (synthetic fixtures only; then `status=inactive`):
+  1. **#611 SiteAdmin**: `siteadmin.prodverify.615@klassapp.xyz` password login → `/superadmin/dashboard`; `/admin/dashboard` bounces back; `/auth/google` → Google with `redirect_uri=https://klassapp.xyz/auth/google/callback`.
+  2. **#615 KPI hrefs**: admin dashboard linked KPIs Students/Teachers/Parents/Staff/Approvals → HTTP **200** (no `%22` 404s). Evidence `e2e/screenshots/prod-verify-611-613-615/`.
+  3. **#615 Toshi dock**: ≥1280px `[data-toshi-root]` `top=0`, `width=380`, `position=static`, in viewport; mobile overlay blur scoped when hidden.
+  4. **#613 unique constraint**: live `OnboardingEngine::saveTeachers` duplicate email → specific message `Email '…' is already registered for teacher …` (not generic “Could not save this step”); collision teacher flagged inactive.
+- **Filesystem markers on prod**: `ds-kpi-card` `href="{{ $link }}"`, `DashboardCache.php`, `AuthRedirectHelper.php`, `describeUniqueConstraintViolation`, toshi `flex-direction: row`.
+
+## Previous: September 15, 2026 — **Staging KPI/cache/Toshi/orphan repair MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
+
+- **Merged**: [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) merge `522f4de6` — GitHub API `merged: true` (`--admin` past ruleset block).
+- **Staging deploy**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. Later **production-deployed** (see Current Status above).
+- **Fixes (school 3 “Mucu Demo Now” + all dashboards)**:
+  1. `x-ds-kpi-card` real `<a href="{{ $link }}">` — no Blade-escaped `/admin/%22https:…%22` 404s.
+  2. `DashboardCache` TTL default 300s when `CACHE_TIME` null/≤0; `forgetRosterCounts` from `UserObserver` + onboarding teacher/student saves.
+  3. `students:repair-orphan-academics` — repaired Grace Mbabazi `user_id=105` → `standardLink_id=26`, `klassapp_student_id=KLS0030010`, academic `id=47`; school 3 orphans=0; KPIs show Students **9** / Teachers **33**.
+  4. Toshi ≥1280: `body` row flex so Livewire sibling of `#app` docks in-viewport; maximize blur only with `.toshi-modal-overlay--open`.
+- **Verify**: PHPUnit DsKpiCard / DashboardRosterCache / RepairOrphan / ToshiPiece2Docking (15). Staging Playwright `e2e/dashboard-kpi-toshi-verify.cjs` as `moemucu@gmail.com` — linked KPIs → **200**; Toshi `top=0` `width=380`; mobile overlay `backdrop-filter: none` when hidden.
+
+## Previous: September 15, 2026 — **Onboarding unique-constraint audit MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
+
+- **Merged**: [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613) `c228a59e` — GitHub API `merged: true`.
+- **Staging deploy**: `depl-a2bf681a-…` @ `c228a59e` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
+- **Problem**: Wizard Teachers/Students showed generic “Could not save this step” after successful xlsx parse — staging logs: `users_email_unique` (`dokello@school.ug`) and `student_academics_lin_unique` (`LIN2501001001`) from leftover school 14 “PR611 Upload School”. Engine checked email **per-school**; DB is **global**. LIN had **no** pre-check.
+- **Staging cleanup**: School 14 retired (`status=0`, users `inactive`, emails remapped, LINs nulled). Confirmed live: `dokello@school.ug` count=0, `LIN2501001001` count=0, `assertEmailAvailableGlobally` present. Schools 10–13 had no fixture collisions.
+- **Code**: `OnboardingEngine` global email + LIN validation; WhatsApp phone pre-check; `describeUniqueConstraintViolation()`; wizard + Toshi surface UniqueConstraint → specific messages.
+- **Verify**: PHPUnit SaveTeachers/SaveStudents/SaveWhatsApp + `WizardUniqueConstraintSurfacingTest` + WhatsApp duplicate. Staging filesystem method present.
+- Full audit table: “Onboarding unique-constraint audit (2026-09-15)” below.
+
+## Previous: September 15, 2026 — **SiteAdmin OAuth + spreadsheet placement MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
+
+- **Merged**: [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611) `f863de73` — GitHub API `merged: true`.
+- **Staging deploy**: `depl-a2bf5410-…` @ `f863de73` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
+- **Fixes**:
+  1. SiteAdmin (`usergroup_id=1`) → `/superadmin/dashboard` via shared `AuthRedirectHelper` (Google OAuth + password + guest middleware + Admin dashboard bounce).
+  2. Student upload auto-creates streams when base class exists (`ensureStandardLinkForClass`).
+  3. Nursery subjects seeded (Literacy/Numeracy/Motor Skills/Social-Emotional) + `resolveOrCreateSubjectForClass` aliases in wizard/Toshi.
+- **Staging live verify**:
+  - Deployed code: `AuthRedirectHelper` ug1→`/superadmin/dashboard`; `GoogleAuthController` uses helper; fixtures present.
+  - Created synthetic SiteAdmin `siteadmin.pr611@klassapp.xyz` (password `demo123`, `google_id` set) — Playwright login lands on `/superadmin/dashboard`; `/admin/dashboard` bounces back; no school student sidebar links. Evidence: `e2e/screenshots/pr611-siteadmin/`.
+  - Google entry: login `data-testid=login-google` → `/auth/google` → 302 to `accounts.google.com` with staging callback URI (interactive Google account click-through not automated; callback uses same helper as password path).
+  - Real fixtures on school 14: **34/34** students placed (incl. `Primary One A` auto-stream); **16** teachers / **61** teacherlinks; David Okello → Literacy on Baby Class **yes**.
+- **Edge**: Pre-existing schools without nursery subjects still get subjects created on first teacher assign. Auto-stream requires base class. **School 14 later retired** during unique-constraint cleanup (emails/LINs held global unique slots).
+
+## Onboarding unique-constraint audit (2026-09-15)
+
+Complete unique-index inventory vs onboarding code (wizard + Toshi → `OnboardingEngine` / signup). Re-audit only if schema uniques change.
+
+| Table | Unique constraint | Scope | App behavior (before → after) | Verdict |
+|---|---|---|---|---|
+| `users` | `users_email_unique` (email) | **Global** | Per-school check + silent remap → **global assert + ValidationException** (provided emails); generated placeholders loop until globally unique | **GAP FIXED** — keep global (login identity) |
+| `users` | `users_google_id_unique` | Global | Onboarding teacher/student paths do not set `google_id` | OK (no gap) |
+| `users` | `users_school_registration_unique` (school_id, registration_number) | Per-school | `StudentIdGeneratorService` → `KLS{school}{seq}` | OK |
+| `student_academics` | `student_academics_lin_unique` (lin) | **Global** | Insert with no pre-check → **global assert + ValidationException** | **GAP FIXED** — keep global (UNEB national LIN) |
+| `student_academics` | `student_academics_klassapp_student_id_unique` | Global | Generator embeds school_id; race-safe sequence table | OK |
+| `student_academics` | `(school_id, std_school_pay_number)` | Per-school | Onboarding saveStudents does not set pay number | OK |
+| `schools` | name, email, phone, school_pay_code, ministry_code | Global each | Signup/`uniqueSchoolName`; phone NULL not `''`; Toshi preflight name/admin email | OK (no teacher/student gap) |
+| `sections` / `standards` | `(school_id, name)` | Per-school | `firstOrCreate` keys match | OK |
+| `standards_link` | `(school_id, section_id, academic_year_id, stream)` | Per-school | `firstOrCreate` / ensure helpers | OK |
+| `subjects` | `(school_id, section_id, name)` | Per-school | `firstOrCreate` | OK |
+| `academic_terms` | `(school_id, name)` | Per-school | `firstOrCreate` in `saveTerms` | OK |
+| `fees_categories` | `(school_id, standard_id, section_id, name)` | Per-school | `firstOrCreate` | OK |
+| `current_plans` | `(school_id, plan_id)` | Per-school | `updateOrCreate` | OK |
+| `whatsapp_users` | `whatsapp_users_phone_unique` (phone) | **Global** | Catch → skipped → **pre-check + ValidationException** (specific message) | **HARDENED** (was partially OK) |
+| `class_teacher_links` | (none beyond PK) | — | `firstOrCreate` | OK |
+| `userprofiles` / `student_parent_links` / `parent_profiles` | (none beyond PK) | — | — | OK |
+| `users.mobile_no` | **not unique** | — | Parent-phone collision was not today’s bug | N/A |
+
+**Product decisions**: Email and LIN stay **globally** unique; code must match DB (fail with helpful validation), not silently invent conflicting identities. Soft-deleted users still occupy `users.email` unique — checks use `withTrashed()`. Retiring test schools must remap emails / null LINs or they keep blocking uploads.
+
+## Previous: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
+
+
+- **Milestone**: Coordinated production cutover of the complete four-surface design program — Piece 1 landing/auth/error `--d-*` · Piece 4 dashboard kit · Piece 3 wizard · Piece 2 Toshi panel — plus parity/bugfix stack (#601/#603/#605/#607).
+- **App on production**: `2e5a382` (`depl-a2bf3117-…`) — design program tip. **Knowledge stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` — GitHub API `merged: true`.
+- **PR sweep**: every program PR `merged: true` with real SHAs (see Session Log cutover entry for full table).
+- **Rollback point (pre-cutover prod)**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ **`ca0e114`** (#560 reduced-motion). Confirmed still readable as `deployment.succeeded`. **Note**: empty-body `POST …/deployments` always ships branch tip — `commit_hash` in body is ignored (verified during probe). Fast rollback = revert/reset `main` to `ca0e114` then redeploy, or Cloud dashboard redeploy of that prior deployment if exposed.
+- **Staging fresh deploy**: `depl-a2bf311a-…` @ `2e5a382` **succeeded**.
+- **Production deploy**: `depl-a2bf3117-…` @ `2e5a382` **succeeded** (`deployment.succeeded`) — live on `klassapp.xyz`.
+- **Staging holistic verify**: auth/errors/dashboard×4/wizard×4/plans/Toshi Admin+Teacher PASS; landing re-PASS after `networkidle`→`load` (hibernation flake); register→wizard plan cards PASS (`e2e/four-surface-*`).
+- **Production holistic verify**: landing/auth/404 PASS; synthetic register→wizard plan cards Freemium/Growth/Premium + Continue PASS; dashboard home shell PASS (incomplete-setup); Toshi docked/pill/mobile PASS for **Admin** (`cutover.prod.…@v.test`) **and Teacher** (`cutover.prod.teacher.…@v.test`); Pulse canary ledger blur + clay dock (no Pulse green on dock). Evidence: `e2e/screenshots/four-surface-cutover/`.
+- **Cleanup**: synthetic cutover users flagged `status=inactive` (not deleted) on prod + staging.
+- **Stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) — cutover runners + knowledge record.
+- **Process note**: A rollback-capability probe POSTed with `commit_hash` and accidentally started the production deploy early (Cloud ignored the hash and shipped tip). Staging verify still completed green before relying on prod; full prod verify followed on the live tip.
+
+## Previous: September 14, 2026 — Plans seed + Toshi fee/term parity **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607)) — superseded by cutover above
+
+- **Plans root cause**: Staging had **0** `plans` rows (genuine missing seed data). Production already has Freemium / Growth ($35) / Premium — **real schools not blocked**.
+- **Staging fix**: Seeded via `PlansTableSeeder` / `plans:ensure`; wizard plan cards live-verified.
+- **Merged**: [#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607) `6ffecc83` — GitHub API `merged: true`. Toshi yearly fee checkbox + mark-current term picker; `plans:ensure` command.
+- **Staging deploy**: `depl-a2bf27cd-…` @ `6ffecc83` **succeeded**.
+- **Verify**: PHPUnit 9 PASS; Playwright `e2e/plans-and-toshi-fees-terms-verify.cjs` PASS (plan cards + Toshi yearly/term markup).
+- **Production**: now live via four-surface cutover `2e5a382`.
+
+## Previous: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605))
+
+- **Cause**: Continue on empty `plan_selection` set shell `errorMessage` to the same string already shown in the step `@empty` alert (`wizard-plan-empty`) — duplicate UI, not a loop.
+- **Merged**: [#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605) `60ba933c` — GitHub API `merged: true`. `next()` short-circuits without setting `errorMessage`; shell banner suppressed if that duplicate string would still appear.
+- **Staging deploy**: `depl-a2bf2035-…` @ `60ba933c` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit `WizardToshiParityBugsTest` 9 PASS (exactly-once assert after Continue); Playwright e2e counts occurrences when empty state is live.
+- **Production**: **NOT deployed**.
+
+## Previous: September 14, 2026 — LIN ≠ School Student ID **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)) — prod cutover still pending
+
+- **Verdict**: `student_academics.lin` already existed separately from `school_student_id`. [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) incorrectly folded upload `lin` into `school_student_id` — **regression**, not a missing-column gap.
+- **Merged**: [#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603) `cc320c98` — GitHub API `merged: true`. Distinct collection + persistence in Toshi, wizard, upload template; engine writes both columns (+ `userprofiles.LIN`).
+- **Staging deploy**: `depl-a2bf1728-…` @ `cc320c98` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit 22 PASS (independent LIN + School Student ID persistence).
+- **Production**: **NOT deployed**.
+
+## Previous: September 14, 2026 — Wizard + Toshi parity bugs **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601)) — prod cutover still pending
+
+- **Merged**: [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) `7e6ae1fe` (`fix/wizard-toshi-parity-bugs`) — GitHub API `merged: true`.
+- **Shipped**: Wizard plan empty-state no longer contradicts “select a plan”; finish errors list incomplete step labels; students Continue requires add or explicit Skip; Toshi `commitAll` passes gender + `school_student_id`/UNEB (legacy `lin` folded — **corrected by [#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)**); Toshi chat form fields + plan empty messaging.
+- **Staging deploy**: `depl-a2befa13-…` @ `7e6ae1fe` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit onboarding suite 38 PASS (incl. `WizardToshiParityBugsTest`); Playwright `e2e/wizard-toshi-parity-bugs-verify.cjs` PASS on staging (students Continue gate + Toshi gender/school-id in DOM).
+- **Four-surface on staging**: Pieces 1–4 complete; parity gates closed before cutover.
+- **Production**: **NOT deployed** — coordinated cutover still held.
+- **Stamp**: [#602](https://github.com/KlassApp-Foundation/KlassApp/pull/602) `24377d98` — GitHub API `merged: true`.
+
+## Previous: September 14, 2026 — Four-surface program **COMPLETE on STAGING** (Pieces 1–4) — prod cutover pending
+
+- **Piece 2 CLOSED on staging**: docking/pill [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599) `a012e5a1` — GitHub API `merged: true`. Clay dock ≥1280 (380px flex column, full-height, scrolling sidebar), `body.toshi-collapsed` → width 0 + toggle tab + pill, fullscreen ≤640. Pulse blocks untouched; source≡published `toshi-ui.css`.
+- **Piece 2 stack**: PR1 header/composer [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595)+[#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) → PR2 cards/chips [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597)+[#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598) → PR3 docking [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599).
+- **Staging deploy**: `depl-a2bee5e6-…` @ `a012e5a1` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: PHPUnit `ToshiPiece2DockingPillContractTest` 6/6 PASS; Playwright `e2e/toshi-piece2-docking-pill-verify.cjs` PASS for **Admin** (`phase4.admin@…`) **and Teacher** (`phase4.teacher@…`) — docked 1280 / collapsed pill / mobile 375; Pulse canary (ledger thead blur + FROZEN banner; dock block clay `#c96442`, no Pulse green).
+- **Four-surface on staging**: Piece 1 landing/auth/errors · Piece 2 Toshi · Piece 3 wizard · Piece 4 dashboard — all verified staging-only.
+- **Production**: **NOT deployed** — coordinated cutover decision is the next gate (no auto-prod).
+- **Staging note**: Teacher web login (usergroup 5) requires `settings.login_status=1`; staging row was missing and was upserted via Commands API for multi-role verify (`optimize:clear` after).
+
+## Previous: September 14, 2026 — Piece 2 Toshi docking/pill on **STAGING ONLY** ([#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599))
+
+- **Merged**: [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599) `a012e5a1` (`piece2/docking-pill`) — GitHub API `merged: true`.
+- **Shipped**: Clay polish for dock accent/`::before`, layout-sibling `#toshi-toggle` / `.toshi-toggle-wrapper`, pill, ≤640 fullscreen top accent; testids on toggle/wrapper/pill; Pulse FROZEN section untouched.
+- **Staging deploy**: `depl-a2bee5e6-…` @ `a012e5a1` **succeeded**.
+- **Staging verify**: multi-role Admin+Teacher Playwright PASS (see Current Status).
+- **Production**: **NOT deployed** — four-surface cutover hold.
+
+## Previous: September 14, 2026 — Piece 2 Toshi panel PR2 on **STAGING ONLY** ([#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597))
+
+- **Merged**: [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597) `d68f32a6` (`piece2/chips-plan-confirm-cards`) — GitHub API `merged: true` @ `2026-09-14T17:24:23Z`.
+- **Shipped**: Clay polish for suggestion chips, plan option cards (badge + CSS hover; green inline removed), tool-confirm cards, execution plan cards — overrides in Piece 2 block of `toshi-ui.css` (source≡published). Component testids added.
+- **Pulse canary**: Re-verified after CSS touch — `.ds-table-ledger thead { backdrop-filter: blur(12px) }` + FROZEN banner + sidebar green pill intact.
+- **Staging deploy**: `depl-a2bedef0-…` @ `d68f32a6` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: Playwright `e2e/toshi-piece2-cards-chips-verify.cjs` PASS (Pulse canary + computed clay `rgb(201,100,66)` / warm `rgb(245,244,237)` / radius 16).
+- **Stamp**: [#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598) `ebb774ad` — GitHub API `merged: true`.
+- **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
+- **Next**: Piece 2 docking/pill (≥1280 docked, ≤640 fullscreen). Pulse stays frozen.
+
+## Previous: September 14, 2026 — Piece 2 Toshi panel PR1 on **STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
+
+- **Merged**: [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) `ab89d1cc` (`piece2/toshi-header-composer`) — GitHub API `merged: true`.
+- **Harden/stamp**: [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) **MERGED** `aa819151` — GitHub API `merged: true` @ `2026-09-14T17:18:24Z` (e2e panel-scoped chips + knowledge stamp).
+- **Shipped**: Clay/warm header + composer (`#c96442` / `#f5f4ed` / radius 16); chip-first Yes/No confirms (shared partial); composer deferred while `awaitingConfirm`; **FROZEN — Pulse** banner + canary `.ds-table-ledger thead { backdrop-filter: blur(12px) }` untouched in Pulse block; source + `public/vendor/toshi-ui/toshi-ui.css` both published.
+- **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded** (PR1). Harden is docs/e2e-only — no redeploy required for #596.
+- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS (`#toshi-panel` scoped).
+- **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
+
+## Previous: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
+
+- **Merged**: [#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593) `d07f0adb` (`feat/wizard-piece3-wrap`) — GitHub API `merged: true`.
+- **Wrap polish**: UNEB Reg No. on student form only for candidate classes (`isCandidateClass`); terms copy notes later admin date edits (flag-card deferred — not built).
+- **Piece 3 stack on staging**: shell/nav [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) → size/category/plan [#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579) → structure/CT [#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583) → bulk [#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586) → review [#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589) → gaps 4–7 [#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591) → wrap [#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593).
+- **Staging deploy**: `depl-a2bec8ed-…` @ `d07f0adb` **succeeded**.
+- **Staging verify**: PHPUnit wrap PASS; Playwright `e2e/wizard-piece3-wrap-verify.cjs` PASS (shell 17 dots + redesigned steps + UNEB gate) @ 375/414/768/1280.
+- **Production**: **NOT deployed** — hold until coordinated four-surface / Piece 3 cutover.
+- **Next**: Coordinated production cutover when ready (or other product work).
+
+## Previous: September 14, 2026 — Piece 3 gaps 4–7 on **STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
+
+- **Merged**: [#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591) `e7265574` (`feat/wizard-onboarding-gaps-4-7`) — GitHub API `merged: true`.
+- **Shipped**: (4) student gender + template Gender / School Student ID / UNEB Reg No. / optional DOB; (5) teacher class×subject → real `Teacherlink`; (6) fees name/amount/whole-school|class/term/yearly; (7) multi-term prefill Term 1–3 + mark current (no one-term auto-advance). Deferred: editable term dates later / flag-card UI — not built.
+- **Staging deploy**: `depl-a2bebe87-…` @ `e7265574` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: PHPUnit gaps + kit + bulk/template PASS; Playwright `e2e/wizard-gaps-4-7-verify.cjs` PASS @ 375/414/768/1280.
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 wrap / residual polish if any.
+
+## Previous: September 14, 2026 — Piece 3 PR5 review panels on **STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
+
+- **Merged**: [#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589) `4c072788` (`feat/wizard-review-cards`) — GitHub API `merged: true`.
+- **Shipped**: Review & confirm → responsive **settings panels** (1/2/3-col) with Edit → `editSection` on every row; subjects review `unique()`s names (see finding below).
+- **Subjects finding**: Not junk DB duplicates. `SchoolCategorySeeder` creates one `subjects` row per class/section by design. Review previously `pluck('name')` without `unique()` → English/Math/Science/SST repeated once per class. **Display aggregation bug** — fixed; DB model unchanged.
+- **Staging deploy**: `depl-a2beabc4-…` @ `4c072788` **succeeded**.
+- **Staging verify**: Playwright 16 panels + Edit school_name/subjects + unique subjects + viewports 375/414/768/1280 PASS (`e2e/wizard-review-panels-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 wrap / residual polish if any.
+
+## Previous: September 14, 2026 — Piece 3 PR4 bulk teachers/students on **STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
+
+- **Merged**: [#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586) `3cb0db6e` (`feat/wizard-bulk-teachers-students-kit`) — GitHub API `merged: true`.
+- **Shipped**: Teachers/students bulk kit chrome — paste + Add from paste, email/phone (teachers), Download template (static teacher xlsx + dynamic `admin.students.upload-template`), Upload file, Skip for now with `wire:confirm` when drafts exist; primary actions via `<x-button>`; standards step no longer misuses `.manual-wizard-bulk-*`.
+- **Staging deploy**: `depl-a2be9a70-…` @ `3cb0db6e` **succeeded**.
+- **Staging verify**: Playwright paste/upload/template download (teacher xlsx + dynamic student `student-upload-template-phase-4-roster-demo-school.xlsx` 6455 bytes) + skip+confirm + viewports 375/414/768/1280 PASS (`e2e/wizard-bulk-teachers-students-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 review polish.
+
+## Previous: September 14, 2026 — Piece 3 PR3 structure/CT cards on **STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
+
+- **Merged**: [#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583) `d1a1f087` (`feat/wizard-structure-ct-cards`) — GitHub API `merged: true`.
+- **Shipped**: Structure & Class Teacher checkpoint kit cards — `manual-wizard-structure-card`, stream chips / “No streams yet — undivided base class.”, CT empty/populated, `<x-button>` Add / Send invite → real `addStructureStream` / `inviteStructureClassTeacher` (validation + flash copy unchanged).
+- **Staging deploy**: `depl-a2be8a03-…` @ `d1a1f087` **succeeded**.
+- **Staging verify**: Playwright stream flash `Added stream “Kit56272” to P.4 Demo.` + CT invite flash + status `CT: Kit Class Teacher` + viewports 375/414/768/1280 PASS (`e2e/wizard-structure-ct-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 PR4 bulk teachers/students lists → review polish.
+
+## Previous: September 14, 2026 — Piece 3 PR2 size/category/plan cards on **STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
+
+- **Merged**: [#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579) `56bbf08f` (`feat/wizard-size-category-cards`) — GitHub API `merged: true`.
+- **Shipped**: Student-size step is a `manual-wizard-plan-card` radiogroup (`selectStudentSize` + real `STUDENT_SIZE_OPTIONS`); category/plan cards already present — contracts tightened; 2×2 `--sizes` CSS at `sm+`.
+- **Staging deploy**: `depl-a2be7d97-…` @ `56bbf08f` **succeeded**.
+- **Staging verify**: Playwright size cards + category labels + review Confirm + viewports 375/414/768/1280 PASS.
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+
+## Previous: September 14, 2026 — Piece 3 PR1 wizard shell/nav on **STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
+
+- **Merged**: [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) `4856d765` (`feat/wizard-shell-nav-kit`) — GitHub API `merged: true`. Stamp [#578](https://github.com/KlassApp-Foundation/KlassApp/pull/578) `4c89d581`.
+- **Shipped**: Manual onboarding wizard kit chrome — KlassApp brand strip (“Setting up without Toshi”), kit step head, Previous / 17 dots / **Continue →**, review **Confirm & finish** via `<x-button>` (attribute bag now forwards `wire:click`). Real `STUDENT_SIZE_OPTIONS` + `SchoolCategorySeeder::CATEGORIES` locked in contract tests (not kit placeholders). `data-toshi-manual-wizard` untouched.
+- **Staging deploy**: `depl-a2be6957-…` @ `4856d765` **succeeded**.
+- **Production**: **NOT deployed** — four-surface / Piece 3 hold until coordinated cutover.
+
+## Previous: September 14, 2026 — Piece 4 dashboard kit parity **COMPLETE on STAGING ONLY** (`origin/main` tip was `f5b9eeee` / stamp `692b4210`)
+
+- **Four surfaces + cleanup — all merged + staging-verified** (GitHub API `merged: true`):
+  - Home shell [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3`
+  - Students roster [#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568) `460fb0c1`
+  - Fees payments [#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570) `3762a9c0` + follow-ups [#571](https://github.com/KlassApp-Foundation/KlassApp/pull/571) `1fbe4927` · [#572](https://github.com/KlassApp-Foundation/KlassApp/pull/572) `c08e8835` · [#574](https://github.com/KlassApp-Foundation/KlassApp/pull/574) `dc84ebe5` (Vue remount → document click delegation)
+  - Exams/marks [#573](https://github.com/KlassApp-Foundation/KlassApp/pull/573) `6f6b62e9`
+  - Residual KPI cleanup [#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575) `f5b9eeee` (approvals + superadmin → `ds-kpi-*`; EOT panel → `dashboard-chart-card`)
+- **Latest staging deploy (Piece 4 tip)**: `depl-a2be523f-…` @ `f5b9eeee` **succeeded** (superseded by Piece 3 #577 on staging).
+- **Production**: **NOT deployed** — hold until coordinated cutover is explicitly approved.
+- **Next**: Piece 3 onboarding wizard visual redesign (PR1 shell/nav shipped — see Current Status).
+
+## Previous: September 14, 2026 — Piece 4 students roster on **STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
+
+- **Merged**: [#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568) `460fb0c1` (`feat/dashboard-students-roster-kit`) — GitHub API `merged: true`.
+- **Shipped**: Admin students kit composition — `ds-page-head`, filter card, selectable/sortable `<x-table>` / `.ds-table-ledger`, WhatsApp column, `dt-name-link`, empty state + `dt-pagination`.
+- **Staging deploy**: `depl-a2be4304-…` @ `460fb0c1` **succeeded**.
+- **Staging verify**: Playwright `e2e/dashboard-students-roster-verify.cjs` PASS 375/414/768/1280; Pulse ledger thead `blur(12px)`.
+- **Production**: **NOT deployed** — four-surface program hold.
+- **Next**: fees → exams/marks → residual KPI cleanup (now done — see Current Status).
+
+## Previous: September 14, 2026 — Piece 4 dashboard home shell on **STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
+
+- **Merged**: [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3` (`feat/dashboard-home-shell-kit`) — GitHub API `merged: true`.
+- **Shipped**: Admin home kit composition — time-of-day greeting + LIVE badge, full-width `ds-kpi-card` grid, fees+connected-tools topfold; incomplete setup keeps product demo under greeting/LIVE.
+- **Staging deploy**: `depl-a2be3f57-…` @ `c39b45b3` **succeeded**.
+- **Staging verify**: Playwright `e2e/dashboard-home-shell-verify.cjs` PASS 375/414/768/1280 (phase4 admin is incomplete-setup → greeting+LIVE+demo); Pulse ledger thead `blur(12px)` on `/admin/students`.
+- **Production**: **NOT deployed** — four-surface program hold.
+- **Next**: students roster → fees → exams/marks → residual `dashboard-kpi-card` cleanup.
+
+## Previous: September 14, 2026 — Piece 1 landing/auth/error `--d-*` alignment on **STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
+
+- **Merged to `main`**: [#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) `e5c22ac5` (landing canvas/ink/Sora+DM Sans) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) `33558296` (auth ds-btn metrics + blue focus) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564) `6c76f36d` (error parchment + ds-btn metrics + blue focus).
+- **Staging deploys**: `depl-a2be32ba-…` (#562) · `depl-a2be3755-…` (#563) · `depl-a2be39e9-…` (#564) — all succeeded on `env-a2b86c90-…`.
+- **Staging verify** (`klassapp-staging-7mpoqg.laravel.cloud`): landing body `rgb(250,250,245)` + Sora; `/login` Playwright `e2e/auth-d-tokens-verify.cjs` PASS (375/414/768/1280); live 404 Playwright `e2e/errors-d-tokens-verify.cjs` PASS.
+- **Production**: **NOT deployed** — explicit hold; keep Piece 1 on staging until cutover is approved.
+- **Still open (Piece 1)**: landing `.btn` glow/geometry cleanup; optional class rename `.ap-submit` / `.err-btn*` → `ds-btn` markup (metrics already match).
+
+## Previous: September 14, 2026 — Dashboard reduced-motion sweep COMPLETE ([PR #560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) MERGED+DEPLOYED)
+
+- **Merged**: [#560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) merge `ca0e1143` (`fix/reduced-motion-pulse-spin`) — save-indicator `d-pulse` and Toshi `toshi-spin` join the three loops from [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) under `@media (prefers-reduced-motion: reduce)`.
+- **Production deploy**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ `ca0e1143` **succeeded**.
+- **Live verify**: prod `dashboard-refresh.css` contains both new rules; Playwright `emulateMedia({ reducedMotion: 'reduce' })` → `d-pulse` and `toshi-spin` compute `animation-name: none`.
+- **Sweep status**: all five infinite loops in `dashboard-refresh.css` now respect reduced motion.
+
+## Previous: September 14, 2026 — Dashboard prefers-reduced-motion LIVE ([PR #558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) MERGED+DEPLOYED)
+
+- **Merged**: [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) merge `cc01623e` (`fix/dashboard-reduced-motion`) — `@media (prefers-reduced-motion: reduce)` disables LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce in `dashboard-refresh.css`.
+- **Also documented**: real `STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, and `OnboardingStepsService::ALL_STEPS` order in `DESIGN_SYSTEM.md` (replacing Claude Design kit placeholders).
+- **Production deploy**: `depl-a2be2723-2d2d-478c-bc4d-2a1babea3c40` @ `cc01623e` **succeeded**.
+- **Live verify**: `https://klassapp.xyz/css/dashboard-refresh.css` contains the media query; Playwright against prod CSS with `emulateMedia({ reducedMotion: 'reduce' })` → all three `animation-name: none`.
+- **Still open**: `d-pulse` (save indicator) and `toshi-spin` not yet under reduced-motion; OD Claude Design dump React kit still has wrong inferred labels (grounding is DESIGN_SYSTEM.md / OD `klassapp` DESIGN.md).
+
+## Previous: September 14, 2026 — Pulse styling global consistency LIVE ([PR #555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) MERGED+DEPLOYED)
+
+- **Merged**: [#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) merge `cb140999` (`fix/pulse-global-consistency`) — SchoolAdmin dashboard KPIs → `<x-ds-kpi-card>`; Pulse table rules extended to `.ds-table-ledger` in `packages/toshi-ui/resources/css/toshi-ui.css` + published `public/vendor/toshi-ui/toshi-ui.css`.
+- **Follow-up**: [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556) merge `1238e9ff` — view tests assert `ds-kpi-card` on complete-setup admin dashboard renders.
+- **Production deploy**: `depl-a2be1a50-f365-414f-87bb-58a46f8e486e` @ `cb140999` **succeeded** (manual Cloud `POST …/deployments`).
+- **Live verify** (`klassapp.xyz`): `vendor/toshi-ui/toshi-ui.css` contains `.ds-table-ledger thead` blur rule; `/admin/students` + `/admin/attendance` ledger `thead` computed `backdrop-filter: blur(12px)`; teacher dashboard KPI values `rgb(34, 197, 94)` (Pulse green reference). UI Review demo admin (`admin@uireview.klassapp.demo`) currently has `setupIncomplete=true` — KPI grid hidden behind product-demo placeholder on prod; admin `ds-kpi-card` markup verified via PHPUnit view tests + will show Pulse green when setup completes.
+- **Evidence**: `e2e/verify-pulse-global-fix.cjs`; screenshots `e2e/screenshots/pulse-global-fix/{before,after}-*.png` + metrics JSON.
+
+## Previous: September 14, 2026 — Claude Design export in-repo ([PR #553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) MERGED — docs + static assets, no deploy)
+
+- **Merged**: [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) merge `e4cab345` (`docs/design-system-claude-export`) — GitHub API `merged: true`, `mergedAt` 2026-09-14T07:52:23Z.
+- **Shipped**: Production-validated `resources/views/components/DESIGN_SYSTEM.md`; canonical brand SVGs in `resources/assets/brand/`; token CSS mirrors in `resources/assets/design-system/tokens/`; `public/images/` mirrors + `.gitignore` fix for trackable brand SVGs.
+- **Verify**: 40/40 spot-checks vs `dashboard-refresh.css` before merge; GitHub main sanity: DESIGN_SYSTEM.md ~14KB, 13 files under `resources/assets/brand/`, `colors.css` present.
+- **No deploy** — documentation and static SVGs only.
+
+## Previous: September 13, 2026 — DS table striped + `.ds-btn-md` LIVE ([PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) MERGED+DEPLOYED)
+
+- **Merged**: [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) merge `14f91188` (`fix/table-striped-prop-and-btn-md-size`) — `mergedAt` 2026-09-13T01:06:52Z.
+- **Shipped**: `<x-table striped>` emits `ds-table-striped`; dead `hover` prop removed (ledger hover is unconditional); `.ds-btn-md` restored as deliberate no-op matching `.ds-btn` base metrics.
+- **Production deploy**: `depl-a2bb7eb1-…` @ `14f91188` **succeeded** (empty-body `POST …/deployments`).
+- **Live verify** (`klassapp.xyz`, demo `admin@uireview.klassapp.demo`): `/admin/fees/payments` table classes include `ds-table-striped`; even rows `rgb(250, 250, 245)` / odd `rgba(0,0,0,0)`. Record Payment `sm` button `5px 12px` / `12.48px`. Injected `.ds-btn-md` `8px 18px` / `13.6px` (unchanged vs pre-fix). Synthetic `PR546-VERIFY-*` fee rows removed after check.
+- **Tests**: `TableAndButtonClassContractTest` 9 passed / 28 assertions locally on PR tip.
+
+## Previous: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
 
 - **Merged**: [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) merge `7683a604` (`feature/laravel-nightwatch`) — `laravel/nightwatch` ^1.30, published `config/nightwatch.php`, `LOG_STACK` via env (default `daily`; Cloud set to `daily,nightwatch`).
 - **Cloud env (staging + production)**: `NIGHTWATCH_TOKEN` set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
@@ -1842,6 +2188,235 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-13: Claude Design sync — durable inputs committed (React shim + tokens + previews)
+
+- **Work done**: First-time sync of KlassApp's real design system (not a manually-restated description) into Claude Design's format. Since Claude Design renders React and KlassApp's DS is anonymous Blade components, built a thin React port under `.design-sync/shim/src/` (Button, Card, Badge, Table, FormGroup, KpiCard, plus WhatsAppMark/SlackMark/GoogleDriveMark using the real brand SVG geometry from `resources/views/components/brand/`) that emits the identical `ds-*` class contract as the Blade originals — verified class-by-class against `public/css/dashboard-refresh.css`. Bundle built via esbuild, styled with the real stylesheet (copied at build time by `shim/copy-css.mjs`, never hand-duplicated), validated (`.d.ts` parse, token/CSS reachability), and 9 authored preview stories per component graded on an absolute rubric (37/37 cells `good`) after installing Playwright/Chromium for a real headless render check.
+- **Files modified**: `.design-sync/config.json`, `.design-sync/NOTES.md`, `.design-sync/conventions.md`, `.design-sync/docs/*.md` (9), `.design-sync/previews/*.tsx` (9), `.design-sync/shim/{package.json,package-lock.json,tsconfig.json,copy-css.mjs,src/*}`, `.gitignore` (ignore the shim's `node_modules`/`dist`, the regenerated `ds-bundle/`, and sync working state — the source files above are the durable, committed sync inputs).
+- **Key decisions**: ship a React port rather than claim a compiled artifact that doesn't exist for a Blade app — every port's JSDoc names its exact `<x-…>` Blade equivalent, so output maps 1:1 back to real markup. `conventions.md` (prepended to the generated README, read by the design agent) explicitly warns that **no Tailwind utility classes ship in this bundle** — `_ds_bundle.css` is `dashboard-refresh.css` verbatim, 364 selectors, zero Tailwind — since the app loads Tailwind separately and a design built from this bundle would otherwise silently drop all utility-class layout.
+- **Bugs found during the verification pass, filed separately**: `<x-table>`'s `striped`/`hover` dead props and `.ds-btn-md`'s missing CSS rule — see the dedicated `TRACKED ISSUE` / `RESOLVED` entries and [PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (separate branch, not part of this commit). `DESIGN_SYSTEM.md`'s badge colour table and its Tailwind v1.4.6 claim are also stale — noted in `.design-sync/NOTES.md`, not yet fixed.
+- **Status**: durable sync inputs committed, this PR — docs/config only, no deploy. **Upload to claude.ai/design is still blocked**: `DesignSync` reports design-system authorization is unavailable in this environment, and the user's own `/design consent` returned a 401. The built bundle (`ds-bundle/`, gitignored, reproducible via `.design-sync/config.json` + the committed shim) has not shipped anywhere yet — this commit only preserves the inputs so a future sync doesn't redo the discovery/build/verify work.
+- **Edge cases flagged**: re-running the sync needs `npm i` inside `.design-sync/shim/` and `.ds-sync/` (both gitignored, regenerated) plus Playwright/Chromium; see `.design-sync/NOTES.md` "Re-sync risks" for the full list (fonts load from Google Fonts at runtime, the shim is a hand-written port that can't auto-detect future Blade changes).
+
+### 2026-09-16 — Strip protocol mesh icon under "Not just software. A protocol."
+- **Work**: Synced `main`; removed `protocol-visual` / mesh block from `landing-v2.blade.php`; updated `LandingPreviewV3Test`; added `e2e/landing-protocol-no-mesh-verify.cjs`.
+- **Status**: ✅ MERGED `21183487` + staging `depl-a2c22941-…` verified. Production not deployed.
+- **Edge**: Protocol card icons retained (Open Source / MCP / Community) — only the left-column decorative mesh under the heading was removed.
+
+### 2026-09-16 — Landing Toshi tower + hero X-flip integration
+- **Work**: Synced `origin/main`; extracted `~/Downloads/KlassApp Design System (1).zip` → `/tmp/klassapp-ds-tower`; installed six clean marks from `/tmp/llm-brand-marks.zip` into `resources/assets/brand/models/` + `public/images/brand/models/` (DeepSeek excluded); ported tower partial + X-flip hero CSS/JS/Blade; remapped `--d-*` to landing tokens.
+- **Files**: `resources/views/partials/landing-toshi-tower.blade.php`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `resources/assets/brand/models/*`, `public/images/brand/models/*`, `.gitignore`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-tower-hero-flip-verify.cjs`.
+- **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
+- **Status**: ✅ MERGED `168a054e` + staging `depl-a2c225d3-…` verified. Production not deployed.
+- **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
+
+
+
+### 2026-09-15: Nightwatch trio — WA demo school_id + fee standardLink + null avatar — **LIVE** ([#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620))
+- **Work done**: Picked up Goose's incomplete Nightwatch fixes. (1) WhatsApp `"demo"` inbound: `school_id` from configured demo parent (`services.whatsapp.demo_parent_user_id` / `WHATSAPP_DEMO_PARENT_USER_ID`, default 104) — never hardcode `1`; graceful when missing. (2) `whatsapp:send-fee-reminders`: students via `whereHas('standardLink', standard_id ∈ fee categories)` (not missing `student_academics.standard_id`); `markAttendance` uses `standardLink_id`; `notifyFeeReminder` via `studentAcademicLatest.standardLink`. (3) Null avatar: `getFilePath` null-guard + `\Throwable`; Teacher resources null-safe. (4) Follow-up #620: `getParentPhones` no longer `wherePivot` on hasMany `StudentParentLink`.
+- **Merged**: [#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) `101d2fcd` API `merged: true` @ 2026-09-15T04:25:23Z; [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620) `4fbcbf6f` API `merged: true`.
+- **Staging**: `depl-a2bfcb43-…` @ `101d2fcd` + `depl-a2bfcd2c-…` @ `4fbcbf6f` **succeeded**. Playwright teachers/find 200; fee dry-run 3/3 no column error.
+- **Production**: `depl-a2bfce3d-…` @ `4fbcbf6f` **succeeded**. Rollback tip `e3c308db`. Dry-run school 33: 6 students / would notify parents. Demo parent 104 → school 31. Markers OK.
+- **Files**: `SendFeeReminders.php`, `WhatsAppController.php`, `OutboundWhatsAppService.php`, `Common.php`, `MemberProcess.php`, Teacher resources, `config/services.php`, `tests/Feature/Nightwatch/*`, `e2e/nightwatch-teachers-find-null-avatar.cjs`.
+- **Key decisions**: Fee categories stay on `standards.id`; join through `standards_link` (standing rule #5 — do not treat `standard_id` as `standardLink_id`). Catch `\Throwable` not just `Exception` for Flysystem TypeError.
+- **Status**: ✅ MERGED + staging + production live.
+- **Edge cases flagged**: Staging dry-run after #619 alone surfaced `wherePivot` crash — fixed in #620 before prod. Demo parent 104 must keep a real `school_id`; override via `WHATSAPP_DEMO_PARENT_USER_ID` if remapped. `getFilePathforDownload` optional-before-required param deprecation remains (pre-existing).
+
+### 2026-09-15: Production ship #611+#613+#615 — **LIVE** @ `e3c308db`
+- **Rollback point**: `2e5a382bc77bc81dbfcb2c551f879f34a8e2b351` (`depl-a2bf3117-…`).
+- **Deploy**: `depl-a2bf8451-…` → `deployment.succeeded` commit `e3c308db` (main tip incl. #611/#613/#615/#616).
+- **Live verify (`klassapp.xyz`)**: SiteAdmin → `/superadmin/dashboard` + Google OAuth callback URI; KPI cards → 200; Toshi docked at 1280; duplicate teacher email → specific ValidationException message. Synthetic users flagged `inactive` after.
+- **Status**: ✅ Production live + verified.
+- **Edge**: Incomplete-setup schools hide main KPI grid (banner only) — used a school with empty `OnboardingHelper::getMissingSteps` for KPI click-through. Interactive Google account picker not automated; password path + OAuth start URI proven.
+
+### 2026-09-15: Staging KPI href + roster cache + Toshi dock + orphan academics — **MERGED + STAGING** ([#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615))
+- **Work done**: Fixed escaped KPI hrefs (`ds-kpi-card`); `DashboardCache` TTL + invalidation; Toshi desktop body-row dock + scoped maximize blur; `students:repair-orphan-academics`; repaired Grace Mbabazi on staging school 3.
+- **Merged**: [#615](https://github.com/KlassApp-Foundation/KlassApp/pull/615) `522f4de6` — API `merged: true`. Branch `fix/staging-kpi-cache-toshi-orphans`.
+- **Staging**: `depl-a2bf7c34-…` @ `522f4de6` **succeeded**. Commands: dry-run then repair → user 105 / link 26 / `KLS0030010`; orphans=0; KPIs 9/33. Playwright admin KPI clicks → 200; Toshi in viewport; mobile blur none when overlay hidden. **Production not deployed.**
+- **Files**: `DashboardCache.php`, `RepairOrphanStudentAcademics.php`, `UserObserver.php`, `OnboardingEngine.php`, `Dashboard.php`, `ds-kpi-card.blade.php`, `agent-toshi.blade.php`, `toshi-ui.css` (+ published), `dashboard-refresh.css`, tests, `e2e/dashboard-kpi-toshi-verify.cjs`, `knowledge.md`.
+- **Key decisions**: Prefer CSS body flex over moving Livewire inside `#app` (Vue root conflict); never assemble `href` into a string then `{{ $attrs }}`.
+- **Status**: ✅ Merged + staging verified.
+- **Edge**: Incomplete-setup dashboards (phase4 demo) may hide KPI grid behind setup banner — verify KPI hrefs on a finished school (e.g. school 3). Reception `/reception/dashboard` 404 on staging for this admin.
+
+### 2026-09-15: Onboarding unique-constraint audit + global email/LIN dedup — **MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
+- **Work done**: Full unique-index audit; retired staging school 14; fixed engine gaps; specific ValidationException / UniqueConstraint messages in wizard + Toshi; PHPUnit + Livewire collision tests.
+- **Merged**: [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613) `c228a59e` — API `merged: true`.
+- **Staging**: `depl-a2bf681a-…` @ `c228a59e` **succeeded**. Production **not** deployed.
+- **Files**: `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, SaveTeachers/SaveStudents/SaveWhatsApp tests, `WizardUniqueConstraintSurfacingTest.php`, `e2e/wizard-unique-constraint-collisions.cjs`, `knowledge.md`.
+- **Key decisions**: Keep email + LIN **global**; align code (don’t catch-and-hide); remap unique fields when retiring test schools.
+- **Status**: ✅ Merged + staging verified (school 14 retired; method live).
+- **Edge**: Wizard student drafts do not pass `email` to engine (LIN is the wizard collision surface); Toshi/engine still enforce global email. Soft-deleted users occupy email unique.
+
+### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
+- **Findings (before fix)**: SiteAdmin school sidebar = real Google OAuth gap; student placement = setup-order (missing streams); Literacy/Baby Class = empty nursery subject seed.
+- **Merged**: [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611) `f863de73` — API `merged: true`.
+- **Staging**: `depl-a2bf5410-…` @ `f863de73` **succeeded**. Production **not** deployed.
+- **Staging verify**: SiteAdmin Playwright → `/superadmin/dashboard`; `/auth/google` → Google OAuth; Cloud Commands fixture uploads school 14 → 34 students + Literacy/Baby Class teacherlink. Screenshots `e2e/screenshots/pr611-siteadmin/`; runner `e2e/siteadmin-superadmin-redirect-verify.cjs`.
+- **Status**: ✅ Staging-only program stamp. User still does their own manual UI upload on their account.
+- **Edge**: Interactive Google account click-through not automated in CI; deployed callback uses `AuthRedirectHelper` (confirmed on staging filesystem). Auto-stream needs base class.
+
+### 2026-09-15: Four-surface design program **PRODUCTION CUTOVER** (Pieces 1–4) — LIVE @ `2e5a382`
+- **Work done**: Full PR merge sweep via GitHub API; fresh staging deploy; holistic Playwright across all four surfaces; documented rollback `ca0e114` / `depl-a2be2ae7-…`; production deploy of main tip; real prod verify (register/wizard plans, Admin+Teacher Toshi dock/mobile, Pulse canary); synthetic users flagged inactive; knowledge stamp.
+- **PR sweep (all `merged: true` + SHA)**:
+  - **Piece 1**: #562 `e5c22ac5` · #563 `33558296` · #564 `6c76f36d` (+ stamp #565); foundation #536 already live.
+  - **Piece 4**: #566 `c39b45b3` · #568 `460fb0c1` · #570 `3762a9c0` · #573 `6f6b62e9` · #575 `f5b9eeee` (+ stamps #567/#569/#576; fixes #571/#572/#574).
+  - **Piece 3**: #577 `4856d765` · #579 `56bbf08f` · #583 `d1a1f087` · #586 `3cb0db6e` · #589 `4c072788` · #591 `e7265574` · #593 `d07f0adb` (+ stamps).
+  - **Piece 2**: #595 `ab89d1cc` · #597 `d68f32a6` · #599 `a012e5a1` (+ #596 harden / stamps).
+  - **Parity/bugs**: #601 `7e6ae1fe` · #603 `cc320c98` · #605 `60ba933c` · #607 `6ffecc83` (+ stamps #602/#604/#606/#608).
+  - **Open design PRs**: none blocking.
+- **Deploys**: staging `depl-a2bf311a-…` · production `depl-a2bf3117-…` — both `deployment.succeeded` @ `2e5a382`.
+- **Files modified**: `knowledge.md`, `e2e/four-surface-cutover-verify.cjs`, `e2e/four-surface-register-wizard-walkthrough.cjs`, `e2e/landing-d-tokens-verify.cjs` (`load` not `networkidle`), evidence under `e2e/screenshots/four-surface-cutover/`.
+- **Key decisions**: Treat accidental early prod deploy (commit_hash probe ignored by Cloud) as the cutover ship after staging green; never delete synthetic cutover users — `status=inactive`.
+- **Status**: ✅ LIVE on `klassapp.xyz` · staging + prod holistic PASS · rollback point documented · stamp [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` MERGED
+- **Edge cases flagged**: Staging `networkidle` hangs on landing (analytics/hibernation) — use `load`. Incomplete-setup schools lack KPI strip / empty student ledger thead — Pulse verified on pages that have ledger chrome. `school_category` Livewire jump returned false once in walkthrough (other steps OK).
+
+### 2026-09-14: Plans seed + Toshi fee yearly / term current — **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607))
+
+- **Work done**: Confirmed staging `plans` count=0 vs production count=3 (Freemium/Growth/Premium). Seeded staging; added `plans:ensure`. Toshi: yearly fee checkbox + mark-current term picker (wizard parity).
+- **Files**: `EnsurePlansCommand.php`, `AgentToshi.php`, `agent-toshi.blade.php`, tests, `e2e/plans-and-toshi-fees-terms-verify.cjs`, `knowledge.md`.
+- **Status**: Merged `6ffecc83`; staging `depl-a2bf27cd-…` **succeeded**. Prod not deployed (plans already OK).
+- **Edge**: Staging Cloud provision skipped `DatabaseSeeder`/plans — re-run `php artisan plans:ensure` after empty envs.
+
+### 2026-09-14: Wizard empty-plan message once — **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605))
+
+- **Work done**: Deduped “No plans are available yet. Contact support.” on wizard plan step — in-step `wizard-plan-empty` only; Continue no longer also fills shell `wizard-error`.
+- **Files**: `ManualOnboardingWizard.php`, `manual-onboarding-wizard.blade.php`, `WizardToshiParityBugsTest.php`, `e2e/wizard-toshi-parity-bugs-verify.cjs`.
+- **Status**: Merged `60ba933c`; staging `depl-a2bf2035-…` **succeeded**. Prod not deployed.
+- **Edge**: Staging demo with active plans skips live once-only assert; PHPUnit covers empty-plan school.
+
+### 2026-09-14: LIN distinct from School Student ID — **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603))
+- **Work done**: Confirmed `student_academics.lin` ≠ `school_student_id` in schema; reverted #601 fold of upload `lin` into school ID; wired optional LIN in Toshi + wizard + upload template; engine persists both columns independently.
+- **Files modified**: `OnboardingEngine.php`, `OnboardingNameListExtractor.php`, `StudentUploadTemplateService.php`, `AgentToshi.php`, `ManualOnboardingWizard.php`, blades, related tests, `knowledge.md`
+- **Key decisions**: Situation = regression from #601 (not a missing-column gap). Also write `userprofiles.LIN` for admin UI parity.
+- **Status**: ✅ MERGED `cc320c98` · GitHub API `merged: true` · staging `depl-a2bf1728-…` succeeded · PHPUnit PASS · **prod held**
+- **Edge cases flagged**: Admin admission still validates LIN as 14-char alpha_num; onboarding keeps optional soft string.
+
+### 2026-09-14: Wizard + Toshi parity bugs (plan/students/gender/ID) — **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601))
+- **Work done**: Fix wizard plan empty vs select contradiction + specific finish incomplete-step labels; block silent students Continue (require Skip for now); pass gender + `school_student_id`/UNEB through Toshi `commitAll` (create + complete-draft); fold upload `lin` → `school_student_id`; Toshi chat form fields + plan empty messaging. PHPUnit + Playwright; staging deploy only.
+- **Files modified**: `ManualOnboardingWizard.php`, `OnboardingStepsService.php`, `AgentToshi.php`, `OnboardingNameListExtractor.php`, `agent-toshi.blade.php`, `manual-wizard-step-fields.blade.php`, `WizardToshiParityBugsTest.php`, related onboarding tests, `e2e/wizard-toshi-parity-bugs-verify.cjs`, `knowledge.md`
+- **Key decisions**: Teachers may still auto-skip on empty Continue; students must not. Engine already supported gender/ID — Toshi mappers were dropping them (stale comment removed).
+- **Status**: ✅ MERGED `7e6ae1fe` · GitHub API `merged: true` · staging `depl-a2befa13-…` @ `7e6ae1fe` succeeded · Playwright PASS · **prod held**
+- **Edge cases flagged**: Live plan empty-state needs a school with zero active plans (PHPUnit covers); staging demo usually past plan step.
+
+### 2026-09-14: Piece 3 wrap — UNEB candidate gate + staging closeout — **MERGED + STAGING ONLY** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
+- **Work done**: Gate student UNEB Reg field to `isCandidateClass`; terms deferral copy; wrap PHPUnit + Playwright smoke across redesigned steps; stamp Piece 3 **CLOSED on staging**.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `WizardPiece3WrapTest.php`, `e2e/wizard-piece3-wrap-verify.cjs`, `e2e/wizard-gaps-4-7-verify.cjs`, `knowledge.md`
+- **Key decisions**: Flag-card / later term-date editing still deferred; production cutover remains coordinated hold.
+- **Status**: ✅ MERGED `d07f0adb` · staging `depl-a2bec8ed-…` · Playwright PASS · **prod held** · Piece 3 staging stack complete
+- **Edge cases flagged**: Primary-only demo may lack P.7 in class select — UNEB hide path still verified; candidate show path asserted in PHPUnit when a candidate section exists.
+
+### 2026-09-14: Piece 3 gaps 4–7 (student fields, teacherlinks, fees, multi-term) — **MERGED + STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
+- **Work done**: Gender on student form + template; School Student ID / UNEB / optional DOB on template; teacher class×subject → `Teacherlink`; fees scope/term/yearly drafts; terms prefill Term 1–3 + mark current (removed one-term early-return). PHPUnit + Playwright @ four viewports; staging deploy only.
+- **Files modified**: `ManualOnboardingWizard.php`, `OnboardingEngine.php`, `OnboardingNameListExtractor.php`, `StudentUploadTemplateService.php`, `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardOnboardingGaps47Test.php`, `WizardOnboardingGaps47KitContractTest.php`, `e2e/wizard-gaps-4-7-verify.cjs`, `knowledge.md`
+- **Key decisions**: Reuse admin `Teacherlink` model (cartesian class×subject); yearly fee = `academic_term_id` null; term status enum `last|current|next` with normalize-to-one-current; deferred editable term dates / flag-card — not built.
+- **Status**: ✅ MERGED `e7265574` · staging `depl-a2bebe87-…` · Playwright PASS · **prod held**
+- **Edge cases flagged**: Teachers without class/subject selection create users with zero teacherlinks (intentional — no silent first-class assignment).
+
+### 2026-09-14: Piece 3 PR5 review panels + subjects unique display — **MERGED + STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
+- **Work done**: Review step → panel grid with Edit per section; subjects review `unique()` + “unique across N class rows”; contract PHPUnit + Playwright e2e; knowledge stamp.
+- **Files modified**: `ManualOnboardingWizard.php` (`buildReviewSummary`), `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardReviewPanelsKitContractTest.php`, `e2e/wizard-review-panels-verify.cjs`, `knowledge.md`
+- **Key decisions**: Subjects duplication is intentional per-class rows from `SchoolCategorySeeder` — fix display only, do not collapse DB rows.
+- **Status**: ✅ MERGED `4c072788` · staging `depl-a2beabc4-…` · Playwright PASS · **prod held**
+- **Edge cases flagged**: Demo staging may show few distinct subject names; uniqueness still asserted.
+
+### 2026-09-14: Piece 3 PR4 bulk teachers/students kit — **MERGED + STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
+- **Work done**: Restyled teachers/students bulk steps to kit (toolbar, paste, pair grid, help/footnote, upload icon); kept paste/upload/email/phone/Download template/Skip+`wire:confirm`; `<x-button>` for primary actions (template stays `<a>`); contract + feature PHPUnit; Playwright e2e (paste, upload, both templates, skip+confirm, 375/414/768/1280). E2e upload waits hardened in follow-up on this stamp branch.
+- **Files modified**: `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `ManualWizardBulkTeachersStudentsTest.php`, `WizardBulkTeachersStudentsKitContractTest.php`, `e2e/wizard-bulk-teachers-students-verify.cjs`, `knowledge.md`
+- **Key decisions**: Do not put Blade `@if` inside `<x-button>` attrs (breaks outer `@elseif` compile); student template remains dynamic `route('admin.students.upload-template')`; after Skip, progress-dot jump to students (skip advances past optional steps to next blocking).
+- **Status**: ✅ MERGED `3cb0db6e` · staging `depl-a2be9a70-…` · Playwright PASS (dynamic student template 6455 bytes) · **prod held**
+- **Edge cases flagged**: Livewire file upload needs wait-for-list-growth (fixed timeout was flaky); `advanceToTeachers` must include subjects checkpoint `next`.
+
+### 2026-09-14: Piece 3 PR3 structure & class-teacher cards — **MERGED + STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
+- **Work done**: Kit CSS card chrome for standards step; stream chips + empty/CT copy; `<x-button>` for Add/Send invite; contract + Livewire action tests; `e2e/wizard-structure-ct-verify.cjs` (requires invite form — staging CT cleared once via Commands API for live invite proof).
+- **Files modified**: `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardStructureKitContractTest.php`, `WizardStructureClassTeacherTest.php`, `e2e/wizard-structure-ct-verify.cjs`, `knowledge.md`
+- **Key decisions**: Visual-only — validation/flash copy and Livewire actions unchanged.
+- **Status**: ✅ MERGED `d1a1f087` · staging `depl-a2be8a03-…` · Playwright stream+CT invite PASS · **prod held**
+- **Edge cases flagged**: Phase4 staging often has only one structure card with CT pre-assigned — e2e must clear `class_teacher_id` (demo) or fail loudly if invite form absent.
+
+### 2026-09-14: Flag community docs process under Future Initiatives
+- **Work done**: Logged deferred community-docs workflow (GitHub Community Standards checklist → Claude Cowork drafts with Content Fundamentals voice; DeepWiki explicitly out of scope).
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
+- **Status**: ✅ MERGED via [#581](https://github.com/KlassApp-Foundation/KlassApp/pull/581) `a87b9575`
+- **Edge cases flagged**: None
+
+### 2026-09-14: Piece 2 PR3 docking/pill/fullscreen — **MERGED + STAGING ONLY** ([#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599))
+- **Work done**: Clay chrome for dock (≥1280 / 380px), collapse pill+toggle, fullscreen ≤640; layout-sibling toggle selectors (outside `[data-toshi-root]`); vendor publish both CSS copies; PHPUnit docking contract; multi-role Playwright Admin+Teacher; Pulse canary re-checked.
+- **Files modified**: `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `layouts/app.blade.php`, `layouts/superadmin-app.blade.php`, `ToshiPiece2DockingPillContractTest.php`, `e2e/toshi-piece2-docking-pill-verify.cjs`, `knowledge.md`
+- **Key decisions**: Styling only — preserve existing dock/collapse/fullscreen behavior; never edit Pulse blocks; teacher login needs `settings.login_status=1` (staging was MISSING).
+- **Status**: ✅ MERGED `a012e5a1` · staging `depl-a2bee5e6-…` · Playwright Admin+Teacher PASS · **Piece 2 CLOSED on staging** · four-surface staging-complete · **prod held**
+- **Edge cases flagged**: `AuthenticatesUsers::checkstatus` gates usergroup 5 on `config('settings.login_status')==1`; empty/missing setting → “Invalid Credentials” even when password hash is correct.
+
+### 2026-09-14: Piece 2 PR2 cards/chips stamp — **MERGED** ([#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598))
+- **Work done**: Knowledge Current Status / Session Log for #597 `d68f32a6` + staging `depl-a2bedef0-…`.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Docs-only stamp after live verify.
+- **Status**: ✅ MERGED `ebb774ad` · **prod held**
+- **Edge cases flagged**: None
+
+### 2026-09-14: Piece 2 PR1 harden + stamp — **MERGED** ([#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596))
+- **Work done**: Admin-merged after GitHub API confirmed open; merge SHA `aa819151`. E2e chip asserts scoped to `#toshi-panel`; Livewire chip HTML contract; knowledge stamp for #595.
+- **Files modified**: `e2e/toshi-piece2-header-composer-verify.cjs`, `ToshiPiece2HeaderComposerContractTest.php`, `knowledge.md`
+- **Key decisions**: Confirm every PR with API `merged:true` + real SHA before next chunk (same discipline tonight).
+- **Status**: ✅ MERGED `aa819151` · **prod held**
+- **Edge cases flagged**: None beyond #595 chip-locator note.
+
+### 2026-09-14: Piece 2 PR1 Toshi header/composer + chip confirms — **MERGED + STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
+- **Work done**: Open Design clay chrome on Toshi panel header/composer; shared `toshi-confirm-chips` partial (panel + modal); composer deferred while awaiting confirm; Pulse freeze banner + ledger blur canary preserved; contract tests (source≡published + Livewire chip HTML); Playwright visual + chip inject.
+- **Files modified**: `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `agent-toshi.blade.php`, `livewire/partials/toshi-confirm-chips.blade.php`, `ToshiPiece2HeaderComposerContractTest.php`, `e2e/toshi-piece2-header-composer-verify.cjs`, `knowledge.md`
+- **Key decisions**: Do not touch Pulse blocks in toshi-ui.css; chip asserts must scope `#toshi-panel` (modal chips exist but parent `display:none`); `$wire.set('awaitingConfirm')` is valid for e2e inject; prod held.
+- **Status**: ✅ MERGED `ab89d1cc` · staging `depl-a2bed2bd-…` · Playwright PASS (visual + chips) · **prod held**
+- **Edge cases flagged**: Unscoped Playwright `isVisible` on `toshi-confirm-chips` fails when first match is the hidden modal instance; `body.innerHTML.includes` false-positives against Livewire snapshot JSON.
+
+### 2026-09-14: Piece 3 PR2 size/category/plan card grids — **MERGED + STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
+- **Work done**: Replaced student-size `<select>` with kit-style `manual-wizard-plan-card` radiogroup driven by `OnboardingStepsService::STUDENT_SIZE_OPTIONS`; added `ManualOnboardingWizard::selectStudentSize`; 2-col `--sizes` grid CSS; contract + Livewire rejection of kit placeholders (`1-100`); e2e reads card labels not `<option>`s. Category/plan already card grids — assertions tightened.
+- **Files modified**: `manual-wizard-step-fields.blade.php`, `ManualOnboardingWizard.php`, `dashboard-refresh.css`, `WizardShellNavKitContractTest.php`, `StudentSizeOnboardingTest.php`, `e2e/wizard-shell-nav-verify.cjs`, `knowledge.md`
+- **Key decisions**: Production size labels override kit `SIZES` placeholders; size uses 2×2 at `sm+` (4 options) vs plans’ 3-col.
+- **Status**: ✅ MERGED `56bbf08f` · staging `depl-a2be7d97-…` · Playwright PASS · **prod held**
+- **Edge cases flagged**: Invalid `selectStudentSize` keeps prior selection and sets `errorMessage` (same pattern as category).
+
+### 2026-09-14: Piece 3 PR1 wizard shell + nav kit parity — **MERGED + STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
+- **Work done**: Brand strip, kit step head, Continue → / Confirm & finish nav via `<x-button>` (attribute merge for `wire:click`), progress width for 17 dots, canvas page shell. Contract tests lock real size/category constants; hardened `e2e/wizard-shell-nav-verify.cjs`.
+- **Files modified**: `manual-onboarding-wizard.blade.php`, `wizard.blade.php`, `button.blade.php`, `dashboard-refresh.css`, `WizardShellNavKitContractTest.php`, `ManualUiWave3WizardTest.php` (Confirm label), `e2e/wizard-shell-nav-verify.cjs`
+- **Key decisions**: No Toshi CTA on manual path (Piece 2); production constants override kit placeholders; staging phase4 may lack Plan rows — verify review via progress-dot jump.
+- **Status**: ✅ MERGED `4856d765` · staging `depl-a2be6957-…` · Playwright chrome/constants/viewports PASS · **prod held**
+- **Edge cases flagged**: Pre-existing `ManualUiWave3WizardTest` WhatsApp→plan walk still fails on `main` (OTP next not advancing) — unrelated to PR1. Full create-mode Continue walk needs seeded `plans` on staging.
+
+### 2026-09-14: Piece 4 fees + exams + KPI cleanup — **MERGED + STAGING ONLY** ([#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570)–[#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575))
+- **Work done**: Fees kit (KPI row, inline record form, save indicator, ledger) + Vue remount fix via `@push('scripts')` + document-level click delegation; exams/marks kit (page head, KPI fold, `.ds-grid-marks`, missing-subject reminder, unfiltered empty state); residual Blade `dashboard-kpi-card` → `ds-kpi-*` (approvals + superadmin) and EOT chart reclass.
+- **Files modified**: fees/payments blades + controller tests/e2e; marks filter blades + `MarksController`; approvals inbox; superadmin dashboard; `_eot-kpi-card.blade.php`; `DashboardKpiCleanupContractTest.php`
+- **Key decisions**: Never put interactive `<script>` inside Vue `#app` content; prefer document delegation after remount; `<x-card>`/`<x-table>` do not forward `data-testid` — wrap in plain `<div>`; EOT panel is a chart, not a KPI.
+- **Status**: ✅ MERGED tip `f5b9eeee` · staging `depl-a2be523f-…` · fees form toggle verified · approvals Pulse green · **prod held**
+- **Edge cases flagged**: fees empty path may omit ledger blur canary (`blur: null`); CSS still contains unused `.dashboard-kpi-card` rules in `dashboard-refresh.css` / standalone HTML — blades have zero remaining usages.
+
+### 2026-09-14: Piece 4 students roster — **MERGED + STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
+- **Work done**: Kit parity for `/admin/students` — `ds-page-head`, filter card, selectable/sortable ledger with WhatsApp + `dt-name-link`, empty/pagination chrome. Pulse canaries unchanged.
+- **Files modified**: `StudentController.php`, `admin/member/index.blade.php`, `StudentsRosterKitContractTest.php`, `e2e/dashboard-students-roster-verify.cjs`
+- **Key decisions**: Keep stream/status filters (beyond kit’s search+class) for real ops; edit URL still uses student `name` (standing rule #18); checkboxes are visual/select-all only (no bulk action invented).
+- **Status**: ✅ MERGED `460fb0c1` · staging `depl-a2be4304-…` · **prod held**
+- **Edge cases flagged**: phase4 staging school has 3 students — ledger path verified live; empty-state copy covered by Blade contract.
+
+### 2026-09-14: Piece 4 dashboard home shell — **MERGED + STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
+- **Work done**: Kit parity for admin home — greeting/LIVE, full-width KPI grid, fees+connected-tools topfold; empty-state demo coexistence. Pulse canaries unchanged.
+- **Files modified**: `DashboardController.php`, `admin/dashboard/dashboard.blade.php`, `dashboard-refresh.css`, tests, `e2e/dashboard-home-shell-verify.cjs`
+- **Key decisions**: Keep real fee Chart.js in topfold (not invent weekly CSS bars); Drive shown as Live capability without inventing a connector status table; staging verify used phase4 incomplete-setup path + students Pulse blur.
+- **Status**: ✅ MERGED `c39b45b3` · staging `depl-a2be3f57-…` · **prod held**
+- **Edge cases flagged**: `phase4.admin@klassapp.xyz` on staging currently `setupIncomplete` — complete-setup KPI Pulse green path covered by PHPUnit view contracts, not staging Playwright this PR.
+
+### 2026-09-14: Piece 1 landing/auth/error `--d-*` alignment — **MERGED + STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
+- **Work done**: Atomic PRs aligning public surfaces to DESIGN_SYSTEM canvas `#FAFAF5`, ink `#1E293B`, Sora+DM Sans (landing), and ds-btn metrics + blue focus (auth + errors). PHPUnit contracts + Playwright locks at 375/414/768/1280. User directive: keep everything on staging — **no production deploy**.
+- **Files modified**: `resources/css/landing-preview.css`, `landing-v2.blade.php`, `resources/css/auth-preview.css`, `resources/views/errors-preview/layout.blade.php`, Vite build assets, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview,LandingAuthErrorCutover}Test.php`, `e2e/{landing,auth,errors}-d-tokens-verify.cjs`
+- **Key decisions**: One surface family per PR; keep `.ap-submit` / `.err-btn*` class names while matching ds-btn geometry; green remains CTA fill, blue is focus/links; staging hibernation → prefer Playwright `waitUntil: 'load'` over `networkidle`.
+- **Status**: ✅ MERGED to `main` · staging verified · **prod held**
+- **Edge cases flagged**: Prod still on pre-#562 visual tokens until cutover approved. Landing primary `.btn` glow still follows earlier landing pass (geometry cleanup deferred).
+
+### 2026-09-14: Pulse styling global consistency — **MERGED+DEPLOYED** ([#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555))
+- **Work done**: Migrated SchoolAdmin home dashboard (`resources/views/admin/dashboard/dashboard.blade.php`) from legacy `.dashboard-kpi-card` to `<x-ds-kpi-card>` (6 enrollment/WhatsApp KPIs + pending approvals). Extended Pulse data-table treatment in `toshi-ui.css` to `.ds-table-ledger` (sticky header `backdrop-filter: blur(12px)` — previously dead code targeting only `.ds-table` while `<x-table>` emits ledger class). Published CSS; added `e2e/verify-pulse-global-fix.cjs`.
+- **Files modified**: `resources/views/admin/dashboard/dashboard.blade.php`, `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `e2e/verify-pulse-global-fix.cjs`, `e2e/screenshots/pulse-global-fix/*`, test follow-up [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556)
+- **Key decisions**: Keep Pulse as global future-default (not scoped to Toshi panel). Minimal diff — no changes to `dashboard-refresh.css` legacy overrides; removing `.dashboard-kpi-value` usage avoids `!important` dark-ink override so Pulse green wins from `toshi-ui.css` load order.
+- **Status**: ✅ MERGED `cb140999` · production `depl-a2be1a50-…` succeeded · tests [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556) `1238e9ff`
+- **Verify**: Before prod capture — admin dashboard `hasLegacy: true`, CSS lacked ledger thead rule. After deploy — `/admin/students` ledger thead `blur(12px)`; teacher KPI `rgb(34, 197, 94)`; PHPUnit `post_onboarding_dashboard_shows_kpis` asserts `ds-kpi-card`. Demo admin school setup-incomplete on prod hides KPI grid (not a regression).
+- **Edge cases flagged**: `/admin/fees/payments` had no table DOM for UI Review demo at verify time (empty/redirect) — use `/admin/students` for ledger blur checks. Superadmin dashboard + approvals inbox still use legacy `.dashboard-kpi-card` (out of scope this PR).
 
 ### 2026-09-13: Landing official brand connector icons — **MERGED+DEPLOYED** ([#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541))
 - **Work done**: Confirmed prior icons were Lucide-style stroke glyphs. Added `<x-brand.whatsapp|slack|google-drive>` with official color marks; wired into hero float, connectors panel/chips, Toshi hub. Neutral brand-well CSS (no recolor). Playwright screenshots confirm recognizable official marks.
@@ -10131,11 +10706,115 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Files modified**: `TOOLING.md` (new), `AGENTS.md`, `knowledge.md`.
 - **Status**: docs PR (this session) — no deploy.
 
-### 2026-09-13: Claude Design sync — durable inputs committed (React shim + tokens + previews)
+### 2026-09-13: TRACKED ISSUE — `<x-table>` `striped` / `hover` are dead props, but 8 production views pass them
 
-- **Work done**: First-time sync of KlassApp's real design system (not a manually-restated description) into Claude Design's format. Since Claude Design renders React and KlassApp's DS is anonymous Blade components, built a thin React port under `.design-sync/shim/src/` (Button, Card, Badge, Table, FormGroup, KpiCard, plus WhatsAppMark/SlackMark/GoogleDriveMark using the real brand SVG geometry from `resources/views/components/brand/`) that emits the identical `ds-*` class contract as the Blade originals — verified class-by-class against `public/css/dashboard-refresh.css`. Bundle built via esbuild, styled with the real stylesheet (copied at build time by `shim/copy-css.mjs`, never hand-duplicated), validated (`.d.ts` parse, token/CSS reachability), and 9 authored preview stories per component graded on an absolute rubric (37/37 cells `good`) after installing Playwright/Chromium for a real headless render check.
-- **Files modified**: `.design-sync/config.json`, `.design-sync/NOTES.md`, `.design-sync/conventions.md`, `.design-sync/docs/*.md` (9), `.design-sync/previews/*.tsx` (9), `.design-sync/shim/{package.json,package-lock.json,tsconfig.json,copy-css.mjs,src/*}`, `.gitignore` (ignore the shim's `node_modules`/`dist`, the regenerated `ds-bundle/`, and sync working state — the source files above are the durable, committed sync inputs).
-- **Key decisions**: ship a React port rather than claim a compiled artifact that doesn't exist for a Blade app — every port's JSDoc names its exact `<x-…>` Blade equivalent, so output maps 1:1 back to real markup. `conventions.md` (prepended to the generated README, read by the design agent) explicitly warns that **no Tailwind utility classes ship in this bundle** — `_ds_bundle.css` is `dashboard-refresh.css` verbatim, 364 selectors, zero Tailwind — since the app loads Tailwind separately and a design built from this bundle would otherwise silently drop all utility-class layout.
-- **Bugs found during the verification pass, filed separately**: `<x-table>`'s `striped`/`hover` dead props and `.ds-btn-md`'s missing CSS rule — see the dedicated `TRACKED ISSUE` / `RESOLVED` entries and [PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (separate branch, not part of this commit). `DESIGN_SYSTEM.md`'s badge colour table and its Tailwind v1.4.6 claim are also stale — noted in `.design-sync/NOTES.md`, not yet fixed.
-- **Status**: durable sync inputs committed, this PR — docs/config only, no deploy. **Upload to claude.ai/design is still blocked**: `DesignSync` reports design-system authorization is unavailable in this environment, and the user's own `/design consent` returned a 401. The built bundle (`ds-bundle/`, gitignored, reproducible via `.design-sync/config.json` + the committed shim) has not shipped anywhere yet — this commit only preserves the inputs so a future sync doesn't redo the discovery/build/verify work.
-- **Edge cases flagged**: re-running the sync needs `npm i` inside `.design-sync/shim/` and `.ds-sync/` (both gitignored, regenerated) plus Playwright/Chromium; see `.design-sync/NOTES.md` "Re-sync risks" for the full list (fonts load from Google Fonts at runtime, the shim is a hand-written port that can't auto-detect future Blade changes).
+**Bug**: `resources/views/components/table.blade.php` declares `'striped' => false` and `'hover' => true` in `@props`, but **neither is referenced anywhere in the template**. The `$classes` string is built only from `ds-table-ledger`, `$densityClass` (`dt-comfortable`/`dt-compact`) and `$cardMobileClass` — no striping or hover class is ever emitted from these props. They are accepted and silently discarded.
+
+- **Impact**: 8 Blade views pass them expecting a visual effect they are not getting. Confirmed call sites include `<x-table :headers="$headers" hover>` (5 occurrences), `admin/fees/payments.blade.php` (`striped hover class="mt-4"`), `admin/fees/unmatched.blade.php` (`hover class="mt-4"`), and the students index (`hover`). Any row-hover that *is* visible today comes from `.ds-table-ledger` itself, not from the prop.
+- **Discovered**: during the Claude Design system sync, while porting the Blade component contracts to React — the prop list and the emitted class list did not reconcile.
+- **The CSS already exists and works.** `public/css/dashboard-refresh.css:467-470` defines `.ds-table-striped tbody tr:nth-child(even) { background: var(--d-surface) }` and `.ds-table-hover tbody tr:hover { background: rgba(34,197,94,0.04) }`. Both are standalone selectors (not scoped under `.ds-table`), so they apply to a `.ds-table-ledger` table too. **Nothing needs to be written — the component just never emits them.**
+- **Two divergent table paths in the codebase**: views that hand-roll `<table class="ds-table ds-table-striped ds-table-hover">` (library cards/books/lends, alumni marks/directory, superadmin school-list) **do** get striping and hover. Views that use `<x-table striped hover>` get neither. Same visual intent, opposite outcome, depending on which path the author picked.
+- **CORRECTION — the two props are not the same problem.** An initial read of this issue proposed wiring *both* props to `.ds-table-striped` / `.ds-table-hover`. That is wrong for `hover`: `dashboard-refresh.css:1971` already defines `.ds-table-ledger tbody tr:hover { background: rgba(34,197,94,0.04); box-shadow: inset 3px 0 0 var(--d-green) }` **unconditionally**, and it is *richer* than the generic `.ds-table-hover` (which only sets the background). So every `<x-table>` — and every raw `<table class="ds-table-ledger">` — already hovers. The `hover` prop had nothing to toggle, and making it conditional would have stripped hover from the 8 raw-markup ledger tables that depend on the unconditional rule.
+- **Fix shipped**: `striped` implemented (emits `.ds-table-striped`); `hover` **removed** from `@props` and from all 8 call sites, with a comment recording that hover is intrinsic to `.ds-table-ledger`. See the resolution entry below.
+- **Related**: `DESIGN_SYSTEM.md` documents this component as emitting `.ds-table` with `striped`/`hover` props — that doc predates the `.ds-table-ledger` rewrite and is stale on both counts.
+
+### 2026-09-13: TRACKED ISSUE — `.ds-btn-md` has no CSS rule, and it is the default button size
+
+**Bug**: `resources/views/components/button.blade.php` maps `size="md"` → `ds-btn-md` and **`md` is the default** (`'size' => 'md'` in `@props`). But `public/css/dashboard-refresh.css` defines **no `.ds-btn-md` rule at all**. `.ds-btn-sm` and `.ds-btn-lg` both exist.
+
+- **Impact**: every `<x-button>` written without an explicit `size` emits a class that matches nothing, so default buttons render at whatever the `.ds-btn` base rule gives them. There is no crash and no visual error — which is why it has survived; the default size is simply not a designed size. Any future edit to `.ds-btn` silently redefines what "default" means.
+- **Scope of the check**: 58 of the 59 `ds-*` classes referenced by the six DS Blade components verify against `dashboard-refresh.css`. `.ds-btn-md` is the only miss.
+- **Discovered**: during the Claude Design system sync, cross-checking every class the components emit against the real stylesheet.
+- **Same defect, second class: `.ds-btn-secondary` has no colour rule either.** It appears in `dashboard-refresh.css` only twice (lines 2261 and 2270), both touch-target rules setting `min-height: 44px` / `inline-flex` — there is **no** `background` / `color` / `border-color` for it, unlike `.ds-btn-primary` (line 334). Three production call sites apply it as raw markup in `resources/views/admin/marks/submission-detail.blade.php` (lines 14, 29, 98), including a ternary `$allLocked ? 'ds-btn-success' : 'ds-btn-secondary'` — so the "unlocked" state renders as a bare `.ds-btn` while the "locked" state is green. `<x-button>` has no `secondary` variant at all, so this class is only reachable by hand-writing markup.
+- **Root cause found in git history.** `8e9ba63b` originally added all three sizes together, including `.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }`. `8d6fb9eb` ("full Flare-inspired redesign") deleted the three-line block and re-added **only `sm` and `lg`** — dropping `md` by accident. It went unnoticed because those exact values are what the `.ds-btn` base rule carries, so nothing moved.
+- **Measured, not assumed**: a headless-Chromium render of `<x-button size="md">` and `<x-button>` (no size prop) both compute to `padding: 8px 18px; font-size: 13.6px` (= `0.85rem`) — identical before and after the fix. So this was **harmless leftover naming**, not a visual defect; default buttons were already rendering at the intended medium size.
+- **Fix shipped**: restored the original `.ds-btn-md` rule verbatim. It is a deliberate no-op that restates the base metrics, so the sm/md/lg scale is explicit and symmetrical and a future edit to `.ds-btn` can't silently redefine "default". See the resolution entry below.
+- **`.ds-btn-secondary` deferred — NOT fixed in that PR.** It is a real but separate defect needing a product decision (is `secondary` a variant or should those three call sites use `outline`?), and folding it in would have widened a two-line fix into a restyle. Still open.
+
+### 2026-09-13: RESOLVED — x-table `striped` implemented, dead `hover` prop removed, `.ds-btn-md` restored (#546)
+
+Fixes the two `TRACKED ISSUE` entries above.
+
+- **Work done**:
+  - `resources/views/components/table.blade.php` — `striped` now appends `ds-table-striped`; `hover` removed from `@props` entirely (it emitted nothing and could not be made conditional without breaking the 8 raw-markup ledger tables — see the CORRECTION bullet above). Added a header comment recording that row hover is intrinsic to `.ds-table-ledger`.
+  - Stripped the dead `hover` attribute from all 8 `<x-table>` call sites (fees/payments, fees/unmatched, member/index, subject/list, exams/index, discipline/list, school/sections/list, school/standards/list). `striped` on fees/payments preserved.
+  - `public/css/dashboard-refresh.css` — restored `.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }`, verbatim from `8e9ba63b`, with a comment naming `8d6fb9eb` as the commit that dropped it.
+- **Files modified**: `resources/views/components/table.blade.php`, `public/css/dashboard-refresh.css`, 8 admin Blade views, `tests/Feature/DesignSystem/TableAndButtonClassContractTest.php` (new), `knowledge.md`.
+- **Key decisions**: treat the two props separately rather than symmetrically — implement `striped`, delete `hover`. Restore `.ds-btn-md` as a deliberate no-op restating the base metrics rather than inventing new values, so the sm/md/lg scale is explicit and a future `.ds-btn` edit can't silently redefine "default". Leave `.ds-btn-secondary` open.
+- **Verification (measured, not assumed)**: headless-Chromium render of the real Blade component against the real stylesheet. Striping: every row `rgba(0,0,0,0)` before → even rows `rgb(250,250,245)` (= `#FAFAF5` = `var(--d-surface)`) after. Buttons: `size="md"` and no-size-prop both `padding: 8px 18px; font-size: 13.6px`, **byte-identical before and after**, confirming the restore changes nothing visually. New test 9 passing / 28 assertions, and **5 of the 9 fail when the fixes are reverted** (proving the test is not tautological). 19 passing across existing tests that render the 8 edited views.
+- **Status**: PR open — [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`fix/table-striped-prop-and-btn-md-size`).
+- **Edge cases flagged**: `.ds-btn-secondary` still unstyled (3 call sites). `resources/views/components/DESIGN_SYSTEM.md` remains stale on this component — it documents `.ds-table` + `striped`/`hover`, while the component emits `.ds-table-ledger` and no longer has a `hover` prop; its badge colour table is also wrong on every hex. `.dt-row-alt` (`#F8F5F0`) is defined in the stylesheet but emitted nowhere — dead CSS, left alone.
+- **Note for AGENTS.md**: line 71 claims `ds-*` classes live in `resources/assets/sass/`. That is stale — there are **zero** `.ds-` selectors in `resources/assets/sass/`; they are all in the hand-maintained, git-tracked `public/css/dashboard-refresh.css`, which layouts link directly via `asset()`. Not corrected in this PR to keep the diff scoped.
+
+### 2026-09-13: PR #546 DS striped + btn-md — MERGED + DEPLOYED + live-verified
+- **Work done**: Reviewed and merged [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`14f91188`). Triggered production deploy `depl-a2bb7eb1-…` @ `14f91188` (succeeded). Playwright-verified striping on `/admin/fees/payments` and button metrics (md no-op).
+- **Files modified**: (shipped in #546) `components/table.blade.php`, `dashboard-refresh.css`, 8 admin table call sites, `TableAndButtonClassContractTest.php`, `knowledge.md`.
+- **Key decisions**: Hover stays intrinsic to `.ds-table-ledger`; do not gate behind a prop. Temporary synthetic fee payments (`PR546-VERIFY-*`) created then deleted for striping pixel proof on empty demo school.
+- **Status**: ✅ MERGED + DEPLOYED + live-verified.
+
+### 2026-09-13: KlassApp logo asset inventory (pre–design-system brand update)
+- **Work done**: Full filesystem + usage map of every KlassApp logo file under `public/images/`, `public/favicon/`, docs copies, and uploads. Confirmed by MD5/viewBox/pixel sampling (not filename alone).
+- **Canonical SVG variants**:
+  1. **Icon (green K)** — `klassapp-logo.svg` ≡ `klassapp-logo-primary.svg` ≡ `public/favicon/favicon.svg` (identical MD5 `e06b7124…`, viewBox 2000×2000). Despite the `-primary` name, this is **icon-only**, not a wordmark.
+  2. **Horizontal wordmark** — `klassapp-logo-dark.svg` (2048×754, navy/green/white). **Zero live Blade references**.
+  3. **Stacked** — `klassapp-logo-stacked.svg` (2048×1117). Used only as `og:image` / `twitter:image` on `landing.blade.php` + `landing2.blade.php`.
+- **No white/reversed SVG exists.** `klassapp-k-white.png` is a colourful mark on light bg (misnamed), unused.
+- **Live usage**: nav/auth/email/admin almost all use `klassapp-logo-primary.svg` (icon); favicon/Toshi/errors use `klassapp-logo.svg` (same file); one legacy path `klassapplogo-dark.png` in `landing-layout.blade.php`.
+- **Orphans / typos**: `klassapp-logo-*.png`, `klassaplogo-primary.png`, `klassapp-app-icon.png`, `klassapp-k-white.png`, `uploads/klassapp_assets.png` (= primary.png). Favicon PNG set under `public/favicon/` is mostly **legacy GeGo orange**, not KlassApp green.
+- **Status**: ✅ Inventory only (no code changes).
+- **Edge cases flagged**: `landing-layout` points at missing `public/favicon.svg` (root); naming `primary.svg` ≠ wordmark will confuse DS sync unless renamed or documented.
+
+### 2026-09-13: Favicon / PWA icon audit — GeGo leftovers replaced with KlassApp green
+- **Found wrong**:
+  1. **Every** `public/favicon/*.png` (+ `.ico`) was **GeGo orange** (~RGB 224,64,32), including the `favicon-32x32.png` wired as PNG fallback in `layouts/partials/favicon.blade.php` and all `android-icon-*` / `apple-icon-*` / `ms-icon-*` sizes.
+  2. `apple-touch-icon` pointed at **SVG** (`images/klassapp-logo.svg`) — poor iOS support; should be opaque 180×180 PNG.
+  3. `manifest.json` used **root-absolute** icon paths (`/android-icon-*.png`) that **404** (files live under `/favicon/`); name was generic `"App"`; no 512px icon for installability.
+  4. `browserconfig.xml` pointed at `/ms-icon-*.png` (also missing at site root).
+  5. `components/landing-layout.blade.php` linked `asset('favicon.svg')` / apple-touch to a **missing** `public/favicon.svg`.
+  6. Landing pages (`landing`, `landing2`, `landing-v2`) only had a bare SVG `<link rel="icon">` — no apple-touch / manifest / PNG fallbacks.
+  7. `layouts/video.blade.php` + `admission.blade.php` had **no** favicon links at all.
+  8. `images/favicon.png` was a 32×32 solid-green placeholder (settings default), not the real mark.
+- **Fixed**:
+  - Regenerated all favicon PNG/ICO sizes from `public/images/klassapp-logo.svg` (cairosvg + Pillow); added `android-icon-512x512.png`; synced `favicon/favicon.svg`, root `public/favicon.svg`, root `public/favicon.ico`, and `images/favicon.png`.
+  - Rewrote `favicon.blade.php`: SVG + 16/32 PNG + apple-touch **180 PNG** + manifest + browserconfig + `theme-color #199D52`.
+  - Rewrote `manifest.json` (name KlassApp, relative icon srcs, 192+512) and `browserconfig.xml` (`/favicon/ms-icon-*`).
+  - Landing layouts + landing-layout + video/admission now `@include` the partial; `students-standalone.html` head updated.
+  - New `tests/Feature/FaviconBrandAssetsTest.php` (green-vs-orange pixel assert + head/manifest contracts).
+- **Browser verify** (`:8012` Playwright): `/` and `/login` head links resolve **HTTP 200**; canvas sample of favicon-32 + apple-180 = **KLASSAPP_GREEN** (orange=0); all 25 favicon PNGs green; manifest icons 36→512 all 200; install **criteria** met (name/192/512/standalone). `beforeinstallprompt` did **not** fire on localhost (Chromium engagement/HTTPS heuristic — expected; not a missing asset).
+- **Evidence**: `e2e/screenshots/favicon-audit/regenerated-icons.png`
+- **Status**: ✅ MERGED + DEPLOYED + prod-verified — [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) merge `d0c3600f`; deploy `depl-a2bc3a9d-…` **deployment.succeeded** @ 2026-09-13T09:55:28Z
+- **Files modified**: `public/favicon/*`, `public/favicon.svg`, `public/favicon.ico`, `public/images/favicon.png`, `resources/views/layouts/partials/favicon.blade.php`, landing/admission/video/landing-layout blades, `public/students-standalone.html`, `tests/Feature/FaviconBrandAssetsTest.php`, `knowledge.md`
+
+### 2026-09-13: Favicon brand fix — MERGED #549 + prod deploy + live Playwright on klassapp.xyz
+- **Work done**: Opened/merged [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) (`fix/favicon-klassapp-brand-assets` → `main`). GitHub API `merged: true` (`merge_commit_sha` `d0c3600fb031ddcb86c5a3a40081666252c7d881`, `merged_at` 2026-09-13T09:52:58Z). Triggered Cloud deploy `depl-a2bc3a9d-e704-4e82-8668-2f40c1616567` @ that commit → **deployment.succeeded**.
+- **Prod Playwright** (`https://klassapp.xyz`): `ok=true`. Head on `/` and `/login` serves SVG + 16/32 PNG + apple-180 + manifest + browserconfig + `theme-color #199D52`. All probed assets HTTP **200** (byte sizes match regenerated files). Canvas pixel sampling: favicon-32 `green=70 orange=0`, apple-180 `green=1538 orange=0`, android-192 `green=1937 orange=0` → **KLASSAPP_GREEN**. Manifest name KlassApp, relative icon srcs, 192+512 all 200.
+- **Evidence**: `e2e/screenshots/favicon-audit/prod-verify.json` (+ prior `regenerated-icons.png`)
+- **Status**: ✅ MERGED + DEPLOYED + live-verified on production
+- **Edge cases flagged**: `beforeinstallprompt` still not asserted on prod (Chromium install UX heuristics); assets meet install criteria.
+
+### 2026-09-14: Claude Design system export → repo DESIGN_SYSTEM.md + brand assets — **MERGED #553**
+- **Work done**: Opened/merged [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) (`docs/design-system-claude-export` → `main`). GitHub API `merged: true` (`merge_commit_sha` `e4cab34510d99e2a2e9fc37383373047b459aee8`, `merged_at` 2026-09-14T07:52:23Z).
+- **Shipped**: Replaced stale `DESIGN_SYSTEM.md` with production-validated content (tokens, badge hexes, `.ds-table-ledger`, responsiveness, brand rules). Canonical brand SVGs + README/FAVICONS in `resources/assets/brand/`; token CSS in `resources/assets/design-system/tokens/`; mirrors in `public/images/`; `.gitignore` fixed (`public/images/*` + re-includes).
+- **Corrections vs export**: Table `striped` works (PR #546); `.ds-btn-md` has a CSS rule. Old doc wrong on Tailwind version, table class, badge colours.
+- **GitHub sanity** (post-merge on `main`): DESIGN_SYSTEM.md present (~14KB); 13 brand assets; key strings (`v4.3.3`, `ds-table-ledger`, `#f0eee6`, `resources/assets/brand`) confirmed via raw content fetch.
+- **Status**: ✅ MERGED — no deploy (docs + static SVGs only)
+- **Edge cases flagged**: Favicon PNGs may still be from pre-export icon bytes (#549); optional regen from new `klassapp-icon.svg`. Stacked lockup vertical gap still needs design sign-off.
+
+### 2026-09-14: Dashboard prefers-reduced-motion for three looping animations
+- **Work done**: Confirmed gap was never shipped (only documented in DESIGN_SYSTEM.md). Added `@media (prefers-reduced-motion: reduce)` in `public/css/dashboard-refresh.css` disabling LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce. Documented real onboarding constants (`STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, `ALL_STEPS` order) replacing Claude Design kit placeholders. PHPUnit `ReducedMotionContractTest`; Playwright emulateMedia assert animations → `none` under reduce.
+- **Files modified**: `public/css/dashboard-refresh.css`, `resources/views/components/DESIGN_SYSTEM.md`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `knowledge.md`; OD mirror `~/open-design/design-systems/klassapp/DESIGN.md` (out of repo).
+- **Key decisions**: Only the three DESIGN_SYSTEM-named loops; leave `d-pulse` / `toshi-spin` for a follow-up. Solid badge/dots remain visible — animation only stops.
+- **Status**: ✅ MERGED #558 (`cc01623e`) + DEPLOYED `depl-a2be2723-…` + live CSS/Playwright verified
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/558
+- **Edge cases flagged**: Claude Design React kit still has wrong inferred size/category labels until someone edits that dump; grounding is DESIGN_SYSTEM.md + OD `klassapp` DESIGN.md. `d-pulse` / `toshi-spin` still lack reduced-motion.
+
+### 2026-09-14: Complete dashboard reduced-motion sweep (d-pulse + toshi-spin)
+- **Work done**: Extended `@media (prefers-reduced-motion: reduce)` to save-indicator `d-pulse` and Toshi plan-card `toshi-spin`. Updated DESIGN_SYSTEM.md + OD klassapp DESIGN.md. PHPUnit asserts all five loops; Playwright emulateMedia confirms both new ones → `animation-name: none`.
+- **Files modified**: `public/css/dashboard-refresh.css`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `resources/views/components/DESIGN_SYSTEM.md`, `knowledge.md`
+- **Status**: ✅ MERGED #560 (`ca0e1143`) + DEPLOYED `depl-a2be2ae7-…` + prod Playwright verified
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/560
+- **Edge cases flagged**: none remaining for infinite loops in `dashboard-refresh.css`
+
+### 2026-09-15: Staging push-to-deploy probe
+- Cloud API: staging `uses_push_to_deploy=true`; production `uses_push_to_deploy=false` (left manual).
+- This merge exists only to confirm staging auto-deploys on main without a Commands/Deploy POST.

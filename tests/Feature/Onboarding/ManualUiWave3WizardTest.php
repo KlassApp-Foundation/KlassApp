@@ -92,8 +92,9 @@ class ManualUiWave3WizardTest extends TestCase
         $response = $this->get('/admin/onboarding/wizard');
 
         $response->assertOk();
-        $response->assertSee('School setup', false);
+        $response->assertSee('Setting up without Toshi', false);
         $response->assertSee('data-testid="wizard-nav"', false);
+        $response->assertSee('Continue →', false);
         $response->assertSee('data-testid="wizard-progress"', false);
         $response->assertSee('data-testid="wizard-prev"', false);
         $response->assertSee('data-testid="wizard-next"', false);
@@ -172,11 +173,12 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->call('next') // uneb skip
             ->call('next') // academic year seeds classes/subjects/grading
-            ->call('next') // structure checkpoint (optional)
+            ->call('next') // structure checkpoint (optional) → subjects
+            ->call('next') // subjects → teachers
             ->set('teacherName', 'Grace')
             ->set('teacherEmail', 'grace@wave3.sch.ug')
             ->call('next')
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // terms
             ->call('next') // fees
             ->assertSee('WhatsApp verification');
@@ -238,11 +240,12 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('unebCenterNumber', 'U333')
             ->call('next')
             ->call('next') // academic year seeds classes/subjects
-            ->call('next') // structure checkpoint (optional)
+            ->call('next') // structure checkpoint (optional) → subjects
+            ->call('next') // subjects → teachers
             ->set('teacherName', 'Amina Teacher')
             ->set('teacherEmail', 'amina@wave3.sch.ug')
             ->call('next')
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // term defaults
             ->call('next'); // fee defaults
 
@@ -291,12 +294,28 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('unebCenterNumber', 'U999')
             ->call('next')
             ->call('next') // academic year seeds classes/subjects
-            ->call('next') // structure checkpoint (optional)
+            ->call('next') // structure checkpoint (optional) → subjects
+            ->call('next'); // subjects → teachers
+
+        $this->assertSame(
+            'teachers',
+            $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null
+        );
+
+        $helenSection = \App\Models\Section::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $helenSubject = \App\Models\Subject::where('school_id', $this->school->id)->orderBy('id')->value('name');
+        $this->assertNotEmpty($helenSection, 'Need a seeded section for teacher assignment');
+        $this->assertNotEmpty($helenSubject, 'Need a seeded subject for teacher assignment');
+
+        $component
             ->set('teacherName', 'Helen Teacher')
             ->set('teacherEmail', 'helen@wave3.sch.ug')
+            ->set('teacherSelectedClasses', [$helenSection])
+            ->set('teacherSelectedSubjects', [$helenSubject])
+            ->call('addTeacherDraft')
             ->call('next')
-            ->call('next') // students skip
-            ->call('next') // terms
+            ->call('skipOptionalStep') // students (explicit skip)
+            ->call('next') // terms (prefilled drafts)
             ->call('next'); // fees
 
         $this->verifyWhatsAppAndAdvance($component, '+256700555666');
@@ -338,7 +357,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->assertSeeHtml('data-testid="wizard-review"')
             ->assertSee('Preview Academy Renamed')
-            ->assertSee('Create School')
+            ->assertSee('Confirm & finish')
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH')
             ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names

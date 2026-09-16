@@ -379,13 +379,18 @@ class OutboundWhatsAppService
      */
     public function notifyFeeReminder(int $studentId, string $type = 'reminder', ?int $feeId = null): int
     {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        $student = User::with(['studentAcademicLatest.standardLink'])->find($studentId);
         if (!$student) {
             return 0;
         }
 
+        $standardId = $student->studentAcademicLatest?->standardLink?->standard_id;
+        if (! $standardId) {
+            return 0;
+        }
+
         $fees = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', $student->studentAcademic?->standard_id)
+            ->where('standard_id', $standardId)
             ->when($feeId, fn ($q) => $q->where('id', $feeId))
             ->get();
 
@@ -412,12 +417,20 @@ class OutboundWhatsAppService
     {
         $phones = [];
 
-        // Load the parent relationship
-        $parents = $student->parents()
-            ->wherePivot('school_id', $student->school_id)
+        // parents() is hasMany StudentParentLink (not belongsToMany) — filter school_id
+        // on the link rows, then resolve the parent User via userParent.
+        $links = $student->parents()
+            ->where('school_id', $student->school_id)
+            ->where('status', 1)
+            ->with('userParent')
             ->get();
 
-        foreach ($parents as $parent) {
+        foreach ($links as $link) {
+            $parent = $link->userParent;
+            if (! $parent) {
+                continue;
+            }
+
             $waUser = WhatsAppUser::optedIn()
                 ->where('user_id', $parent->id)
                 ->first();
@@ -427,7 +440,7 @@ class OutboundWhatsAppService
             }
 
             // Fallback: if parent has a mobile_no in User but no WhatsAppUser yet
-            if (!$waUser && $parent->mobile_no) {
+            if (! $waUser && $parent->mobile_no) {
                 $normalised = WhatsAppPhoneHelper::normalise($parent->mobile_no);
                 if (WhatsAppPhoneHelper::validate($normalised)) {
                     $phones[] = $normalised;

@@ -5,7 +5,7 @@
     'cancelMethod' => 'cancelPlan',
     'executingVerb' => 'Executing...',
 ])
-<div class="toshi-plan-card" wire:key="{{ $wireKey }}">
+<div class="toshi-plan-card" wire:key="{{ $wireKey }}" data-testid="toshi-execution-plan-card">
     <div class="toshi-plan-card-header">
         <span class="toshi-plan-card-icon">📋</span>
         <span class="toshi-plan-card-title">Execution Plan</span>
@@ -51,14 +51,14 @@
             </div>
         @elseif($isProcessing)
             <span class="toshi-plan-card-processing">⏳ {{ $executingVerb }}</span>
-            <button wire:click="{{ $cancelMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-cancel" style="flex: 0 0 auto;">
+            <button wire:click="{{ $cancelMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-cancel" style="flex: 0 0 auto;" data-testid="toshi-plan-cancel">
                 Cancel
             </button>
         @elseif($hasPending)
-            <button wire:click="{{ $confirmMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-execute">
+            <button wire:click="{{ $confirmMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-execute" data-testid="toshi-plan-execute">
                 Execute All ({{ collect($steps)->where('status', 'pending')->count() }})
             </button>
-            <button wire:click="{{ $cancelMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-cancel">
+            <button wire:click="{{ $cancelMethod }}" type="button" class="toshi-plan-btn toshi-plan-btn-cancel" data-testid="toshi-plan-cancel">
                 Cancel
             </button>
         @else

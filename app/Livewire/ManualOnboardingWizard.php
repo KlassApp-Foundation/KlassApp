@@ -132,7 +132,13 @@ class ManualOnboardingWizard extends Component
 
     public string $teacherPhone = '';
 
-    /** @var list<array{name: string, email: string, phone: string}> */
+    /** @var list<string> Selected class names (section) for the teacher being added. */
+    public array $teacherSelectedClasses = [];
+
+    /** @var list<string> Selected subject names for the teacher being added. */
+    public array $teacherSelectedSubjects = [];
+
+    /** @var list<array{name: string, email: string, phone: string, classes: list<string>, subjects: list<string>}> */
     public array $teacherDrafts = [];
 
     public string $teacherPaste = '';
@@ -152,9 +158,15 @@ class ManualOnboardingWizard extends Component
 
     public string $studentSchoolStudentId = '';
 
+    public string $studentLin = '';
+
     public string $studentBoardRegNumber = '';
 
-    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, school_student_id: string, board_registration_number: string}> */
+    public string $studentGender = '';
+
+    public string $studentDateOfBirth = '';
+
+    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, school_student_id: string, board_registration_number: string, gender: string, date_of_birth: string}> */
     public array $studentDrafts = [];
 
     public string $studentPaste = '';
@@ -162,15 +174,36 @@ class ManualOnboardingWizard extends Component
     /** @var mixed */
     public $studentUpload = null;
 
-    public string $termName = 'Term 1';
+    public string $termName = '';
 
     public string $termStartsOn = '';
 
     public string $termEndsOn = '';
 
+    /** @var list<array{name: string, start: string, end: string}> */
+    public array $termDrafts = [];
+
+    /** Name of the term marked as current (must match a draft). */
+    public string $currentTermName = '';
+
     public string $feeName = 'Tuition';
 
     public string $feeAmount = '100000';
+
+    /** whole_school | class */
+    public string $feeScope = 'whole_school';
+
+    public string $feeClass = '';
+
+    public string $feeTerm = '';
+
+    public bool $feeIsYearly = false;
+
+    /** @var list<array{name: string, amount: string, scope: string, class: string, term: string, is_yearly: bool}> */
+    public array $feeDrafts = [];
+
+    /** @var list<string> */
+    public array $availableTermNames = [];
 
     public string $whatsappPhone = '';
 
@@ -205,9 +238,8 @@ class ManualOnboardingWizard extends Component
 
         $this->academicYearStart = now()->startOfYear()->toDateString();
         $this->academicYearEnd = now()->endOfYear()->toDateString();
-        $this->termStartsOn = now()->startOfYear()->toDateString();
-        $this->termEndsOn = now()->startOfYear()->addMonths(4)->toDateString();
         $this->teacherEmail = $this->freshTeacherEmail($school);
+        $this->prefillDefaultTerms();
 
         // Land on the first incomplete step (including optional teachers/students).
         // Skipping optional steps on mount jumped users from Teachers → Terms on reload
@@ -245,6 +277,23 @@ class ManualOnboardingWizard extends Component
 
         $this->selectedPlanId = $planId;
         $this->errorMessage = '';
+    }
+
+    /**
+     * Button-driven student-size selection (card radiogroup; mirrors selectSchoolCategory).
+     * Livewire 3 has no public set() — wire:click="set(...)" was a no-op and blocked Next.
+     */
+    public function selectStudentSize(string $size): void
+    {
+        if (! in_array($size, OnboardingStepsService::STUDENT_SIZE_OPTIONS, true)) {
+            $this->errorMessage = 'Please choose an approximate school size.';
+
+            return;
+        }
+
+        $this->studentSize = $size;
+        $this->errorMessage = '';
+        $this->resetErrorBag('studentSize');
     }
 
     /**
@@ -304,10 +353,14 @@ class ManualOnboardingWizard extends Component
             'name' => $name,
             'email' => $email,
             'phone' => trim($this->teacherPhone),
+            'classes' => array_values(array_filter(array_map('trim', $this->teacherSelectedClasses))),
+            'subjects' => array_values(array_filter(array_map('trim', $this->teacherSelectedSubjects))),
         ];
         $this->teacherName = '';
         $this->teacherPhone = '';
         $this->teacherEmail = $this->freshTeacherEmail();
+        $this->teacherSelectedClasses = [];
+        $this->teacherSelectedSubjects = [];
         $this->errorMessage = '';
     }
 
@@ -328,6 +381,8 @@ class ManualOnboardingWizard extends Component
                 'name' => $name,
                 'email' => $this->freshTeacherEmail(),
                 'phone' => '',
+                'classes' => [],
+                'subjects' => [],
             ];
         }
         $this->teacherPaste = '';
@@ -348,6 +403,11 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        $gender = strtolower(trim($this->studentGender));
+        if (! in_array($gender, ['male', 'female'], true)) {
+            $gender = '';
+        }
+
         $this->studentDrafts[] = [
             'name' => $name,
             'class' => trim($this->studentClass),
@@ -355,7 +415,10 @@ class ManualOnboardingWizard extends Component
             'parent' => trim($this->studentParent),
             'parent_phone' => trim($this->studentParentPhone),
             'school_student_id' => trim($this->studentSchoolStudentId),
+            'lin' => trim($this->studentLin),
             'board_registration_number' => trim($this->studentBoardRegNumber),
+            'gender' => $gender,
+            'date_of_birth' => trim($this->studentDateOfBirth),
         ];
         $this->studentName = '';
         $this->studentClass = '';
@@ -363,7 +426,10 @@ class ManualOnboardingWizard extends Component
         $this->studentParent = '';
         $this->studentParentPhone = '';
         $this->studentSchoolStudentId = '';
+        $this->studentLin = '';
         $this->studentBoardRegNumber = '';
+        $this->studentGender = '';
+        $this->studentDateOfBirth = '';
         $this->errorMessage = '';
     }
 
@@ -387,7 +453,10 @@ class ManualOnboardingWizard extends Component
                 'parent' => '',
                 'parent_phone' => '',
                 'school_student_id' => '',
+                'lin' => '',
                 'board_registration_number' => '',
+                'gender' => '',
+                'date_of_birth' => '',
             ];
         }
         $this->studentPaste = '';
@@ -482,10 +551,14 @@ class ManualOnboardingWizard extends Component
                 if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test';
                 }
+                $subjects = $this->splitCsvList((string) ($row['subjects'] ?? ''));
+                $classes = $this->splitCsvList((string) ($row['classes'] ?? ''));
                 $this->teacherDrafts[] = [
                     'name' => $row['name'],
                     'email' => $email,
                     'phone' => (string) ($row['phone'] ?? ''),
+                    'classes' => $classes,
+                    'subjects' => $subjects,
                 ];
             }
             $this->teacherUpload = null;
@@ -498,7 +571,10 @@ class ManualOnboardingWizard extends Component
                     'parent' => (string) ($row['parent'] ?? ''),
                     'parent_phone' => (string) ($row['parent_phone'] ?? ''),
                     'school_student_id' => (string) ($row['school_student_id'] ?? ''),
+                    'lin' => (string) ($row['lin'] ?? ''),
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
+                    'gender' => (string) ($row['gender'] ?? ''),
+                    'date_of_birth' => (string) ($row['date_of_birth'] ?? ''),
                 ];
             }
             $this->studentUpload = null;
@@ -684,15 +760,23 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        // Optional steps with an empty draft list = skip (parity with Toshi).
+        // Teachers with an empty list can still auto-skip (explicit Skip exists too).
         if (($step['key'] ?? '') === 'teachers' && $this->teacherDrafts === [] && trim($this->teacherName) === '') {
             $this->skipOptionalStep();
 
             return;
         }
+        // Students: never silently skip on Continue — require add or explicit Skip for now.
         if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '') {
-            $this->skipOptionalStep();
+            $this->errorMessage = 'Add at least one student, or click “Skip for now” if you’ll enrol later.';
 
+            return;
+        }
+
+        // No active plans: the step's @empty alert already explains this. Do not also
+        // push the same string into the shell error banner (duplicate on Continue).
+        if (($step['key'] ?? '') === 'plan_selection'
+            && Plan::query()->where('is_active', 1)->doesntExist()) {
             return;
         }
 
@@ -700,6 +784,12 @@ class ManualOnboardingWizard extends Component
             $this->persistCurrentStep($step['key']);
         } catch (ValidationException $e) {
             $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
+
+            return;
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            report($e);
+            $this->errorMessage = app(\App\Services\OnboardingEngine::class)
+                ->describeUniqueConstraintViolation($e);
 
             return;
         } catch (\Throwable $e) {
@@ -828,8 +918,12 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         $this->refreshSteps();
 
-        if (OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
-            $this->errorMessage = 'Finish the remaining setup steps before creating your school.';
+        $blocking = OnboardingStepsService::blockingIncompleteSteps($this->school()->fresh(), Auth::id());
+        if ($blocking !== []) {
+            $labels = collect($blocking)->pluck('label')->filter()->implode(', ');
+            $this->errorMessage = $labels !== ''
+                ? "Finish these incomplete steps before creating your school: {$labels}."
+                : 'Finish the remaining setup steps before creating your school.';
 
             return;
         }
@@ -878,6 +972,17 @@ class ManualOnboardingWizard extends Component
         }
         if ($key === 'subjects') {
             $this->refreshExistingSubjects();
+        }
+        if ($key === 'teachers') {
+            $this->refreshStructureSnapshot();
+            $this->refreshExistingSubjects();
+        }
+        if ($key === 'terms') {
+            $this->ensureTermDraftsPrefill();
+        }
+        if ($key === 'fees') {
+            $this->refreshStructureSnapshot();
+            $this->refreshAvailableTermNames();
         }
     }
 
@@ -985,7 +1090,12 @@ class ManualOnboardingWizard extends Component
 
         $year = AcademicYear::where('school_id', $sid)->first();
         $links = StandardLink::with('section')->where('school_id', $sid)->get();
-        $subjects = Subject::where('school_id', $sid)->pluck('name')->filter()->values();
+        $subjects = Subject::where('school_id', $sid)
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values();
+        $subjectRowCount = Subject::where('school_id', $sid)->count();
         $teachers = Teacherlink::with('teacher.userprofile')
             ->where('school_id', $sid)
             ->get()
@@ -1049,7 +1159,19 @@ class ManualOnboardingWizard extends Component
             ['key' => 'uneb_center', 'label' => 'UNEB centre', 'icon' => '🎓', 'value' => $unebDisplay],
             ['key' => 'academic_year', 'label' => 'Academic year', 'icon' => '📅', 'value' => $yearValue],
             ['key' => 'standards', 'label' => 'Structure & Class Teachers', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
-            ['key' => 'subjects', 'label' => 'Subjects', 'icon' => '📖', 'value' => $subjects->isEmpty() ? '—' : $subjects->implode(', ')],
+            [
+                'key' => 'subjects',
+                'label' => 'Subjects',
+                'icon' => '📖',
+                // Subjects are stored per class/section (intentional). Review shows unique
+                // names — repeating "English" once per P.1–P.7 is noise, not a roster.
+                'value' => $subjects->isEmpty()
+                    ? '—'
+                    : ($subjects->implode(', ')
+                        .($subjectRowCount > $subjects->count()
+                            ? ' · '.$subjects->count().' unique across '.$subjectRowCount.' class rows'
+                            : '')),
+            ],
             ['key' => 'teachers', 'label' => 'Teachers', 'icon' => '👩‍🏫', 'value' => $teachers->isEmpty() ? '—' : $teachers->implode(', ')],
             [
                 'key' => 'students',
@@ -1248,6 +1370,9 @@ class ManualOnboardingWizard extends Component
     public function updatedStudentClass(): void
     {
         $this->applyStudentStreamDefaultForClass();
+        if (! OnboardingEngine::isCandidateClass(trim($this->studentClass))) {
+            $this->studentBoardRegNumber = '';
+        }
     }
 
     /**
@@ -1521,28 +1646,31 @@ class ManualOnboardingWizard extends Component
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
-        $link = StandardLink::where('school_id', $school->id)->first();
-        // Prefer a subject on the same section as the class link so Teacherlink rows are coherent.
-        $subject = null;
-        if ($link) {
-            $subject = Subject::where('school_id', $school->id)
-                ->where('section_id', $link->section_id)
-                ->first();
+        if (! $year) {
+            throw ValidationException::withMessages(['teacherName' => 'Create an academic year first.']);
         }
-        $subject ??= Subject::where('school_id', $school->id)->first();
-        if (! $year || ! $link || ! $subject) {
+
+        $hasAnyLink = StandardLink::where('school_id', $school->id)->exists();
+        $hasAnySubject = Subject::where('school_id', $school->id)->exists();
+        if (! $hasAnyLink || ! $hasAnySubject) {
             throw ValidationException::withMessages(['teacherName' => 'Add class and subject first.']);
         }
 
-        $drafts = array_map(function ($draft) use ($link, $subject) {
-            return [
-                'name'             => trim((string) ($draft['name'] ?? '')),
-                'email'            => trim((string) ($draft['email'] ?? '')),
-                'phone'            => trim((string) ($draft['phone'] ?? '')),
-                'standardLink_id'  => $link->id,
-                'subject_id'       => $subject->id,
+        $drafts = [];
+        foreach ($this->teacherDrafts as $draft) {
+            $links = $this->resolveTeacherAssignmentLinks(
+                $school,
+                $year,
+                is_array($draft['classes'] ?? null) ? $draft['classes'] : [],
+                is_array($draft['subjects'] ?? null) ? $draft['subjects'] : [],
+            );
+            $drafts[] = [
+                'name' => trim((string) ($draft['name'] ?? '')),
+                'email' => trim((string) ($draft['email'] ?? '')),
+                'phone' => trim((string) ($draft['phone'] ?? '')),
+                'links' => $links,
             ];
-        }, $this->teacherDrafts);
+        }
 
         $result = app(OnboardingEngine::class)->saveTeachers($school, $year, $drafts);
         if (($result['created'] ?? []) === []) {
@@ -1552,6 +1680,274 @@ class ManualOnboardingWizard extends Component
         }
 
         $this->teacherDrafts = [];
+    }
+
+
+    /**
+     * @param  list<string|mixed>  $classes
+     * @param  list<string|mixed>  $subjects
+     * @return list<array{standardLink_id: int, subject_id: int}>
+     */
+    private function resolveTeacherAssignmentLinks(School $school, AcademicYear $year, array $classes, array $subjects): array
+    {
+        $classNames = array_values(array_unique(array_filter(array_map(
+            fn ($v) => trim((string) $v),
+            $classes
+        ))));
+        $subjectNames = array_values(array_unique(array_filter(array_map(
+            fn ($v) => trim((string) $v),
+            $subjects
+        ))));
+
+        if ($classNames === [] || $subjectNames === []) {
+            return [];
+        }
+
+        $engine = app(OnboardingEngine::class);
+        $links = [];
+        $seen = [];
+
+        foreach ($classNames as $className) {
+            $standardLink = $engine->resolveStandardLinkForClass($school, $year, $className);
+            if (! $standardLink) {
+                // Fall back: match section display name on existing links.
+                $standardLink = StandardLink::with('section')
+                    ->where('school_id', $school->id)
+                    ->where('academic_year_id', $year->id)
+                    ->get()
+                    ->first(function ($link) use ($className) {
+                        $sec = trim((string) ($link->section?->name ?? ''));
+
+                        return $sec !== '' && strcasecmp($sec, $className) === 0;
+                    });
+            }
+            if (! $standardLink) {
+                throw ValidationException::withMessages([
+                    'teacherName' => "Class '{$className}' was not found. Add it on the classes step first.",
+                ]);
+            }
+
+            foreach ($subjectNames as $subjectName) {
+                $subject = $engine->resolveOrCreateSubjectForClass($school, $year, $standardLink, $subjectName);
+                if (! $subject) {
+                    throw ValidationException::withMessages([
+                        'teacherName' => "Subject '{$subjectName}' was not found for class '{$className}'.",
+                    ]);
+                }
+
+                $key = $standardLink->id.':'.$subject->id;
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $links[] = [
+                    'standardLink_id' => (int) $standardLink->id,
+                    'subject_id' => (int) $subject->id,
+                ];
+            }
+        }
+
+        return $links;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function splitCsvList(string $raw): array
+    {
+        if (trim($raw) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/[,;|]+/', $raw) ?: [])));
+    }
+
+    public function addTermDraft(): void
+    {
+        $name = trim($this->termName);
+        if ($name === '') {
+            $this->errorMessage = 'Enter a term name.';
+
+            return;
+        }
+
+        if ($this->termStartsOn === '' || $this->termEndsOn === '') {
+            $this->errorMessage = 'Enter start and end dates for the term.';
+
+            return;
+        }
+
+        try {
+            $this->validate([
+                'termStartsOn' => 'required|date',
+                'termEndsOn' => 'required|date|after:termStartsOn',
+            ]);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Check the term dates.';
+
+            return;
+        }
+
+        foreach ($this->termDrafts as $draft) {
+            if (strcasecmp((string) ($draft['name'] ?? ''), $name) === 0) {
+                $this->errorMessage = "Term '{$name}' is already in the list.";
+
+                return;
+            }
+        }
+
+        $this->termDrafts[] = [
+            'name' => $name,
+            'start' => $this->termStartsOn,
+            'end' => $this->termEndsOn,
+        ];
+        if ($this->currentTermName === '') {
+            $this->currentTermName = $name;
+        }
+        $this->termName = '';
+        $this->termStartsOn = '';
+        $this->termEndsOn = '';
+        $this->errorMessage = '';
+    }
+
+    public function removeTermDraft(int $index): void
+    {
+        if (! isset($this->termDrafts[$index])) {
+            return;
+        }
+        $removed = trim((string) ($this->termDrafts[$index]['name'] ?? ''));
+        unset($this->termDrafts[$index]);
+        $this->termDrafts = array_values($this->termDrafts);
+        if ($removed !== '' && strcasecmp($removed, $this->currentTermName) === 0) {
+            $this->currentTermName = trim((string) ($this->termDrafts[0]['name'] ?? ''));
+        }
+    }
+
+    public function markTermCurrent(string $name): void
+    {
+        $name = trim($name);
+        foreach ($this->termDrafts as $draft) {
+            if (strcasecmp(trim((string) ($draft['name'] ?? '')), $name) === 0) {
+                $this->currentTermName = trim((string) $draft['name']);
+                $this->errorMessage = '';
+
+                return;
+            }
+        }
+        $this->errorMessage = 'That term is not in the list.';
+    }
+
+    public function addFeeDraft(): void
+    {
+        $name = trim($this->feeName);
+        if ($name === '') {
+            $this->errorMessage = 'Enter a fee name.';
+
+            return;
+        }
+        if (! is_numeric($this->feeAmount) || (float) $this->feeAmount <= 0) {
+            $this->errorMessage = 'Enter a fee amount greater than zero.';
+
+            return;
+        }
+        if ($this->feeScope === 'class' && trim($this->feeClass) === '') {
+            $this->errorMessage = 'Choose a class for this fee, or switch to Whole school.';
+
+            return;
+        }
+        if (! $this->feeIsYearly && trim($this->feeTerm) === '' && $this->availableTermNames !== []) {
+            $this->errorMessage = 'Choose an academic term, or mark this as a yearly fee.';
+
+            return;
+        }
+
+        $this->feeDrafts[] = [
+            'name' => $name,
+            'amount' => (string) $this->feeAmount,
+            'scope' => $this->feeScope === 'class' ? 'class' : 'whole_school',
+            'class' => trim($this->feeClass),
+            'term' => $this->feeIsYearly ? '' : trim($this->feeTerm),
+            'is_yearly' => (bool) $this->feeIsYearly,
+        ];
+        $this->feeName = '';
+        $this->feeAmount = '';
+        $this->feeClass = '';
+        $this->feeTerm = '';
+        $this->feeIsYearly = false;
+        $this->feeScope = 'whole_school';
+        $this->errorMessage = '';
+    }
+
+    public function removeFeeDraft(int $index): void
+    {
+        if (! isset($this->feeDrafts[$index])) {
+            return;
+        }
+        unset($this->feeDrafts[$index]);
+        $this->feeDrafts = array_values($this->feeDrafts);
+    }
+
+    private function prefillDefaultTerms(): void
+    {
+        if ($this->termDrafts !== []) {
+            return;
+        }
+
+        $year = (int) now()->format('Y');
+        $this->termDrafts = [
+            ['name' => 'Term 1', 'start' => "{$year}-02-03", 'end' => "{$year}-05-02"],
+            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-29"],
+            ['name' => 'Term 3', 'start' => "{$year}-09-22", 'end' => "{$year}-12-19"],
+        ];
+        $this->currentTermName = 'Term 1';
+    }
+
+    private function ensureTermDraftsPrefill(): void
+    {
+        $school = $this->school();
+        if (AcademicTerm::where('school_id', $school->id)->exists()) {
+            // Already saved — keep drafts empty so Continue is a no-op via early exist check?
+            // Rehydrate from DB so the admin can still see what was saved when revisiting.
+            if ($this->termDrafts === []) {
+                $this->termDrafts = AcademicTerm::where('school_id', $school->id)
+                    ->orderBy('id')
+                    ->get()
+                    ->map(fn ($t) => [
+                        'name' => (string) $t->name,
+                        'start' => optional($t->starts_on)->toDateString() ?? '',
+                        'end' => optional($t->ends_on)->toDateString() ?? '',
+                    ])
+                    ->all();
+                $current = AcademicTerm::where('school_id', $school->id)->where('status', 'current')->value('name');
+                $this->currentTermName = (string) ($current ?: ($this->termDrafts[0]['name'] ?? ''));
+            }
+
+            return;
+        }
+
+        $this->prefillDefaultTerms();
+    }
+
+    private function refreshAvailableTermNames(): void
+    {
+        $names = AcademicTerm::where('school_id', $this->school()->id)
+            ->orderBy('id')
+            ->pluck('name')
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($names === [] && $this->termDrafts !== []) {
+            $names = array_values(array_filter(array_map(
+                fn ($d) => trim((string) ($d['name'] ?? '')),
+                $this->termDrafts
+            )));
+        }
+
+        $this->availableTermNames = $names;
+        if ($this->feeTerm === '' && $names !== []) {
+            $this->feeTerm = (string) $names[0];
+        }
     }
 
     private function freshTeacherEmail(?School $school = null): string
@@ -1590,7 +1986,10 @@ class ManualOnboardingWizard extends Component
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
+                'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
+                'gender' => trim((string) ($draft['gender'] ?? '')),
+                'date_of_birth' => trim((string) ($draft['date_of_birth'] ?? '')),
             ];
         }, $this->studentDrafts);
 
@@ -1601,13 +2000,27 @@ class ManualOnboardingWizard extends Component
 
     private function saveTerm(School $school): void
     {
-        if (AcademicTerm::where('school_id', $school->id)->exists()) {
-            return;
+        // Flush pending single-term form into drafts (does not advance by itself).
+        if (trim($this->termName) !== '') {
+            $this->addTermDraft();
+            if ($this->errorMessage !== '') {
+                throw ValidationException::withMessages(['termName' => $this->errorMessage]);
+            }
         }
 
-        $name = trim($this->termName);
-        if ($name === '') {
-            throw ValidationException::withMessages(['termName' => 'Enter a term name.']);
+        if ($this->termDrafts === []) {
+            if (AcademicTerm::where('school_id', $school->id)->exists()) {
+                return;
+            }
+            throw ValidationException::withMessages(['termName' => 'Add at least one academic term.']);
+        }
+
+        $current = trim($this->currentTermName);
+        $draftNames = array_map(fn ($d) => trim((string) ($d['name'] ?? '')), $this->termDrafts);
+        if ($current === '' || ! in_array($current, $draftNames, true)) {
+            throw ValidationException::withMessages([
+                'currentTermName' => 'Choose which term is current before continuing.',
+            ]);
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -1615,15 +2028,19 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['termName' => 'Create an academic year first.']);
         }
 
-        $this->validate([
-            'termStartsOn' => 'required|date',
-            'termEndsOn' => 'required|date|after:termStartsOn',
-        ]);
+        $payload = [];
+        foreach ($this->termDrafts as $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+            $payload[] = [
+                'name' => $name,
+                'start' => (string) ($draft['start'] ?? ''),
+                'end' => (string) ($draft['end'] ?? ''),
+                'status' => $name === $current ? 'current' : 'next',
+            ];
+        }
 
         try {
-            app(OnboardingEngine::class)->saveTerms($school, $year, [
-                ['name' => $name, 'start' => $this->termStartsOn, 'end' => $this->termEndsOn],
-            ]);
+            app(OnboardingEngine::class)->saveTerms($school, $year, $payload);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['termName' => collect($e->errors())->flatten()->first()]);
         }
@@ -1631,31 +2048,46 @@ class ManualOnboardingWizard extends Component
 
     private function saveFee(School $school): void
     {
-        if (FeesCategories::where('school_id', $school->id)->exists()) {
-            return;
+        if (trim($this->feeName) !== '' && trim($this->feeAmount) !== '') {
+            $this->addFeeDraft();
+            if ($this->errorMessage !== '') {
+                throw ValidationException::withMessages(['feeName' => $this->errorMessage]);
+            }
         }
 
-        $name = trim($this->feeName);
-        if ($name === '') {
-            throw ValidationException::withMessages(['feeName' => 'Enter a fee name.']);
+        if ($this->feeDrafts === []) {
+            if (FeesCategories::where('school_id', $school->id)->exists()) {
+                return;
+            }
+            throw ValidationException::withMessages(['feeName' => 'Add at least one fee.']);
         }
 
-        $amount = (float) $this->feeAmount;
-        if ($amount <= 0) {
-            throw ValidationException::withMessages(['feeAmount' => 'Enter a fee amount greater than zero.']);
+        $payload = [];
+        foreach ($this->feeDrafts as $draft) {
+            $row = [
+                'name' => trim((string) ($draft['name'] ?? '')),
+                'amount' => (float) ($draft['amount'] ?? 0),
+            ];
+            $scope = (string) ($draft['scope'] ?? 'whole_school');
+            if ($scope === 'class') {
+                $row['class'] = trim((string) ($draft['class'] ?? ''));
+            }
+            if (empty($draft['is_yearly'])) {
+                $term = trim((string) ($draft['term'] ?? ''));
+                if ($term !== '') {
+                    $row['term'] = $term;
+                }
+            }
+            $payload[] = $row;
         }
 
-        // Do not reuse $this->className from the Classes step — that silently scoped
-        // Tuition to one class (e.g. leftover "P1") and skipped school-wide / tier rows.
-        // School-wide save creates one FeesCategories row per Standard (section_id null)
-        // so labeledName() can show Nursery/Primary/O'Level/A'Level like Toshi.
         try {
-            app(OnboardingEngine::class)->saveFees($school, [
-                ['name' => $name, 'amount' => $amount],
-            ]);
+            app(OnboardingEngine::class)->saveFees($school, $payload);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['feeName' => collect($e->errors())->flatten()->first()]);
         }
+
+        $this->feeDrafts = [];
     }
 
     /**
@@ -1767,6 +2199,14 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
+        if (Plan::query()->where('is_active', 1)->doesntExist()) {
+            // Prefer the in-step empty alert; next() short-circuits before this when empty.
+            // Keep a guard for any direct persist path without duplicating UX intent.
+            throw ValidationException::withMessages([
+                'plan' => 'No plans are available yet. Contact support.',
+            ]);
+        }
+
         $this->defaultSelectedPlan();
         if (! $this->selectedPlanId) {
             throw ValidationException::withMessages(['plan' => 'Select a plan to continue.']);

@@ -221,4 +221,89 @@ class SaveStudentsTest extends TestCase
         $this->assertCount(0, $result['created']);
         $this->assertCount(0, $result['skipped']);
     }
+
+    public function test_provided_email_collision_throws_validation_exception(): void
+    {
+        User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 6,
+            'name' => 'Existing Student',
+            'email' => 'student.dup@test.sch.ug',
+            'password' => bcrypt('whatever'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+
+        $engine = app(OnboardingEngine::class);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessageMatches('/student\.dup@test\.sch\.ug/');
+
+        $engine->saveStudents($this->school, $this->year, [
+            ['name' => 'New Student', 'email' => 'student.dup@test.sch.ug', 'class' => 'P.1'],
+        ]);
+    }
+
+    public function test_lin_collision_throws_validation_exception(): void
+    {
+        $existing = User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 6,
+            'name' => 'Existing Student',
+            'email' => 'lin.holder@test.sch.ug',
+            'password' => bcrypt('whatever'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+
+        StudentAcademic::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'user_id' => $existing->id,
+            'standardLink_id' => $this->link->id,
+            'klassapp_student_id' => 'KLS9990001',
+            'lin' => 'LIN2501001999',
+        ]);
+
+        $engine = app(OnboardingEngine::class);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessageMatches('/LIN2501001999/');
+
+        $engine->saveStudents($this->school, $this->year, [
+            ['name' => 'New Student', 'class' => 'P.1', 'lin' => 'LIN2501001999'],
+        ]);
+    }
+
+    public function test_successful_save_with_unique_email_and_lin(): void
+    {
+        $engine = app(OnboardingEngine::class);
+
+        $result = $engine->saveStudents($this->school, $this->year, [
+            [
+                'name' => 'Clean Student',
+                'email' => 'clean.student.'.Str::random(6).'@test.sch.ug',
+                'class' => 'P.1',
+                'lin' => 'LIN'.random_int(1000000000, 1999999999),
+            ],
+        ]);
+
+        $this->assertCount(1, $result['created']);
+        $academic = StudentAcademic::where('user_id', $result['created'][0]['user_id'])->first();
+        $this->assertNotNull($academic);
+        $this->assertNotNull($academic->lin);
+    }
+
+    public function test_blank_email_auto_generates_globally_unique_placeholder(): void
+    {
+        $engine = app(OnboardingEngine::class);
+
+        $result = $engine->saveStudents($this->school, $this->year, [
+            ['name' => 'No Email Student', 'class' => 'P.1'],
+        ]);
+
+        $this->assertCount(1, $result['created']);
+        $this->assertStringContainsString('@', $result['created'][0]['email']);
+        $this->assertTrue(User::where('email', $result['created'][0]['email'])->exists());
+    }
 }

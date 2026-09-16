@@ -9,7 +9,9 @@
     'cancelParam' => '',
 ])
 <div class="toshi-confirm-card {{ $state === 'cancelled' ? 'is-cancelled' : 'is-pending' }}"
-     wire:key="{{ $wireKey }}-{{ $state }}">
+     wire:key="{{ $wireKey }}-{{ $state }}"
+     data-testid="toshi-tool-confirm-card"
+     data-toshi-confirm-state="{{ $state }}">
     <div class="toshi-confirm-card-header">
         <div class="toshi-confirm-card-title">
             <span class="toshi-confirm-card-icon">{{ $state === 'cancelled' ? '✕' : $toolIcon }}</span>
@@ -34,11 +36,13 @@
     <div class="toshi-confirm-card-footer">
         @if($state === 'pending')
         <button wire:click="{{ $confirmMethod }}" type="button"
-                class="toshi-confirm-btn toshi-confirm-btn-yes">
+                class="toshi-confirm-btn toshi-confirm-btn-yes"
+                data-testid="toshi-tool-confirm-yes">
             ✓ Confirm
         </button>
         <button wire:click="{{ $cancelMethod }}('{{ $cancelParam }}')" type="button"
-                class="toshi-confirm-btn toshi-confirm-btn-no">
+                class="toshi-confirm-btn toshi-confirm-btn-no"
+                data-testid="toshi-tool-confirm-no">
             Cancel
         </button>
         @else

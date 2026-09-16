@@ -13,42 +13,10 @@
     @include('partials.message')
 
     {{-- Summary KPI cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-amber-100 text-amber-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ $pendingCount }}</div>
-                    <div class="text-xs text-gray-500">Pending</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ $approvedCount }}</div>
-                    <div class="text-xs text-gray-500">Approved</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-500">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ $rejectedCount }}</div>
-                    <div class="text-xs text-gray-500">Rejected</div>
-                </div>
-            </div>
-        </div>
+    <div class="dashboard-kpi-grid mb-6" data-testid="approvals-kpi-grid">
+        <x-ds-kpi-card icon="calendar" :value="(string) $pendingCount" label="Pending" color="amber" />
+        <x-ds-kpi-card icon="check" :value="(string) $approvedCount" label="Approved" color="green" />
+        <x-ds-kpi-card icon="bell" :value="(string) $rejectedCount" label="Rejected" color="red" />
     </div>
 
     {{-- Approval list --}}

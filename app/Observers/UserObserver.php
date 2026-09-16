@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
+use App\Helpers\DashboardCache;
 use Illuminate\Support\Facades\Cache;
-use App\Helpers\SiteHelper;
 use App\Models\User;
 
 class UserObserver
@@ -16,13 +16,7 @@ class UserObserver
      */
     public function created(User $user)
     {
-        //
-        Cache::forget('parent_list'.$user->school_id);
-        Cache::forget('standardLink'.$user->school_id);
-        if ($user->studentAcademicLatest) {
-            Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id);
-            Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id);
-        }
+        $this->forgetLists($user);
     }
 
     /**
@@ -33,13 +27,7 @@ class UserObserver
      */
     public function updated(User $user)
     {
-        //
-        Cache::forget('parent_list'.$user->school_id);
-        Cache::forget('standardLink'.$user->school_id); 
-        if ($user->studentAcademicLatest) {
-            Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id); 
-            Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id); 
-        }
+        $this->forgetLists($user);
     }
 
     /**
@@ -50,7 +38,7 @@ class UserObserver
      */
     public function deleted(User $user)
     {
-        //
+        $this->forgetLists($user);
     }
 
     /**
@@ -61,7 +49,7 @@ class UserObserver
      */
     public function restored(User $user)
     {
-        //
+        $this->forgetLists($user);
     }
 
     /**
@@ -72,6 +60,21 @@ class UserObserver
      */
     public function forceDeleted(User $user)
     {
-        //
+        $this->forgetLists($user);
+    }
+
+    private function forgetLists(User $user): void
+    {
+        Cache::forget('parent_list'.$user->school_id);
+        Cache::forget('standardLink'.$user->school_id);
+        if ($user->studentAcademicLatest) {
+            Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id);
+            Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id);
+        }
+
+        // Roster KPI cards (students/teachers/parents) — never leave stale forever.
+        DashboardCache::forgetRosterCounts(
+            $user->school_id !== null ? (int) $user->school_id : null
+        );
     }
 }

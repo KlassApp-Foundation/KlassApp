@@ -89,9 +89,26 @@ vapor.yml
 # === Dead CI config ===
 #.github/workflows/
 tmp/
-public/images/
+# Ignore images by default; re-include brand SVGs (parent dir must not be
+# fully ignored or git cannot un-ignore children — use /* not trailing /).
+public/images/*
 !public/images/klassapp-logo.svg
 !public/images/klassapp-logo-primary.svg
+!public/images/klassapp-logo-dark.svg
+!public/images/klassapp-logo-stacked.svg
+!public/images/klassapp-icon.svg
+!public/images/klassapp-icon-reversed.svg
+!public/images/klassapp-horizontal-light.svg
+!public/images/klassapp-horizontal-dark.svg
+!public/images/klassapp-horizontal-transparent.svg
+!public/images/klassapp-stacked-light.svg
+!public/images/klassapp-stacked-dark.svg
+!public/images/whatsapp.svg
+!public/images/slack.svg
+!public/images/google-drive.svg
+!public/images/brand/
+!public/images/brand/models/
+!public/images/brand/models/*
 public/js/app.js.LICENSE.txt
 public/css/app.css.map
 

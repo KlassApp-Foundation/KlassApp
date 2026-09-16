@@ -1,0 +1,115 @@
+{
+  "base": "https://klassapp-staging-7mpoqg.laravel.cloud",
+  "at": "2026-09-16T08:42:19.722Z",
+  "viewports": {
+    "375": {
+      "checks": {
+        "hasSection": true,
+        "headingOk": true,
+        "noVisual": true,
+        "noMesh": true,
+        "noMeshHub": true,
+        "noMeshInHtml": true,
+        "noVisualInHtml": true,
+        "threeCards": true,
+        "sectionRenders": true,
+        "headerVisible": true
+      },
+      "failed": [],
+      "measured": {
+        "hasSection": true,
+        "heading": "Not just software. A protocol.",
+        "hasVisual": false,
+        "hasMesh": false,
+        "hasMeshHub": false,
+        "cardCount": 3,
+        "sectionHeight": 806.046875,
+        "headerVisible": true,
+        "htmlHasMeshClass": false,
+        "htmlHasProtocolVisual": false
+      }
+    },
+    "414": {
+      "checks": {
+        "hasSection": true,
+        "headingOk": true,
+        "noVisual": true,
+        "noMesh": true,
+        "noMeshHub": true,
+        "noMeshInHtml": true,
+        "noVisualInHtml": true,
+        "threeCards": true,
+        "sectionRenders": true,
+        "headerVisible": true
+      },
+      "failed": [],
+      "measured": {
+        "hasSection": true,
+        "heading": "Not just software. A protocol.",
+        "hasVisual": false,
+        "hasMesh": false,
+        "hasMeshHub": false,
+        "cardCount": 3,
+        "sectionHeight": 783.953125,
+        "headerVisible": true,
+        "htmlHasMeshClass": false,
+        "htmlHasProtocolVisual": false
+      }
+    },
+    "768": {
+      "checks": {
+        "hasSection": true,
+        "headingOk": true,
+        "noVisual": true,
+        "noMesh": true,
+        "noMeshHub": true,
+        "noMeshInHtml": true,
+        "noVisualInHtml": true,
+        "threeCards": true,
+        "sectionRenders": true,
+        "headerVisible": true
+      },
+      "failed": [],
+      "measured": {
+        "hasSection": true,
+        "heading": "Not just software. A protocol.",
+        "hasVisual": false,
+        "hasMesh": false,
+        "hasMeshHub": false,
+        "cardCount": 3,
+        "sectionHeight": 612.40625,
+        "headerVisible": true,
+        "htmlHasMeshClass": false,
+        "htmlHasProtocolVisual": false
+      }
+    },
+    "1280": {
+      "checks": {
+        "hasSection": true,
+        "headingOk": true,
+        "noVisual": true,
+        "noMesh": true,
+        "noMeshHub": true,
+        "noMeshInHtml": true,
+        "noVisualInHtml": true,
+        "threeCards": true,
+        "sectionRenders": true,
+        "headerVisible": true
+      },
+      "failed": [],
+      "measured": {
+        "hasSection": true,
+        "heading": "Not just software. A protocol.",
+        "hasVisual": false,
+        "hasMesh": false,
+        "hasMeshHub": false,
+        "cardCount": 3,
+        "sectionHeight": 493.734375,
+        "headerVisible": true,
+        "htmlHasMeshClass": false,
+        "htmlHasProtocolVisual": false
+      }
+    }
+  },
+  "ok": true
+}

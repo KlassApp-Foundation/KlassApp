@@ -26,6 +26,13 @@ class ErrorsPreviewTest extends TestCase
             $response->assertSee('data-testid="exception-present"', false);
             $response->assertSee('family=Sora', false);
             $response->assertSee('--paper-base', false);
+            $response->assertSee('--paper-base: #FAFAF5', false);
+            $response->assertSee('--err-ink: #1E293B', false);
+            $response->assertSee('padding: 8px 18px', false);
+            $response->assertSee('outline: 2px solid var(--err-focus)', false);
+            $response->assertDontSee('--paper-base: #F5F0E6', false);
+            $response->assertDontSee('padding: 11px 24px', false);
+            $response->assertDontSee('rgba(34, 197, 94, 0.28)', false);
             $response->assertSee('repeating-linear-gradient', false);
             $response->assertDontSee('Bricolage', false);
             $response->assertDontSee("\u{2014}");

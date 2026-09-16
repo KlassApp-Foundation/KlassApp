@@ -18,17 +18,21 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --paper-base: #F5F0E6;
-            --paper-mid: #EFE6D5;
-            --paper-deep: #E8DCC8;
+            /* Aligned to DESIGN_SYSTEM.md / --d-* parchment (landing + auth) */
+            --paper-base: #FAFAF5;
+            --paper-mid: #F3F0E8;
+            --paper-deep: #EBE6DA;
             --paper-edge: #D4C4A8;
             --paper-ink-wash: rgba(92, 74, 48, 0.03);
             --paper-rule: rgba(120, 95, 60, 0.07);
+            --err-ink: #1E293B;
+            --err-focus: #1E6FD9;
+            --err-focus-ring: rgba(30, 111, 217, 0.25);
         }
         body {
             font-family: 'DM Sans', sans-serif;
             background: var(--paper-base);
-            color: #1E293B;
+            color: var(--err-ink);
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
             position: relative;
@@ -113,7 +117,7 @@
             font-weight: 600;
             letter-spacing: -0.02em;
             line-height: 1.25;
-            color: #0F172A;
+            color: var(--err-ink);
             max-width: none;
         }
         .err-brand-support {
@@ -169,7 +173,7 @@
             font-size: clamp(22px, 4vw, 26px);
             font-weight: 700;
             letter-spacing: -0.02em;
-            color: #0F172A;
+            color: var(--err-ink);
             margin-bottom: 12px;
             text-wrap: balance;
         }
@@ -188,27 +192,35 @@
             max-width: 320px;
         }
         .err-btn {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 11px 24px;
+            gap: 6px;
+            padding: 8px 18px;
             min-height: 44px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
+            font-size: 0.85rem;
             font-weight: 600;
+            line-height: 1.4;
             letter-spacing: -0.01em;
             text-decoration: none;
-            border: 1.5px solid transparent;
+            border: 1px solid transparent;
             cursor: pointer;
-            transition: background 0.15s ease, border-color 0.15s ease;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+            box-shadow: none;
         }
+        .err-btn:focus,
+        .err-btn:focus-visible {
+            outline: 2px solid var(--err-focus);
+            outline-offset: 2px;
+            box-shadow: none;
+        }
+        .err-btn:active { transform: scale(0.97); }
         .err-btn-primary {
             background: #22C55E;
             color: #fff;
             border-color: #22C55E;
-            box-shadow: 0 1px 3px rgba(34, 197, 94, 0.28);
         }
         .err-btn-primary:hover { background: #16A34A; border-color: #16A34A; }
         .err-btn-secondary {
@@ -222,7 +234,6 @@
             background: #D97706;
             color: #fff;
             border-color: #D97706;
-            box-shadow: 0 1px 3px rgba(217, 119, 6, 0.28);
         }
         .err-btn-amber:hover { background: #B45309; border-color: #B45309; }
         .err-preview-badge {

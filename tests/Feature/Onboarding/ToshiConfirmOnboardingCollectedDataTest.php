@@ -27,7 +27,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const TERMS_STEP = 11;
+    private const TERMS_STEP = 12;
 
     private User $admin;
 
@@ -141,14 +141,18 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
 
     private function initializeDefaultTerms($component): void
     {
-        $component->set('step', self::TERMS_STEP);
-        $component->set('substep', 0);
-
-        $method = new ReflectionMethod(AgentToshi::class, 'callStepHandler');
-        $method->setAccessible(true);
-        $method->invoke($component->instance(), '');
-
-        $component->call('confirmYes');
+        $year = (int) date('Y');
+        $component
+            ->set('step', self::TERMS_STEP)
+            ->set('terms', [
+                ['name' => 'Term I', 'start' => "{$year}-02-01", 'end' => "{$year}-04-30"],
+                ['name' => 'Term II', 'start' => "{$year}-05-01", 'end' => "{$year}-08-31"],
+                ['name' => 'Term III', 'start' => "{$year}-09-01", 'end' => "{$year}-12-31"],
+            ])
+            ->set('substep', 1)
+            ->set('awaitingConfirm', true)
+            ->call('confirmYes')
+            ->call('doneTermsCurrent');
     }
 
     /** @test */

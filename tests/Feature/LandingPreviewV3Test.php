@@ -37,11 +37,24 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('klassapp-logo-primary.svg', false);
         $response->assertSee('navbar-logo-img', false);
         $response->assertSee('hero-bg-vintage', false);
-        $response->assertSee('hub-mark', false);
+        $response->assertSee('id="toshiTower"', false);
+        $response->assertSee('data-toshi-tower="1"', false);
+        $response->assertSee('images/brand/models/anthropic-mark.svg', false);
+        $response->assertSee('images/brand/models/openai-mark.svg', false);
+        $response->assertSee('images/brand/models/xai-grok-mark.svg', false);
+        $response->assertSee('images/brand/models/google-gemini-mark.svg', false);
+        $response->assertSee('images/brand/models/moonshot-kimi-mark.svg', false);
+        $response->assertSee('images/brand/models/zhipu-zai-mark.svg', false);
+        $this->assertStringNotContainsString('deepseek', strtolower($response->getContent()));
+        $response->assertDontSee('toshi-visual-hub', false);
+        $response->assertDontSee('toshi-visual-core', false);
         $response->assertSee('images/klassapp-logo.svg', false);
         $response->assertSee('Human in the loop', false);
         $response->assertSee('Before consequential writes, Toshi asks for confirmation', false);
-        $response->assertSee('class="mesh"', false);
+        $response->assertDontSee('protocol-visual', false);
+        $response->assertDontSee('class="mesh"', false);
+        $response->assertDontSee('mesh-hub-mark', false);
+        $response->assertSee('Not just software. A protocol.', false);
         $response->assertSee('Open Source', false);
         $response->assertSee('MIT licensed. Source and self-hosting will open publicly after an independent security review', false);
         $response->assertSee('Smarter schools start here.', false);
@@ -67,12 +80,14 @@ class LandingPreviewV3Test extends TestCase
         $this->assertStringNotContainsString('href="#">Privacy</a>', $content);
 
         // Hero role rotate + Toshi cloud-quality + real socials (Sep 2026 polish)
+        // Hero X-flip + K-mark avatars (tower/flip integration)
         $response->assertSee('id="heroRoleDeck"', false);
         $response->assertSee('id="heroRoleDots"', false);
         $response->assertSee('Parent · WhatsApp', false);
         $response->assertSee('Teacher · Drive', false);
         $response->assertSee('Admin · Slack', false);
-        $response->assertSee('channel-ico', false);
+        $response->assertSee('hero-role-avatar', false);
+        $response->assertSee('images/klassapp-icon.svg', false);
         $response->assertSee('brand-mark--whatsapp', false);
         $response->assertSee('brand-mark--slack', false);
         $response->assertSee('brand-mark--drive', false);
@@ -84,5 +99,27 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('https://x.com/klassapp', false);
         $response->assertSee('https://github.com/KlassApp-Foundation', false);
         $this->assertStringNotContainsString('href="#" class="site-footer-social"', $content);
+
+        // Canonical DESIGN_SYSTEM type + parchment (Piece 1 marketing alignment)
+        $response->assertSee('family=Sora', false);
+        $response->assertSee('family=DM+Sans', false);
+        $this->assertStringNotContainsString('Bricolage', $content);
+        $this->assertStringNotContainsString('family=Inter', $content);
+
+        $css = file_get_contents(resource_path('css/landing-preview.css'));
+        $this->assertMatchesRegularExpression('/--text-primary:\s*#1E293B/i', $css);
+        $this->assertMatchesRegularExpression('/--paper-base:\s*#FAFAF5/i', $css);
+        $this->assertMatchesRegularExpression("/--font-display:\\s*'Sora'/i", $css);
+        $this->assertMatchesRegularExpression("/--font-body:\\s*'DM Sans'/i", $css);
+        $this->assertDoesNotMatchRegularExpression('/Bricolage/i', $css);
+        $this->assertDoesNotMatchRegularExpression("/--font-body:\\s*'Inter'/i", $css);
+        $this->assertDoesNotMatchRegularExpression('/--paper-base:\\s*#F5F0E6/i', $css);
+
+        // Hero X-flip + tower emergence (no unresolved --d-* in live rules)
+        $this->assertMatchesRegularExpression('/transform:\s*rotateX\(90deg\)/', $css);
+        $this->assertMatchesRegularExpression('/\.hero-role-avatar\s*\{[^}]*border:\s*1px solid var\(--brand-green\)/s', $css);
+        $this->assertMatchesRegularExpression('/@keyframes toshi-model-l/', $css);
+        $this->assertMatchesRegularExpression('/\.toshi-tower\s*\{/', $css);
+        $this->assertStringNotContainsString('var(--d-', $css);
     }
 }

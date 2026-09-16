@@ -1,7 +1,12 @@
+{{--
+  Row hover is intrinsic to .ds-table-ledger (dashboard-refresh.css) and is
+  always on, for both this component and the raw `<table class="ds-table-ledger">`
+  markup used elsewhere. There is deliberately no `hover` prop: it would have
+  nothing to toggle. The prop that used to exist here emitted no class at all.
+--}}
 @props([
     'headers' => [],
     'striped' => false,
-    'hover' => true,
     'density' => 'comfortable', // comfortable | compact
     'selectable' => false,
     'sortable' => false,
@@ -12,7 +17,8 @@
 @php
     $densityClass = $density === 'compact' ? 'dt-compact' : 'dt-comfortable';
     $cardMobileClass = $cardMobile ? 'ds-table-card-mobile' : '';
-    $classes = 'ds-table-ledger ' . $densityClass . ' ' . $cardMobileClass . ' ' . $class;
+    $stripedClass = $striped ? 'ds-table-striped' : '';
+    $classes = 'ds-table-ledger ' . $densityClass . ' ' . $cardMobileClass . ' ' . $stripedClass . ' ' . $class;
 @endphp
 
 <div class="ds-table-wrap">

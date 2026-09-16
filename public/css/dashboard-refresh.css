@@ -95,6 +95,78 @@ body {
     background: var(--d-white);
 }
 
+/* Kit home shell — greeting + LIVE */
+.dashboard-home-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.dashboard-topfold--kit {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard-connected-tools .ds-section-subtitle,
+.dashboard-topfold-fees .ds-section-subtitle {
+    margin: 4px 0 14px;
+}
+
+.dashboard-connected-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dashboard-connected-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--d-text);
+    font-family: "DM Sans", sans-serif;
+}
+
+.dashboard-connected-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.dashboard-connected-mark {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.dashboard-connected-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--d-muted);
+    flex-shrink: 0;
+}
+
+.dashboard-connected-row .ds-badge {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+    .dashboard-topfold--kit {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ── Live Badge (admin dashboard header) ── */
 
 .dashboard-live-badge {
@@ -388,6 +460,12 @@ a.ds-kpi-card:hover {
 }
 
 .ds-btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+/* .ds-btn-md is button.blade.php's default size. It restates the .ds-btn base
+   values rather than overriding them, so the scale is explicit and symmetrical
+   with sm/lg. Originally added in 8e9ba63b and dropped by accident in 8d6fb9eb
+   (the Flare redesign re-added only sm and lg), which left every default-size
+   button carrying a class with no rule. */
+.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }
 .ds-btn-lg { padding: 12px 24px; font-size: 0.95rem; }
 
 /* ── Badge System ── */
@@ -2883,10 +2961,36 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     margin-top: 14px;
 }
 
-/* ── Wave 3: manual wizard shell ── */
+/* ── Wave 3 / Piece 3: manual wizard shell ── */
 .manual-wizard {
     max-width: 880px;
     margin: 0 auto 48px;
+}
+.manual-wizard-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.manual-wizard-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.manual-wizard-brand-name {
+    font-family: Sora, sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -0.02em;
+    color: var(--d-dark, #0F172A);
+}
+.manual-wizard-brand-aside {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--d-muted, #64748B);
+}
+.manual-wizard-step-head .ds-page-head-title {
+    margin-bottom: 4px;
 }
 .manual-wizard-card {
     margin-top: 8px;
@@ -2905,9 +3009,9 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
-    max-width: 320px;
+    max-width: 420px;
 }
 .manual-wizard-dot {
     width: 10px;
@@ -2967,9 +3071,15 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     color: var(--d-text-secondary);
 }
 
-/* Wave 3: maximized Toshi modal — slightly richer focus surface */
+/* Wave 3: maximized Toshi modal — blur only while open (class toggled with $maximized).
+   Unconditional backdrop-filter on a display:none overlay still composites on mobile Safari. */
 [data-toshi-root] .toshi-modal-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+[data-toshi-root] .toshi-modal-overlay.toshi-modal-overlay--open {
     backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
 }
 [data-toshi-root] .toshi-modal-box {
     width: min(96vw, 1280px);
@@ -3006,6 +3116,11 @@ body.toshi-manual-wizard [data-toshi-root] {
 @media (min-width: 640px) {
     .manual-wizard-plan-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Four real STUDENT_SIZE_OPTIONS — 2×2 reads cleaner than a sparse 3-col. */
+    .manual-wizard-plan-grid--sizes {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -3052,19 +3167,186 @@ body.toshi-manual-wizard [data-toshi-root] {
     letter-spacing: 0.04em;
 }
 
-/* Wave 3 review / preview — Toshi review-card structure, DS colors */
+/* Piece 3 PR3 — Structure & class teacher checkpoint cards (kit parity) */
+.manual-wizard-structure-intro {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.manual-wizard-structure-flash {
+    font-size: 14px;
+    font-weight: 500;
+    color: #15803d;
+    margin: 0 0 16px;
+}
+
+.manual-wizard-structure-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.manual-wizard-structure-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.manual-wizard-structure-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.manual-wizard-structure-class-name {
+    font-family: Sora, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: #0f172a;
+    margin: 0;
+}
+
+.manual-wizard-structure-streams {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+
+.manual-wizard-stream-chip {
+    display: inline-block;
+    background: #f1f5f9;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.manual-wizard-structure-ct-status {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.manual-wizard-structure-ct-email {
+    color: #94a3b8;
+}
+
+.manual-wizard-structure-ct-empty {
+    color: #94a3b8;
+}
+
+.manual-wizard-structure-card-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .manual-wizard-structure-card-body {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.manual-wizard-structure-stream-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.manual-wizard-structure-ct-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Wave 3 / Piece 3 PR5 — review as settings-style panels (not flat emoji list) */
 .manual-wizard-review-intro {
     font-size: 14px;
     color: #64748B;
     margin: 0 0 14px;
     line-height: 1.45;
 }
+.manual-wizard-review-panels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+@media (min-width: 768px) {
+    .manual-wizard-review-panels {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1280px) {
+    .manual-wizard-review-panels {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+.manual-wizard-review-panel {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    min-width: 0;
+}
+.manual-wizard-review-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.manual-wizard-review-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.manual-wizard-review-icon {
+    font-size: 15px;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+.manual-wizard-review-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.manual-wizard-review-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+    line-height: 1.45;
+    word-break: break-word;
+}
+.manual-wizard-review-edit {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E6FD9;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.manual-wizard-review-edit:hover {
+    color: #1557B0;
+}
+/* Legacy single-card selectors kept so older screenshots/CSS refs don't break */
 .manual-wizard-review-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 .manual-wizard-review-header {
     background: #0F172A;
@@ -3073,12 +3355,9 @@ body.toshi-manual-wizard [data-toshi-root] {
     font-family: "Sora", sans-serif;
     font-size: 14px;
     font-weight: 700;
-    letter-spacing: -0.01em;
 }
 .manual-wizard-review-body {
     padding: 8px 0;
-    display: flex;
-    flex-direction: column;
 }
 .manual-wizard-review-row {
     display: flex;
@@ -3097,46 +3376,12 @@ body.toshi-manual-wizard [data-toshi-root] {
     gap: 10px;
     min-width: 0;
 }
-.manual-wizard-review-icon {
-    font-size: 16px;
-    line-height: 1.4;
-    flex-shrink: 0;
-}
-.manual-wizard-review-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-.manual-wizard-review-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: #0F172A;
-    margin-top: 2px;
-    word-break: break-word;
-}
-.manual-wizard-review-edit {
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: #1E6FD9;
-    background: transparent;
-    border: none;
-    padding: 4px 0;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-.manual-wizard-review-edit:hover {
-    color: #1557B0;
-}
 .manual-wizard-dot.is-review.is-current {
     background: #0F172A;
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.18);
 }
 
-/* Bulk upload (teachers / students) — Wave DS */
+/* Bulk upload (teachers / students) — Wave DS / kit parity */
 .manual-wizard-bulk-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -3157,6 +3402,74 @@ body.toshi-manual-wizard [data-toshi-root] {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    text-decoration: none;
+    position: relative;
+}
+.manual-wizard-bulk-file {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.manual-wizard-bulk-upload-icon {
+    flex-shrink: 0;
+}
+.manual-wizard-bulk-loading {
+    font-size: 12px;
+    color: #64748B;
+    margin: 0 0 8px;
+}
+.manual-wizard-bulk-help {
+    font-size: 12px;
+    color: #64748B;
+    margin: 4px 0 0;
+    line-height: 1.45;
+}
+.manual-wizard-check-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 6px;
+}
+@media (min-width: 768px) {
+    .manual-wizard-check-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.manual-wizard-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.35;
+}
+.manual-wizard-check input {
+    margin-top: 2px;
+}
+.manual-wizard-bulk-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.manual-wizard-bulk-footnote {
+    font-size: 12px;
+    color: #64748B;
+    margin: 12px 0 0;
+    line-height: 1.45;
+}
+.manual-wizard-bulk-pair {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 16px;
+}
+@media (min-width: 768px) {
+    .manual-wizard-bulk-pair {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 .manual-wizard-bulk-list {
     list-style: none;
@@ -3220,4 +3533,37 @@ body.toshi-manual-wizard [data-toshi-root] {
     flex: 1;
     height: 1px;
     background: #E2E8F0;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────
+   Disables every infinite loop in this stylesheet:
+   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce,
+   save-indicator d-pulse, Toshi plan-card toshi-spin.
+   Keep the solid elements visible — only stop the looping animation. */
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-shell--admin .dashboard-live-badge::after {
+        animation: none;
+        content: none;
+    }
+
+    .dashboard-live-dot {
+        animation: none;
+        box-shadow: none;
+    }
+
+    .ds-loading-dot {
+        animation: none;
+        opacity: 0.7;
+        transform: none;
+    }
+
+    .ds-save-indicator--saving .ds-save-indicator__dot {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    [data-toshi-root] .toshi-plan-card-processing::before {
+        animation: none;
+    }
 }

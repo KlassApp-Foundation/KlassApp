@@ -122,6 +122,11 @@ class WizardStructureClassTeacherTest extends TestCase
         $component->assertSee('Structure & Class Teachers');
         $this->assertNotEmpty($component->get('structureClasses'));
         $component->assertSeeHtml('data-testid="wizard-structure-step"');
+        $component->assertSeeHtml('manual-wizard-structure-card');
+        $component->assertSee('No streams yet — undivided base class.');
+        $component->assertSee('No class teacher yet');
+        $component->assertSeeHtml('placeholder="e.g. A, East, Science"');
+        $component->assertSeeHtml('— Create a new teacher —');
     }
 
     public function test_next_with_no_actions_advances_past_structure(): void
@@ -163,6 +168,9 @@ class WizardStructureClassTeacherTest extends TestCase
             ->call('addStructureStream', $sectionId)
             ->assertSet('errorMessage', '');
 
+        $this->assertStringContainsString('Added stream', $component->get('structureFlash'));
+        $this->assertStringContainsString('East', $component->get('structureFlash'));
+
         $this->assertTrue(
             Section::query()
                 ->where('school_id', $this->school->id)
@@ -202,6 +210,8 @@ class WizardStructureClassTeacherTest extends TestCase
             ->call('inviteStructureClassTeacher', $sectionId)
             ->assertSet('errorMessage', '');
 
+        $this->assertNotSame('', $component->get('structureFlash'));
+
         $link = StandardLink::query()
             ->where('school_id', $this->school->id)
             ->where('section_id', $sectionId)
@@ -213,6 +223,26 @@ class WizardStructureClassTeacherTest extends TestCase
         $this->assertSame(5, (int) $teacher->usergroup_id);
 
         Mail::assertQueued(TeacherInviteMail::class);
+
+        $updated = collect($component->get('structureClasses'))
+            ->firstWhere('section_id', $sectionId);
+        $this->assertSame((int) $link->class_teacher_id, (int) ($updated['class_teacher_id'] ?? 0));
+        $this->assertSame('Grace CT', $updated['class_teacher_name'] ?? null);
+    }
+
+    public function test_add_structure_stream_rejects_blank_with_verbatim_error(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToStructure($component);
+
+        $sectionId = (int) $component->get('structureClasses')[0]['section_id'];
+
+        $component
+            ->set('structureStreamDrafts.'.$sectionId, '   ')
+            ->call('addStructureStream', $sectionId)
+            ->assertSet('errorMessage', 'Enter a stream name (e.g. A, East, Science).')
+            ->assertSet('structureFlash', '');
     }
 
     public function test_students_step_defaults_stream_when_class_has_streams(): void

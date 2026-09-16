@@ -30,7 +30,7 @@
     "isEntry": true
   },
   "resources/css/auth-preview.css": {
-    "file": "assets/auth-preview-OVpX24B_.css",
+    "file": "assets/auth-preview-DcTUet0Q.css",
     "name": "auth-preview",
     "names": [
       "auth-preview.css"
@@ -39,7 +39,7 @@
     "isEntry": true
   },
   "resources/css/landing-preview.css": {
-    "file": "assets/landing-preview-Dn8gj2r_.css",
+    "file": "assets/landing-preview-CQYSyfx9.css",
     "name": "landing-preview",
     "names": [
       "landing-preview.css"
@@ -57,7 +57,7 @@
     "isEntry": true
   },
   "resources/css/tailwind.css": {
-    "file": "assets/tailwind-DS4JEW6T.css",
+    "file": "assets/tailwind-DYtRXav8.css",
     "name": "tailwind",
     "names": [
       "tailwind.css"
@@ -66,7 +66,7 @@
     "isEntry": true
   },
   "resources/js/landing-preview.js": {
-    "file": "assets/landing-preview-Bcub0Fad.js",
+    "file": "assets/landing-preview-B9bG_k42.js",
     "name": "landing-preview",
     "src": "resources/js/landing-preview.js",
     "isEntry": true

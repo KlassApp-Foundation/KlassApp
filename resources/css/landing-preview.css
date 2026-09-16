@@ -1,20 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* Aligned to DESIGN_SYSTEM.md / --d-* (canvas #FAFAF5, ink #1E293B, Sora + DM Sans).
+     Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
   --brand-dark: #0F172A;
   --brand-light: #F8FAFC;
   --brand-white: #FFFFFF;
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
   --text-muted: #94A3B8;
   --border: #E2E8F0;
   --violet-accent: #8B5CF6;
   --brand-amber: #D97706;
 
-  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
 
   --container: 1200px;
   --radius-sm: 8px;
@@ -29,10 +31,10 @@
   --shadow-glow-violet: 0 0 16px rgba(139,92,246,0.2);
   --shadow-glow-amber: 0 0 16px rgba(217,119,6,0.18);
 
-  /* Hero vintage paper (OD v2) — background only; never replaces brand text/CTA tokens */
-  --paper-base: #F5F0E6;
-  --paper-mid: #EFE6D5;
-  --paper-deep: #E8DCC8;
+  /* Hero vintage paper — wash shifted to canonical parchment; grain/rules unchanged */
+  --paper-base: #FAFAF5;
+  --paper-mid: #F3F0E8;
+  --paper-deep: #EBE6DA;
   --paper-edge: #D4C4A8;
   --paper-ink-wash: rgba(92, 74, 48, 0.03);
   --paper-rule: rgba(120, 95, 60, 0.07);
@@ -45,7 +47,7 @@ body {
   font-family: var(--font-body);
   font-weight: 400;
   color: var(--text-primary);
-  background: var(--brand-white);
+  background: var(--paper-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -413,6 +415,7 @@ body.nav-open { overflow: hidden; }
   inset: 0;
   transform-style: preserve-3d;
 }
+/* X-axis flip (OD hero-role-rotate) — remap --d-transition-slow → 0.3s ease */
 .hero-role-card {
   position: absolute;
   inset: 12px 18px;
@@ -422,21 +425,26 @@ body.nav-open { overflow: hidden; }
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 24px 50px -24px rgba(15,23,42,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset;
   overflow: hidden;
-  opacity: 0;
-  transform: translateZ(-80px) rotateY(18deg) scale(0.92);
-  transition: transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.55s ease;
   pointer-events: none;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform-origin: center center;
+  opacity: 0;
+  transform: rotateX(90deg);
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .hero-role-card.is-active {
   opacity: 1;
-  transform: translateZ(0) rotateY(0) scale(1);
+  transform: rotateX(0deg);
   pointer-events: auto;
   z-index: 3;
+  transition-delay: 0.15s;
 }
 .hero-role-card.is-exit {
   opacity: 0;
-  transform: translateZ(-40px) rotateY(-16deg) scale(0.94);
+  transform: rotateX(-90deg);
   z-index: 2;
+  transition-delay: 0s;
 }
 .hero-role-hd {
   display: flex;
@@ -449,15 +457,22 @@ body.nav-open { overflow: hidden; }
 .hero-role-card.wa .hero-role-hd { background: #075E54; }
 .hero-role-card.drive .hero-role-hd { background: #1E3A5F; }
 .hero-role-card.slack .hero-role-hd { background: #3F1F5C; }
+/* K-mark avatar: circle, transparent fill, green ring (all three role cards) */
 .hero-role-avatar {
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--brand-green);
+  overflow: hidden;
   display: grid;
   place-items: center;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  background: rgba(255,255,255,0.18);
+  flex-shrink: 0;
+}
+.hero-role-avatar img {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 .hero-role-body {
   padding: 16px;
@@ -465,6 +480,19 @@ body.nav-open { overflow: hidden; }
   line-height: 1.45;
   color: #E2E8F0;
 }
+.hero-role-body > * {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.is-active .hero-role-body > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+.is-active .hero-role-body > :nth-child(1) { transition-delay: 0.30s; }
+.is-active .hero-role-body > :nth-child(2) { transition-delay: 0.36s; }
+.is-active .hero-role-body > :nth-child(3) { transition-delay: 0.42s; }
+.is-active .hero-role-body > :nth-child(4) { transition-delay: 0.48s; }
 .hero-bubble {
   background: #fff;
   color: #0F172A;
@@ -524,6 +552,7 @@ body.nav-open { overflow: hidden; }
   z-index: 5;
   transform: translateY(-50%);
 }
+/* Verbatim reduced-motion: instant swap, not cross-fade */
 @media (prefers-reduced-motion: reduce) {
   .hero-role-card {
     transition: none !important;
@@ -533,6 +562,11 @@ body.nav-open { overflow: hidden; }
   .hero-role-card.is-active { opacity: 1; }
   .hero-role-card.is-exit { opacity: 0; }
   .hero-role-dots { display: none; }
+  .hero-role-body > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Legacy phone mockup selectors kept for any residual markup */
@@ -1032,6 +1066,112 @@ body.nav-open { overflow: hidden; }
 }
 .toshi-header h2 .toshi-name { color: var(--brand-green); }
 .toshi-header p { font-size: 1.0625rem; }
+
+/* ---- Toshi isometric tower (OD toshi-tower) — --d-* remapped to landing tokens ----
+   --d-canvas→--paper-base  --d-white→--brand-white  --d-border→--border
+   --d-text→--text-primary  --d-text-secondary→--text-secondary  --d-muted→--text-muted
+   --d-dark→--brand-dark  --d-green→--brand-green  --d-blue→--brand-blue
+   --d-font-*→--font-*  --d-transition-slow→0.3s ease
+*/
+.toshi-tower {
+  margin: 48px 0 8px;
+  background: var(--brand-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+.toshi-tower-stage {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.toshi-tower-stage svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.toshi-tower .float-toshi {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toshi-tower .float-toshi {
+    animation: toshi-tower-bob 6s ease-in-out infinite;
+  }
+  @keyframes toshi-tower-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+}
+.toshi-tower .orb,
+.toshi-tower .mo {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.toshi-tower .orb-a { transform: translate(540px, 650px); opacity: 1; }
+.toshi-tower .orb-b { transform: translate(700px, 650px); }
+.toshi-tower .orb-c { transform: translate(540px, 650px); }
+.toshi-tower .mo-1 { transform: translate(560px, 527px); opacity: 1; }
+.toshi-tower .mo-3,
+.toshi-tower .mo-5 { transform: translate(560px, 527px); }
+.toshi-tower .mo-2,
+.toshi-tower .mo-4,
+.toshi-tower .mo-6 { transform: translate(680px, 527px); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes toshi-core-l {
+    0% { transform: translate(540px, 650px) scale(0.25); opacity: 0; }
+    3% { transform: translate(540px, 650px) scale(1.06); opacity: 1; }
+    5% { transform: translate(540px, 650px) scale(1); opacity: 1; }
+    29% { transform: translate(540px, 650px) scale(1); opacity: 1; }
+    33% { transform: translate(540px, 650px) scale(0.25); opacity: 0; }
+    100% { transform: translate(540px, 650px) scale(0.25); opacity: 0; }
+  }
+  @keyframes toshi-core-r {
+    0% { transform: translate(700px, 650px) scale(0.25); opacity: 0; }
+    3% { transform: translate(700px, 650px) scale(1.06); opacity: 1; }
+    5% { transform: translate(700px, 650px) scale(1); opacity: 1; }
+    29% { transform: translate(700px, 650px) scale(1); opacity: 1; }
+    33% { transform: translate(700px, 650px) scale(0.25); opacity: 0; }
+    100% { transform: translate(700px, 650px) scale(0.25); opacity: 0; }
+  }
+  .toshi-tower .orb-a { animation: toshi-core-l 12s linear infinite; animation-delay: -2s; }
+  .toshi-tower .orb-b { animation: toshi-core-r 12s linear infinite; animation-delay: 2s; }
+  .toshi-tower .orb-c { animation: toshi-core-l 12s linear infinite; animation-delay: 6s; }
+  @keyframes toshi-model-l {
+    0% { transform: translate(560px, 527px) scale(0.25); opacity: 0; }
+    2.33% { transform: translate(560px, 527px) scale(1.06); opacity: 1; }
+    3.73% { transform: translate(560px, 527px) scale(1); opacity: 1; }
+    14% { transform: translate(560px, 527px) scale(1); opacity: 1; }
+    16.7% { transform: translate(560px, 527px) scale(0.25); opacity: 0; }
+    100% { transform: translate(560px, 527px) scale(0.25); opacity: 0; }
+  }
+  @keyframes toshi-model-r {
+    0% { transform: translate(680px, 527px) scale(0.25); opacity: 0; }
+    2.33% { transform: translate(680px, 527px) scale(1.06); opacity: 1; }
+    3.73% { transform: translate(680px, 527px) scale(1); opacity: 1; }
+    14% { transform: translate(680px, 527px) scale(1); opacity: 1; }
+    16.7% { transform: translate(680px, 527px) scale(0.25); opacity: 0; }
+    100% { transform: translate(680px, 527px) scale(0.25); opacity: 0; }
+  }
+  .toshi-tower .mo-1,
+  .toshi-tower .mo-3,
+  .toshi-tower .mo-5 { animation: toshi-model-l 18s linear infinite; }
+  .toshi-tower .mo-2,
+  .toshi-tower .mo-4,
+  .toshi-tower .mo-6 { animation: toshi-model-r 18s linear infinite; }
+  .toshi-tower .mo-1 { animation-delay: -1.5s; }
+  .toshi-tower .mo-2 { animation-delay: 1.5s; }
+  .toshi-tower .mo-3 { animation-delay: 4.5s; }
+  .toshi-tower .mo-4 { animation-delay: 7.5s; }
+  .toshi-tower .mo-5 { animation-delay: 10.5s; }
+  .toshi-tower .mo-6 { animation-delay: 13.5s; }
+}
+@media (max-width: 768px) {
+  .toshi-tower { margin: 32px 0 4px; border-radius: var(--radius-lg); }
+}
+
 
 /* Toshi control center visual — cloud-quality surface (OD toshi-hub-cloud-quality) */
 .toshi-visual {
