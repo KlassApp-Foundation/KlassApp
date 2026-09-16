@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Community health files MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
+## Current Status: September 16, 2026 — **AGENTS.md standing rules 21–27 + SoT audit** (PR pending)
+
+- **Branch**: `docs/agents-session-standing-rules` off `origin/main` (`6955864f`).
+- **Change**: Root AI-tool audit documented in AGENTS.md; confirmed `.cursor/rules/` and `.ai/rules/` are pointer-only (not a second rules body); no deletes of legitimate pointers / `.design-sync/` / `.devin/skills/phpstorm-mcp/`. Added standing rules **21–27** (merged:true via API, Playwright UI verify, no inventing, Cloud deploy POST, external PR human review, worktree pwd/branch, periodic AI-scaffold audit). Strengthened Verification discipline + Session workflow + "Why one canonical file".
+- **Verify**: Diff is docs-only (`AGENTS.md` + this stamp). Pointer files re-read — all redirect to AGENTS.md. **No deploy.**
+- **PR / merge**: opening now; stamp MERGED only after GitHub API `merged: true`.
+
+## Previous: September 16, 2026 — **Community health files MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
 
 - **Merged**: [#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640) `2900da81` (CoC, CONTRIBUTING, SECURITY, templates) + follow-ups [#641](https://github.com/KlassApp-Foundation/KlassApp/pull/641)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643) for GitHub detection (`.github/SECURITY.md`, markdown issue templates).
 - **Verify**: Community checklist on github.com/…/community = **8/8 Added**. GraphQL: `isSecurityPolicyEnabled=true`, issueTemplates Bug+Feature. REST `health_percentage` rose **37 → 87** (API still lags `issue_template`/`security` fields; web checklist is authoritative). Docs only; **no deploy**.
@@ -2211,6 +2218,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: AGENTS.md standing rules 21–27 + root AI SoT audit — **PR opening**
+- **Work done**: Pulled `origin/main`. Audited repo root + AI dirs. Verdict: keep `.cursor/rules/` + `.ai/rules/` as machine pointers (no content duplicate of AGENTS.md); keep `.design-sync/` durable inputs; keep `.devin/skills/phpstorm-mcp/`; leave gitignored local clutter (`.playwright-mcp/`, `.opencode/`, `.agents/`, `.claude/`, etc.) alone — do not git-delete ignored noise. Consolidated tonight's durable lessons into AGENTS.md standing rules 21–27; explicit SoT language + audit table under "Why one canonical file"; cross-links in Verification / Session workflow.
+- **Files**: `AGENTS.md`, `knowledge.md` (this stamp). No pointer-file content edits needed (already redirects).
+- **Key decisions**: `.cursor/rules/` is **not** redundant in the sense of "delete the dir" — Cursor needs the files for alwaysApply/globs — but it **is** redundant as a *rules content* location. Single source of truth remains AGENTS.md only.
+- **Status**: 🚧 PR opening on `docs/agents-session-standing-rules`. Docs only; no deploy.
+- **Edge cases flagged**: ~43 local worktrees; always confirm pwd/branch. `knowledge.md` remains hosting/ops SoT; AGENTS.md is agent-rules SoT.
 
 ### 2026-09-16: Community health files — **MERGED** ([#640](https://github.com/KlassApp-Foundation/KlassApp/pull/640)–[#643](https://github.com/KlassApp-Foundation/KlassApp/pull/643))
 - **Work done**: Added `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `CONTRIBUTING.md` (sync-from-main, external PR review via Elijah #552→#638, PHPUnit/Playwright, community@klassapp.xyz), `SECURITY.md` (+ `.github/SECURITY.md`), markdown issue templates, PR template. Follow-ups fixed GitHub detection (YAML forms were invisible to community checklist/GraphQL).
