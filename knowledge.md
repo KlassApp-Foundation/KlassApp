@@ -618,19 +618,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **Staging DB isolation MERGED** ([#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656))
+## Current Status: September 16, 2026 — **README Mermaid connector diagram MERGED** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
+
+- **Merged**: [#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650) — GitHub API `merged: true`, merge SHA `5f236ad81385cff8b7a95c12e9f30c9ab2958c41` (`merged_at` 2026-09-16T22:01:22Z). Rebased onto `main` first (knowledge.md conflict resolved); then admin-merged. Docs only; **no deploy**.
+- **Change**: `README.md` section **Architecture: Toshi connector flow** — Mermaid flowchart of the live WhatsApp path (Meta Cloud API ↔ `WhatsAppController` / `WhatsAppBusinessService` / `OutboundWhatsAppService` / `MessageDeliveryLog`) + dashed Drive/Slack as product-model UI only.
+- **Verify**: GitHub Markdown API renders the fence as `js-render-needs-enrichment` → `viewscreen.githubusercontent.com/markdown/mermaid` on `main` README; diagram nodes present (Cloud API, OutboundWhatsAppService, MessageDeliveryLog, Drive/Slack dashed).
+- **Front-page Mermaid (investigation only, not implemented)**: CDN `mermaid@11.17.2` ≈ **3.57 MB** raw / **~980 KB** gzip vs landing Vite chunk ≈ **4.7 KB** — keep diagram GitHub-README-only.
+
+## Previous: September 16, 2026 — **Staging DB isolation MERGED** ([#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656))
 
 - **Merged**: [#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656) — GitHub API `merged: true`, merge SHA `344baf991184a39e53c39d6fbda81bda42539b76` (`merged_at` 2026-09-16T21:33:44Z). Staging deploy `depl-a2c33e06-…` **succeeded**.
 - **Ops**: Dedicated Cloud MySQL cluster `klassapp-staging-mysql` (`db-a2c339c5-…`); schema `klassapp-staging` (`db-schema-a2c33a13-…`); orphan `production` schema on that cluster deleted.
 - **Verify (post-merge re-probe)**: Staging `SELECT count(*) FROM production.schools` → **`CROSS_BLOCKED`** (`Unknown database 'production'`). `SHOW DATABASES` = `klassapp-staging` only (plus system schemas). User `fp040yuirglxxs9m`.
 - **Password**: All 6 `phase4.*@klassapp.xyz` users **ROTATED** (`OLD_DEMO123=0`). Doppler + Cloud `STAGING_DEMO_PASSWORD` set (not written here). Seeders use `DemoSeedPassword`.
 - **Prior docs**: [#655](https://github.com/KlassApp-Foundation/KlassApp/pull/655) knowledge PII redaction MERGED (`0f31fab0`).
-
-## Previous: September 16, 2026 — **README Mermaid connector diagram PR OPEN** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
-
-- **PR**: [#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650) — branch `docs/readme-mermaid-connector-flow` (rebased onto current `main`). Docs only; **no deploy**.
-- **Change**: `README.md` Mermaid flowchart of the **live** WhatsApp path (Meta Cloud API ↔ `WhatsAppController` / `WhatsAppBusinessService` / `OutboundWhatsAppService` / `MessageDeliveryLog`) + dashed Drive/Slack as product-model UI only.
-- **Front-page Mermaid (investigation only, not implemented)**: CDN `mermaid@11.17.2` `mermaid.min.js` ≈ **3.57 MB** raw / **~980 KB** gzip; landing Vite chunk today ≈ **4.7 KB** (`landing-preview-*.js`, ~1.7 KB gzip). Not worth loading on the marketing page vs GitHub-rendered README (free) or keeping the existing SVG/Blade connector visuals.
 
 ## Previous: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
 
@@ -2255,6 +2256,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: README Mermaid WhatsApp connector diagram — **MERGED** ([#650](https://github.com/KlassApp-Foundation/KlassApp/pull/650))
+- **Work done**: Rebased `docs/readme-mermaid-connector-flow` onto `origin/main`; resolved `knowledge.md` Current Status conflict (kept staging-isolation status; preserved Mermaid investigation note). Force-pushed; `mergeable: true`. Admin-merged.
+- **Verify**: Post-merge `main` README Mermaid fence renders via GitHub Markdown API as viewscreen mermaid enrichment; nodes/labels intact.
+- **Files**: `README.md`, `knowledge.md`.
+- **Status**: ✅ MERGED #650 @ `5f236ad8`. Docs only; no deploy.
 
 ### 2026-09-16: Staging→production DB cross-query closed + demo password rotate — **MERGED** ([#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656))
 - **Work done**: Root cause = shared Laravel Cloud MySQL cluster user with `GRANT … ON *.*` across `production` + `klassapp-staging`. Fix = dedicated staging cluster + schema attach + deploy; drop orphan `production` schema on staging cluster; re-seed Phase4; rotate demo passwords; `DemoSeedPassword` + Phase4/Phase5 seeders stop hardcoding/echoing passwords.
