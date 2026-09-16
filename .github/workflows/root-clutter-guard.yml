@@ -1,0 +1,23 @@
+name: Root Clutter Guard
+
+# Narrow, cheap PR gate: only fails when the PR *adds* new disallowed
+# root-level clutter (screenshots, one-off test scripts outside e2e/,
+# typo brand assets, unexpected top-level dirs). Does not re-audit
+# legacy files already on main. See CONTRIBUTING.md + scripts/check-root-clutter.sh.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for new disallowed root clutter
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: bash scripts/check-root-clutter.sh

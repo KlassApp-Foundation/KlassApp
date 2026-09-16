@@ -53,6 +53,27 @@ If a PR mixes good fixes with unsafe scope (for example removing production-requ
 - **Staging first for product UI.** Production is Laravel Cloud and is not auto-deployed from `main`. Do not assume a merge is live on `klassapp.xyz`.
 - **Multi-tenant by default.** Queries, jobs, caches, and lists must stay scoped by `school_id`.
 - **No secrets.** Never commit `.env`, tokens, or real student/school data. Use fixtures and demo accounts.
+- **Keep the repo root clean.** See [Root clutter CI](#root-clutter-ci) below.
+
+## Root clutter CI
+
+Every PR runs a lightweight GitHub Actions check (`.github/workflows/root-clutter-guard.yml` → `scripts/check-root-clutter.sh`). It only looks at **newly added** paths vs the PR base — it does not fail on legacy files already on `main`.
+
+It fails if the PR introduces any of:
+
+| Kind | Examples | Where they belong |
+|---|---|---|
+| Root screenshots / session dumps | `foo.png`, `issue2-students-list.png`, `students-screenshot.html` at repo root | `e2e/screenshots/` (or leave uncommitted under gitignored paths) |
+| One-off Playwright-style scripts outside `e2e/` | `verify-thing.cjs` at root, or any new `*.cjs` outside `e2e/` | `e2e/` |
+| Typo / duplicate brand assets | `klassaplogo-primary.png`, `klassapplogo-dark.png` | `klassapp-logo-*` (correct spelling + hyphen) under `public/images/` / brand dirs |
+| Unexpected top-level directories | new `scratch/`, `output/`, tool dumps at repo root | Use established dirs (Laravel layout, `e2e/`, `docs/`, `packages/`, or reviewed AI dirs: `.ai/`, `.cursor/`, `.design-sync/`, `.devin/`) |
+
+If this check fails on your PR: move or rename the files, or ask maintainers before adding a new top-level directory (the allowlist lives in `scripts/check-root-clutter.sh`). Run locally with:
+
+```bash
+git fetch origin main
+BASE_REF=origin/main bash scripts/check-root-clutter.sh
+```
 
 ## Running tests locally
 
