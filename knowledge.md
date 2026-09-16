@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 16, 2026 — **README global positioning MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
+## Current Status: September 16, 2026 — **README staging credentials removed MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
+
+- **Merged**: [#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653) — GitHub API `merged: true`, merge SHA `2e5e9318ddda51ad3397dfc8c4c26e19eed373fa` (`merged_at` 2026-09-16T21:02:26Z).
+- **Change**: README no longer publishes `phase4.admin@…` / `demo123`; staging URL kept; demo access via `community@klassapp.xyz`.
+- **Why**: Live Cloud Commands on staging (`APP_ENV=staging`, default DB `klassapp-staging`, `mail=log`, `disk=local`, WhatsApp token empty, `phase4` user present; prod DB `production`, 46 schools, no `phase4`) — **but** staging MySQL can `SELECT count(*) FROM production.schools` → **46** (`CROSS_OK`). Privilege bleed means staging is **not** safely isolated at the DB ACL layer; public school-admin passwords are inappropriate.
+- **Ops follow-up (not done this PR)**: revoke staging DB user’s access to `production.*` schema; rotate `demo123` on staging demo accounts; consider periodic staging wipe/re-seed.
+- **knowledge.md public sensitivity**: audit reported separately — PII/password literals still present in this file; redaction deferred pending explicit go-ahead (see Session Log).
+
+## Previous: September 16, 2026 — **README global positioning MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
 
 - **Merged**: [#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651) — GitHub API `merged: true`, merge SHA `d04ae83773f3543794c191f1014198f6b82c4339` (`merged_at` 2026-09-16T20:55:15Z).
 - **Change**: README opening line no longer Uganda-first; restores locked global positioning (hard constraints / works anywhere). Docs only; **no deploy**.
@@ -2233,6 +2241,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-16: README staging creds removed + staging isolation probe — **MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
+- **Work done**: Removed public staging passwords from README after live Commands probe. Staging default DB `klassapp-staging` (14 schools / 112 users / phase4 present / mail=log / disk=local / WA unset). Prod DB `production` (46 schools / phase4 absent). **Cross-schema**: staging `SELECT` on `production.schools` returned 46.
+- **Also merged earlier**: [#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651) global positioning (`d04ae837`); stamp [#652](https://github.com/KlassApp-Foundation/KlassApp/pull/652) (`59e925f9`).
+- **knowledge.md audit (no redaction yet)**: no live API tokens found; **too sensitive for public** candidates include real `+256…` phone numbers, historical password literals (`SuperAdmin@2026!`, `siteadmin@gmail.com` / `password`), personal gmail in ops notes, Cloud env/app/schema IDs + Doppler `CLOUD_AGENT_TOOLING` retrieval recipe, WABA IDs. Awaiting go-ahead before redact PR.
+- **Status**: ✅ MERGED #653 @ `2e5e9318`. Docs only; no deploy. DB ACL fix is ops, not docs.
 
 ### 2026-09-16: README global positioning — **MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
 - **Work done**: Replaced Uganda-first opening line with locked global positioning copy. Confirmed on `origin/main` after merge.
