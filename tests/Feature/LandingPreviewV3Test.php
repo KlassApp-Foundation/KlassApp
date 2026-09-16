@@ -57,7 +57,7 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('Not just software. A protocol.', false);
         $response->assertSee('Open Source', false);
         $response->assertSee('MIT licensed. Source and self-hosting will open publicly after an independent security review', false);
-        $response->assertSee('Smarter schools start here.', false);
+        $response->assertSee("Educationists' tools connected by intelligence.", false);
         $response->assertSee('site-footer', false);
         $response->assertSee('site-footer-wordmark', false);
         $response->assertDontSee('Stay in the loop', false);
@@ -96,7 +96,8 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('fill="#0066da"', false);
         // Generic Lucide-style approximations must not remain for WA/Drive/Slack connectors
         $this->assertStringNotContainsString('stroke="#16A34A" stroke-width="2"><path d="M21 11.5a8.38', $content);
-        $response->assertSee('https://x.com/klassapp', false);
+        $response->assertSee('https://x.com/Klass_App', false);
+        $response->assertDontSee('https://x.com/klassapp', false);
         $response->assertSee('https://github.com/KlassApp-Foundation', false);
         $this->assertStringNotContainsString('href="#" class="site-footer-social"', $content);
 
