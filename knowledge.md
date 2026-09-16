@@ -618,7 +618,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Docsify brand theme + docs map MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
+## Current Status: September 17, 2026 — **Architecture bridge + public roadmap PR OPEN** (branch `docs/architecture-roadmap`)
+
+- **PR**: `docs/architecture.md` (short DeepWiki bridge), `docs/roadmap.md` (curated Future Initiatives), deprecate `docs/community/roadmap.md`, docs Docsify hub `docs/index.html`. Docs only; **no deploy**.
+- **Verify**: All 6 DeepWiki section links HTTP 200; Docsify theme render (Sora/DM Sans / parchment) + screenshots under `docs/evidence/docs-architecture-roadmap/`.
+- **Prior**: [#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659) Docsify theme MERGED (`97c2fe05`).
+
+## Previous: September 17, 2026 — **Docsify brand theme + docs map MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 
 - **Merged**: [#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659) — GitHub API `merged: true`, merge SHA `97c2fe055c26813c0548d8802c9bbb2ee4713f26` (`merged_at` 2026-09-16T22:12:36Z). Docs only; **no deploy**.
 - **Change**: `docs/dev` archive banner; `docs/README.md` index; shared `docs/shared/docsify-klassapp.css` from DESIGN_SYSTEM `--d-*` (Sora/DM Sans, parchment `#FAFAF5`, green `#22C55E` / blue `#1E6FD9`); themed `docs/dev` + `docs/community` Docsify shells; canonical brand icon.
@@ -2262,6 +2268,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-17: Architecture bridge + public roadmap — shipping
+- **Work done**: Short `docs/architecture.md` pointing at real DeepWiki sections; honest `docs/roadmap.md` from Future Initiatives (Shipped / In progress / Future); deprecated community roadmap stub; docs Docsify hub with DESIGN_SYSTEM theme.
+- **Verify**: DeepWiki links 200; Playwright themed screenshots for architecture + roadmap.
+- **Status**: 🚧 PR opening.
 
 ### 2026-09-17: Docsify DESIGN_SYSTEM theme + docs/dev archive banner + docs index — **MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 - **Work done**: Steps 1–2 of docs plan — archive banner on `docs/dev/README.md`; `docs/README.md` audience map; shared Docsify CSS from DESIGN_SYSTEM `--d-*` tokens (Sora/DM Sans, parchment canvas, green CTA / blue info); themed `docs/dev/index.html` + `docs/community/index.html`; real brand icon copied into both Docsify trees.

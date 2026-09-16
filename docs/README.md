@@ -4,16 +4,21 @@ Short map of what lives under `docs/` and what to read instead. No second wiki �
 
 | Audience | Start here |
 |---|---|
-| New human contributor | [`CONTRIBUTING.md`](../CONTRIBUTING.md) → [`README.md`](../README.md) → [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp) |
+| New human contributor | [`architecture.md`](architecture.md) → [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp) → [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| Public direction | [`roadmap.md`](roadmap.md) |
 | AI / maintainer agents | [`AGENTS.md`](../AGENTS.md) · [`TOOLING.md`](../TOOLING.md) · [`knowledge.md`](../knowledge.md) |
-| Product / schools (community copy) | [`docs/community/`](community/) (Docsify; refresh pending) |
+| Product / schools (community copy) | [`docs/community/`](community/) (Docsify; content refresh pending) |
 | Legacy WhatsApp integration notes | [`docs/dev/`](dev/) — **archived**; see banner there |
+
+Docsify hub (DESIGN_SYSTEM theme): open [`index.html`](index.html) in this folder (or serve `docs/` over HTTP).
 
 ## Canonical references
 
-- Architecture / multi-tenancy / Toshi / WhatsApp Cloud API: [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp)
+- Architecture bridge: [`architecture.md`](architecture.md)
+- Public roadmap: [`roadmap.md`](roadmap.md)
+- Architecture depth: [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp)
 - Fork / GeGoK12 provenance: [`project-provenance.md`](project-provenance.md)
 - Design tokens (Docsify theme source): [`resources/views/components/DESIGN_SYSTEM.md`](../resources/views/components/DESIGN_SYSTEM.md)
 - Shared Docsify theme CSS: [`shared/docsify-klassapp.css`](shared/docsify-klassapp.css)
 
-Working notes, audits, evidence screenshots, and plans stay in this tree but are **not** published onboarding. Public roadmap/vision markdown is planned separately (not in this PR).
+Working notes, audits, and evidence screenshots in this tree are **not** published onboarding.
