@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Community Docsify content refresh MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
+## Current Status: September 17, 2026 — **Docs tree route fix MERGED + STAGING VERIFIED** ([#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665))
+
+- **Merged**: [#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665) — GitHub API `merged: true`, merge SHA `3c3d442ff0f1ee1351e071e8410a45ed63bf0e5e` (`merged_at` 2026-09-16T23:13:04Z).
+- **Change**: `/docs/{path?}` → `DocsController` allowlist (hub, community, dev, shared theme, readme, roadmap/architecture). Denies `evidence/`, audits, IDOR notes, screenshots, `od-mocks/`, path traversal. MIME + SPA fallback preserved.
+- **Staging deploy**: `depl-a2c36189-21dc-42c1-ad54-d8f0453ce03a` @ `3c3d442f` → `deployment.succeeded`.
+- **Live verify** (`klassapp-staging-7mpoqg.laravel.cloud`): shared CSS **200** `text/css`; parchment `--d-canvas` `#fafaf5` / body `rgb(250,250,245)` on community/dev/hub; sensitive paths **404**. Evidence: `docs/evidence/docs-tree-route-staging/`.
+- **Root cause closed**: local `http.server` from `docs/` had hidden that Laravel only served `docs/community/*`.
+
+## Previous: September 17, 2026 — **Community Docsify content refresh MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
 
 - **Merged**: [#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663) — GitHub API `merged: true`, merge SHA `0f4be0bb33944a2a963c57c3d72a29a7f9bc74d6` (`merged_at` 2026-09-16T22:50:33Z). Docs only; **no deploy**.
 - **Change**: Rewrote `docs/community/` to shipped facts — global positioning (hardest constraints first), four-surface + Toshi reality, Meta Cloud API WhatsApp, Freemium / Growth **$35** / Premium custom; cross-link `docs/roadmap.md`; book-onboarding mailto (no fake API form).
@@ -2275,6 +2283,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-17: Docs tree route (shared CSS / hub) — **MERGED + STAGING VERIFIED** ([#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665))
+- **Work done**: Replaced narrow `/docs/community/{path?}` with allowlisted `/docs/{path?}` `DocsController`. Serves hub, community, archive-flagged `dev/`, `shared/` theme, `readme/`, root `roadmap.md` + `architecture.md`. Denies `evidence/`, `internal/`, audits, IDOR notes, screenshot dumps, `od-mocks/`, `..` traversal. Feature tests + live staging Playwright.
+- **Verify**: Staging deploy `depl-a2c36189-…` succeeded @ `3c3d442f`. Live CSS 200 `text/css`; parchment `#fafaf5` / `rgb(250,250,245)` on community/dev/hub; audits/evidence 404. `docs/evidence/docs-tree-route-staging/`.
+- **Status**: ✅ MERGED #665 @ `3c3d442f` + staging verified. Production deploy not required for this fix (staging was the broken surface under test); prod will pick up on next prod deploy.
+- **Edge cases**: Raw `/docs/roadmap.md` is plain markdown (no Docsify shell) — expected; themed view is `/docs/#/roadmap`.
 
 ### 2026-09-17: Community Docsify content refresh — **MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
 - **Work done**: Pulled `origin/main`; rewrote community Docsify pages (`README`, `for-schools`, `for-parents`, `faq`, `school-onboarding`, `ecosystem`, `book-onboarding`) to match README global positioning + shipped product (four surfaces, Toshi guided vs gated free-form, Meta Cloud API, Freemium/Growth $35/Premium from `PlansTableSeeder`). Cross-link `docs/roadmap.md`; deprecate stub unchanged; mark roadmap “docs structure” in-progress row complete; book flow → mailto.

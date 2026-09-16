@@ -1,0 +1,29 @@
+{
+  "afterRoadmapClick": {
+    "href": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/#/../roadmap",
+    "h1": null,
+    "bodySnippet": null
+  },
+  "responses": [
+    {
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+      "status": 404,
+      "ct": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/roadmap.md",
+      "status": 404,
+      "ct": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+      "status": 404,
+      "ct": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+      "status": 404,
+      "ct": "text/html; charset=utf-8"
+    }
+  ]
+}
