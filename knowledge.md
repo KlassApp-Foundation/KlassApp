@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Architecture bridge + public roadmap MERGED** ([#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661))
+## Current Status: September 17, 2026 — **Community Docsify content refresh MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
+
+- **Merged**: [#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663) — GitHub API `merged: true`, merge SHA `0f4be0bb33944a2a963c57c3d72a29a7f9bc74d6` (`merged_at` 2026-09-16T22:50:33Z). Docs only; **no deploy**.
+- **Change**: Rewrote `docs/community/` to shipped facts — global positioning (hardest constraints first), four-surface + Toshi reality, Meta Cloud API WhatsApp, Freemium / Growth **$35** / Premium custom; cross-link `docs/roadmap.md`; book-onboarding mailto (no fake API form).
+- **Verify**: Playwright 8 pages `docs/evidence/community-content-refresh/` — `--d-canvas` `#fafaf5`, theme CSS linked; no Uganda-first / `$30` / Evolution; FACTCHECK.md recorded.
+- **Docs plan**: archive+theme (#659) → architecture/roadmap (#661) → community content (#663) — **closed**.
+
+## Previous: September 17, 2026 — **Architecture bridge + public roadmap MERGED** ([#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661))
 
 - **Merged**: [#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661) — GitHub API `merged: true`, merge SHA `35ef3a79b6e34c5fb8c5f8a34e9913f1f2289b85` (`merged_at` 2026-09-16T22:41:26Z). Docs only; **no deploy**.
 - **Change**: Short `docs/architecture.md` → real DeepWiki sections; honest `docs/roadmap.md` from Future Initiatives; deprecated `docs/community/roadmap.md`; docs Docsify hub (`docs/index.html`) on DESIGN_SYSTEM theme.
@@ -2268,6 +2275,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-17: Community Docsify content refresh — **MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
+- **Work done**: Pulled `origin/main`; rewrote community Docsify pages (`README`, `for-schools`, `for-parents`, `faq`, `school-onboarding`, `ecosystem`, `book-onboarding`) to match README global positioning + shipped product (four surfaces, Toshi guided vs gated free-form, Meta Cloud API, Freemium/Growth $35/Premium from `PlansTableSeeder`). Cross-link `docs/roadmap.md`; deprecate stub unchanged; mark roadmap “docs structure” in-progress row complete; book flow → mailto.
+- **Verify**: Docsify served from `docs/`; Playwright screenshots + `REPORT.json` + `FACTCHECK.md` under `docs/evidence/community-content-refresh/` (canvas `#fafaf5`, theme linked, no `$30`/Uganda-first/Evolution).
+- **Files**: `docs/community/*.md`, `docs/README.md`, `docs/roadmap.md`, evidence PNGs/JSON/FACTCHECK.
+- **Status**: ✅ MERGED #663 @ `0f4be0bb`. Docs only; no deploy. **Docs plan closed.**
 
 ### 2026-09-17: Architecture bridge + public roadmap — **MERGED** ([#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661))
 - **Work done**: Short `docs/architecture.md` pointing at real DeepWiki sections; honest `docs/roadmap.md` from Future Initiatives (Shipped / In progress / Future); deprecated community roadmap stub; docs Docsify hub with DESIGN_SYSTEM theme.
