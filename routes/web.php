@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DocsController;
 use App\Http\Controllers\Superadmin\DashboardController;
 
 /*Route::get('/', function () {
@@ -8,24 +9,11 @@ use App\Http\Controllers\Superadmin\DashboardController;
 });*/
 Route::get('/', 'WelcomeController');
 
-// Community documentation (docsify-based site)
-Route::get('/docs/community/{path?}', function ($path = '') {
-    $base = base_path('docs/community');
-    $file = $path ? "{$base}/{$path}" : "{$base}/index.html";
-
-    if (is_file($file)) {
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
-        $mimes = [
-            'md' => 'text/markdown', 'svg' => 'image/svg+xml',
-            'css' => 'text/css', 'js' => 'application/javascript',
-            'png' => 'image/png', 'jpg' => 'image/jpeg', 'html' => 'text/html',
-        ];
-        return response(file_get_contents($file), 200, ['Content-Type' => $mimes[$ext] ?? 'text/plain']);
-    }
-
-    // SPA fallback — docsify handles client-side routing
-    return response(file_get_contents("{$base}/index.html"), 200, ['Content-Type' => 'text/html']);
-})->where('path', '.*');
+// Public Docsify documentation (docs/ hub, community, archive-flagged dev, shared theme).
+// Allowlisted in DocsController — does not expose evidence/, audits, or other working notes.
+Route::get('/docs/{path?}', DocsController::class)
+    ->where('path', '.*')
+    ->name('docs');
 
 // Locked v3 landing — live cutover on /. Legacy preview URL redirects.
 Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
