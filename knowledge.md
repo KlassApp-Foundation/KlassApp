@@ -618,11 +618,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Architecture bridge + public roadmap PR OPEN** (branch `docs/architecture-roadmap`)
+## Current Status: September 17, 2026 — **Architecture bridge + public roadmap MERGED** ([#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661))
 
-- **PR**: `docs/architecture.md` (short DeepWiki bridge), `docs/roadmap.md` (curated Future Initiatives), deprecate `docs/community/roadmap.md`, docs Docsify hub `docs/index.html`. Docs only; **no deploy**.
-- **Verify**: All 6 DeepWiki section links HTTP 200; Docsify theme render (Sora/DM Sans / parchment) + screenshots under `docs/evidence/docs-architecture-roadmap/`.
-- **Prior**: [#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659) Docsify theme MERGED (`97c2fe05`).
+- **Merged**: [#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661) — GitHub API `merged: true`, merge SHA `35ef3a79b6e34c5fb8c5f8a34e9913f1f2289b85` (`merged_at` 2026-09-16T22:41:26Z). Docs only; **no deploy**.
+- **Change**: Short `docs/architecture.md` → real DeepWiki sections; honest `docs/roadmap.md` from Future Initiatives; deprecated `docs/community/roadmap.md`; docs Docsify hub (`docs/index.html`) on DESIGN_SYSTEM theme.
+- **Verify**: 6/6 DeepWiki links HTTP 200; Docsify parchment + Sora/DM Sans screenshots in `docs/evidence/docs-architecture-roadmap/`.
 
 ## Previous: September 17, 2026 — **Docsify brand theme + docs map MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 
@@ -2269,10 +2269,10 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-17: Architecture bridge + public roadmap — shipping
+### 2026-09-17: Architecture bridge + public roadmap — **MERGED** ([#661](https://github.com/KlassApp-Foundation/KlassApp/pull/661))
 - **Work done**: Short `docs/architecture.md` pointing at real DeepWiki sections; honest `docs/roadmap.md` from Future Initiatives (Shipped / In progress / Future); deprecated community roadmap stub; docs Docsify hub with DESIGN_SYSTEM theme.
 - **Verify**: DeepWiki links 200; Playwright themed screenshots for architecture + roadmap.
-- **Status**: 🚧 PR opening.
+- **Status**: ✅ MERGED #661 @ `35ef3a79`. Docs only; no deploy.
 
 ### 2026-09-17: Docsify DESIGN_SYSTEM theme + docs/dev archive banner + docs index — **MERGED** ([#659](https://github.com/KlassApp-Foundation/KlassApp/pull/659))
 - **Work done**: Steps 1–2 of docs plan — archive banner on `docs/dev/README.md`; `docs/README.md` audience map; shared Docsify CSS from DESIGN_SYSTEM `--d-*` tokens (Sora/DM Sans, parchment canvas, green CTA / blue info); themed `docs/dev/index.html` + `docs/community/index.html`; real brand icon copied into both Docsify trees.
