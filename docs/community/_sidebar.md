@@ -6,3 +6,5 @@
 - [Ecosystem](ecosystem)
 - [Roadmap (see docs hub)](../roadmap.md)
 - [FAQ](faq)
+- ---
+- [📖 GitBook (live docs)](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/)

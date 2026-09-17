@@ -5,14 +5,24 @@
 KlassApp is a multi-tenant school management platform, built first for the hardest real-world constraints — limited bandwidth, everyday phones — which is what makes it work anywhere schools need it.
 
 - **Schools** run academics, fees, attendance, exams, and staff workflows in one web product.
-- **Toshi** — KlassApp’s AI agent — helps finish setup and keep work moving in the dashboard.
+- **Toshi** — KlassApp's AI agent — helps finish setup and keep work moving in the dashboard.
 - **Parents** get answers on **WhatsApp** (Meta Cloud API) without installing another school app.
 
 Live product: [klassapp.xyz](https://klassapp.xyz) · Demo access: [community@klassapp.xyz](mailto:community@klassapp.xyz)
 
 ---
 
-## What’s here
+## This content has moved
+
+This community documentation is now published on **GitBook** with real-time sync from this repository:
+
+**→ [KlassApp Documentation on GitBook](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/)**
+
+The GitBook site is kept in sync via GitHub Sync — changes to these files in the repo automatically appear on GitBook, and edits in GitBook's editor create commits back to the repo.
+
+---
+
+## What's here (legacy Docsify copy)
 
 | Page | For |
 |---|---|

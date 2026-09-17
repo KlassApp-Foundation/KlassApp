@@ -173,7 +173,8 @@ Staging is a separate Laravel Cloud environment with demo/seed data (not a produ
 ## Resources
 
 - [Live product](https://klassapp.xyz)
-- [Docs map](docs/README.md)
+- [Documentation (GitBook)](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/) — community docs, architecture, and roadmap (synced from this repo)
+- [Docs map](docs/README.md) — internal docs index (archived Docsify hub)
 - [Architecture bridge](docs/architecture.md)
 - [Public roadmap](docs/roadmap.md)
 - [Contributing guide](CONTRIBUTING.md)

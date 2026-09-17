@@ -33,9 +33,25 @@
                 markdown: {
                     html: true,
                 },
+                alias: {
+                    "/community/": "/community/README.md",
+                },
             };
         </script>
         <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
         <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+        <script>
+            // Add GitBook banner to community pages
+            document.addEventListener('DOMContentLoaded', function() {
+                var path = window.location.hash || '';
+                if (path.indexOf('/community') !== -1) {
+                    var banner = document.createElement('div');
+                    banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:12px 16px;margin:16px;border-radius:6px;font-size:14px;';
+                    banner.innerHTML = '<strong>📖 This documentation has moved to GitBook.</strong> <a href="https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/" target="_blank">View on GitBook →</a>';
+                    var app = document.getElementById('app');
+                    if (app) app.parentNode.insertBefore(banner, app);
+                }
+            });
+        </script>
     </body>
 </html>
