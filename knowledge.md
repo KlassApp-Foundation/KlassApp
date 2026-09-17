@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Docs tree route fix MERGED + STAGING VERIFIED** ([#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665))
+## Current Status: September 17, 2026 — **Endor secrets triage MERGED** ([#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667))
+
+- **Merged**: [#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667) — GitHub API `merged: true`, merge SHA `bd23849484dcfb7019d3c9d41e29b8fd00af7def` (`merged_at` 2026-09-17T14:36:22Z). Branch `security/endor-secrets-triage`. **No staging/prod deploy** (env/config/docs/compose + Blade `config()` read).
+- **Change**: Hardcoded GeGoK12 Google Maps key → `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')` in 9 Blades; removed commented MSG91 authkey; redacted retired Evolution API keys in knowledge (#655 miss); removed dead Evolution/postgres/n8n from `docker-compose.prod.yml`.
+- **Verify**: PHPUnit `HardcodedGoogleMapsKeyTest` 3 passed; Endor `--secrets --local` down to 2 accepted FPs (`TOKEN_ALPHABET`, test `deputy-pass-123`).
+- **USER ACTION**: Rotate/restrict the old Maps key in **Google Cloud Console** — code removal does not invalidate git-history exposure.
+
+## Previous: September 17, 2026 — **Docs tree route fix MERGED + STAGING VERIFIED** ([#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665))
 
 - **Merged**: [#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665) — GitHub API `merged: true`, merge SHA `3c3d442ff0f1ee1351e071e8410a45ed63bf0e5e` (`merged_at` 2026-09-16T23:13:04Z).
 - **Change**: `/docs/{path?}` → `DocsController` allowlist (hub, community, dev, shared theme, readme, roadmap/architecture). Denies `evidence/`, audits, IDOR notes, screenshots, `od-mocks/`, path traversal. MIME + SPA fallback preserved.
@@ -2286,9 +2293,10 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ### 2026-09-17: Endor local-secrets triage + Maps key env migration
 - **Work done**: Triaged all 14 Endor `--secrets --local` findings. Moved GeGoK12 hardcoded Google Maps key out of 9 Blade views into `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')`. Removed commented MSG91 authkey from `MSG91.php`. Redacted retired Evolution API keys in `knowledge.md` (missed by #655). Removed dead Evolution/postgres/n8n stubs from `docker-compose.prod.yml`. Left WhatsApp `TOKEN_ALPHABET` and test `deputy-pass-123` as false positives.
+- **PR**: [#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667) · branch `security/endor-secrets-triage` · merge `bd23849484dcfb7019d3c9d41e29b8fd00af7def`
 - **Files modified**: 9 Blade views, `config/services.php`, `.env.example`, `app/Traits/MSG91.php`, `docker-compose.prod.yml`, `knowledge.md`, `tests/Feature/Security/HardcodedGoogleMapsKeyTest.php`
 - **Key decisions**: Google key is a **real** GCP key (API returns billing-disabled, not invalid-key). **User must rotate/restrict in Google Cloud Console** — code fix alone does not invalidate the committed key. Evolution compose password was dead infra (Meta Cloud API is live transport).
-- **Status**: 🚧 PR opening on `security/endor-secrets-triage` — awaiting merge stamp; **USER must still rotate/restrict Maps key in Google Cloud Console**
+- **Status**: ✅ MERGED [#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667) @ `bd238494` (`merged_at` 2026-09-17T14:36:22Z). GitHub API `merged: true`. No staging deploy. **USER must still rotate/restrict Maps key in Google Cloud Console** (git history still contains the literal).
 - **Edge cases flagged**: Browser Maps keys remain visible client-side once set via env — must use HTTP referrer restrictions in GCP.
 
 
