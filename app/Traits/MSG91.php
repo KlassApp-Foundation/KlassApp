@@ -11,10 +11,6 @@ use Log;
  */
 trait MSG91
 {
-    /* private $API_KEY = '296511APtvTe5ChJGR5d91ace4';
-    //private $mobileNumber = "9042781117";
-    private $SENDER_ID = "Gegogs";
-    private $ROUTE_NO = 4;*/
     private $RESPONSE_TYPE = 'json';
 
     public function sendSMS($content, $to)

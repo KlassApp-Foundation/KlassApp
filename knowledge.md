@@ -2138,7 +2138,7 @@ This meant the container ran with code baked into the image at build time. Any `
 ### Production .env (key values)
 ```
 EVOLUTION_API_URL=http://10.19.0.6:8081
-EVOLUTION_API_KEY=78E5A6FF-BA89-45C6-987C-C31407BD22B4
+EVOLUTION_API_KEY=[REDACTED - retired Evolution API key]
 EVOLUTION_INSTANCE_NAME=klassapp
 WHATSAPP_BUSINESS_NUMBER=[REDACTED - real phone number]
 WHATSAPP_BUSINESS_NAME=KlassApp
@@ -2283,6 +2283,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-17: Endor local-secrets triage + Maps key env migration
+- **Work done**: Triaged all 14 Endor `--secrets --local` findings. Moved GeGoK12 hardcoded Google Maps key out of 9 Blade views into `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')`. Removed commented MSG91 authkey from `MSG91.php`. Redacted retired Evolution API keys in `knowledge.md` (missed by #655). Removed dead Evolution/postgres/n8n stubs from `docker-compose.prod.yml`. Left WhatsApp `TOKEN_ALPHABET` and test `deputy-pass-123` as false positives.
+- **Files modified**: 9 Blade views, `config/services.php`, `.env.example`, `app/Traits/MSG91.php`, `docker-compose.prod.yml`, `knowledge.md`, `tests/Feature/Security/HardcodedGoogleMapsKeyTest.php`
+- **Key decisions**: Google key is a **real** GCP key (API returns billing-disabled, not invalid-key). **User must rotate/restrict in Google Cloud Console** — code fix alone does not invalidate the committed key. Evolution compose password was dead infra (Meta Cloud API is live transport).
+- **Status**: 🚧 PR opening on `security/endor-secrets-triage` — awaiting merge stamp; **USER must still rotate/restrict Maps key in Google Cloud Console**
+- **Edge cases flagged**: Browser Maps keys remain visible client-side once set via env — must use HTTP referrer restrictions in GCP.
+
 
 ### 2026-09-17: Docs tree route (shared CSS / hub) — **MERGED + STAGING VERIFIED** ([#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665))
 - **Work done**: Replaced narrow `/docs/community/{path?}` with allowlisted `/docs/{path?}` `DocsController`. Serves hub, community, archive-flagged `dev/`, `shared/` theme, `readme/`, root `roadmap.md` + `architecture.md`. Denies `evidence/`, `internal/`, audits, IDOR notes, screenshot dumps, `od-mocks/`, `..` traversal. Feature tests + live staging Playwright.
@@ -5097,7 +5105,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 | Setting | Local | Production |
 |---|---|---|
 | URL | `http://localhost:8081` | `http://10.19.0.6:8081` |
-| API Key | `68ca94ce...` | `78E5A6FF...` |
+| API Key | `[REDACTED]` | `[REDACTED - retired Evolution API key]` |
 | Instance | `klassapp` | `klassapp` |
 
 ### Flow Architecture
