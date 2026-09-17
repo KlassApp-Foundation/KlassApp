@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **GitBook migration MERGED** ([#669](https://github.com/KlassApp-Foundation/KlassApp/pull/669))
+## Current Status: September 17, 2026 — **GitBook live site verified MERGED** ([#670](https://github.com/KlassApp-Foundation/KlassApp/pull/670))
+
+- **Merged**: [#670](https://github.com/KlassApp-Foundation/KlassApp/pull/670) — GitHub API `merged: true`, merge SHA `d465bd945b82e544ad68cd4cb8a6ea604f9b93c8` (`merged_at` 2026-09-17T17:06:17Z). Docs only; **no deploy**.
+- **Change**: Updated all GitBook URLs to confirmed live site (`https://klassdocs.gitbook.io/klassapp-documentation/`). Files: README.md, docs/README.md, docs/community/README.md, docs/community/_sidebar.md, knowledge.md.
+- **Verify**: Live GitBook site confirmed accessible at `https://klassdocs.gitbook.io/klassapp-documentation/`. All community docs pages load correctly (docs/community, docs/community/for-schools, docs/roadmap). Content matches repo source markdown (spot-checked 3 pages). All CI checks pass (GitBook, check, scan).
+- **Live GitBook site**: https://klassdocs.gitbook.io/klassapp-documentation/ (public, published)
+- **GitBook space**: `g6CnNihjBu6JNnwlAA6i` ("KlassApp Documentation") in "Nile Labs" org, GitHub Sync active to `KlassApp-Foundation/KlassApp` main branch
+- **USER ACTION**: Configure site navigation in GitBook dashboard — go to [GitBook dashboard](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/sites/site_pIIiR) → Configure → Navigation. Set up navigation to match desired structure (Overview, For Schools, For Parents, School Onboarding, Roadmap, FAQ as primary items).
+
+## Previous: September 17, 2026 — **GitBook migration MERGED** ([#669](https://github.com/KlassApp-Foundation/KlassApp/pull/669))
 
 - **Merged**: [#669](https://github.com/KlassApp-Foundation/KlassApp/pull/669) — GitHub API `merged: true`, merge SHA `9c5534aa2eefe452e3e31832cd2f33a3bb03827d` (`merged_at` 2026-09-17T15:41:49Z). Docs only; **no deploy**.
 - **Change**: Migrated community docs to GitBook with bidirectional sync. Updated README.md Resources, docs/README.md, docs/community/README.md (moved banner), docs/community/_sidebar.md (GitBook link), docs/index.html (Docsify redirect banner). GitBook space: `g6CnNihjBu6JNnwlAA6i` ("KlassApp Documentation") in "Nile Labs" org, GitHub Sync active to `KlassApp-Foundation/KlassApp` main branch.
@@ -8683,6 +8692,21 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 ---
 
 ## Session Log
+
+### 2026-09-17: GitBook live site verified — URL update
+- **Work done**: Verified GitBook site is published and publicly accessible, updated all repo URLs to confirmed live URL.
+- **Key findings**:
+  - Live GitBook site: https://klassdocs.gitbook.io/klassapp-documentation/ (public, published)
+  - GitBook site ID: `site_pIIiR` ("KlassApp Documentation") in "Nile Labs" org
+  - All community docs pages load correctly (verified via webfetch)
+  - Content matches repo source markdown (spot-checked 3 pages: community, for-schools, roadmap)
+  - Search functionality available via GitBook UI
+  - Site navigation configuration requires manual setup in GitBook dashboard (API not available)
+- **Files modified**: README.md, docs/README.md, docs/community/README.md, docs/community/_sidebar.md, knowledge.md
+- **Changes**: Updated all GitBook URLs from API URL to confirmed live URL
+- **PR**: #670 — merged, merge SHA `d465bd945b82e544ad68cd4cb8a6ea604f9b93c8`
+- **Status**: Merged. Live site verified and accessible.
+- **Remaining**: Configure site navigation in GitBook dashboard (manual step).
 
 ### 2026-09-17: GitBook migration — community docs with bidirectional sync
 - **Work done**: Migrated KlassApp community Docsify docs to GitBook with real-time bidirectional sync.
