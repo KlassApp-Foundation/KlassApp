@@ -62,6 +62,8 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
+        // Browser Maps/Places key — set via env; never commit a literal. Restrict by HTTP referrer in GCP.
+        'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
     /*
