@@ -7,4 +7,4 @@
 - [Roadmap (see docs hub)](../roadmap.md)
 - [FAQ](faq)
 - ---
-- [📖 GitBook (live docs)](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/)
+- [📖 GitBook (live docs)](https://klassdocs.gitbook.io/klassapp-documentation/)

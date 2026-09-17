@@ -618,7 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 17, 2026 — **Endor secrets triage MERGED** ([#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667))
+## Current Status: September 17, 2026 — **GitBook migration MERGED** ([#669](https://github.com/KlassApp-Foundation/KlassApp/pull/669))
+
+- **Merged**: [#669](https://github.com/KlassApp-Foundation/KlassApp/pull/669) — GitHub API `merged: true`, merge SHA `9c5534aa2eefe452e3e31832cd2f33a3bb03827d` (`merged_at` 2026-09-17T15:41:49Z). Docs only; **no deploy**.
+- **Change**: Migrated community docs to GitBook with bidirectional sync. Updated README.md Resources, docs/README.md, docs/community/README.md (moved banner), docs/community/_sidebar.md (GitBook link), docs/index.html (Docsify redirect banner). GitBook space: `g6CnNihjBu6JNnwlAA6i` ("KlassApp Documentation") in "Nile Labs" org, GitHub Sync active to `KlassApp-Foundation/KlassApp` main branch.
+- **Verify**: All CI checks pass (GitBook, check, scan). All community docs synced in GitBook (verified via API).
+- **USER ACTION**: Publish GitBook site via dashboard — go to [GitBook](https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/) → Configure → Set visibility to Public. Configure navigation and custom domain if desired.
+
+## Previous: September 17, 2026 — **Endor secrets triage MERGED** ([#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667))
 
 - **Merged**: [#667](https://github.com/KlassApp-Foundation/KlassApp/pull/667) — GitHub API `merged: true`, merge SHA `bd23849484dcfb7019d3c9d41e29b8fd00af7def` (`merged_at` 2026-09-17T14:36:22Z). Branch `security/endor-secrets-triage`. **No staging/prod deploy** (env/config/docs/compose + Blade `config()` read).
 - **Change**: Hardcoded GeGoK12 Google Maps key → `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')` in 9 Blades; removed commented MSG91 authkey; redacted retired Evolution API keys in knowledge (#655 miss); removed dead Evolution/postgres/n8n from `docker-compose.prod.yml`.
@@ -8676,6 +8683,21 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 ---
 
 ## Session Log
+
+### 2026-09-17: GitBook migration — community docs with bidirectional sync
+- **Work done**: Migrated KlassApp community Docsify docs to GitBook with real-time bidirectional sync.
+- **Key findings**:
+  - GitBook API token: `GITBOOK` in Doppler (`gb_api_jA8yDH5vAPvbdeQd`)
+  - Existing GitBook space: `g6CnNihjBu6JNnwlAA6i` ("KlassApp Documentation") in "Nile Labs" org
+  - GitHub Sync was already configured — bidirectional sync between GitBook and `KlassApp-Foundation/KlassApp` main branch
+  - All community docs already synced (verified via API): docs/community/*, docs/architecture, docs/roadmap
+  - GitBook site creation via API failed (endpoint returns 404 — likely requires UI or paid plan)
+  - Space visibility is "private", edit mode "locked" (managed by Git Sync)
+- **Files modified**: README.md, docs/README.md, docs/community/README.md, docs/community/_sidebar.md, docs/index.html
+- **Changes**: Added GitBook links, "moved to GitBook" banner, Docsify redirect banner
+- **PR**: #669 — merged, merge SHA `9c5534aa2eefe452e3e31832cd2f33a3bb03827d`
+- **Status**: Merged. Site publishing requires manual step in GitBook dashboard (Configure → Set visibility to Public).
+- **Remaining**: Publish GitBook site, configure navigation, verify rendering, optionally set custom domain.
 
 ### 2026-07-19: Fixed chronic 419 Page Expired errors — TrustProxies + session driver
 - **Work done**: Diagnosed and fixed the persistent 419 CSRF token errors on klassapp.xyz. Three interacting root causes were found and fixed.
