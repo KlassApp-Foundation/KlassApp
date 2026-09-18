@@ -74,33 +74,75 @@
           <span>MCP-compatible</span>
         </div>
       </div>
-      {{-- Rotating role preview (OD klassapp-landing-v3-hero-role-rotate): Parent / Teacher / Admin --}}
+      {{-- Rotating role preview — dense product-proof panel (WS-1). Parent / Teacher / Admin. --}}
       <div class="hero-preview reveal reveal-delay-2">
         <div class="hero-stage" id="heroRoleStage">
+          <span class="hero-layer hero-layer-back" aria-hidden="true"></span>
+          <span class="hero-layer hero-layer-mid" aria-hidden="true"></span>
           <div class="hero-deck" id="heroRoleDeck" data-auto="1">
+
             <article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
-              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Parent · WhatsApp</div>
+              <div class="hero-role-hd">
+                <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
+                <span class="hero-role-title">Parent · WhatsApp</span>
+                <span class="hero-chip live"><span class="hero-chip-dot"></span>Live</span>
+              </div>
               <div class="hero-role-body">
-                <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
-                <div class="hero-bubble out">Thanks: fee reminder for next week too?</div>
-                <div class="hero-bubble">Scheduled on WhatsApp for Monday 8am. <span class="hero-meta">8:14</span></div>
+                <div class="hero-bubble">Good morning! P.4 attendance is in — Amina is present today.</div>
+                <div class="hero-bubble out">Thanks. Fee reminder for next week too?</div>
+                <div class="hero-bubble">Scheduled on WhatsApp for Monday 8:00 AM.<span class="hero-meta">8:14</span></div>
+                <div class="hero-row"><span>P.4 attendance · Amina</span><span class="hero-tag ok">Present</span></div>
+                <div class="hero-row"><span>Absence follow-up</span><span class="hero-tag wait">Draft ready</span></div>
+                <div class="hero-ledger">
+                  <div class="hero-ledger-row"><span>Term 2 balance</span><strong>UGX 85,000</strong></div>
+                  <div class="hero-bar"><span style="width:46%"></span></div>
+                  <div class="hero-ledger-foot"><span class="hero-chip">Reminder set</span><span class="hero-meta">Due Friday</span></div>
+                </div>
               </div>
             </article>
+
             <article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
-              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Teacher · Drive</div>
+              <div class="hero-role-hd">
+                <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
+                <span class="hero-role-title">Teacher · Drive</span>
+                <span class="hero-chip sync">Syncing</span>
+              </div>
               <div class="hero-role-body">
-                <div class="hero-row"><span>P.4 Midterm report.pdf</span><span>Ready</span></div>
-                <div class="hero-row"><span>Marks sheet · Term 2</span><span>Synced</span></div>
-                <div class="hero-row"><span>Share to parents</span><span>Queued</span></div>
+                <div class="hero-row"><span>P.4 Midterm report.pdf</span><span class="hero-tag ok">Ready</span></div>
+                <div class="hero-row"><span>Marks sheet · Term 2</span><span class="hero-tag ok">Synced</span></div>
+                <div class="hero-row"><span>Share to parents</span><span class="hero-tag wait">Queued</span></div>
+                <div class="hero-row"><span>Class photo album</span><span class="hero-tag ok">Filed</span></div>
+                <div class="hero-row"><span>P.5 marks · Term 2</span><span class="hero-tag wait">Needs entry</span></div>
+                <div class="hero-progress">
+                  <div class="hero-progress-top"><span>Report pack</span><span>3 / 4 uploaded</span></div>
+                  <div class="hero-bar"><span style="width:75%"></span></div>
+                  <div class="hero-progress-top"><span>Attendance sheet</span><span>Uploaded</span></div>
+                  <div class="hero-bar blue"><span style="width:100%"></span></div>
+                </div>
                 <p class="hero-meta">Toshi filed the PDF to the class Drive folder after you confirmed.</p>
               </div>
             </article>
+
             <article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
-              <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Admin · Slack</div>
+              <div class="hero-role-hd">
+                <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
+                <span class="hero-role-title">Admin · Slack</span>
+                <span class="hero-chip wait">Needs Yes</span>
+              </div>
               <div class="hero-role-body">
-                <div class="hero-row"><span>#school-ops</span><span>Today</span></div>
-                <div class="hero-bubble">Fee collection: 86% · 3 reminders left for overdue families.</div>
-                <div class="hero-bubble">Staff: 2 teachers still need Term 2 mark entry for P.5.</div>
+                <div class="hero-row"><span>#school-ops</span><span class="hero-meta">Today</span></div>
+                <div class="hero-bubble">Fee collection is at 86% — 3 reminders left for overdue families.</div>
+                <div class="hero-row"><span>Overdue · 3 families</span><span class="hero-tag wait">Reminder queued</span></div>
+                <div class="hero-progress">
+                  <div class="hero-progress-top"><span>Fee collection</span><span>86%</span></div>
+                  <div class="hero-bar"><span style="width:86%"></span></div>
+                  <div class="hero-progress-top"><span>Attendance</span><span>94%</span></div>
+                  <div class="hero-bar blue"><span style="width:94%"></span></div>
+                  <div class="hero-progress-top"><span>Staff mark entry</span><span>2 / 12 left</span></div>
+                  <div class="hero-bar"><span style="width:83%"></span></div>
+                  <div class="hero-progress-top"><span>Transport routes</span><span>5 / 6 confirmed</span></div>
+                  <div class="hero-bar blue"><span style="width:83%"></span></div>
+                </div>
                 <p class="hero-meta">Posted by Toshi · needs your Yes to escalate.</p>
               </div>
             </article>
@@ -108,17 +150,17 @@
         </div>
         <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
         <div class="connector-float">
-          <div class="connector-line"></div>
           <h4>Connected</h4>
           <div class="connector-icons">
-            <div class="connector-icon brand-well" title="WhatsApp"><x-brand.whatsapp /></div>
-            <div class="connector-icon brand-well" title="Google Drive"><x-brand.google-drive /></div>
-            <div class="connector-icon brand-well" title="Slack"><x-brand.slack /></div>
-            <div class="connector-icon" title="Email"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></div>
-            <div class="connector-icon" title="SMS"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
-            <div class="connector-icon" title="Calendar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <span class="connector-icon brand-well" role="img" aria-label="WhatsApp"><x-brand.whatsapp /></span>
+            <span class="connector-icon brand-well" role="img" aria-label="Google Drive"><x-brand.google-drive /></span>
+            <span class="connector-icon brand-well" role="img" aria-label="Slack"><x-brand.slack /></span>
+            <span class="connector-icon" role="img" aria-label="Email"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span>
+            <span class="connector-icon" role="img" aria-label="SMS"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+            <span class="connector-icon" role="img" aria-label="Calendar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>

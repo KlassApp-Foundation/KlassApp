@@ -3871,3 +3871,72 @@ select:focus-visible,
   }
   .hero-trust .dot { display: none; }
 }
+
+/* ==== Hero visual rebuild (WS-1): dense product-proof panel ==== */
+.hero-preview { max-width: 460px; }
+.hero-stage { height: 460px; }
+
+/* Two stacked backplates give the panel believable depth (contact shadows). */
+.hero-layer {
+  position: absolute;
+  border-radius: 22px;
+  background: #0B1220;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 24px 50px -30px rgba(15,23,42,0.55);
+  pointer-events: none;
+}
+.hero-layer-back { inset: 30px -14px -20px 30px; opacity: .30; transform: scale(.955); z-index: 0; }
+.hero-layer-mid  { inset: 16px -7px -10px 16px;  opacity: .55; transform: scale(.98);  z-index: 1; }
+.hero-deck { z-index: 2; }
+
+.hero-role-card { inset: 0; }
+.hero-role-title { flex: 1; min-width: 0; font-weight: 600; font-size: 0.875rem; }
+
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.8125rem; font-weight: 600; line-height: 1.2;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.10); color: #E2E8F0; white-space: nowrap;
+}
+.hero-chip.live { background: rgba(34,197,94,0.18); color: #86EFAC; }
+.hero-chip.wait { background: rgba(217,119,6,0.20); color: #FCD34D; }
+.hero-chip.sync { background: rgba(30,111,217,0.22); color: #93C5FD; }
+.hero-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+
+.hero-role-body { font-size: 0.875rem; }
+.hero-row { font-size: 0.8125rem; }
+.hero-meta { font-size: 0.8125rem; }
+
+.hero-ledger { margin-top: 4px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.hero-ledger-row { display: flex; justify-content: space-between; gap: 8px; font-size: 0.875rem; margin-bottom: 9px; }
+.hero-ledger-row strong { color: #fff; font-weight: 700; }
+.hero-ledger-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+
+.hero-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.hero-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--brand-green); }
+.hero-bar.blue > span { background: var(--brand-blue); }
+
+.hero-tag { font-size: 0.8125rem; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #CBD5E1; white-space: nowrap; }
+.hero-tag.ok { color: #86EFAC; background: rgba(34,197,94,0.16); }
+.hero-tag.wait { color: #FCD34D; background: rgba(217,119,6,0.18); }
+
+.hero-progress { margin-top: 10px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.hero-progress-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8125rem; color: #CBD5E1; margin-bottom: 6px; }
+.hero-progress .hero-bar { margin-bottom: 11px; }
+.hero-progress .hero-bar:last-child { margin-bottom: 0; }
+
+/* Desktop: the connected chip stays as a floating glass card with accessible marks. */
+.hero-preview .connector-float { right: -34px; top: 46%; padding: 12px; }
+
+@media (max-width: 900px) {
+  .hero-preview { max-width: 380px; }
+  .hero-stage { height: 445px; }
+  .hero-layer-back { inset: 22px -8px -14px 22px; }
+  .hero-layer-mid  { inset: 12px -4px -7px 12px; }
+}
+@media (max-width: 600px) {
+  .hero-preview { max-width: 100%; }
+  .hero-stage { height: 480px; }
+  .hero-layer-back { inset: 18px -6px -12px 18px; }
+  .hero-layer-mid  { inset: 10px -3px -6px 10px; }
+}
