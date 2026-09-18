@@ -30,7 +30,7 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 
 ## Visual foundations
 
-**Colour.** Two brand hues with strict jobs: **green `#22C55E` acts** (`--d-accent` — every primary button) and **blue `#1E6FD9` informs** (links, sort arrows, table header rule, pagination, focus). Amber `#D97706` warns, red `#DC2626` destroys. Purple `#8B5CF6` is a KPI icon tint only. Hover always goes **darker** (`--d-accent-dk #16A34A`), never lighter.
+**Colour.** Two brand hues with strict jobs: **green acts** (`--d-accent` — every primary button; darkened to `#15803D` on 2026-09-18 for WCAG AA white-text contrast — measured 5.02:1) and **blue `#1E6FD9` informs** (links, sort arrows, table header rule, pagination, focus). Amber `#D97706` warns, red `#DC2626` destroys. Purple `#8B5CF6` is a KPI icon tint only. Hover always goes **darker** (`--d-accent-dk #166534`), never lighter.
 
 **Surfaces.** Canvas is warm parchment `#FAFAF5`. Cards are pure white. Dark shells use `#0F172A` / `#1E293B`. Exactly one gradient: the admin LIVE badge (`#15803d → #22C55E → #4ade80`) with an animated sheen.
 
@@ -51,8 +51,9 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 | Token | Value |
 |---|---|
 | `--d-blue` | `#1E6FD9` |
-| `--d-green` / `--d-accent` | `#22C55E` / `var(--d-green)` |
-| `--d-accent-dk` | `#16A34A` |
+| `--d-green` | `#22C55E` (non-text accents, success) |
+| `--d-accent` | `#15803D` (primary CTA — AA, **changed 2026-09-18**) |
+| `--d-accent-dk` | `#166534` (hover) |
 | `--d-amber` | `#D97706` |
 | `--d-red` | `#DC2626` |
 | `--d-canvas` / `--d-surface` | `#FAFAF5` |

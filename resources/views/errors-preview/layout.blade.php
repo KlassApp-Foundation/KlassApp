@@ -218,11 +218,11 @@
         }
         .err-btn:active { transform: scale(0.97); }
         .err-btn-primary {
-            background: #22C55E;
+            background: #15803D;
             color: #fff;
-            border-color: #22C55E;
+            border-color: #15803D;
         }
-        .err-btn-primary:hover { background: #16A34A; border-color: #16A34A; }
+        .err-btn-primary:hover { background: #166534; border-color: #166534; }
         .err-btn-secondary {
             background: color-mix(in srgb, #fff 50%, transparent);
             color: #64748B;

@@ -22,6 +22,8 @@
      Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
+  /* Primary CTA green — darkened for WCAG AA white text (see DESIGN_SYSTEM.md). */
+  --brand-accent: #15803D;
   --brand-dark: #0F172A;
   --brand-light: #F8FAFC;
   --brand-white: #FFFFFF;
@@ -163,7 +165,7 @@ section {
   font-weight: 600;
   padding: 8px 20px;
   border-radius: var(--radius-sm);
-  background: var(--brand-green);
+  background: var(--brand-accent);
   color: var(--brand-white);
   border: none;
   cursor: pointer;
@@ -221,7 +223,7 @@ section {
   margin-top: 8px;
   text-align: center;
   border-radius: var(--radius-sm);
-  background: var(--brand-green) !important;
+  background: var(--brand-accent) !important;
   color: var(--brand-white) !important;
   border-bottom: none !important;
   font-weight: 600 !important;
@@ -245,13 +247,13 @@ body.nav-open { overflow: hidden; }
   white-space: nowrap;
 }
 .btn-primary {
-  background: var(--brand-green);
+  background: var(--brand-accent);
   color: var(--brand-white);
-  box-shadow: 0 1px 3px rgba(34,197,94,0.3);
+  box-shadow: 0 1px 3px rgba(21,128,61,0.35);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-green), 0 4px 12px rgba(34,197,94,0.3);
+  box-shadow: var(--shadow-glow-green), 0 4px 12px rgba(21,128,61,0.35);
 }
 .btn-secondary {
   background: transparent;
