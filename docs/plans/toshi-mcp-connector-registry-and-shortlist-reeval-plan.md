@@ -4,6 +4,8 @@
 > Builds directly on `docs/plans/toshi-hitl-convergence-and-slack-connector-plan.md` (Part A Slack wave-1, Part B HITL/MCP gate). Where this plan and that one overlap on credential storage, **this plan supersedes** — the Slack-specific `school_slack_mcp_credentials` table generalizes into the registry designed here.
 > Research pass: 2026-09-18, direct source verification (background research agents remain unavailable — worker billing exhausted; all vendor/file claims re-verified directly against the working tree at `main` post-fetch; all external claims sourced from official docs/changelog searches noted inline).
 > **Second verification pass 2026-09-18 (later session):** all codebase claims re-verified green against the working tree (architecture test, auditing manager, vendor `ClientManager`/`HttpTransport`/`OAuthClient`/`OAuthRouteRegistrar`, spike files, landing copy, `ToshiMcpClient::named`); external claims re-verified via direct official-docs search (background agents again failed on billing). Two corrections applied: Figma **Education-plan rate limits** (R.4/D.1 — Education seats get 200 calls/day, not the 6/month View-seat limit; deferral verdict unchanged, re-argued on the per-user authorization model) and a **Canvas official-interest watch item** (R.5 — Instructure community roadmap discussion, July 2026).
+>
+> **Notion use-case research (2026-09-18, PR1 branch):** Scanned `knowledge.md`, product/UX docs, and all app models/views for Notion-relevant workflows. Result: **no credible grounded use-case found**. Bulletins are file-upload-based (`magazines` table, PDF). Lesson plans have an in-app approval workflow (`LessonPlanApproval`). Staff handbooks, meeting notes, policy docs, and SOPs do not exist in the product. Parent comms route through WhatsApp. Speculative "Toshi surfaces Notion docs" requires schools to already use Notion for school-ops docs — no product signal supports this. **Verdict: defer Notion from the 4-PR scope.** Config catalog entry retained for future activation; PR4 not shipped without grounded use-cases.
 
 ---
 
@@ -77,6 +79,28 @@
 | UI tiles/badges | Per-connector | Pattern generic |
 
 **Verdict for (D):** adding connector #2 is *not* a rebuild — it is a catalog entry + a factory block + a thin Skill + gate keys + a UI badge. The expensive machinery (audit wrap, HITL gate, registry, token closure, refresh) is connector-agnostic by construction. Therefore (D) should be designed as **several connectors in parallel behind one abstraction**, not "swap Slack for Miro."
+
+### R.8 laravel/mcp transport compliance — Streamable HTTP (addendum #4, verified 2026-09-18)
+
+**Finding: laravel/mcp v0.8.2 implements HTTP+SSE (old protocol), NOT Streamable HTTP (2026-07-28 spec revision).**
+
+Direct source verification against `vendor/laravel/mcp/src/Client/Transport/HttpTransport.php`:
+- **Stateful session tracking**: `protected ?string $sessionId = null` + `protected bool $initialized = false`; `captureSessionId()` reads `MCP-Session-Id` response header and stores it for subsequent requests. The `terminateSession()` method sends a `DELETE` to the endpoint to end the session.
+- **Session header sent on every request**: `headers()` includes `MCP-Session-Id` when set and `MCP-Protocol-Version` when `initialized`.
+- **SSE fallback**: `send()` checks `Content-Type: text/event-stream` and falls into `readSseStream()` — the OLD stateful HTTP+SSE transport pattern.
+- **Protocol version**: `ProtocolVersion::LATEST = self::V2025_11_25` (enum at `vendor/laravel/mcp/src/Enums/ProtocolVersion.php`) — no 2025-05-22 or 2026-07-28 revision exists.
+
+Streamable HTTP (2026-07-28 MCP revision) eliminated session state (no `MCP-Session-Id`, no `DELETE` termination), eliminated SSE in favor of simple POST-with-JSON-response or `GET` for server-to-client streaming, and made the protocol stateless so any replica could serve any request. The upstream `HttpTransport` is still stateful.
+
+**Implication for our connectors:** Slack/Notion/etc. hosted endpoints will accept the old transport as long as they maintain backward compatibility. The risk is NOT in our code — it's laravel/mcp's transport that may fail against a server that drops the old protocol. This is a vendor-side concern. We should monitor laravel/mcp releases for transport updates, but it is NOT a blocker for our PRs.
+
+### R.9 laravel/mcp dependency chain — Foundation SDK? (addendum #5, verified 2026-09-18)
+
+**Finding: laravel/mcp has ZERO dependency on `modelcontextprotocol/php-sdk`. It is a pure first-party Laravel package by Taylor Otwell.**
+
+Source: `vendor/laravel/mcp/composer.json` requires only Laravel framework components + `symfony/process`. No external MCP SDK. Review of `vendor/laravel/mcp/src/` confirms all code is first-party: `WebClient`, `HttpTransport`, `ClientManager`, OAuth handling, server primitives — all implemented directly within the package.
+
+This **removes** the pre-1.0 Foundation SDK supply-chain risk. The transport state (R.8 above) lives entirely within the first-party Laravel codebase and can be tracked via the laravel/mcp repo's changelog and releases. The only external dependency relevant to MCP is `laravel/ai`'s `suggests: laravel/mcp` — which is why we pin both versions.
 
 ### R.7 What "community" must mean here (trust model)
 

@@ -280,4 +280,43 @@ return [
             'allows_custom_endpoint' => false,
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MCP Write Gates (Part B — HITL convergence)
+    |--------------------------------------------------------------------------
+    |
+    | Write-classification for remote MCP connectors. Reads execute freely;
+    | writes pause for human approval via ApprovableMcpTool.
+    |
+    | mode:
+    |   deny      — all tools treated as writes → fail closed; nothing runs
+    |               without explicit approval
+    |   classify  — catalog read_tools = reads; catalog write_tools = writes
+    |   allowlist — only tools in write_tools are gated; everything else free
+    |
+    | Tool-classified-as-read executes immediately with audit-only after.
+    | Tool-classified-as-write pauses; ApprovableMcpTool returns
+    | Approval::required(); loop resumes via Decisions::approve/reject/edit.
+    |
+    | Defense-in-depth: AuditsMcpToolCalls::callTool adds McpWriteGate
+    | pre-check so raw Client::callTool on a write-classified tool fails
+    | closed even if the agent loop somehow bypasses the Approvable gate.
+    |
+    | Status: PR2 — gates every connector in the catalog automatically.
+    */
+    'mcp_write_gates' => [
+        'master_switch' => env('TOSHI_MCP_WRITE_GATES_ENABLED', false),
+        'connectors' => [
+            'slack' => [
+                'mode' => env('TOSHI_SLACK_MCP_WRITE_MODE', 'deny'),
+            ],
+            'notion' => [
+                'mode' => env('TOSHI_NOTION_MCP_WRITE_MODE', 'deny'),
+            ],
+            'google-drive' => [
+                'mode' => 'deny',
+            ],
+        ],
+    ],
 ];
