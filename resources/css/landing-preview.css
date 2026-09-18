@@ -1,5 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ---- DESIGN_SYSTEM.md token reconciliation (PR-1, WS-6.1) ----
+   The landing keeps local --brand-* / --text-* aliases (the dashboard --d-* tokens are
+   not loaded here). Values already match DESIGN_SYSTEM.md exactly:
+     --brand-blue #1E6FD9   == --d-blue
+     --brand-green #22C55E  == --d-green  (== --d-accent)
+     --brand-dark #0F172A   == --d-dark
+     --brand-white #FFFFFF  == --d-white
+     --brand-amber #D97706  == --d-amber
+     --text-primary #1E293B == --d-text
+     --text-secondary #64748B == --d-text-secondary
+     --text-muted #94A3B8   == --d-muted
+     --border #E2E8F0       == --d-border
+   Genuine divergences (documented, NOT changed here to avoid visual churn):
+     --brand-light #F8FAFC  ~ no DS equivalent (DS canvas is #FAFAF5)
+     --violet-accent #8B5CF6 ~ not in DESIGN_SYSTEM.md
+   Follow-up: resolve the two divergences with design sign-off.
+   ------------------------------------------------------------ */
 :root {
   /* Aligned to DESIGN_SYSTEM.md / --d-* (canvas #FAFAF5, ink #1E293B, Sora + DM Sans).
      Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
@@ -355,6 +372,7 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 18px;
   font-size: clamp(2.5rem, 4.5vw, 3.5rem);
   letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 .hero h1 .accent {
   color: var(--brand-green);
@@ -365,6 +383,7 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 28px;
   max-width: 420px;
   line-height: 1.65;
+  text-wrap: pretty;
 }
 .hero-actions {
   display: flex;
@@ -376,20 +395,21 @@ body.nav-open { overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 .hero-trust span {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 .hero-trust .dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--text-secondary);
   margin: 0 4px;
 }
 
@@ -2433,7 +2453,7 @@ body.nav-open { overflow: hidden; }
   margin-top: 48px;
   padding-top: 24px;
   text-align: center;
-  color: #94A3B8;
+  color: #64748B;
   font-size: 0.875rem;
 }
 
@@ -3814,3 +3834,38 @@ body.nav-open { overflow: hidden; }
   .hero h1 { max-width: none; }
 }
 
+/* ==== PR-1: safe polish — accessibility, contrast, responsive (2026-09-18) ==== */
+
+/* Keyboard focus ring for every interactive element (WS-7). */
+:root { --focus-ring: rgba(30, 111, 217, 0.55); }
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.hero-role-dots button:focus-visible,
+.faq-item summary:focus-visible { outline-offset: 3px; }
+
+/* The header CTA duplicates the hero CTA on the narrowest phones; the mobile
+   panel already carries it, so hide the inline one below 415px (WS-5.3). */
+@media (max-width: 414px) {
+  .navbar-cta { display: none; }
+}
+
+/* Trust row: prevent the "MCP-compatible" hyphen break and lay it out as a
+   roomier 2-column grid on phones (WS-5.2). */
+@media (max-width: 600px) {
+  .hero-trust {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+    gap: 6px 16px;
+  }
+  .hero-trust .dot { display: none; }
+}
