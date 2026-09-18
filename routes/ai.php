@@ -1,6 +1,7 @@
 <?php
 
 use App\Mcp\Servers\SpikeSlackMockServer;
+use App\Models\SchoolMcpConnector;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Mcp\Client;
 use Laravel\Mcp\Client\OAuth\TokenSet;
@@ -8,29 +9,17 @@ use Laravel\Mcp\Facades\Mcp;
 
 /*
 |--------------------------------------------------------------------------
-| Spike: Slack MCP client wiring (throwaway branch spike/toshi-mcp-slack)
+| MCP connector client wiring
 |--------------------------------------------------------------------------
 |
-| Config shape (config/services.php → slack_mcp):
-|   mode         mock|live          default mock
-|   url          https://mcp.slack.com/mcp
-|   client_id    Slack app OAuth client id (live)
-|   client_secret optional / often unused for public native clients
-|   token        optional bearer when not using OAuth (dev only)
-|
-| Per-school note: production must NOT use a single global Slack token.
-| Schools have their own workspaces — store TokenSet per school (or per
-| connecting staff user) after mcp.oauth.slack.connect.
-|
-| Audit: named Mcp::client() → AuditingMcpClient(Manager) callTool audit.
-| Agent McpTool uses same layer (LogToolInvoked skips McpTool). Prefer
-| ToshiMcpClient when you need an explicit acting user. MCP HITL deferred.
+| Named clients are the ONLY construction site (McpClientConstructionTest).
+| Mock mode: local fixture server via stdio.
+| Live mode: per-school token resolved from school_mcp_connectors registry.
 */
 
 $mode = config('services.slack_mcp.mode', 'mock');
 
 if ($mode === 'mock') {
-    // Local fixture server + named client via stdio → `php artisan mcp:start spike-slack-mock`
     Mcp::local('spike-slack-mock', SpikeSlackMockServer::class);
 
     Mcp::registerClient('slack', function () {
@@ -41,35 +30,52 @@ if ($mode === 'mock') {
         ])->withTimeout((float) config('services.slack_mcp.timeout', 30));
     });
 } else {
-    // Live Slack MCP (blocked without credentials — see spike notes)
     Mcp::registerClient('slack', function () {
         $url = (string) config('services.slack_mcp.url', 'https://mcp.slack.com/mcp');
-        $client = Client::web($url)->withTimeout((float) config('services.slack_mcp.timeout', 30));
+        $timeout = (float) config('services.slack_mcp.timeout', 30);
 
-        $token = config('services.slack_mcp.token');
-        if (is_string($token) && $token !== '') {
-            return $client->withToken($token);
-        }
+        $connectorType = 'slack';
 
-        return $client->withOAuth(
-            clientId: config('services.slack_mcp.client_id'),
-            clientSecret: config('services.slack_mcp.client_secret') ?: null,
-        );
+        return Client::web($url)
+            ->withTimeout($timeout)
+            ->withToken(fn () => SchoolMcpConnector::resolveTokenForRequest($connectorType)
+                ?? throw new \App\Exceptions\ConnectorNotConnected(
+                    auth()->user()?->school_id ?? 0,
+                    $connectorType,
+                ));
     });
 
-    // OAuth callback scaffolding — persist TokenSet per authenticated user for now.
-    // Production must map team_id → school_id (per-workspace), not a global env secret.
     Mcp::oAuthRoutesFor('slack', function (string $client, TokenSet $token) {
         $user = Auth::user();
-        if ($user !== null) {
-            // Placeholder: do not reuse users.google_token pattern.
-            // Real design: dedicated school_slack_mcp_credentials table.
-            logger()->info('spike.slack_mcp.oauth_callback', [
-                'client' => $client,
-                'user_id' => $user->id,
-                'has_access_token' => filled($token->accessToken ?? null),
-            ]);
+
+        if ($user?->school_id === null) {
+            return redirect('/dashboard');
         }
+
+        $teamId = $token->teamId ?? $token->team_id ?? $user->id;
+        $teamName = $token->teamName ?? $token->team_name ?? null;
+
+        SchoolMcpConnector::updateOrCreate(
+            [
+                'school_id' => $user->school_id,
+                'connector_type' => 'slack',
+                'external_team_id' => (string) $teamId,
+            ],
+            [
+                'external_team_name' => $teamName,
+                'credentials' => [
+                    'access_token' => $token->accessToken,
+                    'refresh_token' => $token->refreshToken ?? null,
+                    'token_type' => $token->tokenType ?? 'Bearer',
+                    'scope' => $token->scope ?? null,
+                ],
+                'token_expires_at' => $token->expiresAt ?? null,
+                'auth_mode' => 'oauth_remote',
+                'status' => 'active',
+                'write_mode' => 'deny',
+                'connected_by' => $user->id,
+            ]
+        );
 
         return redirect('/dashboard');
     });
