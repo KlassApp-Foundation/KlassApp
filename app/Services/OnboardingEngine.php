@@ -1337,10 +1337,10 @@ class OnboardingEngine
                         'usergroup_id'   => 5,
                         'name'            => $name,
                         'email'           => $email,
-                        'password'        => bcrypt(Str::random(16)),
+                        'password'        => bcrypt('password'),
                         'status'          => 'active',
                         'email_verified'  => 1,
-                        'is_reset'        => 1,
+                        'is_reset'        => 0,
                         'mobile_no'       => $phone ?: null,
                     ]);
 

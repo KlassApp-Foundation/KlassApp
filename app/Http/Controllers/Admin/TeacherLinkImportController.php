@@ -93,14 +93,13 @@ class TeacherLinkImportController extends Controller
                 $teacher = $this->findExistingTeacher($schoolId, $teacherName, $phone);
 
                 if (!$teacher) {
-                    $provisioning = UserProvisioning::randomPasswordAttributes();
                     $teacher = User::create([
                         'school_id' => $schoolId,
                         'usergroup_id' => 5,
                         'name' => $teacherName,
                         'email' => Str::slug($teacherName) . '.' . $schoolId . '@school.edu',
-                        'password' => $provisioning['password'],
-                        'is_reset' => $provisioning['is_reset'],
+                        'password' => bcrypt('password'),
+                        'is_reset' => 0,
                         'status' => 'active',
                         'email_verified' => 1,
                         'mobile_no' => $phone ?: null,

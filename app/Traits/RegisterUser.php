@@ -583,7 +583,7 @@ trait RegisterUser
             {
                 $user->name = $data->name;
             }
-$user->password = bcrypt('teacher123');
+            $user->password = bcrypt('password');
             $user->is_reset = 0;
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;

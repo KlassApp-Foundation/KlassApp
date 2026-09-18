@@ -75,7 +75,7 @@ class RegisterUserProvisioningTest extends TestCase
         ]);
     }
 
-    public function test_create_teacher_uses_random_password_and_is_reset(): void
+    public function test_create_teacher_uses_default_password_and_does_not_require_reset(): void
     {
         $harness = new class
         {
@@ -87,8 +87,8 @@ class RegisterUserProvisioningTest extends TestCase
         $user = $harness->CreateTeacher($data, $this->school->id, $this->year, '', 5);
 
         $this->assertInstanceOf(User::class, $user);
-        $this->assertFalse(Hash::check('password', $user->password));
-        $this->assertSame(1, (int) $user->is_reset);
+        $this->assertTrue(Hash::check('password', $user->password));
+        $this->assertSame(0, (int) $user->is_reset);
     }
 
     public function test_create_user_student_uses_random_password_and_is_reset(): void

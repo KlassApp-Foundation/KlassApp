@@ -37,19 +37,53 @@ class TeacherListController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
       //
-      $teachers = User::ByRole(5)->where('school_id',Auth::user()->school_id)->get();
-      $count    = $teachers->count();
-      $alphabet = request('alphabet')?request('alphabet'):'';
-      $query    = \Request::getQueryString();
-      if(request('date_of_birth') != null)
-        {
-            $birthday = 'true';
-        }
+      $query = User::with('userprofile')
+          ->ByRole(5)
+          ->where('school_id', Auth::user()->school_id);
 
-      return view('/admin/teacher/index',['alphabet'=>$alphabet,'query'=>$query,'birthday' => $birthday,'teachers'=>$teachers,'count'=>$count]);
+      $search = trim((string) $request->input('search', ''));
+      if ($search !== '') {
+          $query->where(function ($builder) use ($search) {
+              $builder->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('mobile_no', 'like', "%{$search}%")
+                  ->orWhereHas('userprofile', function ($profileQuery) use ($search) {
+                      $profileQuery->where('firstname', 'like', "%{$search}%")
+                          ->orWhere('lastname', 'like', "%{$search}%");
+                  });
+          });
+      }
+
+      $statusFilter = $request->input('status');
+      if (in_array($statusFilter, ['active', 'inactive'], true)) {
+          $query->where('status', $statusFilter);
+      }
+
+      $alphabet = strtoupper((string) $request->input('alphabet', ''));
+      if (preg_match('/^[A-Z]$/', $alphabet)) {
+          $query->where('name', 'like', $alphabet . '%');
+      }
+
+      $teachers = $query->orderBy('name')->get();
+      $count    = $teachers->count();
+      $statusFilter = in_array($statusFilter, ['active', 'inactive'], true) ? $statusFilter : '';
+      $query    = \Request::getQueryString();
+      $birthday = request('date_of_birth') != null ? 'true' : null;
+      $totalTeachers = $teachers->count();
+
+      return view('/admin/teacher/index', [
+          'alphabet' => $alphabet,
+          'query' => $query,
+          'birthday' => $birthday,
+          'teachers' => $teachers,
+          'count' => $count,
+          'totalTeachers' => $totalTeachers,
+          'search' => $search,
+          'statusFilter' => $statusFilter,
+      ]);
     }
 
     public function destroy($name)

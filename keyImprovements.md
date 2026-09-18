@@ -12,4 +12,6 @@
  Bring back Terms nav link on the side bar in case the user wants to create/edit/delete terms
  Give a homogeneous password to teachers uploaded from the list as password, this' editable by the user
 
+ ## DB
+ - Move stream from standardlink table to class table for easy lookup
 ## Teacher's dashboard
