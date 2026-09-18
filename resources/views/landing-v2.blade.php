@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KlassApp : The school platform for tools educationists already use</title>
+    <title>KlassApp: The school platform for tools educationists already use</title>
     <meta name="description" content="KlassApp is an open-source agentic school protocol. It operates in the tools educationists already use: WhatsApp, Drive, Slack, email, and more.">
     <link rel="canonical" href="{{ url()->current() }}">
     @include('layouts.partials.favicon')
@@ -82,7 +82,7 @@
               <div class="hero-role-hd"><span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span> Parent · WhatsApp</div>
               <div class="hero-role-body">
                 <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
-                <div class="hero-bubble out">Thanks : fee reminder for next week too?</div>
+                <div class="hero-bubble out">Thanks: fee reminder for next week too?</div>
                 <div class="hero-bubble">Scheduled on WhatsApp for Monday 8am. <span class="hero-meta">8:14</span></div>
               </div>
             </article>
@@ -217,9 +217,9 @@
     </div>
 
     <div class="toshi-grid">
-      <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking : teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
+      <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking: teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
       <div class="toshi-card reveal reveal-delay-2"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><h3>Multi-Channel</h3><p>Works across WhatsApp, email, Slack, SMS, and the dashboard simultaneously. One agent, every channel your school uses.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions : sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
       <div class="toshi-card amber-accent reveal reveal-delay-4"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2a7 7 0 017 7c0 2.5-1.5 4.5-3 6l-1.5 2.5a1 1 0 01-1.7 0L11 15c-1.5-1.5-3-3.5-3-6a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/></svg></div><h3>Context-Aware</h3><p>Remembers term dates, student histories, school policies, and communication patterns. Every interaction builds on the last.</p></div>
       <div class="toshi-card reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><h3>Extensible</h3><p>Connect new tools through MCP servers or custom connectors. Toshi's capabilities grow with your school's needs.</p></div>
       <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
@@ -256,7 +256,7 @@
                 </div>
               </div>
               <div class="wa-bubble in">
-                <strong>Fee reminder</strong> : Nakato has a balance of UGX 85,000 for Term 2.
+                <strong>Fee reminder</strong>: Nakato has a balance of UGX 85,000 for Term 2.
                 <span class="link">Pay securely →</span>
                 <span class="wa-time">7:02 AM</span>
               </div>
@@ -619,13 +619,13 @@
       <div class="protocol-left">
         <div class="protocol-header reveal">
           <h2>Not just software. A protocol.</h2>
-          <p>KlassApp is open infrastructure : designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
+          <p>KlassApp is open infrastructure: designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
         </div>
       </div>
       <div class="protocol-grid">
         <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
         <div class="protocol-card ka-node n-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
-        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome : connectors, translations, features.</p></div></div>
+        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome: connectors, translations, features.</p></div></div>
       </div>
     </div>
   </div>
