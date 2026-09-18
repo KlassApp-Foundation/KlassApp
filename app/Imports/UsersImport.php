@@ -46,6 +46,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 $name = trim((string) ($row['firstname'] ?? $row['name'] ?? ''));
                 $class = trim((string) ($row['class'] ?? ''));
                 $stream = trim((string) ($row['stream'] ?? ''));
+                $file = trim((string) ($row['file'] ?? ''));
 
                 if ($name === '' || $class === '') {
                     Log::warning('Skipping invalid row', $row->toArray());
@@ -94,7 +95,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | CLASS / SECTION (SAFE)
                 |--------------------------------------------------------------------------
                 */
-                $sectionVal = $stream !== '' ? trim($class.' '.$stream) : trim($class);
+                $sectionVal = trim($class);
                 $standardLink = StandardLink::where('school_id', $school_id)
                     ->where('academic_year_id', $academic_year->id ?? null)
                     ->whereHas('section', function ($query) use ($school_id, $sectionVal) {
@@ -103,7 +104,13 @@ class UsersImport implements ToCollection, WithHeadingRow
                     })
                     ->first();
 
+                if ($standardLink && $stream !== '') {
+                    $standardLink->stream = $stream;
+                    $standardLink->save();
+                }
+
                 $student->standard = $standardLink->id ?? null;
+                $student->file = $file !== '' ? $file : null;
 
                 /*
                 |--------------------------------------------------------------------------

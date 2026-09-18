@@ -126,9 +126,12 @@
                         </td>
                         <td data-label="#" class="text-gray-400 text-xs font-mono">{{ $rowIndex }}</td>
                         <td data-label="Student name">
-                            <a href="{{ url('/admin/student/edit/' . $student->name) }}" class="dt-name-link">
+                            <a href="{{ url('/admin/student/show/' . $student->name) }}" class="dt-name-link">
                                 {{ $student->displayName }}
                             </a>
+                            @if(Gate::allows('member-edit', $student))
+                                <a href="{{ url('/admin/student/edit/' . $student->name) }}" class="dt-edit-link text-xs text-blue-600 ml-2">Edit</a>
+                            @endif
                         </td>
                         <td data-label="Class">
                             @if($student->class_name)

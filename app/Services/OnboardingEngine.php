@@ -928,41 +928,90 @@ class OnboardingEngine
                     throw ValidationException::withMessages(['terms' => "Term '{$name}': end date must be after start date."]);
                 }
             }
+
+            $this->createUgandanHolidays($school, $year);
         }
 
-        foreach ($terms as $term) {
-            $name = trim((string) ($term['name'] ?? ''));
-            $start = $term['start'] ?? null;
-            $end = $term['end'] ?? null;
+        $academicTerm = AcademicTerm::where('school_id', $school->id)
+            ->where('name', 'Term 1')
+            ->first();
 
-            $hasStart = $start !== null && trim((string) $start) !== '';
-            $hasEnd = $end !== null && trim((string) $end) !== '';
+        if (!$academicTerm) {
+            $academicTerm = new AcademicTerm;
+            $academicTerm->school_id = $school->id;
+            $academicTerm->name = 'Term 1';
+            $academicTerm->academic_year_id = $year->id;
+            $academicTerm->save();
+        }
+    }
 
-            $requestedStatus = strtolower(trim((string) ($term['status'] ?? '')));
-            if (! in_array($requestedStatus, ['last', 'current', 'next'], true)) {
-                $requestedStatus = null;
-            }
+    /**
+     * Create fixed-date Ugandan public holidays for a newly created school.
+     *
+     * Holidays are stored as events in the events table with category 'holidays',
+     * associated with the school and the applicable academic year.
+     * Operation is safe against duplicate creation — only creates holidays that
+     * do not already exist for this school.
+     *
+     * Fixed-date Ugandan public holidays:
+     *   01-01  New Year's Day
+     *   01-26  Liberation Day
+     *   02-16  Archbishop Janani Luwum Day
+     *   03-08  International Women's Day
+     *   05-01  Labour Day
+     *   06-03  Uganda Martyrs' Day
+     *   06-09  National Heroes' Day
+     *   10-09  Independence Day
+     *   12-25  Christmas Day
+     *   12-26  Boxing Day
+     *
+     * @param  School $school
+     * @param  AcademicYear $year
+     * @return void
+     */
+    public function createUgandanHolidays(School $school, AcademicYear $year): void
+    {
+        $holidays = [
+            ['title' => 'New Year\'s Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Liberation Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Archbishop Janani Luwum Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'International Women\'s Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Labour Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Uganda Martyrs\' Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'National Heroes\' Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Independence Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Christmas Day', 'start_date' => null, 'end_date' => null],
+            ['title' => 'Boxing Day', 'start_date' => null, 'end_date' => null],
+        ];
 
-            $createAttrs = [
-                'academic_year_id' => $year->id,
-                // Default new terms to "next"; promote one to "current" after the batch.
-                'status' => $requestedStatus ?? 'next',
-            ];
-
-            if ($hasStart) {
-                $createAttrs['starts_on'] = Carbon::parse(trim((string) $start))->startOfDay();
-            }
-            if ($hasEnd) {
-                $createAttrs['ends_on'] = Carbon::parse(trim((string) $end))->endOfDay();
-            }
-
-            AcademicTerm::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $name],
-                $createAttrs,
+        foreach ($holidays as $holiday) {
+            $date = \Carbon\Carbon::createFromDate(
+                $year->start_date ?? date('Y'),
+                \Carbon\Carbon::parse($holiday['start_date'] ?? $holiday['end_date'])->month,
+                \Carbon\Carbon::parse($holiday['start_date'] ?? $holiday['end_date'])->day
             );
-        }
 
-        $this->normalizeAcademicTermCurrentStatus($school, $terms);
+            // Check if holiday already exists for this school
+            $existing = \App\Models\Events::where('school_id', $school->id)
+                ->where('title', $holiday['title'])
+                ->where('category', 'holidays')
+                ->first();
+
+            if (!$existing) {
+                \App\Models\Events::create([
+                    'school_id'        => $school->id,
+                    'academic_year_id' => $year->id,
+                    'title'            => $holiday['title'],
+                    'start_date'       => $date->format('Y-m-d'),
+                    'end_date'         => $date->format('Y-m-d'),
+                    'category'         => 'holidays',
+                    'select_type'      => 'school',
+                    'status'           => 'active',
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+            }
+        }
     }
 
     /**

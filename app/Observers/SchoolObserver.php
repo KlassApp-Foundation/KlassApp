@@ -6,6 +6,7 @@ use App\Models\SchoolDetail;
 use Illuminate\Support\Str;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Services\OnboardingEngine;
 use Carbon\Carbon;
 use Exception;
 use Log;
@@ -28,7 +29,7 @@ class SchoolObserver
             $school->slug = $slug;
             $school->save();
 
-            $keys = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'center_no' , 'affiliated_by' , 'board' , 'date_of_establishment' , 'landline_no' , 'moto' , 'school_logo' , 'website'];
+            $keys = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'admission_close_on' , 'center_no' , 'affiliated_by' , 'board' , 'date_of_establishment' , 'landline_no' , 'moto' , 'school_logo' , 'website'];
             foreach ($keys as $key) 
             {
                 $detail = SchoolDetail::create([
@@ -38,49 +39,15 @@ class SchoolObserver
                 ]);
             }
 
-            if (AcademicYear::where('school_id', $school->id)->exists()) {
-                return;
-            }
-
+            $onboardingEngine = new OnboardingEngine;
             $currentYear = Carbon::now()->year;
-            $prevYear    = $currentYear - 1;
-            $nextYear    = $currentYear + 1;
+            $year = AcademicYear::where('school_id', $school->id)
+                ->whereRaw("start_date <= '$currentYear-12-31' AND end_date >= '$currentYear-02-01'")
+                ->first();
 
-            // Previous Academic Year
-            // AcademicYear::create([
-            //     'school_id'   => $school->id,
-            //     'name'        => $prevYear,
-            //     'description' => 'Previous Academic Year',
-            //     'start_date'  => Carbon::create($prevYear, 2, 1),
-            //     'end_date'    => Carbon::create($prevYear, 12, 15),
-            //     'status'      => 0,
-            //     'created_at'  => now(),
-            //     'updated_at'  => now(),
-            // ]);
-
-            // Current Academic Year
-            // AcademicYear::create([
-            //     'school_id'   => $school->id,
-            //     'name'        => $currentYear,
-            //     'description' => 'Current Academic Year',
-            //     'start_date'  => Carbon::create($currentYear, 2, 1),
-            //     'end_date'    => Carbon::create($currentYear, 12, 15),
-            //     'status'      => 1,
-            //     'created_at'  => now(),
-            //     'updated_at'  => now(),
-            // ]);
-
-             // Upcoming Academic Year
-            // AcademicYear::create([
-            //     'school_id'   => $school->id,
-            //     'name'        => $nextYear,
-            //     'description' => 'Upcoming Academic Year',
-            //     'start_date'  => Carbon::create($nextYear, 2, 1),
-            //     'end_date'    => Carbon::create($nextYear, 12, 15),
-            //     'status'      => 1,
-            //     'created_at'  => now(),
-            //     'updated_at'  => now(),
-            // ]);
+            if ($year) {
+                $onboardingEngine->createUgandanHolidays($school, $year);
+            }
         }
         catch(Exception $e)
         {

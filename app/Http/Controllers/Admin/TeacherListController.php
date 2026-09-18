@@ -40,7 +40,8 @@ class TeacherListController extends Controller
     public function index()
     {
       //
-      $count    = User::ByRole(5)->where('school_id',Auth::user()->school_id)->count();
+      $teachers = User::ByRole(5)->where('school_id',Auth::user()->school_id)->get();
+      $count    = $teachers->count();
       $alphabet = request('alphabet')?request('alphabet'):'';
       $query    = \Request::getQueryString();
       if(request('date_of_birth') != null)
@@ -48,7 +49,7 @@ class TeacherListController extends Controller
             $birthday = 'true';
         }
 
-      return view('/admin/teacher/index',['alphabet'=>$alphabet,'query'=>$query,'birthday' => $birthday,'count'=>$count]);
+      return view('/admin/teacher/index',['alphabet'=>$alphabet,'query'=>$query,'birthday' => $birthday,'teachers'=>$teachers,'count'=>$count]);
     }
 
     public function destroy($name)

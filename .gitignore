@@ -89,6 +89,9 @@ vapor.yml
 # === Dead CI config ===
 #.github/workflows/
 tmp/
+
+# Today's work summary
+todayswork.md
 # Ignore images by default; re-include brand SVGs (parent dir must not be
 # fully ignored or git cannot un-ignore children — use /* not trailing /).
 public/images/*

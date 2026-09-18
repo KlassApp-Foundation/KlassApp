@@ -27,19 +27,13 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                'regex:/^(\+?256)?0?7[0578]\d{7}$/',
+                'regex:/^(\+?256)?0?7\d{7,8}$/',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $normalized = app(\App\Services\SchoolSignupBootstrapService::class)->normalizePhone((string) $value);
                     if ($normalized === null) {
                         $fail('Enter a valid WhatsApp phone number.');
 
                         return;
-                    }
-                    if (User::where('mobile_no', $normalized)->exists()) {
-                        $fail('This phone number is already registered.');
-                    }
-                    if (\App\Models\School::where('phone', $normalized)->exists()) {
-                        $fail('This phone number is already registered to a school.');
                     }
                 },
             ],
