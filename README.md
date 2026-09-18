@@ -212,4 +212,9 @@ External contributor PRs get genuine human review before merge.
 
 KlassApp is released under the [MIT License](LICENSE).
 
+**Copyright notices.** The original notice is retained unmodified, as the MIT License requires, with a second line covering the KlassApp work built on top of the fork:
+
+- Original work (GeGoK12): Copyright (c) 2025 GegoSoft Technologies and GegoK12 Contributors
+- KlassApp work (since the fork): Copyright (c) 2026 KlassApp Foundation
+
 You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the conditions in [`LICENSE`](LICENSE).
