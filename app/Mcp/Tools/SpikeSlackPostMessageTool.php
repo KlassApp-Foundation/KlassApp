@@ -13,6 +13,8 @@ use Laravel\Mcp\Server\Tool;
 /**
  * Mock write tool for the Slack wave-1 test suite.
  * Mimics slack_post_message; fixture response only.
+ * Text prefixed with MOCK_FORCE_ERROR returns an MCP error result,
+ * simulating a real Slack rejection on a human-approved write.
  */
 #[Name('spike-slack-post-message')]
 #[Description('Mock Slack post_message — writes to a channel (mock only, no real Slack).')]
@@ -20,8 +22,12 @@ class SpikeSlackPostMessageTool extends Tool
 {
     public function handle(Request $request): ResponseFactory
     {
-        $channel = $request['channel'] ?? '#general';
-        $text = $request['text'] ?? 'Hello from mock!';
+        $channel = $request->get('channel') ?? '#general';
+        $text = $request->get('text') ?? 'Hello from mock!';
+
+        if (str_starts_with($text, 'MOCK_FORCE_ERROR')) {
+            return Response::make([Response::error('mock_forced_error: Slack rejected the message')]);
+        }
 
         return Response::structured([
             'ok' => true,

@@ -172,13 +172,50 @@ class HITLMcpWriteGateTest extends TestCase
 
         $result = $wrapped->handle(new Request(['channel' => '#general', 'text' => 'Approved message']));
 
-        // Gate opens the write; mock returns what it returns. Assert on audit only.
-        $this->assertIsString($result);
+        $this->assertStringContainsString('"ok":true', $result);
+
         $this->assertSame(
             $before + 1,
             ActivityLog::query()->where('log_name', ToshiAuditService::LOG_NAME)->count(),
             'ApprovableMcpTool::handle must still produce an audit row via the auditing client'
         );
+    }
+
+    #[Test]
+    public function approved_write_that_returns_mcp_error_result_still_audits_as_failure(): void
+    {
+        $user = User::factory()->create(['usergroup_id' => 3]);
+        $this->actingAs($user);
+
+        $before = ActivityLog::query()->where('log_name', ToshiAuditService::LOG_NAME)->count();
+
+        $primitive = Mcp::client('slack')->tools()->get('spike-slack-post-message');
+        $wrapped = ApprovableMcpTool::wrap('slack', $primitive);
+
+        // Human approved the write; the "server" (mock, simulating a real Slack
+        // rejection) returns an MCP error result for the execution anyway.
+        $result = $wrapped->handle(new Request([
+            'channel' => '#general',
+            'text' => 'MOCK_FORCE_ERROR approved but rejected',
+        ]));
+
+        $this->assertStringContainsString('MCP tool error', $result);
+        $this->assertStringContainsString('mock_forced_error', $result);
+
+        $this->assertSame(
+            $before + 1,
+            ActivityLog::query()->where('log_name', ToshiAuditService::LOG_NAME)->count(),
+            'Errored execution must still produce exactly one audit row'
+        );
+
+        $log = ActivityLog::query()
+            ->where('log_name', ToshiAuditService::LOG_NAME)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertStringStartsWith('❌', (string) $log->properties['result']);
+        $this->assertStringContainsString('mock_forced_error', (string) $log->properties['result']);
     }
 
     #[Test]

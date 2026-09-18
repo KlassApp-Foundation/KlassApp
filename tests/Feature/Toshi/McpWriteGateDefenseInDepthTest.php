@@ -96,8 +96,8 @@ class McpWriteGateDefenseInDepthTest extends TestCase
             ]);
         });
 
-        // Gate opened: call reached the client. Mock result shape is irrelevant to gate behavior.
-        $this->assertInstanceOf(\Laravel\Mcp\Client\Schema\ToolResult::class, $result);
+        // Gate opened: call reached the client and the write tool's fixture path executed.
+        $this->assertFalse($result->isError ?? false);
         $this->assertSame(
             $before + 1,
             \App\Models\ActivityLog::query()
@@ -120,8 +120,8 @@ class McpWriteGateDefenseInDepthTest extends TestCase
             'text' => 'Gate off',
         ]);
 
-        // Gate disabled: call reached the client regardless of mock result shape.
-        $this->assertInstanceOf(\Laravel\Mcp\Client\Schema\ToolResult::class, $result);
+        // Gate disabled: call reached the client and the write tool's fixture path executed.
+        $this->assertFalse($result->isError ?? false);
     }
 
     private function ensureMockSlackClient(): void
