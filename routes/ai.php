@@ -80,3 +80,33 @@ if ($mode === 'mock') {
         return redirect('/dashboard');
     });
 }
+
+/*
+|--------------------------------------------------------------------------
+| MCP transport era gap — dated re-verification marker (2027-04-28)
+|--------------------------------------------------------------------------
+|
+| Every named client above speaks the pre-2026 MCP protocol era: stateful
+| MCP-Session-Id + initialize handshake + SSE-capable POST
+| (laravel/mcp 0.8.2 HttpTransport; ProtocolVersion::LATEST = 2025-11-25).
+| The 2026-07-28 MCP specification made the protocol stateless and
+| deprecated the pre-2026 era under a formal deprecation policy
+| (SEP-2596): a minimum 12-month deprecation window from the release
+| that first marks it deprecated, so earliest removal eligibility is
+| ~2027-07-28 (a 90-day expedited window exists only for security
+| advisories).
+|
+| Currently acceptable because hosted endpoints (mcp.slack.com and
+| future catalog connectors) still serve the legacy era, and because
+| the upstream fix already exists: laravel/mcp v1.0.0 (2026-09-14)
+| speaks the 2026-07-28 era. We cannot adopt it yet because
+| laravel/mcp enters this app only through laravel/boost
+| (require-dev) at ^0.7.1|^0.8.0 — see plan doc R.8.
+|
+| TODO: before 2027-04-28, re-verify (1) whether mcp.slack.com and
+| other catalog endpoints still serve the legacy era, (2) whether
+| laravel/ai and laravel/boost constraints admit laravel/mcp 1.x,
+| and (3) any announced legacy-era removal dates. Enforced by
+| tests/Architecture/McpTransportEraReverificationTest.php.
+| @see docs/plans/toshi-mcp-connector-registry-and-shortlist-reeval-plan.md R.8
+*/

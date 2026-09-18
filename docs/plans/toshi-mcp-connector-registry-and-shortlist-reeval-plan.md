@@ -80,19 +80,29 @@
 
 **Verdict for (D):** adding connector #2 is *not* a rebuild — it is a catalog entry + a factory block + a thin Skill + gate keys + a UI badge. The expensive machinery (audit wrap, HITL gate, registry, token closure, refresh) is connector-agnostic by construction. Therefore (D) should be designed as **several connectors in parallel behind one abstraction**, not "swap Slack for Miro."
 
-### R.8 laravel/mcp transport compliance — Streamable HTTP (addendum #4, verified 2026-09-18)
+### R.8 laravel/mcp transport compliance — Streamable HTTP (addendum #4, verified 2026-09-18; **tripwire created + re-researched same day — corrections below**)
 
-**Finding: laravel/mcp v0.8.2 implements HTTP+SSE (old protocol), NOT Streamable HTTP (2026-07-28 spec revision).**
+**Finding: laravel/mcp v0.8.2 speaks the pre-2026 MCP era (stateful, initialize-handshake, SSE-capable) — not the stateless 2026-07-28 revision.**
 
-Direct source verification against `vendor/laravel/mcp/src/Client/Transport/HttpTransport.php`:
-- **Stateful session tracking**: `protected ?string $sessionId = null` + `protected bool $initialized = false`; `captureSessionId()` reads `MCP-Session-Id` response header and stores it for subsequent requests. The `terminateSession()` method sends a `DELETE` to the endpoint to end the session.
+**Corrections from the 2026-09-18 evening re-research** (original addendum research missed upstream releases):
+1. **laravel/mcp v1.0.0 shipped 2026-09-14** (plus 0.9.x since July) — it speaks the **2026-07-28 era** (`ProtocolVersion::LATEST = V2026_07_28` on main; #296 drops the initialize handshake, #285 removes server session state, #304/#341 negotiate modern + legacy eras). The upstream fix **already exists** — we are not on it. The original framing ("monitor laravel/mcp releases for transport updates") is outdated.
+2. **Transport naming correction**: v0.8.2's `HttpTransport` is not the ancient 2024-11-05 HTTP+SSE transport — per upstream PR #227 (closed unmerged, superseded), it is **Streamable HTTP as of the 2025-11-25 era**: POST with `Accept: application/json, text/event-stream`, SSE stream reading, and a session layer (`MCP-Session-Id`, initialize handshake, DELETE termination). The 2026-07-28 revision then made the protocol stateless and deprecated the entire pre-2026 era. The practical gap is the same; the label was imprecise.
+3. **Dependency-chain cause**: laravel/mcp is **not a direct dependency** — it enters via `laravel/boost` (require-dev, `^0.7.1|^0.8.0`) and `laravel/ai` suggests it. Upgrading to laravel/mcp 1.x requires laravel/boost lifting its constraint (or a direct require). **Flagged separately**: laravel/mcp being dev-only while `routes/ai.php` + `app/Services/Toshi/*` import `Laravel\Mcp` at runtime is a latent production-install gap (no `--no-dev` install currently ships these classes) — needs resolution when MCP connectors go live (PR3+), not in the tripwire item.
+
+**Deprecation timeline (verified from published spec coverage, SEP-2596 deprecation policy)**: minimum 12-month deprecation window from the revision that first marks a feature deprecated → the pre-2026 era (deprecated by 2026-07-28) has earliest removal eligibility **~2027-07-28**; a 90-day expedited window exists only for security advisories. Slack has announced no legacy-era removal date.
+
+**Enforced re-verification (created 2026-09-18)**:
+- **Tripwire test**: `tests/Architecture/McpTransportEraReverificationTest.php` — passes (incomplete) until **2027-04-28**, then fails unless `TOSHI_MCP_TRANSPORT_VERIFIED_AT` is set to a date within the last 90 days. Date rationale: 3 months before earliest removal eligibility (2027-07-28), leaving a quarter to act.
+- **Code marker**: dated comment block at the transport usage site in `routes/ai.php` (after the live-mode client registration) — greppable via "MCP transport era gap" / "2027-04-28".
+- **Re-verification checklist** (what the tripwire forces): (1) does mcp.slack.com still serve the legacy era; (2) do laravel/ai + laravel/boost constraints admit laravel/mcp 1.x; (3) any announced legacy-era removal dates.
+
+Direct source verification against `vendor/laravel/mcp/src/Client/Transport/HttpTransport.php` (v0.8.2, installed — still accurate):
+- **Stateful session tracking**: `protected ?string $sessionId = null` + `protected bool $initialized = false`; `captureSessionId()` reads `MCP-Session-Id` response header and stores it for subsequent requests. `terminateSession()` sends a `DELETE` to the endpoint to end the session.
 - **Session header sent on every request**: `headers()` includes `MCP-Session-Id` when set and `MCP-Protocol-Version` when `initialized`.
-- **SSE fallback**: `send()` checks `Content-Type: text/event-stream` and falls into `readSseStream()` — the OLD stateful HTTP+SSE transport pattern.
-- **Protocol version**: `ProtocolVersion::LATEST = self::V2025_11_25` (enum at `vendor/laravel/mcp/src/Enums/ProtocolVersion.php`) — no 2025-05-22 or 2026-07-28 revision exists.
+- **SSE-capable POST**: `send()` checks `Content-Type: text/event-stream` and reads an SSE stream (`:161` on 1.x main; `:134` on 0.8.2) — the 2025-11-25-era Streamable HTTP shape, not plain JSON-only POST.
+- **Protocol version**: `ProtocolVersion::LATEST = self::V2025_11_25` (0.8.2) vs `V2026_07_28` (1.x main) — the era gap in one line.
 
-Streamable HTTP (2026-07-28 MCP revision) eliminated session state (no `MCP-Session-Id`, no `DELETE` termination), eliminated SSE in favor of simple POST-with-JSON-response or `GET` for server-to-client streaming, and made the protocol stateless so any replica could serve any request. The upstream `HttpTransport` is still stateful.
-
-**Implication for our connectors:** Slack/Notion/etc. hosted endpoints will accept the old transport as long as they maintain backward compatibility. The risk is NOT in our code — it's laravel/mcp's transport that may fail against a server that drops the old protocol. This is a vendor-side concern. We should monitor laravel/mcp releases for transport updates, but it is NOT a blocker for our PRs.
+**Implication for our connectors:** hosted endpoints (Slack now; Notion/others later) accept the pre-2026 era as long as they maintain backward compatibility. The risk is NOT in app code — it's that a server dropping the legacy era would break every named web client here. The upstream 1.x fix exists; adoption is a dependency-chain task (correction #3), tracked by the tripwire above — not a blocker for PR3/PR4 while Slack serves both eras.
 
 ### R.9 laravel/mcp dependency chain — Foundation SDK? (addendum #5, verified 2026-09-18)
 
