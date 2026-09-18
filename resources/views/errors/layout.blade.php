@@ -56,7 +56,7 @@
             gap: 6px;
             padding: 12px 24px;
             border-radius: 10px;
-            background: #22C55E;
+            background: #15803D;
             color: #fff;
             font-size: 14px;
             font-weight: 600;
@@ -64,7 +64,7 @@
             font-family: 'DM Sans', sans-serif;
             transition: background 0.15s ease;
         }
-        .klass-error-link:hover { background: #16A34A; }
+        .klass-error-link:hover { background: #166534; }
     </style>
 </head>
 <body>

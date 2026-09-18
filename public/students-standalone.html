@@ -39,10 +39,13 @@ body {
     --d-green: #22C55E;
     --d-amber: #D97706;
 
-    /* ── Accent (green is primary CTA) ── */
-    --d-accent: var(--d-green);
+    /* ── Accent (green is primary CTA) ──
+       WCAG AA fix (2026-09-18): --d-accent darkened #22C55E -> #15803D so white
+       CTA text clears 4.5:1 (measured 5.02:1). #22C55E remains --d-green for
+       non-text accents. Hover is a darker green. */
+    --d-accent: #15803D;
     --d-accent-lt: #4ADE80;
-    --d-accent-dk: #16A34A;
+    --d-accent-dk: #166534;
 
     /* ── Surface & Canvas ── */
     --d-canvas: #FAFAF5;
