@@ -1023,8 +1023,18 @@ class AgentToshi extends Component
             $args = $this->pendingToolConfirm['args'];
             $wasPlanStep = $this->planPendingConfirmStep >= 0;
             $planStepIdx = $this->planPendingConfirmStep;
+            $mcpResume = $this->pendingToolConfirm['mcp_resume'] ?? null;
             $this->pendingToolConfirm = null;
             $this->planPendingConfirmStep = -1;
+
+            // MCP connector write (native laravel/ai Approvable pause): resume
+            // the paused conversation with an approve Decision. The write then
+            // executes through ApprovableMcpTool::handle (single legal write
+            // path) and audits via the resolved-approval listeners.
+            if ($mcpResume !== null) {
+                $this->resumeMcpApproval($mcpResume, approved: true);
+                return;
+            }
 
             // Single path: re-invoke the same Tool class via bypassConfirm
             // so the exact handle() logic that built the preview also writes
@@ -1077,7 +1087,17 @@ class AgentToshi extends Component
         if ($this->pendingToolConfirm !== null) {
             // Store cancelled state for UI (cleared on next send)
             $this->cancelledToolConfirm = $this->pendingToolConfirm;
+            $mcpResume = $this->pendingToolConfirm['mcp_resume'] ?? null;
             $this->pendingToolConfirm = null;
+
+            // MCP connector write (native Approvable pause): reject the
+            // pending approval — the vendor loop records the denial and the
+            // resolved-approval listener audits it as approval_rejected.
+            if ($mcpResume !== null) {
+                $this->planPendingConfirmStep = -1;
+                $this->resumeMcpApproval($mcpResume, approved: false);
+                return;
+            }
 
             // Audit trail — log every cancellation so the picture is complete
             // (not just what executed, but what was proposed and rejected).
@@ -1167,6 +1187,9 @@ class AgentToshi extends Component
                     'tool' => $decoded['tool'],
                     'args' => $decoded['args'],
                 ];
+                if (isset($decoded['mcp_resume'])) {
+                    $this->pendingToolConfirm['mcp_resume'] = $decoded['mcp_resume'];
+                }
                 $this->awaitingConfirm = true;
                 $messageId = md5($decoded['preview'] ?? '');
                 session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
@@ -1278,6 +1301,58 @@ class AgentToshi extends Component
      *
      * Returns the tool's output string (same format the LLM would see).
      */
+    /**
+     * Resume a paused native laravel/ai approval (MCP connector writes).
+     *
+     * The paused AgentResponse (from RouteToSlackSkillTool etc.) stored the
+     * conversation id + pending approval id. Approve → Decision::approve();
+     * the vendor loop re-enters the generation loop, executes the write via
+     * ApprovableMcpTool (the only legal write path), and ToolApprovalResolved
+     * audits it with the resolving user as approver. Reject → Decision::reject();
+     * nothing executes and the denial is audited.
+     */
+    private function resumeMcpApproval(array $resume, bool $approved): void
+    {
+        $agentClass = $resume['agent_class'] ?? null;
+        $conversationId = $resume['conversation_id'] ?? null;
+        $approvalId = $resume['approval_id'] ?? null;
+        $actor = auth()->user() ?? auth('web')->user();
+
+        if (! $agentClass || ! $conversationId || ! $approvalId || ! class_exists($agentClass)) {
+            \Log::warning('MCP approval resume skipped — incomplete resume payload', [
+                'has_agent' => (bool) $agentClass,
+                'has_conversation' => (bool) $conversationId,
+                'has_approval' => (bool) $approvalId,
+            ]);
+            $this->botSay('❌ Could not resume this approval. Please retry the request.');
+            return;
+        }
+
+        try {
+            $decision = $approved
+                ? \Laravel\Ai\Approvals\Decision::approve()
+                : \Laravel\Ai\Approvals\Decision::reject('Rejected by user in the Toshi panel.');
+
+            $agent = (new $agentClass)->continue($conversationId, as: $actor);
+            $response = $agent->prompt(\Laravel\Ai\Approvals\Decisions::from([
+                $approvalId => $decision,
+            ]));
+
+            if ($approved) {
+                $this->botSay('✅ Approved and executed. ' . trim((string) $response->text));
+            } else {
+                $this->botSay('Cancelled. The Slack write was not sent. ' . trim((string) $response->text));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('MCP approval resume failed', [
+                'agent_class' => $agentClass,
+                'conversation_id' => $conversationId,
+                'error' => $e->getMessage(),
+            ]);
+            $this->botSay('❌ Resuming this approval failed. Nothing was ' . ($approved ? 'executed' : 'rejected') . '. Error: ' . $e->getMessage());
+        }
+    }
+
     private function executeConfirmedTool(string $toolName, array $args): string
     {
         $class = self::TOOL_CLASS_MAP[$toolName] ?? null;
@@ -2866,6 +2941,9 @@ class AgentToshi extends Component
                                 'tool' => $decoded['tool'],
                                 'args' => $decoded['args'],
                             ];
+                            if (isset($decoded['mcp_resume'])) {
+                                $this->pendingToolConfirm['mcp_resume'] = $decoded['mcp_resume'];
+                            }
                             $this->awaitingConfirm = true;
                             $messageId = md5($decoded['preview'] ?? '');
                             session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);

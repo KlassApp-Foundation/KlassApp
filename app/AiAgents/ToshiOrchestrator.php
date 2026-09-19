@@ -20,6 +20,7 @@ use App\AiAgents\Tools\RouteToGradingSkillTool;
 use App\AiAgents\Tools\RouteToReportingSkillTool;
 use App\AiAgents\Tools\RouteToSchoolAcademicsOpsSkillTool;
 use App\AiAgents\Tools\RouteToSchoolCommsSkillTool;
+use App\AiAgents\Tools\RouteToSlackSkillTool;
 
 #[MaxSteps(3)]
 #[Timeout(120)]
@@ -52,6 +53,7 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 6. **report** — Generating academic, fee, attendance, and summary reports
 7. **school_comms** — Noticeboard notices, calendar events, and holidays (list/create/update only)
 8. **school_academics_ops** — Timetable slots, homework approve/reject/admin CRUD, student-homework review (no destroy)
+9. **slack** — Slack workspace: list channels, search messages, read channel history, post messages (writes require approval). Only when the school has connected their Slack workspace.
 
 **Rules:**
 - If the query clearly matches a domain, route it immediately using the corresponding tool.
@@ -67,6 +69,9 @@ Example: "post a notice about parent meeting" → routeToSchoolCommsSkill
 Example: "add Independence Day holiday" → routeToSchoolCommsSkill
 Example: "approve pending homework" → routeToSchoolAcademicsOpsSkill
 Example: "add a Monday 9am math timetable slot" → routeToSchoolAcademicsOpsSkill
+Example: "list Slack channels" → routeToSlackSkill
+Example: "post a fee reminder to #staff-alerts on Slack" → routeToSlackSkill
+Example: "what did #general say this week" → routeToSlackSkill
 PROMPT;
     }
 
@@ -81,6 +86,7 @@ PROMPT;
             new RouteToReportingSkillTool,
             new RouteToSchoolCommsSkillTool,
             new RouteToSchoolAcademicsOpsSkillTool,
+            new RouteToSlackSkillTool,
         ];
     }
 
