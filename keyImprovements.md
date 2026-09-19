@@ -14,4 +14,6 @@
 
  ## DB
  - Move stream from standardlink table to class table for easy lookup
+ <!-- - Remove sections since we have classes, sections are a duplicate of classes. Find and replace everywhere section is used with class model. Find in blade, livewire and php files, everywhere. -->
+
 ## Teacher's dashboard
