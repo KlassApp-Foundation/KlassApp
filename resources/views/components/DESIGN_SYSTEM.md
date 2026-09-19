@@ -71,7 +71,7 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 | `--d-border-strong` | `#CBD5E1` |
 | `--d-touch-target-min` | `44px` |
 
-Toshi scope (`[data-toshi-root]`): clay accent `#c96442`, warm bg `#f5f4ed`, border `#e8e6dc` — deliberately different from app chrome.
+Toshi scope (`[data-toshi-root]`): clay accent `#c96442`, warm bg `#f5f4ed`, border `#e8e6dc` — deliberately different from app chrome. **Toshi plan-widget action blue (AA, verified 2026-09-19):** execute button `#0369A1` with white text (**5.93:1**), hover `#075985`; blue text on the `#BAE6FD` tint (plan count, active step) also `#075985` (**5.70:1**). **Do not reintroduce `#0284C7`** — it measured 4.10:1 on white and 3.09:1 on `#BAE6FD`.
 
 ---
 

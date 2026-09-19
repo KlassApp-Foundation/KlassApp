@@ -2795,7 +2795,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     font-family: 'DM Sans', sans-serif;
     font-size: 11px;
     font-weight: 600;
-    color: #0284C7;
+    color: #075985;
     background: #BAE6FD;
     padding: 2px 8px;
     border-radius: 10px;
@@ -2821,7 +2821,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     background: transparent;
 }
 [data-toshi-root] .toshi-plan-step.step-active {
-    color: #0369A1;
+    color: #075985;
     background: #BAE6FD;
     font-weight: 600;
 }
@@ -2846,7 +2846,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     color: var(--d-text-secondary);
 }
 [data-toshi-root] .toshi-plan-step.step-active .toshi-plan-step-num {
-    color: #0369A1;
+    color: #075985;
 }
 [data-toshi-root] .toshi-plan-step-label {
     flex: 1;
@@ -2872,11 +2872,11 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     gap: 6px;
 }
 [data-toshi-root] .toshi-plan-btn-execute {
-    background: #0284C7;
+    background: #0369A1;
     color: #fff;
 }
 [data-toshi-root] .toshi-plan-btn-execute:hover {
-    background: #0369A1;
+    background: #075985;
 }
 [data-toshi-root] .toshi-plan-btn-cancel {
     background: #F1F5F9;
