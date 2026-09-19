@@ -4,5 +4,7 @@
 - [Book Onboarding](book-onboarding)
 - [For Parents](for-parents)
 - [Ecosystem](ecosystem)
-- [Roadmap](roadmap)
+- [Roadmap (see docs hub)](../roadmap.md)
 - [FAQ](faq)
+- ---
+- [📖 GitBook (live docs)](https://klassdocs.gitbook.io/klassapp-documentation/)

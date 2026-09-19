@@ -235,4 +235,88 @@ return [
     |    delivered. Cosmetic — no data loss, no user impact.
     */
     'streaming_enabled' => false,
+
+    'mcp_connectors' => [
+        'slack' => [
+            'endpoint' => env('SLACK_MCP_URL', 'https://mcp.slack.com/mcp'),
+            'token_url' => 'https://slack.com/api/oauth.v2.access',
+            'auth_mode' => 'oauth_remote',
+            'oauth_client_id' => env('SLACK_MCP_CLIENT_ID'),
+            'oauth_secret' => env('SLACK_MCP_CLIENT_SECRET'),
+            'timeout' => 30,
+            'skill' => null,
+            'default_write_mode' => 'deny',
+            'read_tools' => ['slack_list_channels', 'slack_search', 'slack_get_channel_history'],
+            'write_tools' => ['slack_post_message'],
+            'enabled' => env('TOSHI_SLACK_CHANNEL_ENABLED', false),
+            'allows_custom_endpoint' => false,
+        ],
+        'notion' => [
+            'endpoint' => 'https://mcp.notion.com/mcp',
+            'token_url' => 'https://api.notion.com/v1/oauth/token',
+            'auth_mode' => 'oauth_remote',
+            'oauth_client_id' => env('NOTION_MCP_CLIENT_ID'),
+            'oauth_secret' => env('NOTION_MCP_CLIENT_SECRET'),
+            'timeout' => 30,
+            'skill' => null,
+            'default_write_mode' => 'deny',
+            'read_tools' => ['notion-search', 'notion-retrieve-page', 'notion-retrieve-block-children'],
+            'write_tools' => ['notion-create-pages', 'notion-update-page', 'notion-create-comment'],
+            'enabled' => env('TOSHI_NOTION_ENABLED', false),
+            'allows_custom_endpoint' => false,
+        ],
+        'google-drive' => [
+            'endpoint' => env('GOOGLE_DRIVE_MCP_URL', 'https://drivemcp.googleapis.com/mcp/v1'),
+            'token_url' => 'https://oauth2.googleapis.com/token',
+            'auth_mode' => 'oauth_remote',
+            'oauth_client_id' => env('GOOGLE_DRIVE_MCP_CLIENT_ID'),
+            'oauth_secret' => env('GOOGLE_DRIVE_MCP_CLIENT_SECRET'),
+            'timeout' => 30,
+            'skill' => null,
+            'default_write_mode' => 'deny',
+            'read_tools' => ['list_files', 'search_files', 'read_document'],
+            'write_tools' => [],
+            'enabled' => env('TOSHI_GOOGLE_DRIVE_ENABLED', false),
+            'allows_custom_endpoint' => false,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MCP Write Gates (Part B — HITL convergence)
+    |--------------------------------------------------------------------------
+    |
+    | Write-classification for remote MCP connectors. Reads execute freely;
+    | writes pause for human approval via ApprovableMcpTool.
+    |
+    | mode:
+    |   deny      — all tools treated as writes → fail closed; nothing runs
+    |               without explicit approval
+    |   classify  — catalog read_tools = reads; catalog write_tools = writes
+    |   allowlist — only tools in write_tools are gated; everything else free
+    |
+    | Tool-classified-as-read executes immediately with audit-only after.
+    | Tool-classified-as-write pauses; ApprovableMcpTool returns
+    | Approval::required(); loop resumes via Decisions::approve/reject/edit.
+    |
+    | Defense-in-depth: AuditsMcpToolCalls::callTool adds McpWriteGate
+    | pre-check so raw Client::callTool on a write-classified tool fails
+    | closed even if the agent loop somehow bypasses the Approvable gate.
+    |
+    | Status: PR2 — gates every connector in the catalog automatically.
+    */
+    'mcp_write_gates' => [
+        'master_switch' => env('TOSHI_MCP_WRITE_GATES_ENABLED', false),
+        'connectors' => [
+            'slack' => [
+                'mode' => env('TOSHI_SLACK_MCP_WRITE_MODE', 'deny'),
+            ],
+            'notion' => [
+                'mode' => env('TOSHI_NOTION_MCP_WRITE_MODE', 'deny'),
+            ],
+            'google-drive' => [
+                'mode' => 'deny',
+            ],
+        ],
+    ],
 ];

@@ -1,10 +1,29 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ---- DESIGN_SYSTEM.md token reconciliation (PR-1, WS-6.1) ----
+   The landing keeps local --brand-* / --text-* aliases (the dashboard --d-* tokens are
+   not loaded here). Values already match DESIGN_SYSTEM.md exactly:
+     --brand-blue #1E6FD9   == --d-blue
+     --brand-green #22C55E  == --d-green  (== --d-accent)
+     --brand-dark #0F172A   == --d-dark
+     --brand-white #FFFFFF  == --d-white
+     --brand-amber #D97706  == --d-amber
+     --text-primary #1E293B == --d-text
+     --text-secondary #64748B == --d-text-secondary
+     --text-muted #94A3B8   == --d-muted
+     --border #E2E8F0       == --d-border
+   Genuine divergences (documented, NOT changed here to avoid visual churn):
+     --brand-light #F8FAFC  ~ no DS equivalent (DS canvas is #FAFAF5)
+     --violet-accent #8B5CF6 ~ not in DESIGN_SYSTEM.md
+   Follow-up: resolve the two divergences with design sign-off.
+   ------------------------------------------------------------ */
 :root {
   /* Aligned to DESIGN_SYSTEM.md / --d-* (canvas #FAFAF5, ink #1E293B, Sora + DM Sans).
      Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
+  /* Primary CTA green — darkened for WCAG AA white text (see DESIGN_SYSTEM.md). */
+  --brand-accent: #15803D;
   --brand-dark: #0F172A;
   --brand-light: #F8FAFC;
   --brand-white: #FFFFFF;
@@ -146,7 +165,7 @@ section {
   font-weight: 600;
   padding: 8px 20px;
   border-radius: var(--radius-sm);
-  background: var(--brand-green);
+  background: var(--brand-accent);
   color: var(--brand-white);
   border: none;
   cursor: pointer;
@@ -204,7 +223,7 @@ section {
   margin-top: 8px;
   text-align: center;
   border-radius: var(--radius-sm);
-  background: var(--brand-green) !important;
+  background: var(--brand-accent) !important;
   color: var(--brand-white) !important;
   border-bottom: none !important;
   font-weight: 600 !important;
@@ -228,13 +247,13 @@ body.nav-open { overflow: hidden; }
   white-space: nowrap;
 }
 .btn-primary {
-  background: var(--brand-green);
+  background: var(--brand-accent);
   color: var(--brand-white);
-  box-shadow: 0 1px 3px rgba(34,197,94,0.3);
+  box-shadow: 0 1px 3px rgba(21,128,61,0.35);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-green), 0 4px 12px rgba(34,197,94,0.3);
+  box-shadow: var(--shadow-glow-green), 0 4px 12px rgba(21,128,61,0.35);
 }
 .btn-secondary {
   background: transparent;
@@ -355,6 +374,7 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 18px;
   font-size: clamp(2.5rem, 4.5vw, 3.5rem);
   letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 .hero h1 .accent {
   color: var(--brand-green);
@@ -365,6 +385,7 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 28px;
   max-width: 420px;
   line-height: 1.65;
+  text-wrap: pretty;
 }
 .hero-actions {
   display: flex;
@@ -376,20 +397,21 @@ body.nav-open { overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 .hero-trust span {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 .hero-trust .dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--text-secondary);
   margin: 0 4px;
 }
 
@@ -415,6 +437,7 @@ body.nav-open { overflow: hidden; }
   inset: 0;
   transform-style: preserve-3d;
 }
+/* X-axis flip (OD hero-role-rotate) — remap --d-transition-slow → 0.3s ease */
 .hero-role-card {
   position: absolute;
   inset: 12px 18px;
@@ -424,21 +447,26 @@ body.nav-open { overflow: hidden; }
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 24px 50px -24px rgba(15,23,42,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset;
   overflow: hidden;
-  opacity: 0;
-  transform: translateZ(-80px) rotateY(18deg) scale(0.92);
-  transition: transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.55s ease;
   pointer-events: none;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform-origin: center center;
+  opacity: 0;
+  transform: rotateX(90deg);
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .hero-role-card.is-active {
   opacity: 1;
-  transform: translateZ(0) rotateY(0) scale(1);
+  transform: rotateX(0deg);
   pointer-events: auto;
   z-index: 3;
+  transition-delay: 0.15s;
 }
 .hero-role-card.is-exit {
   opacity: 0;
-  transform: translateZ(-40px) rotateY(-16deg) scale(0.94);
+  transform: rotateX(-90deg);
   z-index: 2;
+  transition-delay: 0s;
 }
 .hero-role-hd {
   display: flex;
@@ -451,15 +479,22 @@ body.nav-open { overflow: hidden; }
 .hero-role-card.wa .hero-role-hd { background: #075E54; }
 .hero-role-card.drive .hero-role-hd { background: #1E3A5F; }
 .hero-role-card.slack .hero-role-hd { background: #3F1F5C; }
+/* K-mark avatar: circle, transparent fill, green ring (all three role cards) */
 .hero-role-avatar {
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--brand-green);
+  overflow: hidden;
   display: grid;
   place-items: center;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  background: rgba(255,255,255,0.18);
+  flex-shrink: 0;
+}
+.hero-role-avatar img {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 .hero-role-body {
   padding: 16px;
@@ -467,6 +502,19 @@ body.nav-open { overflow: hidden; }
   line-height: 1.45;
   color: #E2E8F0;
 }
+.hero-role-body > * {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.is-active .hero-role-body > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+.is-active .hero-role-body > :nth-child(1) { transition-delay: 0.30s; }
+.is-active .hero-role-body > :nth-child(2) { transition-delay: 0.36s; }
+.is-active .hero-role-body > :nth-child(3) { transition-delay: 0.42s; }
+.is-active .hero-role-body > :nth-child(4) { transition-delay: 0.48s; }
 .hero-bubble {
   background: #fff;
   color: #0F172A;
@@ -526,6 +574,7 @@ body.nav-open { overflow: hidden; }
   z-index: 5;
   transform: translateY(-50%);
 }
+/* Verbatim reduced-motion: instant swap, not cross-fade */
 @media (prefers-reduced-motion: reduce) {
   .hero-role-card {
     transition: none !important;
@@ -535,6 +584,11 @@ body.nav-open { overflow: hidden; }
   .hero-role-card.is-active { opacity: 1; }
   .hero-role-card.is-exit { opacity: 0; }
   .hero-role-dots { display: none; }
+  .hero-role-body > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Legacy phone mockup selectors kept for any residual markup */
@@ -1035,6 +1089,57 @@ body.nav-open { overflow: hidden; }
 .toshi-header h2 .toshi-name { color: var(--brand-green); }
 .toshi-header p { font-size: 1.0625rem; }
 
+/* ---- Toshi agent core — orbiting tools & models (WS-2 / D1 + D2) ----
+   Replaces the flat isometric tower. Pure inline SVG + CSS: layered gradients
+   for glass/metal/emissive materials, glass orbit rings, rotating light
+   packets and per-node emergence pulsing. No deps, no WebGL. */
+.toshi-tower {
+  margin: 48px 0 8px;
+  background: var(--brand-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+.toshi-tower-stage { width: 100%; max-width: 1100px; margin: 0 auto; }
+.toshi-tower-stage svg { display: block; width: 100%; height: auto; }
+
+/* Static base = the reduced-motion state: rings, packets and tiles all visible. */
+.tt-tile { transform-box: fill-box; transform-origin: 50% 50%; filter: url(#tt-shadow); }
+.tt-beat { fill: none; stroke: #22C55E; stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.tt-spin { opacity: .75; transform-box: view-box; transform-origin: 500px 330px; }
+.tt-orbit { transform-box: view-box; transform-origin: 500px 330px; opacity: .9; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Continuous orbit motion (rings + light packets). */
+  .tt-spin { animation: tt-spin 16s linear infinite; }
+  .tt-spin-b { animation-duration: 11s; animation-direction: reverse; }
+  .tt-orbit { animation: tt-spin 26s linear infinite; }
+  @keyframes tt-spin { to { transform: rotate(360deg); } }
+
+  /* Emissive core breathing. */
+  .tt-core-pulse { animation: tt-core-pulse 4.5s ease-in-out infinite; }
+  @keyframes tt-core-pulse { 0%, 100% { opacity: .26; } 50% { opacity: .55; } }
+
+  /* Per-node emergence cadence (one at a time, staggered). */
+  .tt-beat { animation: tt-beat 17s ease-out infinite; animation-delay: var(--d, 0s); }
+  @keyframes tt-beat {
+    0%   { opacity: 0; transform: scale(.35); }
+    6%   { opacity: .55; transform: scale(1); }
+    13%  { opacity: 0; transform: scale(1.4); }
+    100% { opacity: 0; transform: scale(1.4); }
+  }
+}
+
+/* Mobile-specific composition: fewer elements, larger core + tiles. */
+@media (max-width: 700px) {
+  .tt-x { display: none; }
+  .tt-core { transform-box: fill-box; transform-origin: 50% 50%; transform: scale(1.3); }
+  .tt-tile { transform: scale(1.45); }
+}
+@media (max-width: 768px) {
+  .toshi-tower { margin: 32px 0 4px; border-radius: var(--radius-lg); }
+}
 /* Toshi control center visual — cloud-quality surface (OD toshi-hub-cloud-quality) */
 .toshi-visual {
   margin-bottom: 48px;
@@ -2295,7 +2400,7 @@ body.nav-open { overflow: hidden; }
   margin-top: 48px;
   padding-top: 24px;
   text-align: center;
-  color: #94A3B8;
+  color: #64748B;
   font-size: 0.875rem;
 }
 
@@ -3676,3 +3781,107 @@ body.nav-open { overflow: hidden; }
   .hero h1 { max-width: none; }
 }
 
+/* ==== PR-1: safe polish — accessibility, contrast, responsive (2026-09-18) ==== */
+
+/* Keyboard focus ring for every interactive element (WS-7). */
+:root { --focus-ring: rgba(30, 111, 217, 0.55); }
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.hero-role-dots button:focus-visible,
+.faq-item summary:focus-visible { outline-offset: 3px; }
+
+/* The header CTA duplicates the hero CTA on the narrowest phones; the mobile
+   panel already carries it, so hide the inline one below 415px (WS-5.3). */
+@media (max-width: 414px) {
+  .navbar-cta { display: none; }
+}
+
+/* Trust row: prevent the "MCP-compatible" hyphen break and lay it out as a
+   roomier 2-column grid on phones (WS-5.2). */
+@media (max-width: 600px) {
+  .hero-trust {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+    gap: 6px 16px;
+  }
+  .hero-trust .dot { display: none; }
+}
+
+/* ==== Hero visual rebuild (WS-1): dense product-proof panel ==== */
+.hero-preview { max-width: 460px; }
+.hero-stage { height: 460px; }
+
+/* Two stacked backplates give the panel believable depth (contact shadows). */
+.hero-layer {
+  position: absolute;
+  border-radius: 22px;
+  background: #0B1220;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 24px 50px -30px rgba(15,23,42,0.55);
+  pointer-events: none;
+}
+.hero-layer-back { inset: 30px -14px -20px 30px; opacity: .30; transform: scale(.955); z-index: 0; }
+.hero-layer-mid  { inset: 16px -7px -10px 16px;  opacity: .55; transform: scale(.98);  z-index: 1; }
+.hero-deck { z-index: 2; }
+
+.hero-role-card { inset: 0; }
+.hero-role-title { flex: 1; min-width: 0; font-weight: 600; font-size: 0.875rem; }
+
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.8125rem; font-weight: 600; line-height: 1.2;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.10); color: #E2E8F0; white-space: nowrap;
+}
+.hero-chip.live { background: rgba(34,197,94,0.18); color: #86EFAC; }
+.hero-chip.wait { background: rgba(217,119,6,0.20); color: #FCD34D; }
+.hero-chip.sync { background: rgba(30,111,217,0.22); color: #93C5FD; }
+.hero-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+
+.hero-role-body { font-size: 0.875rem; }
+.hero-row { font-size: 0.8125rem; }
+.hero-meta { font-size: 0.8125rem; }
+
+.hero-ledger { margin-top: 4px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.hero-ledger-row { display: flex; justify-content: space-between; gap: 8px; font-size: 0.875rem; margin-bottom: 9px; }
+.hero-ledger-row strong { color: #fff; font-weight: 700; }
+.hero-ledger-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+
+.hero-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.hero-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--brand-green); }
+.hero-bar.blue > span { background: var(--brand-blue); }
+
+.hero-tag { font-size: 0.8125rem; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #CBD5E1; white-space: nowrap; }
+.hero-tag.ok { color: #86EFAC; background: rgba(34,197,94,0.16); }
+.hero-tag.wait { color: #FCD34D; background: rgba(217,119,6,0.18); }
+
+.hero-progress { margin-top: 10px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+.hero-progress-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8125rem; color: #CBD5E1; margin-bottom: 6px; }
+.hero-progress .hero-bar { margin-bottom: 11px; }
+.hero-progress .hero-bar:last-child { margin-bottom: 0; }
+
+/* Desktop: the connected chip stays as a floating glass card with accessible marks. */
+.hero-preview .connector-float { right: -34px; top: 46%; padding: 12px; }
+
+@media (max-width: 900px) {
+  .hero-preview { max-width: 380px; }
+  .hero-stage { height: 445px; }
+  .hero-layer-back { inset: 22px -8px -14px 22px; }
+  .hero-layer-mid  { inset: 12px -4px -7px 12px; }
+}
+@media (max-width: 600px) {
+  .hero-preview { max-width: 100%; }
+  .hero-stage { height: 480px; }
+  .hero-layer-back { inset: 18px -6px -12px 18px; }
+  .hero-layer-mid  { inset: 10px -3px -6px 10px; }
+}

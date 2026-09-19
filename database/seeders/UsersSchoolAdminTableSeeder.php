@@ -29,14 +29,11 @@ class UsersSchoolAdminTableSeeder extends Seeder
             return;
         }
 
-        $centralRegion = DB::table('states')->where('country_id', $uganda->id)
-            ->where('name', 'Central Region')->first();
-
+        // userprofiles.state_id was dropped — do not write it (see #552 / seeder fix).
         $kampala = DB::table('cities')->where('country_id', $uganda->id)
             ->where('name', 'Kampala')->first();
 
-        $stateId = $centralRegion ? $centralRegion->id : null;
-        $cityId  = $kampala ? $kampala->id : null;
+        $cityId = $kampala ? $kampala->id : null;
 
         foreach ($schools as $school) {
             $academicYear = AcademicYear::where([
@@ -50,7 +47,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
             }
 
             // Helper to create user + profile + teacher profile safely
-            $createStaff = function ($roleName, $emailPrefix, $designation) use ($school, $academicYear, $uganda, $stateId, $cityId) {
+            $createStaff = function ($roleName, $emailPrefix, $designation) use ($school, $academicYear, $uganda, $cityId) {
                 $email = $emailPrefix . '@' . Str::slug($school->name, '') . '.sch.ug';
 
                 // Safe user creation
@@ -76,7 +73,6 @@ class UsersSchoolAdminTableSeeder extends Seeder
                         'profession'    => $designation,
                         'address'       => 'School Office, ' . $school->name . ', Kampala',
                         'country_id'    => $uganda->id,
-                        // 'state_id'      => $stateId,
                         'city_id'       => $cityId,
                         'pincode'       => null,
                     ]

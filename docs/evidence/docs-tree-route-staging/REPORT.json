@@ -1,0 +1,254 @@
+{
+  "deploy": "depl-a2c36189-21dc-42c1-ad54-d8f0453ce03a",
+  "commit": "3c3d442f",
+  "pages": [
+    {
+      "name": "01-community",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/#/./",
+      "snap": {
+        "title": "Overview",
+        "h1": "KlassApp Community",
+        "dCanvas": "#fafaf5",
+        "dGreen": "#22c55e",
+        "bodyBg": "rgb(250, 250, 245)",
+        "themeHref": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+        "bodyTextHead": "Overview\nWhat’s here\nPlans (shipped)\nFor Schools\nSchool Onboarding\nBook Onboarding\nFor Parents\nEcosystem\nRoadmap (see docs hub)\nFAQ\nKlassApp Community\n\nEducationists' tools connected by intelligence.\n"
+      },
+      "cssOk": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        }
+      ],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/",
+          "status": 200,
+          "ct": "text/html; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/klassapp-logo.svg",
+          "status": 200,
+          "ct": "image/svg+xml"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/README.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/_sidebar.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "02-dev",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/dev/",
+      "snap": {
+        "title": "Overview (archived)",
+        "h1": "KlassApp WhatsApp Integration",
+        "dCanvas": "#fafaf5",
+        "dGreen": "#22c55e",
+        "bodyBg": "rgb(250, 250, 245)",
+        "themeHref": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+        "bodyTextHead": "Overview (archived)\nArchitecture Overview\nQuick Start\nDocumentation Index\nKey Environment Variables\nRelated Files\nRelated Configuration\nSetup\nArchitecture\nInteractive Menu\nAdmin Dashboard\nAPI Referenc"
+      },
+      "cssOk": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        }
+      ],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/dev/",
+          "status": 200,
+          "ct": "text/html; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/dev/README.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/dev/klassapp-logo.svg",
+          "status": 200,
+          "ct": "image/svg+xml"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/dev/_sidebar.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "03-hub",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/",
+      "snap": {
+        "title": "KlassApp Docs",
+        "h1": "KlassApp docs",
+        "dCanvas": "#fafaf5",
+        "dGreen": "#22c55e",
+        "bodyBg": "rgb(250, 250, 245)",
+        "themeHref": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+        "bodyTextHead": "Docs map\nArchitecture\nRoadmap\nProvenance\nCommunity Docsify\nDev Docsify (archived)\nKlassApp docs\n\nShort map of what lives under docs/ and what to read instead. No second wiki — DeepWiki covers code-der"
+      },
+      "cssOk": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        }
+      ],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/",
+          "status": 200,
+          "ct": "text/html; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/klassapp-logo.svg",
+          "status": 200,
+          "ct": "image/svg+xml"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/README.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/_sidebar.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "04-roadmap-md",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/roadmap.md",
+      "snap": {
+        "title": "",
+        "h1": null,
+        "dCanvas": "",
+        "dGreen": "",
+        "bodyBg": "rgba(0, 0, 0, 0)",
+        "themeHref": null,
+        "bodyTextHead": "# Roadmap\n\nHonest public direction for KlassApp. Sourced from real shipped work and the **Future Initiatives** logged in maintainer notes — not from speculative product fiction.\n\nLast curated: Septemb"
+      },
+      "cssOk": [],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/roadmap.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "05-architecture-md",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/architecture.md",
+      "snap": {
+        "title": "",
+        "h1": null,
+        "dCanvas": "",
+        "dGreen": "",
+        "bodyBg": "rgba(0, 0, 0, 0)",
+        "themeHref": null,
+        "bodyTextHead": "# Architecture (start here)\n\nKlassApp is a **multi-tenant** Laravel 12 school platform: every school’s data is scoped by `school_id`. Staff work in role portals (admin, teacher, …); parents use **What"
+      },
+      "cssOk": [],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/architecture.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "06-hub-roadmap-hash",
+      "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/#/roadmap",
+      "snap": {
+        "title": "Roadmap",
+        "h1": "Roadmap",
+        "dCanvas": "#fafaf5",
+        "dGreen": "#22c55e",
+        "bodyBg": "rgb(250, 250, 245)",
+        "themeHref": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+        "bodyTextHead": "Docs map\nArchitecture\nRoadmap\nShipped (recent)\nIn progress\nFuture (logged initiatives)\nOut of scope here\nProvenance\nCommunity Docsify\nDev Docsify (archived)\nRoadmap\n\nHonest public direction for KlassA"
+      },
+      "cssOk": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        }
+      ],
+      "css404": [],
+      "consoleErrors": [],
+      "failed": [],
+      "docsResponses": [
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/",
+          "status": 200,
+          "ct": "text/html; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css",
+          "status": 200,
+          "ct": "text/css; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/roadmap.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/klassapp-logo.svg",
+          "status": 200,
+          "ct": "image/svg+xml"
+        },
+        {
+          "url": "https://klassapp-staging-7mpoqg.laravel.cloud/docs/_sidebar.md",
+          "status": 200,
+          "ct": "text/markdown; charset=utf-8"
+        }
+      ]
+    }
+  ]
+}

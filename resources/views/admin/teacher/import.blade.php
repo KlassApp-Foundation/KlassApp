@@ -24,7 +24,10 @@
                     {{ session()->forget('insertedcount') }}
                     <div class="flex flex-col">
                         <div>
-                            <input type="file" id="file" name="import_file" class="block text-sm text-gray-900 border border-gray-300 rounded-lg p-2 bg-white cursor-pointer">
+                            <input type="file" id="file" name="import_file"
+                            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                             class="block text-sm text-gray-900 border border-gray-300 rounded-lg p-2 bg-white cursor-pointer">
+
                         </div>
                         <span class="text-red-500 text-xs font-semibold">{{$errors->first('import_file')}}</span> 
                         <div class="mt-3">

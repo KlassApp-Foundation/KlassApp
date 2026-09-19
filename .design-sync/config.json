@@ -1,0 +1,16 @@
+{
+  "pkg": "@klassapp/ds",
+  "globalName": "KlassAppDS",
+  "shape": "package",
+  "buildCmd": "npm --prefix .design-sync/shim run build",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": "dist/dashboard-refresh.css",
+  "docsDir": "../docs",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "FormGroup": {
+      "cardMode": "column"
+    }
+  }
+}

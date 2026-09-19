@@ -1,7 +1,8 @@
 # =====================================================================
-# KlassApp + WhatsApp Stack — Single Portainer Deployment
-# Deploy via: Portainer → Stacks → Add Stack → Paste this file
-# Required env vars: APP_KEY, EVOLUTION_API_KEY, WHATSAPP_HMAC_SECRET
+# KlassApp — legacy Portainer / droplet compose (DigitalOcean stack retired).
+# Production is Laravel Cloud; this file is kept for local/historical reference.
+# WhatsApp is Meta Cloud API — Evolution API + n8n stubs were removed.
+# Required env vars: APP_KEY, WHATSAPP_HMAC_SECRET (and DB/Redis/Google OAuth as used)
 # =====================================================================
 
 services:
@@ -26,20 +27,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ==================== WHATSAPP: DATABASE ====================
-  postgres:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: evolution
-      POSTGRES_USER: evolution
-      POSTGRES_PASSWORD: evolution
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - klassapp
-
-  # ==================== CACHE (shared) ====================
+  # ==================== CACHE ====================
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -68,15 +56,13 @@ services:
       DB_DATABASE: ${DB_DATABASE:-klassapp}
       DB_USERNAME: ${DB_USERNAME:-klassapp}
       DB_PASSWORD: ${DB_PASSWORD:-secret}
-      EVOLUTION_API_URL: http://evolution:8080 # to check this
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
-      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
       WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       PHP_FPM_LISTEN: "0.0.0.0:9000"
     volumes:
       - .:/var/www
@@ -104,69 +90,9 @@ services:
     depends_on:
       - app
 
-  # ==================== WHATSAPP: EVOLUTION API ====================
-  evolution:
-    image: evoapicloud/evolution-api:latest
-    restart: unless-stopped
-    ports:
-      - "8081:8080"
-    environment:
-      SERVER_URL: http://localhost:8081
-      AUTHENTICATION_TYPE: apikey
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://evolution:evolution@postgres:5432/evolution
-      DATABASE_SAVE_DATA_INSTANCE: "true"
-      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
-      DATABASE_SAVE_MESSAGE_UPDATE: "true"
-      CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/1
-      CACHE_REDIS_PREFIX_KEY: klassapp
-    volumes:
-      - evolution_data:/evolution/instances
-    depends_on:
-      - redis
-      - postgres
-    networks:
-      - klassapp
-
-  # ==================== WHATSAPP: n8n (Workflows) ====================
-  n8n:
-    image: n8nio/n8n:1.94.1
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      N8N_HOST: localhost
-      N8N_PORT: 5678
-      N8N_PROTOCOL: http
-      N8N_SECURE_COOKIE: "false"
-      NODE_FUNCTION_ALLOW_BUILTIN: crypto
-      NODE_FUNCTION_ALLOW_EXTERNAL: "*"
-      N8N_RUNNERS_ENABLED: "false"
-      WEBHOOK_URL: http://localhost:5678
-      WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
-      EVOLUTION_API_URL: http://evolution:8080
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
-      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
-      # Reaches Laravel via internal network — no host.docker.internal needed
-      LARAVEL_API_URL: http://nginx:80
-    volumes:
-      - n8n_data:/home/node/.n8n
-    depends_on:
-      - redis
-      - evolution
-      - nginx
-    networks:
-      - klassapp
-
 # ==================== VOLUMES ====================
 volumes:
   db_data:
-  postgres_data:
-  evolution_data:
-  n8n_data:
 
 # ==================== NETWORK ====================
 networks:

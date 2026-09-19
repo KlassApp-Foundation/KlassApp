@@ -44,7 +44,6 @@ class ImportMemberRequest extends FormRequest
         });
 
         return [
-            //
             'import_file' => 'required|check_academic_year|file_extension:csv,xlsx,xls',
         ];
     }

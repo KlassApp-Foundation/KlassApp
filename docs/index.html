@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>KlassApp Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
+        />
+        <link rel="stylesheet" href="shared/docsify-klassapp.css" />
+        <link rel="icon" type="image/svg+xml" href="community/klassapp-logo.svg" />
+    </head>
+    <body>
+        <div id="app"></div>
+        <script>
+            window.$docsify = {
+                name: "KlassApp Docs",
+                logo: "community/klassapp-logo.svg",
+                repo: "https://github.com/KlassApp-Foundation/KlassApp",
+                homepage: "README.md",
+                loadSidebar: true,
+                maxLevel: 3,
+                subMaxLevel: 2,
+                auto2top: true,
+                markdown: {
+                    html: true,
+                },
+                alias: {
+                    "/community/": "/community/README.md",
+                },
+            };
+        </script>
+        <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+        <script>
+            // Add GitBook banner to community pages
+            document.addEventListener('DOMContentLoaded', function() {
+                var path = window.location.hash || '';
+                if (path.indexOf('/community') !== -1) {
+                    var banner = document.createElement('div');
+                    banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:12px 16px;margin:16px;border-radius:6px;font-size:14px;';
+                    banner.innerHTML = '<strong>📖 This documentation has moved to GitBook.</strong> <a href="https://app.gitbook.com/o/5pzBsJV75ZaEToAkj6zT/s/g6CnNihjBu6JNnwlAA6i/" target="_blank">View on GitBook →</a>';
+                    var app = document.getElementById('app');
+                    if (app) app.parentNode.insertBefore(banner, app);
+                }
+            });
+        </script>
+    </body>
+</html>

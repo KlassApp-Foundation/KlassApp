@@ -4,6 +4,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\SpikeSlackAuthTestTool;
 use App\Mcp\Tools\SpikeSlackListChannelsTool;
+use App\Mcp\Tools\SpikeSlackPostMessageTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -24,6 +25,7 @@ class SpikeSlackMockServer extends Server
     protected array $tools = [
         SpikeSlackAuthTestTool::class,
         SpikeSlackListChannelsTool::class,
+        SpikeSlackPostMessageTool::class,
     ];
 
     /**

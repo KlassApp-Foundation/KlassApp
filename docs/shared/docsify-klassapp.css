@@ -1,0 +1,293 @@
+/**
+ * KlassApp Docsify theme — tokens from resources/views/components/DESIGN_SYSTEM.md
+ * (verified --d-* values mirrored from public/css/dashboard-refresh.css).
+ * Shared by docs/dev/ and docs/community/.
+ */
+
+:root {
+  /* Brand (DESIGN_SYSTEM.md) */
+  --d-blue: #1e6fd9;
+  --d-green: #22c55e;
+  --d-accent: #15803d;
+  --d-accent-dk: #166534;
+  --d-amber: #d97706;
+  --d-red: #dc2626;
+  --d-canvas: #fafaf5;
+  --d-surface: #fafaf5;
+  --d-white: #ffffff;
+  --d-text: #1e293b;
+  --d-text-secondary: #64748b;
+  --d-muted: #94a3b8;
+  --d-dark: #0f172a;
+  --d-dark-surface: #1e293b;
+  --d-border: #e2e8f0;
+  --d-border-strong: #cbd5e1;
+  --d-touch-target-min: 44px;
+
+  /* Docsify theme hooks */
+  --theme-color: var(--d-blue);
+  --base-background-color: var(--d-canvas);
+  --base-color: var(--d-text);
+  --base-font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --heading-font-family: "Sora", "DM Sans", sans-serif;
+  --code-font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  --sidebar-background: var(--d-white);
+  --sidebar-width: 280px;
+  --sidebar-border-color: var(--d-border);
+  --sidebar-name-color: var(--d-dark);
+  --sidebar-nav-link-color: var(--d-text);
+  --sidebar-nav-link-color--hover: var(--d-blue);
+  --sidebar-nav-link-color--active: var(--d-blue);
+  --sidebar-nav-link-border-color--active: var(--d-green);
+  --sidebar-nav-link-background-color--active: transparent;
+  --sidebar-nav-link-font-weight--active: 600;
+
+  --link-color: var(--d-blue);
+  --link-color--hover: #185da8;
+
+  --blockquote-border-color: var(--d-accent);
+  --blockquote-background: #e8f5e9;
+
+  --table-head-background: var(--d-white);
+  --table-row-odd-background: #f8f8f3;
+  --table-border-color: var(--d-border);
+
+  --code-inline-background: #f1f5f9;
+  --code-inline-color: var(--d-dark);
+  --code-theme-background: var(--d-dark);
+}
+
+html,
+body {
+  background: var(--d-canvas);
+  color: var(--d-text);
+  font-family: var(--base-font-family);
+}
+
+/* Sidebar brand */
+.sidebar {
+  background: var(--d-white);
+  border-right: 1px solid var(--d-border);
+}
+
+.sidebar > h1 {
+  text-align: left;
+  padding: 20px 18px 12px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--d-border);
+}
+
+.sidebar > h1 a.app-name-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.sidebar > h1 img {
+  max-width: 36px;
+  height: auto;
+  display: block;
+}
+
+.sidebar > h1 span,
+.sidebar .app-name {
+  font-family: var(--heading-font-family);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--d-dark);
+  letter-spacing: -0.02em;
+}
+
+.sidebar ul li a {
+  font-family: var(--base-font-family);
+  font-size: 14.5px;
+  padding: 8px 18px;
+  color: var(--d-text);
+  transition: color 0.15s ease;
+  line-height: 1.4;
+  min-height: var(--d-touch-target-min);
+  display: flex;
+  align-items: center;
+}
+
+.sidebar ul li a:hover {
+  color: var(--d-blue);
+  text-decoration: none;
+}
+
+.sidebar ul li.active > a {
+  color: var(--d-blue);
+  font-weight: 600;
+  border-right: 3px solid var(--d-accent);
+  background: transparent;
+}
+
+.sidebar-nav {
+  padding-top: 8px;
+}
+
+.sidebar-toggle {
+  bottom: auto;
+  top: 12px;
+}
+
+/* Content */
+.markdown-section {
+  max-width: 820px;
+  color: var(--d-text);
+}
+
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4 {
+  font-family: var(--heading-font-family);
+  color: var(--d-dark);
+  letter-spacing: -0.02em;
+}
+
+.markdown-section h1 {
+  font-weight: 700;
+  border-bottom: 2px solid var(--d-accent);
+  padding-bottom: 10px;
+}
+
+.markdown-section h2 {
+  font-weight: 600;
+  border-bottom: 1px solid var(--d-border);
+  padding-bottom: 6px;
+}
+
+.markdown-section h3 {
+  font-weight: 600;
+}
+
+.markdown-section a {
+  color: var(--d-blue);
+  font-weight: 500;
+}
+
+.markdown-section a:hover {
+  color: var(--link-color--hover);
+}
+
+.markdown-section blockquote {
+  border-left: 4px solid var(--d-accent);
+  background: var(--blockquote-background);
+  padding: 12px 18px;
+  border-radius: 0 8px 8px 0;
+  color: var(--d-text);
+}
+
+.markdown-section table {
+  border: 1px solid var(--d-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--d-border);
+}
+
+.markdown-section th {
+  background: var(--d-white);
+  color: var(--d-dark);
+  font-family: var(--heading-font-family);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--d-blue);
+  padding: 12px 14px;
+}
+
+.markdown-section td {
+  padding: 10px 14px;
+  border-top: 1px solid var(--d-border);
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-section tr:hover td {
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.markdown-section code {
+  font-family: var(--code-font-family);
+  color: var(--d-dark);
+  background: var(--code-inline-background);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.9em;
+}
+
+.markdown-section pre {
+  border-radius: 8px;
+  border: 1px solid var(--d-border);
+  background: var(--d-dark) !important;
+}
+
+.markdown-section pre > code {
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0;
+}
+
+/* Archive / status callouts */
+.ka-banner {
+  font-family: var(--base-font-family);
+  border: 1px solid var(--d-border-strong);
+  border-left: 4px solid var(--d-amber);
+  background: #fff8e1;
+  color: var(--d-text);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 0 0 1.5rem;
+}
+
+.ka-banner strong {
+  font-family: var(--heading-font-family);
+  color: var(--d-dark);
+}
+
+/* Pagination (community) */
+.docsify-pagination-container {
+  border-top: 2px solid var(--d-border);
+  margin-top: 40px;
+  padding-top: 20px;
+}
+
+.pagination-item:hover {
+  background: var(--d-canvas);
+}
+
+.pagination-item-label {
+  font-family: var(--heading-font-family);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--d-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pagination-item-title {
+  font-family: var(--heading-font-family);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--d-dark);
+}
+
+.pagination-item:hover .pagination-item-title {
+  color: var(--d-blue);
+}
+
+.pagination-item-subtitle {
+  font-size: 13px;
+  color: var(--d-text-secondary);
+}
+
+.cover {
+  display: none !important;
+}

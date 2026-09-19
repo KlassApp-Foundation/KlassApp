@@ -1,44 +1,73 @@
 # KlassApp
 
-**Tools connected by intelligence.**
+**Educationists' tools connected by intelligence.**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/KlassApp-Foundation/KlassApp)
 
-KlassApp is a multi-tenant school management platform built around **Toshi**, an AI agent that orchestrates the channels schools already use: WhatsApp, email, Drive, Slack, SMS, and the web dashboard. It is not just another SMS admin panel. The product direction is an **agentic protocol** for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
+KlassApp is a multi-tenant school management platform, built first for the hardest real-world constraints — limited bandwidth, everyday phones — which is what makes it work anywhere schools need it. Schools run day-to-day operations in one place, while **Toshi** — KlassApp's AI agent — helps finish setup and keep work moving across the channels educationists already use. Parents get answers on **WhatsApp**. Admins and teachers work in the web dashboard. The product direction is an agentic protocol for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
 
 Live product: [https://klassapp.xyz](https://klassapp.xyz)
 
-KlassApp will be free, open, and self-hostable: you will be able to read the source code, and if you want, run your own copy yourself. Before wide launch, the codebase closes briefly for an independent security review. This repository is the working tree for the hosted SaaS today. Contributions and early feedback are welcome via GitHub and `community@klassapp.xyz`.
+![KlassApp admin dashboard with Toshi open on staging](docs/readme/klassapp-screenshot-readme.png)
 
-## What you get today
+## Key Capabilities
 
-- **Multi-tenant SaaS**: every school is scoped by `school_id` end to end (queries, jobs, caches, UI).
-- **School operations**: academics, attendance, exams and report cards, fees, staff and parent roles, onboarding wizard.
-- **WhatsApp (live)**: Meta Cloud API for parent messaging, interactive menus, notifications, and delivery logging. This is shipped, not "upcoming."
-- **Toshi**: in-product AI assistant for school workflows (role-aware, gated, auditable). Broader connector orchestration (Drive, Slack, and friends) is the protocol roadmap; WhatsApp and the dashboard are the primary live surfaces today.
-- **Hosted on Laravel Cloud** at `klassapp.xyz` (EU-West-1). Local development uses Docker Compose or your own MySQL/Redis.
+- **WhatsApp-first parent operations** — Live Meta Cloud API messaging: attendance, fees, results, interactive menus, and delivery logging. Parents get answers without calling the office.
+- **Toshi, the school AI agent** — In-product assistant for guided school setup and role-aware workflows in the dashboard (with WhatsApp-channel capability in the product). Auditable, gated, and designed for human confirmation on sensitive steps.
+- **Connected tools schools already use** — The admin surface is built around WhatsApp, Google Drive, and Slack as first-class channels. WhatsApp messaging is the connector shipping in production today; Drive and Slack are part of the same product model as the protocol expands.
+- **Real school operations** — Academics, attendance, exams and report cards, fees, staff and parent roles, notice board, and a full onboarding wizard — all scoped per school.
+- **Multi-tenant by design** — Every query, job, cache key, and UI list is scoped by `school_id`. Cross-school data leaks are treated as bugs, not edge cases.
+- **Hosted or self-run** — Production SaaS on Laravel Cloud (`klassapp.xyz`, EU-West-1). This repository is MIT-licensed so you can read the code and run your own copy.
 
-## Stack
+## Architecture: Toshi connector flow
 
-| Layer | Version / notes |
-|---|---|
-| PHP | 8.4 |
-| Laravel | 12.x |
-| Frontend | Blade, Livewire 3, Vue 3.5 via `@vue/compat` (MODE 2), Vite 8 |
-| CSS | Tailwind CSS 4 (CSS-first; no `tailwind.config.js`) |
-| Data | MySQL 8, Redis 7 |
-| Auth / API | Session web auth, Laravel Sanctum |
-| AI | Laravel AI SDK + OpenAI-compatible LLM config for Toshi |
-| Production | Laravel Cloud (`klassapp.xyz`) |
+How channels relate to the Laravel app today. **WhatsApp is the live connector** (Meta Cloud API). Google Drive and Slack appear in the product UI as first-class channels; they are not separate API clients in `app/` yet.
 
-Agent and contributor conventions live in [`AGENTS.md`](AGENTS.md). Project history and verified ops notes live in [`knowledge.md`](knowledge.md). Provenance of the GeGoK12 fork is documented in [`docs/project-provenance.md`](docs/project-provenance.md).
+```mermaid
+flowchart TB
+  subgraph people [People]
+    Parent[Parent on WhatsApp]
+    Staff[Admin / Teacher in browser]
+  end
 
-## Local setup
+  subgraph meta [Meta]
+    CloudAPI["WhatsApp Cloud API<br/>graph.facebook.com"]
+  end
+
+  subgraph klassapp [KlassApp Laravel app]
+    Inbound["WhatsAppController<br/>POST /api/whatsapp/inbound"]
+    Outbound[OutboundWhatsAppService]
+    Transport[WhatsAppBusinessService]
+    DeliveryLog[(MessageDeliveryLog)]
+    ToshiUI["AgentToshi Livewire"]
+    ToshiSDK["ToshiSdkV2Service<br/>Laravel AI SDK"]
+    DriveUI["Google Drive<br/>product model — UI only"]
+    SlackUI["Slack<br/>product model — UI only"]
+  end
+
+  Parent <--> CloudAPI
+  CloudAPI <--> Inbound
+  CloudAPI <--> Transport
+  Outbound --> Transport
+  Transport --> DeliveryLog
+  Inbound --> DeliveryLog
+  Staff --> ToshiUI
+  ToshiUI --> ToshiSDK
+  Staff -.-> DriveUI
+  Staff -.-> SlackUI
+```
+
+Inbound webhook and outbound Graph sends both go through Meta; delivery status is stored in `MessageDeliveryLog`. Dashboard staff talk to Toshi in-product; parent WhatsApp menus and proactive notices use the Meta path above (not a Drive/Slack API).
+
+## Quick Start
+
+KlassApp is a Laravel 12 application. There is no one-line install script. Local setup looks like a normal Laravel + Vite project.
 
 ### Requirements
 
 - PHP 8.4+, Composer 2, Node.js 20+ (or current LTS), npm
-- MySQL 8 and Redis 7 (or Docker Compose from this repo)
+- MySQL 8 and Redis 7 — or Docker Compose from this repo
 - Git
 
 ### 1. Clone and install
@@ -52,7 +81,7 @@ php artisan key:generate
 npm ci
 ```
 
-If `npm ci` fails on peer deps, the repo ships `.npmrc` with `legacy-peer-deps=true` for known Vue 2-era peer declarations. Prefer that over deleting packages without an audit.
+If `npm ci` fails on peer deps, this repo ships `.npmrc` with `legacy-peer-deps=true` for known Vue 2-era peer declarations. Prefer that over deleting packages without an audit.
 
 ### 2. Configure `.env`
 
@@ -71,7 +100,7 @@ CACHE_STORE=file
 SESSION_DRIVER=file
 QUEUE_CONNECTION=database
 
-# Optional: Toshi (disabled by default)
+# Optional: Toshi LLM (leave off for a plain UI smoke test)
 TOSHI_LLM_ENABLED=false
 OPENAI_COMPATIBLE_URL=
 OPENAI_COMPATIBLE_API_KEY=
@@ -84,19 +113,17 @@ WHATSAPP_BUSINESS_WABA_ID=
 WHATSAPP_BUSINESS_VERIFY_TOKEN=
 ```
 
-Generate `APP_KEY` with `php artisan key:generate` if you have not already. Toshi LLM calls fail loudly when enabled without an API key; leave Toshi off for a plain local UI smoke test.
+### 3. Database and services
 
-### 3. Database and Redis
-
-**Option A: Docker Compose** (app + MySQL + Redis + nginx on port 8080):
+**Option A — Docker Compose** (app + MySQL + Redis + nginx; typically port 8080):
 
 ```bash
 docker compose up -d
-# Point DB_HOST / REDIS_HOST at the compose services when running PHP inside the app container,
-# or keep 127.0.0.1 when using published ports from the host.
 ```
 
-**Option B: Host MySQL/Redis** matching the `.env` values above.
+Point `DB_HOST` / Redis at the compose services when PHP runs inside the app container, or keep `127.0.0.1` when using published ports from the host.
+
+**Option B — Host MySQL/Redis** matching the `.env` values above.
 
 Then:
 
@@ -105,19 +132,19 @@ php artisan migrate
 php artisan storage:link
 ```
 
-Seed data, if you use it, depends on the seeders you need for your task. Prefer factories and feature tests over production-like school data.
+Prefer factories and feature tests over production-like school data. Never use real student or parent records for verification.
 
-### 4. Frontend and app server
+### 4. Run the app
 
 ```bash
-# Terminal 1: Vite (writes public/hot while running)
+# Terminal 1 — Vite (writes public/hot while running)
 npm run dev
 
-# Terminal 2: Laravel
+# Terminal 2 — Laravel
 php artisan serve
 ```
 
-Open `http://127.0.0.1:8000`. For a production-like asset build without Vite HMR:
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). For a production-like asset build without HMR:
 
 ```bash
 npm run build
@@ -130,41 +157,64 @@ Do not leave `public/hot` behind when testing a production-style build; Laravel 
 
 ```bash
 php artisan test --compact
-# or a focused file:
+# focused:
 php artisan test --compact tests/Feature/ExampleTest.php
 ```
 
-PHPUnit is the project standard. Prefer factories and school-scoped fixtures. Never use real student or parent data for verification.
+PHPUnit is the project standard. UI checks use Playwright scripts under `e2e/`.
 
-## Repository layout (high level)
+### Try the hosted demo
 
-- `app/` Laravel application code (HTTP, Livewire, services, jobs, console)
-- `resources/views/` Blade (including the public marketing landing)
-- `resources/assets/js/` Vue SFCs and app bootstrap (Vite entry)
-- `routes/` web, API, and role-scoped route files
-- `docs/` deeper guides (WhatsApp, testing, provenance). Some older `docs/dev/*` pages still describe retired stacks; trust this README and `knowledge.md` for current hosting and bundler facts.
-- `AGENTS.md` standing rules for anyone (human or agent) changing the codebase
+Staging is a separate Laravel Cloud environment with demo/seed data (not a production dump). Public login credentials are **not** published here.
+
+- Staging URL: [https://klassapp-staging-7mpoqg.laravel.cloud](https://klassapp-staging-7mpoqg.laravel.cloud)
+- Request demo access: [community@klassapp.xyz](mailto:community@klassapp.xyz)
+
+## Resources
+
+- [Live product](https://klassapp.xyz)
+- [Documentation (GitBook)](https://klassdocs.gitbook.io/klassapp-documentation/) — community docs, architecture, and roadmap (synced from this repo)
+- [Docs map](docs/README.md) — internal docs index (archived Docsify hub)
+- [Architecture bridge](docs/architecture.md)
+- [Public roadmap](docs/roadmap.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Agent & maintainer rules](AGENTS.md)
+- [Project provenance (GeGoK12 fork)](docs/project-provenance.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [DeepWiki overview](https://deepwiki.com/KlassApp-Foundation/KlassApp)
+- Community: [community@klassapp.xyz](mailto:community@klassapp.xyz)
+
+### Stack (short)
+
+| Layer | Notes |
+|---|---|
+| PHP / Laravel | 8.4 / Laravel 12 |
+| UI | Blade, Livewire 3, Vue 3.5 via `@vue/compat` (MODE 2), Vite 8 |
+| CSS | Tailwind CSS 4 (CSS-first; no `tailwind.config.js`) |
+| Data | MySQL 8, Redis 7 |
+| Auth / API | Session web auth, Laravel Sanctum |
+| AI | Laravel AI SDK + OpenAI-compatible LLM config for Toshi |
+| Production | Laravel Cloud (`klassapp.xyz`, EU-West-1) |
+
+Session history and verified ops notes live in [`knowledge.md`](knowledge.md) (maintainers).
 
 ## Contributing
 
-1. Open a focused branch off `main`. Prefer small, atomic PRs.
-2. Match existing conventions in sibling files. Read `AGENTS.md` before non-trivial work.
-3. Add or update PHPUnit coverage for behavior you change, then run the affected tests.
-4. Keep every feature multi-tenant: scope by `school_id` throughout.
-5. Do not commit secrets (`.env`, API keys, deploy keys). Fail loud when required keys are missing rather than baking defaults into config.
+1. Sync from latest `main` before starting (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+2. Prefer small, atomic PRs with real verification evidence.
+3. Keep every feature multi-tenant (`school_id` end to end).
+4. Do not commit secrets or real student/school data.
 
-Questions and community contact: **community@klassapp.xyz**.
-
-## Open source
-
-| Milestone | Status |
-|---|---|
-| Hosted SaaS (`klassapp.xyz`) | Live now |
-| Free, open, self-hostable MIT source | Coming after an independent security review (no public date stated) |
-| MCP-compatible connectors as a first-class protocol surface | Roadmap alongside the open-source release |
-
-Until the public open-source release, treat this tree as the working product codebase. KlassApp will be free, open, and self-hostable: you will be able to read the source, and if you want, run your own copy.
+External contributor PRs get genuine human review before merge.
 
 ## License
 
-Open-source licensing (MIT) lands with the public free/open/self-hostable release after the security review. Until then, all rights are reserved by KlassApp Foundation unless a separate agreement says otherwise.
+KlassApp is released under the [MIT License](LICENSE).
+
+**Copyright notices.** The original notice is retained unmodified, as the MIT License requires, with a second line covering the KlassApp work built on top of the fork:
+
+- Original work (GeGoK12): Copyright (c) 2025 GegoSoft Technologies and GegoK12 Contributors
+- KlassApp work (since the fork): Copyright (c) 2026 KlassApp Foundation
+
+You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the conditions in [`LICENSE`](LICENSE).

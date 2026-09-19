@@ -3,7 +3,6 @@
 
     use App\Models\City;
     use App\Models\Country;
-    use App\Models\State;
     use Illuminate\Database\Seeder;
     use Illuminate\Support\Facades\DB;
     use App\Models\School;
@@ -74,9 +73,8 @@
                             ]
                         );
 
-                        // Student profile
-                        $city = City::where("status", 1)
-                                  ->whereIn("state_id", State::pluck("id"))
+                        // Student profile (userprofiles.state_id dropped — cities.state_id too)
+                        $city = City::where('status', 1)
                                   ->inRandomOrder()
                                   ->first();
                         if ($city) {
@@ -91,7 +89,6 @@
             'address'       => $faker->streetAddress . ', Kampala, Uganda',
             'country_id'    => $city->country_id,
             'city_id'       => $city->id,
-            'state_id'      => $city->state_id,
             'gender'        => $faker->randomElement(['male', 'female']),
             'date_of_birth' => $faker->dateTimeBetween('-18 years', '-5 years'),
         ]

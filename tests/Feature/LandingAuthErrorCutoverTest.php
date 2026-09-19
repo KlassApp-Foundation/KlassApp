@@ -15,7 +15,7 @@ class LandingAuthErrorCutoverTest extends TestCase
         $response->assertSee('Human in the loop', false);
         $response->assertSee('hero-bg-vintage', false);
         $response->assertSee('site-footer', false);
-        $response->assertSee('Smarter schools start here.', false);
+        $response->assertSee("Educationists' tools connected by intelligence.", false);
         $response->assertDontSee('id="community"', false);
         $response->assertDontSee('noindex,nofollow', false);
         $response->assertSee('build/assets/landing-preview-', false);
