@@ -1,6 +1,7 @@
 {{-- Toshi agent core — orbiting tools & models (WS-2 / D1+D2). Pure inline SVG + CSS; no deps, no WebGL. --}}
 <div class="toshi-tower reveal" id="toshiTower" aria-label="Toshi orchestration visual">
   <div class="toshi-tower-stage">
+<div class="toshi-depth" aria-hidden="true"></div>
 <svg class="tt-svg" viewBox="120 150 760 420" role="img" aria-labelledby="tt-title tt-desc">
 <title id="tt-title">KlassApp Toshi — an agent core orchestrating school tools and AI models</title>
 <desc id="tt-desc">A glowing metallic Toshi core sits at the centre, wrapped by two glass orbit rings. School tools (WhatsApp, Google Drive, Slack, email, SMS, calendar) ride the inner ring and AI models (Anthropic, OpenAI, Grok, Gemini, Kimi, Z.ai) the outer ring as upright tiles; the rings and light packets rotate continuously and one tile lights up at a time. Decorative.</desc>

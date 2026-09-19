@@ -109,6 +109,8 @@ public/images/*
 !public/images/brand/
 !public/images/brand/models/
 !public/images/brand/models/*
+!public/images/landing/
+!public/images/landing/*
 public/js/app.js.LICENSE.txt
 public/css/app.css.map
 

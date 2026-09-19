@@ -3962,3 +3962,82 @@ select:focus-visible,
   .hero-role-card.is-active { opacity: 1; transform: none; }
   .hero-role-card.is-exit { opacity: 0; }
 }
+
+/* ==== PR-4: depth, announcement bar, trust strip, real screenshots, section rhythm ==== */
+
+/* Section background rhythm: paper -> white -> tinted (existing tokens only). */
+.toshi { background: var(--paper-base); }
+.how-it-works { background: var(--brand-white); }
+.trust { background: var(--brand-light); }
+.compare { background: var(--paper-base); }
+
+/* Restrained depth: one soft radial glow + a faint grid behind hero + Toshi core. */
+.hero-depth, .toshi-depth { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.hero-depth {
+  background:
+    radial-gradient(ellipse 55% 48% at 74% 36%, rgba(34,197,94,0.10), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(30,41,59,0.04) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(90deg, rgba(30,41,59,0.04) 0 1px, transparent 1px 30px);
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 62% 40%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 72% at 62% 40%, #000 25%, transparent 78%);
+}
+.toshi-depth {
+  background:
+    radial-gradient(ellipse 40% 55% at 50% 46%, rgba(34,197,94,0.10), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(30,41,59,0.035) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(30,41,59,0.035) 0 1px, transparent 1px 32px);
+  -webkit-mask-image: radial-gradient(ellipse 62% 72% at 50% 48%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 62% 72% at 50% 48%, #000 25%, transparent 78%);
+}
+.hero .container { position: relative; z-index: 1; }
+.toshi-tower-stage { position: relative; }
+.toshi-tower-stage svg { position: relative; z-index: 1; }
+
+/* Announcement bar (dismissible; scrolls away above the sticky nav). */
+.announce { position: relative; z-index: 101; background: linear-gradient(90deg, #0F172A, #1E293B); color: #E2E8F0; }
+.announce[hidden] { display: none; }
+.announce-inner { max-width: var(--container); margin: 0 auto; padding: 10px 52px 10px 24px; text-align: center; font-size: 0.875rem; }
+.announce-inner { color: #E2E8F0; }
+.announce p { margin: 0; color: #E2E8F0; }
+.announce a, .announce span { color: #E2E8F0; }
+.announce strong { color: #86EFAC; font-weight: 700; }
+.announce-close {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 8px; border: 0;
+  background: rgba(255,255,255,0.10); color: #E2E8F0; font-size: 18px; line-height: 1; cursor: pointer;
+}
+.announce-close:hover { background: rgba(255,255,255,0.2); }
+.announce-close:focus-visible { outline: 3px solid rgba(134,239,172,0.6); outline-offset: 2px; }
+
+/* Compact trust strip (capability signals only). */
+.trust-strip { background: var(--brand-white); border-bottom: 1px solid var(--border); padding: 18px 0; }
+.trust-strip-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 24px; font-size: 0.875rem; color: var(--text-secondary); }
+.trust-strip-item { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+.trust-strip-item::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--brand-accent); }
+.trust-strip-gh { color: var(--brand-blue); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.trust-strip-gh:hover { text-decoration: underline; }
+.trust-strip-gh:focus-visible { outline: 3px solid var(--focus-ring, rgba(30,111,217,0.55)); outline-offset: 2px; border-radius: var(--radius-sm); }
+@media (max-width: 600px) {
+  .trust-strip-inner { flex-direction: column; gap: 8px; }
+  .trust-strip-item::before { display: none; }
+}
+
+/* Real product screenshot panels (How it works). */
+.shots { margin-top: 56px; }
+.shots-head { text-align: center; margin-bottom: 26px; }
+.shots-head h3 { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: -0.02em; }
+.shots-head p { color: var(--text-secondary); margin-top: 8px; }
+.shots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.shot { margin: 0; background: var(--brand-white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
+.shot .ui-chrome { padding: 10px 12px; }
+.shot img { display: block; width: 100%; height: auto; }
+@media (max-width: 900px) { .shots-grid { grid-template-columns: 1fr; } }
+
+/* Panel chrome gets a URL pill so the framing reads as real browser chrome. */
+.shot .ui-chrome-title { flex: 0 0 auto; }
+.shot-url {
+  flex: 1; min-width: 0; margin-left: 8px;
+  font-size: 0.75rem; color: var(--text-secondary);
+  background: var(--brand-light); border: 1px solid var(--border); border-radius: 6px;
+  padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
