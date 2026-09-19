@@ -122,4 +122,28 @@ class TeacherFindNullAvatarTest extends TestCase
         $this->assertNotNull($match, 'teacher missing from find payload: '.$response->getContent());
         $this->assertTrue(($match['avatar'] ?? null) === null || $match['avatar'] === '');
     }
+
+    public function test_admin_teachers_index_page_renders_without_500(): void
+    {
+        $teacher = User::factory()->create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 5,
+            'email' => 'teacher.index@test.sch.ug',
+            'name' => 'index.teacher',
+        ]);
+
+        Userprofile::create([
+            'school_id' => $this->school->id,
+            'user_id' => $teacher->id,
+            'usergroup_id' => 5,
+            'firstname' => 'Index',
+            'lastname' => 'Teacher',
+            'avatar' => null,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get('/admin/teachers')
+            ->assertOk();
+    }
 }

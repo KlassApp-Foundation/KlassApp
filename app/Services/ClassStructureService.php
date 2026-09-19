@@ -226,7 +226,6 @@ class ClassStructureService
                 $created = true;
             }
 
-            // Name-encoding only — never write standards_link.stream.
             $link = StandardLink::firstOrCreate(
                 [
                     'school_id' => $school->id,
@@ -236,6 +235,7 @@ class ClassStructureService
                 ],
                 [
                     'status' => '1',
+                    'stream' => $streamLabel,
                 ]
             );
 

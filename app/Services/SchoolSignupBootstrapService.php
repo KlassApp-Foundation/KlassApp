@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\OnboardingEngine;
 use App\Models\Plan;
 use App\Models\School;
 use App\Models\Subscription;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Models\AcademicYear;
 
 /**
  * Light SaaS signup bootstrap: admin user + placeholder school.
@@ -24,6 +26,13 @@ use Throwable;
  */
 class SchoolSignupBootstrapService
 {
+    private OnboardingEngine $onboardingEngine;
+
+    public function __construct(?OnboardingEngine $onboardingEngine = null)
+    {
+        $this->onboardingEngine = $onboardingEngine ?? new OnboardingEngine();
+    }
+
     /**
      * @param  array{
      *   name: string,
@@ -38,11 +47,22 @@ class SchoolSignupBootstrapService
     public function bootstrap(array $data): User
     {
         return DB::transaction(function () use ($data) {
-            $adminName = trim((string) $data['name']);
-            $email = trim((string) $data['email']);
+            $adminName = trim((string) ($data['name'] ?? ''));
+            $email = trim((string) ($data['email'] ?? ''));
             $phone = $this->normalizePhone($data['phone'] ?? null);
 
             $school = $this->createPlaceholderSchool($adminName, $email, $phone);
+
+            $academicYear = AcademicYear::query()
+                ->where('school_id', $school->id)
+                ->where('status', 1)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($academicYear) {
+                $this->onboardingEngine->createUgandanHolidays($school, $academicYear);
+            }
+
             $user = $this->createSchoolAdmin($school, $data, $phone);
             $this->createUserProfile($user, $adminName, $phone);
             $this->createPendingSubscription($user);
@@ -120,7 +140,7 @@ class SchoolSignupBootstrapService
             return '+'.$digits;
         }
 
-        if (preg_match('/^7[0578]\d{7}$/', $digits)) {
+        if (preg_match('/^7\d{8}$/', $digits)) {
             return '+256'.$digits;
         }
 

@@ -168,7 +168,7 @@ class TeacherShowController extends Controller
       $schoolId = (int) $actor->school_id;
       $user = User::findByExactNameInSchool($name, $schoolId, 5);
 
-      if ($user === null && ctype_digit((string) $name)) {
+      if ($user === null && (ctype_digit((string) $name) || (string) $name === 'null')) {
           $user = User::query()
               ->where('id', (int) $name)
               ->where('school_id', $schoolId)

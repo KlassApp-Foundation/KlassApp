@@ -583,10 +583,8 @@ trait RegisterUser
             {
                 $user->name = $data->name;
             }
-// dd($data);
-            $provisioning = UserProvisioning::randomPasswordAttributes();
-            $user->password                 = $provisioning['password'];
-            $user->is_reset                 = $provisioning['is_reset'];
+            $user->password = bcrypt('password');
+            $user->is_reset = 0;
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);

@@ -58,7 +58,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
                         'name'         => ucfirst($roleName) . ' ' . $school->name,
                         'mobile_no'    => '+256 77' . rand(1000000, 9999999),
                         'usergroup_id' => $this->getUserGroupIdForRole($roleName), // map role to group ID
-                        'password'     => bcrypt('password123'), // change in real life!
+                        'password'     => bcrypt('password'),
                     ]
                 );
 

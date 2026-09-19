@@ -44,9 +44,6 @@ class ImportMemberRequest extends FormRequest
         });
 
         return [
-            //
-            // Wizard upload path already accepts spreadsheets; admin import
-            // (students + teachers share this FormRequest) must match.
             'import_file' => 'required|check_academic_year|file_extension:csv,xlsx,xls',
         ];
     }

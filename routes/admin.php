@@ -238,6 +238,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::post( '/student/add/validationUser', 'StudentController@validationUser' );
 	Route::post( '/student/add', 'StudentController@store' );
 	//show
+	Route::get( '/student/show/{name}', 'StudentDetailsController@show' );
 	Route::get( '/student/show/details/{name}', 'StudentDetailsController@showDetails' );
 	Route::get( '/student/show/relations/{name}', 'StudentDetailsController@showRelations' );
 	Route::get( '/student/show/siblings/{name}', 'StudentDetailsController@showSiblings' );
@@ -929,8 +930,17 @@ Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentControlle
 
 // Health records are per-student under admin/student/health/{userId}
 Route::get('/health', function () {
-    return redirect('/admin/students');
+    $student = App\Models\User::where('usergroup_id', 6)->first();
+    if (!$student) {
+        return redirect('/admin/students')->with('info', 'No student records found.');
+    }
+    return view('admin.health.index', compact('student'));
 })->name('admin.health');
+
+Route::get('/health/{student_id}', function ($student_id) {
+    $student = App\Models\User::where('usergroup_id', 6)->findOrFail($student_id);
+    return view('admin.health.index', compact('student'));
+})->where('student_id', '[0-9]+')->name('admin.health.student');
 
 Route::get('/messages', function () {
     return view('admin.messages.index');
