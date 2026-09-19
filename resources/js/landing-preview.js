@@ -132,3 +132,15 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   }, { threshold: 0.2 });
   flowObserver.observe(flow);
 })();
+
+/* Announcement bar — dismissible, remembered across reloads. */
+(function initAnnounce() {
+  const bar = document.getElementById('announceBar');
+  const btn = document.getElementById('announceClose');
+  if (!bar || !btn) return;
+  try { if (localStorage.getItem('ka-announce-dismissed') === '1') { bar.hidden = true; return; } } catch (e) { /* storage blocked */ }
+  btn.addEventListener('click', () => {
+    bar.hidden = true;
+    try { localStorage.setItem('ka-announce-dismissed', '1'); } catch (e) { /* storage blocked */ }
+  });
+})();
