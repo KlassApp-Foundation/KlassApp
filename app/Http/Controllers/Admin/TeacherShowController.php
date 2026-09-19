@@ -24,6 +24,27 @@ class TeacherShowController extends Controller
     /**
      * @param  list<string>  $with
      */
+    private function findSchoolTeacherById(int $id, array $with = []): User
+    {
+        $actor = Auth::user();
+        if ($actor === null) {
+            abort(403);
+        }
+
+        $query = User::query()
+            ->where('id', $id)
+            ->where('school_id', (int) $actor->school_id)
+            ->where('usergroup_id', 5);
+        if ($with !== []) {
+            $query->with($with);
+        }
+        $user = $query->first();
+        if ($user === null) {
+            abort(404);
+        }
+        return $user;
+    }
+
     private function findSchoolTeacherByName(string $name, array $with = []): User
     {
         $actor = Auth::user();
@@ -48,10 +69,10 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function showDetails($name)
+    public function showDetails($id)
     {
       //
-      $users = collect([$this->findSchoolTeacherByName($name, ['standardLink'])]);
+      $users = collect([$this->findSchoolTeacherById($id, ['standardLink'])]);
       $users = TeacherDetailResource::collection($users);
 
       return $users;
@@ -63,10 +84,10 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function showTimetable($name)
+    public function showTimetable($id)
     {
       //
-      $users = collect([$this->findSchoolTeacherByName($name, ['teacherlink'])]);
+      $users = collect([$this->findSchoolTeacherById($id, ['teacherlink'])]);
       if( count($users[0]['teacherlink']) > 0)
       {
         $users = TeacherTimeTableResource::collection($users);
@@ -84,10 +105,10 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function showClasses($name)
+    public function showClasses($id)
     {
       //
-      $user = $this->findSchoolTeacherByName($name, ['teacherlink']);
+      $user = $this->findSchoolTeacherById($id, ['teacherlink']);
       $users = TeacherClassesResource::collection($user->teacherlink);
 
       return $users;
@@ -99,10 +120,10 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function showClassTeacher($name)
+    public function showClassTeacher($id)
     {
       //
-      $user = $this->findSchoolTeacherByName($name, ['standardLink']);
+      $user = $this->findSchoolTeacherById($id, ['standardLink']);
       $array['standard']  = $user->standardLink->StandardName;
       $array['section']   = $user->standardLink->section->name;
 
@@ -115,10 +136,10 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function showLeaveHistory($name)
+    public function showLeaveHistory($id)
     {
       //
-      $user = $this->findSchoolTeacherByName($name);
+      $user = $this->findSchoolTeacherById($id);
       $school_id = Auth::user()->school_id;
       $academic_year = SiteHelper::getAcademicYear($school_id);
       $leave = TeacherLeaveApplication::where([
@@ -131,17 +152,17 @@ class TeacherShowController extends Controller
       return $leave;
     }
 
-    public function showActivity($name)
+    public function showActivity($id)
     {
       //
-      $user = $this->findSchoolTeacherByName($name, ['userprofile']);
+      $user = $this->findSchoolTeacherById($id, ['userprofile']);
       $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
       $activitylog = ActivityLogResource::collection($activitylog);
 
       return $activitylog;
     }
 
-     public function showActivityLog($name)
+    public function showActivityLog($name)
     {
       //
       $user = $this->findSchoolTeacherByName($name, ['userprofile']);
@@ -157,24 +178,19 @@ class TeacherShowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($name)
+    public function show($id)
     {
-      // Prefer username slug; fall back to numeric id when users.name is null
-      // (avoids /admin/teacher/show/null from JS string concat).
+      //
       $actor = Auth::user();
       if ($actor === null) {
           abort(403);
       }
       $schoolId = (int) $actor->school_id;
-      $user = User::findByExactNameInSchool($name, $schoolId, 5);
-
-      if ($user === null && (ctype_digit((string) $name) || (string) $name === 'null')) {
-          $user = User::query()
-              ->where('id', (int) $name)
-              ->where('school_id', $schoolId)
-              ->where('usergroup_id', 5)
-              ->first();
-      }
+      $user = User::query()
+          ->where('id', (int) $id)
+          ->where('school_id', $schoolId)
+          ->where('usergroup_id', 5)
+          ->first();
 
       if ($user === null) {
           abort(404);

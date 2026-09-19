@@ -21,6 +21,7 @@ class StandardLink extends JsonResource
             'standard_name'     =>  $this->StandardName,
             'section_name'      =>  $this->section->name,
             'standard_section'  =>  $this->StandardSection,
+            'stream_name'       =>  $this->section?->stream,
         ];
     }
 }

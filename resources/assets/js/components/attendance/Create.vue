@@ -6,85 +6,31 @@
                 {{ success }}
             </div>
 
-            <!-- Class Selection -->
-            <div class="my-5">
-                <div class="tw-form-group w-full lg:w-3/5">
-                    <div
-                        class="flex flex-col lg:flex-row lg:items-center w-full"
-                    >
-                        <div class="mb-2 w-full lg:w-1/4">
-                            <label for="standardLink_id" class="tw-form-label">
-                                Select Class <span class="text-red-500">*</span>
-                            </label>
-                        </div>
-                        <div class="mb-2 w-full lg:w-3/4">
-                            <select
-                                class="tw-form-control w-full"
-                                v-model="standardLink_id"
-                                @change="onClassChange"
-                            >
-                                <option value="" disabled>Select Class</option>
-                                <option
-                                    v-for="std in standardlist"
-                                    :key="std.id"
-                                    :value="std.id"
-                                >
-                                    {{ std.standard_name }} -
-                                    {{ std.section_name }}
-                                </option>
-                            </select>
-                            <span
-                                v-if="errors?.standardLink_id"
-                                class="text-red-500 text-xs font-semibold"
-                            >
-                                {{ errors.standardLink_id[0] }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid gap-4 md:grid-cols-3">
+                <label class="block">
+                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Class</span>
+                    <select class="tw-form-control w-full" v-model="standardLink_id" @change="onClassChange">
+                        <option value="" disabled>Select class</option>
+                        <option v-for="std in standardlist" :key="std.id" :value="std.id">
+                            {{ std.standard_name }} - {{ std.section_name }}<template v-if="std.stream_name"> / {{ std.stream_name }}</template>
+                        </option>
+                    </select>
+                    <span v-if="errors?.standardLink_id" class="text-red-500 text-xs font-semibold">{{ errors.standardLink_id[0] }}</span>
+                </label>
+                <label class="block">
+                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Stream</span>
+                    <input :value="selectedStream" readonly class="tw-form-control w-full bg-slate-50" placeholder="Selected with class" />
+                </label>
+                <label class="block">
+                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Date</span>
+                    <input type="date" v-model="localDate" class="tw-form-control w-full" />
+                    <span v-if="errors.date" class="text-red-500 text-xs font-semibold">{{ errors.date[0] }}</span>
+                </label>
             </div>
 
-            <!-- Date -->
-            <div class="my-5">
-                <div class="tw-form-group w-full lg:w-3/5">
-                    <div
-                        class="flex flex-col lg:flex-row lg:items-center w-full"
-                    >
-                        <div class="mb-2 w-full lg:w-1/4">
-                            <label for="date" class="tw-form-label">
-                                Date <span class="text-red-500">*</span>
-                            </label>
-                        </div>
-                        <div class="mb-2 w-full lg:w-3/4">
-                            <input
-                                type="date"
-                                v-model="localDate"
-                                class="tw-form-control w-full"
-                            />
-                            <span
-                                v-if="errors.date"
-                                class="text-red-500 text-xs font-semibold"
-                            >
-                                {{ errors.date[0] }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Session -->
-            <div class="my-5">
-                <div class="tw-form-group w-full lg:w-3/5">
-                    <div
-                        class="flex flex-col lg:flex-row lg:items-center w-full"
-                    >
-                        <div class="mb-2 w-full lg:w-1/4">
-                            <label class="tw-form-label">
-                                Session <span class="text-red-500">*</span>
-                            </label>
-                        </div>
-                        <div class="mb-2 w-full lg:w-3/4">
-                            <div class="flex gap-4">
+            <div class="mt-5 flex flex-wrap items-center gap-4">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Session</span>
+                <div class="flex gap-4">
                                 <label
                                     class="flex items-center tw-form-control cursor-pointer"
                                 >
@@ -108,15 +54,8 @@
                                     <span>Afternoon</span>
                                 </label>
                             </div>
-                            <span
-                                v-if="errors.session"
-                                class="text-red-500 text-xs font-semibold"
-                            >
-                                {{ errors.session[0] }}
-                            </span>
-                        </div>
-                    </div>
                 </div>
+                <span v-if="errors.session" class="text-red-500 text-xs font-semibold">{{ errors.session[0] }}</span>
             </div>
 
             <!-- Select Students Button -->
@@ -248,6 +187,9 @@ export default {
     },
 
     computed: {
+        selectedStream() {
+            return this.standardlist.find((item) => String(item.id) === String(this.standardLink_id))?.stream_name || "";
+        },
         presentStudents() {
             return this.allStudents.filter((s) => s.isPresent);
         },

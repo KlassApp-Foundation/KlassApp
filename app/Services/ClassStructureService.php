@@ -14,8 +14,7 @@ use Illuminate\Validation\ValidationException;
  * Additive class/stream structure (name-encoded sections).
  *
  * Streams are sections named "{BaseClass} {StreamLabel}" (e.g. "Primary One A").
- * The undivided base section is never removed. standards_link.stream is unused —
- * section.name is the single source of truth.
+ * The undivided base section is never removed; Section.stream stores the label.
  */
 class ClassStructureService
 {
@@ -110,9 +109,12 @@ class ClassStructureService
             $baseName = trim((string) $base->name);
             $sectionName = trim((string) $section->name);
             $prefix = $baseName.' ';
-            $label = str_starts_with($sectionName, $prefix)
-                ? trim(substr($sectionName, strlen($prefix)))
-                : $sectionName;
+            $label = trim((string) $section->stream);
+            if ($label === '') {
+                $label = str_starts_with($sectionName, $prefix)
+                    ? trim(substr($sectionName, strlen($prefix)))
+                    : $sectionName;
+            }
 
             $grouped[$baseId]['streams'][] = [
                 'section_id' => (int) $section->id,
@@ -208,7 +210,7 @@ class ClassStructureService
             ]);
         }
 
-        return DB::transaction(function () use ($school, $year, $base, $baseLink, $sectionName) {
+        return DB::transaction(function () use ($school, $year, $base, $baseLink, $sectionName, $streamLabel) {
             $existing = Section::query()
                 ->where('school_id', $school->id)
                 ->whereRaw('LOWER(name) = ?', [strtolower($sectionName)])
@@ -217,10 +219,15 @@ class ClassStructureService
             $created = false;
             if ($existing) {
                 $section = $existing;
+                if ((string) $section->stream !== $streamLabel) {
+                    $section->stream = $streamLabel;
+                    $section->save();
+                }
             } else {
                 $section = Section::create([
                     'school_id' => $school->id,
                     'name' => $sectionName,
+                    'stream' => $streamLabel,
                     'status' => '1',
                 ]);
                 $created = true;
@@ -235,7 +242,6 @@ class ClassStructureService
                 ],
                 [
                     'status' => '1',
-                    'stream' => $streamLabel,
                 ]
             );
 

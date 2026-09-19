@@ -1,7 +1,10 @@
 <?php
 
 //dashboard
-Route::get( '/dashboard', 'DashboardController@index' );
+Route::get( '/dashboard', 'DashboardController@index' )->name('teacher.dashboard');
+Route::get( '/timetable', 'DashboardController@timetablePage' )->name('teacher.timetable.index');
+Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
+Route::get( '/attendance/add', 'AttendanceController@create' )->name('teacher.attendance.create');
 
 Route::get('/classes', function () {
     return view('class-roster.index');
@@ -226,7 +229,6 @@ Route::get( '/standardLink/show/comments/{post_id}', 'StandardsLinkDetailsContro
 //attendance
 //add
 Route::get( '/attendance/list', 'AttendanceController@list' );
-Route::get( '/attendance/add', 'AttendanceController@create' );
 Route::post( '/attendance/add', 'AttendanceController@store' );
 //export
 Route::get( '/attendance/export/{standardLink_id}', 'AttendanceController@export' );
@@ -385,6 +387,9 @@ Route::prefix('class-streams')->name('teacher.class-stream.')->group(function ()
 
 Route::prefix('exam')->group(function () {
 
+    // Teacher exam landing page
+    Route::get('/', 'MarksController@teacherExamMarksList')->name('teacher.exam.index');
+
     // List of exams available for this teacher to enter marks
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
 
@@ -493,7 +498,7 @@ Route::group(['middleware' => ['designation:student_leave_checker']], function (
 //noticeboard
     //index
     Route::get( '/notice/show/list', 'NoticeBoardController@list' );
-    Route::get( '/notices', 'NoticeBoardController@index' );
+    Route::get( '/notices', 'NoticeBoardController@index' )->name('teacher.notices.index');
 
 
  

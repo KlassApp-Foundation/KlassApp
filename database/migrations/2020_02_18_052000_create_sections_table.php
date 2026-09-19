@@ -18,6 +18,7 @@ class CreateSectionsTable extends Migration
             $table->bigInteger('school_id')->unsigned();
             $table->foreign('school_id')->references('id')->on('schools');
             $table->string('name');
+            $table->string('stream')->nullable();
             $table->boolean('status')->default('1');
             $table->timestamps();
 

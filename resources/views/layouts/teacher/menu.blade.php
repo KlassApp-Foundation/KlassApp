@@ -8,19 +8,16 @@
         <a href="{{ url('teacher/classes') }}" class="flex items-center whitespace-nowrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Classes</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['timetable']) }}">
-        <a href="{{ url('teacher/dashboard') }}#timetable" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-nowrap">Timetable</span></a>
+        <a href="{{ route('teacher.timetable.index') }}" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-nowrap">Timetable</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['attendance']) }}">
-        <a href="{{ url('teacher/dashboard') }}#attendance" class="flex items-center"><x-icons.sidebar name="attendance"/><span class="mx-3 whitespace-nowrap">Attendance</span></a>
+        <a href="{{ url('teacher/attendance') }}" class="flex items-center"><x-icons.sidebar name="attendance"/><span class="mx-3 whitespace-nowrap">Attendance</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['exams','exam']) }}">
-        <a href="{{ url('teacher/exam/marks') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-nowrap">Exams</span></a>
+        <a href="{{ route('teacher.exam.index') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-nowrap">Exams</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['homework','homeworks']) }}">
         <a href="{{ url('teacher/homeworks') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
-    </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['marks','mark']) }}">
-        <a href="{{ url('teacher/exam/marks') }}" class="flex items-center"><x-icons.sidebar name="subjects"/><span class="mx-3 whitespace-nowrap">Marks</span></a>
     </li>
     @php
         $ctReportLinks = (auth()->check() && auth()->user()->school_id)
@@ -35,16 +32,17 @@
         <a href="{{ route('teacher.class-stream.index') }}" class="flex items-center" data-testid="ct-streams-nav"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Class Streams</span></a>
     </li>
     @endif
-    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
-        <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
-    </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['notices','notice']) }}">
-        <a href="{{ url('teacher/dashboard') }}#notices" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Notices</span></a>
+        <a href="{{ route('teacher.notices.index') }}" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Notices</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['events']) }}">
         <a href="{{ url('teacher/events') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-nowrap">Events</span></a>
     </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['library','libraryactivity']) }}">
+    {{-- Hidden for now: not part of the active teacher dashboard flow. --}}
+    {{-- <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
+        <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
+    </li> --}}
+    {{-- <li class="py-3 px-3 dashboard-menu-item {{ tActive(['library','libraryactivity']) }}">
         <a href="{{ url('teacher/libraryactivity') }}" class="flex items-center"><x-icons.sidebar name="library"/><span class="mx-3 whitespace-nowrap">Library</span></a>
-    </li>
+    </li> --}}
 </ul>

@@ -155,15 +155,28 @@ class SiteHelper
         return StandardLink::query()
             ->where('school_id', $school_id)
             ->where('academic_year_id', $academic_year->id)
-            ->where('class_teacher_id', $teacher_id)
+            ->where(function ($query) use ($teacher_id) {
+                $query->where('class_teacher_id', $teacher_id)
+                    ->orWhereHas('section', function ($sectionQuery) use ($teacher_id) {
+                        $sectionQuery->where('class_teacher_id', $teacher_id);
+                    });
+            })
             ->orderBy('section_id')
             ->get();
     }
 
     public static function isClassTeacherOfStandardLink(int $school_id, int $teacher_id, int $standardLink_id): bool
     {
-        return self::getClassTeacherStandardLinks($school_id, $teacher_id)
-            ->contains(fn (StandardLink $link) => (int) $link->id === $standardLink_id);
+        return StandardLink::query()
+            ->where('school_id', $school_id)
+            ->where('id', $standardLink_id)
+            ->where(function ($query) use ($teacher_id) {
+                $query->where('class_teacher_id', $teacher_id)
+                    ->orWhereHas('section', function ($sectionQuery) use ($teacher_id) {
+                        $sectionQuery->where('class_teacher_id', $teacher_id);
+                    });
+            })
+            ->exists();
     }
 
     public static function getStandardList($school_id)

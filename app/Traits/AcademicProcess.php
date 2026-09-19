@@ -204,19 +204,12 @@ trait AcademicProcess
             $standardLink->class_teacher_id = $data->class_teacher_id;
             $standardLink->standard_id      = $data->standard_id;
             $standardLink->no_of_students   = $data->no_of_students;
-            if( ($data->standard_name == '11') || ($data->standard_name == '12') )
-            {
-                if($data->stream == 'others')
-                {
-                    $standardLink->stream           = $data->other_stream;
-                }
-                else
-                {
-                    $standardLink->stream           = $data->stream;
-                }
-            }
             $standardLink->section_id       = $data->section_id;
             $standardLink->status           = 1;
+
+            $section = Section::where('school_id', $school_id)->findOrFail($data->section_id);
+            $section->stream = $data->stream == 'others' ? $data->other_stream : ($data->stream ?? null);
+            $section->save();
 
             $standardLink->save();
 
@@ -315,17 +308,9 @@ trait AcademicProcess
 
             $standardLink->class_teacher_id = $data->class_teacher_id;
             $standardLink->no_of_students   = $data->no_of_students;
-            if( ($data->standard == '11') || ($data->standard == '12') )
-            {
-                if($data->stream == 'others')
-                {
-                    $standardLink->stream           = $data->other_stream;
-                }
-                else
-                {
-                    $standardLink->stream           = $data->stream;
-                }
-            }
+            $section = Section::where('school_id', $school_id)->findOrFail($standardLink->section_id);
+            $section->stream = $data->stream == 'others' ? $data->other_stream : ($data->stream ?? null);
+            $section->save();
 
             $standardLink->save();
 

@@ -17,7 +17,6 @@ use App\Models\WhatsAppPendingParentLink;
 use App\Models\Events;
 use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
-use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;

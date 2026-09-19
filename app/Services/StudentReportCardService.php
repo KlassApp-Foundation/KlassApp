@@ -266,7 +266,7 @@ class StudentReportCardService
         // Every stream-scoped query below must therefore filter by
         // section_id (and standard_id) IN ADDITION to stream, or it will
         // pool unrelated classes that reuse the same label.
-        $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
+        $streamName = $learner->studentAcademicLatest?->standardLink?->section?->stream ?? null;
 
         $midStats = [];
         foreach ($midExams as $midExam) {
@@ -315,7 +315,6 @@ class StudentReportCardService
                 ->where('standards_link.school_id', $schoolId)
                 ->where('standards_link.standard_id', $stdLink->standard_id)
                 ->where('standards_link.section_id', $stdLink->section_id)
-                ->where('standards_link.stream', $streamName)
                 ->where('student_academics.academic_year_id', $exam->academic_year_id)
                 ->whereNull('student_academics.deleted_at')
                 ->pluck('student_academics.user_id')

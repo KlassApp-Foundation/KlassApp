@@ -12,6 +12,8 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Helpers\SiteHelper;
+use App\Services\OnboardingEngine;
 use App\Services\StudentIdGeneratorService;
 use App\Services\ToshiActionService;
 
@@ -95,10 +97,16 @@ class AssignStudentsToStreamTool implements Tool, VerifiableTool
             return "❌ Class \"{$className}\" doesn't exist.";
         }
 
-        $targetLink = StandardLink::where('school_id', $schoolId)
-            ->where('section_id', $section->id)
+        $streamSection = Section::where('school_id', $schoolId)
             ->where('stream', $streamName)
+            ->where('name', OnboardingEngine::composeClassAndStream($className, $streamName))
             ->first();
+        $targetLink = $streamSection
+            ? StandardLink::where('school_id', $schoolId)
+                ->where('section_id', $streamSection->id)
+                ->where('academic_year_id', SiteHelper::getAcademicYear($schoolId)?->id)
+                ->first()
+            : null;
         if (!$targetLink) {
             return "❌ Stream \"{$streamName}\" doesn't exist on {$className} yet. Create it first.";
         }
@@ -175,8 +183,14 @@ class AssignStudentsToStreamTool implements Tool, VerifiableTool
         $students = $this->normalizeNames($request->get('students'));
 
         $section = Section::where('school_id', $schoolId)->where('name', $className)->first();
-        $targetLink = $section
-            ? StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->where('stream', $streamName)->first()
+        $streamSection = $section
+            ? Section::where('school_id', $schoolId)
+                ->where('stream', $streamName)
+                ->where('name', OnboardingEngine::composeClassAndStream($className, $streamName))
+                ->first()
+            : null;
+        $targetLink = $streamSection
+            ? StandardLink::where('school_id', $schoolId)->where('section_id', $streamSection->id)->where('academic_year_id', SiteHelper::getAcademicYear($schoolId)?->id)->first()
             : null;
 
         if (!$targetLink) {

@@ -26,7 +26,6 @@ class CreateStandardsLinkTable extends Migration
             $table->integer('section_id')->unsigned();
             $table->foreign('section_id')->references('id')->on('sections');
             $table->integer('no_of_students')->nullable();
-            $table->string('stream')->nullable();
             $table->boolean('status')->default('1');
             $table->timestamps();
             $table->softDeletes();

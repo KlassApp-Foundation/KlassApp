@@ -643,14 +643,24 @@ return new class extends Migration
             if (!$existing) {
                 continue;
             }
-            DB::table('standards_link')->where('id', $cfg['link'])->update(['stream' => $cfg['s1']]);
+            $baseSection = DB::table('sections')->where('id', $existing->section_id)->first();
+            DB::table('sections')->where('id', $existing->section_id)->update(['stream' => $cfg['s1']]);
+
+            $streamSectionId = DB::table('sections')->insertGetId([
+                'school_id' => $baseSection->school_id,
+                'name' => trim($baseSection->name . ' ' . $cfg['s2']),
+                'stream' => $cfg['s2'],
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             $newId = DB::table('standards_link')->insertGetId([
                 'school_id' => $existing->school_id,
                 'academic_year_id' => $existing->academic_year_id,
                 'class_teacher_id' => $existing->class_teacher_id,
                 'standard_id' => $existing->standard_id,
-                'section_id' => $existing->section_id,
+                'section_id' => $streamSectionId,
                 'no_of_students' => $existing->no_of_students,
                 'stream' => $cfg['s2'],
                 'status' => 1,
@@ -696,12 +706,15 @@ return new class extends Migration
             if (!$existing) {
                 continue;
             }
-            $sibling = DB::table('standards_link')
+            $baseSection = DB::table('sections')->where('id', $existing->section_id)->first();
+            $streamSection = DB::table('sections')
                 ->where('school_id', $existing->school_id)
-                ->where('standard_id', $existing->standard_id)
-                ->where('section_id', $existing->section_id)
+                ->where('name', trim($baseSection->name . ' ' . $cfg['s2']))
                 ->where('stream', $cfg['s2'])
                 ->first();
+            $sibling = $streamSection
+                ? DB::table('standards_link')->where('section_id', $streamSection->id)->first()
+                : null;
             if (!$sibling) {
                 continue;
             }
@@ -711,7 +724,8 @@ return new class extends Migration
                 ->update(['standardLink_id' => $cfg['link']]);
             DB::table('class_teacher_links')->where('standardLink_id', $sibling->id)->delete();
             DB::table('standards_link')->where('id', $sibling->id)->delete();
-            DB::table('standards_link')->where('id', $cfg['link'])->update(['stream' => null]);
+            DB::table('sections')->where('id', $existing->section_id)->update(['stream' => null]);
+            DB::table('sections')->where('id', $streamSection->id)->delete();
         }
 
         Cache::forget('standardLink104_51');

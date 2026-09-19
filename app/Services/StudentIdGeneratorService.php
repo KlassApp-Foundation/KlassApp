@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Race-safe generator for KlassApp student IDs (KLS{school_id_3}{seq_4}).
+ * Race-safe generator for KlassApp student IDs (KA{seq_8}).
  *
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
@@ -24,34 +24,39 @@ class StudentIdGeneratorService
     /**
      * Atomically reserve and return the next klassapp_student_id for a school.
      *
-     * Format: KLS{school_id_padded_to_3}{seq_padded_to_4}
-     * Example: school_id=1, seq=1 → "KLS0010001".
+    * Format: KA{seq_padded_to_8}. The sequence remains school-scoped while
+    * the visible identifier stays consistent across schools.
      */
     public static function next(int $schoolId): string
     {
         return DB::transaction(function () use ($schoolId) {
-            // Lock the row (or the intent to insert) so no two calls get the
-            // same sequence number, even concurrently.
-            $row = DB::table('student_id_sequences')
-                ->where('school_id', $schoolId)
-                ->lockForUpdate()
-                ->first();
+            // Lock all sequence rows because the visible KA number is global,
+            // not school-prefixed. This prevents two schools reserving the same ID.
+            $rows = DB::table('student_id_sequences')->lockForUpdate()->get();
+            $row = $rows->firstWhere('school_id', $schoolId);
+            $seq = (int) ($rows->max('next_seq') ?? 1);
+
+            $existingIds = DB::table('student_academics')
+                ->whereNotNull('klassapp_student_id')
+                ->pluck('klassapp_student_id');
+            foreach ($existingIds as $existingId) {
+                if (preg_match('/^KA(\d{8})$/', (string) $existingId, $matches)) {
+                    $seq = max($seq, (int) $matches[1] + 1);
+                }
+            }
 
             if (! $row) {
-                // First-ever call for this school — seed at seq 1, next call gets 2.
                 DB::table('student_id_sequences')->insert([
                     'school_id' => $schoolId,
-                    'next_seq'  => 2,
+                    'next_seq'  => $seq + 1,
                 ]);
-                $seq = 1;
             } else {
-                $seq = $row->next_seq;
                 DB::table('student_id_sequences')
                     ->where('school_id', $schoolId)
                     ->update(['next_seq' => $seq + 1]);
             }
 
-            return sprintf('KLS%03d%04d', $schoolId, $seq);
+            return sprintf('KA%08d', $seq);
         });
     }
 

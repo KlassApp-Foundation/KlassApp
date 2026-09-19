@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
 use App\Models\Subscription;
 use App\Models\StandardLink;
+use App\Models\Section;
 use App\Models\Qualification;
 use App\Models\AcademicYear;
 use App\Traits\RegisterUser;
@@ -96,17 +97,41 @@ class UsersImport implements ToCollection, WithHeadingRow
                 |--------------------------------------------------------------------------
                 */
                 $sectionVal = trim($class);
-                $standardLink = StandardLink::where('school_id', $school_id)
-                    ->where('academic_year_id', $academic_year->id ?? null)
-                    ->whereHas('section', function ($query) use ($school_id, $sectionVal) {
-                        $query->where('school_id', $school_id)
-                            ->whereRaw('LOWER(name) = ?', [strtolower($sectionVal)]);
-                    })
-                    ->first();
+                $sectionQuery = Section::query()->where('school_id', $school_id);
+                if ($stream !== '') {
+                    $streamName = trim($sectionVal . ' ' . $stream);
+                    $sectionQuery->where(function ($query) use ($stream, $streamName) {
+                        $query->where('stream', $stream)
+                            ->orWhereRaw('LOWER(name) = ?', [strtolower($streamName)]);
+                    });
+                } else {
+                    $sectionQuery
+                        ->whereRaw('LOWER(name) = ?', [strtolower($sectionVal)])
+                        ->where(function ($query) {
+                            $query->whereNull('stream')->orWhere('stream', '');
+                        });
+                }
+                $section = $sectionQuery->first();
+                if ($section && $stream !== '' && trim((string) $section->stream) === '') {
+                    $section->stream = $stream;
+                    $section->save();
+                }
+                $standardLink = $section
+                    ? StandardLink::where('school_id', $school_id)
+                        ->where('academic_year_id', $academic_year->id ?? null)
+                        ->where('section_id', $section->id)
+                        ->first()
+                    : null;
 
-                if ($standardLink && $stream !== '') {
-                    $standardLink->stream = $stream;
-                    $standardLink->save();
+                if (! $standardLink) {
+                    Log::warning('Skipping student with unresolved class/stream', [
+                        'name' => $name,
+                        'class' => $sectionVal,
+                        'stream' => $stream,
+                        'school_id' => $school_id,
+                    ]);
+                    $skippedcount++;
+                    continue;
                 }
 
                 $student->standard = $standardLink->id ?? null;

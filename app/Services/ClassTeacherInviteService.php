@@ -62,7 +62,7 @@ class ClassTeacherInviteService
 
         $school = School::find($inviterSchoolId);
         $schoolName = $school?->name ?? 'your school';
-        $className = $section->name ?? $standardLink->stream ?? 'the class';
+        $className = $section->name ?? $section->stream ?? 'the class';
 
         // ── Existing teacher path ─────────────────────────────────
         $existingTeacherId = isset($data['existing_teacher_id']) ? (int) $data['existing_teacher_id'] : 0;

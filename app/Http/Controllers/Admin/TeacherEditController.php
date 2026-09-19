@@ -40,12 +40,16 @@ class TeacherEditController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function editTeacher($name)
+public function editTeacher($id)
     {
       //
-      $user           = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+      $user = User::query()
+          ->where('id', (int) $id)
+          ->where('school_id', (int) Auth::user()->school_id)
+          ->where('usergroup_id', 5)
+          ->first();
       if ($user === null) { abort(404); }
-      $userprofile    = Userprofile::where('user_id',$user->id)->first();
+      $userprofile = Userprofile::where('user_id',$user->id)->first();
       $teacherprofile = $user->getTeacherDetails();
         
       $array = [];
@@ -97,13 +101,16 @@ class TeacherEditController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($name)
+public function edit($id)
     {
       //
-      $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+      $user = User::query()
+          ->where('id', (int) $id)
+          ->where('school_id', (int) Auth::user()->school_id)
+          ->where('usergroup_id', 5)
+          ->first();
       if ($user === null) { abort(404); }
       $userprofile = Userprofile::where('user_id',$user->id)->first();
-       
       return view('/admin/teacher/edit',['user' => $user , 'userprofile' => $userprofile ]);
     }
 
@@ -113,7 +120,7 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationProfile(TeacherUpdateRequest $request,$name)
+    public function editValidationProfile(TeacherUpdateRequest $request,$id)
     {
       //
     }
@@ -124,7 +131,7 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationQualification(TeacherQualificationUpdateRequest $request,$name)
+    public function editValidationQualification(TeacherQualificationUpdateRequest $request,$id)
     {
       //
     }
@@ -135,7 +142,7 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationNote(TeacherNoteAddRequest $request,$name)
+    public function editValidationNote(TeacherNoteAddRequest $request,$id)
     {
       //
     }
@@ -146,7 +153,7 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationAddress(TeacherAddressUpdateRequest $request,$name)
+    public function editValidationAddress(TeacherAddressUpdateRequest $request,$id)
     {
       //
     }
@@ -158,7 +165,7 @@ class TeacherEditController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $name)
+    public function update(Request $request, $id)
     {
       // 
       try
@@ -189,7 +196,11 @@ class TeacherEditController extends Controller
           $usergroup_id = 5;
         }
 
-        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+        $user = User::query()
+            ->where('id', (int) $id)
+            ->where('school_id', (int) $school_id)
+            ->where('usergroup_id', 5)
+            ->first();
       if ($user === null) { abort(404); }
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         if(Request('avatar'))

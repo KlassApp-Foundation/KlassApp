@@ -23,8 +23,12 @@
             </div>
         @else
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div class="grid gap-3 md:grid-cols-4">
-                    <label class="block">
+                <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Teaching load</p>
+                        <p class="mt-1 text-sm text-slate-500">Your active classes for the selected academic year.</p>
+                    </div>
+                    <label class="block min-w-44">
                         <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Academic year</span>
                         <select wire:model.live="selectedAcademicYearId" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach($years as $year)
@@ -32,77 +36,52 @@
                             @endforeach
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Level</span>
-                        <select wire:model.live="levelId" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
-                            <option value="">All levels</option>
-                            @foreach($levels as $level)
-                                <option value="{{ $level->id }}">{{ $level->name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Assignment</span>
-                        <select wire:model.live="assignmentStatus" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
-                            <option value="all">All classes</option>
-                            <option value="assigned">With a teacher</option>
-                            <option value="unassigned">Needs assignment</option>
-                        </select>
-                    </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Find a class</span>
-                        <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search P.1, P.7..." class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500">
-                    </label>
                 </div>
-                <button wire:click="clearFilters" type="button" class="mt-4 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:text-emerald-700">
-                    Clear filters
-                </button>
-            </div>
 
             @if($sections->count())
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[720px] text-left">
+                        <thead class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            <tr>
+                                <th class="px-3 py-3">Class</th>
+                                <th class="px-3 py-3">Level</th>
+                                <th class="px-3 py-3">Students</th>
+                                <th class="px-3 py-3">Streams</th>
+                                <th class="px-3 py-3">Class teacher</th>
+                                <th class="px-3 py-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
                     @foreach($sections as $section)
                         @php
                             $streams = $section->standardLink;
                             $assignedStreams = $streams->filter(fn ($stream) => $stream->class_teacher_id !== null)->count();
                             $level = $streams->first()?->standard?->name;
                             $sectionTeacher = $section->classTeacher;
+                            $studentCount = $streams->sum(fn ($stream) => $stream->studentAcademic->count());
                             $showRoute = auth()->user()->usergroup_id === 3
                                 ? route('admin.classes.show', ['section' => $section->id, 'academic_year_id' => $selectedYear->id])
                                 : route('teacher.classes.show', ['section' => $section->id, 'academic_year_id' => $selectedYear->id]);
                         @endphp
-                        <a href="{{ $showRoute }}" class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg">
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">{{ $level ?: 'Level pending' }}</p>
-                                    <h2 class="mt-2 text-xl font-bold text-slate-950">{{ $section->name }}</h2>
-                                </div>
-                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">{{ $streams->count() }} {{ \Illuminate\Support\Str::plural('stream', $streams->count()) }}</span>
-                            </div>
-                            <div class="mt-6 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-                                <div>
-                                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Assigned streams</p>
-                                    <p class="mt-1 text-lg font-bold text-slate-800">{{ $assignedStreams }}/{{ $streams->count() }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Class teacher</p>
-                                    <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $sectionTeacher?->name ?: 'Not assigned' }}</p>
-                                </div>
-                            </div>
-                            <div class="mt-5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-700">
-                                <span>Open roster</span>
-                                <span aria-hidden="true" class="text-lg transition group-hover:translate-x-1">→</span>
-                            </div>
-                        </a>
+                        <tr class="transition hover:bg-emerald-50/40">
+                            <td class="px-3 py-4"><a href="{{ $showRoute }}" class="font-bold text-slate-900 hover:text-emerald-700">{{ $section->name }}</a></td>
+                            <td class="px-3 py-4 text-sm text-slate-600">{{ $level ?: 'Level pending' }}</td>
+                            <td class="px-3 py-4 text-sm font-semibold text-slate-800">{{ $studentCount }}</td>
+                            <td class="px-3 py-4 text-sm text-slate-600">{{ $assignedStreams }}/{{ $streams->count() }} assigned</td>
+                            <td class="px-3 py-4 text-sm text-slate-600">{{ $sectionTeacher?->name ?: 'Not assigned' }}</td>
+                            <td class="px-3 py-4 text-right"><a href="{{ $showRoute }}" class="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900">Open roster →</a></td>
+                        </tr>
                     @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                <div>{{ $sections->links() }}</div>
             @else
                 <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
-                    <p class="text-lg font-semibold text-slate-900">No classes match these filters</p>
-                    <p class="mt-2 text-sm text-slate-500">Try another academic year or clear the filters.</p>
+                    <p class="text-lg font-semibold text-slate-900">No classes assigned for this year</p>
+                    <p class="mt-2 text-sm text-slate-500">Your teaching assignments will appear here once they are linked to this academic year.</p>
                 </div>
             @endif
+            </div>
         @endif
     </div>
 </div>

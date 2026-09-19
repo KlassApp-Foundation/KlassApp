@@ -260,7 +260,8 @@ class ImportKabelMarks extends Command
             ->where('sl.section_id', $this->sectionId)
             ->whereNull('sl.deleted_at')
             ->whereNull('st.deleted_at')
-            ->select('sl.id', 'sl.section_id', 'sl.stream', 'st.name as standard_name', 'st.id as standard_id')
+            ->select('sl.id', 'sl.section_id', 'sections.stream', 'st.name as standard_name', 'st.id as standard_id')
+            ->join('sections', 'sections.id', '=', 'sl.section_id')
             ->first();
 
         if (!$link) {

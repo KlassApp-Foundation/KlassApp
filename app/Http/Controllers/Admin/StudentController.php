@@ -98,7 +98,7 @@ class StudentController extends Controller
 
         $streamFilter = $request->input('stream');
         if ($streamFilter) {
-            $query->where('standards_link.stream', $streamFilter);
+            $query->where('sections.stream', $streamFilter);
         }
 
         $statusFilter = $request->input('status');

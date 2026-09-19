@@ -545,6 +545,10 @@ class OnboardingEngine
     ): ?StandardLink {
         $link = $this->resolveStandardLinkForClass($school, $year, $className, $stream);
         if ($link) {
+            if ($stream !== null && trim($stream) !== '' && $link->section && trim((string) $link->section->stream) === '') {
+                $link->section->stream = trim($stream);
+                $link->section->save();
+            }
             return $link;
         }
 
