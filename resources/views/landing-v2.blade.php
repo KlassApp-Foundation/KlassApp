@@ -76,6 +76,10 @@
       </div>
       {{-- Rotating role preview — dense product-proof panel (WS-1). Parent / Teacher / Admin. --}}
       <div class="hero-preview reveal reveal-delay-2">
+        <div class="hero-device">
+          <div class="hero-device-frame">
+            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><em>Toshi · live preview</em></div>
+            <div class="hero-screen">
         <div class="hero-stage" id="heroRoleStage">
           <span class="hero-layer hero-layer-back" aria-hidden="true"></span>
           <span class="hero-layer hero-layer-mid" aria-hidden="true"></span>
@@ -147,6 +151,10 @@
               </div>
             </article>
           </div>
+        </div>
+            </div>
+          </div>
+          <div class="hero-device-base" aria-hidden="true"></div>
         </div>
         <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
         <div class="connector-float">
