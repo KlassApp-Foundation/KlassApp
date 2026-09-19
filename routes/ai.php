@@ -38,6 +38,11 @@ if ($mode === 'mock') {
 
         return Client::web($url)
             ->withTimeout($timeout)
+            ->withOAuth(
+                (string) config('services.slack_mcp.client_id') ?: null,
+                (string) config('services.slack_mcp.client_secret') ?: null,
+                'mcp:read mcp:write',
+            )
             ->withToken(fn () => SchoolMcpConnector::resolveTokenForRequest($connectorType)
                 ?? throw new \App\Exceptions\ConnectorNotConnected(
                     auth()->user()?->school_id ?? 0,
@@ -77,7 +82,7 @@ if ($mode === 'mock') {
             ]
         );
 
-        return redirect('/dashboard');
+        return redirect('/admin/settings/integrations');
     });
 }
 

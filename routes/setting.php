@@ -17,6 +17,10 @@ Route::post('/settings/seodetailsettings', 'Setting\SeoDetailController@store');
 Route::get('/settings/exam-types', 'Setting\ExamTypeController@index')->name('admin.settings.exam-types');
 Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('admin.settings.exam-types.update');
 
+// Integrations — MCP connector registry per school (PR3 Slack wave-1)
+Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');
+Route::post('/settings/integrations/{type}/disconnect', 'Setting\IntegrationsController@disconnect')->name('admin.settings.integrations.disconnect');
+
 //navigation drop-down
 Route::get('/list/academicyear','NavigationController@list');
 Route::post('/academicyear/index','NavigationController@index');

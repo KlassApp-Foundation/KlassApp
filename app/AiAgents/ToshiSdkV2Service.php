@@ -111,7 +111,7 @@ class ToshiSdkV2Service
                     'tool' => $payload['tool'],
                     'args' => $payload['args'],
                     'preview' => $payload['preview'],
-                ]);
+                ] + (isset($payload['mcp_resume']) ? ['mcp_resume' => $payload['mcp_resume']] : []));
             }
 
             return $response;
@@ -198,7 +198,7 @@ class ToshiSdkV2Service
                     'tool' => $payload['tool'],
                     'args' => $payload['args'],
                     'preview' => $payload['preview'],
-                ]);
+                ] + (isset($payload['mcp_resume']) ? ['mcp_resume' => $payload['mcp_resume']] : []));
             }
 
             return $fullText;
