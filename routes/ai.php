@@ -41,7 +41,10 @@ if ($mode === 'mock') {
             ->withOAuth(
                 (string) config('services.slack_mcp.client_id') ?: null,
                 (string) config('services.slack_mcp.client_secret') ?: null,
-                'mcp:read mcp:write',
+                // Real Slack granular scopes (env SLACK_MCP_SCOPES) — NOT
+                // 'mcp:read mcp:write', which Slack rejects with "Invalid
+                // permissions requested" (see go-live checklist §4).
+                (string) config('services.slack_mcp.scopes') ?: null,
             )
             ->withToken(fn () => SchoolMcpConnector::resolveTokenForRequest($connectorType)
                 ?? throw new \App\Exceptions\ConnectorNotConnected(
