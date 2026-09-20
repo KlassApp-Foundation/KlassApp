@@ -456,6 +456,30 @@ trait Dashboard
             })->count();
         $array['myClasses'] = count($standardLinks);
 
+        // Marks this teacher still needs to act on:
+        //  - exams not yet entered/submitted (undone/done)
+        //  - submissions a school admin reopened (marks need correcting after review)
+        $examAuth = app(\App\Services\ExamAuthorization::class);
+        $ctSections = $examAuth->sectionIdsForClassTeacher($teacher, (int) $school_id, (int) $academic_year->id);
+
+        $marksQuery = \App\Models\Academics\Exam::where('school_id', $school_id)
+            ->where('academic_year_id', $academic_year->id)
+            ->where(function ($q) use ($teacher_id, $ctSections) {
+                $q->where('teacher_id', $teacher_id);
+                if (! empty($ctSections)) {
+                    $q->orWhereIn('section_id', $ctSections);
+                }
+            });
+
+        $array['marksToEnter'] = (clone $marksQuery)->whereIn('status', ['undone', 'done'])->count();
+
+        $array['marksReopened'] = \App\Models\Academics\ExamMarksSubmission::where('school_id', $school_id)
+            ->where('status', 'reopened')
+            ->whereIn('exam_id', (clone $marksQuery)->pluck('id'))
+            ->count();
+
+        $array['marksAttention'] = $array['marksToEnter'] + $array['marksReopened'];
+
         return $array;
     }
 

@@ -129,6 +129,18 @@
             <!-- Submit -->
             <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
 
+                @if($correctionReasonRequired ?? false)
+                <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                    <label for="correction_reason" class="block text-sm font-medium mb-1" style="color:#92400E;">
+                        Reason for correcting submitted marks <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="correction_reason" name="correction_reason" rows="3" minlength="10" maxlength="500" required
+                              class="tw-form-control w-full"
+                              placeholder="e.g. Marks were entered against the wrong column.">{{ old('correction_reason') }}</textarea>
+                    <p class="mt-1 text-xs" style="color:#92400E;">Recorded in the marks audit log and sent to your school admin.</p>
+                </div>
+                @endif
+
                 <button type="submit"
                         class="py-2 px-5 rounded text-white bg-green-500 hover:bg-green-600">
                     {{ $isNursery ? 'Save Assessments' : 'Save Marks' }}

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Events\MarksUpdated;
 use App\Events\GradesPublished;
 use App\Exceptions\MarksLockedException;
@@ -169,10 +170,16 @@ public function enterExamMarks(Exam $exam)
         }
     }
 
-    return view('teacher.marks.enter', compact(
-        "allStudents", "exam", "total",
-        "isNursery", "domains", "ratings", "existingAssessments"
-    ));
+    return view('teacher.marks.enter', [
+        'allStudents' => $allStudents,
+        'exam' => $exam,
+        'total' => $total,
+        'isNursery' => $isNursery,
+        'domains' => $domains,
+        'ratings' => $ratings,
+        'existingAssessments' => $existingAssessments,
+        'correctionReasonRequired' => $this->correctionReasonRequired($exam),
+    ]);
 }
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)
@@ -187,6 +194,10 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 
     $this->assertSubmittedStudentsBelongToSchool($request, $exam);
     $this->checkSubmissionLocked($exam);
+
+    // A save on an already-submitted exam is a correction → needs a reason.
+    $reason = $this->requireCorrectionReason($request, $exam);
+    $afterReopen = $this->wasReopened($exam);
 
     $schoolId = $user->school_id;
 
@@ -224,7 +235,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         }
 
         $exam->changeExamStatus();
-        $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
+        $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount, $reason);
 
         return redirect()
             ->route('teacher.exam.marks')
@@ -256,7 +267,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 
     // Notify school admins that marks were entered/updated
     try {
-        event(new MarksUpdated($exam, $user));
+        event(new MarksUpdated($exam, $user, $reason, $afterReopen, $affectedMarkCount));
     } catch (\Throwable $e) {
         \Log::warning("Failed to dispatch MarksUpdated: {$e->getMessage()}");
     }
@@ -326,7 +337,12 @@ public function viewExamMarks(Exam $exam)
         })
         ->get();
 
-    return view('teacher.marks.view', compact('marks', 'exam'));
+    $submission = ExamMarksSubmission::where('exam_id', $exam->id)
+        ->where('class_id', $exam->section_id)
+        ->where('subject_id', $exam->subject_id)
+        ->first();
+
+    return view('teacher.marks.view', compact('marks', 'exam', 'submission'));
 }
 
 public function downloadMarksheet(Exam $exam, ExamMarksheetService $marksheets)
@@ -407,7 +423,13 @@ public function editMark(Exam $exam, User $student, Marks $marks)
     //     abort(404, "Student not in this class/exam.");
     // }
 
-    return view('teacher.marks.edit-single', compact('exam', 'mark', "student", "marks"));
+    return view('teacher.marks.edit-single', [
+        'exam' => $exam,
+        'mark' => $mark,
+        'student' => $student,
+        'marks' => $marks,
+        'correctionReasonRequired' => $this->correctionReasonRequired($exam),
+    ]);
 }
 
 public function updateMark(Request $request, Exam $exam, User $student, GradingSystemService $gradingSystem)
@@ -435,6 +457,11 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         'marks'       => 'sometimes|nullable|numeric|min:0|max:100', // adjust rules to your system
         'grade'       => 'nullable|string|max:5',
     ]);
+
+    // Correcting marks on an exam that was already submitted is a correction:
+    // it needs a reason, exactly like an admin reopening a locked submission.
+    $reason = $this->requireCorrectionReason($request, $exam);
+    $afterReopen = $this->wasReopened($exam);
      $mark = $validated["marks"];
       $grade = $gradingSystem->grade($mark,$schoolId, $exam);
     // Match saveExamMarks: key without actor teacher_id so CT updates the same row.
@@ -453,9 +480,15 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         ]
     );
 
-    $this->logMarksActivity($request, $exam, $teacher, 'marks.updated', 1);
+    $this->logMarksActivity($request, $exam, $teacher, 'marks.updated', 1, $reason);
 
-    // Optional: flash message
+    // Let the school admins know — especially when they reopened this submission.
+    try {
+        event(new MarksUpdated($exam, $teacher, $reason, $afterReopen, 1));
+    } catch (\Throwable $e) {
+        \Log::warning("Failed to dispatch MarksUpdated: {$e->getMessage()}");
+    }
+
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ($student->displayName ?: $student->name) . "'s ". '  Marks updated!');
@@ -466,7 +499,8 @@ private function logMarksActivity(
     Exam $exam,
     User $teacher,
     string $action,
-    int $affectedMarkCount
+    int $affectedMarkCount,
+    ?string $correctionReason = null
 ): void {
     activity()
         ->performedOn($exam)
@@ -478,10 +512,57 @@ private function logMarksActivity(
             'subject_id' => (int) $exam->subject_id,
             'teacher_id' => (int) $teacher->id,
             'affected_mark_count' => $affectedMarkCount,
+            'is_correction' => $correctionReason !== null,
+            'correction_reason' => $correctionReason,
             'request_id' => $request->header('X-Request-ID') ?? (string) Str::uuid(),
         ])
         ->useLog('marks')
         ->log($action);
+}
+
+/**
+ * A reason is required once the exam has been submitted — further marks edits
+ * are corrections, matching the admin reopen reason requirement.
+ */
+private function correctionReasonRequired(Exam $exam): bool
+{
+    return $exam->status === 'submitted';
+}
+
+/**
+ * Validate + return the correction reason when one is required.
+ */
+private function requireCorrectionReason(Request $request, Exam $exam): ?string
+{
+    $reason = trim((string) $request->input('correction_reason', ''));
+
+    if (! $this->correctionReasonRequired($exam)) {
+        return $reason === '' ? null : $reason;
+    }
+
+    if (mb_strlen($reason) < 10) {
+        throw ValidationException::withMessages([
+            'correction_reason' => 'These marks were already submitted. Give a reason of at least 10 characters for correcting them.',
+        ]);
+    }
+
+    if (mb_strlen($reason) > 500) {
+        throw ValidationException::withMessages([
+            'correction_reason' => 'Keep the correction reason under 500 characters.',
+        ]);
+    }
+
+    return $reason;
+}
+
+/** Was this exam's marks submission reopened by an admin? */
+private function wasReopened(Exam $exam): bool
+{
+    return ExamMarksSubmission::where('exam_id', $exam->id)
+        ->where('class_id', $exam->section_id)
+        ->where('subject_id', $exam->subject_id)
+        ->where('status', 'reopened')
+        ->exists();
 }
 
 private function assertSubmittedStudentsBelongToSchool(Request $request, Exam $exam): void

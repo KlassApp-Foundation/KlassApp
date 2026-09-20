@@ -12,10 +12,34 @@
 
     {{-- Teaching KPIs --}}
     <div class="dashboard-kpi-grid">
-        <x-ds-kpi-card icon="users" value="{{ $dashboard['myStudents'] }}" label="My Students" color="green" link="{{ url('/teacher/students') }}" />
+        <x-ds-kpi-card icon="users" value="{{ $dashboard['myStudents'] }}" label="My Students" color="green" link="{{ url('/teacher/classes') }}" />
         <x-ds-kpi-card icon="classes" value="{{ $dashboard['myClasses'] }}" label="My Classes" color="blue" />
         <x-ds-kpi-card icon="exam" value="{{ count($dashboard['upcomingExam']) }}" label="Upcoming Exams" color="amber" link="{{ url('/teacher/exams') }}" />
         <x-ds-kpi-card icon="whatsapp" value="{{ $dashboard['whatsapp']['totalLinked'] }}" label="WhatsApp Linked" color="green" />
+        <x-ds-kpi-card icon="exam" value="{{ $dashboard['marksAttention'] ?? 0 }}" label="Marks needing you" color="amber" link="{{ route('teacher.exam.marks') }}" />
+    </div>
+
+    {{-- Marks entry point: first-time entry AND after-the-fact corrections.
+         Previously this was only reachable via a 4-click path with no entry from the dashboard. --}}
+    <div class="ds-card ds-card-padding-default mt-4" data-testid="teacher-marks-entry">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+                <h2 class="text-base font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">
+                    Marks &amp; corrections
+                </h2>
+                <p class="text-sm mt-1" style="color: var(--d-text-secondary);">
+                    Enter marks for your exams, or correct a mark you already submitted.
+                    @if(($dashboard['marksReopened'] ?? 0) > 0)
+                        <span class="font-semibold" style="color:#B45309;">
+                            {{ $dashboard['marksReopened'] }} submission(s) reopened by your admin need attention.
+                        </span>
+                    @endif
+                </p>
+            </div>
+            <a href="{{ route('teacher.exam.marks') }}" class="ds-btn ds-btn-primary whitespace-nowrap" data-testid="teacher-marks-entry-link">
+                Open my exams
+            </a>
+        </div>
     </div>
 
     @if(($dashboard['myStudents'] ?? 0) === 0)

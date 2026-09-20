@@ -12,7 +12,7 @@
             Edit Marks
         </h1>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ $exam->examType->name }} • {{$exam->subject->name ?? '' }} here
+            {{ $exam->examType->name }} • {{$exam->subject->name ?? '' }}
         </p>
     </div>
 
@@ -52,6 +52,29 @@
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+
+                @if($correctionReasonRequired ?? false)
+                <!-- Correction reason: these marks were already submitted -->
+                <div>
+                    <label for="correction_reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Reason for correcting submitted marks <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="correction_reason"
+                              name="correction_reason"
+                              rows="3"
+                              minlength="10"
+                              maxlength="500"
+                              required
+                              class="tw-form-control w-full"
+                              placeholder="e.g. Mis-keyed mark — the script shows 85, not 72.">{{ old('correction_reason') }}</textarea>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Recorded in the marks audit log and sent to your school admin.
+                    </p>
+                    @error('correction_reason')
+                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+                @endif
             </div>
 
             <!-- Footer -->
