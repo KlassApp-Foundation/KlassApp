@@ -239,18 +239,27 @@
     font-family: 'DM Sans', sans-serif;
 }
 
-/* ── Fullscreen panel ≤640px — same behavior, clay edge treatment ── */
-@media (max-width: 640px) {
+/* ── Sub-1280: edge-anchored sliding drawer ──
+   Same mental model as the ≥1280 right dock (380px, right edge, full height),
+   just overlaid instead of static. Replaces the old centered/floating overlay
+   (641–1279px had no rules at all) and the ≤640px full-screen takeover, so the
+   panel keeps one behaviour at every width. */
+@media (max-width: 1279px) {
     [data-toshi-root] .toshi-panel {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        max-height: none;
+        position: fixed !important;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: auto !important;
+        width: min(420px, 92vw) !important;
+        height: 100vh !important;
+        max-height: none !important;
         border-radius: 0 !important;
         border: none;
-        box-shadow: none !important;
+        border-left: 1px solid #e8e6dc;
+        box-shadow: -8px 0 28px rgba(20, 20, 19, 0.18) !important;
         z-index: 9998;
+        animation: toshi-drawer-in 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     [data-toshi-root] .toshi-panel::before {
@@ -269,6 +278,17 @@
         bottom: 0;
         z-index: 1;
         background: #FFFFFF;
+    }
+
+    @keyframes toshi-drawer-in {
+        from { transform: translateX(100%); }
+        to   { transform: translateX(0); }
+    }
+}
+
+@media (max-width: 1279px) and (prefers-reduced-motion: reduce) {
+    [data-toshi-root] .toshi-panel {
+        animation: none;
     }
 }
 

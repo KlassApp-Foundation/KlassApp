@@ -3645,3 +3645,48 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
 @media (prefers-reduced-motion: reduce) {
   #admin-sidebar, .dashboard-content-area { transition: none; }
 }
+
+/* ── Global show/hide toggle (hide-menu ↔ block) ──
+   The .hide-menu rule is declared inside Show.vue as a SCOPED <style>, so it only
+   ever applied to the notification bell's own subtree. Every other component that
+   relies on the pattern (event detail popup, student Filter, student List) never
+   got it — which left the event popup rendered on load, showing empty
+   "Title : / Description : / Date : / Location :" labels. Restore it globally. */
+.hide-menu { display: none !important; }
+
+/* ── Parent header: children + their schools (multi-school parents) ── */
+.parent-family-menu { position: relative; }
+.parent-family-menu > summary { list-style: none; cursor: pointer; }
+.parent-family-menu > summary::-webkit-details-marker { display: none; }
+.parent-family-menu[open] > summary { background: #E2E8F0; }
+.parent-family-menu__panel {
+  position: absolute;
+  z-index: 60;
+  left: 0;
+  top: calc(100% + 6px);
+  min-width: 240px;
+  max-width: min(92vw, 320px);
+  background: #FFFFFF;
+  border: 1px solid var(--d-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  padding: 6px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.parent-family-menu__item { display: block; padding: 8px 10px; border-radius: 8px; text-decoration: none; }
+.parent-family-menu__item:hover { background: #F1F5F9; }
+.parent-family-menu__name { display: block; font-weight: 600; color: var(--d-text); }
+.parent-family-menu__school { display: block; font-size: 12px; color: var(--d-text-secondary); }
+
+@media (max-width: 640px) {
+  /* The menu sits mid-header, so a left-anchored 254px panel would run past the
+     viewport edge. Anchor its right edge to the menu instead. */
+  .parent-family-menu__panel { left: auto; right: 0; min-width: 0; max-width: min(88vw, 300px); }
+}
+
+/* Parent header: the KlassApp wordmark is redundant next to the mark on phones and
+   (with the children menu) pushed the header past the viewport edge. */
+@media (max-width: 767px) {
+  .nav-brand .parent-brand-name { display: none; }
+}

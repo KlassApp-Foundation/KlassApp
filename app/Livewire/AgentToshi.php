@@ -436,6 +436,10 @@ class AgentToshi extends Component
 
         $actionHints = $this->getActionHints();
 
+        if ($schoolName === '') {
+            return "Hi! I'm Toshi. Ask me about {$actionHints}.";
+        }
+
         return "Hi! I'm Toshi. Ask me about{$schoolName} — {$actionHints}";
     }
 
@@ -463,6 +467,12 @@ class AgentToshi extends Component
             'list_teachers'      => 'view teachers',
             'list_sections'      => 'view class streams',
             'generate_report'    => 'reports and stats',
+            // Parent (ug7) — so the greeting is about THEIR children, not the school
+            'view_fee_balance'   => "your children's fee balances",
+            'view_grades'        => "your children's grades",
+            'view_attendance'    => "your children's attendance",
+            'view_health'        => "your children's health records",
+            'list_children'      => 'your linked children',
         ];
 
         $matched = [];

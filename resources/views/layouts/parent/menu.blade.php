@@ -7,13 +7,4 @@
     <li class="py-3 px-3 dashboard-menu-item {{ pActive('children') }}">
         <a href="{{ route('parent.children') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Children</span></a>
     </li>
-    <li class="py-3 px-3 dashboard-menu-item">
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="flex items-center w-full text-left" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;">
-                <x-icons.sidebar name="settings"/>
-                <span class="mx-3 whitespace-nowrap">Logout</span>
-            </button>
-        </form>
-    </li>
 </ul>

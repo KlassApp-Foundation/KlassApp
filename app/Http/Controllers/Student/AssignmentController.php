@@ -84,7 +84,27 @@ class AssignmentController extends Controller
 
         $standardLink_id = Auth()->user()->studentAcademicLatest->standardLink_id;
 
-        return view('/student/assignment/index' , ['query' => $query , 'standardLink_id' => $standardLink_id]);
+        // Does this student have ANY approved assignment this year (ongoing OR
+        // completed)? The list itself is fetched client-side by the Vue component,
+        // so this guard powers a real server-rendered empty state instead of a
+        // bare table header when there is genuinely nothing to show.
+        $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
+
+        $hasAssignments = Assignment::where([
+                ['school_id', Auth::user()->school_id],
+                ['academic_year_id', $academic_year->id],
+                ['standardLink_id', $standardLink_id],
+            ])
+            ->whereHas('assignmentApproval', function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->exists();
+
+        return view('/student/assignment/index' , [
+            'query'           => $query,
+            'standardLink_id' => $standardLink_id,
+            'hasAssignments'  => $hasAssignments,
+        ]);
     }
 
     /**
