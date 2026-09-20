@@ -239,7 +239,7 @@ return [
     'mcp_connectors' => [
         'slack' => [
             'endpoint' => env('SLACK_MCP_URL', 'https://mcp.slack.com/mcp'),
-            'token_url' => 'https://slack.com/api/oauth.v2.access',
+            'token_url' => 'https://slack.com/api/oauth.v2.user.access',
             'auth_mode' => 'oauth_remote',
             'oauth_client_id' => env('SLACK_MCP_CLIENT_ID'),
             'oauth_secret' => env('SLACK_MCP_CLIENT_SECRET'),

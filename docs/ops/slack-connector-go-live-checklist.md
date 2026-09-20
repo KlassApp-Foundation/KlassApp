@@ -65,7 +65,7 @@ these are presumably already live; verify, don't assume):
 ## 2. What each flag controls (wiring map, verified)
 
 - `routes/ai.php`: `mode=mock` → stdio mock client; `else` (anything ≠ 'mock') →
-  `Client::web(mcp.slack.com/mcp).withOAuth(client_id, client_secret, 'mcp:read mcp:write')`
+  `Client::web(mcp.slack.com/mcp).withOAuth(client_id, client_secret, config('services.slack_mcp.scopes'))`
   with per-request token closure → `SchoolMcpConnector::resolveTokenForRequest('slack')`
   → throws `ConnectorNotConnected` when the school has no active registry row.
   Live mode also registers `mcp/slack/connect` + `mcp/oauth/slack/callback` (vendor
@@ -95,7 +95,7 @@ these are presumably already live; verify, don't assume):
 | `SLACK_MCP_MODE` typo (e.g. `Live`, `production`) | Anything ≠ `mock` = live mode. With credentials absent: `withOAuth(null, null)` → OAuth falls back to RFC 7591 dynamic client registration against Slack's auth server. Slack does not support it → the connect route errors. Connect button is already hidden (`filled(client_id)` guard) but the route itself is registered and would fail loudly if hit directly. | Loud (500 at the route), UI guarded. |
 | Client ID/secret placeholder or wrong | OAuth discover → authorize redirect renders; Slack rejects the client → error page on Slack's side. Secret wrong → token exchange fails at callback with `OAuthException`. | Loud (user-visible error at OAuth). |
 | School not connected (no registry row) | `resolveTokenForRequest` → null → `ConnectorNotConnected` → skill returns friendly `slack_status` message: "connect it in School Settings → Integrations". | Fail-closed, friendly, **by design**. |
-| Token expired + refresh fails (e.g. secret rotated in Doppler but not deployed) | Refresh posts to `slack.com/api/oauth.v2.access`, fails, logs error, `resolveTokenForRequest` returns null → same friendly "not connected" state. Token stays active in DB — next successful refresh recovers. | Semi-silent (Laravel log has `McpConnectorTokenRefresh: refresh failed`; user sees "not connected"). |
+| Token expired + refresh fails (e.g. secret rotated in Doppler but not deployed) | Refresh posts to `slack.com/api/oauth.v2.user.access` (user-token endpoint — the MCP flow issues user tokens, not bot tokens), fails, logs error, `resolveTokenForRequest` returns null → same friendly "not connected" state. Token stays active in DB — next successful refresh recovers. | Semi-silent (Laravel log has `McpConnectorTokenRefresh: refresh failed`; user sees "not connected"). |
 | `APP_URL` wrong/missing | `route('mcp.oauth.slack.callback')` resolves to wrong host → Slack rejects redirect_uri mismatch at authorization. | Loud at first connect attempt. |
 
 ## 4. Slack-side app configuration (what the human creates in api.slack.com)
@@ -111,14 +111,16 @@ these are presumably already live; verify, don't assume):
   (Route = `mcp/oauth/{client}/callback`, client `slack` — vendor default, no custom URI
   passed in `routes/ai.php`. Trailing slashes and path variants will fail — OAuth
   redirect_uri matching is byte-exact.)
-- Scopes: the app requests the MCP-level scope string **`mcp:read mcp:write`** (hardcoded in
-  `routes/ai.php:44` withOAuth call). Slack's hosted MCP server maps these to the underlying
-  Slack API scopes for the tools we consume — `slack_list_channels`, `slack_search`,
-  `slack_get_channel_history` (reads) and `slack_post_message` (write). Follow Slack's
-  MCP get-started guide when creating the app; if the Slack app config asks for explicit
-  bot/user scopes, the set implied by those four tools is `channels:read`, `search:read`,
-  `channels:history` (or `groups:history` where private), `chat:write`, `team:read`.
-  **Verify against the live Slack app config screen at setup time — do not guess.**
+- Scopes: the app requests **real Slack granular scopes** via the `SLACK_MCP_SCOPES`
+  env var (default: `channels:read channels:history groups:history search:read.public chat:write`).
+  These are the actual scopes our four wave-1 tools need — `slack_list_channels`,
+  `slack_search`, `slack_get_channel_history` (reads) and `slack_post_message` (write).
+  The old hardcoded `mcp:read mcp:write` was never valid Slack scopes and caused
+  "Invalid permissions requested" (fixed in commit `428f0d0e` — configurable scope list).
+  Follow Slack's MCP get-started guide when creating the app; add scopes to **User Token
+  Scopes** (the MCP flow uses user tokens, not bot tokens; `token_url` uses
+  `oauth.v2.user.access`). **Verify the granular scope list on the live Slack app config
+  screen at setup time — do not guess.**
 - Note the app's Client ID and Client Secret → Doppler (§5), never the repo.
 - Transport-era caveat (accepted, tripwired): our client speaks the pre-2026 MCP era
   (laravel/mcp 0.8.x); `mcp.slack.com` serves it until at least the 2027-04-28 re-verification
