@@ -293,6 +293,9 @@ Token refresh is **app-owned** (not vendor-baked): `McpConnectorTokenRefreshServ
 > `docs/ops/slack-connector-go-live-checklist.md`). **Not part of the current go-live
 > rollout** — the checklist and its Batches A–C proceed completely unaffected by this
 > section. No PR, no design, no scope exists for this yet.
+>
+> A second deferred backlog item lives directly below: **"Deferred: Slack App
+> Marketplace branding/listing"** (cosmetic, same not-blocking/not-scheduled status).
 
 **What exists today (wave-1, shipped #684):** outbound-only. Toshi can read from and
 (approval-gated) write to Slack **when invoked from within KlassApp** — via
@@ -338,6 +341,38 @@ Do not start from zero.
 Socket Mode trade-offs for this hosting model, identity mapping design, rate/reply
 behavior, and the HITL-gate-questions above). That pass is deliberately **not** this
 note. Recorded as wanted, roughly scoped, unscheduled.
+
+## Deferred: Slack App Marketplace branding/listing — recorded 2026-09-20, not scheduled
+
+> Backlog note only. **Cosmetic/marketplace-listing polish — not required for the
+> connector to function.** The app was never intended to be discovered via Slack's
+> public App Directory: schools install it through KlassApp's own **"Connect Slack"
+> button** (School Settings → Integrations), which drives the OAuth flow directly.
+
+**What's outstanding** (Slack's app-directory listing assets, recorded so they aren't
+rediscovered from scratch later — nothing fetched or created as part of this note):
+
+- App icon (square, 512×512 to 2000×2000 px)
+- Short description + long description
+- Background color
+- Up to 6 app images (1600×1000 px each)
+- Slack Marketplace category selection (max 3)
+- Installation landing page URL
+- Privacy policy URL
+- Support URL / email
+- Supported languages
+- Pricing tier
+- App contact info (name / email / phone / notification channel)
+
+**Boundary flags:**
+- **None of this blocks Batches A–C** of the go-live rollout
+  (`docs/ops/slack-connector-go-live-checklist.md`).
+- **None of it is required** unless/until there is an explicit product decision to
+  actually list KlassApp's Slack app in the public Slack Marketplace — a separate,
+  later decision, **not assumed here**.
+- Per explicit instruction: pick this up **after this connector and MCP phase** —
+  not scheduled now, just recorded so it isn't forgotten.
+
 
 
 
