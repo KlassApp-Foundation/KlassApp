@@ -1,4 +1,6 @@
 {{-- SPDX-License-Identifier: MIT --}}
+{{-- NOTE: unlike general_settings/seodetail_settings (pure fragments), this view
+     extends the layout directly, so it overrides the maintenancesettings wrapper. --}}
 @extends('layouts.app')
 @section('content')
 <div class="container mx-auto">
