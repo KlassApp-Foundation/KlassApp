@@ -2,7 +2,7 @@
 @extends('layouts.app')
 
 @section('base-navigation')
-  @include('layouts.reception.navigation')
+  @include('layouts.partials.navigation', ['notifyMode' => 'receptionist', 'showAcademicYear' => false])
 @endsection
 
 @section('base-sidebar')
