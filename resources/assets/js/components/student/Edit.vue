@@ -7,6 +7,13 @@
         >
             {{ this.success }}
         </div>
+        <div
+            v-if="errors.form"
+            class="alert alert-danger"
+            id="load-error"
+        >
+            {{ errors.form[0] }}
+        </div>
         <h1>Personal Details</h1>
         <div class="my-6">
             <div class="flex items-center">
@@ -157,7 +164,6 @@
                     >
                 </div>
             </div>
-
         </div>
 
         <portal-target name="edit_address"></portal-target>
@@ -208,7 +214,7 @@
                         >
                             <option value="" disabled>Select District</option>
                             <option
-                                v-for="city in citylist[this.country_id]"
+                                v-for="city in (citylist[this.country_id] || [])"
                                 v-bind:value="city.id"
                             >
                                 {{ city.name }}
@@ -222,7 +228,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div v-if="false" class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="pincode" class="tw-form-label"
                             >Pincode</label
@@ -247,7 +253,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row">
+        <div v-if="false" class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
@@ -345,7 +351,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row">
+        <div v-if="false" class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/6">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
@@ -640,7 +646,7 @@
         <hr style="border-width: 1px" />
         <h1>Academic Details</h1>
         <div class="flex flex-col lg:flex-row">
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div v-if="false" class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="registration_number" class="tw-form-label">
@@ -691,7 +697,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div v-if="false" class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="joining_date" class="tw-form-label"
@@ -780,24 +786,24 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="school_student_id" class="tw-form-label"
+                            <label for="klassapp_student_id" class="tw-form-label"
                             >School Student ID</label
                         >
                     </div>
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="school_student_id"
-                            name="school_student_id"
-                            id="school_student_id"
+                            v-model="klassapp_student_id"
+                            name="klassapp_student_id"
+                            id="klassapp_student_id"
                             class="tw-form-control w-full"
                             placeholder="School Student ID"
                         />
                     </div>
                     <span
-                        v-if="errors.school_student_id"
+                        v-if="errors.klassapp_student_id"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.school_student_id[0] }}</span
+                        >{{ errors.klassapp_student_id[0] }}</span
                     >
                 </div>
             </div>
@@ -810,7 +816,8 @@
                             class="tw-form-label whitespace-nowrap"
                             >Board Registration Number<span
                                 class="text-red-500 whitespace-nowrap"
-                                >*Only for UNEB candidate classes (e.g. S.4, S.6)</span
+                                >*Only for UNEB candidate classes (e.g. S.4,
+                                S.6)</span
                             ></label
                         >
                     </div>
@@ -855,7 +862,7 @@
 <script>
 import PortalVue from "portal-vue";
 export default {
-    props: ["url", "student_name"],
+    props: ["url", "student_name", "data_url", "validation_url"],
 
     data() {
         return {
@@ -869,12 +876,16 @@ export default {
             section_name: "",
             city_id: "",
             country_id: "",
+            address: "",
+            latitude: "",
+            longitude: "",
             pincode: "",
             joining_date: "",
             registration_number: "",
             lin: "",
             std_school_pay_number: "",
             school_student_id: "",
+            klassapp_student_id: "",
             board_registration_number: "",
             mode_of_transport: "",
             driver_name: "",
@@ -913,11 +924,19 @@ export default {
     methods: {
         getData() {
             axios
-                .get("/admin/student/editStudent/" + this.student_name)
+                .get(
+                    this.data_url ||
+                        "/admin/student/editStudent/" + this.student_name
+                )
                 .then((response) => {
                     this.user = response.data;
                     //console.log(this.user)
                     this.setData();
+                })
+                .catch(() => {
+                    this.errors = {
+                        form: ["Student details could not be loaded."],
+                    };
                 });
         },
 
@@ -929,9 +948,20 @@ export default {
                 this.gender = this.user.gender;
                 this.city_id = this.user.city_id;
                 this.country_id = this.user.country_id;
+                this.address = this.user.address || "";
+                this.latitude = this.user.latitude || "";
+                this.longitude = this.user.longitude || "";
                 this.pincode = this.user.pincode;
                 this.avatar_display = this.user.avatar;
                 this.notes = this.user.notes;
+
+                const addressInput = document.getElementById('address');
+                const latitudeInput = document.getElementById('latitude');
+                const longitudeInput = document.getElementById('longitude');
+
+                if (addressInput) addressInput.value = this.address;
+                if (latitudeInput) latitudeInput.value = this.latitude;
+                if (longitudeInput) longitudeInput.value = this.longitude;
                 this.registration_number = this.user.registration_number;
                 this.lin = this.user.lin;
                 this.joining_date = this.user.joining_date;
@@ -939,6 +969,7 @@ export default {
                 this.standard = this.user.standardLink_id;
                 this.std_school_pay_number = this.user.std_school_pay_number;
                 this.school_student_id = this.user.school_student_id;
+                this.klassapp_student_id = this.user.klassapp_student_id || "";
                 this.board_registration_number =
                     this.user.board_registration_number;
                 this.mode_of_transport = this.user.mode_of_transport;
@@ -946,8 +977,22 @@ export default {
                 this.driver_contact_number = this.user.driver_contact_number;
                 this.siblings = this.user.siblings;
                 this.siblings_count = this.user.siblings_count;
-                if (this.user.siblings_count != null) {
-                    this.inputs = this.user.sibling_details;
+
+                const siblingDetails = Array.isArray(this.user.sibling_details)
+                    ? this.user.sibling_details
+                    : [];
+
+                if (this.user.siblings_count != null && siblingDetails.length > 0) {
+                    this.inputs = siblingDetails;
+                } else {
+                    this.inputs = [
+                        {
+                            sibling_relation: "",
+                            sibling_name: "",
+                            sibling_date_of_birth: this.today || "",
+                            sibling_standard: "",
+                        },
+                    ];
                 }
 
                 this.countrylist = this.user.countrylist;
@@ -971,6 +1016,9 @@ export default {
             formData.append("standard", this.standard);
             formData.append("city_id", this.city_id);
             formData.append("country_id", this.country_id);
+            formData.append("address", this.address || (document.getElementById('address') ? document.getElementById('address').value : ''));
+            formData.append("latitude", this.latitude || (document.getElementById('latitude') ? document.getElementById('latitude').value : ''));
+            formData.append("longitude", this.longitude || (document.getElementById('longitude') ? document.getElementById('longitude').value : ''));
             formData.append("pincode", this.pincode);
             formData.append("joining_date", this.joining_date);
             formData.append("registration_number", this.registration_number);
@@ -980,6 +1028,7 @@ export default {
                 this.std_school_pay_number
             );
             formData.append("school_student_id", this.school_student_id);
+            formData.append("klassapp_student_id", this.klassapp_student_id);
             formData.append(
                 "board_registration_number",
                 this.board_registration_number
@@ -1046,7 +1095,9 @@ export default {
 
             axios
                 .post(
-                    "/admin/student/edit/validationUser/" + this.student_name,
+                    this.validation_url ||
+                        "/admin/student/edit/validationUser/" +
+                            this.student_name,
                     formData,
                     { headers: { "Content-Type": "multipart/form-data" } }
                 )

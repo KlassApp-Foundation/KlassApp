@@ -13,7 +13,7 @@ if (!function_exists('sidebarActive')) {
 @endphp
 <ul class="list-reset text-sm">
     {{-- ═══ DASHBOARD (ungrouped, always at top) ═══ --}}
-    <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive('dashboard') }}">
+    <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['dashboard']) }}">
         <a href="{{ url('admin/dashboard') }}" class="flex items-center">
             <x-icons.sidebar name="dashboard"/>
             <span class="mx-3 whitespace-nowrap">Dashboard</span>
@@ -42,7 +42,13 @@ if (!function_exists('sidebarActive')) {
             </svg>
         </div>
         <ul x-show="open || previewOpen" x-collapse.duration.200ms>
-            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['students','student','parents','parent','teachers','teacher','staff','staffs','alumni','blocked_students']) }}">
+            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['teachers','teacher','students','student','parents','parent','staff','staffs','alumni','blocked_students']) }}">
+                <a href="{{ url('admin/teachers') }}" class="flex items-center">
+                    <x-icons.sidebar name="teacher"/>
+                    <span class="mx-3 whitespace-nowrap">Teachers</span>
+                </a>
+            </li>
+            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['students','student']) }}">
                 <a href="{{ url('admin/students') }}" class="flex items-center">
                     <x-icons.sidebar name="students"/>
                     <span class="mx-3 whitespace-nowrap">Students</span>
@@ -58,6 +64,12 @@ if (!function_exists('sidebarActive')) {
                 <a href="{{ url('admin/classes') }}" class="flex items-center">
                     <x-icons.sidebar name="classes"/>
                     <span class="mx-3 whitespace-nowrap">Classes &amp; Streams</span>
+                </a>
+            </li>
+            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['classes','sections','standardlinks','standardLink','terms']) }}">
+                <a href="{{ url('admin/academic-term') }}" class="flex items-center">
+                    <x-icons.sidebar name="terms"/>
+                    <span class="mx-3 whitespace-nowrap">Terms</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['subjects','subject']) }}">
@@ -128,7 +140,7 @@ if (!function_exists('sidebarActive')) {
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['health','medical']) }}">
-                <a href="{{ url('admin/students') }}" class="flex items-center">
+                <a href="{{ route('admin.health') }}" class="flex items-center">
                     <x-icons.sidebar name="health"/>
                     <span class="mx-3 whitespace-nowrap">Health</span>
                 </a>
@@ -205,6 +217,12 @@ if (!function_exists('sidebarActive')) {
                 <a href="{{ route('admin.messages') }}" class="flex items-center">
                     <x-icons.sidebar name="messages"/>
                     <span class="mx-3 whitespace-nowrap">Messaging</span>
+                </a>
+            </li>
+            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['messages','messaging','notifications','sentmessages','plans']) }}">
+                <a href="{{ route('superadmin.setting.planlist') }}" class="flex items-center">
+                    <x-icons.sidebar name="plans"/>
+                    <span class="mx-3 whitespace-nowrap">Plans</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['calendar','events']) }}">

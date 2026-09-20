@@ -12,8 +12,8 @@
     @include('partials.message')
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {{-- Message Students --}}
-        <a href="{{ url('admin/students') }}"
+{{-- Message Parents --}}
+        <a href="{{ url('admin/parents') }}"
            class="ds-card ds-card-hover p-6 flex flex-col items-center text-center gap-3 no-underline"
            style="color: inherit;">
             <div class="ds-kpi-icon-wrap" style="background: rgba(30,111,217,0.10); width: 56px; height: 56px;">
@@ -21,9 +21,9 @@
                     <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
                 </svg>
             </div>
-            <h3 class="ds-card-title text-lg">Message Students</h3>
-            <p class="text-sm text-muted">Select students from the list and send them a message.</p>
-            <span class="ds-btn ds-btn-primary ds-btn-sm mt-2">Go to Students</span>
+            <h3 class="ds-card-title text-lg">Message Parents</h3>
+            <p class="text-sm text-muted">Select parents from the list and send them a message.</p>
+            <span class="ds-btn ds-btn-primary ds-btn-sm mt-2">Go to Parents</span>
         </a>
 
         {{-- Message Teachers --}}

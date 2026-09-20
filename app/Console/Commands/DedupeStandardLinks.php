@@ -92,9 +92,10 @@ class DedupeStandardLinks extends Command
     private function duplicateGroups(): array
     {
         return DB::select("
-            SELECT school_id, section_id, academic_year_id, stream, COUNT(*) as cnt
-            FROM standards_link
-            GROUP BY school_id, section_id, academic_year_id, stream
+            SELECT sl.school_id, sl.section_id, sl.academic_year_id, s.stream, COUNT(*) as cnt
+            FROM standards_link sl
+            JOIN sections s ON s.id = sl.section_id
+            GROUP BY sl.school_id, sl.section_id, sl.academic_year_id, s.stream
             HAVING cnt > 1
             ORDER BY school_id, section_id
         ");
@@ -117,9 +118,9 @@ class DedupeStandardLinks extends Command
                 (SELECT COUNT(*) FROM events ev WHERE ev.standard_id = sl.id) as event_count,
                 (SELECT COUNT(*) FROM posts p WHERE p.visible_for = sl.id) as post_count
             FROM standards_link sl
-            WHERE sl.school_id = ? AND sl.section_id = ? AND sl.academic_year_id = ? AND (sl.stream = ? OR (sl.stream IS NULL AND ? IS NULL))
+            WHERE sl.school_id = ? AND sl.section_id = ? AND sl.academic_year_id = ?
             ORDER BY sl.id
-        ", [$group->school_id, $group->section_id, $group->academic_year_id, $group->stream, $group->stream]);
+        ", [$group->school_id, $group->section_id, $group->academic_year_id]);
 
         // Annotate with derived fields
         foreach ($rows as $r) {

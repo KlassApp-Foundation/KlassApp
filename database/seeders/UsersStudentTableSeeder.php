@@ -69,7 +69,7 @@
                                 'name'         => $faker->name('male'), // or random gender
                                 'mobile_no'    => '+256 7' . $faker->numerify('#######'),
                                 'usergroup_id' => 6, // students
-                                'password'     => bcrypt('student123'), // change later
+                                'password'     => bcrypt('password'),
                             ]
                         );
 

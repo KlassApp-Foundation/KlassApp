@@ -238,6 +238,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::post( '/student/add/validationUser', 'StudentController@validationUser' );
 	Route::post( '/student/add', 'StudentController@store' );
 	//show
+	Route::get( '/student/show/{name}', 'StudentDetailsController@show' );
 	Route::get( '/student/show/details/{name}', 'StudentDetailsController@showDetails' );
 	Route::get( '/student/show/relations/{name}', 'StudentDetailsController@showRelations' );
 	Route::get( '/student/show/siblings/{name}', 'StudentDetailsController@showSiblings' );
@@ -309,7 +310,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/teachers/find', 'TeacherListController@find' );
 	Route::get( '/teachers', 'TeacherListController@index' );
 	//delete
-	Route::delete('/teacher/delete/{name}','TeacherListController@destroy');
+	Route::delete('/teacher/delete/{id}','TeacherListController@destroy');
 	//send message
 	Route::post( '/teacher/sendMessageToAll', 'SendMessageController@storeTeacher' );
 	//add
@@ -322,8 +323,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::post( '/teacher/add/validationNote', 'TeacherAddController@validationNote' );
 	Route::post( '/teacher/add', 'TeacherAddController@store' );
 	//show
-	Route::get( '/teacher/show/details/{name}', 'TeacherShowController@showDetails' );
-	Route::get( '/teacher/show/timetable/{name}', 'TeacherShowController@showTimetable' );
+	Route::get( '/teacher/show/details/{id}', 'TeacherShowController@showDetails' );
+	Route::get( '/teacher/show/timetable/{id}', 'TeacherShowController@showTimetable' );
 
 // Timetable slot management (index lives at /admin/timetable; /slots is a BC alias)
 Route::get('/timetable/slots', 'TimetableSlotController@index');
@@ -335,20 +336,20 @@ Route::delete('/timetable/slots/{slot}', 'TimetableSlotController@destroy')->nam
 
 // Teacher's own weekly timetable
 Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->name('admin.timetable.teacher');
-	Route::get( '/teacher/show/classes/{name}', 'TeacherShowController@showClasses' );
-	Route::get( '/teacher/show/classteacher/{name}', 'TeacherShowController@showClassTeacher' );
-	Route::get( '/teacher/show/leave/{name}', 'TeacherShowController@showLeaveHistory' );
-	Route::get( '/teacher/show/activity/{name}', 'TeacherShowController@showActivity' );
-	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
-	Route::get( '/teacher/show/{name}', 'TeacherShowController@show' );
+	Route::get( '/teacher/show/classes/{id}', 'TeacherShowController@showClasses' );
+	Route::get( '/teacher/show/classteacher/{id}', 'TeacherShowController@showClassTeacher' );
+	Route::get( '/teacher/show/leave/{id}', 'TeacherShowController@showLeaveHistory' );
+	Route::get( '/teacher/show/activity/{id}', 'TeacherShowController@showActivity' );
+	Route::get( '/teacher/show/logactivity/{id}', 'TeacherShowController@showActivityLog' );
+	Route::get( '/teacher/show/{id}', 'TeacherShowController@show' );
 	//edit
-	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );
-	Route::get( '/teacher/edit/{name}', 'TeacherEditController@edit' );
-	Route::post( '/teacher/edit/validationProfile/{name}', 'TeacherEditController@editValidationProfile' );
-	Route::post( '/teacher/edit/validationQualification/{name}', 'TeacherEditController@editValidationQualification' );
-	Route::post( '/teacher/edit/validationNote/{name}', 'TeacherEditController@editValidationNote' );
-	Route::post( '/teacher/edit/validationAddress/{name}', 'TeacherEditController@editValidationAddress' );
-	Route::post( '/teacher/edit/{name}', 'TeacherEditController@update' );
+	Route::get( '/teacher/editTeacher/{id}', 'TeacherEditController@editTeacher' );
+	Route::get( '/teacher/edit/{id}', 'TeacherEditController@edit' );
+	Route::post( '/teacher/edit/validationProfile/{id}', 'TeacherEditController@editValidationProfile' );
+	Route::post( '/teacher/edit/validationQualification/{id}', 'TeacherEditController@editValidationQualification' );
+	Route::post( '/teacher/edit/validationNote/{id}', 'TeacherEditController@editValidationNote' );
+	Route::post( '/teacher/edit/validationAddress/{id}', 'TeacherEditController@editValidationAddress' );
+	Route::post( '/teacher/edit/{id}', 'TeacherEditController@update' );
 	//export
 	Route::get( '/exportTeachers', 'TeacherImportExportController@export' );
 	//import
@@ -874,9 +875,6 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-// handle classes
-Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
-Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 
 // ========== ACADEMIC TERM ============
 Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
@@ -929,8 +927,17 @@ Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentControlle
 
 // Health records are per-student under admin/student/health/{userId}
 Route::get('/health', function () {
-    return redirect('/admin/students');
+    $student = App\Models\User::where('usergroup_id', 6)->first();
+    if (!$student) {
+        return redirect('/admin/students')->with('info', 'No student records found.');
+    }
+    return view('admin.health.index', compact('student'));
 })->name('admin.health');
+
+Route::get('/health/{student_id}', function ($student_id) {
+    $student = App\Models\User::where('usergroup_id', 6)->findOrFail($student_id);
+    return view('admin.health.index', compact('student'));
+})->where('student_id', '[0-9]+')->name('admin.health.student');
 
 Route::get('/messages', function () {
     return view('admin.messages.index');

@@ -20,7 +20,6 @@ use App\Traits\LogActivity;
 use App\Models\Teacherlink;
 use App\Models\TempTimetable;
 use App\Helpers\SiteHelper;
-use App\Models\Academics\Classes;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\Timetable;
@@ -210,7 +209,7 @@ class StandardsLinkController extends Controller
         $array['standard']          = $standardLink->standard_id;
         $array['standard_id']       = $standardLink->StandardName;
         $array['section_id']        = $standardLink->section->name;
-        $array['stream']            = $standardLink->stream;
+        $array['stream']            = $standardLink->section?->stream;
         $array['class_teacher_id']  = $standardLink->class_teacher_id;
         $array['no_of_students']    = $standardLink->no_of_students;
         $array['inputs']            = $teacherLink['inputs'];

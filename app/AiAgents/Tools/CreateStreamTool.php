@@ -13,6 +13,8 @@ use App\Models\AcademicYear;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Services\ClassStructureService;
+use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
 
 /**
@@ -106,11 +108,9 @@ class CreateStreamTool implements Tool, VerifiableTool
 
         // ── Guard: already-streamed class cannot be turned direct ──
         if (empty($streams)) {
-            $existingStreamed = StandardLink::where('school_id', $schoolId)
-                ->where('section_id', $section->id)
-                ->where('academic_year_id', $academicYearId)
-                ->whereNotNull('stream')
+            $existingStreamed = Section::where('school_id', $schoolId)
                 ->where('stream', '!=', '')
+                ->where('name', 'like', $className . ' %')
                 ->exists();
 
             if ($existingStreamed) {
@@ -128,11 +128,10 @@ class CreateStreamTool implements Tool, VerifiableTool
         $batchArgs = ['className' => $className, 'streams' => $streams, 'phase' => $phase ?: null];
 
         if (empty($streams)) {
-            // Direct class — one StandardLink with stream = null
+            // Direct class — one StandardLink for the base Section.
             $existingLink = StandardLink::where('school_id', $schoolId)
                 ->where('section_id', $section->id)
                 ->where('academic_year_id', $academicYearId)
-                ->whereNull('stream')
                 ->first();
 
             if ($existingLink) {
@@ -148,7 +147,6 @@ class CreateStreamTool implements Tool, VerifiableTool
                 'academic_year_id' => $academicYearId,
                 'standard_id' => $standard->id,
                 'section_id' => $section->id,
-                'stream' => null,
                 'no_of_students' => 0,
                 'status' => 1,
             ]);
@@ -156,32 +154,36 @@ class CreateStreamTool implements Tool, VerifiableTool
             return "✅ Class **{$className}** created successfully.";
         }
 
-        // Stream-first creation — one StandardLink per stream name
+        // Stream-first creation — one child Section and StandardLink per stream.
         $confirm = $this->confirmOrExecute('toolCreateStream', $batchArgs,
             fn() => "Create class: {$className} with streams: " . implode(', ', $streams) . ".");
         if ($confirm !== null) return $confirm;
 
-        foreach ($streams as $streamName) {
-            $existingStreamLink = StandardLink::where('school_id', $schoolId)
-                ->where('section_id', $section->id)
-                ->where('academic_year_id', $academicYearId)
-                ->where('stream', $streamName)
-                ->first();
-
-            if ($existingStreamLink) {
-                $createdStreams[] = "{$streamName} (already exists)";
-                continue;
-            }
-
-            StandardLink::create([
+        StandardLink::firstOrCreate(
+            [
                 'school_id' => $schoolId,
                 'academic_year_id' => $academicYearId,
                 'standard_id' => $standard->id,
                 'section_id' => $section->id,
-                'stream' => $streamName,
+            ],
+            [
                 'no_of_students' => 0,
                 'status' => 1,
-            ]);
+            ]
+        );
+
+        foreach ($streams as $streamName) {
+            $streamSection = Section::where('school_id', $schoolId)
+                ->where('stream', $streamName)
+                ->where('name', OnboardingEngine::composeClassAndStream($className, $streamName))
+                ->first();
+
+            if ($streamSection && StandardLink::where('school_id', $schoolId)->where('section_id', $streamSection->id)->where('academic_year_id', $academicYearId)->exists()) {
+                $createdStreams[] = "{$streamName} (already exists)";
+                continue;
+            }
+
+            app(ClassStructureService::class)->addStream($user->school, $academicYear, $section, $streamName);
 
             $createdStreams[] = $streamName;
         }
@@ -218,7 +220,6 @@ class CreateStreamTool implements Tool, VerifiableTool
             $link = StandardLink::where('school_id', $schoolId)
                 ->where('section_id', $section->id)
                 ->where('academic_year_id', $academicYearId)
-                ->whereNull('stream')
                 ->first();
 
             return [
@@ -229,9 +230,9 @@ class CreateStreamTool implements Tool, VerifiableTool
             ];
         }
 
-        $existing = StandardLink::where('school_id', $schoolId)
-            ->where('section_id', $section->id)
-            ->where('academic_year_id', $academicYearId)
+        $existing = Section::where('school_id', $schoolId)
+            ->where('stream', '!=', '')
+            ->where('name', 'like', $className . ' %')
             ->whereIn('stream', $streams)
             ->count();
 

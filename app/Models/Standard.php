@@ -5,7 +5,6 @@
  */
 namespace App\Models;
 
-use App\Models\Academics\Classes;
 use App\Models\Academics\SchoolGradingSystem;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laracasts\Presenter\PresentableTrait;
@@ -65,8 +64,5 @@ public function schoolGradingSystem(){
     public function standardLink()
     {
         return $this->hasMany('\App\Models\StandardLink','standard_id','id');
-    }
-    public function classes(){
-        return $this->hasMany(Classes::class);
     }
 }

@@ -28,7 +28,7 @@ class StandardLink extends Model
      * @var array
      */
     protected $fillable = [
-       'school_id' , 'academic_year_id', 'class_teacher_id' , 'standard_id' , 'section_id' , 'no_of_students' , 'stream' , 'status' , 'sub_group'
+    'school_id' , 'academic_year_id', 'class_teacher_id' , 'standard_id' , 'section_id' , 'no_of_students' , 'status' , 'sub_group'
     ];
 
     protected $with=['standard' , 'section'];

@@ -5,6 +5,7 @@
  */
 namespace App\Models;
 
+
 use App\Models\Academics\Classes;
 use App\Models\SchoolDetail;
 use Illuminate\Database\Eloquent\Model;
@@ -227,9 +228,9 @@ class School extends Model
         return $this->hasMany('\App\Models\Assignment','school_id','id');
     }
 
-    public function classes()
+    public function sections()
     {
-        return $this->hasMany(Classes::class);
+        return $this->hasMany(Section::class);
     }
 
     public function leaveType()

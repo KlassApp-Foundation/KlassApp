@@ -28,34 +28,15 @@
             </div>
 
             @if($streams->isNotEmpty())
-                <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    @foreach($streams as $row)
-                        @php($stream = $row['stream'])
-                        <button wire:click="selectStream({{ $stream->id }})" type="button" class="text-left rounded-2xl border p-4 transition {{ $selectedStream?->id === $stream->id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-slate-50 hover:border-emerald-300' }}">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-lg font-bold text-slate-950">{{ $stream->stream ?: 'Main stream' }}</span>
-                                <span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ $stream->standard?->name ?: 'Level pending' }}</span>
-                            </div>
-                            <p class="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Effective teacher</p>
-                            <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ $row['effectiveTeacher']?->name ?: 'Not assigned' }}</p>
-                            <div class="mt-3 flex flex-wrap gap-1.5">
-                                @forelse($row['teacherLinks'] as $teacherLink)
-                                    <span class="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-slate-600">{{ $teacherLink->subject?->name ?: 'Subject pending' }}</span>
-                                @empty
-                                    <span class="text-xs text-slate-400">No subject assignments visible</span>
-                                @endforelse
-                            </div>
-                        </button>
-                    @endforeach
-                </div>
+                <p class="mt-5 text-sm text-slate-600">Showing the complete roster for <span class="font-semibold text-slate-900">{{ $streamLabel }}</span>. Stream selection is not required.</p>
             @endif
         </div>
 
-        @if($selectedStream)
+        @if($streams->isNotEmpty())
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-end">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $selectedStream->stream ?: 'Main stream' }} · student roster</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $streamLabel }} · student roster</p>
                         <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $students->total() }} {{ \Illuminate\Support\Str::plural('student', $students->total()) }}</h2>
                         @if(!$fullStudentDetail)
                             <p class="mt-2 text-xs text-amber-700">Subject view: student details are limited to your assigned subject context.</p>
@@ -74,16 +55,28 @@
                                     @if($fullStudentDetail)
                                         <th class="px-3 py-3">Academic status</th>
                                     @endif
+                                    <th class="px-3 py-3 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
                                 @foreach($students as $studentAcademic)
+                                    @php
+                                        $studentName = $studentAcademic->user?->name ?: 'Unnamed student';
+                                        $editStudentUrl = $studentAcademic->user ? route('teacher.student.edit', ['name' => $studentAcademic->user->name]) : null;
+                                    @endphp
                                     <tr wire:key="student-{{ $studentAcademic->id }}" class="text-slate-700">
-                                        <td class="px-3 py-3 font-semibold text-slate-900">{{ $studentAcademic->user?->name ?: 'Unnamed student' }}</td>
+                                        <td class="px-3 py-3 font-semibold text-slate-900">{{ $studentName }}</td>
                                         <td class="px-3 py-3"><span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{{ ucfirst($studentAcademic->user?->status ?: 'unknown') }}</span></td>
                                         @if($fullStudentDetail)
                                             <td class="px-3 py-3 text-slate-500">{{ ucfirst($studentAcademic->academic_status ?: 'Not recorded') }}</td>
                                         @endif
+                                        <td class="px-3 py-3 text-right">
+                                            @if($editStudentUrl)
+                                                <a href="{{ $editStudentUrl }}" class="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900">Edit</a>
+                                            @else
+                                                <span class="text-xs text-slate-400">Unavailable</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -96,10 +89,6 @@
                         <p class="mt-1 text-sm text-slate-500">The class can be built incrementally; an empty roster is valid.</p>
                     </div>
                 @endif
-            </div>
-        @elseif($streams->isNotEmpty())
-            <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-                <p class="font-semibold text-slate-900">Choose a stream to view its roster</p>
             </div>
         @endif
     </div>

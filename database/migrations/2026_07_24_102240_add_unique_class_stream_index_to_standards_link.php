@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('standards_link', function (Blueprint $table) {
-            $table->unique(['school_id', 'section_id', 'academic_year_id', 'stream'], 'standards_link_unique_class_stream');
+            $table->unique(['school_id', 'section_id', 'academic_year_id', 'standard_id'], 'standards_link_unique_class_year_standard');
         });
     }
 
     public function down(): void
     {
         Schema::table('standards_link', function (Blueprint $table) {
-            $table->dropUnique('standards_link_unique_class_stream');
+            $table->dropUnique('standards_link_unique_class_year_standard');
         });
     }
 };

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Models\Academics\Classes;
+use App\Models\Section;
 use App\Models\FeesCategories;
 
 class SubadminController extends Controller
@@ -22,7 +22,7 @@ class SubadminController extends Controller
         // Basic counts for KPI cards
         $studentCount = User::BySchool($schoolId)->ByRole(6)->count();
         $teacherCount = User::BySchool($schoolId)->ByRole(5)->count();
-        $classCount   = Classes::where('school_id', $schoolId)->count();
+        $classCount   = Section::where('school_id', $schoolId)->where('status', 1)->count();
         $feeCount     = FeesCategories::where('school_id', $schoolId)->count();
 
         return view('admin.subadmin.dashboard', compact(

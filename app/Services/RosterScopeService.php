@@ -82,7 +82,7 @@ class RosterScopeService
             ->where('standards_link.section_id', $section->id)
             ->where('standards_link.academic_year_id', $academicYearId)
             ->where('standards_link.status', 1)
-            ->orderBy('standards_link.stream');
+            ->orderBy('standards_link.section_id');
         $this->withScopedStreamRelations($query, $schoolId, $academicYearId);
 
         if (! $this->isAdmin($actor)) {

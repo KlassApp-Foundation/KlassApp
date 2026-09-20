@@ -48,6 +48,16 @@ class DashboardController extends Controller
         return $dashboard['timetable'];
     }
 
+    public function timetablePage(Request $request)
+    {
+        $teacher_id = Auth::id();
+        $school_id = Auth::user()->school_id;
+
+        $dashboard = $this->teacherDashboard($school_id, $teacher_id);
+
+        return view('/teacher/timetable/index', ['dashboard' => $dashboard]);
+    }
+
     public function list(Request $request,$task_flag)
     {
         //

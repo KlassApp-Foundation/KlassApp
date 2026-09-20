@@ -155,11 +155,23 @@ return new class extends Migration
                 continue;
             }
 
+            $targetSection = DB::table('sections')->where('id', $target->section_id)->first();
+            $oppositeStream = match (strtoupper((string) ($targetSection->stream ?? ''))) {
+                'EAST' => 'WEST',
+                'WEST' => 'EAST',
+                'A' => 'B',
+                default => 'A',
+            };
+
             $original = DB::table('standards_link')
                 ->where('school_id', $target->school_id)
                 ->where('standard_id', $target->standard_id)
-                ->where('section_id', $target->section_id)
-                ->where('stream', $target->stream === 'EAST' ? 'WEST' : ($target->stream === 'WEST' ? 'EAST' : ($target->stream === 'A' ? 'B' : 'A')))
+                ->whereIn('section_id', function ($query) use ($target, $oppositeStream): void {
+                    $query->select('id')
+                        ->from('sections')
+                        ->where('school_id', $target->school_id)
+                        ->where('stream', $oppositeStream);
+                })
                 ->first();
 
             if (! $original) {

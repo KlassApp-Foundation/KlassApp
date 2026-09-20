@@ -8,6 +8,7 @@ use App\Models\StandardLink;
 use App\Services\RosterScopeService;
 use App\Models\User;
 use Illuminate\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -75,14 +76,12 @@ class Show extends Component
         $section = $this->authorizedSection($rosterScope);
         $streams = $rosterScope->visibleStreams($actor, $section, $this->selectedAcademicYearId);
         $sectionTeacher = $rosterScope->effectiveClassTeacher($section, null);
-        $selectedStream = $streams->firstWhere('id', $this->selectedStreamId)
-            ?? $streams->first();
-        $this->selectedStreamId = $selectedStream?->id;
+        $selectedStream = $streams->first();
         $students = collect();
         $fullStudentDetail = $this->isAdmin();
 
-        if ($selectedStream !== null) {
-            $studentsQuery = $rosterScope->studentsForStream($selectedStream, $schoolId, $actor);
+        foreach ($streams as $stream) {
+            $studentsQuery = $rosterScope->studentsForStream($stream, $schoolId, $actor);
             $studentsQuery->when($this->studentSearch !== '', function ($studentQuery) use ($actor): void {
                 $studentQuery->whereHas('user', function ($userQuery) use ($actor): void {
                     $userQuery
@@ -90,10 +89,23 @@ class Show extends Component
                         ->where('users.name', 'like', '%' . $this->studentSearch . '%');
                 });
             });
-            $students = $studentsQuery->paginate($this->perPage, ['*'], 'rosterPage');
+            $students = $students->merge($studentsQuery->get());
             $fullStudentDetail = $fullStudentDetail
-                || $rosterScope->effectiveClassTeacher($section, $selectedStream)?->is($actor);
+                || $rosterScope->effectiveClassTeacher($section, $stream)?->is($actor);
         }
+
+        $students = $students
+            ->unique('id')
+            ->sortBy(fn ($student) => $student->user?->name ?? '')
+            ->values();
+        $page = LengthAwarePaginator::resolveCurrentPage('rosterPage');
+        $students = new LengthAwarePaginator(
+            $students->forPage($page, $this->perPage)->values(),
+            $students->count(),
+            $this->perPage,
+            $page,
+            ['pageName' => 'rosterPage']
+        );
 
         $streamRows = $streams->map(function (StandardLink $stream) use ($rosterScope, $section, $actor): array {
             $effectiveTeacher = $rosterScope->effectiveClassTeacher($section, $stream);
@@ -116,6 +128,7 @@ class Show extends Component
             'sectionTeacher' => $sectionTeacher,
             'streams' => $streamRows,
             'selectedStream' => $selectedStream,
+            'streamLabel' => $section->stream ?: 'Main stream',
             'students' => $students,
             'fullStudentDetail' => $fullStudentDetail,
             'years' => AcademicYear::query()
