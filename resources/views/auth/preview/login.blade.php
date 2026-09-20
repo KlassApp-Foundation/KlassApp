@@ -17,7 +17,7 @@
 
         @if(\Config::get('settings.login_status', 1) == 0)
           <div class="ap-maintenance">Login page is under maintenance</div>
-        @else
+        @endif
           @if (session('failmessage') || ! empty($failmessage))
             <div class="ap-alert ap-alert--error" role="alert" data-testid="auth-flash-error">{{ session('failmessage') ?? $failmessage }}</div>
           @endif
@@ -63,7 +63,6 @@
           <div class="ap-meta">
             <p>Don't have an account? <a href="{{ route('register') }}">Sign up</a></p>
           </div>
-        @endif
       </div>
     </div>
   </div>

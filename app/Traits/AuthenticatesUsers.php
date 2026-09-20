@@ -147,59 +147,18 @@ trait AuthenticatesUsers
             $user = User::where('email', request('email'))->with('userprofile')->first();
             if ($user)
             {
-                if($user->usergroup_id==1)
-                {
+                // Platform-wide login switch (2026-09-20).
+                // SiteAdmin/Superadmin (usergroup 1) ALWAYS bypass it: a switch that
+                // can lock out the only people able to turn it back off is a real
+                // self-lockout risk. Every other role is gated, default-safe — a
+                // missing/empty setting means ENABLED; only an explicit off-value blocks.
+                if ((int) $user->usergroup_id === 1) {
                     return TRUE;
                 }
-                elseif($user->usergroup_id==3)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==4)
-                {
-                    return TRUE;
-                }
-                elseif ($user->usergroup_id==5)
-                {
-                    $loginStatus = \Config::get('settings.login_status');
 
-                    // Default-safe (2026-09-20): when the `settings` table has no
-                    // row (e.g. a freshly provisioned environment) the value is
-                    // null — that must mean "logins enabled", not "blocked".
-                    // Only an explicit off-value (0 / '0' / false) blocks.
-                    if ($loginStatus === null || $loginStatus === '' || (int) $loginStatus === 1) {
-                        return TRUE;
-                    }
-                }
-                elseif ($user->usergroup_id==6)
-                {
-                    return TRUE;
-                }
-                elseif ($user->usergroup_id==7)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==8)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==9)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==10)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==11)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==12)
-                {
-                    return TRUE;
-                }
-                return FALSE;
+                $loginStatus = \Config::get('settings.login_status');
+
+                return $loginStatus === null || $loginStatus === '' || (int) $loginStatus === 1;
             }
             return FALSE;
         },'Invalid Credentials');

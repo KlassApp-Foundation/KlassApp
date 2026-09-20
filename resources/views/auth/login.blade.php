@@ -93,7 +93,7 @@
   </div>
   @if(\Config::get('settings.login_status', 1) == 0)
     <div class="klass-maintenance">Login page is under maintenance</div>
-  @else
+  @endif
     {{-- Session flash (OAuth / auth failures). Field $errors stay on inputs below. --}}
     @if (session('failmessage'))
       <div class="klass-flash klass-flash-error" role="alert" data-testid="auth-flash-error">{{ session('failmessage') }}</div>
@@ -143,6 +143,5 @@
         Go to KlassApp website
       </a>
     </div>
-  @endif
 </div>
 @endsection
