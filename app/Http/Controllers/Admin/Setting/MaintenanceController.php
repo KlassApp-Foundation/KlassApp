@@ -32,28 +32,22 @@ class MaintenanceController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $maintenance='0';
-        $register='0';
-        $login_status='0';
-        
-        if($request->maintenance==1)
-        {
-            $maintenance=$request->maintenance;
+        $school = \Auth::user()->school;
+
+        if (! $school) {
+            abort(403);
         }
-        if($request->register==1)
-        {
-            $register=$request->register;
-        }
-        if($request->login_status==1)
-        {
-            $login_status=$request->login_status;
-        }
-        
-        $this->updatesettings('maintenance',$maintenance);  
-        $this->updatesettings('register',$register);
-        $this->updatesettings('login_status',$login_status);
-              
+
+        // MULTI-TENANCY: write ONLY to this admin's own school, resolved from the
+        // authenticated user. A school id is NEVER taken from request input, so a
+        // tampered request cannot reach another school's settings.
+        $school->setDetailValue('login_status', $request->login_status == 1 ? '1' : '0');
+        $school->setDetailValue('maintenance', $request->maintenance == 1 ? '1' : '0');
+
+        // NOTE: 'register'/'register_status' is a PLATFORM-level switch (public
+        // signup) and is intentionally NOT writable from a school admin page.
+        // It is managed by SiteAdmin (SystemSettingsService).
+
         return redirect()->back();
     }
 }

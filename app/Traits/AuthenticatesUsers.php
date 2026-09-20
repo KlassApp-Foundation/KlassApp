@@ -156,7 +156,10 @@ trait AuthenticatesUsers
                     return TRUE;
                 }
 
-                $loginStatus = \Config::get('settings.login_status');
+                // Resolve the switch for the user's OWN school (never a global value):
+                // a school may only ever be gated by its own setting.
+                $school = $user->school;
+                $loginStatus = $school ? $school->loginStatus() : \Config::get('settings.login_status');
 
                 return $loginStatus === null || $loginStatus === '' || (int) $loginStatus === 1;
             }

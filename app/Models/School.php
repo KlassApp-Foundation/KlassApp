@@ -6,6 +6,7 @@
 namespace App\Models;
 
 use App\Models\Academics\Classes;
+use App\Models\SchoolDetail;
 use Illuminate\Database\Eloquent\Model;
 
 class School extends Model
@@ -54,6 +55,38 @@ class School extends Model
     public function schoolDetail()
     {
         return $this->hasMany('App\Models\SchoolDetail','school_id','id');
+    }
+
+    /**
+     * Per-school access switches live in `school_details` (school_id + meta_key +
+     * meta_value) — the same per-school config pattern already used for
+     * school_logo/board. Access switches must NEVER be global: a school may only
+     * ever change its own.
+     */
+    public function detailValue($key, $default = null)
+    {
+        $row = $this->schoolDetail()->where('meta_key', $key)->first();
+
+        return $row ? $row->meta_value : $default;
+    }
+
+    public function setDetailValue($key, $value)
+    {
+        return SchoolDetail::updateOrCreate(
+            ['school_id' => $this->id, 'meta_key' => $key],
+            ['meta_value' => (string) $value]
+        );
+    }
+
+    /**
+     * This school's login switch. Falls back to the platform default when the
+     * school has no explicit value (missing/empty === enabled).
+     */
+    public function loginStatus()
+    {
+        $value = $this->detailValue('login_status');
+
+        return ($value === null || $value === '') ? \Config::get('settings.login_status') : $value;
     }
 
     public function schoolDetailBoard()
