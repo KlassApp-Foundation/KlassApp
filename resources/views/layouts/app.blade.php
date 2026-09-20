@@ -55,10 +55,10 @@
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full min-h-screen relative">
-                <div class="sidebar self-stretch">
+                <div class="sidebar self-stretch" id="app-sidebar-wrap">
                     @yield('base-sidebar')
                 </div>
-                <div class="bg-gray-200 dashboard-content-area flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
+                <div class="bg-gray-200 dashboard-content-area flex-1 min-w-0 px-4">
                     @yield('base-content')
                 </div>
             </main>
