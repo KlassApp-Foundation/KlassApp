@@ -168,6 +168,38 @@ connects".
 6. Only after stable: consider the deferred wave-2 items (inbound events, interactive
    approval blocks) — out of scope here.
 
+## 6b. Verified: role scoping within a connected school (fold-in check, 2026-09-20)
+
+One admin's OAuth grants workspace *reachability* for the whole school. Verified that
+reachability ≠ usability: **a role check exists today, on two layers**, and is proven by
+test (`tests/Feature/Toshi/SlackRoleScopingTest.php`, 5 tests / 10 assertions, green):
+
+1. **Structural layer** — `ToshiSdkV2Service`'s scope router sends each usergroup to its
+   own operations agent: ug4 (deputy) / ug5 (teacher) / ug6 (student) / ug7 (parent) /
+   ug8 (librarian) / ug10 (receptionist) / ug11 (accountant) → agents whose `tools()`
+   **do not include `RouteToSlackSkillTool`** (verified by grep across all of them).
+   Only the `default` arm → `ToshiOrchestrator` registers the Slack route tool.
+2. **In-tool Gate layer** — `RouteToSlackSkillTool::handle()` calls
+   `AuthorizesToshiAction::authorizeOrMessage()` → Gate `toshi-school-action`
+   (ug3 SchoolAdmin, or ug1 SiteAdmin **impersonating** ug3) OR `toshi-deputy-action`
+   (ug4, school-scoped). Everyone else gets "❌ You are not authorized for this school
+   action." — including the unlisted groups (ug9 OldStudent, ug12 StockKeeper, ug1 in
+   plain school scope) that fall through the structural layer's `default` arm; the
+   in-tool Gate is the barrier for those.
+
+**Who can invoke Slack at a connected school today:** SchoolAdmin (ug3), SiteAdmin
+impersonating a SchoolAdmin, and Deputy Admin (ug4) — dual-allowed by design (same tool
+surface ug3 and ug4 share, per the trait's docblock). **Teachers cannot** — proven for
+both a read intent and a write-gated post-message intent at a school with an ACTIVE
+registry row (denial comes from the role gate, not the not-connected fallback; zero
+audit rows produced). Writes additionally remain approval-gated regardless of role.
+
+**Go/no-go impact:** **No blocker.** Role scoping is present, layered, and regression-
+pinned; this is a green verification, not a gap. Proceed with Batch A/B as written.
+(The deputy-admin dual-allow is the one deliberate breadth decision to keep in mind —
+if the pilot school wants Slack restricted to the full-school-admin only, that is a
+product choice to revisit, not a defect.)
+
 ## 7. Rollback plan
 
 - **Instance-wide kill switch:** set `TOSHI_SLACK_CHANNEL_ENABLED=false` → connector invisible,
