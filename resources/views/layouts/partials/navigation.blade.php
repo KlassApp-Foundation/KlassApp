@@ -22,6 +22,8 @@
     $showAcademicYear = $showAcademicYear ?? ($variant === 'dashboard');
     $extraPricing     = $extraPricing     ?? false;
     $showLogout       = $showLogout       ?? false;
+    $brandLogo        = $brandLogo        ?? null;   // 'klassapp' => KlassApp mark (parent; may span schools)
+    $familyMenu       = $familyMenu       ?? false;  // parent: children + schools menu in the header
 
     // School identity: prefer the SCHOOL's own logo, fall back to the KlassApp mark.
     $navUser   = \Auth::user();
@@ -62,6 +64,18 @@
                 <a class="text-xl lg:text-2xl font-exo font-semibold px-2" href="{{ route($brandRoute) }}">
                     <strong>{{ $brandText }}</strong>
                 </a>
+            @elseif($brandLogo === 'klassapp')
+                {{-- A parent can have children at several schools, so one school's logo
+                     would be wrong here; the children/schools menu carries identity. --}}
+                <a class="h-10 object-contain" href="{{ route($brandRoute) }}" aria-label="KlassApp">
+                    <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
+                         class="h-10 w-auto object-contain mr-3"
+                         alt="KlassApp"
+                         onerror="this.onerror=null;this.src='{{ asset('images/klassapp-logo.svg') }}';">
+                </a>
+                <a class="parent-brand-name {{ $nameClass }}" href="{{ route($brandRoute) }}">
+                    <strong>KlassApp</strong>
+                </a>
             @else
                 <a class="h-10 object-contain" href="{{ route($brandRoute) }}"
                    aria-label="{{ $navSchool ? ucwords($navSchool->name).' dashboard' : 'Dashboard' }}">
@@ -76,6 +90,9 @@
             @endif
         @else
             @include('layouts.partials.logo')
+        @endif
+        @if($familyMenu)
+            @include('layouts.partials.family-menu', ['navUser' => $navUser, 'brandRoute' => $brandRoute])
         @endif
     </div>
 

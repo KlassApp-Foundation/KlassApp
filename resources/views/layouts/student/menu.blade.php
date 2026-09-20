@@ -5,16 +5,10 @@
         <a href="{{ url('student/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-nowrap">Dashboard</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ sActive(['homework','homeworks']) }}">
-        <a href="{{ url('student/homework') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
+        <a href="{{ url('student/homeworks') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ sActive(['assignments','assignment']) }}">
         <a href="{{ url('student/assignments') }}" class="flex items-center"><x-icons.sidebar name="subjects"/><span class="mx-3 whitespace-nowrap">Assignments</span></a>
-    </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ sActive('quiz') }}">
-        <a href="{{ url('student/quiz') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-nowrap">Quiz</span></a>
-    </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ sActive(['timetable','timetables']) }}">
-        <a href="{{ url('student/timetable') }}" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-nowrap">Timetable</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ sActive(['events']) }}">
         <a href="{{ url('student/events') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-nowrap">Events</span></a>
@@ -28,8 +22,8 @@
     <li class="py-3 px-3 dashboard-menu-item {{ sActive(['holidays','holiday']) }}">
         <a href="{{ url('student/holidays') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-nowrap">Holidays</span></a>
     </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ sActive(['chats','chat']) }}">
-        <a href="{{ url('student/chats') }}" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Chats</span></a>
+    <li class="py-3 px-3 dashboard-menu-item {{ sActive(['chats','chat','conversations']) }}">
+        <a href="{{ url('student/conversations') }}" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Chats</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ sActive('activity') }}">
         <a href="{{ url('student/activity') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Activity</span></a>
