@@ -20,6 +20,7 @@ import 'vue-flash-message/dist/vue-flash-message.min.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import Paginate from 'vuejs-paginate';
+import PortalVue from 'portal-vue';
 
 import ExampleComponent from './components/ExampleComponent.vue';
 import DemoTab from './components/demo/Tab.vue';
@@ -214,6 +215,7 @@ dt.compatConfig = Object.assign({}, dt.compatConfig || {}, {
 
 // Single global multiselect registration (SFCs previously re-registered on every require).
 Vue.component('multiselect', Multiselect);
+Vue.use(PortalVue);
 
 // vue-flash-message once (ChangeCredential + create-leave previously each Vue.use'd at module load).
 Vue.use(VueFlashMessage);

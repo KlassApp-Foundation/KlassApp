@@ -315,6 +315,9 @@ class StudentController extends Controller
       $array['aadhar_number']             = $userprofile->aadhar_number==NULL ? '':$userprofile->aadhar_number;
       $array['city_id']                   = $userprofile->city_id;
       $array['country_id']                = $userprofile->country_id;
+      $array['address']                   = $userprofile->address ?? '';
+      $array['latitude']                  = $userprofile->latitude ?? '';
+      $array['longitude']                 = $userprofile->longitude ?? '';
       $array['pincode']                   = $userprofile->pincode==NULL ? '':$userprofile->pincode;
       $array['birth_place']               = $userprofile->birth_place;
       $array['native_place']              = $userprofile->native_place;
@@ -327,23 +330,33 @@ class StudentController extends Controller
       $array['lin']               = $userprofile->lin==NULL ? '':$userprofile->lin;
       $array['joining_date']              = $userprofile->joining_date==NULL ? '':date('Y-m-d',strtotime($userprofile->joining_date));
 
-      $array['standardLink_id']           = $studentAcademic->standardLink_id;
-      $array['std_school_pay_number']               = $studentAcademic->std_school_pay_number==NULL ? '':$studentAcademic->std_school_pay_number;
-      $array['klassapp_student_id']                 = $studentAcademic->klassapp_student_id==NULL ? '':$studentAcademic->klassapp_student_id;
-      $array['school_student_id']          = $studentAcademic->school_student_id==NULL ? '':$studentAcademic->school_student_id;
-      $array['board_registration_number'] = $studentAcademic->board_registration_number==NULL ? '':$studentAcademic->board_registration_number;
-      $array['mode_of_transport']         = $studentAcademic->mode_of_transport;
-      $array['driver_name']               = $studentAcademic->transport_details['driver_name'];
-      $array['driver_contact_number']     = $studentAcademic->transport_details['driver_contact_number'];
-      $array['siblings']                  = $studentAcademic->siblings;
-      $array['siblings_count']            = $studentAcademic->siblings_count;
+      $transportDetails = is_array($studentAcademic?->transport_details)
+        ? $studentAcademic->transport_details
+        : [];
+      $siblingDetails = is_array($studentAcademic?->sibling_details)
+        ? $studentAcademic->sibling_details
+        : [];
 
-      for($i = 0 ; $i < $studentAcademic->siblings_count ; $i++)
+      $array['standardLink_id']           = $studentAcademic?->standardLink_id;
+      $array['std_school_pay_number']     = $studentAcademic?->std_school_pay_number ?? '';
+      $array['klassapp_student_id']       = $studentAcademic?->klassapp_student_id ?? '';
+      $array['school_student_id']         = $studentAcademic?->school_student_id ?? '';
+      $array['board_registration_number'] = $studentAcademic?->board_registration_number ?? '';
+      $array['mode_of_transport']        = $studentAcademic?->mode_of_transport;
+      $array['driver_name']              = $transportDetails['driver_name'] ?? '';
+      $array['driver_contact_number']    = $transportDetails['driver_contact_number'] ?? '';
+      $array['siblings']                 = $studentAcademic?->siblings;
+      $array['siblings_count']           = (int) ($studentAcademic?->siblings_count ?? 0);
+
+      for($i = 0 ; $i < $array['siblings_count'] ; $i++)
       {
-        $array['sibling_details'][$i]['sibling_relation']       = $studentAcademic->sibling_details[$i]['sibling_relation'];
-        $array['sibling_details'][$i]['sibling_name']           = $studentAcademic->sibling_details[$i]['sibling_name'];
-        $array['sibling_details'][$i]['sibling_date_of_birth']  = date('Y-m-d',strtotime($studentAcademic->sibling_details[$i]['sibling_date_of_birth']));
-        $array['sibling_details'][$i]['sibling_standard']       = $studentAcademic->sibling_details[$i]['sibling_standard'];
+        $sibling = $siblingDetails[$i] ?? [];
+        $array['sibling_details'][$i]['sibling_relation']      = $sibling['sibling_relation'] ?? '';
+        $array['sibling_details'][$i]['sibling_name']          = $sibling['sibling_name'] ?? '';
+        $array['sibling_details'][$i]['sibling_date_of_birth'] = !empty($sibling['sibling_date_of_birth'])
+          ? date('Y-m-d', strtotime($sibling['sibling_date_of_birth']))
+          : '';
+        $array['sibling_details'][$i]['sibling_standard']      = $sibling['sibling_standard'] ?? '';
       }
 
       $array['countrylist']       =   SiteHelper::getCountries();

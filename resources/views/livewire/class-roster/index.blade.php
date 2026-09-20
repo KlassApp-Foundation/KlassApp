@@ -55,6 +55,8 @@
                     @foreach($sections as $section)
                         @php
                             $streams = $section->standardLink;
+                            $streamNames = collect([$section->stream])->filter()->unique()->values();
+                            $streamLabel = \App\Support\TeacherRosterFormatter::formatStreams($streamNames);
                             $assignedStreams = $streams->filter(fn ($stream) => $stream->class_teacher_id !== null)->count();
                             $level = $streams->first()?->standard?->name;
                             $sectionTeacher = $section->classTeacher;
@@ -67,9 +69,9 @@
                             <td class="px-3 py-4"><a href="{{ $showRoute }}" class="font-bold text-slate-900 hover:text-emerald-700">{{ $section->name }}</a></td>
                             <td class="px-3 py-4 text-sm text-slate-600">{{ $level ?: 'Level pending' }}</td>
                             <td class="px-3 py-4 text-sm font-semibold text-slate-800">{{ $studentCount }}</td>
-                            <td class="px-3 py-4 text-sm text-slate-600">{{ $assignedStreams }}/{{ $streams->count() }} assigned</td>
+                            <td class="px-3 py-4 text-sm text-slate-600">{{ $streamLabel === '—' ? 'No streams yet' : $streamLabel }}</td>
                             <td class="px-3 py-4 text-sm text-slate-600">{{ $sectionTeacher?->name ?: 'Not assigned' }}</td>
-                            <td class="px-3 py-4 text-right"><a href="{{ $showRoute }}" class="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900">Open roster →</a></td>
+                            <td class="px-3 py-4 text-right"><a href="{{ auth()->user()->usergroup_id === 5 ? route('teacher.classes.manage', ['section' => $section->id, 'academic_year_id' => $selectedYear->id]) : $showRoute }}" class="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900">Manage</a></td>
                         </tr>
                     @endforeach
                         </tbody>

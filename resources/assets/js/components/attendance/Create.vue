@@ -8,54 +8,86 @@
 
             <div class="grid gap-4 md:grid-cols-3">
                 <label class="block">
-                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Class</span>
-                    <select class="tw-form-control w-full" v-model="standardLink_id" @change="onClassChange">
+                    <span
+                        class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400"
+                        >Class</span
+                    >
+                    <select
+                        class="tw-form-control w-full"
+                        v-model="standardLink_id"
+                        @change="onClassChange"
+                    >
                         <option value="" disabled>Select class</option>
-                        <option v-for="std in standardlist" :key="std.id" :value="std.id">
-                            {{ std.standard_name }} - {{ std.section_name }}<template v-if="std.stream_name"> / {{ std.stream_name }}</template>
+                        <option
+                            v-for="std in standardlist"
+                            :key="std.id"
+                            :value="std.id"
+                        >
+                            {{ std.standard_name }} - {{ std.section_name
+                            }}<template v-if="std.stream_name">
+                                / {{ std.stream_name }}</template
+                            >
                         </option>
                     </select>
-                    <span v-if="errors?.standardLink_id" class="text-red-500 text-xs font-semibold">{{ errors.standardLink_id[0] }}</span>
+                    <span
+                        v-if="errors?.standardLink_id"
+                        class="text-red-500 text-xs font-semibold"
+                        >{{ errors.standardLink_id[0] }}</span
+                    >
                 </label>
                 <label class="block">
-                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Stream</span>
-                    <input :value="selectedStream" readonly class="tw-form-control w-full bg-slate-50" placeholder="Selected with class" />
+                    <span
+                        class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400"
+                        >Date</span
+                    >
+                    <input
+                        type="date"
+                        v-model="localDate"
+                        class="tw-form-control w-full"
+                    />
+                    <span
+                        v-if="errors.date"
+                        class="text-red-500 text-xs font-semibold"
+                        >{{ errors.date[0] }}</span
+                    >
                 </label>
-                <label class="block">
-                    <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Date</span>
-                    <input type="date" v-model="localDate" class="tw-form-control w-full" />
-                    <span v-if="errors.date" class="text-red-500 text-xs font-semibold">{{ errors.date[0] }}</span>
-                </label>
-            </div>
-
-            <div class="mt-5 flex flex-wrap items-center gap-4">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Session</span>
-                <div class="flex gap-4">
-                                <label
-                                    class="flex items-center tw-form-control cursor-pointer"
-                                >
-                                    <input
-                                        type="radio"
-                                        v-model="session"
-                                        value="forenoon"
-                                        class="mr-2"
-                                    />
-                                    <span>Forenoon</span>
-                                </label>
-                                <label
-                                    class="flex items-center tw-form-control cursor-pointer"
-                                >
-                                    <input
-                                        type="radio"
-                                        v-model="session"
-                                        value="afternoon"
-                                        class="mr-2"
-                                    />
-                                    <span>Afternoon</span>
-                                </label>
-                            </div>
+                <div class="block">
+                    <span
+                        class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400"
+                        >Session</span
+                    >
+                    <div
+                        class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                        <label
+                            class="flex items-center gap-2 text-sm text-slate-700"
+                        >
+                            <input
+                                type="radio"
+                                v-model="session"
+                                value="forenoon"
+                                class="mr-1"
+                            />
+                            Forenoon
+                        </label>
+                        <label
+                            class="flex items-center gap-2 text-sm text-slate-700"
+                        >
+                            <input
+                                type="radio"
+                                v-model="session"
+                                value="afternoon"
+                                class="mr-1"
+                            />
+                            Afternoon
+                        </label>
+                    </div>
+                    <span
+                        v-if="errors.session"
+                        class="text-red-500 text-xs font-semibold"
+                        >{{ errors.session[0] }}</span
+                    >
                 </div>
-                <span v-if="errors.session" class="text-red-500 text-xs font-semibold">{{ errors.session[0] }}</span>
             </div>
 
             <!-- Select Students Button -->
@@ -188,7 +220,11 @@ export default {
 
     computed: {
         selectedStream() {
-            return this.standardlist.find((item) => String(item.id) === String(this.standardLink_id))?.stream_name || "";
+            return (
+                this.standardlist.find(
+                    (item) => String(item.id) === String(this.standardLink_id)
+                )?.stream_name || ""
+            );
         },
         presentStudents() {
             return this.allStudents.filter((s) => s.isPresent);

@@ -49,14 +49,19 @@ class AttendanceController extends Controller
         ];
     }
 
-    $classTeacherLinks = StandardLink::query()
-        ->where('school_id', $school_id)
-        ->where('academic_year_id', $academic_year->id)
-        ->where('status', 1)
-        ->with(['standard', 'section'])
-        ->orderBy('section_id')
-        ->orderBy('stream')
-        ->get();
+    $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks($school_id, Auth::id());
+
+    if ($classTeacherLinks->isEmpty()) {
+        return [
+            'standardlist'     => [],
+            'studentlist'      => [],
+            'absentReasonlist' => AbsentReason::where('status', 1)->get(),
+            'std_id' => null,
+            'studentAcademic' => collect(),
+        ];
+    }
+
+    $classTeacherLinks = $classTeacherLinks->load(['standard', 'section'])->sortBy('section_id')->values();
     $linkIds = $classTeacherLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
 
     $standardLinklist = StandardLinkResource::collection($classTeacherLinks);

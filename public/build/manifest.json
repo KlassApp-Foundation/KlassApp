@@ -1,74 +1,74 @@
 {
-    "../KlassApp/node_modules/quill/quill.js": {
-        "file": "assets/quill-Cce0OZ8G.js",
-        "name": "quill",
-        "src": "../KlassApp/node_modules/quill/quill.js",
-        "isDynamicEntry": true,
-        "imports": [
-            "resources/assets/js/app.js"
-        ]
-    },
-    "resources/assets/js/app.js": {
-        "file": "assets/app-CGLSX9EI.js",
-        "name": "app",
-        "src": "resources/assets/js/app.js",
-        "isEntry": true,
-        "dynamicImports": [
-            "../KlassApp/node_modules/quill/quill.js"
-        ],
-        "css": [
-            "assets/app-CQYD6N-L.css"
-        ]
-    },
-    "resources/assets/sass/app.scss": {
-        "file": "assets/app-BiRnlwxG.css",
-        "name": "app",
-        "names": [
-            "app.css"
-        ],
-        "src": "resources/assets/sass/app.scss",
-        "isEntry": true
-    },
-    "resources/css/auth-preview.css": {
-        "file": "assets/auth-preview-DHZujyjw.css",
-        "name": "auth-preview",
-        "names": [
-            "auth-preview.css"
-        ],
-        "src": "resources/css/auth-preview.css",
-        "isEntry": true
-    },
-    "resources/css/landing-preview.css": {
-        "file": "assets/landing-preview-CLLsTUrz.css",
-        "name": "landing-preview",
-        "names": [
-            "landing-preview.css"
-        ],
-        "src": "resources/css/landing-preview.css",
-        "isEntry": true
-    },
-    "resources/css/landing.css": {
-        "file": "assets/landing-fvpjSpr3.css",
-        "name": "landing",
-        "names": [
-            "landing.css"
-        ],
-        "src": "resources/css/landing.css",
-        "isEntry": true
-    },
-    "resources/css/tailwind.css": {
-        "file": "assets/tailwind-DYtRXav8.css",
-        "name": "tailwind",
-        "names": [
-            "tailwind.css"
-        ],
-        "src": "resources/css/tailwind.css",
-        "isEntry": true
-    },
-    "resources/js/landing-preview.js": {
-        "file": "assets/landing-preview-i2dZuhwk.js",
-        "name": "landing-preview",
-        "src": "resources/js/landing-preview.js",
-        "isEntry": true
-    }
+  "node_modules/quill/quill.js": {
+    "file": "assets/quill-D4e3F8nq.js",
+    "name": "quill",
+    "src": "node_modules/quill/quill.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/assets/js/app.js"
+    ]
+  },
+  "resources/assets/js/app.js": {
+    "file": "assets/app-Dzh4rPQZ.js",
+    "name": "app",
+    "src": "resources/assets/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "node_modules/quill/quill.js"
+    ],
+    "css": [
+      "assets/app-D539a3lB.css"
+    ]
+  },
+  "resources/assets/sass/app.scss": {
+    "file": "assets/app-BiRnlwxG.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/assets/sass/app.scss",
+    "isEntry": true
+  },
+  "resources/css/auth-preview.css": {
+    "file": "assets/auth-preview-DHZujyjw.css",
+    "name": "auth-preview",
+    "names": [
+      "auth-preview.css"
+    ],
+    "src": "resources/css/auth-preview.css",
+    "isEntry": true
+  },
+  "resources/css/landing-preview.css": {
+    "file": "assets/landing-preview-CLLsTUrz.css",
+    "name": "landing-preview",
+    "names": [
+      "landing-preview.css"
+    ],
+    "src": "resources/css/landing-preview.css",
+    "isEntry": true
+  },
+  "resources/css/landing.css": {
+    "file": "assets/landing-fvpjSpr3.css",
+    "name": "landing",
+    "names": [
+      "landing.css"
+    ],
+    "src": "resources/css/landing.css",
+    "isEntry": true
+  },
+  "resources/css/tailwind.css": {
+    "file": "assets/tailwind-DeGh9ZK2.css",
+    "name": "tailwind",
+    "names": [
+      "tailwind.css"
+    ],
+    "src": "resources/css/tailwind.css",
+    "isEntry": true
+  },
+  "resources/js/landing-preview.js": {
+    "file": "assets/landing-preview-i2dZuhwk.js",
+    "name": "landing-preview",
+    "src": "resources/js/landing-preview.js",
+    "isEntry": true
+  }
 }
