@@ -8,6 +8,8 @@
     'subtitle' => 'Control which exam types contribute to term/report-card totals. Changes apply to future report generation only.',
 ])
 
+@include('layouts.partials.settings-nav')
+
 @include('partials.message')
 
 <div class="relative mt-4">

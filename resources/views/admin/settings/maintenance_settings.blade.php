@@ -2,6 +2,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container mx-auto">
+@include('layouts.partials.settings-nav')
 <div class="w-full my-3 lg:mx-8 md:mx-8 px-3 lg:px-0 md:px-0">
 	<h1 class="my-3">Maintenance Settings</h1>
 	<form method="POST" action="" enctype="multipart/form-data">

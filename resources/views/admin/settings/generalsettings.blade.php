@@ -8,6 +8,8 @@
     'subtitle' => 'Configure school preferences, academic settings, and system options.',
 ])
 
+@include('layouts.partials.settings-nav')
+
 <div class="relative mt-4">
 <div class="w-full main-content flex h-auto">
 <div class="flex lg:flex-row w-full">
