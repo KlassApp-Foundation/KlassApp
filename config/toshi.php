@@ -244,7 +244,7 @@ return [
             'oauth_client_id' => env('SLACK_MCP_CLIENT_ID'),
             'oauth_secret' => env('SLACK_MCP_CLIENT_SECRET'),
             'timeout' => 30,
-            'skill' => null,
+            'skill' => \App\AiAgents\Skills\SlackSkill::class,
             'default_write_mode' => 'deny',
             'read_tools' => ['slack_list_channels', 'slack_search', 'slack_get_channel_history'],
             'write_tools' => ['slack_post_message'],

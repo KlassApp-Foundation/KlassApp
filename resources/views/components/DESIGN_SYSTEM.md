@@ -30,7 +30,9 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 
 ## Visual foundations
 
-**Colour.** Two brand hues with strict jobs: **green acts** (`--d-accent` — every primary button; darkened to `#15803D` on 2026-09-18 for WCAG AA white-text contrast — measured 5.02:1) and **blue `#1E6FD9` informs** (links, sort arrows, table header rule, pagination, focus). Amber `#D97706` warns, red `#DC2626` destroys. Purple `#8B5CF6` is a KPI icon tint only. Hover always goes **darker** (`--d-accent-dk #166534`), never lighter.
+**Colour.** Two brand hues with strict jobs: **green acts** (`--d-accent` — every primary button; darkened to `#15803D` on 2026-09-18 for WCAG AA white-text contrast — measured 5.02:1) and **blue `#1E6FD9` informs** (links, sort arrows, table header rule, pagination, focus). Amber `#D97706` warns, red `#DC2626` destroys. Purple `#8B5CF6` is a KPI icon tint only. Hover always goes **darker**, never lighter.
+
+**Action-button contrast (AA, verified 2026-09-19).** Every solid button variant must clear **4.5:1** with white text: `.ds-btn-primary` `#15803D` (5.02:1) · `.ds-btn-success` **`--d-success #15803D`** (5.02:1) · `.ds-btn-warning` **`--d-warning #B45309`** (5.02:1) · `.ds-btn-danger` `--d-red #DC2626` (4.83:1, already compliant). Hovers darken further (`--d-success-dk #166534`, `--d-warning-dk #92400E`). Do **not** reintroduce the light `#22C55E` / `#D97706` / `#16a34a` / `#b45309` fills on white-on-solid buttons — they measured 2.28:1 and 3.19:1.
 
 **Surfaces.** Canvas is warm parchment `#FAFAF5`. Cards are pure white. Dark shells use `#0F172A` / `#1E293B`. Exactly one gradient: the admin LIVE badge (`#15803d → #22C55E → #4ade80`) with an animated sheen.
 
@@ -54,8 +56,10 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 | `--d-green` | `#22C55E` (non-text accents, success) |
 | `--d-accent` | `#15803D` (primary CTA — AA, **changed 2026-09-18**) |
 | `--d-accent-dk` | `#166534` (hover) |
-| `--d-amber` | `#D97706` |
-| `--d-red` | `#DC2626` |
+| `--d-success` / `--d-success-dk` | `#15803D` / `#166534` (AA success button — **added 2026-09-19**) |
+| `--d-warning` / `--d-warning-dk` | `#B45309` / `#92400E` (AA warning button — **added 2026-09-19**) |
+| `--d-amber` | `#D97706` (warn accents; not for white text) |
+| `--d-red` | `#DC2626` (danger button — 4.83:1 with white, compliant) |
 | `--d-canvas` / `--d-surface` | `#FAFAF5` |
 | `--d-white` | `#FFFFFF` |
 | `--d-text` | `#1E293B` |
@@ -67,7 +71,7 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 | `--d-border-strong` | `#CBD5E1` |
 | `--d-touch-target-min` | `44px` |
 
-Toshi scope (`[data-toshi-root]`): clay accent `#c96442`, warm bg `#f5f4ed`, border `#e8e6dc` — deliberately different from app chrome.
+Toshi scope (`[data-toshi-root]`): clay accent `#c96442`, warm bg `#f5f4ed`, border `#e8e6dc` — deliberately different from app chrome. **Toshi plan-widget action blue (AA, verified 2026-09-19):** execute button `#0369A1` with white text (**5.93:1**), hover `#075985`; blue text on the `#BAE6FD` tint (plan count, active step) also `#075985` (**5.70:1**). **Do not reintroduce `#0284C7`** — it measured 4.10:1 on white and 3.09:1 on `#BAE6FD`.
 
 ---
 

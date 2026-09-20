@@ -1,0 +1,66 @@
+{
+  "base": "http://127.0.0.1:8013",
+  "email": "pr3.admin@test.sch.ug",
+  "connectedMode": true,
+  "at": "2026-09-19T13:34:36.268Z",
+  "viewports": {
+    "375": {
+      "screenshots": [
+        "integrations-375.png"
+      ],
+      "checks": {
+        "pageReachable": true,
+        "listPresent": true,
+        "slackCardPresent": true,
+        "statusBadge": "Connected",
+        "hasConnectLink": false,
+        "hasDisconnectButton": true,
+        "horizontalOverflowPx": 0
+      }
+    },
+    "414": {
+      "screenshots": [
+        "integrations-414.png"
+      ],
+      "checks": {
+        "pageReachable": true,
+        "listPresent": true,
+        "slackCardPresent": true,
+        "statusBadge": "Connected",
+        "hasConnectLink": false,
+        "hasDisconnectButton": true,
+        "horizontalOverflowPx": 0
+      }
+    },
+    "768": {
+      "screenshots": [
+        "integrations-768.png"
+      ],
+      "checks": {
+        "pageReachable": true,
+        "listPresent": true,
+        "slackCardPresent": true,
+        "statusBadge": "Connected",
+        "hasConnectLink": false,
+        "hasDisconnectButton": true,
+        "horizontalOverflowPx": 0
+      }
+    },
+    "1280": {
+      "screenshots": [
+        "integrations-1280.png"
+      ],
+      "checks": {
+        "pageReachable": true,
+        "listPresent": true,
+        "slackCardPresent": true,
+        "statusBadge": "Connected",
+        "hasConnectLink": false,
+        "hasDisconnectButton": true,
+        "horizontalOverflowPx": 0
+      }
+    }
+  },
+  "ok": true,
+  "disconnectBadgeAfter": "Not connected"
+}

@@ -25,6 +25,12 @@ body {
     --d-accent: #15803D;
     --d-accent-lt: #4ADE80;
     --d-accent-dk: #166534;
+    /* Semantic action colours — AA-verified against white text (2026-09-19):
+       success 5.02:1, warning 5.02:1. --d-red (#DC2626) already passes at 4.83:1. */
+    --d-success: #15803D;
+    --d-success-dk: #166534;
+    --d-warning: #B45309;
+    --d-warning-dk: #92400E;
 
     /* ── Surface & Canvas ── */
     --d-canvas: #FAFAF5;
@@ -418,14 +424,14 @@ a.ds-kpi-card:hover {
 }
 
 .ds-btn-success {
-    background: var(--d-green);
+    background: var(--d-success);
     color: #fff;
-    border-color: var(--d-green);
+    border-color: var(--d-success);
 }
 
 .ds-btn-success:hover {
-    background: #16a34a;
-    border-color: #16a34a;
+    background: var(--d-success-dk);
+    border-color: var(--d-success-dk);
 }
 
 .ds-btn-danger {
@@ -784,14 +790,14 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 /* ── Warning Button Variant ── */
 
 .ds-btn-warning {
-    background: var(--d-amber);
+    background: var(--d-warning);
     color: #fff;
-    border-color: var(--d-amber);
+    border-color: var(--d-warning);
 }
 
 .ds-btn-warning:hover {
-    background: #b45309;
-    border-color: #b45309;
+    background: var(--d-warning-dk);
+    border-color: var(--d-warning-dk);
 }
 
 /* ── Profile Dropdown ──
@@ -2789,7 +2795,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     font-family: 'DM Sans', sans-serif;
     font-size: 11px;
     font-weight: 600;
-    color: #0284C7;
+    color: #075985;
     background: #BAE6FD;
     padding: 2px 8px;
     border-radius: 10px;
@@ -2815,7 +2821,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     background: transparent;
 }
 [data-toshi-root] .toshi-plan-step.step-active {
-    color: #0369A1;
+    color: #075985;
     background: #BAE6FD;
     font-weight: 600;
 }
@@ -2840,7 +2846,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     color: var(--d-text-secondary);
 }
 [data-toshi-root] .toshi-plan-step.step-active .toshi-plan-step-num {
-    color: #0369A1;
+    color: #075985;
 }
 [data-toshi-root] .toshi-plan-step-label {
     flex: 1;
@@ -2866,11 +2872,11 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     gap: 6px;
 }
 [data-toshi-root] .toshi-plan-btn-execute {
-    background: #0284C7;
+    background: #0369A1;
     color: #fff;
 }
 [data-toshi-root] .toshi-plan-btn-execute:hover {
-    background: #0369A1;
+    background: #075985;
 }
 [data-toshi-root] .toshi-plan-btn-cancel {
     background: #F1F5F9;

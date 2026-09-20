@@ -15,6 +15,12 @@
     @vite(['resources/css/landing-preview.css', 'resources/js/landing-preview.js'])
 </head>
 <body>
+<div class="announce" id="announceBar" role="region" aria-label="Announcement">
+  <div class="announce-inner">
+    <p>KlassApp is open source and self-hostable — <strong>MIT licensed</strong>.</p>
+  </div>
+  <button type="button" class="announce-close" id="announceClose" aria-label="Dismiss announcement">&times;</button>
+</div>
 {{-- Live cutover: Open Design klassapp-landing-v3 on /. Legacy /landing-preview redirects here. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
@@ -58,6 +64,7 @@
       <path d="M0,0 L8,0 C4,40 14,80 6,120 C-2,160 12,200 8,240 C4,280 14,320 6,360 C-2,400 12,440 8,480 C4,520 14,560 6,600 C0,640 10,680 4,700 L0,700 Z" fill="rgba(140,115,75,0.07)"/>
     </svg>
   </div>
+  <div class="hero-depth" aria-hidden="true"></div>
   <div class="container">
     <div class="hero-inner">
       <div class="hero-content reveal">
@@ -76,6 +83,10 @@
       </div>
       {{-- Rotating role preview — dense product-proof panel (WS-1). Parent / Teacher / Admin. --}}
       <div class="hero-preview reveal reveal-delay-2">
+        <div class="hero-device">
+          <div class="hero-device-frame">
+            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><em>Toshi · live preview</em></div>
+            <div class="hero-screen">
         <div class="hero-stage" id="heroRoleStage">
           <span class="hero-layer hero-layer-back" aria-hidden="true"></span>
           <span class="hero-layer hero-layer-mid" aria-hidden="true"></span>
@@ -148,6 +159,10 @@
             </article>
           </div>
         </div>
+            </div>
+          </div>
+          <div class="hero-device-base" aria-hidden="true"></div>
+        </div>
         <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
         <div class="connector-float">
           <h4>Connected</h4>
@@ -163,6 +178,15 @@
       </div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="trust-strip" aria-label="Open-source and platform commitments">
+  <div class="container trust-strip-inner">
+    <span class="trust-strip-item">MIT · Open Source</span>
+    <span class="trust-strip-item">Self-hostable</span>
+    <span class="trust-strip-item">MCP-compatible</span>
+    <a class="trust-strip-gh" href="https://github.com/KlassApp-Foundation/KlassApp" target="_blank" rel="noopener noreferrer">KlassApp-Foundation/KlassApp ↗</a>
   </div>
 </section>
 
@@ -491,6 +515,29 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="shots reveal">
+      <div class="shots-head">
+        <h3>Real screenshots from the app</h3>
+        <p>Captured from a local KlassApp instance — the actual dashboard, a records module, and the Toshi assistant.</p>
+      </div>
+      <div class="shots-grid">
+        <figure class="shot">
+          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Dashboard</span><span class="shot-url">klassapp.xyz/admin/dashboard</span></div>
+          <img src="{{ asset('images/landing/app-dashboard.webp') }}" alt="KlassApp school-admin dashboard with the setup checklist and Toshi assistant" width="1600" height="1000" loading="lazy" decoding="async">
+        </figure>
+        <figure class="shot">
+          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Library records</span><span class="shot-url">klassapp.xyz/admin/library/books</span></div>
+          <img src="{{ asset('images/landing/app-books.webp') }}" alt="KlassApp library records table listing books" width="1600" height="1000" loading="lazy" decoding="async">
+        </figure>
+        <figure class="shot">
+          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Fees &amp; payments</span><span class="shot-url">klassapp.xyz/admin/fees/payments</span></div>
+          <img src="{{ asset('images/landing/app-page.webp') }}" alt="KlassApp fees and payments module" width="1600" height="1000" loading="lazy" decoding="async">
+        </figure>
       </div>
     </div>
   </div>

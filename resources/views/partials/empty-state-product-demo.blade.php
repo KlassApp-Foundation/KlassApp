@@ -1,7 +1,8 @@
 {{-- SPDX-License-Identifier: MIT --}}
 {{--
   Pre-onboarding product demo (3 scenes, auto-loop).
-  Scene 3 connectors: WhatsApp is live; Google sign-in exists; Slack/Notion are
+  Scene 3 connectors: WhatsApp is live; Google sign-in exists; Slack is LIVE
+  (PR3 wave-1: reads + approval-gated writes for connected schools); Notion is
   aspirational/marketing only — labeled "Coming soon", not claimed as shipped.
 --}}
 <link rel="stylesheet" href="{{ asset('css/empty-state-product-demo.css') }}">
@@ -103,7 +104,7 @@
                     </div>
                     <div class="es-hub-node es-hub-slack es-msg" data-step="3">
                         <strong>Slack</strong>
-                        <span class="es-badge es-badge-soon">Coming soon</span>
+                        <span class="es-badge es-badge-live">Live</span>
                     </div>
                     <div class="es-hub-node es-hub-notion es-msg" data-step="4">
                         <strong>Notion</strong>
@@ -111,7 +112,7 @@
                     </div>
                 </div>
                 <p class="es-connect-disclaimer" data-testid="es-demo-connectors-disclaimer">
-                    Slack and Notion tiles are aspirational previews — not available integrations yet.
+                    Notion tiles are aspirational previews — not available integrations yet. Slack is live: connected schools can list channels, search, read history, and post with approval.
                 </p>
             </div>
         </div>
