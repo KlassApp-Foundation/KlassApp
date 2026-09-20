@@ -161,8 +161,15 @@ trait AuthenticatesUsers
                 }
                 elseif ($user->usergroup_id==5)
                 {
-                    if(\Config::get('settings.login_status')==1)
-                    return TRUE;
+                    $loginStatus = \Config::get('settings.login_status');
+
+                    // Default-safe (2026-09-20): when the `settings` table has no
+                    // row (e.g. a freshly provisioned environment) the value is
+                    // null — that must mean "logins enabled", not "blocked".
+                    // Only an explicit off-value (0 / '0' / false) blocks.
+                    if ($loginStatus === null || $loginStatus === '' || (int) $loginStatus === 1) {
+                        return TRUE;
+                    }
                 }
                 elseif ($user->usergroup_id==6)
                 {
