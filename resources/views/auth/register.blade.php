@@ -210,7 +210,7 @@
     <p class="klass-intro-title">Create your KlassApp account</p>
     <p class="klass-intro-sub">Name, email, and WhatsApp — then finish school setup with Toshi.</p>
 
-    @if(\Config::get('settings.register')==1)
+    @if(\Config::get('settings.register_status')==1)
       <div class="klass-maintenance">Register page is under maintenance!!!</div>
     @else
       <form method="POST" action="{{ route('register') }}" class="klass-form" id="saas-register-form" aria-label="{{ __('Register') }}">

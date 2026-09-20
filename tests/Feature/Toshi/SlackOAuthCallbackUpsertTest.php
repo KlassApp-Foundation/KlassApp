@@ -54,7 +54,7 @@ class SlackOAuthCallbackUpsertTest extends TestCase
                     'access_token' => 'xoxb-callback-123',
                     'refresh_token' => 'xoxr-456',
                     'token_type' => 'Bearer',
-                    'scope' => 'mcp:read mcp:write',
+                    'scope' => 'channels:read channels:history groups:history search:read.public chat:write',
                 ],
                 'token_expires_at' => now()->addHour(),
                 'auth_mode' => 'oauth_remote',

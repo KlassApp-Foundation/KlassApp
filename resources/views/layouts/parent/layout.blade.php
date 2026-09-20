@@ -2,7 +2,7 @@
 @extends('layouts.app')
 
 @section('base-navigation')
-  @include('layouts.parent.navigation')
+  @include('layouts.partials.navigation', ['notifyMode' => null, 'showAcademicYear' => false, 'brandText' => 'KlassApp Parent Portal', 'brandRoute' => 'parent.dashboard', 'showLogout' => true])
 @endsection
 
 @section('base-sidebar')

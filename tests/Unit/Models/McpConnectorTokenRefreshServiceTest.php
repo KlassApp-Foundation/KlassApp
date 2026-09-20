@@ -37,7 +37,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
     public function test_refresh_succeeds_with_valid_response(): void
     {
         config(['toshi.mcp_connectors.slack' => [
-            'token_url' => 'https://slack.com/api/oauth.v2.access',
+            'token_url' => 'https://slack.com/api/oauth.v2.user.access',
             'oauth_client_id' => 'client-id',
             'oauth_secret' => 'client-secret',
         ]]);
@@ -56,7 +56,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
         ]);
 
         Http::fake([
-            'https://slack.com/api/oauth.v2.access' => Http::response([
+            'https://slack.com/api/oauth.v2.user.access' => Http::response([
                 'access_token' => 'new-access-token',
                 'refresh_token' => 'new-refresh-token',
                 'token_type' => 'Bearer',
@@ -95,7 +95,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
     public function test_refresh_fails_on_http_error(): void
     {
         config(['toshi.mcp_connectors.slack' => [
-            'token_url' => 'https://slack.com/api/oauth.v2.access',
+            'token_url' => 'https://slack.com/api/oauth.v2.user.access',
             'oauth_client_id' => 'client-id',
             'oauth_secret' => 'client-secret',
         ]]);
@@ -113,7 +113,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
         ]);
 
         Http::fake([
-            'https://slack.com/api/oauth.v2.access' => Http::response([], 401),
+            'https://slack.com/api/oauth.v2.user.access' => Http::response([], 401),
         ]);
 
         $result = $this->service->refresh($connector);
@@ -124,7 +124,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
     public function test_sweep_expiring_tokens(): void
     {
         config(['toshi.mcp_connectors.slack' => [
-            'token_url' => 'https://slack.com/api/oauth.v2.access',
+            'token_url' => 'https://slack.com/api/oauth.v2.user.access',
             'oauth_client_id' => 'client-id',
             'oauth_secret' => 'client-secret',
         ]]);
@@ -154,7 +154,7 @@ class McpConnectorTokenRefreshServiceTest extends TestCase
         ]);
 
         Http::fake([
-            'https://slack.com/api/oauth.v2.access' => Http::response([
+            'https://slack.com/api/oauth.v2.user.access' => Http::response([
                 'access_token' => 'refreshed-token',
                 'token_type' => 'Bearer',
                 'expires_in' => 3600,

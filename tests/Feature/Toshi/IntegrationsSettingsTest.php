@@ -152,7 +152,7 @@ class IntegrationsSettingsTest extends TestCase
                 'access_token' => 'xoxb-test-'.uniqid(),
                 'refresh_token' => null,
                 'token_type' => 'Bearer',
-                'scope' => 'mcp:read',
+                'scope' => 'channels:read chat:write',
             ],
             'token_expires_at' => null,
             'auth_mode' => 'oauth_remote',

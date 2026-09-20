@@ -17,7 +17,7 @@
         <h1 class="ap-title">Create your KlassApp account</h1>
         <p class="ap-sub">Name, email, and WhatsApp: then finish school setup with Toshi.</p>
 
-        @if(\Config::get('settings.register')==1)
+        @if(\Config::get('settings.register_status')==1)
           <div class="ap-maintenance">Register page is under maintenance!!!</div>
         @else
           @if ($errors->any())

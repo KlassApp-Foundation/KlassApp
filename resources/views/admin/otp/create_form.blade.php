@@ -4,7 +4,7 @@
     <div style="margin-top:20px;padding:12px 16px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:14px;font-weight:600;">
       Login page under maintenance
     </div>
-  @else
+  @endif
     @if (session('resent'))
       <div style="margin-bottom:16px;padding:12px 16px;border-radius:10px;background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;font-size:13px;font-weight:600;">
         A fresh verification code has been sent to your email.
@@ -36,5 +36,4 @@
         <a href="?resend=1&email={{ urlencode(auth()->user()->email ?? '') }}" class="klass-otp-resend-link" id="resend-link">{{ __('Resend') }}</a>
       </div>
     </form>
-  @endif
 </div>

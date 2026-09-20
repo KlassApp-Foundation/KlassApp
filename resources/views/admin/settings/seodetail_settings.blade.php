@@ -5,31 +5,31 @@
 		  @csrf
 		<div class="tw-form-group">
 		<label class="tw-form-label">Site Title</label>
-			<input type="text" name="sitetitle" value="{!!(\config::get('settings.sitetitle'))!!}" class="tw-form-control w-full lg:w-128">
+			<input type="text" name="sitetitle" value="{!!(config('settings.sitetitle'))!!}" class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('sitetitle')}}</span>
 		</div>
 
 		<div class="tw-form-group">
 		<label class="tw-form-label">Site Description</label>
-			<input type="text" name="site_description" value="{!!(\config::get('settings.site_description'))!!}" class="tw-form-control w-full lg:w-128">
+			<input type="text" name="site_description" value="{!!(config('settings.site_description'))!!}" class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('site_description')}}</span>
 		</div>
 
 		<div class="tw-form-group">
 		<label class="tw-form-label">Site Keyword</label>
-			<input type="text" name="site_keyword" value="{!!(\config::get('settings.site_keyword'))!!}"class="tw-form-control w-full lg:w-128">
+			<input type="text" name="site_keyword" value="{!!(config('settings.site_keyword'))!!}"class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('site_keyword')}}</span>
 		</div>
 
 		<div class="tw-form-group">
 		<label class="tw-form-label">Twitter Handle</label>
-			<input type="text" name="twitter_handle" value="{!!(\config::get('settings.twitter_handle'))!!}"class="tw-form-control w-full lg:w-128">
+			<input type="text" name="twitter_handle" value="{!!(config('settings.twitter_handle'))!!}"class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('twitter_handle')}}</span>
 		</div>
 
 		<div class="tw-form-group">
 		<label class="tw-form-label">Twitter Description</label>
-			<input type="text" name="twitter_description" value="{!!(\config::get('settings.twitter_description'))!!}"class="tw-form-control w-full lg:w-128">
+			<input type="text" name="twitter_description" value="{!!(config('settings.twitter_description'))!!}"class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('twitter_description')}}</span>
 		</div>
 
@@ -37,7 +37,7 @@
 
 		<div class="tw-form-group">
 		<label class="tw-form-label">Facebook Site URL</label>
-			<input type="url" name="facebook_site_url" value="{!!(\config::get('settings.facebook_site_url'))!!}"class="tw-form-control w-full lg:w-128">
+			<input type="url" name="facebook_site_url" value="{!!(config('settings.facebook_site_url'))!!}"class="tw-form-control w-full lg:w-128">
 			<span class="text-red-600">{{$errors->first('facebook_site_url')}}</span>
 		</div>
 

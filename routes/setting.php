@@ -2,7 +2,7 @@
 
 // Settings index — redirect to general settings (guarded by fullschooladmin)
 Route::get('/settings', function () {
-    return redirect('/admin/settings/generalsettings');
+    return view('admin.settings.index');
 });
 
 // School settings — guarded by fullschooladmin so subadmins can't access

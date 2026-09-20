@@ -1,6 +1,8 @@
 # Implementation Plan: (C) School-Registrable MCP Connector Registry + (D) Connector Shortlist Re-evaluation
 
-> Status: **GO-AHEAD CONFIRMED (2026-09-18) for the 4-PR execution order, with three resolutions applied** — (1) Google Drive Developer Preview boundary spec → **D.3**; (2) trust model: self-registration is final, no approval step, status = `active`/`disabled` only → **C.1/C.2/C.4**; (3) Notion PR4 gated on concrete use-case research → **D.1 rank-2**. PR1 (registry core) in progress.
+> Status: **ALL PRs COMPLETE as of 2026-09-20** — PR1 (registry core, #672), PR2 (HITL write gate, #672), PR3 (Slack wave-1, #684 merged), and PR4 (Notion) **DROPPED** by product decision (research found no credible grounded use-case). Transport tripwire (#678) also complete. The 4-PR execution order is now closed with no remaining items.
+>
+> **Original go-ahead (2026-09-18):** three resolutions — (1) Google Drive Developer Preview boundary spec → **D.3**; (2) trust model: self-registration is final, no approval step, status = `active`/`disabled` only → **C.1/C.2/C.4**; (3) Notion PR4 gated on concrete use-case research → **D.1 rank-2**. PR1 (registry core) in progress.
 > Builds directly on `docs/plans/toshi-hitl-convergence-and-slack-connector-plan.md` (Part A Slack wave-1, Part B HITL/MCP gate). Where this plan and that one overlap on credential storage, **this plan supersedes** — the Slack-specific `school_slack_mcp_credentials` table generalizes into the registry designed here.
 > Research pass: 2026-09-18, direct source verification (background research agents remain unavailable — worker billing exhausted; all vendor/file claims re-verified directly against the working tree at `main` post-fetch; all external claims sourced from official docs/changelog searches noted inline).
 > **Second verification pass 2026-09-18 (later session):** all codebase claims re-verified green against the working tree (architecture test, auditing manager, vendor `ClientManager`/`HttpTransport`/`OAuthClient`/`OAuthRouteRegistrar`, spike files, landing copy, `ToshiMcpClient::named`); external claims re-verified via direct official-docs search (background agents again failed on billing). Two corrections applied: Figma **Education-plan rate limits** (R.4/D.1 — Education seats get 200 calls/day, not the 6/month View-seat limit; deferral verdict unchanged, re-argued on the per-user authorization model) and a **Canvas official-interest watch item** (R.5 — Instructure community roadmap discussion, July 2026).
@@ -132,7 +134,7 @@ Product evidence points unambiguously at **school self-registration** — option
 | Rank | Connector | Verdict | The fresh case |
 |---|---|---|---|
 | **1** | **Slack** | **Build first** (unchanged — but re-argued) | Only connector with **merged plumbing** (PR #140: named client, mock server, OAuth scaffold, green tests). Official hosted server, OAuth 2.0, workspace-level install, **no per-seat rate-limit model, no Enterprise-gated admin approval**, no AI-credit metering. Product promised it on 6+ surfaces (hero role card "Admin · Slack", orchestration panel, chips, protocol copy); Notion appears once; Miro/Figma zero. Education fit: the product's stated role mapping (staff/admin comms channel). Marginal cost to finish is the lowest of any candidate — the registry (C) it now shares makes it thinner than the prior plan assumed. |
-| **2** | **Notion** | **Build second** | Official hosted server (corrected per R.4), OAuth, read+write tools with real school-ops use cases (staff handbooks, SOPs, meeting notes, policy docs — documents schools genuinely keep). Caveats: interactive-OAuth-only (our registry refresh path covers it — R.2), education adoption moderate, write tools must clear the Part B HITL gate. Slotting it #2 **proves the (D) abstraction** with a second real connector at ~catalog-entry cost. **PR4 gated (resolution #3, confirmed 2026-09-18):** before PR4, ground Notion in 2–3 concrete KlassApp workflows from real product-surface signal (the way Slack's "Admin · Slack" positioning was grounded in landing-page copy). Research scope: scan `knowledge.md`, existing product/UX docs, and comparable school-ops patterns (meeting notes, policy docs, parent-comms logs, staff handbooks) that map to real tools in this codebase. Research runs parallel to PR1–3 and blocks nothing; if nothing credible turns up, flag honestly instead of forcing a justification. |
+| **2** | **Notion** | **DROPPED (2026-09-20)** | **Product decision**: use-case research found no credible grounded KlassApp school-ops workflow. Bulletins are PDF uploads (`magazines`); lesson plans use in-app `LessonPlanApproval`; staff handbooks / meeting notes / policy docs / SOPs do not exist in the product; parent comms route through WhatsApp. Building a connector without a real product surface to connect it to would be speculative engineering — the abstraction already proved itself through Slack (#684) without needing a second connector. Catalog entry retained in `config/toshi.php` for future activation. **What would justify reopening**: a concrete, product-identified school-ops workflow where Notion page/document management directly integrates with KlassApp data surfaces (e.g., Notion pages auto-populated from class rosters, fee reports, or UNEB timetables — not "schools might use Notion for notes"). The research findings (maturity comparison: official hosted server exists, OAuth, read+write tools ≥20 MiB) remain valid if reconsidered. |
 | **3** | **Google Drive (Workspace MCP)** | **Enroll + spike now; build when GA** | The **education jackslot**: schools live in Google Workspace for Education; KlassApp already ships Google OAuth (sign-in "Live" badge, config/services.php `google` block, existing `users.google_id`); Drive is in the marketing trio. But the official MCP servers are **Developer Preview** (per-product endpoints, Google Cloud project enablement, scope config) and **Classroom is absent** — building a product surface on a preview API risks breakage. Action this pass: enroll in the Developer Preview Program, stand up a flagged spike client (`google-drive` catalog entry, `TOSHI_GOOGLE_DRIVE_MCP_*` keys), no product UI, no user promises. Concrete boundary spec: **D.3** (resolution #1). |
 | **4** | **Miro** | **Defer — catalog placeholder** | Official server is real and mature (13 tools, read+write, hosted), but: education relevance for KlassApp's K-12 school-admin buyer is weak (business whiteboarding); **OAuth 2.1 admin-approval + Enterprise-plan org-level enablement** means each school needs a Miro plan tier + admin flow it almost certainly doesn't have; AI-credit consumption adds cost opacity; zero product surface ever promised Miro. Revisit trigger: a paying school requests it with a Miro Enterprise/Expert workspace. |
 | **5** | **Figma/FigJam** | **Defer — structurally blocked** | *(Corrected second pass:)* rate limits are **not** the binding blocker for the education buyer — Figma **Education plans get 200 calls/day, 10/min** (Dev/Full-on-Professional parity). The blocker is the **per-user authorization model**: interactive per-user OAuth only (enterprise-managed auth solely via Okta XAA-for-Claude) + per-user permission scoping — a service account sees only its own files, so one-platform-connection-per-school cannot work. Revisit trigger: a school explicitly requests it AND accepts a dedicated Dev/Full seat as the service account (with its limited file visibility). |
@@ -279,12 +281,100 @@ Token refresh is **app-owned** (not vendor-baked): `McpConnectorTokenRefreshServ
 - Custom/arbitrary endpoint URLs (Tier 2, C.6).
 - Per-**user** connectors (only per-school workspaces this pass; spike comment allows "or per connecting staff user" later — `connected_by` already records who).
 - Inbound event webhooks from connectors (Slack events → Toshi), interactive approval buttons inside Slack/Notion UIs (the WhatsApp-bridge token pattern is the blueprint when this arrives).
+  - *(Superseded note, 2026-09-20: the Slack-specific half of this out-of-scope line is now tracked as a proper future-work section — **"Future: Inbound Slack (Toshi-in-Slack)"** below — with rough requirements and the WhatsApp inbound precedent recorded. Still unscheduled; still out of all current scopes.)*
 - Billing/quota metering per school per connector.
 - Implementations of Miro/Figma beyond catalog placeholders with documented deferral (D.1).
 
 ---
 
-## Execution order (proposed)
+## Future: Inbound Slack (Toshi-in-Slack) — recorded 2026-09-20, NOT scheduled
+
+> Roadmap note only, discovered during Slack go-live prep (go-live checklist:
+> `docs/ops/slack-connector-go-live-checklist.md`). **Not part of the current go-live
+> rollout** — the checklist and its Batches A–C proceed completely unaffected by this
+> section. No PR, no design, no scope exists for this yet.
+>
+> A second deferred backlog item lives directly below: **"Deferred: Slack App
+> Marketplace branding/listing"** (cosmetic, same not-blocking/not-scheduled status).
+
+**What exists today (wave-1, shipped #684):** outbound-only. Toshi can read from and
+(approval-gated) write to Slack **when invoked from within KlassApp** — via
+`RouteToSlackSkillTool` → `SlackSkill` → the named `slack` MCP client, scoped to the
+connecting school's workspace. Nothing in Slack can trigger or address Toshi directly:
+no event subscriptions, no mention/@-handling, no message-driven invocation. A teacher
+or admin in the Slack workspace cannot ask Toshi anything from inside Slack.
+
+**What a future inbound capability would roughly require** (recorded for scoping, not
+designed here):
+
+1. **Slack-side**: Slack **Event Subscriptions** on the connected workspace — either a
+   public request URL (HTTPS endpoint KlassApp must expose and Slack must verify), or
+   **Socket Mode** as the no-public-URL alternative (worth scoping for schools where
+   exposing an endpoint is a hard sell).
+2. **KlassApp-side**: a new inbound webhook/event-handler endpoint that receives Slack's
+   event payloads, verifies them (Slack request-signature checking, the URL-verification
+   handshake for Events API), and is explicitly **excluded from any authenticated-session
+   assumptions** (webhook = unauthenticated by nature; the signature check is the auth).
+3. **Routing logic**: map an incoming Slack message/mention to a Toshi conversation —
+   which school's workspace (registry row by `team_id`), which channel/thread, which
+   conversation history — and back out with a reply (posting via the existing outbound
+   write path, which today is approval-gated; inbound replies would need an explicit
+   decision on whether the HITL gate applies to conversation replies).
+4. **Identity handling — the decision that gates everything**: does a Slack user need to
+   be mapped to a KlassApp user/role for the existing permission model to apply? Today's
+   role scoping (Gates `toshi-school-action`/`toshi-deputy-action`, structural agent
+   routing — see the go-live checklist §6b) assumes the acting user is an authenticated
+   KlassApp user. An unmapped Slack workspace member has none of that; either every
+   inbound actor is mapped to a KlassApp identity (strict, recommended default), or a
+   new, weaker permission tier for "workspace member" has to be invented and reviewed.
+
+**Closest existing precedent in this codebase**: the **WhatsApp channel already has
+inbound handling** — a teacher/parent messages Toshi on WhatsApp and gets a reply
+(`routes/api.php` `/api/whatsapp/inbound` webhook (GET verification + POST payloads,
+CSRF-exempt) → `Api\WhatsAppController@handleInbound` → `WhatsAppToshiChannelService`,
+with phone-number→user identification). That path is the natural reference for how
+Slack's inbound side would eventually be built — webhook verification, inbound
+identity resolution, and channel→Toshi routing all have a working blueprint there.
+Do not start from zero.
+
+**When picked up**: this needs its own scoping/research pass (Slack Events API vs
+Socket Mode trade-offs for this hosting model, identity mapping design, rate/reply
+behavior, and the HITL-gate-questions above). That pass is deliberately **not** this
+note. Recorded as wanted, roughly scoped, unscheduled.
+
+## Deferred: Slack App Marketplace branding/listing — recorded 2026-09-20, not scheduled
+
+> Backlog note only. **Cosmetic/marketplace-listing polish — not required for the
+> connector to function.** The app was never intended to be discovered via Slack's
+> public App Directory: schools install it through KlassApp's own **"Connect Slack"
+> button** (School Settings → Integrations), which drives the OAuth flow directly.
+
+**What's outstanding** (Slack's app-directory listing assets, recorded so they aren't
+rediscovered from scratch later — nothing fetched or created as part of this note):
+
+- App icon (square, 512×512 to 2000×2000 px)
+- Short description + long description
+- Background color
+- Up to 6 app images (1600×1000 px each)
+- Slack Marketplace category selection (max 3)
+- Installation landing page URL
+- Privacy policy URL
+- Support URL / email
+- Supported languages
+- Pricing tier
+- App contact info (name / email / phone / notification channel)
+
+**Boundary flags:**
+- **None of this blocks Batches A–C** of the go-live rollout
+  (`docs/ops/slack-connector-go-live-checklist.md`).
+- **None of it is required** unless/until there is an explicit product decision to
+  actually list KlassApp's Slack app in the public Slack Marketplace — a separate,
+  later decision, **not assumed here**.
+- Per explicit instruction: pick this up **after this connector and MCP phase** —
+  not scheduled now, just recorded so it isn't forgotten.
+
+
+
 
 1. **PR 1 — (C) registry core:** migrations (`school_mcp_connectors`), catalog config, `resolveTokenForRequest` + refresh service + `ConnectorNotConnected` typed flow, refactor the spike's `routes/ai.php` slack block onto the token-closure pattern (still the only construction site), encrypted-cast + isolation + refresh tests, `McpClientConstructionTest` untouched and green. *(Supersedes the prior plan's `school_slack_mcp_credentials` — same need, generalized.)*
 2. **PR 2 — (B-1) HITL gate:** from the prior plan, unchanged; `mcp_write_gates` config now reads from the (C) catalog/registry (`write_mode`, classifications) so the gate covers every connector automatically.

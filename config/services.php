@@ -81,6 +81,17 @@ return [
         'client_secret' => env('SLACK_MCP_CLIENT_SECRET'),
         'token' => env('SLACK_MCP_TOKEN'),
         'timeout' => env('SLACK_MCP_TIMEOUT', 30),
+        // OAuth scopes requested at the authorize step. MUST be real Slack
+        // granular scopes (mcp.slack.com/.well-known/oauth-authorization-server
+        // publishes the supported list — 'mcp:read'/'mcp:write' are NOT Slack
+        // scopes and produce "Invalid permissions requested"). Default = the
+        // minimum set for the four wave-1 tools: list channels (channels:read),
+        // channel history (channels:history + groups:history), search
+        // (search:read.public), post message (chat:write).
+        'scopes' => env(
+            'SLACK_MCP_SCOPES',
+            'channels:read channels:history groups:history search:read.public chat:write',
+        ),
     ],
 
 ];

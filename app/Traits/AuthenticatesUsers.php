@@ -147,52 +147,21 @@ trait AuthenticatesUsers
             $user = User::where('email', request('email'))->with('userprofile')->first();
             if ($user)
             {
-                if($user->usergroup_id==1)
-                {
+                // Platform-wide login switch (2026-09-20).
+                // SiteAdmin/Superadmin (usergroup 1) ALWAYS bypass it: a switch that
+                // can lock out the only people able to turn it back off is a real
+                // self-lockout risk. Every other role is gated, default-safe — a
+                // missing/empty setting means ENABLED; only an explicit off-value blocks.
+                if ((int) $user->usergroup_id === 1) {
                     return TRUE;
                 }
-                elseif($user->usergroup_id==3)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==4)
-                {
-                    return TRUE;
-                }
-                elseif ($user->usergroup_id==5)
-                {
-                    if(\Config::get('settings.login_status')==1)
-                    return TRUE;
-                }
-                elseif ($user->usergroup_id==6)
-                {
-                    return TRUE;
-                }
-                elseif ($user->usergroup_id==7)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==8)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==9)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==10)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==11)
-                {
-                    return TRUE;
-                }
-                elseif($user->usergroup_id==12)
-                {
-                    return TRUE;
-                }
-                return FALSE;
+
+                // Resolve the switch for the user's OWN school (never a global value):
+                // a school may only ever be gated by its own setting.
+                $school = $user->school;
+                $loginStatus = $school ? $school->loginStatus() : \Config::get('settings.login_status');
+
+                return $loginStatus === null || $loginStatus === '' || (int) $loginStatus === 1;
             }
             return FALSE;
         },'Invalid Credentials');
