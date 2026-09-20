@@ -2,6 +2,10 @@
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2 py-2 text-gray-800">
+    {{-- Errors (e.g. the marks-locked message) must be visible on this page:
+         updateMark redirects back here when a correction is refused. --}}
+    @include('partials.message')
+
     {{-- Header --}}
     @php
         $examStatus = match ($exam->status) {
@@ -21,6 +25,17 @@
             + Add Marks
         </a>
     </div>
+
+    @if(isset($submission) && $submission && $submission->status === 'reopened')
+    <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3" data-testid="marks-reopened-banner">
+        <p class="text-sm font-semibold" style="color:#92400E;">
+            This submission was reopened by your school admin — corrections now require a reason.
+        </p>
+        @if($submission->reopen_reason)
+            <p class="text-xs mt-1" style="color:#92400E;">Reason given: &ldquo;{{ $submission->reopen_reason }}&rdquo;</p>
+        @endif
+    </div>
+    @endif
 
     {{-- Filters --}}
     <div class="bg-white p-1 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
@@ -105,16 +120,12 @@
                         </td>
 
                         {{-- Actions --}}
-                        <td class="p-1 border border-gray-400 space-x-6 text-center">
-                                <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}" 
-                                   class="px-3 py-1 text-xs font-medium bg-green-500 text-white bg-blue-50 rounded-md hover:bg-green-600">
+                        <td class="p-1 border border-gray-400 text-center">
+                                <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}"
+                                   class="px-3 py-1 text-xs font-medium bg-green-500 text-white rounded-md hover:bg-green-600"
+                                   aria-label="Correct this student's mark">
                                     Edit
                                 </a>
-
-                                <button 
-                                    class="px-3 py-1 text-xs font-medium text-white bg-red-400 rounded-md hover:bg-red-500">
-                                    Delete
-                                </button>
                         </td>
                     </tr>
 
