@@ -8,6 +8,8 @@
     'subtitle' => 'Connect your school\'s workspace apps so Toshi can work in them. Reads are always audited; every write pauses for your approval.',
 ])
 
+@include('layouts.partials.settings-nav')
+
 @include('partials.message')
 
 <div class="relative mt-4">

@@ -3578,3 +3578,27 @@ body.toshi-manual-wizard [data-toshi-root] {
         animation: none;
     }
 }
+
+/* ==== Settings hub (SchoolAdmin) — grouped IA + consistent settings nav ==== */
+.settings-hub-group {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--d-muted, #94A3B8); margin: 0 0 10px;
+}
+.settings-hub-grid { display: grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap: 16px; }
+@media (min-width: 640px) { .settings-hub-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (min-width: 1024px) { .settings-hub-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+.settings-hub-card { display: flex; align-items: center; gap: 14px; padding: 18px; text-decoration: none; }
+.settings-hub-card strong { display: block; font-size: 0.875rem; font-weight: 600; color: var(--d-text, #1E293B); }
+.settings-hub-card small { display: block; font-size: 0.75rem; color: var(--d-text-secondary, #64748B); margin-top: 2px; }
+.settings-hub-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.settings-hub-icon svg { width: 20px; height: 20px; }
+
+.settings-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
+.settings-nav a {
+  font-size: 0.8125rem; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+  color: var(--d-text-secondary, #64748B); background: var(--d-surface, #FAFAF5);
+  border: 1px solid var(--d-border, #E2E8F0); text-decoration: none; white-space: nowrap;
+}
+.settings-nav a:hover { color: var(--d-accent, #15803D); border-color: var(--d-accent, #15803D); }
+.settings-nav a.is-current { background: var(--d-accent, #15803D); border-color: var(--d-accent, #15803D); color: #fff; }
+.settings-nav a:focus-visible { outline: 3px solid rgba(30,111,217,0.55); outline-offset: 2px; }
