@@ -49,7 +49,7 @@ class GeneralController extends Controller
 
             if (($request->sitelogo)==null)
             {
-                $this->updatesettings('sitelogo',(\config::get('settings.sitelogo')));
+                $this->updatesettings('sitelogo',(config('settings.sitelogo')));
             }
             else
             {
@@ -60,7 +60,7 @@ class GeneralController extends Controller
 
             if(($request->favicon)==null)
             {
-                $this->updatesettings('favicon',(\config::get('settings.favicon')));
+                $this->updatesettings('favicon',(config('settings.favicon')));
             }
             else
             {

@@ -47,7 +47,7 @@ class SeoDetailController extends Controller
             $this->updatesettings('twitter_description',$request->twitter_description);
             if (($request->twitter_card_image)==null)
             {
-                $this->updatesettings('twitter_card_image',(\config::get('settings.twitter_card_image')));
+                $this->updatesettings('twitter_card_image',(config('settings.twitter_card_image')));
             }
             else
             { 
@@ -58,7 +58,7 @@ class SeoDetailController extends Controller
 
             if (($request->facebook_card_image)==null)
             {
-                $this->updatesettings('facebook_card_image',(\config::get('settings.facebook_card_image')));
+                $this->updatesettings('facebook_card_image',(config('settings.facebook_card_image')));
             }
             else
             {
