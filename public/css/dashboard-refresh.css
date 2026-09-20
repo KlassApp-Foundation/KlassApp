@@ -3602,3 +3602,46 @@ body.toshi-manual-wizard [data-toshi-root] {
 .settings-nav a:hover { color: var(--d-accent, #15803D); border-color: var(--d-accent, #15803D); }
 .settings-nav a.is-current { background: var(--d-accent, #15803D); border-color: var(--d-accent, #15803D); color: #fff; }
 .settings-nav a:focus-visible { outline: 3px solid rgba(30,111,217,0.55); outline-offset: 2px; }
+
+/* ==== Sidebar: controlled collapse/expand (fixes uncontrolled content shift) ====
+   Root cause: the shell content column carried a hardcoded inline
+   `width: calc(100vw - 195px)`, so any sidebar/dock change forced a reflow
+   instead of a layout that simply flexes. The content column is now a flex
+   child (min-width:0) and the sidebar animates its width. */
+.sidebar { flex: 0 0 auto; }
+#admin-sidebar { flex: 0 0 auto; transition: width 0.22s ease; }
+.dashboard-content-area { flex: 1 1 auto; min-width: 0; width: auto !important; transition: width 0.25s ease; }
+
+/* Collapsed = icon rail */
+body.sidebar-collapsed #admin-sidebar { width: 4.5rem; }
+body.sidebar-collapsed #admin-sidebar .sidebar-group > ul { display: none !important; }
+body.sidebar-collapsed #admin-sidebar .dashboard-menu-item > a > span,
+body.sidebar-collapsed #admin-sidebar a.dashboard-menu-item > span,
+body.sidebar-collapsed #admin-sidebar .sidebar-group-label,
+body.sidebar-collapsed #admin-sidebar .sidebar-group-chevron { display: none !important; }
+body.sidebar-collapsed #admin-sidebar a.dashboard-menu-item { justify-content: center; }
+body.sidebar-collapsed #admin-sidebar .dashboard-menu-item,
+body.sidebar-collapsed #admin-sidebar .sidebar-group-header { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
+body.sidebar-collapsed #admin-sidebar .dashboard-menu-item > a,
+body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-content: center; }
+
+/* Sidebar polish (contemporary look, same IA) */
+#admin-sidebar { box-shadow: inset -1px 0 0 var(--d-border, #E2E8F0); }
+#admin-sidebar .dashboard-menu-item > a,
+#admin-sidebar .sidebar-group-header {
+  border-radius: 10px; padding: 0.5rem 0.625rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+#admin-sidebar .dashboard-menu-item > a:hover,
+#admin-sidebar .sidebar-group-header:hover { background: rgba(34,197,94,0.10); }
+#admin-sidebar .dashboard-menu-item.active > a,
+#admin-sidebar .dashboard-menu-item.dashboard-active > a { background: rgba(34,197,94,0.14); color: #166534; font-weight: 600; }
+#admin-sidebar .sidebar-group-label {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--d-text-secondary, #64748B);
+}
+#admin-sidebar .sidebar-group-chevron { color: var(--d-text-secondary, #64748B); flex-shrink: 0; }
+#admin-sidebar .header-wrapper-b { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+@media (prefers-reduced-motion: reduce) {
+  #admin-sidebar, .dashboard-content-area { transition: none; }
+}

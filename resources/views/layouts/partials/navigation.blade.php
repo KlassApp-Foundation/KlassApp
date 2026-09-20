@@ -16,6 +16,11 @@
             }
         @endphp
         @if(\Auth::user())
+            <button type="button" id="sidebar-collapse-toggle"
+                    class="mr-3 hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:bg-black/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    aria-label="Collapse sidebar" aria-expanded="true" aria-controls="admin-sidebar" title="Collapse sidebar">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 9l-3 3 3 3"/></svg>
+            </button>
             <button class="mr-3 lg:hidden" id="mobile-menu-trigger" aria-label="Toggle sidebar">
                 <span class="navbar-toggler-icon">
                     <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="currentColor"/></svg>
@@ -69,3 +74,31 @@
         </div>
     </div>
 </nav>
+@push('scripts')
+<script>
+(function () {
+    var KEY = 'admin_sidebar_collapsed';
+    function btn() { return document.getElementById('sidebar-collapse-toggle'); }
+    function apply(collapsed) {
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        var el = btn();
+        if (el) {
+            el.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            el.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            el.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+        }
+    }
+    try { apply(localStorage.getItem(KEY) === '1'); } catch (e) {}
+    // Delegate: the button lives inside the Vue-mounted #app, so a direct
+    // listener is lost whenever Vue re-renders that subtree.
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest && e.target.closest('#sidebar-collapse-toggle');
+        if (!el) return;
+        e.preventDefault();
+        var collapsed = !document.body.classList.contains('sidebar-collapsed');
+        apply(collapsed);
+        try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e2) {}
+    });
+})();
+</script>
+@endpush
