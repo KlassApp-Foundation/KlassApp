@@ -281,12 +281,65 @@ Token refresh is **app-owned** (not vendor-baked): `McpConnectorTokenRefreshServ
 - Custom/arbitrary endpoint URLs (Tier 2, C.6).
 - Per-**user** connectors (only per-school workspaces this pass; spike comment allows "or per connecting staff user" later — `connected_by` already records who).
 - Inbound event webhooks from connectors (Slack events → Toshi), interactive approval buttons inside Slack/Notion UIs (the WhatsApp-bridge token pattern is the blueprint when this arrives).
+  - *(Superseded note, 2026-09-20: the Slack-specific half of this out-of-scope line is now tracked as a proper future-work section — **"Future: Inbound Slack (Toshi-in-Slack)"** below — with rough requirements and the WhatsApp inbound precedent recorded. Still unscheduled; still out of all current scopes.)*
 - Billing/quota metering per school per connector.
 - Implementations of Miro/Figma beyond catalog placeholders with documented deferral (D.1).
 
 ---
 
-## Execution order (proposed)
+## Future: Inbound Slack (Toshi-in-Slack) — recorded 2026-09-20, NOT scheduled
+
+> Roadmap note only, discovered during Slack go-live prep (go-live checklist:
+> `docs/ops/slack-connector-go-live-checklist.md`). **Not part of the current go-live
+> rollout** — the checklist and its Batches A–C proceed completely unaffected by this
+> section. No PR, no design, no scope exists for this yet.
+
+**What exists today (wave-1, shipped #684):** outbound-only. Toshi can read from and
+(approval-gated) write to Slack **when invoked from within KlassApp** — via
+`RouteToSlackSkillTool` → `SlackSkill` → the named `slack` MCP client, scoped to the
+connecting school's workspace. Nothing in Slack can trigger or address Toshi directly:
+no event subscriptions, no mention/@-handling, no message-driven invocation. A teacher
+or admin in the Slack workspace cannot ask Toshi anything from inside Slack.
+
+**What a future inbound capability would roughly require** (recorded for scoping, not
+designed here):
+
+1. **Slack-side**: Slack **Event Subscriptions** on the connected workspace — either a
+   public request URL (HTTPS endpoint KlassApp must expose and Slack must verify), or
+   **Socket Mode** as the no-public-URL alternative (worth scoping for schools where
+   exposing an endpoint is a hard sell).
+2. **KlassApp-side**: a new inbound webhook/event-handler endpoint that receives Slack's
+   event payloads, verifies them (Slack request-signature checking, the URL-verification
+   handshake for Events API), and is explicitly **excluded from any authenticated-session
+   assumptions** (webhook = unauthenticated by nature; the signature check is the auth).
+3. **Routing logic**: map an incoming Slack message/mention to a Toshi conversation —
+   which school's workspace (registry row by `team_id`), which channel/thread, which
+   conversation history — and back out with a reply (posting via the existing outbound
+   write path, which today is approval-gated; inbound replies would need an explicit
+   decision on whether the HITL gate applies to conversation replies).
+4. **Identity handling — the decision that gates everything**: does a Slack user need to
+   be mapped to a KlassApp user/role for the existing permission model to apply? Today's
+   role scoping (Gates `toshi-school-action`/`toshi-deputy-action`, structural agent
+   routing — see the go-live checklist §6b) assumes the acting user is an authenticated
+   KlassApp user. An unmapped Slack workspace member has none of that; either every
+   inbound actor is mapped to a KlassApp identity (strict, recommended default), or a
+   new, weaker permission tier for "workspace member" has to be invented and reviewed.
+
+**Closest existing precedent in this codebase**: the **WhatsApp channel already has
+inbound handling** — a teacher/parent messages Toshi on WhatsApp and gets a reply
+(`routes/api.php` `/api/whatsapp/inbound` webhook (GET verification + POST payloads,
+CSRF-exempt) → `Api\WhatsAppController@handleInbound` → `WhatsAppToshiChannelService`,
+with phone-number→user identification). That path is the natural reference for how
+Slack's inbound side would eventually be built — webhook verification, inbound
+identity resolution, and channel→Toshi routing all have a working blueprint there.
+Do not start from zero.
+
+**When picked up**: this needs its own scoping/research pass (Slack Events API vs
+Socket Mode trade-offs for this hosting model, identity mapping design, rate/reply
+behavior, and the HITL-gate-questions above). That pass is deliberately **not** this
+note. Recorded as wanted, roughly scoped, unscheduled.
+
+
 
 1. **PR 1 — (C) registry core:** migrations (`school_mcp_connectors`), catalog config, `resolveTokenForRequest` + refresh service + `ConnectorNotConnected` typed flow, refactor the spike's `routes/ai.php` slack block onto the token-closure pattern (still the only construction site), encrypted-cast + isolation + refresh tests, `McpClientConstructionTest` untouched and green. *(Supersedes the prior plan's `school_slack_mcp_credentials` — same need, generalized.)*
 2. **PR 2 — (B-1) HITL gate:** from the prior plan, unchanged; `mcp_write_gates` config now reads from the (C) catalog/registry (`write_mode`, classifications) so the gate covers every connector automatically.
