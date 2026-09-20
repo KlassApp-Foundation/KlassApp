@@ -50,7 +50,8 @@ fake Slack data from a real-looking UI. **Always set `SLACK_MCP_MODE=live` and
 | 6 | `TOSHI_MCP_WRITE_GATES_ENABLED` | `false` | `config/toshi.php` `mcp_write_gates.master_switch` → `McpWriteGate::isWrite` | Master switch for write classification **across all connectors**. **Must be `true` for any live connector** (see §0). |
 | 7 | `TOSHI_SLACK_MCP_WRITE_MODE` | `deny` | `config/toshi.php` `mcp_write_gates.connectors.slack.mode` | How Slack tools classify: `deny` = fail closed (ALL tools incl. reads pause for approval — nothing works without approvals); `classify` = catalog `read_tools` free, `write_tools` gated (**recommended**); `allowlist` = only `slack_post_message` gated, everything else free. |
 | 8 | `SLACK_MCP_TIMEOUT` | `30` | `config/services.php:83` → `routes/ai.php` client timeout (s) | HTTP timeout for MCP calls. Leave default. |
-| 9 | `SLACK_MCP_TOKEN` | unset | `config/services.php:82` | ⚠️ **Dead config** — no runtime consumer exists in `app/`/`routes/` (verified by grep). Spike-era leftover. **Do not set in production**; a future cleanup PR should remove it. |
+| 9a | `SLACK_MCP_SCOPES` | `channels:read channels:history groups:history search:read.public chat:write` | `config/services.php` `slack_mcp.scopes` → `routes/ai.php` withOAuth | OAuth scope string for the authorize step. Must be real Slack granular scopes from `mcp.slack.com`'s published metadata — see §4 scope table. Change requires a redeploy only, not a code change. |
+| 9b | `SLACK_MCP_TOKEN` | unset | `config/services.php:82` | ⚠️ **Dead config** — no runtime consumer exists in `app/`/`routes/` (verified by grep). Spike-era leftover. **Do not set in production**; a future cleanup PR should remove it. |
 
 Prerequisites already outside this feature's own flags (Slack rides on the Toshi v2 stack —
 these are presumably already live; verify, don't assume):
@@ -111,16 +112,46 @@ these are presumably already live; verify, don't assume):
   (Route = `mcp/oauth/{client}/callback`, client `slack` — vendor default, no custom URI
   passed in `routes/ai.php`. Trailing slashes and path variants will fail — OAuth
   redirect_uri matching is byte-exact.)
-- Scopes: the app requests **real Slack granular scopes** via the `SLACK_MCP_SCOPES`
-  env var (default: `channels:read channels:history groups:history search:read.public chat:write`).
-  These are the actual scopes our four wave-1 tools need — `slack_list_channels`,
-  `slack_search`, `slack_get_channel_history` (reads) and `slack_post_message` (write).
-  The old hardcoded `mcp:read mcp:write` was never valid Slack scopes and caused
-  "Invalid permissions requested" (fixed in commit `428f0d0e` — configurable scope list).
-  Follow Slack's MCP get-started guide when creating the app; add scopes to **User Token
-  Scopes** (the MCP flow uses user tokens, not bot tokens; `token_url` uses
-  `oauth.v2.user.access`). **Verify the granular scope list on the live Slack app config
-  screen at setup time — do not guess.**
+- **Scope table — every scope KlassApp requests, verified against Slack's live MCP
+  metadata** (`mcp.slack.com/.well-known/oauth-authorization-server`, fetched 2026-09-20 —
+  30 granular scopes published; `mcp:read`/`mcp:write`/`mcp:use` are absent from that list
+  and belong to other vendors' MCP servers, not Slack's):
+
+  | KlassApp scope (default `SLACK_MCP_SCOPES`) | Needed by |
+  |---|---|
+  | `channels:read` | `slack_list_channels` |
+  | `channels:history` | `slack_get_channel_history` (public channels) |
+  | `groups:history` | `slack_get_channel_history` (private channels) |
+  | `search:read.public` | `slack_search` |
+  | `chat:write` | `slack_post_message` |
+
+  The scope string is env-configurable (`SLACK_MCP_SCOPES`, default
+  `channels:read channels:history groups:history search:read.public chat:write`,
+  commit `428f0d0e`) so a future scope change needs only an env-var update + redeploy,
+  not a code change. To request additional tools later (e.g. user lookup → `users:read`),
+  add the scope in Slack's app config **first**, then extend `SLACK_MCP_SCOPES`. The old
+  hardcoded `mcp:read mcp:write` was never a valid Slack scope pair and caused
+  "Invalid permissions requested" at authorize (see knowledge.md 2026-09-20 diagnosis).
+- **MCP feature toggle REQUIRED**: the app must have
+  **Features → Agents & AI Apps → Model Context Protocol toggled ON**. Without this
+  toggle the app cannot use Slack's hosted MCP server at all.
+- **Scopes go on User Token Scopes, not (only) Bot Token Scopes.** Slack's MCP OAuth
+  flow is **user-token based**: authorize endpoint `slack.com/oauth/v2_user/authorize`,
+  token endpoint `slack.com/api/oauth.v2.user.access` (per Slack's live metadata). The
+  catalog `token_url` in `config/toshi.php` was corrected to the user-token endpoint
+  accordingly (was the bot-token `oauth.v2.access` — a latent refresh bug). Keeping a
+  minimal Bot Token Scopes set is fine (Slack's own MCP sample manifest uses both user
+  + bot scopes), but the five MCP scopes above **must** be on User Token Scopes or the
+  authorize step fails.
+- **The app must be installed to the target workspace as an internal app** (or
+  Marketplace-published — unlisted apps cannot use Slack's MCP server at all). Install
+  to the pilot workspace **after** the MCP toggle + User Token Scopes are set, so the
+  install grants the new scope set.
+- **Token refresh contract** (audited 2026-09-20): `McpConnectorTokenRefreshService`
+  posts `grant_type=refresh_token` to `https://slack.com/api/oauth.v2.user.access` and
+  reads `access_token` / `refresh_token` / `token_type` / `expires_in` — standard OAuth
+  field names, identical in Slack's user-token and bot-token responses, so the existing
+  parsing is compatible; no bot-token-only field assumptions exist in the service.
 - Note the app's Client ID and Client Secret → Doppler (§5), never the repo.
 - Transport-era caveat (accepted, tripwired): our client speaks the pre-2026 MCP era
   (laravel/mcp 0.8.x); `mcp.slack.com` serves it until at least the 2027-04-28 re-verification
