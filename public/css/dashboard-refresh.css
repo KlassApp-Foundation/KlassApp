@@ -3956,11 +3956,23 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
    85px band and read as a slab bolted over the chrome. It now starts where the sidebar
    starts and ends where the sidebar ends. Scoped to desktop, because below 1280px the
    widget is deliberately fixed bottom-right. */
-:root { --toshi-header-offset: 85px; }
+:root { --toshi-header-offset: 69px; }
 @media (min-width: 1280px) {
     body [data-toshi-root] {
         margin-top: var(--toshi-header-offset) !important;
         height: calc(100vh - var(--toshi-header-offset)) !important;
         align-self: flex-start !important;
     }
+}
+
+/* ── Header height: 85px to 68px by trimming wrapper padding only ──
+   Measured: <nav class="navbar dashboard-themed-header"> had padding 8px top and bottom
+   around a 68px content row (the academic-year block; the title is 36px), giving 8+68+8.
+   The padding is the only thing trimmed here: the logo, title and selector are untouched,
+   and align-items: center keeps them centred in the shorter band.
+   The offset constant is 69px, not 68, because the rendered header is 68px of content plus a
+   1px border. Measured, not assumed: 68 left a 1px overlap with the panel. */
+.navbar.dashboard-themed-header {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
