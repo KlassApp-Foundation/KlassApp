@@ -12000,3 +12000,32 @@ Three of the four requested pieces shipped and verified; the fourth is logged be
 - **NOT STARTED: the two gap fields (item 2).** `student_size` and `school_category` still have no post-onboarding editor. This is the one item from this batch that is untouched. Plan when picked up: add `student_size` (a select over `OnboardingStepsService::STUDENT_SIZE_OPTIONS`) and `school_category` (a select over `SchoolCategorySeeder::CATEGORIES`) to `schooldetail/Edit.vue`, add both to the JSON payload in `SchoolDetailsController@edit`, write both in `update()`, add real `DetailRequest` rules matching what the UI claims, and rebuild. Verify by round-tripping both fields (write, read back, confirm the checklist reflects them).
 - **Item 5 confirmed**: the Review step's guided round-trip is unchanged, as agreed.
 - **Open production question, not to be lost**: #770 fixed a **cross-tenant read over live school data** (school-details routes trusted `{school_id}`). It is fixed on main and staging-only so far. Separately, `/demo/list/{school_id}` and `/demo/schoolList` remain **public, unauthenticated, and expose real staff emails and phone numbers** (and the demo component prints usernames), which is arguably more exposed than #770 since it needs no account at all. Neither has been deployed to production, and both are awaiting an explicit decision.
+
+### 2026-09-22: KNOWN ISSUE, found and NOT fixed: the public /demo routes expose real school data (not started)
+
+**Status: found, NOT fixed, NOT started. No code written. Awaiting a real urgency and priority decision.** Recorded verbatim and prominently so it cannot be mistaken for resolved or in-flight work.
+
+**Where**
+- `GET /demo/list/{school_id}` and `GET /demo/schoolList`, both in `Demo\\WelcomeController` (`app/Http/Controllers/Demo/WelcomeController.php`).
+- Both declared in `routes/web.php` **outside every middleware group**: no `auth`, no role gate, and **no environment gate**, so they are live in production exactly as they are in development. Public access is **confirmed deliberate**: the routes serve the landing page's demo section (`Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']))`) via `resources/assets/js/components/demo/Tab.vue`.
+
+**Severity, unauthenticated (no account needed at all)**
+- `/demo/schoolList` runs `School::where('status',1)->get()->take(3)` and returns it through `SchoolResource`. That is **whichever three real active schools are first by id**, with real **name, email and phone**. On production this is real customer contact data, not a synthetic demo dataset. Locally it happens to return seeded demo schools, which is exactly why this is easy to miss.
+- `/demo/list/{id}` returns per-role `UserResource` collections for admin, principal, librarian, receptionist, accountant, teacher and student, which include **real login usernames (the email addresses staff actually sign in with)** plus teacher mobile numbers. `demo/Tab.vue` renders them literally as `Username : {{ email }}` and `teacher.mobile_no`.
+- **This is worse than a contact-detail leak**: the email address is the login credential identifier, so the payload hands out half of a credential set for every role in a school, publicly and enumerably (list the schools, then read each one).
+
+**Reliability defect, same routes**
+- An unknown or invalid school id causes an **unauthenticated HTTP 500**: `$school` is null and the method dereferences `$school->id` with no check. It should be a graceful 404. Locally, with debug on, the response also prints the exception and stack trace. `schoolList` has the same null-blind shape.
+- Confirmed live: `/demo/list/1` and `/demo/list/2` return 200 with data, `/demo/list/999` returns 500.
+
+**Correct fix direction (deliberately the opposite of the school-details fix)**
+- The route being public is **intentional**, so **do not add an auth or ownership guard here**. The school-details fix (#770) applied an `assertOwnSchool()` 403; applying that pattern to these routes would break an intended public marketing surface.
+- Instead: (1) serve the demo from a **real dedicated demo dataset** rather than "the first three real active schools"; (2) **strip all personal fields** (email, phone, username) from the public payload, and stop rendering "Username : email" in `Tab.vue`; (3) return a **404 for unknown ids** instead of a 500.
+- If showcasing real schools is genuinely wanted, that needs those schools' consent and a non-personal payload, which is a product decision and not a code one.
+
+**Severity comparison, for prioritisation**
+- This exposure requires **zero authentication** and is reachable by anyone with a browser, which ranks it **above** the school-details cross-tenant read (#770). That one, though a genuine cross-tenant read over live data, required a valid logged-in SchoolAdmin account.
+- Neither the #770 fix nor anything here has been deployed to production. Both await an explicit production decision.
+
+**What is NOT claimed here**
+- I did not inspect `schoolList()`'s filtering beyond reading it, and I did not enumerate which schools a production instance would actually return. The mechanism is what is verified: `status = 1`, `take(3)`, no demo flag, public route.
