@@ -115,7 +115,10 @@ class ReportCardSchoolIdentityTest extends TestCase
 
     public function test_report_templates_have_no_hardcoded_kabale_identity(): void
     {
-        foreach (['formal', 'warm', 'modern'] as $template) {
+        // Derive from the registry rather than a hardcoded list: a template that is
+        // dropped from StudentReportCardService::TEMPLATES must not leave this test
+        // scanning a view file that no longer exists.
+        foreach (array_keys(\App\Services\StudentReportCardService::TEMPLATES) as $template) {
             $src = file_get_contents(resource_path("views/admin/marks/report-templates/{$template}.blade.php"));
             $this->assertIsString($src);
             $this->assertStringContainsString('schoolIdentity', $src);
