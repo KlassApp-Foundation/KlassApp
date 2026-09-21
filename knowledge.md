@@ -12145,3 +12145,27 @@ Zero failing requests, and no request-level failures either. Direct probes of th
 - **Known limitations, recorded rather than hidden**: the principal and teacher tabs are empty because `teacherprofiles` does not exist in this schema (that insert is isolated in a try/catch so it cannot abort the seed, and a follow-up needs the real model's table). On the landing page my new role labels render and no request fails, but there is a `classList` JavaScript error there that was **not attributed**, and the school-name tabs were not confirmed before time ran out.
 - **Production note**: the demo now depends on `is_demo`, so until this migration runs in production the demo section is empty there. That is the intended trade: empty until deliberately seeded, rather than leaking real tenants. **Ready for the production decision alongside #770**, with that caveat stated.
 - **Migration lesson worth keeping**: the first run aborted midway (a `teacherprofiles` insert on a table that does not exist), which left a partial dataset and an unrecorded migration. Making the seed idempotent per school, per year and per person is what allowed it to resume rather than skip everything or duplicate it.
+
+### 2026-09-22: Demo schools excluded from platform reporting, and the four "demo/test/sandbox" concepts documented
+
+- **What was wrong**: the demo seed set `is_demo` but not `is_test`, so the two seeded demo schools and their ~28 synthetic users were counted as real school and user growth on the Superadmin platform dashboard, and could surface in the "recently joined" feed. They were advertising a false number.
+- **Fix**: a new migration (`2026_09_22_020000_mark_demo_schools_as_test_for_reporting`) sets `is_test = true` wherever `is_demo = true` and `is_test = false`, keyed on the flag rather than on specific ids so any future demo school is covered. The original seed migration now sets both flags too, so a fresh environment is correct from the first deploy rather than needing the backfill. The new migration's `down()` deliberately does nothing, because reverting would put demo schools back into reporting, which was the bug.
+- **Verified locally**: demo schools flagged `is_test` = 2 of 2; active schools 7, but the dashboard's own predicate (`School::whereNotIn('id', $testSchoolIds)->where('status', 1)`) now counts **5**; counted users **42 of 70**; and the recently-joined feed (`is_test = false`, latest 5) lists only the five real seeded schools with **0 demo schools**. The dashboard's cached stats key was flushed first, since the payload is cached for 300s.
+- **NOT verified: staging.** Not checked; the migration is the sanctioned path and will run on the merge.
+
+#### The four distinct concepts called some variant of demo, test or sandbox
+
+Documented because this codebase genuinely has four, and a future reader will otherwise conflate them.
+
+| Concept | Location | Real meaning |
+|---|---|---|
+| `schools.is_test` | Column; read only in `Superadmin\DashboardSuperController` | **Reporting visibility.** These tenants are excluded from every platform statistic and from the recently-joined feed. |
+| `schools.is_demo` | Column; read only in `Demo\WelcomeController` | **Public showcase eligibility.** These schools may be shown on the marketing demo. |
+| `Api\Teacher\SandboxController` | Inherited GegoK12 code | A **teacher-app data sandbox** (e.g. `getUGDegree`). Nothing to do with tenants or reporting. |
+| The WhatsApp `demo` command | `Api\WhatsAppController` | An **interactive demo persona**: messaging "demo" auto-links the sender to a configured demo parent user (`services.whatsapp.demo_parent_user_id`, default 104). |
+
+Also worth knowing: there is **no staging concept in application code** at all. `config/app.php` reads `APP_ENV` and nothing branches on `staging` or `production`, so staging is differentiated purely by environment config. And there is **no synthetic/mock/seed concept** either: the `synthetic.*` accounts created and cleaned up during this work were a naming convention, not a platform feature.
+
+#### Known limitation, flagged not fixed: is_test has no writer
+
+`is_test` is read in exactly two places and **written by no code anywhere** in the application. It is purely operator-maintained, set by hand via tinker or SQL. That means every future test or demo tenant depends on someone remembering to set it, and forgetting it silently inflates platform metrics, which is exactly what happened with the demo seed. A one-line admin affordance, or having every seeder that creates a non-customer school set it, would remove that dependency. Deliberately not changed here: it is a product affordance decision, not a bug fix.
