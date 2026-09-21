@@ -129,6 +129,14 @@ class AgentToshi extends Component
     public $ministryCode = '';
     /** @var string|null null = not asked; '' = skipped; value = UNEB centre number */
     public $unebCenterNumber = null;
+    /**
+     * Seeded default for the curriculum suggestion UI only (see curriculumDefaults()).
+     * It is NOT a statement about the school: a school's real curriculum is
+     * schools.curriculum, which may be null. Note that the commit path around the
+     * complete-mode save treats this property as the value to apply when the school has
+     * none, so an unanswered picker can commit 'uneb'. That is a behavioural question,
+     * recorded rather than changed here.
+     */
     public $curriculum = 'uneb';
     public $suggestedPlanId = null;
     public $schoolPayPassword = '';
