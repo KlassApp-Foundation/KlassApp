@@ -11887,3 +11887,31 @@ Two real defects surfaced while verifying the onboarding fixes (#751 / #752 / #7
 - The **URLs were not captured**, so the source is genuinely **unknown**. Recorded as unknown rather than guessed at.
 - Not attributable to those three fixes: none of them touched asset paths (one JS null guard, one progress-bar render change, one body class plus CSS rules).
 - First step whenever someone picks this up: re-run with request-failure logging to capture the URLs, then check against the known staging storage/asset gaps.
+
+### 2026-09-21: Onboarding design pass shipped: actionable setup list and wizard visual fixes (#756, #757)
+
+Design audit first, then implementation, both only on the two onboarding surfaces. Focused mode was explicitly out of scope and was not implemented.
+
+**Before-state (measured, not eyeballed)**
+- Toshi's checklist arrived as ten separate chat messages, one per incomplete step, each repeating the "Toshi" author label and prefixing the step with an emoji red cross: 14px / 16.1px line-height, padding 0, margin 0, transparent background, 16px tall. It read as a list of failures, and status was encoded in emoji rather than the AA tokens.
+- The wizard was already type-accurate (Sora 22.4px title, DM Sans 13.6px sub, 28px card padding, 14px radius) but its progress was a row of **10px interactive dot buttons** (about 20 of them), its nav labels were **12.48px** on 44px buttons, the step counter/hint/optional-flag/growth-note all shared one cramped line, the choice cards used the **light #22C55E** for hover and selected, and the "Prefer the full admin form?" escape hatch was suppressed on exactly the steps where a form helps most.
+
+**#756 MERGED `99145b6a`: the setup checklist is now an actionable list.**
+- One intro message plus a single list; each row is a real button with a tone-tinted icon chip (plus for to-do, check for done), the step label, an Optional flag for `OPTIONAL_STEPS`, and a right-aligned action ("Set up / Add later / Review") that jumps to that step via a new public `jumpToChecklistStep()` wrapping the existing resume helper. No backend change: it reads `OnboardingStepsService` (`is_complete`, labels, keys, `OPTIONAL_STEPS`).
+- Tone mapping uses the shipped `ds-kpi-card` semantics: incomplete required `warning` `#B45309`, incomplete optional `info` `#1E6FD9` plus an Optional flag, complete `positive` `#15803D` muted. Tints are alpha derivations of those AA tokens, so no new palette, and **red is absent by construction**.
+- **Verified**: 16 rows all exactly 44px (min 44 measured), 0 emoji markers, 0 remaining red-X chat messages, and a sweep of every computed colour inside the list contains no destructive red (only `#B45309`, `#1E6FD9`, `#15803D`, `#0F172A`, `#64748B` and alpha tints). Hover moves the border to the tone's dark shade. Clicking "UNEB centre number - Set up" genuinely jumped (4/16 to 6/16) and prompted the step. OCR reads the rows as items with actions.
+- This supersedes the 10px chip row added in #752, which carried the same information less usefully.
+
+**#757 MERGED `f085581b`: six scoped wizard fixes.**
+1. The 10px dot row became a 6px non-interactive track (`role=progressbar`, `aria-valuenow`) plus ONE labelled jump control (a `<select>` in a `<label>`). Measured: 0 buttons inside the progress container, and 0 interactive elements under 24px across steps 7 to 10.
+2. Nav labels 12.48px to 14px, height and accent unchanged.
+3. Counter and optional flag are their own chips; the return-to-review and growth notes are their own lines.
+4. The escape hatch now shows on every step with a route. Verified live on UNEB centre number (`/admin/schooldetails`) and Academic year (`/admin/academics`), both previously missing it.
+5. Choice cards: hover and selected measured at `rgb(21,128,61)` = `#15803D`, replacing the light `#22C55E`.
+6. Focus-visible outlines on buttons, links and selects; disabled styling for buttons and selects. Walked steps 7 to 10 with zero sub-24px elements and zero page errors. The walk stops at Subjects because that step's validation rejects an automation draft with "Class P1 does not exist. Add it on the classes step first.", which is the validation working, not a defect.
+- The `WizardShellNavKitContractTest` and `ManualUiWave3WizardTest` contracts were preserved (progress testid and the 420px max-width untouched), with the retired `is-current` dot assertion replaced by `aria-valuenow` assertions that follow the real step.
+- **Regression check**: Onboarding suite 401 passed, 13 failed, and those 13 are verified **by name** against the earlier JUnit baseline to be byte-for-byte the pre-existing set from clean main. Zero new failures.
+
+**Staging verification**: fresh synthetic signup on the deployed build, both surfaces checked, then the fixture removed (staging back to 2 schools / 16 users). Setup list: 13 rows, min height 44, no destructive red, 0 emoji, 0 red-X chat lines. Wizard: track 6px with 0 buttons inside, counter chip, jump select, hatch present with the real admin href, 0 sub-24px buttons, nav label 14px, 0 page errors. OCR of both staging screenshots confirms the rendering.
+
+**Not verified / open**: the wizard walk did not reach the Review step (blocked by the Subjects validation on an automation draft, not by a defect); the setup list's icon chips were verified by computed colour rather than by pixel sampling; and the local design fixture was removed after the pass. Production has not been deployed for these two PRs, which stays a separate explicit decision.
