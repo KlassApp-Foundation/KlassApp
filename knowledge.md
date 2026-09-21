@@ -11868,3 +11868,22 @@ Three real fixes, each its own scoped PR, all verified locally and on staging.
 - **Verification**: local walk of the manual wizard (steps 1 to 6 of 17, with the growth notices at the exact unlock points), local fresh signup for the null-path proof, staging signup verified for all three fixes, then **staging cleanup** (synthetic user 18 / school 3 removed; staging back to 2 schools and 16 users) and **local cleanup** (synthetic schools 7 "Synthetic Walkthrough School" and 8 removed; local back to 5 schools and 45 users).
 - **New finding surfaced during this work, flagged not fixed**: `SiteHelper::getAcademicYear()` caches per `school_id` (`academic_year_for_school_<id>`, `CACHE_TIME=8400`) and caches the **AcademicYear model object**, so a stale entry survives deletion of its school. On staging, a freshly created school that reused a deleted school's id was served a phantom academic year from 2026-09-14 (the DB had zero years for that school). This made the staging null-path check read as a non-null year, which is how it was noticed. Bounded by the 8400s TTL, but it is a real cross-request staleness bug worth its own fix.
 - Also observed and **not identified**: four console 404s on the staging dashboard during verification. Unrelated to these three fixes (no asset paths were touched), but unverified, so it is recorded here rather than guessed at.
+
+### 2026-09-21: KNOWN ISSUES, found and NOT fixed (logged only, not started)
+
+Two real defects surfaced while verifying the onboarding fixes (#751 / #752 / #753). **Neither is fixed. Neither is started.** Recorded here so they are not lost and not silently forgotten. Both are candidates for the deferred-work register.
+
+**1. `SiteHelper::getAcademicYear()` can serve a phantom academic year to a newly created school (found, not fixed, not started)**
+
+- `app/Helpers/SiteHelper.php:32` wraps the lookup in `Cache::remember('academic_year_for_school_'.$school_id, env('CACHE_TIME'), ...)` and caches the **AcademicYear model object**, not an id. Locally and on staging `CACHE_TIME=8400`, so the entry lives for about 2.3 hours.
+- The cached value is not invalidated when a school is deleted or its years change. So a **brand new school that reuses a deleted school's `id` can be served the old school's academic year.** The underlying query is correctly school-scoped; the staleness is entirely in the cache layer.
+- Observed on staging: a freshly created school (its `academic_years` count was 0) received `current_year` as a year row belonging to the previous school with the same id (id 4, name "2026", created 2026-09-14). This is what made the staging null-path check for #751 read a non-null year.
+- Impact: bounded by the 8400s TTL, but it is a genuine cross-request staleness bug, and in principle a live school could see another school's year for that window if an id is reused.
+- Not investigated further. Fix directions, deliberately NOT chosen and NOT started: cache the year id rather than the model, version the cache key with the school's `updated_at`, or `Cache::forget()` on school/year writes.
+
+**2. Four console 404s on the staging dashboard (found, not identified, not started)**
+
+- Four `Failed to load resource: the server responded with a status of 404 ()` entries appeared on the staging dashboard during the #751 / #752 / #753 verification.
+- The **URLs were not captured**, so the source is genuinely **unknown**. Recorded as unknown rather than guessed at.
+- Not attributable to those three fixes: none of them touched asset paths (one JS null guard, one progress-bar render change, one body class plus CSS rules).
+- First step whenever someone picks this up: re-run with request-failure logging to capture the URLs, then check against the known staging storage/asset gaps.
