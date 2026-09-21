@@ -515,6 +515,10 @@ export default {
                 .get("/admin/schooldetails/edit/" + this.school_id)
                 .then((response) => {
                     this.details = response.data.details;
+                    // Options must ride inside `details`: that is the only thing setDetails()
+                    // reads, which is why the two new selects rendered empty before.
+                    this.details.studentSizeOptions = response.data.details.studentSizeOptions || response.data.studentSizeOptions || [];
+                    this.details.schoolCategoryOptions = response.data.details.schoolCategoryOptions || response.data.schoolCategoryOptions || {};
                     this.setDetails();
                 })
                 .catch(() => {
@@ -565,6 +569,17 @@ export default {
             formData.append("country_id", this.country_id);
             formData.append("city_id", this.city_id);
             formData.append("website", this.website);
+            // address is REQUIRED by DetailRequest and was missing from this payload, which
+            // made every submission fail validation before it could ever save. The failure
+            // arrived as a redirect rather than a JSON error body, so nothing was displayed
+            // and the hidden submit was never clicked: the form silently did nothing.
+            formData.append("address", this.address);
+            formData.append("student_size", this.student_size || "");
+            formData.append("school_category", this.school_category || "");
+            const csrf = document.querySelector('form input[name="_token"]')?.value;
+            if (csrf) {
+                formData.append("_token", csrf);
+            }
             if (this.isUganda) {
                 formData.append("ministry_code", this.ministry_code || "");
             }
@@ -585,7 +600,16 @@ export default {
                     $("#submit-btn").click();
                 })
                 .catch((error) => {
-                    this.errors = error.response?.data?.errors || {};
+                    const fieldErrors = error.response?.data?.errors || {};
+
+                    // A failed form request redirects rather than returning JSON, so a bare
+                    // errors bag can be empty even when the submission failed. Say so instead
+                    // of appearing to do nothing.
+                    this.errors = Object.keys(fieldErrors).length
+                        ? fieldErrors
+                        : { name: ["Could not save: the server rejected the request (HTTP " + (error.response?.status ?? "network error") + "). Nothing was changed."] };
+
+                    console.error("School details preflight failed", error.response?.status, error.response?.data);
                 });
         },
 

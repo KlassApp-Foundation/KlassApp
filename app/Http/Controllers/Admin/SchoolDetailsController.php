@@ -192,8 +192,9 @@ class SchoolDetailsController extends Controller
         // the request already validated but the form never rendered.
         $array['details']['student_size'] = $school->student_size;
         $array['details']['school_category'] = $school->school_category;
-        $array['studentSizeOptions'] = \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS;
-        $array['schoolCategoryOptions'] = \App\Services\SchoolCategorySeeder::CATEGORIES;
+        // Inside details, because that is the only object the component reads.
+        $array['details']['studentSizeOptions'] = \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS;
+        $array['details']['schoolCategoryOptions'] = \App\Services\SchoolCategorySeeder::CATEGORIES;
         if (empty($array['details']['board']) && filled($school->curriculum)) {
             $array['details']['board'] = $school->curriculum;
         }
