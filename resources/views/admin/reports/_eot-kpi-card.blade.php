@@ -38,13 +38,30 @@
         @endif
     </div>
 
-    <div style="height: 320px; position: relative;">
-        <canvas id="eotKpiChart" class="dashboard-chart-canvas"></canvas>
-    </div>
+    @php
+        // The tab bar switches between these three series; the chart itself is the
+        // shared chart component (Chart.js v4), driven through its handle.
+        $eotFirstTab = collect(['perClass', 'perSubject', 'perGender'])
+            ->first(fn ($k) => ! empty($eotKpis[$k]));
+        $eotSeries = $eotFirstTab ? collect($eotKpis[$eotFirstTab]) : collect();
+        $eotHues = ['#4F46E5', '#7C3AED', '#2563EB', '#0891B2', '#0D9488', '#059669', '#65A30D', '#CA8A04', '#EA580C', '#DC2626'];
+        $eotCount = max(1, $eotSeries->count());
+    @endphp
+    <x-chart id="eotKpiChart" type="bar" :height="320"
+             aria-label="End of term performance"
+             empty-message="No performance data yet"
+             :labels="$eotSeries->pluck('label')->all()"
+             :datasets="[[
+                 'label' => 'Avg Score',
+                 'data' => $eotSeries->map(fn ($r) => (float) $r->value)->values()->all(),
+                 'backgroundColor' => $eotSeries->keys()->map(fn ($i) => $eotHues[(int) round($i / max(1, $eotCount - 1) * (count($eotHues) - 1))])->all(),
+                 'borderRadius' => 4,
+             ]]"
+             :options="['scales' => ['x' => ['ticks' => ['autoSkip' => false, 'maxRotation' => 45, 'minRotation' => 0]]]]"
+             options-js='{ plugins: { tooltip: { callbacks: { label: function (c) { return "Avg: " + c.parsed.y; } } } } }' />
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/Chart.min.js') }}?v=2.9.3"></script>
 <script>
 (function () {
     var kpi = @json($eotKpis);
@@ -52,7 +69,6 @@
     var tabKeys = Object.keys(kpi).filter(function (k) { return kpi[k] && kpi[k].length > 0; });
     if (tabKeys.length === 0) return;
 
-    var eotChart = null;
     var defaultTab = tabKeys[0];
 
     function barColor(index, total) {
@@ -63,62 +79,23 @@
         return hues[idx] || hues[0];
     }
 
-    function buildChart(tab) {
+    // The shared chart component owns the Chart.js v4 instance; we only push
+    // new labels/data into it. Retries briefly while the component boots.
+    function buildChart(tab, attempt) {
         var data = kpi[tab];
         if (!data || data.length === 0) return;
 
-        var labels = data.map(function (d) { return d.label; });
+        var chart = (window.__dsCharts || {})['eotKpiChart'];
+        if (!chart) {
+            if ((attempt || 0) < 12) { setTimeout(function () { buildChart(tab, (attempt || 0) + 1); }, 250); }
+            return;
+        }
+
         var values = data.map(function (d) { return parseFloat(d.value); });
-        var colors = values.map(function (_, i) { return barColor(i, values.length); });
-
-        if (eotChart) { eotChart.destroy(); eotChart = null; }
-
-        var ctx = document.getElementById('eotKpiChart').getContext('2d');
-        eotChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Avg Score',
-                    data: values,
-                    backgroundColor: colors,
-                    borderRadius: 4,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: { display: false },
-                tooltips: {
-                    callbacks: {
-                        label: function (item) { return 'Avg: ' + item.yLabel; }
-                    }
-                },
-                scales: {
-                    xAxes: [{
-                        ticks: {
-                            autoSkip: false,
-                            maxRotation: 45,
-                            minRotation: 0,
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontSize: 11,
-                        },
-                        gridLines: { display: false }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontSize: 11,
-                        },
-                        gridLines: {
-                            color: '#F1F5F9',
-                            zeroLineColor: '#E2E8F0',
-                        }
-                    }]
-                }
-            }
-        });
+        chart.data.labels = data.map(function (d) { return d.label; });
+        chart.data.datasets[0].data = values;
+        chart.data.datasets[0].backgroundColor = values.map(function (_, i) { return barColor(i, values.length); });
+        chart.update();
     }
 
     function activateTab(tab) {
@@ -138,7 +115,6 @@
         activateTab(tab);
     };
 
-    // Initial render
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { activateTab(defaultTab); });
     } else {

@@ -27,7 +27,8 @@
 <div class="dashboard-kpi-grid" data-testid="fees-kpi-grid" style="margin-top: 0; margin-bottom: 20px;">
     {{-- Semantic tones + the arrears trend: arrears falling is GOOD, so the card
          passes invert-direction and the indicator reads positive on a down move. --}}
-    <x-ds-kpi-card icon="dollar" :value="$kpis['collected_label']" label="Collected this term" tone="positive" />
+    <x-ds-kpi-card icon="dollar" :value="$kpis['collected_label']" label="Collected this term" tone="positive"
+        :spark="$kpis['collected_spark'] ?? []" spark-label="Weekly collections this term" />
     <x-ds-kpi-card icon="money" :value="$kpis['outstanding_label']" label="Outstanding" tone="warning" />
     <x-ds-kpi-card icon="users" :value="$kpis['arrears_label']" label="Students in arrears" tone="negative"
         :direction="$kpis['arrears_direction']" :invert-direction="true"

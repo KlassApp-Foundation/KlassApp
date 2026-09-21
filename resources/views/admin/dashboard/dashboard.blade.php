@@ -61,7 +61,26 @@
                         </a>
                     </div>
                 </div>
-                <canvas id="feeTrendChart" class="dashboard-chart-canvas" style="height:180px;" data-testid="dashboard-fee-trend-chart"></canvas>
+                @php $feeTrendPoints = collect($feeTrend ?? []); @endphp
+                <div data-testid="dashboard-fee-trend-chart">
+                    <x-chart type="line" :height="180"
+                             aria-label="Fee collection trend"
+                             empty-message="No fee collections recorded yet"
+                             :labels="$feeTrendPoints->pluck('label')->all()"
+                             :datasets="[[
+                                 'label' => 'Fee Collection',
+                                 'data' => $feeTrendPoints->pluck('amount')->all(),
+                                 'borderColor' => '#22C55E',
+                                 'backgroundColor' => 'rgba(34,197,94,0.06)',
+                                 'borderWidth' => 2,
+                                 'pointBackgroundColor' => '#22C55E',
+                                 'pointRadius' => 3,
+                                 'pointHoverRadius' => 5,
+                                 'tension' => 0.3,
+                                 'fill' => true,
+                             ]]"
+                             :options="['plugins' => ['tooltip' => ['mode' => 'index', 'intersect' => false]]]" />
+                </div>
             </div>
             <div class="dashboard-connected-tools" data-testid="dashboard-connected-tools">
                 <h2 class="ds-section-title">Connected tools</h2>
@@ -106,7 +125,21 @@
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students</h1>
                     </div>
-                    <canvas id="graph" class="dashboard-chart-canvas" style="max-width:100%;height:auto"></canvas>
+                    <x-chart type="doughnut" :height="240"
+                             aria-label="Students by gender"
+                             empty-message="No gender data"
+                             :center-value="$dashboard['studentCount'] ?? 0"
+                             :labels="['Male Students', 'Female Students', 'Unspecified']"
+                             :datasets="[[
+                                 'label' => ' Students',
+                                 'backgroundColor' => ['#ffa601', '#304ffe', '#cbd5e1'],
+                                 'data' => [
+                                     $dashboard['maleCount'] ?? 0,
+                                     $dashboard['femaleCount'] ?? 0,
+                                     $dashboard['unknownCount'] ?? 0,
+                                 ],
+                             ]]"
+                             options-js='{ plugins: { tooltip: { callbacks: { label: function (c) { var t = {{ (int) ($dashboard['studentCount'] ?? 0) }}; return c.dataset.label + ": " + Math.round((c.parsed || 0) / (t || 1) * 100) + "%"; } } } } }' />
                     <div class="flex items-center justify-between my-1">
                         @php
                             $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0 || ($dashboard['unknownCount'] ?? 0) > 0;
@@ -355,7 +388,17 @@
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students Per Class</h1>
                     </div>
-                    <canvas id="barChart" class="dashboard-chart-canvas"></canvas>
+                    @php $classRows = collect($dashboard['standardStudentCounts'] ?? collect()); @endphp
+                    <x-chart type="bar" :height="260"
+                             aria-label="Students per class by gender"
+                             empty-message="No classes to chart yet"
+                             :labels="$classRows->map(fn ($l) => $l->section->name ?? $l->section_name ?? ('Standard '.$l->id))->values()->all()"
+                             :datasets="[
+                                 ['label' => 'Boys', 'data' => $classRows->pluck('maleCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#304ffe', 'borderRadius' => 6],
+                                 ['label' => 'Girls', 'data' => $classRows->pluck('femaleCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#ffa601', 'borderRadius' => 6],
+                                 ['label' => 'Unspecified', 'data' => $classRows->pluck('unknownCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#cbd5e1', 'borderRadius' => 6],
+                             ]"
+                             :options="['scales' => ['y' => ['ticks' => ['stepSize' => 1, 'precision' => 0]]]]" />
                 </div>
             </div>
         </div>
@@ -381,189 +424,5 @@
     <script src="{{ asset('js/empty-state-product-demo.js') }}" defer></script>
     @endif
     @if(empty($setupIncomplete))
-    <script src="{{ asset('js/Chart.min.js') }}?v=2.9.3"></script>
-    <script>
-        var ctx = document.getElementById('graph').getContext('2d');
-        var femaleCount = {!! trans($dashboard['femaleCount'] ?? 0) !!};
-        var maleCount = {!! trans($dashboard['maleCount'] ?? 0) !!};
-        var unknownCount = {!! trans($dashboard['unknownCount'] ?? 0) !!};
-        var totalStudents = {!! trans($dashboard['studentCount'] ?? 0) !!};
-
-        if (totalStudents === 0) {
-            var ctx2 = document.getElementById('graph').getContext('2d');
-            ctx2.clearRect(0, 0, ctx2.canvas.width, ctx2.canvas.height);
-            ctx2.textAlign = 'center';
-            ctx2.textBaseline = 'middle';
-            ctx2.font = "13px 'DM Sans', sans-serif";
-            ctx2.fillStyle = '#94A3B8';
-            ctx2.fillText('No gender data', ctx2.canvas.width / 2, ctx2.canvas.height / 2);
-        }
-
-        Chart.pluginService.register({
-            afterDraw: function(chart) {
-                if (chart.config.type !== 'doughnut') return;
-                var width = chart.chart.width,
-                    height = chart.chart.height,
-                    ctx = chart.chart.ctx;
-                ctx.save();
-                var fontSize = (height / 140).toFixed(2);
-                ctx.font = "700 " + fontSize + "em 'Sora', sans-serif";
-                ctx.textBaseline = "middle";
-                ctx.fillStyle = "#4d4c48";
-                var text = totalStudents,
-                    textX = Math.round((width - ctx.measureText(text).width) / 2),
-                    textY = height / 2;
-                ctx.fillText(text, textX, textY);
-                ctx.restore();
-            }
-        });
-
-        var chart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ["Male Students", "Female Students", "Unspecified"],
-                datasets: [{
-                    label: " Students",
-                    backgroundColor: [
-                        "#ffa601", "#304ffe", "#cbd5e1"
-                    ],
-                    data: [maleCount,femaleCount,unknownCount],
-                }]
-            },
-            options: {
-                legend: {
-                    display: false,
-                },
-                tooltips: {
-                    enabled: true,
-                    mode: 'index',
-                    callbacks: {
-                        label: function (tooltipItems, data) {
-                            var i, label = [], l = data.datasets.length;
-                            for (i = 0; i < l; i += 1) {
-                                label[i] = data.datasets[i].label + ': ' + Math.round(data.datasets[i].data[tooltipItems.index] / totalStudents * 100) + '%';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        });
-
-        // ── Fee Collection Trend Chart ──
-        var trendCtx = document.getElementById('feeTrendChart');
-        if (trendCtx) {
-            var trendData = {!! json_encode($feeTrend ?? []) !!};
-            new Chart(trendCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: trendData.map(function (d) { return d.label; }),
-                    datasets: [{
-                        label: 'Fee Collection',
-                        data: trendData.map(function (d) { return d.amount; }),
-                        borderColor: '#22C55E',
-                        backgroundColor: 'rgba(34,197,94,0.06)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#22C55E',
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
-                        tension: 0.3,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        display: false,
-                    },
-                    tooltips: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: '#0F172A',
-                        callbacks: {
-                            label: function (tooltipItem, data) {
-                                var val = tooltipItem.yLabel;
-                                return 'UGX ' + Number(val).toLocaleString();
-                            }
-                        }
-                    },
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                fontFamily: 'DM Sans',
-                                fontSize: 11,
-                                callback: function (value) {
-                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
-                                    return value;
-                                }
-                            },
-                            gridLines: {
-                                color: '#F1F5F9',
-                                drawBorder: false,
-                            }
-                        }],
-                        xAxes: [{
-                            ticks: {
-                                fontFamily: 'DM Sans',
-                                fontSize: 11,
-                            },
-                            gridLines: {
-                                display: false,
-                            }
-                        }]
-                    }
-                }
-            });
-        }
-
-        var ctx = document.getElementById("barChart");
-        if (ctx) {
-            var standardData = {!! json_encode(($dashboard['standardStudentCounts'] ?? collect())->map(fn($l) => [
-                'label' => $l->section->name ?? $l->section_name ?? ('Standard ' . $l->id),
-                'count' => $l->studentCount ?? 0,
-                'male'  => $l->maleCount ?? 0,
-                'female'=> $l->femaleCount ?? 0,
-                'unknown'=> $l->unknownCount ?? 0,
-            ])->values()) !!};
-            var barChart = new Chart(ctx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: standardData.map(function(d) { return d.label; }),
-                    datasets: [{
-                        label: 'Boys',
-                        data: standardData.map(function(d) { return d.male; }),
-                        backgroundColor: '#304ffe',
-                        borderRadius: 6,
-                    }, {
-                        label: 'Girls',
-                        data: standardData.map(function(d) { return d.female; }),
-                        backgroundColor: '#ffa601',
-                        borderRadius: 6,
-                    }, {
-                        label: 'Unspecified',
-                        data: standardData.map(function(d) { return d.unknown; }),
-                        backgroundColor: '#cbd5e1',
-                        borderRadius: 6,
-                    }]
-                },
-                options: {
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                stepSize: 1,
-                                precision: 0,
-                            }
-                        }]
-                    },
-                    legend: { display: false },
-                }
-            });
-        }
-
-    </script>
     @endif
 @endpush
