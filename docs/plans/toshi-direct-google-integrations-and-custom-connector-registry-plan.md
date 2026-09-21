@@ -1,6 +1,16 @@
 # Implementation Plan: Direct Google REST Integrations (Thread A) + Custom Connector Registry (Thread B)
 
-> Status: **PLAN ONLY — awaiting go-ahead. Nothing implemented, nothing enabled.** 2026-09-21.
+> Status: **GO-AHEAD CONFIRMED 2026-09-21 (all four items) — but Classroom implementation is SEQUENCED behind two hard prerequisites and must be re-scoped as its own task with its own go-ahead when picked up. Nothing implemented, nothing enabled yet.**
+>
+> **The approval, verbatim from the product owner (2026-09-21):**
+> 1. **Classroom read-only wave-1 — APPROVED as scoped**: `google_classroom_list_courses` + `google_classroom_list_coursework`, scopes `classroom.courses.readonly` + `classroom.coursework.students.readonly`, no roster/email/guardian scopes, self-hosted local MCP server (option b, `SpikeSlackMockServer` pattern via `Mcp::local()`), standard Tier-1 catalog entry — no new registry machinery.
+>    **HARD SEQUENCING CONSTRAINT — do not start implementation until both prerequisites are INDEPENDENTLY CONFIRMED COMPLETE, with evidence (do not assume either is done just because time has passed; if either is unmet when picked up, STOP and report that instead of proceeding):**
+>    - (a) the staging LLM config gap is fixed — `OPENAI_COMPATIBLE_URL`/`OPENAI_COMPATIBLE_MODEL` set (as of 2026-09-21 they are NULL on staging, verified via Cloud Commands) **and `php artisan toshi:llm-health` passing on staging**;
+>    - (b) Slack's deferred end-to-end verification is **actually run and passes** — checklist §6c: read tool E2E, write-gate pause against real Slack, approve/reject audit correctness, real-vs-mock response shape comparison.
+>    When Classroom implementation starts, it is **its own task with its own go-ahead** — it must not be folded into whatever unblocks the prerequisites.
+> 2. **Calendar — deferral acknowledged** (not-cleared: duplicates the in-app `Events` model; same posture as Notion). No action.
+> 3. **Drive — no-build acknowledged**, the CASA/verification-cost finding on record as an additional reason beyond the GA/contract blocker. No action.
+> 4. **Thread B — continued deferral acknowledged**, with the three sketch corrections (curated manifests not live discovery, reviewed templates not raw URLs, mandatory write-gate declaration) recorded for whenever picked up. No action.
 > Research pass: 2026-09-21, direct source verification against Google's live official pages (fetched, not search-snippet): the OAuth 2.0 Scopes for Google APIs list, Drive API Terms of Service, Drive/Classroom/Calendar scope guides, the Google APIs Terms of Service, the Workspace User Data Developer Policy, the Restricted Scope Verification page, and the OAuth App Verification / App Audience help pages. Plus direct code re-reads: `routes/ai.php`, `config/toshi.php`, `app/Services/Toshi/McpWriteGate.php`, `app/Mcp/Servers/SpikeSlackMockServer.php`, the registry migration, and `vendor/laravel/mcp` v0.8.2 server sources.
 > Companion doc: `docs/plans/toshi-mcp-connector-registry-and-shortlist-reeval-plan.md` (Part C registry, Part D shortlist — both updated with pointers to this doc).
 
@@ -101,9 +111,11 @@ Thread A's Google connectors are **static named clients** (`Mcp::local('google-c
 | Thread B needed for Thread A? | **No** — Thread A ships entirely within Tier 1 catalog-driven model |
 | Thread B | Keep deferred; posture recorded (template registry, curated manifests, read-only default, master-switch precondition); raw URLs stay out until demand |
 
-## Go-ahead requested
+## Go-ahead status (updated 2026-09-21)
 
-1. **Green-light Classroom read-only wave-1** (Thread A, option b) as the next connector PR after Slack wave-1 E2E verification completes — gated behind `TOSHI_GOOGLE_CLASSROOM_ENABLED`, default false, no product UI until verification obligations are understood (see A.1).
-2. Acknowledge Calendar deferral and Drive no-build (recorded in D.1/D.3 of the companion plan).
-3. Acknowledge Thread B deferral with the B.7 posture recorded (no build now).
-4. **Prerequisite dependency note**: staging Toshi LLM gap must be fixed first — any connector's E2E verification needs a working agent loop (same blocker as Slack's deferred verification).
+**CONFIRMED on all four items** — see the status header for the verbatim record. Practical restatement:
+
+1. **Classroom read-only wave-1: approved as scoped.** Implementation start is gated on prerequisites (a) LLM gap fixed + `toshi:llm-health` passing and (b) Slack §6c E2E run and passing — **both must be confirmed with evidence at the start of the Classroom task itself**; if either is unmet, stop and report. When confirmed, the Classroom task re-scopes itself (its own go-ahead — this document's approval transfers, but the task must still present its own implementation plan).
+2. Calendar deferral — acknowledged, recorded (D.1 companion plan).
+3. Drive no-build — acknowledged, recorded (D.3 companion plan + this doc A.2).
+4. Thread B deferral — acknowledged, posture recorded (C.6 companion plan + this doc B.6/B.7).
