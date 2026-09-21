@@ -16,6 +16,8 @@
     invertDirection (bool)
                 For metrics where DOWN is good (fee arrears): the arrow still
                 points down, but the SENTIMENT colour flips to positive.
+    spark       optional array of numbers -> a real sparkline (inline SVG, so no
+                chart library is needed for a KPI), drawn in the trend colour.
     delta       optional text next to the arrow, e.g. "12" or "18%".
     hint        optional trailing context, e.g. "vs last term".
 
@@ -37,6 +39,8 @@
     'invertDirection' => false,
     'delta' => null,
     'hint' => null,
+    'spark' => [],
+    'sparkLabel' => null,
 ])
 
 @php
@@ -123,6 +127,30 @@
     </div>
     <p class="ds-kpi-value">{{ $value }}</p>
     <p class="ds-kpi-label">{{ $label }}</p>
+    @if(is_array($spark) && count($spark) > 1)
+        @php
+            $sparkValues = array_values(array_map('floatval', $spark));
+            $sparkMax = max($sparkValues);
+            $sparkMin = min($sparkValues);
+            $sparkRange = ($sparkMax - $sparkMin) ?: 1.0;
+            $sparkW = 120;
+            $sparkH = 28;
+            $sparkN = count($sparkValues);
+            $sparkPoints = [];
+            foreach ($sparkValues as $i => $v) {
+                $x = $sparkN > 1 ? ($i / ($sparkN - 1)) * $sparkW : 0;
+                $y = $sparkH - (($v - $sparkMin) / $sparkRange) * ($sparkH - 6) - 3;
+                $sparkPoints[] = round($x, 1).','.round($y, 1);
+            }
+            $sparkColor = $direction !== null || $tone !== null ? $sentimentColor : 'var(--d-blue)';
+        @endphp
+        <svg class="ds-kpi-spark" viewBox="0 0 {{ $sparkW }} {{ $sparkH }}" preserveAspectRatio="none"
+             role="img" aria-label="{{ $sparkLabel ?? 'Trend sparkline' }}">
+            <polyline points="{{ implode(' ', $sparkPoints) }}" fill="none" stroke="{{ $sparkColor }}"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      vector-effect="non-scaling-stroke" />
+        </svg>
+    @endif
     @if($direction !== null)
         <p class="ds-kpi-trend" data-direction="{{ $direction }}" data-sentiment="{{ $sentiment }}"
            style="color: {{ $sentimentColor }};" title="{{ $trendLabel }}" aria-label="{{ $trendLabel }}">

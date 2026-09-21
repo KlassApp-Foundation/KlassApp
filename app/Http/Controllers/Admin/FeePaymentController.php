@@ -10,6 +10,8 @@ use App\Models\FeesCategories;
 use App\Models\SchoolPayTransaction;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use Flowframe\Trend\Trend;
+use Flowframe\Trend\TrendValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -148,7 +150,7 @@ class FeePaymentController extends Controller
     /**
      * School-scoped fee KPIs for the payments kit fold.
      *
-     * @return array{context: string, collected_label: string, outstanding_label: string, arrears_label: string, rate_label: string, arrears_direction: ?string, arrears_delta_label: ?string, arrears_hint: ?string}
+     * @return array{context: string, collected_label: string, outstanding_label: string, arrears_label: string, rate_label: string, arrears_direction: ?string, arrears_delta_label: ?string, arrears_hint: ?string, collected_spark: array<int, float>}
      */
     private function feePaymentKpis(int $schoolId): array
     {
@@ -251,9 +253,25 @@ class FeePaymentController extends Controller
             $arrearsHint = 'vs term start';
         }
 
+        // Real date-bucketed collections for the KPI sparkline (Laravel Trend,
+        // flowframe/laravel-trend). Same window as "Collected this term"; falls
+        // back to the last 8 weeks when there is no term window.
+        $sparkStart = $startsOn ? \Illuminate\Support\Carbon::parse($startsOn) : now()->subWeeks(7)->startOfWeek();
+        $sparkEnd = $endsOn ? \Illuminate\Support\Carbon::parse($endsOn) : now();
+
+        $collectedSpark = Trend::query(FeePayment::query()->where('school_id', $schoolId))
+            ->dateColumn('paid_on')   // bucket by when the money was actually paid
+            ->between(start: $sparkStart, end: $sparkEnd)
+            ->perWeek()
+            ->sum('amount')
+            ->map(fn (TrendValue $value) => (float) $value->aggregate)
+            ->values()
+            ->all();
+
         return [
             'context' => $termLabel ?: 'All classes',
             'collected_label' => 'UGX '.$this->compactMoney($collected),
+            'collected_spark' => $collectedSpark,
             'outstanding_label' => 'UGX '.$this->compactMoney($outstanding),
             'arrears_label' => (string) $arrears,
             'rate_label' => $rate.'%',

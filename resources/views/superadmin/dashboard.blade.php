@@ -139,7 +139,36 @@
                  grows the canvas to its container, so the container height must be
                  definite or the canvas runs away on every resize. --}}
             <div class="dashboard-chart-host" style="position: relative; height: 260px; width: 100%;">
-                <canvas id="growthChart"></canvas>
+                @php $growth = collect($stats['monthlyTrends'] ?? []); @endphp
+                <x-chart id="growthChart" type="line" :height="260"
+                         aria-label="Platform growth trends over the last six months"
+                         empty-message="No growth data yet"
+                         :labels="$growth->pluck('label')->all()"
+                         :datasets="[
+                             [
+                                 'label' => 'Schools',
+                                 'data' => $growth->pluck('schools')->map(fn ($v) => (int) $v)->values()->all(),
+                                 'borderColor' => '#1E6FD9',
+                                 'backgroundColor' => 'rgba(30,111,217,0.06)',
+                                 'borderWidth' => 2,
+                                 'pointBackgroundColor' => '#1E6FD9',
+                                 'pointRadius' => 3,
+                                 'pointHoverRadius' => 5,
+                                 'tension' => 0.3,
+                             ],
+                             [
+                                 'label' => 'Users',
+                                 'data' => $growth->pluck('users')->map(fn ($v) => (int) $v)->values()->all(),
+                                 'borderColor' => '#22C55E',
+                                 'backgroundColor' => 'rgba(34,197,94,0.04)',
+                                 'borderWidth' => 2,
+                                 'pointBackgroundColor' => '#22C55E',
+                                 'pointRadius' => 3,
+                                 'pointHoverRadius' => 5,
+                                 'tension' => 0.3,
+                             ],
+                         ]"
+                         :options="['plugins' => ['legend' => ['display' => true, 'position' => 'bottom', 'labels' => ['usePointStyle' => true, 'padding' => 24]]], 'scales' => ['y' => ['ticks' => ['precision' => 0]]]]" />
             </div>
         </div>
 
@@ -379,119 +408,4 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/Chart.min.js') }}"></script>
-<script>
-(function () {
-    var trendData = {!! json_encode($stats['monthlyTrends'] ?? []) !!};
-
-    var chart = null;
-
-    var chartConfig = {
-        type: 'line',
-        data: {
-            labels: trendData.map(function (d) { return d.label; }),
-            datasets: [
-                {
-                    label: 'Schools',
-                    data: trendData.map(function (d) { return d.schools; }),
-                    borderColor: '#1E6FD9',
-                    backgroundColor: 'rgba(30,111,217,0.06)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#1E6FD9',
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    tension: 0.3,
-                },
-                {
-                    label: 'Users',
-                    data: trendData.map(function (d) { return d.users; }),
-                    borderColor: '#22C55E',
-                    backgroundColor: 'rgba(34,197,94,0.04)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#22C55E',
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    tension: 0.3,
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    padding: 24,
-                    fontFamily: 'DM Sans',
-                    fontSize: 12,
-                }
-            },
-            tooltips: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: '#0F172A',
-                titleFontFamily: 'Sora',
-                bodyFontFamily: 'DM Sans',
-                bodyFontSize: 12,
-            },
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        precision: 0,
-                        fontFamily: 'DM Sans',
-                        fontSize: 11,
-                    },
-                    gridLines: {
-                        color: '#F1F5F9',
-                        drawBorder: false,
-                    }
-                }],
-                xAxes: [{
-                    ticks: {
-                        fontFamily: 'DM Sans',
-                        fontSize: 11,
-                    },
-                    gridLines: { display: false },
-                }]
-            }
-        }
-    };
-
-    function build() {
-        var canvas = document.getElementById('growthChart');
-        if (!canvas || typeof Chart === 'undefined') return false;
-        if (canvas.__growthChart) return true;      // already charted on this live node
-        if (chart) { try { chart.destroy(); } catch (e) {} }
-
-        chart = new Chart(canvas.getContext('2d'), chartConfig);
-        canvas.__growthChart = chart;
-        return true;
-    }
-
-    function boot() { build(); }
-
-    // The dashboard sits inside <div id="app">, which Vue mounts from a deferred
-    // module script (Vite) that runs after parsing but before DOMContentLoaded.
-    // That mount replaces the server-rendered <canvas>, so initialising during
-    // parsing left the chart drawn on an orphaned node (rendered blank). Initialise
-    // after the mount, and re-run as a safety net for any later re-render.
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', boot, { once: true });
-    } else {
-        boot();
-    }
-    window.addEventListener('load', boot);
-    setTimeout(boot, 800);
-    setTimeout(boot, 2500);
-
-    if (window.MutationObserver) {
-        new MutationObserver(function () {
-            var c = document.getElementById('growthChart');
-            if (c && !c.__growthChart) build();
-        }).observe(document.body, { childList: true, subtree: true });
-    }
-})();
-</script>
 @endpush
