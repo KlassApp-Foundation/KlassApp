@@ -63,3 +63,10 @@ Route::get( '/activity', 'ActivityLogController@index' );
 
     //delete
     Route::get('/task/{id}/delete', 'TaskController@destroy');
+
+// Notifications — same contract as the other roles: the shared Vue components call
+// {mode}/notification/{list,showList,read} and {mode}/notifications.
+Route::get('/notification/list', 'NotificationController@indexList');
+Route::get('/notifications', 'NotificationController@index');
+Route::post('/notification/read', 'NotificationController@store');
+Route::get('/notification/showList', 'NotificationController@showList');

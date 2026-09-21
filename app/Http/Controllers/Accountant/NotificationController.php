@@ -111,7 +111,7 @@ class NotificationController extends Controller
                     $val='';
                     if((count($notification->data)>0) && (isset($notification->data['data'])))
                     {
-                        if(count($notification->data['data']) > 1)
+                        if(count((array) $notification->data['data']) > 1)
                         {
                             $val = $notification->data['data']['data'];
                             $type = $notification->data['data']['type'];

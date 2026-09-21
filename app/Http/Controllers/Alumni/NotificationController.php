@@ -2,7 +2,7 @@
 /**
  * SPDX-License-Identifier: MIT
  */
-namespace App\Http\Controllers\Parent;
+namespace App\Http\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -11,9 +11,9 @@ use Carbon\Carbon;
 use Exception;
 
 /**
- * Parent notifications. Mirrors the other role controllers (Student/Teacher/
- * Accountant/Receptionist) and is entirely scoped to the authenticated user's
- * own notifications — never a parent-supplied id.
+ * Alumni notifications. Mirrors the other role controllers (Student/Teacher/
+ * Accountant/Receptionist/Parent) and is entirely scoped to the authenticated
+ * user's own notifications — never a caller-supplied id.
  */
 class NotificationController extends Controller
 {
@@ -41,7 +41,7 @@ class NotificationController extends Controller
 
     public function index()
     {
-        return view('parent/notification/index');
+        return view('alumni/notification/index');
     }
 
     /** Mark one notification (or all) as read — only the caller's own. */
@@ -86,15 +86,20 @@ class NotificationController extends Controller
                 $i = 0;
                 foreach ($notifications as $notification) {
                     $val = '';
+                    $type = null;
                     if ((count($notification->data) > 0) && (isset($notification->data['data']))) {
+                        // Cast: payloads may be a plain string (NewMessageNotification)
+                        // or a ['data' => ..., 'type' => ...] array.
                         if (count((array) $notification->data['data']) > 1) {
                             $val = $notification->data['data']['data'];
+                            $type = $notification->data['data']['type'] ?? null;
                         } else {
                             $val = $notification->data['data'];
                         }
                     }
                     $array['list'][$i]['notification_id'] = $notification['id'];
                     $array['list'][$i]['data'] = $val;
+                    $array['list'][$i]['type'] = $type;
                     $array['list'][$i]['date'] = $notification->created_at->diffForHumans();
                     $i++;
                 }
