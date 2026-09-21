@@ -188,6 +188,13 @@ class SchoolDetailsController extends Controller
         $array['details']['ministry_code'] = $school->ministry_code;
         $array['details']['uneb_center_number'] = $school->uneb_center_number;
         $array['details']['curriculum'] = $school->curriculum;
+        // Post-onboarding editors for the two onboarding-only fields, plus the EMIS code that
+        // the request already validated but the form never rendered.
+        $array['details']['student_size'] = $school->student_size;
+        $array['details']['school_category'] = $school->school_category;
+        // Inside details, because that is the only object the component reads.
+        $array['details']['studentSizeOptions'] = \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS;
+        $array['details']['schoolCategoryOptions'] = \App\Services\SchoolCategorySeeder::CATEGORIES;
         if (empty($array['details']['board']) && filled($school->curriculum)) {
             $array['details']['board'] = $school->curriculum;
         }
@@ -261,6 +268,8 @@ class SchoolDetailsController extends Controller
             // Motto now lives in its own column. The meta row is still written during the
             // transition window so a rollback stays safe, and reads prefer the column.
             $school->motto = $validated['moto'] ?? null;
+            $school->student_size = $validated['student_size'] ?? null;
+            $school->school_category = $validated['school_category'] ?? null;
 
             if (Schema::hasColumn('schools', 'uneb_center_number')
                 && array_key_exists('uneb_center_number', $validated)) {

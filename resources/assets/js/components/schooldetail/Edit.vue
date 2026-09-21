@@ -276,6 +276,67 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label
+                                for="ministry_code"
+                                class="ds-form-label"
+                                >EMIS / Ministry Code
+                                <span class="text-xs text-gray-400 font-normal"
+                                    >(required for Uganda schools)</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <input
+                                type="text"
+                                name="ministry_code"
+                                v-model="ministry_code"
+                                id="ministry_code"
+                                class="ds-form-input w-full"
+                                placeholder="e.g. 12345"
+                            />
+                        </div>
+                        <span v-if="errors.ministry_code" class="ds-form-error">{{ errors.ministry_code[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
+                                for="student_size"
+                                class="ds-form-label"
+                                >School size<span class="text-red-500">*</span></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <select name="student_size" v-model="student_size" id="student_size" class="ds-form-input w-full">
+                                <option value="">Select school size</option>
+                                <option v-for="size in studentSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </div>
+                        <span v-if="errors.student_size" class="ds-form-error">{{ errors.student_size[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
+                                for="school_category"
+                                class="ds-form-label"
+                                >School category
+                                <span class="text-xs text-gray-400 font-normal"
+                                    >(applies to UNEB schools)</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <select name="school_category" v-model="school_category" id="school_category" class="ds-form-input w-full">
+                                <option value="">Not set</option>
+                                <option v-for="(labelText, value) in schoolCategoryOptions" :key="value" :value="value">{{ labelText }}</option>
+                            </select>
+                        </div>
+                        <span v-if="errors.school_category" class="ds-form-error">{{ errors.school_category[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
                                 for="uneb_center_number"
                                 class="ds-form-label"
                                 >UNEB Centre Number
@@ -454,6 +515,10 @@ export default {
                 .get("/admin/schooldetails/edit/" + this.school_id)
                 .then((response) => {
                     this.details = response.data.details;
+                    // Options must ride inside `details`: that is the only thing setDetails()
+                    // reads, which is why the two new selects rendered empty before.
+                    this.details.studentSizeOptions = response.data.details.studentSizeOptions || response.data.studentSizeOptions || [];
+                    this.details.schoolCategoryOptions = response.data.details.schoolCategoryOptions || response.data.schoolCategoryOptions || {};
                     this.setDetails();
                 })
                 .catch(() => {
@@ -504,6 +569,17 @@ export default {
             formData.append("country_id", this.country_id);
             formData.append("city_id", this.city_id);
             formData.append("website", this.website);
+            // address is REQUIRED by DetailRequest and was missing from this payload, which
+            // made every submission fail validation before it could ever save. The failure
+            // arrived as a redirect rather than a JSON error body, so nothing was displayed
+            // and the hidden submit was never clicked: the form silently did nothing.
+            formData.append("address", this.address);
+            formData.append("student_size", this.student_size || "");
+            formData.append("school_category", this.school_category || "");
+            const csrf = document.querySelector('form input[name="_token"]')?.value;
+            if (csrf) {
+                formData.append("_token", csrf);
+            }
             if (this.isUganda) {
                 formData.append("ministry_code", this.ministry_code || "");
             }
@@ -524,7 +600,16 @@ export default {
                     $("#submit-btn").click();
                 })
                 .catch((error) => {
-                    this.errors = error.response?.data?.errors || {};
+                    const fieldErrors = error.response?.data?.errors || {};
+
+                    // A failed form request redirects rather than returning JSON, so a bare
+                    // errors bag can be empty even when the submission failed. Say so instead
+                    // of appearing to do nothing.
+                    this.errors = Object.keys(fieldErrors).length
+                        ? fieldErrors
+                        : { name: ["Could not save: the server rejected the request (HTTP " + (error.response?.status ?? "network error") + "). Nothing was changed."] };
+
+                    console.error("School details preflight failed", error.response?.status, error.response?.data);
                 });
         },
 
