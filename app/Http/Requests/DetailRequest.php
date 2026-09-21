@@ -66,7 +66,11 @@ class DetailRequest extends FormRequest
         });
 
         $rules = [
-            'name' => ['required', 'max:30', 'checkunique_schoolname', 'check_keyword'],
+            // 'check_keyword' removed: it rejected any school name containing a Keyword row's
+            // text, a legacy anti-spam list that has no business deciding real school names.
+            // 30 characters also rejected genuine names ("St. Peter's Secondary School Kabale"
+            // is 35), so the ceiling is 120 against a 255-character column.
+            'name' => ['required', 'max:120', 'checkunique_schoolname'],
             'moto' => ['nullable', 'max:50'],
             'date_of_establishment' => ['nullable', 'check_date'],
             'board' => ['nullable', 'string', 'max:50'],
@@ -101,7 +105,7 @@ class DetailRequest extends FormRequest
     {
         return [
             'name.required' => 'School Name Is Required',
-            'name.max' => 'School Name Should Be Atmost 30 Characters',
+            'name.max' => 'School Name Should Be At Most 120 Characters',
             'name.checkunique_schoolname' => 'School Name Already Exists. Try Different Name',
             'name.check_keyword' => 'Enter A Valid School Name',
 
@@ -111,7 +115,7 @@ class DetailRequest extends FormRequest
 
             'school_logo.mimes' => 'Choose png or jpg File',
 
-            'about_us.max' => 'About Us Should Not Exceed 250 Words',
+            'about_us.max' => 'About Us Should Not Exceed 250 Characters',
 
             'country_id.required' => 'Country Is Required',
             'country_id.exists' => 'Select A Valid Country',
