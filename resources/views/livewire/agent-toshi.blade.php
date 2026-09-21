@@ -646,38 +646,56 @@
             </div>
             @endif
 
-            {{-- Step progress bar — dots for all 15 steps --}}
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] !== 'review')
+            {{-- Setup progress, driven by the shared OnboardingStepsService so it can
+                 never disagree with the manual wizard or the Completing Setup checklist. --}}
+            @php
+                $sharedSteps = $this->onboardingChecklist;
+                $sharedTotal = count($sharedSteps);
+                $sharedDone = 0;
+                $sharedCurrent = null;
+                foreach ($sharedSteps as $si => $s) {
+                    if (! empty($s['is_complete'])) {
+                        $sharedDone++;
+                    } elseif ($sharedCurrent === null) {
+                        $sharedCurrent = $si;
+                    }
+                }
+                $currentIsOptional = $sharedCurrent !== null
+                    && in_array($sharedSteps[$sharedCurrent]['key'], \App\Services\OnboardingStepsService::OPTIONAL_STEPS, true);
+            @endphp
+            @if($sharedTotal > 0 && in_array($this->mode, ['complete', 'create'], true))
             <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 0 10px; background: #f5f4ed; border-radius: 8px;">
                 <div style="display: flex; align-items: center; gap: 3px; flex: 1;">
-                    @foreach($steps as $i => $name)
-                        @php
-                            $isDone = $i < $step;
-                            $isCurrent = $i === $step;
-                        @endphp
-                        <div class="toshi-progress-dot {{ $isDone ? 'toshi-progress-dot-done' : ($isCurrent ? 'toshi-progress-dot-current' : 'toshi-progress-dot-pending') }}"></div>
+                    @foreach($sharedSteps as $si => $s)
+                        <div class="toshi-progress-dot {{ !empty($s['is_complete']) ? 'toshi-progress-dot-done' : ($si === $sharedCurrent ? 'toshi-progress-dot-current' : 'toshi-progress-dot-pending') }}"></div>
                     @endforeach
                 </div>
-                <span class="toshi-progress-step">{{ $step + 1 }}/{{ count($steps) }}</span>
-                @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
-                <span class="toshi-badge-required">Required</span>
-                @else
+                <span class="toshi-progress-step">{{ $sharedDone }}/{{ $sharedTotal }}</span>
+                @if($currentIsOptional)
                 <span class="toshi-badge-optional">Optional</span>
+                @else
+                <span class="toshi-badge-required">Required</span>
                 @endif
             </div>
-            {{-- Step progress list — always visible, not just in maximized modal --}}
+            {{-- Setup list, always visible, using the shared step names --}}
             <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 14px; margin: 0 10px;">
-                @foreach($steps as $i => $name)
+                @foreach($sharedSteps as $si => $s)
                     @php
-                        $isDone = $i < $step;
-                        $isCurrent = $i === $step;
-                        $label = ucfirst(str_replace('_', ' ', $name));
+                        $isDone = !empty($s['is_complete']);
+                        $isCurrent = $si === $sharedCurrent;
+                        $label = $s['label'];
                     @endphp
                     <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 3px 8px; border-radius: 4px; background: {{ $isDone ? '#F0FDF4' : ($isCurrent ? '#FFFFFF' : '#F1F5F9') }}; color: {{ $isDone ? '#15803D' : ($isCurrent ? '#141413' : '#94A3B8') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; border: 1px solid {{ $isCurrent ? '#22C55E' : 'transparent' }}; white-space: nowrap;">
                         {{ $isDone ? '✓' : ($isCurrent ? '→' : '') }} {{ $label }}
                     </span>
                 @endforeach
             </div>
+            {{-- The step list is dynamic by design: answering country or curriculum
+                 unlocks more of the shared steps. Say so, so the count growing reads
+                 as intentional rather than as a jump. --}}
+            <p style="margin: 0 10px; padding: 0 14px 10px; font-size: 10px; color: #94A3B8;">
+                Steps appear as your answers unlock them.
+            </p>
             @endif
 
             {{-- Review Card (shown on review step) --}}

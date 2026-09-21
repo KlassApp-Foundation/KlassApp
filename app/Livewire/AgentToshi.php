@@ -618,6 +618,24 @@ class AgentToshi extends Component
     }
 
     /**
+     * The shared onboarding step model, the same source the manual wizard and the
+     * Completing Setup checklist read. The progress bar used to count a private
+     * 19-step taxonomy which had drifted from this list (it lacked curriculum and
+     * school_category and carried steps that are not part of setup at all), so the
+     * panel could claim "1/19" while the checklist and wizard disagreed.
+     */
+    public function getOnboardingChecklistProperty(): array
+    {
+        $school = \App\Models\School::find($this->schoolId);
+
+        if (! $school) {
+            return [];
+        }
+
+        return \App\Services\OnboardingStepsService::steps($school, auth()->id());
+    }
+
+    /**
      * School Admin mode: detect what's missing and jump to first incomplete step.
      */
     private function detectMissingSteps()
