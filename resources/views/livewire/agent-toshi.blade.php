@@ -677,17 +677,37 @@
                 <span class="toshi-badge-required">Required</span>
                 @endif
             </div>
-            {{-- Setup list, always visible, using the shared step names --}}
-            <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 14px; margin: 0 10px;">
+            {{-- Setup items, actionable. One row per shared step, tone-coded so an
+                 incomplete step reads as something to do rather than something wrong.
+                 Red is reserved for destructive actions and is never used here. --}}
+            <div class="toshi-setup-list" data-testid="toshi-setup-list" role="list">
                 @foreach($sharedSteps as $si => $s)
                     @php
                         $isDone = !empty($s['is_complete']);
-                        $isCurrent = $si === $sharedCurrent;
-                        $label = $s['label'];
+                        $isOptional = in_array($s['key'], \App\Services\OnboardingStepsService::OPTIONAL_STEPS, true);
+                        $tone = $isDone ? 'positive' : ($isOptional ? 'info' : 'warning');
+                        $action = $isDone ? 'Review' : ($isOptional ? 'Add later' : 'Set up');
                     @endphp
-                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 3px 8px; border-radius: 4px; background: {{ $isDone ? '#F0FDF4' : ($isCurrent ? '#FFFFFF' : '#F1F5F9') }}; color: {{ $isDone ? '#15803D' : ($isCurrent ? '#141413' : '#94A3B8') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; border: 1px solid {{ $isCurrent ? '#22C55E' : 'transparent' }}; white-space: nowrap;">
-                        {{ $isDone ? '✓' : ($isCurrent ? '→' : '') }} {{ $label }}
-                    </span>
+                    <button type="button"
+                            role="listitem"
+                            class="toshi-setup-row"
+                            data-tone="{{ $tone }}"
+                            data-testid="toshi-setup-row-{{ $s['key'] }}"
+                            wire:click="jumpToChecklistStep('{{ $s['key'] }}')"
+                            aria-label="{{ $s['label'] }}, {{ $isDone ? 'set up already, review it' : 'not set up yet, start it' }}">
+                        <span class="toshi-setup-row-icon" aria-hidden="true">
+                            @if($isDone)
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            @else
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            @endif
+                        </span>
+                        <span class="toshi-setup-row-label">{{ $s['label'] }}</span>
+                        @if($isOptional && ! $isDone)
+                            <span class="toshi-setup-row-flag">Optional</span>
+                        @endif
+                        <span class="toshi-setup-row-action">{{ $action }} →</span>
+                    </button>
                 @endforeach
             </div>
             {{-- The step list is dynamic by design: answering country or curriculum
