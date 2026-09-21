@@ -220,11 +220,82 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 ### `<x-ds-kpi-card />`
 
 ```blade
+{{-- cosmetic tint only --}}
 <x-ds-kpi-card icon="users" value="42" label="Students" color="blue" :link="url('/admin/students')" />
+
+{{-- semantic tone + trend: use for anything that carries meaning --}}
+<x-ds-kpi-card icon="users" :value="$kpis['arrears_label']" label="Students in arrears"
+    tone="negative" :direction="$kpis['arrears_direction']" :invert-direction="true"
+    :delta="$kpis['arrears_delta_label']" :hint="$kpis['arrears_hint']" />
+
+{{-- real sparkline (e.g. a Laravel Trend series) --}}
+<x-ds-kpi-card icon="dollar" value="UGX 500K" label="Collected this term"
+    tone="positive" :spark="$kpis['collected_spark']" spark-label="Weekly collections this term" />
 ```
 
-- **color:** `blue` \| `green` \| `amber` \| `red` \| `purple` (10% tint behind icon chip)
-- Empty value: em dash `—` (default)
+| Prop | Default | Meaning |
+|---|---|---|
+| `icon` | `''` | inline Heroicons v1 glyph: `users` · `classes`/`door` · `exam`/`calendar` · `whatsapp`/`message` · `book`/`library` · `bell`/`notice` · `dollar`/`money` · `check`/`tasks` |
+| `value` | `—` | the figure (em dash when empty) |
+| `label` | `''` | caption |
+| `link` | `''` | renders the card as an `<a>` (never assemble the href by string concatenation — see `knowledge.md` on the `%22https:…%22` 404) |
+| `color` | `blue` | **legacy cosmetic tint only**: `blue` \| `green` \| `amber` \| `red` \| `purple` (10% chip tint) |
+| `tone` | `null` | **semantic tone — the component owns the colour mapping** (table below) |
+| `direction` | `null` | `up` \| `down` \| `flat` → trend indicator; the arrow always shows the **real** movement |
+| `invertDirection` | `false` | flips the trend's **sentiment colour only** (metrics where down is good) |
+| `delta` / `hint` | `null` | optional text beside the arrow (e.g. `-1`, `vs term start`) |
+| `spark` | `[]` | numbers → inline SVG sparkline, drawn in the sentiment colour |
+| `sparkLabel` | `null` | accessible label for the sparkline |
+
+**Tone → token mapping. Never hand-pick these colours at the call site** — the point of `tone` is that a stat cannot read "warning" on one page and plain on another:
+
+| `tone` | Rendered colour | Token |
+|---|---|---|
+| `neutral` | `#64748B` | `--d-text-secondary` |
+| `positive` | `#15803D` | `--d-success` |
+| `negative` | `#DC2626` | `--d-red` |
+| `warning` | `#B45309` | `--d-warning` |
+| `info` | `#1E6FD9` | `--d-blue` |
+
+`tone` tints the icon chip **and** the value/indicator colour. `color` remains for purely decorative tints (e.g. the purple KPI tint).
+
+**`direction` + `invertDirection` semantics — two deliberately separate things:**
+- `tone` = the metric's **nature** (what the card is about).
+- The trend indicator's colour = what the **movement means**: `up` → positive, `down` → negative, `flat` → neutral — **unless** `invertDirection` is set, which swaps the up/down sentiment. The arrow keeps showing the true movement either way.
+- Worked example (fee arrears, shipped): *Students in arrears* is `tone="negative"` with `direction="down"` + `invert-direction` → the chip stays red (negative nature) while the falling trend renders **green** `--d-success`, because fewer students in arrears is good.
+- With only `direction` (no `tone`) the sentiment is derived from the movement; with neither, the card renders exactly like the legacy `color` version.
+
+---
+
+### `<x-chart />`
+
+The **only** way charts are created now — pages must not call `new Chart(...)` inline any more. One shared wrapper around **Chart.js v4** (`public/js/chart.umd.min.js`; the v2 `Chart.min.js` is gone).
+
+```blade
+<x-chart type="line" :height="180" aria-label="Fee collection trend"
+         empty-message="No fee collections recorded yet"
+         :labels="$points->pluck('label')->all()"
+         :datasets="[[ 'label' => 'Fee Collection', 'data' => $points->pluck('amount')->all(),
+                       'borderColor' => '#22C55E', 'tension' => 0.3, 'fill' => true ]]"
+         :options="['plugins' => ['tooltip' => ['mode' => 'index']]]" />
+```
+
+| Prop | Default | Notes |
+|---|---|---|
+| `id` | auto uuid | also the handle key: `window.__dsCharts[id]` |
+| `type` | `line` | `line` \| `bar` \| `doughnut` \| `pie` (verified shipped usages) |
+| `labels` / `datasets` | `[]` | Chart.js v4 data (JSON-safe) |
+| `options` | `[]` | v4 options, deep-merged over KlassApp defaults (DM Sans ticks, `#F1F5F9` grid, slate tooltip) |
+| `optionsJs` | `null` | JS object literal merged at init — **the only place callbacks can live**, since JSON cannot carry functions |
+| `height` | `260` | shell height in px |
+| `ariaLabel` / `emptyMessage` | `null` / `No data yet` | accessibility + a real empty state instead of a blank canvas |
+| `centerValue` | `null` | value drawn in the middle of a doughnut |
+
+Operational notes — each of these was a real bug, do not "simplify" them away:
+- Chart.js loads **once** (`@once @push('scripts')`), so pages without a chart do not pay for it.
+- The config rides on the shell element's **data attributes**: the app mounts `#app` with Vue, which replaces server-rendered nodes **and drops in-DOM `<script>` tags** (a `<script type="application/json">` config silently disappears → blank canvas).
+- Boot is idempotent **per live node** (`Chart.getChart(canvas)`), re-checked on load, on timeouts, on a short settle interval and via `MutationObserver`.
+- Dynamic/tabbed charts update the shared instance through `window.__dsCharts[id]` (see the report-cards EOT card).
 
 ---
 
@@ -247,6 +318,39 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 | `.ds-empty-state` | Empty list treatment |
 | `.ds-dot` + `.ds-dot-{green\|blue\|amber\|red\|gray}` | Status dot |
 | `.ds-save-indicator` | Unsaved / saving chrome |
+
+---
+
+## Sidebar & navigation (menu as data)
+
+**There is no per-role menu file any more.** Every role's sidebar is data in [`config/navigation.php`](../../../config/navigation.php) rendered by one shared partial. Do **not** look for — or re-create — `layouts/<role>/menu.blade.php`; those 10 files were retired (PR #734) along with their per-role `segment('2')` active-state helpers.
+
+```
+config/navigation.php                                   ← SOURCE OF TRUTH (roles → items/groups)
+resources/views/layouts/partials/sidebar-menu.blade.php        ← the renderer (flat + grouped + submenu + footer)
+resources/views/layouts/partials/sidebar-menu-item.blade.php   ← one item
+resources/views/components/icons/sidebar-group.blade.php       ← admin group-header glyphs
+resources/views/layouts/<role>/sidebar.blade.php               ← shell only:
+    @include('layouts.partials.sidebar-menu', ['role' => 'admin'])
+```
+
+A role is: `layout` (`flat` \| `grouped`), `prefix` (URL first segment), `item_class`, `active_class`, `items` and/or `groups`, and an optional `footer` (the admin sidebar's bottom *Help & Docs* link).
+
+| Item key | Meaning |
+|---|---|
+| `label`, `icon` | menu text and `<x-icons.sidebar name="…">` glyph |
+| `route` **or** `url` | named route, or a path for `url()`; `hash` appends `#anchor` |
+| `active` | extra URL second-segments that should also highlight this item (transcribed from the retired helpers) |
+| `paths` | explicit `request()->is()` patterns (used where the old code matched `segment(3)`) |
+| `class` / `a_class` / `title` / `testid` | overrides for special rows |
+| `condition` | `class_teacher` → item rendered only for class teachers |
+| `children` + `submenu` | nested collapsible submenu (accountant *Payroll*) |
+
+Rules:
+- **Active state comes from route/path patterns**, never a hard-coded URL segment index — it no longer breaks when a URL gains a level. Adding a page is a config edit; the renderer does not change.
+- The role's `item_class` carries the base padding + hover treatment (`py-3 px-3 dashboard-menu-item`, `hover:bg-green-100`, `hover:font-semibold`). An item-level `class` **replaces** the role default — that is how the `text-xs` sub-row and its `pl-6` indent are expressed.
+- Admin groups keep their collapse state in `localStorage` (`sidebar-group-<key>`) with a hover preview on fine-pointer devices; the behaviour lives in **`x-data` methods** (`toggle()`, `hoverOn()`, `hoverOff()`). A multi-statement `x-on:click` string is re-parsed by Alpine as an expression and throws `Unexpected token ';'` — do not put logic back into the attribute.
+- Role shells keep their own wrapper (`#admin-sidebar` / `#res_sidebar`, desktop + mobile copies of the same include).
 
 ---
 
@@ -322,6 +426,15 @@ rg -n '--d-accent:|--d-green:|--d-blue:' public/css/dashboard-refresh.css | head
 rg -n 'ds-badge-paid|ds-badge-pending|ds-badge-active' public/css/dashboard-refresh.css
 # Table contract
 rg -n 'ds-table-ledger|ds-table-striped|ds-btn-md' public/css/dashboard-refresh.css resources/views/components/table.blade.php
+# KPI card semantic props + tone tokens
+rg -n "toneMap = \[|invertDirection|'spark'" resources/views/components/ds-kpi-card.blade.php
+rg -n -- '--d-success:|--d-warning:|--d-text-secondary:' public/css/dashboard-refresh.css | head
+# Sidebar is data-driven (no per-role menu files should exist)
+rg -n "'roles' =>" config/navigation.php | head
+ls resources/views/layouts/*/menu.blade.php 2>/dev/null || echo "OK: per-role menu files retired"
+# Charts go through the shared component (no inline new Chart)
+rg -n "new Chart\(" resources/views/ -g '!*.md' ; echo "(no matches = good)"
+rg -n "chart.umd.min.js|data-chart-config" resources/views/components/chart.blade.php | head
 ```
 
-Last full sync vs Claude Design export + production CSS: **2026-09-13**.
+Last full sync vs Claude Design export + production CSS: **2026-09-13**. Append-only verified additions **2026-09-21** (checked against the shipped code, *not* from the design export): `<x-ds-kpi-card>` semantic props (`tone`/`direction`/`invertDirection`/`delta`/`hint`/`spark`), `<x-chart>` (Chart.js v4), and the config-driven sidebar (`config/navigation.php`).
