@@ -210,7 +210,11 @@
     <p class="klass-intro-title">Create your KlassApp account</p>
     <p class="klass-intro-sub">Name, email, and WhatsApp — then finish school setup with Toshi.</p>
 
-    @if(\Config::get('settings.register_status')==1)
+    {{-- register_status is documented and seeded as 1 = open, 0 = closed
+         (SettingsTableSeeder, UpdateSystemSettingsTool). Only an explicit 0 may
+         close sign-up: a missing row stays open (default-safe), otherwise an
+         environment without the setting would silently close registration. --}}
+    @if(\Config::get('settings.register_status')=='0')
       <div class="klass-maintenance">Register page is under maintenance!!!</div>
     @else
       <form method="POST" action="{{ route('register') }}" class="klass-form" id="saas-register-form" aria-label="{{ __('Register') }}">

@@ -17,7 +17,11 @@
         <h1 class="ap-title">Create your KlassApp account</h1>
         <p class="ap-sub">Name, email, and WhatsApp: then finish school setup with Toshi.</p>
 
-        @if(\Config::get('settings.register_status')==1)
+        {{-- register_status is documented and seeded as 1 = open, 0 = closed
+             (SettingsTableSeeder, UpdateSystemSettingsTool). Only an explicit 0 may
+             close sign-up: a missing row stays open (default-safe), otherwise an
+             environment without the setting would silently close registration. --}}
+        @if(\Config::get('settings.register_status')=='0')
           <div class="ap-maintenance">Register page is under maintenance!!!</div>
         @else
           @if ($errors->any())
