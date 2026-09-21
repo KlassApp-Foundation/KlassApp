@@ -11777,3 +11777,30 @@ Fixes the two `TRACKED ISSUE` entries above.
   - **Staging** (deploy `b69a768f` → succeeded; synthetic fixtures rotated then deactivated, fee fixture removed after): fees sparkline ✓ `rgb(21,128,61)` 14 points + pixels `#15803D`; superadmin growth chart ✓ Chart.js `4.5.1`, instance registered, **7,532 painted px**, pixels `#1E6FD9`, OCR ticks + Apr–Aug. `/admin/reports/cards` on staging rendered **no** EOT card (staging has no report-contributing marks right now) — expected, not a regression.
 - **Residual**: the admin-dashboard charts (3) are gated behind `setup incomplete` locally, so they were verified through the probe page rather than the live dashboard; staging's demo school would show them only when its onboarding is complete.
 - **Steps 4–5 remain on hold** (command palette; the orphaned `modern.blade.php` report template) — **stopped for review after Step 3**.
+
+### 2026-09-21: Strategic groundwork — Toshi × OpenClaw → "LaraClaw" (LOGGED ONLY — deferred to its own planning session, not started)
+**Status: not started, not planned in detail, not approved.** This is a record of a strategic conversation so the context survives until it gets its own dedicated planning session. No code, dependency or scope change came out of it.
+
+**Why it came up:** Toshi (KlassApp's embedded AI assistant) and OpenClaw (the standalone agent runtime this workspace runs on) solve adjacent problems with very different shapes, so the question "should these be the same thing?" keeps recurring. Three options were considered:
+
+| # | Option | Assessment |
+|---|---|---|
+| 1 | **Build Toshi directly on OpenClaw** | ❌ **Real architectural mismatch, not recommended.** OpenClaw is a *standalone, device-level, Node.js* runtime; Toshi is *embedded, multi-tenant, Laravel-native* (per-school agents, in-app requests, Laravel auth/queues/policies). Adopting it would mean running a second runtime inside/alongside a multi-tenant Laravel app for reasons the app already covers. |
+| 2 | **Design Toshi to match OpenClaw's ideas without a literal dependency** | ✅ Reasonable middle ground — borrow the *patterns* (channel abstraction, deterministic routing, tool/permission gating) while staying Laravel-native. |
+| 3 | **A new, separate open-source Laravel-native project — "LaraClaw"** | ✅ **Most interesting; genuinely separate scope.** Not a Toshi refactor — a new package/project for the Laravel ecosystem. |
+
+**Real finding — this space is now a 2026 standard:** Laravel ships an official first-party **Laravel AI SDK** (`laravel/ai`: `Contracts\Agent`, tools, memory/conversations, queue integration, approvals). **Toshi already runs on it** — verified in this repo, not assumed: `composer.json` requires `laravel/ai ^0.10` (running `v0.10.2`) and the codebase uses `Laravel\Ai\Contracts\Agent` (`app/Ai/Agents/*`, `app/AiAgents/*`), `Laravel\Ai\Models\Conversation` + `Laravel\Ai\Concerns\HasConversations` (on `User`), `Laravel\Ai\Tools\Request`, and `Laravel\Ai\Approvals\Decision(s)`. So agent primitives are a solved, first-party concern — **not** something a new project should reinvent.
+
+**Refined LaraClaw scope (the interesting gap):** specifically the **OpenClaw-style multi-channel gateway/routing layer for Laravel** — inbound channel → identity/permission resolution → agent loop → reply back to the same channel, with deterministic routing — sitting **on top of the official Laravel AI SDK** rather than reimplementing agents/tools/memory. That layer (the part OpenClaw contributes and Laravel does not have) is what does not exist yet for Laravel.
+
+**Real precedent found:** `romansh/laravel-creem-agent` (Packagist) — an autonomous AI agent for Creem.io store monitoring (heartbeat, proactive workflows, notifications, chat interface). It was cited in the conversation as already bridging a Laravel agent into **OpenClaw's own Telegram channel as a config mode**, i.e. the same shape LaraClaw would generalise, for a narrower case.
+- *Verification note:* the package's **existence** was confirmed by search during this session; the **OpenClaw-Telegram-as-a-config-mode** detail was **reported in the conversation and is not independently verified here** — confirm it on the repo before relying on it as precedent.
+
+**What a future planning session must actually decide (not decided here):**
+1. Is there a real audience for a Laravel multi-channel agent gateway beyond KlassApp itself (i.e. is this a product/OSS play or an internal extraction)?
+2. Which channels first, and does it reuse Laravel notification/queue primitives or define its own driver contract?
+3. Multi-tenancy model — per-tenant agents, credentials and rate limits (KlassApp's own hard-won constraint).
+4. Relationship to option 2: do Toshi and LaraClaw converge later, and is Toshi expected to adopt LaraClaw if it exists?
+5. Scope boundary vs. the official SDK — explicitly *no* agent/tool/memory reinvention.
+
+**Related, already-recorded context:** Toshi's own channel work is in this file (`toshi-whatsapp-channel-audit`, the MCP connector registry plan, the HITL/approval gate), and the deferred-work register above holds the product-side items. This entry exists so the *strategic* question above is not lost.
