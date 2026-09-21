@@ -32,12 +32,18 @@ class SiteHelper
     public static function getAcademicYear($school_id)
     {
         $schoolCacheKey = "academic_year_for_school_".$school_id;
-        return Cache::remember( $schoolCacheKey, env('CACHE_TIME'), function () use ($school_id)  {
+
+        // Cache the year's ID, never the model. A cached model carries its own columns and
+        // outlives the school it came from, so a newly created school that reused a deleted
+        // school's id was served the old school's academic year (observed on staging: a fresh
+        // school with zero academic_years rows received a year created days earlier).
+        // An id is one cheap re-fetch away and cannot carry stale data with it.
+        $yearId = Cache::remember($schoolCacheKey, env('CACHE_TIME'), function () use ($school_id) {
             // Temporary viewing override (NavigationController) — specific year by id.
             if (Cache::has('academic_year') && Cache::get('academic_year') != '') {
                 return AcademicYear::where('school_id', $school_id)
                     ->where('id', Cache::get('academic_year'))
-                    ->first();
+                    ->value('id');
             }
 
             // status=1 is the real "current" flag (see AcademicYearController::updateStatus
@@ -46,7 +52,7 @@ class SiteHelper
             $current = AcademicYear::where('school_id', $school_id)
                 ->where('status', 1)
                 ->orderByDesc('id')
-                ->first();
+                ->value('id');
 
             if ($current !== null) {
                 return $current;
@@ -56,8 +62,16 @@ class SiteHelper
             return AcademicYear::where('school_id', $school_id)
                 ->where('description', 'Current Academic Year')
                 ->orderByDesc('id')
-                ->first();
+                ->value('id');
         });
+
+        if (! $yearId) {
+            return null;
+        }
+
+        // Re-scoped by school_id on the way out, so even a stale id can never resolve to a
+        // different school's year.
+        return AcademicYear::where('school_id', $school_id)->where('id', $yearId)->first();
     }
 
     public static function getAdmin($school_id)
