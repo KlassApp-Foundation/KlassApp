@@ -70,7 +70,7 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="moto" class="ds-form-label"
-                                >School Moto<span class="text-red-500"
+                                >School Motto<span class="text-red-500"
                                     >*</span
                                 ></label
                             >
@@ -82,7 +82,7 @@
                                 v-model="moto"
                                 id="moto"
                                 class="ds-form-input w-full"
-                                placeholder="Enter School Moto"
+                                placeholder="Enter School Motto"
                             />
                         </div>
                         <span

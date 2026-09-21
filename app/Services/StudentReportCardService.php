@@ -441,7 +441,8 @@ class StudentReportCardService
         $phonesLine = $phones === [] ? null : 'Tel: '.implode(' / ', $phones);
 
         $uneb = $this->nonEmptyMeta($school->uneb_center_number);
-        $motto = $this->nonEmptyMeta($details['moto'] ?? null);
+        // Column first, legacy meta as the transition fallback (see School::mottoText()).
+        $motto = $this->nonEmptyMeta($school->mottoText());
 
         $footer = $school->name;
         if ($uneb !== null) {

@@ -2,7 +2,7 @@
 @php
     $schoolName = $school->name;
     $logo = $details['school_logo'] ?? null;
-    $moto = $details['moto'] ?? '';
+    $moto = $school->mottoText() ?? ''; // column first, meta fallback
     $aboutUs = $details['about_us'] ?? '';
     $website = $details['website'] ?? '';
     $board = $details['board'] ?? '';

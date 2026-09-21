@@ -232,6 +232,10 @@ class SchoolDetailsController extends Controller
                     : null;
             }
 
+            // Motto now lives in its own column. The meta row is still written during the
+            // transition window so a rollback stays safe, and reads prefer the column.
+            $school->motto = $validated['moto'] ?? null;
+
             if (Schema::hasColumn('schools', 'uneb_center_number')
                 && array_key_exists('uneb_center_number', $validated)) {
                 $school->uneb_center_number = $validated['uneb_center_number'];
