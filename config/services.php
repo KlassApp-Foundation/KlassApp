@@ -67,6 +67,20 @@ return [
     ],
 
     /*
+    | Google Classroom connector OAuth client (wave-1, read-only).
+    | SEPARATE from the sign-in client above: different scopes
+    | (classroom.courses.readonly + classroom.coursework.students.readonly),
+    | and Google's consent screen requires the redirect URI to match the
+    | client's registered URIs byte-exact — sharing the sign-in client would
+    | break Google sign-in. Client ID/Secret live in Doppler, never the repo.
+    */
+    'google_classroom' => [
+        'client_id' => env('GOOGLE_CLASSROOM_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLASSROOM_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_CLASSROOM_REDIRECT_URI', '/mcp/oauth/google-classroom/callback'),
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Slack MCP client (spike / plumbing — mock by default)
     |--------------------------------------------------------------------------
