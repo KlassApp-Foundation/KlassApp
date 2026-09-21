@@ -57,6 +57,9 @@
                     @if($returningToReview && ($step['key'] ?? '') !== 'review')
                         · Next returns you to review
                     @endif
+                    @if($stepsGrewBy > 0)
+                        · <span data-testid="wizard-steps-grew" style="color:#15803D;">{{ $stepsGrewBy }} more {{ \Illuminate\Support\Str::plural('step', $stepsGrewBy) }} added by your answers</span>
+                    @endif
                 </p>
             </div>
 
