@@ -10,6 +10,7 @@ Short map of what lives under `docs/` and what to read instead. No second wiki �
 | Product / schools (community) | [GitBook](https://klassdocs.gitbook.io/klassapp-documentation/) — community docs, architecture, roadmap (synced from this repo) |
 | Legacy WhatsApp integration notes | [`docs/dev/`](dev/) — **archived**; see banner there |
 | Internal working references | [`docs/internal/`](internal/) — comparisons/decision inputs; **not** published onboarding |
+| External comparison research | [`docs/research/klassapp-external-comparison.md`](research/klassapp-external-comparison.md) (living R1+R2 doc) · [`docs/ui-ecosystem-comparison.md`](ui-ecosystem-comparison.md) — reference research, **not** published onboarding |
 
 ## Canonical references
 
