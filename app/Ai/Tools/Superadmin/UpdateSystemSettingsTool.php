@@ -28,7 +28,7 @@ class UpdateSystemSettingsTool implements Approvable, Tool
 
     public function description(): Stringable|string
     {
-        return 'Update global platform system settings. Pass only keys to change: sitetitle, sitename, sitelogo, favicon (display — no approval), or maintenance, login_status, register_status (access — requires approval).';
+        return 'Update platform system settings. Pass only keys to change: sitetitle, sitename, sitelogo, favicon (display — no approval); or maintenance and login_status (platform DEFAULTS applied only to schools that have no setting of their own — they do NOT switch off every school; requires approval); or register_status (platform-wide public sign-up — requires approval). To change ONE school, use the school:access artisan command instead.';
     }
 
     public function schema(JsonSchema $schema): array
