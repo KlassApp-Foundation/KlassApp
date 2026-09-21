@@ -39,22 +39,16 @@
                 <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
-                <div class="flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); background: #FAFAF5; transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
+                {{-- Flex child (shared .dashboard-content-area) so a sidebar collapse
+                     reflows instead of fighting a hardcoded width. --}}
+                <div class="dashboard-content-area superadmin-content px-4">
                     @yield('base-content')
                 </div>
             </main>
             @yield('base-footer')
         </div>
 
-        {{-- Toshi lives OUTSIDE #app so Vue never touches Alpine markup --}}
-        @auth
-            @if(in_array(auth()->user()->usergroup_id, [1, 3]))
-                @livewire('agent-toshi')
-                <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper">
-                    <div id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
-                </div>
-            @endif
-        @endauth
+        @include('layouts.partials.toshi-embed')
 
         @yield('outside-app')
 
@@ -91,67 +85,6 @@
             }
     });
 </script>
-
-<script>
-    (function () {
-        const body = document.getElementById('superadmin-body');
-        const toggleBtn = document.getElementById('sidebar-toggle');
-        const sidebar = document.getElementById('superadmin-sidebar');
-        const storageKey = 'superadmin_sidebar_collapsed';
-
-        function setCollapsed(collapsed) {
-            body.classList.toggle('sidebar-collapsed', collapsed);
-            if (sidebar) {
-                sidebar.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
-            }
-            try {
-                localStorage.setItem(storageKey, collapsed ? '1' : '0');
-            } catch (e) {}
-        }
-
-        // Ensure top-level menu items have title attributes for collapsed tooltips.
-        if (sidebar) {
-            sidebar.querySelectorAll('li > a').forEach(function (link) {
-                const span = link.querySelector('span');
-                if (span && !link.parentElement.hasAttribute('title')) {
-                    const text = span.textContent.trim().split('\n')[0].trim();
-                    if (text) {
-                        link.parentElement.setAttribute('title', text);
-                    }
-                }
-            });
-        }
-
-        // Restore preference on load
-        try {
-            const stored = localStorage.getItem(storageKey);
-            if (stored === '1') {
-                setCollapsed(true);
-            }
-        } catch (e) {}
-
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function () {
-                const isCollapsed = body.classList.contains('sidebar-collapsed');
-                setCollapsed(!isCollapsed);
-            });
-        }
-    })();
-</script>
-
-@auth
-    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
-        <script>
-        document.addEventListener('click', function(e) {
-            if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
-                e.preventDefault();
-                document.body.classList.remove('toshi-collapsed');
-                document.getElementById('toshi-toggle').textContent = '▶';
-            }
-        });
-        </script>
-    @endif
-@endauth
 
     </body>
     <style>
