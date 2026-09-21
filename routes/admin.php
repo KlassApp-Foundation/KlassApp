@@ -70,6 +70,15 @@ Route::get( '/schooldetails', 'SchoolDetailsController@index' );
 //Route::post( '/schooldetails/create', 'SchoolDetailsController@store' );
 Route::get( '/schooldetails/edit/{school_id}', 'SchoolDetailsController@edit' );
 Route::get( '/schooldetails/editdetail/{school_id}', 'SchoolDetailsController@editdetail' );
+
+// Stable "School profile" entry point for navigation. Resolves the school from the
+// authenticated user, so there is no {school_id} in the URL to tamper with, and it
+// keeps a single URL for menus while the destination stays ownership-scoped.
+Route::get( '/school-profile', function () {
+    abort_unless(auth()->check() && auth()->user()->school_id, 403);
+
+    return redirect('/admin/schooldetails/editdetail/'.auth()->user()->school_id);
+})->name('admin.school-profile');
 Route::post( '/schooldetails/update/validationUpdate/{school_id}', 'SchoolDetailsController@validationUpdate' );
 Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@update' );
 

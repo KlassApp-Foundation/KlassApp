@@ -10,7 +10,7 @@
     <section class="mt-6">
         <h2 class="settings-hub-group">School</h2>
         <div class="settings-hub-grid">
-            <a href="{{ url('/admin/schooldetails') }}" class="ds-card ds-card-hover settings-hub-card">
+            <a href="{{ url('/admin/school-profile') }}" class="ds-card ds-card-hover settings-hub-card">
                 <span class="settings-hub-icon bg-blue-50 text-blue-600"><x-icons.sidebar name="classes"/></span>
                 {{-- Boundary made explicit: this card owns the school's identity as data. How it is
                      displayed and themed belongs to Site branding below, so the two cannot drift. --}}
