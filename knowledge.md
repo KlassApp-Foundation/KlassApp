@@ -12199,3 +12199,48 @@ Also worth knowing: there is **no staging concept in application code** at all. 
 **Still to do**: resume draft PR #786 (student_size, school_category, EMIS field, and item 10's null-guard), rebased on this fix. Its option-nesting is already correct (inside `details`, which is what `setDetails()` reads), and its `student_size` required rule will now hold once that select actually has options. Verify with the same real-UI round-trip, then re-run the logo upload check.
 
 **Also outstanding, unrelated**: the six untested upload endpoints (importTeachers, importUsers, teacher-links/import, promotion/import, importHolidays, upload/photos) still have no end-to-end evidence, and the dashboard-list and attendance audit was not completed. The production decisions on #770 and the demo routes remain open.
+
+### 2026-09-22: Toshi panel thread: two pieces shipped, three attempts reverted on a third, two items not started
+
+Written for a future reader, because this thread has real nuance. **Read the status column before acting on anything below.**
+
+| Piece | Status | Where |
+|---|---|---|
+| Step 1, header overlap | **SHIPPED + verified (local)** | #791, merged `6913d255` |
+| Part B, header reduced to 68px | **SHIPPED + verified (local)** | #792, merged `47fe3c9c` |
+| Header full width (Option B) | **NOT SHIPPED. Three attempts, all reverted.** Diagnostic state below | unmerged; main clean at `47fe3c9c` |
+| Profile and notifications to the sidebar footer | **NOT STARTED** | no code |
+| Part A, three-state expandable rail | **NOT STARTED** | no code |
+| Staging verification for this whole thread | **NOT VERIFIED.** Everything shipped here is local-only | open |
+
+#### 1. Step 1, the header overlap (#791, shipped)
+- **Cause, measured:** on desktop the panel root is a **static flex item in the body's row**, and `align-items: stretch` made it span the full viewport height from `y=0`. It was never a fixed-position problem. Measured before: panel `y=0` to 1080 at 1920 wide, while the sidebar ran `y=85` to 1080, so the panel occupied the header's whole 85px band.
+- **Fix:** scoped to `min-width: 1280px`, the root got `margin-top` of the header offset, `height: calc(100vh - offset)`, and `align-self: flex-start`. Below 1280 the widget stays a fixed bottom-right pill and is untouched.
+- **Verified:** at 1920 and 1440 the panel matched the sidebar exactly (same `y`, same `bottom`), `overlapHeaderPx: 0`, and OCR of the screenshot read the header band cleanly (school name, year selector, search, sidebar headings), which was the visual proof rather than a DOM number.
+
+#### 2. Part B, header reduced to 68px (#792, shipped)
+- **Cause, measured:** `<nav class="navbar dashboard-themed-header">` carried **8px padding top and bottom around a 68px content row** (the academic-year block; the title is 36px), giving 8+68+8 = 85px. There is no 85px constant anywhere: the height is emergent from content.
+- **Fix:** trim only the wrapper padding to zero, leaving the logo, title and selector untouched and centred.
+- **The 1px correction caught mid-implementation:** the rendered header is **69px**, not 68, because of a 1px border. Setting the offset to 68 produced a measured 1px overlap, so the constant was synced to **69px**, the measured value. `--toshi-header-offset` is the single place this number lives.
+- **Verified:** header 69px on three pages; panel `y=69` matching the sidebar exactly; `overlapHeaderPx: 0`; exact y and bottom matches; no horizontal overflow; no page errors; mobile nav 57px with the offset unused and no overflow.
+
+#### 3. Header full width, Option B (NOT SHIPPED, three attempts, all reverted)
+Goal: `#app` spans the full viewport and Toshi becomes an anchored column below the header rather than a flex sibling.
+- **Attempt 1:** patched a plausible `@media (min-width: 1280px)` block. No effect.
+- **Attempt 2:** found the **winning** block by reading computed values (its `margin-top`, `align-self` and `height` were demonstrably live) and patched that. Still no effect on the root.
+- **Attempt 3:** neutralised the child panel's own `position: fixed` first. **This part worked**: the panel's computed position flipped to `relative`, confirming it as a real gatekeeper. Also corrected the stale comment above it. The root still did not move.
+- **Unresolved contradiction, recorded precisely:** two `body [data-toshi-root]` rules both declare `position: fixed !important`, the base one and ours, with ours later in the source, yet the root's computed position stays **static** and its `y` stays **0**. Consequently `#app` stays at viewport minus 380 and the header is not full width.
+- **Leading hypothesis:** an ancestor with `transform`, `filter`, `contain` or `will-change`, which makes `position: fixed` behave as absolute relative to that ancestor. Also possible: an inline `style` attribute on the root, or a partially dropped media block (less likely, the file's braces and parens balance and the block is served over HTTP).
+- **Next diagnostic, already scoped, about five lines:** read `getComputedStyle(root).position` immediately after patching, and list every ancestor's `transform`, `filter`, `contain` and `will-change`.
+- **Two stale CSS comments found and corrected during the attempts** (left in the tree only inside the reverted attempts, so still live for future readers): `dashboard-refresh.css` line ~668 references a **`toshi-ui.css` that does not exist**, and the comment above `[data-toshi-root] .toshi-panel` claims the panel is "not independently fixed" while the rule sets `position: fixed`. Do not trust either claim.
+- **Attempt-three side finding:** `#app`'s width of viewport minus 380 comes from the panel's continued presence in the flex flow, not from any width rule of its own, which is why removing it from the flow is the prerequisite for a full-width header.
+
+#### 4. Queued, not started
+- **Profile icon and notification bell to the sidebar footer**, matching the common SaaS pattern. The sidebar has no footer region today: its single child is `div.flex-1.header-wrapper-b`. Verify in both collapsed and expanded sidebar states.
+- **Part A, the three-state expandable rail** (collapsed, default 380px, maximized at roughly half the viewport), mirroring `#admin-sidebar`'s mechanism (delegated toggle, `localStorage`, reduced-motion guard), fixing the misleading toggle glyph, with the acceptance test on a content-heavy page (fee payments, not the dashboard) that the remaining half stays genuinely legible and functional.
+
+#### 5. Open item: staging, for the whole thread
+Nothing in this thread has been verified on staging. Both shipped pieces are local-only. Closing that means checking Step 1's envelope and Part B's header on the deployed build, ideally on the same pass that finally lands the full-width header.
+
+#### Side question resolved, so nobody chases it
+The profile dropdown **works**: clicking `.profile-click` adds an `open` class and the menu displays. An earlier note in this thread reported "zero visible menus", which was a fault in that test's selector, not in the product. Likewise the academic-year selector was confirmed working twice (two options, changed and persisted).
