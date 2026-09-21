@@ -9,7 +9,8 @@
             <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Super Admin</h1>
             <p class="dashboard-subtitle" style="margin-top: 4px;">
                 Platform overview across {{ number_format($stats['totalSchools']) }} schools
-                &middot; refreshed {{ $stats['refreshedAt'] ?? 'now' }}
+                &middot; stats updated
+                <span @if(!empty($stats['refreshedAtAbsolute']))title="{{ $stats['refreshedAtAbsolute'] }}" @endif>{{ $stats['refreshedAt'] ?? 'recently' }}</span>
             </p>
         </div>
         <div class="flex items-center gap-3">
@@ -134,7 +135,12 @@
         {{-- Growth Chart --}}
         <div class="lg:col-span-2 dashboard-panel-card p-5">
             <h3 class="dashboard-section-title mb-4">Growth Trends (6 Months)</h3>
-            <canvas id="growthChart" style="max-width:100%;height:260px;"></canvas>
+            {{-- Fixed-height wrapper: Chart.js (responsive + maintainAspectRatio:false)
+                 grows the canvas to its container, so the container height must be
+                 definite or the canvas runs away on every resize. --}}
+            <div class="dashboard-chart-host" style="position: relative; height: 260px; width: 100%;">
+                <canvas id="growthChart"></canvas>
+            </div>
         </div>
 
         {{-- Users by Role --}}
@@ -373,15 +379,14 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+<script src="{{ asset('js/Chart.min.js') }}"></script>
 <script>
 (function () {
-    var ctx = document.getElementById('growthChart');
-    if (!ctx) return;
-
     var trendData = {!! json_encode($stats['monthlyTrends'] ?? []) !!};
 
-    new Chart(ctx.getContext('2d'), {
+    var chart = null;
+
+    var chartConfig = {
         type: 'line',
         data: {
             labels: trendData.map(function (d) { return d.label; }),
@@ -452,7 +457,41 @@
                 }]
             }
         }
-    });
+    };
+
+    function build() {
+        var canvas = document.getElementById('growthChart');
+        if (!canvas || typeof Chart === 'undefined') return false;
+        if (canvas.__growthChart) return true;      // already charted on this live node
+        if (chart) { try { chart.destroy(); } catch (e) {} }
+
+        chart = new Chart(canvas.getContext('2d'), chartConfig);
+        canvas.__growthChart = chart;
+        return true;
+    }
+
+    function boot() { build(); }
+
+    // The dashboard sits inside <div id="app">, which Vue mounts from a deferred
+    // module script (Vite) that runs after parsing but before DOMContentLoaded.
+    // That mount replaces the server-rendered <canvas>, so initialising during
+    // parsing left the chart drawn on an orphaned node (rendered blank). Initialise
+    // after the mount, and re-run as a safety net for any later re-render.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot, { once: true });
+    } else {
+        boot();
+    }
+    window.addEventListener('load', boot);
+    setTimeout(boot, 800);
+    setTimeout(boot, 2500);
+
+    if (window.MutationObserver) {
+        new MutationObserver(function () {
+            var c = document.getElementById('growthChart');
+            if (c && !c.__growthChart) build();
+        }).observe(document.body, { childList: true, subtree: true });
+    }
 })();
 </script>
 @endpush
