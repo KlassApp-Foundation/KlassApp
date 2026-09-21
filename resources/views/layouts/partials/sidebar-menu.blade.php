@@ -108,8 +108,6 @@
                 <div x-on:click="toggle()"
                      class="sidebar-group-header"
                      x-bind:class="{ 'sidebar-group-header--open': open || previewOpen }">
-
-                     x-bind:class="{ 'sidebar-group-header--open': open || previewOpen }">
                     <div class="flex items-center gap-2">
                         <x-icons.sidebar-group name="{{ $group['icon'] ?? $group['key'] }}"/>
                         <span class="sidebar-group-label">{{ $group['label'] }}</span>
