@@ -1,7 +1,20 @@
 /* Empty-state product demo (3-scene loop) */
 .es-demo {
+    /* Derived from the design tokens so this card inherits future design-system
+       changes instead of drifting. Tints use color-mix over a token, never a new
+       hardcoded hex. The WhatsApp-brand hexes inside the phone mock are left alone:
+       they simulate a specific real product's UI, not KlassApp's. */
+    --es-ink: var(--d-dark, #0F172A);
+    --es-ink-soft: var(--d-text-secondary, #64748B);
+    --es-rule: var(--d-border, #E2E8F0);
+    --es-surface: var(--d-surface, #FAFAF5);
+    --es-green: var(--d-success, #15803D);
+    --es-green-tint: color-mix(in srgb, var(--d-success, #15803D) 8%, #FFFFFF);
+    --es-blue-tint: color-mix(in srgb, var(--d-blue, #1E6FD9) 12%, #FFFFFF);
+    --es-red: var(--d-red, #DC2626);
+    --es-red-tint: color-mix(in srgb, var(--d-red, #DC2626) 12%, #FFFFFF);
     position: relative;
-    background: linear-gradient(160deg, #F8FAFC 0%, #EEF6FF 45%, #F0FDF4 100%);
+    background: linear-gradient(160deg, var(--es-green-tint) 0%, var(--es-blue-tint) 45%, var(--es-green-tint) 100%);
     border: 1px solid var(--d-border, #E2E8F0);
     border-radius: 16px;
     padding: 22px 22px 16px;
@@ -13,13 +26,13 @@
     font-family: Sora, sans-serif;
     font-size: 18px;
     font-weight: 600;
-    color: #0F172A;
+    color: var(--es-ink);
     margin: 0 0 6px;
 }
 .es-demo-static-text {
     font-family: "DM Sans", sans-serif;
     font-size: 14px;
-    color: #64748B;
+    color: var(--es-ink-soft);
     margin: 0;
     max-width: 42rem;
 }
@@ -51,14 +64,14 @@
     font-family: Sora, sans-serif;
     font-size: 22px;
     font-weight: 700;
-    color: #0F172A;
+    color: var(--es-ink);
     margin: 0 0 8px;
     line-height: 1.25;
 }
 .es-demo-sub {
     font-family: "DM Sans", sans-serif;
     font-size: 14px;
-    color: #64748B;
+    color: var(--es-ink-soft);
     margin: 0;
     line-height: 1.5;
     max-width: 28rem;
@@ -73,7 +86,7 @@
     width: 7px;
     height: 7px;
     border-radius: 999px;
-    background: #CBD5E1;
+    background: var(--es-rule);
 }
 .es-dot-nav.is-active {
     background: var(--d-blue, #1E6FD9);
@@ -107,7 +120,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--d-green, #22C55E);
+    background: var(--es-green);
     color: #fff;
     display: flex;
     align-items: center;
@@ -142,7 +155,7 @@
 .es-wa-in { align-self: flex-start; background: #202C33; }
 .es-wa-out { align-self: flex-end; background: #005C4B; }
 .es-browser {
-    background: #fff;
+    background: #FFFFFF;
     border: 1px solid var(--d-border, #E2E8F0);
     border-radius: 12px;
     overflow: hidden;
@@ -153,7 +166,7 @@
     align-items: center;
     gap: 6px;
     padding: 10px 12px;
-    background: #F8FAFC;
+    background: var(--es-surface);
     border-bottom: 1px solid var(--d-border, #E2E8F0);
 }
 .es-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
@@ -164,9 +177,9 @@
     margin-left: 8px;
     flex: 1;
     font-size: 11px;
-    color: #64748B;
+    color: var(--es-ink-soft);
     font-family: "DM Sans", sans-serif;
-    background: #fff;
+    background: #FFFFFF;
     border: 1px solid var(--d-border, #E2E8F0);
     border-radius: 6px;
     padding: 4px 8px;
@@ -179,13 +192,13 @@
 .es-toshi-panel {
     padding: 12px;
     border-right: 1px solid var(--d-border, #E2E8F0);
-    background: #FAFAF5;
+    background: var(--es-surface);
 }
 .es-toshi-title {
     font-family: Sora, sans-serif;
     font-size: 13px;
     font-weight: 700;
-    color: #0F172A;
+    color: var(--es-ink);
     margin-bottom: 10px;
 }
 .es-chat-bubble {
@@ -200,14 +213,14 @@
     transition: opacity 0.35s ease, transform 0.35s ease;
 }
 .es-chat-bubble.is-shown { opacity: 1; transform: none; }
-.es-chat-user { background: #DBEAFE; color: #1E3A8A; margin-left: 12px; }
-.es-chat-bot { background: #fff; border: 1px solid var(--d-border, #E2E8F0); color: #334155; margin-right: 12px; }
+.es-chat-user { background: var(--es-blue-tint); color: var(--es-ink); margin-left: 12px; }
+.es-chat-bot { background: #FFFFFF; border: 1px solid var(--d-border, #E2E8F0); color: var(--es-ink); margin-right: 12px; }
 .es-result-panel { padding: 12px; }
 .es-result-label {
     font-family: Sora, sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: #0F172A;
+    color: var(--es-ink);
     margin-bottom: 8px;
 }
 .es-table { border: 1px solid var(--d-border, #E2E8F0); border-radius: 8px; overflow: hidden; }
@@ -219,13 +232,13 @@
     font-size: 11px;
     font-family: "DM Sans", sans-serif;
     border-top: 1px solid var(--d-border, #E2E8F0);
-    color: #334155;
+    color: var(--es-ink);
 }
 .es-tr:first-child { border-top: none; }
-.es-tr-head { background: #F8FAFC; font-weight: 600; color: #64748B; }
+.es-tr-head { background: var(--es-surface); font-weight: 600; color: var(--es-ink-soft); }
 .es-tr-new {
     opacity: 0;
-    background: #F0FDF4;
+    background: var(--es-green-tint);
     transform: translateY(4px);
     transition: opacity 0.35s ease, transform 0.35s ease;
 }
@@ -237,14 +250,14 @@
     gap: 8px;
     font-size: 12px;
     font-family: "DM Sans", sans-serif;
-    color: #334155;
+    color: var(--es-ink);
     opacity: 0;
     transition: opacity 0.35s ease;
 }
 .es-pdf.is-shown { opacity: 1; }
 .es-pdf-icon {
-    background: #FEE2E2;
-    color: #B91C1C;
+    background: var(--es-red-tint);
+    color: var(--es-red);
     font-weight: 700;
     font-size: 10px;
     padding: 6px 8px;
@@ -278,7 +291,7 @@
 }
 .es-hub-node {
     position: absolute;
-    background: #fff;
+    background: #FFFFFF;
     border: 1px solid var(--d-border, #E2E8F0);
     border-radius: 12px;
     padding: 8px 10px;
@@ -289,7 +302,7 @@
     transition: opacity 0.4s ease, transform 0.4s ease;
     font-family: "DM Sans", sans-serif;
     font-size: 12px;
-    color: #0F172A;
+    color: var(--es-ink);
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -306,8 +319,8 @@
     border-radius: 999px;
     padding: 2px 7px;
 }
-.es-badge-live { background: #DCFCE7; color: #166534; }
-.es-badge-soon { background: #FEF3C7; color: #92400E; }
+.es-badge-live { background: var(--es-green-tint); color: #166534; }
+.es-badge-soon { background: color-mix(in srgb, var(--d-warning, #B45309) 14%, #FFFFFF); color: #92400E; }
 .es-connect-disclaimer {
     margin: 10px auto 0;
     max-width: 26rem;
