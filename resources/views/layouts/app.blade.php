@@ -67,6 +67,8 @@
 
         @include('layouts.partials.toshi-embed')
 
+        @include('layouts.partials.command-palette')
+
         @yield('outside-app')
 
         <!-- Scripts -->

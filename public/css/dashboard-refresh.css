@@ -3758,3 +3758,22 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
     margin-top: 10px;
     overflow: visible;
 }
+
+/* ── Command palette (Step 4, wire-elements/spotlight) ─────────────────
+   x-cloak is required: the palette is hidden with x-show, so without this it
+   flashes unstyled before Alpine boots. The rest is a light token pass so the
+   package UI matches KlassApp (rather than injecting its own normalize sheet). */
+[x-cloak] { display: none !important; }
+
+#ds-command-palette .bg-gray-900 { background: var(--d-dark) !important; }
+#ds-command-palette .border-gray-800 { border-color: var(--d-dark-border) !important; }
+#ds-command-palette .bg-gray-700 { background: rgba(255, 255, 255, 0.10) !important; }
+#ds-command-palette .hover\:bg-gray-800:hover { background: rgba(255, 255, 255, 0.06) !important; }
+#ds-command-palette .text-white,
+#ds-command-palette .text-gray-300 { color: var(--d-dark-fg) !important; }
+#ds-command-palette .text-gray-400,
+#ds-command-palette .text-gray-500 { color: var(--d-dark-fg) !important; opacity: 0.75; }
+#ds-command-palette input { font-family: "DM Sans", sans-serif; }
+#ds-command-palette .rounded-lg { border-radius: 12px !important; }
+#ds-command-palette .shadow-xl { box-shadow: 0 24px 48px rgba(15, 23, 42, 0.35) !important; }
+#ds-command-palette li button span:first-child { font-weight: 600; }

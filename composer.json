@@ -58,7 +58,8 @@
     "symfony/postmark-mailer": "^7.0",
     "symfony/process": "^7.0.3",
     "titasgailius/search-relations": "dev-master",
-    "twilio/sdk": "dev-main"
+    "twilio/sdk": "dev-main",
+    "wire-elements/spotlight": "^2.0"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.2",
