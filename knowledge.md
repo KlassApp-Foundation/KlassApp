@@ -12111,3 +12111,28 @@ Timetable materialization, report column and weighting as data, marks-entry grid
 **The real fix is #781**, merged after this note: `SiteHelper::getAcademicYear()` now caches the year's **id** rather than the AcademicYear **model**, and re-scopes by `school_id` on read. The repro is deliberately the strongest form: the school is created with a current year, the resolved model is cached exactly as the pre-fix code did, the school and its year are deleted, a school is recreated with the same id, and only then is the helper read. It returns **`null`** while the stale model is still in the cache. Probe schools and their cache entries were cleaned up; the local school count is back to its baseline.
 
 **Read #780 as void for the code claim, and #781 as the fix.** The other two items in that entry were real: Toshi's context no longer fabricates a curriculum or country, and the `AgentToshi` curriculum default was investigated and documented (both shipped in #779).
+
+### 2026-09-22: The four staging 404s did not reproduce; closed as a likely deploy-window artefact (not a bug)
+
+Closes the item logged as unknown in #755. **Result: not reproducible, no fix applied, and the leading explanation is a page load during a deploy rather than a defect.**
+
+**What was done**: activated a synthetic staging SchoolAdmin (rotated password, both status fields, deactivated immediately afterwards), then loaded six pages with a listener recording every response at status 400 or above: dashboard, onboarding wizard, settings hub, the new `/admin/school-profile`, fees payments, and report cards.
+
+| Page | Status | Failing requests |
+|---|---|---|
+| /admin/dashboard | 200 | 0 |
+| /admin/onboarding/wizard | 200 | 0 |
+| /admin/settings | 200 | 0 |
+| /admin/school-profile | 200 | 0 |
+| /admin/fees/payments | 200 | 0 |
+| /admin/reports/cards | 200 | 0 |
+
+Zero failing requests, and no request-level failures either. Direct probes of the plausible candidates all return 200: `/images/klassapp-logo.svg`, `/images/klassapp-logo-primary.svg`, `/images/klassapp-icon.svg`, `/favicon/favicon-32x32.png`, `/favicon/manifest.json`, `/build/manifest.json`. `/storage/` returns 404, which is simply a directory listing being refused and is not evidence of a broken symlink; school logos load on the pages above.
+
+**Leading explanation, stated as a hypothesis rather than a finding**: the original sighting happened right after a staging deploy. Vite fingerprints assets and the build deletes the previous files, so a browser holding pre-deploy HTML can request an asset hash that no longer exists and receive a 404. That is a normal deploy-window race, not an application defect, and it explains why it appeared once on staging and never locally, where no deploy was in flight.
+
+**What is ruled out**: a missing asset in the repo (all candidates 200), a staging config difference (six pages clean, twice, including a repeat run), and a broken storage symlink (the previously fixed symlink is fine).
+
+**Not verified**: I did not capture a 404 live, because I could not reproduce one, and I did not run the capture *during* a deploy, which is the condition that would confirm the deploy-race hypothesis. If this matters later, the way to settle it is to load the dashboard from a cold browser while a deploy is in progress and log the response statuses.
+
+**Local check, for the record**: the same capture run locally also produced zero failing requests, which is what first suggested the issue was environmental rather than in the code.
