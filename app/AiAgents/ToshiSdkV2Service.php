@@ -76,7 +76,7 @@ class ToshiSdkV2Service
             // ug5 → TeacherOperationsAgent; ug11 → AccountantOperationsAgent;
             // ug8 → LibrarianOperationsAgent; ug10 → ReceptionistOperationsAgent;
             // ug6 → StudentOperationsAgent; ug7 → ParentOperationsAgent;
-            // else school-admin ToshiOrchestrator.
+            // ug9 → AlumniOperationsAgent; else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
@@ -87,6 +87,7 @@ class ToshiSdkV2Service
                     10 => new ReceptionistOperationsAgent,
                     6 => new StudentOperationsAgent,
                     7 => new ParentOperationsAgent,
+                    9 => new AlumniOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $response = method_exists($agent, 'run')
@@ -163,6 +164,7 @@ class ToshiSdkV2Service
                     10 => new ReceptionistOperationsAgent,
                     6 => new StudentOperationsAgent,
                     7 => new ParentOperationsAgent,
+                    9 => new AlumniOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $fullText = '';

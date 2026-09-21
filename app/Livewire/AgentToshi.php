@@ -473,6 +473,11 @@ class AgentToshi extends Component
             'view_attendance'    => "your children's attendance",
             'view_health'        => "your children's health records",
             'list_children'      => 'your linked children',
+            // Alumni (ug9) — their own records and the school alumni network
+            'view_exam_records'      => 'your exam records',
+            'view_academic_summary'  => 'your academic summary',
+            'view_alumni_profile'    => 'your alumni profile',
+            'view_alumni_directory'  => 'the alumni directory',
         ];
 
         $matched = [];
