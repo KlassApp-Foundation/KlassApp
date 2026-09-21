@@ -12169,3 +12169,33 @@ Also worth knowing: there is **no staging concept in application code** at all. 
 #### Known limitation, flagged not fixed: is_test has no writer
 
 `is_test` is read in exactly two places and **written by no code anywhere** in the application. It is purely operator-maintained, set by hand via tinker or SQL. That means every future test or demo tenant depends on someone remembering to set it, and forgetting it silently inflates platform metrics, which is exactly what happened with the demo seed. A one-line admin affordance, or having every seeder that creates a non-customer school set it, would remove that dependency. Deliberately not changed here: it is a product affordance decision, not a bug fix.
+
+### 2026-09-22: School-details save path FIXED and PROVEN, after three wrong diagnoses (#789)
+
+**The root cause.** `SiteHelper::getCountries()` and `getCities()` cache for `CACHE_TIME` (8400s), and the **cached collections were EMPTY** (0 entries) while the tables held **10 countries and 139 cities**. So the country select rendered with only its disabled placeholder, its DOM value collapsed to `""`, the real form submit posted `country_id=""`, and validation failed with **"Country Is Required"** on every attempt. Nothing ever saved, and the school logo upload rode the same submit and died with it. It is the **same class of bug as the academic-year cache**: a stale cache entry outliving the data it was built from.
+
+**Fixes (#789, merged `238cbb20`)**
+1. **Never serve a cached empty list**: if the cached collection is empty, forget the key and rebuild it, so a cache populated before seeding cannot poison every dependent select for the whole TTL. Applied to `getCountries()` and `getCities()`.
+2. **The component owns the submission**: `updateDetails()` now posts the full payload by axios to the same update endpoint once the preflight passes, instead of clicking a native submit and trusting DOM serialisation, which is exactly what silently dropped the bound country value. This closes the whole divergence class rather than one symptom, and carries the logo file with it.
+
+**Proven, and this is the proof that never succeeded all session**
+
+| Check | Result |
+|---|---|
+| Country select | **11 options**, value **7 (DRC)**, previously 1 option and empty |
+| Real click through the rendered UI | `/update/validationUpdate/1` then `/update/1` |
+| Database after a real save | **genuinely changed**: `website=https://saveproof.example.test`, `about_us=Saved through the real UI at last.` |
+| Validation error display | real, evidenced on this form: **"Error! Country Is Required"** |
+| Logo upload | meta persists a real path; **file present** under `storage/app/public` (89 bytes); its URL returns **HTTP 200** |
+
+**Three diagnoses I got wrong, recorded so they are not repeated**
+1. "Vue strips the form's action/method/CSRF." Wrong: the form submits correctly. I inferred it from counting attribute-less forms, which are simply Toshi's Livewire forms.
+2. "`edit()` never supplies the country list." Wrong: it does, at lines 194-195. My edit on that basis added a duplicate write and was reverted.
+3. "The payload omits a required `address`." Wrong: `address` is nullable.
+   The lesson, the same one as the academic-year bug: **measure the actual state (the select's option count, the cached collection, the POST body) instead of inferring from counts and code shape.**
+
+**NOT verified: staging.** Local only. The merges deploy by themselves.
+
+**Still to do**: resume draft PR #786 (student_size, school_category, EMIS field, and item 10's null-guard), rebased on this fix. Its option-nesting is already correct (inside `details`, which is what `setDetails()` reads), and its `student_size` required rule will now hold once that select actually has options. Verify with the same real-UI round-trip, then re-run the logo upload check.
+
+**Also outstanding, unrelated**: the six untested upload endpoints (importTeachers, importUsers, teacher-links/import, promotion/import, importHolidays, upload/photos) still have no end-to-end evidence, and the dashboard-list and attendance audit was not completed. The production decisions on #770 and the demo routes remain open.
