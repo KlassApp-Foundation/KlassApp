@@ -147,8 +147,28 @@ class SchoolDetailsController extends Controller
         }
     }
 
+    /**
+     * These routes carry a {school_id} in the URL, and three actions trusted it: a school
+     * admin could read another school's profile (and open its edit form) just by changing
+     * the id. Every action now refuses any id other than the caller's own school.
+     *
+     * update() already ignored the parameter and used the authenticated school, so the write
+     * path was not cross-tenant; it is guarded here too so the refusal is explicit and
+     * consistent rather than incidental.
+     */
+    private function assertOwnSchool(int|string $school_id): int
+    {
+        $own = (int) (Auth::user()->school_id ?? 0);
+
+        abort_unless($own > 0 && (int) $school_id === $own, 403, 'You can only manage your own school.');
+
+        return $own;
+    }
+
     public function edit($school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         $array = [];
 
         $school = School::where('id', $school_id)->first();
@@ -179,6 +199,8 @@ class SchoolDetailsController extends Controller
 
     public function editdetail($school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         $school = School::where('id', $school_id)->first();
 
         return view('/admin/schooldetails/edit', ['school_id' => $school_id, 'school' => $school]);
@@ -191,6 +213,8 @@ class SchoolDetailsController extends Controller
      */
     public function validationUpdate(DetailRequest $request, $school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         return response()->json(['success' => true]);
     }
 
@@ -202,6 +226,8 @@ class SchoolDetailsController extends Controller
      */
     public function update(DetailRequest $request, $school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         try {
             $school_id = Auth::user()->school_id;
             $school = School::where('id', $school_id)->firstOrFail();
