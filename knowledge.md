@@ -11915,3 +11915,30 @@ Design audit first, then implementation, both only on the two onboarding surface
 **Staging verification**: fresh synthetic signup on the deployed build, both surfaces checked, then the fixture removed (staging back to 2 schools / 16 users). Setup list: 13 rows, min height 44, no destructive red, 0 emoji, 0 red-X chat lines. Wizard: track 6px with 0 buttons inside, counter chip, jump select, hatch present with the real admin href, 0 sub-24px buttons, nav label 14px, 0 page errors. OCR of both staging screenshots confirms the rendering.
 
 **Not verified / open**: the wizard walk did not reach the Review step (blocked by the Subjects validation on an automation draft, not by a defect); the setup list's icon chips were verified by computed colour rather than by pixel sampling; and the local design fixture was removed after the pass. Production has not been deployed for these two PRs, which stays a separate explicit decision.
+
+### 2026-09-21: Onboarding-adjacent surface pass: banner, Connections card, integrations page (#759, #760, #761)
+
+Three of the four requested pieces shipped and verified; the fourth is logged below as NOT started.
+
+**#759 MERGED `f371e0a4`: the setup banner's primary action was blue.**
+- "Set up manually" carried an inline `style=background:var(--d-blue)`, contradicting green-acts-blue-informs, and competed with the green "Set up with Toshi" beside it. Removed the override so `ds-btn-primary` applies.
+- Verified live on a fresh school: `rgb(21,128,61)` = `#15803D` at 44px, same as the Toshi button, `inlineOverrides: []` on the card, `blueAction: false`, no destructive red.
+- Flagged, deliberately out of scope: the banner icon tile still uses `var(--d-green)`, and `--d-green` is still `#22C55E` (the CSS documents that the accent moved to `#15803D` for AA while `#22C55E` stayed as `--d-green`). It is a decorative icon, not text on a solid, so it is not an AA problem, but it is the last retired-green use in that card.
+
+**#760 MERGED `183828c7`: the Connections card (empty-state product demo) is now token-driven.**
+- It owned its own stylesheet and had drifted: its green was `var(--d-green)` = **#22C55E**, the retired value, plus raw Tailwind shades (#F87171, #FBBF24, #DCFCE7, #FEF3C7, #F8FAFC, #DBEAFE, #1E3A8A, #334155, #CBD5E1) and hardcoded token values.
+- It now derives everything from `var(--d-*)` through a small set of local variables built with `color-mix` (ink, ink-soft, rule, surface, green, and blue/red/warning tints), so future token changes propagate instead of drifting. The retired green is gone.
+- **Deliberately untouched**: WhatsApp-brand hexes inside the phone mock (they simulate a specific real product, not KlassApp) and the mock browser's traffic-light dots.
+- **Preserved and asserted**: the honest status treatment. Badges still read Live / Sign-in / Live / Coming soon, and the copy still says WhatsApp is live today, Google sign-in works, and roadmap items are not presented as shipping features.
+- **Verified across all three rotating scenes**, since this card rotates with its own JS and the audit had captured only one: WhatsApp, Toshi and Connections each render with zero retired-green occurrences and no hardcoded inline styles.
+
+**#761 MERGED `1b0068c4`: the integrations page moved onto ds-* components (presentation only).**
+- Explicit boundary honoured: no connector logic, connection state or functional behaviour touched. The `@forelse` over connectors, the `connected` branches, the CSRF forms, the connect route and the disconnect route are unchanged, and the testids are identical.
+- Cards to `ds-card`, status chips to `ds-badge-active` / `ds-badge-inactive` (they now inherit the badge system from the settings hub instead of duplicating it in Tailwind), Connect to `ds-btn-primary`, Disconnect to `ds-btn-danger` (red for destructive), and the grey text/falls onto `--d-text-secondary` and `--d-surface`.
+- **Verified** by rendering both connector states: ds-card, both badge variants, danger and primary buttons, no `#1F2937`, no inline hex button, and the logic markers intact (card/status testids, `integrations/slack/disconnect` with `_token`, `mcp/slack/connect`).
+- **Honest scope note**: the integrations blade itself now has zero raw Tailwind status/grey utilities, but a page-level grep still matches raw utilities coming from **shared partials** (`partials/message` carries `border-red-400 text-red-700`), not from this page. Those are out of scope here and remain raw.
+
+**NOT STARTED: the wizard empty-space live draft preview (item 4).**
+- Not built, no code written, explicitly outstanding. The measured basis stands: at 1440 the card is 880px in a 1248px content area (184px per side) and at 1920 the same 880px in 1728px (424px per side), with roughly 300px of empty vertical space below a 200px-tall card. A side panel only makes sense around 1600px and up; below that it must stack under the card.
+- Concrete plan when it is picked up: reuse the proven `manual-wizard-review-panels` / `manual-wizard-review-panel` pattern from the Review step (bottom of `manual-wizard-step-fields.blade.php`), drive it from the draft arrays already public on the component (`termDrafts`, `feeDrafts`, `teacherDrafts`, `studentDrafts`, `structureClasses`, `existingSubjectNames`), so no new content and no backend work. CSS: a stacked panel below the card by default, becoming a side column at roughly 1600px and up.
+- Verification it will need: enter real data at several different steps (Terms, Fees, Standards, Subjects) and confirm each renders the user's own entered data correctly, not just one step.
