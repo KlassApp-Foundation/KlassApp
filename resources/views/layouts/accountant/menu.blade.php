@@ -10,9 +10,6 @@
     <li class="py-3 px-3 hover:font-semibold {{ aActive(['reports','report']) }}">
         <a href="{{ route('accountant.reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Data Exports</span></a>
     </li>
-    <li class="py-3 px-3 hover:font-semibold {{ aActive(['reports','report']) }}">
-        <a href="{{ url('accountant/reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Data Exports</span></a>
-    </li>
     <li class="py-3 px-3 hover:font-semibold {{ aActive(['holidays','holiday']) }}">
         <a href="{{ url('accountant/holidays') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-nowrap">Holidays</span></a>
     </li>
