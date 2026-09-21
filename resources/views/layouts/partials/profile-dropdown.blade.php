@@ -2,31 +2,25 @@
 {{-- Shared profile dropdown — used by all role navigation files --}}
 @php
     $portalLinks = \App\Support\PortalProfileLinks::forUser(Auth::user());
+    $defaultAvatar = asset('uploads/user/avatar/default-user.jpg');
+    $avatarUrl = Auth::user()->usergroup_id === 3
+        ? $defaultAvatar
+        : (Auth::user()->userprofile && Auth::user()->userprofile->avatar != null
+            ? url(Auth::user()->userprofile->AvatarPath)
+            : $defaultAvatar);
 @endphp
 <div class="profile-click" dusk="profile-menu">
-    @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
-        <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
-    @else
-        <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
-    @endif
+    <img src="{{ $avatarUrl }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
     <div class="user-dtl">
         <ul class="list-reset">
             <li class="user-dtl-header">
                 @if($portalLinks['change_avatar'])
                     <a href="{{ url($portalLinks['change_avatar']) }}" style="display:flex;align-items:center;text-decoration:none;">
-                        @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
-                            <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="user-avatar" style="cursor:pointer;">
-                        @else
-                            <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="user-avatar" style="cursor:pointer;">
-                        @endif
+                        <img src="{{ $avatarUrl }}" class="user-avatar" style="cursor:pointer;">
                     </a>
                 @else
                     <span style="display:flex;align-items:center;">
-                        @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
-                            <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="user-avatar">
-                        @else
-                            <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="user-avatar">
-                        @endif
+                        <img src="{{ $avatarUrl }}" class="user-avatar">
                     </span>
                 @endif
                 <div class="user-info">

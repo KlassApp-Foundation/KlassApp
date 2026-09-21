@@ -1,17 +1,35 @@
 <?php
 
 //dashboard
-Route::get( '/dashboard', 'DashboardController@index' );
+Route::get( '/dashboard', 'DashboardController@index' )->name('teacher.dashboard');
+Route::get('/timetable', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherIndex'])->name('teacher.timetable.index');
+Route::get('/timetable/create', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherCreate'])->name('teacher.timetable.create');
+Route::post('/timetable', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherStore'])->name('teacher.timetable.store');
+Route::get('/timetable/{slot}/edit', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherEdit'])->name('teacher.timetable.edit');
+Route::put('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherUpdate'])->name('teacher.timetable.update');
+Route::delete('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherDestroy'])->name('teacher.timetable.destroy');
+Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
+Route::get( '/attendance/add', 'AttendanceController@create' )->name('teacher.attendance.create');
 
 Route::get('/classes', function () {
     return view('class-roster.index');
 })->name('teacher.classes.index');
-Route::get('/classes/{section}', function ($section) {
+Route::get('/classes/{section}/manage', function ($section) {
     return view('class-roster.show', [
         'sectionId' => (int) $section,
         'academicYearId' => request()->integer('academic_year_id') ?: null,
     ]);
+})->whereNumber('section')->name('teacher.classes.manage');
+Route::get('/classes/{section}', function ($section) {
+    return redirect()->route('teacher.classes.manage', [
+        'section' => $section,
+        'academic_year_id' => request()->integer('academic_year_id') ?: null,
+    ]);
 })->whereNumber('section')->name('teacher.classes.show');
+Route::get('/student/edit/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'edit'])->name('teacher.student.edit');
+Route::get('/student/edit-data/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'data'])->name('teacher.student.data');
+Route::post('/student/edit-validation/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'validation'])->name('teacher.student.validation');
+Route::post('/student/edit/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'update'])->name('teacher.student.update');
 Route::get( '/dashboard/timetable', 'DashboardController@timetable' );
 Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
@@ -226,7 +244,6 @@ Route::get( '/standardLink/show/comments/{post_id}', 'StandardsLinkDetailsContro
 //attendance
 //add
 Route::get( '/attendance/list', 'AttendanceController@list' );
-Route::get( '/attendance/add', 'AttendanceController@create' );
 Route::post( '/attendance/add', 'AttendanceController@store' );
 //export
 Route::get( '/attendance/export/{standardLink_id}', 'AttendanceController@export' );
@@ -385,6 +402,9 @@ Route::prefix('class-streams')->name('teacher.class-stream.')->group(function ()
 
 Route::prefix('exam')->group(function () {
 
+    // Teacher exam landing page
+    Route::get('/', 'MarksController@teacherExamMarksList')->name('teacher.exam.index');
+
     // List of exams available for this teacher to enter marks
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
 
@@ -493,7 +513,7 @@ Route::group(['middleware' => ['designation:student_leave_checker']], function (
 //noticeboard
     //index
     Route::get( '/notice/show/list', 'NoticeBoardController@list' );
-    Route::get( '/notices', 'NoticeBoardController@index' );
+    Route::get( '/notices', 'NoticeBoardController@index' )->name('teacher.notices.index');
 
 
  

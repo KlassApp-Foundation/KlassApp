@@ -23,12 +23,19 @@ class AttendanceAddRequest extends FormRequest
             return true;
         }
 
-        // Teachers may only post attendance for classes they custodian.
+        // Teachers may post attendance for any active class in their school.
         if ((int) $user->usergroup_id === 5) {
             $linkId = (int) $this->input('standardLink_id');
+            $academicYear = SiteHelper::getAcademicYear((int) $user->school_id);
 
             return $linkId > 0
-                && SiteHelper::isClassTeacherOfStandardLink((int) $user->school_id, (int) $user->id, $linkId);
+                && $academicYear !== null
+                && \App\Models\StandardLink::query()
+                    ->whereKey($linkId)
+                    ->where('school_id', $user->school_id)
+                    ->where('academic_year_id', $academicYear->id)
+                    ->where('status', 1)
+                    ->exists();
         }
 
         return true;

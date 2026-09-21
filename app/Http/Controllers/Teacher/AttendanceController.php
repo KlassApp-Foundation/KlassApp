@@ -39,7 +39,6 @@ class AttendanceController extends Controller
     public function list()
 {
     $school_id = Auth::user()->school_id;
-    $teacher_id = (int) Auth::id();
     $academic_year = SiteHelper::getAcademicYear($school_id);
 
     if (!$academic_year) {
@@ -50,8 +49,25 @@ class AttendanceController extends Controller
         ];
     }
 
-    // Same class_teacher_id scope as Api\Teacher\AttendanceController@index
-    $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks((int) $school_id, $teacher_id);
+    $classTeacherLinks = StandardLink::query()
+        ->where('school_id', $school_id)
+        ->where('academic_year_id', $academic_year->id)
+        ->where('status', 1)
+        ->with(['standard', 'section'])
+        ->orderBy('section_id')
+        ->get();
+
+    if ($classTeacherLinks->isEmpty()) {
+        return [
+            'standardlist'     => [],
+            'studentlist'      => [],
+            'absentReasonlist' => AbsentReason::where('status', 1)->get(),
+            'std_id' => null,
+            'studentAcademic' => collect(),
+        ];
+    }
+
+    $classTeacherLinks = $classTeacherLinks->values();
     $linkIds = $classTeacherLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
 
     $standardLinklist = StandardLinkResource::collection($classTeacherLinks);
@@ -102,10 +118,49 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function index()
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+        $selectedSection = request()->integer('section_id') ?: null;
+        $selectedStream = trim((string) request()->input('stream', ''));
+        $selectedDate = request()->input('date', now()->format('Y-m-d'));
+
+        $links = $academicYear
+            ? StandardLink::query()
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $academicYear->id)
+                ->where('status', 1)
+                ->with('section')
+                ->orderBy('section_id')
+                ->get()
+            : collect();
+
+        $sections = $links->pluck('section')->filter()->unique('id')->sortBy('name')->values();
+        $streams = $sections->pluck('stream')->filter()->unique()->sort()->values();
+
+        $records = $academicYear
+            ? Attendance::query()
+                ->with(['user', 'standardLink.section'])
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $academicYear->id)
+                ->where('recorded_by', Auth::id())
+                ->whereDate('date', $selectedDate)
+                ->when($selectedSection, fn ($query) => $query->whereHas('standardLink', fn ($linkQuery) => $linkQuery->where('section_id', $selectedSection)))
+                ->when($selectedStream !== '', fn ($query) => $query->whereHas('standardLink.section', fn ($sectionQuery) => $sectionQuery->where('stream', $selectedStream)))
+                ->orderBy('standardLink_id')
+                ->orderBy('user_id')
+                ->get()
+            : collect();
+
+        return view('teacher.attendance.index', compact(
+            'records', 'sections', 'streams', 'selectedSection', 'selectedStream', 'selectedDate'
+        ));
+    }
+
     public function create()
     {
-        //
-        $standard = \Request::get('standardLink_id') ? \Request::get('standardLink_id'):'';
+        $standard = request()->input('standardLink_id', '');
         return view('/teacher/attendance/create' ,['standard' => $standard]);
     }
 
@@ -125,10 +180,6 @@ class AttendanceController extends Controller
 
         if (!$academic_year) {
             return response()->json(['error' => 'Academic year not set'], 422);
-        }
-
-        if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) $admin, (int) $request->standardLink_id)) {
-            abort(403, 'You are not the class teacher for this class.');
         }
 
         $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
@@ -166,11 +217,11 @@ class AttendanceController extends Controller
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) Auth::id(), (int) $standardLink_id)) {
-                abort(403, 'You are not the class teacher for this class.');
-            }
-
-            $standardLink = StandardLink::where('id',$standardLink_id)->first();
+            $standardLink = StandardLink::query()
+                ->where('school_id', $school_id)
+                ->where('academic_year_id', $academic_year->id)
+                ->where('status', 1)
+                ->findOrFail($standardLink_id);
             $standard = $standardLink->StandardName;
             $section = $standardLink->section->name;
             $csv_name = 'SP Student Attendance Export_'.$standard.'_'.$section.'_'.date('_d-m-Y_H:i').'.csv';
