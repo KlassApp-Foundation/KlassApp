@@ -32,7 +32,8 @@ class SchoolController extends Controller
 
         $array['schoolName']            = $school->name;
         $array['schoolLogo']            = $details['school_logo']=='-' ? null:$this->getFilePath($details['school_logo']);
-        $array['moto']                  = $details['moto']=='-' ? null:$details['moto'];
+        $mottoValue                     = $school->mottoText(); // column first, meta fallback
+        $array['moto']                  = $mottoValue;
         $array['affiliatedBy']          = $details['affiliated_by']=='-' ? null:$details['affiliated_by'];
         $array['affiliationNo']         = $details['center_no']=='-' ? null:$details['center_no'];
         $array['dateOfEstablishment']   = $details['date_of_establishment']=='-' ? null:$details['date_of_establishment'];
