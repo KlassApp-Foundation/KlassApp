@@ -3949,3 +3949,18 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     outline: 2px solid var(--d-blue, #1E6FD9);
     outline-offset: 2px;
 }
+
+/* ── Toshi panel: the sidebar's own vertical envelope ──
+   On desktop the root is a static flex item in the body's row, and align-items: stretch
+   made it span the full viewport height starting at y=0, so it swallowed the header's
+   85px band and read as a slab bolted over the chrome. It now starts where the sidebar
+   starts and ends where the sidebar ends. Scoped to desktop, because below 1280px the
+   widget is deliberately fixed bottom-right. */
+:root { --toshi-header-offset: 85px; }
+@media (min-width: 1280px) {
+    body [data-toshi-root] {
+        margin-top: var(--toshi-header-offset) !important;
+        height: calc(100vh - var(--toshi-header-offset)) !important;
+        align-self: flex-start !important;
+    }
+}
