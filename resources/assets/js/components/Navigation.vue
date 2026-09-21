@@ -54,8 +54,12 @@
             getAcademicYear()
             {
                 axios.get('/admin/list/academicyear').then(response => {
-                    this.academiclist = response.data.academiclist;
-                    this.academic_year= response.data.current_year.id;
+                    this.academiclist = response.data.academiclist ?? [];
+                    // A brand new school has no academic year yet, so current_year is
+                    // null and dereferencing .id threw a TypeError on every
+                    // onboarding screen. Guard the value instead of assuming it.
+                    const current = response.data.current_year;
+                    this.academic_year = current ? current.id : '';
                 });
             },
         },
