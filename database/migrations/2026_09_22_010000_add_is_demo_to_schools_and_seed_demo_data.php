@@ -38,13 +38,16 @@ return new class extends Migration
             $existing = DB::table('schools')->where('slug', $s['slug'])->first();
             if ($existing) {
                 $schoolId = $existing->id;
-                DB::table('schools')->where('id', $schoolId)->update(['is_demo' => true]);
+                DB::table('schools')->where('id', $schoolId)->update(['is_demo' => true, 'is_test' => true]);
             } else {
             $schoolId = DB::table('schools')->insertGetId([
                 'name' => $s['name'],
                 'motto' => $s['motto'],
                 'slug' => $s['slug'],
                 'is_demo' => true,
+                // Also is_test: demo schools are not customers, so they must stay out of the
+                // Superadmin platform metrics and the recently-joined feed from the start.
+                'is_test' => true,
                 'status' => 1,
                 'registration_country' => 'Uganda',
                 'curriculum' => 'uneb',
