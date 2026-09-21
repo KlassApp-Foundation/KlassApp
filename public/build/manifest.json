@@ -1,6 +1,6 @@
 {
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-PPlqvut1.js",
+    "file": "assets/quill-Ctn467dB.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/assets/js/app.js": {
-    "file": "assets/app-BCp22d34.js",
+    "file": "assets/app-CysF7BDf.js",
     "name": "app",
     "src": "resources/assets/js/app.js",
     "isEntry": true,
@@ -17,7 +17,7 @@
       "node_modules/quill/quill.js"
     ],
     "css": [
-      "assets/app-CVlmzTsw.css"
+      "assets/app-B3XLcQ8n.css"
     ]
   },
   "resources/assets/sass/app.scss": {
@@ -57,7 +57,7 @@
     "isEntry": true
   },
   "resources/css/tailwind.css": {
-    "file": "assets/tailwind-u8pJmZpd.css",
+    "file": "assets/tailwind-BI-XdYIV.css",
     "name": "tailwind",
     "names": [
       "tailwind.css"

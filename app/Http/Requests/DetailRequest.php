@@ -71,10 +71,11 @@ class DetailRequest extends FormRequest
             // 30 characters also rejected genuine names ("St. Peter's Secondary School Kabale"
             // is 35), so the ceiling is 120 against a 255-character column.
             'name' => ['required', 'max:120', 'checkunique_schoolname'],
-            'moto' => ['nullable', 'max:50'],
+            // Required to match the asterisk in schooldetail/Edit.vue: the two must agree.
+            'moto' => ['required', 'max:50'],
             'date_of_establishment' => ['nullable', 'check_date'],
             'board' => ['nullable', 'string', 'max:50'],
-            'about_us' => ['nullable', 'max:250'],
+            'about_us' => ['required', 'max:250'],
             'country_id' => ['required', 'integer', 'exists:countries,id'],
             'city_id' => ['nullable', 'integer'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -109,12 +110,14 @@ class DetailRequest extends FormRequest
             'name.checkunique_schoolname' => 'School Name Already Exists. Try Different Name',
             'name.check_keyword' => 'Enter A Valid School Name',
 
-            'moto.max' => 'Moto Should Not Exceed More Than 50 Characters',
+            'moto.required' => 'School Motto Is Required',
+            'moto.max' => 'School Motto Should Not Exceed 50 Characters',
 
             'date_of_establishment.check_date' => 'Select Valid Date',
 
             'school_logo.mimes' => 'Choose png or jpg File',
 
+            'about_us.required' => 'About Us Is Required',
             'about_us.max' => 'About Us Should Not Exceed 250 Characters',
 
             'country_id.required' => 'Country Is Required',

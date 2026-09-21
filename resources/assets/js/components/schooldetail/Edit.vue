@@ -109,9 +109,8 @@
                             <label
                                 for="date_of_establishment"
                                 class="ds-form-label"
-                                >Date Of Establishment<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >Date Of Establishment
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
@@ -135,9 +134,8 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="board" class="ds-form-label"
-                                >Board Of Education<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >Board Of Education
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
@@ -211,9 +209,8 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="city" class="ds-form-label"
-                                >District<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >District
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">

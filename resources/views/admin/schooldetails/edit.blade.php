@@ -49,6 +49,11 @@
               </div>
 
               <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+                {{-- The map portal and its coordinate fields are gated on the same key as
+                     the Maps script below. Until that key is configured the feature is not
+                     built, so rendering a 250px empty box and two hidden inputs only shows a
+                     half-feature. Wrap, never cut: the markup stays intact for Wave 2. --}}
+                @if(config('services.google.maps_api_key'))
                 <div class="lg:mr-8 md:mr-8">
                   <div id="map_canvas" class="tw-form-control" style="height: 250px;">
                   </div>
@@ -83,6 +88,7 @@
                   </div>
                 </div>
               </div>
+                @endif
             </div>
           </portal>
         </x-card>
@@ -94,6 +100,7 @@
 @if(config('services.google.maps_api_key'))
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places&key={{ config('services.google.maps_api_key') }}"></script>
 @endif
+@if(config('services.google.maps_api_key'))
 <script type="text/javascript">
 
 var map;
@@ -169,4 +176,5 @@ function codeAddress()
 }
 google.maps.event.addDomListener(window, 'load', initialize);
 </script>
+@endif
 @endpush
