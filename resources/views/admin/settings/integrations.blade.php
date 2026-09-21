@@ -17,28 +17,27 @@
     <div data-testid="integrations-list" class="space-y-4">
         @forelse ($connectors as $c)
             <div data-testid="integration-card-{{ $c['type'] }}"
-                 class="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                 style="background: #FFFFFF; color: #1F2937;">
+                 class="ds-card ds-card-padding-default flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="flex items-center gap-3">
                     @if ($c['type'] === 'slack')
                         <x-brand.slack />
                     @else
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold" style="background: var(--d-surface, #FAFAF5); color: var(--d-text-secondary, #64748B);">
                             {{ strtoupper(substr($c['label'], 0, 1)) }}
                         </span>
                     @endif
                     <div>
-                        <div class="font-semibold flex items-center gap-2">
+                        <div class="font-semibold flex items-center gap-2" style="color: var(--d-dark, #0F172A);">
                             {{ $c['label'] }}
                             @if ($c['connected'])
                                 <span data-testid="integration-status-{{ $c['type'] }}"
-                                      class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">Connected</span>
+                                      class="ds-badge ds-badge-active">Connected</span>
                             @else
                                 <span data-testid="integration-status-{{ $c['type'] }}"
-                                      class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Not connected</span>
+                                      class="ds-badge ds-badge-inactive">Not connected</span>
                             @endif
                         </div>
-                        <div class="text-sm text-gray-500">
+                        <div class="text-sm" style="color: var(--d-text-secondary, #64748B);">
                             @if ($c['connected'])
                                 Workspace: {{ $c['team_name'] ?? 'connected workspace' }}
                                 &middot; Write mode: {{ $c['write_mode'] }}
@@ -59,19 +58,18 @@
                                 @csrf
                                 <button type="submit"
                                         data-testid="integration-disconnect-slack"
-                                        class="px-4 py-2 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 text-sm font-medium">
+                                        class="ds-btn ds-btn-danger ds-btn-md">
                                     Disconnect
                                 </button>
                             </form>
                         @elseif ($slackConnectable)
                             <a href="{{ url('mcp/slack/connect') }}"
                                data-testid="integration-connect-slack"
-                               class="px-4 py-2 rounded-lg text-white text-sm font-medium"
-                               style="background: #15803D;">
+                               class="ds-btn ds-btn-primary ds-btn-md">
                                 Connect Slack
                             </a>
                         @else
-                            <span class="text-sm text-gray-400" data-testid="integration-connect-unavailable">
+                            <span class="text-sm" style="color: var(--d-muted, #94A3B8);" data-testid="integration-connect-unavailable">
                                 Connect unavailable (instance not in live mode)
                             </span>
                         @endif
@@ -79,11 +77,11 @@
                 </div>
             </div>
         @empty
-            <p class="text-gray-500">No integrations available yet.</p>
+            <p style="color: var(--d-text-secondary, #64748B);">No integrations available yet.</p>
         @endforelse
     </div>
 
-    <div class="mt-6 text-sm text-gray-500 max-w-2xl">
+    <div class="mt-6 text-sm max-w-2xl" style="color: var(--d-text-secondary, #64748B);">
         <p><strong>Safety:</strong> Toshi reads (channels, search, history) run immediately and are fully audited.
         Writes (posting messages) always pause for a human approval before executing — the approver is recorded in the audit log.</p>
         <p class="mt-2">Disconnecting blocks Toshi from reaching the workspace. Re-connecting re-authorizes it.</p>
