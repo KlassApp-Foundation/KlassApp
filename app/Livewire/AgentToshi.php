@@ -653,15 +653,11 @@ class AgentToshi extends Component
             return;
         }
 
+        // One intro message only. The items themselves render as a single actionable
+        // list in the panel (see agent-toshi.blade.php): ten separate chat lines each
+        // repeated the author label and prefixed the step with a red X, which read as
+        // a list of failures rather than a list of things to do.
         $this->botSay("I found **" . count($incomplete) . "** thing" . (count($incomplete) > 1 ? 's' : '') . " to set up:");
-        foreach ($incomplete as $step) {
-            $label = \App\Services\OnboardingStepsService::labelForContext(
-                (string) ($step['key'] ?? ''),
-                (string) ($step['label'] ?? ''),
-                'toshi'
-            );
-            $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $label);
-        }
 
         // Same landing rule as ManualOnboardingWizard mount: nextIncompleteStep
         // (includes optional teachers/students), not blocking-only.
@@ -675,6 +671,27 @@ class AgentToshi extends Component
             $this->promptPlanSelection();
         } else {
             $this->botSay(self::onboardingPromptForStep($first['key']));
+        }
+    }
+
+    /**
+     * Public entry point for the setup list: jump to a shared step by key.
+     * Wraps the private resume helper and prompts the step, so a click from the list
+     * behaves exactly like arriving via checklist resume.
+     */
+    public function jumpToChecklistStep(string $key): void
+    {
+        $known = collect(\App\Services\OnboardingStepsService::ALL_STEPS)->has($key);
+        if (! $known) {
+            return;
+        }
+
+        $this->jumpToIncompleteOnboardingStep($key);
+
+        if ($key === 'plan_selection') {
+            $this->promptPlanSelection();
+        } elseif (! \App\Services\OnboardingStepsService::isStepComplete($key, \App\Models\School::find($this->schoolId), auth()->id())) {
+            $this->botSay(self::onboardingPromptForStep($key));
         }
     }
 
