@@ -25,10 +25,14 @@
 @include('partials.message')
 
 <div class="dashboard-kpi-grid" data-testid="fees-kpi-grid" style="margin-top: 0; margin-bottom: 20px;">
-    <x-ds-kpi-card icon="dollar" :value="$kpis['collected_label']" label="Collected this term" color="green" />
-    <x-ds-kpi-card icon="money" :value="$kpis['outstanding_label']" label="Outstanding" color="amber" />
-    <x-ds-kpi-card icon="users" :value="$kpis['arrears_label']" label="Students in arrears" color="red" />
-    <x-ds-kpi-card icon="check" :value="$kpis['rate_label']" label="Collection rate" color="blue" />
+    {{-- Semantic tones + the arrears trend: arrears falling is GOOD, so the card
+         passes invert-direction and the indicator reads positive on a down move. --}}
+    <x-ds-kpi-card icon="dollar" :value="$kpis['collected_label']" label="Collected this term" tone="positive" />
+    <x-ds-kpi-card icon="money" :value="$kpis['outstanding_label']" label="Outstanding" tone="warning" />
+    <x-ds-kpi-card icon="users" :value="$kpis['arrears_label']" label="Students in arrears" tone="negative"
+        :direction="$kpis['arrears_direction']" :invert-direction="true"
+        :delta="$kpis['arrears_delta_label']" :hint="$kpis['arrears_hint']" />
+    <x-ds-kpi-card icon="check" :value="$kpis['rate_label']" label="Collection rate" tone="info" />
 </div>
 
 <div id="fees-record-form" data-testid="fees-record-form" @if(! $showRecordForm) hidden @endif style="margin-bottom: 16px;">

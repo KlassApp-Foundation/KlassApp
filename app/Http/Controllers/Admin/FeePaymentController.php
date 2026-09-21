@@ -148,7 +148,7 @@ class FeePaymentController extends Controller
     /**
      * School-scoped fee KPIs for the payments kit fold.
      *
-     * @return array{context: string, collected_label: string, outstanding_label: string, arrears_label: string, rate_label: string}
+     * @return array{context: string, collected_label: string, outstanding_label: string, arrears_label: string, rate_label: string, arrears_direction: ?string, arrears_delta_label: ?string, arrears_hint: ?string}
      */
     private function feePaymentKpis(int $schoolId): array
     {
@@ -214,12 +214,52 @@ class FeePaymentController extends Controller
 
         $rate = $expected > 0 ? (int) round(($expected - $outstanding) / $expected * 100) : 0;
 
+        // Like-for-like trend for the arrears card: the SAME definition (standard
+        // fee due vs payments received) evaluated BEFORE this term started, so the
+        // card can show whether arrears are rising or falling. Null when there is
+        // no term window to compare against — the card then renders no indicator.
+        $arrearsDirection = null;
+        $arrearsDeltaLabel = null;
+        $arrearsHint = null;
+
+        if ($startsOn) {
+            $paidBeforeByStudent = FeePayment::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('user_id', $activeStudents)
+                ->whereDate('paid_on', '<', $startsOn)
+                ->groupBy('user_id')
+                ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+                ->pluck('total_paid', 'user_id');
+
+            $arrearsBefore = 0;
+            foreach ($latestAcademics as $row) {
+                $due = (float) ($categoriesByStandard[$row->standard_id] ?? 0);
+                if ($due <= 0) {
+                    continue;
+                }
+                $paidBefore = (float) ($paidBeforeByStudent[$row->user_id] ?? 0);
+                if (max(0, $due - $paidBefore) > 0) {
+                    $arrearsBefore++;
+                }
+            }
+
+            // Fewer students in arrears than at term start = 'down' = good
+            // (the card passes invertDirection so the indicator reads positive).
+            $arrearsDirection = $arrears <=> $arrearsBefore ? ($arrears > $arrearsBefore ? 'up' : 'down') : 'flat';
+            $delta = $arrears - $arrearsBefore;
+            $arrearsDeltaLabel = $delta === 0 ? null : (($delta > 0 ? '+' : '').$delta);
+            $arrearsHint = 'vs term start';
+        }
+
         return [
             'context' => $termLabel ?: 'All classes',
             'collected_label' => 'UGX '.$this->compactMoney($collected),
             'outstanding_label' => 'UGX '.$this->compactMoney($outstanding),
             'arrears_label' => (string) $arrears,
             'rate_label' => $rate.'%',
+            'arrears_direction' => $arrearsDirection,
+            'arrears_delta_label' => $arrearsDeltaLabel,
+            'arrears_hint' => $arrearsHint,
         ];
     }
 
