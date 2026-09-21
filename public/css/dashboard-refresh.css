@@ -3625,6 +3625,10 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header { justify-content: c
 body.sidebar-collapsed #admin-sidebar .dashboard-menu-item > a,
 body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-content: center; }
 
+/* SiteAdmin (D2) platform header: the shared plain header is white with no divider,
+   so the platform header keeps its own border + soft shadow. */
+#superadmin-body .navbar { border-bottom: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+
 /* Sidebar polish (contemporary look, same IA) */
 #admin-sidebar { box-shadow: inset -1px 0 0 var(--d-border, #E2E8F0); }
 #admin-sidebar .dashboard-menu-item > a,

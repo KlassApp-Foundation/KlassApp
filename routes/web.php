@@ -436,6 +436,13 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
     Route::post('toshi/ops/{conversation}', [\App\Http\Controllers\Superadmin\PlatformOpsConversationController::class, 'store'])
         ->middleware('platform.toshi')
         ->name('superadmin.toshi.ops.store');
+
+    // Notifications — same contract as the other roles: the shared Vue components
+    // call {mode}/notification/{list,showList,read} and {mode}/notifications.
+    Route::get('notification/list', 'NotificationController@indexList');
+    Route::get('notifications', 'NotificationController@index');
+    Route::post('notification/read', 'NotificationController@store');
+    Route::get('notification/showList', 'NotificationController@showList');
 });
 
 
