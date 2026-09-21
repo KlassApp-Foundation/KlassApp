@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Superadmin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\School;
@@ -29,7 +30,9 @@ class DashboardSuperController extends Controller
         $admin_id  = Auth::id();
         $testSchoolIds = School::where('is_test', true)->pluck('id');
 
-        $stats = Cache::remember('superadmin_dashboard_stats', 300, function () use ($testSchoolIds) {
+        // v2 cache key: the payload now carries `builtAt` so the view can report the
+        // real age of the data instead of a per-request now() timestamp.
+        $stats = Cache::remember('superadmin_dashboard_stats_v2', 300, function () use ($testSchoolIds) {
             $now = now();
 
             $schoolBase   = School::whereNotIn('id', $testSchoolIds);
@@ -124,7 +127,7 @@ class DashboardSuperController extends Controller
             $pendingJobs = DB::table('jobs')->count();
             $failedJobs  = DB::table('failed_jobs')->count();
 
-            return compact(
+            return array_merge(compact(
                 'totalSchools', 'activeSchools', 'inactiveSchools',
                 'schoolsThisMonth', 'schoolsLastMonth',
                 'totalUsers', 'schoolAdmins', 'teachers', 'students', 'parents',
@@ -136,7 +139,7 @@ class DashboardSuperController extends Controller
                 'plans',
                 'monthlyTrends',
                 'pendingJobs', 'failedJobs',
-            );
+            ), ['builtAt' => $now->toIso8601String()]);
         });
 
         // ── Recent activity (not cached — always fresh) ──
@@ -145,7 +148,13 @@ class DashboardSuperController extends Controller
 
         $stats['recentSchools'] = $recentSchools;
         $stats['recentUsers']   = $recentUsers;
-        $stats['refreshedAt']   = now()->diffForHumans();
+        // Age of the cached payload (not now()), so the label reflects when the
+        // underlying stats were actually computed.
+        $builtAt = isset($stats['builtAt']) ? Carbon::parse($stats['builtAt']) : now();
+        $stats['refreshedAt']         = $builtAt->diffInSeconds(now()) < 60
+            ? 'less than a minute ago'
+            : $builtAt->diffForHumans();
+        $stats['refreshedAtAbsolute'] = $builtAt->format('D, d M Y H:i');
 
         return view('/superadmin/dashboard', ['stats' => $stats]);
     }
