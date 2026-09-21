@@ -86,19 +86,41 @@ class SiteHelper
 
     public static function getCountries()
     {
-        return Cache::remember( "countries", env('CACHE_TIME'), function ()  {
+        $cached = Cache::remember("countries", env('CACHE_TIME'), function () {
             $country = Country::all();
+
             return CountryResource::collection($country)->keyby('id');
         });
+
+        // Never serve a cached EMPTY list. An empty result cached before the table was seeded
+        // poisons every select that depends on it for the whole TTL, and this one silently
+        // broke the school-details form: the country select rendered with no options, so the
+        // bound value collapsed to empty and every submission failed "Country Is Required".
+        if ($cached->isEmpty()) {
+            Cache::forget('countries');
+            $cached = CountryResource::collection(Country::all())->keyby('id');
+        }
+
+        return $cached;
     }
 
     public static function getCities()
     {
-        return Cache::remember( "cities", env('CACHE_TIME'), function ()  {
+        $cached = Cache::remember("cities", env('CACHE_TIME'), function () {
             $city = City::query()->where('status', 1)->whereNull('deleted_at')->get();
 
             return CityResource::collection($city)->groupby('country_id');
         });
+
+        // Same guard as getCountries(): a cached empty list must not be served.
+        if ($cached->isEmpty()) {
+            Cache::forget('cities');
+            $cached = CityResource::collection(
+                City::query()->where('status', 1)->whereNull('deleted_at')->get()
+            )->groupby('country_id');
+        }
+
+        return $cached;
     }
 
     public static function getQualifications()
