@@ -34,8 +34,17 @@ class DetailRequest extends FormRequest
         // ("{First}'s School") to a real name — Toshi's commitAll bypasses this
         // request entirely, so the manual path could never complete school_name.
         Validator::extend('checkunique_schoolname', function ($attribute, $value, $parameters, $validator) {
+            // Guard the authenticated user rather than assuming one: this closure is only
+            // reachable on an authenticated route today, but it threw when evaluated
+            // without a user (e.g. from tinker), so it now fails safely instead.
+            $ownSchoolId = Auth::user()?->school_id;
+
+            if ($ownSchoolId === null) {
+                return false; // unauthenticated: cannot prove uniqueness, refuse
+            }
+
             return ! School::where('name', request('name'))
-                ->where('id', '!=', Auth::user()->school_id)
+                ->where('id', '!=', $ownSchoolId)
                 ->exists();
         });
 
@@ -73,6 +82,11 @@ class DetailRequest extends FormRequest
             'name' => ['required', 'max:120', 'checkunique_schoolname'],
             // Required to match the asterisk in schooldetail/Edit.vue: the two must agree.
             'moto' => ['required', 'max:50'],
+            // School size is required because the wizard treats it as a mandatory step and
+            // nothing marks it optional anywhere. School category stays nullable: the wizard
+            // only asks for it on UNEB curricula, so a non-UNEB school cannot answer it.
+            'student_size' => ['required', 'string', 'in:'.implode(',', \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS)],
+            'school_category' => ['nullable', 'string', 'in:'.implode(',', array_keys(\App\Services\SchoolCategorySeeder::CATEGORIES))],
             'date_of_establishment' => ['nullable', 'check_date'],
             'board' => ['nullable', 'string', 'max:50'],
             'about_us' => ['required', 'max:250'],
@@ -111,6 +125,7 @@ class DetailRequest extends FormRequest
             'name.check_keyword' => 'Enter A Valid School Name',
 
             'moto.required' => 'School Motto Is Required',
+            'student_size.required' => 'School Size Is Required',
             'moto.max' => 'School Motto Should Not Exceed 50 Characters',
 
             'date_of_establishment.check_date' => 'Select Valid Date',

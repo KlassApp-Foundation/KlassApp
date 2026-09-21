@@ -276,6 +276,67 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label
+                                for="ministry_code"
+                                class="ds-form-label"
+                                >EMIS / Ministry Code
+                                <span class="text-xs text-gray-400 font-normal"
+                                    >(required for Uganda schools)</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <input
+                                type="text"
+                                name="ministry_code"
+                                v-model="ministry_code"
+                                id="ministry_code"
+                                class="ds-form-input w-full"
+                                placeholder="e.g. 12345"
+                            />
+                        </div>
+                        <span v-if="errors.ministry_code" class="ds-form-error">{{ errors.ministry_code[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
+                                for="student_size"
+                                class="ds-form-label"
+                                >School size<span class="text-red-500">*</span></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <select name="student_size" v-model="student_size" id="student_size" class="ds-form-input w-full">
+                                <option value="">Select school size</option>
+                                <option v-for="size in studentSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </div>
+                        <span v-if="errors.student_size" class="ds-form-error">{{ errors.student_size[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
+                                for="school_category"
+                                class="ds-form-label"
+                                >School category
+                                <span class="text-xs text-gray-400 font-normal"
+                                    >(applies to UNEB schools)</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <select name="school_category" v-model="school_category" id="school_category" class="ds-form-input w-full">
+                                <option value="">Not set</option>
+                                <option v-for="(labelText, value) in schoolCategoryOptions" :key="value" :value="value">{{ labelText }}</option>
+                            </select>
+                        </div>
+                        <span v-if="errors.school_category" class="ds-form-error">{{ errors.school_category[0] }}</span>
+                    </div>
+
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
                                 for="uneb_center_number"
                                 class="ds-form-label"
                                 >UNEB Centre Number
