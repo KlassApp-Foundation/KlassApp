@@ -37,8 +37,43 @@ class SystemSettings extends Component
         session()->flash('message', 'Settings saved.');
     }
 
+    /**
+     * Read-only view of what each school ACTUALLY uses.
+     *
+     * The maintenance/login values on this page are platform DEFAULTS only: a
+     * school with its own setting is never affected by them. Showing each school's
+     * effective value (and whether it is its own setting or inherited) keeps the
+     * page honest instead of implying platform-wide control it does not have.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function schoolAccessRows(): array
+    {
+        $defaultMaintenance = \Config::get('settings.maintenance');
+
+        return \App\Models\School::orderBy('name')->get()->map(function ($school) use ($defaultMaintenance) {
+            $ownLogin = $school->detailValue('login_status');
+            $ownMaintenance = $school->detailValue('maintenance');
+
+            $effectiveMaintenance = ($ownMaintenance === null || $ownMaintenance === '')
+                ? $defaultMaintenance
+                : $ownMaintenance;
+
+            return [
+                'id' => $school->id,
+                'name' => $school->name,
+                'own_login' => $ownLogin,
+                'effective_login' => $school->loginStatus(),
+                'own_maintenance' => $ownMaintenance,
+                'effective_maintenance' => $effectiveMaintenance,
+            ];
+        })->all();
+    }
+
     public function render()
     {
-        return view('livewire.superadmin.settings.system-settings');
+        return view('livewire.superadmin.settings.system-settings', [
+            'schoolAccess' => $this->schoolAccessRows(),
+        ]);
     }
 }
