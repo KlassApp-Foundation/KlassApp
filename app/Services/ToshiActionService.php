@@ -281,10 +281,13 @@ class ToshiActionService
                     'view_library_cards', 'view_dashboard', 'manage_tasks',
                 ],
             ],
-            9 => [ // OldStudent
-                'scope'   => 'none',
-                'label'   => 'former student',
-                'actions' => [],
+            9 => [ // OldStudent / Alumni — self-scope reads of their OWN records only
+                'scope'   => 'self',
+                'label'   => 'alumni',
+                'actions' => [
+                    'view_exam_records', 'view_academic_summary',
+                    'view_alumni_profile', 'view_alumni_directory',
+                ],
             ],
             10 => [ // Receptionist
                 'scope'   => 'school',

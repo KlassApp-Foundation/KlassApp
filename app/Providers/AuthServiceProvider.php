@@ -541,6 +541,22 @@ class AuthServiceProvider extends ServiceProvider
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this student action.');
         });
 
+        // Alumni-scoped Toshi tools only (ug9). Self ownership is enforced in AlumniActionService.
+        Gate::define('toshi-alumni-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 9 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 9 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this alumni action.');
+        });
+
         // Parent-scoped Toshi tools only (ug7). Children ownership is enforced in ParentActionService.
         Gate::define('toshi-parent-action', function (User $user): \Illuminate\Auth\Access\Response {
             if ($user->usergroup_id === 7) {
