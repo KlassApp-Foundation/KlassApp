@@ -107,6 +107,32 @@
             </div>
         @endif
         <div class="flex items-center">
+            {{-- Command palette trigger. It dispatches the palette's OWN shortcut so
+                 there is a single source of open/close logic (the package binds
+                 cmd/ctrl+K; dispatching both modifiers would toggle twice). --}}
+            @auth
+                <button type="button" id="command-palette-trigger"
+                        class="inline-flex items-center gap-2 mr-3 px-2.5 py-1.5 rounded-lg text-sm hover:opacity-90"
+                        style="border: 1px solid var(--d-border); background: var(--d-white); color: var(--d-text-secondary);"
+                        title="Search your pages" aria-label="Open the command palette"
+                        onclick="(function () {
+                            var mac = /Mac|iPhone|iPad/.test(navigator.platform || '');
+                            window.dispatchEvent(new KeyboardEvent('keydown', {
+                                key: 'k', code: 'KeyK', bubbles: true, cancelable: true,
+                                metaKey: mac, ctrlKey: ! mac
+                            }));
+                        })()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <span class="hidden sm:inline">Search</span>
+                    <kbd class="hidden sm:inline" id="command-palette-kbd" style="font-family: 'DM Sans', sans-serif; font-size: 0.68rem; padding: 1px 5px; border: 1px solid var(--d-border); border-radius: 4px; color: var(--d-muted);">⌘K</kbd>
+                </button>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var k = document.getElementById('command-palette-kbd');
+                        if (k && ! /Mac|iPhone|iPad/.test(navigator.platform || '')) k.textContent = 'Ctrl K';
+                    });
+                </script>
+            @endauth
             @if($notifyMode)
                 <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
             @endif

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Command palette (wire-elements/spotlight) markup lives in vendor: scan it so its
+   Tailwind utilities are actually generated. Without this the palette renders
+   unstyled (and we avoid injecting the package's own normalize sheet). */
+@source "../../vendor/wire-elements/spotlight/resources/views";
+
 @theme {
   --font-primary: "Nunito Sans", Roboto, sans-serif;
   --font-exo: "Exo 2", sans-serif;
