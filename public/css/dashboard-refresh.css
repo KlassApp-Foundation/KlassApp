@@ -3777,3 +3777,14 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
 #ds-command-palette .rounded-lg { border-radius: 12px !important; }
 #ds-command-palette .shadow-xl { box-shadow: 0 24px 48px rgba(15, 23, 42, 0.35) !important; }
 #ds-command-palette li button span:first-child { font-weight: 600; }
+
+/* ── Manual onboarding wizard: Toshi fully hidden, not just collapsed ──
+   Collapsing only zeroed the panel root's width, so its step list kept rendering
+   and spilled into the sidebar beside the wizard, competing with it. The wizard
+   sets this class server-side (see layouts/app.blade.php), which also removes the
+   old script-ordering bug where the toggle glyph was set before the toggle
+   existed and so claimed "open me" while already collapsed. */
+body.toshi-manual-wizard-active [data-toshi-root],
+body.toshi-manual-wizard-active #toshi-toggle-wrapper {
+    display: none !important;
+}

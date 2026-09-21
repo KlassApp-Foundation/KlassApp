@@ -44,6 +44,13 @@ class ManualOnboardingWizard extends Component
 
     public int $stepIndex = 0;
 
+    /**
+     * Steps unlocked by the last answer. The applicable step list grows as answers
+     * arrive (country unlocks EMIS, a UNEB curriculum unlocks UNEB centre and school
+     * category), so surface the growth instead of letting the counter jump.
+     */
+    public int $stepsGrewBy = 0;
+
     public bool $finished = false;
 
     /** When set, Next on an edited checklist step returns here (wizard review). */
@@ -1063,6 +1070,11 @@ class ManualOnboardingWizard extends Component
             'is_complete' => false,
             'route' => null,
         ];
+
+        $previousStepCount = count($this->steps);
+        $this->stepsGrewBy = $previousStepCount > 0 && count($checklist) > $previousStepCount
+            ? count($checklist) - $previousStepCount
+            : 0;
 
         $this->steps = $checklist;
     }
