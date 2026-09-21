@@ -9,6 +9,7 @@ Short map of what lives under `docs/` and what to read instead. No second wiki �
 | AI / maintainer agents | [`AGENTS.md`](../AGENTS.md) · [`TOOLING.md`](../TOOLING.md) · [`knowledge.md`](../knowledge.md) |
 | Product / schools (community) | [GitBook](https://klassdocs.gitbook.io/klassapp-documentation/) — community docs, architecture, roadmap (synced from this repo) |
 | Legacy WhatsApp integration notes | [`docs/dev/`](dev/) — **archived**; see banner there |
+| Internal working references | [`docs/internal/`](internal/) — comparisons/decision inputs; **not** published onboarding |
 
 ## Canonical references
 
