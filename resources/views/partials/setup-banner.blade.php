@@ -31,7 +31,10 @@
                 Work through them step by step, or let Toshi guide you in a focused panel.
             </p>
             <div class="setup-banner-actions">
-                <a href="{{ url('/admin/onboarding/wizard') }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual" style="background:var(--d-blue);">
+                {{-- Green acts, blue informs: this is an action, so it takes the primary
+                     treatment. It used to carry an inline --d-blue override, which made the
+                     primary CTA blue while every other primary action in the app is green. --}}
+                <a href="{{ url('/admin/onboarding/wizard') }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
                     Set up manually
                 </a>
                 <button type="button"
