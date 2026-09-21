@@ -32,7 +32,12 @@ class SchoolDetailsController extends Controller
      */
     public function index()
     {
-        $details = SchoolDetail::where('school_id', Auth::user()->school_id)->get()->keyby('meta_key');
+        // Per-school access switches (maintenance, login_status) are deliberately excluded:
+        // they live in the settings hub, which is the one place that both reads and writes
+        // them. This page must not be a second, read-only surface for the same toggles.
+        $details = SchoolDetail::where('school_id', Auth::user()->school_id)
+            ->whereNotIn('meta_key', ['maintenance', 'login_status'])
+            ->get()->keyby('meta_key');
 
         $school = School::where('id', Auth::user()->school_id)->first();
 
@@ -109,7 +114,8 @@ class SchoolDetailsController extends Controller
             }
 
             foreach ($request->request as $key => $value) {
-                $arrays = ['about_us', 'board', 'date_of_establishment', 'moto', 'school_logo', 'website'];
+                // See update(): board maps to schools.curriculum and is not duplicated here.
+                $arrays = ['about_us', 'date_of_establishment', 'moto', 'school_logo', 'website'];
                 foreach ($arrays as $array) {
                     if ($key == $array) {
                         $details = new SchoolDetail;
@@ -209,7 +215,9 @@ class SchoolDetailsController extends Controller
                 $school->city_id = $validated['city_id'];
             }
 
-            // Single country selector: write registration_country (Toshi) + country_id (FK).
+            // Managed convergence, not a fork: country_id is the FK this form edits, while
+            // registration_country is the string the wizard, Toshi and the UNEB checks read.
+            // persistCountry() keeps both in step, so neither is a second source of truth.
             $country = Country::query()->find($validated['country_id']);
             if ($country) {
                 OnboardingStepsService::persistCountry($school, $country->name);
@@ -247,7 +255,10 @@ class SchoolDetailsController extends Controller
                 );
             }
 
-            $metaKeys = ['about_us', 'board', 'date_of_establishment', 'moto', 'website'];
+            // 'board' is deliberately NOT written as a meta row: it is mapped onto
+            // schools.curriculum above, which is the column the wizard, Toshi and the
+            // report cards read. Writing both created a second copy that could drift.
+            $metaKeys = ['about_us', 'date_of_establishment', 'moto', 'website'];
             foreach ($metaKeys as $metaKey) {
                 if (! array_key_exists($metaKey, $validated) && ! $request->exists($metaKey)) {
                     continue;
