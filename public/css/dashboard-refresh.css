@@ -3863,3 +3863,89 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
 .toshi-setup-row[data-tone="positive"] .toshi-setup-row-icon { background: rgba(21, 128, 61, 0.12); color: #15803D; }
 .toshi-setup-row[data-tone="positive"]:hover { border-color: #166534; }
 .toshi-setup-row[data-tone="positive"] .toshi-setup-row-label { color: var(--d-text-secondary, #64748B); font-weight: 500; }
+
+/* ── Wizard visual fixes: header chips, progress track, jump control, states ── */
+.manual-wizard-step-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.manual-wizard-step-note {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    color: var(--d-text-secondary, #64748B);
+}
+.manual-wizard-step-note--growth {
+    color: #15803D;
+    font-weight: 600;
+}
+/* The track replaces the 10px dots: glanceable, not a row of tiny buttons. */
+.manual-wizard-progress {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+.manual-wizard-track {
+    height: 6px;
+    border-radius: 999px;
+    background: #E2E8F0;
+    overflow: hidden;
+}
+.manual-wizard-track-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--d-accent, #15803D);
+    transition: width 0.25s ease;
+}
+.manual-wizard-jump {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.manual-wizard-jump-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--d-text-secondary, #64748B);
+}
+.manual-wizard-jump-select {
+    flex: 1 1 auto;
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12.5px;
+    color: var(--d-dark, #0F172A);
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+}
+/* Fix 2: primary/secondary labels were 12.48px on a 44px button. Keep the height. */
+.manual-wizard-nav .ds-btn {
+    font-size: 14px;
+}
+/* Fix 5: the selected/hover green was the light #22C55E; the accent is #15803D. */
+.manual-wizard-plan-card:hover {
+    border-color: #15803D;
+}
+.manual-wizard-plan-card.is-selected {
+    border-color: #15803D;
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+    background: #F0FDF4;
+}
+/* Fix 6: real hover / focus / disabled states for the wizard's interactive elements. */
+.manual-wizard button:focus-visible,
+.manual-wizard a:focus-visible,
+.manual-wizard select:focus-visible,
+.manual-wizard-jump-select:focus-visible {
+    outline: 2px solid var(--d-blue, #1E6FD9);
+    outline-offset: 2px;
+}
+.manual-wizard button:disabled,
+.manual-wizard select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.manual-wizard-plan-card:focus-visible {
+    outline: 2px solid var(--d-blue, #1E6FD9);
+    outline-offset: 2px;
+}
