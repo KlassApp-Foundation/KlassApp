@@ -279,6 +279,30 @@ return [
             'enabled' => env('TOSHI_GOOGLE_DRIVE_ENABLED', false),
             'allows_custom_endpoint' => false,
         ],
+        'google-classroom' => [
+            // Thread A wave-1: self-hosted LOCAL MCP server wrapping the
+            // Classroom REST API (GoogleClassroomServer via Mcp::local in
+            // routes/ai.php). No remote endpoint — token_url exists for
+            // McpConnectorTokenRefreshService (Google refresh endpoint,
+            // same shape as the google-drive entry).
+            'endpoint' => 'local://google-classroom',
+            'token_url' => 'https://oauth2.googleapis.com/token',
+            'auth_mode' => 'oauth_remote',
+            'oauth_client_id' => env('GOOGLE_CLASSROOM_CLIENT_ID'),
+            'oauth_secret' => env('GOOGLE_CLASSROOM_CLIENT_SECRET'),
+            'timeout' => 30,
+            'skill' => \App\AiAgents\Skills\GoogleClassroomSkill::class,
+            'default_write_mode' => 'deny',
+            // Real tool names (Name attributes on the tool classes) — unlike
+            // the google-drive entry (whose names drifted; see D.3), these are
+            // verified against the classes shipped in the same PR.
+            'read_tools' => ['google_classroom_list_courses', 'google_classroom_list_coursework'],
+            // Wave-1 is read-only BY DESIGN: no write tools exist, so nothing
+            // can be classified as a write — stronger than write_mode=deny.
+            'write_tools' => [],
+            'enabled' => env('TOSHI_GOOGLE_CLASSROOM_ENABLED', false),
+            'allows_custom_endpoint' => false,
+        ],
     ],
 
     /*
@@ -316,6 +340,14 @@ return [
             ],
             'google-drive' => [
                 'mode' => 'deny',
+            ],
+            'google-classroom' => [
+                // Wave-1 has zero write tools; 'classify' means every known
+                // read tool executes and ANY unknown tool name fails closed
+                // as a write → gated/denied. If a future wave adds a write
+                // tool, it lands in ApprovableMcpTool-gated territory by
+                // default — never the ungated-master-switch failure mode.
+                'mode' => env('TOSHI_GOOGLE_CLASSROOM_MCP_WRITE_MODE', 'classify'),
             ],
         ],
     ],

@@ -3,6 +3,7 @@
 use App\Mcp\Servers\SpikeSlackMockServer;
 use App\Models\SchoolMcpConnector;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Laravel\Mcp\Client;
 use Laravel\Mcp\Client\OAuth\TokenSet;
 use Laravel\Mcp\Facades\Mcp;
@@ -87,6 +88,62 @@ if ($mode === 'mock') {
 
         return redirect('/admin/settings/integrations');
     });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Google Classroom mock server (test-only — always registered)
+|--------------------------------------------------------------------------
+|
+| The spike-slack-mock pattern: register the fixture server unconditionally
+| so the mcp:start subprocess in tests can find it. NOT behind a feature flag
+| — this is a local mock that never talks to the real Classroom API.
+| Production has no mock-mode flag to flip; tests register the named client
+| directly in setUp() and this server is always available for mcp:start.
+*/
+
+Mcp::local('google-classroom-mock', \App\Mcp\Servers\SpikeGoogleClassroomMockServer::class);
+
+/*
+|--------------------------------------------------------------------------
+| Google Classroom connector (Thread A wave-1, read-only)
+|--------------------------------------------------------------------------
+|
+| Self-hosted LOCAL MCP server wrapping the Classroom REST API. Both ends
+| speak the laravel/mcp 0.8.2 era in-process — the remote-server transport
+| gap does NOT apply to Mcp::local() (see the marker below for the remote
+| client story). Tool code resolves per-school tokens from the registry.
+|
+| Google REST OAuth is NOT a remote MCP server: the vendor's
+| Mcp::oAuthRoutesFor requires a WebClient, so the connect/callback routes
+| are plain Socialite google routes (GoogleClassroomOAuthController) — the
+| GoogleAuthController precedent, separate client credentials.
+|
+| Dormant by default (TOSHI_GOOGLE_CLASSROOM_ENABLED=false). Enabled on an
+| instance only after the verification prerequisites are confirmed.
+| CODE COMPLETE, VERIFICATION PENDING — no live agent-loop test yet.
+*/
+
+$googleClassroomEnabled = env('TOSHI_GOOGLE_CLASSROOM_ENABLED', false);
+
+if ($googleClassroomEnabled) {
+    Mcp::local('google-classroom', \App\Mcp\Servers\GoogleClassroomServer::class);
+
+    Mcp::registerClient('google-classroom', function () {
+        return Client::local(PHP_BINARY, [
+            base_path('artisan'),
+            'mcp:start',
+            'google-classroom',
+        ])->withTimeout((float) config('toshi.mcp_connectors.google-classroom.timeout', 30));
+    });
+
+    Route::get('/mcp/google-classroom/connect', [\App\Http\Controllers\Admin\Setting\GoogleClassroomOAuthController::class, 'connect'])
+        ->name('mcp.oauth.google-classroom.connect')
+        ->middleware(['web', 'auth']);
+
+    Route::get('/mcp/oauth/google-classroom/callback', [\App\Http\Controllers\Admin\Setting\GoogleClassroomOAuthController::class, 'callback'])
+        ->name('mcp.oauth.google-classroom.callback')
+        ->middleware(['web', 'auth']);
 }
 
 /*
