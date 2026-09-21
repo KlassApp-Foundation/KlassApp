@@ -46,21 +46,21 @@
         @endphp
         <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card" wire:key="wizard-card-{{ $stepIndex }}-{{ $step['key'] }}">
             <div class="manual-wizard-step-head mb-6">
-                <h2 class="ds-page-head-title" data-testid="wizard-step-title">
-                    {{ $step['label'] }}
-                </h2>
-                <p class="ds-page-head-sub" data-testid="wizard-step-sub">
-                    Step {{ $stepIndex + 1 }} of {{ $this->stepCount }}
+                <div class="manual-wizard-step-title-row">
+                    <h2 class="ds-page-head-title" data-testid="wizard-step-title">
+                        {{ $step['label'] }}
+                    </h2>
+                    <span class="ds-badge ds-badge-pending ds-badge-sm" data-testid="wizard-step-counter">Step {{ $stepIndex + 1 }} of {{ $this->stepCount }}</span>
                     @if($isOptional)
-                        · optional
+                        <span class="ds-badge ds-badge-info ds-badge-sm" data-testid="wizard-step-optional">Optional</span>
                     @endif
-                    @if($returningToReview && ($step['key'] ?? '') !== 'review')
-                        · Next returns you to review
-                    @endif
-                    @if($stepsGrewBy > 0)
-                        · <span data-testid="wizard-steps-grew" style="color:#15803D;">{{ $stepsGrewBy }} more {{ \Illuminate\Support\Str::plural('step', $stepsGrewBy) }} added by your answers</span>
-                    @endif
-                </p>
+                </div>
+                @if($returningToReview && ($step['key'] ?? '') !== 'review')
+                    <p class="manual-wizard-step-note" data-testid="wizard-step-note">Next returns you to review.</p>
+                @endif
+                @if($stepsGrewBy > 0)
+                    <p class="manual-wizard-step-note manual-wizard-step-note--growth" data-testid="wizard-steps-grew">{{ $stepsGrewBy }} more {{ \Illuminate\Support\Str::plural('step', $stepsGrewBy) }} added by your answers.</p>
+                @endif
             </div>
 
             @if($errorMessage)
@@ -86,7 +86,9 @@
                 ])
             </div>
 
-            @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'standards', 'plan_selection', 'review'], true))
+            {{-- Offered on every step that has a real admin route. It used to be suppressed on
+                 exactly the steps where a form helps most (EMIS, UNEB centre, academic year). --}}
+            @if(!empty($step['route']))
                 <p class="mt-4 text-xs text-gray-500" style="color:#64748B;">
                     Prefer the full admin form?
                     <a href="{{ url($step['route']) }}" class="text-blue-600 underline" style="color:#1E6FD9;">Open {{ $step['label'] }}</a>
@@ -124,16 +126,27 @@
                 {{ $prevLabel }}
             </x-button>
 
-            <div class="manual-wizard-progress" role="tablist" aria-label="Setup progress" data-testid="wizard-progress">
-                @foreach($steps as $i => $s)
-                    <button type="button"
-                            class="manual-wizard-dot {{ $i === $stepIndex ? 'is-current' : '' }} {{ $s['is_complete'] ? 'is-complete' : '' }} {{ ($s['key'] ?? '') === 'review' ? 'is-review' : '' }}"
-                            wire:click="goToStep({{ $i }})"
-                            title="{{ $s['label'] }}"
-                            aria-label="{{ $s['label'] }}"
-                            aria-current="{{ $i === $stepIndex ? 'step' : 'false' }}"
-                            data-step-key="{{ $s['key'] }}"></button>
-                @endforeach
+            <div class="manual-wizard-progress" data-testid="wizard-progress">
+                <div class="manual-wizard-track"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="{{ $this->stepCount }}"
+                     aria-valuenow="{{ $stepIndex + 1 }}"
+                     aria-label="Setup progress"
+                     data-testid="wizard-track">
+                    <span class="manual-wizard-track-fill" style="width: {{ $this->stepCount > 0 ? (int) round((($stepIndex + 1) / $this->stepCount) * 100) : 0 }}%"></span>
+                </div>
+                <label class="manual-wizard-jump">
+                    <span class="manual-wizard-jump-label">Jump to</span>
+                    <select class="manual-wizard-jump-select"
+                            data-testid="wizard-jump"
+                            aria-label="Jump to a setup step"
+                            wire:change="goToStep($event.target.value)">
+                        @foreach($steps as $i => $s)
+                            <option value="{{ $i }}" @selected($i === $stepIndex)>{{ $i + 1 }}. {{ $s['label'] }}{{ $s['is_complete'] ? ' (done)' : '' }}</option>
+                        @endforeach
+                    </select>
+                </label>
             </div>
 
             <x-button

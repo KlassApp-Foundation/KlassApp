@@ -130,7 +130,11 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSet('stepIndex', 0)
             ->assertSee('School name')
             ->assertSeeHtml('data-testid="wizard-progress"')
-            ->assertSeeHtml('is-current')
+            ->assertSeeHtml('data-testid="wizard-track"')
+            ->assertSeeHtml('data-testid="wizard-jump"')
+            // The indicator is now a progress track plus one labelled jump control, so
+            // assert the value it reports rather than the retired `is-current` dot class.
+            ->assertSeeHtml('aria-valuenow="1"')
             ->call('next')
             ->assertSet('errorMessage', 'Enter your real school name.')
             ->assertSet('stepIndex', 0)
@@ -149,7 +153,8 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSet('stepIndex', 0)
             ->assertSee('School name')
             ->call('goToStep', 1)
-            ->assertSet('stepIndex', 1);
+            ->assertSet('stepIndex', 1)
+            ->assertSeeHtml('aria-valuenow="2"');
     }
 
     public function test_whatsapp_next_lands_on_visible_plan_step_not_completion(): void
