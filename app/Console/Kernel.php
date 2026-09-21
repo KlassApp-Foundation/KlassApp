@@ -149,6 +149,26 @@ class Kernel extends ConsoleKernel
                  ->hourly()
                  ->withoutOverlapping();
 
+        // EOT KPI snapshots — keep the dashboard + report-card aggregates fresh
+        // without running the raw-SQL aggregate on every page load. Frequency and
+        // staleness are config-anchored (config/report_kpis.php).
+        $kpiRebuild = $schedule->command('report-kpis:rebuild')
+                 ->withoutOverlapping();
+
+        switch ((string) config('report_kpis.rebuild_frequency', 'hourly')) {
+            case 'every_fifteen_minutes':
+                $kpiRebuild->everyFifteenMinutes();
+                break;
+            case 'every_thirty_minutes':
+                $kpiRebuild->everyThirtyMinutes();
+                break;
+            case 'daily':
+                $kpiRebuild->dailyAt((string) config('report_kpis.daily_at', '01:30'));
+                break;
+            default:
+                $kpiRebuild->hourly();
+        }
+
         // Heartbeat so Cloud scheduler can be verified without relying on LOG_LEVEL.
         $schedule->call(function () {
             \Illuminate\Support\Facades\Cache::put(

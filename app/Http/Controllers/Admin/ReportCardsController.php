@@ -94,67 +94,19 @@ class ReportCardsController extends Controller
      *
      * @return array{perClass: array, perSubject: array, perGender: array}
      */
+    /**
+     * EOT KPIs for the dashboard + report-cards page.
+     *
+     * Reads the materialized `report_kpi_snapshots` table (rebuilt by
+     * `php artisan report-kpis:rebuild`) and falls back to the original live
+     * aggregate when the snapshot is missing or older than
+     * config('report_kpis.stale_after_minutes') — so a stale snapshot can never
+     * show wrong numbers. The aggregate itself now lives in
+     * App\Services\ReportKpiSnapshotService::computeLive().
+     */
     public static function computeEotKpis(int $schoolId, ?int $academicTermId = null): array
     {
-        // --- Per class: average of per-student EOT totals, grouped by section ---
-        $perClass = DB::table('marks as m')
-            ->join('exams as e', 'm.exam_id', '=', 'e.id')
-            ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
-            ->where('m.school_id', $schoolId)
-            ->where('et.contributes_to_report_total', 1)
-            ->when($academicTermId, fn($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('m.section_id', DB::raw('SUM(m.marks) as total'))
-            ->groupBy('m.student_id', 'm.section_id');
-
-        $perClass = DB::table(DB::raw("({$perClass->toSql()}) as student_totals"))
-            ->mergeBindings($perClass)
-            ->join('sections as s', 'student_totals.section_id', '=', 's.id')
-            ->select('s.name as label', DB::raw('ROUND(AVG(student_totals.total), 1) as value'))
-            ->groupBy('s.name', 'student_totals.section_id')
-            ->orderBy('s.name')
-            ->get()
-            ->toArray();
-
-        // --- Per subject: average mark per subject ---
-        $perSubject = DB::table('marks as m')
-            ->join('exams as e', 'm.exam_id', '=', 'e.id')
-            ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
-            ->join('subjects as sub', 'm.subject_id', '=', 'sub.id')
-            ->where('m.school_id', $schoolId)
-            ->where('et.contributes_to_report_total', 1)
-            ->when($academicTermId, fn($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('sub.name as label', DB::raw('ROUND(AVG(m.marks), 1) as value'))
-            ->groupBy('sub.name', 'm.subject_id')
-            ->orderBy('sub.name')
-            ->get()
-            ->toArray();
-
-        // --- Per gender: average of per-student EOT totals, split by gender ---
-        $studentTotalsForGender = DB::table('marks as m')
-            ->join('exams as e', 'm.exam_id', '=', 'e.id')
-            ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
-            ->where('m.school_id', $schoolId)
-            ->where('et.contributes_to_report_total', 1)
-            ->when($academicTermId, fn($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('m.student_id', DB::raw('SUM(m.marks) as total'))
-            ->groupBy('m.student_id');
-
-        $perGender = DB::table(DB::raw("({$studentTotalsForGender->toSql()}) as student_totals"))
-            ->mergeBindings($studentTotalsForGender)
-            ->join('users as u', 'student_totals.student_id', '=', 'u.id')
-            ->join('userprofiles as up', 'u.id', '=', 'up.user_id')
-            ->whereIn('up.gender', ['male', 'female'])
-            ->select(DB::raw("CASE WHEN up.gender = 'male' THEN 'Male' ELSE 'Female' END as label"), DB::raw('ROUND(AVG(student_totals.total), 1) as value'))
-            ->groupBy('up.gender')
-            ->orderBy('up.gender')
-            ->get()
-            ->toArray();
-
-        return [
-            'perClass'   => $perClass,
-            'perSubject' => $perSubject,
-            'perGender'  => $perGender,
-        ];
+        return app(\App\Services\ReportKpiSnapshotService::class)->kpis($schoolId, $academicTermId);
     }
 
     public function downloadClass(StandardLink $stdLink)
