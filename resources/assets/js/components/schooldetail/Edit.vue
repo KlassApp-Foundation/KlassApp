@@ -521,7 +521,29 @@ export default {
                     formData
                 )
                 .then(() => {
-                    $("#submit-btn").click();
+                    // Own the submission. The native form serialises the DOM, which silently
+                    // dropped bound values (an empty country select posted country_id=""), so
+                    // the component now posts its own state to the same endpoint instead.
+                    axios
+                        .post(
+                            "/admin/schooldetails/update/" + this.school_id,
+                            formData
+                        )
+                        .then(() => {
+                            window.location.href =
+                                "/admin/schooldetails/editdetail/" +
+                                this.school_id;
+                        })
+                        .catch((error) => {
+                            this.errors = error.response?.data?.errors || {
+                                name: [
+                                    "Could not save (HTTP " +
+                                        (error.response?.status ??
+                                            "network error") +
+                                        "). Nothing was changed.",
+                                ],
+                            };
+                        });
                 })
                 .catch((error) => {
                     this.errors = error.response?.data?.errors || {};
