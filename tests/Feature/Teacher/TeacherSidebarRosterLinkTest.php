@@ -38,7 +38,7 @@ class TeacherSidebarRosterLinkTest extends TestCase
             'email' => 'sidebar.teacher@t.sch.ug',
         ]);
 
-        $html = view('layouts.teacher.menu')->render();
+        $html = view('layouts.partials.sidebar-menu', ['role' => 'teacher'])->render();
 
         $this->assertStringContainsString(url('teacher/classes'), $html);
         $this->assertStringNotContainsString('href="' . url('teacher/standardLinks') . '"', $html);

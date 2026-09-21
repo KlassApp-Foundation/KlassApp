@@ -310,15 +310,15 @@ class TeacherReportCardsTest extends TestCase
 
     public function test_sidebar_report_cards_link_only_for_class_teachers(): void
     {
-        $ctHtml = view('layouts.teacher.menu')->with([])->render();
+        $ctHtml = view('layouts.partials.sidebar-menu', ['role' => 'teacher'])->render();
         // Menu reads auth(); actingAs before render.
         $this->actingAs($this->classTeacher);
-        $ctHtml = view('layouts.teacher.menu')->render();
+        $ctHtml = view('layouts.partials.sidebar-menu', ['role' => 'teacher'])->render();
         $this->assertStringContainsString(route('teacher.reports.cards.index'), $ctHtml);
         $this->assertStringNotContainsString('/teacher/report-cards', $ctHtml);
 
         $this->actingAs($this->subjectTeacher);
-        $subjHtml = view('layouts.teacher.menu')->render();
+        $subjHtml = view('layouts.partials.sidebar-menu', ['role' => 'teacher'])->render();
         $this->assertStringNotContainsString(route('teacher.reports.cards.index'), $subjHtml);
     }
 
