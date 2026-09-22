@@ -28,7 +28,9 @@ class SchoolObserver
             $school->slug = $slug;
             $school->save();
 
-            $keys = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'center_no' , 'affiliated_by' , 'board' , 'date_of_establishment' , 'landline_no' , 'moto' , 'school_logo' , 'website'];
+            // 'board' removed: it maps to schools.curriculum (see SchoolDetailsController::update),
+            // so seeding a meta row for it would recreate the duplicate that was just removed.
+            $keys = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'center_no' , 'affiliated_by' , 'date_of_establishment' , 'landline_no' , 'moto' , 'school_logo' , 'website'];
             foreach ($keys as $key) 
             {
                 $detail = SchoolDetail::create([

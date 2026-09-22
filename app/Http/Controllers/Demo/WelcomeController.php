@@ -22,45 +22,69 @@ class WelcomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Public demo: only schools explicitly flagged for showcase, and only non-personal
+     * fields. Previously this returned the first three active schools with their real
+     * names, emails and phone numbers.
+     */
     public function schoolList()
     {
-        //
-        $schoolList = School::where('status',1)->get()->take(3);
-        
-        $schoolList = SchoolResource::collection($schoolList);
+        $schools = School::where('is_demo', true)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->take(3)
+            ->get()
+            ->map(fn ($school) => ['id' => $school->id, 'name' => $school->name])
+            ->values()
+            ->all();
 
-        return $schoolList;
+        return ['data' => $schools];
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Public demo roster for one demo school. Returns names and roles only: never an email
+     * (staff emails are their login identifiers) and never a phone number. Unknown or
+     * non-demo ids are a clean 404 rather than an unauthenticated 500.
      */
     public function list($school_id)
     {
-        //
-        $array = [];
+        $school = School::where('id', $school_id)
+            ->where('status', 1)
+            ->where('is_demo', true)
+            ->first();
 
-        $school = School::with('admin')->where([['id',$school_id],['status',1]])->first();
+        abort_if($school === null, 404);
 
-        $academic_year = SiteHelper::getAcademicYear($school->id);
+        $academicYear = SiteHelper::getAcademicYear($school->id);
+        $yearId = $academicYear?->id;
 
-        $principal =  TeacherProfile::where([['school_id',$school->id],['academic_year_id',$academic_year->id],['designation','principal']])->get();
-
-        $teacher =  TeacherProfile::where([['school_id',$school->id],['academic_year_id',$academic_year->id],['designation','!=','principal'],['designation','!=','librarian'],['designation','!=','receptionist'],['designation','!=','accountant']])->take(3)->get();
+        $principals = $yearId ? TeacherProfile::where([['school_id', $school->id], ['academic_year_id', $yearId], ['designation', 'principal']])->get() : collect();
+        $teachers = $yearId ? TeacherProfile::where([['school_id', $school->id], ['academic_year_id', $yearId], ['designation', '!=', 'principal'], ['designation', '!=', 'librarian'], ['designation', '!=', 'receptionist'], ['designation', '!=', 'accountant']])->take(3)->get() : collect();
 
         $details = $school->getDetails();
 
-        $array['admin']         = UserResource::collection($details['admin']);
-        $array['principal']     = TeacherResource::collection($principal);
-        $array['teacher']       = TeacherResource::collection($teacher);
-        $array['student']       = UserResource::collection($details['student']);
-        $array['parent']        = UserResource::collection($details['parent']);
-        $array['librarian']     = UserResource::collection($details['librarian']);
-        $array['receptionist']  = UserResource::collection($details['receptionist']);
-        $array['accountant']    = UserResource::collection($details['accountant']);
+        // Names and roles only. No email, no phone, nothing credential-shaped.
+        $safe = function ($people, string $role) {
+            return collect($people)->map(function ($person) use ($role) {
+                $profile = $person->userprofile ?? null;
+                $name = trim(($profile->firstname ?? '').' '.($profile->lastname ?? ''));
 
-        return $array;
+                return [
+                    'fullname' => $name !== '' ? $name : (string) ($person->name ?? 'Member'),
+                    'role' => $role,
+                ];
+            })->values()->all();
+        };
+
+        return [
+            'admin' => $safe($details['admin'] ?? [], 'Administrator'),
+            'principal' => $safe($principals, 'Principal'),
+            'teacher' => $safe($teachers, 'Teacher'),
+            'student' => $safe($details['student'] ?? [], 'Student'),
+            'parent' => $safe($details['parent'] ?? [], 'Parent'),
+            'librarian' => $safe($details['librarian'] ?? [], 'Librarian'),
+            'receptionist' => $safe($details['receptionist'] ?? [], 'Receptionist'),
+            'accountant' => $safe($details['accountant'] ?? [], 'Accountant'),
+        ];
     }
 }

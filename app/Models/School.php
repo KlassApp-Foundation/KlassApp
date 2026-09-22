@@ -11,6 +11,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class School extends Model
 {
+
+    /**
+     * Motto text for school identity (report cards, school pages, API payloads).
+     *
+     * Reads the colleges column first, falling back to the legacy `school_details.moto`
+     * meta so nothing breaks for a school whose meta was written before the backfill.
+     * The `-` sentinel means "not set" everywhere, so it normalises to null here too.
+     * Remove the fallback only once every school has a column value.
+     */
+    public function mottoText(): ?string
+    {
+        $value = $this->motto;
+
+        if ($value === null || trim((string) $value) === '' || $value === '-') {
+            $legacy = \App\Models\SchoolDetail::where('school_id', $this->id)
+                ->where('meta_key', 'moto')
+                ->value('meta_value');
+            $value = ($legacy === null || trim((string) $legacy) === '' || $legacy === '-') ? null : $legacy;
+        }
+
+        $value = $value === null ? null : trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
     //
     /**
      * The table associated with the model.
@@ -25,7 +50,7 @@ class School extends Model
      * @var array
      */
     protected $fillable = [
-        'name' , 'email' , 'phone' , 'address' , 'country_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'uneb_center_number', 'curriculum', 'school_category', 'status', 'registration_country', 'student_size',
+        'name' , 'motto' , 'email' , 'phone' , 'address' , 'country_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'uneb_center_number', 'curriculum', 'school_category', 'status', 'registration_country', 'student_size',
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
         'exam_type_preferences',
         'toshi_enabled',

@@ -18,6 +18,27 @@ class AttendanceAddRequest extends FormRequest
      */
     public function authorize()
     {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // School admins keep school-wide attendance create.
+        if ((int) $user->usergroup_id === 3) {
+            return true;
+        }
+
+        // Same shared scope check as the web request, so the two paths cannot diverge.
+        // The API posts the class as Standardlinkid.
+        if ((int) $user->usergroup_id === 5) {
+            return SiteHelper::canTeacherRecordAttendance(
+                (int) $user->school_id,
+                (int) $user->id,
+                (int) $this->input('Standardlinkid')
+            );
+        }
+
         return true;
     }
 

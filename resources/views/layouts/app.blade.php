@@ -50,8 +50,13 @@
     <!-- end -->
 
  <livewire:styles>
+    @php
+        // The manual onboarding wizard hides Toshi entirely (see dashboard-refresh.css)
+        // so its checklist cannot compete with the wizard.
+        $manualWizardActive = request()->routeIs('admin.onboarding.wizard');
+    @endphp
     </head>
-    <body class="font-primary antialiased min-h-screen overflow-x-hidden">
+    <body class="font-primary antialiased min-h-screen overflow-x-hidden{{ $manualWizardActive ? ' toshi-manual-wizard-active' : '' }}">
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full min-h-screen relative">

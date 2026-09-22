@@ -70,7 +70,7 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="moto" class="ds-form-label"
-                                >School Moto<span class="text-red-500"
+                                >School Motto<span class="text-red-500"
                                     >*</span
                                 ></label
                             >
@@ -82,7 +82,7 @@
                                 v-model="moto"
                                 id="moto"
                                 class="ds-form-input w-full"
-                                placeholder="Enter School Moto"
+                                placeholder="Enter School Motto"
                             />
                         </div>
                         <span
@@ -109,9 +109,8 @@
                             <label
                                 for="date_of_establishment"
                                 class="ds-form-label"
-                                >Date Of Establishment<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >Date Of Establishment
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
@@ -135,9 +134,8 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="board" class="ds-form-label"
-                                >Board Of Education<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >Board Of Education
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
@@ -211,9 +209,8 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="city" class="ds-form-label"
-                                >District<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >District
+                                </label
                             >
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
@@ -524,7 +521,29 @@ export default {
                     formData
                 )
                 .then(() => {
-                    $("#submit-btn").click();
+                    // Own the submission. The native form serialises the DOM, which silently
+                    // dropped bound values (an empty country select posted country_id=""), so
+                    // the component now posts its own state to the same endpoint instead.
+                    axios
+                        .post(
+                            "/admin/schooldetails/update/" + this.school_id,
+                            formData
+                        )
+                        .then(() => {
+                            window.location.href =
+                                "/admin/schooldetails/editdetail/" +
+                                this.school_id;
+                        })
+                        .catch((error) => {
+                            this.errors = error.response?.data?.errors || {
+                                name: [
+                                    "Could not save (HTTP " +
+                                        (error.response?.status ??
+                                            "network error") +
+                                        "). Nothing was changed.",
+                                ],
+                            };
+                        });
                 })
                 .catch((error) => {
                     this.errors = error.response?.data?.errors || {};

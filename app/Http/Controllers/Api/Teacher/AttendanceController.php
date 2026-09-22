@@ -64,7 +64,8 @@ class AttendanceController extends Controller
                     })->get()->sortBy('user.userprofile.firstname')
                 : collect();
 
-            $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks((int) $school_id, (int) Auth::id());
+            // Scope-aware, shared with the web path (class_teacher_only | classes_i_teach | school_wide).
+            $classTeacherLinks = SiteHelper::attendanceScopeStandardLinks((int) $school_id, (int) Auth::id());
             $array['standardlist']      = \App\Http\Resources\StandardLink::collection($classTeacherLinks);
             $array['studentlist']       = StudentlistResource::collection($studentAcademic);
             $array['absentReasonlist']  = AbsentReason::where('status',1)->get();

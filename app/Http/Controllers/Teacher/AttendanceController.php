@@ -32,6 +32,59 @@ class AttendanceController extends Controller
     use Common;
 
     /**
+     * Attendance overview for this teacher (view: teacher/attendance/index).
+     *
+     * The class list and every record are bounded by the school's attendance_scope, so this
+     * page shows exactly what the teacher is allowed to record against. It deliberately does
+     * not assume school-wide access: under class_teacher_only it lists homeroom classes only,
+     * under classes_i_teach it adds the classes they are assigned as a subject teacher.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $teacherId = (int) Auth::id();
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+
+        $links = SiteHelper::attendanceScopeStandardLinks($schoolId, $teacherId);
+        $linkIds = $links->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $sections = $links->pluck('section')->filter()->unique('id')->sortBy('name')->values();
+        $streams = $links->pluck('stream')->filter()->unique()->sort()->values();
+
+        $selectedSection = $request->integer('section_id') ?: null;
+        $selectedStream = trim((string) $request->input('stream', ''));
+        $selectedDate = $request->input('date', now()->format('Y-m-d'));
+
+        $records = ($academicYear && ! empty($linkIds))
+            ? Attendance::query()
+                ->with(['user.studentAcademicLatest', 'standardLink.section'])
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('standardLink_id', $linkIds)
+                ->where('date', $selectedDate)
+                ->when($selectedSection, function ($q) use ($selectedSection) {
+                    $q->whereHas('standardLink', fn ($s) => $s->where('section_id', $selectedSection));
+                })
+                ->when($selectedStream !== '', function ($q) use ($selectedStream) {
+                    $q->whereHas('standardLink', fn ($s) => $s->where('stream', $selectedStream));
+                })
+                ->orderByDesc('id')
+                ->get()
+            : collect();
+
+        return view('teacher.attendance.index', [
+            'records' => $records,
+            'sections' => $sections,
+            'streams' => $streams,
+            'selectedSection' => $selectedSection,
+            'selectedStream' => $selectedStream,
+            'selectedDate' => $selectedDate,
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
@@ -39,6 +92,7 @@ class AttendanceController extends Controller
     public function list()
 {
     $school_id = Auth::user()->school_id;
+    $teacher_id = (int) Auth::id();
     $academic_year = SiteHelper::getAcademicYear($school_id);
 
     if (!$academic_year) {
@@ -49,25 +103,9 @@ class AttendanceController extends Controller
         ];
     }
 
-    $classTeacherLinks = StandardLink::query()
-        ->where('school_id', $school_id)
-        ->where('academic_year_id', $academic_year->id)
-        ->where('status', 1)
-        ->with(['standard', 'section'])
-        ->orderBy('section_id')
-        ->get();
-
-    if ($classTeacherLinks->isEmpty()) {
-        return [
-            'standardlist'     => [],
-            'studentlist'      => [],
-            'absentReasonlist' => AbsentReason::where('status', 1)->get(),
-            'std_id' => null,
-            'studentAcademic' => collect(),
-        ];
-    }
-
-    $classTeacherLinks = $classTeacherLinks->values();
+    // Same scope as Api\Teacher\AttendanceController@index: one shared helper reads the
+    // school's attendance_scope so the web and API listings cannot diverge.
+    $classTeacherLinks = SiteHelper::attendanceScopeStandardLinks((int) $school_id, $teacher_id);
     $linkIds = $classTeacherLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
 
     $standardLinklist = StandardLinkResource::collection($classTeacherLinks);
@@ -113,51 +151,6 @@ class AttendanceController extends Controller
     ];
 }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        $schoolId = (int) Auth::user()->school_id;
-        $academicYear = SiteHelper::getAcademicYear($schoolId);
-        $selectedSection = request()->integer('section_id') ?: null;
-        $selectedStream = trim((string) request()->input('stream', ''));
-        $selectedDate = request()->input('date', now()->format('Y-m-d'));
-
-        $links = $academicYear
-            ? StandardLink::query()
-                ->where('school_id', $schoolId)
-                ->where('academic_year_id', $academicYear->id)
-                ->where('status', 1)
-                ->with('section')
-                ->orderBy('section_id')
-                ->get()
-            : collect();
-
-        $sections = $links->pluck('section')->filter()->unique('id')->sortBy('name')->values();
-        $streams = $sections->pluck('stream')->filter()->unique()->sort()->values();
-
-        $records = $academicYear
-            ? Attendance::query()
-                ->with(['user', 'standardLink.section'])
-                ->where('school_id', $schoolId)
-                ->where('academic_year_id', $academicYear->id)
-                ->where('recorded_by', Auth::id())
-                ->whereDate('date', $selectedDate)
-                ->when($selectedSection, fn ($query) => $query->whereHas('standardLink', fn ($linkQuery) => $linkQuery->where('section_id', $selectedSection)))
-                ->when($selectedStream !== '', fn ($query) => $query->whereHas('standardLink.section', fn ($sectionQuery) => $sectionQuery->where('stream', $selectedStream)))
-                ->orderBy('standardLink_id')
-                ->orderBy('user_id')
-                ->get()
-            : collect();
-
-        return view('teacher.attendance.index', compact(
-            'records', 'sections', 'streams', 'selectedSection', 'selectedStream', 'selectedDate'
-        ));
-    }
-
     public function create()
     {
         $standard = request()->input('standardLink_id', '');
@@ -172,6 +165,17 @@ class AttendanceController extends Controller
      */
     public function store(AttendanceAddRequest $request)
 { 
+    // Authorization runs BEFORE the try/catch: the catch below turns every Exception,
+    // HttpException included, into a generic 422, so an abort(403) inside the try would
+    // be silently swallowed. This check must therefore live outside it.
+    if (! SiteHelper::canTeacherRecordAttendance(
+        (int) Auth::user()->school_id,
+        (int) Auth::id(),
+        (int) $request->standardLink_id
+    )) {
+        abort(403, 'You are not allowed to record attendance for this class.');
+    }
+
     try
     {
         $school_id      = Auth::user()->school_id;
@@ -211,13 +215,23 @@ class AttendanceController extends Controller
 
     public function export($standardLink_id)
     {
+        // Same swallow hazard as store(): abort() inside this try would be converted to
+        // a generic response by the catch below. The scope check must run before it.
+        if (! SiteHelper::canTeacherRecordAttendance(
+            (int) Auth::user()->school_id,
+            (int) Auth::id(),
+            (int) $standardLink_id
+        )) {
+            abort(403, 'You are not allowed to export attendance for this class.');
+        }
+
         try
         {
             //
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            $standardLink = StandardLink::query()
+$standardLink = StandardLink::query()
                 ->where('school_id', $school_id)
                 ->where('academic_year_id', $academic_year->id)
                 ->where('status', 1)

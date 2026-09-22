@@ -25,7 +25,27 @@
     $activeClass = $nav['active_class'] ?? 'active';
     $prefix      = trim((string) ($nav['prefix'] ?? ''), '/');
 
-    $navHref = function (array $item): string {
+    // Parent per-child entries resolve through the real portal service. A single-child
+    // parent goes straight to that child's data; a multi-child parent lands on Children,
+    // which is where the choice is actually made. Resolved once, and only if needed.
+    $parentChildren = [];
+    $needsParentChild = collect($nav['items'] ?? [])->contains(fn ($i) => ($i['resolver'] ?? null) === 'parent_child');
+    if ($needsParentChild && auth()->check()) {
+        try {
+            $parentChildren = collect(app(\App\Services\Parent\ParentPortalService::class)->listChildren(auth()->user())['children'] ?? [])->all();
+        } catch (\Throwable $e) {
+            $parentChildren = []; // fail safe: fall back to the Children page
+        }
+    }
+
+    $navHref = function (array $item) use ($parentChildren): string {
+        if (($item['resolver'] ?? null) === 'parent_child') {
+            if (count($parentChildren) === 1) {
+                return route('parent.children.'.($item['child_path'] ?? 'fees'), $parentChildren[0]['student_id']);
+            }
+
+            return route('parent.children');
+        }
         $href = isset($item['route']) ? route($item['route']) : url($item['url'] ?? '#');
         if (! empty($item['hash'])) {
             $href .= '#'.$item['hash'];
@@ -63,8 +83,39 @@
         );
     }
 
-    $showItem = function (array $item) use ($ctLinks): bool {
-        return ($item['condition'] ?? null) !== 'class_teacher' || ($ctLinks && $ctLinks->isNotEmpty());
+    // Class Streams visibility must mirror ITS OWN authorization, which is not the
+    // attendance scope and not the Report Cards rule. ClassStreamController enforces
+    // ownership through ExamAuthorization::sectionIdsForClassTeacher(), and that unions
+    // standards_link.class_teacher_id with sections.class_teacher_id. The nav must not be
+    // narrower than the check it stands in front of, or a section-level class teacher is
+    // denied the link to a page they are actually allowed to open.
+    $ctSectionIds = [];
+    $needsSectionCt = collect($nav['items'] ?? [])->contains(fn ($i) => ($i['condition'] ?? null) === 'class_streams');
+    if ($needsSectionCt && auth()->check() && auth()->user()->school_id) {
+        $navYear = \App\Helpers\SiteHelper::getAcademicYear((int) auth()->user()->school_id);
+        if ($navYear) {
+            $ctSectionIds = app(\App\Services\ExamAuthorization::class)->sectionIdsForClassTeacher(
+                auth()->user(),
+                (int) auth()->user()->school_id,
+                (int) $navYear->id
+            );
+        }
+    }
+
+    $showItem = function (array $item) use ($ctLinks, $ctSectionIds): bool {
+        $condition = $item['condition'] ?? null;
+
+        // Report Cards keeps the homeroom rule because ReportCardsController::authorizeClassTeacher()
+        // checks exactly that, via isClassTeacherOfStandardLink().
+        if ($condition === 'class_teacher') {
+            return (bool) ($ctLinks && $ctLinks->isNotEmpty());
+        }
+
+        if ($condition === 'class_streams') {
+            return ! empty($ctSectionIds);
+        }
+
+        return true;
     };
 @endphp
 <ul class="list-reset text-sm">

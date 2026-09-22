@@ -118,7 +118,7 @@ class CallLogController extends Controller
 
     public function show($id)
     {
-        $calllog=CallLog::where('id',$id)->get();
+        $calllog=CallLog::where('school_id', Auth::user()->school_id)->where('id',$id)->get();
 
         $calllog=CallLogResource::collection($calllog);
 
@@ -152,7 +152,11 @@ class CallLogController extends Controller
             $school_id = Auth::user()->school_id;
 
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-            $calllog=CallLog::find($id);
+            $calllog=CallLog::where('school_id', Auth::user()->school_id)->find($id);
+
+            if (! $calllog) {
+                abort(404, 'Record not found.');
+            }
 
             $calllog->school_id=$school_id;
             $calllog->academic_year_id=$academic_year->id;
@@ -211,10 +215,18 @@ class CallLogController extends Controller
      */
     public function destroy($id)
     {
+
+        // Authorization and the 404 guard run BEFORE the try: the catch below
+        // converts every Exception, HttpException included, into a generic
+        // response, so a 404 raised inside the try would be swallowed.
+        $calllog=CallLog::where('school_id', Auth::user()->school_id)->where('id',$id)->first();
+
+        if (! $calllog) {
+            abort(404, 'Record not found.');
+        }
+
         try 
         {
-            $calllog=CallLog::where('id',$id)->first();
-            
             $calllog->delete();
             
             $message=trans('messages.delete_success_msg',['module' => 'Call Log']);

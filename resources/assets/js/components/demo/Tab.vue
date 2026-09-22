@@ -10,35 +10,35 @@
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Admin</b></li>
                     <li class="text-sm py-1" v-for="admin in list.admin">
-                        <p>Username : <span class="text-gray-600"> {{ admin.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Principal</b></li>
                     <li class="text-sm py-1" v-for="principal in list.principal">
-                        <p>Username : <span class="text-gray-600"> {{ principal.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Librarian</b></li>
                     <li class="text-sm py-1" v-for="librarian in list.librarian">
-                        <p>Username : <span class="text-gray-600"> {{ librarian.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Receptionist</b></li>
                     <li class="text-sm py-1" v-for="receptionist in list.receptionist">
-                        <p>Username : <span class="text-gray-600"> {{ receptionist.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Accountant</b></li>
                     <li class="text-sm py-1" v-for="accountant in list.accountant">
-                        <p>Username : <span class="text-gray-600"> {{ accountant.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
@@ -47,14 +47,14 @@
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Teacher</b></li>
                     <li class="text-sm py-1" v-for="teacher in list.teacher">
-                        <p>Username : <span class="text-gray-600"> {{ teacher.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Teacher</b> (For App)</li>
                     <li class="text-sm py-1" v-for="teacher in list.teacher">
-                        <p>Username : <span class="text-gray-600"> {{ teacher.mobile_no }} </span></p>
+                        <p>Username : <span class="text-gray-600"> {{ x.role }} </span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
@@ -63,14 +63,14 @@
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Student</b></li>
                     <li class="text-sm py-1" v-for="student in list.student">
-                        <p>Username : <span class="text-gray-600"> {{ student.email }} </span></p>
+                        <p>{{ x.fullname }} <span class="text-gray-500">· {{ x.role }}</span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>
                 <ul class="px-2 py-2">
                     <li class="text-gray-800 text-sm"><b>Parent</b> (For App)</li>
                     <li class="text-sm py-1" v-for="parent in list.parent">
-                        <p>Username : <span class="text-gray-600"> {{ parent.mobile_no }} </span></p>
+                        <p>Username : <span class="text-gray-600"> {{ x.role }} </span></p>
                         <p>Password : <span class="text-gray-600"> password </span></p>
                     </li>
                 </ul>

@@ -129,6 +129,14 @@ class AgentToshi extends Component
     public $ministryCode = '';
     /** @var string|null null = not asked; '' = skipped; value = UNEB centre number */
     public $unebCenterNumber = null;
+    /**
+     * Seeded default for the curriculum suggestion UI only (see curriculumDefaults()).
+     * It is NOT a statement about the school: a school's real curriculum is
+     * schools.curriculum, which may be null. Note that the commit path around the
+     * complete-mode save treats this property as the value to apply when the school has
+     * none, so an unanswered picker can commit 'uneb'. That is a behavioural question,
+     * recorded rather than changed here.
+     */
     public $curriculum = 'uneb';
     public $suggestedPlanId = null;
     public $schoolPayPassword = '';
@@ -618,6 +626,24 @@ class AgentToshi extends Component
     }
 
     /**
+     * The shared onboarding step model, the same source the manual wizard and the
+     * Completing Setup checklist read. The progress bar used to count a private
+     * 19-step taxonomy which had drifted from this list (it lacked curriculum and
+     * school_category and carried steps that are not part of setup at all), so the
+     * panel could claim "1/19" while the checklist and wizard disagreed.
+     */
+    public function getOnboardingChecklistProperty(): array
+    {
+        $school = \App\Models\School::find($this->schoolId);
+
+        if (! $school) {
+            return [];
+        }
+
+        return \App\Services\OnboardingStepsService::steps($school, auth()->id());
+    }
+
+    /**
      * School Admin mode: detect what's missing and jump to first incomplete step.
      */
     private function detectMissingSteps()
@@ -635,15 +661,11 @@ class AgentToshi extends Component
             return;
         }
 
+        // One intro message only. The items themselves render as a single actionable
+        // list in the panel (see agent-toshi.blade.php): ten separate chat lines each
+        // repeated the author label and prefixed the step with a red X, which read as
+        // a list of failures rather than a list of things to do.
         $this->botSay("I found **" . count($incomplete) . "** thing" . (count($incomplete) > 1 ? 's' : '') . " to set up:");
-        foreach ($incomplete as $step) {
-            $label = \App\Services\OnboardingStepsService::labelForContext(
-                (string) ($step['key'] ?? ''),
-                (string) ($step['label'] ?? ''),
-                'toshi'
-            );
-            $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $label);
-        }
 
         // Same landing rule as ManualOnboardingWizard mount: nextIncompleteStep
         // (includes optional teachers/students), not blocking-only.
@@ -657,6 +679,27 @@ class AgentToshi extends Component
             $this->promptPlanSelection();
         } else {
             $this->botSay(self::onboardingPromptForStep($first['key']));
+        }
+    }
+
+    /**
+     * Public entry point for the setup list: jump to a shared step by key.
+     * Wraps the private resume helper and prompts the step, so a click from the list
+     * behaves exactly like arriving via checklist resume.
+     */
+    public function jumpToChecklistStep(string $key): void
+    {
+        $known = collect(\App\Services\OnboardingStepsService::ALL_STEPS)->has($key);
+        if (! $known) {
+            return;
+        }
+
+        $this->jumpToIncompleteOnboardingStep($key);
+
+        if ($key === 'plan_selection') {
+            $this->promptPlanSelection();
+        } elseif (! \App\Services\OnboardingStepsService::isStepComplete($key, \App\Models\School::find($this->schoolId), auth()->id())) {
+            $this->botSay(self::onboardingPromptForStep($key));
         }
     }
 

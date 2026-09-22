@@ -69,7 +69,8 @@ class MustBePrivilege
      */
     private function isManualOnboardingRoute($request): bool
     {
-        return $request->is('admin/schooldetails')
+        return $request->is('admin/school-profile')
+            || $request->is('admin/schooldetails')
             || $request->is('admin/schooldetails/*')
             || $request->is('admin/whatsapp/phone')
             || $request->is('admin/subscriptions')

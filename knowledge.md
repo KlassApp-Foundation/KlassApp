@@ -11852,3 +11852,638 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Regression test**: `tests/Feature/Auth/RegistrationSwitchTest.php`, **4 passing (18 assertions)**: 1 shows the form, 0 shows maintenance, missing stays open, and **both** views agree with the flag, so the inversion cannot silently recur in the unrouted twin. Note for future tests: the form-present marker is the submit label ("Create account with password"), because the layout's own footer script mentions `saas-register-form` even when the form is absent, which produced a false positive in the first version of the test.
 - **Verification**: local A/B over real HTTP in both directions plus the missing-row case; regression test green; **deployed to production** (deployment `depl-a2cd0df7-553a-41e1-b391-88a45fb191d1` reached `deployment.succeeded` at commit `69dd98d0`); **verified on production itself**: `https://klassapp.xyz/register` and `https://www.klassapp.xyz/register` both return HTTP 200 with the real form ("Create account with password" present, `under maintenance` absent). The production `register_status` row is **still `"1"`**, unchanged, so the deploy alone restored sign-up with no production data write.
 - **Found during** the onboarding-flow audit of the same session, and shipped as its own isolated PR as requested: two view conditions plus one new test file, nothing else.
+
+### 2026-09-21: Onboarding audit fixes shipped and verified: header TypeError, Toshi progress taxonomy, wizard Toshi leak (#751, #752, #753)
+
+Three real fixes, each its own scoped PR, all verified locally and on staging.
+
+- **#751 MERGED `d809cf5c`: the header threw a TypeError on every fresh-school screen.** `Navigation.vue` did `this.academic_year = response.data.current_year.id` with no guard, and `/admin/list/academicyear` returns `current_year: null` for a school with no academic year, i.e. every brand new signup. Guarded the value; no try/catch added, so the cause is fixed rather than the symptom hidden. **Verified**: fresh synthetic signup with no academic year, the API really returns `current_year: null`, the page loads the new bundle `app-BCp22d34.js`, the select renders empty, **0 page errors**.
+- **#752 MERGED `a3b613d8`: Toshi's progress bar counted its own stale 19-step taxonomy.** Live it read **1/19** while the checklist in the same panel said "I found 13 things" and the wizard said "Step 1 of 14" for the same school; the private list lacked `curriculum` and `school_category` and carried `admin_account`, `co_admin_invite`, `exams`, `school_pay`, `review`. The bar, dots, list, `done/total` label and Required/Optional badge now read `OnboardingStepsService::steps()`. **Verified**: server-side expectation for a fresh synthetic school was 13 applicable / 0 complete and the rendered bar reads **0/13**; OCR of the screenshot confirms "0/13 Required".
+  - **Deliberate scope override**: the legacy `$steps` array is NOT deleted wholesale. It is the component's state machine (`$this->step` is an integer index into it, drafts persist that index in `onboarding_sessions.step`, and prompt routing, resume, jump and branching key off those names), so removing it means re-keying the flow plus migrating stored drafts. That is a separate scoped change; the progress UI no longer reads the drifted list.
+- **#753 MERGED `09b8b204`: the manual wizard hid Toshi only halfway.** Collapsing zeroed the panel root's width (`body.toshi-collapsed [data-toshi-root] { width: 0 }`) so the step list kept rendering and spilled into the sidebar beside the wizard, and the wizard's inline script set the toggle glyph before the toggle element existed (the script runs inside `#app`, the toggle is emitted after it), so it claimed "open me" while already collapsed. Now the wizard route sets a body class **server-side** and `dashboard-refresh.css` hides `[data-toshi-root]` and `#toshi-toggle-wrapper` outright; the inline script is gone, so the ordering race is gone.
+  - **Verified with a real visual check**, not DOM presence: `[data-toshi-root]` computes to `display: none` with a 0x0 rect, no visible Toshi text node remains after walking leaf nodes, and **OCR of the rendered screenshot finds no Toshi panel text at all**. Staging agrees (body class present, both elements `display: none`, no visible Toshi text).
+  - **Growth now reads as intentional** (decision: keep the denominator dynamic): "Step 4 of 15 · 1 more step added by your answers", then "Step 5 of 17 · 2 more steps added by your answers". Both singular and plural forms observed live.
+  - **Implementation trap worth remembering**: an `@if` inlined in the body tag's class attribute made `/admin/dashboard` return **500**. The class must be computed into a variable before the tag. Caught by checking the rendered status rather than assuming.
+- **Decisions applied**: denominator stays dynamic (growth surfaced in the UI, above); the legacy Vue header is untouched beyond the null guard, no broader migration; **no synthetic review step added to Toshi's checklist** because Toshi already has its own end-of-setup confirmation in the conversational flow (its `review` step, then `commitAll()` plus the "✅ All done! Your school is set up" message), so the wizard-only `review` step stays wizard-only.
+- **Verification**: local walk of the manual wizard (steps 1 to 6 of 17, with the growth notices at the exact unlock points), local fresh signup for the null-path proof, staging signup verified for all three fixes, then **staging cleanup** (synthetic user 18 / school 3 removed; staging back to 2 schools and 16 users) and **local cleanup** (synthetic schools 7 "Synthetic Walkthrough School" and 8 removed; local back to 5 schools and 45 users).
+- **New finding surfaced during this work, flagged not fixed**: `SiteHelper::getAcademicYear()` caches per `school_id` (`academic_year_for_school_<id>`, `CACHE_TIME=8400`) and caches the **AcademicYear model object**, so a stale entry survives deletion of its school. On staging, a freshly created school that reused a deleted school's id was served a phantom academic year from 2026-09-14 (the DB had zero years for that school). This made the staging null-path check read as a non-null year, which is how it was noticed. Bounded by the 8400s TTL, but it is a real cross-request staleness bug worth its own fix.
+- Also observed and **not identified**: four console 404s on the staging dashboard during verification. Unrelated to these three fixes (no asset paths were touched), but unverified, so it is recorded here rather than guessed at.
+
+### 2026-09-21: KNOWN ISSUES, found and NOT fixed (logged only, not started)
+
+Two real defects surfaced while verifying the onboarding fixes (#751 / #752 / #753). **Neither is fixed. Neither is started.** Recorded here so they are not lost and not silently forgotten. Both are candidates for the deferred-work register.
+
+**1. `SiteHelper::getAcademicYear()` can serve a phantom academic year to a newly created school (found, not fixed, not started)**
+
+- `app/Helpers/SiteHelper.php:32` wraps the lookup in `Cache::remember('academic_year_for_school_'.$school_id, env('CACHE_TIME'), ...)` and caches the **AcademicYear model object**, not an id. Locally and on staging `CACHE_TIME=8400`, so the entry lives for about 2.3 hours.
+- The cached value is not invalidated when a school is deleted or its years change. So a **brand new school that reuses a deleted school's `id` can be served the old school's academic year.** The underlying query is correctly school-scoped; the staleness is entirely in the cache layer.
+- Observed on staging: a freshly created school (its `academic_years` count was 0) received `current_year` as a year row belonging to the previous school with the same id (id 4, name "2026", created 2026-09-14). This is what made the staging null-path check for #751 read a non-null year.
+- Impact: bounded by the 8400s TTL, but it is a genuine cross-request staleness bug, and in principle a live school could see another school's year for that window if an id is reused.
+- Not investigated further. Fix directions, deliberately NOT chosen and NOT started: cache the year id rather than the model, version the cache key with the school's `updated_at`, or `Cache::forget()` on school/year writes.
+
+**2. Four console 404s on the staging dashboard (found, not identified, not started)**
+
+- Four `Failed to load resource: the server responded with a status of 404 ()` entries appeared on the staging dashboard during the #751 / #752 / #753 verification.
+- The **URLs were not captured**, so the source is genuinely **unknown**. Recorded as unknown rather than guessed at.
+- Not attributable to those three fixes: none of them touched asset paths (one JS null guard, one progress-bar render change, one body class plus CSS rules).
+- First step whenever someone picks this up: re-run with request-failure logging to capture the URLs, then check against the known staging storage/asset gaps.
+
+### 2026-09-21: Onboarding design pass shipped: actionable setup list and wizard visual fixes (#756, #757)
+
+Design audit first, then implementation, both only on the two onboarding surfaces. Focused mode was explicitly out of scope and was not implemented.
+
+**Before-state (measured, not eyeballed)**
+- Toshi's checklist arrived as ten separate chat messages, one per incomplete step, each repeating the "Toshi" author label and prefixing the step with an emoji red cross: 14px / 16.1px line-height, padding 0, margin 0, transparent background, 16px tall. It read as a list of failures, and status was encoded in emoji rather than the AA tokens.
+- The wizard was already type-accurate (Sora 22.4px title, DM Sans 13.6px sub, 28px card padding, 14px radius) but its progress was a row of **10px interactive dot buttons** (about 20 of them), its nav labels were **12.48px** on 44px buttons, the step counter/hint/optional-flag/growth-note all shared one cramped line, the choice cards used the **light #22C55E** for hover and selected, and the "Prefer the full admin form?" escape hatch was suppressed on exactly the steps where a form helps most.
+
+**#756 MERGED `99145b6a`: the setup checklist is now an actionable list.**
+- One intro message plus a single list; each row is a real button with a tone-tinted icon chip (plus for to-do, check for done), the step label, an Optional flag for `OPTIONAL_STEPS`, and a right-aligned action ("Set up / Add later / Review") that jumps to that step via a new public `jumpToChecklistStep()` wrapping the existing resume helper. No backend change: it reads `OnboardingStepsService` (`is_complete`, labels, keys, `OPTIONAL_STEPS`).
+- Tone mapping uses the shipped `ds-kpi-card` semantics: incomplete required `warning` `#B45309`, incomplete optional `info` `#1E6FD9` plus an Optional flag, complete `positive` `#15803D` muted. Tints are alpha derivations of those AA tokens, so no new palette, and **red is absent by construction**.
+- **Verified**: 16 rows all exactly 44px (min 44 measured), 0 emoji markers, 0 remaining red-X chat messages, and a sweep of every computed colour inside the list contains no destructive red (only `#B45309`, `#1E6FD9`, `#15803D`, `#0F172A`, `#64748B` and alpha tints). Hover moves the border to the tone's dark shade. Clicking "UNEB centre number - Set up" genuinely jumped (4/16 to 6/16) and prompted the step. OCR reads the rows as items with actions.
+- This supersedes the 10px chip row added in #752, which carried the same information less usefully.
+
+**#757 MERGED `f085581b`: six scoped wizard fixes.**
+1. The 10px dot row became a 6px non-interactive track (`role=progressbar`, `aria-valuenow`) plus ONE labelled jump control (a `<select>` in a `<label>`). Measured: 0 buttons inside the progress container, and 0 interactive elements under 24px across steps 7 to 10.
+2. Nav labels 12.48px to 14px, height and accent unchanged.
+3. Counter and optional flag are their own chips; the return-to-review and growth notes are their own lines.
+4. The escape hatch now shows on every step with a route. Verified live on UNEB centre number (`/admin/schooldetails`) and Academic year (`/admin/academics`), both previously missing it.
+5. Choice cards: hover and selected measured at `rgb(21,128,61)` = `#15803D`, replacing the light `#22C55E`.
+6. Focus-visible outlines on buttons, links and selects; disabled styling for buttons and selects. Walked steps 7 to 10 with zero sub-24px elements and zero page errors. The walk stops at Subjects because that step's validation rejects an automation draft with "Class P1 does not exist. Add it on the classes step first.", which is the validation working, not a defect.
+- The `WizardShellNavKitContractTest` and `ManualUiWave3WizardTest` contracts were preserved (progress testid and the 420px max-width untouched), with the retired `is-current` dot assertion replaced by `aria-valuenow` assertions that follow the real step.
+- **Regression check**: Onboarding suite 401 passed, 13 failed, and those 13 are verified **by name** against the earlier JUnit baseline to be byte-for-byte the pre-existing set from clean main. Zero new failures.
+
+**Staging verification**: fresh synthetic signup on the deployed build, both surfaces checked, then the fixture removed (staging back to 2 schools / 16 users). Setup list: 13 rows, min height 44, no destructive red, 0 emoji, 0 red-X chat lines. Wizard: track 6px with 0 buttons inside, counter chip, jump select, hatch present with the real admin href, 0 sub-24px buttons, nav label 14px, 0 page errors. OCR of both staging screenshots confirms the rendering.
+
+**Not verified / open**: the wizard walk did not reach the Review step (blocked by the Subjects validation on an automation draft, not by a defect); the setup list's icon chips were verified by computed colour rather than by pixel sampling; and the local design fixture was removed after the pass. Production has not been deployed for these two PRs, which stays a separate explicit decision.
+
+### 2026-09-21: Onboarding-adjacent surface pass: banner, Connections card, integrations page (#759, #760, #761)
+
+Three of the four requested pieces shipped and verified; the fourth is logged below as NOT started.
+
+**#759 MERGED `f371e0a4`: the setup banner's primary action was blue.**
+- "Set up manually" carried an inline `style=background:var(--d-blue)`, contradicting green-acts-blue-informs, and competed with the green "Set up with Toshi" beside it. Removed the override so `ds-btn-primary` applies.
+- Verified live on a fresh school: `rgb(21,128,61)` = `#15803D` at 44px, same as the Toshi button, `inlineOverrides: []` on the card, `blueAction: false`, no destructive red.
+- Flagged, deliberately out of scope: the banner icon tile still uses `var(--d-green)`, and `--d-green` is still `#22C55E` (the CSS documents that the accent moved to `#15803D` for AA while `#22C55E` stayed as `--d-green`). It is a decorative icon, not text on a solid, so it is not an AA problem, but it is the last retired-green use in that card.
+
+**#760 MERGED `183828c7`: the Connections card (empty-state product demo) is now token-driven.**
+- It owned its own stylesheet and had drifted: its green was `var(--d-green)` = **#22C55E**, the retired value, plus raw Tailwind shades (#F87171, #FBBF24, #DCFCE7, #FEF3C7, #F8FAFC, #DBEAFE, #1E3A8A, #334155, #CBD5E1) and hardcoded token values.
+- It now derives everything from `var(--d-*)` through a small set of local variables built with `color-mix` (ink, ink-soft, rule, surface, green, and blue/red/warning tints), so future token changes propagate instead of drifting. The retired green is gone.
+- **Deliberately untouched**: WhatsApp-brand hexes inside the phone mock (they simulate a specific real product, not KlassApp) and the mock browser's traffic-light dots.
+- **Preserved and asserted**: the honest status treatment. Badges still read Live / Sign-in / Live / Coming soon, and the copy still says WhatsApp is live today, Google sign-in works, and roadmap items are not presented as shipping features.
+- **Verified across all three rotating scenes**, since this card rotates with its own JS and the audit had captured only one: WhatsApp, Toshi and Connections each render with zero retired-green occurrences and no hardcoded inline styles.
+
+**#761 MERGED `1b0068c4`: the integrations page moved onto ds-* components (presentation only).**
+- Explicit boundary honoured: no connector logic, connection state or functional behaviour touched. The `@forelse` over connectors, the `connected` branches, the CSRF forms, the connect route and the disconnect route are unchanged, and the testids are identical.
+- Cards to `ds-card`, status chips to `ds-badge-active` / `ds-badge-inactive` (they now inherit the badge system from the settings hub instead of duplicating it in Tailwind), Connect to `ds-btn-primary`, Disconnect to `ds-btn-danger` (red for destructive), and the grey text/falls onto `--d-text-secondary` and `--d-surface`.
+- **Verified** by rendering both connector states: ds-card, both badge variants, danger and primary buttons, no `#1F2937`, no inline hex button, and the logic markers intact (card/status testids, `integrations/slack/disconnect` with `_token`, `mcp/slack/connect`).
+- **Honest scope note**: the integrations blade itself now has zero raw Tailwind status/grey utilities, but a page-level grep still matches raw utilities coming from **shared partials** (`partials/message` carries `border-red-400 text-red-700`), not from this page. Those are out of scope here and remain raw.
+
+**NOT STARTED: the wizard empty-space live draft preview (item 4).**
+- Not built, no code written, explicitly outstanding. The measured basis stands: at 1440 the card is 880px in a 1248px content area (184px per side) and at 1920 the same 880px in 1728px (424px per side), with roughly 300px of empty vertical space below a 200px-tall card. A side panel only makes sense around 1600px and up; below that it must stack under the card.
+- Concrete plan when it is picked up: reuse the proven `manual-wizard-review-panels` / `manual-wizard-review-panel` pattern from the Review step (bottom of `manual-wizard-step-fields.blade.php`), drive it from the draft arrays already public on the component (`termDrafts`, `feeDrafts`, `teacherDrafts`, `studentDrafts`, `structureClasses`, `existingSubjectNames`), so no new content and no backend work. CSS: a stacked panel below the card by default, becoming a side column at roughly 1600px and up.
+- Verification it will need: enter real data at several different steps (Terms, Fees, Standards, Subjects) and confirm each renders the user's own entered data correctly, not just one step.
+
+### 2026-09-21: SchoolAdmin school-details audit and partial implementation (#763, #764) plus a hard finding about the form layer
+
+**Shipped:**
+- **#763 MERGED `13ed6c0f`: one write path for school config, one surface for access switches.** The form wrote `board` twice (onto `schools.curriculum` **and** a `school_details` meta row nothing reads); the duplicate meta write is removed from `update()`, from the routed-off `create()` path, and from `SchoolObserver`'s seeding list, so no path recreates it. Pre-existing rows are left unreferenced rather than deleted. The `country_id` to `registration_country` bridge stays and is now documented in place as managed convergence, not a fork. The read-only Maintenance / Login Status rows are gone from this page and `index()` excludes those keys, so the settings hub is the single place that reads and writes per-school access switches. Verified: no Maintenance or Login Status text on the page, no `board` meta row, `schools.curriculum` intact. Honest gap: my automated POST never produced a confirmed update (it redirected to `/`), so the save round-trip is not verified.
+- **#764: truthfulness fixes, scoped to what verified.** `DetailRequest` loses the legacy `check_keyword` name blocklist (it rejected real school names containing a Keyword row's text) and the name ceiling goes from 30 to 120 against a 255-character column; verified live that a 35-character name is now accepted. The `about_us` message says Characters instead of Words. The index no longer prints the literal strings NULL / N/A: eight text nodes and two fallbacks now render a real Not-set treatment; verified 0 NULL and 0 N/A on the page.
+
+**Hard finding, and the reason the remaining items are not done:** the school-details **edit form is rendered by a Vue component**, `resources/assets/js/components/schooldetail/Edit.vue` (and `Create.vue`), **not** by `edit.blade.php`. So the required-asterisk corrections and the dead latitude/longitude removal belong in the component and need a front-end build. A first attempt at the blade layer **broke the page with a 500**; it was caught by checking the rendered status, reverted, and the page re-verified to 200 before anything shipped. Anyone picking this up should start in the Vue components, not the Blade.
+
+**Corrected from the audit:** the form **does** include "UNEB Centre Number (optional)"; the audit note saying it was not visible was wrong.
+
+**NOT STARTED (all items explicitly outstanding):**
+- The required-asterisk corrections (School Moto, Date Of Establishment, Board Of Education, District, About Us are all nullable in `DetailRequest` but marked required in the UI) and removal of the invisible latitude/longitude pair, both in `schooldetail/Edit.vue`.
+- The `moto` to `motto` migration. Load-bearing: `StudentReportCardService` reads the `moto` meta for the report-card identity, and the API controllers, `SchoolObserver` and `schools/templates/_shared.blade.php` also reference it. Needs add-column, backfill, update every read site, keep the old key readable during transition.
+- The two gaps: a real phone input (`schools.phone` exists and report cards read it, but there is no way to set it here) and `school_category`.
+- The tokenisation pass (index card and edit form onto `ds-card` / `ds-form-*` / the AA tokens, removing `#4A5568`, `#00C982`, `#22292F`, `#3492E2` and the raw Tailwind utilities). Note the index card is fully legacy (0 `ds-*` classes, 27 raw grey utilities) while the edit form is half-migrated (30 `ds-*` vs 25 raw utilities).
+
+### 2026-09-21: School-details required markers made true, and the map half-feature gated (#766)
+
+- **#766 MERGED: markers fixed on both sides at once.** School Moto and About Us keep their asterisk and are now **genuinely required** in `DetailRequest` (with messages); Date Of Establishment, Board Of Education and District lose their asterisks because all three are nullable. Website, School Logo and UNEB Centre Number were already correct and are untouched.
+- **Verified in both directions**: empty `moto` and `about_us` now fail validation on both keys; both filled passes; `board` verified still optional. Rendered page shows required exactly as `[School Name*, School Moto*, Country*, About Us*, Address*]`.
+- **Layer note, now definitive**: the edit form is a **Vue component** (`resources/assets/js/components/schooldetail/Edit.vue`) mounted by `edit.blade.php`, and its markers need a `npm run build`. Editing the Blade for markers does nothing. The Blade still owns the map portal and the coordinate fields.
+- **Lat/long and the map canvas are a deferred Wave-2 feature**, gated on an unconfigured Google Maps key. Rather than delete it, both now render inside the same `@if(config('services.google.maps_api_key'))` as the Maps script, so nothing renders a half-feature and the markup survives for Wave 2.
+- **Real bug fixed as a side effect**: the inline maps script ran unconditionally and threw `google is not defined` on every page load. That error is now gone (verified zero page errors).
+- **Process lesson, written down because it cost a page outage last time**: my first pass stripped the opening `<span class="text-red-500"` and left broken multi-line tags, which failed the build; the earlier Blade cut left an unbalanced `@if`/`@endif` and 500d the page. Both were caught by checking real rendered status, not by trusting the tooling. Wrap Blade blocks, never cut them; repair Vue tags as whole elements.
+- **Pre-existing fragility noted, not fixed**: `DetailRequest`'s `checkunique_schoolname` closure reads `Auth::user()->school_id`, which warns when the rules are evaluated without an authenticated user (e.g. in tinker). Only reachable on an authenticated route today, but it should guard against a null user.
+- **Still NOT STARTED, queued in order**: the `moto` to `motto` migration (load-bearing: `StudentReportCardService` reads the `moto` meta for the report-card identity, and the API controllers, `SchoolObserver` and `schools/templates/_shared.blade.php` reference it too), the phone and school_category gaps, and the tokenisation pass (index card fully legacy at 0 `ds-*` classes and 27 raw grey utilities; edit form half-migrated at 30 `ds-*` against 25 raw).
+
+### 2026-09-21: School motto moved to its own column, non-destructively (#768)
+
+- **Problem**: the motto existed only as a `school_details.moto` meta row, which is what the report-card identity reads. It was the only school-identity field with no column, so it could not be queried or constrained, and the `-` sentinel meant every reader had to normalise it by hand.
+- **Change**: `schools.motto` (string 100, nullable) added, backfilled from the meta with `-` and empty treated as not set. Reads go through a new `School::mottoText()` that prefers the column and falls back to the meta. Writes set the column and still mirror the meta row during the transition. Legacy meta rows are untouched, so `down()` is safe because nothing depended on the column existing.
+- **Read sites moved**: `StudentReportCardService` (report-card identity), `Api/SchoolController`, `Api/Teacher/SchoolController`, `schools/templates/_shared.blade.php`. The API controllers still emit the `moto` response key for payload compatibility.
+- **Also**: user-facing label and placeholder renamed from School Moto to School Motto, plus the front-end build.
+- **Verified locally on the report-card code path**: identity motto identical before and after (`Knowledge Is Power`); backfilled column holds the same value; a school with no motto renders `null` without crashing; a `-` sentinel meta normalises to `null` and never leaks as a dash; a fresh write to the column is what the identity returns; zero columns hold the sentinel; and a grep confirms no read site reads the meta directly any more.
+- **NOT verified: staging.** The merge deploys it and the migration is the sanctioned path, but the staging render was not checked. To confirm: generate a report card for a school with a motto on staging and compare the motto line with the previous output.
+- **Transition exit criterion, for a later pass**: once every school has a column value, remove the meta fallback in `mottoText()` and stop mirroring the meta write, then delete the legacy meta rows in their own migration.
+- **Still queued**: the two gaps (phone, `school_category`) and the tokenisation pass. Also open from the hub audit: the seven schooldetails-bound escape hatches land on the index card rather than the edit form, and the settings hub links to only five destinations.
+
+### 2026-09-21: Cross-tenant read on school-details closed (#770) - and a correction to the report that found it
+
+- **The hole**: the four school-details routes take a `{school_id}` and three actions used it directly, with no ownership comparison anywhere in the controller. Proven live as school 1's admin: `GET /admin/schooldetails/edit/2` returned **200 with another school's data**, and `/editdetail/2` rendered **another school's edit form**.
+- **The fix**: one `assertOwnSchool()` guard resolves the caller's own school and aborts **403** for any other id, applied to `edit`, `editdetail`, `validationUpdate` and `update`.
+- **Verified after**: own read 200, **foreign read 403**, own edit page 200, **foreign edit page 403**, **foreign POST 403**. Regression test `tests/Feature/SchoolDetailsTenantIsolationTest.php`: **5 passing**, covering both read routes, the update POST with an assertion that the other school's row is unchanged, the preflight route, and that same-school paths still work.
+- **CORRECTION, recorded because the original report overstated it**: I claimed the write path was cross-tenant. **It was not.** `update()` already overrode `school_id = Auth::user()->school_id` as its first statement, so a crafted POST wrote to the caller's own school, never the target. The **reads** were the hole. Anyone reading the earlier audit entry should use this one.
+- **Not verified**: the legitimate write path was not confirmed live (the POST attempt returned no response). It is guarded only by an id comparison against the caller's own school, and the test proves same-school GETs still return 200.
+- **Sibling found, NOT examined and NOT fixed**: `/demo/list/{school_id}` in `Demo\\WelcomeController@list` also takes a school_id. It needs the same treatment, or an explicit decision that it is an intentional public demo. This is the only other `{school_id}` route in the app.
+- **Production decision point**: because this is a cross-tenant read over live data, this is a strong candidate for production deployment, unlike the rest of tonight's onboarding and school-details work which stays staging-only by design. Not deployed, pending the user's explicit call.
+- **Process note**: an unrelated guard-order detail surfaced while writing the tests. Laravel resolves the type-hinted `DetailRequest` **before** the controller body runs, so a foreign POST with an invalid payload returns a validation 302 rather than the 403, and only a valid payload reaches the guard. Both refuse, and neither writes, but a test must send a valid payload to prove the 403 specifically.
+
+### 2026-09-22: Settings hub expanded to the full configuration surface, branding boundary settled, escape hatches fixed (#772, #773)
+
+- **#772 MERGED: the hub went from 5 links in 5 groups to 15 in 7.** School (profile, branding), Academics (years, terms, structure and classes, subjects, exam types), People (teachers, students), Finance (fee structures, plan), Connections (integrations, WhatsApp number), Public presence (SEO), System (maintenance and access). Grouping follows the app's own vocabulary instead of appending a flat list, reusing the `ds-card settings-hub-card` pattern and the known-good icon set. **Verified live: hub 200, 7 groups, 15 links, every link fetched returns 200-399, zero broken, 0 page errors.**
+- **Branding boundary settled**: School profile owns the school identity **as data** (name, motto, address, website, logo); Site branding owns **how it is presented** (site title, favicon, theme). Stated in both cards' copy and in a code comment, so the ambiguity cannot quietly return.
+- **#773 MERGED: the seven identity escape hatches now land on the edit form.** `stepRoute()` returned `/admin/schooldetails` (the read-only index card) for school name, size, curriculum, country, category, EMIS and UNEB centre, costing an extra hop. It now returns `editdetail/{own school}` with a fallback to the index when unauthenticated. **Verified live: the hatch href is now `/admin/schooldetails/editdetail/1`, and the #770 ownership guard still returns 200 for the caller's own school and 403 for a foreign one from this new entry point.**
+- **NOT STARTED: the two gap fields (item 2).** `student_size` and `school_category` still have no post-onboarding editor. This is the one item from this batch that is untouched. Plan when picked up: add `student_size` (a select over `OnboardingStepsService::STUDENT_SIZE_OPTIONS`) and `school_category` (a select over `SchoolCategorySeeder::CATEGORIES`) to `schooldetail/Edit.vue`, add both to the JSON payload in `SchoolDetailsController@edit`, write both in `update()`, add real `DetailRequest` rules matching what the UI claims, and rebuild. Verify by round-tripping both fields (write, read back, confirm the checklist reflects them).
+- **Item 5 confirmed**: the Review step's guided round-trip is unchanged, as agreed.
+- **Open production question, not to be lost**: #770 fixed a **cross-tenant read over live school data** (school-details routes trusted `{school_id}`). It is fixed on main and staging-only so far. Separately, `/demo/list/{school_id}` and `/demo/schoolList` remain **public, unauthenticated, and expose real staff emails and phone numbers** (and the demo component prints usernames), which is arguably more exposed than #770 since it needs no account at all. Neither has been deployed to production, and both are awaiting an explicit decision.
+
+### 2026-09-22: KNOWN ISSUE, found and NOT fixed: the public /demo routes expose real school data (not started)
+
+**Status: found, NOT fixed, NOT started. No code written. Awaiting a real urgency and priority decision.** Recorded verbatim and prominently so it cannot be mistaken for resolved or in-flight work.
+
+**Where**
+- `GET /demo/list/{school_id}` and `GET /demo/schoolList`, both in `Demo\\WelcomeController` (`app/Http/Controllers/Demo/WelcomeController.php`).
+- Both declared in `routes/web.php` **outside every middleware group**: no `auth`, no role gate, and **no environment gate**, so they are live in production exactly as they are in development. Public access is **confirmed deliberate**: the routes serve the landing page's demo section (`Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']))`) via `resources/assets/js/components/demo/Tab.vue`.
+
+**Severity, unauthenticated (no account needed at all)**
+- `/demo/schoolList` runs `School::where('status',1)->get()->take(3)` and returns it through `SchoolResource`. That is **whichever three real active schools are first by id**, with real **name, email and phone**. On production this is real customer contact data, not a synthetic demo dataset. Locally it happens to return seeded demo schools, which is exactly why this is easy to miss.
+- `/demo/list/{id}` returns per-role `UserResource` collections for admin, principal, librarian, receptionist, accountant, teacher and student, which include **real login usernames (the email addresses staff actually sign in with)** plus teacher mobile numbers. `demo/Tab.vue` renders them literally as `Username : {{ email }}` and `teacher.mobile_no`.
+- **This is worse than a contact-detail leak**: the email address is the login credential identifier, so the payload hands out half of a credential set for every role in a school, publicly and enumerably (list the schools, then read each one).
+
+**Reliability defect, same routes**
+- An unknown or invalid school id causes an **unauthenticated HTTP 500**: `$school` is null and the method dereferences `$school->id` with no check. It should be a graceful 404. Locally, with debug on, the response also prints the exception and stack trace. `schoolList` has the same null-blind shape.
+- Confirmed live: `/demo/list/1` and `/demo/list/2` return 200 with data, `/demo/list/999` returns 500.
+
+**Correct fix direction (deliberately the opposite of the school-details fix)**
+- The route being public is **intentional**, so **do not add an auth or ownership guard here**. The school-details fix (#770) applied an `assertOwnSchool()` 403; applying that pattern to these routes would break an intended public marketing surface.
+- Instead: (1) serve the demo from a **real dedicated demo dataset** rather than "the first three real active schools"; (2) **strip all personal fields** (email, phone, username) from the public payload, and stop rendering "Username : email" in `Tab.vue`; (3) return a **404 for unknown ids** instead of a 500.
+- If showcasing real schools is genuinely wanted, that needs those schools' consent and a non-personal payload, which is a product decision and not a code one.
+
+**Severity comparison, for prioritisation**
+- This exposure requires **zero authentication** and is reachable by anyone with a browser, which ranks it **above** the school-details cross-tenant read (#770). That one, though a genuine cross-tenant read over live data, required a valid logged-in SchoolAdmin account.
+- Neither the #770 fix nor anything here has been deployed to production. Both await an explicit production decision.
+
+**What is NOT claimed here**
+- I did not inspect `schoolList()`'s filtering beyond reading it, and I did not enumerate which schools a production instance would actually return. The mechanism is what is verified: `status = 1`, `take(3)`, no demo flag, public route.
+
+### 2026-09-22: Settings now leads to an editable School profile, and the read-only card is retired as a destination (#776)
+
+- **Where the link lived**: not in `config/navigation.php` (the sidebar has no School Details entry), but in the **settings hub card** (`admin/settings/index.blade.php`), which pointed at `/admin/schooldetails`. The settings sub-nav carries no School Details link, verified rather than assumed.
+- **Fix**: new stable entry point `GET /admin/school-profile` resolves the school from the authenticated user and redirects to `editdetail/{own school}`. No `{school_id}` in the URL, so there is nothing to tamper with; menus keep one stable URL and the destination stays ownership-scoped, consistent with #773 and respecting #770. Added to `MustBePrivilege`'s manual-onboarding allowlist alongside the other schooldetails routes. The edit page's Back button now returns to Settings.
+- **Recommendation, implemented: the index card is retired as a navigation destination.** It is a raw dump of every `school_details` meta row, which is why it showed keys like **Admission close message**. Those are **real, used fields** read by `AdmissionController`, not cruft, but they belong to the admissions feature rather than the school profile, and the card even special-cases `admission_open` to hide its own label: a patch on a display that should not exist. A school admin landing there mostly reads "Not set", while the edit form shows the same values inline as real inputs and serves as its own view. The route is left in place but unreachable from navigation; deleting the view and route is a small follow-up if wanted.
+- **Verified**: the real journey (Settings, click School profile) lands on `/admin/schooldetails/editdetail/1` with a form and the `name` field present; the #770 guard returns 200 for the caller's own school and 403 for a foreign one from this entry point; a broad search confirms no other live navigation path to the index remains; 0 page errors. Deliberately left alone: `create.blade.php`'s Back link, on a create route that is commented out.
+- **Still outstanding from the batch before this one**: `student_size` and `school_category` still have no post-onboarding editor. Unchanged, not started, plan recorded.
+- **Still awaiting a production decision**: the #770 cross-tenant read fix (fixed, staging-only) and the public `/demo` routes (found, NOT fixed, NOT started, and higher exposure since they need no account).
+
+### 2026-09-22: Session close-out: dashboard redesign phase, onboarding fixes, school-details work, and a cross-tenant security fix
+
+Written as a trustworthy summary for a future reader. PR numbers are the real ones already recorded in this file; where something is unverified or unfinished it says so rather than implying completion. Main tip at the end of the session: `eff0fa67`.
+
+#### Shipped and verified this session
+
+**Dashboard UX programme, all roles.** The landing spec waves (WS-1 to WS-7: #674, #676, #677, #680, #683, #685, #687, #689, #690, #691, Slack wave-1 in #684) and then a role-by-role dashboard pass covering SchoolAdmin, Teacher, Parent, Student, the specialist roles (librarian, receptionist, accountant, stock keeper, alumni) and SiteAdmin: settings hub #695/#696, sidebar collapse #697/#698, maintenance overflow #699/#700, settings view audit #701/#702, facade cleanup #703/#704, nav consolidation with 8 role nav files deleted #705/#706, teacher login gate #707/#708, platform login switch #709/#710, per-school access switches #712/#713, SiteAdmin panel and dashboard work #716 to #724, "honest global default" #726/#727. `#682` was reviewed and deliberately left open and untouched.
+
+**Five-step design-system phase, all five complete.**
+- Step 1, sidebar menu-as-data: #733 to #737 (menu moved to `config/navigation.php`, 10 duplicated menus retired, plus a live regression fix where a bad splice leaked literal Alpine text into the sidebar at 177px instead of 40px, and the guard test that reproduces it).
+- Step 2, `ds-kpi-card` semantic props: #738/#739 (tone owns the colour mapping, direction owns sentiment, arrears direction computed for real).
+- Step 3, Chart.js 2 to 4 plus shared `<x-chart>` and Laravel Trend sparkline: #740/#741 (two real bugs found and fixed: logic in an `x-data` attribute, and the Vue mount dropping in-DOM script tags, solved with data attributes and idempotent boot per live canvas).
+- Step 4, command palette on `wire-elements/spotlight`: #744/#745 (destinations derived from the same `config/navigation.php`, server-side scoping, mounted outside `#app`, one upstream package bug guarded).
+- Step 5, orphaned `modern.blade.php` report template removed: #746 with the test guard, plus the menu-as-data test fallout repaired in #747 and stamped in #748. `DESIGN_SYSTEM.md` drift was fixed in #742, and the LaraClaw strategic groundwork was logged in #743.
+
+**Onboarding fixes.**
+- `register_status` inversion: **critical production fix, deployed and verified live on production**. The flag is documented as 1 = open, 0 = closed, but the views rendered maintenance when it was 1, so production was serving "Register page is under maintenance" to every visitor while the platform believed registration was open. Fixed in #749, regression test added, deployed to production, verified serving the real form, and stamped in #750. Staging had no settings row at all, which is why it never caught it.
+- `Navigation.vue` academic-year TypeError: #751, fired for every school with no academic year, fixed by guarding, verified with a fresh school whose API really returns `current_year: null`.
+- Toshi progress-bar parity: #752, the panel counted a private 19-step taxonomy that had drifted from the shared `OnboardingStepsService`; it now reads the shared model. The legacy array itself is deliberately NOT deleted, because it is the component's state machine and drafts persist indices into it.
+- Sidebar leak on the manual wizard: #753, wrapping Toshi in a server-set body class instead of an inline script that ran before the toggle existed, plus the growth notice explaining a growing step denominator.
+- Onboarding visual redesign: Toshi's checklist turned from ten red-X chat lines into an actionable tone-coded list (#756), and six scoped wizard fixes (#757: progress track replacing 10px dot buttons, 14px button labels, counter chip, header hierarchy, escape hatch on every routed step, choice-card colour to #15803D), stamped #754 and #758.
+
+**School-details work.**
+- Single write path and one surface for access switches: #763 (the duplicate `board` meta write removed from `update()`, `create()` and `SchoolObserver`; the read-only Maintenance and Login Status rows removed from the page).
+- Truthfulness fixes: #764 (legacy `check_keyword` name blocklist dropped, name ceiling 30 to 120, `about_us` unit corrected, the literal strings NULL and N/A replaced with a real Not-set treatment).
+- Required markers made true in both directions: #766 (Moto and About Us genuinely required in `DetailRequest` now matching their asterisks; Date Of Establishment, Board Of Education and District unmarked; the latitude/longitude half-feature and its Maps portal gated behind the API key, which also removed a real `google is not defined` console error). Stamped #767.
+- Motto migration: #768 moved the motto from a `school_details` meta row into `schools.motto`, with a sentinel-aware backfill, a `School::mottoText()` transition helper that prefers the column and falls back to the meta, every read site moved, and the form writing the column while mirroring the meta. Verified on the report-card identity path: motto identical before and after. Stamped #769.
+- Settings hub expansion: #772, from 5 links in 5 groups to 15 in 7 (School, Academics, People, Finance, Connections, Public presence, System), with every link fetched and confirmed navigable, plus the explicit boundary between School profile (identity as data) and Site branding (how it is presented).
+- Wizard escape hatches: #773, the seven identity steps now point at the edit form for the caller's own school instead of the read-only index card.
+- Navigation fix: #776, retired the dead-end read-only card as a destination and added a stable `GET /admin/school-profile` entry point that resolves the school from the authenticated user, so there is no `{school_id}` in the URL at all. Stamped #777.
+
+**Critical security fix.** A **cross-tenant read** on the school-details routes: `edit()` returned another school's details JSON and `editdetail()` rendered another school's edit form, because `{school_id}` was trusted with no ownership check anywhere in the controller. Proven live as school 1's admin reading school 2's data, fixed with an `assertOwnSchool()` 403 guard on all four actions (#770), regression tested in `SchoolDetailsTenantIsolationTest` (5 passing, including an assertion that the refused write changed nothing), and stamped #771. Correction recorded in both the stamp and here: the **write** path was never cross-tenant, because `update()` already overrode the parameter from the authenticated school, so only the reads were exposed. Staging verified; production not deployed.
+
+#### Open production decisions, awaiting an explicit go-ahead
+
+1. **#770's cross-tenant fix**: fixed on main, staging-verified, **not deployed to production**.
+2. **The public `/demo` route exposure**: `GET /demo/list/{school_id}` and `GET /demo/schoolList` are declared outside every middleware group with **zero authentication**, and return real staff login usernames (emails) plus teacher phone numbers, plus the first three real active schools' names, emails and phones. Also an unauthenticated 500 for an unknown id. Found, logged in full (#775), **NOT fixed, NOT started**. Flagged as **more urgent than #770**, because it needs no account at all, while #770 at least required a logged-in SchoolAdmin. Fix direction is the opposite of #770: keep it public, serve a dedicated demo dataset, strip personal fields, return 404 for unknown ids.
+
+#### Queued work, not started
+
+- `student_size` and `school_category` still have no post-onboarding editor. Plan recorded in the #774 stamp (add both to `schooldetail/Edit.vue`, the `edit()` payload, `update()`, and real `DetailRequest` rules, then rebuild and round-trip).
+- **EMIS, UNEB and logo fields on the live edit form: status unconfirmed.** What is verified: the UNEB input exists in `Edit.vue` (lines 279 to 292) and the audit note claiming it was missing was wrong and corrected in #766; `ministry_code` and `school_logo` appear in `DetailRequest` and in the form's field inventory. What is **not** verified: their live rendering and round-trip after the marker work and the motto migration. This needs a real check, and may be either a genuine regression or just a capture gap.
+- Tokenisation pass on school-details (card and form onto `ds-card`/`ds-form-*` and the AA tokens, removing the legacy hexes `#4A5568`, `#00C982`, `#22292F`, `#3492E2` and the raw Tailwind utilities). Deliberately last in the original ordering.
+- The **"unified school-configs page"** architecture question, logged for a future dedicated session: whether the profile, academics, structure, subjects, terms and fees management belong on one page. Real scale involves embedding several full CRUD management systems, not a layout change, so it is not decided here.
+
+#### Deferred-work register (logged earlier, still valid)
+
+Timetable materialization, report column and weighting as data, marks-entry grid, nursery skills and competency model, room entity plus conflict check, permission-matrix UI (blocked on the D8 outcome: usergroups plus `teacher_designations` are the source of truth, Laratrust is vestigial and should be retired), and `SchoolStatService` consolidation.
+
+#### Also recorded this session, for the record
+
+- Known, non-blocking: `SiteHelper::getAcademicYear()` caches the AcademicYear model object per `school_id` with a 8400s TTL, so a stale entry can outlive its school and be served to a school that reused the id (#755).
+- Known, not identified: four console 404s seen on the staging dashboard during verification, URLs never captured, recorded as unknown rather than guessed (#755).
+- `DetailRequest`'s `checkunique_schoolname` closure reads `Auth::user()->school_id` and warns when rules are evaluated without an authenticated user. Only reachable on authenticated routes today, but it should guard a null user.
+- Laravel resolves a type-hinted `DetailRequest` before the controller body runs, so a foreign POST with an invalid payload returns a validation 302 rather than the ownership 403. Both refuse and neither writes, but a test must send a valid payload to prove the 403 specifically.
+
+### 2026-09-22: Three deferred bugs fixed: academic-year cache staleness, Toshi context fabrication, and the curriculum default (#779, #780)
+
+- **#780 MERGED: academic-year cache staleness.** `SiteHelper::getAcademicYear()` cached the **AcademicYear model** per `school_id` for 8400s, so the cached object carried its own columns and outlived its school. A newly created school that reused a deleted school's id was served the old school's year, which is exactly what was seen on staging (a fresh school with 0 `academic_years` rows receiving a year created five days earlier). Now it caches the **id** and re-scopes by `school_id` on read, so even a stale id cannot resolve to another school's year. Chosen over `Cache::forget()` on writes because it needs no knowledge of every write path. **Verified with a faithful repro**: with the old-style model cached, deleting the school and its year and recreating a school with the same id now returns `null` instead of `2026`.
+- **#779 MERGED: Toshi no longer fabricates a curriculum or country.** `ToshiOrchestrator` fed the model `Curriculum: **UNEB**` and `Country: **Uganda**` whenever unset, so a Cambridge school mid-setup was described to the model as UNEB. Both now read **"not set yet"**. Verified by source assertion (grep shows the new strings and no remaining `?: 'UNEB'` / `?: 'Uganda'`); a direct call to the private `buildSchoolContext()` via reflection resolved the platform variant rather than the school branch, so no runtime proof is claimed, and a live model-behaviour test is impossible in these environments because `TOSHI_LLM_ENABLED=false`.
+- **#779 also settled the curriculum default question.** `AgentToshi::$curriculum = 'uneb'` has a **real reason**: it seeds the curriculum suggestion UI through `curriculumDefaults()`. It is not a statement about the school, whose real curriculum is `schools.curriculum` and may be null. The neighbouring comment claiming the picker is "never silently pre-filled" was **inaccurate** and was corrected. **Recorded, not changed**: the default leaks into a commit path, because `persistUnebCenterFromInput()` uses `$this->curriculum` and only prefers the school's own value when one exists, so an unanswered picker can commit UNEB-derived behaviour. That is a behavioural decision (block the save?) and is documented on the property.
+- **NOT fixed: the four staging console 404s.** Re-run locally with response logging: **zero** failing requests, so it does not reproduce locally and remains staging-specific. Still unidentified, still logged as unknown in #755 rather than guessed at.
+
+### 2026-09-22 CORRECTION: the academic-year cache fix did not ship in #780; the real fix is #781
+
+**Correcting an entry written minutes earlier, because it was wrong.** The #780 stamp above claims the academic-year cache staleness was fixed, verified with a repro, and merged as a code change. **It was not.** The stamp PR itself merged, but it was docs-only: my fix had been chained behind a `sed` command that errored, so the patch never ran, `git add` found nothing, and no code commit was ever created. What actually shipped in #780 was a description of a fix that did not exist on main.
+
+**How it was caught:** the repro was re-run before believing the summary, and it returned **`2026`** for a school whose reused id has zero academic years, proving the bug was still live. That is the whole argument for running the verification rather than trusting the tooling.
+
+**The real fix is #781**, merged after this note: `SiteHelper::getAcademicYear()` now caches the year's **id** rather than the AcademicYear **model**, and re-scopes by `school_id` on read. The repro is deliberately the strongest form: the school is created with a current year, the resolved model is cached exactly as the pre-fix code did, the school and its year are deleted, a school is recreated with the same id, and only then is the helper read. It returns **`null`** while the stale model is still in the cache. Probe schools and their cache entries were cleaned up; the local school count is back to its baseline.
+
+**Read #780 as void for the code claim, and #781 as the fix.** The other two items in that entry were real: Toshi's context no longer fabricates a curriculum or country, and the `AgentToshi` curriculum default was investigated and documented (both shipped in #779).
+
+### 2026-09-22: The four staging 404s did not reproduce; closed as a likely deploy-window artefact (not a bug)
+
+Closes the item logged as unknown in #755. **Result: not reproducible, no fix applied, and the leading explanation is a page load during a deploy rather than a defect.**
+
+**What was done**: activated a synthetic staging SchoolAdmin (rotated password, both status fields, deactivated immediately afterwards), then loaded six pages with a listener recording every response at status 400 or above: dashboard, onboarding wizard, settings hub, the new `/admin/school-profile`, fees payments, and report cards.
+
+| Page | Status | Failing requests |
+|---|---|---|
+| /admin/dashboard | 200 | 0 |
+| /admin/onboarding/wizard | 200 | 0 |
+| /admin/settings | 200 | 0 |
+| /admin/school-profile | 200 | 0 |
+| /admin/fees/payments | 200 | 0 |
+| /admin/reports/cards | 200 | 0 |
+
+Zero failing requests, and no request-level failures either. Direct probes of the plausible candidates all return 200: `/images/klassapp-logo.svg`, `/images/klassapp-logo-primary.svg`, `/images/klassapp-icon.svg`, `/favicon/favicon-32x32.png`, `/favicon/manifest.json`, `/build/manifest.json`. `/storage/` returns 404, which is simply a directory listing being refused and is not evidence of a broken symlink; school logos load on the pages above.
+
+**Leading explanation, stated as a hypothesis rather than a finding**: the original sighting happened right after a staging deploy. Vite fingerprints assets and the build deletes the previous files, so a browser holding pre-deploy HTML can request an asset hash that no longer exists and receive a 404. That is a normal deploy-window race, not an application defect, and it explains why it appeared once on staging and never locally, where no deploy was in flight.
+
+**What is ruled out**: a missing asset in the repo (all candidates 200), a staging config difference (six pages clean, twice, including a repeat run), and a broken storage symlink (the previously fixed symlink is fine).
+
+**Not verified**: I did not capture a 404 live, because I could not reproduce one, and I did not run the capture *during* a deploy, which is the condition that would confirm the deploy-race hypothesis. If this matters later, the way to settle it is to load the dashboard from a cold browser while a deploy is in progress and log the response statuses.
+
+**Local check, for the record**: the same capture run locally also produced zero failing requests, which is what first suggested the issue was environmental rather than in the code.
+
+### 2026-09-22: Public demo exposure closed with a real demo dataset (#784) - ready for the production decision
+
+- **What was wrong**: the public `/demo` routes served `School::where('status',1)->take(3)`, i.e. whichever real schools came first, with real staff **emails (their login identifiers)** and phone numbers, and returned a **500** for an unknown id. Investigation confirmed **no demo-school concept existed**: the only related flag was `is_test`, which means something else.
+- **What shipped**: `schools.is_demo`, plus a migration seeding two **synthetic** demo schools (Lakeview Junior School, Model Hill Secondary School) with twelve invented people each: synthetic names, reserved `@demo.klassapp.test` addresses, nothing real. `schoolList` now returns demo-flagged schools with id and name only; `list` 404s every non-demo school so real customers are unreachable; unknown ids 404 instead of 500ing. The payload carries names and roles only.
+- **Verified unauthenticated**: `schoolList` returns only the two demo schools with id and name; `/demo/list/1` (a real school) is **404**; `/demo/list/999` is **404**; the roster payload contains **zero** occurrences of email, mobile, phone, username, password or user_name; and `Tab.vue` no longer renders `Username : email` or `mobile_no`.
+- **Known limitations, recorded rather than hidden**: the principal and teacher tabs are empty because `teacherprofiles` does not exist in this schema (that insert is isolated in a try/catch so it cannot abort the seed, and a follow-up needs the real model's table). On the landing page my new role labels render and no request fails, but there is a `classList` JavaScript error there that was **not attributed**, and the school-name tabs were not confirmed before time ran out.
+- **Production note**: the demo now depends on `is_demo`, so until this migration runs in production the demo section is empty there. That is the intended trade: empty until deliberately seeded, rather than leaking real tenants. **Ready for the production decision alongside #770**, with that caveat stated.
+- **Migration lesson worth keeping**: the first run aborted midway (a `teacherprofiles` insert on a table that does not exist), which left a partial dataset and an unrecorded migration. Making the seed idempotent per school, per year and per person is what allowed it to resume rather than skip everything or duplicate it.
+
+### 2026-09-22: Demo schools excluded from platform reporting, and the four "demo/test/sandbox" concepts documented
+
+- **What was wrong**: the demo seed set `is_demo` but not `is_test`, so the two seeded demo schools and their ~28 synthetic users were counted as real school and user growth on the Superadmin platform dashboard, and could surface in the "recently joined" feed. They were advertising a false number.
+- **Fix**: a new migration (`2026_09_22_020000_mark_demo_schools_as_test_for_reporting`) sets `is_test = true` wherever `is_demo = true` and `is_test = false`, keyed on the flag rather than on specific ids so any future demo school is covered. The original seed migration now sets both flags too, so a fresh environment is correct from the first deploy rather than needing the backfill. The new migration's `down()` deliberately does nothing, because reverting would put demo schools back into reporting, which was the bug.
+- **Verified locally**: demo schools flagged `is_test` = 2 of 2; active schools 7, but the dashboard's own predicate (`School::whereNotIn('id', $testSchoolIds)->where('status', 1)`) now counts **5**; counted users **42 of 70**; and the recently-joined feed (`is_test = false`, latest 5) lists only the five real seeded schools with **0 demo schools**. The dashboard's cached stats key was flushed first, since the payload is cached for 300s.
+- **NOT verified: staging.** Not checked; the migration is the sanctioned path and will run on the merge.
+
+#### The four distinct concepts called some variant of demo, test or sandbox
+
+Documented because this codebase genuinely has four, and a future reader will otherwise conflate them.
+
+| Concept | Location | Real meaning |
+|---|---|---|
+| `schools.is_test` | Column; read only in `Superadmin\DashboardSuperController` | **Reporting visibility.** These tenants are excluded from every platform statistic and from the recently-joined feed. |
+| `schools.is_demo` | Column; read only in `Demo\WelcomeController` | **Public showcase eligibility.** These schools may be shown on the marketing demo. |
+| `Api\Teacher\SandboxController` | Inherited GegoK12 code | A **teacher-app data sandbox** (e.g. `getUGDegree`). Nothing to do with tenants or reporting. |
+| The WhatsApp `demo` command | `Api\WhatsAppController` | An **interactive demo persona**: messaging "demo" auto-links the sender to a configured demo parent user (`services.whatsapp.demo_parent_user_id`, default 104). |
+
+Also worth knowing: there is **no staging concept in application code** at all. `config/app.php` reads `APP_ENV` and nothing branches on `staging` or `production`, so staging is differentiated purely by environment config. And there is **no synthetic/mock/seed concept** either: the `synthetic.*` accounts created and cleaned up during this work were a naming convention, not a platform feature.
+
+#### Known limitation, flagged not fixed: is_test has no writer
+
+`is_test` is read in exactly two places and **written by no code anywhere** in the application. It is purely operator-maintained, set by hand via tinker or SQL. That means every future test or demo tenant depends on someone remembering to set it, and forgetting it silently inflates platform metrics, which is exactly what happened with the demo seed. A one-line admin affordance, or having every seeder that creates a non-customer school set it, would remove that dependency. Deliberately not changed here: it is a product affordance decision, not a bug fix.
+
+### 2026-09-22: School-details save path FIXED and PROVEN, after three wrong diagnoses (#789)
+
+**The root cause.** `SiteHelper::getCountries()` and `getCities()` cache for `CACHE_TIME` (8400s), and the **cached collections were EMPTY** (0 entries) while the tables held **10 countries and 139 cities**. So the country select rendered with only its disabled placeholder, its DOM value collapsed to `""`, the real form submit posted `country_id=""`, and validation failed with **"Country Is Required"** on every attempt. Nothing ever saved, and the school logo upload rode the same submit and died with it. It is the **same class of bug as the academic-year cache**: a stale cache entry outliving the data it was built from.
+
+**Fixes (#789, merged `238cbb20`)**
+1. **Never serve a cached empty list**: if the cached collection is empty, forget the key and rebuild it, so a cache populated before seeding cannot poison every dependent select for the whole TTL. Applied to `getCountries()` and `getCities()`.
+2. **The component owns the submission**: `updateDetails()` now posts the full payload by axios to the same update endpoint once the preflight passes, instead of clicking a native submit and trusting DOM serialisation, which is exactly what silently dropped the bound country value. This closes the whole divergence class rather than one symptom, and carries the logo file with it.
+
+**Proven, and this is the proof that never succeeded all session**
+
+| Check | Result |
+|---|---|
+| Country select | **11 options**, value **7 (DRC)**, previously 1 option and empty |
+| Real click through the rendered UI | `/update/validationUpdate/1` then `/update/1` |
+| Database after a real save | **genuinely changed**: `website=https://saveproof.example.test`, `about_us=Saved through the real UI at last.` |
+| Validation error display | real, evidenced on this form: **"Error! Country Is Required"** |
+| Logo upload | meta persists a real path; **file present** under `storage/app/public` (89 bytes); its URL returns **HTTP 200** |
+
+**Three diagnoses I got wrong, recorded so they are not repeated**
+1. "Vue strips the form's action/method/CSRF." Wrong: the form submits correctly. I inferred it from counting attribute-less forms, which are simply Toshi's Livewire forms.
+2. "`edit()` never supplies the country list." Wrong: it does, at lines 194-195. My edit on that basis added a duplicate write and was reverted.
+3. "The payload omits a required `address`." Wrong: `address` is nullable.
+   The lesson, the same one as the academic-year bug: **measure the actual state (the select's option count, the cached collection, the POST body) instead of inferring from counts and code shape.**
+
+**NOT verified: staging.** Local only. The merges deploy by themselves.
+
+**Still to do**: resume draft PR #786 (student_size, school_category, EMIS field, and item 10's null-guard), rebased on this fix. Its option-nesting is already correct (inside `details`, which is what `setDetails()` reads), and its `student_size` required rule will now hold once that select actually has options. Verify with the same real-UI round-trip, then re-run the logo upload check.
+
+**Also outstanding, unrelated**: the six untested upload endpoints (importTeachers, importUsers, teacher-links/import, promotion/import, importHolidays, upload/photos) still have no end-to-end evidence, and the dashboard-list and attendance audit was not completed. The production decisions on #770 and the demo routes remain open.
+
+### 2026-09-22: Toshi panel thread: two pieces shipped, three attempts reverted on a third, two items not started
+
+Written for a future reader, because this thread has real nuance. **Read the status column before acting on anything below.**
+
+| Piece | Status | Where |
+|---|---|---|
+| Step 1, header overlap | **SHIPPED + verified (local)** | #791, merged `6913d255` |
+| Part B, header reduced to 68px | **SHIPPED + verified (local)** | #792, merged `47fe3c9c` |
+| Header full width (Option B) | **NOT SHIPPED. Three attempts, all reverted.** Diagnostic state below | unmerged; main clean at `47fe3c9c` |
+| Profile and notifications to the sidebar footer | **NOT STARTED** | no code |
+| Part A, three-state expandable rail | **NOT STARTED** | no code |
+| Staging verification for this whole thread | **NOT VERIFIED.** Everything shipped here is local-only | open |
+
+#### 1. Step 1, the header overlap (#791, shipped)
+- **Cause, measured:** on desktop the panel root is a **static flex item in the body's row**, and `align-items: stretch` made it span the full viewport height from `y=0`. It was never a fixed-position problem. Measured before: panel `y=0` to 1080 at 1920 wide, while the sidebar ran `y=85` to 1080, so the panel occupied the header's whole 85px band.
+- **Fix:** scoped to `min-width: 1280px`, the root got `margin-top` of the header offset, `height: calc(100vh - offset)`, and `align-self: flex-start`. Below 1280 the widget stays a fixed bottom-right pill and is untouched.
+- **Verified:** at 1920 and 1440 the panel matched the sidebar exactly (same `y`, same `bottom`), `overlapHeaderPx: 0`, and OCR of the screenshot read the header band cleanly (school name, year selector, search, sidebar headings), which was the visual proof rather than a DOM number.
+
+#### 2. Part B, header reduced to 68px (#792, shipped)
+- **Cause, measured:** `<nav class="navbar dashboard-themed-header">` carried **8px padding top and bottom around a 68px content row** (the academic-year block; the title is 36px), giving 8+68+8 = 85px. There is no 85px constant anywhere: the height is emergent from content.
+- **Fix:** trim only the wrapper padding to zero, leaving the logo, title and selector untouched and centred.
+- **The 1px correction caught mid-implementation:** the rendered header is **69px**, not 68, because of a 1px border. Setting the offset to 68 produced a measured 1px overlap, so the constant was synced to **69px**, the measured value. `--toshi-header-offset` is the single place this number lives.
+- **Verified:** header 69px on three pages; panel `y=69` matching the sidebar exactly; `overlapHeaderPx: 0`; exact y and bottom matches; no horizontal overflow; no page errors; mobile nav 57px with the offset unused and no overflow.
+
+#### 3. Header full width, Option B (NOT SHIPPED, three attempts, all reverted)
+Goal: `#app` spans the full viewport and Toshi becomes an anchored column below the header rather than a flex sibling.
+- **Attempt 1:** patched a plausible `@media (min-width: 1280px)` block. No effect.
+- **Attempt 2:** found the **winning** block by reading computed values (its `margin-top`, `align-self` and `height` were demonstrably live) and patched that. Still no effect on the root.
+- **Attempt 3:** neutralised the child panel's own `position: fixed` first. **This part worked**: the panel's computed position flipped to `relative`, confirming it as a real gatekeeper. Also corrected the stale comment above it. The root still did not move.
+- **Unresolved contradiction, recorded precisely:** two `body [data-toshi-root]` rules both declare `position: fixed !important`, the base one and ours, with ours later in the source, yet the root's computed position stays **static** and its `y` stays **0**. Consequently `#app` stays at viewport minus 380 and the header is not full width.
+- **Leading hypothesis:** an ancestor with `transform`, `filter`, `contain` or `will-change`, which makes `position: fixed` behave as absolute relative to that ancestor. Also possible: an inline `style` attribute on the root, or a partially dropped media block (less likely, the file's braces and parens balance and the block is served over HTTP).
+- **Next diagnostic, already scoped, about five lines:** read `getComputedStyle(root).position` immediately after patching, and list every ancestor's `transform`, `filter`, `contain` and `will-change`.
+- **Two stale CSS comments found and corrected during the attempts** (left in the tree only inside the reverted attempts, so still live for future readers): `dashboard-refresh.css` line ~668 references a **`toshi-ui.css` that does not exist**, and the comment above `[data-toshi-root] .toshi-panel` claims the panel is "not independently fixed" while the rule sets `position: fixed`. Do not trust either claim.
+- **Attempt-three side finding:** `#app`'s width of viewport minus 380 comes from the panel's continued presence in the flex flow, not from any width rule of its own, which is why removing it from the flow is the prerequisite for a full-width header.
+
+#### 4. Queued, not started
+- **Profile icon and notification bell to the sidebar footer**, matching the common SaaS pattern. The sidebar has no footer region today: its single child is `div.flex-1.header-wrapper-b`. Verify in both collapsed and expanded sidebar states.
+- **Part A, the three-state expandable rail** (collapsed, default 380px, maximized at roughly half the viewport), mirroring `#admin-sidebar`'s mechanism (delegated toggle, `localStorage`, reduced-motion guard), fixing the misleading toggle glyph, with the acceptance test on a content-heavy page (fee payments, not the dashboard) that the remaining half stays genuinely legible and functional.
+
+#### 5. Open item: staging, for the whole thread
+Nothing in this thread has been verified on staging. Both shipped pieces are local-only. Closing that means checking Step 1's envelope and Part B's header on the deployed build, ideally on the same pass that finally lands the full-width header.
+
+#### Side question resolved, so nobody chases it
+The profile dropdown **works**: clicking `.profile-click` adds an `open` class and the menu displays. An earlier note in this thread reported "zero visible menus", which was a fault in that test's selector, not in the product. Likewise the academic-year selector was confirmed working twice (two options, changed and persisted).
+
+### 2026-09-22: teacher attendance scope becomes a per-school setting, and the class_teacher_links naming trap
+
+Decision record, written **before** implementation. Full version: [docs/plans/attendance-scope-configurable-setting-plan.md](docs/plans/attendance-scope-configurable-setting-plan.md).
+
+**The naming trap, now on the record.** `class_teacher_links` is **not** the homeroom designation. It is the subject-teacher-class assignment table, reached through the `Teacherlink` model (`protected $table = 'class_teacher_links'`; columns `school_id`, `academic_year_id`, `standardLink_id`, `subject_id`, `teacher_id`). Homeroom lives on `standards_link.class_teacher_id`, and on `sections.class_teacher_id`. Anyone touching attendance authorization should read the table before trusting its name.
+
+**The relationship already exists.** `SiteHelper::getStandardSubjectList()` (around line 388) already **unions** homeroom links with `Teacherlink` subject assignments, scoped to the school and academic year. `Teacherlink` has **122 usages** (timetables, lesson plans, dashboards, noticeboards, admin imports via `TeacherLinkImportController`), so this is load-bearing infrastructure, not a stray table. Measured caveat: locally `class_teacher_links` holds **0 rows** while all 200 `standards_link` rows have a homeroom teacher, so a strict subject-only scope would leave teachers with zero access in schools whose assignments were never imported.
+
+**Decided design.** Three values, stored as `school_details` meta under key `attendance_scope`, the same pattern as the per-school `login_status` and `maintenance` switches (#712):
+
+| Value | Meaning |
+|---|---|
+| `class_teacher_only` | homeroom classes only (today's shipped scope) |
+| `classes_i_teach` | homeroom **union** subject assignments, **the default** |
+| `school_wide` | any active class in the school, explicit opt-in only |
+
+Missing or unrecognised values resolve to `classes_i_teach`, **never** `school_wide`. The scope is read from `Auth::user()->school_id` and never from input, and is cached per school with forgetting on write, per the #789 empty-cache lesson. Authorization goes through one new shared method, `SiteHelper::canTeacherRecordAttendance()`, so the web request and the teacher API cannot drift apart. The setting appears in the settings hub's **Academics** group, controlled by each school's own SchoolAdmin, consistent with every other per-school setting.
+
+**Three decisions confirmed.** `classes_i_teach` is the default despite being a real behaviour change, because it arguably fixes an existing bug: a teacher currently cannot record attendance for a class they genuinely teach but do not homeroom. The `status = 1` filter stays as a data-integrity safeguard. And each school controls its own setting.
+
+**How this reframes PR #788.** That PR's authorization rewrite is functionally the `school_wide` mode. It is not discarded: it becomes one legitimate mode, **off by default**. What was wrong is corrected here: it performed no relationship check at all, it deleted the comment documenting the narrower scope, and it would have silently become the default for every school. The intent is honoured; the method is fixed.
+
+### 2026-09-22: configurable attendance scope, SHIPPED (and a suite-breaking migration bug found on the way)
+
+Earlier the same day this was a decision record only. It is now implemented, merged and verified locally.
+
+| Piece | Status |
+|---|---|
+| Attendance scope setting (3 modes, shared check) | **SHIPPED** (#797), verified locally in a real browser |
+| Demo-seed migration NOT NULL fix | **SHIPPED** (#796), unblocked the whole test suite |
+| Elijah's teacher work from PR #788 (the formatter, new teacher views) | **NOT INCORPORATED YET.** Plan below |
+| Staging verification for any of this | **NOT DONE** |
+
+**Shipped: the setting.** `attendance_scope` lives in `school_details` meta, the same per-school pattern as `login_status` and `maintenance`. Values: `class_teacher_only` (homeroom only, the previously shipped scope), `classes_i_teach` (**the default**, homeroom **union** subject assignments from `class_teacher_links` via the `Teacherlink` model), and `school_wide` (any active class in the school, explicit opt-in only). A missing or unrecognised value resolves to `classes_i_teach`, never `school_wide`. The scope is always read from `Auth::user()->school_id`, never from input, and is cached per school with forgetting on write, per the #789 lesson.
+
+One shared method, `SiteHelper::canTeacherRecordAttendance()`, backs the web request, the API request, and both attendance listings, so the two paths cannot diverge. It also fails closed when the teacher does not belong to the school being checked. That guard came out of the tests: the first cross-school assertion failed because the tenant filter trusted the caller to pass a consistent school and teacher pair. It now verifies membership instead.
+
+Caught during implementation and fixed in the same pass: the demo-seed migration inserted `academic_years` without `start_date`/`end_date` (NOT NULL) and `users.status` as `1` where the column is an enum with a CHECK constraint. Both passed only on non-strict MySQL, so the migration chain aborted on SQLite and **every** `RefreshDatabase` test failed to boot. It went unnoticed because the suite was last run before that migration merged. Fixed in #796, additive only, since already-migrated databases will not re-run it. Follow-up still open: rows seeded by the earlier run may carry placeholder date values on non-strict MySQL, and a guarded repair migration is the clean fix.
+
+**Verified locally, with real evidence.** `tests/Feature/Teacher/AttendanceScopeTest.php`, 9 passing, 25 assertions: the default resolution, the unknown-value fallback, all three modes, the inactive-class refusal under `school_wide`, cross-school refusal in every scope, and web/API listing parity. In a real browser as a SchoolAdmin: the settings page renders the card (3 radios, correct values, `classes_i_teach` checked, heading present), submitting `school_wide` persists and re-renders as checked, and macOS Vision OCR reads all three option labels verbatim. As the teacher, the real attendance list returns 41 classes under `school_wide` and 40 under `class_teacher_only`, with a synthetic fixture class present in the first and absent in the second. That difference is the feature working end to end on real local data.
+
+**Not incorporated: PR #788's teacher work.** His `TeacherRosterFormatter`, the new teacher dashboard/attendance/student/timetable/noticeboard views, and his two controllers were reviewed as legitimate and are still **not** on main. They are new files (the teacher timetable and noticeboard view paths do not exist on main at all), so bringing them in means integrating new pages plus two controllers and adapting his attendance test to the scope modes. That is its own careful pass with its own browser verification, and it is deliberately not rushed in behind this change. Note that `TeacherWebAttendanceScopeTest` is already on main (merged separately in `68e78b18`) and still passes under the new default.
+
+**Still the biggest gap: staging.** Every piece of this is local-only. The teacher attendance flow and the settings card both need a staging pass.
+
+**His `school_wide` rewrite is now a supported mode.** Rather than discarding PR #788's authorization direction, `school_wide` is one legitimate, off-by-default option, and the settings card describes it as being for small schools where teachers cover for each other.
+
+### 2026-09-22: the attendance slice of PR 788 is ported and scope-aware; its timetable and student parts are blocked
+
+Follow-up to the attendance-scope stamp above. PR 788's teacher work is now partly on main, and the parts that are not have concrete reasons.
+
+| Piece | Status |
+|---|---|
+| TeacherRosterFormatter + teacher attendance overview view + scope-aware index() | **SHIPPED** (#799), verified locally |
+| His timetable routes and views | **NOT PORTED: they target methods that do not exist** |
+| His student-edit controller and routes | **NOT PORTED**, needs its own pass |
+| His admin teacher/member view changes | **NOT PORTED** |
+| Staging for any of the above | **NOT DONE** |
+
+**What shipped.** The attendance overview view and the `TeacherRosterFormatter` helper, with a new `index()` action on the teacher web attendance controller serving it from `SiteHelper::attendanceScopeStandardLinks()`. His original version listed **every active class in the school** unconditionally. The ported version is bounded by the school's `attendance_scope`, so the class list, the stream list and every record reflect what the teacher may actually record against.
+
+**Verified locally, decisively.** Same URL (`/teacher/attendance`), same teacher, same data, only the scope mode differing: under `classes_i_teach` the page renders **1 record**, that record being on a class the teacher subject-teaches but does not homeroom; under `class_teacher_only` the same page renders **0 records** for the same date with the empty state shown. Status 200 both times, no page errors. That is the requirement met exactly: his view respects the active scope rather than assuming school-wide access.
+
+**Why the timetable is not ported.** His routes point at six `Admin\TimetableSlotController` teacher methods (`teacherIndex`, `teacherCreate`, `teacherStore`, `teacherEdit`, `teacherUpdate`, `teacherDestroy`) that **do not exist on main** (only `teacherWeekly` does), and his PR never adds them. His timetable views also link to those route names. Porting them as-is would ship pages that fatal-error on arrival. Whoever picks this up should either implement those six actions or retire the routes, deliberately, rather than importing the views alone.
+
+**Why the student-edit part is not ported.** His `Teacher\StudentController` is a new file whose `edit()` returns the existing `admin/member/edit` view; wiring it safely means confirming that view's expected variables and its own authorization, which is a review in its own right rather than a copy.
+
+**Method note.** His branch is 82 commits behind main on a single squashed commit, so this was done by taking specific file contents, never by merging or blindly cherry-picking. Two interface checks ran over every ported file: that none of the four do-not-revert files appear (command palette, layouts/teacher/menu, config/navigation.php, the sidebar test), and that the hardcoded-credential and random-phone patterns from his branch are absent. The credential is in the branch's scratch files; the random phone was in a test fixture and is benign.
+
+### 2026-09-22: attendance scope verification closed, and the verification found a real bug in the write path
+
+This closes the three gaps left open in the stamps above. It also produced a genuine bug fix, which is the point of insisting on click-tested verification rather than reading the diff.
+
+| Gap | Result |
+|---|---|
+| school_wide click-tested in a browser | **CLOSED**, and it exposed a real defect |
+| Teacher API path exercised for real, per mode | **CLOSED**, web and API identical |
+| Staging verification for the whole thread | **CLOSED**, all three modes plus the API |
+
+**The bug the verification found.** The request's `authorize()` had been made scope-aware, but `AttendanceController::store()` and `::export()` kept their own hardcoded `isClassTeacherOfStandardLink()` checks. Under `classes_i_teach` or `school_wide` a teacher recording attendance for a subject-taught or unrelated class passed authorization and was then refused with **403 by the controller**. Under `class_teacher_only` the two checks agreed, which is exactly why the gap stayed invisible to code reading and to the tests that only exercised the helper. Fixed in #801 so all four entry points (web request, web controller, export, API) call `SiteHelper::canTeacherRecordAttendance()`.
+
+**Gap 1, real browser evidence.** As a real teacher, against a class with no relationship at all (not homeroom, no subject assignment): under `class_teacher_only` the overview shows 0 records and a real form POST is refused with 403; under `school_wide` the overview shows the record and the same POST succeeds with 200, the row verifiably landing in the database. An inactive class is refused in both modes, on read and on write, and creates no row.
+
+**Gap 2, real API client calls.** An actual sanctum login through `POST /api/teacher/login` (which authenticates on `mobile_no`, not email, and requires a `device_id`), then `GET /api/teacher/attendance/list` with the bearer token, for all three modes, compared against the web path for the same teacher:
+
+| Mode | API | Web | Identical |
+|---|---|---|---|
+| `class_teacher_only` | 40 | 40 | yes |
+| `classes_i_teach` | 41 | 41 | yes |
+| `school_wide` | 42 | 42 | yes |
+
+**Gap 3, staging.** Deployed main to staging and verified with synthetic fixtures on the fixture-safe school (which had **no academic year at all**, so one had to be created before the scope had anything to bind to). On staging: the settings card renders with the three options and `classes_i_teach` checked, confirmed by screenshot and macOS Vision OCR reading all three labels; a real SchoolAdmin login changed the mode through the UI and it persisted; the teacher attendance overview returned 0 records under `class_teacher_only`, 0 under `classes_i_teach` (the record sits on an unrelated class) and 1 under `school_wide`; and the API returned 1, 2 and 3 classes matching the web path exactly in every mode. Staging was left on the default and the synthetic accounts were deactivated with both status columns reset.
+
+**Known follow-up:** there is no durable test asserting the controller-level store() behaviour per mode. The helper is well covered; the write path is currently guarded by the shared call and by this manual verification, and a feature test that posts attendance under each mode would make the #801 class of regression impossible to reintroduce.
+
+### 2026-09-22: the attendance-scope thread is closed: durable write-path cover, and one more honest correction
+
+The last gap flagged in the verification stamp above is closed, and writing the test for it found one more thing worth correcting the record on.
+
+| Layer | Cover |
+|---|---|
+| Helper (`SiteHelper::canTeacherRecordAttendance`) | covered since #797 |
+| Request (`AttendanceAddRequest::authorize`) | covered since #797 |
+| Controller `store()` / `export()` | **now durably covered** (this change) |
+| API request and listings | covered since #797, parity-tested locally and on staging |
+
+**The test.** `AttendanceWriteScopeTest` exercises the real controller action with real POSTs under each of the three modes, over all four class relationships: homeroom, subject-taught, unrelated, and inactive. It also covers the export path and asserts refused writes create no rows. 6 tests, 19 assertions.
+
+**Proof it catches the bug it exists for.** With the #801-era hardcoded check temporarily reintroduced, 3 of 6 tests fail (the subject-taught allowed case, the unrelated allowed case and the export allowed case); restored to the fixed code, all 6 pass.
+
+**The honest correction.** In the verification stamp I said a school-wide write would have been "refused with 403 by the controller". Writing this test made me look properly, and that was imprecise. Both checks ran their `abort(403)` **inside** a `try/catch (Exception)` that converts every Exception, `HttpException` included, into a generic error response. So the controller checks never actually produced a 403 at all: the refusals everyone relied on came from the FormRequest layer. A pre-#801 school-wide write would have surfaced as a generic swallowed error, not a clean 403. The defect was real, but its shape was worse and quieter than I claimed: the controller guard was decorative.
+
+**The fix.** Both checks are now hoisted above the try blocks, so the controller guard is genuine and a refused write is a real 403 from the controller too. Defence in depth now means three real layers (request, controller, API request) rather than one real layer and two that only looked like they worked.
+
+Regression sweep after the change: Teacher, SchoolDetails and Navigation suites, 72 passed.
+
+### 2026-09-22: Boost MCP client config made worktree-portable
+
+`.ai/mcp/mcp.json` is committed, so both worktrees share it, but it stored an absolute path to the main worktree's `artisan`. That can only ever be correct for one checkout, and the two worktrees point at **different databases** (port 3306 vs 3307), so a client reading the wrong path silently queries the wrong data. Both paths are now relative (`php artisan boost:mcp`), which resolves against whichever project root the client launches from.
+
+Caveat recorded deliberately: `php artisan boost:install` may rewrite this file with absolute paths again, so re-check it after a Boost upgrade.
+
+### 2026-09-22: repaired the placeholder academic-year dates the pre-fix demo seed left behind
+
+The follow-up flagged in the demo-seed stamps is now closed. The seed originally inserted `academic_years` without `start_date`/`end_date`, and because those columns are NOT NULL, non-strict MySQL accepted the insert with `0000-00-00` placeholders rather than failing. Fixing the seed stopped new damage but left the existing rows invalid, and an academic year with year-zero dates presents as nonsense wherever it is displayed.
+
+New migration `2026_09_22_030000_repair_placeholder_academic_year_dates`, written as a guarded repair per rule #1 (data changes go through committed migrations). It touches only rows where the school is `is_demo` and the dates are still placeholders, and only when the year label is a plain 4 digit year, so it can never invent dates. It repairs them to the house convention used by every other academic year in this database: 2 February to 4 December of the named year. `down()` is deliberately empty, since restoring year-zero dates would reintroduce the defect.
+
+Measured before and after with Laravel Boost rather than by inference: two affected rows, both demo schools (`Lakeview Junior School`, `Model Hill Secondary School`), and zero placeholder rows anywhere in `academic_years` afterwards. A check across `users`, `userprofiles`, `sections` and `schools` found no zero dates, so `academic_years` was the only table the seed damaged this way.
+
+### 2026-09-22: role capability matrix published as the reference for the testing pass
+
+New reference document: [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md). Built from real sources only: `config/navigation.php`, `php artisan route:list --json`, `RouteServiceProvider` middleware groups, `ToshiActionService::getRoleCapabilities()`, and the scope helpers in `SiteHelper`. It covers SchoolAdmin, Class Teacher, Teacher, Parent and Student with a capability grid (full, write-limited, view, scoped, self, none), the configurable attendance scope row, and the per-role Toshi action sets.
+
+Ten findings recorded, the substantive ones being: the teacher attendance overview page shipped in #799 is unreachable from the sidebar because the nav points at a dashboard anchor; teacher routes carry receptionist-domain write access (`visitorlog`, `calllog`, `postalrecord` accept POST/PUT/DELETE behind only `web, auth, teacher`); the sidebar's `class_teacher` condition uses homeroom-only links so it ignores the new `attendance_scope`; and Parent's sidebar exposes 2 of its real capabilities while the per-child fees, grades and attendance routes exist behind the Children page.
+
+No functional testing was performed. This document is the baseline the testing pass follows.
+
+### 2026-09-22: capability matrix findings quantified with Laravel Boost
+
+Added a measured-population section to [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md), derived from Boost `database-query` and `database-schema` calls rather than inference.
+
+Numbers that matter for the coming testing pass: 6 homeroom teachers, 1 teacher with subject assignments, and **0 subject-only teachers** locally, which means the sidebar `class_teacher` condition bug currently affects nobody here and can only be reproduced by constructing a teacher who subject-teaches a class they do not homeroom. `visitor_log`, `call_log` and `postal_record` all hold **0 rows**, so the teacher write-access exposure is latent rather than exploited, and `visitor_log` has **no author column at all**, so a teacher-created row could not be attributed after the fact. That makes writing a test row the only way to demonstrate the issue.
+
+Also recorded: `ToshiActionService::getRoleCapabilities()` defines usergroups 2 and 13, neither of which exists in the `usergroups` table.
+
+### 2026-09-22: teacher reception-desk access is now a per-school setting, off by default
+
+Closes finding 2 of the role capability matrix: teacher routes carried full write access to the receptionist domains (visitor log, call log, postal record) behind nothing but basic teacher authentication.
+
+**The setting.** `school_details` meta key `teacher_receptionist_access`, boolean, **disabled by default**. `SiteHelper::teacherReceptionistAccessEnabled()` is fail-safe: a missing or unrecognised value resolves to disabled, the same principle as `attendance_scope`. Cached per school and forgotten on write. Writable from the access-switches page in the settings hub and by SiteAdmin via `php artisan school:access --teacher-receptionist=on|off`. Scope is always read from `Auth::user()->school_id`, never from input.
+
+**Enforcement.** One middleware, `EnsureTeacherReceptionistAccess`, applied to the three route groups, so there is a single gate rather than twelve per-action checks. It covers teachers only, leaves reads alone, and matches on **path as well as method**, because the delete actions are `Route::get`.
+
+**Two things found while building it.**
+
+1. **The deletes are GET routes.** `/teacher/visitorlog/delete/{id}` and its two siblings are `Route::get` with side effects, so a method-based gate would have missed every delete and the delete is also CSRF-exempt and prefetchable in principle. The gate matches `teacher/*/delete/*` by path for exactly this reason.
+2. **The lookups were not tenant-scoped.** All nine `where('id', $id)` lookups in the three teacher controllers were unscoped, so a teacher could act on any school's record by id, and the receptionist originals are correctly school-scoped by comparison. All nine now filter by `school_id` from the authenticated user.
+
+**A third thing, same lesson as earlier tonight.** The null guard added after scoping raised `abort(404)` **inside** a `try/catch (Exception)` that converts every exception into a generic response, so the 404 was swallowed. The guard is now hoisted above the `try` in the destructive `destroy` path in all three controllers, exactly as the attendance write path had to be.
+
+**Verified locally, with real evidence.** Test suite `TeacherReceptionistAccessTest`, 6 passing. In a real browser as a teacher: POST add refused **403**, GET delete refused **403**, reads unaffected at **200**; the settings card renders unchecked by default; enabling it through the real UI then showed POST and GET delete both at **200**, and the probe row was verifiably soft-deleted; restoring it to off via the UI left it off. Regression sweep of Teacher, Navigation and SchoolDetails suites: 78 passed.
+
+**Data check.** Locally `visitor_log`, `call_log` and `postal_record` all held **0 rows** before this work, so nothing suggests teachers were using the capability here and the default lockout breaks no existing local workflow. Staging was checked separately.
+
+### 2026-09-22: teacher attendance nav points at the real page, and Class Streams visibility now matches its own authorization
+
+Findings 2 and 3 of the role capability matrix, closed together because both are attendance-adjacent nav issues.
+
+**Finding 2, the orphaned page.** `config/navigation.php` pointed the teacher Attendance item at `teacher/dashboard` with a `#attendance` hash, so the real `/teacher/attendance` page shipped in #799 had no way in. The item now uses `route('teacher.attendance.index')`.
+
+**Finding 3 was not what it looked like, and checking first mattered.** The `condition => 'class_teacher'` nav flag appeared to be one rule applied to two items. It is not. Each item has its own server-side check:
+
+| Item | Real authorization | Homeroom sources |
+|---|---|---|
+| Report Cards | `ReportCardsController::authorizeClassTeacher()` via `isClassTeacherOfStandardLink()` | `standards_link.class_teacher_id` only |
+| Class Streams | `ClassStreamController` via `ExamAuthorization::sectionIdsForClassTeacher()` | `standards_link.class_teacher_id` **and** `sections.class_teacher_id` |
+
+So the nav was correct for Report Cards and **too narrow** for Class Streams: a teacher designated class teacher on the section itself passed the controller check but was never shown the link. Class Streams now carries a distinct `class_streams` condition resolved through `ExamAuthorization::sectionIdsForClassTeacher()`, the same service the controller enforces, so nav and authorization cannot drift. Report Cards deliberately keeps the narrower homeroom rule.
+
+**Deliberately NOT done: neither item follows `attendance_scope`.** Neither feature's authorization reads that setting. Making the nav follow it would have produced the opposite bug, items visible to teachers who then get a 403. This is recorded because the matrix finding assumed the opposite, and the assumption was wrong.
+
+**Latent today.** Locally `sections.class_teacher_id` is populated on **0 of 52** sections while 203 standards_link rows carry it, so the Class Streams mismatch was invisible in this database. It bites a school that designates class teachers at section level.
+
+**Verified, locally.** Seven new tests in `ClassTeacherNavVisibilityTest`, and a real browser pass over three constructed teacher shapes:
+
+| Teacher shape | Attendance link | Report Cards | Class Streams | /teacher/attendance |
+|---|---|---|---|---|
+| homeroom teacher | `/teacher/attendance` | visible | visible | 200 |
+| subject-only teacher | `/teacher/attendance` | hidden | hidden | 200 |
+| section-level class teacher | `/teacher/attendance` | hidden | **visible** | 200 |
+
+The subject-only teacher correctly sees neither conditioned item, because neither feature's authorization grants them one. `attendance_scope` was flipped through all three modes in the tests and moves neither item. The pre-existing `SidebarMenuRenderTest` guard needed its expectation widened, since it assumed a single condition name. Navigation and Teacher suites: 79 passing.
+
+Staging verified after deploy.
+
+### 2026-09-22: nav findings pass, items 1, 3, 4 and 5 resolved, item 2 needs a decision
+
+Detail in [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md). Summary of the five:
+
+**1 FIXED, parent nav.** Direct Fees, Grades and Attendance entries, resolved through `ParentPortalService::listChildren()`. One child links straight to that child; several or none fall back to the Children page. Real caveat found while verifying: the per-child URIs carry a `/children` segment (`/parent/children/{student}/fees`), which the audit's shorthand had wrong. Browser verified 200 for all three for a real parent and their own child.
+
+**2 NEEDS A DECISION.** The premise was wrong: `routes/student.php` has **no** marks or attendance routes. It is a missing feature, not a missing nav entry. Toshi grants a student `view_marks` and `view_attendance`, so the AI path exists and the web surface does not. Build read-only student pages, or drop the claim.
+
+**3 INTENTIONAL, no change.** `Student/AssignmentController@store` creates a `StudentAssignment` with `user_id = Auth::id()` and an uploaded file. Students **submit work against** assignments, they do not create them. The matrix wording was corrected, not the code.
+
+**4 FIXED, except one decision.** Teacher Exams and Marks were genuinely distinct destinations both pointing at one route: Exams now goes to `teacher.exams.create` (with the class-teacher condition, matching its controller) and Marks to `teacher.exam.marks`. The duplicate teacher "Students" entry, identical to "Classes", is removed. Admin Health now points at the named `admin/health` route, but that route merely redirects to `/admin/students`, so the item stays effectively redundant. **Decision needed:** a health landing page, or remove the item.
+
+**5 NOT A GAP, no change.** `MustBePrivilege` is an onboarding gate that keeps a school admin on the dashboard until an academic year and standards exist. Teachers have no setup surface, so there is nothing for an equivalent gate to do and none was added.
+
+Verification: 15 Navigation tests passing, including the new resolver matrix (one child, several, none), the distinct Exams/Marks targets and the class-teacher condition on Exams. Real browser pass covering the parent entries, the admin Health link and both teacher destinations. Staging verified after deploy.
+
+### 2026-09-22: student own-record pages, and a real health overview landing
+
+Two builds shipped from the capability-matrix follow-up.
+
+**Student marks and attendance (#812).** The matrix claim was wrong: `routes/student.php` had no marks or attendance routes at all, so this was a missing feature rather than a missing nav entry. Added `Student\RecordsController` with `marks()` and `attendance()`, two routes, two views and the nav entries.
+
+The scoping decision is the interesting part: **neither route accepts a student id**. The parent equivalents do, and enforce ownership through `StudentParentLink`; a student reading their own record needs no such surface, so there is no id to tamper with. Queries use `Auth::id()` plus the authenticated school, mirroring the proven shape of `ParentPortalService::grades()` and `::attendance()`. Verified with 6 tests: own marks only, own attendance only, a crafted `student_id` in the query string ignored, `/student/{id}/marks` returning 404, the parent per-child routes refusing a student, and cross-school isolation. Real browser: nav resolves, marks render real data, `/student/{other}/marks` is 404, and `?student_id=other` still shows only own marks.
+
+**Admin health overview (#813).** `/admin/health` was a closure that redirected to the student list, making the nav item an effective duplicate of Students. Health is tracked per student (profiles, immunizations, incidents), so the landing is now a school-level summary of that same data: profiles on file, immunisation count with overdue count, incidents in the last 30 days, medical flags, incidents by severity, and the six most recent incidents with student names. All queries use the models' `whereSchool()` scope; no school id comes from the request. 3 tests including cross-school isolation asserted in both directions.
+
+**Two things learned building them.** `Exams` and its family live in `App\Models\Academics\`, not `App\Models\`, which cost a 500 and was diagnosed in one call with Boost's `last-error`. And `exams` carries two NOT NULL columns the older inspection missed, `academic_term_id` and `exam_type_id`, found with Boost's `database-schema` rather than by trial and error. Separately, the admin group's `MustBePrivilege` onboarding gate bounced the health page in tests until disabled, which is independent confirmation that the gate works the way the earlier investigation described.
+
+**Staging verified after deploy (head 05fca10e).** As a real staging admin: `/admin/health` renders 200 without redirecting, with the heading present. As a real staging student: the nav resolves to `/student/marks` and `/student/attendance`, both 200, and a genuine crafted attempt at another student's id, `/student/4/marks`, is refused with 404. Fixture accounts deactivated afterwards.
+
+### 2026-09-22: parent nav verified for both shapes on local and staging, and the Health nav item relabelled
+
+**Item 1, multi-child parent verification (no code change; the fix shipped in #811).** The earlier staging gap was my own error, not a data-model difference: I checked for a `userparent` table and reported the linkage as differing, when the real table is **`student_parent_links`** (`parent_id`, `student_id`, `school_id`, `status`), which exists on staging with rows already. Lesson repeated from earlier in this session: a wrong table name is not evidence of a different model.
+
+Verified in a real browser, local and staging, with fixtures matching that real model:
+
+| Parent shape | Fees / Grades / Attendance links | Pages |
+|---|---|---|
+| Two children | all three fall back to `/parent/children` | 200 |
+| One child | direct links to `/parent/children/{id}/fees|grades|attendance` | 200 |
+
+**Item 2, Health nav placement: kept in Operations, relabelled to "Health records".** Real reconsideration rather than defaulting to no-change. The admin nav is Dashboard plus five groups: Academics (Students, Parents, Classes and Streams, Subjects, Timetable, Attendance, Exams and Marks, Grading, Report Cards), **Operations (Library, Health, Transport)**, Finance, Communication, System.
+
+Reasoning for keeping it in Operations: health records are a school service (the nurse and first-aid function), the same category as the library and transport, not teaching and learning. Moving it into Academics next to Students would recreate exactly the adjacency that made the original finding confusing, an item beside Students that was indistinguishable from Students. A group of its own for one item would be worse. What was genuinely wrong was the label reading like a duplicate of the student list, so it is now **"Health records"**, which matches both the page and the domain.
+
+Verified: the item renders with the new label and lands on `/admin/health`, which serves the real overview (200, no redirect) as confirmed locally and on staging.

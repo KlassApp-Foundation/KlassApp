@@ -112,8 +112,11 @@ PROMPT;
 
         $parts = [];
         $parts[] = 'School: **' . $school->name . '** (ID: ' . $schoolId . ')';
-        $parts[] = 'Country: **' . ($school->registration_country ?: 'Uganda') . '**';
-        $parts[] = 'Curriculum: **' . ($school->curriculum ?: 'UNEB') . '**';
+        // Never state a curriculum or country the school has not set. These used to default
+        // to UNEB and Uganda, so Toshi's context asserted facts nobody had told us, and a
+        // Cambridge school mid-setup would be described as UNEB. Say it is unset instead.
+        $parts[] = 'Country: **' . ($school->registration_country ?: 'not set yet') . '**';
+        $parts[] = 'Curriculum: **' . ($school->curriculum ?: 'not set yet') . '**';
         $parts[] = 'User role: **' . $this->getUserRole($user) . '**';
 
         // Add grading-scale context if configured

@@ -44,14 +44,14 @@
                                     @if( ($value->meta_value != null) && ($value->meta_value != '-') )
                                         {{ $value->meta_value }}
                                     @else
-                                        NULL
+                                        <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                                     @endif
 
                                 @else
                                     @if( ($value->meta_value != null) && ($value->meta_value != '-') )
                                         <img src="{{ $value->LogoPath }}" class="img-responsive w-32">
                                     @else
-                                        NULL
+                                        <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                                     @endif
                                 @endif
                             </p>
@@ -70,7 +70,7 @@
 
                      <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Center Number</p>
-                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->center_no ?? "N/A" }}</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->center_no ?: 'Not set' }}</p>
                     </li>
                     @if($school->landline_no != null)
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
@@ -78,7 +78,7 @@
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->landline_no }}</p>
                     </li>
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                     
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
@@ -87,7 +87,7 @@
                             @if($school->address != null)
                                 {{ $school->address }}
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                         </p>
                     </li>
@@ -97,7 +97,7 @@
                             @if($school->city_id != null)
                                 {{ $school->city->name }}
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                         </p>
                     </li>
@@ -107,7 +107,7 @@
                             @if($school->state_id != null)
                                 {{ $school->state->name }}
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                         </p>
                     </li>
@@ -119,14 +119,14 @@
                             @elseif($school->country_id != null)
                                 {{ $school->country->name }}
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                         </p>
                     </li>
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">EMIS / Ministry Code</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
-                            {{ $school->ministry_code ?: 'NULL' }}
+                            {{ $school->ministry_code ?: 'Not set' }}
                         </p>
                     </li>
                     @if(\App\Services\OnboardingStepsService::isUnebCurriculum($school->curriculum))
@@ -138,7 +138,7 @@
                             @elseif($school->uneb_center_number === '')
                                 Skipped
                             @else
-                                NULL
+                                <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
                         </p>
                     </li>

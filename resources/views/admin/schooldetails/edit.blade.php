@@ -10,7 +10,7 @@
 <div class="py-6 px-4">
     <div class="ds-page-head">
         <div class="flex items-center gap-3">
-            <x-button href="{{ url('/admin/schooldetails') }}" variant="ghost" size="sm" title="Back">
+            <x-button href="{{ url('/admin/settings') }}" variant="ghost" size="sm" title="Back">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </x-button>
             <h1 class="ds-page-head-title">Edit School Details</h1>
@@ -49,6 +49,11 @@
               </div>
 
               <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+                {{-- The map portal and its coordinate fields are gated on the same key as
+                     the Maps script below. Until that key is configured the feature is not
+                     built, so rendering a 250px empty box and two hidden inputs only shows a
+                     half-feature. Wrap, never cut: the markup stays intact for Wave 2. --}}
+                @if(config('services.google.maps_api_key'))
                 <div class="lg:mr-8 md:mr-8">
                   <div id="map_canvas" class="tw-form-control" style="height: 250px;">
                   </div>
@@ -83,6 +88,7 @@
                   </div>
                 </div>
               </div>
+                @endif
             </div>
           </portal>
         </x-card>
@@ -94,6 +100,7 @@
 @if(config('services.google.maps_api_key'))
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places&key={{ config('services.google.maps_api_key') }}"></script>
 @endif
+@if(config('services.google.maps_api_key'))
 <script type="text/javascript">
 
 var map;
@@ -169,4 +176,5 @@ function codeAddress()
 }
 google.maps.event.addDomListener(window, 'load', initialize);
 </script>
+@endif
 @endpush

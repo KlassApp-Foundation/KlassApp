@@ -32,7 +32,12 @@ class SchoolDetailsController extends Controller
      */
     public function index()
     {
-        $details = SchoolDetail::where('school_id', Auth::user()->school_id)->get()->keyby('meta_key');
+        // Per-school access switches (maintenance, login_status) are deliberately excluded:
+        // they live in the settings hub, which is the one place that both reads and writes
+        // them. This page must not be a second, read-only surface for the same toggles.
+        $details = SchoolDetail::where('school_id', Auth::user()->school_id)
+            ->whereNotIn('meta_key', ['maintenance', 'login_status'])
+            ->get()->keyby('meta_key');
 
         $school = School::where('id', Auth::user()->school_id)->first();
 
@@ -109,7 +114,8 @@ class SchoolDetailsController extends Controller
             }
 
             foreach ($request->request as $key => $value) {
-                $arrays = ['about_us', 'board', 'date_of_establishment', 'moto', 'school_logo', 'website'];
+                // See update(): board maps to schools.curriculum and is not duplicated here.
+                $arrays = ['about_us', 'date_of_establishment', 'moto', 'school_logo', 'website'];
                 foreach ($arrays as $array) {
                     if ($key == $array) {
                         $details = new SchoolDetail;
@@ -141,8 +147,28 @@ class SchoolDetailsController extends Controller
         }
     }
 
+    /**
+     * These routes carry a {school_id} in the URL, and three actions trusted it: a school
+     * admin could read another school's profile (and open its edit form) just by changing
+     * the id. Every action now refuses any id other than the caller's own school.
+     *
+     * update() already ignored the parameter and used the authenticated school, so the write
+     * path was not cross-tenant; it is guarded here too so the refusal is explicit and
+     * consistent rather than incidental.
+     */
+    private function assertOwnSchool(int|string $school_id): int
+    {
+        $own = (int) (Auth::user()->school_id ?? 0);
+
+        abort_unless($own > 0 && (int) $school_id === $own, 403, 'You can only manage your own school.');
+
+        return $own;
+    }
+
     public function edit($school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         $array = [];
 
         $school = School::where('id', $school_id)->first();
@@ -173,6 +199,8 @@ class SchoolDetailsController extends Controller
 
     public function editdetail($school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         $school = School::where('id', $school_id)->first();
 
         return view('/admin/schooldetails/edit', ['school_id' => $school_id, 'school' => $school]);
@@ -185,6 +213,8 @@ class SchoolDetailsController extends Controller
      */
     public function validationUpdate(DetailRequest $request, $school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         return response()->json(['success' => true]);
     }
 
@@ -196,6 +226,8 @@ class SchoolDetailsController extends Controller
      */
     public function update(DetailRequest $request, $school_id)
     {
+        $this->assertOwnSchool($school_id);
+
         try {
             $school_id = Auth::user()->school_id;
             $school = School::where('id', $school_id)->firstOrFail();
@@ -209,7 +241,9 @@ class SchoolDetailsController extends Controller
                 $school->city_id = $validated['city_id'];
             }
 
-            // Single country selector: write registration_country (Toshi) + country_id (FK).
+            // Managed convergence, not a fork: country_id is the FK this form edits, while
+            // registration_country is the string the wizard, Toshi and the UNEB checks read.
+            // persistCountry() keeps both in step, so neither is a second source of truth.
             $country = Country::query()->find($validated['country_id']);
             if ($country) {
                 OnboardingStepsService::persistCountry($school, $country->name);
@@ -223,6 +257,10 @@ class SchoolDetailsController extends Controller
                     ? $validated['ministry_code']
                     : null;
             }
+
+            // Motto now lives in its own column. The meta row is still written during the
+            // transition window so a rollback stays safe, and reads prefer the column.
+            $school->motto = $validated['moto'] ?? null;
 
             if (Schema::hasColumn('schools', 'uneb_center_number')
                 && array_key_exists('uneb_center_number', $validated)) {
@@ -247,7 +285,10 @@ class SchoolDetailsController extends Controller
                 );
             }
 
-            $metaKeys = ['about_us', 'board', 'date_of_establishment', 'moto', 'website'];
+            // 'board' is deliberately NOT written as a meta row: it is mapped onto
+            // schools.curriculum above, which is the column the wizard, Toshi and the
+            // report cards read. Writing both created a second copy that could drift.
+            $metaKeys = ['about_us', 'date_of_establishment', 'moto', 'website'];
             foreach ($metaKeys as $metaKey) {
                 if (! array_key_exists($metaKey, $validated) && ! $request->exists($metaKey)) {
                     continue;

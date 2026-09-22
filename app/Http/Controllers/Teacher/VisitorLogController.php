@@ -165,7 +165,11 @@ class VisitorLogController extends Controller
 
     public function show($id)
     {
-        $visitorlog=VisitorLog::where('id',$id)->first();
+        $visitorlog=VisitorLog::where('school_id', Auth::user()->school_id)->where('id',$id)->first();
+
+        if (! $visitorlog) {
+            abort(404, 'Record not found.');
+        }
 
         $array = [];
 
@@ -225,7 +229,11 @@ class VisitorLogController extends Controller
         
         try
         {
-            $visitorlog = VisitorLog::where('id',$id)->first();
+            $visitorlog = VisitorLog::where('school_id', Auth::user()->school_id)->where('id',$id)->first();
+
+            if (! $visitorlog) {
+                abort(404, 'Record not found.');
+            }
 
             $visitorlog->student_id             =   $request->student_id;
             $visitorlog->relation               =   $request->relation;
@@ -319,10 +327,18 @@ class VisitorLogController extends Controller
      */
     public function destroy($id)
     {
+
+        // Authorization and the 404 guard run BEFORE the try: the catch below
+        // converts every Exception, HttpException included, into a generic
+        // response, so a 404 raised inside the try would be swallowed.
+        $visitorlog=VisitorLog::where('school_id', Auth::user()->school_id)->where('id',$id)->first();
+
+        if (! $visitorlog) {
+            abort(404, 'Record not found.');
+        }
+
         try 
         {
-            $visitorlog=VisitorLog::where('id',$id)->first();
-
             $visitorlog->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Visitor Log']);

@@ -243,6 +243,7 @@ Route::get( '/standardLink/show/comments/{post_id}', 'StandardsLinkDetailsContro
 
 //attendance
 //add
+Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
 Route::get( '/attendance/list', 'AttendanceController@list' );
 Route::post( '/attendance/add', 'AttendanceController@store' );
 //export
@@ -306,6 +307,7 @@ Route::group([ 'namespace' =>'Approval' ], function () {
     Route::post( '/studenthomework/edit/{id}', 'StudentHomeworkController@update' );
 
 //visitor-log
+Route::middleware('teacher.receptionist')->group(function () {
 Route::get( '/visitorlog', 'VisitorLogController@index' );
 Route::get('/visitorlog/showlist', 'VisitorLogController@showlist');
 Route::get('/visitorlog/list', 'VisitorLogController@list');
@@ -315,9 +317,11 @@ Route::get('/visitorlog/show/{id}','VisitorLogController@show');
 Route::get('/visitorlog/edit/{id}', 'VisitorLogController@edit');
 Route::post('/visitorlog/update/{id}', 'VisitorLogController@update');
 Route::get('/visitorlog/delete/{id}', 'VisitorLogController@destroy');
+});
 
 
 //call-log
+Route::middleware('teacher.receptionist')->group(function () {
 Route::get( '/calllog', 'CallLogController@index' );
 Route::get('/calllog/showlist', 'CallLogController@showlist');
 Route::get('/calllog/list', 'CallLogController@list');
@@ -327,9 +331,11 @@ Route::get('/calllog/show/{id}','CallLogController@show');
 Route::get('/calllog/edit/{id}', 'CallLogController@edit');
 Route::post('/calllog/update/{id}', 'CallLogController@update');
 Route::get('/calllog/delete/{id}', 'CallLogController@destroy');
+});
 
 
 //call-log
+Route::middleware('teacher.receptionist')->group(function () {
 Route::get( '/postalrecord', 'PostalRecordController@index' );
 Route::get('/postalrecord/showlist', 'PostalRecordController@showlist');
 Route::get('/postalrecord/list', 'PostalRecordController@list');
@@ -339,6 +345,7 @@ Route::get('/postalrecord/show/{id}','PostalRecordController@show');
 Route::get('/postalrecord/edit/{id}', 'PostalRecordController@edit');
 Route::post('/postalrecord/update/{id}', 'PostalRecordController@update');
 Route::get('/postalrecord/delete/{id}', 'PostalRecordController@destroy');
+});
 
 //student details
 Route::get( '/student/show/{name}', 'StudentDetailsController@show' );
