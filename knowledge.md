@@ -12374,3 +12374,11 @@ The follow-up flagged in the demo-seed stamps is now closed. The seed originally
 New migration `2026_09_22_030000_repair_placeholder_academic_year_dates`, written as a guarded repair per rule #1 (data changes go through committed migrations). It touches only rows where the school is `is_demo` and the dates are still placeholders, and only when the year label is a plain 4 digit year, so it can never invent dates. It repairs them to the house convention used by every other academic year in this database: 2 February to 4 December of the named year. `down()` is deliberately empty, since restoring year-zero dates would reintroduce the defect.
 
 Measured before and after with Laravel Boost rather than by inference: two affected rows, both demo schools (`Lakeview Junior School`, `Model Hill Secondary School`), and zero placeholder rows anywhere in `academic_years` afterwards. A check across `users`, `userprofiles`, `sections` and `schools` found no zero dates, so `academic_years` was the only table the seed damaged this way.
+
+### 2026-09-22: role capability matrix published as the reference for the testing pass
+
+New reference document: [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md). Built from real sources only: `config/navigation.php`, `php artisan route:list --json`, `RouteServiceProvider` middleware groups, `ToshiActionService::getRoleCapabilities()`, and the scope helpers in `SiteHelper`. It covers SchoolAdmin, Class Teacher, Teacher, Parent and Student with a capability grid (full, write-limited, view, scoped, self, none), the configurable attendance scope row, and the per-role Toshi action sets.
+
+Ten findings recorded, the substantive ones being: the teacher attendance overview page shipped in #799 is unreachable from the sidebar because the nav points at a dashboard anchor; teacher routes carry receptionist-domain write access (`visitorlog`, `calllog`, `postalrecord` accept POST/PUT/DELETE behind only `web, auth, teacher`); the sidebar's `class_teacher` condition uses homeroom-only links so it ignores the new `attendance_scope`; and Parent's sidebar exposes 2 of its real capabilities while the per-child fees, grades and attendance routes exist behind the Children page.
+
+No functional testing was performed. This document is the baseline the testing pass follows.
