@@ -12440,3 +12440,19 @@ So the nav was correct for Report Cards and **too narrow** for Class Streams: a 
 The subject-only teacher correctly sees neither conditioned item, because neither feature's authorization grants them one. `attendance_scope` was flipped through all three modes in the tests and moves neither item. The pre-existing `SidebarMenuRenderTest` guard needed its expectation widened, since it assumed a single condition name. Navigation and Teacher suites: 79 passing.
 
 Staging verified after deploy.
+
+### 2026-09-22: nav findings pass, items 1, 3, 4 and 5 resolved, item 2 needs a decision
+
+Detail in [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md). Summary of the five:
+
+**1 FIXED, parent nav.** Direct Fees, Grades and Attendance entries, resolved through `ParentPortalService::listChildren()`. One child links straight to that child; several or none fall back to the Children page. Real caveat found while verifying: the per-child URIs carry a `/children` segment (`/parent/children/{student}/fees`), which the audit's shorthand had wrong. Browser verified 200 for all three for a real parent and their own child.
+
+**2 NEEDS A DECISION.** The premise was wrong: `routes/student.php` has **no** marks or attendance routes. It is a missing feature, not a missing nav entry. Toshi grants a student `view_marks` and `view_attendance`, so the AI path exists and the web surface does not. Build read-only student pages, or drop the claim.
+
+**3 INTENTIONAL, no change.** `Student/AssignmentController@store` creates a `StudentAssignment` with `user_id = Auth::id()` and an uploaded file. Students **submit work against** assignments, they do not create them. The matrix wording was corrected, not the code.
+
+**4 FIXED, except one decision.** Teacher Exams and Marks were genuinely distinct destinations both pointing at one route: Exams now goes to `teacher.exams.create` (with the class-teacher condition, matching its controller) and Marks to `teacher.exam.marks`. The duplicate teacher "Students" entry, identical to "Classes", is removed. Admin Health now points at the named `admin/health` route, but that route merely redirects to `/admin/students`, so the item stays effectively redundant. **Decision needed:** a health landing page, or remove the item.
+
+**5 NOT A GAP, no change.** `MustBePrivilege` is an onboarding gate that keeps a school admin on the dashboard until an academic year and standards exist. Teachers have no setup surface, so there is nothing for an equivalent gate to do and none was added.
+
+Verification: 15 Navigation tests passing, including the new resolver matrix (one child, several, none), the distinct Exams/Marks targets and the class-teacher condition on Exams. Real browser pass covering the parent entries, the admin Health link and both teacher destinations. Staging verified after deploy.

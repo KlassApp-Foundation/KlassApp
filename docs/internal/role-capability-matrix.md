@@ -132,3 +132,20 @@ Two consequences for the testing pass:
 ### Also observed
 
 `ToshiActionService::getRoleCapabilities()` defines roles for usergroups **2 (SiteSubadmin)** and **13 (Non Teaching)** that do not exist in the `usergroups` table. Usergroup 4 (SchoolSubadmin) exists with zero users. Neither affects the five roles in this matrix, but the map is not a faithful picture of the role list.
+
+## Nav-finding outcomes (2026-09-22, second pass)
+
+The five nav findings from the audit, with what the code actually showed.
+
+**1. Parent nav thinner than its capabilities: FIXED.** Parent now has direct Fees, Grades and Attendance entries. They resolve through `ParentPortalService::listChildren()`: a single-child parent links straight to that child (real URIs are `/parent/children/{student}/fees|grades|attendance`, note the `/children` segment), and a multi-child or childless parent falls back to the Children page where the choice is actually made. Verified in a browser: all three return 200 for a real parent and their own child.
+
+**2. Student Marks and Attendance nav items: NOT SHIPPABLE AS DESCRIBED, needs a decision.** The audit premise was wrong: `routes/student.php` contains **no** marks or attendance routes at all. Student writes cover assignments, homework, tasks, class wall and profile only. So this is not a missing nav entry, it is a missing feature. Toshi does grant a student `view_marks` and `view_attendance` in self scope, so the AI path exists while the web surface does not. Options: build read-only student pages reusing the per-child logic in `ChildDataController`, or drop the claim from the matrix. Left for a decision rather than invented.
+
+**3. Students adding assignments: INTENTIONAL, no change.** `Student/AssignmentController@store` is annotated `//StudentAssignmentAdd` and creates a `StudentAssignment` row with `assignment_id`, `user_id = Auth::id()` and an uploaded file plus `submitted_on`. It is a student **submitting work against** an existing assignment, not creating one for a class. Commit `d92431b0` already tightened this with ownership Gates. The matrix wording was imprecise and is corrected here: students submit assignment work; they do not create assignments.
+
+**4. Duplicate and wrong destinations: mostly FIXED, one item still a decision.**
+- **Teacher "Exams" and "Marks" are genuinely distinct** and were both pointing at one route. Exams now points at `teacher.exams.create` and Marks at `teacher.exam.marks`. Exam create is class-teacher scoped, so "Exams" also carries the class-teacher condition, matching its controller. Verified 200 for a class teacher, hidden for a teacher without a homeroom.
+- **Teacher "Students" removed.** It resolved to `teacher/classes`, identical to "Classes". Students are viewed through a class, so the duplicate entry is gone.
+- **Admin "Health": corrected but still redundant.** It pointed at `admin/students`. The real health surface is per-student at `/admin/student/health/{userId}`, which 404s without a student id, and `GET /admin/health` is a closure that simply redirects to `/admin/students`. Health now points at the named `admin/health` route (200), which is the semantically correct target if a landing page is ever built, but the item remains effectively a duplicate of Students. **Decision needed:** build a health landing page, or remove the nav item and reach health from the student record.
+
+**5. Middleware gating difference: NOT A GAP, no change.** `MustBePrivilege` is not a security gate. It is an **onboarding gate**: when a school has no academic year or no standards, it keeps the **school admin** on the dashboard with the continue-setup surface and lets only the manual-onboarding routes through. Teachers have no setup surface and no dashboard-bounce behaviour, so there is nothing for an equivalent gate to do. Adding one for symmetry would be cargo-culting, so it was deliberately not done.

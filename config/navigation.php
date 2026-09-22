@@ -61,7 +61,7 @@ return [
                     'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
                     'items' => [
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
-                        ['label' => 'Health', 'icon' => 'health', 'url' => 'admin/students', 'active' => ['health', 'medical']],
+                        ['label' => 'Health', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
                 ],
@@ -116,12 +116,11 @@ return [
                 ['label' => 'Classes', 'icon' => 'classes', 'url' => 'teacher/classes', 'a_class' => 'flex items-center whitespace-nowrap', 'active' => ['classes', 'standardLinks', 'standardLink']],
                 ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'teacher/dashboard', 'hash' => 'timetable', 'active' => ['timetable']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'route' => 'teacher.attendance.index', 'active' => ['attendance']],
-                ['label' => 'Exams', 'icon' => 'exams', 'url' => 'teacher/exam/marks', 'active' => ['exams', 'exam']],
+                ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exams.create', 'active' => ['exams', 'exam'], 'condition' => 'class_teacher'],
                 ['label' => 'Homework', 'icon' => 'reports', 'url' => 'teacher/homeworks', 'active' => ['homework', 'homeworks']],
                 ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Report Cards', 'icon' => 'reports', 'route' => 'teacher.reports.cards.index', 'active' => ['reports'], 'condition' => 'class_teacher'],
                 ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
-                ['label' => 'Students', 'icon' => 'students', 'url' => 'teacher/classes', 'active' => ['students', 'student', 'classes']],
                 ['label' => 'Notices', 'icon' => 'messages', 'url' => 'teacher/dashboard', 'hash' => 'notices', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
                 ['label' => 'Library', 'icon' => 'library', 'url' => 'teacher/libraryactivity', 'active' => ['library', 'libraryactivity']],
@@ -154,6 +153,9 @@ return [
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'route' => 'parent.dashboard', 'active' => ['dashboard']],
                 ['label' => 'Children', 'icon' => 'students', 'route' => 'parent.children', 'active' => ['children']],
+                ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/*/fees']],
+                ['label' => 'Grades', 'icon' => 'reports', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/*/grades']],
+                ['label' => 'Attendance', 'icon' => 'attendance', 'resolver' => 'parent_child', 'child_path' => 'attendance', 'paths' => ['parent/*/attendance']],
             ],
         ],
 
