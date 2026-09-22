@@ -171,6 +171,17 @@ class AttendanceController extends Controller
      */
     public function store(AttendanceAddRequest $request)
 { 
+    // Authorization runs BEFORE the try/catch: the catch below turns every Exception,
+    // HttpException included, into a generic 422, so an abort(403) inside the try would
+    // be silently swallowed. This check must therefore live outside it.
+    if (! SiteHelper::canTeacherRecordAttendance(
+        (int) Auth::user()->school_id,
+        (int) Auth::id(),
+        (int) $request->standardLink_id
+    )) {
+        abort(403, 'You are not allowed to record attendance for this class.');
+    }
+
     try
     {
         $school_id      = Auth::user()->school_id;
@@ -179,12 +190,6 @@ class AttendanceController extends Controller
 
         if (!$academic_year) {
             return response()->json(['error' => 'Academic year not set'], 422);
-        }
-
-        // Scope-aware, shared with the request and the API: class_teacher_only,
-        // classes_i_teach (homeroom union subject assignments) or school_wide.
-        if (! SiteHelper::canTeacherRecordAttendance((int) $school_id, (int) $admin, (int) $request->standardLink_id)) {
-            abort(403, 'You are not allowed to record attendance for this class.');
         }
 
         $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
@@ -216,15 +221,21 @@ class AttendanceController extends Controller
 
     public function export($standardLink_id)
     {
+        // Same swallow hazard as store(): abort() inside this try would be converted to
+        // a generic response by the catch below. The scope check must run before it.
+        if (! SiteHelper::canTeacherRecordAttendance(
+            (int) Auth::user()->school_id,
+            (int) Auth::id(),
+            (int) $standardLink_id
+        )) {
+            abort(403, 'You are not allowed to export attendance for this class.');
+        }
+
         try
         {
             //
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
-
-            if (! SiteHelper::canTeacherRecordAttendance((int) $school_id, (int) Auth::id(), (int) $standardLink_id)) {
-                abort(403, 'You are not the class teacher for this class.');
-            }
 
             $standardLink = StandardLink::where('id',$standardLink_id)->first();
             $standard = $standardLink->StandardName;
