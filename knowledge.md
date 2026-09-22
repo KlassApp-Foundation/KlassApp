@@ -12382,3 +12382,11 @@ New reference document: [docs/internal/role-capability-matrix.md](docs/internal/
 Ten findings recorded, the substantive ones being: the teacher attendance overview page shipped in #799 is unreachable from the sidebar because the nav points at a dashboard anchor; teacher routes carry receptionist-domain write access (`visitorlog`, `calllog`, `postalrecord` accept POST/PUT/DELETE behind only `web, auth, teacher`); the sidebar's `class_teacher` condition uses homeroom-only links so it ignores the new `attendance_scope`; and Parent's sidebar exposes 2 of its real capabilities while the per-child fees, grades and attendance routes exist behind the Children page.
 
 No functional testing was performed. This document is the baseline the testing pass follows.
+
+### 2026-09-22: capability matrix findings quantified with Laravel Boost
+
+Added a measured-population section to [docs/internal/role-capability-matrix.md](docs/internal/role-capability-matrix.md), derived from Boost `database-query` and `database-schema` calls rather than inference.
+
+Numbers that matter for the coming testing pass: 6 homeroom teachers, 1 teacher with subject assignments, and **0 subject-only teachers** locally, which means the sidebar `class_teacher` condition bug currently affects nobody here and can only be reproduced by constructing a teacher who subject-teaches a class they do not homeroom. `visitor_log`, `call_log` and `postal_record` all hold **0 rows**, so the teacher write-access exposure is latent rather than exploited, and `visitor_log` has **no author column at all**, so a teacher-created row could not be attributed after the fact. That makes writing a test row the only way to demonstrate the issue.
+
+Also recorded: `ToshiActionService::getRoleCapabilities()` defines usergroups 2 and 13, neither of which exists in the `usergroups` table.
