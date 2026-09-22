@@ -12313,3 +12313,29 @@ Follow-up to the attendance-scope stamp above. PR 788's teacher work is now part
 **Why the student-edit part is not ported.** His `Teacher\StudentController` is a new file whose `edit()` returns the existing `admin/member/edit` view; wiring it safely means confirming that view's expected variables and its own authorization, which is a review in its own right rather than a copy.
 
 **Method note.** His branch is 82 commits behind main on a single squashed commit, so this was done by taking specific file contents, never by merging or blindly cherry-picking. Two interface checks ran over every ported file: that none of the four do-not-revert files appear (command palette, layouts/teacher/menu, config/navigation.php, the sidebar test), and that the hardcoded-credential and random-phone patterns from his branch are absent. The credential is in the branch's scratch files; the random phone was in a test fixture and is benign.
+
+### 2026-09-22: attendance scope verification closed, and the verification found a real bug in the write path
+
+This closes the three gaps left open in the stamps above. It also produced a genuine bug fix, which is the point of insisting on click-tested verification rather than reading the diff.
+
+| Gap | Result |
+|---|---|
+| school_wide click-tested in a browser | **CLOSED**, and it exposed a real defect |
+| Teacher API path exercised for real, per mode | **CLOSED**, web and API identical |
+| Staging verification for the whole thread | **CLOSED**, all three modes plus the API |
+
+**The bug the verification found.** The request's `authorize()` had been made scope-aware, but `AttendanceController::store()` and `::export()` kept their own hardcoded `isClassTeacherOfStandardLink()` checks. Under `classes_i_teach` or `school_wide` a teacher recording attendance for a subject-taught or unrelated class passed authorization and was then refused with **403 by the controller**. Under `class_teacher_only` the two checks agreed, which is exactly why the gap stayed invisible to code reading and to the tests that only exercised the helper. Fixed in #801 so all four entry points (web request, web controller, export, API) call `SiteHelper::canTeacherRecordAttendance()`.
+
+**Gap 1, real browser evidence.** As a real teacher, against a class with no relationship at all (not homeroom, no subject assignment): under `class_teacher_only` the overview shows 0 records and a real form POST is refused with 403; under `school_wide` the overview shows the record and the same POST succeeds with 200, the row verifiably landing in the database. An inactive class is refused in both modes, on read and on write, and creates no row.
+
+**Gap 2, real API client calls.** An actual sanctum login through `POST /api/teacher/login` (which authenticates on `mobile_no`, not email, and requires a `device_id`), then `GET /api/teacher/attendance/list` with the bearer token, for all three modes, compared against the web path for the same teacher:
+
+| Mode | API | Web | Identical |
+|---|---|---|---|
+| `class_teacher_only` | 40 | 40 | yes |
+| `classes_i_teach` | 41 | 41 | yes |
+| `school_wide` | 42 | 42 | yes |
+
+**Gap 3, staging.** Deployed main to staging and verified with synthetic fixtures on the fixture-safe school (which had **no academic year at all**, so one had to be created before the scope had anything to bind to). On staging: the settings card renders with the three options and `classes_i_teach` checked, confirmed by screenshot and macOS Vision OCR reading all three labels; a real SchoolAdmin login changed the mode through the UI and it persisted; the teacher attendance overview returned 0 records under `class_teacher_only`, 0 under `classes_i_teach` (the record sits on an unrelated class) and 1 under `school_wide`; and the API returned 1, 2 and 3 classes matching the web path exactly in every mode. Staging was left on the default and the synthetic accounts were deactivated with both status columns reset.
+
+**Known follow-up:** there is no durable test asserting the controller-level store() behaviour per mode. The helper is well covered; the write path is currently guarded by the shared call and by this manual verification, and a feature test that posts attendance under each mode would make the #801 class of regression impossible to reintroduce.
