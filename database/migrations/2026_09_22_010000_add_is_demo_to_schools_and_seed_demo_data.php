@@ -44,6 +44,10 @@ return new class extends Migration
                 'name' => $s['name'],
                 'motto' => $s['motto'],
                 'slug' => $s['slug'],
+                // Synthetic contact details on a reserved domain. These columns are required,
+                // and they must never resemble a real school's contact information.
+                'email' => $s['slug'].'@'.self::DOMAIN,
+                'phone' => '070'.str_pad((string) (crc32($s['slug']) % 10000000), 7, '0', STR_PAD_LEFT),
                 'is_demo' => true,
                 // Also is_test: demo schools are not customers, so they must stay out of the
                 // Superadmin platform metrics and the recently-joined feed from the start.
@@ -62,6 +66,11 @@ return new class extends Migration
                     'name' => $s['year'],
                     'status' => 1,
                     'description' => 'Current Academic Year',
+                    // start_date and end_date are NOT NULL. Omitting them let this seed pass on
+                    // non-strict MySQL but broke every fresh migrate, and therefore the entire
+                    // SQLite RefreshDatabase suite. Found and fixed 2026-09-22.
+                    'start_date' => now()->startOfYear(),
+                    'end_date' => now()->endOfYear(),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -92,7 +101,9 @@ return new class extends Migration
                     'password' => Hash::make(str()->random(32)),
                     'usergroup_id' => $p['usergroup_id'],
                     'school_id' => $schoolId,
-                    'status' => 1,
+                    // users.status is an enum, not a boolean. Passing 1 passed only on
+                    // non-strict MySQL and failed the CHECK constraint elsewhere.
+                    'status' => 'active',
                     'email_verified_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
