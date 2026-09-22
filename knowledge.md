@@ -12360,3 +12360,9 @@ The last gap flagged in the verification stamp above is closed, and writing the 
 **The fix.** Both checks are now hoisted above the try blocks, so the controller guard is genuine and a refused write is a real 403 from the controller too. Defence in depth now means three real layers (request, controller, API request) rather than one real layer and two that only looked like they worked.
 
 Regression sweep after the change: Teacher, SchoolDetails and Navigation suites, 72 passed.
+
+### 2026-09-22: Boost MCP client config made worktree-portable
+
+`.ai/mcp/mcp.json` is committed, so both worktrees share it, but it stored an absolute path to the main worktree's `artisan`. That can only ever be correct for one checkout, and the two worktrees point at **different databases** (port 3306 vs 3307), so a client reading the wrong path silently queries the wrong data. Both paths are now relative (`php artisan boost:mcp`), which resolves against whichever project root the client launches from.
+
+Caveat recorded deliberately: `php artisan boost:install` may rewrite this file with absolute paths again, so re-check it after a Boost upgrade.
