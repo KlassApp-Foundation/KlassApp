@@ -937,9 +937,7 @@ Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentControlle
 //Addons
 
 // Health records are per-student under admin/student/health/{userId}
-Route::get('/health', function () {
-    return redirect('/admin/students');
-})->name('admin.health');
+Route::get('/health', 'StudentHealthOverviewController@index')->name('admin.health');
 
 Route::get('/messages', function () {
     return view('admin.messages.index');
