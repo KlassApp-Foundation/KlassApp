@@ -12390,3 +12390,22 @@ Added a measured-population section to [docs/internal/role-capability-matrix.md]
 Numbers that matter for the coming testing pass: 6 homeroom teachers, 1 teacher with subject assignments, and **0 subject-only teachers** locally, which means the sidebar `class_teacher` condition bug currently affects nobody here and can only be reproduced by constructing a teacher who subject-teaches a class they do not homeroom. `visitor_log`, `call_log` and `postal_record` all hold **0 rows**, so the teacher write-access exposure is latent rather than exploited, and `visitor_log` has **no author column at all**, so a teacher-created row could not be attributed after the fact. That makes writing a test row the only way to demonstrate the issue.
 
 Also recorded: `ToshiActionService::getRoleCapabilities()` defines usergroups 2 and 13, neither of which exists in the `usergroups` table.
+
+### 2026-09-22: teacher reception-desk access is now a per-school setting, off by default
+
+Closes finding 2 of the role capability matrix: teacher routes carried full write access to the receptionist domains (visitor log, call log, postal record) behind nothing but basic teacher authentication.
+
+**The setting.** `school_details` meta key `teacher_receptionist_access`, boolean, **disabled by default**. `SiteHelper::teacherReceptionistAccessEnabled()` is fail-safe: a missing or unrecognised value resolves to disabled, the same principle as `attendance_scope`. Cached per school and forgotten on write. Writable from the access-switches page in the settings hub and by SiteAdmin via `php artisan school:access --teacher-receptionist=on|off`. Scope is always read from `Auth::user()->school_id`, never from input.
+
+**Enforcement.** One middleware, `EnsureTeacherReceptionistAccess`, applied to the three route groups, so there is a single gate rather than twelve per-action checks. It covers teachers only, leaves reads alone, and matches on **path as well as method**, because the delete actions are `Route::get`.
+
+**Two things found while building it.**
+
+1. **The deletes are GET routes.** `/teacher/visitorlog/delete/{id}` and its two siblings are `Route::get` with side effects, so a method-based gate would have missed every delete and the delete is also CSRF-exempt and prefetchable in principle. The gate matches `teacher/*/delete/*` by path for exactly this reason.
+2. **The lookups were not tenant-scoped.** All nine `where('id', $id)` lookups in the three teacher controllers were unscoped, so a teacher could act on any school's record by id, and the receptionist originals are correctly school-scoped by comparison. All nine now filter by `school_id` from the authenticated user.
+
+**A third thing, same lesson as earlier tonight.** The null guard added after scoping raised `abort(404)` **inside** a `try/catch (Exception)` that converts every exception into a generic response, so the 404 was swallowed. The guard is now hoisted above the `try` in the destructive `destroy` path in all three controllers, exactly as the attendance write path had to be.
+
+**Verified locally, with real evidence.** Test suite `TeacherReceptionistAccessTest`, 6 passing. In a real browser as a teacher: POST add refused **403**, GET delete refused **403**, reads unaffected at **200**; the settings card renders unchecked by default; enabling it through the real UI then showed POST and GET delete both at **200**, and the probe row was verifiably soft-deleted; restoring it to off via the UI left it off. Regression sweep of Teacher, Navigation and SchoolDetails suites: 78 passed.
+
+**Data check.** Locally `visitor_log`, `call_log` and `postal_record` all held **0 rows** before this work, so nothing suggests teachers were using the capability here and the default lockout breaks no existing local workflow. Staging was checked separately.

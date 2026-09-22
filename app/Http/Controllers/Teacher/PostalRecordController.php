@@ -113,7 +113,7 @@ class PostalRecordController extends Controller
 
     public function show($id)
     {
-        $postalrecord=PostalRecord::where('id',$id)->get();
+        $postalrecord=PostalRecord::where('school_id', Auth::user()->school_id)->where('id',$id)->get();
 
         $postalrecord=PostalRecordResource::collection($postalrecord);
 
@@ -146,7 +146,11 @@ class PostalRecordController extends Controller
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
         try
         {
-            $postalrecord=PostalRecord::find($id);
+            $postalrecord=PostalRecord::where('school_id', Auth::user()->school_id)->find($id);
+
+            if (! $postalrecord) {
+                abort(404, 'Record not found.');
+            }
 
             $postalrecord->school_id=$school_id;
             $postalrecord->academic_year_id=$academic_year->id;
@@ -207,10 +211,18 @@ class PostalRecordController extends Controller
      */
     public function destroy($id)
     {
+
+        // Authorization and the 404 guard run BEFORE the try: the catch below
+        // converts every Exception, HttpException included, into a generic
+        // response, so a 404 raised inside the try would be swallowed.
+        $postalrecord=PostalRecord::where('school_id', Auth::user()->school_id)->where('id',$id)->first();
+
+        if (! $postalrecord) {
+            abort(404, 'Record not found.');
+        }
+
         try 
         {
-            $postalrecord=PostalRecord::where('id',$id)->first();
-            
             $postalrecord->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Postal Record']);
