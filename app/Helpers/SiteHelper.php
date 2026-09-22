@@ -203,6 +203,40 @@ class SiteHelper
             ->contains(fn (StandardLink $link) => (int) $link->id === $standardLink_id);
     }
 
+    /** school_details meta key: whether teachers may write reception-desk records. */
+    public const TEACHER_RECEPTIONIST_ACCESS_KEY = 'teacher_receptionist_access';
+
+    /**
+     * Whether teachers at this school may create/update/delete reception-desk records
+     * (visitor log, call log, postal record). Fail-safe: a missing or unrecognised value
+     * resolves to DISABLED, the same safe-default principle as attendance_scope. Cached
+     * per school, forgotten on write.
+     */
+    public static function teacherReceptionistAccessEnabled(int $school_id): bool
+    {
+        $cacheKey = 'teacher_receptionist_access_'.$school_id;
+        $cached = Cache::get($cacheKey);
+
+        if (is_string($cached) && in_array($cached, ['0', '1'], true)) {
+            return $cached === '1';
+        }
+
+        $value = SchoolDetail::query()
+            ->where('school_id', $school_id)
+            ->where('meta_key', self::TEACHER_RECEPTIONIST_ACCESS_KEY)
+            ->value('meta_value');
+
+        $enabled = trim((string) $value) === '1';
+        Cache::put($cacheKey, $enabled ? '1' : '0', env('CACHE_TIME'));
+
+        return $enabled;
+    }
+
+    public static function forgetTeacherReceptionistAccess(int $school_id): void
+    {
+        Cache::forget('teacher_receptionist_access_'.$school_id);
+    }
+
     /** Attendance-scope meta key on school_details (same per-school pattern as the access switches). */
     public const ATTENDANCE_SCOPE_KEY = 'attendance_scope';
 

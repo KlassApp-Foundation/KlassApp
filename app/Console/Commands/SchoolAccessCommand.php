@@ -17,7 +17,8 @@ class SchoolAccessCommand extends Command
                             {school : The school id to target}
                             {--login= : on|off (that school\'s login switch)}
                             {--maintenance= : on|off (that school\'s maintenance mode)}
-                            {--attendance-scope= : class_teacher_only|classes_i_teach|school_wide}';
+                            {--attendance-scope= : class_teacher_only|classes_i_teach|school_wide}
+                            {--teacher-receptionist= : on|off (teachers may write reception-desk records)}';
 
     protected $description = "Set ONE school's access switches (per-school; never global)";
 
@@ -29,6 +30,21 @@ class SchoolAccessCommand extends Command
             $this->error('School not found: '.$this->argument('school'));
 
             return self::FAILURE;
+        }
+
+        $reception = $this->option('teacher-receptionist');
+
+        if ($reception !== null) {
+            if (! array_key_exists((string) $reception, ['on' => '1', 'off' => '0', '1' => '1', '0' => '0'])) {
+                $this->error('--teacher-receptionist must be on|off');
+
+                return self::FAILURE;
+            }
+
+            $value = ['on' => '1', 'off' => '0', '1' => '1', '0' => '0'][(string) $reception];
+            $school->setDetailValue(\App\Helpers\SiteHelper::TEACHER_RECEPTIONIST_ACCESS_KEY, $value);
+            \App\Helpers\SiteHelper::forgetTeacherReceptionistAccess((int) $school->id);
+            $this->info("school {$school->id} ({$school->name}): teacher_receptionist_access = {$value}");
         }
 
         $scope = $this->option('attendance-scope');
