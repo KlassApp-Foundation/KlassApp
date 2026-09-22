@@ -12366,3 +12366,11 @@ Regression sweep after the change: Teacher, SchoolDetails and Navigation suites,
 `.ai/mcp/mcp.json` is committed, so both worktrees share it, but it stored an absolute path to the main worktree's `artisan`. That can only ever be correct for one checkout, and the two worktrees point at **different databases** (port 3306 vs 3307), so a client reading the wrong path silently queries the wrong data. Both paths are now relative (`php artisan boost:mcp`), which resolves against whichever project root the client launches from.
 
 Caveat recorded deliberately: `php artisan boost:install` may rewrite this file with absolute paths again, so re-check it after a Boost upgrade.
+
+### 2026-09-22: repaired the placeholder academic-year dates the pre-fix demo seed left behind
+
+The follow-up flagged in the demo-seed stamps is now closed. The seed originally inserted `academic_years` without `start_date`/`end_date`, and because those columns are NOT NULL, non-strict MySQL accepted the insert with `0000-00-00` placeholders rather than failing. Fixing the seed stopped new damage but left the existing rows invalid, and an academic year with year-zero dates presents as nonsense wherever it is displayed.
+
+New migration `2026_09_22_030000_repair_placeholder_academic_year_dates`, written as a guarded repair per rule #1 (data changes go through committed migrations). It touches only rows where the school is `is_demo` and the dates are still placeholders, and only when the year label is a plain 4 digit year, so it can never invent dates. It repairs them to the house convention used by every other academic year in this database: 2 February to 4 December of the named year. `down()` is deliberately empty, since restoring year-zero dates would reintroduce the defect.
+
+Measured before and after with Laravel Boost rather than by inference: two affected rows, both demo schools (`Lakeview Junior School`, `Model Hill Secondary School`), and zero placeholder rows anywhere in `academic_years` afterwards. A check across `users`, `userprofiles`, `sections` and `schools` found no zero dates, so `academic_years` was the only table the seed damaged this way.
