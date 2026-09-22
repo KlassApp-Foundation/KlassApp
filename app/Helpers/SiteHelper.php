@@ -17,6 +17,7 @@ use App\Models\TeacherProfile;
 use App\Models\Qualification;
 use App\Models\NonScholastic;
 use App\Models\StandardLink;
+use App\Models\SchoolDetail;
 use App\Models\AcademicYear;
 use App\Models\Teacherlink;
 use App\Models\Scholastic;
@@ -200,6 +201,138 @@ class SiteHelper
     {
         return self::getClassTeacherStandardLinks($school_id, $teacher_id)
             ->contains(fn (StandardLink $link) => (int) $link->id === $standardLink_id);
+    }
+
+    /** Attendance-scope meta key on school_details (same per-school pattern as the access switches). */
+    public const ATTENDANCE_SCOPE_KEY = 'attendance_scope';
+
+    /** Fail-safe default. Missing or unrecognised values resolve to this, never to school_wide. */
+    public const ATTENDANCE_SCOPE_DEFAULT = 'classes_i_teach';
+
+    public const ATTENDANCE_SCOPES = ['class_teacher_only', 'classes_i_teach', 'school_wide'];
+
+    /**
+     * This school's attendance scope. Fail-safe: a missing row or an unrecognised value
+     * resolves to classes_i_teach, NEVER to school_wide. Cached per school; the writer
+     * forgets the key so a change is never served stale (see the #789 empty-cache lesson).
+     */
+    public static function resolveAttendanceScope(int $school_id): string
+    {
+        $cacheKey = 'attendance_scope_'.$school_id;
+        $cached = Cache::get($cacheKey);
+
+        if (is_string($cached) && in_array($cached, self::ATTENDANCE_SCOPES, true)) {
+            return $cached;
+        }
+
+        $value = SchoolDetail::query()
+            ->where('school_id', $school_id)
+            ->where('meta_key', self::ATTENDANCE_SCOPE_KEY)
+            ->value('meta_value');
+
+        $scope = (is_string($value) && in_array(trim($value), self::ATTENDANCE_SCOPES, true))
+            ? trim($value)
+            : self::ATTENDANCE_SCOPE_DEFAULT;
+
+        // Only a real, valid value is cached. A missing setting resolves to the default
+        // every time, so no stale or empty read can ever be served.
+        Cache::put($cacheKey, $scope, env('CACHE_TIME'));
+
+        return $scope;
+    }
+
+    public static function forgetAttendanceScope(int $school_id): void
+    {
+        Cache::forget('attendance_scope_'.$school_id);
+    }
+
+    /**
+     * The StandardLink query a teacher may record attendance against, under the active scope.
+     * Every branch is tenant-scoped by school_id and academic year and requires an active
+     * class (status = 1). ONE source of truth so the web and API paths cannot diverge.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder|null  null when there is no academic year
+     */
+    protected static function attendanceScopeStandardLinkQuery(int $school_id, int $teacher_id)
+    {
+        // Defence in depth: the teacher must belong to the school being checked. Callers
+        // pass Auth::user()->school_id, but a mismatched pair must still fail closed rather
+        // than silently resolve against another tenant's classes.
+        $teacherBelongsToSchool = User::query()
+            ->whereKey($teacher_id)
+            ->where('school_id', $school_id)
+            ->exists();
+
+        if (! $teacherBelongsToSchool) {
+            return null;
+        }
+
+        $academic_year = self::getAcademicYear($school_id);
+
+        if (! $academic_year) {
+            return null;
+        }
+
+        $scope = self::resolveAttendanceScope($school_id);
+
+        $query = StandardLink::query()
+            ->where('school_id', $school_id)
+            ->where('academic_year_id', $academic_year->id)
+            ->where('status', 1);
+
+        if ($scope === 'class_teacher_only') {
+            // The original shipped scope: homeroom classes only.
+            $query->where('class_teacher_id', $teacher_id);
+        } elseif ($scope === 'classes_i_teach') {
+            // Homeroom UNION subject assignments (class_teacher_links via the Teacherlink
+            // model). The union keeps schools without imported assignments working.
+            $subjectLinkIds = Teacherlink::query()
+                ->where('school_id', $school_id)
+                ->where('academic_year_id', $academic_year->id)
+                ->where('teacher_id', $teacher_id)
+                ->pluck('standardLink_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $query->where(function ($q) use ($teacher_id, $subjectLinkIds) {
+                $q->where('class_teacher_id', $teacher_id);
+
+                if (! empty($subjectLinkIds)) {
+                    $q->orWhereIn('id', $subjectLinkIds);
+                }
+            });
+        }
+        // 'school_wide': any active class in this school, no further constraint.
+
+        return $query;
+    }
+
+    /**
+     * The classes a teacher may record attendance against, under the active scope.
+     * Used by both the web and the API attendance listings.
+     *
+     * @return \Illuminate\Support\Collection<int, StandardLink>
+     */
+    public static function attendanceScopeStandardLinks(int $school_id, int $teacher_id)
+    {
+        $query = self::attendanceScopeStandardLinkQuery($school_id, $teacher_id);
+
+        return $query ? $query->orderBy('section_id')->get() : collect();
+    }
+
+    /**
+     * Whether this teacher may record attendance for this class, under the active scope.
+     * $school_id must come from the authenticated user, never from request input.
+     */
+    public static function canTeacherRecordAttendance(int $school_id, int $teacher_id, int $standardLink_id): bool
+    {
+        if ((int) $standardLink_id <= 0) {
+            return false;
+        }
+
+        $query = self::attendanceScopeStandardLinkQuery($school_id, $teacher_id);
+
+        return $query ? $query->whereKey((int) $standardLink_id)->exists() : false;
     }
 
     public static function getStandardList($school_id)

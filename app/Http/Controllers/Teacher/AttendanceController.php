@@ -50,8 +50,9 @@ class AttendanceController extends Controller
         ];
     }
 
-    // Same class_teacher_id scope as Api\Teacher\AttendanceController@index
-    $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks((int) $school_id, $teacher_id);
+    // Same scope as Api\Teacher\AttendanceController@index: one shared helper reads the
+    // school's attendance_scope so the web and API listings cannot diverge.
+    $classTeacherLinks = SiteHelper::attendanceScopeStandardLinks((int) $school_id, $teacher_id);
     $linkIds = $classTeacherLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
 
     $standardLinklist = StandardLinkResource::collection($classTeacherLinks);

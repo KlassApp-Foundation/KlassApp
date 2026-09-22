@@ -23,12 +23,15 @@ class AttendanceAddRequest extends FormRequest
             return true;
         }
 
-        // Teachers may only post attendance for classes they custodian.
+        // Teachers may post attendance for the classes their school's attendance_scope
+        // allows (class_teacher_only | classes_i_teach | school_wide). The school id is
+        // taken from the authenticated user, never from request input.
         if ((int) $user->usergroup_id === 5) {
-            $linkId = (int) $this->input('standardLink_id');
-
-            return $linkId > 0
-                && SiteHelper::isClassTeacherOfStandardLink((int) $user->school_id, (int) $user->id, $linkId);
+            return SiteHelper::canTeacherRecordAttendance(
+                (int) $user->school_id,
+                (int) $user->id,
+                (int) $this->input('standardLink_id')
+            );
         }
 
         return true;

@@ -16,7 +16,8 @@ class SchoolAccessCommand extends Command
     protected $signature = 'school:access
                             {school : The school id to target}
                             {--login= : on|off (that school\'s login switch)}
-                            {--maintenance= : on|off (that school\'s maintenance mode)}';
+                            {--maintenance= : on|off (that school\'s maintenance mode)}
+                            {--attendance-scope= : class_teacher_only|classes_i_teach|school_wide}';
 
     protected $description = "Set ONE school's access switches (per-school; never global)";
 
@@ -28,6 +29,22 @@ class SchoolAccessCommand extends Command
             $this->error('School not found: '.$this->argument('school'));
 
             return self::FAILURE;
+        }
+
+        $scope = $this->option('attendance-scope');
+
+        if ($scope !== null) {
+            $scope = (string) $scope;
+
+            if (! in_array($scope, \App\Helpers\SiteHelper::ATTENDANCE_SCOPES, true)) {
+                $this->error('--attendance-scope must be one of: '.implode('|', \App\Helpers\SiteHelper::ATTENDANCE_SCOPES));
+
+                return self::FAILURE;
+            }
+
+            $school->setDetailValue(\App\Helpers\SiteHelper::ATTENDANCE_SCOPE_KEY, $scope);
+            \App\Helpers\SiteHelper::forgetAttendanceScope((int) $school->id);
+            $this->info("school {$school->id} ({$school->name}): attendance_scope = {$scope}");
         }
 
         $map = ['on' => '1', 'off' => '0', '1' => '1', '0' => '0'];
