@@ -12244,3 +12244,25 @@ Nothing in this thread has been verified on staging. Both shipped pieces are loc
 
 #### Side question resolved, so nobody chases it
 The profile dropdown **works**: clicking `.profile-click` adds an `open` class and the menu displays. An earlier note in this thread reported "zero visible menus", which was a fault in that test's selector, not in the product. Likewise the academic-year selector was confirmed working twice (two options, changed and persisted).
+
+### 2026-09-22: teacher attendance scope becomes a per-school setting, and the class_teacher_links naming trap
+
+Decision record, written **before** implementation. Full version: [docs/plans/attendance-scope-configurable-setting-plan.md](docs/plans/attendance-scope-configurable-setting-plan.md).
+
+**The naming trap, now on the record.** `class_teacher_links` is **not** the homeroom designation. It is the subject-teacher-class assignment table, reached through the `Teacherlink` model (`protected $table = 'class_teacher_links'`; columns `school_id`, `academic_year_id`, `standardLink_id`, `subject_id`, `teacher_id`). Homeroom lives on `standards_link.class_teacher_id`, and on `sections.class_teacher_id`. Anyone touching attendance authorization should read the table before trusting its name.
+
+**The relationship already exists.** `SiteHelper::getStandardSubjectList()` (around line 388) already **unions** homeroom links with `Teacherlink` subject assignments, scoped to the school and academic year. `Teacherlink` has **122 usages** (timetables, lesson plans, dashboards, noticeboards, admin imports via `TeacherLinkImportController`), so this is load-bearing infrastructure, not a stray table. Measured caveat: locally `class_teacher_links` holds **0 rows** while all 200 `standards_link` rows have a homeroom teacher, so a strict subject-only scope would leave teachers with zero access in schools whose assignments were never imported.
+
+**Decided design.** Three values, stored as `school_details` meta under key `attendance_scope`, the same pattern as the per-school `login_status` and `maintenance` switches (#712):
+
+| Value | Meaning |
+|---|---|
+| `class_teacher_only` | homeroom classes only (today's shipped scope) |
+| `classes_i_teach` | homeroom **union** subject assignments, **the default** |
+| `school_wide` | any active class in the school, explicit opt-in only |
+
+Missing or unrecognised values resolve to `classes_i_teach`, **never** `school_wide`. The scope is read from `Auth::user()->school_id` and never from input, and is cached per school with forgetting on write, per the #789 empty-cache lesson. Authorization goes through one new shared method, `SiteHelper::canTeacherRecordAttendance()`, so the web request and the teacher API cannot drift apart. The setting appears in the settings hub's **Academics** group, controlled by each school's own SchoolAdmin, consistent with every other per-school setting.
+
+**Three decisions confirmed.** `classes_i_teach` is the default despite being a real behaviour change, because it arguably fixes an existing bug: a teacher currently cannot record attendance for a class they genuinely teach but do not homeroom. The `status = 1` filter stays as a data-integrity safeguard. And each school controls its own setting.
+
+**How this reframes PR #788.** That PR's authorization rewrite is functionally the `school_wide` mode. It is not discarded: it becomes one legitimate mode, **off by default**. What was wrong is corrected here: it performed no relationship check at all, it deleted the comment documenting the narrower scope, and it would have silently become the default for every school. The intent is honoured; the method is fixed.
