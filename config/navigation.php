@@ -61,7 +61,7 @@ return [
                     'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
                     'items' => [
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
-                        ['label' => 'Health', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
+                        ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
                 ],
