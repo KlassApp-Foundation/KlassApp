@@ -12291,3 +12291,25 @@ Caught during implementation and fixed in the same pass: the demo-seed migration
 **Still the biggest gap: staging.** Every piece of this is local-only. The teacher attendance flow and the settings card both need a staging pass.
 
 **His `school_wide` rewrite is now a supported mode.** Rather than discarding PR #788's authorization direction, `school_wide` is one legitimate, off-by-default option, and the settings card describes it as being for small schools where teachers cover for each other.
+
+### 2026-09-22: the attendance slice of PR 788 is ported and scope-aware; its timetable and student parts are blocked
+
+Follow-up to the attendance-scope stamp above. PR 788's teacher work is now partly on main, and the parts that are not have concrete reasons.
+
+| Piece | Status |
+|---|---|
+| TeacherRosterFormatter + teacher attendance overview view + scope-aware index() | **SHIPPED** (#799), verified locally |
+| His timetable routes and views | **NOT PORTED: they target methods that do not exist** |
+| His student-edit controller and routes | **NOT PORTED**, needs its own pass |
+| His admin teacher/member view changes | **NOT PORTED** |
+| Staging for any of the above | **NOT DONE** |
+
+**What shipped.** The attendance overview view and the `TeacherRosterFormatter` helper, with a new `index()` action on the teacher web attendance controller serving it from `SiteHelper::attendanceScopeStandardLinks()`. His original version listed **every active class in the school** unconditionally. The ported version is bounded by the school's `attendance_scope`, so the class list, the stream list and every record reflect what the teacher may actually record against.
+
+**Verified locally, decisively.** Same URL (`/teacher/attendance`), same teacher, same data, only the scope mode differing: under `classes_i_teach` the page renders **1 record**, that record being on a class the teacher subject-teaches but does not homeroom; under `class_teacher_only` the same page renders **0 records** for the same date with the empty state shown. Status 200 both times, no page errors. That is the requirement met exactly: his view respects the active scope rather than assuming school-wide access.
+
+**Why the timetable is not ported.** His routes point at six `Admin\TimetableSlotController` teacher methods (`teacherIndex`, `teacherCreate`, `teacherStore`, `teacherEdit`, `teacherUpdate`, `teacherDestroy`) that **do not exist on main** (only `teacherWeekly` does), and his PR never adds them. His timetable views also link to those route names. Porting them as-is would ship pages that fatal-error on arrival. Whoever picks this up should either implement those six actions or retire the routes, deliberately, rather than importing the views alone.
+
+**Why the student-edit part is not ported.** His `Teacher\StudentController` is a new file whose `edit()` returns the existing `admin/member/edit` view; wiring it safely means confirming that view's expected variables and its own authorization, which is a review in its own right rather than a copy.
+
+**Method note.** His branch is 82 commits behind main on a single squashed commit, so this was done by taking specific file contents, never by merging or blindly cherry-picking. Two interface checks ran over every ported file: that none of the four do-not-revert files appear (command palette, layouts/teacher/menu, config/navigation.php, the sidebar test), and that the hardcoded-credential and random-phone patterns from his branch are absent. The credential is in the branch's scratch files; the random phone was in a test fixture and is benign.
