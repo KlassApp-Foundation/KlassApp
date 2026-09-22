@@ -181,8 +181,10 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'Academic year not set'], 422);
         }
 
-        if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) $admin, (int) $request->standardLink_id)) {
-            abort(403, 'You are not the class teacher for this class.');
+        // Scope-aware, shared with the request and the API: class_teacher_only,
+        // classes_i_teach (homeroom union subject assignments) or school_wide.
+        if (! SiteHelper::canTeacherRecordAttendance((int) $school_id, (int) $admin, (int) $request->standardLink_id)) {
+            abort(403, 'You are not allowed to record attendance for this class.');
         }
 
         $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
@@ -220,7 +222,7 @@ class AttendanceController extends Controller
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) Auth::id(), (int) $standardLink_id)) {
+            if (! SiteHelper::canTeacherRecordAttendance((int) $school_id, (int) Auth::id(), (int) $standardLink_id)) {
                 abort(403, 'You are not the class teacher for this class.');
             }
 
