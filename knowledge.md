@@ -12409,3 +12409,34 @@ Closes finding 2 of the role capability matrix: teacher routes carried full writ
 **Verified locally, with real evidence.** Test suite `TeacherReceptionistAccessTest`, 6 passing. In a real browser as a teacher: POST add refused **403**, GET delete refused **403**, reads unaffected at **200**; the settings card renders unchecked by default; enabling it through the real UI then showed POST and GET delete both at **200**, and the probe row was verifiably soft-deleted; restoring it to off via the UI left it off. Regression sweep of Teacher, Navigation and SchoolDetails suites: 78 passed.
 
 **Data check.** Locally `visitor_log`, `call_log` and `postal_record` all held **0 rows** before this work, so nothing suggests teachers were using the capability here and the default lockout breaks no existing local workflow. Staging was checked separately.
+
+### 2026-09-22: teacher attendance nav points at the real page, and Class Streams visibility now matches its own authorization
+
+Findings 2 and 3 of the role capability matrix, closed together because both are attendance-adjacent nav issues.
+
+**Finding 2, the orphaned page.** `config/navigation.php` pointed the teacher Attendance item at `teacher/dashboard` with a `#attendance` hash, so the real `/teacher/attendance` page shipped in #799 had no way in. The item now uses `route('teacher.attendance.index')`.
+
+**Finding 3 was not what it looked like, and checking first mattered.** The `condition => 'class_teacher'` nav flag appeared to be one rule applied to two items. It is not. Each item has its own server-side check:
+
+| Item | Real authorization | Homeroom sources |
+|---|---|---|
+| Report Cards | `ReportCardsController::authorizeClassTeacher()` via `isClassTeacherOfStandardLink()` | `standards_link.class_teacher_id` only |
+| Class Streams | `ClassStreamController` via `ExamAuthorization::sectionIdsForClassTeacher()` | `standards_link.class_teacher_id` **and** `sections.class_teacher_id` |
+
+So the nav was correct for Report Cards and **too narrow** for Class Streams: a teacher designated class teacher on the section itself passed the controller check but was never shown the link. Class Streams now carries a distinct `class_streams` condition resolved through `ExamAuthorization::sectionIdsForClassTeacher()`, the same service the controller enforces, so nav and authorization cannot drift. Report Cards deliberately keeps the narrower homeroom rule.
+
+**Deliberately NOT done: neither item follows `attendance_scope`.** Neither feature's authorization reads that setting. Making the nav follow it would have produced the opposite bug, items visible to teachers who then get a 403. This is recorded because the matrix finding assumed the opposite, and the assumption was wrong.
+
+**Latent today.** Locally `sections.class_teacher_id` is populated on **0 of 52** sections while 203 standards_link rows carry it, so the Class Streams mismatch was invisible in this database. It bites a school that designates class teachers at section level.
+
+**Verified, locally.** Seven new tests in `ClassTeacherNavVisibilityTest`, and a real browser pass over three constructed teacher shapes:
+
+| Teacher shape | Attendance link | Report Cards | Class Streams | /teacher/attendance |
+|---|---|---|---|---|
+| homeroom teacher | `/teacher/attendance` | visible | visible | 200 |
+| subject-only teacher | `/teacher/attendance` | hidden | hidden | 200 |
+| section-level class teacher | `/teacher/attendance` | hidden | **visible** | 200 |
+
+The subject-only teacher correctly sees neither conditioned item, because neither feature's authorization grants them one. `attendance_scope` was flipped through all three modes in the tests and moves neither item. The pre-existing `SidebarMenuRenderTest` guard needed its expectation widened, since it assumed a single condition name. Navigation and Teacher suites: 79 passing.
+
+Staging verified after deploy.
