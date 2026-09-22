@@ -134,6 +134,8 @@ return [
             'item_class' => 'py-3 px-3 dashboard-menu-item',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'student/dashboard', 'active' => ['dashboard']],
+                ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'student/marks', 'active' => ['marks', 'mark']],
+                ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'student/attendance', 'active' => ['attendance']],
                 ['label' => 'Homework', 'icon' => 'reports', 'url' => 'student/homeworks', 'active' => ['homework', 'homeworks']],
                 ['label' => 'Assignments', 'icon' => 'subjects', 'url' => 'student/assignments', 'active' => ['assignments', 'assignment']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'student/events', 'active' => ['events']],
