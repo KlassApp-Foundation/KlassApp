@@ -1,8 +1,48 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<nav class="teacher-menu">
-    <a href="{{ url('teacher/dashboard') }}">Dashboard</a>
-    <a href="{{ url('teacher/notices') }}">Notices</a>
-    <a href="{{ url('teacher/attendance/add') }}">Attendance</a>
-    <a href="{{ url('teacher/timetable') }}">Timetable</a>
-    <a href="{{ url('teacher/classes') }}">Classes</a>
-</nav>
+@php if(!function_exists('tActive')){function tActive($p){ $s=Request()->segment('2'); foreach((array)$p as $v) if($s===$v) return 'active'; return ''; }} @endphp
+<ul class="list-reset text-sm">
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive('dashboard') }}">
+        <a href="{{ url('teacher/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-nowrap">Dashboard</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['classes','standardLinks','standardLink']) }}">
+        <a href="{{ url('teacher/classes') }}" class="flex items-center whitespace-nowrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Classes</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['timetable']) }}">
+        <a href="{{ route('teacher.timetable.index') }}" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-nowrap">Timetable</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['attendance']) }}">
+        <a href="{{ url('teacher/attendance') }}" class="flex items-center"><x-icons.sidebar name="attendance"/><span class="mx-3 whitespace-nowrap">Attendance</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['exams','exam']) }}">
+        <a href="{{ route('teacher.exam.index') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-nowrap">Exams</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['homework','homeworks']) }}">
+        <a href="{{ url('teacher/homework/show/list') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
+    </li>
+    @php
+        $ctReportLinks = (auth()->check() && auth()->user()->school_id)
+            ? \App\Helpers\SiteHelper::getClassTeacherStandardLinks((int) auth()->user()->school_id, (int) auth()->id())
+            : collect();
+    @endphp
+    @if ($ctReportLinks->isNotEmpty())
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['reports']) }}">
+        <a href="{{ route('teacher.reports.cards.index') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Report Cards</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['class-streams']) }}">
+        <a href="{{ route('teacher.class-stream.index') }}" class="flex items-center" data-testid="ct-streams-nav"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Class Streams</span></a>
+    </li>
+    @endif
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['notices','notice']) }}">
+        <a href="{{ route('teacher.notices.index') }}" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Notices</span></a>
+    </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['events']) }}">
+        <a href="{{ url('teacher/events') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-nowrap">Events</span></a>
+    </li>
+    {{-- Hidden for now: not part of the active teacher dashboard flow. --}}
+    {{-- <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
+        <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
+    </li> --}}
+    {{-- <li class="py-3 px-3 dashboard-menu-item {{ tActive(['library','libraryactivity']) }}">
+        <a href="{{ url('teacher/libraryactivity') }}" class="flex items-center"><x-icons.sidebar name="library"/><span class="mx-3 whitespace-nowrap">Library</span></a>
+    </li> --}}
+</ul>
