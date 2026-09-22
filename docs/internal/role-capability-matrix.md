@@ -108,3 +108,27 @@ Blocked roles, for completeness: usergroup 2 (scope `none`) and usergroup 12 Sto
 8. **Duplicate teacher destinations:** "Exams" and "Marks" both resolve to `teacher/exam/marks`; "Classes" and "Students" both resolve to `teacher/classes`.
 9. **Admin's "Students" nav item claims parents, teachers, staff and alumni as active aliases**, so Students stays highlighted while those pages are open.
 10. **Gating is inconsistent between role groups:** the admin group runs `schooladmin` plus `privilegeconditions`, the teacher group runs only `teacher`, so the academic-year and standards gate is absent for teachers.
+
+## Measured population (local fixture data, 2026-09-22)
+
+The findings above were quantified with Laravel Boost queries so the testing pass knows the current blast radius rather than only the theoretical one.
+
+| Measurement | Value | What it means |
+|---|---|---|
+| Homeroom teachers (`standards_link.class_teacher_id`) | 6 | teachers who pass the `class_teacher` nav condition today |
+| Teachers with subject assignments (`class_teacher_links`) | 1 | and that one is also a homeroom teacher |
+| **Subject-only teachers (assigned, no homeroom)** | **0** | finding 3 currently bites nobody locally, because every subject-assigned teacher here is also a homeroom teacher |
+| Subject assignments on record | 1 | the fixture, not real imported data |
+| `visitor_log` rows | 0 | finding 2 is latent, not exploited |
+| `call_log` rows | 0 | as above |
+| `postal_record` rows | 0 | as above |
+| Rows in `visitor_log` with an author column | **none exist** | the table has no recorded-by column at all, only `employee_id` for the visited staff member |
+
+Two consequences for the testing pass:
+
+1. **Finding 3 needs specific fixtures to reproduce.** With zero subject-only teachers in local data, the nav bug is invisible until a teacher is created who subject-teaches a class they do not homeroom. That is the normal case in a real secondary school, and it is the case the test must construct.
+2. **Finding 2 cannot be caught by inspecting data.** Since `visitor_log` records no author, and all three tables are empty, the only way to show the exposure is to sign in as a teacher and write a row. Attribution would then be impossible after the fact, which is the sharper half of the finding.
+
+### Also observed
+
+`ToshiActionService::getRoleCapabilities()` defines roles for usergroups **2 (SiteSubadmin)** and **13 (Non Teaching)** that do not exist in the `usergroups` table. Usergroup 4 (SchoolSubadmin) exists with zero users. Neither affects the five roles in this matrix, but the map is not a faithful picture of the role list.
