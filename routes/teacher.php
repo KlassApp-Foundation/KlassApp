@@ -243,7 +243,6 @@ Route::get( '/standardLink/show/comments/{post_id}', 'StandardsLinkDetailsContro
 
 //attendance
 //add
-Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
 Route::get( '/attendance/list', 'AttendanceController@list' );
 Route::post( '/attendance/add', 'AttendanceController@store' );
 //export
