@@ -12470,3 +12470,20 @@ The scoping decision is the interesting part: **neither route accepts a student 
 **Two things learned building them.** `Exams` and its family live in `App\Models\Academics\`, not `App\Models\`, which cost a 500 and was diagnosed in one call with Boost's `last-error`. And `exams` carries two NOT NULL columns the older inspection missed, `academic_term_id` and `exam_type_id`, found with Boost's `database-schema` rather than by trial and error. Separately, the admin group's `MustBePrivilege` onboarding gate bounced the health page in tests until disabled, which is independent confirmation that the gate works the way the earlier investigation described.
 
 **Staging verified after deploy (head 05fca10e).** As a real staging admin: `/admin/health` renders 200 without redirecting, with the heading present. As a real staging student: the nav resolves to `/student/marks` and `/student/attendance`, both 200, and a genuine crafted attempt at another student's id, `/student/4/marks`, is refused with 404. Fixture accounts deactivated afterwards.
+
+### 2026-09-22: parent nav verified for both shapes on local and staging, and the Health nav item relabelled
+
+**Item 1, multi-child parent verification (no code change; the fix shipped in #811).** The earlier staging gap was my own error, not a data-model difference: I checked for a `userparent` table and reported the linkage as differing, when the real table is **`student_parent_links`** (`parent_id`, `student_id`, `school_id`, `status`), which exists on staging with rows already. Lesson repeated from earlier in this session: a wrong table name is not evidence of a different model.
+
+Verified in a real browser, local and staging, with fixtures matching that real model:
+
+| Parent shape | Fees / Grades / Attendance links | Pages |
+|---|---|---|
+| Two children | all three fall back to `/parent/children` | 200 |
+| One child | direct links to `/parent/children/{id}/fees|grades|attendance` | 200 |
+
+**Item 2, Health nav placement: kept in Operations, relabelled to "Health records".** Real reconsideration rather than defaulting to no-change. The admin nav is Dashboard plus five groups: Academics (Students, Parents, Classes and Streams, Subjects, Timetable, Attendance, Exams and Marks, Grading, Report Cards), **Operations (Library, Health, Transport)**, Finance, Communication, System.
+
+Reasoning for keeping it in Operations: health records are a school service (the nurse and first-aid function), the same category as the library and transport, not teaching and learning. Moving it into Academics next to Students would recreate exactly the adjacency that made the original finding confusing, an item beside Students that was indistinguishable from Students. A group of its own for one item would be worse. What was genuinely wrong was the label reading like a duplicate of the student list, so it is now **"Health records"**, which matches both the page and the domain.
+
+Verified: the item renders with the new label and lands on `/admin/health`, which serves the real overview (200, no redirect) as confirmed locally and on staging.
