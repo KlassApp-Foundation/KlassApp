@@ -12339,3 +12339,24 @@ This closes the three gaps left open in the stamps above. It also produced a gen
 **Gap 3, staging.** Deployed main to staging and verified with synthetic fixtures on the fixture-safe school (which had **no academic year at all**, so one had to be created before the scope had anything to bind to). On staging: the settings card renders with the three options and `classes_i_teach` checked, confirmed by screenshot and macOS Vision OCR reading all three labels; a real SchoolAdmin login changed the mode through the UI and it persisted; the teacher attendance overview returned 0 records under `class_teacher_only`, 0 under `classes_i_teach` (the record sits on an unrelated class) and 1 under `school_wide`; and the API returned 1, 2 and 3 classes matching the web path exactly in every mode. Staging was left on the default and the synthetic accounts were deactivated with both status columns reset.
 
 **Known follow-up:** there is no durable test asserting the controller-level store() behaviour per mode. The helper is well covered; the write path is currently guarded by the shared call and by this manual verification, and a feature test that posts attendance under each mode would make the #801 class of regression impossible to reintroduce.
+
+### 2026-09-22: the attendance-scope thread is closed: durable write-path cover, and one more honest correction
+
+The last gap flagged in the verification stamp above is closed, and writing the test for it found one more thing worth correcting the record on.
+
+| Layer | Cover |
+|---|---|
+| Helper (`SiteHelper::canTeacherRecordAttendance`) | covered since #797 |
+| Request (`AttendanceAddRequest::authorize`) | covered since #797 |
+| Controller `store()` / `export()` | **now durably covered** (this change) |
+| API request and listings | covered since #797, parity-tested locally and on staging |
+
+**The test.** `AttendanceWriteScopeTest` exercises the real controller action with real POSTs under each of the three modes, over all four class relationships: homeroom, subject-taught, unrelated, and inactive. It also covers the export path and asserts refused writes create no rows. 6 tests, 19 assertions.
+
+**Proof it catches the bug it exists for.** With the #801-era hardcoded check temporarily reintroduced, 3 of 6 tests fail (the subject-taught allowed case, the unrelated allowed case and the export allowed case); restored to the fixed code, all 6 pass.
+
+**The honest correction.** In the verification stamp I said a school-wide write would have been "refused with 403 by the controller". Writing this test made me look properly, and that was imprecise. Both checks ran their `abort(403)` **inside** a `try/catch (Exception)` that converts every Exception, `HttpException` included, into a generic error response. So the controller checks never actually produced a 403 at all: the refusals everyone relied on came from the FormRequest layer. A pre-#801 school-wide write would have surfaced as a generic swallowed error, not a clean 403. The defect was real, but its shape was worse and quieter than I claimed: the controller guard was decorative.
+
+**The fix.** Both checks are now hoisted above the try blocks, so the controller guard is genuine and a refused write is a real 403 from the controller too. Defence in depth now means three real layers (request, controller, API request) rather than one real layer and two that only looked like they worked.
+
+Regression sweep after the change: Teacher, SchoolDetails and Navigation suites, 72 passed.
