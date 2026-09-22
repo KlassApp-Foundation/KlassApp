@@ -32,6 +32,59 @@ class AttendanceController extends Controller
     use Common;
 
     /**
+     * Attendance overview for this teacher (view: teacher/attendance/index).
+     *
+     * The class list and every record are bounded by the school's attendance_scope, so this
+     * page shows exactly what the teacher is allowed to record against. It deliberately does
+     * not assume school-wide access: under class_teacher_only it lists homeroom classes only,
+     * under classes_i_teach it adds the classes they are assigned as a subject teacher.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $teacherId = (int) Auth::id();
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+
+        $links = SiteHelper::attendanceScopeStandardLinks($schoolId, $teacherId);
+        $linkIds = $links->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $sections = $links->pluck('section')->filter()->unique('id')->sortBy('name')->values();
+        $streams = $links->pluck('stream')->filter()->unique()->sort()->values();
+
+        $selectedSection = $request->integer('section_id') ?: null;
+        $selectedStream = trim((string) $request->input('stream', ''));
+        $selectedDate = $request->input('date', now()->format('Y-m-d'));
+
+        $records = ($academicYear && ! empty($linkIds))
+            ? Attendance::query()
+                ->with(['user.studentAcademicLatest', 'standardLink.section'])
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('standardLink_id', $linkIds)
+                ->where('date', $selectedDate)
+                ->when($selectedSection, function ($q) use ($selectedSection) {
+                    $q->whereHas('standardLink', fn ($s) => $s->where('section_id', $selectedSection));
+                })
+                ->when($selectedStream !== '', function ($q) use ($selectedStream) {
+                    $q->whereHas('standardLink', fn ($s) => $s->where('stream', $selectedStream));
+                })
+                ->orderByDesc('id')
+                ->get()
+            : collect();
+
+        return view('teacher.attendance.index', [
+            'records' => $records,
+            'sections' => $sections,
+            'streams' => $streams,
+            'selectedSection' => $selectedSection,
+            'selectedStream' => $selectedStream,
+            'selectedDate' => $selectedDate,
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
