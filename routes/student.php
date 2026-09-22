@@ -69,6 +69,10 @@ Route::get( '/holidays/list', 'HolidaysController@list' );
 Route::get('/holidays','HolidaysController@index');
 //activitylog
 Route::get( '/activity', 'ActivityLogController@index' );
+
+// Own marks and attendance. No student id parameter exists on either route by design.
+Route::get( '/marks', 'RecordsController@marks' )->name('student.marks');
+Route::get( '/attendance', 'RecordsController@attendance' )->name('student.attendance');
 //library activity
 Route::get( '/libraryactivity', 'LibraryActivityController@index' );
 Route::get( '/libraryactivity/show', 'LibraryActivityController@show' );
