@@ -12456,3 +12456,17 @@ Detail in [docs/internal/role-capability-matrix.md](docs/internal/role-capabilit
 **5 NOT A GAP, no change.** `MustBePrivilege` is an onboarding gate that keeps a school admin on the dashboard until an academic year and standards exist. Teachers have no setup surface, so there is nothing for an equivalent gate to do and none was added.
 
 Verification: 15 Navigation tests passing, including the new resolver matrix (one child, several, none), the distinct Exams/Marks targets and the class-teacher condition on Exams. Real browser pass covering the parent entries, the admin Health link and both teacher destinations. Staging verified after deploy.
+
+### 2026-09-22: student own-record pages, and a real health overview landing
+
+Two builds shipped from the capability-matrix follow-up.
+
+**Student marks and attendance (#812).** The matrix claim was wrong: `routes/student.php` had no marks or attendance routes at all, so this was a missing feature rather than a missing nav entry. Added `Student\RecordsController` with `marks()` and `attendance()`, two routes, two views and the nav entries.
+
+The scoping decision is the interesting part: **neither route accepts a student id**. The parent equivalents do, and enforce ownership through `StudentParentLink`; a student reading their own record needs no such surface, so there is no id to tamper with. Queries use `Auth::id()` plus the authenticated school, mirroring the proven shape of `ParentPortalService::grades()` and `::attendance()`. Verified with 6 tests: own marks only, own attendance only, a crafted `student_id` in the query string ignored, `/student/{id}/marks` returning 404, the parent per-child routes refusing a student, and cross-school isolation. Real browser: nav resolves, marks render real data, `/student/{other}/marks` is 404, and `?student_id=other` still shows only own marks.
+
+**Admin health overview (#813).** `/admin/health` was a closure that redirected to the student list, making the nav item an effective duplicate of Students. Health is tracked per student (profiles, immunizations, incidents), so the landing is now a school-level summary of that same data: profiles on file, immunisation count with overdue count, incidents in the last 30 days, medical flags, incidents by severity, and the six most recent incidents with student names. All queries use the models' `whereSchool()` scope; no school id comes from the request. 3 tests including cross-school isolation asserted in both directions.
+
+**Two things learned building them.** `Exams` and its family live in `App\Models\Academics\`, not `App\Models\`, which cost a 500 and was diagnosed in one call with Boost's `last-error`. And `exams` carries two NOT NULL columns the older inspection missed, `academic_term_id` and `exam_type_id`, found with Boost's `database-schema` rather than by trial and error. Separately, the admin group's `MustBePrivilege` onboarding gate bounced the health page in tests until disabled, which is independent confirmation that the gate works the way the earlier investigation described.
+
+**Staging verified after deploy (head 05fca10e).** As a real staging admin: `/admin/health` renders 200 without redirecting, with the heading present. As a real staging student: the nav resolves to `/student/marks` and `/student/attendance`, both 200, and a genuine crafted attempt at another student's id, `/student/4/marks`, is refused with 404. Fixture accounts deactivated afterwards.
