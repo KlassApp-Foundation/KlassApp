@@ -25,7 +25,27 @@
     $activeClass = $nav['active_class'] ?? 'active';
     $prefix      = trim((string) ($nav['prefix'] ?? ''), '/');
 
-    $navHref = function (array $item): string {
+    // Parent per-child entries resolve through the real portal service. A single-child
+    // parent goes straight to that child's data; a multi-child parent lands on Children,
+    // which is where the choice is actually made. Resolved once, and only if needed.
+    $parentChildren = [];
+    $needsParentChild = collect($nav['items'] ?? [])->contains(fn ($i) => ($i['resolver'] ?? null) === 'parent_child');
+    if ($needsParentChild && auth()->check()) {
+        try {
+            $parentChildren = collect(app(\App\Services\Parent\ParentPortalService::class)->listChildren(auth()->user())['children'] ?? [])->all();
+        } catch (\Throwable $e) {
+            $parentChildren = []; // fail safe: fall back to the Children page
+        }
+    }
+
+    $navHref = function (array $item) use ($parentChildren): string {
+        if (($item['resolver'] ?? null) === 'parent_child') {
+            if (count($parentChildren) === 1) {
+                return route('parent.children.'.($item['child_path'] ?? 'fees'), $parentChildren[0]['student_id']);
+            }
+
+            return route('parent.children');
+        }
         $href = isset($item['route']) ? route($item['route']) : url($item['url'] ?? '#');
         if (! empty($item['hash'])) {
             $href .= '#'.$item['hash'];
