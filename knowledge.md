@@ -12266,3 +12266,28 @@ Missing or unrecognised values resolve to `classes_i_teach`, **never** `school_w
 **Three decisions confirmed.** `classes_i_teach` is the default despite being a real behaviour change, because it arguably fixes an existing bug: a teacher currently cannot record attendance for a class they genuinely teach but do not homeroom. The `status = 1` filter stays as a data-integrity safeguard. And each school controls its own setting.
 
 **How this reframes PR #788.** That PR's authorization rewrite is functionally the `school_wide` mode. It is not discarded: it becomes one legitimate mode, **off by default**. What was wrong is corrected here: it performed no relationship check at all, it deleted the comment documenting the narrower scope, and it would have silently become the default for every school. The intent is honoured; the method is fixed.
+
+### 2026-09-22: configurable attendance scope, SHIPPED (and a suite-breaking migration bug found on the way)
+
+Earlier the same day this was a decision record only. It is now implemented, merged and verified locally.
+
+| Piece | Status |
+|---|---|
+| Attendance scope setting (3 modes, shared check) | **SHIPPED** (#797), verified locally in a real browser |
+| Demo-seed migration NOT NULL fix | **SHIPPED** (#796), unblocked the whole test suite |
+| Elijah's teacher work from PR #788 (the formatter, new teacher views) | **NOT INCORPORATED YET.** Plan below |
+| Staging verification for any of this | **NOT DONE** |
+
+**Shipped: the setting.** `attendance_scope` lives in `school_details` meta, the same per-school pattern as `login_status` and `maintenance`. Values: `class_teacher_only` (homeroom only, the previously shipped scope), `classes_i_teach` (**the default**, homeroom **union** subject assignments from `class_teacher_links` via the `Teacherlink` model), and `school_wide` (any active class in the school, explicit opt-in only). A missing or unrecognised value resolves to `classes_i_teach`, never `school_wide`. The scope is always read from `Auth::user()->school_id`, never from input, and is cached per school with forgetting on write, per the #789 lesson.
+
+One shared method, `SiteHelper::canTeacherRecordAttendance()`, backs the web request, the API request, and both attendance listings, so the two paths cannot diverge. It also fails closed when the teacher does not belong to the school being checked. That guard came out of the tests: the first cross-school assertion failed because the tenant filter trusted the caller to pass a consistent school and teacher pair. It now verifies membership instead.
+
+Caught during implementation and fixed in the same pass: the demo-seed migration inserted `academic_years` without `start_date`/`end_date` (NOT NULL) and `users.status` as `1` where the column is an enum with a CHECK constraint. Both passed only on non-strict MySQL, so the migration chain aborted on SQLite and **every** `RefreshDatabase` test failed to boot. It went unnoticed because the suite was last run before that migration merged. Fixed in #796, additive only, since already-migrated databases will not re-run it. Follow-up still open: rows seeded by the earlier run may carry placeholder date values on non-strict MySQL, and a guarded repair migration is the clean fix.
+
+**Verified locally, with real evidence.** `tests/Feature/Teacher/AttendanceScopeTest.php`, 9 passing, 25 assertions: the default resolution, the unknown-value fallback, all three modes, the inactive-class refusal under `school_wide`, cross-school refusal in every scope, and web/API listing parity. In a real browser as a SchoolAdmin: the settings page renders the card (3 radios, correct values, `classes_i_teach` checked, heading present), submitting `school_wide` persists and re-renders as checked, and macOS Vision OCR reads all three option labels verbatim. As the teacher, the real attendance list returns 41 classes under `school_wide` and 40 under `class_teacher_only`, with a synthetic fixture class present in the first and absent in the second. That difference is the feature working end to end on real local data.
+
+**Not incorporated: PR #788's teacher work.** His `TeacherRosterFormatter`, the new teacher dashboard/attendance/student/timetable/noticeboard views, and his two controllers were reviewed as legitimate and are still **not** on main. They are new files (the teacher timetable and noticeboard view paths do not exist on main at all), so bringing them in means integrating new pages plus two controllers and adapting his attendance test to the scope modes. That is its own careful pass with its own browser verification, and it is deliberately not rushed in behind this change. Note that `TeacherWebAttendanceScopeTest` is already on main (merged separately in `68e78b18`) and still passes under the new default.
+
+**Still the biggest gap: staging.** Every piece of this is local-only. The teacher attendance flow and the settings card both need a staging pass.
+
+**His `school_wide` rewrite is now a supported mode.** Rather than discarding PR #788's authorization direction, `school_wide` is one legitimate, off-by-default option, and the settings card describes it as being for small schools where teachers cover for each other.
