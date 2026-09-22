@@ -17,7 +17,7 @@
         <a href="{{ route('teacher.exam.index') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-nowrap">Exams</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['homework','homeworks']) }}">
-        <a href="{{ url('teacher/homework/show/list') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
+        <a href="{{ url('teacher/homeworks') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Homework</span></a>
     </li>
     @php
         $ctReportLinks = (auth()->check() && auth()->user()->school_id)

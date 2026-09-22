@@ -9,12 +9,6 @@
 
     <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
         @include('partials.message')
-
-        @if (!empty($canCreateExams))
-            <a href="{{ route('teacher.exams.create') }}" class="ds-btn ds-btn-primary ds-btn-md">
-                Create Exam
-            </a>
-        @endif
     </div>
 
     <div class="ds-card ds-card-padding-default mt-6">
