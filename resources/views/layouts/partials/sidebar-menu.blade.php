@@ -63,8 +63,39 @@
         );
     }
 
-    $showItem = function (array $item) use ($ctLinks): bool {
-        return ($item['condition'] ?? null) !== 'class_teacher' || ($ctLinks && $ctLinks->isNotEmpty());
+    // Class Streams visibility must mirror ITS OWN authorization, which is not the
+    // attendance scope and not the Report Cards rule. ClassStreamController enforces
+    // ownership through ExamAuthorization::sectionIdsForClassTeacher(), and that unions
+    // standards_link.class_teacher_id with sections.class_teacher_id. The nav must not be
+    // narrower than the check it stands in front of, or a section-level class teacher is
+    // denied the link to a page they are actually allowed to open.
+    $ctSectionIds = [];
+    $needsSectionCt = collect($nav['items'] ?? [])->contains(fn ($i) => ($i['condition'] ?? null) === 'class_streams');
+    if ($needsSectionCt && auth()->check() && auth()->user()->school_id) {
+        $navYear = \App\Helpers\SiteHelper::getAcademicYear((int) auth()->user()->school_id);
+        if ($navYear) {
+            $ctSectionIds = app(\App\Services\ExamAuthorization::class)->sectionIdsForClassTeacher(
+                auth()->user(),
+                (int) auth()->user()->school_id,
+                (int) $navYear->id
+            );
+        }
+    }
+
+    $showItem = function (array $item) use ($ctLinks, $ctSectionIds): bool {
+        $condition = $item['condition'] ?? null;
+
+        // Report Cards keeps the homeroom rule because ReportCardsController::authorizeClassTeacher()
+        // checks exactly that, via isClassTeacherOfStandardLink().
+        if ($condition === 'class_teacher') {
+            return (bool) ($ctLinks && $ctLinks->isNotEmpty());
+        }
+
+        if ($condition === 'class_streams') {
+            return ! empty($ctSectionIds);
+        }
+
+        return true;
     };
 @endphp
 <ul class="list-reset text-sm">

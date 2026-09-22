@@ -66,8 +66,11 @@ class SidebarMenuRenderTest extends TestCase
             // each collapsible group wrapper is itself an <li>
             $expected += count($nav['groups'] ?? []);
 
-            // teacher: class-teacher-only items are hidden without an authenticated class teacher
-            $expected -= $flat->where('condition', 'class_teacher')->count();
+            // teacher: conditioned items are hidden without an authenticated actor whose
+            // condition resolves. There is more than one condition now (class_teacher for
+            // Report Cards, class_streams for Class Streams), so count every conditioned
+            // item rather than one condition name.
+            $expected -= $flat->filter(fn ($i) => ! empty($i['condition']))->count();
 
             $this->assertSame($expected, substr_count($html, '<li '), "Sidebar [{$role}] rendered the wrong number of list items.");
         }
