@@ -96,7 +96,7 @@
                       </td>
                     </tr>
                   </tbody>
-                  <tbody v-if="Object.keys(paidStudents[1]).length == 0">
+                  <tbody v-if="Object.keys(paidStudents[1] || {}).length == 0">
                     <tr class="border-b">
                       <td colspan="3">
                         <p class="font-semibold text-s" style="text-align: center">No Records Found</p>
@@ -132,7 +132,7 @@
                       </td>
                     </tr>
                   </tbody>
-                  <tbody v-if="Object.keys(unpaidStudents[1]).length == 0">
+                  <tbody v-if="Object.keys(unpaidStudents[1] || {}).length == 0">
                     <tr class="border-b">
                       <td colspan="1">
                         <p class="font-semibold text-s" style="text-align: center">No Records Found</p>
@@ -171,8 +171,10 @@ export default {
     {
       axios.get('/'+this.mode+'/standardLink/show/conference/'+this.id+'?page='+this.page).then(response => {
         this.conference           = response.data.data;
-        this.page_count           = response.data.meta.last_page;
-        this.total                = response.data.meta.total;
+        // meta can be absent (empty or non-paginated payload), which threw
+        // "Cannot read properties of undefined (reading 'last_page')".
+        this.page_count           = response.data && response.data.meta ? response.data.meta.last_page : 1;
+        this.total                = response.data && response.data.meta ? response.data.meta.total : 0;
        
         //console.log(response.data);   
       });

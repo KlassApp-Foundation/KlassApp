@@ -32,7 +32,7 @@
                 <p class="font-semibold text-xs">{{ student[0]['session'] }}</p>
               </td>
               <td class="py-3 px-2 cursor-pointer" @click="showAbsentees(student[0]['id_date'])">
-                <p class="font-semibold text-xs">{{ Object.keys(student).length }}</p>
+                <p class="font-semibold text-xs">{{ Object.keys(student || {}).length }}</p>
               </td>
               <td class="py-3 px-2">
                 <p class="font-semibold text-xs">{{ student[0]['recorded_by'] }}</p>
@@ -42,7 +42,7 @@
               </td>
             </tr>
           </tbody>
-          <tbody v-if="attendances == ''">
+          <tbody v-if="attendances == '' || attendances == null">
             <tr class="border-b">
               <td colspan="5">
                 <p class="font-semibold text-sm" style="text-align: center">No Records Found</p>
@@ -147,16 +147,32 @@
 
       setData(data)
       {
-        if(Object.keys(data).length > 0)
+        // A null or undefined payload used to reach Object.keys() and throw
+        // "Cannot convert undefined or null to object" (TypeError: Object.keys), which
+        // broke the whole monthly attendance panel on an otherwise healthy 200 page.
+        if(data && typeof data === 'object' && Object.keys(data || {}).length > 0)
         {
-          this.months             = data.months;
-          this.attendances        = data.attendances;
-          this.select_month       = data.select_month;
-          this.dates              = data.dates;
-          this.forenoon_present   = data.forenoon_present;
-          this.forenoon_absent    = data.forenoon_absent;
-          this.afternoon_present  = data.afternoon_present;
-          this.afternoon_absent   = data.afternoon_absent;
+          this.months             = data.months || [];
+          this.attendances        = data.attendances || '';
+          this.select_month       = data.select_month || '';
+          this.dates              = data.dates || [];
+          this.forenoon_present   = data.forenoon_present || [];
+          this.forenoon_absent    = data.forenoon_absent || [];
+          this.afternoon_present  = data.afternoon_present || [];
+          this.afternoon_absent   = data.afternoon_absent || [];
+        }
+        else
+        {
+          // Empty-safe defaults: no attendance yet renders an empty state and an empty
+          // chart rather than a broken one.
+          this.months             = [];
+          this.attendances        = '';
+          this.select_month       = '';
+          this.dates              = [];
+          this.forenoon_present   = [];
+          this.forenoon_absent    = [];
+          this.afternoon_present  = [];
+          this.afternoon_absent   = [];
         }
         this.chartOptions = {
           chart: {
@@ -178,7 +194,7 @@
           },
           "xAxis": {
             "title": {},
-            "categories":this.dates,
+            "categories": this.dates || [],
           },
           "yAxis": [{
             "min": 0,
@@ -203,22 +219,22 @@
           "series": [{
             "name": "Present",
             "color": "#82f5b6",
-            "data": this.forenoon_present,
+            "data": this.forenoon_present || [],
             "stack": 'Forenoon',
           }, {
             "name": "Absent",
             "color": "#f56c7c",
-            "data": this.forenoon_absent,
+            "data": this.forenoon_absent || [],
             "stack": 'Forenoon',
           }, {
             "name": "Present",
             "color": "#82f5b6",
-            "data": this.afternoon_present,
+            "data": this.afternoon_present || [],
             "stack": 'Afternoon',
           }, {
             "name": "Absent",
             "color": "#f56c7c",
-            "data": this.afternoon_absent,
+            "data": this.afternoon_absent || [],
             "stack": 'Afternoon',
           }]
         };

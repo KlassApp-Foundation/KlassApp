@@ -1,7 +1,7 @@
 <template>
 	<div class="py-3" v-bind:class="[this.profile_tab==12?'block' :'hidden']"> <!-- overflow-x-scroll lg:overflow-x-auto md:overflow-x-auto -->
     	<div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
-    	<div class="my-2" v-if="Object.keys(this.posts).length > 0">
+    	<div class="my-2" v-if="Object.keys(this.posts || {}).length > 0">
 			<div class="bg-white p-5 py-4" v-for="post in posts">
 				<div class="">
 		    	    <div class="flex items-center justify-end relative">
