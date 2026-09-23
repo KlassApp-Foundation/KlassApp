@@ -74,7 +74,12 @@
           
            <div id="showdetail" class="hidden attendance-class-detail shadow rounded mx-2 absolute right-0 bg-white">
             <ul class="text-sm leading-loose">
-              @if(config('gtimetable.enabled', false))
+              {{-- The timetable package is optional; its model class is referenced by
+                   StandardLink::timetable(). Accessing it without this guard threw
+                   "Class \Gegok12\Timetable\Models\Timetable not found" and 500'd the
+                   class detail page for every class. Same class_exists pattern as
+                   Dashboard.php and AcademicProcess.php. --}}
+              @if(config('gtimetable.enabled', false) && class_exists('Gegok12\Timetable\Models\Timetable'))
               <li class="py-1">
                 @if(count($standardLink->timetable) == 0)
                   <a href="{{ url('/admin/timetable/add?standardLink_id='.$standardLink->id) }}" class="capitalize px-3 py-2 my-1 font-medium text-center">add timetable</a>

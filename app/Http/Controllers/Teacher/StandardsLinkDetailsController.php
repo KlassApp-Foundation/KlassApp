@@ -105,6 +105,13 @@ class StandardsLinkDetailsController extends Controller
                 }
                 $i++;
             }
+            for ($j = 0; $j < $i; $j++)
+            {
+                $array['forenoon_present'][$j]    = $forenoonpresent[$j]    ?? 0;
+                $array['forenoon_absent'][$j]     = $forenoonabsent[$j]     ?? 0;
+                $array['afternoon_present'][$j]   = $afternoonpresent[$j]   ?? 0;
+                $array['afternoon_absent'][$j]    = $afternoonabsent[$j]    ?? 0;
+            }
             return $array;
         }
         else
@@ -129,14 +136,16 @@ class StandardsLinkDetailsController extends Controller
             $array = [];
             $academic_year  = SiteHelper::getAcademicYear(Auth::user()->school_id);
             $array['select_month']  = Carbon::now()->format('m-Y');
+            $array['months'] = [];
             $months = [];
             $start = strtotime('last month', strtotime($academic_year->start_date));
             $now = strtotime($academic_year->end_date);
             $i = 0;
             while(($start = strtotime('next month', $start)) <= $now) 
             {
-                $array['months']->$i->id = date('m-Y', $start);
-                $array['months']->$i->name = date('M Y', $start);
+                // Same fix as the admin controller: was written to an uninitialised
+                // value and 500'd the class attendance view for every class.
+                $array['months'][$i] = ['id' => date('m-Y', $start), 'name' => date('M Y', $start)];
                 $i++;
             }
             $startDate  = Carbon::now()->firstOfMonth()->format('Y-m-d');  
@@ -170,24 +179,28 @@ class StandardsLinkDetailsController extends Controller
                 $array['dates'][$i]  =   $date;
                 foreach ($attendance as $session => $student) 
                 { 
+                    // A date can have only one session and only one status, so the
+                    // missing groups must default to empty rather than be counted
+                    // directly: count($student[1]) threw "count(): Argument #1 must be
+                    // of type Countable|array, null given" and 500'd the page for any
+                    // class whose data lacked a group.
+                    $present = count($student[1] ?? []);
+                    $absent  = count($student[0] ?? []);
                     if($session == 'forenoon')
                     {
-                        $forenoonpresent[$i]    = count($student[1]);
-                        $forenoonabsent[$i]     = count($student[0]);
+                        $forenoonpresent[$i]    = $present;
+                        $forenoonabsent[$i]     = $absent;
                     }
                     else
                     {
-                        $afternoonpresent[$i]   = count($student[1]);
-                        $afternoonabsent[$i]    = count($student[0]);
+                        $afternoonpresent[$i]   = $present;
+                        $afternoonabsent[$i]    = $absent;
                     }
                 }
-                for ($j = 0 ;$j < count($attendancechart) ; $j++) 
-                {
-                   $array['forenoon_present'][$j]    = $forenoonpresent[$j];
-                   $array['forenoon_absent'][$j]     = $forenoonabsent[$j];
-                   $array['afternoon_present'][$j]   = $afternoonpresent[$j];
-                   $array['afternoon_absent'][$j]    = $afternoonabsent[$j];
-                }
+                $forenoonpresent[$i]    = $forenoonpresent[$i]    ?? 0;
+                $forenoonabsent[$i]     = $forenoonabsent[$i]     ?? 0;
+                $afternoonpresent[$i]   = $afternoonpresent[$i]   ?? 0;
+                $afternoonabsent[$i]    = $afternoonabsent[$i]    ?? 0;
                 $i++;
             }
             
@@ -222,8 +235,9 @@ class StandardsLinkDetailsController extends Controller
             $i = 0;
             while(($start = strtotime('next month', $start)) <= $now) 
             {
-                $array['months']->$i->id = date('m-Y', $start);
-                $array['months']->$i->name = date('M Y', $start);
+                // Same fix as the admin controller: was written to an uninitialised
+                // value and 500'd the class attendance view for every class.
+                $array['months'][$i] = ['id' => date('m-Y', $start), 'name' => date('M Y', $start)];
                 $i++;
             }
             $startDate      = Carbon::parse($date)->firstOfMonth()->format('Y-m-d');  
@@ -257,24 +271,28 @@ class StandardsLinkDetailsController extends Controller
                 $array['dates'][$i]  =   $date;
                 foreach ($attendance as $session => $student) 
                 { 
+                    // A date can have only one session and only one status, so the
+                    // missing groups must default to empty rather than be counted
+                    // directly: count($student[1]) threw "count(): Argument #1 must be
+                    // of type Countable|array, null given" and 500'd the page for any
+                    // class whose data lacked a group.
+                    $present = count($student[1] ?? []);
+                    $absent  = count($student[0] ?? []);
                     if($session == 'forenoon')
                     {
-                        $forenoonpresent[$i]    = count($student[1]);
-                        $forenoonabsent[$i]     = count($student[0]);
+                        $forenoonpresent[$i]    = $present;
+                        $forenoonabsent[$i]     = $absent;
                     }
                     else
                     {
-                        $afternoonpresent[$i]   = count($student[1]);
-                        $afternoonabsent[$i]    = count($student[0]);
+                        $afternoonpresent[$i]   = $present;
+                        $afternoonabsent[$i]    = $absent;
                     }
                 }
-                for ($j = 0 ;$j < count($attendancechart) ; $j++) 
-                {
-                   $array['forenoon_present'][$j]    = $forenoonpresent[$j];
-                   $array['forenoon_absent'][$j]     = $forenoonabsent[$j];
-                   $array['afternoon_present'][$j]   = $afternoonpresent[$j];
-                   $array['afternoon_absent'][$j]    = $afternoonabsent[$j];
-                }
+                $forenoonpresent[$i]    = $forenoonpresent[$i]    ?? 0;
+                $forenoonabsent[$i]     = $forenoonabsent[$i]     ?? 0;
+                $afternoonpresent[$i]   = $afternoonpresent[$i]   ?? 0;
+                $afternoonabsent[$i]    = $afternoonabsent[$i]    ?? 0;
                 $i++;
             }
             
