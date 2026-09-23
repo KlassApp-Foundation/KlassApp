@@ -325,7 +325,9 @@ class SchoolDetailsController extends Controller
             Log::info($e->getMessage());
 
             if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['message' => $e->getMessage()], 500);
+                Log::error('Request failed', ['message' => $e->getMessage()]);
+
+                return response()->json(['message' => 'Something went wrong. Please try again.'], 500);
             }
 
             return redirect()->back()->with('errormessage', $e->getMessage());

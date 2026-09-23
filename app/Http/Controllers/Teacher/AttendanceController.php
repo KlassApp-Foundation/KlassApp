@@ -211,10 +211,16 @@ class AttendanceController extends Controller
     }
     catch(Exception $e)
     {
-        Log::error($e->getMessage());
+        // Log the real cause server-side; never return it to the client. The raw
+        // exception message previously reached the browser, SQLSTATE strings included.
+        Log::error('Attendance store failed', [
+            'user_id' => Auth::id(),
+            'standardLink_id' => $request->input('standardLink_id'),
+            'message' => $e->getMessage(),
+        ]);
+
         return response()->json([
-            'error' => 'Something went wrong',
-            'message' => $e->getMessage()
+            'error' => 'We could not save this attendance. Please check the details and try again.',
         ], 422);
     }
 }

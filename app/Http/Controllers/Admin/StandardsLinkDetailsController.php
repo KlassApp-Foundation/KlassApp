@@ -48,6 +48,13 @@ class StandardsLinkDetailsController extends Controller
         //
         $school_id = Auth::user()->school_id;
         $standardLink = StandardLink::with('standard','section','teacher')->where([['id',$id],['school_id',$school_id]])->first();
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $academic_year = SiteHelper::getAcademicYear($school_id);
@@ -65,6 +72,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
@@ -110,6 +124,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
@@ -138,6 +159,13 @@ class StandardsLinkDetailsController extends Controller
         //
         $standardLink = StandardLink::where('id',$id)->first();
 
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
@@ -164,6 +192,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
@@ -227,6 +262,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
@@ -321,6 +363,13 @@ class StandardsLinkDetailsController extends Controller
         //
         $standardLink = StandardLink::where('id',$id)->first();
 
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $date = Carbon::createFromFormat('m-Y', $request->select_month);
@@ -414,6 +463,13 @@ class StandardsLinkDetailsController extends Controller
         //
         $standardLink = StandardLink::where('id',$id)->first();
 
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $events  = Events::where('standard_id',$standardLink->id);
@@ -444,6 +500,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
@@ -483,6 +546,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
@@ -528,6 +598,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
         $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
@@ -628,6 +705,13 @@ class StandardsLinkDetailsController extends Controller
         //
         $standardLink = StandardLink::where('id',$id)->first();
 
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
+
         if(Gate::allows('standardlink',$standardLink))
         {
             $school_id = Auth::user()->school_id;
@@ -664,6 +748,13 @@ class StandardsLinkDetailsController extends Controller
     {
         //
          $standardLink = StandardLink::where('id',$id)->first();
+
+        // The lookup above is school-scoped, so a foreign or unknown id yields null,
+        // and the standardlink gate dereferences ->school_id on it, which threw a
+        // 500 instead of refusing. Guard before the gate.
+        if (! $standardLink) {
+            abort(403, 'You are not allowed to view this class.');
+        }
 
         if(Gate::allows('standardlink',$standardLink))
         {
