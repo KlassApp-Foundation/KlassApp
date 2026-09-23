@@ -1,6 +1,6 @@
 <template>
   <div class="px-3 overflow-x-scroll lg:overflow-x-auto md:overflow-x-auto" v-bind:class="[this.profile_tab==9?'block' :'hidden']">
-    <div class="my-5" v-if="Object.keys(events).length > 0">
+    <div class="my-5" v-if="Object.keys(events || {}).length > 0">
       <div class="flex mx-2 my-3 items-start" v-for="event in events">
         <div class="w-full mx-4 border rounded px-2 py-2">
           <div class="flex flex-col lg:flex-row md:flex-row justify-between lg:items-center">

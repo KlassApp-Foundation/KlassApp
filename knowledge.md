@@ -12517,3 +12517,13 @@ Added a null check before every `Gate::allows('standardlink', ...)` in the two c
 **3. Attendance defaults now replicate.** `AbsentReasonsTableSeeder` already existed with four sensible reasons, and `DatabaseSeeder` calls it, but **deploys run migrations and not seeders**, so a deployed environment could have zero reasons and be unable to complete any attendance entry, which is exactly what staging showed. New migration `2026_09_24_000000_seed_default_absent_reasons` seeds `Health Issue`, `Family Functions`, `Personal Work`, `Others` idempotently, keyed on title, guarded on the table existing. Local already had all four and the migration correctly inserted nothing, leaving no duplicates.
 
 Regression sweep of the Teacher, Admin, Navigation and Student suites: **190 passing**.
+
+### 2026-09-24: the two attendance residuals from #816 closed
+
+**1. Chart JS null-handling (monthlyRecord and the whole class-tab family).** The real fix was broader than the one component: the error `Cannot convert undefined or null to object` came from template-level `Object.keys(...)` calls in the class-tab family (`monthlyRecord`, `pastExams`, `upcomingExams`, `teachers`, `events`, `timetable`, `studentRecord`, `wallBoard`, `fees`, `conference`), where an AJAX payload without an expected key overwrote a data property with `undefined`. The components declare `[]` correctly; the overwrite happened after. All of them are now guarded (`Object.keys(x || {})`), `monthlyRecord.setData` is null-safe with explicit empty defaults, and `conference.vue` no longer reads `meta.last_page` and `meta.total` unguarded, which was the second console error. `npm run build` re-verified.
+
+Verified in a real browser over classes with and without attendance data: **zero console errors or page errors** on both, the chart renders and the "No Records Found" empty state shows.
+
+**2. AttendanceResource now survives a missing user.** The real orphan path is a **soft-deleted student**: their attendance history stays while the `user` relation resolves to null, so `->FullName` on it warned. The resource is now null-safe for user, admin, absent reason and class, degrading to `Unknown student` and `-` rather than broken output. Verified by soft-deleting a synthetic student who had attendance rows (5 genuinely orphaned rows), serialising the collection: the placeholder appears and **zero** null warnings are logged; the student was restored afterwards. Local data held 0 such orphans before, so the path needed constructing to test.
+
+Also worth a decision, not fixed: the Vue tab components still render raw `<table>` markup rather than the design-system `<x-table>`, consistent with the broader table-consistency finding in the matrix.

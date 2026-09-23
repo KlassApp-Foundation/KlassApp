@@ -84,7 +84,7 @@
                       </td>
                     </tr>
                   </tbody>
-                  <tbody v-if="Object.keys(paidStudents[1]).length == 0">
+                  <tbody v-if="Object.keys(paidStudents[1] || {}).length == 0">
                     <tr class="border-b">
                       <td colspan="3">
                         <p class="font-semibold text-s" style="text-align: center">No Records Found</p>
@@ -120,7 +120,7 @@
                       </td>
                     </tr>
                   </tbody>
-                  <tbody v-if="Object.keys(unpaidStudents[1]).length == 0">
+                  <tbody v-if="Object.keys(unpaidStudents[1] || {}).length == 0">
                     <tr class="border-b">
                       <td colspan="1">
                         <p class="font-semibold text-s" style="text-align: center">No Records Found</p>
