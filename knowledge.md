@@ -618,6 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
+## Session: 2026-09-25 — Member lists: Teachers/Staff pagination (PR #820 OPEN) + alumni dead-code cleanup (PR #821 OPEN); PowerGrid dropped
+
+- **Decision**: PowerGrid abandoned for this codebase — independent verification (spike worktree `docs/powergrid-spike-verification.md`) found a genuine cross-tenant leak in PowerGrid 6.x's search path (`SearchHandler::filterRelation` emits top-level `orWhereHas` outside the tenant-closure; searching another school's student name returned foreign rows to a same-school admin) plus real CI/Tailwind friction. Spike branch `spike/powergrid-student-list` candiscard.
+- **Audit against real `origin/main`**: Teachers `TeacherFilter` → `->get()` no pagination (confirmed); Staff `StaffFilter` → `->get()` no pagination (confirmed); **Alumni claim was wrong** — no admin alumni list page exists; the only directory (`AlumniController@directory`) is already school-scoped with `userprofile` eager and `paginate(30)`. `MemberProcess::AlumniFilter`/`AlumniProfileFilter` were dead code with zero callers (removed in #821).
+- **Implementation (PR #820, branch `feat/teacher-staff-lists-pagination`, head `9081e640`)**: `TeacherFilter`/`StaffFilter` paginate(25) + deterministic firstname order + `with(['userprofile','teacherprofile.qualification'])` batched eager loading; exports call with `$paginate=false` (full row sets preserved); Vue `teacher/List.vue` + `staff/List.vue` gained a minimal Prev/Next pager (data shapes untouched — `.data.data` reads still work).
+- **Evidence #820**: PHPUnit 4/4 (`tests/Feature/Students/MemberListPaginationAndScopingTest.php`, MySQL `klassapp_test`) — page-size + meta, page 2 renderable with distinct window, crafted `?school_id`/`?usergroup_id` cannot widen scope, zero cross-school rows; live query measurement: teacher find p1 = 18 queries for 25 rows, staff find = 7; browser (Playwright): teachers p1 = 25 cards + Next, p2 click renders 9 cards (`/tmp/teachers-p1.png`, `/tmp/teachers-p2.png`, `/tmp/staffs-p1.png`), staff page renders `ds-table-ledger` rows. Pre-existing failures reproduced without the diff: `TeacherApprovalRoutesTest` (seed id collision), `DashboardGenderChartTest` (2 fails).
+- **Evidence #821**: dead refs = 0; Admin/Students/Student suites MySQL 107/107.
+- **Staging**: NOT run — Laravel Cloud MCP token absent (`token_present: false`), PR bodies disclose; both need human review + stagging pass before merge (#21/#22/#25).
+- **Status**: #820 OPEN · #821 OPEN · do not stamp merged until GitHub API `merged: true`.
+
 ## Session: 2026-09-24/25 — IDOR fix: school-scope StandardLink lookups (PR #819 OPEN, branch `fix/standardlink-filter-school-scope`, head `ebf25ba4`)
 
 - **Found during**: the PowerGrid spike's independent verification pass (`/Users/mac/projects/KlassApp-powergrid-spike/docs/powergrid-spike-verification.md`) — unrelated to PowerGrid.
