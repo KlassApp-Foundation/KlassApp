@@ -68,13 +68,13 @@ class TeacherListController extends Controller
                 ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
                 LOGNAME_DELETE_TEACHER,
                 $message
-            ); 
+            );
             \Session::put('successmessage',$message);
             return redirect('/admin/teachers');
         }
         catch(Exception $e)
         {
             //dd($e->getMessage());
-        } 
+        }
     }
 }
