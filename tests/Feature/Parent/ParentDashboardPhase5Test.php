@@ -61,7 +61,14 @@ class ParentDashboardPhase5Test extends TestCase
         app(ParentLinkService::class)->linkByStudentId('+256700555001', $this->studentA->id, 'Dash Parent');
         app(ParentLinkService::class)->linkByStudentId('+256700555001', $this->studentB->id, 'Dash Parent');
 
-        $this->parent = User::where('usergroup_id', 7)->firstOrFail();
+        // Resolve the parent through the LINK, never by usergroup alone — the demo-seeding
+        // migration (2026_09_22_010000) puts demo usergroup-7 parents in the DB on every
+        // fresh migrate, and firstOrFail() grabbed one of those instead of this test's
+        // linked parent, so the dashboard legitimately rendered the empty state.
+        $linkedParentId = (int) DB::table('student_parent_links')
+            ->where('student_id', $this->studentA->id)
+            ->value('parent_id');
+        $this->parent = User::findOrFail($linkedParentId);
         $this->parent->update([
             'email' => 'parent.dash@test.sch.ug',
             'password' => bcrypt('dash-pass-123'),
@@ -118,7 +125,7 @@ class ParentDashboardPhase5Test extends TestCase
         $this->actingAs($lonely)
             ->get(route('parent.dashboard'))
             ->assertOk()
-            ->assertSee('No children linked')
+            ->assertSee('No children are linked to your account. Contact the school office to link a student.')
             ->assertSee('parent-empty-children', false)
             ->assertDontSee('Alpha-Only Tuition')
             ->assertDontSee('Beta-Only Tuition');
