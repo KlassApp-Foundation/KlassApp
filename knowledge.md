@@ -618,6 +618,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
+## Session: 2026-09-25 — Laravel Truss spike (branch `spike/laravel-truss`)
+
+- **Package**: `albertoarena/laravel-truss` ^1.14 — read-only schema metadata visualizer/CLI (information_schema only, never row data). Installed on this spike branch off `origin/main` with a clean install adding only `spatie/laravel-package-tools`.
+
+- **Evaluated & NOT adopted (reference only)**: `ajimoti/roles-and-permissions` — a Laravel RBAC package supporting role/permission assignment on pivot tables (many-to-many role↔permission). Decision: **do not adopt**. KlassApp's authoritative authorization is the existing usergroup/school-scoping/Gate model (usergroups 1–13, `AuthServiceProvider` gates, school_id scoping) — extensively built and hardened this session; Laratrust is already vestigial. Two authorization philosophies side by side would add confusion, not replace anything. Logged as a reference for a future genuine gap, not an active candidate.
+
+- **Verified against the real `klassapp_local` schema (150 tables)**:
+  - Mermaid/DBML/LLM exports capture tonight's canary relations: `users ||--o{ sections : sections_class_teacher_id_foreign` **AND** `users ||--o{ standards_link : standards_link_class_teacher_id_foreign` (the dual homeroom), `class_teacher_links` chains to `school, academic_year, standardLink, subject, teacher` (subject-teacher, not homeroom), `subjects ||--o{ class_teacher_links`, `teacherprofile_reporting_to_foreign`.
+  - **Focus mode works**: Focus=standards_link depth 1 prunes the UI from **146 → 18 tables**; header proactively warns “146 tables, a large schema. Use the filter or focus a table…”. `truss:show`, `truss:export --format=…`, `truss:doctor`, `truss:diff` all function.
+  - `truss:doctor` surfaced 13 REAL schema findings (6 error/7 warning) confirmed against information_schema: `chapters.standard_id → standards_link` (misleading column name), `exam_marks_submissions.class_id → sections`, duplicate `schools ministry_code` unique + plain index pair, redundant left-prefix index in agent_conversation_messages, no-PK `password_resets`, and no-unique-key pivot tables from the vestigial Laratrust tables (permission_role, school_subject, post_tags).
+  - No Laravel 12 / PHP 8.4 compatibility issues encountered.
+- **Kept as a dev-only tool**: `truss.enabled` defaults to local-only (`APP_ENV === 'local'`); plus a new fail-closed `Gate::define('viewTruss')` (SiteAdmin/ug=1 only) for defense in depth; `TRUSS_ENABLED=true` only added to `.env.example`. Non-local environment: route 404s. MCP stdio server (`mcp:start truss`) registered alongside laravel-boost — read-only, structure-only. Boost MCP already covers agent schema reads; Truss's value is the visual ERD dashboard plus structure exports (dbml/mermaid/csv/markdown/html/llm) — different roles, not redundant.
+- **Files**: `composer.json`/`composer.lock`, `config/truss.php` (published), `app/Providers/AuthServiceProvider.php` (gate), `.env.example` (TRUSS block), and `tests/Feature/Security/ViewTrussGateTest.php` regression. Affected suites re-run MySQL: **112/112**.
+- **PR**: to be opened after commit; not stamped merged until GitHub API `merged: true`.
+
+---
+
 ## Current Status: September 21, 2026 (latest) — **Classroom REST wave-1 APPROVED (sequenced behind LLM-gap + Slack-E2E prerequisites, both must be evidence-confirmed before any code); Slack E2E still deferred on LLM gap; Drive waiting for GA; Tier-2 deferred**
 
 - **Google Classroom read-only wave-1: ✅ GO-AHEAD CONFIRMED 2026-09-21** (plan doc status header carries the verbatim record). Scope: 2 read tools (`google_classroom_list_courses`/`google_classroom_list_coursework`), scopes `classroom.courses.readonly` + `classroom.coursework.students.readonly`, NO roster/email/guardian scopes, self-hosted local MCP server via `Mcp::local()` (SpikeSlackMockServer pattern), Tier-1 catalog entry. **HARD CONSTRAINT**: implementation may not start until BOTH prerequisites are independently confirmed complete **with evidence** at the start of the Classroom task itself — (a) staging LLM gap fixed (`OPENAI_COMPATIBLE_URL`/`MODEL` set — still NULL as of 2026-09-21 — **and** `toshi:llm-health` passing), (b) Slack §6c E2E (reads, write-gate pause, approve/reject audit, real-vs-mock shapes) actually run and passing. If either is unmet when picked up: STOP and report. Classroom is **its own task with its own go-ahead** — never folded into prerequisite-unblocking work.
