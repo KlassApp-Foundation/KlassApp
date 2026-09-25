@@ -627,6 +627,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Evidence #821**: dead refs = 0; Admin/Students/Student suites MySQL 107/107.
 - **Staging**: NOT run — Laravel Cloud MCP token absent (`token_present: false`), PR bodies disclose; both need human review + stagging pass before merge (#21/#22/#25).
 - **Status**: #820 OPEN · #821 OPEN · do not stamp merged until GitHub API `merged: true`.
+- **Reference-only (no code change) — evaluated, NOT adopted**: `ajimoti/roles-and-permissions` (Laravel RBAC package supporting role/permission assignment on pivot tables, i.e. many-to-many role↔permission relationships) was evaluated during the 2026-09-24/25 UI-tools research. **Decision: do not adopt.** KlassApp's authoritative authorization system is the existing usergroup/school-scoping/Gate model (usergroups 1–13, `AuthServiceProvider` gates, school_id scoping) — extensively built and hardened this session; Laratrust is already flagged elsewhere as vestigial. Adopting a new generic RBAC package would mean running two authorization philosophies side by side rather than replacing anything. Logged here as a **reference in case a future genuine gap in the existing model** calls for revisiting it — not an active candidate.
 
 ## Session: 2026-09-24/25 — IDOR fix: school-scope StandardLink lookups (PR #819 OPEN, branch `fix/standardlink-filter-school-scope`, head `ebf25ba4`)
 
