@@ -5,7 +5,9 @@
    or directly from packages/toshi-ui/resources/css/toshi-ui.css
    ══════════════════════════════════════════════════════════════ */
 
-:root { --nav-height: 83px; }
+/* --nav-height: 83px removed 2026-09-25 — dead constant from the 85px-header era;
+   nothing consumed it. The live header constant is --toshi-header-offset
+   (defined in dashboard-refresh.css, consumed below). */
 
 /* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ──
    Layout places #toshi-toggle-wrapper as a sibling of [data-toshi-root] (app.blade).
@@ -21,14 +23,18 @@
 
 /* ══════════════════════════════════════════════════════════════
    PIECE 2 — Docking / pill / fullscreen chrome (≥1280 dock, ≤640 fullscreen)
-   Behavior unchanged: 380px static flex column, collapse → width 0 + pill,
-   independently scrolling sidebar. Visual treatment = clay kit (not Pulse green).
-   Do NOT move Pulse .ds-* rules into this section.
+   Desktop (≥1280): a FIXED 380px right column below the header (Option B,
+   2026-09-25) — #app spans the full viewport width (full-width header), and the
+   dock overlays the right edge rather than taking part in the flex flow.
+   Collapse → width 0 + floating pill. Sub-1280: edge drawer (see below).
+   Visual treatment = clay kit (not Pulse green). Do NOT move Pulse .ds-* rules
+   into this section.
    ══════════════════════════════════════════════════════════════ */
 
 @media (min-width: 1280px) {
-    /* Toshi mounts as a sibling of #app (outside Vue). Body must be a row flex
-       so the dock sits beside #app — not below it under overflow:hidden. */
+    /* Body stays a row flex so #app (flex:1) fills the whole viewport. The dock
+       root is position:fixed and therefore NOT a flex item — the toggle wrapper
+       sibling (width 0 / 28px collapsed) is the only other flow child. */
     body {
         overflow: hidden !important;
         height: 100vh;
@@ -80,33 +86,47 @@
     }
 
     body [data-toshi-root] {
-        display: flex;
-        height: 100vh;
-        flex-shrink: 0;
-        width: 380px;
-        overflow: hidden;
+        /* Fixed right column below the header (Option B, 2026-09-25). #app spans the
+           full viewport; the dock is a fixed column anchored right, top = header offset,
+           bottom = viewport. IMPORTANT: this sheet loads AFTER dashboard-refresh.css,
+           which declares the same selector with position:fixed !important (base widget
+           rule). Same specificity + both !important => this later sheet wins. Any
+           position change for the dock MUST live here, not in dashboard-refresh.css —
+           three reverted attempts (2026-09-22) failed exactly there. margin/height/
+           align-self are explicitly zeroed to retire the #791 flex-envelope rules. */
+        position: fixed !important;
+        top: var(--toshi-header-offset, 69px) !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: auto !important;
+        width: 380px !important;
+        height: auto !important;
+        margin: 0 !important;
+        /* 32: above the sticky navbar (z-index 31), below content dropdowns (z-index 50).
+           Do NOT set to auto: position:fixed + z-index:auto lets the maximized modal's
+           z-index 10000 (a descendant) compare against the navbar's 31 and lose, because
+           the navbar is painted later in DOM order. 32 keeps the modal on top. */
+        z-index: 32 !important;
+        display: flex !important;
+        align-self: auto !important;
         transition: width 0.25s ease;
-        /* override dashboard-refresh.css position: fixed !important — must match specificity and have !important */
-        position: static !important;
-        bottom: auto !important;
-        right: auto !important;
-        z-index: auto !important;
-        align-self: stretch;
     }
 
     [data-toshi-root] .toshi-panel {
+        /* Fills the fixed root column. The panel's own mobile/base rule declares
+           position:fixed (sub-1280 drawer); on desktop it must be a plain flex child. */
         position: relative !important;
         top: auto !important;
         right: auto !important;
         bottom: auto !important;
         left: auto !important;
-        width: 380px !important;
+        width: 100% !important;
         height: 100% !important;
         max-height: none !important;
         display: flex !important;
         flex-direction: column;
         border-radius: 0 !important;
-        box-shadow: -6px 0 24px rgba(20, 20, 19, 0.06) !important;
+        box-shadow: none !important;
         border-left: 1px solid #e8e6dc !important;
         z-index: auto !important;
         transition: none !important;
