@@ -6,6 +6,7 @@ use App\Mail\TeacherInviteMail;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Support\UserProvisioning;
@@ -181,76 +182,48 @@ class ClassTeacherInviteService
         string $schoolName,
         string $className,
     ): array {
-        // Duplicate email check (scoped globally — email is unique across platform)
+        // Duplicate email check (global + pending invites)
         if (User::where('email', $email)->exists()) {
             return self::result(false, "A user with email **{$email}** already exists.");
         }
 
-        try {
-            DB::beginTransaction();
-
-            $credentials = UserProvisioning::randomPasswordCredentials();
-
-            $teacher = User::create([
-                'school_id'      => $schoolId,
-                'usergroup_id'   => 5,
-                'name'           => $name,
-                'email'          => $email,
-                'password'       => $credentials['password'],
-                'is_reset'       => $credentials['is_reset'],
-                'status'         => 'active',
-                'email_verified' => 1,
-                'mobile_no'      => $phone !== '' ? $phone : null,
-            ]);
-
-            Userprofile::create([
-                'school_id'     => $schoolId,
-                'user_id'       => $teacher->id,
-                'usergroup_id'  => 5,
-                'firstname'     => $name,
-                'lastname'      => '',
-                'status'        => 'active',
-                'alternate_no'  => $phone !== '' ? $phone : null,
-            ]);
-
-            $standardLink->class_teacher_id = $teacher->id;
-            $standardLink->save();
-
-            $section->class_teacher_id = $teacher->id;
-            $section->save();
-
-            DB::commit();
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('CT invite: failed to create and assign new teacher', [
-                'school_id' => $schoolId,
-                'email'     => $email,
-                'error'     => $e->getMessage(),
-            ]);
-
-            return self::result(false, 'Could not create class teacher. Please try again.');
+        if (TeacherInvite::where('email', $email)
+            ->whereNull('claimed_at')
+            ->where('expires_at', '>', now())
+            ->exists()) {
+            return self::result(false, "An invite for **{$email}** is already pending.");
         }
 
-        // Send invite email with credentials
-        try {
-            Mail::to($email)->queue(new TeacherInviteMail(
-                $name,
-                $email,
-                $credentials['plain'],
-                $schoolName,
-                $className,
-            ));
-        } catch (\Exception $e) {
-            Log::warning('CT invite: invite email failed', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-            ]);
+        $school = School::find($schoolId);
+        if (! $school) {
+            return self::result(false, 'School not found.');
         }
+
+        // Issue a one-time invite link instead of creating the user immediately
+        $result = TeacherInviteLinkService::issue(
+            school: $school,
+            email: $email,
+            name: $name,
+            standardLink: $standardLink,
+            phone: $phone !== '' ? $phone : null,
+        );
+
+        $invite = $result['invite'];
+        $token = $result['token'];
+
+        // Send invite via email (no password — just the link)
+        TeacherInviteLinkService::sendEmail($invite, $token, $school, $className);
+
+        // Also send via WhatsApp when a phone number is available
+        if ($phone !== '' && trim($phone) !== '') {
+            TeacherInviteLinkService::sendWhatsApp($invite, $token, $school, $className);
+        }
+
+        $channels = $phone !== '' && trim($phone) !== '' ? 'email and WhatsApp' : 'email';
 
         return self::result(
             true,
-            "{$name} has been invited as class teacher for {$className}.",
-            ['teacher_id' => $teacher->id],
+            "An invite link has been sent to {$name} at {$email} (via {$channels}). They must set their own password to activate the account.",
         );
     }
 
