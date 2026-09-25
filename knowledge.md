@@ -618,7 +618,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 26, 2026 — **PR #825 merged (6e7cb4fb), deployed to staging, verified PASS. PR #826 still open.**
+## Current Status: September 26, 2026 — **Both PRs from the public-visitor-lens work are MERGED, staging-deployed, and verified PASS — #825 (6e7cb4fb) and #826 (048838b6). This thread is CLOSED.**
 
 - **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` **succeeded** at commit `6e7cb4fb`.
 - **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
@@ -12633,6 +12633,27 @@ Also worth a decision, not fixed: the Vue tab components still render raw `<tabl
 - 768 dead-zone confirmed fixed: 767px hamburger visible (`display:flex`), 768px hamburger hidden (`display:none`), sidebar visible — old `lg:hidden` dead button at 768-1023 gone
 - `#mobile-menu-trigger` delegated event handler survives Livewire morphing (verified by the tap1/tap2 cycle working across all roles)
 
-**PR #826:** still open (`merged:false`). Not deployed. The user's instruction was "if also merged by now" — it wasn't, so skipped.
+**PR #826:** MERGED `048838b6` (2026-09-26, session below), staging deployed + verified PASS. See 2026-09-26 (later) session entry.
 
-**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines, fresh context per viewport/role). Screenshots: `e2e/screenshots/staging-nav-verify/*.png` (admin/parent/student/teacher at each viewport). Results JSON: same dir.
+**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines), `e2e/tmp-staging-pr826-verify.cjs` (251 lines). Screenshots: `e2e/screenshots/staging-nav-verify/` and `e2e/screenshots/staging-pr826-verify/`.
+
+### 2026-09-26 (later): PR #826 merged → staging deployed → verified PASS. Both visitor-lens PRs now CLOSED.
+
+**Merge:** PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) (`fix/visitor-lens-empty-states`) squash-merged → `048838b6dfb6416caf523845c8d5722c39034c39`. Confirmed `merged:true` per standing rule #21.
+
+**Deploy:** Staging `POST …/environments/env-a2b86c90-…/deployments` → `depl-a2d56317-cae0-4727-9e7d-9406ded8cf4a` **succeeded** at `048838b6`. SHA confirmed.
+
+**Credential handling:** `synthetic.parent.multi.staging@klassapp.test` (parent 48) was `status=inactive` (login validator rejected it). Temporarily activated for Toshi parent regression check, then re-flagged inactive afterward. Same `STAGING_DEMO_PASSWORD` used throughout. All demo/seed data only — no production data.
+
+**Verification results (real Playwright + real HTTP on staging):**
+
+| Check | Result | Detail |
+|---|---|---|
+| **1: Zero-children parent → per-child URL redirect** | ✅ | `/parent/children/999/{fees,grades,attendance}` all → HTTP **302** → `/parent/children` (200). No 422, no "Something is broken." Helpful message present. |
+| **2: CTA copy in empty state** | ✅ | Children page: *"No children are linked to your account. Contact the school office to link a student."* — present. Dashboard also has the same guidance copy. Old bare message replaced. |
+| **3a: Student Toshi greeting (self-worded)** | ✅ | Student greeting: *"Ask me about your assignments, your homework, your marks, your attendance, and your library activity."* — **zero parent-context wording**. No "your children's" anywhere. |
+| **3b: Parent Toshi greeting (regression check)** | ✅ | Parent greeting: *"Ask me about your children's fee balances, your children's grades, your children's attendance, your children's health records, and your linked children."* — correctly parent-context. No student wording leaked. |
+
+**Key discovery during verification:** Toshi is **not** a separate route (`/student/toshi`, `/parent/toshi`) — it's a Livewire component embedded in the dashboard shell via `@livewire('agent-toshi')` in `layouts/partials/toshi-embed.blade.php`, included by `layouts/app.blade.php` (which both parent and student layouts extend). The usergroup allow-list in the embed includes both ug6 (student) and ug7 (parent). The greeting appears on the dashboard page in the collapsible Toshi panel.
+
+**Thread status:** Both PRs from the public-visitor-lens re-check are now **CLOSED** — #825 (critical mobile nav) and #826 (empty-state copy/logic + Toshi greeting + test repairs). Screenshots: `e2e/screenshots/staging-pr826-verify/`. Verify script: `e2e/tmp-staging-pr826-verify.cjs`.
