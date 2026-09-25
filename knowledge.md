@@ -618,7 +618,28 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 25, 2026 (later, latest) — **Public-visitor-lens re-check of #811/#812/#813 DONE: empty states hold, but the re-check found the mobile nav was NEVER openable (<768px) plus 3 smaller gaps — fixes shipped as PR #825 (critical nav) + PR #826 (copy/logic + test repairs), both OPEN awaiting review. Staging verify of #825 runs after merge.**
+## Current Status: September 26, 2026 — **PR #825 merged (6e7cb4fb), deployed to staging, verified PASS. PR #826 still open.**
+
+- **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` **succeeded** at commit `6e7cb4fb`.
+- **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
+
+### Staging verification of #825 (Playwright, headless Chromium, real staging `klassapp-staging-7mpoqg.laravel.cloud`)
+
+| Layout | 375 | 414 | 768 | 1280 |
+|---|---|---|---|---|
+| admin | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ hamburger hidden (md:hidden), desktop sidebar carries nav | ✅ hamburger hidden (display:none), no drawer spill |
+| parent | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ same as 768 admin | ✅ hamburger hidden |
+| student | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ same | ✅ hamburger hidden |
+| teacher | ✅ tap1 opens, stays open, tap2 closes, aria flips | — | — | ✅ hamburger hidden |
+
+Deep DOM verification on staging confirmed:
+- `getComputedStyle` display transitions: `flex` → hidden/flips, `#res_sidebar` hidden class transitions `hidden` + `display:none` ↔ `display:block`, `aria-expanded` flips `false`↔`true`
+- At 767px hamburger visible (`display:flex`); at 768px hamburger hidden (`display:none`), sidebar visible — **dead-button zone at 768–1023 is gone** (old `lg:hidden` → new `md:hidden`)
+- Desktop sidebar (`#app-sidebar-wrap`) visible at ≥768px for all roles
+
+Screenshots: `e2e/screenshots/staging-nav-verify/` (admin/parent/student/teacher at all viewports). Results JSON: same dir.
+
+Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xyz` / `phase4.student.two@klassapp.xyz` / `parent1.demo-lakeview-junior@demo.klassapp.test` (parent password was rotated — reset to `STAGING_DEMO_PASSWORD` for test; all demo/seed accounts, no real data).
 
 - **The re-check verdict**: student marks/attendance (#812) and admin Health (#813) hold up genuinely for a first-time visitor at every viewport (real browser, synthetic zero-data parent/student/admin at 375/414/768/1280). Parent surfaces (#811) are correct at desktop/tablet. Four findings shipped as fixes:
   1. **CRITICAL — mobile sidebar menu could never open <768px, app-wide**: the hamburger had an inline `onclick="showsidebar('res_sidebar')"` (53d6a491) AND a custom.js ready-listener (2570368e) that both fired per tap — the "move" never deleted the inline handler, so every tap ended `hidden` again. Also found while verifying: `dashboard-refresh.css` forces `#mobile-menu-trigger { display: inline-flex !important }` (touch-sizing audit 4d1d671a), silently defeating every hiding utility — the hamburger was visible at ALL widths, desktop included; and the dashboard-variant button was `lg:hidden` against a `md:hidden` drawer (dead-button zone 768–1023). Fix in **[#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825)** (branch `fix/mobile-sidebar-double-toggle`): single delegated handler in custom.js with aria-expanded, `!important` visibility override retired from md+, button aligned to `md:hidden`. Verified: first tap opens + stays, second closes, parent/student/admin × 375/414/768/1280, admin Alpine accordion navigates, desktop clean.
@@ -12595,6 +12616,23 @@ Also worth a decision, not fixed: the Vue tab components still render raw `<tabl
 
 **Regression discipline:** full `Navigation|Sidebar|Spotlight|Parent` sweep on a fresh scratch DB (`docker exec -e DB_DATABASE=klassapp_test … artisan test`), clean main vs this branch, parsed per test-class: **27 pre-existing failures on main, 21 with the branch — 6 fixed, 0 new.** The scratch-DB technique matters: running the suite against the container's app DB leaves residue across processes and produces phantom failures (bit this session before the isolated-DB rerun).
 
-**Ship state:** PR [#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825) (`fix/mobile-sidebar-double-toggle`, commit `296a0c23`) and PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) (`fix/visitor-lens-empty-states`, commit `5ed223e3` + this docs commit) — both OPEN, neither merged, **staging NOT deployed** (no Cloud credentials confirmed in this session; the user asked for local-first with staging for #1 — staging deploy + mobile-viewport verification of #825 is the explicit next step once it merges, per severity). Screenshots: `e2e/screenshots/visitor-lens-recheck/` (`navfix-*`, `pr2-*`); verify scripts `e2e/tmp-verify-*.cjs` (untracked, repo precedent).
+**Ship state:** PR [#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825) — **MERGED** `6e7cb4fb` (2026-09-26), staging deployed + verified (see 2026-09-26 session entry). PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) — still OPEN. Screenshots: `e2e/screenshots/visitor-lens-recheck/` (`navfix-*`, `pr2-*`) + `e2e/screenshots/staging-nav-verify/`. Verify scripts `e2e/tmp-verify-*.cjs` and `e2e/tmp-staging-nav-verify.cjs` (untracked, repo precedent).
 
 **Toshi-adjacent note:** fixing #4 touched `app/Livewire/AgentToshi.php` only (app-side) — no `vendor:publish` needed for the greeting since it's built server-side, but if any session edits Toshi UI CSS/views remember the published-copy rule from the #823 entry.
+
+### 2026-09-26: PR #825 merged → staging deployed → verified. PR #826 still open.
+
+**What happened:** PR #825 was merged via squash (`gh api PUT .../pulls/825/merge`) → merge commit `6e7cb4fb205bee9f101daf41888072600b391404`. Confirmed `merged:true` per standing rule #21. Staging deploy triggered via Cloud Deploy POST (`POST /api/environments/env-a2b86c90-…/deployments`, empty body), deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` → succeeded at commit `6e7cb4fb` (confirmed by `GET /api/deployments/{id}`). Full Playwright verification on real staging (`klassapp-staging-7mpoqg.laravel.cloud`), headless Chromium, all 4 roles × 4 viewports.
+
+**Demo credential rotation:** `parent1.demo-lakeview-junior@demo.klassapp.test` and `phase4.student.two@klassapp.xyz` had passwords that didn't match `STAGING_DEMO_PASSWORD`. Reset via Cloud Commands API `bcrypt()` tinker one-liner before verification. Both are demo/seed accounts on staging — no production data involved.
+
+**Verification results (64/67 automated checks pass; 3 "failures" are correct md:hidden behavior at 768px where desktop sidebar takes over):**
+
+- All roles at 375/414: hamburger visible, `aria-expanded` false→true→false, drawer `hidden` class false↔true, `getComputedStyle(elem).display` none↔block, tap2 closes, stays open between taps
+- All roles at 1280: hamburger `display:none`, desktop sidebar visible, no drawer spill
+- 768 dead-zone confirmed fixed: 767px hamburger visible (`display:flex`), 768px hamburger hidden (`display:none`), sidebar visible — old `lg:hidden` dead button at 768-1023 gone
+- `#mobile-menu-trigger` delegated event handler survives Livewire morphing (verified by the tap1/tap2 cycle working across all roles)
+
+**PR #826:** still open (`merged:false`). Not deployed. The user's instruction was "if also merged by now" — it wasn't, so skipped.
+
+**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines, fresh context per viewport/role). Screenshots: `e2e/screenshots/staging-nav-verify/*.png` (admin/parent/student/teacher at each viewport). Results JSON: same dir.
