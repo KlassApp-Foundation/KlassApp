@@ -618,7 +618,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 26, 2026 — **PR #825 merged (6e7cb4fb), deployed to staging, verified PASS. PR #826 still open.**
+## Current Status: September 26, 2026 — **Both visitor-lens PRs (#825, #826) merged + staging-verified. Teacher invite-link flow shipped as PR #827 (OPEN).**
 
 - **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` **succeeded** at commit `6e7cb4fb`.
 - **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
@@ -12633,6 +12633,36 @@ Also worth a decision, not fixed: the Vue tab components still render raw `<tabl
 - 768 dead-zone confirmed fixed: 767px hamburger visible (`display:flex`), 768px hamburger hidden (`display:none`), sidebar visible — old `lg:hidden` dead button at 768-1023 gone
 - `#mobile-menu-trigger` delegated event handler survives Livewire morphing (verified by the tap1/tap2 cycle working across all roles)
 
-**PR #826:** still open (`merged:false`). Not deployed. The user's instruction was "if also merged by now" — it wasn't, so skipped.
+**PR #826:** MERGED `048838b6`, staging deployed + verified PASS. See 2026-09-26 (later) session entry.
 
-**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines, fresh context per viewport/role). Screenshots: `e2e/screenshots/staging-nav-verify/*.png` (admin/parent/student/teacher at each viewport). Results JSON: same dir.
+**PR #827** (`feat/teacher-invite-link-flow`, `dc82ae21`): **OPEN** — replaces plain-text-password invite emails with one-time invite-link flow. Pending review.
+
+**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines), `e2e/tmp-staging-pr826-verify.cjs` (251 lines). Screenshots: `e2e/screenshots/staging-nav-verify/` and `e2e/screenshots/staging-pr826-verify/`.
+
+### 2026-09-26 (later): PR #826 merged → staging deployed → verified PASS. Both visitor-lens PRs now CLOSED.
+
+**Merge:** PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) squash-merged → `048838b6dfb6416caf523845c8d5722c39034c39`. Confirmed `merged:true`.
+
+**Deploy:** Staging `depl-a2d56317` **succeeded** at `048838b6`.
+
+**Verification results (Playwright + HTTP on staging):**
+
+| Check | Result |
+|---|---|
+| Zero-children per-child URLs → /parent/children | ✅ 302 redirect, 200, helpful message |
+| CTA copy on Children page + dashboard | ✅ "Contact the school office to link a student" |
+| Student Toshi greeting self-worded | ✅ "your assignments, your homework, your marks…" |
+| Parent Toshi greeting parent-context (regression) | ✅ "your children's fee balances, your children's grades…" |
+
+### 2026-09-26 (later still): Teacher invite-link flow shipped as PR #827
+
+Implemented per the onboarding audit findings from the same session. The real problem with teacher invites wasn't step ordering — it was that passwords were sent in clear-text email.
+
+**PR [#827](https://github.com/KlassApp-Foundation/KlassApp/pull/827)** (`feat/teacher-invite-link-flow`, `dc82ae21`):
+- New `teacher_invites` table + model + `TeacherInviteLinkService`
+- `ClassTeacherInviteService::createAndAssignNewTeacher()` → issues pending invite instead of creating User immediately
+- `GET /invite/teacher/{token}` → password-set form; `POST` → claim + create account
+- Token: 64-char random, SHA-256 stored, 72h expiry, single-use, school-scoped
+- Email + WhatsApp delivery (WABA-integrated when phone provided)
+- Tests: 37/37 pass (13 new security tests + 4 updated + 20 unaffected)
+- 0 new test regressions (82 pre-existing on both main and this branch)
