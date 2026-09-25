@@ -12,7 +12,7 @@
         <div class="ds-empty-state mt-6" data-testid="parent-children-empty">
             <div class="ds-empty-state-icon" aria-hidden="true">👨‍👩‍👧</div>
             <p class="ds-empty-state-title">No children linked yet</p>
-            <p class="ds-empty-state-desc">{{ $emptyMessage ?? 'No linked children yet.' }}</p>
+            <p class="ds-empty-state-desc">{{ $emptyMessage ?? 'No children are linked to your account. Contact the school office to link a student.' }}</p>
         </div>
     @else
         <div class="space-y-6 mt-4">
