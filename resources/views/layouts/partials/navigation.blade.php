@@ -55,7 +55,10 @@
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 9l-3 3 3 3"/></svg>
                 </button>
             @endif
-            <button class="mr-3 {{ $variant === 'dashboard' ? 'lg:hidden' : 'block lg:hidden md:hidden' }}" id="mobile-menu-trigger" aria-label="Toggle sidebar" onclick="if (typeof showsidebar === 'function') { showsidebar('res_sidebar'); }">
+            <button class="mr-3 {{ $variant === 'dashboard' ? 'md:hidden' : 'block lg:hidden md:hidden' }}" id="mobile-menu-trigger" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="res_sidebar">
+                {{-- NOTE: click handling lives in public/js/custom.js (delegated). An earlier inline
+                     onclick="showsidebar('res_sidebar')" here double-bound with that listener, so every
+                     tap re-added `hidden` right after removing it and the menu could NEVER open (<768px). --}}
                 <span class="navbar-toggler-icon">
                     <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="currentColor"/></svg>
                 </span>
