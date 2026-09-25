@@ -26,13 +26,21 @@ const viewports = [
 ];
 
 async function login(page) {
-  await page.goto(`${BASE}/login`, { waitUntil: 'load', timeout: 90000 });
-  await page.fill('input[name="email"]', 'diag.toshi@demo.klassapp.test');
-  await page.fill('input[name="password"]', 'diag-pass-2026');
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'load', timeout: 90000 }).catch(() => null),
-    page.click('[data-testid="ap-primary-submit"], button[type="submit"]'),
-  ]);
+  const email = process.env.DASH_EMAIL || 'diag.toshi@demo.klassapp.test';
+  const password = process.env.DASH_PASSWORD || 'diag-pass-2026';
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await page.goto(`${BASE}/login`, { waitUntil: 'load', timeout: 90000 });
+    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="password"]', password);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load', timeout: 90000 }).catch(() => null),
+      page.click('[data-testid="ap-primary-submit"], button[type="submit"]'),
+    ]);
+    // Staging sits behind Cloudflare — the first POST can hit a challenge page.
+    await page.waitForTimeout(2500);
+    if (!page.url().includes('/login')) return; // logged in
+  }
+  throw new Error(`Login did not leave /login after 3 attempts (url: ${page.url()})`);
 }
 
 (async () => {
@@ -49,7 +57,7 @@ async function login(page) {
     await login(page);
     await page.goto(`${BASE}/admin/dashboard`, { waitUntil: 'load', timeout: 90000 });
     await page.evaluate(() => document.body.classList.remove('toshi-collapsed'));
-    await page.waitForTimeout(700);
+    await page.waitForTimeout(2500); // challenge + Livewire hydration tolerance
 
     const m = await page.evaluate(() => {
       const root = document.querySelector('[data-toshi-root]');
