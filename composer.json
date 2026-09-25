@@ -16,6 +16,7 @@
   ],
   "require": {
     "php": "^8.2",
+    "albertoarena/laravel-truss": "^1.14",
     "algolia/algoliasearch-client-php": "3.4.1",
     "aws/aws-sdk-php-laravel": "dev-master",
     "barryvdh/laravel-dompdf": "dev-master",

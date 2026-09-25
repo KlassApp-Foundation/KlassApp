@@ -58,7 +58,13 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
       $this->registerPolicies();
-      
+
+      // Truss is a read-only structure/dev dashboard. Fail-closed: any user who
+      // is not SiteAdmin (ug 1) is denied in non-local environments (route 404s).
+      Gate::define('viewTruss', function ($user = null) {
+        return $user !== null && (int) $user->usergroup_id === 1;
+      });
+
       Gate::define('event', function ($user, $event) {
         return $user->school_id == $event->school_id;
       });
