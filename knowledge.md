@@ -12557,3 +12557,40 @@ Also worth a decision, not fixed: the Vue tab components still render raw `<tabl
 **Follow-ups recorded, not started:** (a) superadmin shell's navbar is 65px vs the admin's 69px — the shared `--toshi-header-offset: 69px` leaves a 4px gap on the superadmin dock (pre-existing; per-shell offset is the likely fix); (b) by Option B design, page content scrolls *under* the open dock — a reserved-gutter variant is a one-rule follow-up if product wants it; (c) staging `phase4.admin@klassapp.xyz` no longer accepts `demo123` (password rotated per `DemoSeedPassword` design — correct behavior, but future staging verifiers must provision their own synthetic admin; this session used `diag.fullwidth-verify@klassapp.test`, flagged `inactive` after use per the no-delete rule).
 
 **Local environment notes for the next session:** colima had to be restarted; the stack is `sms-app` + `sms_nginx` (:8080) + `klassapp-database-1` (compose volume `klassapp_db-data`, port 3306) — note both `klassapp-quickstart-database-1` and `klassapp-database-1` exist and fight for port 3306; start the compose one, not the quickstart one, or the app waits on DNS `database` forever. Disposable local admins: `diag.toshi@demo.klassapp.test` / `diag-pass-2026` (schooladmin) and `diag.superadmin@demo.klassapp.test` / `diag-pass-2026`.
+
+### 2026-09-25: Table-consolidation batch PR (Phase A) — 12 files converted to `<x-table>`
+
+**Work done:** Audited the full raw `<table>` inventory across the codebase (130 files, ~180 table elements), classified into candidates vs exclusions, then converted the 12 most straightforward single-table CRUD listings to the shared `<x-table>` component (precedent: `admin/member/index.blade.php`).
+
+**Files converted:**
+
+| # | File | Before | After |
+|---|---|---|---|
+| 1 | `admin/activity_log/show_list.blade.php` | Raw Bootstrap `table table-hover` | `<x-table>` |
+| 2 | `accountant/activity_log/show_list.blade.php` | Raw Bootstrap `table table-hover` | `<x-table>` |
+| 3 | `teacher/activity_log/show_list.blade.php` | Raw Bootstrap `table table-hover` | `<x-table>` |
+| 4 | `reception/activity_log/show_list.blade.php` | Raw Bootstrap `table table-hover` | `<x-table>` |
+| 5 | `student/activity_log/show_list.blade.php` | Raw Bootstrap `table table-hover` | `<x-table>` |
+| 6 | `superadmin/mail-list.blade.php` | Raw `ds-table` | `<x-table>` |
+| 7 | `admin/school/term/index.blade.php` | Raw `ds-table-ledger` | `<x-table>` |
+| 8 | `admin/school/fees/index.blade.php` | Raw `ds-table-ledger` | `<x-table>` |
+| 9 | `admin/transport/index.blade.php` | Raw `ds-table-ledger` | `<x-table>` |
+| 10 | `admin/library/books/index.blade.php` | `ds-table ds-table-striped` | `<x-table striped>` |
+| 11 | `admin/library/lends/index.blade.php` | `ds-table ds-table-striped` | `<x-table striped>` |
+| 12 | `admin/library/cards/index.blade.php` | Inner `ds-table ds-table-striped` | `<x-table striped>` |
+
+**Explicit exclusions (for future phases):**
+- DomPDF/pass-through templates: visitorlog parent/other, id-card print, buspass print, marksheet PDF, payslips, alumni pdf, whatsapp report-card
+- HTML email layouts: `vendor/mail/**`
+- Multi-table / marks-entry grids / timetable grids (all marks views, timetable index/teacher-weekly)
+- Livewire components with `wire:*` inside rows: feature-toggles, co-admins, emis-school-list
+- Complex listings: standardlinks (nested teacherloop cells + AJAX), feedbacks (DataTables legacy CSS), leavetypes (inline SVG icons + SweetAlert inline)
+- Detail/show views (single-record forms, not listings): discipline show_form, teacher leave show, admin academics show
+
+**Verification:** `php artisan view:cache` compiled cleanly. PHPUnit: `ActivityLoggerTest` 4 passed, `AcademicTermCrossSchoolTest` 1 passed, `ManualUiWave1BladeDsTest` 8 passed, `FeePaymentRecordingTest` 2 passed, `FeesPaymentsKitContractTest` 3 passed. Total diff: +347 / −492 lines.
+
+**PR:** [#824](https://github.com/KlassApp-Foundation/KlassApp/pull/824), branch `feature/table-consolidation-batch`, commit `78b91044`. Status: **OPEN** (awaits human review).
+
+**Risk:** Very low. Pure Blade structural consolidation — zero controller/model/route/JS changes, all data bindings and actions preserved exactly.
+
+**Edge cases:** The library `activity_log/show_list.blade.php` was already converted in a prior session (already uses `ds-table-ledger`); the other 5 role variants were the last remaining raw Bootstrap instances. `admin/school/fees/index.blade.php` was a double-verification target since it appears in `Onboarding/ManualUiWave1BladeDsTest`.
