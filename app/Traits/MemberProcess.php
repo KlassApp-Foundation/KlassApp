@@ -6,7 +6,6 @@ namespace App\Traits;
 
 use App\Http\Resources\ParentDetail as ParentDetailResource;
 use App\Http\Resources\Teacher as TeacherResource;
-use App\Http\Resources\Alumni as AlumniResource;
 use App\Http\Resources\User as UserResource;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -412,79 +411,4 @@ trait MemberProcess
         }
     }
 
-    public function AlumniFilter($request,$school_id,$usergroup_id)
-    {
-        try
-        {
-            $users = User::where('school_id',$school_id)->ByRole($usergroup_id);
-
-            $alphabet = $request->alphabet ? $request->alphabet:'';
-            if($alphabet)
-            {
-                $users =$users->ByName($alphabet);
-            }
-
-            $passing_session = $request->passing_session;
-            if($passing_session)
-            {
-                $users =$users->ByBatch($passing_session);
-            }
-
-            $users=$users->get();
-
-            if(class_exists('Gegok12\Alumni\Http\Resources\Alumni')) //new
-            {
-                $users = \Gegok12\Alumni\Http\Resources\Alumni::collection($users);
-            }
-            else
-            {
-                $users = AlumniResource::collection($users);
-            }
-
-            return $users;
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
-   }
-
-    public function AlumniProfileFilter($request,$school_id,$usergroup_id,$user_id)
-    {
-        try
-        {
-            $users = User::where('school_id',$school_id)->ByRole($usergroup_id)->where('id','!=',$user_id);
-
-            $alphabet = $request->alphabet ? $request->alphabet:'';
-            if($alphabet)
-            {
-                $users =$users->ByName($alphabet);
-            }
-
-            $passing_session = $request->passing_session;
-            if($passing_session)
-            {
-                $users =$users->ByBatch($passing_session);
-            }
-
-            $users=$users->get();
-
-            if(class_exists('Gegok12\Alumni\Http\Resources\Alumni')) //new
-            {
-                $users = \Gegok12\Alumni\Http\Resources\Alumni::collection($users);
-            }
-            else
-            {
-                $users = AlumniResource::collection($users);
-            }
-
-            return $users;
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
-    }
 }
