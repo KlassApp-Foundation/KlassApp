@@ -642,8 +642,51 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 21, 2026 (latest) — **Classroom REST wave-1 APPROVED (sequenced behind LLM-gap + Slack-E2E prerequisites, both must be evidence-confirmed before any code); Slack E2E still deferred on LLM gap; Drive waiting for GA; Tier-2 deferred**
+---
 
+## Current Status: September 26, 2026 — **Wide regression pass of today's merges COMPLETE: main green (0 new test failures, all critical fixes hold local + staging). PRIORITY: PR #819 (StandardLink cross-tenant IDORs) still OPEN — the 3 "fixed today" cross-tenant writes are NOT on main and were re-demonstrated live on staging. PRs #824/#827 verified on-branch, both OPEN.**
+
+- **One-line context for the status above**: everything MERGED today (#816–#818, #823, #825, #826 + earlier capability-matrix work) holds up under a real browser + real HTTP + full-suite-baseline pass, locally and on staging (deployed `2c4c36e6`). The two OPEN PRs verified on-branch are fit to merge with two test-hygiene notes (see Session Log). The priority action is reviewing/merging **PR #819** — until then, `StudentController` roster filter and `StandardsLinkController` update/updateStatus/idcard/printidcard remain cross-tenant-writable, and PR #820 remains open for the 55-query `/admin/staffs` list.
+
+- **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` **succeeded** at commit `6e7cb4fb`.
+- **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
+
+### Staging verification of #825 (Playwright, headless Chromium, real staging `klassapp-staging-7mpoqg.laravel.cloud`)
+
+| Layout | 375 | 414 | 768 | 1280 |
+|---|---|---|---|---|
+| admin | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ hamburger hidden (md:hidden), desktop sidebar carries nav | ✅ hamburger hidden (display:none), no drawer spill |
+| parent | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ same as 768 admin | ✅ hamburger hidden |
+| student | ✅ tap1 opens, stays open, tap2 closes, aria flips | ✅ same | ✅ same | ✅ hamburger hidden |
+| teacher | ✅ tap1 opens, stays open, tap2 closes, aria flips | — | — | ✅ hamburger hidden |
+
+Deep DOM verification on staging confirmed:
+- `getComputedStyle` display transitions: `flex` → hidden/flips, `#res_sidebar` hidden class transitions `hidden` + `display:none` ↔ `display:block`, `aria-expanded` flips `false`↔`true`
+- At 767px hamburger visible (`display:flex`); at 768px hamburger hidden (`display:none`), sidebar visible — **dead-button zone at 768–1023 is gone** (old `lg:hidden` → new `md:hidden`)
+- Desktop sidebar (`#app-sidebar-wrap`) visible at ≥768px for all roles
+
+Screenshots: `e2e/screenshots/staging-nav-verify/` (admin/parent/student/teacher at all viewports). Results JSON: same dir.
+
+Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xyz` / `phase4.student.two@klassapp.xyz` / `parent1.demo-lakeview-junior@demo.klassapp.test` (parent password was rotated — reset to `STAGING_DEMO_PASSWORD` for test; all demo/seed accounts, no real data).
+
+- **The re-check verdict**: student marks/attendance (#812) and admin Health (#813) hold up genuinely for a first-time visitor at every viewport (real browser, synthetic zero-data parent/student/admin at 375/414/768/1280). Parent surfaces (#811) are correct at desktop/tablet. Four findings shipped as fixes:
+  1. **CRITICAL — mobile sidebar menu could never open <768px, app-wide**: the hamburger had an inline `onclick="showsidebar('res_sidebar')"` (53d6a491) AND a custom.js ready-listener (2570368e) that both fired per tap — the "move" never deleted the inline handler, so every tap ended `hidden` again. Also found while verifying: `dashboard-refresh.css` forces `#mobile-menu-trigger { display: inline-flex !important }` (touch-sizing audit 4d1d671a), silently defeating every hiding utility — the hamburger was visible at ALL widths, desktop included; and the dashboard-variant button was `lg:hidden` against a `md:hidden` drawer (dead-button zone 768–1023). Fix in **[#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825)** (branch `fix/mobile-sidebar-double-toggle`): single delegated handler in custom.js with aria-expanded, `!important` visibility override retired from md+, button aligned to `md:hidden`. Verified: first tap opens + stays, second closes, parent/student/admin × 375/414/768/1280, admin Alpine accordion navigates, desktop clean.
+  2. **Zero-children parent hitting `parent/children/{id}/fees|grades|attendance` got the stock 422 "Something is broken" page** — now redirects to the Children page with the helpful empty state.
+  3. **Web zero-children empty state lacked the contact-the-school CTA** WhatsApp already gives — now consistent everywhere ("No children are linked to your account. Contact the school office to link a student.").
+  4. **Toshi greeted STUDENTS with parent copy** ("your children's attendance") — `getActionHints()` keyed by action name while `view_attendance` exists in both ug6 and ug7 capability sets. Now worded by scope; students hear "your marks/homework/assignments/attendance"; pinned by new `ToshiRoleGreetingTest`.
+  Fixes 2–4 + test repairs in **[#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826)** (branch `fix/visitor-lens-empty-states`). Both PRs OPEN — not merged, staging NOT deployed. After #825 merges, staging deploy + mobile-viewport verify is the remaining step (severity warranted it).
+- **Test repairs riding in #826 (all pre-existing on clean main)**: NavigationCommandTest (2) — #811's `parent_child` resolver items rendered as dead `/` URLs in the command palette and `class_streams` was never implemented in `NavigationCommand`; ParentDashboardPhase5Test (4) — the 2026_09_22 demo-seeding migration puts usergroup-7 demo parents in every fresh DB so `User::where('usergroup_id', 7)->firstOrFail()` grabbed a demo parent. **FOLLOW-UP NEEDED (21 failing tests on clean main, same family)**: `ParentWebAuthShellTest` (3), `ParentPortalServiceTest` (6), `ProfileDropdownRoleAwareTest` (1), `ParentAdversarialIsolationTest` (4), `WhatsAppToshiChannelTest` (2), `ParentCrossSchoolLinkingTest` (1), `ParentCrossSchoolQueryScopingTest` (4) — all `firstOrFail()`-by-usergroup after demo seeding; needs a dedicated test-repair PR. Regression sweep on clean DB vs main: **0 new failures from this work, 6 of main's 27 fixed.**
+- **Environment facts on the record (local dev stack)**: (1) the app on :8080 (`sms-app`, mounts the repo at `/var/www`) uses **`host=database` — the `klassapp-database-1` container — NOT the host MySQL at 127.0.0.1:3306**, even though both are named `klassapp_local`; verify with `docker exec sms-app php artisan tinker` before creating fixtures. (2) The host-side `klassapp_local` at 127.0.0.1:3306 is a *different* DB; fixture writes landed there by mistake first (login "Invalid Credentials — you are not in this school" was the symptom). (3) Running `php artisan test` in the container against the app DB leaves residue across processes; use a scratch DB via `docker exec -e DB_DATABASE=klassapp_test …` for honest clean-DB results. (4) Blade changes need `docker exec sms-app php artisan optimize:clear` before browser verification (static assets like `custom.js` serve immediately — that asymmetry cost an hour this session).
+- **Synthetic fixtures state**: `synthetic.{parent,student}.zero@demo.local` + `synthetic.health.admin@demo.local` (container DB ids 31/32/33, school 2) and the host-DB trio (66/67/68) — flagged **inactive** after the re-check, reactivated for fix verification, and **re-flagged inactive at final cleanup** (verified: 0 still-active synthetic fixtures; host-DB trio was never reactivated). The scaffold `standards` row was deleted both times (created and removed within one session each time; flagging it inactive instead would have changed the demo school's MustBePrivilege gate semantics — deletion restores the demo school's real prior state). Reactivation for future sessions is a two-line tinker snippet.
+- The Toshi-header and Classroom threads below are unchanged.
+
+## Previous: September 25, 2026 — **Toshi header full-width thread CLOSED (#823 merged `160ee1b5`, staging-deployed & verified); Classroom wave-1 prerequisites unchanged (LLM gap + Slack E2E still stand before any Classroom code)**
+
+- **Toshi full-width header (Option B): ✅ SHIPPED + STAGING-VERIFIED.** [#823](https://github.com/KlassApp-Foundation/KlassApp/pull/823) merged at `160ee1b5` (API `merged: true`, 2026-09-25T14:38:10Z). Staging deployed (`depl-a2d4c494`, commit `160ee1b5`, `deployment.succeeded`) and verified green at all six viewports. Production NOT yet deployed (push-to-deploy off; trigger per deploy-POST pattern when ready). Full close-out in the Session Log entry below — **the 2026-09-22 parked thread is genuinely closed, not re-parked**: the ancestor-containing-block hypothesis is dead with evidence, and the real mechanism (same-selector `!important` tie broken by stylesheet order — toshi-ui.css loads after dashboard-refresh.css and always won `position`) is on the record so no fourth attempt ever targets the wrong sheet again. Dock-geometry changes on ≥1280 must live in `packages/toshi-ui/resources/css/toshi-ui.css` (published via `vendor:publish --tag=toshi-ui-css --force`), never in `dashboard-refresh.css`.
+- **Follow-ups recorded, not started**: (a) superadmin shell navbar is 65px vs the admin's 69px, so the shared `--toshi-header-offset: 69px` leaves a 4px gap on the superadmin dock (pre-existing, unchanged by #823; a per-shell offset is the likely fix); (b) Option B content scrolls *under* the open dock by design — a reserved-gutter variant is a one-rule follow-up if product wants it; (c) staging `phase4.admin@klassapp.xyz` password no longer matches `demo123` (rotated per `DemoSeedPassword` design) — future staging verifiers should provision their own synthetic admin and flag it inactive after.
+- **Classroom REST wave-1 / Slack E2E / Drive / Tier-2**: unchanged — see the September 21 entry below for the standing constraints.
+
+## Previous: September 21, 2026 — **Classroom REST wave-1 APPROVED (constraints below still standing)** (superseded above for the Toshi thread only)
 - **Google Classroom read-only wave-1: ✅ GO-AHEAD CONFIRMED 2026-09-21** (plan doc status header carries the verbatim record). Scope: 2 read tools (`google_classroom_list_courses`/`google_classroom_list_coursework`), scopes `classroom.courses.readonly` + `classroom.coursework.students.readonly`, NO roster/email/guardian scopes, self-hosted local MCP server via `Mcp::local()` (SpikeSlackMockServer pattern), Tier-1 catalog entry. **HARD CONSTRAINT**: implementation may not start until BOTH prerequisites are independently confirmed complete **with evidence** at the start of the Classroom task itself — (a) staging LLM gap fixed (`OPENAI_COMPATIBLE_URL`/`MODEL` set — still NULL as of 2026-09-21 — **and** `toshi:llm-health` passing), (b) Slack §6c E2E (reads, write-gate pause, approve/reject audit, real-vs-mock shapes) actually run and passing. If either is unmet when picked up: STOP and report. Classroom is **its own task with its own go-ahead** — never folded into prerequisite-unblocking work.
 - **Calendar (deferred — acknowledged), Drive (no-build — acknowledged, CASA cost on record), Thread B Tier-2 (deferred — acknowledged, 3 sketch corrections recorded)**. No action on any.
 
@@ -12232,7 +12275,7 @@ Written for a future reader, because this thread has real nuance. **Read the sta
 |---|---|---|
 | Step 1, header overlap | **SHIPPED + verified (local)** | #791, merged `6913d255` |
 | Part B, header reduced to 68px | **SHIPPED + verified (local)** | #792, merged `47fe3c9c` |
-| Header full width (Option B) | **NOT SHIPPED. Three attempts, all reverted.** Diagnostic state below | unmerged; main clean at `47fe3c9c` |
+| Header full width (Option B) | **SHIPPED + STAGING-VERIFIED 2026-09-25. #823 merged `160ee1b5`; root cause finally measured — see the 2026-09-25 Session Log entry (mechanism: same-selector `!important` tie broken by stylesheet order; ancestor hypothesis ruled out with runtime evidence).** | merged; production deploy pending |
 | Profile and notifications to the sidebar footer | **NOT STARTED** | no code |
 | Part A, three-state expandable rail | **NOT STARTED** | no code |
 | Staging verification for this whole thread | **NOT VERIFIED.** Everything shipped here is local-only | open |
@@ -12248,7 +12291,7 @@ Written for a future reader, because this thread has real nuance. **Read the sta
 - **The 1px correction caught mid-implementation:** the rendered header is **69px**, not 68, because of a 1px border. Setting the offset to 68 produced a measured 1px overlap, so the constant was synced to **69px**, the measured value. `--toshi-header-offset` is the single place this number lives.
 - **Verified:** header 69px on three pages; panel `y=69` matching the sidebar exactly; `overlapHeaderPx: 0`; exact y and bottom matches; no horizontal overflow; no page errors; mobile nav 57px with the offset unused and no overflow.
 
-#### 3. Header full width, Option B (NOT SHIPPED, three attempts, all reverted)
+#### 3. Header full width, Option B (**CLOSED 2026-09-25 — see the 2026-09-25 Session Log entry; the "leading hypothesis" below was ruled out and the real mechanism was stylesheet-order `!important` tie-breaking — kept for the record**)
 Goal: `#app` spans the full viewport and Toshi becomes an anchored column below the header rather than a flex sibling.
 - **Attempt 1:** patched a plausible `@media (min-width: 1280px)` block. No effect.
 - **Attempt 2:** found the **winning** block by reading computed values (its `margin-top`, `align-self` and `height` were demonstrably live) and patched that. Still no effect on the root.
@@ -12264,7 +12307,7 @@ Goal: `#app` spans the full viewport and Toshi becomes an anchored column below 
 - **Part A, the three-state expandable rail** (collapsed, default 380px, maximized at roughly half the viewport), mirroring `#admin-sidebar`'s mechanism (delegated toggle, `localStorage`, reduced-motion guard), fixing the misleading toggle glyph, with the acceptance test on a content-heavy page (fee payments, not the dashboard) that the remaining half stays genuinely legible and functional.
 
 #### 5. Open item: staging, for the whole thread
-Nothing in this thread has been verified on staging. Both shipped pieces are local-only. Closing that means checking Step 1's envelope and Part B's header on the deployed build, ideally on the same pass that finally lands the full-width header.
+**CLOSED 2026-09-25 for the full-width piece**: #823 staging-deployed (`depl-a2d4c494` @ `160ee1b5`) and verified green at all six viewports the same evening. Step 1's envelope and Part B's header were re-verified as part of the same suite (69px height, no overlap) on staging. Production deploy of the whole thread remains open (push-to-deploy off on prod).
 
 #### Side question resolved, so nobody chases it
 The profile dropdown **works**: clicking `.profile-click` adds an `open` class and the menu displays. An earlier note in this thread reported "zero visible menus", which was a fault in that test's selector, not in the product. Likewise the academic-year selector was confirmed working twice (two options, changed and persisted).
@@ -12551,3 +12594,135 @@ Verified in a real browser over classes with and without attendance data: **zero
 **2. AttendanceResource now survives a missing user.** The real orphan path is a **soft-deleted student**: their attendance history stays while the `user` relation resolves to null, so `->FullName` on it warned. The resource is now null-safe for user, admin, absent reason and class, degrading to `Unknown student` and `-` rather than broken output. Verified by soft-deleting a synthetic student who had attendance rows (5 genuinely orphaned rows), serialising the collection: the placeholder appears and **zero** null warnings are logged; the student was restored afterwards. Local data held 0 such orphans before, so the path needed constructing to test.
 
 Also worth a decision, not fixed: the Vue tab components still render raw `<table>` markup rather than the design-system `<x-table>`, consistent with the broader table-consistency finding in the matrix.
+
+### 2026-09-25: Toshi header full-width CLOSED — root cause finally measured after 3 reverted attempts (#823 merged + staging verified)
+
+**The parked thread from 2026-09-22 ("Header full width, Option B — NOT SHIPPED, three attempts, all reverted") is closed.** Not re-parked: the fix is merged, staging-deployed and staging-verified. This session ran the diagnostic first and implemented only after the mechanism was confirmed with runtime evidence — exactly the discipline the 3 failed attempts lacked.
+
+**The diagnostic, and what it killed:**
+
+1. **The ancestor containing-block hypothesis is DEAD with evidence.** Runtime walk of the full computed ancestor chain from `.toshi-panel` up to `<html>`: only `.toshi-root → body → html`, and `transform`/`filter`/`contain`/`will-change`/`backdrop-filter`/`perspective`/`container-type` are all `none`/`auto`/`normal` on every one — checked as computed values (so dynamic JS/Alpine/Vue application would have shown), not declared CSS. Decisive probe: a synthetic `position:fixed` element appended inside the root resolves at viewport `(0,0)` — no ancestor captures fixed descendants. **No future session should spend an attempt on this suspect.**
+2. **The real mechanism (the answer to the recorded "unresolved contradiction"):** the winning `position` rule for `[data-toshi-root]` lives in **`toshi-ui.css`**, which loads **after** `dashboard-refresh.css` (`app.blade.php` head order: admin.css → dashboard-refresh.css → vendor/toshi-ui/toshi-ui.css). Both sheets declare `body [data-toshi-root] { position: … !important }` — same selector, same specificity, both `!important` → **the tie is broken purely by document order, and toshi-ui.css always won `position`.** That is why attempts 1–3 (all patched `dashboard-refresh.css`) mathematically could not change `position`, and why inline styles couldn't either (author `!important` > inline non-important). The "contradiction" resolved once measured per-property: #791's `margin-top`/`height` `!important` rules in dashboard-refresh.css **did** apply (toshi-ui.css didn't contest those with `!important`) — hence "some rules live, position dead" without any ancestor magic.
+3. **A second gate the prior attempts never accounted for: the published copy.** `public/vendor/toshi-ui/toshi-ui.css` is the *served* file; edits to `packages/toshi-ui/resources/css/toshi-ui.css` require `php artisan vendor:publish --tag=toshi-ui-css --force`. (This session confirmed source and published are byte-identical after publish.)
+
+**The fix (#823, Option B exactly as scoped in the thread):**
+
+- `toshi-ui.css` ≥1280 dock block: `body [data-toshi-root]` is now a **fixed right column** — `top: var(--toshi-header-offset, 69px) !important; right: 0; bottom: 0; width: 380px; height: auto; margin: 0` — out of the body's flex flow, so `#app` (flex 1) and the navbar inside it span the **full viewport width**. Panel becomes a plain relative flex child filling the column. Sub-1280 drawer model untouched.
+- **`z-index: 32` on the root, deliberately NOT auto** — a real regression caught in the pre-implementation scratch: with z-auto, the maximized modal (z 10000, a descendant of the root) painted *under* the sticky navbar (z 31), because a `position:fixed` root with z-index traps descendants in its stacking context. 32 = above navbar (31), below content dropdowns (50).
+- `dashboard-refresh.css`: **#791's static-flex envelope block retired** (margin-top/height/align-self) — superseded and actively misleading; `--toshi-header-offset` stays as the single 69px constant, now *consumed* by toshi-ui.css. The three stale comments from the failed attempts corrected (the "not independently fixed" panel comment, the "overrides this to position: static" note, the envelope block's description) and the dead `--nav-height: 83px` constant removed.
+
+**Verification (real browser, local AND staging, all green, zero failures):** `e2e/toshi-fullwidth-verify.cjs` — 375/414/768 drawer unchanged, no overflow; 1280/1440/1920: navbar + `#app` full viewport width, root fixed at `top=69 / bottom=viewport / right=0 / width=380`, `margin-top: 0`, panel fills root, navbar height still 69px (**no #791/#792 regression**), no horizontal overflow, **modal covers navbar**, collapsed state hides the column and shows the floating pill. Screenshot pixel evidence: header band (cream `rgb(245,244,237)`) runs continuously x=0→1439 with no break at the old 1060px boundary. Superadmin shell also goes full-width (its pre-existing 69-vs-65px offset quirk unchanged, follow-up recorded). Content-heavy page (`/admin/fees/payments`) verified. Manual onboarding wizard still hides Toshi. Pulse canary intact after publish.
+
+**Ship record:** PR [#823](https://github.com/KlassApp-Foundation/KlassApp/pull/823), branch `fix/toshi-header-full-width`, merged `160ee1b5` (GitHub API `merged: true`, 2026-09-25T14:38:10Z). Staging deploy `depl-a2d4c494` @ `160ee1b5` → `deployment.succeeded`, verified green the same evening. **Production NOT deployed** (push-to-deploy off) — trigger the deploy POST per the documented pattern when ready.
+
+**Follow-ups recorded, not started:** (a) superadmin shell's navbar is 65px vs the admin's 69px — the shared `--toshi-header-offset: 69px` leaves a 4px gap on the superadmin dock (pre-existing; per-shell offset is the likely fix); (b) by Option B design, page content scrolls *under* the open dock — a reserved-gutter variant is a one-rule follow-up if product wants it; (c) staging `phase4.admin@klassapp.xyz` no longer accepts `demo123` (password rotated per `DemoSeedPassword` design — correct behavior, but future staging verifiers must provision their own synthetic admin; this session used `diag.fullwidth-verify@klassapp.test`, flagged `inactive` after use per the no-delete rule).
+
+**Local environment notes for the next session:** colima had to be restarted; the stack is `sms-app` + `sms_nginx` (:8080) + `klassapp-database-1` (compose volume `klassapp_db-data`, port 3306) — note both `klassapp-quickstart-database-1` and `klassapp-database-1` exist and fight for port 3306; start the compose one, not the quickstart one, or the app waits on DNS `database` forever. Disposable local admins: `diag.toshi@demo.klassapp.test` / `diag-pass-2026` (schooladmin) and `diag.superadmin@demo.klassapp.test` / `diag-pass-2026`.
+
+### 2026-09-25 (later): Public-visitor-lens re-check of #811/#812/#813 — findings + fixes shipped as #825 (critical mobile nav) + #826 (copy/logic + test repairs), both OPEN
+
+**Task**: re-experience the shipped #811/#812/#813 surfaces as a genuinely first-time visitor with zero data, real browser, report gaps honestly, then fix what was real. Interrupted mid-fixture-creation in the prior session; resumed there.
+
+**Fixture work (and the environment discovery that mattered):** the interrupted session's fixtures existed but were wrong — parent had `usergroup_id=3`, student had `4`, and both lacked the `userprofiles` row the login validator requires (`checkactive` reads `->userprofile->status` and fatally null-errors without it). Repairing them exposed the bigger fact: **the app on :8080 (`sms-app`) connects to `host=database` — the `klassapp-database-1` container — not the host MySQL at 127.0.0.1:3306**, even though both are named `klassapp_local`. The first fixture writes went to the host DB and login failed with "Invalid Credentials.You are not in this school" (`checkschool`) because the app's DB simply didn't contain the users. Always verify with `docker exec sms-app php artisan tinker` (config value) before creating fixtures. The host-DB trio (66/67/68) and container trio (31/32/33) were both flagged `inactive` at final cleanup; the scaffold `standards` row for the admin-gate test was deleted both times (flagging it inactive would have permanently changed the demo school's MustBePrivilege semantics — deletion restores the true prior state).
+
+**Re-check verdict (all real browser, Playwright headless Chromium, 375/414/768/1280):**
+- **#812 student marks/attendance: holds up.** Zero-state copy is sensible ("No marks published yet — your results will appear once your teachers publish them"; attendance stat cards all 0 + "No attendance recorded"), zero JS errors, both widths.
+- **#813 admin Health: holds up.** `/admin/health` 200, no redirect, zero counts, and the best empty state of the three ("No incidents recorded — Nothing has been logged for this school yet. Health records are added from a student's page."). Fresh-school question answered empirically: even with zero standards, the MustBePrivilege gate lets the page through via its `$onboardingIncomplete` escape (a fresh admin is by definition mid-onboarding).
+- **#811 parent: correct at desktop/tablet, unreachable on phones** (finding 1 below). Nav Fees/Grades/Attendance correctly fall back to `/parent/children` with zero children; empty state rendered.
+
+**Findings → fixes:**
+1. **CRITICAL — mobile sidebar never openable <768px, app-wide.** Inline `onclick="showsidebar('res_sidebar')"` (added 53d6a491, June 10) + custom.js `document.ready` listener (added 2570368e as a *"move"* — *"Vue strips inline scripts"* — that never deleted the inline handler). Each tap: inline removes `hidden`, listener re-adds it → drawer ends every tap closed (empirically: class list ends `block hidden`). **Fix [#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825)**: inline onclick removed; single **delegated** handler in custom.js (`$(document).on('click','#mobile-menu-trigger')` — survives Livewire morphs) with `hidden`/`block` swap + `aria-expanded`/`aria-controls`. `showsidebar()` kept — still used by admin member/staff profile menus. **Two adjacent visibility bugs found while verifying thoroughly**: (a) `dashboard-refresh.css` forces `#mobile-menu-trigger { display:inline-flex !important }` (touch-sizing audit 4d1d671a) — silently defeats *every* responsive hiding utility, so the hamburger had been visible at ALL widths, desktop included, since that commit; now `display:none !important` from `md` up; (b) dashboard-variant button was `lg:hidden` against a `md:hidden` drawer — dead-button zone 768–1023; button aligned to `md:hidden` (plain variant already was). **Verification**: parent/student/admin × 375/414/768/1280 — first tap opens + stays open (1s settle check), second closes, `aria-expanded` flips, navigation through the open drawer works (Children / student Marks / admin Health records via the Alpine accordion OPERATIONS group), 768+ desktop sidebar carries nav with no dead button, 1280 no hamburger and no drawer spill. Full matrix `ALL NAV CHECKS PASSED`.
+2. **Zero-children parent on a per-child URL → stock 422 page.** `ChildDataController::respond()` aborted 422 on the not-denied failure, discarding the service's helpful message. Fix in #826: redirect to `parent.children` (which renders the helpful empty state); `denied` still 403s — a genuine refusal, not an empty account. Verified: all three URLs → 200 at `/parent/children`, no "Something is broken".
+3. **No CTA in the web zero-children empty state** while WhatsApp says "Please contact your school office…". Fix in #826: one canonical message in `ParentPortalService::listChildren()` + dashboard/children fallbacks: "No children are linked to your account. Contact the school office to link a student." Verified on Children page and dashboard.
+4. **Toshi greeted students with parent copy** ("Ask me about your children's attendance"). Root cause: `AgentToshi::getActionHints()` keys hints by action name, but `view_attendance`/`view_grades` exist in BOTH the ug6 and ug7 capability sets (`ToshiActionService`), so the parent wording won for students. Fix in #826: shared keys worded by the role's **scope** (`'children'` vs `'self'`) + genuine student hints added (`view_marks`/`view_homework`/`view_assignments`/`view_library_activity`). Verified live: student now hears "Ask me about your assignments, your homework, your marks, your attendance, and your library activity."; parent still hears "your children's …". Pinned by new `tests/Feature/Toshi/ToshiRoleGreetingTest.php` (2 tests).
+
+**Test repairs riding in #826 — all pre-existing on clean `origin/main` (verified by stash):**
+- `NavigationCommandTest` (2 fails): #811's `parent_child` resolver items have no `route`/`url` of their own, so the command palette rendered them as dead `/` destinations; and the `class_streams` condition (added to `config/navigation.php` later than the palette code) was never implemented in `NavigationCommand`, so a school-less teacher was offered "Class Streams". Palette now skips resolver items and mirrors the sidebar's `sectionIdsForClassTeacher` gate (no DB read when the user has no school, matching the test's documented intent).
+- `ParentDashboardPhase5Test` (4 fails): the demo-seeding migration `2026_09_22_010000` puts usergroup-7 demo parents in every fresh DB, so the test's `User::where('usergroup_id', 7)->firstOrFail()` grabbed demo parent "Joseph Wandera" instead of the test's linked parent — and the dashboard then *legitimately* rendered the empty state. Test now resolves the parent via the `student_parent_links` row (by id, per standing rule #18), and the empty-state assertion updated for the new CTA copy.
+- **NOT swept (follow-up PR needed): 21 failing tests in 7 classes on clean main, all the same `firstOrFail()`-after-demo-seeding family** — `ParentWebAuthShellTest` (3), `ParentPortalServiceTest` (6), `ProfileDropdownRoleAwareTest` (1), `ParentAdversarialIsolationTest` (4), `WhatsAppToshiChannelTest` (2), `ParentCrossSchoolLinkingTest` (1), `ParentCrossSchoolQueryScopingTest` (4). Left alone: unrelated to this PR's scope and each needs its own careful repair.
+
+**Regression discipline:** full `Navigation|Sidebar|Spotlight|Parent` sweep on a fresh scratch DB (`docker exec -e DB_DATABASE=klassapp_test … artisan test`), clean main vs this branch, parsed per test-class: **27 pre-existing failures on main, 21 with the branch — 6 fixed, 0 new.** The scratch-DB technique matters: running the suite against the container's app DB leaves residue across processes and produces phantom failures (bit this session before the isolated-DB rerun).
+
+**Ship state:** PR [#825](https://github.com/KlassApp-Foundation/KlassApp/pull/825) — **MERGED** `6e7cb4fb` (2026-09-26), staging deployed + verified (see 2026-09-26 session entry). PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) — still OPEN. Screenshots: `e2e/screenshots/visitor-lens-recheck/` (`navfix-*`, `pr2-*`) + `e2e/screenshots/staging-nav-verify/`. Verify scripts `e2e/tmp-verify-*.cjs` and `e2e/tmp-staging-nav-verify.cjs` (untracked, repo precedent).
+
+**Toshi-adjacent note:** fixing #4 touched `app/Livewire/AgentToshi.php` only (app-side) — no `vendor:publish` needed for the greeting since it's built server-side, but if any session edits Toshi UI CSS/views remember the published-copy rule from the #823 entry.
+
+### 2026-09-26: PR #825 merged → staging deployed → verified. PR #826 still open.
+
+**What happened:** PR #825 was merged via squash (`gh api PUT .../pulls/825/merge`) → merge commit `6e7cb4fb205bee9f101daf41888072600b391404`. Confirmed `merged:true` per standing rule #21. Staging deploy triggered via Cloud Deploy POST (`POST /api/environments/env-a2b86c90-…/deployments`, empty body), deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` → succeeded at commit `6e7cb4fb` (confirmed by `GET /api/deployments/{id}`). Full Playwright verification on real staging (`klassapp-staging-7mpoqg.laravel.cloud`), headless Chromium, all 4 roles × 4 viewports.
+
+**Demo credential rotation:** `parent1.demo-lakeview-junior@demo.klassapp.test` and `phase4.student.two@klassapp.xyz` had passwords that didn't match `STAGING_DEMO_PASSWORD`. Reset via Cloud Commands API `bcrypt()` tinker one-liner before verification. Both are demo/seed accounts on staging — no production data involved.
+
+**Verification results (64/67 automated checks pass; 3 "failures" are correct md:hidden behavior at 768px where desktop sidebar takes over):**
+
+- All roles at 375/414: hamburger visible, `aria-expanded` false→true→false, drawer `hidden` class false↔true, `getComputedStyle(elem).display` none↔block, tap2 closes, stays open between taps
+- All roles at 1280: hamburger `display:none`, desktop sidebar visible, no drawer spill
+- 768 dead-zone confirmed fixed: 767px hamburger visible (`display:flex`), 768px hamburger hidden (`display:none`), sidebar visible — old `lg:hidden` dead button at 768-1023 gone
+- `#mobile-menu-trigger` delegated event handler survives Livewire morphing (verified by the tap1/tap2 cycle working across all roles)
+
+**PR #826:** MERGED `048838b6`, staging deployed + verified PASS. See 2026-09-26 (later) session entry.
+
+**PR #827** (`feat/teacher-invite-link-flow`, `dc82ae21`): **OPEN** — replaces plain-text-password invite emails with one-time invite-link flow. Pending review.
+
+**Scripts:** `e2e/tmp-staging-nav-verify.cjs` (140 lines), `e2e/tmp-staging-pr826-verify.cjs` (251 lines). Screenshots: `e2e/screenshots/staging-nav-verify/` and `e2e/screenshots/staging-pr826-verify/`.
+
+### 2026-09-26 (later): PR #826 merged → staging deployed → verified PASS. Both visitor-lens PRs now CLOSED.
+
+**Merge:** PR [#826](https://github.com/KlassApp-Foundation/KlassApp/pull/826) squash-merged → `048838b6dfb6416caf523845c8d5722c39034c39`. Confirmed `merged:true`.
+
+**Deploy:** Staging `depl-a2d56317` **succeeded** at `048838b6`.
+
+**Verification results (Playwright + HTTP on staging):**
+
+| Check | Result |
+|---|---|
+| Zero-children per-child URLs → /parent/children | ✅ 302 redirect, 200, helpful message |
+| CTA copy on Children page + dashboard | ✅ "Contact the school office to link a student" |
+| Student Toshi greeting self-worded | ✅ "your assignments, your homework, your marks…" |
+| Parent Toshi greeting parent-context (regression) | ✅ "your children's fee balances, your children's grades…" |
+
+### 2026-09-26 (later still): Teacher invite-link flow shipped as PR #827
+
+Implemented per the onboarding audit findings from the same session. The real problem with teacher invites wasn't step ordering — it was that passwords were sent in clear-text email.
+
+**PR [#827](https://github.com/KlassApp-Foundation/KlassApp/pull/827)** (`feat/teacher-invite-link-flow`, `dc82ae21`):
+- New `teacher_invites` table + model + `TeacherInviteLinkService`
+- `ClassTeacherInviteService::createAndAssignNewTeacher()` → issues pending invite instead of creating User immediately
+- `GET /invite/teacher/{token}` → password-set form; `POST` → claim + create account
+- Token: 64-char random, SHA-256 stored, 72h expiry, single-use, school-scoped
+- Email + WhatsApp delivery (WABA-integrated when phone provided)
+- Tests: 37/37 pass (13 new security tests + 4 updated + 20 unaffected)
+- 0 new test regressions (82 pre-existing on both main and this branch)
+
+### 2026-09-26 (regression pass): wide sanity sweep of everything merged today — main green, PR #824/#827 verified on-branch; ONE priority finding: the StandardLink cross-tenant writes are still live on main (PR #819 OPEN)
+
+Full-pass regression session at `main` `2c4c36e6` (staging confirmed deployed at the same SHA, `depl-a2d57f57`). Method: real browser (Playwright/Chromium) + real HTTP probes + DB read-backs locally and on staging, full PHPUnit suite diffed against a pre-today baseline (`055bf68a`), then PR #824 and PR #827 exercised on their own branches.
+
+**Result matrix (local + staging):**
+
+| Area | Verdict |
+|---|---|
+| Attendance for TODAY (the #816 critical fix) | ✅ admin + teacher real writes land (JSON success + DB rows read back), local AND staging |
+| attendance_scope 3 modes | ✅ all enforced on real POSTs: class_teacher_only refuses subject/unrelated; classes_i_teach allows subject-taught, refuses unrelated; school_wide allows unrelated active; inactive classes refused in every mode; foreign-school teacher refused in every mode (web; staging spot-check; API covered by existing `AttendanceScopeTest` 9/9 + `AttendanceWriteScopeTest` 6/6 green) |
+| Receptionist gate (#809) | ✅ reads 200 unaffected; crafted POSTs (visitorlog/calllog/postalrecord) → 403 with the correct message; GET-delete → 403; zero probe rows created; verified again on staging |
+| **StandardLink cross-tenant IDORs (PR #819 targets)** | ❌ **STILL LIVE ON MAIN — priority finding, see below** |
+| Parent nav (#811) | ✅ one-child → direct `/parent/children/{id}/fees|grades|attendance` links all 200; multi-child falls back (existing tests + prior verification); not-linked child id → 403 |
+| Student records (#812) | ✅ own marks/attendance 200; `/student/{other}/marks` 404; `?student_id=` ignored (verified name of other student absent) |
+| Admin Health (#813) | ✅ 200, no redirect, real counts, no foreign-school names |
+| Teachers/Staff lists | ⚠️ main renders 200 but query counts are the pre-fix ones: `/admin/teacher` = 25 queries, `/admin/staffs` = 55 queries — PR #820 (OPEN) is the fix; N+1 not worsened by today's merges |
+| Toshi full-width (#823) | ✅ `e2e/toshi-fullwidth-verify.cjs` all green at 1280/1440/1920 (root fixed column top=69, navbar+app full width, no overflow, modal covers navbar) and 375/414/768 drawer unchanged; superadmin shell full-width with the documented pre-existing 65-vs-69 offset quirk unchanged |
+| Mobile nav (#825) | ✅ 42/42: 4 roles × 375/414 tap1 opens + stays (1.1s settle), tap2 closes, aria flips; 768/1280 hamburger `display:none` + desktop sidebar carries nav; 767/768 boundary proves dead-zone gone; re-confirmed on staging (admin+student) |
+| Empty states + greeting (#826) | ✅ zero-children per-child URLs 302→`/parent/children` with CTA (all three, local + staging); student Toshi greeting self-scoped, parent keeps children-scoped |
+| Full PHPUnit suite | ✅ **0 new failures vs baseline; 6 fixed.** main = 159 failing test-methods of 1696; baseline `055bf68a` = 165 of 1694; every main failure pre-exists at baseline. (Suite must run as `php vendor/phpunit/phpunit/phpunit` — the shell wrapper `vendor/phpunit/phpunit` silently no-ops after a checkout dance; memory_limit 2G needed.) KNOWN HAZARD reconfirmed: running `php artisan test` in the container wipes the app DB via RefreshDatabase — the local dev DB had to be rebuilt mid-session (documented before; still true) |
+| PR #824 (on-branch `f2e2541d`) | ✅ all 12 converted views render 200 with real `<x-table>` output once fixtures exist (admin/teacher/student activity logs, academic terms, fees, transport, library books/lends/cards incl. the student-scoped cards view + lending history); empty states correct on dataless schools; `view:cache` compiles all templates; zero JS errors. Note: term/fee views sit behind the MustBePrivilege onboarding gate on setup-incomplete schools (expected) |
+| PR #827 (on-branch `dc82ae21`) | ✅ E2E: real invite issued → email contains link only (no credentials anywhere) → password-set form 200 → weak password refused server-side (min:8 + mixed case + digit + confirmed, enforced in controller) → strong password claims, creates active user 76, assigns class_teacher (sl 1 ct=76) → **teacher logs in with the password they set** → token reuse shows invalid without form → forged 64-char token refused → expired token refused. ⚠️ test-file caveat: `TeacherInviteLinkSecurityTest` 8/13 fail with **419 CSRF** in this container env — the file lacks the repo-standard `$this->withoutMiddleware(VerifyCsrfToken::class)` setUp (the documented fix from the PR #352 era); behavior itself verified green by browser E2E |
+
+**Priority finding — PR #819 must merge before the IDOR claims are considered shipped.** The three cross-tenant vulnerabilities are NOT fixed on `main` because PR #819 is still OPEN. Demonstrated with real browser sessions + DB read-backs:
+- **Local:** school-2 admin `POST /admin/standardLink/updateStatus/242` (school 3's class) → 200 + redirect, DB shows `standards_link.242.status` flipped 1→0 (restored).
+- **Staging (school-2 admin session):** `POST /admin/standardLink/updateStatus/1` (school 1's class) → 200 + redirect, DB `sl1.status` 1→0; restored to 1 and verified.
+- Roster `?standard=<foreign id>` also still resolves the foreign link (`StudentController` line 90 `StandardLink::find()` unscoped — PR #819's exact fix).
+- PR #819 also carries the SQLite-`FIELD()` fix for `/admin/students` tests and the school-scoped `idcard`/`printidcard`. Recommend reviewing and merging it as the next action; its own verification evidence (5/5 MySQL tests + real-HTTP probes) is in the PR body.
+
+**Fixtures/state left clean:** local dev DB rebuilt after the suite-run wipe, regression fixtures (10 users incl. `reg.*@klassapp.test` + `invited.teacher*`) flagged `inactive`; staging fixtures flagged `inactive`, demo-student password re-randomized, synthetic classes 9/10 disabled, school-2 scope restored to its original `school_wide`, `sl1` restored to status 1, zero probe rows in `visitor_log`. Worktrees `KlassApp-reg-base` and `KlassApp-pr824` removed; scratch scripts deleted.
+
+**Session facts worth keeping:** staging Commands API tinker needs the base64-file + `--execute="$(cat …)"` pattern (inline multiline closures parse-error otherwise); the container's `klassapp_test` scratch DB approach from prior sessions was superseded tonight by running the suite on the default SQLite `:memory:` config via `php vendor/phpunit/phpunit/phpunit`.

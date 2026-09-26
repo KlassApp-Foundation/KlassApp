@@ -664,8 +664,11 @@ body [data-toshi-root] {
     --toshi-user-bubble: rgba(201, 100, 66, 0.10);
     --toshi-bot-bubble: var(--d-surface);
 
-    /* Position: fixed so the widget is always visible regardless of scroll */
-    /* On desktop (≥1280px), toshi-ui.css overrides this to position: static inside the flex layout */
+    /* Position: fixed so the widget is always visible regardless of scroll.
+       On desktop (≥1280px) the dock block in published vendor/toshi-ui/toshi-ui.css
+       (which loads AFTER this file) re-declares this same selector with the fixed
+       right-column geometry. Same specificity + both !important => that later sheet
+       wins — desktop dock geometry changes MUST be made in toshi-ui.css, not here. */
     position: fixed !important;
     bottom: 24px !important;
     right: 24px !important;
@@ -680,7 +683,12 @@ body [data-toshi-root] .toshi-pill {
     align-items: center;
 }
 
-/* ── Panel: fills the fixed [data-toshi-root] container — not independently fixed ── */
+/* ── Panel: fills its [data-toshi-root] container. On sub-1280 the root is a small
+   fixed widget box and this makes the panel fill it; on ≥1280 toshi-ui.css's dock
+   block re-declares the panel as a relative flex child filling the fixed column.
+   (The old comment here claimed the panel was "not independently fixed" while the
+   sub-1280 drawer rule in toshi-ui.css sets position:fixed on it — stale, corrected
+   2026-09-25.) ── */
 body [data-toshi-root] .toshi-panel {
     display: flex;
     flex-direction: column;
@@ -2398,6 +2406,15 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     justify-content: center !important;
     box-sizing: border-box !important;
 }
+/* The hamburger exists only below md (768px), where the desktop sidebar is hidden and
+   the res_sidebar drawer is the only nav. From md up the desktop sidebar carries
+   navigation, so hide the button — !important because the touch-sizing rule above
+   forces display and silently defeats the md:hidden/lg:hidden utilities. */
+@media (min-width: 768px) {
+    #mobile-menu-trigger {
+        display: none !important;
+    }
+}
 /* Navbar touch targets */
 .nav-brand a {
     min-height: 44px;
@@ -3950,20 +3967,14 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     outline-offset: 2px;
 }
 
-/* ── Toshi panel: the sidebar's own vertical envelope ──
-   On desktop the root is a static flex item in the body's row, and align-items: stretch
-   made it span the full viewport height starting at y=0, so it swallowed the header's
-   85px band and read as a slab bolted over the chrome. It now starts where the sidebar
-   starts and ends where the sidebar ends. Scoped to desktop, because below 1280px the
-   widget is deliberately fixed bottom-right. */
+/* ── Toshi header offset constant (single source of truth) ──
+   69px = the rendered .navbar.dashboard-themed-header height (68px content + 1px
+   border, measured 2026-09-22). Consumed by the ≥1280 fixed right-column dock in
+   published vendor/toshi-ui/toshi-ui.css (top: var(--toshi-header-offset)).
+   History: #791 (2026-09-22) used this for margin-top/height/align-self on the
+   then-static flex root; retired 2026-09-25 when the dock became position:fixed —
+   the toshi-ui.css dock block now zeroes margin/height/align-self explicitly. */
 :root { --toshi-header-offset: 69px; }
-@media (min-width: 1280px) {
-    body [data-toshi-root] {
-        margin-top: var(--toshi-header-offset) !important;
-        height: calc(100vh - var(--toshi-header-offset)) !important;
-        align-self: flex-start !important;
-    }
-}
 
 /* ── Header height: 85px to 68px by trimming wrapper padding only ──
    Measured: <nav class="navbar dashboard-themed-header"> had padding 8px top and bottom
