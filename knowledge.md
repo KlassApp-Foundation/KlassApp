@@ -618,7 +618,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 26, 2026 — **Both visitor-lens PRs (#825, #826) merged + staging-verified. Teacher invite-link flow shipped as PR #827 (OPEN).**
+## Current Status: September 26, 2026 — **Wide regression pass of today's merges COMPLETE: main green (0 new test failures, all critical fixes hold local + staging). PRIORITY: PR #819 (StandardLink cross-tenant IDORs) still OPEN — the 3 "fixed today" cross-tenant writes are NOT on main and were re-demonstrated live on staging. PRs #824/#827 verified on-branch, both OPEN.**
+
+- **One-line context for the status above**: everything MERGED today (#816–#818, #823, #825, #826 + earlier capability-matrix work) holds up under a real browser + real HTTP + full-suite-baseline pass, locally and on staging (deployed `2c4c36e6`). The two OPEN PRs verified on-branch are fit to merge with two test-hygiene notes (see Session Log). The priority action is reviewing/merging **PR #819** — until then, `StudentController` roster filter and `StandardsLinkController` update/updateStatus/idcard/printidcard remain cross-tenant-writable, and PR #820 remains open for the 55-query `/admin/staffs` list.
 
 - **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy `depl-a2d54f60-b2ad-4935-a9e7-00710a2de3ef` **succeeded** at commit `6e7cb4fb`.
 - **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
@@ -12666,3 +12668,36 @@ Implemented per the onboarding audit findings from the same session. The real pr
 - Email + WhatsApp delivery (WABA-integrated when phone provided)
 - Tests: 37/37 pass (13 new security tests + 4 updated + 20 unaffected)
 - 0 new test regressions (82 pre-existing on both main and this branch)
+
+### 2026-09-26 (regression pass): wide sanity sweep of everything merged today — main green, PR #824/#827 verified on-branch; ONE priority finding: the StandardLink cross-tenant writes are still live on main (PR #819 OPEN)
+
+Full-pass regression session at `main` `2c4c36e6` (staging confirmed deployed at the same SHA, `depl-a2d57f57`). Method: real browser (Playwright/Chromium) + real HTTP probes + DB read-backs locally and on staging, full PHPUnit suite diffed against a pre-today baseline (`055bf68a`), then PR #824 and PR #827 exercised on their own branches.
+
+**Result matrix (local + staging):**
+
+| Area | Verdict |
+|---|---|
+| Attendance for TODAY (the #816 critical fix) | ✅ admin + teacher real writes land (JSON success + DB rows read back), local AND staging |
+| attendance_scope 3 modes | ✅ all enforced on real POSTs: class_teacher_only refuses subject/unrelated; classes_i_teach allows subject-taught, refuses unrelated; school_wide allows unrelated active; inactive classes refused in every mode; foreign-school teacher refused in every mode (web; staging spot-check; API covered by existing `AttendanceScopeTest` 9/9 + `AttendanceWriteScopeTest` 6/6 green) |
+| Receptionist gate (#809) | ✅ reads 200 unaffected; crafted POSTs (visitorlog/calllog/postalrecord) → 403 with the correct message; GET-delete → 403; zero probe rows created; verified again on staging |
+| **StandardLink cross-tenant IDORs (PR #819 targets)** | ❌ **STILL LIVE ON MAIN — priority finding, see below** |
+| Parent nav (#811) | ✅ one-child → direct `/parent/children/{id}/fees|grades|attendance` links all 200; multi-child falls back (existing tests + prior verification); not-linked child id → 403 |
+| Student records (#812) | ✅ own marks/attendance 200; `/student/{other}/marks` 404; `?student_id=` ignored (verified name of other student absent) |
+| Admin Health (#813) | ✅ 200, no redirect, real counts, no foreign-school names |
+| Teachers/Staff lists | ⚠️ main renders 200 but query counts are the pre-fix ones: `/admin/teacher` = 25 queries, `/admin/staffs` = 55 queries — PR #820 (OPEN) is the fix; N+1 not worsened by today's merges |
+| Toshi full-width (#823) | ✅ `e2e/toshi-fullwidth-verify.cjs` all green at 1280/1440/1920 (root fixed column top=69, navbar+app full width, no overflow, modal covers navbar) and 375/414/768 drawer unchanged; superadmin shell full-width with the documented pre-existing 65-vs-69 offset quirk unchanged |
+| Mobile nav (#825) | ✅ 42/42: 4 roles × 375/414 tap1 opens + stays (1.1s settle), tap2 closes, aria flips; 768/1280 hamburger `display:none` + desktop sidebar carries nav; 767/768 boundary proves dead-zone gone; re-confirmed on staging (admin+student) |
+| Empty states + greeting (#826) | ✅ zero-children per-child URLs 302→`/parent/children` with CTA (all three, local + staging); student Toshi greeting self-scoped, parent keeps children-scoped |
+| Full PHPUnit suite | ✅ **0 new failures vs baseline; 6 fixed.** main = 159 failing test-methods of 1696; baseline `055bf68a` = 165 of 1694; every main failure pre-exists at baseline. (Suite must run as `php vendor/phpunit/phpunit/phpunit` — the shell wrapper `vendor/phpunit/phpunit` silently no-ops after a checkout dance; memory_limit 2G needed.) KNOWN HAZARD reconfirmed: running `php artisan test` in the container wipes the app DB via RefreshDatabase — the local dev DB had to be rebuilt mid-session (documented before; still true) |
+| PR #824 (on-branch `f2e2541d`) | ✅ all 12 converted views render 200 with real `<x-table>` output once fixtures exist (admin/teacher/student activity logs, academic terms, fees, transport, library books/lends/cards incl. the student-scoped cards view + lending history); empty states correct on dataless schools; `view:cache` compiles all templates; zero JS errors. Note: term/fee views sit behind the MustBePrivilege onboarding gate on setup-incomplete schools (expected) |
+| PR #827 (on-branch `dc82ae21`) | ✅ E2E: real invite issued → email contains link only (no credentials anywhere) → password-set form 200 → weak password refused server-side (min:8 + mixed case + digit + confirmed, enforced in controller) → strong password claims, creates active user 76, assigns class_teacher (sl 1 ct=76) → **teacher logs in with the password they set** → token reuse shows invalid without form → forged 64-char token refused → expired token refused. ⚠️ test-file caveat: `TeacherInviteLinkSecurityTest` 8/13 fail with **419 CSRF** in this container env — the file lacks the repo-standard `$this->withoutMiddleware(VerifyCsrfToken::class)` setUp (the documented fix from the PR #352 era); behavior itself verified green by browser E2E |
+
+**Priority finding — PR #819 must merge before the IDOR claims are considered shipped.** The three cross-tenant vulnerabilities are NOT fixed on `main` because PR #819 is still OPEN. Demonstrated with real browser sessions + DB read-backs:
+- **Local:** school-2 admin `POST /admin/standardLink/updateStatus/242` (school 3's class) → 200 + redirect, DB shows `standards_link.242.status` flipped 1→0 (restored).
+- **Staging (school-2 admin session):** `POST /admin/standardLink/updateStatus/1` (school 1's class) → 200 + redirect, DB `sl1.status` 1→0; restored to 1 and verified.
+- Roster `?standard=<foreign id>` also still resolves the foreign link (`StudentController` line 90 `StandardLink::find()` unscoped — PR #819's exact fix).
+- PR #819 also carries the SQLite-`FIELD()` fix for `/admin/students` tests and the school-scoped `idcard`/`printidcard`. Recommend reviewing and merging it as the next action; its own verification evidence (5/5 MySQL tests + real-HTTP probes) is in the PR body.
+
+**Fixtures/state left clean:** local dev DB rebuilt after the suite-run wipe, regression fixtures (10 users incl. `reg.*@klassapp.test` + `invited.teacher*`) flagged `inactive`; staging fixtures flagged `inactive`, demo-student password re-randomized, synthetic classes 9/10 disabled, school-2 scope restored to its original `school_wide`, `sl1` restored to status 1, zero probe rows in `visitor_log`. Worktrees `KlassApp-reg-base` and `KlassApp-pr824` removed; scratch scripts deleted.
+
+**Session facts worth keeping:** staging Commands API tinker needs the base64-file + `--execute="$(cat …)"` pattern (inline multiline closures parse-error otherwise); the container's `klassapp_test` scratch DB approach from prior sessions was superseded tonight by running the suite on the default SQLite `:memory:` config via `php vendor/phpunit/phpunit/phpunit`.
