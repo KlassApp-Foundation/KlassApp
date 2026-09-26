@@ -159,20 +159,20 @@ class SiteHelper
         $standardLinkCacheKey = 'standardLink'.$school_id.'_'.$academic_year_id;
         return Cache::remember( $standardLinkCacheKey, env('CACHE_TIME'), function () use ($school_id,$academic_year)  {
             if (!$academic_year) return collect();
-            $standards = Standard::where('school_id',$school_id)->orderBy('order')->pluck('id')->toArray();
-            if(count($standards) > 0)
-            {
-                $standard = implode(' ,',$standards);
-                $standardLink = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])
-                    ->orderByRaw('FIELD(standard_id,'.$standard.')')
-                    ->orderBy('section_id')
-                    ->get()
-                    ->unique(function($item) {
-                        return $item->standard_id.'-'.$item->section_id;
-                    });
-                return StandardLinkResource::collection($standardLink);
-            }
-            return collect();
+            $standardLink = StandardLink::where('standards_link.school_id', $school_id)
+                ->where('standards_link.academic_year_id', $academic_year->id)
+                // Portable ordering (FIELD() is MySQL-only and breaks the
+                // SQLite test env): same sequence as ordering by this
+                // school's standards "order" column.
+                ->join('standards', 'standards.id', '=', 'standards_link.standard_id')
+                ->orderBy('standards.order')
+                ->orderBy('standard_id')
+                ->orderBy('section_id')
+                ->get()
+                ->unique(function($item) {
+                    return $item->standard_id.'-'.$item->section_id;
+                });
+            return StandardLinkResource::collection($standardLink);
         });
     }
 
