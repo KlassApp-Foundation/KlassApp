@@ -644,7 +644,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 26, 2026 — **Wide regression pass of today's merges COMPLETE: main green (0 new test failures, all critical fixes hold local + staging). PRIORITY: PR #819 (StandardLink cross-tenant IDORs) still OPEN — the 3 "fixed today" cross-tenant writes are NOT on main and were re-demonstrated live on staging. PRs #824/#827 verified on-branch, both OPEN.**
+## Current Status: September 26, 2026 (later) — **PR #819 MERGED `6d8ea9be` (GitHub API `merged: true`) + staging deployed + re-verified refused. The StandardLink cross-tenant IDORs are CLOSED on main. Remaining OPEN: #820 (staff-list N+1/pagination), #824 (table-consolidation, verified on-branch), #827 (teacher invite-link, verified on-branch, needs the CSRF setUp fix in its test file).**
+
+- **The #819 close-out (2026-09-26 ~05:00–05:35, full Session Log entry below):** branch had drifted (`mergeable_state: dirty` — 3 later docs commits + knowledge.md conflicts vs today's main). Resolved by merging `origin/main` INTO the PR branch (`b55f32f7`): only `knowledge.md` conflicted (kept the branch's two session entries + main's newer status; all code auto-merged clean). Tests on the true merge: **5/5 cross-school + Students/Navigation/Spotlight 28/28 + Admin 98/98 + today's attendance/receptionist/greeting 23/23** (a first run showing 4 failures was proven to be harness contamination — a symlinked `vendor` made composer resolve `App\` to the main worktree's unfixed code; re-run in the container was clean). Local browser pre-check: school-2 admin → school-3 class 81 updateStatus → **refused, logged, DB untouched**; roster `?standard=81` ignored the foreign filter. Merged via API (`merge` method) → `6d8ea9be`, `merged: true` confirmed (rule #21). Staging deployed `depl-a2d5c0c2` @ `6d8ea9be` → `deployment.succeeded`. **Staging re-verification (the exact attack from the regression pass):** school-2 admin POST `updateStatus/1` on school-1's class → redirected with error, **refusal logged** (`admin_id:51, requested_id:"1"`), **`sl1.status` still 1** (the pre-fix behavior flipped it to 0); `?standard=1` ignored; `idcard/1` and `printidcard/1` → **404**. Legit same-school write (sl 9) unaffected (no refusal logged, normal redirect). State restored: sl9→0, sl1 confirmed 1, admin2 inactive + password re-randomized.
 
 - **One-line context for the status above**: everything MERGED today (#816–#818, #823, #825, #826 + earlier capability-matrix work) holds up under a real browser + real HTTP + full-suite-baseline pass, locally and on staging (deployed `2c4c36e6`). The two OPEN PRs verified on-branch are fit to merge with two test-hygiene notes (see Session Log). The priority action is reviewing/merging **PR #819** — until then, `StudentController` roster filter and `StandardsLinkController` update/updateStatus/idcard/printidcard remain cross-tenant-writable, and PR #820 remains open for the 55-query `/admin/staffs` list.
 
@@ -12693,6 +12695,32 @@ Implemented per the onboarding audit findings from the same session. The real pr
 - Email + WhatsApp delivery (WABA-integrated when phone provided)
 - Tests: 37/37 pass (13 new security tests + 4 updated + 20 unaffected)
 - 0 new test regressions (82 pre-existing on both main and this branch)
+
+### 2026-09-26 (later): PR #819 merged + deployed + re-verified refused on staging — the StandardLink cross-tenant IDORs are CLOSED
+
+Executed right after the regression pass flagged #819 as the priority gap. This was a merge-and-verify mission, not a re-investigation — the fix's evidence was already solid from 2026-09-24/25 and the pass had just re-demonstrated the vulnerability live.
+
+**1. Mergeability:** PR #819 was NOT cleanly mergeable — `mergeable_state: dirty`. The branch tip (`4364522c`) had drifted 3 commits past the original fix (`ebf25ba4`): two later knowledge.md docs commits + the #819 stamp, conflicting against today's heavily-edited main. Resolution: merged `origin/main` **into the PR branch** in a dedicated worktree (`b55f32f7`). Only `knowledge.md` conflicted — resolved by keeping the branch's two session entries (member-lists #820/#821 + the original #819 record, which main lacked) above main's newer Sept-26 Current Status; all four code files (SiteHelper, StudentController, StandardsLinkController, the new cross-school test) auto-merged clean. Verified the fix diff vs main intact: all 5 sites school-scoped + the portable `standards.order` join replacing MySQL-only `FIELD()`.
+
+**2. Tests on the true merge (container, SQLite default):** `StudentsRosterStandardFilterCrossSchoolTest` **5/5**; Students+Navigation+Spotlight **28/28**; Admin **98/98**; today's AttendanceScope+AttendanceWriteScope+TeacherReceptionistAccess+ToshiRoleGreeting **23/23**. **Harness trap recorded:** a symlinked `vendor` into a worktree makes composer resolve `App\` to the symlink *target's* app dir — the first run executed the MAIN worktree's unfixed code and showed 4 spurious `FIELD()` 500s. Worktree test runs must run in the container (or a full standalone vendor), never a symlink.
+
+**3. Local browser pre-check (branch @ `b55f32f7`):** school-2 admin → `POST updateStatus/81` (school-3 class) → redirect-with-error, **refusal logged** (`admin_id:42, requested_id:"81"`), **DB untouched (status 1)**; `?standard=81` foreign filter ignored (0 rows injected). Legit same-school write unaffected.
+
+**4. Merge + deploy:** API merge (merge method, documented solo-maintainer bypass) → **`6d8ea9be`**, read-back `merged: true` @ 2026-09-26T02:23:25Z (rule #21). Staging deploy POST → `depl-a2d5c0c2` @ commit `6d8ea9be` → polled to **`deployment.succeeded`** (~2.5 min).
+
+**5. Staging re-verification — the exact attack from the regression pass, now refused:**
+
+| Probe (school-2 admin session) | Pre-fix (regression pass, ~03:2x) | Post-fix (05:28) |
+|---|---|---|
+| `POST /admin/standardLink/updateStatus/1` (school-1's class) | 200 + redirect, **DB flipped 1→0** | 200 + redirect **with error**, **DB still 1**, refusal logged `{"admin_id":51,"requested_id":"1"}` |
+| `GET /admin/students?standard=1` (foreign id) | foreign StandardLink resolved & applied | foreign filter **ignored**, no foreign rows |
+| `GET /admin/standardLink/idcard/1` | unscoped lookup | **404** (scoped `firstOrFail`) |
+| `GET /admin/standardLink/printidcard/1` | unscoped lookup | **404** |
+| Legit same-school `updateStatus/9` | worked | still works (no refusal logged, normal redirect; sl9 verified restored to 0 after) |
+
+**State restored:** sl1 confirmed 1 (untouched by the refused attack), sl9 back to 0, admin2 fixture inactive + password re-randomized, cache flushed. Local: fixture admin re-flagged inactive, local sl 242 restored to 1, probe scripts deleted.
+
+**Suite smoke on merged main (`6d8ea9be`):** Students/Admin/Navigation 121/121 green. Post-merge main now carries: `6d8ea9be` ← `b55f32f7` (branch merge) ← `3794beda` (regression-pass docs) — everything else from today unchanged beneath.
 
 ### 2026-09-26 (regression pass): wide sanity sweep of everything merged today — main green, PR #824/#827 verified on-branch; ONE priority finding: the StandardLink cross-tenant writes are still live on main (PR #819 OPEN)
 
