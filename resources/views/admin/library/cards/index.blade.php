@@ -71,54 +71,40 @@
         {{-- Lending History --}}
         <div class="ds-card">
             <h3 class="ds-card-title">Lending History</h3>
-            <div class="ds-table-wrap mt-3">
-                <table class="ds-table ds-table-striped ds-table-hover">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Book</th>
-                            <th>Issue Date</th>
-                            <th>Due Date</th>
-                            <th>Returned</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($lends as $i => $lend)
-                        <tr>
-                            <td>{{ $i + 1 }}</td>
-                            <td>{{ $lend->book->title ?? '—' }}<br>
-                                <small class="text-muted">Code: {{ $lend->book_code_no }}</small>
-                            </td>
-                            <td>{{ $lend->issue_date ? date('d M Y', strtotime($lend->issue_date)) : '—' }}</td>
-                            <td>{{ $lend->return_date ? date('d M Y', strtotime($lend->return_date)) : '—' }}</td>
-                            <td>
-                                @if($lend->status === 'returned')
-                                    {{ $lend->updated_at ? date('d M Y', strtotime($lend->updated_at)) : '—' }}
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($lend->status === 'pending')
-                                    <span class="ds-badge ds-badge-pending">Checked Out</span>
-                                @elseif($lend->status === 'returned')
-                                    <span class="ds-badge ds-badge-paid">Returned</span>
-                                @else
-                                    <span class="ds-badge ds-badge-inactive">{{ ucfirst($lend->status) }}</span>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                No lending history for this student.
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            <x-table striped class="mt-3" :headers="['#', 'Book', 'Issue Date', 'Due Date', 'Returned', 'Status']">
+                @forelse($lends as $i => $lend)
+                    <tr>
+                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $lend->book->title ?? '—' }}<br>
+                            <small class="text-muted">Code: {{ $lend->book_code_no }}</small>
+                        </td>
+                        <td>{{ $lend->issue_date ? date('d M Y', strtotime($lend->issue_date)) : '—' }}</td>
+                        <td>{{ $lend->return_date ? date('d M Y', strtotime($lend->return_date)) : '—' }}</td>
+                        <td>
+                            @if($lend->status === 'returned')
+                                {{ $lend->updated_at ? date('d M Y', strtotime($lend->updated_at)) : '—' }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($lend->status === 'pending')
+                                <span class="ds-badge ds-badge-pending">Checked Out</span>
+                            @elseif($lend->status === 'returned')
+                                <span class="ds-badge ds-badge-paid">Returned</span>
+                            @else
+                                <span class="ds-badge ds-badge-inactive">{{ ucfirst($lend->status) }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No lending history for this student.
+                        </td>
+                    </tr>
+                @endforelse
+            </x-table>
         </div>
     @elseif(request('user_id'))
         <div class="ds-card">
