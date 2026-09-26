@@ -133,7 +133,7 @@ class ParentPortalService
         if ($students->isEmpty()) {
             return [
                 'success' => false,
-                'message' => 'No children linked to your account.',
+                'message' => 'No children are linked to your account. Contact the school office to link a student.',
                 'children' => [],
                 'count' => 0,
                 'grouped_by_school' => [],

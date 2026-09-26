@@ -2406,6 +2406,15 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     justify-content: center !important;
     box-sizing: border-box !important;
 }
+/* The hamburger exists only below md (768px), where the desktop sidebar is hidden and
+   the res_sidebar drawer is the only nav. From md up the desktop sidebar carries
+   navigation, so hide the button — !important because the touch-sizing rule above
+   forces display and silently defeats the md:hidden/lg:hidden utilities. */
+@media (min-width: 768px) {
+    #mobile-menu-trigger {
+        display: none !important;
+    }
+}
 /* Navbar touch targets */
 .nav-brand a {
     min-height: 44px;

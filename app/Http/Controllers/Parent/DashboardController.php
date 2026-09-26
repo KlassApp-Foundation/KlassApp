@@ -34,7 +34,7 @@ class DashboardController extends Controller
             'groupedBySchool' => $grouped,
             'selectedChild' => $selected,
             'panel' => $panel,
-            'emptyMessage' => ($listed['success'] ?? false) ? null : ($listed['message'] ?? 'No children linked to your account.'),
+            'emptyMessage' => ($listed['success'] ?? false) ? null : ($listed['message'] ?? 'No children are linked to your account. Contact the school office to link a student.'),
         ]);
     }
 }
