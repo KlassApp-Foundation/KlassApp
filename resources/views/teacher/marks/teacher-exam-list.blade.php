@@ -1,118 +1,85 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
-    <div class="container-fluid w-full lg:mx-2">
-        <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exams</h1>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Exams assigned to you - enter or update student marks
-                </p>
-            </div>
-            @if (!empty($canCreateExams))
-                <a href="{{ route('teacher.exams.create') }}"
-                   class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium">
-                    Create Exam
-                </a>
-            @endif
-            @include('partials.message')
-        </div>
-        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Exams to Mark</h2>
-            </div>
+<div class="dashboard-shell dashboard-shell--teacher px-4 md:px-6 py-4">
+    @include('layouts.partials.page-header', [
+        'title' => 'My Exams',
+        'subtitle' => 'Track exams assigned to you, open marks entry, and review class results.',
+    ])
 
-            <div class="p-6">
-                @if($exams->isEmpty())
-                    <p class="text-center py-12 text-gray-500 dark:text-gray-400">
-                        No exams assigned to you for marking yet.
-                    </p>
-                @else
-                    <div class="space-y-4">
-                       
-                    @foreach($examsByClass as $sectionId => $classExams)
-                        @php $stdLink = $assignedStdLinks->get($sectionId); $className = $classExams->first()->section->name ?? ('Class #' . $sectionId); @endphp
-                        <div class="mb-8">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-base font-semibold text-gray-800 dark:text-white">{{ $className }}</h3>
-                                @if ($stdLink)
-                                    <a href="{{ route('teacher.exam.combinedMarksheet', $stdLink) }}" class="py-2 px-4 rounded bg-amber-600 hover:bg-amber-500 text-white text-sm inline-flex items-center gap-1">
-                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        Combined Marksheet
-                                    </a>
-                                @endif
-                            </div>
-                            <div class="space-y-4">
-                        @foreach($classExams as $exam)
-                         @php
-                            $termPosition = $exam->academicTerm?->positionLabel() ?? '-';
-                         @endphp
-                            <div class="flex items-center justify-between p-4 borderr shadow-md hover:shadow-lg dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30 relative">
-                                <p class='bg-yellow-400 px-1 text-red-500 rounded-full text-xs absolute top-0 right-0'>
-                                        {{ $exam->status }}
-                                    </p>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">{{ $exam->subject->name . " EXAM"}}
-                                    </h3>
-                                    
-                                    </div>
-                                    <div class="flex gap-6 sm:gap-10 items-center">
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">
-                                        <span>{{ $exam->section->name ?? '-' }}</span>
-                                        <span>{{ $exam->examType->name ?? "-" }}</span>
-                                         <span>{{ $termPosition }}</span>
-                                    </p>
-                                    
-                                    {{-- to mark the exam as done --}}
-                                   <form action="{{ route("teacher.marks.change-status", $exam) }}" method='POST'>
-                                    @csrf
-                                    @method("PATCH")
-                                    @php
-                                        $btntext = match ($exam->status){
-                                           "undone"     =>  "Mark as done",
-                                           "done"       =>  "Submit Marks",
-                                           "submitted"       =>  "Marks Submitted",
-                                        }
-                                    @endphp
-
-                                    @if ( $exam->status === "done")
-                                        <button type="submit" class='bg-blue-500 text-white py-1 px-2 rounded text-xs'> {{$btntext}}
-                                         </button>
-                                    @endif
-                                         
-                                   </form>
-                                    </div>
-                                </div>
-                                <div class="flex gap-3 flex-wrap">
-                                    <a href="{{ route('teacher.exams.edit', $exam) }}"
-                                       class="py-2 px-4 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
-                                        Edit Exam
-                                    </a>
-                                    <a href="{{ route('teacher.exam.marks.enter', $exam) }}"
-                                       class="py-2 px-4 rounded text-white bg-green-500 hover:bg-green-600 text-sm">
-                                        Enter / Edit Marks
-                                    </a>
-                                    <!-- Optional view link -->
-                                    <a href="{{ route('teacher.exam.marks.view', $exam) }}"
-                                       class="py-2 px-4 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
-                                        View Entered Marks
-                                    </a>
-                                    <!-- Download marksheet -->
-                                    <a href="{{ route('teacher.exam.marksheet', $exam) }}"
-                                       class="py-2 px-4 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm inline-flex items-center gap-1">
-                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        Marksheet
-                                    </a>
-                                </div>
-                            </div>
-                        @endforeach
-                            </div>
-                        </div>
-                    @endforeach
-                    </div>
-                @endif
-            </div>
-        </div>
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+        @include('partials.message')
     </div>
+
+    <div class="ds-card ds-card-padding-default mt-6">
+        <div class="flex items-center justify-between gap-3 border-b border-gray-200 pb-4 mb-5">
+            <div>
+                <h2 class="text-lg font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">Exams to Mark</h2>
+            </div>
+        </div>
+
+        @if($exams->isEmpty())
+            <div class="text-center py-12">
+                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+                <p class="text-sm" style="color: var(--d-muted);">No exams assigned to you for marking yet.</p>
+            </div>
+        @else
+            <div class="space-y-6">
+                @foreach($examsByClass as $sectionId => $classExams)
+                    @php $stdLink = $assignedStdLinks->get($sectionId); $className = $classExams->first()->section->name ?? ('Class #' . $sectionId); @endphp
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-base font-semibold" style="color: var(--d-text);">{{ $className }}</h3>
+                            @if ($stdLink)
+                                <a href="{{ route('teacher.exam.combinedMarksheet', $stdLink) }}" class="ds-btn ds-btn-warning ds-btn-sm inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    Combined Marksheet
+                                </a>
+                            @endif
+                        </div>
+
+                        <div class="space-y-4">
+                            @foreach($classExams as $exam)
+                                @php $termPosition = $exam->academicTerm?->positionLabel() ?? '-'; @endphp
+                                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                                        <div class="min-w-0">
+                                            <div class="mb-2 flex items-center gap-2 flex-wrap">
+                                                <span class="ds-badge ds-badge-sm ds-badge-info">{{ $exam->subject->name ?? 'Exam' }}</span>
+                                                <span class="ds-badge ds-badge-sm ds-badge-warning">{{ $exam->status }}</span>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-3 text-xs" style="color: var(--d-muted);">
+                                                <span>{{ $exam->section->name ?? '-' }}</span>
+                                                <span>•</span>
+                                                <span>{{ $exam->examType->name ?? '-' }}</span>
+                                                <span>•</span>
+                                                <span>{{ $termPosition }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('teacher.exams.edit', $exam) }}" class="ds-btn ds-btn-ghost ds-btn-sm">
+                                                Edit Exam
+                                            </a>
+                                            <a href="{{ route('teacher.exam.marks.enter', $exam) }}" class="ds-btn ds-btn-primary ds-btn-sm">
+                                                Enter / Edit Marks
+                                            </a>
+                                            <a href="{{ route('teacher.exam.marks.view', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm">
+                                                View Marks
+                                            </a>
+                                            <a href="{{ route('teacher.exam.marksheet', $exam) }}" class="ds-btn ds-btn-secondary ds-btn-sm">
+                                                Marksheet
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</div>
 @endsection

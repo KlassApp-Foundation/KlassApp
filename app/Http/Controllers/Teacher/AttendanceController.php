@@ -151,15 +151,9 @@ class AttendanceController extends Controller
     ];
 }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
-        $standard = \Request::get('standardLink_id') ? \Request::get('standardLink_id'):'';
+        $standard = request()->input('standardLink_id', '');
         return view('/teacher/attendance/create' ,['standard' => $standard]);
     }
 
@@ -243,7 +237,11 @@ class AttendanceController extends Controller
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            $standardLink = StandardLink::where('id',$standardLink_id)->first();
+$standardLink = StandardLink::query()
+                ->where('school_id', $school_id)
+                ->where('academic_year_id', $academic_year->id)
+                ->where('status', 1)
+                ->findOrFail($standardLink_id);
             $standard = $standardLink->StandardName;
             $section = $standardLink->section->name;
             $csv_name = 'SP Student Attendance Export_'.$standard.'_'.$section.'_'.date('_d-m-Y_H:i').'.csv';
