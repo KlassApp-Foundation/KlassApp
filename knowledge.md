@@ -618,6 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
+## Session: 2026-09-27 — ds-form-label onto type scale (0.82rem → 0.85rem) (PR [#835](https://github.com/KlassApp-Foundation/KlassApp/pull/835) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-form-label`)
+
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: `.ds-form-label` font-size 0.82rem → 0.85rem in `public/css/dashboard-refresh.css`; new `tests/Feature/DesignSystem/FormLabelTypeScaleTest.php`.
+- **Wrap check**: 25 visible labels × (1280, 390) across fee payment create, classes create, student add, subject add, fee category create, onboarding wizard, superadmin system settings — 13.12px→13.6px, box 15.1→15.6px, 0 wraps before and after.
+- **Access this session (verified, rule #12/#23)**: no Laravel Cloud token, no Doppler, no Cloud MCP — staging/prod NOT exercised; local only (Docker MySQL 8 demo DB + synthetic fixtures, Chromium Playwright at 1280/390). Composer: `phpstan/phpstan` dist zip 403s through the session proxy, so vendor was installed from an untracked copy of the lock without phpstan/larastan (tests/app unaffected).
+- **Regression pack (every PR)**: `#mobile-menu-trigger` opens `#res_sidebar` with exactly 1 class flip; Toshi split collapsed by default, drag clamps 300–640px; admin sidebar footer (#830) renders, collapses 192→72px. All pass.
+- **Evidence page**: https://claude.ai/artifact/4fjPe8Vujp7FjR72YR4ZxY (private; before/after at 1280/390 + measurements)
+- **Status**: OPEN — do not stamp merged until GitHub API `merged: true` (rule #21). Needs human review + staging pass.
+
 ## Session: 2026-09-25 — Member lists: Teachers/Staff pagination (PR #820 OPEN) + alumni dead-code cleanup (PR #821 OPEN); PowerGrid dropped
 
 - **Decision**: PowerGrid abandoned for this codebase — independent verification (spike worktree `docs/powergrid-spike-verification.md`) found a genuine cross-tenant leak in PowerGrid 6.x's search path (`SearchHandler::filterRelation` emits top-level `orWhereHas` outside the tenant-closure; searching another school's student name returned foreign rows to a same-school admin) plus real CI/Tailwind friction. Spike branch `spike/powergrid-student-list` candiscard.
