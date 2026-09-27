@@ -618,6 +618,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
+## Session: 2026-09-27 — x-profile-photo + replace divergent avatar frames (PR [#837](https://github.com/KlassApp-Foundation/KlassApp/pull/837) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-profile-photo`)
+
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Pre-PR grep** (`grep -rn AvatarPath resources/ app/ packages/`, full tree): the handoff's 7 + `layouts/partials/profile-dropdown` (3 imgs) + **`teacher/student/show` L18 (missed by the design scan)**; app/packages hits are JSON API resources (out of scope); `buspass/print` L94 (HTML comment) untouched.
+- **Component**: `components/profile-photo.blade.php` — sizes xs32/sm40/md64/lg128/xl192, square 12px (`var(--d-radius-xl, 12px)`; `--d-radius-lg` is 10px and radius tokens aren't loaded at runtime) + 1px `--d-border` ring, circle only for the nav trigger (option b) with new `--d-avatar-ring` token; fallback uses `avatar != null` (AvatarPath returns '' → `??` would emit `src=""` — confirmed in `Common::getFilePath`); alt = display name.
+- **Measured main → branch**: student show 196×192 stretched → 192×192; teacher wide photo 174×74 → 174×174 cover; staff no-avatar `src=""` broken → default; feedback hard-coded default → parent photo; teacher nav trigger at 390 4×32 sliver → 32×32; alt everywhere. Print templates (id-card ×2, bus_pass) radius 10→12px only (bus_pass has no route).
+- **Access this session (verified, rule #12/#23)**: no Laravel Cloud token, no Doppler, no Cloud MCP — staging/prod NOT exercised; local only (Docker MySQL 8 demo DB + synthetic fixtures, Chromium Playwright at 1280/390). Composer: `phpstan/phpstan` dist zip 403s through the session proxy, so vendor was installed from an untracked copy of the lock without phpstan/larastan (tests/app unaffected).
+- **Regression pack (every PR)**: `#mobile-menu-trigger` opens `#res_sidebar` with exactly 1 class flip; Toshi split collapsed by default, drag clamps 300–640px; admin sidebar footer (#830) renders, collapses 192→72px. All pass.
+- **Evidence page**: https://claude.ai/artifact/4fjPe8Vujp7FjR72YR4ZxY (private; before/after at 1280/390 + measurements)
+- **Status**: OPEN — do not stamp merged until GitHub API `merged: true` (rule #21). Needs human review + staging pass.
+
 ## Session: 2026-09-25 — Member lists: Teachers/Staff pagination (PR #820 OPEN) + alumni dead-code cleanup (PR #821 OPEN); PowerGrid dropped
 
 - **Decision**: PowerGrid abandoned for this codebase — independent verification (spike worktree `docs/powergrid-spike-verification.md`) found a genuine cross-tenant leak in PowerGrid 6.x's search path (`SearchHandler::filterRelation` emits top-level `orWhereHas` outside the tenant-closure; searching another school's student name returned foreign rows to a same-school admin) plus real CI/Tailwind friction. Spike branch `spike/powergrid-student-list` candiscard.
