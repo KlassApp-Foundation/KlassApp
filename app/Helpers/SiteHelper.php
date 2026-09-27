@@ -156,7 +156,9 @@ class SiteHelper
     {
         $academic_year = SiteHelper::getAcademicYear($school_id);
         $academic_year_id = $academic_year ? $academic_year->id : 'none';
-        $standardLinkCacheKey = 'standardLink'.$school_id.'_'.$academic_year_id;
+        // Key renamed from 'standardLink…' so lists cached with the standards
+        // join's clobbered ids are not served after deploy.
+        $standardLinkCacheKey = 'standardLinkList'.$school_id.'_'.$academic_year_id;
         return Cache::remember( $standardLinkCacheKey, env('CACHE_TIME'), function () use ($school_id,$academic_year)  {
             if (!$academic_year) return collect();
             $standardLink = StandardLink::where('standards_link.school_id', $school_id)
@@ -165,9 +167,13 @@ class SiteHelper
                 // SQLite test env): same sequence as ordering by this
                 // school's standards "order" column.
                 ->join('standards', 'standards.id', '=', 'standards_link.standard_id')
+                // Without this the joined standards columns (id, status, …)
+                // overwrite the class's own and every class reports its
+                // standard's id.
+                ->select('standards_link.*')
                 ->orderBy('standards.order')
-                ->orderBy('standard_id')
-                ->orderBy('section_id')
+                ->orderBy('standards_link.standard_id')
+                ->orderBy('standards_link.section_id')
                 ->get()
                 ->unique(function($item) {
                     return $item->standard_id.'-'.$item->section_id;
