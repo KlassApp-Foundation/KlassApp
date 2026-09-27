@@ -39,7 +39,10 @@ GEMINI.md
 # Keep .cursor/rules/*.mdc tracked — those are KlassApp-specific.
 .cursor/mcp.json
 .cursor/skills/
-.claude/
+# .claude/ stays local except the shared SessionStart hook for cloud sessions.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 .junie/
 
 test-results/
