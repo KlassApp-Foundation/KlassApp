@@ -295,6 +295,17 @@
   </div>
 </section>
 
+<section class="agent-core" id="agent-core" aria-labelledby="agent-core-title">
+  <div class="container">
+    <div class="agent-core-header reveal">
+      <h2 id="agent-core-title">Toshi on top of KlassApp</h2>
+      <p>WhatsApp, Email, Slack, SMS, Drive and Calendar feed the KlassApp core. Toshi sits above it and acts for parents, teachers and admins.</p>
+    </div>
+
+    @include('partials.landing-agent-core')
+  </div>
+</section>
+
 <section class="how-it-works" id="how-it-works">
   <div class="container">
     <div class="how-header reveal">
