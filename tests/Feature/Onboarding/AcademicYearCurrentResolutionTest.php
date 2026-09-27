@@ -251,6 +251,6 @@ class AcademicYearCurrentResolutionTest extends TestCase
         $view->assertDontSee('data-testid="empty-state-product-demo"', false);
         $view->assertSee('ds-kpi-card', false);
         $view->assertDontSee('dashboard-kpi-card', false);
-        $view->assertSee('data-testid="dashboard-live-badge"', false);
+        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
     }
 }

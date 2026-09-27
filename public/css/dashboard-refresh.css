@@ -176,65 +176,12 @@ body {
     }
 }
 
-/* ── Live Badge (admin dashboard header) ── */
+/* ── Live Badge — REMOVED 2026-09-27 ──
+   The "LIVE" pill in the admin dashboard header was removed by product decision
+   (UI-polish pass, PR series from docs/test-suite-triage-2026-09-26.md follow-up).
+   Badge CSS blocks deleted; reduced-motion canaries for the badge were removed with it.
+   The .dashboard-live-dot / badge-sheen keyframes are unused now and deleted. */
 
-.dashboard-live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 16px;
-    border-radius: 999px;
-    background: var(--d-accent);
-    color: var(--d-text-on-accent);
-    font-family: "DM Sans", sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.dashboard-shell--admin .dashboard-live-badge {
-    background: linear-gradient(90deg, #15803d 0%, var(--d-green) 55%, #4ade80 100%);
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.25);
-    position: relative;
-    overflow: hidden;
-}
-
-.dashboard-shell--admin .dashboard-live-badge::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -30%;
-    width: 24%;
-    height: 100%;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: skewX(-20deg);
-    animation: badge-sheen 3.4s ease-in-out infinite;
-}
-
-@keyframes badge-sheen {
-    0%, 100% { left: -30%; opacity: 0; }
-    25% { opacity: 0.8; }
-    55% { left: 115%; opacity: 0; }
-}
-
-.dashboard-live-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--d-text-on-accent);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
-    animation: pulse-dot 1.8s ease-out infinite;
-}
-
-@keyframes pulse-dot {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8); }
-    70% { box-shadow: 0 0 0 9px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-.dashboard-live-badge--teacher { background: var(--d-accent); }
-.dashboard-live-badge--superadmin { background: var(--d-accent); }
 
 /* ── Typography ── */
 
@@ -3563,22 +3510,50 @@ body.toshi-manual-wizard [data-toshi-root] {
     background: #E2E8F0;
 }
 
+/* ── Sidebar footer (profile + notifications, relocated from the header) ──
+   The .profile-click JS toggles .open on click; .user-dtl opens ABOVE the
+   footer anchor (bottom-anchored menu). The notification drawer is
+   position:fixed and position-independent. In the collapsed rail the footer
+   centres its icons and the user name hides like the menu labels. */
+.dashboard-sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--d-border, #E2E8F0);
+    position: relative;
+    flex-shrink: 0;
+}
+.dashboard-sidebar-footer .profile-click { display: flex; align-items: center; min-width: 0; }
+.dashboard-sidebar-footer .profile-click img { width: 32px; height: 32px; flex-shrink: 0; }
+.dashboard-sidebar-footer .user-dtl {
+    /* Anchor to the footer, opening upward; inherits card styling from app.css */
+    bottom: calc(100% + 8px);
+    top: auto;
+    right: 8px;
+    margin-top: 0;
+}
+.dashboard-sidebar-footer-bell { display: flex; align-items: center; }
+.dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
+.dashboard-sidebar-footer-bell svg.w-8 { width: 22px; height: 22px; color: var(--d-text-secondary, #64748B); }
+
+/* Collapsed rail: centre icons, keep the anchor hit-target */
+body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { justify-content: center; padding-left: 0.25rem; padding-right: 0.25rem; }
+body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
+
+/* Mobile menu sidebar (res_sidebar) — dark surface, so lift the footer chrome */
+#res_sidebar .dashboard-sidebar-footer { border-top-color: rgba(255,255,255,0.15); }
+#res_sidebar .dashboard-sidebar-footer-bell svg { color: #E2E8F0; }
+#res_sidebar .dashboard-sidebar-footer .user-info .user-name { color: #F8FAFC; }
+#res_sidebar .dashboard-sidebar-footer .user-info .user-email { color: #94A3B8; }
+
 /* ── Reduced motion ────────────────────────────────────────────────────────
    Disables every infinite loop in this stylesheet:
-   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce,
-   save-indicator d-pulse, Toshi plan-card toshi-spin.
-   Keep the solid elements visible — only stop the looping animation. */
+   loading-dot bounce, save-indicator d-pulse, Toshi plan-card toshi-spin.
+   (The LIVE badge sheen/dot entries were removed with the badge itself,
+   2026-09-27.) Keep the solid elements visible — only stop the looping
+   animation. */
 @media (prefers-reduced-motion: reduce) {
-    .dashboard-shell--admin .dashboard-live-badge::after {
-        animation: none;
-        content: none;
-    }
-
-    .dashboard-live-dot {
-        animation: none;
-        box-shadow: none;
-    }
-
     .ds-loading-dot {
         animation: none;
         opacity: 0.7;

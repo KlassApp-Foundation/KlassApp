@@ -163,7 +163,7 @@ class DashboardEmptyStatePlanToProfileTest extends TestCase
         $view->assertSee('Teachers', false);
         $view->assertSee('Notice Board', false);
         $view->assertSee('Connected tools', false);
-        $view->assertSee('data-testid="dashboard-live-badge"', false);
+        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
         $view->assertDontSee('data-testid="plan-usage-banner"', false);
         $view->assertDontSee('Freemium Plan', false);
         $view->assertDontSee('data-testid="dashboard-kpi-placeholder"', false);

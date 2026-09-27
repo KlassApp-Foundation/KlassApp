@@ -4,10 +4,12 @@
   <div class="flex-1 header-wrapper-b">
     @include('layouts.partials.sidebar-menu', ['role' => 'admin'])
   </div>
+  @include('layouts.partials.sidebar-footer', ['notifyMode' => 'admin'])
 </div>
-{{-- Mobile sidebar — toggleable via hamburger --}}
+{{-- Mobile sidebar — toggleable via hamburger. Reuses the same footer at the bottom of the menu. --}}
 <div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" style="background-color: #141413; position: absolute; z-index: 50; width: 100%;">
-  <div class="min-h-full header-wrapper-b">
+  <div class="min-h-full header-wrapper-b flex flex-col">
     @include('layouts.partials.sidebar-menu', ['role' => 'admin'])
+    @include('layouts.partials.sidebar-footer', ['notifyMode' => 'admin'])
   </div>
 </div>
