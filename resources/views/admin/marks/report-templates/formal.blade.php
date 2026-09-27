@@ -159,7 +159,7 @@
         }
         .ledger tr:nth-child(even) td { background: #F0FBF4; }
         .ledger td.left { text-align: left; font-family: 'DejaVu Serif', serif; }
-        .ledger td.empty { color: #94A3B8; }
+        .ledger td.empty { color: #64748B; }
 
         .total-row td {
             font-weight: 800;
