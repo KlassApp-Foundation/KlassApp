@@ -26,23 +26,13 @@
         </div>
 
         @if($approvals->count() === 0)
-            <div class="p-8 text-center text-gray-400 text-sm">
-                No approval requests yet.
+            <div class="ds-empty-state" data-testid="approvals-empty-state">
+                <p class="ds-empty-state-title">No approval requests yet</p>
+                {{-- --d-text-secondary, not the component's --d-muted (#94A3B8, 2.56:1): AA on white. --}}
+                <p class="ds-empty-state-desc" style="color: var(--d-text-secondary, #64748B);">Staff leave, parent-link and marks requests you need to review will appear here.</p>
             </div>
         @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
-                            <th class="px-5 py-3 font-semibold">Type</th>
-                            <th class="px-5 py-3 font-semibold">Requester</th>
-                            <th class="px-5 py-3 font-semibold">Status</th>
-                            <th class="px-5 py-3 font-semibold">Comments</th>
-                            <th class="px-5 py-3 font-semibold">Requested</th>
-                            <th class="px-5 py-3 font-semibold">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
+            <x-table :headers="['Type', 'Requester', 'Status', 'Comments', 'Requested', 'Actions']">
                         @foreach($approvals as $approval)
                             @php
                                 $approvable = $approval->approvable;
@@ -65,36 +55,40 @@
                                         ->get();
                                 }
                             @endphp
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-5 py-4 text-gray-700 font-medium">
-                                    {{ $typeName }}
-                                    @if($isParentLink)
-                                        <span class="text-gray-400 text-xs block font-normal">
-                                            {{ $approvable->phone }} · {{ $approvable->summaryLine() }}
-                                        </span>
-                                    @endif
+                            <tr>
+                                <td data-label="Type" class="font-medium" style="color: var(--d-text, #1E293B);">
+                                    <span>
+                                        {{ $typeName }}
+                                        @if($isParentLink)
+                                            <span class="text-xs block font-normal" style="color: var(--d-text-secondary, #64748B);">
+                                                {{ $approvable->phone }} · {{ $approvable->summaryLine() }}
+                                            </span>
+                                        @endif
+                                    </span>
                                 </td>
-                                <td class="px-5 py-4">
+                                <td data-label="Requester">
                                     @if($approval->requester)
-                                        <span class="text-gray-700">{{ $approval->requester->name }}</span>
-                                        <span class="text-gray-400 text-xs block">{{ $approval->requester->email }}</span>
+                                        <span>
+                                            <span style="color: var(--d-text, #1E293B);">{{ $approval->requester->name }}</span>
+                                            <span class="text-xs block" style="color: var(--d-text-secondary, #64748B);">{{ $approval->requester->email }}</span>
+                                        </span>
                                     @else
-                                        <span class="text-gray-400">—</span>
+                                        <span style="color: var(--d-text-secondary, #64748B);">—</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-4">
+                                <td data-label="Status">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                           style="background:{{ $stateColor }}15;color:{{ $stateColor }};">
                                         {{ $stateLabel }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-4 text-gray-500 max-w-xs truncate">
+                                <td data-label="Comments" class="max-w-xs truncate" style="color: var(--d-text-secondary, #64748B);">
                                     {{ $approval->comments ?: '—' }}
                                 </td>
-                                <td class="px-5 py-4 text-gray-400 text-xs whitespace-nowrap">
+                                <td data-label="Requested" class="text-xs whitespace-nowrap" style="color: var(--d-text-secondary, #64748B);">
                                     {{ $approval->created_at->diffForHumans() }}
                                 </td>
-                                <td class="px-5 py-4">
+                                <td data-label="Actions">
                                     @if($canAct)
                                         <div class="flex flex-col gap-2">
                                             <form method="POST" action="{{ route('admin.approvals.approve', $approval) }}" class="inline flex flex-wrap items-center gap-2">
@@ -102,7 +96,7 @@
                                                 @if($isParentLink)
                                                     @if($candidateStudents->isNotEmpty())
                                                         <select name="matched_student_id" required
-                                                                class="text-xs border rounded px-2 py-1 max-w-xs">
+                                                                class="ds-form-select max-w-xs" style="min-height: var(--d-touch-target-min, 44px);">
                                                             @foreach($candidateStudents as $candidate)
                                                                 <option value="{{ $candidate->id }}"
                                                                     @selected($candidate->id == $approvable->suggested_student_id)>
@@ -120,40 +114,37 @@
                                                     @endif
                                                 @endif
                                                 <input type="hidden" name="comments" value="">
-                                                <button type="submit"
-                                                         class="px-3 py-1 text-xs font-medium rounded text-white border-0 bg-green-600 hover:bg-green-500"
-                                                         onclick="return confirm('Approve this request?')">
+                                                <x-button type="submit" variant="primary" size="sm"
+                                                          onclick="return confirm('Approve this request?')">
                                                     Approve
-                                                </button>
+                                                </x-button>
                                             </form>
-                                            <button type="button"
-                                                     class="px-3 py-1 text-xs font-medium rounded text-white border-0 bg-red-500 hover:bg-red-400"
-                                                     onclick="document.getElementById('reject-form-{{ $approval->id }}').classList.toggle('hidden')">
+                                            <x-button variant="danger" size="sm"
+                                                      onclick="document.getElementById('reject-form-{{ $approval->id }}').classList.toggle('hidden')">
                                                 Reject
-                                            </button>
+                                            </x-button>
                                             <form id="reject-form-{{ $approval->id }}"
                                                   method="POST" action="{{ route('admin.approvals.reject', $approval) }}"
-                                                  class="hidden inline">
+                                                  class="hidden">
                                                 @csrf
-                                                <input type="text" name="comments" placeholder="Reason required..."
-                                                       class="text-xs border rounded px-2 py-1 w-32" required>
-                                                <button type="submit"
-                                                         class="px-2 py-1 text-xs font-medium rounded text-white border-0 bg-red-500 hover:bg-red-400">
-                                                    Confirm
-                                                </button>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <input type="text" name="comments" placeholder="Reason required..."
+                                                           class="ds-form-input w-40" style="min-height: var(--d-touch-target-min, 44px);" required>
+                                                    <x-button type="submit" variant="danger" size="sm">
+                                                        Confirm
+                                                    </x-button>
+                                                </div>
                                             </form>
                                         </div>
                                     @else
-                                        <span class="text-gray-400 text-xs">
+                                        <span class="text-xs" style="color: var(--d-text-secondary, #64748B);">
                                             {{ $approval->resolved_at ? $approval->resolved_at->diffForHumans() : '' }}
                                         </span>
                                     @endif
                                 </td>
                             </tr>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
+            </x-table>
 
             @if($approvals->hasPages())
                 <div class="px-5 py-3 border-t border-gray-100">
