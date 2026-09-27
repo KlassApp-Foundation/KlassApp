@@ -50,6 +50,7 @@
     <!-- end -->
 
  <livewire:styles>
+    @include('layouts.partials.toshi-prepaint')
     @php
         // The manual onboarding wizard hides Toshi entirely (see dashboard-refresh.css)
         // so its checklist cannot compete with the wizard.

@@ -31,6 +31,7 @@
     {{-- <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script> --}}
 
  <livewire:styles>
+    @include('layouts.partials.toshi-prepaint')
     </head>
     <body class="font-primary antialiased min-h-screen overflow-x-hidden" id="superadmin-body">
         <div id="app">

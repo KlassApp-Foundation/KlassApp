@@ -1,0 +1,93 @@
+{
+  "phase": "after",
+  "base": "http://localhost:8080",
+  "checks": {
+    "defaultState": {
+      "collapsed": true,
+      "rootW": 0,
+      "rootPos": "fixed",
+      "navbarW": 1412,
+      "navbarH": 69,
+      "pillVisible": true,
+      "hOverflowPx": 0
+    },
+    "expanded1280": {
+      "rootW": 380,
+      "appW": 1280,
+      "navbarW": 1280,
+      "contentRight": 900,
+      "rootLeft": 900,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "expanded1440": {
+      "rootW": 380,
+      "appW": 1440,
+      "navbarW": 1440,
+      "contentRight": 1060,
+      "rootLeft": 1060,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "expanded1920": {
+      "rootW": 380,
+      "appW": 1920,
+      "navbarW": 1920,
+      "contentRight": 1540,
+      "rootLeft": 1540,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "collapseRoundTrip": {
+      "expandedRootW": 380,
+      "collapsedRootW": 0,
+      "collapsedPillVisible": true,
+      "collapsedContentW": 1220,
+      "expandedContentW": 868,
+      "reExpandedRootW": 380,
+      "twoWayWorks": true
+    },
+    "resizeHandle": {
+      "present": true,
+      "boundingBox": {
+        "x": 1055,
+        "y": 69,
+        "width": 9,
+        "height": 831
+      },
+      "afterDragWiden": {
+        "rootW": 500,
+        "contentRight": 940,
+        "rootLeft": 940,
+        "noOverlap": false
+      },
+      "afterDragNarrow": {
+        "rootW": 400
+      },
+      "bounds": {
+        "afterMaxDragW": 300,
+        "afterMinDragW": 640
+      }
+    },
+    "persistence": {
+      "preReloadRootW": 0,
+      "postReloadRootW": 0,
+      "widthPersisted": true,
+      "collapsedStatePersisted": true
+    },
+    "mobile375": {
+      "burgerPresent": true,
+      "menuOpens": true,
+      "footerOnMobile": true,
+      "rootPos": "fixed",
+      "hOverflowPx": 0
+    },
+    "mobile767": {
+      "burgerPresent": true,
+      "menuOpens": true,
+      "footerOnMobile": true,
+      "rootPos": "fixed",
+      "hOverflowPx": 0
+    }
+  }
+}

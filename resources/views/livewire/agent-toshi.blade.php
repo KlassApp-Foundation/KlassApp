@@ -5,7 +5,7 @@
      class="toshi-root">
     <div id="toshi-pill"
          wire:click="show"
-         onclick="document.body.classList.remove('toshi-collapsed');"
+         onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);"
          class="toshi-pill"
          data-testid="toshi-pill"
          style="{{ $visible || $maximized ? 'display: none;' : '' }}">
@@ -17,6 +17,17 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
+
+    <div id="toshi-resize-handle"
+         data-toshi-resize-handle
+         role="separator"
+         aria-orientation="vertical"
+         aria-label="Resize Toshi panel (drag or arrow keys)"
+         aria-valuemin="300"
+         aria-valuemax="640"
+         aria-valuenow="380"
+         tabindex="0"
+         title="Drag to resize · double-click to reset"></div>
 
     <div id="toshi-panel"
          class="toshi-panel"
@@ -35,7 +46,7 @@
                 <button wire:click="maximize" class="toshi-header-btn" title="Expand" data-testid="toshi-expand">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                 </button>
-                <button onclick="document.body.classList.add('toshi-collapsed');document.getElementById('toshi-toggle').textContent='◀';" class="toshi-header-btn" title="Close" data-testid="toshi-close">
+                <button onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);" class="toshi-header-btn" title="Close" data-testid="toshi-close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>
@@ -1471,7 +1482,7 @@
                                                     </div>
                                                 </div>
                                                 @endif
-                                    
+
                         {{-- Buttons inside maximize modal — same cards for step land + leftover actionStep --}}
                         @if(!$selectedPlanId && (
                             (!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection')
