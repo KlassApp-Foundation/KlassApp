@@ -79,7 +79,7 @@ class EmptyStateProductDemoTest extends TestCase
         $response->assertSee('data-testid="es-demo-scene-toshi"', false);
         $response->assertSee('data-testid="es-demo-scene-connectors"', false);
         $response->assertSee('data-testid="dashboard-greeting"', false);
-        $response->assertSee('data-testid="dashboard-live-badge"', false);
+        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
         $response->assertSee('data-testid="dashboard-home-head"', false);
         $response->assertDontSee('data-testid="dashboard-kpi-grid"', false);
         $response->assertDontSee('data-testid="dashboard-connected-tools"', false);
@@ -179,7 +179,7 @@ class EmptyStateProductDemoTest extends TestCase
         $view->assertDontSee('dashboard-kpi-card', false);
         $view->assertSee('data-testid="dashboard-greeting"', false);
         $view->assertSee('Good morning, Demo', false);
-        $view->assertSee('data-testid="dashboard-live-badge"', false);
+        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
         $view->assertSee('data-testid="dashboard-connected-tools"', false);
         $view->assertSee('data-testid="dashboard-topfold-kit"', false);
         $view->assertSee('Connected tools', false);

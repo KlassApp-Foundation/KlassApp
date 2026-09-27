@@ -1,36 +1,5 @@
-.dashboard-shell .dashboard-live-badge {
-    display: inline-block;
-    background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-    border-left: 4px solid #22c55e !important;
-    border: 1px solid rgba(30, 111, 217, 0.55);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-    padding: 0.75rem 1rem;
-    border-radius: 0.375rem;
-    color: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-}
-
-.dashboard-shell .dashboard-live-badge--teacher {
-    display: inline-block;
-    background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-    border-left: 4px solid #22c55e !important;
-    border: 1px solid rgba(30, 111, 217, 0.55);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-    padding: 0.75rem 1rem;
-    border-radius: 0.375rem;
-}
-
-.dashboard-shell .dashboard-live-badge--superadmin {
-    display: inline-block;
-    background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-    border-left: 4px solid #22c55e !important;
-    border: 1px solid rgba(30, 111, 217, 0.55);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-    padding: 0.75rem 1rem;
-    border-radius: 0.375rem;
-}
+/* LIVE badge — REMOVED 2026-09-27 (UI-polish pass). The admin dashboard
+   header no longer renders the badge; these blocks were its only styling. */
 
 .dashboard-shell .dashboard-subtitle {
     font-weight: 700 !important;
@@ -108,8 +77,12 @@
     background-color: transparent;
 }
 
+/* Deliberately var(--d-text-secondary), NOT the fork-era #dbeafe (a light-blue
+   for a dark navy header that no longer exists — 1.17:1 on today's #FAFAF5
+   header, unreadable). #64748B measures 4.55:1 on --d-shell (WCAG AA pass for
+   this 0.75rem bold label). UI-polish pass 2026-09-27. */
 .dashboard-themed-header .tw-form-label {
-    color: #dbeafe !important;
+    color: var(--d-text-secondary, #64748B) !important;
     font-weight: 700;
 }
 .admin-sidebar ul li a {
@@ -680,16 +653,16 @@ body {
   position: relative;
 }
 @keyframes jump {
-  0% 
-  { 
-    top: 0; 
+  0%
+  {
+    top: 0;
   }
-  50% 
-     { 
-      top: 50px; 
-      } 
-      100% { 
-        top: 0; 
+  50%
+     {
+      top: 50px;
+      }
+      100% {
+        top: 0;
       }
 }*/
 

@@ -59,13 +59,22 @@
                     <span class="es-browser-url">klassapp.xyz/admin/dashboard</span>
                 </div>
                 <div class="es-browser-body">
-                    <div class="es-toshi-panel">
+                    {{-- One connected "ask → get" demonstration, not two floating panels:
+                         the ask panel feeds the result panel through an explicit connector
+                         (arrow on desktop, stacked flow on ≤640px). --}}
+                    <div class="es-ask-panel">
+                        <div class="es-ask-tag">You ask Toshi</div>
                         <div class="es-toshi-title">Toshi</div>
                         <div class="es-chat-bubble es-chat-user es-msg" data-step="1">Add a new student: Okello James, P.4</div>
                         <div class="es-chat-bubble es-chat-bot es-msg" data-step="2">Creating student profile…</div>
                         <div class="es-chat-bubble es-chat-bot es-msg" data-step="3">Done — Okello James added to P.4.</div>
                     </div>
+                    <div class="es-flow-connector" aria-hidden="true">
+                        <span class="es-flow-line"></span>
+                        <svg class="es-flow-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                    </div>
                     <div class="es-result-panel">
+                        <div class="es-ask-tag es-ask-tag-result">Your dashboard updates</div>
                         <div class="es-result-label">Students</div>
                         <div class="es-table">
                             <div class="es-tr es-tr-head"><span>Name</span><span>Class</span></div>

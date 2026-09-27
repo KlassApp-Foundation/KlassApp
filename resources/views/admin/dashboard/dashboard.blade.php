@@ -12,10 +12,6 @@
                     {{ $dashboardContextLine ?? 'School overview' }}
                 </p>
             </div>
-            <span class="dashboard-live-badge" data-testid="dashboard-live-badge">
-                <span class="dashboard-live-dot" aria-hidden="true"></span>
-                Live
-            </span>
         </div>
         @include('partials.message')
         @if(!empty($setupIncomplete))

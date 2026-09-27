@@ -13,15 +13,14 @@ class DashboardHomeShellContractTest extends TestCase
         $this->assertStringContainsString('.dashboard-home-head', $css);
         $this->assertStringContainsString('.dashboard-topfold--kit', $css);
         $this->assertStringContainsString('.dashboard-connected-tools', $css);
-        $this->assertStringContainsString('.dashboard-live-badge', $css);
-        $this->assertStringContainsString('.dashboard-live-dot', $css);
+        // LIVE badge removed 2026-09-27 (UI-polish): the header pill is gone by
+        // product decision; only its tombstone comment remains in the CSS.
+        $this->assertStringNotContainsString('.dashboard-live-badge {', $css);
 
         // Pulse / reduced-motion canaries must remain (do not regress #555 / #558 / #560).
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
-        $this->assertMatchesRegularExpression(
-            '/\.dashboard-shell--admin\s+\.dashboard-live-badge::after\s*\{[^}]*content:\s*none/s',
-            $css
-        );
+        // (The badge's own reduced-motion entries were removed together with the
+        // badge — see the tombstone comment in dashboard-refresh.css.)
     }
 
     public function test_pulse_toshi_css_still_greens_kpi_values_and_blurs_ledger_thead(): void
