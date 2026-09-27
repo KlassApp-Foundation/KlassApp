@@ -111,6 +111,43 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   io.observe(stage);
 })();
 
+/* Toshi tower v2: scale the fixed 1120x600 stage to its container (>=760px only;
+   below that the CSS stacks it), and cycle one model mark at a time. */
+(function initToshiTower() {
+  const fit = document.getElementById('toshiTowerFit');
+  const models = document.getElementById('toshiTowerModels');
+  if (!fit || !models) return;
+
+  const wide = window.matchMedia('(min-width: 760px)');
+  function size() {
+    if (!wide.matches) { fit.style.removeProperty('--tv-s'); return; }
+    const w = fit.clientWidth;
+    if (w > 0) fit.style.setProperty('--tv-s', String(w / 1120));
+  }
+  new ResizeObserver(size).observe(fit);
+  wide.addEventListener('change', size);
+  size();
+
+  const tiles = Array.from(models.querySelectorAll('.tv-mt'));
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let i = 0;
+  let timer = null;
+  /* Reduced motion: no cycling, first two marks (one per face) shown statically. */
+  function show() {
+    tiles.forEach((t, k) => t.classList.toggle('on', rm.matches ? k < 2 : k === i));
+  }
+  function run() {
+    clearInterval(timer);
+    timer = null;
+    show();
+    if (!rm.matches) {
+      timer = setInterval(() => { i = (i + 1) % tiles.length; show(); }, 3000);
+    }
+  }
+  rm.addEventListener('change', run);
+  run();
+})();
+
 /* How it works: sequential step reveal */
 (function initHowFlow() {
   const flow = document.getElementById('how-flow');
