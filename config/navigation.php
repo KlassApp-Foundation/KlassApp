@@ -115,9 +115,9 @@ return [
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'teacher/dashboard', 'active' => ['dashboard']],
                 ['label' => 'Classes', 'icon' => 'classes', 'url' => 'teacher/classes', 'a_class' => 'flex items-center whitespace-nowrap', 'active' => ['classes', 'standardLinks', 'standardLink']],
-                ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'teacher/dashboard', 'hash' => 'timetable', 'active' => ['timetable']],
+                ['label' => 'Timetable', 'icon' => 'timetable', 'route' => 'teacher.timetable.index', 'active' => ['timetable']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'route' => 'teacher.attendance.index', 'active' => ['attendance']],
-                ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exams.create', 'active' => ['exams', 'exam'], 'condition' => 'class_teacher'],
+                ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exam.index', 'active' => ['exams', 'exam', 'marks', 'mark'], 'condition' => 'class_teacher'],
                 ['label' => 'Homework', 'icon' => 'reports', 'url' => 'teacher/homeworks', 'active' => ['homework', 'homeworks']],
                 ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Report Cards', 'icon' => 'reports', 'route' => 'teacher.reports.cards.index', 'active' => ['reports'], 'condition' => 'class_teacher'],

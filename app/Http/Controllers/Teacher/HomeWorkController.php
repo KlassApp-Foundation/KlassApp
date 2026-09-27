@@ -73,10 +73,34 @@ class HomeWorkController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    { 
-        $query = \Request::getQueryString();
+    {
+        $school_id = Auth::user()->school_id;
+        $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        return view('/teacher/homework/index' ,['query' => $query]);
+        $standardLinks = StandardLink::where('school_id', $school_id)
+            ->where('academic_year_id', $academic_year->id)
+            ->where('class_teacher_id', Auth::id())
+            ->pluck('id')
+            ->toArray();
+
+        $teacherlinks = Teacherlink::where('school_id', $school_id)
+            ->where('academic_year_id', $academic_year->id)
+            ->where('teacher_id', Auth::id())
+            ->pluck('standardLink_id')
+            ->toArray();
+
+        $allStandardLinks = array_unique(array_merge($standardLinks, $teacherlinks));
+
+        $homeworks = Homework::with(['standardLink', 'subject'])
+            ->where('school_id', $school_id)
+            ->whereIn('standardLink_id', $allStandardLinks)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return view('/teacher/homework/index', [
+            'homeworks' => $homeworks,
+            'query' => \Request::getQueryString(),
+        ]);
     }
 
     /**

@@ -59,9 +59,6 @@
                                         </div>
 
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <a href="{{ route('teacher.exams.edit', $exam) }}" class="ds-btn ds-btn-ghost ds-btn-sm">
-                                                Edit Exam
-                                            </a>
                                             <a href="{{ route('teacher.exam.marks.enter', $exam) }}" class="ds-btn ds-btn-primary ds-btn-sm">
                                                 Enter / Edit Marks
                                             </a>
