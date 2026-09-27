@@ -37,20 +37,26 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('klassapp-logo-primary.svg', false);
         $response->assertSee('navbar-logo-img', false);
         $response->assertSee('hero-bg-vintage', false);
-        // Toshi tower v2: core + Toshi blocks, 6 channels in, 3 roles out.
-        $response->assertSee('id="toshiTowerFit"', false);
-        $response->assertSee('id="toshiTowerModels"', false);
-        $response->assertSee('class="toshi-visual-label tv-lbl">Toshi</div>', false);
+        // #toshi keeps the orbital tower (partials/landing-toshi-tower, #624).
+        $response->assertSee('id="toshiTower"', false);
+        // #agent-core: tower v2 as its own section directly after #toshi.
+        $content = $response->getContent();
+        $this->assertMatchesRegularExpression('#<section class="toshi" id="toshi">.*?</section>\s*<section class="agent-core" id="agent-core"#s', $content);
+        $toshi = substr($content, strpos($content, 'id="toshi"'), strpos($content, 'id="agent-core"') - strpos($content, 'id="toshi"'));
+        $this->assertStringNotContainsString('ac-', $toshi);
+        $response->assertSee('id="agentCoreFit"', false);
+        $response->assertSee('id="agentCoreModels"', false);
+        $response->assertSee('<h2 id="agent-core-title">Toshi on top of KlassApp</h2>', false);
+        $response->assertSee('class="toshi-visual-label ac-lbl">Toshi</div>', false);
         $response->assertSee('KlassApp · Core', false);
-        $response->assertSee('<title id="tv-title">Toshi on top of KlassApp</title>', false);
         foreach (['WhatsApp', 'Email', 'Slack', 'SMS', 'Drive', 'Calendar'] as $channel) {
             $response->assertSee('<span>'.$channel.'</span>', false);
         }
         foreach (['Parent', 'Teacher', 'Admin'] as $role) {
-            $response->assertSee('<span class="tv-role-dot"></span>'.$role, false);
+            $response->assertSee('<span class="ac-role-dot"></span>'.$role, false);
         }
         // Model tiles are decorative duplicates of the "Runs on" row: empty alt only.
-        $this->assertSame(6, preg_match_all('/class="tv-mt tv-mt-[lr]"><img [^>]*alt=""/', $response->getContent()));
+        $this->assertSame(6, preg_match_all('/class="ac-mt ac-mt-[lr]"><img [^>]*alt=""/', $content));
         $response->assertSee('Runs on', false);
         $response->assertSee('images/brand/models/anthropic-mark.svg', false);
         $response->assertSee('images/brand/models/openai-mark.svg', false);
@@ -132,9 +138,12 @@ class LandingPreviewV3Test extends TestCase
         // Hero X-flip + tower emergence (no unresolved --d-* in live rules)
         $this->assertMatchesRegularExpression('/transform:\s*rotateX\(90deg\)/', $css);
         $this->assertMatchesRegularExpression('/\.hero-role-avatar\s*\{[^}]*border:\s*1px solid var\(--brand-green\)/s', $css);
-        // Tower v2: only the K tile's plate spins; the K mark itself never animates.
-        $this->assertMatchesRegularExpression('/\.tv-plate\s*\{\s*animation:\s*orbitSpin 48s/', $css);
-        $this->assertDoesNotMatchRegularExpression('/\.tv-ktile img\s*\{[^}]*animation/', $css);
+        // #toshi orbital tower CSS is intact.
+        $this->assertMatchesRegularExpression('/\.toshi-tower\s*\{/', $css);
+        $this->assertMatchesRegularExpression('/\.tt-spin\s*\{/', $css);
+        // #agent-core: only the K tile's plate spins; the K mark itself never animates.
+        $this->assertMatchesRegularExpression('/\.ac-plate\s*\{\s*animation:\s*acSpin 48s/', $css);
+        $this->assertDoesNotMatchRegularExpression('/\.ac-ktile img\s*\{[^}]*animation/', $css);
         $this->assertMatchesRegularExpression('/\.toshi-visual-label\s*\{[^}]*color:\s*#15803D/s', $css);
         $this->assertMatchesRegularExpression('/@media \(max-width: 759\.98px\)/', $css);
         $this->assertDoesNotMatchRegularExpression('/var\(--toshi-/', $css);

@@ -114,24 +114,24 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   io.observe(stage);
 })();
 
-/* Toshi tower v2: scale the fixed 1120x600 stage to its container (>=760px only;
+/* #agent-core (tower v2): scale the fixed 1120x600 stage to its container (>=760px only;
    below that the CSS stacks it), and cycle one model mark at a time. */
-(function initToshiTower() {
-  const fit = document.getElementById('toshiTowerFit');
-  const models = document.getElementById('toshiTowerModels');
+(function initAgentCore() {
+  const fit = document.getElementById('agentCoreFit');
+  const models = document.getElementById('agentCoreModels');
   if (!fit || !models) return;
 
   const wide = window.matchMedia('(min-width: 760px)');
   function size() {
-    if (!wide.matches) { fit.style.removeProperty('--tv-s'); return; }
+    if (!wide.matches) { fit.style.removeProperty('--ac-s'); return; }
     const w = fit.clientWidth;
-    if (w > 0) fit.style.setProperty('--tv-s', String(w / 1120));
+    if (w > 0) fit.style.setProperty('--ac-s', String(w / 1120));
   }
   new ResizeObserver(size).observe(fit);
   wide.addEventListener('change', size);
   size();
 
-  const tiles = Array.from(models.querySelectorAll('.tv-mt'));
+  const tiles = Array.from(models.querySelectorAll('.ac-mt'));
   const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
   let i = 0;
   let timer = null;

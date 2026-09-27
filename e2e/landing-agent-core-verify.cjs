@@ -1,18 +1,20 @@
 /**
- * Landing #toshi — Toshi tower v2 acceptance checks (exits 1 on any failure).
+ * Landing #agent-core (Toshi tower v2, its own section after #toshi) — acceptance checks (exits 1 on any failure).
  *
- *   PREVIEW_BASE=https://klassapp-staging-7mpoqg.laravel.cloud node e2e/landing-toshi-tower-v2-verify.cjs
+ *   PREVIEW_BASE=https://klassapp-staging-7mpoqg.laravel.cloud node e2e/landing-agent-core-verify.cjs
  *   (cloud VM: CHROMIUM_PATH=/opt/pw-browsers/chromium)
  *
  * 1. K tile: pause the plate's 48s spin at 0 / 12 / 24 / 36 / 43.2s. The plate reads
  *    0 / 90 / 180 / -90 / -36 deg; the K mark reads 0 deg (never sideways) with
  *    det = +1 (never mirrored) at every sample, and has no animation of its own.
- * 2. Model cycling: exactly one .tv-mt.on at a time, changing every ~3s, alternating faces.
+ * 2. Model cycling: exactly one .ac-mt.on at a time, changing every ~3s, alternating faces.
  * 3. Reduced motion (emulated prefers-reduced-motion: reduce): no running animations
- *    inside #toshi, exactly two .tv-mt.on unchanged after 10s, hover does not move a
+ *    inside #agent-core, exactly two .ac-mt.on unchanged after 10s, hover does not move a
  *    node, flow streaks display:none.
  * 4. Below 760px: no horizontal scroll at 320/375/414, channels/roles >= 44px tall.
  * 5. Label contrast: "Toshi" pill text vs its rendered pill background (pixel-sampled).
+ * 6. Placement: #agent-core sits directly after #toshi; #toshi still renders the orbital
+ *    tower (#toshiTower) and contains no ac-* element.
  */
 const { chromium } = require('playwright');
 
@@ -30,17 +32,32 @@ const angle = (m) => {
 (async () => {
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
+  // ---- 6: placement + #toshi untouched ----
+  {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    const r = await page.evaluate(() => {
+      const t = document.getElementById('toshi'), a = document.getElementById('agent-core');
+      return { next: t && t.nextElementSibling ? t.nextElementSibling.id : null, orbital: !!(t && t.querySelector('#toshiTower .tt-svg')),
+        acInToshi: t ? t.querySelectorAll('[class^="ac-"], [class*=" ac-"]').length : -1, towerInAgentCore: !!(a && a.querySelector('.ac-visual #agentCoreFit')) };
+    });
+    check(r.next === 'agent-core', `#agent-core directly follows #toshi (next sibling: ${r.next})`);
+    check(r.orbital && r.acInToshi === 0, `#toshi still renders the orbital tower and has no ac-* elements (${r.acInToshi})`);
+    check(r.towerInAgentCore, 'tower v2 renders inside #agent-core');
+    await page.close();
+  }
+
   // ---- 1 + 2 + 5: full motion, desktop ----
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' });
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-    await page.locator('#toshi .toshi-visual').evaluate((e) => e.scrollIntoView({ block: 'center' }));
+    await page.locator('#agent-core .ac-visual').evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(1200);
 
     const samples = await page.evaluate(() => {
-      const plate = document.querySelector('.tv-plate');
-      const k = document.querySelector('.tv-ktile img');
-      const anim = plate.getAnimations().find((a) => a.animationName === 'orbitSpin');
+      const plate = document.querySelector('.ac-plate');
+      const k = document.querySelector('.ac-ktile img');
+      const anim = plate.getAnimations().find((a) => a.animationName === 'acSpin');
       if (!anim) return null;
       anim.pause();
       const kAnims = k.getAnimations().length;
@@ -50,7 +67,7 @@ const angle = (m) => {
         return { t, plate: getComputedStyle(plate).transform, k: getComputedStyle(k).transform, kBox: [+r.width.toFixed(1), +r.height.toFixed(1)] };
       }) };
     });
-    check(!!samples, 'plate has an orbitSpin animation');
+    check(!!samples, 'plate has an acSpin animation');
     if (samples) {
       check(samples.kAnims === 0, `K mark has no animation of its own (found ${samples.kAnims})`);
       const want = { 0: 0, 12000: 90, 24000: 180, 36000: -90, 43200: -36 };
@@ -65,8 +82,8 @@ const angle = (m) => {
     const seq = [];
     for (let n = 0; n < 6; n++) {
       seq.push(await page.evaluate(() => {
-        const on = [...document.querySelectorAll('.tv-mt')].map((e, i) => (e.classList.contains('on') ? i : -1)).filter((i) => i >= 0);
-        return { on, face: on.length ? (document.querySelectorAll('.tv-mt')[on[0]].classList.contains('tv-mt-l') ? 'L' : 'R') : '-' };
+        const on = [...document.querySelectorAll('.ac-mt')].map((e, i) => (e.classList.contains('on') ? i : -1)).filter((i) => i >= 0);
+        return { on, face: on.length ? (document.querySelectorAll('.ac-mt')[on[0]].classList.contains('ac-mt-l') ? 'L' : 'R') : '-' };
       }));
       await page.waitForTimeout(1500);
     }
@@ -75,7 +92,7 @@ const angle = (m) => {
     check(distinct.length >= 3, `model tile advances (~3s): saw ${distinct.join(',')}`);
 
     // Label contrast, pixel-sampled: text colour from computed style, background from rendered pill pixels.
-    const lbl = page.locator('.tv-lbl');
+    const lbl = page.locator('.ac-lbl');
     const box = await lbl.boundingBox();
     const png = await page.screenshot({ clip: { x: box.x + 3, y: box.y + box.height / 2, width: 1, height: 1 } });
     const bgPx = await page.evaluate(async (b64) => {
@@ -96,20 +113,20 @@ const angle = (m) => {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-    await page.locator('#toshi .toshi-visual').evaluate((e) => e.scrollIntoView({ block: 'center' }));
+    await page.locator('#agent-core .ac-visual').evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(1500);
     const state = () => page.evaluate(() => ({
-      anims: document.getElementById('toshi').getAnimations({ subtree: true }).filter((a) => a.playState === 'running').map((a) => a.animationName || a.transitionProperty),
-      on: [...document.querySelectorAll('.tv-mt')].map((e, i) => (e.classList.contains('on') ? i : -1)).filter((i) => i >= 0),
-      flow: getComputedStyle(document.querySelector('.tv-fl')).display,
+      anims: document.getElementById('agent-core').getAnimations({ subtree: true }).filter((a) => a.playState === 'running').map((a) => a.animationName || a.transitionProperty),
+      on: [...document.querySelectorAll('.ac-mt')].map((e, i) => (e.classList.contains('on') ? i : -1)).filter((i) => i >= 0),
+      flow: getComputedStyle(document.querySelector('.ac-fl')).display,
     }));
     const a = await state();
     await page.waitForTimeout(10000);
     const b = await state();
-    check(a.anims.length === 0 && b.anims.length === 0, `no running animations in #toshi (${JSON.stringify(b.anims)})`);
+    check(a.anims.length === 0 && b.anims.length === 0, `no running animations in #agent-core (${JSON.stringify(b.anims)})`);
     check(b.on.length === 2 && a.on.join() === b.on.join(), `two static model tiles, unchanged after 10s (${a.on} → ${b.on})`);
     check(b.flow === 'none', `flow streaks display:${b.flow}`);
-    const ch = page.locator('.tv-ch').first();
+    const ch = page.locator('.ac-ch').first();
     const before = await ch.boundingBox();
     await ch.hover(); await page.waitForTimeout(500);
     const after = await ch.boundingBox();
@@ -125,9 +142,9 @@ const angle = (m) => {
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
     const r = await page.evaluate(() => ({
       sw: document.documentElement.scrollWidth, iw: innerWidth,
-      ch: [...document.querySelectorAll('.tv-ch')].map((e) => Math.round(e.getBoundingClientRect().height)),
-      roles: [...document.querySelectorAll('.tv-role')].map((e) => Math.round(e.getBoundingClientRect().height)),
-      tower: (() => { const b = document.querySelector('.tv-tower').getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; })(),
+      ch: [...document.querySelectorAll('.ac-ch')].map((e) => Math.round(e.getBoundingClientRect().height)),
+      roles: [...document.querySelectorAll('.ac-role')].map((e) => Math.round(e.getBoundingClientRect().height)),
+      tower: (() => { const b = document.querySelector('.ac-tower').getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height)]; })(),
     }));
     check(r.sw <= r.iw, `${width}px no horizontal scroll (scrollWidth ${r.sw} <= ${r.iw})`);
     check(r.ch.every((h) => h >= 44) && r.roles.every((h) => h >= 44), `${width}px tap heights channels ${r.ch} roles ${r.roles} (>=44)`);
