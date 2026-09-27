@@ -3886,6 +3886,15 @@ select:focus-visible,
   .hero-layer-mid  { inset: 10px -3px -6px 10px; }
 }
 
+/* Mobile audit 2026-09-27: at 375px the 'Absence follow-up · Draft ready'
+   hero-row overflowed its card (~12px; the card clips via overflow:hidden, so
+   the tag text was silently cut). Flex rows with a nowrap tag can't shrink the
+   label span without min-width:0 — give it one and ellipsize when cramped. */
+@media (max-width: 600px) {
+  .hero-row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-role-body { overflow: hidden; }
+}
+
 /* ==== Hero device frame + macOS-style select transition (hero redesign) ==== */
 /* Idle bob moves from the stage to the whole device. */
 .hero-stage { animation: none; }

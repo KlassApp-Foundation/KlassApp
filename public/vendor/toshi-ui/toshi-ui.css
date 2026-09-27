@@ -351,6 +351,26 @@
    (641–1279px had no rules at all) and the ≤640px full-screen takeover, so the
    panel keeps one behaviour at every width. */
 @media (max-width: 1279px) {
+    /* Collapsed pill on mobile (audit fix 2026-09-27): the collapsed-pill
+       positioning rule previously lived ONLY in the ≥1280 block, so sub-1280
+       the pill was static inside the 0-width collapsed root — squeezed to a
+       16px sliver, untappable. Anchor it fixed bottom-right on every width,
+       with a ≥44px tap area. */
+    body.toshi-collapsed [data-toshi-root] .toshi-pill {
+        display: flex !important;
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        max-width: calc(100vw - 32px);
+        z-index: 9999;
+    }
+    body.toshi-collapsed [data-toshi-root] .toshi-pill .toshi-pill-text {
+        display: none; /* keep the collapsed pill compact on phones */
+    }
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-pill {
+        display: none !important; /* open drawer replaces the pill */
+    }
+
     [data-toshi-root] .toshi-panel {
         position: fixed !important;
         top: 0;
