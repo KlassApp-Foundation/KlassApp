@@ -167,7 +167,7 @@ class TeacherWebAttendanceScopeTest extends TestCase
         ]);
     }
 
-    public function test_teacher_attendance_list_includes_all_active_school_classes(): void
+    public function test_teacher_attendance_list_only_includes_own_scoped_classes(): void
     {
         $response = $this->actingAs($this->classTeacher)->getJson('/teacher/attendance/list');
 
@@ -176,27 +176,25 @@ class TeacherWebAttendanceScopeTest extends TestCase
 
         $linkIds = collect($payload['standardlist'])->pluck('id')->map(fn ($id) => (int) $id)->all();
         $this->assertContains((int) $this->ownStream->id, $linkIds);
-        $this->assertContains((int) $this->otherStream->id, $linkIds);
+        $this->assertNotContains((int) $this->otherStream->id, $linkIds);
 
         $this->assertArrayHasKey((string) $this->ownStream->id, $payload['studentlist']);
-        $this->assertArrayHasKey((string) $this->otherStream->id, $payload['studentlist']);
+        $this->assertArrayNotHasKey((string) $this->otherStream->id, $payload['studentlist']);
     }
 
-    public function test_attendance_list_does_not_depend_on_class_teacher_assignment(): void
+    public function test_attendance_list_depends_on_class_teacher_assignment(): void
     {
         $this->ownStream->update(['class_teacher_id' => null]);
-        $this->ownStream->section()->update(['class_teacher_id' => $this->classTeacher->id]);
 
         $response = $this->actingAs($this->classTeacher)->getJson('/teacher/attendance/list');
 
         $response->assertOk();
         $linkIds = collect($response->json('standardlist'))->pluck('id')->map(fn ($id) => (int) $id)->all();
 
-        $this->assertContains((int) $this->ownStream->id, $linkIds);
-        $this->assertContains((int) $this->otherStream->id, $linkIds);
+        $this->assertNotContains((int) $this->ownStream->id, $linkIds);
     }
 
-    public function test_teacher_can_store_attendance_for_class_they_are_not_ct_of(): void
+    public function test_teacher_cannot_store_attendance_for_class_they_are_not_ct_of(): void
     {
         $ay = \App\Helpers\SiteHelper::getAcademicYear($this->school->id);
         $attDate = \Carbon\Carbon::parse($ay->start_date)->addDay()->format('Y-m-d');
@@ -213,12 +211,11 @@ class TeacherWebAttendanceScopeTest extends TestCase
             'present_id0' => $this->otherStudent->id,
         ]);
 
-        $response->assertOk();
-        $this->assertDatabaseHas('attendances', [
+        $response->assertForbidden();
+        $this->assertDatabaseMissing('attendances', [
             'school_id' => $this->school->id,
             'standardLink_id' => $this->otherStream->id,
             'user_id' => $this->otherStudent->id,
-            'status' => 1,
         ]);
     }
 
