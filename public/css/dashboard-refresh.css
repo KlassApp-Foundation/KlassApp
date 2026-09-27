@@ -708,7 +708,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 .ds-form-label {
     display: block;
     font-family: "DM Sans", sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--d-text);
     margin-bottom: 6px;
