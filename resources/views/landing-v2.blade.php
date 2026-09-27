@@ -317,7 +317,7 @@
             </div>
             <div class="wa-body">
               <div class="wa-header">
-                <div class="wa-avatar">KA</div>
+                <div class="wa-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="14" height="14"></div>
                 <div>
                   <div class="wa-name">KlassApp · Toshi</div>
                   <div class="wa-status">online</div>
@@ -377,7 +377,7 @@
             </div>
             <div class="teach-shell">
               <div class="teach-side">
-                <div class="teach-side-mark">K</div>
+                <img class="teach-side-mark" src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="16" height="16">
                 <div class="teach-nav-dot active"></div>
                 <div class="teach-nav-dot"></div>
                 <div class="teach-nav-dot"></div>
@@ -528,18 +528,21 @@
         <p>Captured from a local KlassApp instance — the actual dashboard, a records module, and the Toshi assistant.</p>
       </div>
       <div class="shots-grid">
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Dashboard</span><span class="shot-url">klassapp.xyz/admin/dashboard</span></div>
-          <img src="{{ asset('images/landing/app-dashboard.webp') }}" alt="KlassApp school-admin dashboard with the setup checklist and Toshi assistant" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Library records</span><span class="shot-url">klassapp.xyz/admin/library/books</span></div>
-          <img src="{{ asset('images/landing/app-books.webp') }}" alt="KlassApp library records table listing books" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Fees &amp; payments</span><span class="shot-url">klassapp.xyz/admin/fees/payments</span></div>
-          <img src="{{ asset('images/landing/app-page.webp') }}" alt="KlassApp fees and payments module" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
+        <x-landing.app-shot
+          :src="asset('images/landing/app-dashboard.webp')"
+          alt="KlassApp school-admin dashboard for a demo school: term and enrolment summary, a WhatsApp feature card, the Finish school setup checklist, and the Toshi panel listing each setup step"
+          title="KlassApp · Dashboard"
+          url="klassapp.xyz/admin/dashboard" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-books.webp')"
+          alt="KlassApp library books page: a searchable table of school textbooks with title, author, category, code and quantity"
+          title="KlassApp · Library records"
+          url="klassapp.xyz/admin/library/books" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-fees.webp')"
+          alt="KlassApp fee payments page: amounts collected and outstanding, students in arrears and collection rate, above a table of payments by student, class, amount, method and status"
+          title="KlassApp · Fees & payments"
+          url="klassapp.xyz/admin/fees/payments" />
       </div>
     </div>
   </div>

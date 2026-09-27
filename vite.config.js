@@ -13,9 +13,6 @@ import path from 'path';
  * - resources/css/tailwind.css → @tailwindcss/vite (has @import "tailwindcss")
  * - resources/assets/sass/app.scss → Vite built-in Sass (Phase 2b: plain CSS in
  *   adminstyle/style — no @apply reintroduction)
- * - resources/css/landing.css → plain CSS entry (Mix mix.styles concat); no
- *   @import "tailwindcss", so @tailwindcss/vite does not utility-scan it.
- *   Wire into Blade only where Mix landing.css was used (not app layouts).
  *
  * Phase 3.1: app.js + bootstrap.js are ESM (no require).
  * Phase 3.5: Mix removed — use `npm run dev` / `npm run build` (no public/hot in prod).
@@ -27,7 +24,6 @@ export default defineConfig({
                 'resources/assets/js/app.js',
                 'resources/assets/sass/app.scss',
                 'resources/css/tailwind.css',
-                'resources/css/landing.css',
                 'resources/css/landing-preview.css',
                 'resources/js/landing-preview.js',
                 'resources/css/auth-preview.css',
@@ -49,7 +45,7 @@ export default defineConfig({
             },
         }),
         // Only expands utilities for CSS that @import "tailwindcss" (tailwind.css).
-        // Plain landing.css / Sass app.scss pass through without content scanning.
+        // Plain landing-preview.css / Sass app.scss pass through without content scanning.
         tailwindcss(),
     ],
     resolve: {

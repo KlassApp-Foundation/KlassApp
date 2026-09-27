@@ -39,21 +39,12 @@
     "isEntry": true
   },
   "resources/css/landing-preview.css": {
-    "file": "assets/landing-preview-BZ_QKOWA.css",
+    "file": "assets/landing-preview-B6bWE3pN.css",
     "name": "landing-preview",
     "names": [
       "landing-preview.css"
     ],
     "src": "resources/css/landing-preview.css",
-    "isEntry": true
-  },
-  "resources/css/landing.css": {
-    "file": "assets/landing-fvpjSpr3.css",
-    "name": "landing",
-    "names": [
-      "landing.css"
-    ],
-    "src": "resources/css/landing.css",
     "isEntry": true
   },
   "resources/css/tailwind.css": {

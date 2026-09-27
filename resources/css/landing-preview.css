@@ -2944,18 +2944,18 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 2px;
 }
 
+/* Toshi's avatar is the K mark everywhere (same treatment as .hero-role-avatar). */
 .wa-avatar {
   width: 22px; height: 22px;
   border-radius: 50%;
-  background: var(--brand-green);
-  color: #fff;
-  font-size: 0.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
+  background: var(--brand-white);
+  border: 1px solid var(--brand-green);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
+.wa-avatar img { width: 14px; height: 14px; display: block; }
 
 .wa-name {
   font-size: 0.625rem;
@@ -3036,18 +3036,8 @@ body.nav-open { overflow: hidden; }
   gap: 6px;
 }
 
-.teach-side-mark {
-  width: 16px; height: 16px;
-  border-radius: 4px;
-  background: var(--brand-blue);
-  color: #fff;
-  font-size: 0.4375rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-}
+/* The app sidebar's real K mark, not a text "K". */
+.teach-side-mark { width: 16px; height: 16px; display: block; }
 
 .teach-nav-dot {
   width: 12px; height: 12px;
@@ -3936,7 +3926,9 @@ select:focus-visible,
 .shots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .shot { margin: 0; background: var(--brand-white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
 .shot .ui-chrome { padding: 10px 12px; }
-.shot img { display: block; width: 100%; height: auto; }
+/* Fixed 16:10 frame: a replacement capture at a slightly different size can't shift layout. */
+.shot-frame { aspect-ratio: 16 / 10; overflow: hidden; background: var(--brand-light); }
+.shot-frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 @media (max-width: 900px) { .shots-grid { grid-template-columns: 1fr; } }
 
 /* Panel chrome gets a URL pill so the framing reads as real browser chrome. */
