@@ -13038,3 +13038,44 @@ Full-pass regression session at `main` `2c4c36e6` (staging confirmed deployed at
 **Fixtures/state left clean:** local dev DB rebuilt after the suite-run wipe, regression fixtures (10 users incl. `reg.*@klassapp.test` + `invited.teacher*`) flagged `inactive`; staging fixtures flagged `inactive`, demo-student password re-randomized, synthetic classes 9/10 disabled, school-2 scope restored to its original `school_wide`, `sl1` restored to status 1, zero probe rows in `visitor_log`. Worktrees `KlassApp-reg-base` and `KlassApp-pr824` removed; scratch scripts deleted.
 
 **Session facts worth keeping:** staging Commands API tinker needs the base64-file + `--execute="$(cat …)"` pattern (inline multiline closures parse-error otherwise); the container's `klassapp_test` scratch DB approach from prior sessions was superseded tonight by running the suite on the default SQLite `:memory:` config via `php vendor/phpunit/phpunit/phpunit`.
+
+### 2026-09-27 (later, local Claude Code): Consolidated production deploy — #838/#839/#840/#841 shipped; fixture cleanup done; post-deploy browser verification INCOMPLETE (hand-off to PHPStorm)
+
+#### What was completed this session
+
+1. **Synthetic fixture cleanup (production, rule #3 — flag inactive, never delete)**
+   - `standards_link id=307` (school 53, section P4V) → `status=0` (inactive). Was left active by the earlier interrupted session.
+   - `users id=2339` "ZZ Prod Verify Admin" `prodverify.demo-lakeview-junior@demo.klassapp.test` → `status=inactive`
+   - `users id=2340` "Verify Student" `synthetic.student.verify53@demo.klassapp.test` → `status=inactive`
+   All three confirmed by read-back after the Commands API update.
+
+2. **Regression gate — PASS**
+   - Ran `php -d memory_limit=2G vendor/phpunit/phpunit/phpunit` inside `sms-app` Docker container (the correct command per earlier sessions — `php artisan test` wipes dev DB, shell wrapper silently no-ops).
+   - Result: **1712 tests / 99 errors / 52 failures = 151 not-passing**. Baseline was 159/1696. **8 fewer failures, 16 new tests — zero new regressions.**
+   - CI on commit `7283f66f`: `scan` check = **success**.
+
+3. **Pre-deploy rollback point**: last prod deploy = `depl-a2d7de51` @ `d377e2e1` (2026-09-27T03:40:30Z). No new migrations in the diff since that SHA.
+
+4. **Production deployed**: `POST …/environments/env-a2ac7a89-…/deployments` → `depl-a2d8bb5a-c15a-45d5-9a45-54ab53677453` → polled to **`deployment.succeeded`** — SHA confirmed: `7283f66fe7a8ce3f7ec0f80126c4bcaebbbb86ce`.
+
+5. **#840 landing contrast verified on live `klassapp.xyz`**: `PREVIEW_BASE=https://klassapp.xyz node e2e/landing-toshi-name-contrast-verify.cjs` → `rgb(21,128,61)` on `rgb(250,250,245)` = **4.79:1 at 375/414/768/1280** — AA passes. ✅
+
+6. **#839 IDOR fix confirmed in code on main**: `findSchoolFeedback($id, $school_id, $action)` scopes by `->where('school_id', $school_id)->findOrFail(…)` before each handler, comment explains why lookups sit outside the catch block (the catch swallows `abort()`). Status-change and reply both use the same helper. Live browser probe not yet run (handed off).
+
+#### Still needed — pick up here in PHPStorm
+
+The following browser-based verification items are **NOT YET CONFIRMED** on live production. Do not write the final `knowledge.md` stamp until these are done:
+
+- **Attendance write-then-read round-trip** on production. Note: fixtures flagged inactive this session — you'll need a live admin. Option: reset password for `admin.demo-lakeview-junior@demo.klassapp.test` (id=2315, school 53, still active) via Cloud Commands tinker. An active StandardLink at school 53 must also exist (id=307 is now inactive; query for another active SL at school 53 first).
+- **#819 cross-school StandardLink IDOR refusal** on production (update/updateStatus/idcard/printidcard scoped). Probe: log in as school-53 admin, attempt `POST /admin/standardLink/updateStatus/<id-from-different-school>` → expect 404 or 403, NOT 200+redirect+DB flip.
+- **#839 cross-school feedback IDOR refusal** on production — three operations: (a) `GET /admin/feedbacks/<foreign-id>/edit` → 404; (b) `POST /admin/feedbacks/<foreign-id>/update` → 404; (c) `POST /admin/feedbacks/updateStatus/<foreign-message-id>` → 404. Need a real foreign feedback id — query production: `SELECT id, school_id FROM feedbacks WHERE school_id != 53 LIMIT 5`.
+- **Mobile-nav tap-to-open at 375px** on production (Playwright or Chrome DevTools at 375 — #825 fix).
+- **PRs #833–#837**: staging-deploy each, verify the fix described in each PR, merge in order (#837 last). Real regression checks: mobile-nav, Toshi split-layout, sidebar-footer on staging.
+
+#### Current production state
+
+- **Live SHA**: `7283f66f` (as of this session's deploy)
+- **Live deploy**: `depl-a2d8bb5a`
+- **Rollback**: `depl-a2d7de51` @ `d377e2e1`
+- **⚠️ #827 still open (plain-text password warning)**: teacher invite flow sends a plain-text password in the invite email. Not deployed to production. Open PR.
+- **Open PRs still needing work**: #833, #834, #835, #836, #837 (all reviewed, not merged, staged-not-verified), and #827 (plain-text password).
