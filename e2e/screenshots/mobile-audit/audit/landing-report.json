@@ -1,0 +1,33 @@
+[
+  {
+    "label": "landing-375",
+    "url": "http://localhost:8080/",
+    "vw": 375,
+    "overflow": 0,
+    "wide": [
+      {
+        "tag": "SPAN",
+        "cls": "hero-tag wait",
+        "w": 119,
+        "right": 387
+      }
+    ],
+    "offViewportInteractive": []
+  },
+  {
+    "label": "landing-414",
+    "url": "http://localhost:8080/",
+    "vw": 414,
+    "overflow": 0,
+    "wide": [],
+    "offViewportInteractive": []
+  },
+  {
+    "label": "landing-768",
+    "url": "http://localhost:8080/",
+    "vw": 768,
+    "overflow": 0,
+    "wide": [],
+    "offViewportInteractive": []
+  }
+]

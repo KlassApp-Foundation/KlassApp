@@ -152,9 +152,9 @@ class StandardsLinkController extends Controller
         {
             $school_id = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
-           
+
             $standard = $this->createStandardLink($school_id , $academic_year->id , $request);
-            
+
             $message = trans('messages.add_success_msg',['module' => 'Standard Details']);
 
             $ip= $this->getRequestIP();
@@ -249,7 +249,15 @@ class StandardsLinkController extends Controller
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
             $school_id = Auth::user()->school_id;
 
-            $standardLink = StandardLink::where('id',$id)->first();
+            $standardLink = StandardLink::where('id',$id)
+                ->where('school_id',$school_id)
+                ->first();
+
+            if (!$standardLink) {
+                Log::warning('StandardLink update refused: id not in admin school', ['admin_id' => Auth::id(), 'requested_id' => $id]);
+                $res['error'] = trans('messages.update_error_msg', ['module' => 'Standard Details']);
+                return $res;
+            }
 
             $standard = $this->editStandardLink($school_id , $academic_year->id , $id , $request);
 
@@ -287,7 +295,14 @@ class StandardsLinkController extends Controller
         //
         try
         {
-            $standard = StandardLink::where('id',$id)->first();
+            $standard = StandardLink::where('id',$id)
+                ->where('school_id', Auth::user()->school_id)
+                ->first();
+
+            if (!$standard) {
+                Log::warning('StandardLink status update refused: id not in admin school', ['admin_id' => Auth::id(), 'requested_id' => $id]);
+                return redirect('/admin/standardlinks')->with('errormessage', trans('messages.update_error_msg', ['module' => 'Standard']));
+            }
 
             $standard->status   = $request->status;
 
@@ -315,12 +330,14 @@ class StandardsLinkController extends Controller
 
     public function idcard($id)
     {
-       
+
          $academic = SiteHelper::getAcademicYear(Auth::user()->school_id);
-         $standardLink = StandardLink::where('id',$id)->first();
+         $standardLink = StandardLink::where('id',$id)
+             ->where('school_id', Auth::user()->school_id)
+             ->firstOrFail();
          $students=SiteHelper::getClassStudents(Auth::user()->school_id,$academic->id,$standardLink->id);
          //$pdf = PDF::loadView('admin/exam/hallticket', compact('exam','students'));
-        // return $pdf->stream('result.pdf', array('Attachment'=>0)); 
+        // return $pdf->stream('result.pdf', array('Attachment'=>0));
         // return view('admin.id-card.id-card1',compact('standardLink','students'));
         // dd($students);
           return view('admin.id-card.id-card-new',compact('standardLink','students','academic'));
@@ -332,10 +349,12 @@ class StandardsLinkController extends Controller
     {
 
          $academic = SiteHelper::getAcademicYear(Auth::user()->school_id);
-         $standardLink = StandardLink::where('id',$id)->first();   
+         $standardLink = StandardLink::where('id',$id)
+             ->where('school_id', Auth::user()->school_id)
+             ->firstOrFail();
          $students=SiteHelper::getClassStudents(Auth::user()->school_id,$academic_year->id,$standardLink->id);
          $pdf = PDF::loadView('admin/id-card/idcard-print', compact('exam','students','academic'));
-         return $pdf->stream('result.pdf', array('Attachment'=>0)); 
+         return $pdf->stream('result.pdf', array('Attachment'=>0));
          //return view('admin.id-card.idcard-print',compact('standardLink','students'));
          //return view('admin.id-card.id-card1',compact('standardLink','students'));
         // return $pdf;
@@ -390,5 +409,5 @@ class StandardsLinkController extends Controller
     }
 
     // ============== Ug mode@elicom ========
-    
+
 }

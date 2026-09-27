@@ -1,6 +1,6 @@
 <template>
   <div class=" overflow-x-scroll lg:overflow-x-auto md:overflow-x-auto py-3" v-bind:class="[this.profile_tab==4?'block' :'hidden']">
-    <div class="flex flex-wrap custom-table mx-3 my-3" v-if="Object.keys(teachers).length>0">
+    <div class="flex flex-wrap custom-table mx-3 my-3" v-if="Object.keys(teachers || {}).length>0">
       <table class="w-full">
         <thead class="bg-grey-light">
           <tr class="border-b">

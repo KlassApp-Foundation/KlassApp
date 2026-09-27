@@ -176,65 +176,12 @@ body {
     }
 }
 
-/* ── Live Badge (admin dashboard header) ── */
+/* ── Live Badge — REMOVED 2026-09-27 ──
+   The "LIVE" pill in the admin dashboard header was removed by product decision
+   (UI-polish pass, PR series from docs/test-suite-triage-2026-09-26.md follow-up).
+   Badge CSS blocks deleted; reduced-motion canaries for the badge were removed with it.
+   The .dashboard-live-dot / badge-sheen keyframes are unused now and deleted. */
 
-.dashboard-live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 16px;
-    border-radius: 999px;
-    background: var(--d-accent);
-    color: var(--d-text-on-accent);
-    font-family: "DM Sans", sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.dashboard-shell--admin .dashboard-live-badge {
-    background: linear-gradient(90deg, #15803d 0%, var(--d-green) 55%, #4ade80 100%);
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.25);
-    position: relative;
-    overflow: hidden;
-}
-
-.dashboard-shell--admin .dashboard-live-badge::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -30%;
-    width: 24%;
-    height: 100%;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: skewX(-20deg);
-    animation: badge-sheen 3.4s ease-in-out infinite;
-}
-
-@keyframes badge-sheen {
-    0%, 100% { left: -30%; opacity: 0; }
-    25% { opacity: 0.8; }
-    55% { left: 115%; opacity: 0; }
-}
-
-.dashboard-live-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--d-text-on-accent);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
-    animation: pulse-dot 1.8s ease-out infinite;
-}
-
-@keyframes pulse-dot {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8); }
-    70% { box-shadow: 0 0 0 9px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-.dashboard-live-badge--teacher { background: var(--d-accent); }
-.dashboard-live-badge--superadmin { background: var(--d-accent); }
 
 /* ── Typography ── */
 
@@ -664,8 +611,11 @@ body [data-toshi-root] {
     --toshi-user-bubble: rgba(201, 100, 66, 0.10);
     --toshi-bot-bubble: var(--d-surface);
 
-    /* Position: fixed so the widget is always visible regardless of scroll */
-    /* On desktop (≥1280px), toshi-ui.css overrides this to position: static inside the flex layout */
+    /* Position: fixed so the widget is always visible regardless of scroll.
+       On desktop (≥1280px) the dock block in published vendor/toshi-ui/toshi-ui.css
+       (which loads AFTER this file) re-declares this same selector with the fixed
+       right-column geometry. Same specificity + both !important => that later sheet
+       wins — desktop dock geometry changes MUST be made in toshi-ui.css, not here. */
     position: fixed !important;
     bottom: 24px !important;
     right: 24px !important;
@@ -680,7 +630,12 @@ body [data-toshi-root] .toshi-pill {
     align-items: center;
 }
 
-/* ── Panel: fills the fixed [data-toshi-root] container — not independently fixed ── */
+/* ── Panel: fills its [data-toshi-root] container. On sub-1280 the root is a small
+   fixed widget box and this makes the panel fill it; on ≥1280 toshi-ui.css's dock
+   block re-declares the panel as a relative flex child filling the fixed column.
+   (The old comment here claimed the panel was "not independently fixed" while the
+   sub-1280 drawer rule in toshi-ui.css sets position:fixed on it — stale, corrected
+   2026-09-25.) ── */
 body [data-toshi-root] .toshi-panel {
     display: flex;
     flex-direction: column;
@@ -2398,6 +2353,15 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     justify-content: center !important;
     box-sizing: border-box !important;
 }
+/* The hamburger exists only below md (768px), where the desktop sidebar is hidden and
+   the res_sidebar drawer is the only nav. From md up the desktop sidebar carries
+   navigation, so hide the button — !important because the touch-sizing rule above
+   forces display and silently defeats the md:hidden/lg:hidden utilities. */
+@media (min-width: 768px) {
+    #mobile-menu-trigger {
+        display: none !important;
+    }
+}
 /* Navbar touch targets */
 .nav-brand a {
     min-height: 44px;
@@ -3546,22 +3510,50 @@ body.toshi-manual-wizard [data-toshi-root] {
     background: #E2E8F0;
 }
 
+/* ── Sidebar footer (profile + notifications, relocated from the header) ──
+   The .profile-click JS toggles .open on click; .user-dtl opens ABOVE the
+   footer anchor (bottom-anchored menu). The notification drawer is
+   position:fixed and position-independent. In the collapsed rail the footer
+   centres its icons and the user name hides like the menu labels. */
+.dashboard-sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--d-border, #E2E8F0);
+    position: relative;
+    flex-shrink: 0;
+}
+.dashboard-sidebar-footer .profile-click { display: flex; align-items: center; min-width: 0; }
+.dashboard-sidebar-footer .profile-click img { width: 32px; height: 32px; flex-shrink: 0; }
+.dashboard-sidebar-footer .user-dtl {
+    /* Anchor to the footer, opening upward; inherits card styling from app.css */
+    bottom: calc(100% + 8px);
+    top: auto;
+    right: 8px;
+    margin-top: 0;
+}
+.dashboard-sidebar-footer-bell { display: flex; align-items: center; }
+.dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
+.dashboard-sidebar-footer-bell svg.w-8 { width: 22px; height: 22px; color: var(--d-text-secondary, #64748B); }
+
+/* Collapsed rail: centre icons, keep the anchor hit-target */
+body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { justify-content: center; padding-left: 0.25rem; padding-right: 0.25rem; }
+body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
+
+/* Mobile menu sidebar (res_sidebar) — dark surface, so lift the footer chrome */
+#res_sidebar .dashboard-sidebar-footer { border-top-color: rgba(255,255,255,0.15); }
+#res_sidebar .dashboard-sidebar-footer-bell svg { color: #E2E8F0; }
+#res_sidebar .dashboard-sidebar-footer .user-info .user-name { color: #F8FAFC; }
+#res_sidebar .dashboard-sidebar-footer .user-info .user-email { color: #94A3B8; }
+
 /* ── Reduced motion ────────────────────────────────────────────────────────
    Disables every infinite loop in this stylesheet:
-   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce,
-   save-indicator d-pulse, Toshi plan-card toshi-spin.
-   Keep the solid elements visible — only stop the looping animation. */
+   loading-dot bounce, save-indicator d-pulse, Toshi plan-card toshi-spin.
+   (The LIVE badge sheen/dot entries were removed with the badge itself,
+   2026-09-27.) Keep the solid elements visible — only stop the looping
+   animation. */
 @media (prefers-reduced-motion: reduce) {
-    .dashboard-shell--admin .dashboard-live-badge::after {
-        animation: none;
-        content: none;
-    }
-
-    .dashboard-live-dot {
-        animation: none;
-        box-shadow: none;
-    }
-
     .ds-loading-dot {
         animation: none;
         opacity: 0.7;
@@ -3950,20 +3942,14 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     outline-offset: 2px;
 }
 
-/* ── Toshi panel: the sidebar's own vertical envelope ──
-   On desktop the root is a static flex item in the body's row, and align-items: stretch
-   made it span the full viewport height starting at y=0, so it swallowed the header's
-   85px band and read as a slab bolted over the chrome. It now starts where the sidebar
-   starts and ends where the sidebar ends. Scoped to desktop, because below 1280px the
-   widget is deliberately fixed bottom-right. */
+/* ── Toshi header offset constant (single source of truth) ──
+   69px = the rendered .navbar.dashboard-themed-header height (68px content + 1px
+   border, measured 2026-09-22). Consumed by the ≥1280 fixed right-column dock in
+   published vendor/toshi-ui/toshi-ui.css (top: var(--toshi-header-offset)).
+   History: #791 (2026-09-22) used this for margin-top/height/align-self on the
+   then-static flex root; retired 2026-09-25 when the dock became position:fixed —
+   the toshi-ui.css dock block now zeroes margin/height/align-self explicitly. */
 :root { --toshi-header-offset: 69px; }
-@media (min-width: 1280px) {
-    body [data-toshi-root] {
-        margin-top: var(--toshi-header-offset) !important;
-        height: calc(100vh - var(--toshi-header-offset)) !important;
-        align-self: flex-start !important;
-    }
-}
 
 /* ── Header height: 85px to 68px by trimming wrapper padding only ──
    Measured: <nav class="navbar dashboard-themed-header"> had padding 8px top and bottom

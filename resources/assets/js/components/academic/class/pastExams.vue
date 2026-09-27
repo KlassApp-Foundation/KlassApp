@@ -1,6 +1,6 @@
 <template>
   <div class=" overflow-x-scroll lg:overflow-x-auto md:overflow-x-auto py-3" v-bind:class="[this.profile_tab==8?'block' :'hidden']">
-    <div class="my-5" v-if="Object.keys(past_exams).length > 0">
+    <div class="my-5" v-if="Object.keys(past_exams || {}).length > 0">
       <div class="flex mx-2 my-3 items-center" v-for="past_exam in past_exams">
         <div class="w-full lg:w-4/5 lg:mx-4 border rounded px-2 py-2">
           <div class="flex justify-between items-center">

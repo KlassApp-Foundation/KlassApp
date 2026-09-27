@@ -87,7 +87,10 @@ class StudentController extends Controller
 
         $standardFilter = $request->input('standard');
         if ($standardFilter) {
-            $selectedLink = StandardLink::find($standardFilter);
+            // School-scoped: a crafted foreign StandardLink id must not leak
+            // another school's class-link data into this filter (IDOR).
+            // Fail-safe: ignored when the id does not belong to this school.
+            $selectedLink = StandardLink::where('school_id', $school_id)->find($standardFilter);
             if ($selectedLink) {
                 // A class can have multiple stream links (e.g. East/West) —
                 // filter by standard + section so every stream is included.

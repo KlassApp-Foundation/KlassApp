@@ -128,7 +128,7 @@ class GoogleAuthController extends Controller
                 ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
             Log::error('Google auth user creation failed', [
-                'message' => $e->getMessage(),
+                'message' => 'Something went wrong. Please try again.',
                 'exception' => $e::class,
             ]);
             session()->forget('saas_signup');

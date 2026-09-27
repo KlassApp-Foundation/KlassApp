@@ -475,12 +475,22 @@ class AgentToshi extends Component
             'list_teachers'      => 'view teachers',
             'list_sections'      => 'view class streams',
             'generate_report'    => 'reports and stats',
-            // Parent (ug7) — so the greeting is about THEIR children, not the school
+            // Parent (ug7) — so the greeting is about THEIR children, not the school.
+            // Student (ug6) shares the view_attendance key, so overlapping keys must be
+            // worded by SCOPE ('children' vs 'self'), never by action name alone —
+            // otherwise students get greeted with "your children's attendance".
             'view_fee_balance'   => "your children's fee balances",
             'view_grades'        => "your children's grades",
-            'view_attendance'    => "your children's attendance",
+            'view_attendance'    => (($this->capabilities['scope'] ?? '') === 'children')
+                                    ? "your children's attendance"
+                                    : 'your attendance',
             'view_health'        => "your children's health records",
             'list_children'      => 'your linked children',
+            // Student (ug6) — their OWN records
+            'view_marks'         => 'your marks',
+            'view_homework'      => 'your homework',
+            'view_assignments'   => 'your assignments',
+            'view_library_activity' => 'your library activity',
             // Alumni (ug9) — their own records and the school alumni network
             'view_exam_records'      => 'your exam records',
             'view_academic_summary'  => 'your academic summary',

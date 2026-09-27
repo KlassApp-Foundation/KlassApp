@@ -43,8 +43,18 @@ class AttendanceAddRequest extends FormRequest
         Validator::extend('check_date', function ($attribute, $value, $parameters, $validator) {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
-            $start_date = Carbon::parse($academic_year->start_date);
-            $input_date = Carbon::createFromFormat('Y-m-d', $value);
+            if (! $academic_year) {
+                return false;
+            }
+
+            // Compare DATES, not date-times. Carbon::createFromFormat('Y-m-d', $value)
+            // inherits the current time of day, so a submission for today became
+            // "today HH:MM" which is always later than Carbon::today() at midnight, and
+            // every attempt to record attendance for the current date was rejected with
+            // "Enter valid Date". Attendance is taken during the school day, so any time
+            // on any date between the academic year start and today is valid.
+            $start_date = Carbon::parse($academic_year->start_date)->startOfDay();
+            $input_date = Carbon::parse($value)->startOfDay();
             $today = Carbon::today();
 
             return $input_date->between($start_date, $today);

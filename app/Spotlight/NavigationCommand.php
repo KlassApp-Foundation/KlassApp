@@ -76,10 +76,20 @@ class NavigationCommand extends SpotlightCommand
         }
 
         $isClassTeacher = null;
+        $isCtSections = null;
         $out = [];
 
-        $add = function (array $item) use (&$out, &$isClassTeacher, $user) {
+        $add = function (array $item) use (&$out, &$isClassTeacher, &$isCtSections, $user) {
             if (empty($item['label'])) {
+                return;
+            }
+
+            // Resolver items (e.g. the parent's per-child Fees/Grades/Attendance entries)
+            // need a linked child resolved against the authenticated user before they
+            // have a URL; without one they would only ever produce a dead "/". The
+            // sidebar renders them via the resolver — the palette skips them and offers
+            // the Children page instead.
+            if (! empty($item['resolver'])) {
                 return;
             }
 
@@ -90,6 +100,27 @@ class NavigationCommand extends SpotlightCommand
                         : false;
                 }
                 if (! $isClassTeacher) {
+                    return;
+                }
+            }
+
+            // Mirrors sidebar-menu.blade.php: Class Streams is a class-teacher-of-a-section
+            // item. A teacher without a school must never see it (and must not trigger a
+            // DB read to find that out).
+            if (($item['condition'] ?? null) === 'class_streams') {
+                if ($isCtSections === null) {
+                    $isCtSections = false;
+                    if ($user && $user->school_id && (int) $user->usergroup_id === 5) {
+                        $year = SiteHelper::getAcademicYear((int) $user->school_id);
+                        if ($year) {
+                            $isCtSections = ! empty(
+                                app(\App\Services\ExamAuthorization::class)
+                                    ->sectionIdsForClassTeacher($user, (int) $user->school_id, (int) $year->id)
+                            );
+                        }
+                    }
+                }
+                if (! $isCtSections) {
                     return;
                 }
             }

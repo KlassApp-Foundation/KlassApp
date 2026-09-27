@@ -1,0 +1,74 @@
+{
+  "phase": "before",
+  "base": "http://localhost:8080",
+  "checks": {
+    "defaultState": {
+      "collapsed": false,
+      "rootW": 380,
+      "rootPos": "fixed",
+      "navbarW": 1440,
+      "navbarH": 69,
+      "pillVisible": false,
+      "hOverflowPx": 0
+    },
+    "expanded1280": {
+      "rootW": 380,
+      "appW": 1280,
+      "navbarW": 1280,
+      "contentRight": 1280,
+      "rootLeft": 900,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "expanded1440": {
+      "rootW": 380,
+      "appW": 1440,
+      "navbarW": 1440,
+      "contentRight": 1440,
+      "rootLeft": 1060,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "expanded1920": {
+      "rootW": 380,
+      "appW": 1920,
+      "navbarW": 1920,
+      "contentRight": 1920,
+      "rootLeft": 1540,
+      "contentOverlapsRoot": true,
+      "navbarFullViewport": true
+    },
+    "collapseRoundTrip": {
+      "expandedRootW": 380,
+      "collapsedRootW": 0,
+      "collapsedPillVisible": true,
+      "collapsedContentW": 1220,
+      "expandedContentW": 1248,
+      "reExpandedRootW": 380,
+      "twoWayWorks": true
+    },
+    "resizeHandle": {
+      "present": false
+    },
+    "persistence": {
+      "preReloadRootW": 380,
+      "postReloadRootW": 380,
+      "widthPersisted": null,
+      "collapsedStatePersisted": false
+    },
+    "mobile375": {
+      "burgerPresent": true,
+      "menuOpens": true,
+      "footerOnMobile": true,
+      "rootPos": "fixed",
+      "hOverflowPx": 0
+    },
+    "mobile767": {
+      "burgerPresent": true,
+      "menuOpens": true,
+      "footerOnMobile": true,
+      "rootPos": "fixed",
+      "hOverflowPx": 0
+    }
+  }
+}

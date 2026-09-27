@@ -12,6 +12,9 @@
       showAcademicYear   show the academic-year selector (default: variant === 'dashboard')
       extraPricing       show the Pricing link (default false)
       showLogout         show a Logout button instead of the profile dropdown (default false)
+      chromeInSidebar    true => suppress the notification bell + profile dropdown here
+                         (they live in the sidebar footer instead — admin shell only,
+                         2026-09-27 UI-polish pass)
 --}}
 @php
     $variant          = $variant          ?? 'dashboard';
@@ -24,6 +27,7 @@
     $showLogout       = $showLogout       ?? false;
     $brandLogo        = $brandLogo        ?? null;   // 'klassapp' => KlassApp mark (parent; may span schools)
     $familyMenu       = $familyMenu       ?? false;  // parent: children + schools menu in the header
+    $chromeInSidebar  = $chromeInSidebar ?? false;  // admin: chrome lives in the sidebar footer
 
     // School identity: prefer the SCHOOL's own logo, fall back to the KlassApp mark.
     $navUser   = \Auth::user();
@@ -55,7 +59,10 @@
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 9l-3 3 3 3"/></svg>
                 </button>
             @endif
-            <button class="mr-3 {{ $variant === 'dashboard' ? 'lg:hidden' : 'block lg:hidden md:hidden' }}" id="mobile-menu-trigger" aria-label="Toggle sidebar" onclick="if (typeof showsidebar === 'function') { showsidebar('res_sidebar'); }">
+            <button class="mr-3 {{ $variant === 'dashboard' ? 'md:hidden' : 'block lg:hidden md:hidden' }}" id="mobile-menu-trigger" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="res_sidebar">
+                {{-- NOTE: click handling lives in public/js/custom.js (delegated). An earlier inline
+                     onclick="showsidebar('res_sidebar')" here double-bound with that listener, so every
+                     tap re-added `hidden` right after removing it and the menu could NEVER open (<768px). --}}
                 <span class="navbar-toggler-icon">
                     <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="currentColor"/></svg>
                 </span>
@@ -133,7 +140,7 @@
                     });
                 </script>
             @endauth
-            @if($notifyMode)
+            @if($notifyMode && ! $chromeInSidebar)
                 <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
             @endif
             @if($showLogout)
@@ -141,7 +148,7 @@
                     @csrf
                     <button type="submit" class="ds-btn ds-btn-sm" style="background:#fff;color:#0F172A;font-weight:600;">Logout</button>
                 </form>
-            @else
+            @elseif(! $chromeInSidebar)
                 <div class="navbar-menu {{ $variant === 'dashboard' ? 'ml-5' : 'lg:ml-5 md:ml-3' }}">
                     <ul class="navbar-nav ml-auto flex items-center">
                         @if($extraPricing)

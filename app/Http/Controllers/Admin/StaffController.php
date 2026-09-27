@@ -42,7 +42,7 @@ class StaffController extends Controller
     public function index()
     {
         //
-       
+
          $count    =  User::where('school_id',Auth::user()->school_id)->whereIn('usergroup_id',[4,8,10,11,12,13])->count();
         $alphabet = request('alphabet')?request('alphabet'):'A';
         $query    = \Request::getQueryString();
@@ -121,7 +121,7 @@ class StaffController extends Controller
           ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
           LOGNAME_ADD_TEACHER,
           $mes
-        ); 
+        );
 
         return redirect()->back()->with('successmessage',$mes);
       }
@@ -129,8 +129,8 @@ class StaffController extends Controller
       {
             Log::info($e->getMessage());
         //dd($e->getMessage());
-      } 
-    
+      }
+
 
     }
 
@@ -144,7 +144,7 @@ class StaffController extends Controller
     {
       //
       $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
-      if ($user === null) { abort(404); } 
+      if ($user === null) { abort(404); }
 
       return view('/admin/staff/show',['user' => $user]);
     }
@@ -161,7 +161,7 @@ class StaffController extends Controller
         $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
       if ($user === null) { abort(404); }
       $userprofile = Userprofile::where('user_id',$user->id)->first();
-       
+
       return view('/admin/staff/edit',['user' => $user , 'userprofile' => $userprofile ]);
     }
 
@@ -212,14 +212,14 @@ class StaffController extends Controller
         if(Request('avatar'))
         {
           $file = $request->file('avatar');
-          $path = $this->uploadFile(Auth::user()->school->slug.'/uploads/admin/teacher/avatar',$file); 
-          $userprofile->avatar = $path;  
+          $path = $this->uploadFile(Auth::user()->school->slug.'/uploads/admin/teacher/avatar',$file);
+          $userprofile->avatar = $path;
         }
         else
         {
           $userprofile->avatar = $userprofile->avatar;
         }
-            
+
         $userprofile->firstname             = $request->firstname;
         $userprofile->lastname              = $request->lastname;
         $userprofile->gender                = $request->gender;
@@ -233,7 +233,7 @@ class StaffController extends Controller
         $userprofile->marital_status        = $request->marital_status;
         $userprofile->notes                 = $request->notes;
         $userprofile->joining_date          = date('Y-m-d',strtotime($request->joining_date));
-            
+
         $userprofile->save();
 
         $teacherprofiles = TeacherProfile::where([['school_id',$school_id],['user_id',$user->id]])->get();
@@ -259,10 +259,10 @@ class StaffController extends Controller
                 $teacherprofile->specialization       = $request->specialization;
                 $teacherprofile->designation          = $request->designation;
                 $teacherprofile->sub_designation      = $request->sub_designation;
-                $teacherprofile->employee_id          = $request->employee_id;                
-                $teacherprofile->job_type             = $request->job_type;                
-                $teacherprofile->interested_in        = $request->interested_in;              
-                $teacherprofile->reporting_to         = $request->reporting_to;                 
+                $teacherprofile->employee_id          = $request->employee_id;
+                $teacherprofile->job_type             = $request->job_type;
+                $teacherprofile->interested_in        = $request->interested_in;
+                $teacherprofile->reporting_to         = $request->reporting_to;
                 $teacherprofile->status               = 1;
 
                 $teacherprofile->save();
@@ -283,10 +283,10 @@ class StaffController extends Controller
                   $teacherprofile->pg_degree            = $request->pg_degree;
                   $teacherprofile->specialization       = $request->specialization;
                   $teacherprofile->designation          = $request->designation;
-                  $teacherprofile->sub_designation      = $request->sub_designation;               
-                  $teacherprofile->job_type             = $request->job_type;               
-                  $teacherprofile->interested_in        = $request->interested_in;               
-                  $teacherprofile->reporting_to         = $request->reporting_to; 
+                  $teacherprofile->sub_designation      = $request->sub_designation;
+                  $teacherprofile->job_type             = $request->job_type;
+                  $teacherprofile->interested_in        = $request->interested_in;
+                  $teacherprofile->reporting_to         = $request->reporting_to;
                   $teacherprofile->status               = 1;
 
                   $teacherprofile->save();
@@ -323,14 +323,14 @@ class StaffController extends Controller
           ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
           LOGNAME_EDIT_TEACHER,
           $message
-        ); 
+        );
         \Session::put('successmessage',$message);
         return redirect()->back();
       }
       catch(Exception $e)
       {
         //dd($e->getMessage());
-      } 
+      }
     }
 
     /**
@@ -356,7 +356,7 @@ class StaffController extends Controller
                 ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
                 LOGNAME_DELETE_TEACHER,
                 $message
-            ); 
+            );
             \Session::put('successmessage',$message);
             return redirect('/admin/staffs');
         }
@@ -364,12 +364,12 @@ class StaffController extends Controller
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
       public function staffexport(Request $request)
    {
-    
+
      /* if(!\Session::has('headings'))
        {*/
         \Session::forget('staff_headings');
@@ -385,7 +385,7 @@ class StaffController extends Controller
     $headings=\Session::get('staff_headings');
     $heads=array_values($headings);
     //dd($heads);
-     $users = $this->StaffFilter($request,Auth::user()->school_id,[8,10,11,12,13]);    
+     $users = $this->StaffFilter($request,Auth::user()->school_id,[8,10,11,12,13],false);
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
      $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','date_of_birth','address','city','state','country','pincode',);
      $result=[];
@@ -396,7 +396,7 @@ class StaffController extends Controller
         if(count($users) > 0)
         {
             $csv->insertOne($result);
-      
+
             foreach($users as $user)
             {
                 $data=[];
@@ -450,7 +450,7 @@ class StaffController extends Controller
                 {
                     $data[]=$user->userprofile->pincode;
                 }
-                
+
                 $csv->insertOne($data);
             }
         }

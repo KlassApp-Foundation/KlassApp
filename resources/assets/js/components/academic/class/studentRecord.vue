@@ -8,7 +8,7 @@
                         <th class="text-left text-sm px-2 py-2 text-grey-darker" :colspan="month_count" style="text-align: center;"> Months </th>
                     </tr>
                 </thead>   
-                <tbody v-if="Object.keys(this.students).length > 0">
+                <tbody v-if="Object.keys(this.students || {}).length > 0">
                     <tr class="border-b" v-for="(student,key) in students.students">
                         <td class="py-3 px-2" v-for="(value,index) in student">
                             <p class="font-semibold text-xs" v-if="index != 'FullName'">{{ index }} : {{ value }} days</p>
@@ -50,7 +50,7 @@
             {
                 axios.get('/'+this.mode+'/standardLink/show/student/attendances/'+this.id).then(response => {
                     this.students = response.data;
-                    this.month_count = Object.keys(response.data.months).length;
+                    this.month_count = Object.keys(response.data.months || {}).length;
                     //console.log(this.students);
                     //console.log(this.month_count);
                 });

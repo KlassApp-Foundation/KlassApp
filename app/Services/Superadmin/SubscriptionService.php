@@ -11,6 +11,19 @@ use Illuminate\Validation\ValidationException;
 /**
  * Shared subscription mutators for Livewire SubscriptionForm / Subscriptions table
  * and Toshi platform tools. Mirrors Batch A submitSubscription + Filament approve.
+ *
+ * DELIBERATE DESIGN — billing decoupled from provisioning (July 4, 2026 decision,
+ * recorded in knowledge.md, "enforcePlanLimit() Implementation"):
+ * these methods write ONLY the Subscription billing/audit record. They must
+ * never create or mutate a CurrentPlan. Runtime plan limits come exclusively
+ * from an explicit admin choice — the onboarding plan step
+ * (OnboardingEngine::savePlan / AgentToshi::persistSelectedPlan),
+ * FreeTierPlanService, or CurrentPlanController. The divergence between
+ * Subscription and CurrentPlan (e.g. after an admin changes the plan directly)
+ * is intentional: CurrentPlan is the canonical source that
+ * ToshiActionService::enforcePlanLimit() reads; Subscription is billing history.
+ * Do not couple billing status to plan provisioning. Guarded by
+ * tests/Feature/Superadmin/SubscriptionCurrentPlanTest.php.
  */
 class SubscriptionService
 {

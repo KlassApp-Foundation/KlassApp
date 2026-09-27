@@ -6,10 +6,10 @@ $(document).ready(function(){
     if ($(e.target).closest('.user-dtl').length) return; // ignore clicks inside dropdown
     var $parent = $(this);
     var wasOpen = $parent.hasClass('open');
-    
+
     // Close all other open dropdowns
     $('.profile-click').removeClass('open');
-    
+
     if (!wasOpen) {
       $parent.addClass('open');
       e.stopPropagation();
@@ -37,7 +37,7 @@ $(document).ready(function(){
     {
       $('.create_event').removeclass('hidden').addclass('block');
     }
-    else 
+    else
     {
       $('.create_event').removeclass('block').addclass('hidden');
     }
@@ -54,17 +54,17 @@ $(document).ready(function(){
     }
   }
 
-  // Mobile menu toggle (moved from navigation.blade.php — Vue strips inline scripts)
-  $(document).ready(function() {
-    var btn = document.getElementById('mobile-menu-trigger');
-    if (btn) {
-      btn.addEventListener('click', function() {
-        var resSidebar = document.getElementById('res_sidebar');
-        if (resSidebar) {
-          resSidebar.classList.toggle('hidden');
-        }
-      });
-    }
+  // Mobile menu toggle (delegated — replaces both the old per-element listener AND the
+  // former inline onclick="showsidebar('res_sidebar')", which double-bound and made the
+  // menu unopenable: the inline handler removed `hidden`, this listener re-added it.
+  // Delegation also survives Livewire morphing of the navbar.)
+  $(document).on('click', '#mobile-menu-trigger', function() {
+    var resSidebar = document.getElementById('res_sidebar');
+    if (!resSidebar) return;
+    var willOpen = resSidebar.classList.contains('hidden');
+    resSidebar.classList.toggle('hidden', !willOpen);
+    resSidebar.classList.toggle('block', willOpen);
+    this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   });
 
   // Sidebar accordion toggle (moved from superadmin/menu.blade.php — Vue strips inline scripts)
