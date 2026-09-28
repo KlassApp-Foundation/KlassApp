@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\AdmissionUser;
 use App\Models\SchoolDetail;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;
 use App\Models\Userprofile;
@@ -58,16 +59,33 @@ class AdmissionController extends Controller
      */
     public function create($slug)
     {
-        $school = School::where('slug',$slug)->first();
+        $school = School::where('slug', $slug)->first();
 
-        $admission_open = SchoolDetail::where('school_id',$school->id)->where('meta_key','admission_open')->first();
+        if (! $school) {
+            abort(404);
+        }
 
-        $logo = SchoolDetail::where('school_id',$school->id)->where('meta_key','school_logo')->first();
-        $logo = $logo->LogoPath;
+        try {
+            $admission_open = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'admission_open')->first();
 
-        $closedetails = SchoolDetail::where('school_id',$school->id)->where('meta_key','admission_close_message')->first();
+            $logo = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'school_logo')->first();
 
-        return view('/pages/admission/admission',['admission_open' => $admission_open , 'closedetails' => $closedetails , 'slug' => $slug , 'logo' => $logo]);
+            $closedetails = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'admission_close_message')->first();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->view('pages.admission.unavailable', ['slug' => $slug], 503);
+        }
+
+        $logoValue = $logo?->meta_value;
+
+        return view('/pages/admission/admission', [
+            'admission_open' => $admission_open,
+            'isOpen'         => ($admission_open?->meta_value === '1'),
+            'closedetails'   => $closedetails,
+            'slug'           => $slug,
+            'logo'           => (filled($logoValue) && $logoValue !== '-' ? ($logo->LogoPath ?? '') : ''),
+        ]);
     }
 
     /**
@@ -132,13 +150,36 @@ class AdmissionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,$slug)
+    public function store(Request $request, $slug)
     {
-        $school=School::where('slug',$slug)->first();
+        $school = School::where('slug', $slug)->first();
 
+        if (! $school) {
+            abort(404);
+        }
+
+        try {
+            return $this->storeAdmission($request, $school);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'We could not submit the application right now. Please try again in a few minutes.');
+        }
+    }
+
+    /**
+     * Persist the admission form submission.
+     */
+    private function storeAdmission(Request $request, School $school)
+    {
         $academic_year  = SiteHelper::getAcademicYear($school->id);
         try
-        {  
+        {
             $admin = User::where('school_id',$school->id)->ByRole(3)->first();
        
             $admission = new Admission;
@@ -267,8 +308,9 @@ class AdmissionController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            dd($e->getMessage());
+            Log::error('Admission form submit failed', ['error' => $e->getMessage()]);
+
+            throw $e;
         }   
     }  
 }

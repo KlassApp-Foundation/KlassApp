@@ -24,7 +24,7 @@ class WhatsAppReportDiskRoutingTest extends TestCase
         $this->assertNotNull($delivery->absolutePathForToken($token));
 
         $this->get(url('/whatsapp/report-files/'.$token))
-            ->assertForbidden();
+            ->assertStatus(410);
     }
 
     public function test_signed_route_streams_from_default_disk_without_local_path(): void
