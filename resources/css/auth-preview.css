@@ -34,6 +34,7 @@
   --paper-edge: #D4C4A8;
   --paper-ink-wash: rgba(92, 74, 48, 0.03);
   --paper-rule: rgba(120, 95, 60, 0.07);
+  --hair: rgba(120, 95, 60, 0.14);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -543,6 +544,82 @@
   padding: 4px 10px;
 }
 
+/* ---- Invite pages: hints, notes, secondary actions, state icons ---- */
+.ap-hint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ap-muted);
+}
+
+.ap-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 60%, var(--ap-border));
+  border-radius: var(--ap-radius-sm);
+  background: var(--ap-input-bg);
+  color: var(--ap-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 18px;
+  min-height: 44px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+}
+
+.ap-secondary:hover {
+  background: var(--ap-input-bg-focus);
+  color: var(--ap-ink);
+}
+
+.ap-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ap-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: var(--ap-radius-sm);
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ap-muted);
+}
+
+.ap-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.err-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--hair);
+  margin-bottom: 20px;
+}
+
+.err-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 /* ---- Desktop: genuine two-column (not centered mobile card) ---- */
 @media (min-width: 960px) {
   .ap-shell {
@@ -600,5 +677,14 @@
   .ap-sub {
     font-size: 0.9375rem;
     margin-bottom: 4px;
+  }
+
+  .ap-actions--row {
+    flex-direction: row;
+  }
+
+  .ap-actions--row > * {
+    width: auto;
+    flex: 1;
   }
 }

@@ -4,41 +4,53 @@
 @section('title', 'Invite Link — ' . config('app.name'))
 
 @section('content')
-<div class="auth-shell" data-testid="invite-invalid-page">
-    <div class="auth-card" style="max-width: 480px;">
-        <div class="auth-card-header">
-            @if($reason === 'expired')
-                <h1 class="auth-card-title">Link expired</h1>
-                <p class="auth-card-subtitle">
-                    This invite link has expired
-                    @if(isset($invite))
-                    on {{ $invite->expires_at->format('j M Y, g:i A') }}.
-                    @endif
-                </p>
-            @elseif($reason === 'claimed')
-                <h1 class="auth-card-title">Already used</h1>
-                <p class="auth-card-subtitle">
-                    This invite link has already been used to create an account.
-                    You can log in with your email and password.
-                </p>
-            @else
-                <h1 class="auth-card-title">Invalid link</h1>
-                <p class="auth-card-subtitle">
-                    This invite link is not valid. It may have been mistyped or already used.
-                </p>
+<div class="ap-page" data-ap-paper="vintage" data-ap-layout="split" data-ap-screen="invite-link" data-testid="invite-invalid-page">
+  @include('auth.preview._paper-bg')
+  <div class="ap-shell">
+    @include('auth.preview._brand-panel', [
+      'tagline' => 'School operations on one protocol',
+      'support' => 'Classes, fees, and parent updates from one connected system.',
+    ])
+    <div class="ap-form-panel">
+      <div class="ap-form-shell ap-card">
+        @if($reason === 'expired')
+          <div class="err-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <h1 class="ap-title">This invite has expired</h1>
+          <p class="ap-sub">
+            @if(isset($invite))
+              It expired on {{ $invite->expires_at->format('j M Y') }} at {{ $invite->expires_at->format('g:i A') }}.
             @endif
-        </div>
-
-        <div class="form-actions">
-            <a href="{{ route('login') }}" class="btn btn-primary btn-full" data-testid="invite-goto-login">
-                Go to login
-            </a>
-        </div>
-
-        <p class="auth-card-footer-text">
-            If you need a new invitation, please contact your school administrator.
-        </p>
+            Invite links last {{ (int) config('invites.expiry_hours', 72) }} hours.
+          </p>
+          <div class="ap-actions">
+            <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Go to sign in</a>
+          </div>
+          <p class="ap-meta">Ask your school admin to send a new invite. It will arrive at the same email address.</p>
+        @elseif($reason === 'claimed')
+          <div class="err-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          </div>
+          <h1 class="ap-title">This invite has already been used</h1>
+          <p class="ap-sub">An account was created with it. Sign in with that email and the password you chose.</p>
+          <div class="ap-actions">
+            <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Sign in</a>
+            <a href="{{ route('password.email') }}" class="ap-secondary">Forgot password?</a>
+          </div>
+        @else
+          <div class="err-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </div>
+          <h1 class="ap-title">This invite link doesn't work</h1>
+          <p class="ap-sub">It may be incomplete. Open the link straight from the email rather than copying it.</p>
+          <div class="ap-actions">
+            <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Go to sign in</a>
+          </div>
+          <p class="ap-meta">Still stuck? Ask your school admin to send a new invite.</p>
+        @endif
+      </div>
     </div>
-</div>
+  </div>
 </div>
 @endsection
