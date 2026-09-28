@@ -26,10 +26,10 @@ Route::get('/classes/{section}', function ($section) {
         'academic_year_id' => request()->integer('academic_year_id') ?: null,
     ]);
 })->whereNumber('section')->name('teacher.classes.show');
-Route::get('/student/edit/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'edit'])->name('teacher.student.edit');
-Route::get('/student/edit-data/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'data'])->name('teacher.student.data');
-Route::post('/student/edit-validation/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'validation'])->name('teacher.student.validation');
-Route::post('/student/edit/{name}', [\App\Http\Controllers\Teacher\StudentController::class, 'update'])->name('teacher.student.update');
+Route::get('/student/edit/{id}', [\App\Http\Controllers\Teacher\StudentController::class, 'edit'])->name('teacher.student.edit');
+Route::get('/student/edit-data/{id}', [\App\Http\Controllers\Teacher\StudentController::class, 'data'])->name('teacher.student.data');
+Route::post('/student/edit-validation/{id}', [\App\Http\Controllers\Teacher\StudentController::class, 'validation'])->name('teacher.student.validation');
+Route::post('/student/edit/{id}', [\App\Http\Controllers\Teacher\StudentController::class, 'update'])->name('teacher.student.update');
 Route::get( '/dashboard/timetable', 'DashboardController@timetable' );
 Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );

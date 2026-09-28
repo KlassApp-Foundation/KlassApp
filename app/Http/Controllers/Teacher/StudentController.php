@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentController extends AdminStudentController
 {
-    public function edit($name)
+    public function edit($id)
     {
-        $student = $this->studentForTeacher($name);
+        $student = $this->studentForTeacher((int) $id);
 
         return response()->view('/admin/member/edit', [
             'user' => $student,
@@ -22,33 +22,38 @@ class StudentController extends AdminStudentController
         ]);
     }
 
-    public function update(Request $request, $name)
+    public function update(Request $request, $id)
     {
-        $this->studentForTeacher($name);
+        $student = $this->studentForTeacher((int) $id);
 
-        return parent::update($request, $name);
+        return parent::update($request, $student->name);
     }
 
-    public function data($name)
+    public function data($id)
     {
-        $this->studentForTeacher($name);
+        $student = $this->studentForTeacher((int) $id);
 
-        return response()->json(parent::editStudent($name));
+        return response()->json(parent::editStudent($student->name));
     }
 
-    public function validation(UserProfileUpdateRequest $request, $name)
+    public function validation(UserProfileUpdateRequest $request, $id)
     {
-        $this->studentForTeacher($name);
+        $student = $this->studentForTeacher((int) $id);
 
-        return parent::editValidationUser($request, $name);
+        return parent::editValidationUser($request, $student->name);
     }
 
-    private function studentForTeacher(string $name): User
+    private function studentForTeacher(int $id): User
     {
         $teacher = Auth::user();
-        $student = User::findByExactNameInSchool($name, (int) $teacher->school_id, 6);
+        $student = User::find($id);
 
-        abort_unless($student !== null, 404);
+        abort_unless(
+            $student !== null
+                && (int) $student->school_id === (int) $teacher->school_id
+                && (int) $student->usergroup_id === 6,
+            404
+        );
 
         $academicYear = SiteHelper::getAcademicYear((int) $teacher->school_id);
         abort_unless(
