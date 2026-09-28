@@ -50,6 +50,9 @@ return [
         'business_phone_number_id' => env('WHATSAPP_BUSINESS_PHONE_NUMBER_ID'),
         'business_waba_id' => env('WHATSAPP_BUSINESS_WABA_ID'),
         'business_verify_token' => env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'),
+        // Meta webhook signature verification (X-Hub-Signature-256) for the WhatsApp webhook POSTs
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
+        'verify_signature' => env('WHATSAPP_VERIFY_SIGNATURE', true),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
         'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),
