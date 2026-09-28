@@ -1,0 +1,25 @@
+name: Test Guard
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run full suite with known-failures guard
+        run: bash scripts/test-guard.sh
