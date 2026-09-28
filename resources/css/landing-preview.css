@@ -1111,10 +1111,21 @@ body.nav-open { overflow: hidden; }
 .toshi-tower-stage svg { display: block; width: 100%; height: auto; }
 
 /* Static base = the reduced-motion state: rings, packets and tiles all visible. */
+.tt-g { fill: var(--brand-green); }
+.tt-gs { stroke: var(--brand-green); }
+.tt-bs { stroke: var(--brand-blue); }
+.tt-d { fill: var(--brand-dark); }
+.tt-stop-g { stop-color: var(--brand-green); }
+.tt-stop-b { stop-color: var(--brand-blue); }
+.tt-stop-d { stop-color: var(--brand-dark); }
+.tt-tile rect { fill: var(--brand-white); stroke: var(--border); }
 .tt-tile { transform-box: fill-box; transform-origin: 50% 50%; filter: url(#tt-shadow); }
-.tt-beat { fill: none; stroke: #22C55E; stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.tt-beat { fill: none; stroke: var(--brand-green); stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .tt-spin { opacity: .75; transform-box: view-box; transform-origin: 500px 330px; }
 .tt-orbit { transform-box: view-box; transform-origin: 500px 330px; opacity: .9; }
+.tt-mer { transform-box: fill-box; transform-origin: 50% 50%; transform: scaleX(var(--ms)); }
+.tt-k { transform-box: fill-box; transform-origin: 50% 50%; }
+.tt-k + .tt-k { opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Continuous orbit motion (rings + light packets). */
@@ -1123,16 +1134,24 @@ body.nav-open { overflow: hidden; }
   .tt-orbit { animation: tt-spin 26s linear infinite; }
   @keyframes tt-spin { to { transform: rotate(360deg); } }
 
+  /* The K decals ride the globe: one visible face at a time, 32s per turn. */
+  .tt-k, .tt-k + .tt-k { animation: tt-k 32s linear infinite; animation-delay: var(--kd); }
+  @keyframes tt-k { 0.000% { transform: translateX(0.00px) scaleX(1.000); opacity: 1; } 4.167% { transform: translateX(12.16px) scaleX(0.966); opacity: 1; } 8.333% { transform: translateX(23.50px) scaleX(0.866); opacity: 1; } 12.500% { transform: translateX(33.23px) scaleX(0.707); opacity: 1; } 16.667% { transform: translateX(40.70px) scaleX(0.500); opacity: 1; } 20.833% { transform: translateX(45.40px) scaleX(0.259); opacity: 1; } 25.000% { transform: translateX(47.00px) scaleX(0.020); opacity: 0; } 29.167% { transform: translateX(45.40px) scaleX(0.020); opacity: 0; } 33.333% { transform: translateX(40.70px) scaleX(0.020); opacity: 0; } 37.500% { transform: translateX(33.23px) scaleX(0.020); opacity: 0; } 41.667% { transform: translateX(23.50px) scaleX(0.020); opacity: 0; } 45.833% { transform: translateX(12.16px) scaleX(0.020); opacity: 0; } 50.000% { transform: translateX(0.00px) scaleX(0.020); opacity: 0; } 54.167% { transform: translateX(-12.16px) scaleX(0.020); opacity: 0; } 58.333% { transform: translateX(-23.50px) scaleX(0.020); opacity: 0; } 62.500% { transform: translateX(-33.23px) scaleX(0.020); opacity: 0; } 66.667% { transform: translateX(-40.70px) scaleX(0.020); opacity: 0; } 70.833% { transform: translateX(-45.40px) scaleX(0.020); opacity: 0; } 75.000% { transform: translateX(-47.00px) scaleX(0.020); opacity: 0; } 79.167% { transform: translateX(-45.40px) scaleX(0.259); opacity: 1; } 83.333% { transform: translateX(-40.70px) scaleX(0.500); opacity: 1; } 87.500% { transform: translateX(-33.23px) scaleX(0.707); opacity: 1; } 91.667% { transform: translateX(-23.50px) scaleX(0.866); opacity: 1; } 95.833% { transform: translateX(-12.16px) scaleX(0.966); opacity: 1; } 100.000% { transform: translateX(-0.00px) scaleX(1.000); opacity: 1; } }
+
+  /* Globe meridians turn with scaleX only. */
+  .tt-mer { animation: tt-mer 32s ease-in-out infinite; animation-delay: calc(var(--m) * -4s); }
+  @keyframes tt-mer { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } 100% { transform: scaleX(1); } }
+
   /* Emissive core breathing. */
   .tt-core-pulse { animation: tt-core-pulse 4.5s ease-in-out infinite; }
   @keyframes tt-core-pulse { 0%, 100% { opacity: .26; } 50% { opacity: .55; } }
 
-  /* Per-node emergence cadence (one at a time, staggered). */
-  .tt-beat { animation: tt-beat 17s ease-out infinite; animation-delay: var(--d, 0s); }
+  /* Per-node emergence cadence: one at a time, 18s cycle, 1.5s steps. */
+  .tt-beat { animation: tt-beat 18s ease-out infinite; animation-delay: var(--d, 0s); }
   @keyframes tt-beat {
     0%   { opacity: 0; transform: scale(.35); }
-    6%   { opacity: .55; transform: scale(1); }
-    13%  { opacity: 0; transform: scale(1.4); }
+    4%   { opacity: .55; transform: scale(1); }
+    8%   { opacity: 0; transform: scale(1.4); }
     100% { opacity: 0; transform: scale(1.4); }
   }
 }
@@ -1142,7 +1161,9 @@ body.nav-open { overflow: hidden; }
   .tt-x { display: none; }
   .tt-core { transform-box: fill-box; transform-origin: 50% 50%; transform: scale(1.3); }
   .tt-tile { transform: scale(1.45); }
+  .tt-beat { animation-delay: var(--dm, 0s); }
 }
+
 @media (max-width: 768px) {
   .toshi-tower { margin: 32px 0 4px; border-radius: var(--radius-lg); }
 }
@@ -4180,7 +4201,7 @@ select:focus-visible,
   margin-bottom: 6px;
 }
 .demo-optional {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 .demo-field input,
@@ -4213,7 +4234,7 @@ select:focus-visible,
   flex-wrap: wrap;
 }
 .demo-note {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.8125rem;
 }
 .demo-hp {
