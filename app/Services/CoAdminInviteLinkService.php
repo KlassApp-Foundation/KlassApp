@@ -16,13 +16,12 @@ use Illuminate\Support\Str;
  * Issues one-time co-admin invite links and handles token verification + claiming.
  *
  * Tokens are 64 random chars, stored as SHA-256 hashes (not plain text).
- * Links expire after 72 hours and are single-use only.
+ * Links expire after a configurable number of hours (invites.expiry_hours)
+ * and are single-use only.
  */
 class CoAdminInviteLinkService
 {
     public const TOKEN_LENGTH = 64;
-
-    public const EXPIRY_HOURS = 72;
 
     /**
      * Issue a new invite for a new co-admin.
@@ -40,7 +39,7 @@ class CoAdminInviteLinkService
             'email'      => mb_strtolower(trim($email)),
             'token_hash' => $tokenHash,
             'name'       => trim($name),
-            'expires_at' => now()->addHours(self::EXPIRY_HOURS),
+            'expires_at' => now()->addHours((int) config('invites.expiry_hours', 72)),
         ]);
 
         Log::info('Co-admin invite issued', [
@@ -65,7 +64,7 @@ class CoAdminInviteLinkService
         $token = Str::random(self::TOKEN_LENGTH);
 
         $invite->token_hash = hash('sha256', $token);
-        $invite->expires_at = now()->addHours(self::EXPIRY_HOURS);
+        $invite->expires_at = now()->addHours((int) config('invites.expiry_hours', 72));
         $invite->save();
 
         Log::info('Co-admin invite reissued', [
