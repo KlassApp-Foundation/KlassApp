@@ -44,7 +44,7 @@
         $eotFirstTab = collect(['perClass', 'perSubject', 'perGender'])
             ->first(fn ($k) => ! empty($eotKpis[$k]));
         $eotSeries = $eotFirstTab ? collect($eotKpis[$eotFirstTab]) : collect();
-        $eotHues = ['#4F46E5', '#7C3AED', '#2563EB', '#0891B2', '#0D9488', '#059669', '#65A30D', '#CA8A04', '#EA580C', '#DC2626'];
+        $eotHues = ['#4F46E5', '#7C3AED', '#2563EB', '#0891B2', '#0D9488', '#059669', '#65A30D', '#A16207', '#EA580C', '#DC2626'];
         $eotCount = max(1, $eotSeries->count());
     @endphp
     <x-chart id="eotKpiChart" type="bar" :height="320"
@@ -57,7 +57,11 @@
                  'backgroundColor' => $eotSeries->keys()->map(fn ($i) => $eotHues[(int) round($i / max(1, $eotCount - 1) * (count($eotHues) - 1))])->all(),
                  'borderRadius' => 4,
              ]]"
-             :options="['scales' => ['x' => ['ticks' => ['autoSkip' => false, 'maxRotation' => 45, 'minRotation' => 0]]]]"
+             :options="[
+                 'layout' => ['padding' => ['top' => 18]],
+                 'plugins' => ['dsValueLabels' => ['display' => true]],
+                 'scales' => ['x' => ['ticks' => ['autoSkip' => false, 'maxRotation' => 45, 'minRotation' => 0]]],
+             ]"
              options-js='{ plugins: { tooltip: { callbacks: { label: function (c) { return "Avg: " + c.parsed.y; } } } } }' />
 </div>
 
@@ -73,7 +77,7 @@
 
     function barColor(index, total) {
         var hues = ['#4F46E5', '#7C3AED', '#2563EB', '#0891B2', '#0D9488',
-                    '#059669', '#65A30D', '#CA8A04', '#EA580C', '#DC2626'];
+                    '#059669', '#65A30D', '#A16207', '#EA580C', '#DC2626'];
         var ratio = total > 1 ? index / (total - 1) : 0;
         var idx = Math.round(ratio * (hues.length - 1));
         return hues[idx] || hues[0];
