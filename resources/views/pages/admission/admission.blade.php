@@ -27,7 +27,7 @@
             <!-- multistep form -->
             <form method="POST" action="" enctype="multipart/form-data" id="msform" class="w-full lg:w-1/2 mx-auto">
                 @csrf
-                <add-admission url="{{ url('/') }}" slug="{{ $slug }}"></add-admission>
+                <add-admission url="{{ url('/') }}" slug="{{ $slug }}" boarding="{{ $boardingAvailable ? 'true' : 'false' }}"></add-admission>
                 <portal-target name="add_admissionform"></portal-target>
             </form>
 

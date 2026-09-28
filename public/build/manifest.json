@@ -1,6 +1,6 @@
 {
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-DA4rzMWo.js",
+    "file": "assets/quill--5P_nVAC.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/assets/js/app.js": {
-    "file": "assets/app-D6M0rA-P.js",
+    "file": "assets/app-BgrAfJdh.js",
     "name": "app",
     "src": "resources/assets/js/app.js",
     "isEntry": true,

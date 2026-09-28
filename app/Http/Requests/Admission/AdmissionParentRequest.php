@@ -114,28 +114,30 @@ class AdmissionParentRequest extends FormRequest
 
         return [
             //
-            'father_name'               => 'required|check_father_name',
-            'father_qualification_id'   => 'required',
-            'father_designation'        => 'required|check_father_designation',
-            'father_occupation'         => 'required|check_father_occupation',
-            'father_organisation'       => 'required|check_father_organisation',
-            'father_income'             => 'required|numeric|check_father_annual_income|check_father_annual_income_value',
-            'father_mobile_no'          => 'required|numeric|digits:10',
-            'father_email'              => 'required|email',
-      
-            'mother_name'               => 'required|check_mother_name',
-            'mother_qualification_id'   => 'required',
-            'mother_designation'        => 'required|check_mother_designation',
-            'mother_occupation'         => 'required|check_mother_occupation',
-            'mother_organisation'       => 'required|check_mother_organisation',
-            'mother_income'             => 'required|numeric|check_mother_annual_income|check_mother_annual_income_value',
-            'mother_mobile_no'          => 'nullable|numeric|digits:10',
-            'mother_email'              => 'nullable|email',
+            // Primary parent or guardian - required.
+            'father_name'               => 'required|string|max:120',
+            'father_relationship'       => 'required|string|max:60',
+            'father_mobile_no'          => 'required|string|min:9|max:20',
+            'father_on_whatsapp'        => 'nullable|boolean',
+            'father_alt_phone'          => 'nullable|string|max:20',
+            'father_email'              => 'nullable|email',
+            'father_occupation'         => 'nullable|string|max:120',
+            'father_district'           => 'required|string|max:120',
 
-            'emergency_contact_1'       => 'required|numeric|digits:10',
-            'relation_with_student_1'   => 'required|check_relation',
-            'emergency_contact_2'       => 'required|numeric|digits:10',
-            'relation_with_student_2'   => 'required|check_relation_two',
+            // Second parent or guardian - all optional.
+            'mother_name'               => 'nullable|string|max:120',
+            'mother_relationship'       => 'nullable|string|max:60',
+            'mother_mobile_no'          => 'nullable|string|max:20',
+            'mother_on_whatsapp'        => 'nullable|boolean',
+            'mother_alt_phone'          => 'nullable|string|max:20',
+            'mother_email'              => 'nullable|email',
+            'mother_occupation'         => 'nullable|string|max:120',
+            'mother_district'           => 'nullable|string|max:120',
+
+            // Emergency contact, if different - optional.
+            'emergency_contact_name_1'  => 'nullable|string|max:120',
+            'relation_with_student_1'   => 'nullable|string|max:60',
+            'emergency_contact_1'       => 'nullable|string|max:20',
         ];
     }
 
@@ -143,79 +145,13 @@ class AdmissionParentRequest extends FormRequest
     {
         return
         [
-            'father_name.required'                                  => 'Father Name Is Required',
-            'father_name.check_father_name'                         => 'Enter Valid Father Name',
-
-            'father_qualification_id.required'                      => 'Father Qualification Is Required',
-            //'father_qualification_id.check_father_qualification'    => 'Enter Valid Father Qualification',
-
-            'father_designation.required'                           => 'Designation Is Required',
-            'father_designation.check_father_designation'           => 'Enter Valid Designation',
-
-            'father_occupation.required'                            => 'Occupation Is Required',
-            'father_occupation.check_father_occupation'             => 'Enter Valid Occupation',
-
-            'father_organisation.required'                          => 'Organisation Name Is Required',
-            'father_organisation.check_father_organisation'         => 'Enter Valid Organisation Name',
-
-            'father_income.required'                                => 'Income Is Required',
-            'father_income.numeric'                                 => 'Income Should Be In Numbers',
-            'father_income.check_father_annual_income'              => 'Income Should Be Lesser Than 9 Digits',
-            'father_income.check_father_annual_income_value'        => 'Enter Valid Income',
-
-            'father_mobile_no.required'                             => 'Mobile Number Is Required',
-            'father_mobile_no.numeric'                              => 'Enter Valid Mobile Number',
-            'father_mobile_no.digits:10'                            => 'Mobile Number Should Be Of 10 Digits',
-
-            'father_email.required'                                 => 'Email Is Required',
-            'father_email.email'                                    => 'Enter Valid Email',
-
-            'father_aadhar_number.required'                         => 'Aadhaar Number Is Required',
-            'father_aadhar_number.numeric'                          => 'Enter Valid Aadhaar Number',
-            'father_aadhar_number.digits:12'                        => 'Aadhaar Number Should Be Of 12 Digits',
-
-            'mother_name.required'                                  => 'Mother Name Is Required',
-            'mother_name.check_mother_name'                         => 'Enter Valid Mother Name',
-
-            'mother_qualification_id.required'                      => 'Mother Qualification Is Required',
-            //'mother_qualification_id.check_mother_qualification'    => 'Enter Valid Mother Qualification',
-
-            'mother_designation.required'                           => 'Designation Is Required',
-            'mother_designation.check_mother_designation'           => 'Enter Valid Designation',
-
-            'mother_occupation.required'                            => 'Occupation Is Required',
-            'mother_occupation.check_mother_occupation'             => 'Enter Valid Occupation',
-
-            'mother_organisation.required'                          => 'Organisation Name Is Required',
-            'mother_organisation.check_mother_organisation'         => 'Enter Valid Organisation Name',
-
-            'mother_income.required'                                => 'Income Is Required',
-            'mother_income.numeric'                                 => 'Income Should Be In Numbers',
-            'mother_income.check_mother_annual_income'              => 'Income Should Be Greater Lesser Than 9 Digits',
-            'mother_income.check_mother_annual_income_value'        => 'Enter Valid Income',
-
-            'mother_mobile_no.numeric'                              => 'Enter Valid Mobile Number',
-            'mother_mobile_no.digits:10'                            => 'Mobile Number Should Be Of 10 Digits',
-
-            'mother_email.email'                                    => 'Enter Valid Email',
-
-            'mother_aadhar_number.required'                         => 'Aadhaar Number Is Required',
-            'mother_aadhar_number.numeric'                          => 'Enter Valid Aadhaar Number',
-            'mother_aadhar_number.digits:12'                        => 'Aadhaar Number Should Be Of 12 Digits',
-
-            'relation_with_student_1.required'                      => 'Relationship Is Required',
-            'relation_with_student_1.check_relation'                => 'Enter Valid Relation',
-
-            'relation_with_student_2.required'                      => 'Relationship Is Required',
-            'relation_with_student_2.check_relation_two'            => 'Enter Valid Relation',
-            
-            'emergency_contact_1.required'                          => 'Mobile Number Is Required',
-            'emergency_contact_1.numeric'                           => 'Enter Valid Mobile Number',
-            'emergency_contact_1.digits:10'                         => 'Mobile Number Should Be Of 10 Digits',
-
-            'emergency_contact_2.required'                          => 'Mobile Number Is Required',
-            'emergency_contact_2.numeric'                           => 'Enter Valid Mobile Number',
-            'emergency_contact_2.digits:10'                         => 'Mobile Number Should Be Of 10 Digits',
+            'father_name.required'              => 'Parent or guardian name is required',
+            'father_relationship.required'      => 'Relationship to the child is required',
+            'father_mobile_no.required'         => 'Phone number is required',
+            'father_mobile_no.min'              => 'Enter a valid phone number',
+            'father_district.required'          => 'District of residence is required',
+            'father_email.email'                => 'Enter a valid email address',
+            'mother_email.email'                => 'Enter a valid email address',
         ];
     }
 }

@@ -12171,6 +12171,8 @@ Written as a trustworthy summary for a future reader. PR numbers are the real on
 
 Timetable materialization, report column and weighting as data, marks-entry grid, nursery skills and competency model, room entity plus conflict check, permission-matrix UI (blocked on the D8 outcome: usergroups plus `teacher_designations` are the source of truth, Laratrust is vestigial and should be retired), and `SchoolStatService` consolidation.
 
+- Configurable admission forms (added 2026-09-29 with the admission field set): schools choose which fields they collect, add custom fields, set required/optional per field and per class, and reorder steps. The PR 5 field set becomes the default template. Design needed before build.
+
 #### Also recorded this session, for the record
 
 - Known, non-blocking: `SiteHelper::getAcademicYear()` caches the AcademicYear model object per `school_id` with a 8400s TTL, so a stale entry can outlive its school and be served to a school that reused the id (#755).

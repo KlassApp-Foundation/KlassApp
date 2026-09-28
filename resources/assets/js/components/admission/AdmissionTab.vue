@@ -22,13 +22,13 @@
             </li>
 
             <li class="active" v-bind:class="[{'active' : profile_tab === '5'}]">
-                <!-- <a href="#" @click="setProfileTab('5')" class="text-gray-700 font-medium">Personal Detail</a> -->
-                <a href="#" class="text-gray-700 font-medium">Personal Detail</a>
+                <!-- <a href="#" @click="setProfileTab('5')" class="text-gray-700 font-medium">Health and support</a> -->
+                <a href="#" class="text-gray-700 font-medium">Health and support</a>
             </li>
         </ul>
 
         <portal to="add_admissionform">
-            <select-standard :url="this.url" :slug="this.slug"></select-standard>
+            <select-standard :url="this.url" :slug="this.slug" :boarding="this.boarding"></select-standard>
             <student-detail :url="this.url" :slug="this.slug"></student-detail>
             <academic-detail :url="this.url" :slug="this.slug"></academic-detail>
             <parent-detail :url="this.url" :slug="this.slug"></parent-detail>
@@ -47,7 +47,7 @@
     import personalDetail from './PersonalDetail';
 
     export default {
-        props:['url','slug'],
+        props:['url','slug','boarding'],
         data () {
             return {
                 profile_tab:'1',     

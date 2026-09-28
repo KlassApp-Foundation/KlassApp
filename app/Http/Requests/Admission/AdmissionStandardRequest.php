@@ -23,10 +23,26 @@ class AdmissionStandardRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $rules = [
             //
-            'standard_id'   => 'required',           
+            'standard_id'   => 'required',
+            'entry_term'    => 'required|in:1,2,3',
+            'entry_year'    => 'required|digits:4',
         ];
+
+        $school = \App\Models\School::where('slug', request()->route('slug') ?? request('slug'))->first();
+        $offersBoarding = false;
+        if ($school) {
+            $offersBoarding = \App\Models\SchoolDetail::where('school_id', $school->id)
+                ->where('meta_key', 'boarding_available')
+                ->value('meta_value') === '1';
+        }
+
+        $rules['boarding_type'] = $offersBoarding
+            ? 'required|in:day,boarding'
+            : 'nullable|in:day,boarding';
+
+        return $rules;
     }
 
      public function messages()
