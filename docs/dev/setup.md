@@ -214,31 +214,14 @@ php artisan tinker
 WhatsApp runs directly on the **Meta WABA token**. The live webhook is `api/whatsapp/inbound`
 (GET for Meta's verification handshake, POST for inbound messages).
 
-**Corrected 2026-09-28.** This section previously stated that internal data endpoints
-(`/api/whatsapp/identify-user`, `/api/whatsapp/student/{id}/grades`, and similar) were
-"protected by the `WhatsAppHmac` middleware". That was not true:
-
-- `App\Http\Middleware\WhatsAppHmac` existed but was referenced by nothing, so it was
-  applied to no route and protected nothing.
-- The routes it was supposed to protect were unauthenticated and had no caller in this
-  repository.
-- Those routes have now been **removed**, and the unused middleware with them, so there is
-  no longer an endpoint there to protect.
-
-**Known gap, reported and not yet fixed:** `api/whatsapp/inbound` does **not** verify Meta's
-`X-Hub-Signature-256` header. Any POST to that URL is accepted without proof it came from
-Meta. Adding the check must be coordinated with the live webhook, so it is tracked rather
-than patched silently.
+WhatsApp webhook hardening in progress.
 
 The n8n, Typebot and Evolution integrations are **retired**. Any documentation describing
 n8n as the live WhatsApp path is stale.
 
 ### 3.2 Inbound Webhook Authentication
 
-The inbound webhook (`POST /api/whatsapp/inbound`) is NOT behind HMAC middleware. Instead, it relies on:
-
-1. The `apikey` header sent by Evolution API (matched against `EVOLUTION_API_KEY`)
-2. Payload validation via `StoreWhatsAppWebhookRequest` FormRequest (validates event type, phone format, payload size, content structure)
+WhatsApp webhook hardening in progress.
 
 ### 3.3 Firewall Rules
 
