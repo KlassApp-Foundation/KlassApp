@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Security;
 
-use App\Http\Controllers\TestController;
 use Tests\TestCase;
 
 /**
@@ -17,11 +16,11 @@ class DebugRoutesRemovedTest extends TestCase
         $this->get('/checksms')->assertNotFound();
     }
 
-    public function test_the_checksms_controller_method_is_gone(): void
+    public function test_the_test_controller_itself_is_gone(): void
     {
-        // The route cannot be re-added without the method, and the method cannot be
-        // re-added without failing here.
-        $this->assertFalse(method_exists(TestController::class, 'checksms'));
+        // The whole controller was removed: it held an unrouted webhook that created users
+        // with a password taken from request data, plus the SMS-sending checksms() method.
+        $this->assertFileDoesNotExist(app_path('Http/Controllers/TestController.php'));
     }
 
     public function test_cache_clear_route_no_longer_exists(): void
