@@ -56,6 +56,8 @@ These apply to every change, in every session, regardless of which tool is runni
 
 29. **This repository is public.** Never write unfixed vulnerabilities, verification account identifiers, production or infrastructure identifiers, credentials or customer data into commits, PR bodies, docs or knowledge.md. Record them in KlassApp-Foundation/internal.
 
+30. **Never merge with a failing test — run the full affected suites first.** Before merging any PR, run every test suite affected by the change (not just the new tests) from a clean run and confirm they are all green. A failure that "was already red" still blocks the merge: fix it or split the change. Precedent (2026-09-29): [#879](https://github.com/KlassApp-Foundation/KlassApp/pull/879) merged with two admission guard suites red and needed an immediate follow-up ([#880](https://github.com/KlassApp-Foundation/KlassApp/pull/880)); that merge should not have happened, and this rule closes the gap.
+
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
 Before editing code in these areas, check the fix markers below are still in place. Full root-cause / fix / verification detail lives in `knowledge.md`'s "Known Bug Patterns & Lessons" section — this is a locator, not a replacement for reading it.

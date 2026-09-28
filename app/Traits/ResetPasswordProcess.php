@@ -34,7 +34,7 @@ trait ResetPasswordProcess
             }
             if( (env('MAIL_STATUS') == 'on') && ($model->email != '') )
             {
-                $message = (new ResetPassword($model,$token))->onQueue('email');
+                $message = new ResetPassword($model,$token);
                 Mail::to($model->email)->queue($message);
 
                 \Session::put('successmessage','Check your email to reset the password');
