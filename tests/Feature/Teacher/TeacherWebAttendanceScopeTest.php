@@ -167,7 +167,7 @@ class TeacherWebAttendanceScopeTest extends TestCase
         ]);
     }
 
-    public function test_class_teacher_list_only_includes_own_class(): void
+    public function test_teacher_attendance_list_only_includes_own_scoped_classes(): void
     {
         $response = $this->actingAs($this->classTeacher)->getJson('/teacher/attendance/list');
 
@@ -182,11 +182,29 @@ class TeacherWebAttendanceScopeTest extends TestCase
         $this->assertArrayNotHasKey((string) $this->otherStream->id, $payload['studentlist']);
     }
 
+    public function test_attendance_list_depends_on_class_teacher_assignment(): void
+    {
+        $this->ownStream->update(['class_teacher_id' => null]);
+
+        $response = $this->actingAs($this->classTeacher)->getJson('/teacher/attendance/list');
+
+        $response->assertOk();
+        $linkIds = collect($response->json('standardlist'))->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $this->assertNotContains((int) $this->ownStream->id, $linkIds);
+    }
+
     public function test_teacher_cannot_store_attendance_for_class_they_are_not_ct_of(): void
     {
+        $ay = \App\Helpers\SiteHelper::getAcademicYear($this->school->id);
+        $attDate = \Carbon\Carbon::parse($ay->start_date)->addDay()->format('Y-m-d');
+        if (\Carbon\Carbon::parse($attDate)->gt(\Carbon\Carbon::today())) {
+            $attDate = \Carbon\Carbon::today()->format('Y-m-d');
+        }
+
         $response = $this->actingAs($this->classTeacher)->postJson('/teacher/attendance/add', [
             'standardLink_id' => $this->otherStream->id,
-            'date' => now()->format('Y-m-d'),
+            'date' => $attDate,
             'session' => 'forenoon',
             'absentCount' => 0,
             'presentCount' => 1,
@@ -195,6 +213,7 @@ class TeacherWebAttendanceScopeTest extends TestCase
 
         $response->assertForbidden();
         $this->assertDatabaseMissing('attendances', [
+            'school_id' => $this->school->id,
             'standardLink_id' => $this->otherStream->id,
             'user_id' => $this->otherStudent->id,
         ]);

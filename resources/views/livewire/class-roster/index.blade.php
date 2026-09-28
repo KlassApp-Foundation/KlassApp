@@ -23,40 +23,44 @@
             </div>
         @else
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div class="grid gap-3 md:grid-cols-4">
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Academic year</span>
-                        <select wire:model.live="selectedAcademicYearId" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
+                <div class="flex flex-wrap items-end gap-x-3 gap-y-3" data-testid="ct-filter-form">
+                    <label class="block max-sm:w-full">
+                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Academic year</span>
+                        <select wire:model.live="selectedAcademicYearId" class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 sm:w-40 h-10" data-testid="ct-filter-year">
                             @foreach($years as $year)
                                 <option value="{{ $year->id }}">{{ $year->name }}</option>
                             @endforeach
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Level</span>
-                        <select wire:model.live="levelId" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
+                    <label class="block max-sm:w-full">
+                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Level</span>
+                        <select wire:model.live="levelId" class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 sm:w-32 h-10" data-testid="ct-filter-level">
                             <option value="">All levels</option>
                             @foreach($levels as $level)
                                 <option value="{{ $level->id }}">{{ $level->name }}</option>
                             @endforeach
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Assignment</span>
-                        <select wire:model.live="assignmentStatus" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500">
+                    <label class="block max-sm:w-full">
+                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assignment</span>
+                        <select wire:model.live="assignmentStatus" class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 sm:w-44 h-10" data-testid="ct-filter-assignment">
                             <option value="all">All classes</option>
                             <option value="assigned">With a teacher</option>
                             <option value="unassigned">Needs assignment</option>
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Find a class</span>
-                        <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search P.1, P.7..." class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500">
+                    <label class="block max-sm:w-full">
+                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Find a class</span>
+                        <span class="relative block">
+                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                            <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search P.1, P.7..." class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500 sm:w-56 h-10" data-testid="ct-filter-search">
+                        </span>
                     </label>
+                    <button wire:click="clearFilters" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 h-10 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700" data-testid="ct-filter-clear">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Clear filters
+                    </button>
                 </div>
-                <button wire:click="clearFilters" type="button" class="mt-4 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:text-emerald-700">
-                    Clear filters
-                </button>
             </div>
 
             @if($sections->count())

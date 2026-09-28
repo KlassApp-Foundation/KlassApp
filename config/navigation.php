@@ -47,6 +47,7 @@ return [
                     'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
                     'items' => [
                         ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'parents', 'parent', 'teachers', 'teacher', 'staff', 'staffs', 'alumni', 'blocked_students']],
+                        ['label' => 'Teachers', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
                         ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
                         ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink']],
                         ['label' => 'Subjects', 'icon' => 'subjects', 'url' => 'admin/subjects', 'active' => ['subjects', 'subject']],
@@ -114,14 +115,16 @@ return [
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'teacher/dashboard', 'active' => ['dashboard']],
                 ['label' => 'Classes', 'icon' => 'classes', 'url' => 'teacher/classes', 'a_class' => 'flex items-center whitespace-nowrap', 'active' => ['classes', 'standardLinks', 'standardLink']],
-                ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'teacher/dashboard', 'hash' => 'timetable', 'active' => ['timetable']],
+                ['label' => 'Timetable', 'icon' => 'timetable', 'route' => 'teacher.timetable.index', 'active' => ['timetable']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'route' => 'teacher.attendance.index', 'active' => ['attendance']],
-                ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exams.create', 'active' => ['exams', 'exam'], 'condition' => 'class_teacher'],
+                ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exam.index', 'active' => ['exams', 'exam', 'marks', 'mark'], 'condition' => 'class_teacher'],
                 ['label' => 'Homework', 'icon' => 'reports', 'url' => 'teacher/homeworks', 'active' => ['homework', 'homeworks']],
-                ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
+                // Marks commented out per tr-design.md: duplicate of Exams — exams only.
+                // ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Report Cards', 'icon' => 'reports', 'route' => 'teacher.reports.cards.index', 'active' => ['reports'], 'condition' => 'class_teacher'],
-                ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
-                ['label' => 'Notices', 'icon' => 'messages', 'url' => 'teacher/dashboard', 'hash' => 'notices', 'active' => ['notices', 'notice']],
+                // Class Streams commented out per tr-design.md.
+                // ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
+                ['label' => 'Notices', 'icon' => 'messages', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
                 ['label' => 'Library', 'icon' => 'library', 'url' => 'teacher/libraryactivity', 'active' => ['library', 'libraryactivity']],
             ],
