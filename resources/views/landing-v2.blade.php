@@ -303,8 +303,71 @@
     </div>
 
     <div class="how-flow" id="how-flow">
-      <div class="how-hub reveal">
-        <div class="how-hub-node"><span class="hub-pulse"></span> Toshi · protocol orchestration</div>
+      <div class="ac-tower reveal" id="agentCore">
+        <div class="ac-fit" id="agentCoreFit">
+          <div class="ac-stage" id="agentCoreStage">
+            <div class="ac-art">
+              <svg viewBox="0 0 1120 600" role="img" aria-labelledby="ac-tt ac-td">
+                <title id="ac-tt">Toshi on top of KlassApp</title>
+                <desc id="ac-td">WhatsApp, Email, Slack, SMS, Drive and Calendar feed the KlassApp core. Toshi sits above it and acts for parents, teachers and admins.</desc>
+                <defs>
+                  <linearGradient id="ac-gIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-green" stop-opacity=".18"/><stop offset=".55" class="ac-stop-green" stop-opacity=".42"/><stop offset="1" class="ac-stop-green" stop-opacity=".72"/></linearGradient>
+                  <linearGradient id="ac-bIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-blue" stop-opacity=".16"/><stop offset=".55" class="ac-stop-blue" stop-opacity=".38"/><stop offset="1" class="ac-stop-blue" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-vIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-violet" stop-opacity=".16"/><stop offset=".55" class="ac-stop-violet" stop-opacity=".38"/><stop offset="1" class="ac-stop-violet" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-aIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-amber" stop-opacity=".16"/><stop offset=".55" class="ac-stop-amber" stop-opacity=".38"/><stop offset="1" class="ac-stop-amber" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-gOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-green" stop-opacity=".70"/><stop offset=".5" class="ac-stop-green" stop-opacity=".42"/><stop offset="1" class="ac-stop-green" stop-opacity=".36"/></linearGradient>
+                  <linearGradient id="ac-bOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-blue" stop-opacity=".66"/><stop offset=".5" class="ac-stop-blue" stop-opacity=".40"/><stop offset="1" class="ac-stop-blue" stop-opacity=".34"/></linearGradient>
+                  <linearGradient id="ac-aOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-amber" stop-opacity=".66"/><stop offset=".5" class="ac-stop-amber" stop-opacity=".38"/><stop offset="1" class="ac-stop-amber" stop-opacity=".32"/></linearGradient>
+                  <linearGradient id="ac-coreTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+                  <linearGradient id="ac-coreL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+                  <linearGradient id="ac-tTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2DD46A"/><stop offset=".42" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+                  <linearGradient id="ac-tL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+                  <radialGradient id="ac-bloomG"><stop offset="0" stop-color="#22C55E" stop-opacity=".28"/><stop offset=".32" stop-color="#22C55E" stop-opacity=".12"/><stop offset=".55" stop-color="#8B5CF6" stop-opacity=".06"/><stop offset=".72" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="ac-pool"><stop offset="0" stop-color="#22C55E" stop-opacity=".55"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></radialGradient>
+                  <linearGradient id="ac-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E" stop-opacity=".7"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></linearGradient>
+                  <radialGradient id="ac-groundG"><stop offset="0" stop-color="#0F172A" stop-opacity=".10"/><stop offset="1" stop-color="#0F172A" stop-opacity="0"/></radialGradient>
+                </defs>
+                <ellipse cx="560" cy="548" rx="210" ry="26" fill="url(#ac-groundG)"/>
+                <path d="M410 390 L560 465 L560 535 L410 460 Z" fill="url(#ac-coreL)"/>
+                <path d="M560 465 L710 390 L710 460 L560 535 Z" fill="#0F172A"/>
+                <path d="M410 390 L560 315 L710 390 L560 465 Z" fill="url(#ac-coreTop)"/>
+                <path d="M410 390 L560 315 L710 390 L560 465 Z" fill="none" stroke="#22C55E" stroke-opacity=".45" stroke-width="1"/>
+                <path d="M560 465 L560 535" stroke="#22C55E" stroke-opacity=".3" stroke-width="1"/>
+                <ellipse class="ac-bloom ac-land" cx="560" cy="390" rx="92" ry="46" fill="url(#ac-pool)"/>
+                <rect x="554" y="330" width="12" height="60" fill="url(#ac-beam)" opacity=".6"/>
+                <circle class="ac-bloom" cx="560" cy="262" r="150" fill="url(#ac-bloomG)"/>
+                <g class="ac-bounce">
+                  <path d="M460 250 L560 300 L560 356 L460 306 Z" fill="url(#ac-tL)"/>
+                  <path d="M560 300 L660 250 L660 306 L560 356 Z" fill="#16A34A"/>
+                  <path d="M460 250 L560 200 L660 250 L560 300 Z" fill="url(#ac-tTop)"/>
+                  <path d="M460 250 L560 200 L660 250" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>
+                  <ellipse cx="560" cy="248" rx="30" ry="15" fill="#0F172A" opacity=".18"/>
+                  <g transform="matrix(1 .5 0 1 460 250)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="ac-scr" id="ac-scrL" href="{{ asset('images/brand/models/anthropic-mark.svg') }}" x="37" y="15" width="26" height="26"/></g>
+                  <g transform="matrix(1 -.5 0 1 560 300)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="ac-scr" id="ac-scrR" href="{{ asset('images/brand/models/openai-mark.svg') }}" x="37" y="15" width="26" height="26"/></g>
+                </g>
+                <ellipse id="ac-shock" cx="560" cy="390" rx="92" ry="46" fill="none" stroke="#22C55E" stroke-width="2" opacity="0"/>
+                <g id="ac-sig" aria-hidden="true"></g>
+              </svg>
+              <div class="ac-bounce ac-kb" aria-hidden="true">
+                <div class="ac-coin"><div class="ac-spin"><img class="f" src="{{ asset('images/klassapp-icon.svg') }}" alt="KlassApp"><img class="b" src="{{ asset('images/klassapp-icon.svg') }}" alt=""></div></div>
+                <div class="ac-kshadow"></div>
+              </div>
+            </div>
+            <div class="ac-nodes">
+              <div class="ac-ch ac-node ac-n-green" data-n="WhatsApp" style="left:60px;top:70px"><span class="ac-ico ac-brand-well"><x-brand.whatsapp /></span><span>WhatsApp</span></div>
+              <div class="ac-ch ac-node" data-n="Email" style="left:30px;top:232px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
+              <div class="ac-ch ac-node ac-n-violet" data-n="Slack" style="left:110px;top:382px"><span class="ac-ico ac-brand-well"><x-brand.slack /></span><span>Slack</span></div>
+              <div class="ac-ch ac-node ac-n-green" data-n="SMS" style="left:236px;top:510px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
+              <div class="ac-ch ac-node ac-n-amber" data-n="Drive" style="left:770px;top:64px"><span class="ac-ico ac-brand-well"><x-brand.google-drive /></span><span>Drive</span></div>
+              <div class="ac-ch ac-node" data-n="Calendar" style="left:880px;top:474px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Calendar</span></div>
+              <div class="ac-role ac-node ac-n-green" data-n="Parent" style="left:262px;top:124px"><span class="ac-role-dot"></span>Parent</div>
+              <div class="ac-role ac-node" data-n="Teacher" style="left:872px;top:262px"><span class="ac-role-dot"></span>Teacher</div>
+              <div class="ac-role ac-node ac-n-amber" data-n="Admin" style="left:716px;top:540px"><span class="ac-role-dot"></span>Admin</div>
+            </div>
+          </div>
+        </div>
+        <div class="ac-models" id="agentCoreModels" aria-label="Models Toshi runs on"><b>Runs on</b>
+          <span><img src="{{ asset('images/brand/models/anthropic-mark.svg') }}" alt="" width="16" height="16">Anthropic</span><span><img src="{{ asset('images/brand/models/openai-mark.svg') }}" alt="" width="16" height="16">OpenAI</span><span><img src="{{ asset('images/brand/models/google-gemini-mark.svg') }}" alt="" width="16" height="16">Gemini</span><span><img src="{{ asset('images/brand/models/xai-grok-mark.svg') }}" alt="" width="16" height="16">Grok</span><span><img src="{{ asset('images/brand/models/moonshot-kimi-mark.svg') }}" alt="" width="16" height="16">Kimi</span><span><img src="{{ asset('images/brand/models/zhipu-zai-mark.svg') }}" alt="" width="16" height="16">GLM</span></div>
       </div>
 
       <div class="how-columns">

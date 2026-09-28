@@ -2,14 +2,17 @@
  * Frame-rate check at 4x CPU slowdown. Exits 1 on meaningful long frames.
  *
  *   PREVIEW_BASE=https://... node e2e/landing-fps-verify.cjs
+ *   FPS_TARGET="#agentCore" to measure the tower (default: #toshiTower, the orbit).
  *   (cloud VM: CHROMIUM_PATH=/opt/pw-browsers/chromium)
  *
+ * The 8s window covers at least two full 3s bounce cycles of the tower.
  * rAF deltas are vsync-locked: small sub-millisecond jitter around 16.7ms is timer
  * noise, so the check flags meaningful long frames (>25ms) and hard stalls (>50ms)
  * while reporting the raw distribution.
  */
 const { chromium } = require('playwright');
 const BASE = (process.env.PREVIEW_BASE || 'http://127.0.0.1:8000').replace(/\/$/, '') + '/';
+const TARGET = process.env.FPS_TARGET || '#toshiTower';
 let fails = 0;
 const ck = (ok, m) => { console.log((ok ? 'PASS ' : 'FAIL ') + m); if (!ok) fails++; };
 
@@ -21,7 +24,7 @@ const ck = (ok, m) => { console.log((ok ? 'PASS ' : 'FAIL ') + m); if (!ok) fail
     const client = await ctx.newCDPSession(p);
     await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await p.goto(BASE, { waitUntil: 'networkidle' });
-    await p.evaluate(() => document.getElementById('toshiTower').scrollIntoView({ block: 'center' }));
+    await p.locator(TARGET).evaluate((e) => e.scrollIntoView({ block: 'center' }));
     const stats = await p.evaluate(async () => {
       await new Promise((r) => setTimeout(r, 2500));
       const deltas = [];
@@ -48,7 +51,7 @@ const ck = (ok, m) => { console.log((ok ? 'PASS ' : 'FAIL ') + m); if (!ok) fail
         over50: deltas.filter((d) => d > 50).length,
       };
     });
-    console.log(w + 'px 4x throttle: frames=' + stats.n + ' median=' + stats.median.toFixed(2) + 'ms p95=' + stats.p95.toFixed(2) + 'ms max=' + stats.max.toFixed(2) + 'ms >16.7=' + stats.over167 + ' >25=' + stats.over25 + ' >50=' + stats.over50);
+    console.log(`${w}px 4x throttle [${TARGET}]: frames=${stats.n} median=${stats.median.toFixed(2)}ms p95=${stats.p95.toFixed(2)}ms max=${stats.max.toFixed(2)}ms >16.7=${stats.over167} >25=${stats.over25} >50=${stats.over50}`);
     ck(stats.over50 === 0 && stats.over25 <= 5, w + 'px: no meaningful long frames at 4x throttling');
     await ctx.close();
   }

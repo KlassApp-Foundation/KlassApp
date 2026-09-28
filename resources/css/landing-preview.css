@@ -4283,3 +4283,326 @@ select:focus-visible,
     width: 100%;
   }
 }
+
+/* ==== How it works: Toshi tower v2 (port of concepts/toshi-tower/v2.html; ac- namespace) ==== */
+.ac-tower {
+  position: relative;
+  margin: 0 auto 44px;
+}
+.ac-fit {
+  width: 100%;
+  height: calc(600px * var(--ac-s, 1));
+  position: relative;
+}
+.ac-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1120px;
+  height: 600px;
+  transform-origin: 0 0;
+  transform: scale(var(--ac-s, 1));
+}
+.ac-art {
+  position: absolute;
+  inset: 0;
+}
+.ac-art > svg {
+  position: absolute;
+  inset: 0;
+  width: 1120px;
+  height: 600px;
+  overflow: visible;
+}
+.ac-nodes {
+  position: absolute;
+  inset: 0;
+}
+
+/* Section backdrop: the tower's mist and dot grid (debox B12). */
+.how-it-works::before {
+  content: '';
+  position: absolute;
+  inset: -22% -12% auto -12%;
+  height: 72%;
+  width: auto;
+  top: auto;
+  left: auto;
+  transform: none;
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 0%, rgba(30,111,217,.28), transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 30%, rgba(139,92,246,.16), transparent 65%),
+    radial-gradient(ellipse 40% 50% at 80% 25%, rgba(34,197,94,.14), transparent 65%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+.how-it-works::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(15,23,42,.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.45), transparent 85%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,.45), transparent 85%);
+  opacity: .55;
+  pointer-events: none;
+}
+
+/* Satellites: .ac-node + .ac-ch + .ac-role. */
+.ac-node {
+  --node-color: var(--brand-blue);
+  --node-tint: rgba(30,111,217,.07);
+  --node-border: rgba(30,111,217,.20);
+  --node-glow: rgba(30,111,217,.22);
+  background: linear-gradient(165deg, var(--brand-white) 0%, var(--node-tint) 100%);
+  border: 1px solid var(--node-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,23,42,.05), 0 6px 16px rgba(15,23,42,.06);
+  transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, border-color .3s ease;
+}
+.ac-node:hover {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 2px 4px rgba(15,23,42,.05), 0 14px 30px rgba(15,23,42,.1), 0 0 22px var(--node-glow);
+}
+.ac-n-green {
+  --node-color: var(--brand-green);
+  --node-tint: rgba(34,197,94,.07);
+  --node-border: rgba(34,197,94,.20);
+  --node-glow: rgba(34,197,94,.22);
+}
+.ac-n-violet {
+  --node-color: var(--violet-accent);
+  --node-tint: rgba(139,92,246,.07);
+  --node-border: rgba(139,92,246,.20);
+  --node-glow: rgba(139,92,246,.22);
+}
+.ac-n-amber {
+  --node-color: var(--brand-amber);
+  --node-tint: rgba(217,119,6,.07);
+  --node-border: rgba(217,119,6,.20);
+  --node-glow: rgba(217,119,6,.20);
+}
+.ac-ch {
+  position: absolute;
+  width: 168px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 14px;
+}
+.ac-ch::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, transparent, var(--node-color), transparent);
+  opacity: .55;
+  transition: opacity .3s;
+}
+.ac-ch:hover { transform: translateY(-4px); }
+.ac-ch:hover::after { opacity: 1; }
+.ac-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 6px 12px -8px rgba(15,23,42,.5);
+}
+.ac-ico svg { width: 15px; height: 15px; }
+.ac-n-green .ac-ico { background: linear-gradient(145deg, #25D366, #128C7E); }
+.ac-ch:not(.ac-n-green):not(.ac-n-violet):not(.ac-n-amber) .ac-ico { background: linear-gradient(145deg, #3B82F6, #1E6FD9); }
+.ac-n-violet .ac-ico { background: linear-gradient(145deg, #A78BFA, #8B5CF6); }
+.ac-n-amber .ac-ico { background: linear-gradient(145deg, #F59E0B, #D97706); }
+.ac-ico.ac-brand-well {
+  background: #fff;
+  border: 1px solid rgba(15,23,42,.1);
+  box-shadow: 0 4px 10px -6px rgba(15,23,42,.25);
+}
+.ac-ico.ac-brand-well .brand-mark { width: 16px; height: 16px; display: block; }
+.ac-ch span:not(.ac-ico) {
+  font-size: .6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-primary);
+}
+.ac-role {
+  position: absolute;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px;
+  border-radius: 100px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ac-role:hover { transform: translateY(-3px); }
+.ac-role-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--node-color);
+  box-shadow: 0 0 0 3px var(--node-tint), 0 0 9px var(--node-glow);
+}
+
+/* K coin: the logo only, one turn per 10s, back face turned 180 degrees. */
+.ac-kb { position: absolute; inset: 0; pointer-events: none; }
+.ac-coin {
+  position: absolute;
+  left: 528px;
+  top: 128px;
+  width: 64px;
+  height: 64px;
+  perspective: 400px;
+}
+.ac-spin { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ac-spin img {
+  position: absolute;
+  inset: 0;
+  width: 64px;
+  height: 64px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.ac-spin img.b { transform: rotateY(180deg); }
+.ac-kshadow {
+  position: absolute;
+  left: 532px;
+  top: 236px;
+  width: 56px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(15,23,42,.28), transparent 70%);
+}
+
+/* Node hit glow (0.7s): compositor-only, an opacity/transform pseudo layer. */
+.ac-node::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 6px var(--node-glow), 0 0 26px var(--node-glow);
+  opacity: 0;
+  pointer-events: none;
+}
+.ac-node.hit::before { animation: ac-hit .7s ease-out; }
+@keyframes ac-hit {
+  0% { opacity: .9; transform: scale(.96); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+
+.ac-scr { transition: opacity .25s ease; }
+.ac-scr.ac-off { opacity: 0; }
+
+.ac-stop-green { stop-color: var(--brand-green); }
+.ac-stop-blue { stop-color: var(--brand-blue); }
+.ac-stop-violet { stop-color: var(--violet-accent); }
+.ac-stop-amber { stop-color: var(--brand-amber); }
+
+/* Runs on row */
+.ac-models {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 18px;
+  margin: 18px 0 0;
+  position: relative;
+  z-index: 1;
+  font-size: .75rem;
+  color: var(--text-secondary);
+}
+.ac-models span { display: inline-flex; align-items: center; gap: 6px; }
+.ac-models img { width: 16px; height: 16px; }
+.ac-models b {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .6875rem;
+}
+
+/* Bloom: scale/opacity only, fill-box origin. */
+.ac-bloom { transform-box: fill-box; transform-origin: center; }
+
+/* Motion, gated behind no-preference. */
+@media (prefers-reduced-motion: no-preference) {
+  .ac-bloom { animation: ac-hubBloom 4.2s ease-in-out infinite; }
+  .ac-bounce { animation: ac-tBounce 3s cubic-bezier(.45,0,.55,1) infinite; }
+  @keyframes ac-tBounce {
+    0% { transform: translateY(0); }
+    10% { transform: translateY(2px); }
+    50% { transform: translateY(-24px); }
+    90% { transform: translateY(0); }
+    100% { transform: translateY(0); }
+  }
+  .ac-bloom.ac-land { animation: ac-land 3s ease-out infinite; }
+  @keyframes ac-land {
+    0%, 86% { opacity: .5; }
+    92% { opacity: 1; }
+    100% { opacity: .5; }
+  }
+  .ac-spin { animation: ac-coin 10s linear infinite; }
+  @keyframes ac-coin { to { transform: rotateY(360deg); } }
+}
+@keyframes ac-hubBloom {
+  0%, 100% { transform: scale(.92); opacity: .78; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ac-node.hit { animation: none; }
+  .ac-node.hit::before { animation: none; }
+  .ac-scr { transition: none; }
+  .ac-node, .ac-ch::after { transition: none; }
+  .ac-ch:hover, .ac-role:hover { transform: none; }
+}
+
+/* Below 760px: the tower keeps its art, and the nine nodes stack as a 3-column grid. */
+@media (max-width: 759.98px) {
+  .ac-fit { height: auto; }
+  .ac-stage {
+    position: static;
+    width: auto;
+    height: auto;
+    transform: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .ac-art {
+    position: relative;
+    grid-column: 1 / -1;
+    width: 100%;
+    aspect-ratio: 1120 / 600;
+  }
+  .ac-art > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .ac-coin { left: 47.14%; top: 21.33%; width: 5.71%; height: 10.67%; }
+  .ac-spin img { width: 100%; height: 100%; }
+  .ac-kshadow { left: 47.5%; top: 39.33%; width: 5%; height: 2.33%; }
+  .ac-nodes {
+    position: static;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .ac-ch, .ac-role {
+    position: static;
+    width: auto;
+    height: auto;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+  .ac-ch::before, .ac-role::before { display: none; }
+  .ac-ch { padding: 6px 10px; gap: 6px; }
+  .ac-ch span:not(.ac-ico) { font-size: .625rem; letter-spacing: .02em; overflow-wrap: anywhere; }
+  .ac-role { padding: 6px 12px; }
+}
