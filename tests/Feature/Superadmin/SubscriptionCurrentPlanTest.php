@@ -13,6 +13,31 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * Documents the deliberate decoupling of Subscription (billing/audit record)
+ * from CurrentPlan (runtime plan limits).
+ *
+ * Per the July 4, 2026 decision recorded in knowledge.md
+ * ("enforcePlanLimit() Implementation"): "CurrentPlan is canonical source for
+ * plan limits (confirmed via scoping analysis — Subscription is billing audit
+ * trail, diverges when admin changes plan via CurrentPlanController)" and
+ * "Divergence flagged as intentional design".
+ *
+ * CurrentPlan is provisioned ONLY through an explicit admin choice — the
+ * onboarding plan step (OnboardingEngine::savePlan / AgentToshi
+ * persistSelectedPlan), FreeTierPlanService, or CurrentPlanController.
+ * SubscriptionService::approve()/create()/update() are billing-record
+ * operations and must NEVER provision or mutate a CurrentPlan. Coupling
+ * billing status to runtime plan limits is the exact divergence that
+ * decision declared intentional.
+ *
+ * History: this file originally contained four tests asserting the opposite
+ * (approve → CurrentPlan row). They shipped already-failing in PR #222
+ * (f57da131, 2026-08-12) inside an unrelated report-cards commit, with no
+ * implementation ever existing at any point in history. The 2026-09-27
+ * archaeology (see knowledge.md) confirmed they were born red and re-scoped
+ * them here to assert the real contract instead.
+ */
 class SubscriptionCurrentPlanTest extends TestCase
 {
     use RefreshDatabase;
@@ -78,9 +103,9 @@ class SubscriptionCurrentPlanTest extends TestCase
         ], $overrides);
     }
 
-    // ── Service::approve() (Filament action) ──
+    // ── Service::approve() (Filament action / Toshi ApproveSubscriptionTool) ──
 
-    public function test_approve_free_subscription_creates_current_plan(): void
+    public function test_approve_free_subscription_does_not_provision_a_current_plan(): void
     {
         $subscription = Subscription::create($this->createArgs([
             'plan_id' => $this->freePlan->id,
@@ -91,13 +116,17 @@ class SubscriptionCurrentPlanTest extends TestCase
         app(SubscriptionService::class)->approve($subscription->id);
 
         $this->assertSame('approved', $subscription->fresh()->status);
-        $this->assertDatabaseHas('current_plans', [
-            'school_id' => $this->school->id,
-            'plan_id' => $this->freePlan->id,
-        ]);
+        // Approving a billing record must never grant runtime plan limits —
+        // tier changes flow exclusively through the admin-choice paths
+        // (onboarding plan step, FreeTierPlanService, CurrentPlanController).
+        $this->assertSame(
+            0,
+            CurrentPlan::where('school_id', $this->school->id)->count(),
+            'approve() must not provision a CurrentPlan — see July 4, 2026 decision.'
+        );
     }
 
-    public function test_approve_paid_subscription_starts_trial(): void
+    public function test_approve_paid_subscription_does_not_start_a_trial(): void
     {
         $subscription = Subscription::create($this->createArgs([
             'plan_id' => $this->paidPlan->id,
@@ -107,15 +136,15 @@ class SubscriptionCurrentPlanTest extends TestCase
 
         app(SubscriptionService::class)->approve($subscription->id);
 
-        $this->assertDatabaseHas('current_plans', [
+        $this->assertSame('approved', $subscription->fresh()->status);
+        // TrialService::startTrial() is invoked only from the explicit
+        // plan-choice paths (OnboardingEngine::savePlan for paid plans).
+        // Billing approval is not plan selection.
+        $this->assertSame(0, CurrentPlan::where('school_id', $this->school->id)->count());
+        $this->assertDatabaseMissing('current_plans', [
             'school_id' => $this->school->id,
-            'plan_id' => $this->paidPlan->id,
             'is_trial' => true,
-            'status' => 'running',
         ]);
-        $this->assertNotNull(
-            CurrentPlan::where('school_id', $this->school->id)->first()->trial_ends_at
-        );
     }
 
     public function test_approve_does_not_overwrite_existing_current_plan(): void
@@ -148,7 +177,7 @@ class SubscriptionCurrentPlanTest extends TestCase
 
     // ── Service::create() (SubscriptionForm) ──
 
-    public function test_create_with_approved_status_creates_current_plan(): void
+    public function test_create_with_approved_status_does_not_provision_a_current_plan(): void
     {
         $this->assertSame(0, CurrentPlan::where('school_id', $this->school->id)->count());
 
@@ -157,10 +186,12 @@ class SubscriptionCurrentPlanTest extends TestCase
             'status' => 'approved',
         ]));
 
-        $this->assertDatabaseHas('current_plans', [
-            'school_id' => $this->school->id,
-            'plan_id' => $this->freePlan->id,
-        ]);
+        // Even an approved-at-create billing record is not a tier choice.
+        $this->assertSame(
+            0,
+            CurrentPlan::where('school_id', $this->school->id)->count(),
+            'create() with approved status must not provision a CurrentPlan.'
+        );
     }
 
     public function test_create_with_pending_status_does_not_create_current_plan(): void
@@ -177,7 +208,7 @@ class SubscriptionCurrentPlanTest extends TestCase
 
     // ── Service::update() (SubscriptionForm edit) ──
 
-    public function test_update_to_approved_creates_current_plan(): void
+    public function test_update_to_approved_does_not_provision_a_current_plan(): void
     {
         $subscription = Subscription::create($this->createArgs([
             'plan_id' => $this->freePlan->id,
@@ -192,10 +223,11 @@ class SubscriptionCurrentPlanTest extends TestCase
         ]));
 
         $this->assertSame('approved', $subscription->fresh()->status);
-        $this->assertDatabaseHas('current_plans', [
-            'school_id' => $this->school->id,
-            'plan_id' => $this->paidPlan->id,
-        ]);
+        $this->assertSame(
+            0,
+            CurrentPlan::where('school_id', $this->school->id)->count(),
+            'update() to approved must not provision a CurrentPlan.'
+        );
     }
 
     public function test_update_staying_pending_does_not_create_current_plan(): void

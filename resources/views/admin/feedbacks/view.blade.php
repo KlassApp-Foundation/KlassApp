@@ -20,7 +20,7 @@
                         <div class="flex flex-row participant-box col-md-4">
                             <div class="flex flex-col lg:w-3/4 lg:flex-row profile-section items-center">
                                 <div class="profile-image-section p-4">
-                                    <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" width="60px" height="60px">
+                                    <x-profile-photo :user="$feedback->parent" size="md" />
                                 </div>
                                 <div class="profile-data-section my-2">
                                     <h3 class="profile-full-name text-sm">

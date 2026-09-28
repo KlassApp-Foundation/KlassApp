@@ -33,13 +33,13 @@ class TeacherImportExportController extends Controller
      */
     public function export(Request $request)
     {
-        $users = $this->TeacherFilter($request,Auth::user()->school_id,5);  
+        $users = $this->TeacherFilter($request,Auth::user()->school_id,5,false);
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
 
         if(count($users) > 0)
         {
             $csv->insertOne(['employee_id','designation','firstname','lastname','gender','date_of_birth','address','city','country','pincode','mobile_no','email','notes','status',]);
-      
+
             foreach($users as $user)
             {
                 $csv->insertOne
@@ -57,7 +57,7 @@ class TeacherImportExportController extends Controller
                     $user->mobile_no,
                     $user->email,
                     $user->userprofile->notes,
-                    $user->userprofile->status,   
+                    $user->userprofile->status,
                 ]);
             }
         }
@@ -89,7 +89,7 @@ class TeacherImportExportController extends Controller
         //
         return view('admin/teacher/import');
     }
-  
+
     /**
     * @return \Illuminate\Support\Collection
     */
@@ -108,13 +108,13 @@ class TeacherImportExportController extends Controller
         {
             Excel::import(new TeachersImport,$request->file('import_file'));
             $count = Session::get('count');
-                    
+
 
             if($count != 0)
             {
                 return back()->with('failmessage','You can add only '.$count.' Members');
             }
-         
+
             $insertedcount = Session::get('insertedcount');
             if($insertedcount > 0)
             {
@@ -133,7 +133,7 @@ class TeacherImportExportController extends Controller
             else
             {
                 return back()->with('failmessage',trans('messages.insert_failure_msg'));
-            } 
+            }
         }
         catch(Exception $e)
         {
@@ -183,7 +183,7 @@ exit;
 }
      public function teacherexport(Request $request)
    {
-    
+
      /* if(!\Session::has('headings'))
        {*/
         Session::forget('teacher_headings');
@@ -199,7 +199,7 @@ exit;
     $headings=\Session::get('teacher_headings');
     $heads=array_values($headings);
     //dd($heads);
-     $users = $this->TeacherFilter($request,Auth::user()->school_id,5);    
+     $users = $this->TeacherFilter($request,Auth::user()->school_id,5,false);
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
      $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','date_of_birth','address','region','district','country','pincode',);
      $result=[];
@@ -210,7 +210,7 @@ exit;
         if(count($users) > 0)
         {
             $csv->insertOne($result);
-      
+
             foreach($users as $user)
             {
                 $data=[];
@@ -268,7 +268,7 @@ exit;
                 {
                     $data[]=$user->userprofile->pincode;
                 }
-                
+
                 $csv->insertOne($data);
             }
         }

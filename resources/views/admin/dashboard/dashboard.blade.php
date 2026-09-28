@@ -12,10 +12,6 @@
                     {{ $dashboardContextLine ?? 'School overview' }}
                 </p>
             </div>
-            <span class="dashboard-live-badge" data-testid="dashboard-live-badge">
-                <span class="dashboard-live-dot" aria-hidden="true"></span>
-                Live
-            </span>
         </div>
         @include('partials.message')
         @if(!empty($setupIncomplete))
@@ -70,10 +66,10 @@
                              :datasets="[[
                                  'label' => 'Fee Collection',
                                  'data' => $feeTrendPoints->pluck('amount')->all(),
-                                 'borderColor' => '#22C55E',
-                                 'backgroundColor' => 'rgba(34,197,94,0.06)',
+                                 'borderColor' => '#15803D',
+                                 'backgroundColor' => 'rgba(21,128,61,0.06)',
                                  'borderWidth' => 2,
-                                 'pointBackgroundColor' => '#22C55E',
+                                 'pointBackgroundColor' => '#15803D',
                                  'pointRadius' => 3,
                                  'pointHoverRadius' => 5,
                                  'tension' => 0.3,
@@ -125,32 +121,37 @@
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students</h1>
                     </div>
+                    {{-- Pre-computed: a `['studentCount']` subscript inside the single-quoted
+                         options-js attribute ends the attribute early, Blade then fails to match
+                         the component tag and the raw <x-chart> markup ships (doughnut never drew). --}}
+                    @php $genderChartTotal = (int) ($dashboard['studentCount'] ?? 0); @endphp
+                    {{-- Series colours match the per-class bar: boys #304ffe, girls #B45309, unspecified #64748B. --}}
                     <x-chart type="doughnut" :height="240"
                              aria-label="Students by gender"
-                             empty-message="No gender data"
+                             empty-message="No students enrolled yet"
                              :center-value="$dashboard['studentCount'] ?? 0"
                              :labels="['Male Students', 'Female Students', 'Unspecified']"
                              :datasets="[[
                                  'label' => ' Students',
-                                 'backgroundColor' => ['#ffa601', '#304ffe', '#cbd5e1'],
+                                 'backgroundColor' => ['#304ffe', '#B45309', '#64748B'],
                                  'data' => [
                                      $dashboard['maleCount'] ?? 0,
                                      $dashboard['femaleCount'] ?? 0,
                                      $dashboard['unknownCount'] ?? 0,
                                  ],
                              ]]"
-                             options-js='{ plugins: { tooltip: { callbacks: { label: function (c) { var t = {{ (int) ($dashboard['studentCount'] ?? 0) }}; return c.dataset.label + ": " + Math.round((c.parsed || 0) / (t || 1) * 100) + "%"; } } } } }' />
+                             options-js='{ plugins: { tooltip: { callbacks: { label: function (c) { var t = {{ $genderChartTotal }}; return c.dataset.label + ": " + Math.round((c.parsed || 0) / (t || 1) * 100) + "%"; } } } } }' />
                     <div class="flex items-center justify-between my-1">
                         @php
                             $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0 || ($dashboard['unknownCount'] ?? 0) > 0;
                         @endphp
-                        <div class="border-r w-1/3 mt-4 bar-bg-blue relative student_count dashboard-gender-stat">
+                        <div class="border-r w-1/3 mt-4 bar-bg-orange relative student_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=female') }}">
                                 <p class="text-sm item-title font-semibold">Girls</p>
                                 <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['femaleCount'] : '—' }}</p>
                             </a>
                         </div>
-                        <div class="w-1/3 text-center mt-4 bar-bg-orange relative student_count student_male_count dashboard-gender-stat">
+                        <div class="w-1/3 text-center mt-4 bar-bg-blue relative student_count student_male_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=male') }}" target="_blank">
                                 <p class="text-sm item-title font-semibold ">Boys</p>
                                 <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['maleCount'] : '—' }}</p>
@@ -395,8 +396,8 @@
                              :labels="$classRows->map(fn ($l) => $l->section->name ?? $l->section_name ?? ('Standard '.$l->id))->values()->all()"
                              :datasets="[
                                  ['label' => 'Boys', 'data' => $classRows->pluck('maleCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#304ffe', 'borderRadius' => 6],
-                                 ['label' => 'Girls', 'data' => $classRows->pluck('femaleCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#ffa601', 'borderRadius' => 6],
-                                 ['label' => 'Unspecified', 'data' => $classRows->pluck('unknownCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#cbd5e1', 'borderRadius' => 6],
+                                 ['label' => 'Girls', 'data' => $classRows->pluck('femaleCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#B45309', 'borderRadius' => 6],
+                                 ['label' => 'Unspecified', 'data' => $classRows->pluck('unknownCount')->map(fn ($v) => (int) $v)->values()->all(), 'backgroundColor' => '#64748B', 'borderRadius' => 6],
                              ]"
                              :options="['scales' => ['y' => ['ticks' => ['stepSize' => 1, 'precision' => 0]]]]" />
                 </div>

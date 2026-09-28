@@ -54,6 +54,14 @@
             </div>
           </template>
         </div>
+
+        <div v-if="!loadingIndex && users.length > 0" class="te-pagination flex items-center justify-between flex-wrap my-4 text-sm">
+          <span class="text-gray-500">Showing page {{ currentPage }} of {{ indexPages }} ({{ indexTotal }} teachers)</span>
+          <div class="flex items-center gap-2">
+            <button v-if="currentPage > 1" type="button" class="text-blue-600 hover:underline" @click="goIndexPage(currentPage - 1)">← Prev</button>
+            <button v-if="currentPage < indexPages" type="button" class="text-blue-600 hover:underline" @click="goIndexPage(currentPage + 1)">Next →</button>
+          </div>
+        </div>
       </div>
     </div>
     <div v-if="this.send == 1" class="modal modal-mask">
@@ -141,6 +149,11 @@
           selected: [],
           selectedUsers:[],
           selectedUsersCount:0,
+          indexPages:1,
+          indexTotal:0,
+          loadingIndex:false,
+          currentPage:1,
+          selectedUsersCount:0,
           send_later:'',
           allSelected: false,
           noneSelected:false,
@@ -155,11 +168,8 @@
 
       created() 
       {
-        axios.get('/admin/teachers/find?'+this.searchquery).then(response => {
-          this.users = response.data.data;
-        });
-        this.getUrl();
-        console.log(this.searchquery);
+        this.currentPage = Number(new URLSearchParams(window.location.search).get('page') || 1);
+        this.fetchIndex(this.currentPage);
       },
 
       computed: 
@@ -187,6 +197,26 @@
 
     methods:
     {
+      fetchIndex(page)
+      {
+        const url = '/admin/teachers/find?' + this.searchquery;
+        this.loadingIndex = true;
+        axios.get(url).then(response => {
+          this.users = response.data.data;
+          this.indexTotal = Number(response.data.meta ? response.data.meta.total : this.users.length);
+          this.indexPages = Number(response.data.meta ? response.data.meta.last_page : 1);
+          this.loadingIndex = false;
+        });
+      },
+
+      goIndexPage(page)
+      {
+        if(page < 1 || page > this.indexPages || page === this.currentPage) return;
+        var href = new URL(window.location.href);
+        href.searchParams.set('page', page);
+        window.location.href = href.toString();
+      },
+
       clearAll()
       {
         window.location.href = '/admin/teachers';

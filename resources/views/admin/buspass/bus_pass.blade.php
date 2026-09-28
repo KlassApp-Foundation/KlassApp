@@ -112,7 +112,7 @@
                                       <tr>
                                       
                                     <td>
-                                    <span><img src="{{ $user->userprofile->AvatarPath }}" style="width: 75px;height: 75px;border-radius: 10px;margin-left: auto;"></span>
+                                    <span><img src="{{ $user->userprofile->AvatarPath }}" style="width: 75px;height: 75px;border-radius: 12px;margin-left: auto;"></span>
                                   </td>
                                   </tr>
                                 </tbody>

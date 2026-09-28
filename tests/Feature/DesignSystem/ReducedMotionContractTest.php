@@ -6,8 +6,10 @@ use Tests\TestCase;
 
 /**
  * Locks the prefers-reduced-motion contract for every infinite loop in
- * dashboard-refresh.css: LIVE badge sheen, LIVE pulsing dot, loading-dot bounce,
- * save-indicator d-pulse, and Toshi plan-card toshi-spin.
+ * dashboard-refresh.css: loading-dot bounce, save-indicator d-pulse, and
+ * Toshi plan-card toshi-spin. (The LIVE badge sheen/dot entries were removed
+ * with the badge itself — 2026-09-27 UI-polish pass; the badge no longer
+ * renders anywhere, so it has no motion contract left to lock.)
  */
 class ReducedMotionContractTest extends TestCase
 {
@@ -39,21 +41,11 @@ class ReducedMotionContractTest extends TestCase
         );
     }
 
-    public function test_reduced_motion_disables_all_five_looping_animations(): void
+    public function test_reduced_motion_disables_all_remaining_looping_animations(): void
     {
         $body = $this->reducedMotionBody();
 
-        $this->assertMatchesRegularExpression(
-            '/\.dashboard-shell--admin\s+\.dashboard-live-badge::after\s*\{[^}]*animation:\s*none/s',
-            $body,
-            'LIVE badge sheen must stop under reduced motion'
-        );
-
-        $this->assertMatchesRegularExpression(
-            '/\.dashboard-live-dot\s*\{[^}]*animation:\s*none/s',
-            $body,
-            'LIVE pulsing dot must stop under reduced motion'
-        );
+        $this->assertStringNotContainsString('dashboard-live-badge', $body, 'LIVE badge removed 2026-09-27; its reduced-motion entries were removed with it');
 
         $this->assertMatchesRegularExpression(
             '/\.ds-loading-dot\s*\{[^}]*animation:\s*none/s',
@@ -78,7 +70,7 @@ class ReducedMotionContractTest extends TestCase
     {
         $css = $this->stylesheet();
 
-        foreach (['badge-sheen', 'pulse-dot', 'd-loadingBounce', 'd-pulse', 'toshi-spin'] as $name) {
+        foreach (['d-loadingBounce', 'd-pulse', 'toshi-spin'] as $name) {
             $this->assertMatchesRegularExpression(
                 '/@keyframes\s+'.preg_quote($name, '/').'\s*\{/',
                 $css,

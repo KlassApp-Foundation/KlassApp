@@ -128,6 +128,14 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div v-if="!loadingStaff && users.length > 0" class="st-pagination flex items-center justify-between flex-wrap my-4 text-sm">
+                <span class="text-gray-500">Showing page {{ currentPage }} of {{ staffPages }} ({{ staffTotal }} staff)</span>
+                <div class="flex items-center gap-2">
+                    <button v-if="currentPage > 1" type="button" class="text-blue-600 hover:underline" @click="goStaffPage(currentPage - 1)">← Prev</button>
+                    <button v-if="currentPage < staffPages" type="button" class="text-blue-600 hover:underline" @click="goStaffPage(currentPage + 1)">Next →</button>
+                </div>
+            </div>
         </div>
 
         <!-- Send Message Button -->
@@ -270,6 +278,10 @@ export default {
             active: false,
             selected: [],
             selectedUsers: [],
+            staffPages: 1,
+            staffTotal: 0,
+            loadingStaff: false,
+            currentPage: 1,
             selectedUsersCount: 0,
             send_later: "",
             allSelected: false,
@@ -284,10 +296,8 @@ export default {
     },
 
     created() {
-        axios.get("/admin/staffs/find?" + this.searchquery).then((response) => {
-            this.users = response.data.data;
-        });
-        this.getUrl();
+        this.currentPage = Number(new URLSearchParams(window.location.search).get('page') || 1);
+        this.fetchPage(1);
         this.letter = this.searchquery.slice(-1)[0];
     },
 
@@ -310,6 +320,23 @@ export default {
     },
 
     methods: {
+        fetchPage(page) {
+            this.loadingStaff = true;
+            axios.get("/admin/staffs/find?" + this.searchquery).then((response) => {
+                this.users = response.data.data;
+                this.staffTotal = Number(response.data.meta ? response.data.meta.total : this.users.length);
+                this.staffPages = Number(response.data.meta ? response.data.meta.last_page : 1);
+                this.loadingStaff = false;
+            });
+        },
+
+        goStaffPage(page) {
+            if (page < 1 || page > this.staffPages || page === this.currentPage) return;
+            const href = new URL(window.location.href);
+            href.searchParams.set('page', page);
+            window.location.href = href.toString();
+        },
+
         clearAll() {
             window.location.href = "/admin/teachers";
         },

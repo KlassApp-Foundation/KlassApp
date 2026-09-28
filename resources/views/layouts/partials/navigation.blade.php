@@ -12,6 +12,9 @@
       showAcademicYear   show the academic-year selector (default: variant === 'dashboard')
       extraPricing       show the Pricing link (default false)
       showLogout         show a Logout button instead of the profile dropdown (default false)
+      chromeInSidebar    true => suppress the notification bell + profile dropdown here
+                         (they live in the sidebar footer instead — admin shell only,
+                         2026-09-27 UI-polish pass)
 --}}
 @php
     $variant          = $variant          ?? 'dashboard';
@@ -24,6 +27,7 @@
     $showLogout       = $showLogout       ?? false;
     $brandLogo        = $brandLogo        ?? null;   // 'klassapp' => KlassApp mark (parent; may span schools)
     $familyMenu       = $familyMenu       ?? false;  // parent: children + schools menu in the header
+    $chromeInSidebar  = $chromeInSidebar ?? false;  // admin: chrome lives in the sidebar footer
 
     // School identity: prefer the SCHOOL's own logo, fall back to the KlassApp mark.
     $navUser   = \Auth::user();
@@ -136,7 +140,7 @@
                     });
                 </script>
             @endauth
-            @if($notifyMode)
+            @if($notifyMode && ! $chromeInSidebar)
                 <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
             @endif
             @if($showLogout)
@@ -144,7 +148,7 @@
                     @csrf
                     <button type="submit" class="ds-btn ds-btn-sm" style="background:#fff;color:#0F172A;font-weight:600;">Logout</button>
                 </form>
-            @else
+            @elseif(! $chromeInSidebar)
                 <div class="navbar-menu {{ $variant === 'dashboard' ? 'ml-5' : 'lg:ml-5 md:ml-3' }}">
                     <ul class="navbar-nav ml-auto flex items-center">
                         @if($extraPricing)

@@ -39,7 +39,7 @@ fi
 
 # Established tracked top-level directories (see AGENTS.md root AI-tool audit).
 # Extend this list only when a new top-level dir is intentional and reviewed.
-ALLOWED_ROOT_DIRS=".ai .cursor .design-sync .devin .github app bootstrap config database docs docs-site e2e lang packages public resources routes scripts storage tests"
+ALLOWED_ROOT_DIRS=".ai .claude .cursor .design-sync .devin .github app bootstrap config database docs docs-site e2e lang packages public resources routes scripts storage tests"
 
 is_allowed_root_dir() {
   case " $ALLOWED_ROOT_DIRS " in

@@ -23,9 +23,12 @@
 
 /* ══════════════════════════════════════════════════════════════
    PIECE 2 — Docking / pill / fullscreen chrome (≥1280 dock, ≤640 fullscreen)
-   Desktop (≥1280): a FIXED 380px right column below the header (Option B,
-   2026-09-25) — #app spans the full viewport width (full-width header), and the
-   dock overlays the right edge rather than taking part in the flex flow.
+   Desktop (≥1280): SPLIT LAYOUT (2026-09-27) — a FIXED right column below the
+   header, width var(--toshi-w, 380px), with #app carving out a matching
+   margin-right so content REFLOWS around the panel (supersedes Option B's
+   overlay-scroll-under for the content area; #823's fixed-column geometry,
+   z-index 32, and full-width navbar are preserved). Default state COLLAPSED.
+   Resizable 300–640px via [data-toshi-resize-handle] (toshi-embed script).
    Collapse → width 0 + floating pill. Sub-1280: edge drawer (see below).
    Visual treatment = clay kit (not Pulse green). Do NOT move Pulse .ds-* rules
    into this section.
@@ -86,20 +89,26 @@
     }
 
     body [data-toshi-root] {
-        /* Fixed right column below the header (Option B, 2026-09-25). #app spans the
-           full viewport; the dock is a fixed column anchored right, top = header offset,
-           bottom = viewport. IMPORTANT: this sheet loads AFTER dashboard-refresh.css,
-           which declares the same selector with position:fixed !important (base widget
-           rule). Same specificity + both !important => this later sheet wins. Any
-           position change for the dock MUST live here, not in dashboard-refresh.css —
-           three reverted attempts (2026-09-22) failed exactly there. margin/height/
-           align-self are explicitly zeroed to retire the #791 flex-envelope rules. */
+        /* SPLIT LAYOUT (2026-09-27 redesign — supersedes Option B's pure overlay
+           for the CONTENT area only; #823's core mechanisms are preserved exactly:
+           the fixed right column, the stylesheet-order position rule, z-index 32
+           modal trap fix, and the full-width navbar. What changes: the dock width
+           is now var(--toshi-w, 380px) — set pre-paint by toshi-embed's script
+           from localStorage (default 380) — and #app carries a matching
+           margin-right (below) so content REFLOWS around the panel instead of
+           scrolling under it. IMPORTANT: this sheet loads AFTER
+           dashboard-refresh.css, which declares the same selector with
+           position:fixed !important (base widget rule). Same specificity + both
+           !important => this later sheet wins. Any position change for the dock
+           MUST live here, not in dashboard-refresh.css — three reverted attempts
+           (2026-09-22) failed exactly there. margin/height/align-self are
+           explicitly zeroed to retire the #791 flex-envelope rules. */
         position: fixed !important;
         top: var(--toshi-header-offset, 69px) !important;
         right: 0 !important;
         bottom: 0 !important;
         left: auto !important;
-        width: 380px !important;
+        width: var(--toshi-w, 380px) !important;
         height: auto !important;
         margin: 0 !important;
         /* 32: above the sticky navbar (z-index 31), below content dropdowns (z-index 50).
@@ -110,6 +119,75 @@
         display: flex !important;
         align-self: auto !important;
         transition: width 0.25s ease;
+    }
+
+    /* While dragging the resize handle, kill the width transition so the panel
+       tracks the pointer 1:1 (the transition otherwise lags the drag). */
+    /* THE SPLIT: content gives up exactly the dock's width. The margin targets
+       main/.dashboard-content-area (NOT #app!) so the sticky navbar inside #app
+       keeps spanning the FULL viewport — #823's full-width header is preserved
+       by design. Collapsed => margin 0 => full width. The paint-critical
+       html-level mirror lives in the pre-paint block near the end of this
+       media query. */
+    body:not(.toshi-collapsed) main {
+        margin-right: var(--toshi-w, 380px);
+        /* main is w-full (width:100%); with margin-right that overflows the
+           reduced #app box. Force auto so the split geometry is exact. */
+        width: auto !important;
+        transition: margin-right 0.25s ease;
+    }
+
+    html:not(.toshi-collapsed) main {
+        margin-right: var(--toshi-w, 380px);
+        width: auto !important;
+        transition: margin-right 0.25s ease;
+    }
+
+    body.toshi-collapsed main,
+    html.toshi-collapsed main {
+        margin-right: 0;
+        width: 100% !important;
+    }
+
+    body.toshi-resizing main {
+        transition: none !important;
+    }
+
+    /* ── Resize handle: the draggable boundary between content and Toshi ──
+       Sits on the dock's left edge, same top band as the panel. Pointer events
+       only on desktop ≥1280 (the handle markup is inside the root; sub-1280
+       never enters this media block). Double-click = reset to default 380px. */
+    [data-toshi-resize-handle] {
+        position: absolute;
+        left: -5px;
+        top: 0;
+        bottom: 0;
+        width: 9px;
+        cursor: col-resize;
+        z-index: 40;
+        background: transparent;
+        touch-action: none;
+    }
+    [data-toshi-resize-handle]::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 3px;
+        height: 44px;
+        border-radius: 3px;
+        background: #d6d3c8;
+        transition: background 0.15s ease, height 0.15s ease;
+    }
+    [data-toshi-resize-handle]:hover::after,
+    [data-toshi-resize-handle]:focus-visible::after,
+    body.toshi-resizing [data-toshi-resize-handle]::after {
+        background: #c96442;
+        height: 64px;
+    }
+    body.toshi-collapsed [data-toshi-resize-handle] {
+        display: none;
     }
 
     [data-toshi-root] .toshi-panel {
@@ -140,6 +218,14 @@
     }
 
     body.toshi-collapsed [data-toshi-root] {
+        width: 0 !important;
+    }
+
+    /* html-level mirror: the pre-paint bootstrap (toshi-prepaint.blade.php) sets
+       the class on <html> BEFORE Livewire's hydration snapshot; the embed script
+       mirrors it onto <body> for the legacy body.* rules. These html.* variants
+       cover the paint-critical window between first paint and the mirror. */
+    html.toshi-collapsed [data-toshi-root] {
         width: 0 !important;
     }
 
@@ -265,6 +351,26 @@
    (641–1279px had no rules at all) and the ≤640px full-screen takeover, so the
    panel keeps one behaviour at every width. */
 @media (max-width: 1279px) {
+    /* Collapsed pill on mobile (audit fix 2026-09-27): the collapsed-pill
+       positioning rule previously lived ONLY in the ≥1280 block, so sub-1280
+       the pill was static inside the 0-width collapsed root — squeezed to a
+       16px sliver, untappable. Anchor it fixed bottom-right on every width,
+       with a ≥44px tap area. */
+    body.toshi-collapsed [data-toshi-root] .toshi-pill {
+        display: flex !important;
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        max-width: calc(100vw - 32px);
+        z-index: 9999;
+    }
+    body.toshi-collapsed [data-toshi-root] .toshi-pill .toshi-pill-text {
+        display: none; /* keep the collapsed pill compact on phones */
+    }
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-pill {
+        display: none !important; /* open drawer replaces the pill */
+    }
+
     [data-toshi-root] .toshi-panel {
         position: fixed !important;
         top: 0;

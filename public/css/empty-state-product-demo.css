@@ -186,13 +186,61 @@
 }
 .es-browser-body {
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1.1fr auto 0.9fr;
+    align-items: stretch;
     min-height: 220px;
 }
+.es-ask-panel {
+    padding: 12px;
+    background: var(--es-surface);
+}
+.es-ask-tag {
+    display: inline-block;
+    font-family: "DM Sans", sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--es-ink-soft);
+    border: 1px solid var(--d-border, #E2E8F0);
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-bottom: 8px;
+    background: #FFFFFF;
+}
+.es-ask-tag-result { color: var(--es-green); border-color: color-mix(in srgb, var(--d-success, #15803D) 25%, #FFFFFF); background: var(--es-green-tint); }
 .es-toshi-panel {
     padding: 12px;
-    border-right: 1px solid var(--d-border, #E2E8F0);
     background: var(--es-surface);
+}
+/* Explicit ask→get connector: the two panels are one demonstration, not
+   floating siblings. Vertical line + arrow on desktop, downward arrow
+   on the stacked ≤640px layout. */
+.es-flow-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    background: #FFFFFF;
+    border-left: 1px solid var(--d-border, #E2E8F0);
+    border-right: 1px solid var(--d-border, #E2E8F0);
+}
+.es-flow-line {
+    flex: 1;
+    min-height: 2px;
+    height: 2px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--d-green, #22C55E) 0 6px,
+        transparent 6px 10px
+    );
+}
+.es-flow-arrow {
+    width: 18px;
+    height: 18px;
+    color: var(--d-green, #22C55E);
+    flex-shrink: 0;
+    margin-left: -8px; /* sit on the panel edge, pointing into the result */
 }
 .es-toshi-title {
     font-family: Sora, sans-serif;
@@ -346,8 +394,32 @@
 @media (max-width: 900px) {
     .es-demo-scene.is-active { grid-template-columns: 1fr; }
     .es-phone, .es-browser { margin: 0 auto; width: 100%; max-width: 420px; }
+    /* Stacked layout: the connector becomes a downward flow between panels. */
     .es-browser-body { grid-template-columns: 1fr; }
-    .es-toshi-panel { border-right: none; border-bottom: 1px solid var(--d-border, #E2E8F0); }
+    .es-flow-connector {
+        width: auto;
+        height: 30px;
+        border: none;
+        border-top: 1px solid var(--d-border, #E2E8F0);
+        border-bottom: 1px solid var(--d-border, #E2E8F0);
+    }
+    .es-flow-line {
+        flex: 1;
+        min-height: 2px;
+        height: 2px;
+        width: 2px;
+        background: repeating-linear-gradient(
+            to bottom,
+            var(--d-green, #22C55E) 0 6px,
+            transparent 6px 10px
+        );
+    }
+    .es-flow-arrow {
+        transform: rotate(90deg);
+        margin-left: 0;
+        margin-top: -8px;
+    }
+    .es-toshi-panel { border-right: none; }
     .es-demo-headline { font-size: 18px; }
 }
 

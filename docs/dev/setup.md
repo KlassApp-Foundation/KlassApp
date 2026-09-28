@@ -209,33 +209,19 @@ php artisan tinker
 
 ## 3. Webhook Security
 
-### 3.1 HMAC Signing
+### 3.1 Authentication of the WhatsApp endpoints
 
-All internal data endpoints (`/api/whatsapp/identify-user`, `/api/whatsapp/student/{id}/grades`, etc.) are protected by the `WhatsAppHmac` middleware. This ensures only authenticated callers (n8n, Typebot, internal services) can access student data.
+WhatsApp runs directly on the **Meta WABA token**. The live webhook is `api/whatsapp/inbound`
+(GET for Meta's verification handshake, POST for inbound messages).
 
-How to generate a signature:
+WhatsApp webhook hardening in progress.
 
-```bash
-# Given the raw JSON body
-BODY='{"phone":"+256701234567"}'
-SECRET="your-hmac-secret"
-
-# Compute HMAC-SHA256
-SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $NF}')
-
-# Call the endpoint
-curl -X POST https://your-app.com/api/whatsapp/identify-user \
-  -H "Content-Type: application/json" \
-  -H "X-Hub-Signature-256: $SIGNATURE" \
-  -d "$BODY"
-```
+The n8n, Typebot and Evolution integrations are **retired**. Any documentation describing
+n8n as the live WhatsApp path is stale.
 
 ### 3.2 Inbound Webhook Authentication
 
-The inbound webhook (`POST /api/whatsapp/inbound`) is NOT behind HMAC middleware. Instead, it relies on:
-
-1. The `apikey` header sent by Evolution API (matched against `EVOLUTION_API_KEY`)
-2. Payload validation via `StoreWhatsAppWebhookRequest` FormRequest (validates event type, phone format, payload size, content structure)
+WhatsApp webhook hardening in progress.
 
 ### 3.3 Firewall Rules
 

@@ -6,6 +6,7 @@ namespace App\Traits;
 
 use App\Http\Resources\ParentDetail as ParentDetailResource;
 use App\Http\Resources\Teacher as TeacherResource;
+use App\Models\Userprofile;
 use App\Http\Resources\Alumni as AlumniResource;
 use App\Http\Resources\User as UserResource;
 use Illuminate\Http\Request;
@@ -140,7 +141,7 @@ trait MemberProcess
         }
     }
 
-    public function TeacherFilter($request,$school_id,$usergroup_id)
+    public function TeacherFilter($request,$school_id,$usergroup_id,$paginate = true)
     {
         try
         {
@@ -224,7 +225,21 @@ trait MemberProcess
                     $users = $users->ByJopType($job_type);
                 }
             }
-            $users=$users->get();
+            // Batched relation loading keeps the list N+1-free; exports pass
+            // $paginate=false so they still receive the full row set.
+            if ($paginate) {
+                $users = $users
+                    ->with(['userprofile', 'teacherprofile.qualification'])
+                    ->orderBy(Userprofile::select('firstname')
+                        ->whereColumn('user_id', 'users.id')
+                        ->limit(1))
+                    ->paginate(25)
+                    ->withQueryString();
+            } else {
+                $users = $users
+                    ->with(['userprofile', 'teacherprofile.qualification'])
+                    ->get();
+            }
             $users = TeacherResource::collection($users);
             return $users;
         }
@@ -232,11 +247,10 @@ trait MemberProcess
         catch(\Throwable $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
         }
     }
 
-    public function StaffFilter($request,$school_id,$usergroup_id)
+    public function StaffFilter($request,$school_id,$usergroup_id,$paginate = true)
     {
         try
         {
@@ -320,7 +334,21 @@ trait MemberProcess
                     $users = $users->ByJopType($job_type);
                 }
             }
-            $users=$users->get();
+            // Batched relation loading keeps the list N+1-free; exports pass
+            // $paginate=false so they still receive the full row set.
+            if ($paginate) {
+                $users = $users
+                    ->with(['userprofile', 'teacherprofile.qualification'])
+                    ->orderBy(Userprofile::select('firstname')
+                        ->whereColumn('user_id', 'users.id')
+                        ->limit(1))
+                    ->paginate(25)
+                    ->withQueryString();
+            } else {
+                $users = $users
+                    ->with(['userprofile', 'teacherprofile.qualification'])
+                    ->get();
+            }
             $users = TeacherResource::collection($users);
             return $users;
         }
