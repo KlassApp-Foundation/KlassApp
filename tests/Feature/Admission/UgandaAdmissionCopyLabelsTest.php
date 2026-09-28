@@ -12,12 +12,13 @@ class UgandaAdmissionCopyLabelsTest extends TestCase
         $source = file_get_contents($path);
 
         $this->assertStringContainsString('Previous School Marks', $source);
-        $this->assertStringContainsString('Local Language', $source);
         $this->assertStringContainsString('Examination Board', $source);
         $this->assertStringContainsString('UNEB candidate classes', $source);
 
         $this->assertStringNotContainsString('Half Yearly Mark Details', $source);
         $this->assertStringNotContainsString('>Tamil</label', $source);
+        $this->assertStringNotContainsString('name="tamil"', $source);
+        $this->assertStringContainsString('UGANDAN FIELDS SPOT', $source);
         $this->assertStringNotContainsString('Board of Study', $source);
         $this->assertStringNotContainsString('Class X , XI , XII', $source);
     }

@@ -29,7 +29,6 @@ class AdmissionAcademicRequest extends FormRequest
         $rules = [
             //
             'english'               =>  'nullable|numeric|max:100',
-            'tamil'                 =>  'nullable|numeric|max:100',
             'maths'                 =>  'nullable|numeric|max:100',
             'science'               =>  'nullable|numeric|max:100',
             'social'                =>  'nullable|numeric|max:100',
@@ -57,8 +56,6 @@ class AdmissionAcademicRequest extends FormRequest
             'english.numeric'                       => 'Enter Valid English Marks',
             'english.max'                           => 'Enter Valid English Marks Cannot Be Greater Than 100',
 
-            'tamil.numeric'                         => 'Enter Valid Tamil Marks',
-            'tamil.max'                             => 'Enter Valid Tamil Marks Cannot Be Greater Than 100',
 
             'maths.numeric'                         => 'Enter Valid Maths Marks',
             'maths.max'                             => 'Enter Valid Maths Marks Cannot Be Greater Than 100',

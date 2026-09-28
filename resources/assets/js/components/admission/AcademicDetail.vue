@@ -28,25 +28,7 @@
                                     >{{ errors.english[0] }}</span
                                 >
                             </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="name" class="tw-form-label mr-2"
-                                        >Local Language</label
-                                    >
-                                    <input
-                                        type="text"
-                                        name="tamil"
-                                        v-model="tamil"
-                                        placeholder="Local Language"
-                                        class="tw-form-control w-1/2 mx-4 my-1 py-2"
-                                    />
-                                </div>
-                                <span
-                                    v-if="errors.tamil"
-                                    class="text-red-500 text-xs font-semibold"
-                                    >{{ errors.tamil[0] }}</span
-                                >
-                            </div>
+                            <!-- UGANDAN FIELDS SPOT: school-specific fields land here (owner will define) -->
                         </div>
 
                         <div class="flex flex-col lg:flex-row">
@@ -250,7 +232,6 @@ export default {
             profile_tab: "",
             half_yearly_mark_details: "",
             english: "",
-            tamil: "",
             maths: "",
             science: "",
             social: "",
@@ -310,7 +291,6 @@ export default {
             let formData = new FormData();
 
             formData.append("english", this.english);
-            formData.append("tamil", this.tamil);
             formData.append("maths", this.maths);
             formData.append("science", this.science);
             formData.append("social", this.social);
