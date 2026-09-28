@@ -13079,3 +13079,30 @@ The following browser-based verification items are **NOT YET CONFIRMED** on live
 - **Rollback**: `depl-a2d7de51` @ `d377e2e1`
 - **⚠️ #827 still open (plain-text password warning)**: teacher invite flow sends a plain-text password in the invite email. Not deployed to production. Open PR.
 - **Open PRs still needing work**: #833, #834, #835, #836, #837 (all reviewed, not merged, staged-not-verified), and #827 (plain-text password).
+
+### 2026-09-28: production housekeeping, four retired verification logins flagged inactive
+
+Read-only checks first, then the change, then an independent confirmation. Nothing was deleted (rule #9).
+
+**What the read-only pass found**
+
+| Check | Result |
+|---|---|
+| School 43 "Demo Toshi Primary 1789064502315" | `is_test = 0`, `is_demo = 0`, status active |
+| School 45 "Caveats 504 Primary 1789078396536" | `is_test = 0`, `is_demo = 0`, status active |
+| Repo references to `demo.toshi` (user 159) | **none** |
+| Repo references to `teacher.toshi.43` (user 160) | none: the `teacher.toshi` matches are test fixtures on the unrelated `@test.sch.ug` domain |
+| Repo references to `caveats504` / `1789078396536` (user 187) | historical `knowledge.md` verification evidence only, no live flow |
+| Repo references to `1789086305461` (user 188) | none |
+| `school_details` rows mentioning any of them | 0 |
+
+**What changed.** All four accounts were flagged inactive on production: `users.status = inactive`, `userprofiles.status = inactive`, and `device_id` cleared so any app session is dropped. Accounts: 159 `demo.toshi.1789064502315@live-verify.test` (school 43, ug3), 160 `teacher.toshi.43@live-verify.test` (43, ug5), 187 `caveats504.1789078396536@live-verify.test` (45, ug3), 188 `ct.kls1.1789086305461@live-verify.test` (45, ug5). The rows remain, so the logins can be reactivated if anything turns out to need them.
+
+**User 159 was not treated as a demo-flow account**, because nothing references it: not a seeder, not a script, not a config value, not a doc. The "leave active and rotate" branch therefore did not apply.
+
+**Independent read-only confirmation afterwards:** all four read `users.status = inactive`, `profile.status = inactive`, `device = null`, all four rows still present, and `active_among_them = 0`.
+
+**Two findings left for a decision, deliberately not acted on.**
+
+1. **Schools 43 and 45 are named like fixtures but flagged as live customers** (`is_test = 0`, `is_demo = 0`), so they are counted in platform metrics and can appear in the recently-joined feed even though their accounts are verification throwaways.
+2. **Eight further `@live-verify.test` accounts are still active**, and they are the same family: 147 and 148 on school 36, 150 and 151 on school 38, and 155, 156, 157 and 158 on schools 39 to 42, the last four named `demo.toshi.*`. The earlier cleanups stopped short of them, so this looks like a series of verification fixtures across roughly ten schools rather than four stragglers.
