@@ -4115,3 +4115,118 @@ select:focus-visible,
   background: var(--brand-light); border: 1px solid var(--border); border-radius: 6px;
   padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* Demo request form (lead capture) */
+.demo-section {
+  padding: 84px 0;
+  background: #FFFFFF;
+  border-top: 1px solid var(--border);
+}
+.demo-head {
+  max-width: 640px;
+  margin: 0 auto 28px;
+  text-align: center;
+}
+.demo-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 38px);
+  color: var(--text-primary);
+  margin: 0 0 10px;
+}
+.demo-head p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+.demo-form {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--brand-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.demo-field-full {
+  grid-column: 1 / -1;
+}
+.demo-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.demo-optional {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.demo-field input,
+.demo-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  font: inherit;
+  color: var(--text-primary);
+  background: #FFFFFF;
+}
+.demo-field input:focus,
+.demo-field textarea:focus {
+  outline: 2px solid rgba(30, 111, 217, 0.35);
+  outline-offset: 1px;
+  border-color: var(--brand-blue);
+}
+.demo-err {
+  color: #B91C1C;
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+.demo-actions {
+  margin-top: 20px;
+  display: flex;
+}
+.demo-hp {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.demo-success {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--brand-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.demo-success h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+.demo-success p {
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+}
+@media (max-width: 760px) {
+  .demo-section {
+    padding: 64px 0;
+  }
+  .demo-grid {
+    grid-template-columns: 1fr;
+  }
+  .demo-actions .btn {
+    width: 100%;
+  }
+}

@@ -134,6 +134,11 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 })->name('contact.send');
 Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
 
+// Demo request capture (public form on the landing)
+Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('demo.request.store');
+
 // Terms of Service and Privacy Policy
 Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
 Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'create']);
@@ -263,6 +268,10 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
    Route::get('reports/contact', function () {
         return view('superadmin.reports.contactlist');
     })->name('superadmin.reports.contactlist');
+
+   Route::get('reports/demo-requests', function () {
+        return view('superadmin.reports.demorequestlist');
+    })->name('superadmin.reports.demorequests');
 
    //School
    Route::get('academics/school/create', function () {
