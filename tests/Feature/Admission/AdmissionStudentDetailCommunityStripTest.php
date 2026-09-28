@@ -37,6 +37,8 @@ class AdmissionStudentDetailCommunityStripTest extends TestCase
             'lastname' => 'Nakato',
             'date_of_birth' => '2015-03-12',
             'gender' => 'female',
+            'nationality' => 'Ugandan',
+            'home_district' => 'Kampala',
             'identification_marks' => 'Scar on left knee',
             'school_last_studied' => 'Previous Primary',
             'reason_for_leaving' => 'Relocation',
