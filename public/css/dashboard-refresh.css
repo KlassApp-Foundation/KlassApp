@@ -54,6 +54,8 @@ body {
     /* ── Borders & Rings ── */
     --d-border: #E2E8F0;
     --d-border-strong: #CBD5E1;
+    /* Nav-trigger avatar ring (x-profile-photo shape="circle"); was inline in profile-dropdown. */
+    --d-avatar-ring: rgba(34, 197, 94, 0.3);
 
     /* ── Semantic ── */
     --d-red: #DC2626;

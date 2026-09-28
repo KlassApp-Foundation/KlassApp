@@ -217,6 +217,27 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 
 ---
 
+### `<x-profile-photo />`
+
+The one frame for a user's profile photo (added 2026-09-27).
+
+```blade
+<x-profile-photo :user="$user" size="xl" class="mx-auto" />
+<x-profile-photo :user="Auth::user()" size="xs" shape="circle" />   {{-- nav trigger only --}}
+```
+
+| Prop | Default | Notes |
+|---|---|---|
+| `user` | **required** (may be `null`) | `null` renders the default image with `alt=""` |
+| `size` | `md` | `xs` 32 (nav trigger only) · `sm` 40 · `md` 64 · `lg` 128 · `xl` 192 px; `max-width: 100%` keeps it square in narrow columns |
+| `shape` | `square` | square = 12px radius + 1px `--d-border` ring; `circle` (2px `--d-avatar-ring`) is reserved for the profile-dropdown trigger |
+
+- Fallback uses `userprofile->avatar != null`, **not** `?->AvatarPath ?? default` — the accessor returns `''` when there is no avatar, which would emit `src=""`.
+- `alt` is the display name (FullName when the profile has a first name, else `name`).
+- Not for print/PDF templates (ID card, bus pass): they keep fixed inline px because DomPDF may not resolve CSS custom properties.
+
+---
+
 ### `<x-ds-kpi-card />`
 
 ```blade

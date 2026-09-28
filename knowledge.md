@@ -13151,3 +13151,10 @@ Two statements that appear earlier in this file are **stale or wrong** and are c
 - **PDF evidence** (real DomPDF, synthetic fixture): missing-marks 3 spans and student-report 9 spans `#94A3B8`→`#64748B`, page counts unchanged.
 - **Found**: formal's `.ledger td.empty` matches no element (inert). `student-report.blade.php` has no render path since `16a03804` (2026-08-13) and still hardcodes Kabale Junior School identity + missing `public/images/KJSLogo.jpg` — deletion candidate (separate PR).
 
+
+## Session: 2026-09-27 — x-profile-photo + replace divergent avatar frames (PR [#837](https://github.com/KlassApp-Foundation/KlassApp/pull/837) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-profile-photo`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Pre-PR grep** (`grep -rn AvatarPath resources/ app/ packages/`, full tree): the handoff's 7 + `layouts/partials/profile-dropdown` (3 imgs) + **`teacher/student/show` L18 (missed by the design scan)**; app/packages hits are JSON API resources (out of scope); `buspass/print` L94 (HTML comment) untouched.
+- **Component**: `components/profile-photo.blade.php` — sizes xs32/sm40/md64/lg128/xl192, square 12px (`var(--d-radius-xl, 12px)`; `--d-radius-lg` is 10px and radius tokens aren't loaded at runtime) + 1px `--d-border` ring, circle only for the nav trigger (option b) with new `--d-avatar-ring` token; fallback uses `avatar != null` (AvatarPath returns '' → `??` would emit `src=""` — confirmed in `Common::getFilePath`); alt = display name.
+- **Measured main → branch**: student show 196×192 stretched → 192×192; teacher wide photo 174×74 → 174×174 cover; staff no-avatar `src=""` broken → default; feedback hard-coded default → parent photo; teacher nav trigger at 390 4×32 sliver → 32×32; alt everywhere. Print templates (id-card ×2, bus_pass) radius 10→12px only (bus_pass has no route).
+
