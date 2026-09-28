@@ -15,6 +15,14 @@ trait CreatesApplication
         putenv('DB_CONNECTION=sqlite');
         putenv('DB_DATABASE=:memory:');
 
+        // Force the testing environment before boot. PHPUnit's <env> only
+        // writes putenv/$_ENV, but Laravel's Env reads $_SERVER first
+        // (ServerConstAdapter), so a shell that exports APP_ENV=local would
+        // otherwise make CSRF enforce inside these tests and 419 every POST.
+        putenv('APP_ENV=testing');
+        $_ENV['APP_ENV'] = 'testing';
+        $_SERVER['APP_ENV'] = 'testing';
+
         $app = require __DIR__ . '/../bootstrap/app.php';
 
         $app->make(Kernel::class)->bootstrap();
