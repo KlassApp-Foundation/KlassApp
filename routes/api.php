@@ -289,26 +289,25 @@ Route::post('/schoolpay/webhook', 'Api\SchoolPayWebhookController@handle')
     ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
 // =====================================================================
-// WhatsApp API — REST endpoints for n8n/Typebot integration
+// WhatsApp API — live Meta Cloud API (WABA) webhook only
 // =====================================================================
+// The n8n, Typebot and Evolution integrations are retired. WhatsApp now runs directly on
+// the Meta WABA token, so these are the only WhatsApp routes:
+//   GET/POST /inbound  — Meta webhook verification (GET) and inbound messages (POST)
+//   POST     /delivery — delivery/status callbacks
+// The legacy REST data endpoints (identify-user, student/{id}/grades|report|attendance,
+// fees/{id}/balance, school/{id}/events) were removed: they had no in-repo caller and were
+// unauthenticated, and the WhatsAppHmac middleware that was meant to protect them was
+// never applied. The controller methods are kept, unrouted, in case Toshi or an internal
+// service needs them as direct calls.
 Route::prefix('whatsapp')->group(function () {
     // Meta Cloud API webhook verification (GET) + inbound messages (POST)
     // Meta sends GET to verify the webhook URL, POST for actual messages/statuses
     Route::match(['get', 'post'], '/inbound', 'Api\WhatsAppController@handleInbound')
         ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
-    // Delivery status webhook (Evolution API → Laravel)
+    // Delivery status webhook. Unauthenticated POST, kept deliberately: it is likely called
+    // by Meta and has no in-repo caller to confirm against, so it is left in place and
+    // reported rather than guessed at.
     Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook');
-
-    // Identify user by phone number
-    Route::post('/identify-user', 'Api\WhatsAppController@identify');
-
-    // Student data endpoints (used by n8n for parent/student flows)
-    Route::get('/student/{studentId}/grades', 'Api\WhatsAppController@grades');
-    Route::get('/student/{studentId}/report', 'Api\WhatsAppController@report');
-    Route::get('/student/{studentId}/attendance', 'Api\WhatsAppController@attendance');
-    Route::get('/fees/{studentId}/balance', 'Api\WhatsAppController@feeBalance');
-
-    // School-wide endpoints
-    Route::get('/school/{schoolId}/events', 'Api\WhatsAppController@schoolEvents');
 });

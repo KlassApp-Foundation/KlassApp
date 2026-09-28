@@ -708,7 +708,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 .ds-form-label {
     display: block;
     font-family: "DM Sans", sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--d-text);
     margin-bottom: 6px;
@@ -3962,3 +3962,9 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
 }
+
+/* Dashboard gender legend swatches — match the chart series (boys #304ffe,
+   girls #B45309 AA amber). Scoped to the admin dashboard; the adminstyle.scss
+   .bar-bg-* defaults (#417dfc / #ffa601) still serve the superadmin widget. */
+.dashboard-gender-stat.bar-bg-blue:after { background-color: #304ffe; }
+.dashboard-gender-stat.bar-bg-orange:after { background-color: #B45309; }
