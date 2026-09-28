@@ -289,25 +289,19 @@ Route::post('/schoolpay/webhook', 'Api\SchoolPayWebhookController@handle')
     ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
 // =====================================================================
-// WhatsApp API — live Meta Cloud API (WABA) webhook only
+// WhatsApp API: live Meta Cloud API (WABA) webhook only
 // =====================================================================
-// The n8n, Typebot and Evolution integrations are retired. WhatsApp now runs directly on
-// the Meta WABA token, so these are the only WhatsApp routes:
-//   GET/POST /inbound  — Meta webhook verification (GET) and inbound messages (POST)
-//   POST     /delivery — delivery/status callbacks
-// The legacy REST data endpoints (identify-user, student/{id}/grades|report|attendance,
-// fees/{id}/balance, school/{id}/events) were removed: they had no in-repo caller and were
-// unauthenticated, and the WhatsAppHmac middleware that was meant to protect them was
-// never applied. The controller methods are kept, unrouted, in case Toshi or an internal
-// service needs them as direct calls.
+// WhatsApp runs directly on the Meta WABA token, so these are the only WhatsApp routes.
+// Both webhook POSTs are verified against Meta's X-Hub-Signature-256 by
+// VerifyWhatsAppWebhookSignature (config services.whatsapp.app_secret; switchable with
+// WHATSAPP_VERIFY_SIGNATURE); the GET verify-token handshake on /inbound is unchanged.
 Route::prefix('whatsapp')->group(function () {
     // Meta Cloud API webhook verification (GET) + inbound messages (POST)
-    // Meta sends GET to verify the webhook URL, POST for actual messages/statuses
     Route::match(['get', 'post'], '/inbound', 'Api\WhatsAppController@handleInbound')
-        ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
+        ->middleware(\App\Http\Middleware\VerifyWhatsAppWebhookSignature::class);
 
-    // Delivery status webhook. Unauthenticated POST, kept deliberately: it is likely called
-    // by Meta and has no in-repo caller to confirm against, so it is left in place and
-    // reported rather than guessed at.
-    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook');
+    // Delivery/status callbacks.
+    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook')
+        ->middleware(\App\Http\Middleware\VerifyWhatsAppWebhookSignature::class);
 });
