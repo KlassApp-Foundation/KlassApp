@@ -618,22 +618,6 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-<<<<<<< HEAD
-## Session: 2026-09-27 — Approvals inbox on x-table + ds buttons (PR [#834](https://github.com/KlassApp-Foundation/KlassApp/pull/834) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-approvals-inbox`)
-
-- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
-- **Measured on main**: Approve/Reject/Confirm were white text on a TRANSPARENT background (Tailwind v4 build never emitted `bg-green-600`/`bg-red-500` for this view), 21.8px tall; select 26px; input 23.8px.
-- **Change**: `<x-table>` (all six columns + `data-label`; `@php` block byte-identical), `<x-button variant=primary|danger size=sm>` (44px, `#15803D`/`#DC2626`, hovers darken to `#166534`/`#992A2A`), `ds-form-select`/`ds-form-input` + 44px floor (ds classes alone 35.6px), secondary text `#64748B`, `.ds-empty-state` with the handoff copy (desc overrides `--d-muted`). `confirm()` left as-is (dialog = own PR).
-- **Files**: `admin/approvals/inbox.blade.php`, new `tests/Feature/Admin/ApprovalsInboxDesignSystemTest.php`.
-- **Pre-existing, not changed**: x-table's sticky thead stays visible on mobile (same on `/admin/students`); Livewire parent-link picker results overlap Approve when open.
-=======
-## Session: 2026-09-27 — Charts: AA-contrast series colours + EOT value labels (PR [#833](https://github.com/KlassApp-Foundation/KlassApp/pull/833) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub`)
-
-- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
-- **Change**: fee trend `#22C55E`→`#15803D` (fill `rgba(21,128,61,.06)`); gender girls `#ffa601`→`#B45309`, unspecified `#cbd5e1`→`#64748B`, boys `#304ffe` in BOTH doughnut and class bar (doughnut used to map the orange to Male; legend swatches follow via scoped `.dashboard-gender-stat.bar-bg-*` in dashboard-refresh.css); empty msg → "No students enrolled yet"; EOT `#CA8A04`→`#A16207` (PHP + JS lists); inline opt-in `dsValueLabels` Chart.js plugin (no datalabels dep); `<x-chart>` emptyMessage required (throws local/testing) + AA fallback palette.
-- **Pre-existing bug fixed**: Students doughnut had NOT rendered since `7492eda2` (2026-09-21) — `['studentCount']` inside the single-quoted `options-js` attribute broke Blade's component-tag match, raw `<x-chart>` shipped (+ "Malformed arrow function parameter list" page error). `DashboardGenderChartTest` (2 stale v2 assertions, red on main) rewritten against the v4 config + a no-raw-`<x-chart>` guard (proven to fail on the old markup).
-- **Files**: `admin/dashboard/dashboard.blade.php`, `admin/reports/_eot-kpi-card.blade.php` (handoff said `admin/dashboard/` — real path is `admin/reports/`), `components/chart.blade.php`, `components/DESIGN_SYSTEM.md`, `public/css/dashboard-refresh.css`, `tests/Feature/Dashboard/DashboardGenderChartTest.php`, new `tests/Feature/DesignSystem/ChartComponentContractTest.php`.
->>>>>>> origin/main
 - **Access this session (verified, rule #12/#23)**: no Laravel Cloud token, no Doppler, no Cloud MCP — staging/prod NOT exercised; local only (Docker MySQL 8 demo DB + synthetic fixtures, Chromium Playwright at 1280/390). Composer: `phpstan/phpstan` dist zip 403s through the session proxy, so vendor was installed from an untracked copy of the lock without phpstan/larastan (tests/app unaffected).
 - **Regression pack (every PR)**: `#mobile-menu-trigger` opens `#res_sidebar` with exactly 1 class flip; Toshi split collapsed by default, drag clamps 300–640px; admin sidebar footer (#830) renders, collapses 192→72px. All pass.
 - **Evidence page**: https://claude.ai/artifact/4fjPe8Vujp7FjR72YR4ZxY (private; before/after at 1280/390 + measurements)
@@ -2587,8 +2571,6 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
 - **Status**: ✅ MERGED `168a054e` + staging `depl-a2c225d3-…` verified. Production not deployed.
 - **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
-
-
 
 ### 2026-09-15: Nightwatch trio — WA demo school_id + fee standardLink + null avatar — **LIVE** ([#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620))
 - **Work done**: Picked up Goose's incomplete Nightwatch fixes. (1) WhatsApp `"demo"` inbound: `school_id` from configured demo parent (`services.whatsapp.demo_parent_user_id` / `WHATSAPP_DEMO_PARENT_USER_ID`, default 104) — never hardcode `1`; graceful when missing. (2) `whatsapp:send-fee-reminders`: students via `whereHas('standardLink', standard_id ∈ fee categories)` (not missing `student_academics.standard_id`); `markAttendance` uses `standardLink_id`; `notifyFeeReminder` via `studentAcademicLatest.standardLink`. (3) Null avatar: `getFilePath` null-guard + `\Throwable`; Teacher resources null-safe. (4) Follow-up #620: `getParentPhones` no longer `wherePivot` on hasMany `StudentParentLink`.
@@ -6368,8 +6350,6 @@ Teacher click-verification is **complete** — all 5 modules E2E tested with DB 
 - Admin: `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`
 - Teacher has `leave_applier` designation and `reporting_to=5` set in TeacherProfile
 - Admin has `leave_checker` designation
-
-
 
 ---
 
@@ -12968,8 +12948,6 @@ Forced-push detection first: `teacher` branch `head_pushed=2026-09-26T02:47:35Z`
 
 **Verdict for the human review (standing rule #25): DO NOT MERGE as-is.** The tonight-security (today's-attendance, receptionist gate, scope authorization, IDOR class in his touched controllers) is **not silently reverted — it survives and is test-proven on the hypothetical merge**. But the branch is a **product-direction conflict**: (1) its tests assert school-wide teacher access the scope-setting decision deliberately rejected, (2) it forks the teacher shell off the shared nav chrome (doubling maintenance of the #823/#825 surface), (3) it ships compiled `public/build/*` artifacts and scratch files (`revert.md`, `todayswork.md`), (4) its timetable routes target `TimetableSlotController` methods that **still don't exist on main** (the documented reason the timetable part was never ported — `teacherIndex/teacherCreate/teacherStore/teacherEdit/teacherUpdate/teacherDestroy` absent from `Admin\TimetableSlotController`). Safe path if anything is adopted: his export() hardening + admin Teachers nav row + teacher menu destinations are the genuinely compatible pieces; the scope-assertion inversion, nav fork, and timetable routes are the must-not-take pieces.
 
-
-
 ### 2026-09-26 (evening): PR #682 (Elijah-ug, `refactor-sep`) first-ever risk review — verdict: DO NOT MERGE; two hard blockers (student-ID scheme self-contradiction, schema refactor breaks main's stream/onboarding surface) + a hidden authorization widening; the new teacher-edit-student feature itself passes cross-school probes; investigation only, nothing merged
 
 Full structured review, same technique as #788/#819: merged `origin/main` INTO a scratch worktree of `refactor-sep` (head `6adff2c2`, 15 commits, 112 files +3288/−1239, merge-base `795009e7`, PR body = unfilled template), resolved conflicts in the security-preserving direction, and ran tonight's suites + purpose-built probes against the hypothetical merge (scratch commit `e70399b3`, local only, worktree removed, branch/staging untouched). Docker/colima was down; per the recorded harness-trap rule a **physical full vendor copy** was used (no symlinks), local PHP 8.4.19, SQLite `:memory:`. Note: #682 is the **upstream sibling of #788** — its file set is exactly the teacher work knowledge.md lists as "not incorporated yet" (`TeacherRosterFormatter`, teacher dashboard/attendance/student/timetable/noticeboard surfaces, `TimetableSlotController::teacher*` — which DO exist here, resolving #788's "methods don't exist" note) plus far more (schema migrations, laratrust, States).
@@ -12987,8 +12965,6 @@ Full structured review, same technique as #788/#819: merged `origin/main` INTO a
 **6. Dead weight / scope creep.** `config/laratrust.php` (267 lines) + `laratrust_seeder.php` for a package that is NOT in composer.json/lock and used by nothing; unrouted Livewire `Superadmin\Setting\States|StateForm|StateDetail` + `StatePolicy`; scratch files `additional.md` (430 lines), `keyImprovements.md`, `tr-sunday.md`, `teacher-test.md`, literal files named `,` and `-`; committed `public/build/*` artifacts; `composer.json` bumps `laravel/ai` ^0.10→^0.11.2 (untested package upgrade inside an external PR touching the Toshi/AI stack — flag: do not take blind) and removes `HasConversations` from `User` (behaviorally near-neutral today — the class's own legacy `conversations()` already shadows the trait — but the upgrade itself is untested risk); `.gitignore`d `todayswork.md`; commented-out `klassapp-ci.yml`.
 
 **Verdict (standing rule #25): DO NOT MERGE. Higher risk than #788** — same product-direction conflicts PLUS two hard blockers (KA ID scheme, schema surgery) that make even a security-preserving merge unusable, an unreviewed CT widening, and migration edits to already-deployed files. **Genuinely worth extracting as small reviewed PRs:** (a) teacher timetable (controller methods + routes + views — properly school-scoped, teacher-link-authorized, conflict-detecting; supersedes main's hash-anchor nav row), (b) attendance export() scoped findOrFail (same as #788's), (c) teacher edit-student capability re-ported with id-based routes, (d) `.xlx/.xlsx` import acceptance (passes main's `ImportMemberSpreadsheetAcceptanceTest`), (e) null-safety hardening in `Admin\StudentController::editStudent` (transport/siblings), (f) Teachers + Terms nav rows via `config/navigation.php`, (g) Ugandan fixed-date holidays seeding (needs the `batch` NOT NULL fix and main-parity review). Must-not-take: the ID normalization migration, the stream→sections schema refactor (needs its own designed RFC against main's current architecture, not an external big-bang), the CT widening (unless separately decided), his school-wide attendance tests, laratrust/States dead code, laravel/ai bump, menu-blade edits.
-
-
 
 ### 2026-09-26 (evening): PR #820 MERGED `007c77a1` + staging-deployed + verified — teachers/staffs list pagination (58→20 and 57→19 queries measured directly); conflict-free merge; no branch push needed
 
@@ -13149,3 +13125,16 @@ Two statements that appear earlier in this file are **stale or wrong** and are c
 **Open finding, not fixed:** `api/whatsapp/inbound` does not verify Meta's `X-Hub-Signature-256`, so an unsigned or wrongly signed POST is accepted. Verifying this properly means coordinating with the live webhook, so it is reported rather than changed silently.
 
 **Verification:** the five existing WhatsApp test failures are pre-existing and identical on clean main (5 failed, 2 risky, 68 passed before, 70 passed with the removal). Removed routes return 404, the inbound webhook route remains, and the dead middleware is gone.
+
+## Session: 2026-09-27 — Approvals inbox on x-table + ds buttons (PR [#834](https://github.com/KlassApp-Foundation/KlassApp/pull/834) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-approvals-inbox`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Measured on main**: Approve/Reject/Confirm were white text on a TRANSPARENT background (Tailwind v4 build never emitted `bg-green-600`/`bg-red-500` for this view), 21.8px tall; select 26px; input 23.8px.
+- **Change**: `<x-table>` (all six columns + `data-label`; `@php` block byte-identical), `<x-button variant=primary|danger size=sm>` (44px, `#15803D`/`#DC2626`, hovers darken to `#166534`/`#992A2A`), `ds-form-select`/`ds-form-input` + 44px floor (ds classes alone 35.6px), secondary text `#64748B`, `.ds-empty-state` with the handoff copy (desc overrides `--d-muted`). `confirm()` left as-is (dialog = own PR).
+- **Files**: `admin/approvals/inbox.blade.php`, new `tests/Feature/Admin/ApprovalsInboxDesignSystemTest.php`.
+- **Pre-existing, not changed**: x-table's sticky thead stays visible on mobile (same on `/admin/students`); Livewire parent-link picker results overlap Approve when open.
+
+## Session: 2026-09-27 — Charts: AA-contrast series colours + EOT value labels (PR [#833](https://github.com/KlassApp-Foundation/KlassApp/pull/833) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: fee trend `#22C55E`→`#15803D` (fill `rgba(21,128,61,.06)`); gender girls `#ffa601`→`#B45309`, unspecified `#cbd5e1`→`#64748B`, boys `#304ffe` in BOTH doughnut and class bar (doughnut used to map the orange to Male; legend swatches follow via scoped `.dashboard-gender-stat.bar-bg-*` in dashboard-refresh.css); empty msg → "No students enrolled yet"; EOT `#CA8A04`→`#A16207` (PHP + JS lists); inline opt-in `dsValueLabels` Chart.js plugin (no datalabels dep); `<x-chart>` emptyMessage required (throws local/testing) + AA fallback palette.
+- **Pre-existing bug fixed**: Students doughnut had NOT rendered since `7492eda2` (2026-09-21) — `['studentCount']` inside the single-quoted `options-js` attribute broke Blade's component-tag match, raw `<x-chart>` shipped (+ "Malformed arrow function parameter list" page error). `DashboardGenderChartTest` (2 stale v2 assertions, red on main) rewritten against the v4 config + a no-raw-`<x-chart>` guard (proven to fail on the old markup).
+- **Files**: `admin/dashboard/dashboard.blade.php`, `admin/reports/_eot-kpi-card.blade.php` (handoff said `admin/dashboard/` — real path is `admin/reports/`), `components/chart.blade.php`, `components/DESIGN_SYSTEM.md`, `public/css/dashboard-refresh.css`, `tests/Feature/Dashboard/DashboardGenderChartTest.php`, new `tests/Feature/DesignSystem/ChartComponentContractTest.php`.
