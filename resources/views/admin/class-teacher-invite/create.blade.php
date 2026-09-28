@@ -77,6 +77,45 @@
             </div>
          </form>
       </div>
+
+      @if($pendingInvites->isNotEmpty())
+      <div class="ds-card ds-card-body max-w-2xl mt-6" data-testid="pending-invites">
+         <h2 class="text-sm font-semibold mb-3">Pending invites</h2>
+         <table class="w-full text-sm">
+            <thead>
+               <tr class="text-left text-gray-500">
+                  <th class="py-1">Email</th>
+                  <th class="py-1">Name</th>
+                  <th class="py-1">Status</th>
+                  <th class="py-1 text-right">Link</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach($pendingInvites as $invite)
+               <tr class="border-t">
+                  <td class="py-2">{{ $invite->email }}</td>
+                  <td class="py-2">{{ $invite->name }}</td>
+                  <td class="py-2">
+                     @if($invite->isExpired())
+                     <span class="text-amber-600">Expired</span>
+                     @else
+                     <span class="text-green-700">Pending</span>
+                     @endif
+                  </td>
+                  <td class="py-2 text-right">
+                     <form method="POST" action="{{ route('admin.class-teacher-invite.resend', $invite) }}">
+                        @csrf
+                        <button type="submit" class="ds-btn ds-btn-ghost ds-btn-sm">Resend</button>
+                     </form>
+                  </td>
+               </tr>
+               @endforeach
+            </tbody>
+         </table>
+         <p class="text-gray-500 text-xs mt-2">Resending sends a fresh link and replaces the previous one.</p>
+      </div>
+      @endif
+
    </div>
 @endsection
 

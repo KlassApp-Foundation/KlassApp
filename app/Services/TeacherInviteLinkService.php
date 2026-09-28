@@ -65,6 +65,31 @@ class TeacherInviteLinkService
     }
 
     /**
+     * Reissue an invite: generates a fresh token (invalidating the previous one)
+     * and extends the expiry window. Used by the admin resend action.
+     *
+     * @return array{invite: TeacherInvite, token: string}
+     */
+    public static function reissue(TeacherInvite $invite): array
+    {
+        $token = Str::random(self::TOKEN_LENGTH);
+
+        $invite->token_hash = hash('sha256', $token);
+        $invite->expires_at = now()->addHours(self::EXPIRY_HOURS);
+        $invite->save();
+
+        Log::info('Teacher invite reissued', [
+            'invite_id'  => $invite->id,
+            'school_id'  => $invite->school_id,
+            'email'      => $invite->email,
+            'expires_at' => $invite->expires_at->toIso8601String(),
+            // token is never logged
+        ]);
+
+        return ['invite' => $invite, 'token' => $token];
+    }
+
+    /**
      * Build the absolute invite URL from a raw token.
      */
     public static function inviteUrl(string $token): string
