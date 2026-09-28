@@ -136,7 +136,9 @@ class DashboardController extends Controller
                 ];
             });
 
-        return $assignmentDeadlines->merge($homeworkDeadlines)->sortBy('date')->values()->all();
+        // Both deadline maps are plain arrays; base collections merge them safely.
+        // Eloquent\Collection::merge() would call getKey() on each item and fatal.
+        return collect($assignmentDeadlines)->merge(collect($homeworkDeadlines))->sortBy('date')->values()->all();
     }
 
     /**
