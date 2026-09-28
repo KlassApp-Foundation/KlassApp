@@ -23,7 +23,7 @@ class AttendanceAddRequest extends FormRequest
             return true;
         }
 
-        // Teachers may post attendance for the classes their school's attendance_scope
+// Teachers may post attendance for the classes their school's attendance_scope
         // allows (class_teacher_only | classes_i_teach | school_wide). The school id is
         // taken from the authenticated user, never from request input.
         if ((int) $user->usergroup_id === 5) {

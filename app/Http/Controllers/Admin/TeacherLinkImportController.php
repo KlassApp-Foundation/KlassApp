@@ -15,6 +15,7 @@ use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class TeacherLinkImportController extends Controller
@@ -99,6 +100,7 @@ class TeacherLinkImportController extends Controller
                         'usergroup_id' => 5,
                         'name' => $teacherName,
                         'email' => Str::slug($teacherName) . '.' . $schoolId . '@school.edu',
+                        // 'password' => Hash::make('password'), // For testing locally
                         'password' => $provisioning['password'],
                         'is_reset' => $provisioning['is_reset'],
                         'status' => 'active',
