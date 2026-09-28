@@ -153,6 +153,12 @@ Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteContro
 Route::post('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'claim'])
     ->name('teacher.invite.claim');
 
+// Co-admin invite link — one-time password-set flow (no credentials in email)
+Route::get('/invite/co-admin/{token}', [\App\Http\Controllers\CoAdminInviteController::class, 'show'])
+    ->name('coadmin.invite.form');
+Route::post('/invite/co-admin/{token}', [\App\Http\Controllers\CoAdminInviteController::class, 'claim'])
+    ->name('coadmin.invite.claim');
+
 Route::get('/parent/magic-login/{user}/{nonce}', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'show'])
     ->middleware('signed')
     ->name('parent.magic-login');

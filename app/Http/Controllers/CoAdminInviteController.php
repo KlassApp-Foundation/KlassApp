@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TeacherInvite;
-use App\Services\TeacherInviteLinkService;
+use App\Models\CoAdminInvite;
+use App\Services\CoAdminInviteLinkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
-class TeacherInviteController extends Controller
+class CoAdminInviteController extends Controller
 {
     /**
      * Show the password-set form for a valid invite token.
@@ -17,7 +16,7 @@ class TeacherInviteController extends Controller
      */
     public function show(string $token): View
     {
-        $result = TeacherInviteLinkService::validateToken($token);
+        $result = CoAdminInviteLinkService::validateToken($token);
 
         if ($result === null) {
             return view('auth.invite-invalid', ['reason' => 'invalid']);
@@ -29,29 +28,24 @@ class TeacherInviteController extends Controller
         if ($error === 'expired') {
             return view('auth.invite-invalid', [
                 'reason' => 'expired',
-                'invite'  => $invite,
+                'invite' => $invite,
             ]);
         }
 
         if ($error === 'claimed') {
             return view('auth.invite-invalid', [
                 'reason' => 'claimed',
-                'invite'  => $invite,
+                'invite' => $invite,
             ]);
         }
-
-        $school = $result['school'];
-        $className = $invite->standardLink?->section?->name
-            ?? $invite->standardLink?->stream
-            ?? null;
 
         return view('auth.invite-set-password', [
             'token'      => $token,
             'invite'     => $invite,
-            'school'     => $school,
-            'className'  => $className,
-            'claimRoute' => 'teacher.invite.claim',
-            'roleLabel'  => null,
+            'school'     => $result['school'],
+            'className'  => null,
+            'claimRoute' => 'coadmin.invite.claim',
+            'roleLabel'  => 'as a Co-Admin',
         ]);
     }
 
@@ -60,10 +54,10 @@ class TeacherInviteController extends Controller
      */
     public function claim(Request $request, string $token): RedirectResponse
     {
-        $result = TeacherInviteLinkService::validateToken($token);
+        $result = CoAdminInviteLinkService::validateToken($token);
 
         if ($result === null) {
-            return redirect()->route('teacher.invite.form', $token)
+            return redirect()->route('coadmin.invite.form', $token)
                 ->with('error', 'This invite link is invalid.');
         }
 
@@ -77,16 +71,15 @@ class TeacherInviteController extends Controller
 
         $invite = $result['invite'];
 
-        // Validate password
         $validated = $request->validate([
             'password' => [
                 'required',
                 'string',
                 'min:8',
                 'confirmed',
-                'regex:/[a-z]/',      // at least one lowercase
-                'regex:/[A-Z]/',      // at least one uppercase
-                'regex:/[0-9]/',      // at least one digit
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
             ],
         ], [
             'password.min' => 'Password must be at least 8 characters.',
@@ -94,10 +87,10 @@ class TeacherInviteController extends Controller
             'password.confirmed' => 'Passwords do not match.',
         ]);
 
-        $claim = TeacherInviteLinkService::claim($invite, $validated['password']);
+        $claim = CoAdminInviteLinkService::claim($invite, $validated['password']);
 
         if (! ($claim['success'] ?? false)) {
-            return redirect()->route('teacher.invite.form', $token)
+            return redirect()->route('coadmin.invite.form', $token)
                 ->with('error', $claim['message'] ?? 'Could not create your account.');
         }
 

@@ -24,7 +24,6 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Helpers\SiteHelper;
-use App\Mail\CoAdminInviteMail;
 use App\Mail\TeacherInviteMail;
 use App\Support\UserProvisioning;
 use Illuminate\Support\Facades\DB;
@@ -603,53 +602,18 @@ class ToshiActionService
         }
 
         try {
-            DB::beginTransaction();
-
-            $credentials = UserProvisioning::randomPasswordCredentials();
-            $schoolName = School::find($schoolId)?->name ?? 'your school';
-
-            $coAdmin = User::create([
-                'school_id'    => $schoolId,
-                'usergroup_id' => 3,
-                'name'         => $name,
-                'email'        => $email,
-                'password'     => $credentials['password'],
-                'is_reset'     => $credentials['is_reset'],
-                'status'       => 'active',
-                'email_verified' => 1,
-            ]);
-
-            Userprofile::create([
-                'school_id'    => $schoolId,
-                'user_id'      => $coAdmin->id,
-                'usergroup_id' => 3,
-                'firstname'    => $name,
-                'lastname'     => '',
-                'status'       => 'active',
-            ]);
-
-            DB::commit();
-
-            try {
-                Mail::to($email)->queue(new CoAdminInviteMail(
-                    $name,
-                    $email,
-                    $credentials['plain'],
-                    $schoolName,
-                    false
-                ));
-            } catch (\Exception $e) {
-                Log::warning('ToshiAction: co-admin invite email failed', [
-                    'email' => $email,
-                    'error' => $e->getMessage(),
-                ]);
+            $school = School::find($schoolId);
+            if (! $school) {
+                return self::result(false, 'School not found.');
             }
 
-            return self::result(true, "Co-admin **{$name}** added. An invite email was sent to **{$email}** with login credentials.", [
-                'user_id' => $coAdmin->id, 'email' => $email,
+            ['invite' => $invite, 'token' => $token] = CoAdminInviteLinkService::issue($school, $email, $name);
+            CoAdminInviteLinkService::sendEmail($invite, $token, $school);
+
+            return self::result(true, "Co-admin invite for **{$name}** created. An invite email was sent to **{$email}** — they will set their own password to activate the account.", [
+                'email' => $email,
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('ToshiAction: addCoAdmin failed', ['error' => $e->getMessage()]);
             return self::result(false, 'Failed to add co-admin: ' . $e->getMessage());
         }

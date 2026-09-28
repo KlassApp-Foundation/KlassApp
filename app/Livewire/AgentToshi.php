@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Services\CoAdminInviteLinkService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
-use App\Support\UserProvisioning;
 
 class AgentToshi extends Component
 {
@@ -4372,7 +4372,7 @@ class AgentToshi extends Component
             $name = $this->validateRequired($text, 'Co-admin name', 3);
             if ($name === null) return;
             $this->coAdminName = $name;
-            $this->botSay("Co-admin **{$name}** added. They'll receive login credentials when the school is created.");
+            $this->botSay("Co-admin **{$name}** added. They'll receive an invite email to set their own password when the school is created.");
             $this->substep = 0;
             $this->advance();
             return;
@@ -6353,31 +6353,19 @@ class AgentToshi extends Component
                 ]);
 
                 // Co-admin
-                $coAdminUser = null;
                 if ($this->coAdminName && $this->coAdminEmail) {
-                    $coAdminCredentials = UserProvisioning::randomPasswordCredentials();
-                    $coAdminUser = User::create([
-                        'school_id' => $school->id, 'usergroup_id' => 3,
-                        'name' => $this->coAdminName,
-                        'email' => $this->coAdminEmail,
-                        'password' => $coAdminCredentials['password'],
-                        'is_reset' => $coAdminCredentials['is_reset'],
-                        'status' => 'active', 'email_verified' => 1,
-                    ]);
-                    Userprofile::create([
-                        'school_id' => $school->id, 'user_id' => $coAdminUser->id,
-                        'usergroup_id' => 3, 'firstname' => $this->coAdminName,
-                        'lastname' => 'Co-Admin', 'status' => 'active',
-                    ]);
-
-                    try {
-                        Mail::to($this->coAdminEmail)->queue(new CoAdminInviteMail(
-                            $this->coAdminName, $this->coAdminEmail,
-                            $coAdminCredentials['plain'],
-                            $school->name, false
-                        ));
-                    } catch (\Exception $e) {
-                        \Log::warning('Co-admin invite email failed: ' . $e->getMessage());
+                    if (User::where('email', $this->coAdminEmail)->exists()) {
+                        \Log::warning('Co-admin invite skipped: email already in use', [
+                            'school_id' => $school->id,
+                            'email'     => $this->coAdminEmail,
+                        ]);
+                    } else {
+                        ['invite' => $invite, 'token' => $token] = CoAdminInviteLinkService::issue(
+                            $school,
+                            $this->coAdminEmail,
+                            $this->coAdminName,
+                        );
+                        CoAdminInviteLinkService::sendEmail($invite, $token, $school);
                     }
                 }
 

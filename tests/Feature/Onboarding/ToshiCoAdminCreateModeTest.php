@@ -3,7 +3,9 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Livewire\AgentToshi;
+use App\Mail\CoAdminInviteLinkMail;
 use App\Mail\CoAdminInviteMail;
+use App\Models\CoAdminInvite;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ class ToshiCoAdminCreateModeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_mode_co_admin_gets_own_password_not_primary_admin(): void
+    public function test_create_mode_co_admin_gets_invite_link_not_password(): void
     {
         Mail::fake();
 
@@ -62,20 +64,23 @@ class ToshiCoAdminCreateModeTest extends TestCase
         $this->assertGreaterThan(0, $schoolId);
 
         $primary = User::where('school_id', $schoolId)->where('email', 'primary@coadmin.sch.ug')->first();
-        $coAdmin = User::where('email', 'secondary@coadmin.sch.ug')->first();
-
         $this->assertNotNull($primary);
-        $this->assertNotNull($coAdmin);
         $this->assertTrue(Hash::check('primary-only-secret', $primary->password));
-        $this->assertFalse(Hash::check('primary-only-secret', $coAdmin->password));
-        $this->assertNotSame($primary->password, $coAdmin->password);
-        $this->assertSame(1, (int) $coAdmin->is_reset);
 
-        Mail::assertQueued(CoAdminInviteMail::class, function (CoAdminInviteMail $mail) use ($coAdmin) {
-            return $mail->email === 'secondary@coadmin.sch.ug'
-                && $mail->password !== 'primary-only-secret'
-                && $mail->password !== 'password'
-                && Hash::check($mail->password, $coAdmin->password);
+        $this->assertNull(User::where('email', 'secondary@coadmin.sch.ug')->first());
+
+        $invite = CoAdminInvite::where('email', 'secondary@coadmin.sch.ug')->first();
+        $this->assertNotNull($invite);
+        $this->assertSame($schoolId, (int) $invite->school_id);
+        $this->assertSame('Secondary Admin', $invite->name);
+        $this->assertNull($invite->claimed_at);
+        $this->assertTrue($invite->expires_at->greaterThan(now()->addHours(70)));
+
+        Mail::assertQueued(CoAdminInviteLinkMail::class, function (CoAdminInviteLinkMail $mail) use ($schoolId) {
+            return str_contains($mail->inviteUrl, '/invite/co-admin/')
+                && $mail->schoolName === 'Co Admin Split School'
+                && ! property_exists($mail, 'password');
         });
+        Mail::assertNotQueued(CoAdminInviteMail::class);
     }
 }
