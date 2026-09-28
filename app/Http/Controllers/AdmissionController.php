@@ -171,7 +171,7 @@ class AdmissionController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'We could not submit the application right now. Please try again in a few minutes.');
+                ->with('failmessage', 'We could not submit the application right now. Please try again in a few minutes.');
         }
     }
 
@@ -194,6 +194,7 @@ class AdmissionController extends Controller
             $admission->entry_year           = $request->entry_year;
             $admission->boarding_type        = $request->boarding_type;
             $admission->name                = $request->name;
+            $admission->lastname            = $request->lastname;
             $admission->date_of_birth       = $request->date_of_birth;
             $file=$request->avatar;
             if($file)
@@ -240,7 +241,7 @@ class AdmissionController extends Controller
             $array['science']   = $request->science;
             $array['social']    = $request->social;
 
-            $admission->half_yearly_mark_details  = $array;
+            $admission->half_yearly_mark_details  = json_encode($array);
 
             $admission->last_class_completed      = $request->last_class_completed;
             $admission->ple_index_number          = $request->ple_index_number;
@@ -278,6 +279,8 @@ class AdmissionController extends Controller
 
             $admission->application_status      = 'Draft';
             $admission->application_no          = 'APP-FORM-'.date('YmdHis');
+            $admission->payment_status          = 'unpaid';
+            $admission->remarks                 = (string) $request->remarks;
 
             $admission->save();
 
