@@ -13144,3 +13144,10 @@ Two statements that appear earlier in this file are **stale or wrong** and are c
 - **Change**: `.ds-form-label` font-size 0.82rem → 0.85rem in `public/css/dashboard-refresh.css`; new `tests/Feature/DesignSystem/FormLabelTypeScaleTest.php`.
 - **Wrap check**: 25 visible labels × (1280, 390) across fee payment create, classes create, student add, subject add, fee category create, onboarding wizard, superadmin system settings — 13.12px→13.6px, box 15.1→15.6px, 0 wraps before and after.
 
+
+## Session: 2026-09-27 — Printed report greys #94A3B8 → #64748B (PR [#836](https://github.com/KlassApp-Foundation/KlassApp/pull/836) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-report-greys`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: student-report (.badge-year, .info-label, .marks-table td.empty, .comments-label, .footer-table td; `.sign-line` border kept), formal (.ledger td.empty), missing-marks (.meta, .footer, inline standard label). 7–8px sizes untouched. New `tests/Feature/Reports/PrintedReportGreyContrastTest.php`.
+- **PDF evidence** (real DomPDF, synthetic fixture): missing-marks 3 spans and student-report 9 spans `#94A3B8`→`#64748B`, page counts unchanged.
+- **Found**: formal's `.ledger td.empty` matches no element (inert). `student-report.blade.php` has no render path since `16a03804` (2026-08-13) and still hardcodes Kabale Junior School identity + missing `public/images/KJSLogo.jpg` — deletion candidate (separate PR).
+
