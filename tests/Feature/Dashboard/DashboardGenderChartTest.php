@@ -82,24 +82,71 @@ class DashboardGenderChartTest extends TestCase
         ]);
     }
 
+    /**
+     * Decoded Chart.js configs carried on the x-chart shells' data attributes.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function chartConfigs(string $html): array
+    {
+        preg_match_all('/data-chart-config="([^"]*)"/', $html, $m);
+
+        return array_map(
+            fn ($raw) => json_decode(html_entity_decode($raw, ENT_QUOTES | ENT_HTML5), true),
+            $m[1]
+        );
+    }
+
+    private function chartOfType(string $html, string $type): ?array
+    {
+        foreach ($this->chartConfigs($html) as $cfg) {
+            if (($cfg['type'] ?? null) === $type) {
+                return $cfg;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Regression: an unescaped `['studentCount']` subscript inside the doughnut's
+     * single-quoted options-js attribute broke Blade's component-tag match, so
+     * the raw <x-chart> markup shipped and the doughnut never rendered.
+     */
+    public function test_every_chart_component_compiles(): void
+    {
+        $html = (string) $this->renderDashboard($this->dashboardData([
+            'standardStudentCounts' => collect([(object) [
+                'id' => 1, 'section' => (object) ['name' => 'P7'],
+                'studentCount' => 40, 'maleCount' => 25, 'femaleCount' => 10, 'unknownCount' => 5,
+            ]]),
+        ]));
+
+        $this->assertStringNotContainsString('<x-chart', $html);
+        $this->assertNotNull($this->chartOfType($html, 'doughnut'), 'doughnut shell missing');
+        $this->assertNotNull($this->chartOfType($html, 'bar'), 'class bar shell missing');
+    }
+
     public function test_donut_includes_unspecified_segment_so_total_matches_student_count(): void
     {
-        $view = $this->renderDashboard($this->dashboardData());
+        $html = (string) $this->renderDashboard($this->dashboardData());
+        $donut = $this->chartOfType($html, 'doughnut');
 
-        $view->assertSee('var femaleCount = 476;', false);
-        $view->assertSee('var maleCount = 610;', false);
-        $view->assertSee('var unknownCount = 164;', false);
-        $view->assertSee('var totalStudents = 1250;', false);
-        $view->assertSee('data: [maleCount,femaleCount,unknownCount],', false);
-        $view->assertSee('"Male Students", "Female Students", "Unspecified"', false);
-        $view->assertSee('"#ffa601", "#304ffe", "#cbd5e1"', false);
+        $this->assertNotNull($donut);
+        $this->assertSame(['Male Students', 'Female Students', 'Unspecified'], $donut['data']['labels']);
+        $this->assertSame([610, 476, 164], $donut['data']['datasets'][0]['data']);
+        // Same series colours as the per-class bar: boys blue, girls #B45309, unspecified #64748B.
+        $this->assertSame(['#304ffe', '#B45309', '#64748B'], $donut['data']['datasets'][0]['backgroundColor']);
+        $this->assertSame('1250', $donut['options']['plugins']['dsCenterValue']['value']);
     }
 
     public function test_donut_center_is_student_count_not_gender_sum(): void
     {
-        $view = $this->renderDashboard($this->dashboardData());
+        $html = (string) $this->renderDashboard($this->dashboardData());
 
-        $view->assertDontSee('var totalStudents = femaleCount + maleCount;', false);
+        // 610 + 476 = 1086 would be the pre-fix gender-only sum.
+        $this->assertSame('1250', $this->chartOfType($html, 'doughnut')['options']['plugins']['dsCenterValue']['value']);
+        $this->assertStringContainsString('var t = 1250;', $html);
     }
 
     public function test_gender_stat_boxes_show_unspecified_count(): void
@@ -123,12 +170,18 @@ class DashboardGenderChartTest extends TestCase
             'unknownCount' => 5,
         ];
 
-        $view = $this->renderDashboard($this->dashboardData([
+        $html = (string) $this->renderDashboard($this->dashboardData([
             'standardStudentCounts' => collect([$link]),
         ]));
+        $bar = $this->chartOfType($html, 'bar');
 
-        $view->assertSee('"unknown":5', false);
-        $view->assertSee("label: 'Unspecified'", false);
+        $this->assertNotNull($bar);
+        $this->assertSame(['P7'], $bar['data']['labels']);
+        $byLabel = collect($bar['data']['datasets'])->keyBy('label');
+        $this->assertSame([5], $byLabel['Unspecified']['data']);
+        $this->assertSame('#64748B', $byLabel['Unspecified']['backgroundColor']);
+        $this->assertSame('#B45309', $byLabel['Girls']['backgroundColor']);
+        $this->assertSame('#304ffe', $byLabel['Boys']['backgroundColor']);
     }
 
     public function test_donut_falls_back_when_no_student_data_at_all(): void
@@ -140,7 +193,8 @@ class DashboardGenderChartTest extends TestCase
             'unknownCount' => 0,
         ]));
 
-        $view->assertSee('No gender data', false);
+        $view->assertSee('No students enrolled yet', false);
+        $view->assertDontSee('No gender data', false);
         $view->assertSee('—', false);
     }
 }

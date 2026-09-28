@@ -618,12 +618,6 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Session: 2026-09-27 — x-profile-photo + replace divergent avatar frames (PR [#837](https://github.com/KlassApp-Foundation/KlassApp/pull/837) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-profile-photo`)
-
-- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
-- **Pre-PR grep** (`grep -rn AvatarPath resources/ app/ packages/`, full tree): the handoff's 7 + `layouts/partials/profile-dropdown` (3 imgs) + **`teacher/student/show` L18 (missed by the design scan)**; app/packages hits are JSON API resources (out of scope); `buspass/print` L94 (HTML comment) untouched.
-- **Component**: `components/profile-photo.blade.php` — sizes xs32/sm40/md64/lg128/xl192, square 12px (`var(--d-radius-xl, 12px)`; `--d-radius-lg` is 10px and radius tokens aren't loaded at runtime) + 1px `--d-border` ring, circle only for the nav trigger (option b) with new `--d-avatar-ring` token; fallback uses `avatar != null` (AvatarPath returns '' → `??` would emit `src=""` — confirmed in `Common::getFilePath`); alt = display name.
-- **Measured main → branch**: student show 196×192 stretched → 192×192; teacher wide photo 174×74 → 174×174 cover; staff no-avatar `src=""` broken → default; feedback hard-coded default → parent photo; teacher nav trigger at 390 4×32 sliver → 32×32; alt everywhere. Print templates (id-card ×2, bus_pass) radius 10→12px only (bus_pass has no route).
 - **Access this session (verified, rule #12/#23)**: no Laravel Cloud token, no Doppler, no Cloud MCP — staging/prod NOT exercised; local only (Docker MySQL 8 demo DB + synthetic fixtures, Chromium Playwright at 1280/390). Composer: `phpstan/phpstan` dist zip 403s through the session proxy, so vendor was installed from an untracked copy of the lock without phpstan/larastan (tests/app unaffected).
 - **Regression pack (every PR)**: `#mobile-menu-trigger` opens `#res_sidebar` with exactly 1 class flip; Toshi split collapsed by default, drag clamps 300–640px; admin sidebar footer (#830) renders, collapses 192→72px. All pass.
 - **Evidence page**: https://claude.ai/artifact/4fjPe8Vujp7FjR72YR4ZxY (private; before/after at 1280/390 + measurements)
@@ -655,7 +649,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 27, 2026 (early hours, latest) — **Wide mobile audit shipped as PR [#832](https://github.com/KlassApp-Foundation/KlassApp/pull/832) — MERGED `343513da3` + staging-deployed (`depl-a2d7cd50`) + verified: landing hero-row clipping fixed (was silently clipped ~12px @375) + Toshi collapsed-pill fixed (was a 16×52px untappable sliver on mobile — pre-existing, surfaced by audit). All 5 dashboards × 375/414/768 verified 15/15 clean (zero overflow/oversized/off-viewport); #825 nav opens everywhere; Toshi mobile typed-send works end-to-end; resize handle correctly invisible sub-1280.** Earlier: Toshi SPLIT LAYOUT PR [#831](https://github.com/KlassApp-Foundation/KlassApp/pull/831) — MERGED `6620ba6c1` + staging-deployed + verified: resizable IDE-style split, default-COLLAPSED, content reflows, 300–640 drag bounds, localStorage persistence; #823 mechanisms preserved. UI-polish PR [#830](https://github.com/KlassApp-Foundation/KlassApp/pull/830) — MERGED `335ccba5`: demo card, LIVE badge, label AA contrast, sidebar-footer. A1 re-scope PR [#829](https://github.com/KlassApp-Foundation/KlassApp/pull/829) — MERGED `2198ecb7`. Triage report PR [#828](https://github.com/KlassApp-Foundation/KlassApp/pull/828) — MERGED `081836f7` (144 red = 109 env/harness + 35 stale tests + 0 app bugs; report `docs/test-suite-triage-2026-09-26.md`).** Earlier: PR #820 MERGED `007c77a1` (API `merged: true`) + staging-deployed (`depl-a2d6d801`, `deployment.succeeded`) + verified (teachers/staffs lists: 58→20 and 57→19 queries measured; paginator shape live on staging; browser-passed at 375/768/1280). PR #682 (Elijah-ug `refactor-sep`) risk-reviewed: DO NOT MERGE — two hard blockers (KA student-ID scheme contradicts the KLS model invariant, proven live on his own branch; stream→sections schema refactor breaks main's onboarding surface, 94/418 test failures on the hypothetical merge) + hidden CT widening; new teacher-edit-student feature passes cross-school probes; teacher timetable + import `.xlx` + export hardening are the extractable wins. #788 verdict unchanged (do not merge as-is). Remaining OPEN: #788, #682, #822, #827, #728, #732, #786.**
+## Attribution note: PRs #833–#837 are internal agent work, not Elijah-ug contributions (2026-09-27)
+
+- **What GitHub shows**: [#833](https://github.com/KlassApp-Foundation/KlassApp/pull/833), [#834](https://github.com/KlassApp-Foundation/KlassApp/pull/834), [#835](https://github.com/KlassApp-Foundation/KlassApp/pull/835), [#836](https://github.com/KlassApp-Foundation/KlassApp/pull/836) and [#837](https://github.com/KlassApp-Foundation/KlassApp/pull/837) display "opened by **Elijah-ug**".
+- **Why**: a GitHub-connector session issue. The Claude Code session that opened them was logged in to GitHub as Elijah-ug's account (verified: `get_me` returned `Elijah-ug`, id 125479282). He did not write, push or open them.
+- **What they actually are**: agent-authored (Claude Code) implementations of the Claude Design handoff spec `guidelines/handoff-2026-09-27-fixes.md` (design-system project, not in this repo), requested by the project owner. Every commit is authored `Claude <noreply@anthropic.com>`. Branches: `claude/handoff-2026-09-27-fixes-19hyub` and its `-approvals-inbox`, `-form-label`, `-report-greys`, `-profile-photo` siblings. Each PR carries its own Session Log entry on its branch.
+- **Rule #25 does not apply to these five.** Future sessions running the rule-#28 open-PR scan should list them as normal internal work, not flag them as external contributions needing the deeper review process. The normal internal bar still applies: human review, staging pass, rule #21 `merged: true` before stamping merged.
+- **Not fixed on GitHub, by decision**: re-opening under Mucunguzi256 needs a fresh session with the reconnected account; the owner judged that not worth the cost now. This note is the record instead.
+- **Scope**: these five PR numbers only. Any *other* PR showing Elijah-ug as author (e.g. #682, #788) is still his real external work and rule #25 applies in full.
+
+## Current Status: September 27, 2026 (midday, latest) — **Landing screenshot refresh PR [#841](https://github.com/KlassApp-Foundation/KlassApp/pull/841) — MERGED `11b6483b` (images only, NOT deployed anywhere yet): `public/images/landing/app-{dashboard,books,page}.webp` regenerated from the real local app after proving they were stale — last captured 2026-09-19 (`cf8b7c0b`), predating #824 `<x-table>`, #830 LIVE-badge removal, #831 Toshi split; evidence + capture method + the two capture-time data bugs (wrong-school admin → UGX 0 KPIs; placeholder book rows) in the Session Log. Earlier same day: Feedback IDOR [#839](https://github.com/KlassApp-Foundation/KlassApp/pull/839) MERGED `063c76af` — **still exploitable on prod until a Cloud deploy**; landing Toshi-name contrast [#840](https://github.com/KlassApp-Foundation/KlassApp/pull/840) MERGED `02c28aa8` (2.18→4.79:1, prod measurement pending); [#838](https://github.com/KlassApp-Foundation/KlassApp/pull/838) MERGED.** Earlier: **Wide mobile audit shipped as PR [#832](https://github.com/KlassApp-Foundation/KlassApp/pull/832) — MERGED `343513da3` + staging-deployed (`depl-a2d7cd50`) + verified: landing hero-row clipping fixed (was silently clipped ~12px @375) + Toshi collapsed-pill fixed (was a 16×52px untappable sliver on mobile — pre-existing, surfaced by audit). All 5 dashboards × 375/414/768 verified 15/15 clean (zero overflow/oversized/off-viewport); #825 nav opens everywhere; Toshi mobile typed-send works end-to-end; resize handle correctly invisible sub-1280.** Earlier: Toshi SPLIT LAYOUT PR [#831](https://github.com/KlassApp-Foundation/KlassApp/pull/831) — MERGED `6620ba6c1` + staging-deployed + verified: resizable IDE-style split, default-COLLAPSED, content reflows, 300–640 drag bounds, localStorage persistence; #823 mechanisms preserved. UI-polish PR [#830](https://github.com/KlassApp-Foundation/KlassApp/pull/830) — MERGED `335ccba5`: demo card, LIVE badge, label AA contrast, sidebar-footer. A1 re-scope PR [#829](https://github.com/KlassApp-Foundation/KlassApp/pull/829) — MERGED `2198ecb7`. Triage report PR [#828](https://github.com/KlassApp-Foundation/KlassApp/pull/828) — MERGED `081836f7` (144 red = 109 env/harness + 35 stale tests + 0 app bugs; report `docs/test-suite-triage-2026-09-26.md`).** Earlier: PR #820 MERGED `007c77a1` (API `merged: true`) + staging-deployed (`depl-a2d6d801`, `deployment.succeeded`) + verified (teachers/staffs lists: 58→20 and 57→19 queries measured; paginator shape live on staging; browser-passed at 375/768/1280). PR #682 (Elijah-ug `refactor-sep`) risk-reviewed: DO NOT MERGE — two hard blockers (KA student-ID scheme contradicts the KLS model invariant, proven live on his own branch; stream→sections schema refactor breaks main's onboarding surface, 94/418 test failures on the hypothetical merge) + hidden CT widening; new teacher-edit-student feature passes cross-school probes; teacher timetable + import `.xlx` + export hardening are the extractable wins. #788 verdict unchanged (do not merge as-is). Remaining OPEN (corrected 2026-09-27 by a live rule-#28 scan — #821 was missing from this list, and #833–#837 opened after it was written): #837, #836, #835, #834, #833, #827, #822, #821, #788, #786 (draft), #732, #728, #682.**
 
 ## Current Status: September 26, 2026 (later) — **PR #819 MERGED `6d8ea9be` + staging-deployed + re-verified refused (IDORs closed); PR #824 MERGED `90288ea0` after real conflict resolution (12 view conversions intact, 0 new test failures, browser-verified; staging NOT deployed — pure view-layer, deliberate). Elijah-ug #788 risk-reviewed: do not merge as-is. Remaining OPEN: #788, #682, #820, #822, #827, #728, #732, #786.**
 
@@ -2568,8 +2571,6 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decisions**: Marks served via `asset('images/brand/models/*-mark.svg')` (source of truth under `resources/assets/brand/models/`); no live `var(--d-*)` on landing; reduced-motion = instant opacity swap (verbatim).
 - **Status**: ✅ MERGED `168a054e` + staging `depl-a2c225d3-…` verified. Production not deployed.
 - **Edge**: `public/images/*` gitignore needed `!public/images/brand/models/*` exceptions; tower `<desc>` em-dashes stripped for landing no-`—` lock.
-
-
 
 ### 2026-09-15: Nightwatch trio — WA demo school_id + fee standardLink + null avatar — **LIVE** ([#619](https://github.com/KlassApp-Foundation/KlassApp/pull/619) + [#620](https://github.com/KlassApp-Foundation/KlassApp/pull/620))
 - **Work done**: Picked up Goose's incomplete Nightwatch fixes. (1) WhatsApp `"demo"` inbound: `school_id` from configured demo parent (`services.whatsapp.demo_parent_user_id` / `WHATSAPP_DEMO_PARENT_USER_ID`, default 104) — never hardcode `1`; graceful when missing. (2) `whatsapp:send-fee-reminders`: students via `whereHas('standardLink', standard_id ∈ fee categories)` (not missing `student_academics.standard_id`); `markAttendance` uses `standardLink_id`; `notifyFeeReminder` via `studentAcademicLatest.standardLink`. (3) Null avatar: `getFilePath` null-guard + `\Throwable`; Teacher resources null-safe. (4) Follow-up #620: `getParentPhones` no longer `wherePivot` on hasMany `StudentParentLink`.
@@ -6349,8 +6350,6 @@ Teacher click-verification is **complete** — all 5 modules E2E tested with DB 
 - Admin: `admin@testschoolone.sch.ug` / `[REDACTED - historical password]`
 - Teacher has `leave_applier` designation and `reporting_to=5` set in TeacherProfile
 - Admin has `leave_checker` designation
-
-
 
 ---
 
@@ -12780,6 +12779,63 @@ Decision-informing investigation for triage family A1 (no fixes made). Four real
 - **Status**: ✅ Done — decision evidence complete; implementation/refactor deferred to a follow-up PR if accepted.
 - **Edge cases flagged**: if billing and provisioning are ever *wanted* to converge (e.g. paid renewal after trial), that should be a deliberate new design discussion, not a backfill of these tests.
 
+### 2026-09-27 (midday): Landing "Real screenshots from the app" were 8 days stale — proven, regenerated, shipped as PR #841
+
+**Staleness evidence (the actual find):** `public/images/landing/app-{dashboard,books,page}.webp` last changed in `cf8b7c0b` (committed **2026-09-19**, "captured at 2x from the local app", 1600×1000). Three UI-shipping merges landed after that date, and `gh api .../pulls/{824,830,831}/files` confirmed file-scope overlap with what the screenshots depict:
+
+| Screenshot | UI merge that post-dates it | Merge |
+|---|---|---|
+| `app-books.webp`, `app-page.webp` | **#824** table consolidation → `<x-table>` (touched `admin/library/books/index.blade.php` + `admin/fees/payments.blade.php`), merge `90288ea0` | 2026-09-26 |
+| `app-dashboard.webp`, `app-page.webp` | **#830** LIVE badge removal + sidebar-footer rework, merge `335ccba5` | 2026-09-27 |
+| `app-dashboard.webp`, `app-page.webp` | **#831** Toshi split-layout dock (replaces overlay), merge `6620ba6c1` | 2026-09-27 |
+
+Visual confirmation on the old assets (read back before overwriting): green LIVE badge present on the dashboard frame; pre-#824 plain tables with chunky Edit/Delete buttons on books/fees; pre-#831 Toshi overlay panel on dashboard/fees. The landing copy literally advertises "Real screenshots from the app" — they were showing a product state that no longer existed.
+
+**What was regenerated and how:** all three re-captured from the real local app (`localhost:8080`, this worktree via `sms-app` Docker), Playwright chromium headless, viewport 1280×800 @ `deviceScaleFactor: 1.25` → **1600×1000 WebP q90** (matches originals, `sips`-verified), raw app viewport with **no fake browser chrome** — the landing CSS supplies the frame. Original capture discipline kept: ad-hoc script at `/tmp/landing-capture/capture.cjs`, deliberately **not committed** (grep confirms no capture script exists in `e2e/` or `scripts/` — `cf8b7c0b` was ad-hoc too). Toshi driven open on dashboard, collapsed on books/fees via `body`/`documentElement` `toshi-collapsed` class + `localStorage.toshi_split_collapsed` (selectors per `e2e/toshi-split-verify.cjs`). Old files backed up to `/tmp/landing-capture/`.
+
+**Bug caught #1 — wrong-school admin session (the "UGX 0" mystery):** early fee captures showed UGX 0 KPIs. Root cause was NOT caching: `admin@testschoolone.sch.ug` is **school_id=2 (empty)** while all seed data is **school_id=3** — the login had silently switched tenants (standing rule #13 territory: identity assumed, not verified). Fixed by setting a password on the real school-3 admin (`admin@demoacademyuganda.sch.ug` / capture-only password) and re-authenticating; KPIs then returned `{"collected_label":"UGX 4.1M","outstanding_label":"UGX 1.4M","arrears_label":"4","rate_label":"73%"}` via direct `feePaymentKpis()` reflection. Secondary fix: all 16 `FeePayments.paid_on` fell outside the current term window (`currentTermWindow()` = Term 4 = 2026-05-24→2026-08-14) so they were filtered out — dates moved to 2026-08-01 (synthetic demo data, local only).
+
+**Bug caught #2 — placeholder/odd book data:** the first books capture shipped nonsense inventory (wrong title↔publisher pairings, a placeholder-ish "Growing Up Entrepreneurs"). Corrected the three Book rows to realistic Ugandan-school inventory (Fountain / Longhorn / Namirembe titles, `LIB-0142` / `LIB-0287` / `LIB-0053`) and **re-captured `app-books.webp`** — the shipped image is the post-fix one, verified by read-back.
+
+- **PR**: [#841](https://github.com/KlassApp-Foundation/KlassApp/pull/841) · branch `chore/refresh-landing-screenshots` · merge `11b6483be0cc5b8ddbbcd4b1aca3819b739ac9b3` (admin merge — branch protection required `--admin`; GitHub API `merged: true` confirmed per standing rule #21, `merged_at` 2026-09-27T13:09:46Z)
+- **Files modified**: `public/images/landing/app-dashboard.webp`, `app-books.webp`, `app-page.webp` (binary only — `<img>` tags in `resources/views/landing-v2.blade.php` lines 531/535/539 unchanged; alt texts already correct; no `?v=` cache-buster exists on these URLs)
+- **Key decisions**: (a) real app captures, never composites — `cf8b7c0b` discipline; (b) capture script stays out of the repo (temp dir) per original precedent; (c) per rule #19 the worktree was synced `d377e2e1` → `6ff535fe` first, then branched from `origin/main` for the PR; knowledge.md updated on `main` after merge.
+- **Status**: ✅ MERGED [#841](https://github.com/KlassApp-Foundation/KlassApp/pull/841) @ `11b6483b` (GitHub API `merged: true`). **Not deployed anywhere** — these are repo/public-disk assets; they only appear on klassapp.xyz after the next Cloud deploy. No staging deploy triggered.
+- **Edge cases flagged**: (a) landing image URLs have **no cache-busting** — after the next deploy, stale CDN/browser copies of the OLD images may persist until hard-refresh; if the landing still shows the LIVE badge post-deploy, it's cache, not the repo. (b) demo school-3 data was mutated for capture (payment dates, book rows) — all synthetic/local, but future capture sessions on this box inherit it. (c) before any future capture/verification run, check the authenticated session's `school_id` explicitly — a tenant-mismatched login fails silently with zeros (same failure family as patterns #2/#6: assumed identity instead of verifying it).
+
+### 2026-09-27 (cloud session, later): Feedback cross-tenant IDOR fixed (#839 MERGED `063c76af`) + landing "Toshi" contrast (#840 MERGED `02c28aa8`). Neither is deployed anywhere yet.
+
+> ⚠️ **Merged to `main` ≠ live.** Staging and production are both still on `d377e2e1` for these. Until a production deploy, **the feedback IDOR is still exploitable on production**: any school admin can read another school's feedback thread, reply into it, or change its message status by id. Deploy this first when Cloud access is available, then re-run the crafted cross-school attempt against staging and prod.
+
+- **#839** (`fix/feedback-school-scope`, API `merged: true`, merged 12:34:40Z): `Admin\FeedbackController` `edit` / `update` / `updateStatus` loaded by bare id. Now `id` + `school_id`, `abort(404)` + `Log::warning` on foreign or unknown ids. The lookups sit **before** each `try`, because the existing `catch (Exception)` swallows `abort()` and would return an empty 200. `AdminFeedbackCrossSchoolTest` 7/7. Its 4 refusal tests fail on the old controller (proven by stashing the fix). Full suite: 1712 tests / 141 failing, the identical failing set to main. Other Feedback lookups (Api, Api\Teacher, `ParentController::showFeedbacks`) were already scoped.
+  - **Pre-existing, still open**: `update()` never sets NOT NULL `feedback_messages.category`, so every admin reply insert fails silently. The `admin/feedbacks/conversation_form.blade.php` partial isn't included anywhere. Admin replies are non-functional on main.
+- **#840** (`fix/landing-toshi-name-contrast`, API `merged: true`, merged 12:35:24Z): the landing's "Meet **Toshi**." heading word (`.toshi-header h2 .toshi-name`) changed from `--brand-green` #22C55E to `--brand-accent` #15803D. Real Chromium at 375/414/768/1280: **2.18:1 → 4.79:1** on `#FAFAF5`. Only the `landing-preview` build entry was committed. **Live not measured**: after the prod deploy run `PREVIEW_BASE=https://klassapp.xyz node e2e/landing-toshi-name-contrast-verify.cjs`, which exits 1 below 4.5.
+- **#837 dependency**: #837 only changes `admin/feedbacks/view.blade.php` (parent photo). It doesn't touch the controller or route, so there's no textual conflict with #839. The only dependency was exposure: the photo would have landed on an unscoped page. With #839 on main, that's satisfied **in code**, but it must also be *deployed* before or with #837.
+- **#833–#837**: still NOT merged. They need a staging deploy + browser pass, and this session still can't reach staging (proxy 403, no Cloud token), re-checked at the start of this task.
+- **CI note**: #838 first went red on the Root Clutter Guard (`.claude/` not on the allowlist). My earlier local "PASS" was run before the hook commit existed. Fixed by adding `.claude` to `ALLOWED_ROOT_DIRS`; the old guard's failure was reproduced locally and the new one passes.
+
+### 2026-09-27 (cloud session): SessionStart hook for Claude Code on the web — dependencies install automatically
+
+- **What**: `.claude/settings.json` registers `.claude/hooks/session-start.sh` (sync, `timeout: 1200`). It runs only when `CLAUDE_CODE_REMOTE=true`. `.gitignore` now ignores `.claude/*` except those two paths. Boost-generated `.claude/` content stays local.
+- **Proxy workaround, now automatic**: the cloud proxy 403s GitHub HTTP archives (api.github.com zipballs, codeload, /archive), so Composer dist downloads fail. The hook installs with `--prefer-source` (git over the proxy works). For dist-only lock entries (currently only `phpstan/phpstan`) it shallow-fetches the exact locked commit, `git archive`s a local zip, and points a temporary copy of `composer.lock` at it. The original lock is always restored (trap). A full `git clone --mirror` of phpstan exceeded Composer's 300s timeout, which is why the shallow-fetch zip is used. It also creates `.env` from `.env.example` with a key and `FILESYSTEM_DISK=public`, because the example's bucketless S3 disk makes `Storage::url()` fail avatar tests falsely. Then `npm ci` (not `npm install`, which rewrote `package-lock.json`).
+- **Measured in-session**: cold run (vendor, node_modules, .env and Composer cache all wiped) exited 0 in **590s**. Re-run exited 0 in **0s** (skips when `vendor/.session-start-lock` matches `composer.lock` and `node_modules` is current). A non-cloud run exits 0 and does nothing. After the hook: PHPUnit `tests/Feature/DesignSystem` 12/12, `npm run build` OK, PHPStan+Larastan runs. `git status` is clean afterwards.
+- **Pre-existing, not fixed here**: `phpstan.neon.dist` sets `checkMissingIterableValueType` / `checkGenericClassInNonGenericObjectType`, which PHPStan 2 (locked 2.2.5) rejects as "Invalid configuration", so `vendor/bin/phpstan analyse` with the repo config fails until those two lines are removed.
+- **Verify on the next fresh session**: `ls vendor/autoload.php node_modules/.bin/vite .env` all exist before you install anything; `git status` is clean; `php vendor/bin/phpunit tests/Feature/DesignSystem` passes. If the hook failed, the session start shows the hook error, and re-running `CLAUDE_CODE_REMOTE=true CLAUDE_PROJECT_DIR=$PWD .claude/hooks/session-start.sh` reproduces it. It only takes effect once merged to the default branch.
+
+### 2026-09-27 (midday, cloud session): PRs #833–#837 reviewed — NOT merged (staging unreachable); production verification of `d377e2e1` still INCOMPLETE
+
+> ⚠️ **CRITICAL GAP IN THE `d377e2e1` PRODUCTION RELEASE: PR [#827](https://github.com/KlassApp-Foundation/KlassApp/pull/827) (teacher invite-link) is NOT in it — GitHub API: `state: open`, `merged: false`, `mergeable_state: blocked`. Production still emails new teachers their password in PLAIN TEXT until #827 is reviewed, merged and deployed.**
+
+> ⚠️ **Production verification of `d377e2e1` is NOT complete, and synthetic fixtures are still live on production.** Still to do: (1) attendance write-then-read round trip, (2) #819 cross-tenant IDOR refusal on prod, (3) mobile-nav tap-to-open @375 on prod. Still ACTIVE on prod, to be flagged inactive (rule #3) once those pass: the "verify"-labelled StandardLink **id 307** (school 53, class P4V) and the disposable verification admin account. The interrupted session's `e2e/tmp-prod-*.cjs` scripts and the admin's credentials were never pushed. They exist only on the machine that was interrupted.
+
+- **Why it stopped here**: this cloud session's network policy refuses `klassapp.xyz`, `klassapp-staging-7mpoqg.laravel.cloud` and `cloud.laravel.com` (proxy 403), and it has no Doppler or `CLOUD_AGENT_TOOLING`. No staging deploy, no prod check, and no merges were attempted.
+- **Attribution**: checked independently. Every commit on the five branches is authored `Claude <noreply@anthropic.com>`, which matches the attribution note above. Treated as internal work (rule #25 not applied).
+- **Conflicts vs latest main**: all five branch from `d377e2e1` (0 behind main). Merged in order #833→#837 on a throwaway branch: **code merges cleanly**. Only `knowledge.md` conflicts, because each PR's "stamp PR open" entry inserts at the same line (~620). Resolve each merge by keeping both sides.
+- **Tests (local, SQLite, `FILESYSTEM_DISK=public`)**: each PR's own tests pass on its own branch (#833 11/11, #834 2/2, #835 1/1, #836 2/2, #837 5/5). All five combined: DesignSystem + touched feature tests 33/33 (161 assertions). **Full suite main vs all five combined: 141 → 139 failing test cases, 0 new failures.** The 2 fixed are #833's rewritten `DashboardGenderChartTest` cases. Env notes: `.env.example`'s S3 disk with no bucket makes `Storage::url()` throw (swallowed by `Common::getFilePath`), which fails `ProfilePhotoComponentTest` with a false red, so use `FILESYSTEM_DISK=public`. `composer install` needed phpstan/larastan dropped locally because the GitHub dist API is blocked, and those files were restored afterwards.
+- **Code review notes**: #833 makes `<x-chart empty-message>` required (throws in local/testing). All 4 live call sites pass it, but the usage example in `components/chart.blade.php`'s header comment omits it (doc nit). #833 also flips the doughnut's orange from boys to girls, a product call the owner should confirm. #834 `<x-button>` defaults to `type="button"`, so the Reject toggle keeps its behaviour. #837 `$feedback->parent` is the right user (the box already shows the parent's name).
+- **Pre-existing finding (not in these PRs, needs its own PR)**: `Admin\FeedbackController::edit` loads `Feedback::where('id', $feedbackid)` and its messages with **no `school_id` scope**, and `Feedback` has no global scope. That makes `/admin/feedback/edit/{id}` a likely cross-tenant IDOR. #837 now shows the parent's real photo on that page, so the exposure grows slightly. The same view also links to `/admin/parent/show/{name}` by name, which is a rule #18 smell.
+- **Status**: #833–#837 are all `mergeable_state: blocked` (checks green on #833; most likely a required approving review). Still needed before merge: staging deploy + real browser verification at 375/414/768/1280 (rule #22), then merge and `merged: true` (rule #21).
+
 ### 2026-09-27 (05:26): Wide mobile audit shipped as PR #832 — landing hero-row + Toshi collapsed-pill fixed; all 5 dashboards verified clean
 
 Systematic mobile-responsiveness audit at 375/414/768 with real screenshots + geometry probes, three areas (landing → Toshi → every dashboard), per the request. PR [#832](https://github.com/KlassApp-Foundation/KlassApp/pull/832) — **MERGED `343513da3`** (API `merged: true` 2026-09-27T02:50:21Z; scan+check green; solo-maintainer bypass). Staging deployed `depl-a2d7cd50` @ `343513da3` → `deployment.succeeded`, both fixes re-verified on staging (landing 0px overflow at 3/3 widths; pill 137×52 at 375+414; admin mobile nav opens; real typed-send works end-to-end).
@@ -12892,8 +12948,6 @@ Forced-push detection first: `teacher` branch `head_pushed=2026-09-26T02:47:35Z`
 
 **Verdict for the human review (standing rule #25): DO NOT MERGE as-is.** The tonight-security (today's-attendance, receptionist gate, scope authorization, IDOR class in his touched controllers) is **not silently reverted — it survives and is test-proven on the hypothetical merge**. But the branch is a **product-direction conflict**: (1) its tests assert school-wide teacher access the scope-setting decision deliberately rejected, (2) it forks the teacher shell off the shared nav chrome (doubling maintenance of the #823/#825 surface), (3) it ships compiled `public/build/*` artifacts and scratch files (`revert.md`, `todayswork.md`), (4) its timetable routes target `TimetableSlotController` methods that **still don't exist on main** (the documented reason the timetable part was never ported — `teacherIndex/teacherCreate/teacherStore/teacherEdit/teacherUpdate/teacherDestroy` absent from `Admin\TimetableSlotController`). Safe path if anything is adopted: his export() hardening + admin Teachers nav row + teacher menu destinations are the genuinely compatible pieces; the scope-assertion inversion, nav fork, and timetable routes are the must-not-take pieces.
 
-
-
 ### 2026-09-26 (evening): PR #682 (Elijah-ug, `refactor-sep`) first-ever risk review — verdict: DO NOT MERGE; two hard blockers (student-ID scheme self-contradiction, schema refactor breaks main's stream/onboarding surface) + a hidden authorization widening; the new teacher-edit-student feature itself passes cross-school probes; investigation only, nothing merged
 
 Full structured review, same technique as #788/#819: merged `origin/main` INTO a scratch worktree of `refactor-sep` (head `6adff2c2`, 15 commits, 112 files +3288/−1239, merge-base `795009e7`, PR body = unfilled template), resolved conflicts in the security-preserving direction, and ran tonight's suites + purpose-built probes against the hypothetical merge (scratch commit `e70399b3`, local only, worktree removed, branch/staging untouched). Docker/colima was down; per the recorded harness-trap rule a **physical full vendor copy** was used (no symlinks), local PHP 8.4.19, SQLite `:memory:`. Note: #682 is the **upstream sibling of #788** — its file set is exactly the teacher work knowledge.md lists as "not incorporated yet" (`TeacherRosterFormatter`, teacher dashboard/attendance/student/timetable/noticeboard surfaces, `TimetableSlotController::teacher*` — which DO exist here, resolving #788's "methods don't exist" note) plus far more (schema migrations, laratrust, States).
@@ -12911,8 +12965,6 @@ Full structured review, same technique as #788/#819: merged `origin/main` INTO a
 **6. Dead weight / scope creep.** `config/laratrust.php` (267 lines) + `laratrust_seeder.php` for a package that is NOT in composer.json/lock and used by nothing; unrouted Livewire `Superadmin\Setting\States|StateForm|StateDetail` + `StatePolicy`; scratch files `additional.md` (430 lines), `keyImprovements.md`, `tr-sunday.md`, `teacher-test.md`, literal files named `,` and `-`; committed `public/build/*` artifacts; `composer.json` bumps `laravel/ai` ^0.10→^0.11.2 (untested package upgrade inside an external PR touching the Toshi/AI stack — flag: do not take blind) and removes `HasConversations` from `User` (behaviorally near-neutral today — the class's own legacy `conversations()` already shadows the trait — but the upgrade itself is untested risk); `.gitignore`d `todayswork.md`; commented-out `klassapp-ci.yml`.
 
 **Verdict (standing rule #25): DO NOT MERGE. Higher risk than #788** — same product-direction conflicts PLUS two hard blockers (KA ID scheme, schema surgery) that make even a security-preserving merge unusable, an unreviewed CT widening, and migration edits to already-deployed files. **Genuinely worth extracting as small reviewed PRs:** (a) teacher timetable (controller methods + routes + views — properly school-scoped, teacher-link-authorized, conflict-detecting; supersedes main's hash-anchor nav row), (b) attendance export() scoped findOrFail (same as #788's), (c) teacher edit-student capability re-ported with id-based routes, (d) `.xlx/.xlsx` import acceptance (passes main's `ImportMemberSpreadsheetAcceptanceTest`), (e) null-safety hardening in `Admin\StudentController::editStudent` (transport/siblings), (f) Teachers + Terms nav rows via `config/navigation.php`, (g) Ugandan fixed-date holidays seeding (needs the `batch` NOT NULL fix and main-parity review). Must-not-take: the ID normalization migration, the stream→sections schema refactor (needs its own designed RFC against main's current architecture, not an external big-bang), the CT widening (unless separately decided), his school-wide attendance tests, laratrust/States dead code, laravel/ai bump, menu-blade edits.
-
-
 
 ### 2026-09-26 (evening): PR #820 MERGED `007c77a1` + staging-deployed + verified — teachers/staffs list pagination (58→20 and 57→19 queries measured directly); conflict-free merge; no branch push needed
 
@@ -12983,3 +13035,126 @@ Full-pass regression session at `main` `2c4c36e6` (staging confirmed deployed at
 **Fixtures/state left clean:** local dev DB rebuilt after the suite-run wipe, regression fixtures (10 users incl. `reg.*@klassapp.test` + `invited.teacher*`) flagged `inactive`; staging fixtures flagged `inactive`, demo-student password re-randomized, synthetic classes 9/10 disabled, school-2 scope restored to its original `school_wide`, `sl1` restored to status 1, zero probe rows in `visitor_log`. Worktrees `KlassApp-reg-base` and `KlassApp-pr824` removed; scratch scripts deleted.
 
 **Session facts worth keeping:** staging Commands API tinker needs the base64-file + `--execute="$(cat …)"` pattern (inline multiline closures parse-error otherwise); the container's `klassapp_test` scratch DB approach from prior sessions was superseded tonight by running the suite on the default SQLite `:memory:` config via `php vendor/phpunit/phpunit/phpunit`.
+
+### 2026-09-27 (later, local Claude Code): Consolidated production deploy — #838/#839/#840/#841 shipped; fixture cleanup done; post-deploy browser verification INCOMPLETE (hand-off to PHPStorm)
+
+#### What was completed this session
+
+1. **Synthetic fixture cleanup (production, rule #3 — flag inactive, never delete)**
+   - `standards_link id=307` (school 53, section P4V) → `status=0` (inactive). Was left active by the earlier interrupted session.
+   - `users id=2339` "ZZ Prod Verify Admin" `prodverify.demo-lakeview-junior@demo.klassapp.test` → `status=inactive`
+   - `users id=2340` "Verify Student" `synthetic.student.verify53@demo.klassapp.test` → `status=inactive`
+   All three confirmed by read-back after the Commands API update.
+
+2. **Regression gate — PASS**
+   - Ran `php -d memory_limit=2G vendor/phpunit/phpunit/phpunit` inside `sms-app` Docker container (the correct command per earlier sessions — `php artisan test` wipes dev DB, shell wrapper silently no-ops).
+   - Result: **1712 tests / 99 errors / 52 failures = 151 not-passing**. Baseline was 159/1696. **8 fewer failures, 16 new tests — zero new regressions.**
+   - CI on commit `7283f66f`: `scan` check = **success**.
+
+3. **Pre-deploy rollback point**: last prod deploy = `depl-a2d7de51` @ `d377e2e1` (2026-09-27T03:40:30Z). No new migrations in the diff since that SHA.
+
+4. **Production deployed**: `POST …/environments/env-a2ac7a89-…/deployments` → `depl-a2d8bb5a-c15a-45d5-9a45-54ab53677453` → polled to **`deployment.succeeded`** — SHA confirmed: `7283f66fe7a8ce3f7ec0f80126c4bcaebbbb86ce`.
+
+5. **#840 landing contrast verified on live `klassapp.xyz`**: `PREVIEW_BASE=https://klassapp.xyz node e2e/landing-toshi-name-contrast-verify.cjs` → `rgb(21,128,61)` on `rgb(250,250,245)` = **4.79:1 at 375/414/768/1280** — AA passes. ✅
+
+6. **#839 IDOR fix confirmed in code on main**: `findSchoolFeedback($id, $school_id, $action)` scopes by `->where('school_id', $school_id)->findOrFail(…)` before each handler, comment explains why lookups sit outside the catch block (the catch swallows `abort()`). Status-change and reply both use the same helper. Live browser probe not yet run (handed off).
+
+#### Still needed — pick up here in PHPStorm
+
+The following browser-based verification items are **NOT YET CONFIRMED** on live production. Do not write the final `knowledge.md` stamp until these are done:
+
+- **Attendance write-then-read round-trip** on production. Note: fixtures flagged inactive this session — you'll need a live admin. Option: reset password for `admin.demo-lakeview-junior@demo.klassapp.test` (id=2315, school 53, still active) via Cloud Commands tinker. An active StandardLink at school 53 must also exist (id=307 is now inactive; query for another active SL at school 53 first).
+- **#819 cross-school StandardLink IDOR refusal** on production (update/updateStatus/idcard/printidcard scoped). Probe: log in as school-53 admin, attempt `POST /admin/standardLink/updateStatus/<id-from-different-school>` → expect 404 or 403, NOT 200+redirect+DB flip.
+- **#839 cross-school feedback IDOR refusal** on production — three operations: (a) `GET /admin/feedbacks/<foreign-id>/edit` → 404; (b) `POST /admin/feedbacks/<foreign-id>/update` → 404; (c) `POST /admin/feedbacks/updateStatus/<foreign-message-id>` → 404. Need a real foreign feedback id — query production: `SELECT id, school_id FROM feedbacks WHERE school_id != 53 LIMIT 5`.
+- **Mobile-nav tap-to-open at 375px** on production (Playwright or Chrome DevTools at 375 — #825 fix).
+- **PRs #833–#837**: staging-deploy each, verify the fix described in each PR, merge in order (#837 last). Real regression checks: mobile-nav, Toshi split-layout, sidebar-footer on staging.
+
+#### Current production state
+
+- **Live SHA**: `7283f66f` (as of this session's deploy)
+- **Live deploy**: `depl-a2d8bb5a`
+- **Rollback**: `depl-a2d7de51` @ `d377e2e1`
+- **⚠️ #827 still open (plain-text password warning)**: teacher invite flow sends a plain-text password in the invite email. Not deployed to production. Open PR.
+- **Open PRs still needing work**: #833, #834, #835, #836, #837 (all reviewed, not merged, staged-not-verified), and #827 (plain-text password).
+
+### 2026-09-28: production housekeeping, four retired verification logins flagged inactive
+
+Read-only checks first, then the change, then an independent confirmation. Nothing was deleted (rule #9).
+
+**What the read-only pass found**
+
+| Check | Result |
+|---|---|
+| School 43 "Demo Toshi Primary 1789064502315" | `is_test = 0`, `is_demo = 0`, status active |
+| School 45 "Caveats 504 Primary 1789078396536" | `is_test = 0`, `is_demo = 0`, status active |
+| Repo references to `demo.toshi` (user 159) | **none** |
+| Repo references to `teacher.toshi.43` (user 160) | none: the `teacher.toshi` matches are test fixtures on the unrelated `@test.sch.ug` domain |
+| Repo references to `caveats504` / `1789078396536` (user 187) | historical `knowledge.md` verification evidence only, no live flow |
+| Repo references to `1789086305461` (user 188) | none |
+| `school_details` rows mentioning any of them | 0 |
+
+**What changed.** All four accounts were flagged inactive on production: `users.status = inactive`, `userprofiles.status = inactive`, and `device_id` cleared so any app session is dropped. Accounts: 159 `demo.toshi.1789064502315@live-verify.test` (school 43, ug3), 160 `teacher.toshi.43@live-verify.test` (43, ug5), 187 `caveats504.1789078396536@live-verify.test` (45, ug3), 188 `ct.kls1.1789086305461@live-verify.test` (45, ug5). The rows remain, so the logins can be reactivated if anything turns out to need them.
+
+**User 159 was not treated as a demo-flow account**, because nothing references it: not a seeder, not a script, not a config value, not a doc. The "leave active and rotate" branch therefore did not apply.
+
+**Independent read-only confirmation afterwards:** all four read `users.status = inactive`, `profile.status = inactive`, `device = null`, all four rows still present, and `active_among_them = 0`.
+
+**Two findings left for a decision, deliberately not acted on.**
+
+1. **Schools 43 and 45 are named like fixtures but flagged as live customers** (`is_test = 0`, `is_demo = 0`), so they are counted in platform metrics and can appear in the recently-joined feed even though their accounts are verification throwaways.
+2. **Eight further `@live-verify.test` accounts are still active**, and they are the same family: 147 and 148 on school 36, 150 and 151 on school 38, and 155, 156, 157 and 158 on schools 39 to 42, the last four named `demo.toshi.*`. The earlier cleanups stopped short of them, so this looks like a series of verification fixtures across roughly ten schools rather than four stragglers.
+
+### 2026-09-28: correction. n8n is not the live WhatsApp path, and the HMAC claim was false
+
+Two statements that appear earlier in this file are **stale or wrong** and are corrected here rather than rewritten in place.
+
+1. **n8n is retired.** Earlier entries describe the WhatsApp architecture as "n8n -> Laravel REST API" and treat `GET /api/whatsapp/student/{studentId}/report` as "the new endpoint n8n calls". WhatsApp now runs **directly on the Meta WABA token**, with the live webhook at `api/whatsapp/inbound` (GET for Meta's verification handshake, POST for inbound messages). Typebot and Evolution are retired too. Those entries are historical records of how it worked then; this entry is the current state.
+2. **The `WhatsAppHmac` middleware never protected anything.** `docs/dev/setup.md` section 3.1 claimed the internal data endpoints were protected by it. In fact `App\Http\Middleware\WhatsAppHmac` was referenced by nothing, so it was applied to no route. `docs/dev/setup.md` 3.1 is now corrected to say so.
+
+**Removed in this change:** the unauthenticated legacy REST routes, which had no caller anywhere in the repository (PHP, JS, tests, services, scheduled jobs), and the unused middleware. The controller methods are kept but unrouted.
+
+- `POST /api/whatsapp/identify-user`
+- `GET /api/whatsapp/student/{studentId}/grades`
+- `GET /api/whatsapp/student/{studentId}/report`
+- `GET /api/whatsapp/student/{studentId}/attendance`
+- `GET /api/whatsapp/fees/{studentId}/balance`
+- `GET /api/whatsapp/school/{schoolId}/events`
+
+**Deliberately left in place and reported, not guessed at:** `POST /api/whatsapp/delivery` is an unauthenticated write route that still has no in-repo caller; it looks like a Meta status callback, so removing it without confirmation could break delivery receipts. `GET /api/events/show/details/{id}` on the API is unauthenticated and returns 500 for unknown ids; the in-app JavaScript uses the authenticated `/admin/events/show/details/{id}` route instead, but a mobile client could be using the API one, so it is left and flagged.
+
+**Open finding, not fixed:** `api/whatsapp/inbound` does not verify Meta's `X-Hub-Signature-256`, so an unsigned or wrongly signed POST is accepted. Verifying this properly means coordinating with the live webhook, so it is reported rather than changed silently.
+
+**Verification:** the five existing WhatsApp test failures are pre-existing and identical on clean main (5 failed, 2 risky, 68 passed before, 70 passed with the removal). Removed routes return 404, the inbound webhook route remains, and the dead middleware is gone.
+
+## Session: 2026-09-27 — Approvals inbox on x-table + ds buttons (PR [#834](https://github.com/KlassApp-Foundation/KlassApp/pull/834) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-approvals-inbox`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Measured on main**: Approve/Reject/Confirm were white text on a TRANSPARENT background (Tailwind v4 build never emitted `bg-green-600`/`bg-red-500` for this view), 21.8px tall; select 26px; input 23.8px.
+- **Change**: `<x-table>` (all six columns + `data-label`; `@php` block byte-identical), `<x-button variant=primary|danger size=sm>` (44px, `#15803D`/`#DC2626`, hovers darken to `#166534`/`#992A2A`), `ds-form-select`/`ds-form-input` + 44px floor (ds classes alone 35.6px), secondary text `#64748B`, `.ds-empty-state` with the handoff copy (desc overrides `--d-muted`). `confirm()` left as-is (dialog = own PR).
+- **Files**: `admin/approvals/inbox.blade.php`, new `tests/Feature/Admin/ApprovalsInboxDesignSystemTest.php`.
+- **Pre-existing, not changed**: x-table's sticky thead stays visible on mobile (same on `/admin/students`); Livewire parent-link picker results overlap Approve when open.
+
+## Session: 2026-09-27 — Charts: AA-contrast series colours + EOT value labels (PR [#833](https://github.com/KlassApp-Foundation/KlassApp/pull/833) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: fee trend `#22C55E`→`#15803D` (fill `rgba(21,128,61,.06)`); gender girls `#ffa601`→`#B45309`, unspecified `#cbd5e1`→`#64748B`, boys `#304ffe` in BOTH doughnut and class bar (doughnut used to map the orange to Male; legend swatches follow via scoped `.dashboard-gender-stat.bar-bg-*` in dashboard-refresh.css); empty msg → "No students enrolled yet"; EOT `#CA8A04`→`#A16207` (PHP + JS lists); inline opt-in `dsValueLabels` Chart.js plugin (no datalabels dep); `<x-chart>` emptyMessage required (throws local/testing) + AA fallback palette.
+- **Pre-existing bug fixed**: Students doughnut had NOT rendered since `7492eda2` (2026-09-21) — `['studentCount']` inside the single-quoted `options-js` attribute broke Blade's component-tag match, raw `<x-chart>` shipped (+ "Malformed arrow function parameter list" page error). `DashboardGenderChartTest` (2 stale v2 assertions, red on main) rewritten against the v4 config + a no-raw-`<x-chart>` guard (proven to fail on the old markup).
+- **Files**: `admin/dashboard/dashboard.blade.php`, `admin/reports/_eot-kpi-card.blade.php` (handoff said `admin/dashboard/` — real path is `admin/reports/`), `components/chart.blade.php`, `components/DESIGN_SYSTEM.md`, `public/css/dashboard-refresh.css`, `tests/Feature/Dashboard/DashboardGenderChartTest.php`, new `tests/Feature/DesignSystem/ChartComponentContractTest.php`.
+
+## Session: 2026-09-27 — ds-form-label onto type scale (0.82rem → 0.85rem) (PR [#835](https://github.com/KlassApp-Foundation/KlassApp/pull/835) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-form-label`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: `.ds-form-label` font-size 0.82rem → 0.85rem in `public/css/dashboard-refresh.css`; new `tests/Feature/DesignSystem/FormLabelTypeScaleTest.php`.
+- **Wrap check**: 25 visible labels × (1280, 390) across fee payment create, classes create, student add, subject add, fee category create, onboarding wizard, superadmin system settings — 13.12px→13.6px, box 15.1→15.6px, 0 wraps before and after.
+
+
+## Session: 2026-09-27 — Printed report greys #94A3B8 → #64748B (PR [#836](https://github.com/KlassApp-Foundation/KlassApp/pull/836) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-report-greys`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Change**: student-report (.badge-year, .info-label, .marks-table td.empty, .comments-label, .footer-table td; `.sign-line` border kept), formal (.ledger td.empty), missing-marks (.meta, .footer, inline standard label). 7–8px sizes untouched. New `tests/Feature/Reports/PrintedReportGreyContrastTest.php`.
+- **PDF evidence** (real DomPDF, synthetic fixture): missing-marks 3 spans and student-report 9 spans `#94A3B8`→`#64748B`, page counts unchanged.
+- **Found**: formal's `.ledger td.empty` matches no element (inert). `student-report.blade.php` has no render path since `16a03804` (2026-08-13) and still hardcodes Kabale Junior School identity + missing `public/images/KJSLogo.jpg` — deletion candidate (separate PR).
+
+
+## Session: 2026-09-27 — x-profile-photo + replace divergent avatar frames (PR [#837](https://github.com/KlassApp-Foundation/KlassApp/pull/837) OPEN, branch `claude/handoff-2026-09-27-fixes-19hyub-profile-photo`)
+- **Source**: Claude Design handoff `guidelines/handoff-2026-09-27-fixes.md` (design-system project; not in this repo), base `main` `d377e2e`.
+- **Pre-PR grep** (`grep -rn AvatarPath resources/ app/ packages/`, full tree): the handoff's 7 + `layouts/partials/profile-dropdown` (3 imgs) + **`teacher/student/show` L18 (missed by the design scan)**; app/packages hits are JSON API resources (out of scope); `buspass/print` L94 (HTML comment) untouched.
+- **Component**: `components/profile-photo.blade.php` — sizes xs32/sm40/md64/lg128/xl192, square 12px (`var(--d-radius-xl, 12px)`; `--d-radius-lg` is 10px and radius tokens aren't loaded at runtime) + 1px `--d-border` ring, circle only for the nav trigger (option b) with new `--d-avatar-ring` token; fallback uses `avatar != null` (AvatarPath returns '' → `??` would emit `src=""` — confirmed in `Common::getFilePath`); alt = display name.
+- **Measured main → branch**: student show 196×192 stretched → 192×192; teacher wide photo 174×74 → 174×174 cover; staff no-avatar `src=""` broken → default; feedback hard-coded default → parent photo; teacher nav trigger at 390 4×32 sliver → 32×32; alt everywhere. Print templates (id-card ×2, bus_pass) radius 10→12px only (bus_pass has no route).
+

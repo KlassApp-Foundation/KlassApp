@@ -209,26 +209,29 @@ php artisan tinker
 
 ## 3. Webhook Security
 
-### 3.1 HMAC Signing
+### 3.1 Authentication of the WhatsApp endpoints
 
-All internal data endpoints (`/api/whatsapp/identify-user`, `/api/whatsapp/student/{id}/grades`, etc.) are protected by the `WhatsAppHmac` middleware. This ensures only authenticated callers (n8n, Typebot, internal services) can access student data.
+WhatsApp runs directly on the **Meta WABA token**. The live webhook is `api/whatsapp/inbound`
+(GET for Meta's verification handshake, POST for inbound messages).
 
-How to generate a signature:
+**Corrected 2026-09-28.** This section previously stated that internal data endpoints
+(`/api/whatsapp/identify-user`, `/api/whatsapp/student/{id}/grades`, and similar) were
+"protected by the `WhatsAppHmac` middleware". That was not true:
 
-```bash
-# Given the raw JSON body
-BODY='{"phone":"+256701234567"}'
-SECRET="your-hmac-secret"
+- `App\Http\Middleware\WhatsAppHmac` existed but was referenced by nothing, so it was
+  applied to no route and protected nothing.
+- The routes it was supposed to protect were unauthenticated and had no caller in this
+  repository.
+- Those routes have now been **removed**, and the unused middleware with them, so there is
+  no longer an endpoint there to protect.
 
-# Compute HMAC-SHA256
-SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $NF}')
+**Known gap, reported and not yet fixed:** `api/whatsapp/inbound` does **not** verify Meta's
+`X-Hub-Signature-256` header. Any POST to that URL is accepted without proof it came from
+Meta. Adding the check must be coordinated with the live webhook, so it is tracked rather
+than patched silently.
 
-# Call the endpoint
-curl -X POST https://your-app.com/api/whatsapp/identify-user \
-  -H "Content-Type: application/json" \
-  -H "X-Hub-Signature-256: $SIGNATURE" \
-  -d "$BODY"
-```
+The n8n, Typebot and Evolution integrations are **retired**. Any documentation describing
+n8n as the live WhatsApp path is stale.
 
 ### 3.2 Inbound Webhook Authentication
 

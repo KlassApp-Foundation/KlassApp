@@ -189,7 +189,6 @@ Route::post('/password/force-change', 'Auth\ForceChangePasswordController@store'
 //Email Verification for Member
 Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification');
 // OTP Verification
-Route::get('/checksms', 'TestController@checksms');
 Route::get('/verifyotp', 'OTPController@create');
 Route::post('/verifyotp', 'OTPController@store');
 
@@ -228,10 +227,6 @@ Route::group(['middleware' => ['siteadmin'], 'namespace' => 'Admin'], function (
 //user list
 Route::get('/demo/schoolList', 'Demo\WelcomeController@schoolList');
 Route::get('/demo/list/{school_id}', 'Demo\WelcomeController@list');
-
-Route::get('/cache-clear', function () {
-    Artisan::call('cache:clear');
-});
 
 Route::get('/{slug}/standardlist','AdmissionController@list');
 Route::get( '/{slug}/admission-form', 'AdmissionController@create' );

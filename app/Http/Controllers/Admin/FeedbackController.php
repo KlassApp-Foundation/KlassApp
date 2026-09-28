@@ -57,9 +57,14 @@ class FeedbackController extends Controller
      */
     public function edit($feedbackid)
     {
-        //
-        $messages = FeedbackMessage::where('feedback_id', $feedbackid)->with('feedback')->get();
-        $feedback = Feedback::where('id', $feedbackid)->with(['parent', 'admin','feedbackMessage'])->first();
+        $school_id = Auth::user()->school_id;
+        $feedback = $this->findSchoolFeedback($feedbackid, $school_id, 'view');
+        $feedback->load(['parent', 'admin', 'feedbackMessage']);
+
+        $messages = FeedbackMessage::where('feedback_id', $feedback->id)
+            ->where('school_id', $school_id)
+            ->with('feedback')
+            ->get();
         /*foreach ($messages as $message)
         {
             $message = FeedbackMessage::where('id', $message->id )->first();
@@ -76,11 +81,18 @@ class FeedbackController extends Controller
      */
     public function updateStatus(Request $request,$id)
     {
-        //
+        // Scoped lookup outside the try: the catch below would swallow abort().
+        $feedbackMessage = FeedbackMessage::where('id', $id)
+            ->where('school_id', Auth::user()->school_id)
+            ->first();
+
+        if (!$feedbackMessage) {
+            Log::warning('Feedback status update refused: message not in admin school', ['admin_id' => Auth::id(), 'requested_id' => $id]);
+            abort(404);
+        }
+
         try
         {
-            $feedbackMessage = FeedbackMessage::where('id', $id)->first();
-
             $feedbackMessage->is_seen = $request->status;
 
             $feedbackMessage->save();
@@ -127,7 +139,9 @@ class FeedbackController extends Controller
 
     public function update(FeedbackRequest $request,$feedbackid)
     {
-        //
+        // Scoped lookup outside the try: the catch below would swallow abort().
+        $feedback = $this->findSchoolFeedback($feedbackid, Auth::user()->school_id, 'reply');
+
         try
         {
             $message = new FeedbackMessage;
@@ -135,11 +149,9 @@ class FeedbackController extends Controller
             $message->message = $request->message;
             $message->user_id = Auth::id();
             $message->school_id = Auth::user()->school_id;
-            $message->feedback_id = $feedbackid;
+            $message->feedback_id = $feedback->id;
 
             $message->save();
-
-            $feedback = Feedback::where('id',$feedbackid)->first();
 
             $data=[];
 
@@ -157,5 +169,24 @@ class FeedbackController extends Controller
             Log::info($e->getMessage());
             //dd($e->getMessage());
         }
+    }
+
+    /**
+     * A feedback thread by id, only if it belongs to the admin's school.
+     * A foreign or unknown id is a 404 (not 403) so ids of other schools'
+     * threads are not confirmed to exist.
+     */
+    private function findSchoolFeedback($feedbackid, $school_id, string $action): Feedback
+    {
+        $feedback = Feedback::where('id', $feedbackid)
+            ->where('school_id', $school_id)
+            ->first();
+
+        if (!$feedback) {
+            Log::warning("Feedback {$action} refused: thread not in admin school", ['admin_id' => Auth::id(), 'requested_id' => $feedbackid]);
+            abort(404);
+        }
+
+        return $feedback;
     }
 }

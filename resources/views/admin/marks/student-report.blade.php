@@ -61,7 +61,7 @@
             padding: 3px 10px;
             text-transform: uppercase;
         }
-        .badge-year { display: block; font-size: 8px; color: #94A3B8; margin-top: 2px; }
+        .badge-year { display: block; font-size: 8px; color: #64748B; margin-top: 2px; }
 
         .header-divider { border-bottom: 1px solid #E2E8F0; margin-bottom: 8px; }
 
@@ -69,7 +69,7 @@
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; border: 1px solid #E2E8F0; }
         .info-table td { text-align: center; padding: 6px 8px; font-size: 9px; border: none; }
         .info-table td:first-child { border-left: 3px solid #1E6FD9; }
-        .info-label { font-size: 7px; color: #94A3B8; text-transform: uppercase; margin-bottom: 1px; }
+        .info-label { font-size: 7px; color: #64748B; text-transform: uppercase; margin-bottom: 1px; }
         .info-value { font-size: 10px; font-weight: 700; color: #0F172A; }
         .info-value-lg { font-size: 12px; font-weight: 700; color: #0F172A; }
 
@@ -92,7 +92,7 @@
             text-align: center;
         }
         .marks-table td.left { text-align: left; }
-        .marks-table td.empty { color: #94A3B8; }
+        .marks-table td.empty { color: #64748B; }
         .marks-table td.strong { font-weight: 600; }
 
         .section-mid { background: #0F172A; color: #fff; font-size: 8px; font-weight: 700; }
@@ -103,7 +103,7 @@
         /* ── Comments (table-based) ── */
         .comments-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         .comments-table td { width: 50%; padding: 0 3px; vertical-align: top; border: none; }
-        .comments-label { font-size: 7px; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+        .comments-label { font-size: 7px; color: #64748B; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
         .comments-box {
             padding: 6px 8px;
             border: 1px solid #E2E8F0;
@@ -125,7 +125,7 @@
 
         /* ── Footer ── */
         .footer-table { width: 100%; border-collapse: collapse; margin-top: 8px; padding-top: 4px; border-top: 1px solid #E2E8F0; }
-        .footer-table td { font-size: 7px; color: #94A3B8; padding: 2px 0; border: none; }
+        .footer-table td { font-size: 7px; color: #64748B; padding: 2px 0; border: none; }
         .footer-table td.right { text-align: right; }
         .sign-line { border-bottom: 1px solid #94A3B8; display: inline-block; width: 80px; margin-left: 4px; }
 
