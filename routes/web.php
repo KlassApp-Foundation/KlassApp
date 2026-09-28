@@ -94,21 +94,20 @@ Route::prefix('preview')->name('preview.')->group(function () {
     })->where('code', '404|419|500')->name('errors');
 });
 
-// Landing page v2 (Flare-style)
-Route::get('/landing2', function () {
-    return view('landing2');
-});
-
-// Landing page (public)
-Route::get('/landing', function () {
-    return view('landing');
-});
-
-// Clean landing section URLs (no more hash anchors)
-Route::get('/features', fn() => view('landing', ['scrollTo' => 'features']));
-Route::get('/pricing', fn() => view('landing', ['scrollTo' => 'pricing']));
-Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
-Route::get('/contact', fn() => view('landing', ['scrollTo' => 'contact']));
+// ── Legacy marketing paths → 301 to the new landing (/) ──────────────────
+// The new landing has no features/pricing/schools sections, so those paths
+// land on /. Only /demo and GET /contact map to a section (#demo).
+// Registered GET-only on purpose: Router::redirect() registers any-method and
+// would shadow POST /contact (contact.send), which must keep working.
+// Kept routes under these prefixes: POST /contact, GET /schools/{slug},
+// GET /demo/schoolList, GET /demo/list/{school_id}, POST /demo-request,
+// API GET /schools/list, and the existing /landing-preview 301 above.
+Route::get('/landing', fn () => redirect('/', 301));
+Route::get('/landing2', fn () => redirect('/', 301));
+Route::get('/features', fn () => redirect('/', 301));
+Route::get('/pricing', fn () => redirect('/', 301));
+Route::get('/schools', fn () => redirect('/', 301));
+Route::get('/contact', fn () => redirect('/#demo', 301));
 
 Route::post('/contact', function (Illuminate\Http\Request $request) {
     $request->validate([
@@ -132,7 +131,7 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 
     return redirect('/contact?sent=true#contact');
 })->name('contact.send');
-Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
+Route::get('/demo', fn () => redirect('/#demo', 301));
 
 // Demo request capture (public form on the landing)
 Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class, 'store'])
