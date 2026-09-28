@@ -59,12 +59,6 @@ class TestController extends Controller
 
    }
 
-    public function checksms()
-    {
-    	$content="Hai";
-        $this->sendSMS($content,'919042781117');
-    }
-
 
 
 }
