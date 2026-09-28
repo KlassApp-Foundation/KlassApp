@@ -22,6 +22,8 @@
      Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
+  /* Text-safe green for small text on light backgrounds: #22C55E is ~2.2:1. */
+  --brand-green-text: #15803D;
   /* Primary CTA green — darkened for WCAG AA white text (see DESIGN_SYSTEM.md). */
   --brand-accent: #15803D;
   --brand-dark: #0F172A;
@@ -533,6 +535,8 @@ body.nav-open { overflow: hidden; }
   color: #94A3B8;
   margin-top: 4px;
 }
+/* On the white chat bubble #94A3B8 is 2.56:1; the dark-card uses keep it (6.3–7.3:1). */
+.hero-bubble .hero-meta { color: var(--text-secondary); }
 .hero-row {
   display: flex;
   justify-content: space-between;
@@ -746,7 +750,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 10px;
 }
 .connector-icons {
@@ -848,7 +852,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--brand-green);
+  color: var(--brand-green-text, #15803D);
 }
 .status-dot {
   width: 7px; height: 7px;
@@ -870,7 +874,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
   background: rgba(248,250,252,0.6);
 }
@@ -940,7 +944,7 @@ body.nav-open { overflow: hidden; }
 }
 .panel-badge.live { background: #DCFCE7; color: #15803D; }
 .panel-badge.sync { background: #DBEAFE; color: #1D4ED8; }
-.panel-badge.idle { background: var(--brand-light); color: var(--text-muted); }
+.panel-badge.idle { background: var(--brand-light); color: var(--text-secondary); }
 
 /* ── shared elevated-surface treatment ───────────────────────────────
    Same contract as the Toshi diagram's .toshi-node — layered shadow,
@@ -1058,7 +1062,7 @@ body.nav-open { overflow: hidden; }
 .connector-card-icon.sms { background: #ECFDF5; }
 .connector-card-icon.calendar { background: #EFF6FF; }
 .connector-card h3 { font-size: 0.9375rem; font-weight: 600; margin-bottom: 4px; }
-.connector-card p { font-size: 0.8125rem; color: var(--text-muted); }
+.connector-card p { font-size: 0.8125rem; color: var(--text-secondary); }
 
 .toshi { background: var(--brand-white); position: relative; }
 .toshi-header {
@@ -1832,7 +1836,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -2084,7 +2088,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .mesh-node {
   position: absolute;
@@ -2182,7 +2186,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: var(--brand-white);
   border: 1px solid var(--border);
   border-radius: 100px;
@@ -2389,13 +2393,14 @@ body.nav-open { overflow: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94A3B8;
+  /* The 𝕏 glyph is text on #F1F5F9: --text-secondary is 4.34:1 there, --text-primary passes. */
+  color: var(--text-primary);
   font-size: 1.125rem;
   transition: background 0.2s ease, color 0.2s ease;
 }
 .site-footer-social:hover {
   background: #E2E8F0;
-  color: #64748B;
+  color: var(--text-primary);
 }
 .site-footer-copy {
   border-top: 1px solid #E2E8F0;
@@ -2495,7 +2500,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--brand-green);
+  color: var(--brand-green-text, #15803D);
   margin-bottom: 12px;
 }
 
@@ -2577,7 +2582,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -2632,7 +2637,7 @@ body.nav-open { overflow: hidden; }
   display: block;
   margin-top: 2px;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   letter-spacing: -0.01em;
 }
@@ -2711,7 +2716,7 @@ body.nav-open { overflow: hidden; }
 
 .trust-footnote p {
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.55;
 }
@@ -2804,7 +2809,7 @@ body.nav-open { overflow: hidden; }
 
 .timeline li.future .tl-when { color: var(--brand-blue); }
 
-.timeline li.pending .tl-when { color: var(--text-muted); }
+.timeline li.pending .tl-when { color: var(--text-secondary); }
 
 .community-panel {
   background: var(--brand-white);
@@ -2869,7 +2874,7 @@ body.nav-open { overflow: hidden; }
 
 .contrib span {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
@@ -2912,7 +2917,7 @@ body.nav-open { overflow: hidden; }
 .panel-note {
   margin-top: 18px;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -3072,7 +3077,7 @@ body.nav-open { overflow: hidden; }
   margin-left: 6px;
   font-size: 0.625rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -3154,7 +3159,7 @@ body.nav-open { overflow: hidden; }
   display: block;
   text-align: right;
   font-size: 0.5rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 3px;
 }
 
@@ -3238,7 +3243,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .kpi-chip .val {
@@ -3273,7 +3278,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
   background: var(--brand-light);
 }
@@ -3375,7 +3380,7 @@ body.nav-open { overflow: hidden; }
 .admin-panel .panel-title {
   font-size: 0.5625rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 6px;
@@ -3402,7 +3407,7 @@ body.nav-open { overflow: hidden; }
   display: flex;
   justify-content: space-between;
   font-size: 0.5rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .admin-bar-track {
@@ -3439,7 +3444,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 18px;
   display: flex;
   align-items: center;
@@ -3610,7 +3615,9 @@ body.nav-open { overflow: hidden; }
   margin: 0;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--brand-amber);
+  /* #B45309, not --brand-amber (#D97706, 3.19:1): same amber hue as the Coming
+     badge, 5.02:1 on white. Mirrors the app's --d-warning; no landing token exists. */
+  color: #B45309;
 }
 
 .hero h1 {
@@ -3629,7 +3636,7 @@ body.nav-open { overflow: hidden; }
 .compare-header .lead {
   margin-top: 10px;
   font-size: 0.9375rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .compare-list {
   display: flex;
@@ -3665,7 +3672,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 .compare-col p {
@@ -3709,7 +3716,7 @@ body.nav-open { overflow: hidden; }
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: color-mix(in srgb, var(--brand-light) 80%, white);
 }
 .compare-table th:last-child,
@@ -3845,7 +3852,9 @@ select:focus-visible,
   padding: 3px 9px; border-radius: 999px;
   background: rgba(255,255,255,0.10); color: #E2E8F0; white-space: nowrap;
 }
-.hero-chip.live { background: rgba(34,197,94,0.18); color: #86EFAC; }
+/* #86EFAC on the translucent green over the dark card measured 4.25:1 (axe-core).
+   A lighter text is the correct direction on a dark surface. */
+.hero-chip.live { background: rgba(34,197,94,0.18); color: #DCFCE7; }
 .hero-chip.wait { background: rgba(217,119,6,0.20); color: #FCD34D; }
 .hero-chip.sync { background: rgba(30,111,217,0.22); color: #93C5FD; }
 .hero-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
