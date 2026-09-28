@@ -27,6 +27,26 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
+        $detectedEnv = app()->environment();
+        if ($detectedEnv !== 'testing') {
+            fwrite(STDERR, sprintf(
+                "[test-harness] abort: app environment is '%s', expected 'testing'. A shell or service is overriding phpunit's environment; refusing to run tests in the wrong mode.\n",
+                $detectedEnv
+            ));
+            exit(1);
+        }
+
+        $defaultConnection = (string) config('database.default');
+        $defaultDatabase = (string) config("database.connections.{$defaultConnection}.database");
+        if ($defaultConnection !== 'sqlite' || $defaultDatabase !== ':memory:') {
+            fwrite(STDERR, sprintf(
+                "[test-harness] abort: default database is '%s' (%s), expected sqlite :memory: per phpunit.xml. Refusing to run migrations or tests against a non-test database.\n",
+                $defaultConnection,
+                $defaultDatabase
+            ));
+            exit(1);
+        }
+
         // Re-apply SQLite config after boot (env may have been overridden by .env)
         config(['database.default' => 'sqlite']);
         config(['database.connections.sqlite.database' => ':memory:']);
