@@ -54,12 +54,10 @@ class LegacyDemographicsValidationTest extends TestCase
             'community',
             'v-model="community"',
             'name="community"',
-            'v-model="religion"',
-            'v-model="nationality"',
+            // religion and nationality are intentionally collected again by the
+            // Ugandan admission set (PR 5): religion optional, nationality required.
             'v-model="height"',
             'v-model="weight"',
-            'name="religion"',
-            'name="nationality"',
             'name="height"',
             'name="weight"',
         ];
@@ -110,7 +108,8 @@ class LegacyDemographicsValidationTest extends TestCase
             'UserProfileUpdateRequest' => ['Http/Requests/UserProfileUpdateRequest.php'],
             'TeacherProfileAddRequest' => ['Http/Requests/TeacherProfileAddRequest.php'],
             'TeacherUpdateRequest' => ['Http/Requests/TeacherUpdateRequest.php'],
-            'AdmissionStudentRequest' => ['Http/Requests/Admission/AdmissionStudentRequest.php'],
+            // AdmissionStudentRequest intentionally requires date_of_birth for the
+            // admission form (Ugandan field set, PR 5); admin-side requests keep it nullable.
         ];
     }
 
@@ -135,7 +134,7 @@ class LegacyDemographicsValidationTest extends TestCase
         $path = app_path('Http/Requests/Admission/AdmissionStudentRequest.php');
         $source = file_get_contents($path);
 
-        foreach (['community', 'religion', 'nationality', 'height', 'weight', 'mother_tongue', 'aadhar_number', 'blood_group', 'birth_place'] as $field) {
+        foreach (['community', 'height', 'weight', 'mother_tongue', 'aadhar_number', 'blood_group', 'birth_place'] as $field) {
             $this->assertDoesNotMatchRegularExpression(
                 "/['\"]{$field}['\"]\s*=>/",
                 $source,
