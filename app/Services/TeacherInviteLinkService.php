@@ -18,13 +18,12 @@ use Illuminate\Support\Str;
  * Issues one-time teacher invite links and handles token verification + claiming.
  *
  * Tokens are 64 random chars, stored as SHA-256 hashes (not plain text).
- * Links expire after 72 hours and are single-use only.
+ * Links expire after a configurable number of hours (invites.expiry_hours)
+ * and are single-use only.
  */
 class TeacherInviteLinkService
 {
     public const TOKEN_LENGTH = 64;
-
-    public const EXPIRY_HOURS = 72;
 
     /**
      * Issue a new invite for a new teacher.
@@ -50,7 +49,7 @@ class TeacherInviteLinkService
             'standard_link_id' => $standardLink?->id,
             'name'             => trim($name),
             'phone'            => $phone ? trim($phone) : null,
-            'expires_at'       => now()->addHours(self::EXPIRY_HOURS),
+            'expires_at'       => now()->addHours((int) config('invites.expiry_hours', 72)),
         ]);
 
         Log::info('Teacher invite issued', [
@@ -75,7 +74,7 @@ class TeacherInviteLinkService
         $token = Str::random(self::TOKEN_LENGTH);
 
         $invite->token_hash = hash('sha256', $token);
-        $invite->expires_at = now()->addHours(self::EXPIRY_HOURS);
+        $invite->expires_at = now()->addHours((int) config('invites.expiry_hours', 72));
         $invite->save();
 
         Log::info('Teacher invite reissued', [
@@ -135,7 +134,7 @@ class TeacherInviteLinkService
         $classLabel = $className ? " for {$className}" : '';
         $message = "You've been invited to join {$school->name}{$classLabel} on KlassApp. "
                  ."Set your password here: {$url} "
-                 ."(link expires in ".self::EXPIRY_HOURS.' hours)';
+                 ."(link expires in ".(int) config('invites.expiry_hours', 72).' hours)';
 
         try {
             $whatsApp = app(\App\Services\WhatsAppBusinessService::class);
