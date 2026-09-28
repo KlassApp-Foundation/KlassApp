@@ -16,11 +16,23 @@
     options       Chart.js v4 options (merged with the KlassApp defaults)
     height        canvas height in px (default 260)
     ariaLabel     accessible description of the chart
-    emptyMessage  shown instead of the canvas when every dataset is empty
+    emptyMessage  REQUIRED — shown instead of the canvas when every dataset is
+                  empty. Throws in local/testing when omitted so a chart never
+                  ships the generic fallback; production falls back to
+                  "No data yet" rather than 500ing a dashboard.
     centerValue   draws this value in the middle of a doughnut (KlassApp plugin)
     optionsJs     optional JS object literal deep-merged over `options` at init —
                   the only place callbacks live, because JSON cannot carry
                   functions. Kept explicit so data/options stay JSON-encoded.
+
+  Value labels (opt-in): pass options.plugins.dsValueLabels.display = true to
+  draw each bar's value 4px above it (DM Sans 600 11px, #1E293B). Inline
+  Chart.js v4 plugin — chartjs-plugin-datalabels is deliberately not a
+  dependency. Give the chart layout.padding.top headroom for the top label.
+
+  Colour fallback: a dataset with no backgroundColor/borderColor gets the
+  AA-checked palette #1E6FD9 / #B45309 / #15803D / #64748B (by dataset index)
+  instead of Chart.js's library defaults.
 
   Usage
     <x-chart type="line" :labels="$labels" :datasets="$datasets" :height="180"
@@ -34,13 +46,33 @@
     'options' => [],
     'height' => 260,
     'ariaLabel' => null,
-    'emptyMessage' => 'No data yet',
+    'emptyMessage' => null,
     'centerValue' => null,
     'optionsJs' => null,
 ])
 
 @php
     $chartId = $id ?: 'ds-chart-'.\Illuminate\Support\Str::uuid();
+
+    if ($emptyMessage === null || $emptyMessage === '') {
+        if (app()->environment(['local', 'testing'])) {
+            throw new \InvalidArgumentException(
+                '<x-chart> requires an empty-message describing what is missing (e.g. "No fee collections recorded yet").'
+            );
+        }
+        $emptyMessage = 'No data yet';
+    }
+
+    // AA-checked fallback palette for datasets that set no colour of their own.
+    $fallbackPalette = ['#1E6FD9', '#B45309', '#15803D', '#64748B'];
+    $datasets = collect($datasets)->values()->map(function ($d, $i) use ($fallbackPalette) {
+        if (! is_array($d) || isset($d['backgroundColor']) || isset($d['borderColor'])) {
+            return $d;
+        }
+        $c = $fallbackPalette[$i % count($fallbackPalette)];
+
+        return $d + ['backgroundColor' => $c, 'borderColor' => $c];
+    })->all();
 
     // KlassApp defaults; page options are merged over them.
     $defaults = [
@@ -116,6 +148,32 @@
                         ctx.textAlign = 'center';
                         ctx.fillStyle = '#4d4c48';
                         ctx.fillText(opts.value, (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+                        ctx.restore();
+                    },
+                });
+
+                // Bar value labels (opt-in via options.plugins.dsValueLabels.display).
+                // Inline so chartjs-plugin-datalabels never becomes a dependency.
+                window.Chart.register({
+                    id: 'dsValueLabels',
+                    afterDatasetsDraw(chart, args, opts) {
+                        if (!opts || !opts.display) return;
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        ctx.font = '600 11px "DM Sans", sans-serif';
+                        ctx.fillStyle = '#1E293B';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        chart.data.datasets.forEach(function (ds, di) {
+                            const meta = chart.getDatasetMeta(di);
+                            if (meta.hidden || meta.type !== 'bar') return;
+                            meta.data.forEach(function (bar, i) {
+                                const v = ds.data[i];
+                                if (v === null || v === undefined || v === '' || isNaN(v)) return;
+                                const n = Number(v);
+                                ctx.fillText(Number.isInteger(n) ? String(n) : n.toFixed(1), bar.x, bar.y - 4);
+                            });
+                        });
                         ctx.restore();
                     },
                 });

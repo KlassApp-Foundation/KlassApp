@@ -1086,7 +1086,9 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 16px;
   box-shadow: var(--shadow-glow-violet);
 }
-.toshi-header h2 .toshi-name { color: var(--brand-green); }
+/* --brand-accent (#15803D), not --brand-green (#22C55E): the bright green is
+   2.18:1 on the section's --paper-base, below AA even for large text. */
+.toshi-header h2 .toshi-name { color: var(--brand-accent); }
 .toshi-header p { font-size: 1.0625rem; }
 
 /* ---- Toshi agent core — orbiting tools & models (WS-2 / D1 + D2) ----
