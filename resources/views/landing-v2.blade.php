@@ -723,6 +723,72 @@
 </section>
 
 
+<section class="demo-section" id="demo">
+  <div class="container">
+    <div class="demo-head reveal">
+      <h2>Book a demo</h2>
+      <p>See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.</p>
+    </div>
+
+    @if(session('demo_request_success'))
+    <div class="demo-success" data-testid="demo-success">
+      <h3>Thank you, we have your request.</h3>
+      <p>Our team will reach out shortly to arrange a walkthrough for your school.</p>
+      @if(config('services.demo.booking_url'))
+      <p>
+        <a href="{{ config('services.demo.booking_url') }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-testid="demo-booking-button">Pick a time for a call</a>
+      </p>
+      @else
+      <p>We will email you with next steps.</p>
+      @endif
+    </div>
+    @else
+    <form class="demo-form" method="POST" action="{{ url('/demo-request') }}" data-testid="demo-form">
+      @csrf
+      <input type="hidden" name="source_page" value="landing-v2#demo">
+      <div class="demo-hp" aria-hidden="true">
+        <label for="demo-website">Website</label>
+        <input type="text" id="demo-website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <div class="demo-grid">
+        <div class="demo-field">
+          <label for="demo-school">School name</label>
+          <input id="demo-school" type="text" name="school_name" value="{{ old('school_name') }}" required>
+          @error('school_name')<p class="demo-err">{{ $message }}</p>@enderror
+        </div>
+        <div class="demo-field">
+          <label for="demo-name">Your name</label>
+          <input id="demo-name" type="text" name="contact_name" value="{{ old('contact_name') }}" required>
+          @error('contact_name')<p class="demo-err">{{ $message }}</p>@enderror
+        </div>
+        <div class="demo-field">
+          <label for="demo-email">Email</label>
+          <input id="demo-email" type="email" name="email" value="{{ old('email') }}" required>
+          @error('email')<p class="demo-err">{{ $message }}</p>@enderror
+        </div>
+        <div class="demo-field">
+          <label for="demo-phone">Phone</label>
+          <input id="demo-phone" type="tel" name="phone" value="{{ old('phone') }}" required>
+          @error('phone')<p class="demo-err">{{ $message }}</p>@enderror
+        </div>
+        <div class="demo-field demo-field-full">
+          <label for="demo-district">District <span class="demo-optional">(optional)</span></label>
+          <input id="demo-district" type="text" name="district" value="{{ old('district') }}">
+        </div>
+        <div class="demo-field demo-field-full">
+          <label for="demo-message">Anything we should know? <span class="demo-optional">(optional)</span></label>
+          <textarea id="demo-message" name="message" rows="3">{{ old('message') }}</textarea>
+        </div>
+      </div>
+      <div class="demo-actions">
+        <button type="submit" class="btn btn-primary" data-testid="demo-submit">Request a demo</button>
+      </div>
+    </form>
+    @endif
+  </div>
+</section>
+
+
 {{-- Production footer block from resources/views/landing.blade.php (footer only; no Stay-in-the-loop newsletter). --}}
 <footer class="site-footer">
   <div class="site-footer-wordmark" aria-hidden="true">KlassApp</div>
@@ -736,12 +802,12 @@
         <a href="{{ url('/terms-of-service') }}">Terms</a>
         <a href="{{ url('/privacy-policy') }}">Privacy</a>
         <a href="/docs/community/">Docs</a>
-        <a href="/contact">Contact</a>
+        <a href="{{ url('/') }}#demo">Contact</a>
       </nav>
       <div class="site-footer-socials">
         <a href="https://x.com/Klass_App" class="site-footer-social" aria-label="KlassApp on X" rel="noopener noreferrer" target="_blank">𝕏</a>
         <a href="https://github.com/KlassApp-Foundation" class="site-footer-social" aria-label="KlassApp on GitHub" rel="noopener noreferrer" target="_blank">GH</a>
-        <a href="{{ url('/contact') }}" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
+        <a href="{{ url('/') }}#demo" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
       </div>
     </div>
     <div class="site-footer-copy">&copy; {{ date('Y') }} KlassApp. All rights reserved.</div>
