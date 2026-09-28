@@ -13,6 +13,8 @@
                 <strong>{{ $school->name ?? 'KlassApp' }}</strong>
                 @if($className)
                 as class teacher for <strong>{{ $className }}</strong>
+                @elseif(!empty($roleLabel))
+                {{ $roleLabel }}
                 @endif
                 .
             </p>
@@ -32,7 +34,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('teacher.invite.claim', $token) }}" data-testid="invite-password-form-el">
+        <form method="POST" action="{{ route($claimRoute, $token) }}" data-testid="invite-password-form-el">
             @csrf
 
             <div class="form-group">
