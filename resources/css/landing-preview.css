@@ -4606,3 +4606,271 @@ select:focus-visible,
   .ac-ch span:not(.ac-ico) { font-size: .625rem; letter-spacing: .02em; overflow-wrap: anywhere; }
   .ac-role { padding: 6px 12px; }
 }
+
+/* ==== Landing de-box (Phase 2b item 3): ledger rules replace card edges ====
+   The boxed-by-habit items go free-floating: a 1px ledger hairline above each
+   item, ~28px gaps, and depth on the icon tile only. The Provable pillar
+   stays the one deliberate box (dashed amber). Reference build:
+   concepts/landing-debox/index.html. */
+:root { --ledger: rgba(120, 95, 60, 0.14); }
+
+/* B6 - the orbit sits on .toshi-depth instead of its own card. */
+.toshi-tower {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* B1 - Toshi capability cards: hairline + icon depth. */
+.toshi-grid { gap: 30px 28px; }
+.toshi-card {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--ledger);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  padding: 16px 0 0;
+}
+.toshi-card::before, .toshi-card::after { content: none; }
+.toshi-card.visible { box-shadow: none; border-color: transparent; border-top-color: var(--ledger); }
+.toshi-card.amber-accent.visible { box-shadow: none; border-color: transparent; border-top-color: var(--ledger); }
+.toshi-card:hover { transform: none; box-shadow: none; }
+.toshi-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  color: var(--brand-accent);
+  background: linear-gradient(165deg, #fff 0%, rgba(34,197,94,0.10) 100%);
+  border: 1px solid rgba(34,197,94,0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 6px 14px -8px rgba(15,23,42,0.25);
+}
+.toshi-card.violet-accent .toshi-card-icon {
+  color: #6D28D9;
+  background: linear-gradient(165deg, #fff 0%, rgba(139,92,246,0.10) 100%);
+  border-color: rgba(139,92,246,0.22);
+}
+.toshi-card.amber-accent .toshi-card-icon {
+  color: #B45309;
+  background: linear-gradient(165deg, #fff 0%, rgba(217,119,6,0.10) 100%);
+  border-color: rgba(217,119,6,0.22);
+}
+
+/* B5 - Human in the loop: a violet glow behind the icon, no stripe. */
+.toshi-hitl {
+  max-width: 62ch;
+  gap: 16px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.toshi-hitl-icon {
+  position: relative;
+  isolation: isolate;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  color: #6D28D9;
+  background: linear-gradient(165deg, #fff 0%, rgba(139,92,246,0.10) 100%);
+  border: 1px solid rgba(139,92,246,0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 6px 14px -8px rgba(15,23,42,0.25);
+}
+.toshi-hitl-icon::before {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.20), transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* B4 - How-it-works columns: no card; the preview keeps its own edge. */
+.how-columns { gap: 28px; }
+.how-column {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--ledger);
+  border-radius: 0;
+  padding: 16px 0 0;
+}
+.how-preview {
+  border: 0;
+  box-shadow: 0 10px 24px -14px rgba(15,23,42,0.35), 0 0 0 1px rgba(15,23,42,0.05);
+}
+
+/* B2 - Protocol Cores: four float, Provable is the one deliberate box. */
+.pillars-5 { gap: 26px 24px; }
+.pillar {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--ledger);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px 0 0;
+}
+.pillar:hover {
+  box-shadow: none;
+  transform: none;
+  border-color: transparent;
+  border-top-color: var(--ledger);
+}
+.pillar-icon {
+  border-radius: 11px;
+  color: var(--brand-accent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 6px 14px -8px rgba(15,23,42,0.25);
+}
+.pillar-future {
+  border: 1.5px dashed rgba(217,119,6,0.55);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #fff 0%, rgba(217,119,6,0.05) 100%);
+  padding: 16px 16px 14px;
+}
+.pillar-future:hover { border-color: rgba(217,119,6,0.55); }
+
+/* B3 - Compare: one band, one vertical rule, soft green wash behind the right half. */
+.compare-band { position: relative; display: flex; flex-direction: column; }
+.compare-band::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 50%; width: 50%;
+  background: linear-gradient(180deg, rgba(34,197,94,0.07), rgba(34,197,94,0.03));
+  border-radius: 14px;
+  z-index: 0;
+  pointer-events: none;
+}
+.compare-band > * { position: relative; z-index: 1; }
+.compare-band-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.compare-band-head .compare-label { margin-bottom: 0; padding: 0 18px 10px; }
+.compare-label-after { color: var(--brand-accent); }
+.compare-band-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.compare-band-cell { padding: 14px 18px; border-top: 1px solid var(--ledger); }
+.compare-band-cell + .compare-band-cell { border-left: 1px solid var(--ledger); }
+.compare-band-cell p { margin: 0; font-size: 0.9375rem; line-height: 1.55; }
+.compare-band-cell:first-child p { color: var(--text-secondary); }
+.compare-label-mobile { display: none; }
+@media (max-width: 700px) {
+  .compare-band-head { display: none; }
+  .compare-band::after { display: none; }
+  .compare-band-row { grid-template-columns: 1fr; }
+  .compare-band-cell + .compare-band-cell { border-left: 0; }
+  .compare-label-mobile { display: block; margin-bottom: 6px; }
+}
+
+/* A6 - FAQ: a divider list; 56px summaries; chevrons. */
+.faq-list { gap: 0; }
+.faq-item {
+  border: 0;
+  border-bottom: 1px solid var(--ledger);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+.faq-item:first-child { border-top: 1px solid var(--ledger); }
+.faq-item summary {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+}
+.faq-item summary::after { content: none; }
+.faq-chev {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.faq-item[open] .faq-chev { transform: rotate(180deg); }
+.faq-item summary:hover .faq-chev { color: var(--brand-accent); }
+.faq-item p { padding: 0 4px 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .faq-chev { transition: none; }
+}
+
+/* B9 - Protocol cards: the same float treatment as the capability cards. */
+.protocol-grid { gap: 26px; }
+.protocol-card {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--ledger);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px 0 0;
+}
+.protocol-card:hover { transform: none; }
+.protocol-card.amber-accent { border-left: 0; }
+.protocol-icon {
+  border-radius: 11px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 6px 14px -8px rgba(15,23,42,0.25);
+}
+.protocol-card.protocol-blue .protocol-icon {
+  color: var(--brand-blue);
+  background: linear-gradient(165deg, #fff 0%, rgba(30,111,217,0.10) 100%);
+  border: 1px solid rgba(30,111,217,0.22);
+}
+.protocol-card.protocol-violet .protocol-icon {
+  color: #6D28D9;
+  background: linear-gradient(165deg, #fff 0%, rgba(139,92,246,0.10) 100%);
+  border: 1px solid rgba(139,92,246,0.22);
+}
+.protocol-card.protocol-amber .protocol-icon {
+  color: #B45309;
+  background: linear-gradient(165deg, #fff 0%, rgba(217,119,6,0.10) 100%);
+  border: 1px solid rgba(217,119,6,0.22);
+}
+
+/* B7 - Hero Connected: status dot and wells, floating on the paper. */
+.connector-float {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  text-align: center;
+}
+.connector-float::after {
+  content: '';
+  position: absolute;
+  left: 8%; right: 8%; bottom: -16px;
+  height: 18px;
+  background: radial-gradient(ellipse at center, rgba(92,74,48,0.16), transparent 70%);
+  pointer-events: none;
+}
+.connector-float h4 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.connector-float h4::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-green);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+}
+.connector-icons { justify-items: center; }
+.connector-float .connector-icon {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 4px 10px -6px rgba(15,23,42,0.25);
+}
+
+/* B8 - Connector chips: mark plus label, no card. */
+.connector-grid-compact { gap: 16px 24px; }
+.connector-chip {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 4px 2px;
+}
+.connector-chip::after { content: none; }
+.connector-chip:hover { transform: none; }
+
+/* B11 - Trust strip: spacing replaces the border. */
+.trust-strip { border-bottom: 0; padding: 24px 0 20px; }

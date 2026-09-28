@@ -254,12 +254,12 @@
     </div>
 
     <div class="connector-grid-compact reveal reveal-delay-1">
-      <div class="connector-chip ka-node n-green"><x-brand.whatsapp /> WhatsApp</div>
-      <div class="connector-chip ka-node n-amber"><x-brand.google-drive /> Drive</div>
-      <div class="connector-chip ka-node n-violet"><x-brand.slack /> Slack</div>
-      <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg> Email</div>
-      <div class="connector-chip ka-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> SMS</div>
-      <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</div>
+      <div class="connector-chip"><x-brand.whatsapp /> WhatsApp</div>
+      <div class="connector-chip"><x-brand.google-drive /> Drive</div>
+      <div class="connector-chip"><x-brand.slack /> Slack</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg> Email</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> SMS</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</div>
     </div>
   </div>
 </section>
@@ -287,10 +287,10 @@
     <div class="toshi-grid">
       <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking: teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
       <div class="toshi-card reveal reveal-delay-2"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><h3>Multi-Channel</h3><p>Works across WhatsApp, email, Slack, SMS, and the dashboard simultaneously. One agent, every channel your school uses.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
       <div class="toshi-card amber-accent reveal reveal-delay-4"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2a7 7 0 017 7c0 2.5-1.5 4.5-3 6l-1.5 2.5a1 1 0 01-1.7 0L11 15c-1.5-1.5-3-3.5-3-6a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/></svg></div><h3>Context-Aware</h3><p>Remembers term dates, student histories, school policies, and communication patterns. Every interaction builds on the last.</p></div>
       <div class="toshi-card reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><h3>Extensible</h3><p>Connect new tools through MCP servers or custom connectors. Toshi's capabilities grow with your school's needs.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
     </div>
   </div>
 </section>
@@ -698,47 +698,51 @@
       <h2>What we actually address</h2>
       <p class="lead">Illustrative of real product capability. Not sourced from a named school.</p>
     </div>
-    <div class="compare-list reveal" role="list">
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+    <div class="compare-band reveal" role="list">
+      <div class="compare-band-head" aria-hidden="true">
+        <span class="compare-label">Before</span>
+        <span class="compare-label compare-label-after">KlassApp way</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Fee reminders mean phone calls and follow-up visits</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Report cards are printed and sent home, sometimes lost along the way</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Parents get results the moment marks are finalized, on their connected channels</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Setting up a new term means days of spreadsheet work</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>A guided setup configures classes and streams in minutes, through any connected channel</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Every setup step means filling out forms, one field at a time</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Just tell Toshi what you need, in plain language, and it does the rest</p>
         </div>
-      </article>
+      </div>
     </div>
   </div>
 </section>
@@ -751,19 +755,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item reveal">
-        <summary>Do parents need to download an app?</summary>
+        <summary>Do parents need to download an app?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>No. Everything works through WhatsApp, a tool most families already use every day.</p>
       </details>
       <details class="faq-item reveal reveal-delay-1">
-        <summary>What if our school doesn't have separate class streams?</summary>
+        <summary>What if our school doesn't have separate class streams?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>KlassApp works the same way whether your school has one class per grade or several streams. Streams are entirely optional.</p>
       </details>
       <details class="faq-item reveal reveal-delay-2">
-        <summary>Is our students' data safe?</summary>
+        <summary>Is our students' data safe?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>Yes. Access is limited by design. Parents see only their own children, teachers see only their own students.</p>
       </details>
       <details class="faq-item reveal reveal-delay-3">
-        <summary>Can we try it before committing?</summary>
+        <summary>Can we try it before committing?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>Yes. KlassApp has a free tier so you can set up your school and see how it works before choosing a paid plan.</p>
       </details>
     </div>
@@ -780,9 +784,9 @@
         </div>
       </div>
       <div class="protocol-grid">
-        <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
-        <div class="protocol-card ka-node n-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
-        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome: connectors, translations, features.</p></div></div>
+        <div class="protocol-card protocol-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
+        <div class="protocol-card protocol-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
+        <div class="protocol-card protocol-amber reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome: connectors, translations, features.</p></div></div>
       </div>
     </div>
   </div>
