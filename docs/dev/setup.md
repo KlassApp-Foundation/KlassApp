@@ -353,3 +353,17 @@ See [testing.md](testing.md) for detailed test documentation.
 - [ ] Delivery webhook endpoint verified with Evolution API
 - [ ] Logs monitored for 24 hours post-deployment
 - [ ] `.env.example` updated with new WhatsApp variables
+
+---
+
+## 8. Invite links
+
+Invite links (teacher and co-admin invitations) depend on:
+
+- `APP_URL` - must match the public URL of the deployment, otherwise emailed links point at the wrong host.
+- `APP_KEY` - keep it set and stable; regenerating it invalidates previously issued signed links.
+- Mail settings - invite emails are queued, so configure the mailer for the environment and keep a queue worker running so messages leave the queue.
+
+Behind a load balancer or reverse proxy, keep the app's trusted-proxy middleware enabled so links are generated with the public `https` scheme (the `X-Forwarded-*` headers are trusted).
+
+For local development, use `MAIL_MAILER=log` (invite emails, including the link, land in `storage/logs/laravel.log`) or a local catcher such as Mailpit. This keeps test invitations out of real inboxes and makes links easy to open.
