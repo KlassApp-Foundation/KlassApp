@@ -124,15 +124,20 @@
 (function () {
     const select = document.querySelector('select[name="existing_teacher_id"]');
     const newFields = document.querySelectorAll('.js-new-teacher-fields');
+    const nameInput = document.querySelector('input[name="name"]');
 
     function toggle() {
         const isExisting = select.value !== '';
+
         newFields.forEach(el => {
             el.style.display = isExisting ? 'none' : 'block';
-            el.querySelectorAll('input').forEach(input => {
-                input.required = !isExisting;
-            });
         });
+
+        // Only the teacher name is required for a new teacher.
+        // Phone stays optional, matching its label and the server-side rules.
+        if (nameInput) {
+            nameInput.required = !isExisting;
+        }
     }
 
     select.addEventListener('change', toggle);
