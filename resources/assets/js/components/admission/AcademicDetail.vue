@@ -97,6 +97,57 @@
                 </div>
 
                 <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="school_last_studied" class="tw-form-label">Previous school <span v-if="prevRequired" class="text-red-500">*</span><span v-else class="text-gray-500">(optional for nursery and P.1)</span></label>
+                            <input type="text" name="school_last_studied" v-model="school_last_studied" placeholder="Previous school" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.school_last_studied" class="text-red-500 text-xs font-semibold">{{ errors.school_last_studied[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="last_class_completed" class="tw-form-label">Last class completed <span v-if="prevRequired" class="text-red-500">*</span></label>
+                            <input type="text" name="last_class_completed" v-model="last_class_completed" placeholder="Last class completed" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.last_class_completed" class="text-red-500 text-xs font-semibold">{{ errors.last_class_completed[0] }}</span>
+                    </div>
+                </div>
+
+                <div v-if="isS1" class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="ple_index_number" class="tw-form-label">PLE index number<span class="text-red-500">*</span></label>
+                            <input type="text" name="ple_index_number" v-model="ple_index_number" placeholder="PLE index number" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.ple_index_number" class="text-red-500 text-xs font-semibold">{{ errors.ple_index_number[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="ple_aggregate" class="tw-form-label">PLE aggregate<span class="text-red-500">*</span></label>
+                            <input type="text" name="ple_aggregate" v-model="ple_aggregate" placeholder="PLE aggregate" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.ple_aggregate" class="text-red-500 text-xs font-semibold">{{ errors.ple_aggregate[0] }}</span>
+                    </div>
+                </div>
+
+                <div v-if="isS5" class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="uce_index_number" class="tw-form-label">UCE index number<span class="text-red-500">*</span></label>
+                            <input type="text" name="uce_index_number" v-model="uce_index_number" placeholder="UCE index number" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.uce_index_number" class="text-red-500 text-xs font-semibold">{{ errors.uce_index_number[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="uce_results_summary" class="tw-form-label">UCE results summary<span class="text-red-500">*</span></label>
+                            <input type="text" name="uce_results_summary" v-model="uce_results_summary" placeholder="UCE results summary" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.uce_results_summary" class="text-red-500 text-xs font-semibold">{{ errors.uce_results_summary[0] }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row">
                     <div class="w-full my-1">
                         <h6 class="text-sm font-bold mb-3">
                             Examination Board<span class="text-red-500">*</span>
@@ -235,6 +286,13 @@ export default {
             maths: "",
             science: "",
             social: "",
+            school_last_studied: "",
+            last_class_completed: "",
+            ple_index_number: "",
+            ple_aggregate: "",
+            uce_index_number: "",
+            uce_results_summary: "",
+            standardlist: [],
             board_of_education: "",
             board_registration_number: "",
             choice_of_language: "",
@@ -283,6 +341,32 @@ export default {
         };
     },
 
+    computed: {
+        standardName() {
+            const match = this.standardlist.find(
+                (s) => String(s.id) === String(this.standard_id)
+            );
+            return match
+                ? String(match.name).toUpperCase().replace(/\s+/g, " ").trim()
+                : "";
+        },
+        isS1() {
+            return /^(S\.?\s?1|SENIOR\s?1|SENIOR ONE)$/.test(this.standardName);
+        },
+        isS5() {
+            return /^(S\.?\s?5|SENIOR\s?5|SENIOR FIVE)$/.test(this.standardName);
+        },
+        prevRequired() {
+            const name = this.standardName;
+            if (!name) {
+                return true;
+            }
+            const nursery = ["BABY CLASS", "MIDDLE CLASS", "TOP CLASS", "NURSERY"].includes(name);
+            const p1 = /^P\.?\s?1$/.test(name);
+            return !nursery && !p1;
+        },
+    },
+
     methods: {
         submitForm(val) {
             this.errors = [];
@@ -302,6 +386,12 @@ export default {
                 this.board_registration_number
             );
             formData.append("standard_id", this.standard_id);
+            formData.append("school_last_studied", this.school_last_studied);
+            formData.append("last_class_completed", this.last_class_completed);
+            formData.append("ple_index_number", this.ple_index_number);
+            formData.append("ple_aggregate", this.ple_aggregate);
+            formData.append("uce_index_number", this.uce_index_number);
+            formData.append("uce_results_summary", this.uce_results_summary);
 
             axios
                 .post(
@@ -340,6 +430,10 @@ export default {
     },
 
     created() {
+        axios.get(this.url + "/" + this.slug + "/standardlist").then((response) => {
+            this.standardlist = response.data.standardlist;
+        });
+
         bus.$on("dataAdmissionTab", (data) => {
             if (data != "") {
                 this.profile_tab = data;

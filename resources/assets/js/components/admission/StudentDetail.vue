@@ -8,14 +8,14 @@
                         <div class="flex flex-col lg:flex-row">
                             <div class="w-full lg:w-1/2 lg:mr-2">
                                 <div class="my-1">
-                                    <label for="name" class="tw-form-label">First Name<span class="text-red-500">*</span></label>
+                                    <label for="name" class="tw-form-label">Given names<span class="text-red-500">*</span></label>
                                     <input type="text" name="name" v-model="name" placeholder="First Name" class="tw-form-control w-full my-1 py-2">
                                 </div>
                                 <span v-if="errors.name" class="text-red-500 text-xs font-semibold">{{ errors.name[0] }}</span>
                             </div>
                             <div class="w-full lg:w-1/2 lg:mr-2">
                                 <div class="my-1">
-                                    <label for="lastname" class="tw-form-label">Last Name</label>
+                                    <label for="lastname" class="tw-form-label">Surname<span class="text-red-500">*</span></label>
                                     <input type="text" name="lastname" v-model="lastname" placeholder="Last Name" class="tw-form-control w-full my-1 py-2">
                                 </div>
                                 <span v-if="errors.lastname" class="text-red-500 text-xs font-semibold">{{ errors.lastname[0] }}</span>
@@ -32,7 +32,7 @@
                             </div>
                             <div class="w-full lg:w-1/2 lg:mr-2">
                                 <div class="my-1">
-                                    <label for="gender" class="tw-form-label">Gender<span class="text-red-500">*</span></label>
+                                    <label for="gender" class="tw-form-label">Sex<span class="text-red-500">*</span></label>
                                     <div class="flex tw-form-control py-2 my-1">
                                         <div class="w-1/4 flex items-center mr-2 lg:mr-8 md:mr-8">
                                             <input type="radio" name="gender" v-model="gender" id="gender1" value="male"> 
@@ -50,7 +50,7 @@
                     </div>
                     <div class="w-full lg:w-1/3">
                         <div class="relative w-10/12 mx-auto my-2">
-                            <label for="avatar" class="tw-form-label">Attach Photo</label>
+                            <label for="avatar" class="tw-form-label">Passport photo (optional)</label>
                             <input type="file" name="avatar" @change="OnFileSelected" id="avatar" class="tw-form-control w-full">
                             <div class="" v-if="image != ''">
                                 <img :src="image" style="width: 150px;height: 150px;">
@@ -59,6 +59,54 @@
                                 <img id="blah" class="student-img text-sm border border-dashed border-gray-300 my-2" :src='url+"/uploads/user/avatar/default-user.jpg"' style="width: 150px;height: 150px;">
                             </div>
                         </div>
+                        <div class="my-2">
+                            <label for="birth_certificate" class="tw-form-label">Birth certificate or baptism card (optional)</label>
+                            <input type="file" name="birth_certificate" @change="onBirthCertSelected" id="birth_certificate" class="tw-form-control w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="nationality" class="tw-form-label">Nationality<span class="text-red-500">*</span></label>
+                            <input type="text" name="nationality" v-model="nationality" placeholder="Nationality" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.nationality" class="text-red-500 text-xs font-semibold">{{ errors.nationality[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="religion" class="tw-form-label">Religion</label>
+                            <input type="text" name="religion" v-model="religion" placeholder="Religion (optional)" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.religion" class="text-red-500 text-xs font-semibold">{{ errors.religion[0] }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="home_district" class="tw-form-label">Home district<span class="text-red-500">*</span></label>
+                            <input type="text" name="home_district" v-model="home_district" placeholder="Home district" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.home_district" class="text-red-500 text-xs font-semibold">{{ errors.home_district[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="village_town" class="tw-form-label">Village or town</label>
+                            <input type="text" name="village_town" v-model="village_town" placeholder="Village or town (optional)" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.village_town" class="text-red-500 text-xs font-semibold">{{ errors.village_town[0] }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="lin" class="tw-form-label">LIN (Learner Identification Number)</label>
+                            <input type="text" name="lin" v-model="lin" placeholder="LIN, if known" class="tw-form-control w-full my-1 py-2">
+                        </div>
+                        <span v-if="errors.lin" class="text-red-500 text-xs font-semibold">{{ errors.lin[0] }}</span>
                     </div>
                 </div>
 
@@ -79,14 +127,7 @@
                 <div class="flex flex-col lg:flex-row">
                     <div class="w-full lg:w-1/2 lg:mr-2">
                         <div class="my-1">
-                            <label for="school_last_studied" class="tw-form-label">School last studied</label>
-                            <input type="text" name="school_last_studied" v-model="school_last_studied" placeholder="School last studied" class="tw-form-control w-full my-1 py-2">
-                        </div>
-                        <span v-if="errors.school_last_studied" class="text-red-500 text-xs font-semibold">{{ errors.school_last_studied[0] }}</span>
-                    </div>
-                    <div class="w-full lg:w-1/2 lg:mr-2">
-                        <div class="my-1">
-                            <label for="reason_for_leaving" class="tw-form-label">Reason for leaving</label>
+                            <label for="reason_for_leaving" class="tw-form-label">Reason for leaving (previous school)</label>
                             <input type="text" name="reason_for_leaving" v-model="reason_for_leaving" placeholder="Reason for leaving" class="tw-form-control w-full my-1 py-2">
                         </div>
                         <span v-if="errors.reason_for_leaving" class="text-red-500 text-xs font-semibold">{{ errors.reason_for_leaving[0] }}</span>
@@ -143,11 +184,16 @@
                 profile_tab:'',
                 name:'',
                 lastname:'',
+                nationality:'Ugandan',
+                religion:'',
+                home_district:'',
+                village_town:'',
+                lin:'',
+                birth_certificate:'',
                 date_of_birth:'',
                 gender:'',
                 identification_marks:'',
                 identification_marks_1:'',
-                school_last_studied:'',
                 reason_for_leaving:'',
                 permanent_address:'',
                 address_for_communication:'',
@@ -169,6 +215,11 @@
                 if (!files.length)
                 return;
                 this.createImage(files[0]);
+            },
+
+            onBirthCertSelected(event)
+            {
+                this.birth_certificate = event.target.files[0];
             },
 
             createImage(file) 
@@ -194,11 +245,15 @@
                 formData.append('gender',this.gender);          
                 formData.append('avatar',this.avatar);          
                 formData.append('identification_marks',this.identification_marks);          
-                formData.append('school_last_studied',this.school_last_studied);          
                 formData.append('reason_for_leaving',this.reason_for_leaving);          
                 formData.append('permanent_address',this.permanent_address);          
                 formData.append('address_for_communication',this.address_for_communication);          
                 formData.append('siblings',this.siblings); 
+                formData.append('nationality',this.nationality);          
+                formData.append('religion',this.religion);          
+                formData.append('home_district',this.home_district);          
+                formData.append('village_town',this.village_town);          
+                formData.append('lin',this.lin);          
                 formData.append('standard_id',this.standard_id);          
        
                 axios.post(this.url+'/'+this.slug+'/admission-form/validationStudentDetail',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
