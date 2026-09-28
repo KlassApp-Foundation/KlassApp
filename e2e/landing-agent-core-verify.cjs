@@ -32,12 +32,13 @@ function mat(m) {
 }
 
 (async () => {
+  try { await fetch(BASE + '/'); } catch (e) { /* warm-up */ }
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
   /* ---- 1: placement ---- */
   {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
     const r = await page.evaluate(() => {
       const a = document.getElementById('agentCore');
       const t = document.getElementById('toshi');
@@ -59,7 +60,7 @@ function mat(m) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' });
     const errs = [];
     page.on('pageerror', (e) => errs.push(String(e).slice(0, 90)));
-    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
     await page.locator('#agentCore').evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(1500);
 
@@ -178,7 +179,7 @@ function mat(m) {
   /* ---- 4: reduced motion ---- */
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
     await page.locator('#agentCore').evaluate((e) => e.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(1500);
     const rm = await page.evaluate(() => ({
@@ -212,7 +213,7 @@ function mat(m) {
   /* ---- 5: stacked layout ---- */
   for (const width of [320, 375, 414]) {
     const page = await browser.newPage({ viewport: { width, height: 800 } });
-    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 120000 });
     const r = await page.evaluate(() => {
       const nodes = [...document.querySelectorAll('.ac-ch, .ac-role')];
       const cols = getComputedStyle(document.querySelector('.ac-nodes')).gridTemplateColumns.split(' ').length;
