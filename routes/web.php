@@ -143,6 +143,12 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
+// Teacher invite link — one-time password-set flow (no credentials in email)
+Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])
+    ->name('teacher.invite.form');
+Route::post('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'claim'])
+    ->name('teacher.invite.claim');
+
 Route::get('/parent/magic-login/{user}/{nonce}', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'show'])
     ->middleware('signed')
     ->name('parent.magic-login');
