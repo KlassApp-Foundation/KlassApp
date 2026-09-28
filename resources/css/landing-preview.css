@@ -3901,7 +3901,9 @@ select:focus-visible,
 /* Idle bob moves from the stage to the whole device. */
 .hero-stage { animation: none; }
 
-.hero-device { position: relative; }
+/* width:100% — .hero-preview centres its children (align-items:center), so without it
+   the window shrink-wrapped to its chrome caption (~211px inside a 460px column). */
+.hero-device { position: relative; width: 100%; }
 .hero-device-frame {
   position: relative;
   padding: 16px;
@@ -3914,7 +3916,17 @@ select:focus-visible,
 .hero-device-chrome span:nth-child(1) { background: rgba(248,113,113,0.8); }
 .hero-device-chrome span:nth-child(2) { background: rgba(251,191,36,0.8); }
 .hero-device-chrome span:nth-child(3) { background: rgba(74,222,128,0.8); }
-.hero-device-chrome em { margin-left: auto; font-style: normal; font-size: 0.75rem; letter-spacing: 0.04em; color: rgba(226,232,240,0.6); }
+/* Address bar: the tool the active card is in (web.whatsapp.com / drive.google.com /
+   app.slack.com), set by the hero flip JS. #CBD5E1 on the frame ≈ 10.9:1. */
+.hero-device-url {
+  margin-left: 14px; flex: 1; min-width: 0; height: 24px;
+  display: flex; align-items: center; gap: 6px; padding: 0 10px;
+  border-radius: 999px; background: rgba(255,255,255,0.07);
+  font-size: 0.75rem; color: #CBD5E1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hero-device-url svg { width: 11px; height: 11px; flex-shrink: 0; }
+.hero-device-url span { overflow: hidden; text-overflow: ellipsis; }
+.hero-phone-status, .hero-phone-bar { display: none; }
 .hero-screen { border-radius: 14px; overflow: hidden; background: #0B1220; }
 .hero-device-base {
   height: 14px; margin: 0 16%;
@@ -3953,9 +3965,6 @@ select:focus-visible,
 
 /* Mobile: compact frame (no chrome bar, no stand) + a measurably higher fold. */
 @media (max-width: 700px) {
-  .hero-device-frame { padding: 10px; border-radius: 18px; }
-  .hero-device-chrome { display: none; }
-  .hero-device-base { display: none; }
   .hero-layer-back { inset: 16px 10px 0 16px; }
   .hero-layer-mid  { inset: 8px 5px 0 8px; }
   .hero { padding: 18px 0 48px; }
@@ -3965,6 +3974,51 @@ select:focus-visible,
   .hero-sub { font-size: 1rem; margin-bottom: 14px; }
   .hero-actions { margin-bottom: 12px; }
   .navbar-inner { height: 56px; }
+}
+
+/* ≤900px (the column-collapse breakpoint): the window becomes a phone, built from
+   the landing's own phone values (.phone-frame: 280x560, radius 40, padding 12,
+   --brand-dark, 120x28 notch). Fixed height: a card taller than the screen
+   scrolls inside it; the phone never grows. Same markup + flip JS. */
+@media (max-width: 900px) {
+  .hero-device-frame {
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    height: 560px;
+    margin: 0 auto;
+    padding: 12px;
+    border-radius: 40px;
+    background: var(--brand-dark);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  }
+  .hero-device-frame::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 28px;
+    background: var(--brand-dark);
+    border-radius: 0 0 18px 18px;
+    z-index: 4;
+  }
+  .hero-device-chrome, .hero-device-base { display: none; }
+  .hero-screen { flex: 1; min-height: 0; display: flex; flex-direction: column; border-radius: 30px; }
+  .hero-phone-status {
+    display: flex; flex-shrink: 0; height: 40px; align-items: center; justify-content: space-between;
+    padding: 0 22px; font-size: 0.75rem; font-weight: 600; color: #fff;
+  }
+  .hero-phone-battery { display: block; width: 16px; height: 8px; border: 1.5px solid #fff; border-radius: 2px; }
+  .hero-stage { flex: 1; min-height: 0; height: auto; }
+  .hero-role-card { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .hero-role-card::-webkit-scrollbar { display: none; }
+  .hero-layer-back, .hero-layer-mid { display: none; }
+  .hero-phone-bar {
+    display: block; position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+    width: 96px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.55); z-index: 4;
+  }
 }
 
 /* Reduced motion: instant swap, only the active card shown (no recede stack). */

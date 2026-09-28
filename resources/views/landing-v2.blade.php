@@ -85,14 +85,15 @@
       <div class="hero-preview reveal reveal-delay-2">
         <div class="hero-device">
           <div class="hero-device-frame">
-            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><em>Toshi · live preview</em></div>
+            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><span class="hero-device-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span id="heroDeviceUrl">web.whatsapp.com</span></span></div>
             <div class="hero-screen">
+              <div class="hero-phone-status" aria-hidden="true"><span>8:14</span><span class="hero-phone-battery"></span></div>
         <div class="hero-stage" id="heroRoleStage">
           <span class="hero-layer hero-layer-back" aria-hidden="true"></span>
           <span class="hero-layer hero-layer-mid" aria-hidden="true"></span>
           <div class="hero-deck" id="heroRoleDeck" data-auto="1">
 
-            <article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
+            <article class="hero-role-card wa is-active" data-role="parent" data-host="web.whatsapp.com" aria-label="Parent WhatsApp preview">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Parent · WhatsApp</span>
@@ -112,7 +113,7 @@
               </div>
             </article>
 
-            <article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
+            <article class="hero-role-card drive" data-role="teacher" data-host="drive.google.com" aria-label="Teacher Drive preview" aria-hidden="true">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Teacher · Drive</span>
@@ -134,7 +135,7 @@
               </div>
             </article>
 
-            <article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
+            <article class="hero-role-card slack" data-role="admin" data-host="app.slack.com" aria-label="Admin Slack preview" aria-hidden="true">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Admin · Slack</span>
@@ -161,6 +162,7 @@
         </div>
             </div>
           </div>
+          <span class="hero-phone-bar" aria-hidden="true"></span>
           <div class="hero-device-base" aria-hidden="true"></div>
         </div>
         <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>

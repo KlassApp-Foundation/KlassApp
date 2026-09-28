@@ -42,6 +42,7 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   if (cards.length < 2) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const url = document.getElementById('heroDeviceUrl');
   let i = 0;
   let timer = null;
 
@@ -62,6 +63,8 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
       card.classList.toggle('is-active', on);
       card.setAttribute('aria-hidden', on ? 'false' : 'true');
     });
+    /* Address bar in the desktop device frame shows the active card's tool. */
+    if (url && cards[i].dataset.host) url.textContent = cards[i].dataset.host;
     Array.from(dots.children).forEach((d, di) => {
       d.classList.toggle('on', di === i);
       d.setAttribute('aria-selected', di === i ? 'true' : 'false');
