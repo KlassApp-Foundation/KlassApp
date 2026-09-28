@@ -10,7 +10,7 @@
     <p style="color: #64748B; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
         Hi {{ $name }},
         <br><br>
-        Use the code below to reset your password. It expires in 5 minutes.
+        Use the 6-digit code below to reset your password. It expires in 5 minutes.
     </p>
     <div style="background: #F0FDF4; border: 2px dashed #22C55E; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
         <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #16A34A;">{{ $code }}</span>
