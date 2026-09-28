@@ -204,10 +204,8 @@ class AdmissionController extends Controller
             $admission->birth_place                 = $request->birth_place;
             $admission->nationality                 = $request->nationality;
             $admission->religion                    = $request->religion;
-            $admission->community                   = $request->community;
             $admission->mother_tongue               = $request->mother_tongue;
             $admission->identification_marks        = $request->identification_marks;
-            $admission->aadhar_number               = $request->aadhar_number;
             $admission->blood_group                 = $request->blood_group;
             $admission->school_last_studied         = $request->school_last_studied;
             $admission->reason_for_leaving          = $request->reason_for_leaving;
@@ -219,7 +217,6 @@ class AdmissionController extends Controller
             $array=[];
 
             $array['english']   = $request->english; 
-            $array['tamil']     = $request->tamil;
             $array['maths']     = $request->maths;
             $array['science']   = $request->science;
             $array['social']    = $request->social;
@@ -237,7 +234,6 @@ class AdmissionController extends Controller
             $admission->father_income             = $request->father_income;
             $admission->father_mobile_no          = $request->father_mobile_no;
             $admission->father_email              = $request->father_email;
-            $admission->father_aadhar_number      = $request->father_aadhar_number;
 
             $motherfile = $request->mother_avatar;
             if($motherfile)
@@ -267,7 +263,6 @@ class AdmissionController extends Controller
             $admission->mother_income             = $request->mother_income;
             $admission->mother_mobile_no          = $request->mother_mobile_no;
             $admission->mother_email              = $request->mother_email;
-            $admission->mother_aadhar_number      = $request->mother_aadhar_number;
 
             $admission->emergency_contact_1             = $request->emergency_contact_1;
             $admission->relation_with_student_1         = $request->relation_with_student_1;

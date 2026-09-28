@@ -2,8 +2,8 @@
     <div>
         <ul id="progressbar" class="w-full lg:w-9/12 mx-auto">
             <li class="active" v-bind:class="[{'active' : profile_tab === '1'}]">
-                <!-- <a href="#" @click="setProfileTab('1')" class="text-gray-700 font-medium">Standard Detail</a> -->
-                <a href="#" class="text-gray-700 font-medium">Standard Detail</a>
+                <!-- <a href="#" @click="setProfileTab('1')" class="text-gray-700 font-medium">Class</a> -->
+                <a href="#" class="text-gray-700 font-medium">Class</a>
             </li>
 
             <li class="active" v-bind:class="[{'active' : profile_tab === '2'}]">

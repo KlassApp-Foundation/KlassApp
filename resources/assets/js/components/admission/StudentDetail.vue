@@ -1,4 +1,5 @@
 <template>
+    <!-- UGANDAN FIELDS SPOT: school-specific fields land here (owner will define) -->
     <div class="bg-white shadow px-4 py-3" v-bind:class="[this.profile_tab == 2 ? 'block' :'hidden']">
         <div>
             <fieldset class="shadow">
