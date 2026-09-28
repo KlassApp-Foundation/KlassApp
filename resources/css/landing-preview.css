@@ -3100,18 +3100,18 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 2px;
 }
 
+/* Toshi's avatar is the K mark everywhere (same treatment as .hero-role-avatar). */
 .wa-avatar {
   width: 22px; height: 22px;
   border-radius: 50%;
-  background: var(--brand-green);
-  color: #fff;
-  font-size: 0.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
+  background: var(--brand-white);
+  border: 1px solid var(--brand-green);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
+.wa-avatar img { width: 14px; height: 14px; display: block; }
 
 .wa-name {
   font-size: 0.625rem;
@@ -3192,18 +3192,8 @@ body.nav-open { overflow: hidden; }
   gap: 6px;
 }
 
-.teach-side-mark {
-  width: 16px; height: 16px;
-  border-radius: 4px;
-  background: var(--brand-blue);
-  color: #fff;
-  font-size: 0.4375rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-}
+/* The app sidebar's real K mark, not a text "K". */
+.teach-side-mark { width: 16px; height: 16px; display: block; }
 
 .teach-nav-dot {
   width: 12px; height: 12px;
@@ -4104,7 +4094,9 @@ select:focus-visible,
 .shots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .shot { margin: 0; background: var(--brand-white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
 .shot .ui-chrome { padding: 10px 12px; }
-.shot img { display: block; width: 100%; height: auto; }
+/* Fixed 16:10 frame: a replacement capture at a slightly different size can't shift layout. */
+.shot-frame { aspect-ratio: 16 / 10; overflow: hidden; background: var(--brand-light); }
+.shot-frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 @media (max-width: 900px) { .shots-grid { grid-template-columns: 1fr; } }
 
 /* Panel chrome gets a URL pill so the framing reads as real browser chrome. */
@@ -4116,30 +4108,56 @@ select:focus-visible,
   padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* Demo request form (lead capture) */
+/* ==== Demo request section (Book a demo) - matches the landing's section language ==== */
 .demo-section {
-  padding: 84px 0;
-  background: #FFFFFF;
+  padding: 88px 0;
+  background: var(--brand-white);
   border-top: 1px solid var(--border);
 }
-.demo-head {
-  max-width: 640px;
-  margin: 0 auto 28px;
-  text-align: center;
+.demo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: start;
 }
-.demo-head h2 {
+.demo-header h2 {
   font-family: var(--font-display);
-  font-size: clamp(28px, 4vw, 38px);
+  font-size: clamp(30px, 3.4vw, 40px);
   color: var(--text-primary);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
-.demo-head p {
+.demo-header > p {
   color: var(--text-secondary);
+  font-size: 1.0625rem;
+  margin: 0 0 24px;
+  max-width: 420px;
+}
+.demo-checks {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.demo-checks li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+.demo-checks svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--brand-green-text);
+}
+.demo-panel {
+  min-width: 0;
 }
 .demo-form {
-  max-width: 720px;
-  margin: 0 auto;
   background: var(--brand-light);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -4156,7 +4174,7 @@ select:focus-visible,
 }
 .demo-field label {
   display: block;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 6px;
@@ -4174,11 +4192,11 @@ select:focus-visible,
   padding: 11px 13px;
   font: inherit;
   color: var(--text-primary);
-  background: #FFFFFF;
+  background: var(--brand-white);
 }
 .demo-field input:focus,
 .demo-field textarea:focus {
-  outline: 2px solid rgba(30, 111, 217, 0.35);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
   border-color: var(--brand-blue);
 }
@@ -4190,6 +4208,13 @@ select:focus-visible,
 .demo-actions {
   margin-top: 20px;
   display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.demo-note {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
 }
 .demo-hp {
   position: absolute;
@@ -4200,12 +4225,10 @@ select:focus-visible,
   overflow: hidden;
 }
 .demo-success {
-  max-width: 720px;
-  margin: 0 auto;
   background: var(--brand-light);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 32px;
+  padding: 40px 32px;
   text-align: center;
   box-shadow: var(--shadow-sm);
 }
@@ -4217,7 +4240,16 @@ select:focus-visible,
 }
 .demo-success p {
   color: var(--text-secondary);
-  margin: 0 0 14px;
+  margin: 0 0 16px;
+}
+.demo-success p:last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 900px) {
+  .demo-layout {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
 }
 @media (max-width: 760px) {
   .demo-section {

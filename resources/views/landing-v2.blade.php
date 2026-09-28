@@ -317,7 +317,7 @@
             </div>
             <div class="wa-body">
               <div class="wa-header">
-                <div class="wa-avatar">KA</div>
+                <div class="wa-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="14" height="14"></div>
                 <div>
                   <div class="wa-name">KlassApp · Toshi</div>
                   <div class="wa-status">online</div>
@@ -377,7 +377,7 @@
             </div>
             <div class="teach-shell">
               <div class="teach-side">
-                <div class="teach-side-mark">K</div>
+                <img class="teach-side-mark" src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="16" height="16">
                 <div class="teach-nav-dot active"></div>
                 <div class="teach-nav-dot"></div>
                 <div class="teach-nav-dot"></div>
@@ -528,18 +528,21 @@
         <p>Captured from a local KlassApp instance — the actual dashboard, a records module, and the Toshi assistant.</p>
       </div>
       <div class="shots-grid">
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Dashboard</span><span class="shot-url">klassapp.xyz/admin/dashboard</span></div>
-          <img src="{{ asset('images/landing/app-dashboard.webp') }}" alt="KlassApp school-admin dashboard with the setup checklist and Toshi assistant" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Library records</span><span class="shot-url">klassapp.xyz/admin/library/books</span></div>
-          <img src="{{ asset('images/landing/app-books.webp') }}" alt="KlassApp library records table listing books" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Fees &amp; payments</span><span class="shot-url">klassapp.xyz/admin/fees/payments</span></div>
-          <img src="{{ asset('images/landing/app-page.webp') }}" alt="KlassApp fees and payments module" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
+        <x-landing.app-shot
+          :src="asset('images/landing/app-dashboard.webp')"
+          alt="KlassApp school-admin dashboard for a demo school: term and enrolment summary, a WhatsApp feature card, the Finish school setup checklist, and the Toshi panel listing each setup step"
+          title="KlassApp · Dashboard"
+          url="klassapp.xyz/admin/dashboard" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-books.webp')"
+          alt="KlassApp library books page: a searchable table of school textbooks with title, author, category, code and quantity"
+          title="KlassApp · Library records"
+          url="klassapp.xyz/admin/library/books" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-fees.webp')"
+          alt="KlassApp fee payments page: amounts collected and outstanding, students in arrears and collection rate, above a table of payments by student, class, amount, method and status"
+          title="KlassApp · Fees &amp; payments"
+          url="klassapp.xyz/admin/fees/payments" />
       </div>
     </div>
   </div>
@@ -725,66 +728,85 @@
 
 <section class="demo-section" id="demo">
   <div class="container">
-    <div class="demo-head reveal">
-      <h2>Book a demo</h2>
-      <p>See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.</p>
-    </div>
+    <div class="demo-layout">
+      <div class="demo-header reveal">
+        <h2>Book a demo</h2>
+        <p>See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.</p>
+        <ul class="demo-checks">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>A walkthrough of the dashboard, WhatsApp flows and Toshi</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>Setup guidance for classes, staff and parent invites</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>Straight answers on data access, hosting and pricing</span>
+          </li>
+        </ul>
+      </div>
 
-    @if(session('demo_request_success'))
-    <div class="demo-success" data-testid="demo-success">
-      <h3>Thank you, we have your request.</h3>
-      <p>Our team will reach out shortly to arrange a walkthrough for your school.</p>
-      @if(config('services.demo.booking_url'))
-      <p>
-        <a href="{{ config('services.demo.booking_url') }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-testid="demo-booking-button">Pick a time for a call</a>
-      </p>
-      @else
-      <p>We will email you with next steps.</p>
-      @endif
+      <div class="demo-panel">
+        @if(session('demo_request_success'))
+        <div class="demo-success" data-testid="demo-success">
+          <h3>Thank you, we have your request.</h3>
+          <p>Our team will reach out shortly to arrange a walkthrough for your school.</p>
+          @if(config('services.demo.booking_url'))
+          <p>
+            <a href="{{ config('services.demo.booking_url') }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-testid="demo-booking-button">Pick a time for a call</a>
+          </p>
+          @else
+          <p>We will email you with next steps.</p>
+          @endif
+        </div>
+        @else
+        <form class="demo-form" method="POST" action="{{ url('/demo-request') }}" data-testid="demo-form">
+          @csrf
+          <input type="hidden" name="source_page" value="landing-v2#demo">
+          <div class="demo-hp" aria-hidden="true">
+            <label for="demo-website">Website</label>
+            <input type="text" id="demo-website" name="website" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other">
+          </div>
+          <div class="demo-grid">
+            <div class="demo-field">
+              <label for="demo-school">School name</label>
+              <input id="demo-school" type="text" name="school_name" value="{{ old('school_name') }}" required>
+              @error('school_name')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-name">Your name</label>
+              <input id="demo-name" type="text" name="contact_name" value="{{ old('contact_name') }}" required>
+              @error('contact_name')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-email">Email</label>
+              <input id="demo-email" type="email" name="email" value="{{ old('email') }}" required>
+              @error('email')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-phone">Phone</label>
+              <input id="demo-phone" type="tel" name="phone" value="{{ old('phone') }}" required>
+              @error('phone')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field demo-field-full">
+              <label for="demo-district">District <span class="demo-optional">(optional)</span></label>
+              <input id="demo-district" type="text" name="district" value="{{ old('district') }}">
+            </div>
+            <div class="demo-field demo-field-full">
+              <label for="demo-message">Anything we should know? <span class="demo-optional">(optional)</span></label>
+              <textarea id="demo-message" name="message" rows="3">{{ old('message') }}</textarea>
+            </div>
+          </div>
+          <div class="demo-actions">
+            <button type="submit" class="btn btn-primary" data-testid="demo-submit">Request a demo</button>
+            <span class="demo-note">We only use this to arrange your demo.</span>
+          </div>
+        </form>
+        @endif
+      </div>
     </div>
-    @else
-    <form class="demo-form" method="POST" action="{{ url('/demo-request') }}" data-testid="demo-form">
-      @csrf
-      <input type="hidden" name="source_page" value="landing-v2#demo">
-      <div class="demo-hp" aria-hidden="true">
-        <label for="demo-website">Website</label>
-        <input type="text" id="demo-website" name="website" tabindex="-1" autocomplete="off">
-      </div>
-      <div class="demo-grid">
-        <div class="demo-field">
-          <label for="demo-school">School name</label>
-          <input id="demo-school" type="text" name="school_name" value="{{ old('school_name') }}" required>
-          @error('school_name')<p class="demo-err">{{ $message }}</p>@enderror
-        </div>
-        <div class="demo-field">
-          <label for="demo-name">Your name</label>
-          <input id="demo-name" type="text" name="contact_name" value="{{ old('contact_name') }}" required>
-          @error('contact_name')<p class="demo-err">{{ $message }}</p>@enderror
-        </div>
-        <div class="demo-field">
-          <label for="demo-email">Email</label>
-          <input id="demo-email" type="email" name="email" value="{{ old('email') }}" required>
-          @error('email')<p class="demo-err">{{ $message }}</p>@enderror
-        </div>
-        <div class="demo-field">
-          <label for="demo-phone">Phone</label>
-          <input id="demo-phone" type="tel" name="phone" value="{{ old('phone') }}" required>
-          @error('phone')<p class="demo-err">{{ $message }}</p>@enderror
-        </div>
-        <div class="demo-field demo-field-full">
-          <label for="demo-district">District <span class="demo-optional">(optional)</span></label>
-          <input id="demo-district" type="text" name="district" value="{{ old('district') }}">
-        </div>
-        <div class="demo-field demo-field-full">
-          <label for="demo-message">Anything we should know? <span class="demo-optional">(optional)</span></label>
-          <textarea id="demo-message" name="message" rows="3">{{ old('message') }}</textarea>
-        </div>
-      </div>
-      <div class="demo-actions">
-        <button type="submit" class="btn btn-primary" data-testid="demo-submit">Request a demo</button>
-      </div>
-    </form>
-    @endif
   </div>
 </section>
 
