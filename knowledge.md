@@ -13106,3 +13106,25 @@ Read-only checks first, then the change, then an independent confirmation. Nothi
 
 1. **Schools 43 and 45 are named like fixtures but flagged as live customers** (`is_test = 0`, `is_demo = 0`), so they are counted in platform metrics and can appear in the recently-joined feed even though their accounts are verification throwaways.
 2. **Eight further `@live-verify.test` accounts are still active**, and they are the same family: 147 and 148 on school 36, 150 and 151 on school 38, and 155, 156, 157 and 158 on schools 39 to 42, the last four named `demo.toshi.*`. The earlier cleanups stopped short of them, so this looks like a series of verification fixtures across roughly ten schools rather than four stragglers.
+
+### 2026-09-28: correction. n8n is not the live WhatsApp path, and the HMAC claim was false
+
+Two statements that appear earlier in this file are **stale or wrong** and are corrected here rather than rewritten in place.
+
+1. **n8n is retired.** Earlier entries describe the WhatsApp architecture as "n8n -> Laravel REST API" and treat `GET /api/whatsapp/student/{studentId}/report` as "the new endpoint n8n calls". WhatsApp now runs **directly on the Meta WABA token**, with the live webhook at `api/whatsapp/inbound` (GET for Meta's verification handshake, POST for inbound messages). Typebot and Evolution are retired too. Those entries are historical records of how it worked then; this entry is the current state.
+2. **The `WhatsAppHmac` middleware never protected anything.** `docs/dev/setup.md` section 3.1 claimed the internal data endpoints were protected by it. In fact `App\Http\Middleware\WhatsAppHmac` was referenced by nothing, so it was applied to no route. `docs/dev/setup.md` 3.1 is now corrected to say so.
+
+**Removed in this change:** the unauthenticated legacy REST routes, which had no caller anywhere in the repository (PHP, JS, tests, services, scheduled jobs), and the unused middleware. The controller methods are kept but unrouted.
+
+- `POST /api/whatsapp/identify-user`
+- `GET /api/whatsapp/student/{studentId}/grades`
+- `GET /api/whatsapp/student/{studentId}/report`
+- `GET /api/whatsapp/student/{studentId}/attendance`
+- `GET /api/whatsapp/fees/{studentId}/balance`
+- `GET /api/whatsapp/school/{schoolId}/events`
+
+**Deliberately left in place and reported, not guessed at:** `POST /api/whatsapp/delivery` is an unauthenticated write route that still has no in-repo caller; it looks like a Meta status callback, so removing it without confirmation could break delivery receipts. `GET /api/events/show/details/{id}` on the API is unauthenticated and returns 500 for unknown ids; the in-app JavaScript uses the authenticated `/admin/events/show/details/{id}` route instead, but a mobile client could be using the API one, so it is left and flagged.
+
+**Open finding, not fixed:** `api/whatsapp/inbound` does not verify Meta's `X-Hub-Signature-256`, so an unsigned or wrongly signed POST is accepted. Verifying this properly means coordinating with the live webhook, so it is reported rather than changed silently.
+
+**Verification:** the five existing WhatsApp test failures are pre-existing and identical on clean main (5 failed, 2 risky, 68 passed before, 70 passed with the removal). Removed routes return 404, the inbound webhook route remains, and the dead middleware is gone.
