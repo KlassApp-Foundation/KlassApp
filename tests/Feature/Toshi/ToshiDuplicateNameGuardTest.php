@@ -66,7 +66,7 @@ class ToshiDuplicateNameGuardTest extends TestCase
         $result = ToshiActionService::guardDuplicateName($school->id, $s1->id, 'student');
         $this->assertNotNull($result, 'Duplicate name should trigger guard');
         $this->assertStringContainsString('multiple students', $result);
-        $this->assertStringContainsString('Shared Name', $result);
+        $this->assertStringContainsString('SHARED NAME', $result);
         $this->assertStringContainsString((string) $s2->id, $result);
     }
 

@@ -84,12 +84,21 @@ class ProfileDropdownRoleAwareTest extends TestCase
     #[Test]
     public function parent_layout_nav_has_logout_only_no_admin_account_links(): void
     {
-        $source = file_get_contents(resource_path('views/layouts/parent/navigation.blade.php'));
+        // The per-role nav partials were consolidated into the shared, parameterised
+        // header (cce2060e); the parent chrome is layouts/parent/layout.blade.php plus
+        // its role menu include. No admin account links anywhere in the parent chrome.
+        $layout = file_get_contents(resource_path('views/layouts/parent/layout.blade.php'));
+        $this->assertNotFalse($layout);
+        $this->assertStringContainsString('layouts.partials.navigation', $layout);
+        $this->assertStringContainsString("'showLogout' => true", $layout);
+        $this->assertStringContainsString("'brandRoute' => 'parent.dashboard'", $layout);
+        $this->assertStringNotContainsString('/admin/changepassword', $layout);
+        $this->assertStringNotContainsString('/admin/editprofile', $layout);
 
-        $this->assertNotFalse($source);
-        $this->assertStringContainsString('route(\'logout\')', $source);
-        $this->assertStringNotContainsString('profile-dropdown', $source);
-        $this->assertStringNotContainsString('/admin/changepassword', $source);
-        $this->assertStringNotContainsString('/admin/editprofile', $source);
+        $sidebar = file_get_contents(resource_path('views/layouts/parent/sidebar.blade.php'));
+        $this->assertNotFalse($sidebar);
+        $this->assertStringContainsString("'role' => 'parent'", $sidebar);
+        $this->assertStringNotContainsString('/admin/changepassword', $sidebar);
+        $this->assertStringNotContainsString('/admin/editprofile', $sidebar);
     }
 }

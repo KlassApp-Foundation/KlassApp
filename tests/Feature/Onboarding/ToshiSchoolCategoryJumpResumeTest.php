@@ -47,6 +47,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
             'curriculum' => 'uneb',
             'registration_country' => 'Uganda',
             'school_category' => null,
+            'student_size' => 'Under 100 students',
             'toshi_enabled' => 1,
         ]);
 
@@ -92,7 +93,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
             ->pluck('text')
             ->implode("\n");
 
-        $this->assertStringContainsString('school category', strtolower($botText));
+        $this->assertStringContainsString('pick a category below', strtolower($botText));
         $this->assertStringNotContainsString("Let's continue setting up.", $botText);
     }
 

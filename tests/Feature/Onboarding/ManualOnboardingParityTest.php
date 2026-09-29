@@ -160,6 +160,8 @@ class ManualOnboardingParityTest extends TestCase
             'country_id' => $this->uganda->id,
             'ministry_code' => 'EMIS-1001',
             'uneb_center_number' => 'U0123',
+            'moto' => 'Learn, grow, belong',
+            'about_us' => 'A demo school used by the parity tests.',
         ])->assertSessionHasNoErrors();
 
         // Content steps (academic year, classes, subjects, teachers, terms, fees)
@@ -196,6 +198,8 @@ class ManualOnboardingParityTest extends TestCase
             'country_id' => $this->uganda->id,
             'ministry_code' => 'EMIS-1001',
             'uneb_center_number' => 'U0123',
+            'moto' => 'Learn, grow, belong',
+            'about_us' => 'A demo school used by the parity tests.',
         ])->assertSessionHasNoErrors();
 
         $fresh = $this->school->fresh();
@@ -260,6 +264,10 @@ class ManualOnboardingParityTest extends TestCase
 
     private function completeContentSteps(): void
     {
+        // School size comes from the manual wizard's size step — share the same
+        // engine write so identity is complete without Toshi.
+        app(\App\Services\OnboardingEngine::class)->saveStudentSize($this->school->fresh(), 'Under 100 students');
+
         $year = AcademicYear::create([
             'school_id' => $this->school->id,
             'name' => date('Y'),

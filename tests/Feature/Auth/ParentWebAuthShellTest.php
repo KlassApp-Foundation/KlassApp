@@ -73,11 +73,16 @@ class ParentWebAuthShellTest extends TestCase
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700999888', $this->parent);
 
-        $response = $this->get($url);
+        // The link opens a confirm page first (single-use nonce); the POST confirms.
+        $this->get($url)->assertOk();
 
-        $response->assertRedirect(route('parent.dashboard'));
+        $this->post(route('parent.magic-login.confirm'), [
+            '_token' => session()->token(),
+        ])->assertRedirect(route('parent.dashboard'));
 
-        $dashboard = $this->followingRedirects()->get(route('parent.dashboard'));
+        $this->assertAuthenticatedAs($this->parent);
+
+        $dashboard = $this->get(route('parent.dashboard'));
 
         $dashboard->assertOk();
         $dashboard->assertSee('Parent Portal');

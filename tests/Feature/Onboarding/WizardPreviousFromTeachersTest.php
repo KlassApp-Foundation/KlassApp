@@ -100,7 +100,8 @@ class WizardPreviousFromTeachersTest extends TestCase
             ->call('next')
             ->call('next') // uneb
             ->call('next') // academic year seeds classes/subjects
-            ->call('next'); // structure checkpoint (optional) → teachers
+            ->call('next') // structure checkpoint (optional)
+            ->call('next'); // subjects → teachers
     }
 
     public function test_previous_from_teachers_goes_to_subjects_not_students(): void

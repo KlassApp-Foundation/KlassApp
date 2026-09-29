@@ -3,12 +3,13 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Livewire\AgentToshi;
-use App\Mail\TeacherInviteMail;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ClassStructureService;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -183,12 +185,29 @@ class ToshiStructureStreamsParityTest extends TestCase
             ->set('input', 'ct Primary One: Grace CT, ct-grace@toshi-structure.sch.ug')
             ->call('send');
 
+        // The ct command issues a one-time link invite; the assignment lands when
+        // the invitee claims the link (link-only invites, no emailed passwords).
+        $invite = TeacherInvite::where('email', 'ct-grace@toshi-structure.sch.ug')->first();
+        $this->assertNotNull($invite, 'Invite should be created');
+        $this->assertNull($invite->claimed_at);
+
+        Mail::assertQueued(TeacherInviteLinkMail::class, function ($mail) {
+            return $mail->name === 'Grace CT';
+        });
+
+        $mails = Mail::queued(TeacherInviteLinkMail::class);
+        $token = Str::after($mails->last()->inviteUrl, '/invite/teacher/');
+
+        $this->post(route('teacher.invite.claim', $token), [
+            'password' => 'StrongP4ssw0rd',
+            'password_confirmation' => 'StrongP4ssw0rd',
+        ]);
+
         $link = $this->baseLink->fresh();
-        $this->assertNotNull($link?->class_teacher_id);
+        $this->assertNotNull($link?->class_teacher_id, 'Claim must assign the class teacher');
         $teacher = User::find($link->class_teacher_id);
         $this->assertSame('ct-grace@toshi-structure.sch.ug', $teacher->email);
         $this->assertSame(5, (int) $teacher->usergroup_id);
-        Mail::assertQueued(TeacherInviteMail::class);
     }
 
     public function test_after_academic_year_lands_on_structure_checkpoint(): void

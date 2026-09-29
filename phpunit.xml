@@ -23,6 +23,9 @@
     <env name="EVOLUTION_API_KEY" value="test-key"/>
     <env name="EVOLUTION_INSTANCE_NAME" value="klassapp"/>
     <env name="SLACK_MCP_MODE" value="mock"/>
+    <env name="OPENAI_COMPATIBLE_API_KEY" value="test-suite-placeholder-key"/>
+    <env name="TOSHI_LLM_MODEL" value=""/>
+    <env name="TOSHI_LLM_BASE_URL" value=""/>
   </php>
   <source>
     <include>

@@ -58,7 +58,9 @@ class IsResetEnforcementTest extends TestCase
             'password' => 'OldPassword!123',
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
+        // A teacher lands on the teacher dashboard (the general admin redirect
+        // target changed when the teacher dashboard shipped).
+        $response->assertRedirect('/teacher/dashboard');
         $this->assertAuthenticatedAs($user);
     }
 
@@ -126,7 +128,9 @@ class IsResetEnforcementTest extends TestCase
         $response = $this->actingAs($user)->get('/password/force-change');
 
         $response->assertOk();
-        $response->assertViewIs('auth.force-change-password');
+        // The live route renders the redesigned preview-namespace view
+        // (cutover in 0b794479).
+        $response->assertViewIs('auth.preview.force-change-password');
     }
 
     public function test_force_change_form_redirects_when_is_reset_zero(): void
