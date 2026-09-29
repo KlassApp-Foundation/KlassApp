@@ -13205,3 +13205,10 @@ WhatsApp webhook hardening in progress.
 
 ## Decision: docs platform (2026-09-29)
 - Docs platform (2026-09-29): VitePress for all docs, user manuals (/docs/help/) and contributor docs (/docs/community/), replacing Docsify; GitBook to be retired after its content is migrated and redirected. klassapp.xyz/help redirects to the Help section.
+
+## Cloud hardening — object storage and log streaming (2026-09-29)
+- PR #892: staging attaches the Laravel Cloud object storage bucket klassapp-staging (private, EU, Cloudflare R2). The attach injects FILESYSTEM_DISK + AWS S3 variables; uploads land in R2 (live write/read verified on staging).
+- Per-object 'public' visibility removed from uploadFile, putContents and profile avatar uploads (R2 rejects ACL headers); bucket-level visibility governs access.
+- getFilePath resolves per disk: local /storage URLs, public bucket base URL, private bucket 30-minute signed URLs. getFilePathforDownload fixed to ($file, $disk = '') and reads the default disk; video and bulletin downloads updated. .env.example defaults FILESYSTEM_DISK=local.
+- Logging: staging LOG_STACK switched from daily,nightwatch to laravel-cloud-socket,nightwatch so application logs stream to Laravel Cloud Logs (verified live via the Logs API) with Nightwatch kept; no local log file on Cloud. The same variable is set on production and applies on the next production deployment.
+- Verification: storage suites shown failing without the change (5 failed, 2 passed) and passing with it (7 passed); full guard exit 0; CI Test Guard success.

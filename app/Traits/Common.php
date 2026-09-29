@@ -23,18 +23,38 @@ trait Common
             return '';
         }
 
-        $path = '';
-
         try
         {
-            $path = \Storage::url($file);
+            return $this->fileUrlForStoredFile($file);
         }
         catch(\Throwable $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
         }
-        return $path;
+
+        return '';
+    }
+
+    /**
+     * Resolve a display URL for a stored file on the given (or default) disk.
+     *
+     * Local disks serve regular /storage URLs. Laravel Cloud object storage
+     * buckets are private, so when the disk has no public base URL configured
+     * we hand out a short lived signed URL instead (R2 presigned GET); public
+     * buckets configured with a url are served directly.
+     */
+    public function fileUrlForStoredFile($file, $disk = null)
+    {
+        $disk = $disk ?: config('filesystems.default');
+        $storage = \Storage::disk($disk);
+
+        if (config("filesystems.disks.$disk.driver") === 's3') {
+            return config("filesystems.disks.$disk.url")
+                ? $storage->url($file)
+                : $storage->temporaryUrl($file, now()->addMinutes(30));
+        }
+
+        return $storage->url($file);
     }
 
     public function uploadFile($folder,$file)
@@ -43,7 +63,9 @@ trait Common
 
         try
         {
-            $path = \Storage::putFile($folder, $file,'public');
+            // No per-object visibility: Cloudflare R2 rejects ACL headers;
+            // bucket level visibility governs access.
+            $path = \Storage::putFile($folder, $file);
         }
         catch(Exception $e)
         {
@@ -110,7 +132,7 @@ trait Common
 
         try
         {
-            $path = \Storage::put($folder, $contents,'public');
+            $path = \Storage::put($folder, $contents);
         }
         catch(Exception $e)
         {
@@ -179,24 +201,17 @@ trait Common
     }
 
 
-    public function getFilePathforDownload($disk='',$file)
+    public function getFilePathforDownload($file, $disk='')
     { 
         $path = '';
         try
         {
-            if($disk!='')
-            { 
-                $path = \Storage::disk($disk)->get($file);
-            }
-            else
-            {
-                $path = \Storage::get($file);
-            }
+            $storage = $disk !== '' ? \Storage::disk($disk) : \Storage::disk();
+            $path = $storage->get($file);
         }
-        catch(Exception $e)
+        catch(\Throwable $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
         }
  
         return $path;
