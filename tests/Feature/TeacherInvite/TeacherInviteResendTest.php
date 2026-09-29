@@ -114,7 +114,7 @@ class TeacherInviteResendTest extends TestCase
         $this->assertNotSame($oldToken, $newToken);
 
         // Old link is dead, new link works
-        $this->get(route('teacher.invite.form', $oldToken))->assertOk()->assertSee('Invalid link');
+        $this->get(route('teacher.invite.form', $oldToken))->assertOk()->assertSee("This invite link doesn't work", false);
         $this->get(route('teacher.invite.form', $newToken))->assertOk()->assertSee('Set your password');
     }
 

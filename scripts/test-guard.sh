@@ -8,7 +8,8 @@ set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 KNOWN="$ROOT/tests/known-failures.txt"
-JUNIT="$(mktemp "${TMPDIR:-/tmp}/test-guard-junit.XXXXXX.xml")"
+# Template ends in Xs: BSD mktemp (macOS) does not substitute Xs before a suffix.
+JUNIT="$(mktemp "${TMPDIR:-/tmp}/test-guard-junit.XXXXXX")"
 trap 'rm -f "$JUNIT"' EXIT
 
 cd "$ROOT"
