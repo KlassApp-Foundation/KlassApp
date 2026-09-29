@@ -13,7 +13,7 @@ class WebhookValidationTest extends TestCase
             'instance' => 'klassapp',
             'data'     => [
                 'key' => [
-                    'remoteJid' => '256781940358@s.whatsapp.net',
+                    'remoteJid' => '256700000000@s.whatsapp.net',
                     'fromMe'    => false,
                     'id'        => 'ABC123',
                 ],

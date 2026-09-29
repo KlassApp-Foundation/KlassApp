@@ -741,7 +741,7 @@
                 <div class="ka-hero-actions">
                     <a class="ka-btn ka-btn-green ka-btn-lg" href="{{ url('/register') }}">Start free trial</a>
                     <a class="ka-btn ka-btn-glass ka-btn-lg" href="{{ route('login') }}">Sign in to Portal</a>
-                    <a class="ka-btn ka-btn-dark-ghost ka-btn-lg" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Book a demo</a>
+                    <a class="ka-btn ka-btn-dark-ghost ka-btn-lg" href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer">Book a demo</a>
                 </div>
                 <div class="ka-hero-trust">
                     <div class="ka-hero-trust-item">
@@ -1083,7 +1083,7 @@
                     <li>SLA guarantee</li>
                 </ul>
                 <div class="ka-plan-cta">
-                    <a class="ka-btn ka-btn-outline" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Contact sales →</a>
+                    <a class="ka-btn ka-btn-outline" href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer">Contact sales →</a>
                 </div>
             </div>
         </div>

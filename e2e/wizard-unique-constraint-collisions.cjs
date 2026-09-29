@@ -23,10 +23,10 @@ const studentLin = `LIN9${String(stamp).slice(-9)}`;
 const studentEmail = `e2e.student.${stamp}@collision.test`;
 
 async function login(page) {
-  const email = process.env.DASH_EMAIL || process.env.STAGING_ADMIN_EMAIL || 'moemucu@gmail.com';
+  const email = process.env.DASH_EMAIL || process.env.STAGING_ADMIN_EMAIL || '';
   const password = process.env.DASH_PASSWORD || process.env.STAGING_ADMIN_PASSWORD || '';
-  if (!password) {
-    throw new Error('Set DASH_PASSWORD / STAGING_ADMIN_PASSWORD for wizard e2e');
+  if (!email || !password) {
+    throw new Error('Set DASH_EMAIL / STAGING_ADMIN_EMAIL and DASH_PASSWORD / STAGING_ADMIN_PASSWORD for wizard e2e');
   }
   await page.goto(`${BASE}/login`, { waitUntil: 'load', timeout: 90000 });
   await page.fill('input[name=email], input[type=email]', email);
