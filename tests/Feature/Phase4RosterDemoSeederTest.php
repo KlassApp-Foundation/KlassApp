@@ -21,8 +21,10 @@ class Phase4RosterDemoSeederTest extends TestCase
 
         $this->assertDatabaseHas('schools', [
             'email' => 'phase4-roster-demo@klassapp.xyz',
-            'name' => 'Phase 4 Roster Demo School',
+            'name' => 'Phase 4 Roster Test Fixture',
         ]);
+        $this->assertSame(1, (int) School::where('email', 'phase4-roster-demo@klassapp.xyz')->value('is_test'), 'fixture is flagged is_test');
+        $this->assertSame(0, (int) School::where('email', 'phase4-roster-demo@klassapp.xyz')->value('is_demo'), 'fixture is not a demo school');
         $schoolId = School::where('email', 'phase4-roster-demo@klassapp.xyz')->value('id');
 
         $this->assertSame(6, User::where('school_id', $schoolId)->count());

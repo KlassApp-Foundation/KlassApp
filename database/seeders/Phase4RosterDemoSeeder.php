@@ -15,6 +15,13 @@ use App\Support\DemoSeedPassword;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * TEST FIXTURE ONLY — this school exists for the Phase 4 roster tests.
+ *
+ * It must never be used for demos, screenshots or landing material. The single
+ * canonical demo school is Demo Academy Uganda (see DemoAcademySeeder); capture
+ * scripts and docs must target demo-academy-uganda, never this fixture.
+ */
 class Phase4RosterDemoSeeder extends Seeder
 {
     public function run(): void
@@ -24,7 +31,7 @@ class Phase4RosterDemoSeeder extends Seeder
         $school = School::firstOrCreate(
             ['email' => 'phase4-roster-demo@klassapp.xyz'],
             [
-                'name' => 'Phase 4 Roster Demo School',
+                'name' => 'Phase 4 Roster Test Fixture',
                 'slug' => 'phase4-roster-demo',
                 'phone' => '070' . random_int(1000000, 9999999),
                 'registration_country' => 'Uganda',
@@ -33,6 +40,9 @@ class Phase4RosterDemoSeeder extends Seeder
                 'toshi_enabled' => 0,
             ],
         );
+
+        // Clear flags: a test fixture, not a demo, not a customer.
+        $school->forceFill(['is_test' => 1, 'is_demo' => 0])->save();
 
         $year = AcademicYear::firstOrCreate(
             ['school_id' => $school->id, 'name' => '2026 Demo'],
