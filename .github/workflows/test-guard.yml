@@ -21,5 +21,10 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
       - name: Run full suite with known-failures guard
         run: bash scripts/test-guard.sh
