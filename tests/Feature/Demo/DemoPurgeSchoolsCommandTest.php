@@ -20,6 +20,15 @@ class DemoPurgeSchoolsCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // MySQL enforces foreign keys; sqlite does not by default. Turn them
+        // on so a wrong delete order fails here instead of on staging.
+        \DB::statement('PRAGMA foreign_keys = ON');
+    }
+
     private function makeSchool(string $name, bool $demo): School
     {
         $school = School::create([

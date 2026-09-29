@@ -30,7 +30,12 @@ class DemoPurgeSchoolsCommand extends Command
 
     protected $description = 'Remove demo schools and their dependent rows (dry run unless --force).';
 
-    /** Tables with a school_id column, in dependency-safe delete order. */
+    /**
+     * Tables with a school_id column, in foreign-key-safe delete order:
+     * rows that reference other rows are deleted before their parents
+     * (MySQL enforces the constraints; the test suite turns them on for
+     * sqlite too).
+     */
     private const SCHOOL_SCOPED = [
         'activity_log',
         'current_plans',
@@ -41,18 +46,18 @@ class DemoPurgeSchoolsCommand extends Command
         'fee_payments',
         'fees_categories',
         'student_academics',
+        'admissions',
         'teacherlinks',
-        'subjects',
-        'standards_link',
         'teacher_invites',
         'whatsapp_users',
-        'academic_terms',
-        'academic_years',
-        'sections',
-        'standards',
-        'admissions',
         'school_details',
         'teacherprofile',
+        'standards_link',
+        'sections',
+        'subjects',
+        'standards',
+        'academic_terms',
+        'academic_years',
     ];
 
     /** Tables with a user_id column. */
