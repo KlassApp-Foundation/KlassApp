@@ -173,7 +173,7 @@ return [
          * Phone number in E.164 format (e.g. +2567XXXXXXXX).
          */
         'whatsapp' => [
-            'phone' => env('BACKUP_WHATSAPP_PHONE'),
+            'phone' => env('BACKUP_WHATSAPP_PHONE', ''),
         ],
     ],
 
