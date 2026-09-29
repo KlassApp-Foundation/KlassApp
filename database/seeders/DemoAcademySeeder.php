@@ -84,6 +84,7 @@ class DemoAcademySeeder extends Seeder
         $this->seedStaff();
         $this->seedClassesAndSubjects();
         $this->seedStudents();
+        $this->seedSecondaryPle();
         $this->seedFees();
         $this->seedAttendance();
         $this->seedExamsAndMarks();
@@ -159,6 +160,7 @@ class DemoAcademySeeder extends Seeder
         $teachers = [
             'Grace Nabirye', 'Peter Okello', 'Rita Auma', 'Samuel Kigozi',
             'Joan Achen', 'Moses Ssentamu', 'Esther Nansubuga', 'Isaac Tumwine',
+            'Diana Kembabazi', 'Paul Musoke',
         ];
         foreach ($teachers as $i => $name) {
             $this->staff['teacher' . ($i + 1)] = $this->user('teacher' . ($i + 1), $name, 5);
@@ -195,6 +197,10 @@ class DemoAcademySeeder extends Seeder
             ['school_id' => $this->school->id, 'name' => 'primary'],
             ['order' => 2, 'status' => 1]
         );
+        $secondary = Standard::firstOrCreate(
+            ['school_id' => $this->school->id, 'name' => 'o-level'],
+            ['order' => 3, 'status' => 1]
+        );
 
         $teacherIds = [];
         foreach (array_keys($this->staff) as $key) {
@@ -214,12 +220,20 @@ class DemoAcademySeeder extends Seeder
             ['name' => 'Primary Five', 'level' => 'primary', 'streams' => ['A', 'B']],
             ['name' => 'Primary Six', 'level' => 'primary', 'streams' => ['A', 'B']],
             ['name' => 'Primary Seven', 'level' => 'primary', 'streams' => ['A', 'B']],
+            ['name' => 'Senior One', 'level' => 'secondary', 'streams' => [null]],
+            ['name' => 'Senior Two', 'level' => 'secondary', 'streams' => [null]],
+            ['name' => 'Senior Three', 'level' => 'secondary', 'streams' => [null]],
+            ['name' => 'Senior Four', 'level' => 'secondary', 'streams' => [null]],
         ];
 
         $teacherIndex = 0;
 
         foreach ($classes as $class) {
-            $standard = $class['level'] === 'nursery' ? $nursery : $primary;
+            $standard = match ($class['level']) {
+                'nursery' => $nursery,
+                'secondary' => $secondary,
+                default => $primary,
+            };
 
             $section = Section::firstOrCreate(
                 ['school_id' => $this->school->id, 'name' => $class['name']],
@@ -254,9 +268,14 @@ class DemoAcademySeeder extends Seeder
                 $this->links[$key] = $link;
             }
 
-            $subjectNames = $class['level'] === 'nursery'
-                ? ['Language' => 'LANG', 'Numbers' => 'NUM', 'Reading' => 'READ']
-                : ['Mathematics' => 'MTC', 'English' => 'ENG', 'Science' => 'SCI', 'Social Studies' => 'SST'];
+            $subjectNames = match ($class['level']) {
+                'nursery' => ['Language' => 'LANG', 'Numbers' => 'NUM', 'Reading' => 'READ'],
+                'secondary' => [
+                    'Mathematics' => 'MTC', 'English' => 'ENG', 'Physics' => 'PHY',
+                    'Chemistry' => 'CHE', 'Biology' => 'BIO', 'Geography' => 'GEO', 'History' => 'HIS',
+                ],
+                default => ['Mathematics' => 'MTC', 'English' => 'ENG', 'Science' => 'SCI', 'Social Studies' => 'SST'],
+            };
 
             foreach ($subjectNames as $name => $code) {
                 $subject = Subject::firstOrCreate(
@@ -303,6 +322,7 @@ class DemoAcademySeeder extends Seeder
             'Baby Class' => 4, 'Middle Class' => 4, 'Top Class' => 4,
             'Primary One' => 6, 'Primary Two' => 6, 'Primary Three' => 6, 'Primary Four' => 6,
             'Primary Five' => 10, 'Primary Six' => 10, 'Primary Seven' => 10,
+            'Senior One' => 5, 'Senior Two' => 5, 'Senior Three' => 4, 'Senior Four' => 4,
         ];
 
         $n = 0;
@@ -343,6 +363,80 @@ class DemoAcademySeeder extends Seeder
         }
     }
 
+    // ─────────────────────────────────────── secondary PLE entry records
+
+    /**
+     * A few Senior One learners with full PLE results, so docs and landing
+     * shots can show the secondary side: PLE index/aggregate land where the
+     * app actually keeps them (approved S.1 admission records).
+     */
+    private function seedSecondaryPle(): void
+    {
+        $seniorOne = $this->sections['Senior One'] ?? null;
+        $secondary = Standard::where('school_id', $this->school->id)->where('name', 'o-level')->first();
+        if (! $seniorOne || ! $secondary) {
+            return;
+        }
+
+        $linkIds = [];
+        foreach ($this->links as $link) {
+            if ($link->section_id === $seniorOne->id) {
+                $linkIds[] = $link->id;
+            }
+        }
+
+        $learners = StudentAcademic::where('school_id', $this->school->id)
+            ->whereIn('standardLink_id', $linkIds)
+            ->with('user')
+            ->orderBy('id')
+            ->take(3)
+            ->get();
+
+        $aggregates = ['9', '12', '16'];
+        $inserted = 0;
+        foreach ($learners as $i => $academic) {
+            $user = $academic->user;
+            $applicationNo = 'APP-FORM-DEMO-' . now()->format('Y') . '-' . str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT);
+            if (\DB::table('admissions')->where('school_id', $this->school->id)->where('application_no', $applicationNo)->exists()) {
+                continue;
+            }
+            \DB::table('admissions')->insert([
+                'school_id' => $this->school->id,
+                'standard_id' => $secondary->id,
+                'entry_term' => '1',
+                'entry_year' => '2026',
+                'boarding_type' => 'boarding',
+                'name' => explode(' ', $user->name)[0],
+                'lastname' => explode(' ', $user->name, 2)[1] ?? 'Demo',
+                'date_of_birth' => '2013-0' . (3 + $i) . '-12',
+                'gender' => 'female',
+                'nationality' => 'Ugandan',
+                'home_district' => 'Kampala',
+                'village_town' => 'Ntinda',
+                'permanent_address' => '12 Kampala Road',
+                'address_for_communication' => '12 Kampala Road',
+                'school_last_studied' => 'Demo Academy Primary',
+                'last_class_completed' => 'P.7',
+                'ple_index_number' => 'DEMO/2025/' . str_pad((string) (101 + $i), 4, '0', STR_PAD_LEFT),
+                'ple_aggregate' => $aggregates[$i] ?? '12',
+                'father_name' => 'Demo Parent',
+                'father_relationship' => 'Father',
+                'father_mobile_no' => '+2567700001' . (10 + $i),
+                'father_district' => 'Kampala',
+                'application_status' => 'Approved',
+                'application_no' => $applicationNo,
+                'payment_status' => 'paid',
+                'half_yearly_mark_details' => '{}',
+                'remarks' => 'Seeded PLE entry record for the secondary demo.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $inserted++;
+        }
+
+        $this->command?->info('Secondary PLE records seeded: ' . $inserted . ' new approved S.1 entries with PLE results.');
+    }
+
     // ───────────────────────────────────────────────────────────────── fees
 
     private function seedFees(): void
@@ -353,6 +447,7 @@ class DemoAcademySeeder extends Seeder
 
         $nursery = Standard::where('school_id', $this->school->id)->where('name', 'nursery')->first();
         $primary = Standard::where('school_id', $this->school->id)->where('name', 'primary')->first();
+        $oLevel = Standard::where('school_id', $this->school->id)->where('name', 'o-level')->first();
 
         $definitions = [
             ['standard' => $nursery, 'name' => 'Tuition', 'amount' => 450000, 'type' => 'tuition'],
@@ -360,6 +455,8 @@ class DemoAcademySeeder extends Seeder
             ['standard' => $primary, 'name' => 'Tuition', 'amount' => 620000, 'type' => 'tuition'],
             ['standard' => $primary, 'name' => 'Lunch', 'amount' => 110000, 'type' => 'lunch'],
             ['standard' => $primary, 'name' => 'Transport', 'amount' => 150000, 'type' => 'transport'],
+            ['standard' => $oLevel, 'name' => 'Tuition', 'amount' => 780000, 'type' => 'tuition'],
+            ['standard' => $oLevel, 'name' => 'Lunch', 'amount' => 120000, 'type' => 'lunch'],
         ];
 
         $categories = [];
@@ -379,22 +476,25 @@ class DemoAcademySeeder extends Seeder
             )->refresh();
         }
 
-        if (FeePayment::where('school_id', $this->school->id)->exists()) {
-            $this->command?->info('Fees already seeded for Demo Academy — skipping payments.');
-
-            return;
-        }
-
         $students = StudentAcademic::where('school_id', $this->school->id)
             ->with('user')
             ->get();
 
         $index = 0;
+        $seededPayments = 0;
         foreach ($students as $academic) {
             if (! $academic->user) {
                 continue;
             }
             $index++;
+
+            // Per-learner idempotency: new learners (e.g. a freshly added
+            // secondary section) get their payments while existing rows stay.
+            // Index advances for every learner so the payment mix stays stable
+            // across re-runs.
+            if (FeePayment::where('school_id', $this->school->id)->where('user_id', $academic->user_id)->exists()) {
+                continue;
+            }
 
             $link = $this->links[array_search($academic->standardLink_id, array_map(fn ($l) => $l->id, $this->links), true)] ?? null;
             $standardName = null;
@@ -435,7 +535,7 @@ class DemoAcademySeeder extends Seeder
             // rolls 10-11: nothing paid yet (owing).
         }
 
-        $this->command?->info('Fees seeded: ' . FeePayment::where('school_id', $this->school->id)->count() . ' payments.');
+        $this->command?->info('Fees seeded: ' . FeePayment::where('school_id', $this->school->id)->count() . ' payments total.');
     }
 
     private function payment(int $studentId, FeesCategories $category, float|int $amount, string $paidOn, string $method, ?string $reference = null): void
@@ -457,11 +557,7 @@ class DemoAcademySeeder extends Seeder
 
     private function seedAttendance(): void
     {
-        if (Attendance::where('school_id', $this->school->id)->exists()) {
-            $this->command?->info('Attendance already seeded for Demo Academy — skipping.');
-
-            return;
-        }
+        $alreadyRecorded = Attendance::where('school_id', $this->school->id)->distinct()->pluck('user_id')->all();
 
         $students = StudentAcademic::where('school_id', $this->school->id)->get(['user_id', 'standardLink_id']);
         $studentsByLink = [];
@@ -488,6 +584,9 @@ class DemoAcademySeeder extends Seeder
             foreach ($days as $day) {
                 foreach (['forenoon', 'afternoon'] as $session) {
                     foreach ($userIds as $userId) {
+                        if (in_array($userId, $alreadyRecorded, true)) {
+                            continue;
+                        }
                         $absent = (crc32($userId . '|' . $day . '|' . $session) % 100) < 4;
                         Attendance::create([
                             'school_id' => $this->school->id,
@@ -507,7 +606,7 @@ class DemoAcademySeeder extends Seeder
             }
         }
 
-        $this->command?->info('Attendance seeded: ' . $count . ' rows over ' . count($days) . ' school days.');
+        $this->command?->info('Attendance seeded: ' . $count . ' new rows over ' . count($days) . ' school days.');
     }
 
     // ────────────────────────────────────────────────────────── exams & marks
@@ -525,24 +624,24 @@ class DemoAcademySeeder extends Seeder
 
         $termTwo = AcademicTerm::where('school_id', $this->school->id)->where('name', 'Term II')->first();
 
-        // Grading scale for the primary standard (same shape AcademicSetupService writes).
-        $primary = Standard::where('school_id', $this->school->id)->where('name', 'primary')->first();
-        foreach ($this->primaryGrades as $grade) {
-            SchoolGradingSystem::updateOrCreate(
-                ['school_id' => $this->school->id, 'standard_id' => $primary->id, 'grade' => $grade['grade']],
-                [
-                    'points' => $grade['points'],
-                    'min_score' => $grade['min_score'],
-                    'max_score' => $grade['max_score'],
-                    'remark' => $grade['remark'],
-                ]
-            );
-        }
-
-        if (Exam::where('school_id', $this->school->id)->exists()) {
-            $this->command?->info('Exams already seeded for Demo Academy — skipping.');
-
-            return;
+        // Grading scale for the primary and o-level standards (same shape
+        // AcademicSetupService writes).
+        foreach (['primary', 'o-level'] as $standardName) {
+            $standard = Standard::where('school_id', $this->school->id)->where('name', $standardName)->first();
+            if (! $standard) {
+                continue;
+            }
+            foreach ($this->primaryGrades as $grade) {
+                SchoolGradingSystem::updateOrCreate(
+                    ['school_id' => $this->school->id, 'standard_id' => $standard->id, 'grade' => $grade['grade']],
+                    [
+                        'points' => $grade['points'],
+                        'min_score' => $grade['min_score'],
+                        'max_score' => $grade['max_score'],
+                        'remark' => $grade['remark'],
+                    ]
+                );
+            }
         }
 
         $subjects = Subject::where('school_id', $this->school->id)->get();
@@ -561,6 +660,15 @@ class DemoAcademySeeder extends Seeder
 
             // Only primary classes carry marks (nursery reporting is narrative).
             if (! $sectionName || str_contains($sectionName, 'Class')) {
+                continue;
+            }
+
+            // Per class+subject idempotency: a newly added class seeds its own
+            // exams and marks without touching existing ones.
+            if (Exam::where('school_id', $this->school->id)
+                ->where('section_id', $subject->section_id)
+                ->where('subject_id', $subject->id)
+                ->exists()) {
                 continue;
             }
 
@@ -610,7 +718,7 @@ class DemoAcademySeeder extends Seeder
             }
         }
 
-        $this->command?->info('Exams + marks seeded: ' . $marksCount . ' mark rows across primary classes.');
+        $this->command?->info('Exams + marks seeded: ' . $marksCount . ' mark rows across classes.');
     }
 
     private function gradeFor(int $score): string

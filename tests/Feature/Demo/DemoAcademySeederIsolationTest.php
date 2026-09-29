@@ -13,6 +13,15 @@ class DemoAcademySeederIsolationTest extends TestCase
 {
     private const NEEDLE = 'DemoAcademySeeder';
 
+    /** Code without comments, so documentation may name the seeder freely. */
+    private function codeOnly(string $path): string
+    {
+        $stripped = php_strip_whitespace($path);
+        $this->assertNotFalse($stripped, 'could not parse ' . $path);
+
+        return (string) $stripped;
+    }
+
     public function test_no_other_seeder_references_the_demo_academy_seeder(): void
     {
         foreach (File::files(database_path('seeders')) as $file) {
@@ -22,8 +31,8 @@ class DemoAcademySeederIsolationTest extends TestCase
 
             $this->assertStringNotContainsString(
                 self::NEEDLE,
-                File::get($file->getPathname()),
-                $file->getFilename() . ' must not reference the demo seeder'
+                $this->codeOnly($file->getPathname()),
+                $file->getFilename() . ' must not reference the demo seeder in code'
             );
         }
     }
@@ -33,7 +42,7 @@ class DemoAcademySeederIsolationTest extends TestCase
         foreach (File::allFiles(database_path('migrations')) as $file) {
             $this->assertStringNotContainsString(
                 self::NEEDLE,
-                File::get($file->getPathname()),
+                $this->codeOnly($file->getPathname()),
                 $file->getFilename() . ' must never seed demo data'
             );
         }
@@ -47,7 +56,7 @@ class DemoAcademySeederIsolationTest extends TestCase
         ], 'file_exists');
 
         foreach ($paths as $path) {
-            $this->assertStringNotContainsString(self::NEEDLE, File::get($path), $path);
+            $this->assertStringNotContainsString(self::NEEDLE, $this->codeOnly($path), $path);
         }
     }
 }

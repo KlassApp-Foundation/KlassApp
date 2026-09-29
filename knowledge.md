@@ -13228,3 +13228,9 @@ WhatsApp webhook hardening in progress.
 - tests/known-failures stays empty; new scripts/test-guard-compare.py makes STALE entries fail the guard (a listed-but-passing test = exit 2), and the guard script's mktemp template is once more BSD-safe (trailing Xs).
 - Verification: Demo suites 20 passed; guard wiring shown failing-then-passing (5 failed -> 6 passed); full guarded suite + CI exercise the stale check end to end.
 - Consolidation: ONE demo school going forward = Demo Academy Uganda. Production removal candidates (nothing deleted; owner decides): schools id 53 Lakeview Junior + id 54 Model Hill, their 26 users (ids 2315-2340, incl. 2 inactive synthetics), plus dependents; all their passwords are random-32 values stored nowhere, so nobody can log in today. Staging: demo-lakeview-junior + demo-model-hill retire in favour of Demo Academy; phase-4-roster-demo-school decision pending. Capture scripts target demo-academy-uganda.
+### Demo consolidation (2026-09-29 evening)
+- Data seeding stripped from the old demo migration (schema-only now); fresh migrate creates no schools/users (FreshInstallSeedsNoSchoolsTest). Demo data is seeded on purpose only.
+- New demo:purge-schools command: dry-run first, prints the full inventory (schools, every user, per-table row ids), --force to delete, refuses non-is_demo schools, idempotent.
+- Demo Academy Uganda extended with S.1-S.4, O-level subjects, 18 secondary learners (84 total) and 3 approved S.1 PLE entry records for secondary demos.
+- phase-4-roster-demo-school renamed "Phase 4 Roster Test Fixture", is_test=1/is_demo=0 — never for captures; capture scripts target demo-academy-uganda.
+- Docs handoff confirmed VitePress (klassapp.xyz/docs/help/ + /docs/community/), not Docsify.
