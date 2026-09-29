@@ -33,6 +33,26 @@ class WhatsAppBusinessService
     /**
      * Check if the service is configured with Business API credentials.
      */
+    /**
+     * Demo schools never receive real WhatsApp messages (hard outbound guard).
+     * Returns a skipped response array when blocked, otherwise null.
+     */
+    protected function demoBlocked(string $phone, ?int $userId = null): ?array
+    {
+        if (! \App\Services\DemoSchoolCommsGuard::blocksWhatsApp($phone, $userId)) {
+            return null;
+        }
+
+        \Illuminate\Support\Facades\Log::info('[demo-guard] WhatsApp send blocked for demo school recipient', ['phone' => $phone]);
+
+        return [
+            'success' => false,
+            'blocked' => true,
+            'reason' => 'demo_school',
+            'message' => 'Outbound messaging is disabled for demo schools.',
+        ];
+    }
+
     public function isConfigured(): bool
     {
         return !empty($this->token) && !empty($this->phoneNumberId);
@@ -51,6 +71,10 @@ class WhatsAppBusinessService
      */
     public function sendText(string $phone, string $message, ?string $flowType = null, ?int $userId = null, bool $previewUrl = false): array
     {
+        if ($blocked = $this->demoBlocked($phone, $userId)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
 
         $response = Http::withToken($this->token)
@@ -122,6 +146,10 @@ class WhatsAppBusinessService
         ?string $language = null,
         ?string $flowType = null,
     ): array {
+        if ($blocked = $this->demoBlocked($phone)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
         $lang = $language ?? config('services.whatsapp.template_language', env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'));
 
@@ -219,6 +247,10 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
+        if ($blocked = $this->demoBlocked($phone, $userId)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
 
         $metaButtons = array_map(fn ($btn) => [
@@ -306,6 +338,10 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
+        if ($blocked = $this->demoBlocked($phone, $userId)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
 
         // Count total rows across all sections (Meta limit: 10)
@@ -412,6 +448,10 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
+        if ($blocked = $this->demoBlocked($phone, $userId)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
 
         $flowActionPayload = ['screen' => $screenId];
@@ -603,6 +643,10 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
+        if ($blocked = $this->demoBlocked($phone, $userId)) {
+            return $blocked;
+        }
+
         $cleanPhone = $this->cleanPhone($phone);
 
         $body = [
