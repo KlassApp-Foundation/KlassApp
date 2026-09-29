@@ -65,7 +65,7 @@ class CoAdminInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('coadmin.invite.form', Str::random(64)));
 
         $response->assertOk();
-        $response->assertSee('Invalid link');
+        $response->assertSee("This invite link doesn't work", false);
     }
 
     public function test_expired_token_shows_error_page(): void
@@ -83,7 +83,7 @@ class CoAdminInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('coadmin.invite.form', $token));
 
         $response->assertOk();
-        $response->assertSee('Link expired');
+        $response->assertSee('This invite has expired');
     }
 
     public function test_claimed_token_shows_error_page(): void
@@ -103,7 +103,7 @@ class CoAdminInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('coadmin.invite.form', $token));
 
         $response->assertOk();
-        $response->assertSee('Already used');
+        $response->assertSee('This invite has already been used');
     }
 
     public function test_valid_token_claim_creates_co_admin_with_chosen_password(): void
@@ -255,7 +255,7 @@ class CoAdminInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('coadmin.invite.form', $tampered));
 
         $response->assertOk();
-        $response->assertSee('Invalid link');
+        $response->assertSee("This invite link doesn't work", false);
         $this->assertDatabaseMissing('users', ['email' => 'tamper@coadmininvite.test']);
     }
 }

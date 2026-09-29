@@ -97,12 +97,37 @@ class TeacherInviteLinkSecurityTest extends TestCase
     }
 
     /** @test */
+    public function invite_pages_render_on_the_auth_shell()
+    {
+        ['token' => $token] = TeacherInviteLinkService::issue(
+            school: $this->school,
+            email: 'shell-check@invite.test',
+            name: 'Shell Check',
+            standardLink: $this->standardLink,
+        );
+
+        // Both pages must build on the shared ap-* shell; the old views used
+        // auth-shell classes the stylesheet does not define (unstyled render).
+        $this->get(route('teacher.invite.form', $token))
+            ->assertOk()
+            ->assertSee('ap-page', false)
+            ->assertSee('ap-card', false)
+            ->assertDontSee('auth-shell', false);
+
+        $this->get(route('teacher.invite.form', Str::random(64)))
+            ->assertOk()
+            ->assertSee('ap-page', false)
+            ->assertSee('ap-card', false)
+            ->assertDontSee('auth-shell', false);
+    }
+
+    /** @test */
     public function invalid_token_shows_error_page()
     {
         $response = $this->get(route('teacher.invite.form', Str::random(64)));
 
         $response->assertOk();
-        $response->assertSee('Invalid link');
+        $response->assertSee("This invite link doesn't work", false);
     }
 
     /** @test */
@@ -122,7 +147,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('teacher.invite.form', $token));
 
         $response->assertOk();
-        $response->assertSee('Link expired');
+        $response->assertSee('This invite has expired');
     }
 
     /** @test */
@@ -144,7 +169,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response = $this->get(route('teacher.invite.form', $token));
 
         $response->assertOk();
-        $response->assertSee('Already used');
+        $response->assertSee('This invite has already been used');
     }
 
     /** @test */
@@ -329,7 +354,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $crafterToken = Str::random(64);
 
         $this->get(route('teacher.invite.form', $crafterToken))
-            ->assertSee('Invalid link');
+            ->assertSee("This invite link doesn't work", false);
 
         $this->post(route('teacher.invite.claim', $crafterToken), [
             'password' => 'StrongP4ssw0rd',
