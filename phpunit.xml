@@ -12,9 +12,11 @@
     <env name="APP_ENV" value="testing" force="true"/>
     <env name="DB_CONNECTION" value="sqlite" force="true"/>
     <env name="DB_DATABASE" value=":memory:" force="true"/>
+    <env name="FILESYSTEM_DISK" value="local" force="true"/>
     <server name="APP_ENV" value="testing" force="true"/>
     <server name="DB_CONNECTION" value="sqlite" force="true"/>
     <server name="DB_DATABASE" value=":memory:" force="true"/>
+    <server name="FILESYSTEM_DISK" value="local" force="true"/>
     <env name="BCRYPT_ROUNDS" value="4"/>
     <env name="CACHE_DRIVER" value="array"/>
     <env name="SESSION_DRIVER" value="array"/>
