@@ -127,3 +127,6 @@ public/css/app.css.map
 /.design-sync/node_modules
 /.design-sync/shim/node_modules
 /.design-sync/shim/dist
+
+# Local-only known-failures — honoured by scripts/test-guard.sh when present; CI never sees it.
+/tests/known-failures.local.txt
