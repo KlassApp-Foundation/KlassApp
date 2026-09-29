@@ -196,7 +196,7 @@ class BulletinsController extends Controller
         if(Gate::allows('bulletin',$bulletin))
         {
             $file=$bulletin->bulletin_file;
-            $path=$this->getFilePathforDownload(env('FILESYSTEM_DRIVER'),$file);
+            $path=$this->getFilePathforDownload($file);
             $name='bulletin_year'.'_'.$bulletin->year.'.pdf';
             $headers = [
                 'Content-Disposition' => 'attachment; filename="'. $name.'"',

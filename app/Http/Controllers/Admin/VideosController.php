@@ -471,7 +471,7 @@ class VideosController extends Controller
     {
         $video = Video::where('id', $id)->where('school_id',Auth::user()->school_id)->first();
         $file=$video->url;
-        $path=$this->getFilePathforDownload(env('FILESYSTEM_DRIVER'),$file);
+        $path=$this->getFilePathforDownload($file);
         $name='Media'.'_'.$video->name.'.jpg';
         $headers = [
             'Content-Disposition' => 'attachment; filename="'. $name.'"',
