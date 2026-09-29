@@ -17,7 +17,7 @@
 <body>
 <div class="announce" id="announceBar" role="region" aria-label="Announcement">
   <div class="announce-inner">
-    <p>KlassApp is open source and self-hostable — <strong>MIT licensed</strong>.</p>
+    <p>KlassApp is open source and self-hostable. <strong>MIT licensed</strong>.</p>
   </div>
   <button type="button" class="announce-close" id="announceClose" aria-label="Dismiss announcement">&times;</button>
 </div>
@@ -100,7 +100,7 @@
                 <span class="hero-chip live"><span class="hero-chip-dot"></span>Live</span>
               </div>
               <div class="hero-role-body">
-                <div class="hero-bubble">Good morning! P.4 attendance is in — Amina is present today.</div>
+                <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
                 <div class="hero-bubble out">Thanks. Fee reminder for next week too?</div>
                 <div class="hero-bubble">Scheduled on WhatsApp for Monday 8:00 AM.<span class="hero-meta">8:14</span></div>
                 <div class="hero-row"><span>P.4 attendance · Amina</span><span class="hero-tag ok">Present</span></div>
@@ -143,7 +143,7 @@
               </div>
               <div class="hero-role-body">
                 <div class="hero-row"><span>#school-ops</span><span class="hero-meta">Today</span></div>
-                <div class="hero-bubble">Fee collection is at 86% — 3 reminders left for overdue families.</div>
+                <div class="hero-bubble">Fee collection is at 86%; 3 reminders left for overdue families.</div>
                 <div class="hero-row"><span>Overdue · 3 families</span><span class="hero-tag wait">Reminder queued</span></div>
                 <div class="hero-progress">
                   <div class="hero-progress-top"><span>Fee collection</span><span>86%</span></div>
@@ -588,7 +588,7 @@
     <div class="shots reveal">
       <div class="shots-head">
         <h3>Real screenshots from the app</h3>
-        <p>Captured from a local KlassApp instance — the actual dashboard, a records module, and the Toshi assistant.</p>
+        <p>Captured from a local KlassApp instance: the actual dashboard, a records module, and the Toshi assistant.</p>
       </div>
       <div class="shots-grid">
         <x-landing.app-shot

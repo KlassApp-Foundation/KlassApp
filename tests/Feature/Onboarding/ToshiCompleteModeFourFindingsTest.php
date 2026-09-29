@@ -214,6 +214,8 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
             ->set('schoolPhone', '+256700119902')
             ->set('step', $waIdx)
             ->set('substep', 0)
+            ->set('actionStep', null)
+            ->set('actionSubstep', 0)
             ->set('input', 'skip')
             ->call('send');
 

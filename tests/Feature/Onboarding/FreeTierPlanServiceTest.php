@@ -61,6 +61,10 @@ class FreeTierPlanServiceTest extends TestCase
 
     private function completeAllContentExceptPlan(): void
     {
+        // Student size is a blocking onboarding step; without it the school is
+        // never "content complete" and the service correctly refuses.
+        $this->school->update(['student_size' => 'Under 100 students']);
+
         $year = AcademicYear::create([
             'school_id' => $this->school->id,
             'name' => date('Y'),

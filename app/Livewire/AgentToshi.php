@@ -775,11 +775,19 @@ class AgentToshi extends Component
         }
 
         // Already in complete mode — typically after restoreState(). Keep the restored
-        // step/substep so mid-flow draft progress survives reload. Only re-land when the
-        // restored index is invalid.
+        // step/substep so mid-flow draft progress survives reload, but drop a stale
+        // actionStep that no longer matches the next incomplete step (a stale action
+        // would otherwise hijack the next free-text answer as an onboarding action).
         $restoredStep = $this->steps[$this->step] ?? null;
-        if ($restoredStep === null) {
+        $expectedAction = self::onboardingActionForKey($next['key']);
+        if ($restoredStep === null
+            || ($this->actionStep !== null && $this->actionStep !== $expectedAction)) {
             $this->jumpToIncompleteOnboardingStep($next['key']);
+            if ($next['key'] === 'plan_selection') {
+                $this->promptPlanSelection();
+            } else {
+                $this->botSay(self::onboardingPromptForStep($next['key']));
+            }
         }
         $this->persistState();
     }
@@ -802,6 +810,22 @@ class AgentToshi extends Component
             $this->botSay($this->getAssistantGreeting());
         }
         $this->persistState();
+    }
+
+    /**
+     * The resume actionStep that corresponds to an OnboardingStepsService key
+     * (or null when the step resumes as a regular flow step instead of an action).
+     */
+    private static function onboardingActionForKey(string $key): ?string
+    {
+        return [
+            'curriculum' => 'onboarding_curriculum',
+            'student_size' => 'onboarding_student_size',
+            'country' => 'onboarding_country',
+            'school_category' => 'onboarding_school_category',
+            'emis' => 'onboarding_emis',
+            'uneb_center' => 'onboarding_uneb_center',
+        ][$key] ?? null;
     }
 
     /**

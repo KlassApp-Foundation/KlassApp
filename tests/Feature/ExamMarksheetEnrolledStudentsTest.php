@@ -243,6 +243,7 @@ class ExamMarksheetEnrolledStudentsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('MATHEMATICS', false);
-        $response->assertSee('James Okello', false);
+        // Teacher names render via the shared uppercase display-name convention.
+        $response->assertSee('JAMES OKELLO', false);
     }
 }

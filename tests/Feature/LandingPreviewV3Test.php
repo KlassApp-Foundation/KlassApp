@@ -30,7 +30,7 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('Get notified when we open source', false);
         $response->assertSee('Do parents need to download an app?', false);
         $response->assertSee('One protocol layer. Toshi orchestrates WhatsApp, Drive, and Slack', false);
-        $response->assertSee('Toshi · protocol orchestration', false);
+        $response->assertSee('Toshi · Connector Orchestration', false);
         $response->assertSee('Protocol path', false);
         $response->assertSee('Through the WhatsApp connector', false);
         $response->assertDontSee('One intelligence layer orchestrating three perspectives on the same school.', false);
@@ -38,7 +38,7 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('navbar-logo-img', false);
         $response->assertSee('hero-bg-vintage', false);
         $response->assertSee('id="toshiTower"', false);
-        $response->assertSee('data-toshi-tower="1"', false);
+        $response->assertSee('class="toshi-tower reveal"', false);
         $response->assertSee('images/brand/models/anthropic-mark.svg', false);
         $response->assertSee('images/brand/models/openai-mark.svg', false);
         $response->assertSee('images/brand/models/xai-grok-mark.svg', false);
@@ -70,8 +70,9 @@ class LandingPreviewV3Test extends TestCase
         // Mobile nav + compare cards + real legal footer links (Sep 2026 mobile bugfix)
         $response->assertSee('id="navbarMobileToggle"', false);
         $response->assertSee('id="navbarMobilePanel"', false);
-        $response->assertSee('compare-list', false);
-        $response->assertSee('compare-card', false);
+        // Compare section rebuilt (debox): band rows with per-cell mobile labels.
+        $response->assertSee('compare-band', false);
+        $response->assertSee('compare-band-cell', false);
         $response->assertDontSee('compare-table-wrap', false);
         $response->assertSee('/terms-of-service', false);
         $response->assertSee('/privacy-policy', false);
@@ -119,7 +120,8 @@ class LandingPreviewV3Test extends TestCase
         // Hero X-flip + tower emergence (no unresolved --d-* in live rules)
         $this->assertMatchesRegularExpression('/transform:\s*rotateX\(90deg\)/', $css);
         $this->assertMatchesRegularExpression('/\.hero-role-avatar\s*\{[^}]*border:\s*1px solid var\(--brand-green\)/s', $css);
-        $this->assertMatchesRegularExpression('/@keyframes toshi-model-l/', $css);
+        // Tower v2 animation set replaced the v1 agent-core keyframes.
+        $this->assertMatchesRegularExpression('/@keyframes toshiDrift/', $css);
         $this->assertMatchesRegularExpression('/\.toshi-tower\s*\{/', $css);
         $this->assertStringNotContainsString('var(--d-', $css);
     }

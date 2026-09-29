@@ -51,6 +51,15 @@ class ToshiE2EVerificationTest extends TestCase
     /** @test */
     public function llm_responds_and_route_tool_fails_authentication_gracefully()
     {
+        if (env('TOSHI_E2E_LIVE') != 1) {
+            $this->markTestSkipped('Set TOSHI_E2E_LIVE=1 to run the live-LLM E2E check.');
+        }
+
+        if (empty(config('ai.providers.openai-compatible.key'))
+            || config('ai.providers.openai-compatible.key') === 'test-suite-placeholder-key') {
+            $this->markTestSkipped('A real openai-compatible API key is required for the live E2E check.');
+        }
+
         $this->actingAs($this->admin);
 
         \Illuminate\Support\Facades\Log::info('=== E2E: testing LLM connectivity ===');
@@ -118,6 +127,12 @@ class ToshiE2EVerificationTest extends TestCase
         \Illuminate\Support\Facades\Config::set('toshi.sdk_v2_enabled', false);
 
         $livewire = Livewire::test(\App\Livewire\AgentToshi::class);
+        // School already set up — answer in assistant mode so the keyword router
+        // handles the greeting (a pending checklist action would intercept first).
+        $livewire->set('mode', 'assistant');
+        $livewire->set('actionStep', null);
+        $livewire->set('actionSubstep', 0);
+        $livewire->set('awaitingConfirm', false);
 
         $livewire
             ->set('input', 'hello')
