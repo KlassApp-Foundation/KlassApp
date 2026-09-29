@@ -58,6 +58,11 @@ These apply to every change, in every session, regardless of which tool is runni
 
 30. **Never merge with a failing test — run the full affected suites first.** Before merging any PR, run every test suite affected by the change (not just the new tests) from a clean run and confirm they are all green. A failure that "was already red" still blocks the merge: fix it or split the change. Precedent (2026-09-29): [#879](https://github.com/KlassApp-Foundation/KlassApp/pull/879) merged with two admission guard suites red and needed an immediate follow-up ([#880](https://github.com/KlassApp-Foundation/KlassApp/pull/880)); that merge should not have happened, and this rule closes the gap.
 
+31. **Verification gate before reporting any PR done.** A PR is not "done" until all three hold, with evidence:
+    1. **Full suite under the guarded harness** (`bash scripts/test-guard.sh`, which runs the full suite via phpunit and compares failures against `tests/known-failures.txt`): **zero new failures** vs the current known-failures list. When a fix retires known failures, refresh `tests/known-failures.txt` in the same PR.
+    2. **Every page the PR touches loaded on staging as a real user**: HTTP 200, no server-side error-log entries for the visit window, and no browser console errors. PHPUnit `assertSee` alone is not page verification (extends standing rule #22).
+    3. **Every bug fix includes a failing-then-passing test**: the test must be shown failing without the fix and passing with it, under the guarded harness. CI runs the same guard on PRs (`.github/workflows/test-guard.yml`); local full-suite claims must back failures up with real outputs, not assertions — the invite-419 incident (2026-09-29) showed "green at merge SHA" claims can silently be shell-environment artifacts.
+
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
 Before editing code in these areas, check the fix markers below are still in place. Full root-cause / fix / verification detail lives in `knowledge.md`'s "Known Bug Patterns & Lessons" section — this is a locator, not a replacement for reading it.
