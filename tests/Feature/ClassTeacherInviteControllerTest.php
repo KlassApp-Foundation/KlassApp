@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -70,8 +72,16 @@ class ClassTeacherInviteControllerTest extends TestCase
         $response->assertRedirect(route('admin.classes'));
         $response->assertSessionHas('successmessage');
 
+        // New flow: a pending TeacherInvite is created, NOT a User
         $link->refresh();
-        $this->assertNotNull($link->class_teacher_id);
+        $this->assertNull($link->class_teacher_id, 'class_teacher_id should remain null');
+
+        $invite = TeacherInvite::where('email', 'new@school.ug')->first();
+        $this->assertNotNull($invite);
+        $this->assertNull($invite->claimed_at);
+
+        // Link-based mail queued
+        Mail::assertQueued(TeacherInviteLinkMail::class);
     }
 
     public function test_admin_can_reassign_existing_teacher_via_web_route(): void

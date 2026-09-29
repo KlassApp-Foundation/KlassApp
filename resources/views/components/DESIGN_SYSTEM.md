@@ -217,6 +217,27 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 
 ---
 
+### `<x-profile-photo />`
+
+The one frame for a user's profile photo (added 2026-09-27).
+
+```blade
+<x-profile-photo :user="$user" size="xl" class="mx-auto" />
+<x-profile-photo :user="Auth::user()" size="xs" shape="circle" />   {{-- nav trigger only --}}
+```
+
+| Prop | Default | Notes |
+|---|---|---|
+| `user` | **required** (may be `null`) | `null` renders the default image with `alt=""` |
+| `size` | `md` | `xs` 32 (nav trigger only) · `sm` 40 · `md` 64 · `lg` 128 · `xl` 192 px; `max-width: 100%` keeps it square in narrow columns |
+| `shape` | `square` | square = 12px radius + 1px `--d-border` ring; `circle` (2px `--d-avatar-ring`) is reserved for the profile-dropdown trigger |
+
+- Fallback uses `userprofile->avatar != null`, **not** `?->AvatarPath ?? default` — the accessor returns `''` when there is no avatar, which would emit `src=""`.
+- `alt` is the display name (FullName when the profile has a first name, else `name`).
+- Not for print/PDF templates (ID card, bus pass): they keep fixed inline px because DomPDF may not resolve CSS custom properties.
+
+---
+
 ### `<x-ds-kpi-card />`
 
 ```blade
@@ -276,7 +297,7 @@ The **only** way charts are created now — pages must not call `new Chart(...)`
          empty-message="No fee collections recorded yet"
          :labels="$points->pluck('label')->all()"
          :datasets="[[ 'label' => 'Fee Collection', 'data' => $points->pluck('amount')->all(),
-                       'borderColor' => '#22C55E', 'tension' => 0.3, 'fill' => true ]]"
+                       'borderColor' => '#15803D', 'tension' => 0.3, 'fill' => true ]]"
          :options="['plugins' => ['tooltip' => ['mode' => 'index']]]" />
 ```
 
@@ -288,8 +309,12 @@ The **only** way charts are created now — pages must not call `new Chart(...)`
 | `options` | `[]` | v4 options, deep-merged over KlassApp defaults (DM Sans ticks, `#F1F5F9` grid, slate tooltip) |
 | `optionsJs` | `null` | JS object literal merged at init — **the only place callbacks can live**, since JSON cannot carry functions |
 | `height` | `260` | shell height in px |
-| `ariaLabel` / `emptyMessage` | `null` / `No data yet` | accessibility + a real empty state instead of a blank canvas |
+| `ariaLabel` | `null` | accessible description of the chart |
+| `emptyMessage` | **required** | real empty state instead of a blank canvas; omitting it throws in local/testing (production falls back to `No data yet`) |
 | `centerValue` | `null` | value drawn in the middle of a doughnut |
+| `options.plugins.dsValueLabels.display` | off | bar value labels, 4px above each bar (DM Sans 600 11px `#1E293B`) — inline plugin, no `chartjs-plugin-datalabels`; add `layout.padding.top` headroom |
+
+Series colours must clear AA on white: fee green `#15803D`, girls/amber `#B45309`, unspecified `#64748B`, boys `#304ffe`. A dataset with no colour falls back to `#1E6FD9` / `#B45309` / `#15803D` / `#64748B` by index.
 
 Operational notes — each of these was a real bug, do not "simplify" them away:
 - Chart.js loads **once** (`@once @push('scripts')`), so pages without a chart do not pay for it.

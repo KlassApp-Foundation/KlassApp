@@ -2,219 +2,161 @@
     <div class="bg-white shadow px-4 py-3" v-bind:class="[this.profile_tab==4?'block' :'hidden']">
         <div>
             <fieldset class="shadow">
-                <h2 class="text-lg my-2">Father's Detail</h2>
+                <h2 class="text-lg my-2">Parent or guardian 1 (primary contact)</h2>
                 <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-2/3">
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_name" class="tw-form-label">Father Name<span class="text-red-500">*</span></label>
-                                    <input type="text" v-model="father_name" name="father_name" placeholder="Father Name" class="tw-form-control w-full my-1 py-2">
-                                    <span v-if="errors.father_name" class="text-red-500 text-xs font-semibold">{{ errors.father_name[0] }}</span>
-                                </div>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_qualification_id" class="tw-form-label">Qualification<span class="text-red-500">*</span></label>
-                                    <select class="tw-form-control w-full" id="father_qualification_id" v-model="father_qualification_id" name="father_qualification_id">
-                                        <option value="" disabled>Select Qualification</option>
-                                        <option v-for="qualifications in qualificationlist" v-bind:value="qualifications.id">{{ qualifications.display_name }}</option>
-                                    </select>
-                                </div>
-                                <span v-if="errors.father_qualification_id" class="text-red-500 text-xs font-semibold">{{ errors.father_qualification_id[0] }}</span>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_occupation" class="tw-form-label">Occupation<span class="text-red-500">*</span></label>
-                                    <input type="text" v-model="father_occupation" name="father_occupation" placeholder="Occupation" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.father_occupation" class="text-red-500 text-xs font-semibold">{{ errors.father_occupation[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_designation" class="tw-form-label">Designation<span class="text-red-500">*</span></label>
-                                    <input type="text" v-model="father_designation" name="father_designation" placeholder="Designation" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.father_designation" class="text-red-500 text-xs font-semibold">{{ errors.father_designation[0] }}</span>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_organization" class="tw-form-label">Organization<span class="text-red-500">*</span></label>
-                                    <input type="text" name="father_organization" v-model="father_organisation" placeholder="Organization" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.father_organisation" class="text-red-500 text-xs font-semibold">{{ errors.father_organisation[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="father_income" class="tw-form-label">Income (P.A)<span class="text-red-500">*</span></label>
-                                    <input type="text" name="father_income" v-model="father_income" placeholder="Income" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.father_income" class="text-red-500 text-xs font-semibold">{{ errors.father_income[0] }}</span>
-                            </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_name" class="tw-form-label">Full name<span class="text-red-500">*</span></label>
+                            <input type="text" name="father_name" v-model="father_name" placeholder="Full name" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_name" class="text-red-500 text-xs font-semibold">{{ errors.father_name[0] }}</span>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3">
-                        <div class="relative w-10/12 mx-auto my-2">
-                            <label for="father_avatar" class="tw-form-label">Attach Photo</label>
-                            <input type="file" name="father_avatar" @change="OnFileSelected($event,'father')" id="father_avatar" class="tw-form-control w-full">
-                            <div class="" v-if="father_image != ''">
-                                <img :src="father_image" style="width: 150px;height: 150px;">
-                            </div>
-                            <div class="" v-else>
-                                <img id="blah1" class="student-img text-sm border border-dashed border-gray-300 my-2" :src='url+"/uploads/user/avatar/default-user.jpg"' style="width: 150px;height: 150px;">
-                            </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_relationship" class="tw-form-label">Relationship to the child<span class="text-red-500">*</span></label>
+                            <input type="text" name="father_relationship" v-model="father_relationship" placeholder="Relationship to the child" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_relationship" class="text-red-500 text-xs font-semibold">{{ errors.father_relationship[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_mobile_no" class="tw-form-label">Phone<span class="text-red-500">*</span></label>
+                            <input type="text" name="father_mobile_no" v-model="father_mobile_no" placeholder="Phone number" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_mobile_no" class="text-red-500 text-xs font-semibold">{{ errors.father_mobile_no[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1 flex items-center">
+                            <input type="checkbox" id="father_on_whatsapp" name="father_on_whatsapp" value="1" v-model="father_on_whatsapp">
+                            <label for="father_on_whatsapp" class="tw-form-label mx-2">This number is on WhatsApp</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_alt_phone" class="tw-form-label">Alternative phone</label>
+                            <input type="text" name="father_alt_phone" v-model="father_alt_phone" placeholder="Alternative phone (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_alt_phone" class="text-red-500 text-xs font-semibold">{{ errors.father_alt_phone[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_email" class="tw-form-label">Email</label>
+                            <input type="text" name="father_email" v-model="father_email" placeholder="Email (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_email" class="text-red-500 text-xs font-semibold">{{ errors.father_email[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_occupation" class="tw-form-label">Occupation</label>
+                            <input type="text" name="father_occupation" v-model="father_occupation" placeholder="Occupation (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_occupation" class="text-red-500 text-xs font-semibold">{{ errors.father_occupation[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="father_district" class="tw-form-label">District of residence<span class="text-red-500">*</span></label>
+                            <input type="text" name="father_district" v-model="father_district" placeholder="District of residence" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.father_district" class="text-red-500 text-xs font-semibold">{{ errors.father_district[0] }}</span>
                         </div>
                     </div>
                 </div>
 
+                <h2 class="text-lg my-2">Parent or guardian 2</h2>
                 <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-1/3 lg:mr-2">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
                         <div class="my-1">
-                            <label for="father_mobile_no" class="tw-form-label">Mobile Number<span class="text-red-500">*</span></label>
-                            <input type="text" v-model="father_mobile_no" name="father_mobile_no" placeholder="Mobile Number" class="tw-form-control w-full my-1 py-2">
+                            <label for="mother_name" class="tw-form-label">Full name</label>
+                            <input type="text" name="mother_name" v-model="mother_name" placeholder="Full name (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_name" class="text-red-500 text-xs font-semibold">{{ errors.mother_name[0] }}</span>
                         </div>
-                        <span v-if="errors.father_mobile_no" class="text-red-500 text-xs font-semibold">{{ errors.father_mobile_no[0] }}</span>
                     </div>
-                    <div class="w-full lg:w-1/3 lg:mr-2">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
                         <div class="my-1">
-                            <label for="father_email" class="tw-form-label">Email ID</label>
-                            <input type="text" name="father_email" v-model="father_email" placeholder="Email ID" class="tw-form-control w-full my-1 py-2">
+                            <label for="mother_relationship" class="tw-form-label">Relationship to the child</label>
+                            <input type="text" name="mother_relationship" v-model="mother_relationship" placeholder="Relationship to the child (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_relationship" class="text-red-500 text-xs font-semibold">{{ errors.mother_relationship[0] }}</span>
                         </div>
-                        <span v-if="errors.father_email" class="text-red-500 text-xs font-semibold">{{ errors.father_email[0] }}</span>
                     </div>
                 </div>
-
-                <h2 class="text-lg my-2">Mother's Detail</h2>
                 <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-2/3">
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_name" class="tw-form-label">Mother Name<span class="text-red-500">*</span></label>
-                                    <input type="text" name="mother_name" v-model="mother_name" placeholder="Mother Name" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.mother_name" class="text-red-500 text-xs font-semibold">{{ errors.mother_name[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_qualification_id" class="tw-form-label">Qualification<span class="text-red-500">*</span></label>
-                                    <select class="tw-form-control w-full" id="mother_qualification_id" v-model="mother_qualification_id" name="mother_qualification_id">
-                                        <option value="" disabled>Select Qualification</option>
-                                        <option v-for="qualifications in qualificationlist" v-bind:value="qualifications.id">{{ qualifications.display_name }}</option>
-                                    </select>
-                                </div>
-                                <span v-if="errors.mother_qualification_id" class="text-red-500 text-xs font-semibold">{{ errors.mother_qualification_id[0] }}</span>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_occupation" class="tw-form-label">Occupation<span class="text-red-500">*</span></label>
-                                    <input type="text"  name="mother_occupation" v-model="mother_occupation" placeholder="Occupation" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.mother_occupation" class="text-red-500 text-xs font-semibold">{{ errors.mother_occupation[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_designation" class="tw-form-label">Designation<span class="text-red-500">*</span></label>
-                                    <input type="text" name="mother_designation" v-model="mother_designation" placeholder="Designation" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.mother_designation" class="text-red-500 text-xs font-semibold">{{ errors.mother_designation[0] }}</span>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_organisation" class="tw-form-label">Organization<span class="text-red-500">*</span></label>
-                                    <input type="text" name="mother_organisation" v-model="mother_organisation" placeholder="Organization" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.mother_organisation" class="text-red-500 text-xs font-semibold">{{ errors.mother_organisation[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="mother_income" class="tw-form-label">Income (P.A)<span class="text-red-500">*</span></label>
-                                    <input type="text" name="mother_income" placeholder="Income" v-model="mother_income" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.mother_income" class="text-red-500 text-xs font-semibold">{{ errors.mother_income[0] }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="w-full lg:w-1/3">
-                        <div class="relative w-10/12 mx-auto my-2">
-                            <label for="mother_avatar" class="tw-form-label">Attach Photo</label>
-                            <input type="file" name="mother_avatar" @change="OnFileSelected($event,'mother')" id="mother_avatar" class="tw-form-control w-full">
-                            <div class="" v-if="mother_image != ''">
-                                <img :src="mother_image" style="width: 150px;height: 150px;">
-                            </div>
-                            <div class="" v-else>
-                                <img id="blah1" class="student-img text-sm border border-dashed border-gray-300 my-2" :src='url+"/uploads/user/avatar/default-user.jpg"' style="width: 150px;height: 150px;">
-                            </div>
-                        </div>
-                        <span v-if="errors.mother_avatar" class="text-red-500 text-xs font-semibold">{{ errors.mother_avatar[0] }}</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-1/3 lg:mr-2">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
                         <div class="my-1">
-                            <label for="mother_mobile_no" class="tw-form-label">Mobile Number</label>
-                            <input type="text" name="mother_mobile_no" v-model="mother_mobile_no" placeholder="Mobile Number" class="tw-form-control w-full my-1 py-2">
+                            <label for="mother_mobile_no" class="tw-form-label">Phone</label>
+                            <input type="text" name="mother_mobile_no" v-model="mother_mobile_no" placeholder="Phone number (optional)" class="tw-form-control w-full my-1 py-2">
                             <span v-if="errors.mother_mobile_no" class="text-red-500 text-xs font-semibold">{{ errors.mother_mobile_no[0] }}</span>
                         </div>
                     </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1 flex items-center">
+                            <input type="checkbox" id="mother_on_whatsapp" name="mother_on_whatsapp" value="1" v-model="mother_on_whatsapp">
+                            <label for="mother_on_whatsapp" class="tw-form-label mx-2">This number is on WhatsApp</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="mother_alt_phone" class="tw-form-label">Alternative phone</label>
+                            <input type="text" name="mother_alt_phone" v-model="mother_alt_phone" placeholder="Alternative phone (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_alt_phone" class="text-red-500 text-xs font-semibold">{{ errors.mother_alt_phone[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="mother_email" class="tw-form-label">Email</label>
+                            <input type="text" name="mother_email" v-model="mother_email" placeholder="Email (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_email" class="text-red-500 text-xs font-semibold">{{ errors.mother_email[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col lg:flex-row">
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="mother_occupation" class="tw-form-label">Occupation</label>
+                            <input type="text" name="mother_occupation" v-model="mother_occupation" placeholder="Occupation (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_occupation" class="text-red-500 text-xs font-semibold">{{ errors.mother_occupation[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:mr-2">
+                        <div class="my-1">
+                            <label for="mother_district" class="tw-form-label">District of residence</label>
+                            <input type="text" name="mother_district" v-model="mother_district" placeholder="District of residence (optional)" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.mother_district" class="text-red-500 text-xs font-semibold">{{ errors.mother_district[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="text-lg my-2">Emergency contact (if different)</h2>
+                <div class="flex flex-col lg:flex-row">
                     <div class="w-full lg:w-1/3 lg:mr-2">
                         <div class="my-1">
-                            <label for="mother_email" class="tw-form-label">Email ID</label>
-                            <input type="text" name="mother_email" v-model="mother_email" placeholder="Email ID" class="tw-form-control w-full my-1 py-2">
+                            <label for="emergency_contact_name_1" class="tw-form-label">Name</label>
+                            <input type="text" name="emergency_contact_name_1" v-model="emergency_contact_name_1" placeholder="Name" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.emergency_contact_name_1" class="text-red-500 text-xs font-semibold">{{ errors.emergency_contact_name_1[0] }}</span>
                         </div>
-                        <span v-if="errors.mother_email" class="text-red-500 text-xs font-semibold">{{ errors.mother_email[0] }}</span>
+                    </div>
+                    <div class="w-full lg:w-1/3 lg:mr-2">
+                        <div class="my-1">
+                            <label for="relation_with_student_1" class="tw-form-label">Relationship to the child</label>
+                            <input type="text" name="relation_with_student_1" v-model="relation_with_student_1" placeholder="Relationship" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.relation_with_student_1" class="text-red-500 text-xs font-semibold">{{ errors.relation_with_student_1[0] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/3 lg:mr-2">
+                        <div class="my-1">
+                            <label for="emergency_contact_1" class="tw-form-label">Phone</label>
+                            <input type="text" name="emergency_contact_1" v-model="emergency_contact_1" placeholder="Phone number" class="tw-form-control w-full my-1 py-2">
+                            <span v-if="errors.emergency_contact_1" class="text-red-500 text-xs font-semibold">{{ errors.emergency_contact_1[0] }}</span>
+                        </div>
                     </div>
                 </div>
 
-                <h2 class="text-lg my-2">Emergency Contact<span class="text-red-500">*</span></h2>
-                <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-1/3 lg:mr-2">
-                        <div class="my-1 flex items-center">
-                            <label for="emergency_contact_1" class="tw-form-label">1.</label>
-                            <input type="text" name="emergency_contact_1" v-model="emergency_contact_1" placeholder="Mobile Number" class="tw-form-control w-full my-1 py-2 mx-2">
-                        </div>
-                        <span v-if="errors.emergency_contact_1" class="text-red-500 text-xs font-semibold">{{ errors.emergency_contact_1[0] }}</span>
-                    </div>
-                    <div class="w-full lg:w-2/3 lg:mr-2">
-                        <div class="my-1 flex flex-col lg:flex-row lg:items-center ml-5 lg:ml-0">
-                            <label for="relation_with_student_1" class="tw-form-label w-full lg:w-4/12">Relationship with Student</label>
-                            <input type="text" name="relation_with_student_1" v-model="relation_with_student_1" placeholder="Relationship" class="tw-form-control w-full lg:w-8/12 my-1 py-2">
-                        </div>
-                        <span v-if="errors.relation_with_student_1" class="text-red-500 text-xs font-semibold">{{ errors.relation_with_student_1[0] }}</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-1/3 lg:mr-2">
-                        <div class="my-1 flex items-center">
-                            <label for="emergency_contact_2" class="tw-form-label">2.</label>
-                            <input type="text" name="emergency_contact_2" v-model="emergency_contact_2" placeholder="Mobile Number" class="tw-form-control w-full my-1 py-2 mx-2">
-                        </div>
-                        <span v-if="errors.emergency_contact_2" class="text-red-500 text-xs font-semibold">{{ errors.emergency_contact_2[0] }}</span>
-                    </div>
-                    <div class="w-full lg:w-2/3 lg:mr-2">
-                        <div class="my-1 flex flex-col lg:flex-row items-center ml-5 lg:ml-0">
-                            <label for="relation_with_student_2" class="tw-form-label w-full lg:w-4/12">Relationship with Student</label>
-                            <input type="text" name="relation_with_student_2" v-model="relation_with_student_2" placeholder="Relationship" class="tw-form-control w-full lg:w-8/12 my-1 py-2">
-                        </div>
-                        <span v-if="errors.relation_with_student_2" class="text-red-500 text-xs font-semibold">{{ errors.relation_with_student_2[0] }}</span>
-                    </div>
-                </div>
-  
                 <a href="#" dusk="submit-btn" class=" btn-primary submit-btn blue-bg text-sm text-white px-2 py-1 rounded mx-1" @click="previousForm('3')">Previous</a>
                 <a href="#" dusk="submit-btn" class=" btn-primary submit-btn blue-bg text-sm text-white px-2 py-1 rounded mx-1" @click="submitForm('5')">Next</a>
             </fieldset>
@@ -231,30 +173,24 @@
             return{
                 profile_tab:'',
                 father_name:'',
-                father_qualification_id:'',
-                father_occupation:'',
-                father_designation:'',
-                father_organisation:'',
-                father_income:'',
+                father_relationship:'',
                 father_mobile_no:'',
+                father_on_whatsapp:true,
+                father_alt_phone:'',
                 father_email:'',
-                father_avatar:'',
-                father_image:'',
+                father_occupation:'',
+                father_district:'',
                 mother_name:'',
-                mother_qualification_id:'',
-                mother_occupation:'',
-                mother_designation:'',
-                mother_organisation:'',
-                mother_income:'',
+                mother_relationship:'',
                 mother_mobile_no:'',
+                mother_on_whatsapp:true,
+                mother_alt_phone:'',
                 mother_email:'',
-                mother_avatar:'',
-                mother_image:'',
-                emergency_contact_1:'',
+                mother_occupation:'',
+                mother_district:'',
+                emergency_contact_name_1:'',
                 relation_with_student_1:'',
-                emergency_contact_2:'',
-                relation_with_student_2:'',
-                qualificationlist:[],
+                emergency_contact_1:'',
                 errors:[],
                 success:null,
             }
@@ -262,41 +198,6 @@
         
         methods:
         {     
-            OnFileSelected(event,type)
-            {
-                if(type == 'mother')
-                {
-                    this.mother_avatar = event.target.files[0];
-                }
-                else if(type == 'father')
-                {
-                    this.father_avatar = event.target.files[0];
-                }
-                let files = event.target.files || event.dataTransfer.files;
-                if (!files.length)
-                return;
-                this.createImage(files[0],type);
-            },
-
-            createImage(file,type) 
-            {
-                let reader = new FileReader();
-                let vm = this;
-                if(type == 'mother')
-                {
-                    reader.onload = (e) => {
-                        vm.mother_image = e.target.result;
-                    };
-                }
-                else if(type == 'father')
-                {
-                    reader.onload = (e) => {
-                        vm.father_image = e.target.result;
-                    };
-                }
-                reader.readAsDataURL(file);
-            },
-
             submitForm(val)
             {
                 this.errors=[];
@@ -305,29 +206,26 @@
                 let formData = new FormData(); 
 
                 formData.append('father_name',this.father_name);          
-                formData.append('father_qualification_id',this.father_qualification_id);          
-                formData.append('father_designation',this.father_designation);          
-                formData.append('father_occupation',this.father_occupation);                
-                formData.append('father_organisation',this.father_organisation);                
-                formData.append('father_income',this.father_income);                
-                formData.append('father_mobile_no',this.father_mobile_no);                
-                formData.append('father_email',this.father_email);                
-                formData.append('father_avatar',this.father_avatar);                
+                formData.append('father_relationship',this.father_relationship);          
+                formData.append('father_mobile_no',this.father_mobile_no);          
+                formData.append('father_on_whatsapp',this.father_on_whatsapp ? 1 : 0);          
+                formData.append('father_alt_phone',this.father_alt_phone);          
+                formData.append('father_email',this.father_email);          
+                formData.append('father_occupation',this.father_occupation);          
+                formData.append('father_district',this.father_district);          
 
                 formData.append('mother_name',this.mother_name);          
-                formData.append('mother_qualification_id',this.mother_qualification_id);          
-                formData.append('mother_designation',this.mother_designation);          
-                formData.append('mother_occupation',this.mother_occupation);                
-                formData.append('mother_organisation',this.mother_organisation);                
-                formData.append('mother_income',this.mother_income);                
-                formData.append('mother_mobile_no',this.mother_mobile_no);                
-                formData.append('mother_email',this.mother_email);                
-                formData.append('mother_avatar',this.mother_avatar);                
+                formData.append('mother_relationship',this.mother_relationship);          
+                formData.append('mother_mobile_no',this.mother_mobile_no);          
+                formData.append('mother_on_whatsapp',this.mother_on_whatsapp ? 1 : 0);          
+                formData.append('mother_alt_phone',this.mother_alt_phone);          
+                formData.append('mother_email',this.mother_email);          
+                formData.append('mother_occupation',this.mother_occupation);          
+                formData.append('mother_district',this.mother_district);          
 
-                formData.append('emergency_contact_1',this.emergency_contact_1);                    
+                formData.append('emergency_contact_name_1',this.emergency_contact_name_1);                    
                 formData.append('relation_with_student_1',this.relation_with_student_1);                    
-                formData.append('emergency_contact_2',this.emergency_contact_2);                    
-                formData.append('relation_with_student_2',this.relation_with_student_2);                    
+                formData.append('emergency_contact_1',this.emergency_contact_1);                    
        
                 axios.post(this.url+'/'+this.slug+'/admission-form/validationParentDetail',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
                     this.setProfileTab(val); 
@@ -347,11 +245,9 @@
                 bus.$emit("dataAdmissionTab", this.profile_tab);
             },
         },
+
         created()
         {
-            axios.get(this.url+'/'+this.slug+'/standardlist').then(response => { 
-                this.qualificationlist = response.data.qualificationlist;    
-            });
             bus.$on("dataAdmissionTab", data => {
                 if(data!='')
                 {

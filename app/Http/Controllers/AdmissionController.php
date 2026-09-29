@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\AdmissionUser;
 use App\Models\SchoolDetail;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;
 use App\Models\Userprofile;
@@ -58,16 +59,36 @@ class AdmissionController extends Controller
      */
     public function create($slug)
     {
-        $school = School::where('slug',$slug)->first();
+        $school = School::where('slug', $slug)->first();
 
-        $admission_open = SchoolDetail::where('school_id',$school->id)->where('meta_key','admission_open')->first();
+        if (! $school) {
+            abort(404);
+        }
 
-        $logo = SchoolDetail::where('school_id',$school->id)->where('meta_key','school_logo')->first();
-        $logo = $logo->LogoPath;
+        try {
+            $admission_open = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'admission_open')->first();
 
-        $closedetails = SchoolDetail::where('school_id',$school->id)->where('meta_key','admission_close_message')->first();
+            $logo = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'school_logo')->first();
 
-        return view('/pages/admission/admission',['admission_open' => $admission_open , 'closedetails' => $closedetails , 'slug' => $slug , 'logo' => $logo]);
+            $closedetails = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'admission_close_message')->first();
+
+            $boarding = SchoolDetail::where('school_id', $school->id)->where('meta_key', 'boarding_available')->value('meta_value');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->view('pages.admission.unavailable', ['slug' => $slug], 503);
+        }
+
+        $logoValue = $logo?->meta_value;
+
+        return view('/pages/admission/admission', [
+            'admission_open' => $admission_open,
+            'isOpen'         => ($admission_open?->meta_value === '1'),
+            'closedetails'   => $closedetails,
+            'slug'           => $slug,
+            'logo'           => (filled($logoValue) && $logoValue !== '-' ? ($logo->LogoPath ?? '') : ''),
+            'boardingAvailable' => ($boarding === '1'),
+        ]);
     }
 
     /**
@@ -132,13 +153,36 @@ class AdmissionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,$slug)
+    public function store(Request $request, $slug)
     {
-        $school=School::where('slug',$slug)->first();
+        $school = School::where('slug', $slug)->first();
 
+        if (! $school) {
+            abort(404);
+        }
+
+        try {
+            return $this->storeAdmission($request, $school);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('failmessage', 'We could not submit the application right now. Please try again in a few minutes.');
+        }
+    }
+
+    /**
+     * Persist the admission form submission.
+     */
+    private function storeAdmission(Request $request, School $school)
+    {
         $academic_year  = SiteHelper::getAcademicYear($school->id);
         try
-        {  
+        {
             $admin = User::where('school_id',$school->id)->ByRole(3)->first();
        
             $admission = new Admission;
@@ -146,7 +190,11 @@ class AdmissionController extends Controller
             $admission->school_id           = $school->id;
             $admission->academic_year_id    = $academic_year->id;
             $admission->standard_id         = $request->standard_id;
+            $admission->entry_term           = $request->entry_term;
+            $admission->entry_year           = $request->entry_year;
+            $admission->boarding_type        = $request->boarding_type;
             $admission->name                = $request->name;
+            $admission->lastname            = $request->lastname;
             $admission->date_of_birth       = $request->date_of_birth;
             $file=$request->avatar;
             if($file)
@@ -157,16 +205,27 @@ class AdmissionController extends Controller
                 
                 $admission->avatar=$path;
             }
+
+            $birthcert=$request->birth_certificate;
+            if($birthcert)
+            {
+                $birthcert_name = $request->birth_certificate->getClientOriginalName();
+                $folder         = $school->id.'/student/documents';
+                $birthcert_path = $this->uploadFile($folder,$birthcert);
+
+                $admission->birth_certificate = $birthcert_path;
+            }
             $admission->gender                      = $request->gender;
             $admission->height                      = $request->height;
             $admission->weight                      = $request->weight;
             $admission->birth_place                 = $request->birth_place;
             $admission->nationality                 = $request->nationality;
             $admission->religion                    = $request->religion;
-            $admission->community                   = $request->community;
+            $admission->home_district               = $request->home_district;
+            $admission->village_town                = $request->village_town;
+            $admission->lin                         = $request->lin;
             $admission->mother_tongue               = $request->mother_tongue;
             $admission->identification_marks        = $request->identification_marks;
-            $admission->aadhar_number               = $request->aadhar_number;
             $admission->blood_group                 = $request->blood_group;
             $admission->school_last_studied         = $request->school_last_studied;
             $admission->reason_for_leaving          = $request->reason_for_leaving;
@@ -178,77 +237,50 @@ class AdmissionController extends Controller
             $array=[];
 
             $array['english']   = $request->english; 
-            $array['tamil']     = $request->tamil;
             $array['maths']     = $request->maths;
             $array['science']   = $request->science;
             $array['social']    = $request->social;
 
-            $admission->half_yearly_mark_details  = $array;
+            $admission->half_yearly_mark_details  = json_encode($array);
+
+            $admission->last_class_completed      = $request->last_class_completed;
+            $admission->ple_index_number          = $request->ple_index_number;
+            $admission->ple_aggregate             = $request->ple_aggregate;
+            $admission->uce_index_number          = $request->uce_index_number;
+            $admission->uce_results_summary       = $request->uce_results_summary;
 
             $admission->board_of_education        = $request->board_of_education;
             $admission->choice_of_language        = $request->choice_of_language;
             $admission->group_selection           = $request->group_selection;
             $admission->father_name               = $request->father_name;
-            $admission->father_qualification_id   = $request->father_qualification_id;
-            $admission->father_designation        = $request->father_designation;
-            $admission->father_occupation         = $request->father_occupation;
-            $admission->father_organisation       = $request->father_organisation;
-            $admission->father_income             = $request->father_income;
+            $admission->father_relationship       = $request->father_relationship;
             $admission->father_mobile_no          = $request->father_mobile_no;
+            $admission->father_on_whatsapp        = $request->has('father_on_whatsapp') ? $request->boolean('father_on_whatsapp') : null;
+            $admission->father_alt_phone          = $request->father_alt_phone;
             $admission->father_email              = $request->father_email;
-            $admission->father_aadhar_number      = $request->father_aadhar_number;
+            $admission->father_occupation         = $request->father_occupation;
+            $admission->father_district           = $request->father_district;
 
-            $motherfile = $request->mother_avatar;
-            if($motherfile)
-            {
-                $motherfile_name = $request->mother_avatar->getClientOriginalName();
-                $folder          = $school->id.'/student/avatar';
-                $mother_path     = $this->uploadFile($folder,$motherfile);
-
-                $admission->mother_avatar = $mother_path;
-            }
-
-            $fatherfile = $request->father_avatar;
-            if($fatherfile)
-            {
-                $fatherfile_name = $request->father_avatar->getClientOriginalName();
-                $folder          = $school->id.'/student/avatar';
-                $father_path     = $this->uploadFile($folder,$fatherfile);
-
-                $admission->father_avatar = $father_path;
-            }
-      
             $admission->mother_name               = $request->mother_name;
-            $admission->mother_qualification_id   = $request->mother_qualification_id;
-            $admission->mother_designation        = $request->mother_designation;
-            $admission->mother_occupation         = $request->mother_occupation;
-            $admission->mother_organisation       = $request->mother_organisation;
-            $admission->mother_income             = $request->mother_income;
+            $admission->mother_relationship       = $request->mother_relationship;
             $admission->mother_mobile_no          = $request->mother_mobile_no;
+            $admission->mother_on_whatsapp        = $request->has('mother_on_whatsapp') ? $request->boolean('mother_on_whatsapp') : null;
+            $admission->mother_alt_phone          = $request->mother_alt_phone;
             $admission->mother_email              = $request->mother_email;
-            $admission->mother_aadhar_number      = $request->mother_aadhar_number;
+            $admission->mother_occupation         = $request->mother_occupation;
+            $admission->mother_district           = $request->mother_district;
 
+            $admission->emergency_contact_name_1        = $request->emergency_contact_name_1;
             $admission->emergency_contact_1             = $request->emergency_contact_1;
             $admission->relation_with_student_1         = $request->relation_with_student_1;
-            $admission->emergency_contact_2             = $request->emergency_contact_2;
-            $admission->relation_with_student_2         = $request->relation_with_student_2;
-            $admission->medical_history                 = $request->medical_history;
-            $admission->medical_details                 = $request->medical_details;
-            $admission->extra_curricular_activities     = $request->extra_curricular_activities;
-            $admission->activities                      = $request->activities;
-            $admission->mode_of_transport               = $request->mode_of_transport;
 
-            if($admission->mode_of_transport == 'car' || $admission->mode_of_transport == 'taxi' || $admission->mode_of_transport == 'auto')
-            {
-                $array=[];
-                $array['driver_name']           = $request->driver_name; 
-                $array['driver_mobile_number']  = $request->driver_mobile_number;
+            $admission->medical_conditions              = $request->medical_conditions;
+            $admission->special_needs                   = $request->special_needs;
 
-                $admission->transport_details   = $array;
-            }
-    
             $admission->application_status      = 'Draft';
             $admission->application_no          = 'APP-FORM-'.date('YmdHis');
+            $admission->payment_status          = 'unpaid';
+            $admission->remarks                 = (string) $request->remarks;
 
             $admission->save();
 
@@ -267,8 +299,9 @@ class AdmissionController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            dd($e->getMessage());
+            Log::error('Admission form submit failed', ['error' => $e->getMessage()]);
+
+            throw $e;
         }   
     }  
 }

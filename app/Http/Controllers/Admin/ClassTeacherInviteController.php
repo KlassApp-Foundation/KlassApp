@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Services\ClassTeacherInviteService;
+use App\Services\TeacherInviteLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -45,7 +47,12 @@ class ClassTeacherInviteController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.class-teacher-invite.create', compact('section', 'standardLink', 'existingTeachers'));
+        $pendingInvites = TeacherInvite::where('school_id', $schoolId)
+            ->whereNull('claimed_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.class-teacher-invite.create', compact('section', 'standardLink', 'existingTeachers', 'pendingInvites'));
     }
 
     /**
@@ -73,5 +80,37 @@ class ClassTeacherInviteController extends Controller
         $flashKey = $result['success'] ? 'successmessage' : 'errormessage';
 
         return redirect()->route('admin.classes')->with($flashKey, $result['message']);
+    }
+
+    /**
+     * Resend an invite with a fresh token. The previous link stops working.
+     */
+    public function resend(TeacherInvite $invite)
+    {
+        $user = Auth::user();
+        abort_if(
+            (int) $invite->school_id !== (int) $user->school_id,
+            403,
+            'You are not authorized for this school.'
+        );
+
+        if ($invite->isClaimed()) {
+            return redirect()->route('admin.classes')
+                ->with('errormessage', 'This invite has already been used.');
+        }
+
+        $result = TeacherInviteLinkService::reissue($invite);
+        $school = $invite->school;
+        $className = $invite->standardLink?->section?->name
+            ?? $invite->standardLink?->stream
+            ?? null;
+
+        TeacherInviteLinkService::sendEmail($result['invite'], $result['token'], $school, $className);
+
+        if ($invite->phone !== null && trim((string) $invite->phone) !== '') {
+            TeacherInviteLinkService::sendWhatsApp($result['invite'], $result['token'], $school, $className);
+        }
+
+        return back()->with('successmessage', 'A fresh invite link has been sent.');
     }
 }

@@ -237,7 +237,7 @@ class WhatsAppToshiChannelTest extends TestCase
             'child_name' => 'Alice',
         ]));
 
-        $this->assertStringContainsString('Alice Child', $result);
+        $this->assertStringContainsString('ALICE CHILD', $result);
         $this->assertStringContainsString('Fee Balance', $result);
     }
 
@@ -314,8 +314,8 @@ class WhatsAppToshiChannelTest extends TestCase
         $this->actingAs($this->parent);
 
         $toolResult = (new ListChildrenTool)->handle(new Request([]));
-        $this->assertStringContainsString('Alice Child', $toolResult);
-        $this->assertStringContainsString('Bob Child', $toolResult);
+        $this->assertStringContainsString('ALICE CHILD', $toolResult);
+        $this->assertStringContainsString('BOB CHILD', $toolResult);
 
         // Teacher must not pass parent authorize
         $this->actingAs($this->teacher);

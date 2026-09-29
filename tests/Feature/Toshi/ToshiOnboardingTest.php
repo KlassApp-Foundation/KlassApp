@@ -287,13 +287,16 @@ class ToshiOnboardingTest extends TestCase
         $component->set('step', 0);
         $component->set('substep', 0);
 
-        // Select Growth plan
-        $component->call('selectPlan', 2);
-
         // School info
         $component->set('input', 'Limit Test School')->call('send');
         $component->set('input', 'yes')->call('send');
         $component->call('setSchoolType', 'primary', '', 'mixed');
+
+        // Student size, country, EMIS, UNEB (steps added in #177)
+        $component->set('input', 'Under 100 students')->call('send');
+        $component->set('input', 'Uganda')->call('send');
+        $component->set('input', 'skip')->call('send');
+        $component->set('input', 'skip')->call('send');
 
         // Admin account: email + name + phone + password
         $component->set('input', 'admin@limittest.sch.ug')->call('send');
@@ -308,18 +311,15 @@ class ToshiOnboardingTest extends TestCase
         $component->call('coAdminInviteSkip');
 
         // Academic year: accept default
-        $component->set('input', 'go')->call('send');
         $component->set('input', 'yes')->call('send');
 
-        // Standards: confirm defaults, skip streams for all 10 classes (3 nursery + 7 primary)
+        // Standards: confirm defaults, then decline streams for all 7 primary classes
         $component->set('input', 'yes')->call('send');
-        $component->set('input', 'yes')->call('send');
-        // 10x 'no' for streams (Baby, Middle, Top, Primary 1-7)
-        foreach (range(1, 10) as $i) {
+        foreach (range(1, 7) as $i) {
             $component->set('input', 'no')->call('send');
         }
 
-        // Subjects: accept defaults (advance() already loaded them, one 'yes' confirms)
+        // Subjects: accept defaults
         $component->set('input', 'yes')->call('send');
 
         // Teachers: skip via doneTeachers() button
@@ -328,23 +328,23 @@ class ToshiOnboardingTest extends TestCase
         // Students: skip via doneStudents button
         $component->call('doneStudents');
 
-        // Terms: accept default 3 terms (advance() already loaded them, one 'yes' confirms)
+        // Terms: accept default 3 terms, then mark the current term
         $component->set('input', 'yes')->call('send');
+        $component->call('doneTermsCurrent');
 
-        // Fees: skip using doneFees() to avoid form mode
+        // Fees, exams: skip via done buttons
         $component->call('doneFees');
-
-        // Exams: skip using doneExams() to avoid form mode
         $component->call('doneExams');
 
-        // WhatsApp verify: 'no' at substep=1 skips directly
-        $component->set('input', 'no')->call('send');
-
-        // School pay: skip
+        // WhatsApp verify and School Pay: skip
+        $component->set('input', 'skip')->call('send');
         $component->set('input', 'skip')->call('send');
 
+        // Plan selection is the final step (#177): pick Growth
+        $component->set('input', 'Growth')->call('send');
+
         // Now at review — inject 4 students over the 2-student limit
-        $this->assertEquals(14, $component->get('step'), 'Should be at review step');
+        $this->assertSame('review', $component->get('steps')[$component->get('step')] ?? null, 'Should be at review step');
 
         $names = ['Alice', 'Bob', 'Charlie', 'Diana'];
         $component->set('studentList', $names);
@@ -382,19 +382,21 @@ class ToshiOnboardingTest extends TestCase
                 "Term '{$term->name}' status '{$term->status}' must be valid");
         }
 
-        // 5. Only 2 students (plan limit enforcement sliced 4 → 2)
+        // 5. All 4 students kept — onboarding commits are not truncated by plan
+        //    limits since #177; the limit gates later adds instead.
         $students = User::where('school_id', $schoolId)->where('usergroup_id', 6)->orderBy('id')->get();
-        $this->assertCount(2, $students);
+        $this->assertCount(4, $students);
 
         // 6. Admin user exists
         $adminUser = \App\Models\User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
         $this->assertNotNull($adminUser, 'School admin must exist');
 
-        // 7. Verify conversational limit note
-        $note = $component->get('onboardingLimitNote');
-        $this->assertStringContainsString('2 students', $note);
-        $this->assertStringContainsString('Growth', $note);
-        $this->assertStringNotContainsString('<', $note);
+        // 7. Adding more students is now blocked at the Growth limit
+        $blocked = \App\Services\ToshiActionService::enforcePlanLimit($schoolId, 'students');
+        $this->assertFalse($blocked['success'], 'Growth allows 2 students; further adds must be blocked');
+        $this->assertStringContainsString('2 students', $blocked['message']);
+        $this->assertStringContainsString('Growth', $blocked['message']);
+        $this->assertStringNotContainsString('<', $blocked['message']);
     }
 
     /** @test */
@@ -410,11 +412,14 @@ class ToshiOnboardingTest extends TestCase
         $component->set('step', 0);
         $component->set('substep', 0);
 
-        // Walk through full onboarding (same flow as enforcement test)
-        $component->call('selectPlan', 1);
+        // Walk through full onboarding — plan selection is the final step (#177)
         $component->set('input', 'Freemium E2E ' . now()->timestamp)->call('send');
         $component->set('input', 'yes')->call('send');
         $component->call('setSchoolType', 'primary', '', 'mixed');
+        $component->set('input', 'Under 100 students')->call('send');
+        $component->set('input', 'Uganda')->call('send');
+        $component->set('input', 'skip')->call('send');
+        $component->set('input', 'skip')->call('send');
         $component->set('input', 'admin.freemium@e2e.test')->call('send');
         $component->set('input', 'yes')->call('send');
         $component->set('input', 'Freemium Admin')->call('send');
@@ -423,21 +428,21 @@ class ToshiOnboardingTest extends TestCase
         $component->set('input', 'yes')->call('send');
         $component->set('input', 'password123')->call('send');
         $component->call('coAdminInviteSkip');
-        $component->set('input', 'go')->call('send');
         $component->set('input', 'yes')->call('send');
         $component->set('input', 'yes')->call('send');
-        $component->set('input', 'yes')->call('send');
-        foreach (range(1, 10) as $i) {
+        foreach (range(1, 7) as $i) {
             $component->set('input', 'no')->call('send');
         }
         $component->set('input', 'yes')->call('send');
         $component->call('doneTeachers');
         $component->call('doneStudents');
         $component->set('input', 'yes')->call('send');
+        $component->call('doneTermsCurrent');
         $component->call('doneFees');
         $component->call('doneExams');
-        $component->set('input', 'no')->call('send');
         $component->set('input', 'skip')->call('send');
+        $component->set('input', 'skip')->call('send');
+        $component->set('input', 'Freemium')->call('send');
 
         // Inject 3 students (within 5-student Freemium limit)
         $names = ['Alice', 'Bob', 'Charlie'];
@@ -483,8 +488,8 @@ class ToshiOnboardingTest extends TestCase
         $adminUser = \App\Models\User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
         $this->assertNotNull($adminUser, 'School admin must exist');
 
-        // 7. No limit note (under limit)
-        $note = $component->get('onboardingLimitNote');
-        $this->assertEmpty($note, 'No limit note expected when under plan limit');
+        // 7. Under the limit — further adds remain allowed
+        $allowed = \App\Services\ToshiActionService::enforcePlanLimit($schoolId, 'students');
+        $this->assertTrue($allowed['success'], '3 of 5 Freemium students used; adds must remain allowed');
     }
 }

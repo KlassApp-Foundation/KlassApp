@@ -1,6 +1,6 @@
 {
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-QJ8IXZRn.js",
+    "file": "assets/quill--5P_nVAC.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/assets/js/app.js": {
-    "file": "assets/app-D5G2i3m0.js",
+    "file": "assets/app-BgrAfJdh.js",
     "name": "app",
     "src": "resources/assets/js/app.js",
     "isEntry": true,
@@ -39,7 +39,7 @@
     "isEntry": true
   },
   "resources/css/landing-preview.css": {
-    "file": "assets/landing-preview-tL4aBA7i.css",
+    "file": "assets/landing-preview-DEPGYeOg.css",
     "name": "landing-preview",
     "names": [
       "landing-preview.css"
@@ -57,7 +57,7 @@
     "isEntry": true
   },
   "resources/css/tailwind.css": {
-    "file": "assets/tailwind-sJPseVMh.css",
+    "file": "assets/tailwind-CJL1bmlj.css",
     "name": "tailwind",
     "names": [
       "tailwind.css"
@@ -66,7 +66,7 @@
     "isEntry": true
   },
   "resources/js/landing-preview.js": {
-    "file": "assets/landing-preview-i2dZuhwk.js",
+    "file": "assets/landing-preview-DZ_PEfrT.js",
     "name": "landing-preview",
     "src": "resources/js/landing-preview.js",
     "isEntry": true

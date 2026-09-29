@@ -94,21 +94,20 @@ Route::prefix('preview')->name('preview.')->group(function () {
     })->where('code', '404|419|500')->name('errors');
 });
 
-// Landing page v2 (Flare-style)
-Route::get('/landing2', function () {
-    return view('landing2');
-});
-
-// Landing page (public)
-Route::get('/landing', function () {
-    return view('landing');
-});
-
-// Clean landing section URLs (no more hash anchors)
-Route::get('/features', fn() => view('landing', ['scrollTo' => 'features']));
-Route::get('/pricing', fn() => view('landing', ['scrollTo' => 'pricing']));
-Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
-Route::get('/contact', fn() => view('landing', ['scrollTo' => 'contact']));
+// ── Legacy marketing paths → 301 to the new landing (/) ──────────────────
+// The new landing has no features/pricing/schools sections, so those paths
+// land on /. Only /demo and GET /contact map to a section (#demo).
+// Registered GET-only on purpose: Router::redirect() registers any-method and
+// would shadow POST /contact (contact.send), which must keep working.
+// Kept routes under these prefixes: POST /contact, GET /schools/{slug},
+// GET /demo/schoolList, GET /demo/list/{school_id}, POST /demo-request,
+// API GET /schools/list, and the existing /landing-preview 301 above.
+Route::get('/landing', fn () => redirect('/', 301));
+Route::get('/landing2', fn () => redirect('/', 301));
+Route::get('/features', fn () => redirect('/', 301));
+Route::get('/pricing', fn () => redirect('/', 301));
+Route::get('/schools', fn () => redirect('/', 301));
+Route::get('/contact', fn () => redirect('/#demo', 301));
 
 Route::post('/contact', function (Illuminate\Http\Request $request) {
     $request->validate([
@@ -132,7 +131,12 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 
     return redirect('/contact?sent=true#contact');
 })->name('contact.send');
-Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
+Route::get('/demo', fn () => redirect('/#demo', 301));
+
+// Demo request capture (public form on the landing)
+Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('demo.request.store');
 
 // Terms of Service and Privacy Policy
 Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
@@ -143,6 +147,18 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
+// Teacher invite link — one-time password-set flow (no credentials in email)
+Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])
+    ->name('teacher.invite.form');
+Route::post('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'claim'])
+    ->name('teacher.invite.claim');
+
+// Co-admin invite link — one-time password-set flow (no credentials in email)
+Route::get('/invite/co-admin/{token}', [\App\Http\Controllers\CoAdminInviteController::class, 'show'])
+    ->name('coadmin.invite.form');
+Route::post('/invite/co-admin/{token}', [\App\Http\Controllers\CoAdminInviteController::class, 'claim'])
+    ->name('coadmin.invite.claim');
+
 Route::get('/parent/magic-login/{user}/{nonce}', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'show'])
     ->middleware('signed')
     ->name('parent.magic-login');
@@ -150,7 +166,6 @@ Route::post('/parent/magic-login/confirm', [\App\Http\Controllers\Auth\ParentMag
     ->name('parent.magic-login.confirm');
 
 Route::get('/whatsapp/report-files/{token}', [\App\Http\Controllers\WhatsAppReportFileController::class, 'show'])
-    ->middleware('signed')
     ->where('token', '[A-Za-z0-9]{40}')
     ->name('whatsapp.report-file');
 
@@ -189,7 +204,6 @@ Route::post('/password/force-change', 'Auth\ForceChangePasswordController@store'
 //Email Verification for Member
 Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification');
 // OTP Verification
-Route::get('/checksms', 'TestController@checksms');
 Route::get('/verifyotp', 'OTPController@create');
 Route::post('/verifyotp', 'OTPController@store');
 
@@ -229,10 +243,6 @@ Route::group(['middleware' => ['siteadmin'], 'namespace' => 'Admin'], function (
 Route::get('/demo/schoolList', 'Demo\WelcomeController@schoolList');
 Route::get('/demo/list/{school_id}', 'Demo\WelcomeController@list');
 
-Route::get('/cache-clear', function () {
-    Artisan::call('cache:clear');
-});
-
 Route::get('/{slug}/standardlist','AdmissionController@list');
 Route::get( '/{slug}/admission-form', 'AdmissionController@create' );
 Route::post( '/{slug}/admission-form', 'AdmissionController@store' );
@@ -262,6 +272,10 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
    Route::get('reports/contact', function () {
         return view('superadmin.reports.contactlist');
     })->name('superadmin.reports.contactlist');
+
+   Route::get('reports/demo-requests', function () {
+        return view('superadmin.reports.demorequestlist');
+    })->name('superadmin.reports.demorequests');
 
    //School
    Route::get('academics/school/create', function () {

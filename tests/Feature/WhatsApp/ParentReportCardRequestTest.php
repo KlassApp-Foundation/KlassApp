@@ -339,7 +339,9 @@ class ParentReportCardRequestTest extends TestCase
             ->assertHeader('Content-Type', 'application/pdf');
 
         $path = parse_url($result['url'], PHP_URL_PATH);
-        $this->get($path)->assertForbidden();
+        $this->get($path)
+            ->assertStatus(410)
+            ->assertSee('This link has expired');
     }
 
     public function test_prune_command_deletes_old_report_files(): void

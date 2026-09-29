@@ -31,6 +31,22 @@
             </div>
         </a>
 
+        {{-- Demo Requests --}}
+        <a href="{{ route('superadmin.reports.demorequests') }}"
+           class="block bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-[#D97706]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Demo Requests</h2>
+                    <p class="text-sm text-gray-500 mt-1">Lead form submissions from the public landing page</p>
+                </div>
+            </div>
+        </a>
+
         {{-- Subscriptions --}}
         <a href="{{ route('superadmin.reports.subscriptionlist') }}"
            class="block bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6">

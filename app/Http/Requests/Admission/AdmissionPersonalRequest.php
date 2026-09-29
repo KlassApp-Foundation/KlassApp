@@ -31,16 +31,9 @@ class AdmissionPersonalRequest extends FormRequest
 
         $rules= [
             //
-            'medical_history'               => 'required',
-            'extra_curricular_activities'   => 'required',
-            'mode_of_transport'             => 'required',
+            'medical_conditions'    => 'nullable|string|max:2000',
+            'special_needs'         => 'nullable|string|max:2000',
         ];
-
-        if( (request('mode_of_transport') == 'auto') || (request('mode_of_transport') == 'rickshaw') || (request('mode_of_transport') == 'taxi') )
-        { 
-            $rules['driver_name']           =  'required|check_driver_name';
-            $rules['driver_mobile_number']  =  'required|numeric|digits:10';
-        }
 
         return $rules;
     }
@@ -49,18 +42,8 @@ class AdmissionPersonalRequest extends FormRequest
     {
         return
         [
-            'medical_history.required'              => 'Medical History Is Required',
-
-            'extra_curricular_activities.required'  => 'Extra Curricular Activities Is Required',
-
-            'mode_of_transport.required'            => 'Mode Of Trasnport Is Required',
-
-            'driver_name.required'                  => 'Driver Name Required',
-            'driver_name.check_driver_name'         => 'Enter Valid Driver Name',
-
-            'driver_mobile_number.required'         => 'Driver Mobile No. Required',
-            'driver_mobile_number.numeric'          => 'Enter Valid Mobile Number',
-            'driver_mobile_number.digits:10'        => 'Mobile Number Should Be 10 Digits',
+            'medical_conditions.max' => 'Please keep this under 2000 characters.',
+            'special_needs.max'      => 'Please keep this under 2000 characters.',
         ];
     }
 }

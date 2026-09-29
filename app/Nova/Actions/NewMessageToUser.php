@@ -43,7 +43,7 @@ class NewMessageToUser extends Action
         { 
             if(env('MAIL_STATUS') == 'on')
             {
-                $message = (new NewMessage($fields->subject,$fields->message,$user))->onQueue('email');
+                $message = new NewMessage($fields->subject,$fields->message,$user);
                 Mail::to($user->email)->queue($message);
             }        
         }

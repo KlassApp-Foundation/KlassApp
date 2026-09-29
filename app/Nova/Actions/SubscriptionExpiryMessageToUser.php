@@ -42,7 +42,7 @@ class SubscriptionExpiryMessageToUser extends Action
         
         foreach ($users as $user)
         { 
-            $message = (new NewMessage($fields->subject,$fields->message,$user))->onQueue('email');
+            $message = new NewMessage($fields->subject,$fields->message,$user);
             Mail::to($user->payment_details['email'])->queue($message);        
         }
     }

@@ -5,7 +5,9 @@ namespace Tests\Feature\Onboarding;
 use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Livewire\ManualOnboardingWizard;
+use App\Mail\TeacherInviteLinkMail;
 use App\Mail\TeacherInviteMail;
+use App\Models\TeacherInvite;
 use App\Models\Country;
 use App\Models\Plan;
 use App\Models\School;
@@ -190,7 +192,7 @@ class WizardStructureClassTeacherTest extends TestCase
         $this->assertContains('East', $labels);
     }
 
-    public function test_invite_structure_class_teacher_assigns_ct(): void
+    public function test_invite_structure_class_teacher_issues_invite_link(): void
     {
         $this->actingAs($this->admin);
         $component = Livewire::test(ManualOnboardingWizard::class);
@@ -211,23 +213,27 @@ class WizardStructureClassTeacherTest extends TestCase
             ->assertSet('errorMessage', '');
 
         $this->assertNotSame('', $component->get('structureFlash'));
+        $this->assertStringContainsString('invite link has been sent', $component->get('structureFlash'));
 
+        // New flow: no User created yet — only a pending TeacherInvite
+        $invite = TeacherInvite::where('email', 'ct-east@structure-wizard.sch.ug')->first();
+        $this->assertNotNull($invite);
+        $this->assertNull($invite->user_id);
+        $this->assertNull($invite->claimed_at);
+
+        // class_teacher_id NOT set (only on claim)
         $link = StandardLink::query()
             ->where('school_id', $this->school->id)
             ->where('section_id', $sectionId)
             ->first();
-        $this->assertNotNull($link?->class_teacher_id);
+        $this->assertNull($link?->class_teacher_id);
 
-        $teacher = User::find($link->class_teacher_id);
-        $this->assertSame('ct-east@structure-wizard.sch.ug', $teacher->email);
-        $this->assertSame(5, (int) $teacher->usergroup_id);
-
-        Mail::assertQueued(TeacherInviteMail::class);
+        // Link-based mail queued
+        Mail::assertQueued(TeacherInviteLinkMail::class);
 
         $updated = collect($component->get('structureClasses'))
             ->firstWhere('section_id', $sectionId);
-        $this->assertSame((int) $link->class_teacher_id, (int) ($updated['class_teacher_id'] ?? 0));
-        $this->assertSame('Grace CT', $updated['class_teacher_name'] ?? null);
+        $this->assertNull($updated['class_teacher_id'] ?? null);
     }
 
     public function test_add_structure_stream_rejects_blank_with_verbatim_error(): void

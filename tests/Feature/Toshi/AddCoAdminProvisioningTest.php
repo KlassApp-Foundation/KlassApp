@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Toshi;
 
+use App\Mail\CoAdminInviteLinkMail;
 use App\Mail\CoAdminInviteMail;
+use App\Models\CoAdminInvite;
 use App\Models\CurrentPlan;
 use App\Models\Plan;
 use App\Models\School;
@@ -10,7 +12,6 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -72,7 +73,7 @@ class AddCoAdminProvisioningTest extends TestCase
         ]);
     }
 
-    public function test_add_co_admin_uses_unique_password_and_is_reset(): void
+    public function test_add_co_admin_issues_invite_without_creating_user(): void
     {
         $result = ToshiActionService::addCoAdmin($this->admin, [
             'name' => 'Second Admin',
@@ -80,13 +81,33 @@ class AddCoAdminProvisioningTest extends TestCase
         ]);
 
         $this->assertTrue($result['success']);
+        $this->assertNull(User::where('email', 'second-admin@test.sch.ug')->first());
 
-        $coAdmin = User::where('email', 'second-admin@test.sch.ug')->first();
-        $this->assertNotNull($coAdmin);
-        $this->assertSame(1, (int) $coAdmin->is_reset);
-        $this->assertFalse(Hash::check('password', $coAdmin->password));
-        $this->assertFalse(Hash::check('primary-admin-secret', $coAdmin->password));
-        $this->assertNotSame($this->admin->password, $coAdmin->password);
+        $invite = CoAdminInvite::where('email', 'second-admin@test.sch.ug')->first();
+        $this->assertNotNull($invite);
+        $this->assertSame($this->schoolId, (int) $invite->school_id);
+        $this->assertSame('Second Admin', $invite->name);
+        $this->assertNull($invite->claimed_at);
+        $this->assertTrue($invite->expires_at->greaterThan(now()->addHours(70)));
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $invite->token_hash);
+    }
+
+    public function test_add_co_admin_refuses_already_used_email(): void
+    {
+        User::factory()->create([
+            'email' => 'taken@test.sch.ug',
+            'school_id' => $this->schoolId,
+            'usergroup_id' => 3,
+        ]);
+
+        $result = ToshiActionService::addCoAdmin($this->admin, [
+            'name' => 'Duplicate Admin',
+            'email' => 'taken@test.sch.ug',
+        ]);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('already exists', $result['message']);
+        $this->assertSame(0, CoAdminInvite::where('email', 'taken@test.sch.ug')->count());
     }
 
     public function test_add_co_admin_does_not_leak_password_in_chat_message(): void
@@ -102,21 +123,17 @@ class AddCoAdminProvisioningTest extends TestCase
         $this->assertStringContainsString('invite email', strtolower($result['message']));
     }
 
-    public function test_add_co_admin_queues_invite_mail_with_co_admin_password(): void
+    public function test_add_co_admin_queues_invite_link_mail_without_password(): void
     {
         ToshiActionService::addCoAdmin($this->admin, [
             'name' => 'Mail Admin',
             'email' => 'mail-admin@test.sch.ug',
         ]);
 
-        Mail::assertQueued(CoAdminInviteMail::class, function (CoAdminInviteMail $mail) {
-            $coAdmin = User::where('email', 'mail-admin@test.sch.ug')->first();
-
-            return $mail->email === 'mail-admin@test.sch.ug'
-                && $mail->password !== null
-                && $mail->password !== 'password'
-                && $mail->password !== 'primary-admin-secret'
-                && Hash::check($mail->password, $coAdmin->password);
+        Mail::assertQueued(CoAdminInviteLinkMail::class, function (CoAdminInviteLinkMail $mail) {
+            return str_contains($mail->inviteUrl, '/invite/co-admin/')
+                && ! property_exists($mail, 'password');
         });
+        Mail::assertNotQueued(CoAdminInviteMail::class);
     }
 }

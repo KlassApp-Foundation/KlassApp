@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Mail\TeacherInviteLinkMail;
 use App\Mail\TeacherInviteMail;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ClassTeacherInviteService;
@@ -39,7 +41,7 @@ class ClassTeacherInviteServiceTest extends TestCase
     // Happy paths
     // ===================================================================
 
-    public function test_invites_new_teacher_and_sets_class_teacher_fields(): void
+    public function test_invites_new_teacher_via_invite_link(): void
     {
         $inviter = $this->admin();
         $link = $this->stream($inviter->school_id);
@@ -51,37 +53,34 @@ class ClassTeacherInviteServiceTest extends TestCase
         ]);
 
         $this->assertTrue($result['success']);
-        $this->assertStringContainsString('invited as class teacher', $result['message']);
-        $this->assertArrayHasKey('teacher_id', $result);
+        $this->assertStringContainsString('invite link has been sent', $result['message']);
 
-        // CT fields updated
+        // New flow: no teacher_id key — user is not created until claimed
+        $this->assertArrayNotHasKey('teacher_id', $result);
+
+        // CT fields should NOT be set yet (only on claim)
         $link->refresh();
-        $section->refresh();
-        $this->assertSame($result['teacher_id'], $link->class_teacher_id);
-        $this->assertSame($result['teacher_id'], $section->class_teacher_id);
+        $this->assertNull($link->class_teacher_id);
 
-        // User created with correct attributes
-        $teacher = User::find($result['teacher_id']);
-        $this->assertSame(5, $teacher->usergroup_id);
-        $this->assertSame((int) $inviter->school_id, $teacher->school_id);
-        $this->assertSame('newteacher@school.ug', $teacher->email);
-        $this->assertSame(1, $teacher->is_reset);
-        $this->assertSame(1, $teacher->email_verified);
-        $this->assertSame('0777000000', $teacher->mobile_no);
+        // A pending TeacherInvite record exists
+        $invite = TeacherInvite::where('email', 'newteacher@school.ug')->first();
+        $this->assertNotNull($invite);
+        $this->assertNull($invite->user_id);
+        $this->assertNull($invite->claimed_at);
+        $this->assertSame('New Teacher', $invite->name);
+        $this->assertSame('0777000000', $invite->phone);
 
-        // Userprofile created
-        $this->assertDatabaseHas('userprofiles', [
-            'user_id'      => $teacher->id,
-            'school_id'    => $inviter->school_id,
-            'usergroup_id' => 5,
-            'firstname'    => 'New Teacher',
-        ]);
+        // No User created yet
+        $this->assertDatabaseMissing('users', ['email' => 'newteacher@school.ug']);
 
-        // Email queued with credentials
-        Mail::assertQueued(TeacherInviteMail::class, function ($mail) {
-            return $mail->email === 'newteacher@school.ug'
-                && $mail->password !== null
-                && $mail->password !== '';
+        // Link-based mail queued (no password)
+        Mail::assertQueued(TeacherInviteLinkMail::class, function ($mail) {
+            return $mail->name === 'New Teacher';
+        });
+
+        // Old password-based mail should NOT have been sent
+        Mail::assertNotQueued(TeacherInviteMail::class, function ($mail) {
+            return $mail->email === 'newteacher@school.ug';
         });
     }
 

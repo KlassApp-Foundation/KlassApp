@@ -17,7 +17,7 @@
 <body>
 <div class="announce" id="announceBar" role="region" aria-label="Announcement">
   <div class="announce-inner">
-    <p>KlassApp is open source and self-hostable — <strong>MIT licensed</strong>.</p>
+    <p>KlassApp is open source and self-hostable. <strong>MIT licensed</strong>.</p>
   </div>
   <button type="button" class="announce-close" id="announceClose" aria-label="Dismiss announcement">&times;</button>
 </div>
@@ -85,21 +85,22 @@
       <div class="hero-preview reveal reveal-delay-2">
         <div class="hero-device">
           <div class="hero-device-frame">
-            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><em>Toshi · live preview</em></div>
+            <div class="hero-device-chrome" aria-hidden="true"><span></span><span></span><span></span><span class="hero-device-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span id="heroDeviceUrl">web.whatsapp.com</span></span></div>
             <div class="hero-screen">
+              <div class="hero-phone-status" aria-hidden="true"><span>8:14</span><span class="hero-phone-battery"></span></div>
         <div class="hero-stage" id="heroRoleStage">
           <span class="hero-layer hero-layer-back" aria-hidden="true"></span>
           <span class="hero-layer hero-layer-mid" aria-hidden="true"></span>
           <div class="hero-deck" id="heroRoleDeck" data-auto="1">
 
-            <article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
+            <article class="hero-role-card wa is-active" data-role="parent" data-host="web.whatsapp.com" aria-label="Parent WhatsApp preview">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Parent · WhatsApp</span>
                 <span class="hero-chip live"><span class="hero-chip-dot"></span>Live</span>
               </div>
               <div class="hero-role-body">
-                <div class="hero-bubble">Good morning! P.4 attendance is in — Amina is present today.</div>
+                <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
                 <div class="hero-bubble out">Thanks. Fee reminder for next week too?</div>
                 <div class="hero-bubble">Scheduled on WhatsApp for Monday 8:00 AM.<span class="hero-meta">8:14</span></div>
                 <div class="hero-row"><span>P.4 attendance · Amina</span><span class="hero-tag ok">Present</span></div>
@@ -112,7 +113,7 @@
               </div>
             </article>
 
-            <article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
+            <article class="hero-role-card drive" data-role="teacher" data-host="drive.google.com" aria-label="Teacher Drive preview" aria-hidden="true">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Teacher · Drive</span>
@@ -134,7 +135,7 @@
               </div>
             </article>
 
-            <article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
+            <article class="hero-role-card slack" data-role="admin" data-host="app.slack.com" aria-label="Admin Slack preview" aria-hidden="true">
               <div class="hero-role-hd">
                 <span class="hero-role-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="24" height="24"></span>
                 <span class="hero-role-title">Admin · Slack</span>
@@ -142,7 +143,7 @@
               </div>
               <div class="hero-role-body">
                 <div class="hero-row"><span>#school-ops</span><span class="hero-meta">Today</span></div>
-                <div class="hero-bubble">Fee collection is at 86% — 3 reminders left for overdue families.</div>
+                <div class="hero-bubble">Fee collection is at 86%; 3 reminders left for overdue families.</div>
                 <div class="hero-row"><span>Overdue · 3 families</span><span class="hero-tag wait">Reminder queued</span></div>
                 <div class="hero-progress">
                   <div class="hero-progress-top"><span>Fee collection</span><span>86%</span></div>
@@ -161,6 +162,7 @@
         </div>
             </div>
           </div>
+          <span class="hero-phone-bar" aria-hidden="true"></span>
           <div class="hero-device-base" aria-hidden="true"></div>
         </div>
         <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
@@ -252,12 +254,12 @@
     </div>
 
     <div class="connector-grid-compact reveal reveal-delay-1">
-      <div class="connector-chip ka-node n-green"><x-brand.whatsapp /> WhatsApp</div>
-      <div class="connector-chip ka-node n-amber"><x-brand.google-drive /> Drive</div>
-      <div class="connector-chip ka-node n-violet"><x-brand.slack /> Slack</div>
-      <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg> Email</div>
-      <div class="connector-chip ka-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> SMS</div>
-      <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</div>
+      <div class="connector-chip"><x-brand.whatsapp /> WhatsApp</div>
+      <div class="connector-chip"><x-brand.google-drive /> Drive</div>
+      <div class="connector-chip"><x-brand.slack /> Slack</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg> Email</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> SMS</div>
+      <div class="connector-chip"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</div>
     </div>
   </div>
 </section>
@@ -285,10 +287,10 @@
     <div class="toshi-grid">
       <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking: teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
       <div class="toshi-card reveal reveal-delay-2"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><h3>Multi-Channel</h3><p>Works across WhatsApp, email, Slack, SMS, and the dashboard simultaneously. One agent, every channel your school uses.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
       <div class="toshi-card amber-accent reveal reveal-delay-4"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2a7 7 0 017 7c0 2.5-1.5 4.5-3 6l-1.5 2.5a1 1 0 01-1.7 0L11 15c-1.5-1.5-3-3.5-3-6a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/></svg></div><h3>Context-Aware</h3><p>Remembers term dates, student histories, school policies, and communication patterns. Every interaction builds on the last.</p></div>
       <div class="toshi-card reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><h3>Extensible</h3><p>Connect new tools through MCP servers or custom connectors. Toshi's capabilities grow with your school's needs.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
     </div>
   </div>
 </section>
@@ -301,8 +303,71 @@
     </div>
 
     <div class="how-flow" id="how-flow">
-      <div class="how-hub reveal">
-        <div class="how-hub-node"><span class="hub-pulse"></span> Toshi · protocol orchestration</div>
+      <div class="ac-tower reveal" id="agentCore">
+        <div class="ac-fit" id="agentCoreFit">
+          <div class="ac-stage" id="agentCoreStage">
+            <div class="ac-art">
+              <svg viewBox="0 0 1120 600" role="img" aria-labelledby="ac-tt ac-td">
+                <title id="ac-tt">Toshi on top of KlassApp</title>
+                <desc id="ac-td">WhatsApp, Email, Slack, SMS, Drive and Calendar feed the KlassApp core. Toshi sits above it and acts for parents, teachers and admins.</desc>
+                <defs>
+                  <linearGradient id="ac-gIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-green" stop-opacity=".18"/><stop offset=".55" class="ac-stop-green" stop-opacity=".42"/><stop offset="1" class="ac-stop-green" stop-opacity=".72"/></linearGradient>
+                  <linearGradient id="ac-bIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-blue" stop-opacity=".16"/><stop offset=".55" class="ac-stop-blue" stop-opacity=".38"/><stop offset="1" class="ac-stop-blue" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-vIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-violet" stop-opacity=".16"/><stop offset=".55" class="ac-stop-violet" stop-opacity=".38"/><stop offset="1" class="ac-stop-violet" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-aIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-amber" stop-opacity=".16"/><stop offset=".55" class="ac-stop-amber" stop-opacity=".38"/><stop offset="1" class="ac-stop-amber" stop-opacity=".66"/></linearGradient>
+                  <linearGradient id="ac-gOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-green" stop-opacity=".70"/><stop offset=".5" class="ac-stop-green" stop-opacity=".42"/><stop offset="1" class="ac-stop-green" stop-opacity=".36"/></linearGradient>
+                  <linearGradient id="ac-bOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-blue" stop-opacity=".66"/><stop offset=".5" class="ac-stop-blue" stop-opacity=".40"/><stop offset="1" class="ac-stop-blue" stop-opacity=".34"/></linearGradient>
+                  <linearGradient id="ac-aOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="ac-stop-amber" stop-opacity=".66"/><stop offset=".5" class="ac-stop-amber" stop-opacity=".38"/><stop offset="1" class="ac-stop-amber" stop-opacity=".32"/></linearGradient>
+                  <linearGradient id="ac-coreTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+                  <linearGradient id="ac-coreL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+                  <linearGradient id="ac-tTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2DD46A"/><stop offset=".42" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+                  <linearGradient id="ac-tL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+                  <radialGradient id="ac-bloomG"><stop offset="0" stop-color="#22C55E" stop-opacity=".28"/><stop offset=".32" stop-color="#22C55E" stop-opacity=".12"/><stop offset=".55" stop-color="#8B5CF6" stop-opacity=".06"/><stop offset=".72" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="ac-pool"><stop offset="0" stop-color="#22C55E" stop-opacity=".55"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></radialGradient>
+                  <linearGradient id="ac-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E" stop-opacity=".7"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></linearGradient>
+                  <radialGradient id="ac-groundG"><stop offset="0" stop-color="#0F172A" stop-opacity=".10"/><stop offset="1" stop-color="#0F172A" stop-opacity="0"/></radialGradient>
+                </defs>
+                <ellipse cx="560" cy="548" rx="210" ry="26" fill="url(#ac-groundG)"/>
+                <path d="M410 390 L560 465 L560 535 L410 460 Z" fill="url(#ac-coreL)"/>
+                <path d="M560 465 L710 390 L710 460 L560 535 Z" fill="#0F172A"/>
+                <path d="M410 390 L560 315 L710 390 L560 465 Z" fill="url(#ac-coreTop)"/>
+                <path d="M410 390 L560 315 L710 390 L560 465 Z" fill="none" stroke="#22C55E" stroke-opacity=".45" stroke-width="1"/>
+                <path d="M560 465 L560 535" stroke="#22C55E" stroke-opacity=".3" stroke-width="1"/>
+                <ellipse class="ac-bloom ac-land" cx="560" cy="390" rx="92" ry="46" fill="url(#ac-pool)"/>
+                <rect x="554" y="330" width="12" height="60" fill="url(#ac-beam)" opacity=".6"/>
+                <circle class="ac-bloom" cx="560" cy="262" r="150" fill="url(#ac-bloomG)"/>
+                <g class="ac-bounce">
+                  <path d="M460 250 L560 300 L560 356 L460 306 Z" fill="url(#ac-tL)"/>
+                  <path d="M560 300 L660 250 L660 306 L560 356 Z" fill="#16A34A"/>
+                  <path d="M460 250 L560 200 L660 250 L560 300 Z" fill="url(#ac-tTop)"/>
+                  <path d="M460 250 L560 200 L660 250" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>
+                  <ellipse cx="560" cy="248" rx="30" ry="15" fill="#0F172A" opacity=".18"/>
+                  <g transform="matrix(1 .5 0 1 460 250)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="ac-scr" id="ac-scrL" href="{{ asset('images/brand/models/anthropic-mark.svg') }}" x="37" y="15" width="26" height="26"/></g>
+                  <g transform="matrix(1 -.5 0 1 560 300)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="ac-scr" id="ac-scrR" href="{{ asset('images/brand/models/openai-mark.svg') }}" x="37" y="15" width="26" height="26"/></g>
+                </g>
+                <ellipse id="ac-shock" cx="560" cy="390" rx="92" ry="46" fill="none" stroke="#22C55E" stroke-width="2" opacity="0"/>
+                <g id="ac-sig" aria-hidden="true"></g>
+              </svg>
+              <div class="ac-bounce ac-kb" aria-hidden="true">
+                <div class="ac-coin"><div class="ac-spin"><img class="f" src="{{ asset('images/klassapp-icon.svg') }}" alt="KlassApp"><img class="b" src="{{ asset('images/klassapp-icon.svg') }}" alt=""></div></div>
+                <div class="ac-kshadow"></div>
+              </div>
+            </div>
+            <div class="ac-nodes">
+              <div class="ac-ch ac-node ac-n-green" data-n="WhatsApp" style="left:60px;top:70px"><span class="ac-ico ac-brand-well"><x-brand.whatsapp /></span><span>WhatsApp</span></div>
+              <div class="ac-ch ac-node" data-n="Email" style="left:30px;top:232px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
+              <div class="ac-ch ac-node ac-n-violet" data-n="Slack" style="left:110px;top:382px"><span class="ac-ico ac-brand-well"><x-brand.slack /></span><span>Slack</span></div>
+              <div class="ac-ch ac-node ac-n-green" data-n="SMS" style="left:236px;top:510px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
+              <div class="ac-ch ac-node ac-n-amber" data-n="Drive" style="left:770px;top:64px"><span class="ac-ico ac-brand-well"><x-brand.google-drive /></span><span>Drive</span></div>
+              <div class="ac-ch ac-node" data-n="Calendar" style="left:880px;top:474px"><span class="ac-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Calendar</span></div>
+              <div class="ac-role ac-node ac-n-green" data-n="Parent" style="left:262px;top:124px"><span class="ac-role-dot"></span>Parent</div>
+              <div class="ac-role ac-node" data-n="Teacher" style="left:872px;top:262px"><span class="ac-role-dot"></span>Teacher</div>
+              <div class="ac-role ac-node ac-n-amber" data-n="Admin" style="left:716px;top:540px"><span class="ac-role-dot"></span>Admin</div>
+            </div>
+          </div>
+        </div>
+        <div class="ac-models" id="agentCoreModels" aria-label="Models Toshi runs on"><b>Runs on</b>
+          <span><img src="{{ asset('images/brand/models/anthropic-mark.svg') }}" alt="" width="16" height="16">Anthropic</span><span><img src="{{ asset('images/brand/models/openai-mark.svg') }}" alt="" width="16" height="16">OpenAI</span><span><img src="{{ asset('images/brand/models/google-gemini-mark.svg') }}" alt="" width="16" height="16">Gemini</span><span><img src="{{ asset('images/brand/models/xai-grok-mark.svg') }}" alt="" width="16" height="16">Grok</span><span><img src="{{ asset('images/brand/models/moonshot-kimi-mark.svg') }}" alt="" width="16" height="16">Kimi</span><span><img src="{{ asset('images/brand/models/zhipu-zai-mark.svg') }}" alt="" width="16" height="16">GLM</span></div>
       </div>
 
       <div class="how-columns">
@@ -315,7 +380,7 @@
             </div>
             <div class="wa-body">
               <div class="wa-header">
-                <div class="wa-avatar">KA</div>
+                <div class="wa-avatar"><img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="14" height="14"></div>
                 <div>
                   <div class="wa-name">KlassApp · Toshi</div>
                   <div class="wa-status">online</div>
@@ -375,7 +440,7 @@
             </div>
             <div class="teach-shell">
               <div class="teach-side">
-                <div class="teach-side-mark">K</div>
+                <img class="teach-side-mark" src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="16" height="16">
                 <div class="teach-nav-dot active"></div>
                 <div class="teach-nav-dot"></div>
                 <div class="teach-nav-dot"></div>
@@ -523,21 +588,24 @@
     <div class="shots reveal">
       <div class="shots-head">
         <h3>Real screenshots from the app</h3>
-        <p>Captured from a local KlassApp instance — the actual dashboard, a records module, and the Toshi assistant.</p>
+        <p>Captured from a local KlassApp instance: the actual dashboard, a records module, and the Toshi assistant.</p>
       </div>
       <div class="shots-grid">
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Dashboard</span><span class="shot-url">klassapp.xyz/admin/dashboard</span></div>
-          <img src="{{ asset('images/landing/app-dashboard.webp') }}" alt="KlassApp school-admin dashboard with the setup checklist and Toshi assistant" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Library records</span><span class="shot-url">klassapp.xyz/admin/library/books</span></div>
-          <img src="{{ asset('images/landing/app-books.webp') }}" alt="KlassApp library records table listing books" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
-        <figure class="shot">
-          <div class="ui-chrome"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-chrome-title">KlassApp · Fees &amp; payments</span><span class="shot-url">klassapp.xyz/admin/fees/payments</span></div>
-          <img src="{{ asset('images/landing/app-page.webp') }}" alt="KlassApp fees and payments module" width="1600" height="1000" loading="lazy" decoding="async">
-        </figure>
+        <x-landing.app-shot
+          :src="asset('images/landing/app-dashboard.webp')"
+          alt="KlassApp school-admin dashboard for a demo school: term and enrolment summary, a WhatsApp feature card, the Finish school setup checklist, and the Toshi panel listing each setup step"
+          title="KlassApp · Dashboard"
+          url="klassapp.xyz/admin/dashboard" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-books.webp')"
+          alt="KlassApp library books page: a searchable table of school textbooks with title, author, category, code and quantity"
+          title="KlassApp · Library records"
+          url="klassapp.xyz/admin/library/books" />
+        <x-landing.app-shot
+          :src="asset('images/landing/app-fees.webp')"
+          alt="KlassApp fee payments page: amounts collected and outstanding, students in arrears and collection rate, above a table of payments by student, class, amount, method and status"
+          title="KlassApp · Fees &amp; payments"
+          url="klassapp.xyz/admin/fees/payments" />
       </div>
     </div>
   </div>
@@ -630,47 +698,51 @@
       <h2>What we actually address</h2>
       <p class="lead">Illustrative of real product capability. Not sourced from a named school.</p>
     </div>
-    <div class="compare-list reveal" role="list">
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+    <div class="compare-band reveal" role="list">
+      <div class="compare-band-head" aria-hidden="true">
+        <span class="compare-label">Before</span>
+        <span class="compare-label compare-label-after">KlassApp way</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Fee reminders mean phone calls and follow-up visits</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Report cards are printed and sent home, sometimes lost along the way</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Parents get results the moment marks are finalized, on their connected channels</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Setting up a new term means days of spreadsheet work</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>A guided setup configures classes and streams in minutes, through any connected channel</p>
         </div>
-      </article>
-      <article class="compare-card" role="listitem">
-        <div class="compare-col compare-before">
-          <span class="compare-label">Before</span>
+      </div>
+      <div class="compare-band-row" role="listitem">
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">Before</span>
           <p>Every setup step means filling out forms, one field at a time</p>
         </div>
-        <div class="compare-col compare-after">
-          <span class="compare-label">KlassApp way</span>
+        <div class="compare-band-cell">
+          <span class="compare-label compare-label-mobile">KlassApp way</span>
           <p>Just tell Toshi what you need, in plain language, and it does the rest</p>
         </div>
-      </article>
+      </div>
     </div>
   </div>
 </section>
@@ -683,19 +755,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item reveal">
-        <summary>Do parents need to download an app?</summary>
+        <summary>Do parents need to download an app?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>No. Everything works through WhatsApp, a tool most families already use every day.</p>
       </details>
       <details class="faq-item reveal reveal-delay-1">
-        <summary>What if our school doesn't have separate class streams?</summary>
+        <summary>What if our school doesn't have separate class streams?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>KlassApp works the same way whether your school has one class per grade or several streams. Streams are entirely optional.</p>
       </details>
       <details class="faq-item reveal reveal-delay-2">
-        <summary>Is our students' data safe?</summary>
+        <summary>Is our students' data safe?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>Yes. Access is limited by design. Parents see only their own children, teachers see only their own students.</p>
       </details>
       <details class="faq-item reveal reveal-delay-3">
-        <summary>Can we try it before committing?</summary>
+        <summary>Can we try it before committing?<svg class="faq-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
         <p>Yes. KlassApp has a free tier so you can set up your school and see how it works before choosing a paid plan.</p>
       </details>
     </div>
@@ -712,9 +784,94 @@
         </div>
       </div>
       <div class="protocol-grid">
-        <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
-        <div class="protocol-card ka-node n-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
-        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome: connectors, translations, features.</p></div></div>
+        <div class="protocol-card protocol-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
+        <div class="protocol-card protocol-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
+        <div class="protocol-card protocol-amber reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome: connectors, translations, features.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="demo-section" id="demo">
+  <div class="container">
+    <div class="demo-layout">
+      <div class="demo-header reveal">
+        <h2>Book a demo</h2>
+        <p>See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.</p>
+        <ul class="demo-checks">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>A walkthrough of the dashboard, WhatsApp flows and Toshi</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>Setup guidance for classes, staff and parent invites</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
+            <span>Straight answers on data access, hosting and pricing</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="demo-panel">
+        @if(session('demo_request_success'))
+        <div class="demo-success" data-testid="demo-success">
+          <h3>Thank you, we have your request.</h3>
+          <p>Our team will reach out shortly to arrange a walkthrough for your school.</p>
+          @if(config('services.demo.booking_url'))
+          <p>
+            <a href="{{ config('services.demo.booking_url') }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-testid="demo-booking-button">Pick a time for a call</a>
+          </p>
+          @else
+          <p>We will email you with next steps.</p>
+          @endif
+        </div>
+        @else
+        <form class="demo-form" method="POST" action="{{ url('/demo-request') }}" data-testid="demo-form">
+          @csrf
+          <input type="hidden" name="source_page" value="landing-v2#demo">
+          <div class="demo-hp" aria-hidden="true">
+            <label for="demo-website">Website</label>
+            <input type="text" id="demo-website" name="website" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other">
+          </div>
+          <div class="demo-grid">
+            <div class="demo-field">
+              <label for="demo-school">School name</label>
+              <input id="demo-school" type="text" name="school_name" value="{{ old('school_name') }}" required>
+              @error('school_name')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-name">Your name</label>
+              <input id="demo-name" type="text" name="contact_name" value="{{ old('contact_name') }}" required>
+              @error('contact_name')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-email">Email</label>
+              <input id="demo-email" type="email" name="email" value="{{ old('email') }}" required>
+              @error('email')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field">
+              <label for="demo-phone">Phone</label>
+              <input id="demo-phone" type="tel" name="phone" value="{{ old('phone') }}" required>
+              @error('phone')<p class="demo-err">{{ $message }}</p>@enderror
+            </div>
+            <div class="demo-field demo-field-full">
+              <label for="demo-district">District <span class="demo-optional">(optional)</span></label>
+              <input id="demo-district" type="text" name="district" value="{{ old('district') }}">
+            </div>
+            <div class="demo-field demo-field-full">
+              <label for="demo-message">Anything we should know? <span class="demo-optional">(optional)</span></label>
+              <textarea id="demo-message" name="message" rows="3">{{ old('message') }}</textarea>
+            </div>
+          </div>
+          <div class="demo-actions">
+            <button type="submit" class="btn btn-primary" data-testid="demo-submit">Request a demo</button>
+            <span class="demo-note">We only use this to arrange your demo.</span>
+          </div>
+        </form>
+        @endif
       </div>
     </div>
   </div>
@@ -734,12 +891,12 @@
         <a href="{{ url('/terms-of-service') }}">Terms</a>
         <a href="{{ url('/privacy-policy') }}">Privacy</a>
         <a href="/docs/community/">Docs</a>
-        <a href="/contact">Contact</a>
+        <a href="{{ url('/') }}#demo">Contact</a>
       </nav>
       <div class="site-footer-socials">
         <a href="https://x.com/Klass_App" class="site-footer-social" aria-label="KlassApp on X" rel="noopener noreferrer" target="_blank">𝕏</a>
         <a href="https://github.com/KlassApp-Foundation" class="site-footer-social" aria-label="KlassApp on GitHub" rel="noopener noreferrer" target="_blank">GH</a>
-        <a href="{{ url('/contact') }}" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
+        <a href="{{ url('/') }}#demo" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
       </div>
     </div>
     <div class="site-footer-copy">&copy; {{ date('Y') }} KlassApp. All rights reserved.</div>

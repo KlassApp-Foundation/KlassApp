@@ -1559,7 +1559,14 @@
     function revealAdminTagline() {
         if (taglineEl) taglineEl.classList.remove('opacity-0');
     }
-    if (prefersReduced) {
+    if (!el || !cursor) {
+        // The typewriter targets are not on every page that includes this view: the demo
+        // page renders the audience tabs without #typewriter-text / #typewriter-cursor, and
+        // the cursor was dereferenced unconditionally, throwing
+        // "Cannot read properties of null (reading 'classList')" on load. Same guard style
+        // as setAudience() above. Pre-existing, not a regression.
+        revealAdminTagline();
+    } else if (prefersReduced) {
         el.textContent = typewriterText;
         cursor.classList.add('paused');
         setTimeout(revealAdminTagline, 100);

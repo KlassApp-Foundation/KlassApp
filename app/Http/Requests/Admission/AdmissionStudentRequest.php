@@ -62,14 +62,21 @@ class AdmissionStudentRequest extends FormRequest
         return [
             //
             'name'                      => 'required|check_name',
-            'date_of_birth'             => 'nullable|date',
+            'lastname'                  => 'required|string|max:120',
+            'date_of_birth'             => 'required|date',
             'gender'                    => 'required',
+            'nationality'               => 'required|string|max:120',
+            'home_district'             => 'required|string|max:120',
+            'village_town'              => 'nullable|string|max:120',
+            'lin'                       => 'nullable|string|max:60',
+            'religion'                  => 'nullable|string|max:120',
             'identification_marks'      => 'required|check_identification_marks',
             'school_last_studied'       => 'nullable|check_school_last_studied',
             'reason_for_leaving'        => 'nullable|check_reason_for_leaving',
             'permanent_address'         => 'required',
             'address_for_communication' => 'required',
             'siblings'                  => 'required',
+            'birth_certificate'         => 'nullable|file|max:5120',
         ];
     }
 

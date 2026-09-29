@@ -173,20 +173,23 @@ class SaveStudentsStreamMatchTest extends TestCase
         $this->assertSame($this->linkA->id, $result['created'][0]['standardLink_id']);
     }
 
-    public function test_unknown_stream_throws_instead_of_wrong_section(): void
+    public function test_unknown_stream_gets_a_dedicated_section_not_a_wrong_one(): void
     {
         $engine = app(OnboardingEngine::class);
 
-        try {
-            $engine->saveStudents($this->school, $this->year, [
-                ['name' => 'Lost', 'class' => 'P1', 'stream' => 'C'],
-            ]);
-            $this->fail('Expected ValidationException for unmatched stream');
-        } catch (ValidationException $e) {
-            $this->assertStringContainsString('stream C', $e->getMessage());
-        }
+        // Streams are auto-created (wizard parity, setup-order footgun fix): a stream
+        // that doesn't exist yet must never land the student in an existing different
+        // stream (P1 A / P1 B) — it gets a dedicated new section derived from the
+        // best-matching base (P1 A → stream section "P1 A C").
+        $result = $engine->saveStudents($this->school, $this->year, [
+            ['name' => 'Lost', 'class' => 'P1', 'stream' => 'C'],
+        ]);
 
-        $this->assertSame(0, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+        $created = $result['created'][0] ?? null;
+        $this->assertNotNull($created, 'Student should be created');
+        $this->assertNotSame($this->linkA->id, $created['standardLink_id']);
+        $this->assertNotSame($this->linkB->id, $created['standardLink_id']);
+        $this->assertSame('P1 A C', $created['class']);
     }
 
     public function test_wizard_maps_stream_into_save_students_drafts(): void

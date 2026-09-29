@@ -18,7 +18,7 @@
                 <div class="bg-white  rounded leading-relaxed">
                     <div class="relative">
                         <div class="p-4">
-                            <img src="{{ $user->userprofile->AvatarPath }}" class="w-32 h-32 lg:w-full lg:max-h-48 lg:h-48 object-cover mx-auto">
+                            <x-profile-photo :user="$user" size="xl" class="mx-auto" />
                         </div>
                         <div class=" mx-auto p-2 ">
                             <ul class="flex justify-center">

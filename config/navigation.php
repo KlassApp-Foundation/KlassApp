@@ -122,8 +122,7 @@ return [
                 // Marks commented out per tr-design.md: duplicate of Exams — exams only.
                 // ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Report Cards', 'icon' => 'reports', 'route' => 'teacher.reports.cards.index', 'active' => ['reports'], 'condition' => 'class_teacher'],
-                // Class Streams commented out per tr-design.md.
-                // ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
+                ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
                 ['label' => 'Notices', 'icon' => 'messages', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
                 ['label' => 'Library', 'icon' => 'library', 'url' => 'teacher/libraryactivity', 'active' => ['library', 'libraryactivity']],

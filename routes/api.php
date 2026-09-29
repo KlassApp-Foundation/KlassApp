@@ -289,26 +289,19 @@ Route::post('/schoolpay/webhook', 'Api\SchoolPayWebhookController@handle')
     ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
 // =====================================================================
-// WhatsApp API — REST endpoints for n8n/Typebot integration
+// WhatsApp API: live Meta Cloud API (WABA) webhook only
 // =====================================================================
+// WhatsApp runs directly on the Meta WABA token, so these are the only WhatsApp routes.
+// Both webhook POSTs are verified against Meta's X-Hub-Signature-256 by
+// VerifyWhatsAppWebhookSignature (config services.whatsapp.app_secret; switchable with
+// WHATSAPP_VERIFY_SIGNATURE); the GET verify-token handshake on /inbound is unchanged.
 Route::prefix('whatsapp')->group(function () {
     // Meta Cloud API webhook verification (GET) + inbound messages (POST)
-    // Meta sends GET to verify the webhook URL, POST for actual messages/statuses
     Route::match(['get', 'post'], '/inbound', 'Api\WhatsAppController@handleInbound')
-        ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
+        ->middleware(\App\Http\Middleware\VerifyWhatsAppWebhookSignature::class);
 
-    // Delivery status webhook (Evolution API → Laravel)
-    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook');
-
-    // Identify user by phone number
-    Route::post('/identify-user', 'Api\WhatsAppController@identify');
-
-    // Student data endpoints (used by n8n for parent/student flows)
-    Route::get('/student/{studentId}/grades', 'Api\WhatsAppController@grades');
-    Route::get('/student/{studentId}/report', 'Api\WhatsAppController@report');
-    Route::get('/student/{studentId}/attendance', 'Api\WhatsAppController@attendance');
-    Route::get('/fees/{studentId}/balance', 'Api\WhatsAppController@feeBalance');
-
-    // School-wide endpoints
-    Route::get('/school/{schoolId}/events', 'Api\WhatsAppController@schoolEvents');
+    // Delivery/status callbacks.
+    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook')
+        ->middleware(\App\Http\Middleware\VerifyWhatsAppWebhookSignature::class);
 });

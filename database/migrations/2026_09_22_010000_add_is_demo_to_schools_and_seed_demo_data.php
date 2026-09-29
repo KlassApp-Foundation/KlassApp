@@ -27,6 +27,13 @@ return new class extends Migration
             });
         }
 
+        // The test suite seeds its own fixtures and several suites insert rows
+        // with fixed ids; seeded demo tenants would collide with them. Schema
+        // parity is kept above; data seeding stays for real environments only.
+        if (app()->environment('testing')) {
+            return;
+        }
+
         $schools = [
             ['name' => 'Lakeview Junior School', 'slug' => 'demo-lakeview-junior', 'motto' => 'Learn, grow, belong', 'year' => '2026'],
             ['name' => 'Model Hill Secondary School', 'slug' => 'demo-model-hill', 'motto' => 'Knowledge and character', 'year' => '2026'],

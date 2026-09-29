@@ -8,13 +8,13 @@
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; line-height: 1.4; color: #1E293B; }
         h1 { font-size: 16px; color: #1E6FD9; margin-bottom: 4px; }
         h2 { font-size: 13px; color: #1E6FD9; margin: 12px 0 4px; border-bottom: 1px solid #E2E8F0; padding-bottom: 2px; }
-        .meta { font-size: 8px; color: #94A3B8; margin-bottom: 12px; }
+        .meta { font-size: 8px; color: #64748B; margin-bottom: 12px; }
         .class-count { font-size: 9px; color: #DC2626; margin-bottom: 4px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
         th { background: #F1F5F9; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #475569; padding: 4px 6px; border: 1px solid #E2E8F0; text-align: left; }
         td { font-size: 9px; padding: 2px 6px; border: 1px solid #E2E8F0; }
         .empty { text-align: center; padding: 20px; color: #22C55E; font-size: 12px; }
-        .footer { margin-top: 16px; font-size: 7px; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 4px; }
+        .footer { margin-top: 16px; font-size: 7px; color: #64748B; border-top: 1px solid #E2E8F0; padding-top: 4px; }
     </style>
 </head>
 <body>
@@ -38,7 +38,7 @@
     @php $total = 0; @endphp
     @forelse ($missing as $group)
         @php $total += $group['count']; @endphp
-        <h2>{{ $group['class'] }} <span style="font-weight:400;font-size:10px;color:#94A3B8;">({{ $group['standard'] }})</span></h2>
+        <h2>{{ $group['class'] }} <span style="font-weight:400;font-size:10px;color:#64748B;">({{ $group['standard'] }})</span></h2>
         <div class="class-count">{{ $group['count'] }} students missing marks</div>
         <table>
             <tr><th style="width:5%">#</th><th>Student Name</th></tr>

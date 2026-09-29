@@ -209,33 +209,19 @@ php artisan tinker
 
 ## 3. Webhook Security
 
-### 3.1 HMAC Signing
+### 3.1 Authentication of the WhatsApp endpoints
 
-All internal data endpoints (`/api/whatsapp/identify-user`, `/api/whatsapp/student/{id}/grades`, etc.) are protected by the `WhatsAppHmac` middleware. This ensures only authenticated callers (n8n, Typebot, internal services) can access student data.
+WhatsApp runs directly on the **Meta WABA token**. The live webhook is `api/whatsapp/inbound`
+(GET for Meta's verification handshake, POST for inbound messages).
 
-How to generate a signature:
+WhatsApp webhook hardening in progress.
 
-```bash
-# Given the raw JSON body
-BODY='{"phone":"+256701234567"}'
-SECRET="your-hmac-secret"
-
-# Compute HMAC-SHA256
-SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $NF}')
-
-# Call the endpoint
-curl -X POST https://your-app.com/api/whatsapp/identify-user \
-  -H "Content-Type: application/json" \
-  -H "X-Hub-Signature-256: $SIGNATURE" \
-  -d "$BODY"
-```
+The n8n, Typebot and Evolution integrations are **retired**. Any documentation describing
+n8n as the live WhatsApp path is stale.
 
 ### 3.2 Inbound Webhook Authentication
 
-The inbound webhook (`POST /api/whatsapp/inbound`) is NOT behind HMAC middleware. Instead, it relies on:
-
-1. The `apikey` header sent by Evolution API (matched against `EVOLUTION_API_KEY`)
-2. Payload validation via `StoreWhatsAppWebhookRequest` FormRequest (validates event type, phone format, payload size, content structure)
+WhatsApp webhook hardening in progress.
 
 ### 3.3 Firewall Rules
 
@@ -367,3 +353,17 @@ See [testing.md](testing.md) for detailed test documentation.
 - [ ] Delivery webhook endpoint verified with Evolution API
 - [ ] Logs monitored for 24 hours post-deployment
 - [ ] `.env.example` updated with new WhatsApp variables
+
+---
+
+## 8. Invite links
+
+Invite links (teacher and co-admin invitations) depend on:
+
+- `APP_URL` - must match the public URL of the deployment, otherwise emailed links point at the wrong host.
+- `APP_KEY` - keep it set and stable; regenerating it invalidates previously issued signed links.
+- Mail settings - invite emails are queued, so configure the mailer for the environment and keep a queue worker running so messages leave the queue.
+
+Behind a load balancer or reverse proxy, keep the app's trusted-proxy middleware enabled so links are generated with the public `https` scheme (the `X-Forwarded-*` headers are trusted).
+
+For local development, use `MAIL_MAILER=log` (invite emails, including the link, land in `storage/logs/laravel.log`) or a local catcher such as Mailpit. This keeps test invitations out of real inboxes and makes links easy to open.

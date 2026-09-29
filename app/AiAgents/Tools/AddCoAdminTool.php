@@ -8,6 +8,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
+use App\Models\CoAdminInvite;
 use App\Models\User;
 
 class AddCoAdminTool implements Tool, VerifiableTool
@@ -17,7 +18,7 @@ class AddCoAdminTool implements Tool, VerifiableTool
 
     public function description(): string
     {
-        return 'Add a new co-admin for the school. Provide a name and email. The co-admin will get a login with a default password.';
+        return 'Add a new co-admin for the school. Provide a name and email. The co-admin will receive an invite link to set their own password.';
     }
 
     public function schema(JsonSchema $schema): array
@@ -62,16 +63,23 @@ class AddCoAdminTool implements Tool, VerifiableTool
             return ['verified' => false, 'message' => 'Co-admin email is required for verification.'];
         }
 
-        $exists = User::where('school_id', $schoolId)
+        $userExists = User::where('school_id', $schoolId)
             ->where('usergroup_id', 3)
             ->where('email', $email)
             ->exists();
 
+        $inviteExists = CoAdminInvite::where('school_id', $schoolId)
+            ->where('email', mb_strtolower(trim($email)))
+            ->whereNull('claimed_at')
+            ->exists();
+
         return [
-            'verified' => $exists,
-            'message' => $exists
+            'verified' => $userExists || $inviteExists,
+            'message' => $userExists
                 ? 'Co-admin record confirmed in database.'
-                : 'Co-admin was not found after creation.',
+                : ($inviteExists
+                    ? 'Co-admin invite confirmed — awaiting password setup.'
+                    : 'Co-admin was not found after creation.'),
         ];
     }
 }

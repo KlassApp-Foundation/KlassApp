@@ -90,6 +90,10 @@ class ManualUiWave2SchoolDetailsDsTest extends TestCase
 
     public function test_editdetail_keeps_address_maps_portal_on_legacy_tw_form(): void
     {
+        // The map block is gated on a configured Maps key; enable it so the real
+        // map markup renders (unset, the section intentionally hides instead).
+        config(['services.google.maps_api_key' => 'test-maps-key']);
+
         $response = $this->actingAs($this->admin)
             ->get('/admin/schooldetails/editdetail/'.$this->school->id);
 

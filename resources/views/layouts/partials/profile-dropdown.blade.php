@@ -10,17 +10,17 @@
             : $defaultAvatar);
 @endphp
 <div class="profile-click" dusk="profile-menu">
-    <img src="{{ $avatarUrl }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
+    <x-profile-photo :user="Auth::user()" size="xs" shape="circle" class="cursor-pointer" />
     <div class="user-dtl">
         <ul class="list-reset">
             <li class="user-dtl-header">
                 @if($portalLinks['change_avatar'])
                     <a href="{{ url($portalLinks['change_avatar']) }}" style="display:flex;align-items:center;text-decoration:none;">
-                        <img src="{{ $avatarUrl }}" class="user-avatar" style="cursor:pointer;">
+                        <x-profile-photo :user="Auth::user()" size="sm" class="cursor-pointer" />
                     </a>
                 @else
                     <span style="display:flex;align-items:center;">
-                        <img src="{{ $avatarUrl }}" class="user-avatar">
+                        <x-profile-photo :user="Auth::user()" size="sm" />
                     </span>
                 @endif
                 <div class="user-info">

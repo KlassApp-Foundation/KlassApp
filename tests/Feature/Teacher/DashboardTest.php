@@ -4,7 +4,12 @@ namespace Tests\Feature\Teacher;
 
 use App\Models\AcademicYear;
 use App\Models\Country;
+use App\Models\Homework;
 use App\Models\School;
+use App\Models\Section;
+use App\Models\Standard;
+use App\Models\StandardLink;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -247,5 +252,56 @@ class DashboardTest extends TestCase
         $response = $this->get('/teacher/dashboard');
 
         $response->assertRedirect('/login');
+    }
+
+    public function test_dashboard_renders_with_homework_due_within_week(): void
+    {
+        $standard = Standard::create([
+            'school_id' => $this->school->id,
+            'name' => 'primary_lower',
+            'order' => 1,
+            'status' => '1',
+        ]);
+
+        $section = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'P.3 Dash',
+            'status' => 1,
+        ]);
+
+        $stream = StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'class_teacher_id' => $this->teacher->id,
+            'status' => '1',
+        ]);
+
+        $subject = Subject::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'name' => 'Deadline Subject',
+            'code' => 'DS-1',
+            'type' => 'core',
+        ]);
+
+        Homework::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'standardLink_id' => $stream->id,
+            'subject_id' => $subject->id,
+            'description' => 'Deadline window homework',
+            'date' => now()->addDay()->toDateString(),
+            'created_by' => $this->teacher->id,
+        ]);
+
+        $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
+
+        $response->assertStatus(200);
+        $response->assertSee('Upcoming Deadlines');
+        $response->assertSee('Deadline window homework', false);
     }
 }

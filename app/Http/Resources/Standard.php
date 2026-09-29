@@ -17,7 +17,11 @@ class Standard extends JsonResource
         return [
             //
             'id'    =>  $this->id,
-            'name'  =>  $this->present()->integerToRoman($this->name),
+            // Raw class name (P.1-P.7, S.1-S.6, nursery word names). The legacy
+            // integerToRoman() transform maps every real class name to an empty
+            // string, which broke the public admission class list and the
+            // class-dependent PLE/UCE fields.
+            'name'  =>  (string) $this->name,
         ];
     }
 }
