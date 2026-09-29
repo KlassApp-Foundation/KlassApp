@@ -13,6 +13,10 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        \Illuminate\Mail\Events\MessageSending::class => [
+            \App\Listeners\DemoSchoolBlockOutboundMail::class,
+        ],
+
         'App\Events\Event' => [
             'App\Listeners\EventListener',
         ],

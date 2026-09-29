@@ -10,6 +10,8 @@
 #     override the harness and diverge from CI.
 #   - A gitignored tests/known-failures.local.txt, when present locally, is
 #     honoured as an extra ignore set; CI never sees that file.
+#   - Stale entries FAIL: a test listed as known-failing that now passes must
+#     be removed from the list in the same change (CI check).
 #
 # Usage: bash scripts/test-guard.sh
 # Requires: vendor/bin/phpunit, python3.
@@ -18,7 +20,8 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 KNOWN="$ROOT/tests/known-failures.txt"
 KNOWN_LOCAL="$ROOT/tests/known-failures.local.txt"
-JUNIT="$(mktemp "${TMPDIR:-/tmp}/test-guard-junit.XXXXXX.xml")"
+# Template ends in Xs: BSD mktemp (macOS) does not substitute Xs before a suffix.
+JUNIT="$(mktemp "${TMPDIR:-/tmp}/test-guard-junit.XXXXXX")"
 trap 'rm -f "$JUNIT"' EXIT
 
 cd "$ROOT"
@@ -57,61 +60,4 @@ if [ ! -s "$JUNIT" ]; then
     exit 2
 fi
 
-python3 - "$JUNIT" "$KNOWN" "$KNOWN_LOCAL" <<'PY'
-import os, sys, xml.etree.ElementTree as ET
-
-junit_path, known_path, local_path = sys.argv[1], sys.argv[2], sys.argv[3]
-root = ET.parse(junit_path).getroot()
-
-current = set()
-total = failed = errored = skipped = 0
-skip_names = []
-for case in root.iter('testcase'):
-    total += 1
-    failure = case.find('failure')
-    error = case.find('error')
-    skip = case.find('skipped')
-    cls = (case.get('classname') or '').replace('.', '\\')
-    meth = case.get('name') or ''
-    name = f'{cls}::{meth}'
-    if failure is not None or error is not None:
-        current.add(name)
-        if failure is not None:
-            failed += 1
-        else:
-            errored += 1
-    elif skip is not None:
-        skipped += 1
-        if len(skip_names) < 25:
-            reason = (skip.get('message') or skip.text or '').strip().split('\n')[0][:120]
-            skip_names.append(f'{name} — {reason}' if reason else name)
-
-known = set()
-for path in (known_path, local_path):
-    if os.path.exists(path):
-        with open(path, encoding='utf-8') as fh:
-            known.update(
-                line.strip()
-                for line in fh
-                if line.strip() and not line.strip().startswith('#')
-            )
-
-new = current - known
-recovered = known - current
-
-print(f'[test-guard] Suite totals: {total} tests, {failed} failures, {errored} errors, {skipped} skipped.')
-if skip_names:
-    print('[test-guard] Skipped tests (up to 25 shown):')
-    for n in skip_names:
-        print(f'  {n}')
-
-if new:
-    print(f'[test-guard] FAIL: {len(new)} new failing test(s) not in the known-failures list(s):')
-    for name in sorted(new):
-        print(f'  {name}')
-    print(f'[test-guard] baseline failing: {len(known)}, current failing: {len(current)}')
-    sys.exit(1)
-
-print(f'[test-guard] OK: {len(current)} failing test(s), all accounted for in tests/known-failures.txt '
-      f'({len(recovered)} previously-known failures now passing).')
-PY
+python3 "$ROOT/scripts/test-guard-compare.py" "$JUNIT" "$KNOWN" "$KNOWN_LOCAL"

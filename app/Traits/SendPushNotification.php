@@ -17,6 +17,13 @@ trait SendPushNotification
 
    public function sendNotification($array,$usertoken)
    {
+    // Demo schools never send real push notifications (hard outbound guard).
+    if (\App\Services\DemoSchoolCommsGuard::blocksDeviceToken($usertoken)) {
+        \Log::info('[demo-guard] push blocked for demo school device');
+
+        return null;
+    }
+
     try
     {
    
@@ -57,6 +64,13 @@ trait SendPushNotification
 
      public function sendTeacherNotification($array,$usertoken)
    {
+    // Demo schools never send real push notifications (hard outbound guard).
+    if (\App\Services\DemoSchoolCommsGuard::blocksDeviceToken($usertoken)) {
+        \Log::info('[demo-guard] push blocked for demo school device');
+
+        return null;
+    }
+
     try
     {
       config(['fcm.http.server_key' => env('FCM_TEACHER_SERVER_KEY')]);

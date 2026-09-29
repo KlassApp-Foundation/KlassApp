@@ -15,6 +15,13 @@ trait MSG91
 
     public function sendSMS($content, $to)
     {
+        // Demo schools never send real SMS (hard outbound guard).
+        if (\App\Services\DemoSchoolCommsGuard::blocksPhone($to)) {
+            \Log::info('[demo-guard] SMS blocked for demo school recipient', ['to' => $to]);
+
+            return 'blocked: demo school (no SMS sent)';
+        }
+
         try
         {
             $isError = 0;
