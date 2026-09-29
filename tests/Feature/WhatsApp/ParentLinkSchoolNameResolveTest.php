@@ -83,7 +83,7 @@ class ParentLinkSchoolNameResolveTest extends TestCase
         $student = $this->createStudent($school, $link, 'Grace Auma');
 
         $request = app(ParentLinkRequestService::class)->createFromFlowSubmission(
-            '+256789843175',
+            '+256700000001',
             [
                 'parent_name' => 'Sunday Johnson',
                 'child_name' => 'Grace Auma',
@@ -121,7 +121,7 @@ class ParentLinkSchoolNameResolveTest extends TestCase
 
         $orphan = ParentLinkRequest::create([
             'school_id' => null,
-            'phone' => '+256789843175',
+            'phone' => '+256700000001',
             'parent_name' => 'Sunday Johnson',
             'child_name' => 'Grace Auma',
             'child_class' => 'P.7',
