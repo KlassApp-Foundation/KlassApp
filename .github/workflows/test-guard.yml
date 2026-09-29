@@ -3,6 +3,8 @@ name: Test Guard
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   test-guard:
@@ -17,6 +19,9 @@ jobs:
           php-version: '8.4'
           tools: composer:v2
           coverage: none
+
+      - name: Environment variable names visible to PHP (no values)
+        run: php -r '$e=array_keys(getenv()); sort($e); echo implode("\n",$e),PHP_EOL;'
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress

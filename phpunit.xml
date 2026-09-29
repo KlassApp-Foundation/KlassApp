@@ -9,28 +9,74 @@
     </testsuite>
   </testsuites>
   <php>
+    <!--
+      Every variable below is force="true" so a leaking shell environment cannot
+      change test behaviour relative to CI (root cause of the 2026-09-29 Toshi
+      local failures: shell-exported TOSHI_LLM_* mixed a model family with a
+      different provider host and tripped ToshiLlm's ambiguity guard).
+
+      Values equal CI's effective values: phpunit-set names keep their value
+      (phpunit sets them before Dotenv, so .env cannot override); names added
+      here were previously resolved from .env.example and are pinned to those
+      exact values. scripts/test-guard.sh aborts if any entry in this file
+      without force="true" is shadowed by the invoking shell.
+    -->
     <env name="APP_ENV" value="testing" force="true"/>
+    <env name="APP_KEY" value="base64:ObPJaxQf1eMxrne4YBjtdUZbym1/fsDEQVsYKtnv+NA=" force="true"/>
     <env name="DB_CONNECTION" value="sqlite" force="true"/>
     <env name="DB_DATABASE" value=":memory:" force="true"/>
     <env name="FILESYSTEM_DISK" value="local" force="true"/>
+    <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+    <env name="CACHE_DRIVER" value="array" force="true"/>
+    <env name="CACHE_STORE" value="file" force="true"/>
+    <env name="SESSION_DRIVER" value="array" force="true"/>
+    <env name="QUEUE_DRIVER" value="sync" force="true"/>
+    <env name="QUEUE_CONNECTION" value="database" force="true"/>
+    <env name="MAIL_DRIVER" value="array" force="true"/>
+    <env name="WHATSAPP_BUSINESS_NUMBER" value="+256793844906" force="true"/>
+    <env name="WHATSAPP_BUSINESS_NAME" value="KlassApp" force="true"/>
+    <env name="EVOLUTION_API_URL" value="http://localhost:8080" force="true"/>
+    <env name="EVOLUTION_API_KEY" value="test-key" force="true"/>
+    <env name="EVOLUTION_INSTANCE_NAME" value="klassapp" force="true"/>
+    <env name="SLACK_MCP_MODE" value="mock" force="true"/>
+    <env name="OPENAI_COMPATIBLE_API_KEY" value="test-suite-placeholder-key" force="true"/>
+    <env name="OPENAI_COMPATIBLE_URL" value="https://api.deepseek.com" force="true"/>
+    <env name="OPENAI_COMPATIBLE_MODEL" value="deepseek-chat" force="true"/>
+    <env name="TOSHI_LLM_ENABLED" value="false" force="true"/>
+    <env name="TOSHI_LLM_MODEL" value="" force="true"/>
+    <env name="TOSHI_LLM_BASE_URL" value="" force="true"/>
+    <env name="TOSHI_SDK_V2_ENABLED" value="false" force="true"/>
+    <env name="TOSHI_PLATFORM_GATE_ENABLED" value="false" force="true"/>
+    <env name="TOSHI_PLATFORM_USER_IDS" value="" force="true"/>
+    <env name="TOSHI_DAILY_LLM_LIMIT" value="100" force="true"/>
     <server name="APP_ENV" value="testing" force="true"/>
+    <server name="APP_KEY" value="base64:ObPJaxQf1eMxrne4YBjtdUZbym1/fsDEQVsYKtnv+NA=" force="true"/>
     <server name="DB_CONNECTION" value="sqlite" force="true"/>
     <server name="DB_DATABASE" value=":memory:" force="true"/>
     <server name="FILESYSTEM_DISK" value="local" force="true"/>
-    <env name="BCRYPT_ROUNDS" value="4"/>
-    <env name="CACHE_DRIVER" value="array"/>
-    <env name="SESSION_DRIVER" value="array"/>
-    <env name="QUEUE_DRIVER" value="sync"/>
-    <env name="MAIL_DRIVER" value="array"/>
-    <env name="WHATSAPP_BUSINESS_NUMBER" value="+256793844906"/>
-    <env name="WHATSAPP_BUSINESS_NAME" value="KlassApp"/>
-    <env name="EVOLUTION_API_URL" value="http://localhost:8080"/>
-    <env name="EVOLUTION_API_KEY" value="test-key"/>
-    <env name="EVOLUTION_INSTANCE_NAME" value="klassapp"/>
-    <env name="SLACK_MCP_MODE" value="mock"/>
-    <env name="OPENAI_COMPATIBLE_API_KEY" value="test-suite-placeholder-key"/>
-    <env name="TOSHI_LLM_MODEL" value=""/>
-    <env name="TOSHI_LLM_BASE_URL" value=""/>
+    <server name="BCRYPT_ROUNDS" value="4" force="true"/>
+    <server name="CACHE_DRIVER" value="array" force="true"/>
+    <server name="CACHE_STORE" value="file" force="true"/>
+    <server name="SESSION_DRIVER" value="array" force="true"/>
+    <server name="QUEUE_DRIVER" value="sync" force="true"/>
+    <server name="QUEUE_CONNECTION" value="database" force="true"/>
+    <server name="MAIL_DRIVER" value="array" force="true"/>
+    <server name="WHATSAPP_BUSINESS_NUMBER" value="+256793844906" force="true"/>
+    <server name="WHATSAPP_BUSINESS_NAME" value="KlassApp" force="true"/>
+    <server name="EVOLUTION_API_URL" value="http://localhost:8080" force="true"/>
+    <server name="EVOLUTION_API_KEY" value="test-key" force="true"/>
+    <server name="EVOLUTION_INSTANCE_NAME" value="klassapp" force="true"/>
+    <server name="SLACK_MCP_MODE" value="mock" force="true"/>
+    <server name="OPENAI_COMPATIBLE_API_KEY" value="test-suite-placeholder-key" force="true"/>
+    <server name="OPENAI_COMPATIBLE_URL" value="https://api.deepseek.com" force="true"/>
+    <server name="OPENAI_COMPATIBLE_MODEL" value="deepseek-chat" force="true"/>
+    <server name="TOSHI_LLM_ENABLED" value="false" force="true"/>
+    <server name="TOSHI_LLM_MODEL" value="" force="true"/>
+    <server name="TOSHI_LLM_BASE_URL" value="" force="true"/>
+    <server name="TOSHI_SDK_V2_ENABLED" value="false" force="true"/>
+    <server name="TOSHI_PLATFORM_GATE_ENABLED" value="false" force="true"/>
+    <server name="TOSHI_PLATFORM_USER_IDS" value="" force="true"/>
+    <server name="TOSHI_DAILY_LLM_LIMIT" value="100" force="true"/>
   </php>
   <source>
     <include>
