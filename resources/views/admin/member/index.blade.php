@@ -103,7 +103,8 @@
         @else
             <div data-testid="students-ledger">
             <x-table
-                :headers="['Student name', 'Class', 'Stream', 'Gender', 'Status']"
+                :headers="['', 'Student name', 'Class', 'Stream', 'Gender', 'Status', 'WhatsApp']"
+                selectable
                 sortable
             >
                 @foreach($students as $student)
@@ -113,6 +114,7 @@
                     $stream = $student->standardLink?->stream ?? '—';
                 @endphp
                     <tr>
+                        <td class="dt-cell-check"><input type="checkbox" class="dt-checkbox students-row-check" value="{{ $student->id }}"></td>
 <td data-label="Student name">
                             <a href="{{ url('/admin/student/show/' . $student->name) }}" class="dt-name-link">
                                 {{ $student->displayName }}
@@ -148,7 +150,14 @@
                                 </span>
                             @endif
                         </td>
-                    </tr>
+                        <td data-label="WhatsApp">
+                            @if($student->userprofile && $student->userprofile->phone)
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $student->userprofile->phone) }}" target="_blank" rel="noopener" class="dt-name-link text-xs text-green-600 hover:underline">WhatsApp</a>
+                            @else
+                                <span class="text-xs text-gray-400">—</span>
+                            @endif
+                        </td>
+                     </tr>
                 @endforeach
             </x-table>
             </div>

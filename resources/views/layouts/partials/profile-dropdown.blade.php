@@ -2,12 +2,6 @@
 {{-- Shared profile dropdown — used by all role navigation files --}}
 @php
     $portalLinks = \App\Support\PortalProfileLinks::forUser(Auth::user());
-    $defaultAvatar = asset('uploads/user/avatar/default-user.jpg');
-    $avatarUrl = Auth::user()->usergroup_id === 3
-        ? $defaultAvatar
-        : (Auth::user()->userprofile && Auth::user()->userprofile->avatar != null
-            ? url(Auth::user()->userprofile->AvatarPath)
-            : $defaultAvatar);
 @endphp
 <div class="profile-click" dusk="profile-menu">
     <x-profile-photo :user="Auth::user()" size="xs" shape="circle" class="cursor-pointer" />
