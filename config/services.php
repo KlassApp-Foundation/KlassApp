@@ -64,7 +64,11 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
+        // Callback follows APP_URL so staging custom domains stay in sync.
+        // Local-only override: GOOGLE_REDIRECT_URI when APP_ENV=local.
+        'redirect' => (env('APP_ENV') === 'local' && filled(env('GOOGLE_REDIRECT_URI')))
+            ? env('GOOGLE_REDIRECT_URI')
+            : (rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback'),
         // Browser Maps/Places key — set via env; never commit a literal. Restrict by HTTP referrer in GCP.
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
@@ -107,3 +111,4 @@ return [
         'booking_url' => env('DEMO_BOOKING_URL'),
     ],
 ];
+
