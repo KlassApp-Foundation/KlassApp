@@ -154,6 +154,20 @@ Route::post('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCod
 Route::post('/register/verify/resend', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
     ->middleware('throttle:3,1')
     ->name('register.verify.resend');
+// Polled by the sign-up tab: {confirmed: bool} for this browser's pending signup only.
+Route::get('/register/verify/status', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'status'])
+    ->middleware('throttle:verify-status')
+    ->name('register.verify.status');
+// Sign-up tab moves on after the email was confirmed on another device.
+Route::post('/register/verify/continue', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'continueSignup'])
+    ->name('register.verify.continue');
+// Signed "Confirm email" link (Part D2). GET shows a button; only the POST confirms.
+Route::get('/register/verify/link/{token}', [\App\Http\Controllers\Auth\EmailConfirmLinkController::class, 'show'])
+    ->middleware('throttle:verify-link')
+    ->name('register.verify.link');
+Route::post('/register/verify/link/{token}', [\App\Http\Controllers\Auth\EmailConfirmLinkController::class, 'confirm'])
+    ->middleware('throttle:verify-link')
+    ->name('register.verify.link.confirm');
 
 // Teacher invite link — one-time password-set flow (no credentials in email)
 Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])

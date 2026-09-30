@@ -42,7 +42,7 @@ class SubscriptionExpiredMail extends Mailable implements ShouldQueue
         $mail_content = str_replace(":end_date",$this->subscription->end_date,$mail_content);
         $mail_content = str_replace(":url",url('/pricing'),$mail_content);
       
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                         ->subject($subject)
                         ->with([
                             'content' => $mail_content,

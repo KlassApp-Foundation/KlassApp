@@ -105,10 +105,11 @@ class ClassTeacherInviteServiceTest extends TestCase
         $this->assertSame($existingTeacher->id, $link->class_teacher_id);
         $this->assertSame($existingTeacher->id, $section->class_teacher_id);
 
-        // Reassignment email — password must be null/empty
+        // Reassignment email — existing account, never carries a password
         Mail::assertQueued(TeacherInviteMail::class, function ($mail) {
             return $mail->email === 'existing@school.ug'
-                && ($mail->password === null || $mail->password === '');
+                && $mail->existingAccount === true
+                && ! property_exists($mail, 'password');
         });
     }
 

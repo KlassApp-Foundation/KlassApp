@@ -1,16 +1,13 @@
-@component('mail::message')
-# You've been promoted at {{ $schoolName }}
+<x-mail::message :preheader="'Sign in with your usual email and password.'">
+# You're now a Co-Admin
 
-You are now a **Co-Admin** for **{{ $schoolName }}** on KlassApp.
+You now have full admin access to **{{ $schoolName }}** on KlassApp.
 
-Your existing login credentials still work. Log in with your current email and password.
+Sign in with your usual email and password. Nothing else changes.
 
-@component('mail::button', ['url' => url('/login'), 'color' => 'green'])
-Log in to KlassApp
-@endcomponent
+<x-mail::button :url="url('/login')">Sign in to KlassApp</x-mail::button>
 
-As a Co-Admin, you now have full admin access to manage the school.
-
-Thanks,<br>
-{{ config('app.name') }}
-@endcomponent
+<x-slot:subcopy>
+Button not working? Paste this link into your browser: <span class="break-all">[{{ url('/login') }}]({{ url('/login') }})</span>
+</x-slot:subcopy>
+</x-mail::message>

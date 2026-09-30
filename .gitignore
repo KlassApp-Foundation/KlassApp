@@ -108,6 +108,8 @@ public/images/*
 !public/images/klassapp-stacked-dark.svg
 !public/images/whatsapp.svg
 !public/images/slack.svg
+# Email shell logo (PNG: Outlook does not render SVG)
+!public/images/email/
 !public/images/google-drive.svg
 !public/images/brand/
 !public/images/brand/models/

@@ -43,7 +43,7 @@ class NewMessage extends Mailable implements ShouldQueue
                  $message= $mailtemplate->mail_content;
                   $message= str_replace(':name',$this->user->name,$message);
                   $message= str_replace(':message',$this->content,$message);
-       return $this->markdown('emails.mailcontent')
+       return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                    ->subject($this->sub)
                    ->with([
                        'content' => $message,
