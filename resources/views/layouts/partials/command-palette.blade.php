@@ -5,7 +5,9 @@
      server-rendered nodes, which would break Alpine/Livewire markup inside it. --}}
 @auth
     <div id="ds-command-palette">
-        <livewire:livewire-ui-spotlight />
+        @if (view()->exists('livewire-ui-spotlight'))
+            <livewire:livewire-ui-spotlight />
+        @endif
     </div>
 
     {{-- Guard for a real bug in wire-elements/spotlight 2.0.4: go() does
