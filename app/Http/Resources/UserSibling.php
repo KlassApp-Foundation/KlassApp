@@ -26,7 +26,7 @@ class UserSibling extends JsonResource
         {
             $array[$i]['fullname'] = ucwords($details['sibling_name']);
             $array[$i]['relation'] = ucwords($details['sibling_relation']);
-            $array[$i]['date_of_birth'] = date('d-m-Y',strtotime($details['sibling_date_of_birth']));
+            $array[$i]['date_of_birth'] = \App\Support\DateOfBirth::formatOrNull($details['sibling_date_of_birth'] ?? null);
             $standardLink = StandardLink::where([['id',$details['sibling_standard']],['academic_year_id',$academic_year->id]])->first();
             $array[$i]['standard_section'] = $standardLink->StandardSection;
             $i++;

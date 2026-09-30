@@ -58,9 +58,7 @@ class ExportMemberController extends Controller
                     $user->userprofile->LIN,
                     $user->userprofile->joining_date,
                     $user->userprofile->gender,
-                    blank(optional($user->userprofile)->date_of_birth)
-                        ? ''
-                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
+                    \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
                     $user->userprofile->country->name,
@@ -171,9 +169,7 @@ class ExportMemberController extends Controller
                 }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=blank(optional($user->userprofile)->date_of_birth)
-                        ? ''
-                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
+                    $data[]=\App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', '');
                 }
                 if(in_array('address', $heads))
                 {

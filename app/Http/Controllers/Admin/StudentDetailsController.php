@@ -144,7 +144,7 @@ class StudentDetailsController extends Controller
         $user = $this->findSchoolStudentByName($name, ['userprofile']);
         if(Gate::allows('member',$user))
         {
-            $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
+            $activitylog = ActivityLog::whereIn('subject_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
 
             $activitylog = ActivityLogResource::collection($activitylog);
 
@@ -162,7 +162,7 @@ class StudentDetailsController extends Controller
         $user = $this->findSchoolStudentByName($name, ['userprofile']);
         if(Gate::allows('member',$user))
         {
-            $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
+            $activitylog = ActivityLog::whereIn('causer_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
 
             $activitylog = ActivityLogResource::collection($activitylog);
 
@@ -349,11 +349,8 @@ class StudentDetailsController extends Controller
         $user = $this->findSchoolStudentMemberOrAbort($name, ['studentAcademicLatest']);
         $parents = $user->parent;
 
-        if ($_SERVER['HTTP_REFERER'] != null) {
-            $prev_url = $_SERVER['HTTP_REFERER'];
-        } else {
-            $prev_url = url('/admin/students');
-        }
+        // Direct visits / bookmarks send no Referer header; $_SERVER['HTTP_REFERER'] is then undefined.
+        $prev_url = request()->headers->get('referer') ?: url('/admin/students');
 
         return view('/admin/member/show', ['user' => $user, 'parents' => $parents, 'prev_url' => $prev_url]);
     }

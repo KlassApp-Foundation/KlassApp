@@ -78,7 +78,7 @@
                         </td>
                         <!-- Date of Birth (conditional) -->
                         <td v-if="birthday == 'true'">
-                            <span class="text-sm text-gray-600">{{ user['date_of_birth'] }}</span>
+                            <span class="text-sm text-gray-600">{{ user['date_of_birth'] || 'Not recorded' }}</span>
                         </td>
                         <!-- Designation -->
                         <td>

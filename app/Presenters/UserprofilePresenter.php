@@ -30,7 +30,7 @@ class UserprofilePresenter extends Presenter
 
   public function getAge($date_of_birth)
   {
-    if (blank($date_of_birth)) {
+    if (! \App\Support\DateOfBirth::isRecorded($date_of_birth)) {
       return null;
     }
 

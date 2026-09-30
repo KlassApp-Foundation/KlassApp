@@ -185,7 +185,7 @@
                                     </h2>
                                     <p>{{ user["class"] }}</p>
                                     <p v-if="birthday == 'true'">
-                                        {{ user["date_of_birth"] }}
+                                        {{ user["date_of_birth"] || "Not recorded" }}
                                     </p>
                                 </div>
                             </div>

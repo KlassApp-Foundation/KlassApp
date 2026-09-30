@@ -23,7 +23,7 @@ class UserDetail extends JsonResource
     }
     else
     {
-        $avatarpath = $this->userprofile->AvatarPath;
+        $avatarpath = optional($this->userprofile)->AvatarPath;
     }
         $standardName = $this->studentAcademicLatest->standardLink->standard->name ?? '';
         $sectionName = $this->studentAcademicLatest->standardLink->section->name ?? '';
@@ -32,7 +32,7 @@ class UserDetail extends JsonResource
 
         if ($isCandidateClass)
         {
-            $board_registration_number = $this->studentAcademicLatest->board_registration_number;
+            $board_registration_number = optional($this->studentAcademicLatest)->board_registration_number;
         }
         else
         {
@@ -42,15 +42,13 @@ class UserDetail extends JsonResource
         return
         [
             'name'                      => $this->name,
-            'school_name'               => $this->school->name,
+            'school_name'               => optional($this->school)->name,
             'fullname'                  => $this->FullName,
-            'gender'                    => $this->userprofile->gender,
-            'date_of_birth'             => blank(optional($this->userprofile)->date_of_birth)
-                ? null
-                : date('d-m-Y', strtotime($this->userprofile->date_of_birth)),
-            'address'                   => $this->userprofile->address,
-            'city'                      => $this->userprofile->city->name ?? null,
-            'country'                   => $this->userprofile->country->name,
+            'gender'                    => optional($this->userprofile)->gender,
+            'date_of_birth'             => \App\Support\DateOfBirth::formatOrNull(optional($this->userprofile)->date_of_birth, 'd-m-Y'),
+            'address'                   => optional($this->userprofile)->address,
+            'city'                      => optional(optional($this->userprofile)->city)->name,
+            'country'                   => optional(optional($this->userprofile)->country)->name,
             'pincode'                   => optional($this->userprofile)->pincode=="" ? null:optional($this->userprofile)->pincode,
             'email'                     => $this->email,
             'mobile_no'                 => $this->mobile_no,
@@ -58,22 +56,20 @@ class UserDetail extends JsonResource
             'avatar'                    => $avatarpath,
             'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)),
             'updated_at'                => optional($this->userprofile)->updated_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->updated_at)),
-            'age'                       => blank(optional($this->userprofile)->date_of_birth)
-                ? null
-                : date('Y') - date('Y', strtotime($this->userprofile->date_of_birth)),
+            'age'                       => \App\Support\DateOfBirth::age(optional($this->userprofile)->date_of_birth),
             'ref_id'                    => $this->ref_id,
             'class'                     => $this->studentAcademicLatest?->standardLink?->StandardSection ?? 'No class',
-            'transport_mode'            => ucwords(str_replace('_', ' ', $this->studentAcademicLatest->mode_of_transport)),
-            'driver_name'               => $this->studentAcademicLatest->transport_details['driver_name'],
-            'driver_number'             => $this->studentAcademicLatest->transport_details['driver_contact_number'],
-            'registration_number'       => $this->registration_number == null ? $this->userprofile->registration_number:$this->registration_number,
-            'lin'               => $this->userprofile->lin,
-            'joining_date'           => date('d-m-Y',strtotime($this->userprofile->joining_date)),
-            'std_school_pay_number'               => $this->studentAcademicLatest->std_school_pay_number,
-            'school_student_id'          => $this->studentAcademicLatest->school_student_id,
+            'transport_mode'            => ucwords(str_replace('_', ' ', optional($this->studentAcademicLatest)->mode_of_transport)),
+            'driver_name'               => optional($this->studentAcademicLatest)->transport_details['driver_name'] ?? null,
+            'driver_number'             => optional($this->studentAcademicLatest)->transport_details['driver_contact_number'] ?? null,
+            'registration_number'       => $this->registration_number == null ? optional($this->userprofile)->registration_number:$this->registration_number,
+            'lin'               => optional($this->userprofile)->lin,
+            'joining_date'           => \App\Support\DateOfBirth::formatOrNull(optional($this->userprofile)->joining_date),
+            'std_school_pay_number'               => optional($this->studentAcademicLatest)->std_school_pay_number,
+            'school_student_id'          => optional($this->studentAcademicLatest)->school_student_id,
             'board_registration_number' => $board_registration_number,
             'is_candidate_class'        => $isCandidateClass,
-            'librarycard_number'        => $this->librarycard->library_card_no,
+            'librarycard_number'        => optional($this->librarycard)->library_card_no,
         ];
     }
 }

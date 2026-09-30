@@ -61,7 +61,7 @@ trait AdmissionUser
             }
             $userprofile->gender                = $data->gender;
 
-            $userprofile->date_of_birth         = date('Y-m-d',strtotime($data->date_of_birth));
+            $userprofile->date_of_birth         = blank($data->date_of_birth) ? null : date('Y-m-d',strtotime($data->date_of_birth));
 
             $userprofile->blood_group           = $data->blood_group;
 

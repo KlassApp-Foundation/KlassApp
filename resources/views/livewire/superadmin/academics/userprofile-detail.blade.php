@@ -110,11 +110,7 @@
                 <p>Date Of Birth</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                @if($userprofileDetail->date_of_birth)
-                    <p class="leading-loose txt-gray-light">{{ $userprofileDetail->date_of_birth }}</p>
-                @else
-                    <p class="leading-loose txt-gray-light">--</p>
-                @endif
+                <p class="leading-loose txt-gray-light">{{ \App\Support\DateOfBirth::format($userprofileDetail->date_of_birth) }}</p>
             </div>
         </div>
 

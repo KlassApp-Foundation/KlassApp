@@ -18,7 +18,7 @@
             </div>
           </td>
           <td>{{ user.relation }}</td>
-          <td>{{ user.date_of_birth }}</td>
+          <td>{{ user.date_of_birth || 'Not recorded' }}</td>
           <td>{{ user.standard_section }}</td>
         </tr>
       </tbody>

@@ -159,7 +159,7 @@ class UserProfileController extends Controller
         $array['birth_firstname']=$userprofile->birth_firstname;
         $array['birth_lastname']=$userprofile->birth_lastname;
         $array['gender']=$userprofile->gender;
-        $array['date_of_birth']=date('Y-m-d',strtotime($userprofile->date_of_birth));
+        $array['date_of_birth']=\App\Support\DateOfBirth::formatOrNull($userprofile->date_of_birth, 'Y-m-d') ?? '';
         $array['address']=$userprofile->address;
         // $array['country_id']=$userprofile->country->name;
         // $array['city_id']=$userprofile->city->name;
