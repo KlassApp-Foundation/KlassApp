@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,6 +99,15 @@ class TestPurgeSchoolsCommandTest extends TestCase
             'section_id' => $section->id,
             'status' => 1,
         ]);
+        // Subjects reference sections; the purge must delete subjects first.
+        Subject::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'name' => 'Purge Subject',
+            'status' => 1,
+        ]);
     }
 
     public function test_dry_run_prints_the_inventory_and_deletes_nothing(): void
@@ -109,6 +119,7 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->artisan('test:purge-schools', ['--school' => [$school->id]])
             ->expectsOutputToContain("school {$school->id}")
             ->expectsOutputToContain("user id={$user->id}")
+            ->expectsOutputToContain('subjects: 1 row(s)')
             ->expectsOutputToContain('sections: 1 row(s)')
             ->expectsOutputToContain('Dry run — nothing was deleted.')
             ->assertExitCode(0);
@@ -134,6 +145,7 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $e2eUser->id]);
         $this->assertDatabaseMissing('userprofiles', ['user_id' => $e2eUser->id]);
         $this->assertDatabaseMissing('sections', ['school_id' => $e2e->id]);
+        $this->assertDatabaseMissing('subjects', ['school_id' => $e2e->id]);
         $this->assertDatabaseMissing('standards_link', ['school_id' => $e2e->id]);
 
         $this->assertDatabaseHas('schools', ['id' => $other->id]);
