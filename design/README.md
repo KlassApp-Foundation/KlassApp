@@ -1,11 +1,14 @@
 # KlassApp design
 
-In-repo home for Claude Design exports (soft-launch convention).
+**Source of truth for all design work.** Import Claude Design exports here; do not keep parallel handoff ZIPs elsewhere.
 
 | Path | What |
 |---|---|
-| `system/` | Full design-system export (tokens, components, concepts, guidelines, assets). |
-| `handoffs/<date>-<name>/` | Dated handoff packages used to drive implementation PRs. |
+| `system/` | Full design-system export: tokens, components, guidelines, concepts, assets, `SKILL.md`, `handoff/`. |
+| `system/guidelines/` | Handoff guides (including dated `handoff-*.md`). |
+| `system/handoff/` | Implementation packages (e.g. `handoff/emails/`). |
+| `handoffs/2026-09-30-avatar/` | Earlier small avatar handoff (#908); superseded for new work by `system/`. |
 
-**Task B** (2026-09-29 consolidated, including emails code under `B-emails-code/`) is at `handoffs/2026-09-29/`.
-Imported from the local Claude Design export `KlassApp Design System.zip` (2026-10-01).
+## Drift check (required before each implementation PR)
+
+`system/github.md` records the last design↔repo sync (**2026-09-28**, commit `dbe68419`). Before starting a PR from a handoff, run `git log --oneline dbe68419..main` (and re-read any listed files that moved) so you do not implement against a stale tree.
