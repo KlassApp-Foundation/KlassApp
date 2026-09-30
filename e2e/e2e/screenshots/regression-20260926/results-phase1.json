@@ -1,0 +1,20 @@
+[
+  {
+    "area": "attendance-today",
+    "check": "admin login lands on dashboard",
+    "pass": true,
+    "detail": "http://localhost:8080/admin/dashboard"
+  },
+  {
+    "area": "attendance-today",
+    "check": "admin attendance form loads",
+    "pass": false,
+    "detail": "status=404 url=http://localhost:8080/admin/class/241/attendance/add"
+  },
+  {
+    "area": "attendance-today",
+    "check": "admin attendance POST probe executed",
+    "pass": true,
+    "detail": "{\"status\":404,\"body\":\"{\\n    \\\"message\\\": \\\"The route admin/class/241/attendance/add could not be found.\\\"\\n}\"}"
+  }
+]

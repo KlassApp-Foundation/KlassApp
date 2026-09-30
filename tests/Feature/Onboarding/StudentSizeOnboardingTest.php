@@ -76,10 +76,9 @@ class StudentSizeOnboardingTest extends TestCase
     public function test_student_size_options_match_auth_onboarding_buckets(): void
     {
         $this->assertSame([
-            'Under 100 students',
-            '100-300 students',
-            '300-500 students',
-            '500+ students',
+            'Up to 500',
+            'Up to 1,000',
+            'More than 1,000',
         ], OnboardingStepsService::STUDENT_SIZE_OPTIONS);
     }
 
@@ -103,9 +102,9 @@ class StudentSizeOnboardingTest extends TestCase
 
     public function test_save_student_size_persists_valid_option(): void
     {
-        app(OnboardingEngine::class)->saveStudentSize($this->school, '300-500 students');
+        app(OnboardingEngine::class)->saveStudentSize($this->school, 'Up to 500');
 
-        $this->assertSame('300-500 students', $this->school->fresh()->student_size);
+        $this->assertSame('Up to 500', $this->school->fresh()->student_size);
         $this->assertTrue(OnboardingStepsService::isStepComplete('student_size', $this->school->fresh()));
     }
 
@@ -129,11 +128,11 @@ class StudentSizeOnboardingTest extends TestCase
             ->set('schoolName', 'Size Collect Academy')
             ->call('next')
             ->assertSee('Approximate school size')
-            ->set('studentSize', '500+ students')
+            ->set('studentSize', 'Up to 1,000')
             ->call('next')
             ->assertSee('Country');
 
-        $this->assertSame('500+ students', $this->school->fresh()->student_size);
+        $this->assertSame('Up to 1,000', $this->school->fresh()->student_size);
     }
 
     public function test_wizard_select_student_size_card_sets_property_and_rejects_kit_placeholder(): void
@@ -141,10 +140,10 @@ class StudentSizeOnboardingTest extends TestCase
         $this->actingAs($this->admin);
 
         Livewire::test(ManualOnboardingWizard::class)
-            ->call('selectStudentSize', 'Under 100 students')
-            ->assertSet('studentSize', 'Under 100 students')
+            ->call('selectStudentSize', 'Up to 500')
+            ->assertSet('studentSize', 'Up to 500')
             ->call('selectStudentSize', '1-100')
-            ->assertSet('studentSize', 'Under 100 students')
+            ->assertSet('studentSize', 'Up to 500')
             ->assertSet('errorMessage', 'Please choose an approximate school size.');
     }
 
@@ -159,7 +158,7 @@ class StudentSizeOnboardingTest extends TestCase
             ->set('input', '100-300')
             ->call('send');
 
-        $this->assertSame('100-300 students', $this->school->fresh()->student_size);
+        $this->assertSame('Up to 500', $this->school->fresh()->student_size);
     }
 
     public function test_toshi_create_mode_student_size_step_stores_property_and_advances(): void
@@ -176,7 +175,7 @@ class StudentSizeOnboardingTest extends TestCase
             ->set('input', '500+')
             ->call('send');
 
-        $component->assertSet('studentSize', '500+ students');
+        $component->assertSet('studentSize', 'Up to 1,000');
         $this->assertSame(
             'country',
             $component->instance()->steps[$component->get('step')] ?? null

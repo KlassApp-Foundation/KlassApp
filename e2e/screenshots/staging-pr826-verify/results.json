@@ -1,0 +1,61 @@
+{
+  "RESULTS": [
+    {
+      "label": "/parent/children/999/fees → /parent/children redirect",
+      "pass": true,
+      "detail": "final=https://klassapp-staging-7mpoqg.laravel.cloud/parent/children status=200 error_page=false helpful=true"
+    },
+    {
+      "label": "/parent/children/999/grades → /parent/children redirect",
+      "pass": true,
+      "detail": "final=https://klassapp-staging-7mpoqg.laravel.cloud/parent/children status=200 error_page=false helpful=true"
+    },
+    {
+      "label": "/parent/children/999/attendance → /parent/children redirect",
+      "pass": true,
+      "detail": "final=https://klassapp-staging-7mpoqg.laravel.cloud/parent/children status=200 error_page=false helpful=true"
+    },
+    {
+      "label": "HTTP: /parent/children/999/fees → final URL is /parent/children",
+      "pass": true,
+      "detail": "final=https://klassapp-staging-7mpoqg.laravel.cloud/parent/children"
+    },
+    {
+      "label": "HTTP: https://klassapp-staging-7mpoqg.laravel.cloud/parent/children/999/fees → 302",
+      "pass": true,
+      "detail": "status=302"
+    },
+    {
+      "label": "CTA: children page has guidance copy",
+      "pass": true,
+      "detail": "present"
+    },
+    {
+      "label": "CTA: old bare message is gone",
+      "pass": true,
+      "detail": "replaced with CTAs"
+    },
+    {
+      "label": "CTA: dashboard also has guidance copy",
+      "pass": true,
+      "detail": "present"
+    },
+    {
+      "label": "Toshi: NO parent-context copy",
+      "pass": true,
+      "detail": "correctly absent"
+    },
+    {
+      "label": "Toshi: HAS student-appropriate greeting",
+      "pass": false,
+      "detail": "MISSING student wording"
+    },
+    {
+      "label": "Parent Toshi: HAS parent-context wording",
+      "pass": false,
+      "detail": "MISSING — regression?"
+    }
+  ],
+  "passed": 9,
+  "failed": 2
+}

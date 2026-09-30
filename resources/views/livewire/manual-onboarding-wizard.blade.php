@@ -98,6 +98,11 @@
     @endif
 
     {{-- Footer chrome: Previous | progress dots | Continue --}}
+    @if($overLimitNotice)
+        <div class="manual-wizard-notice" role="status" data-testid="wizard-overlimit" style="background:#FFFBEB;color:#92400E;border:1px solid #F59E0B;border-radius:8px;padding:10px 14px;margin:0 0 12px;">
+            ⚠️ {{ $overLimitNotice }}
+        </div>
+    @endif
     @if(! $finished && $this->stepCount > 0)
         @php
             $onReview = ($this->currentStep['key'] ?? '') === 'review';

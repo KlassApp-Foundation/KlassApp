@@ -260,10 +260,9 @@
                 <label class="form-label" for="student_size">Approximate Number of Students</label>
                 <select name="student_size" id="student_size" class="form-select" required>
                     <option value="" disabled {{ old('student_size') ? '' : 'selected' }}>Select range</option>
-                    <option value="Under 100 students" {{ old('student_size') == 'Under 100 students' ? 'selected' : '' }}>Under 100 students</option>
-                    <option value="100-300 students" {{ old('student_size') == '100-300 students' ? 'selected' : '' }}>100-300 students</option>
-                    <option value="300-500 students" {{ old('student_size') == '300-500 students' ? 'selected' : '' }}>300-500 students</option>
-                    <option value="500+ students" {{ old('student_size') == '500+ students' ? 'selected' : '' }}>500+ students</option>
+                    <option value="Up to 500" {{ old('student_size') == 'Up to 500' ? 'selected' : '' }}>Up to 500</option>
+                    <option value="Up to 1,000" {{ old('student_size') == 'Up to 1,000' ? 'selected' : '' }}>Up to 1,000</option>
+                    <option value="More than 1,000" {{ old('student_size') == 'More than 1,000' ? 'selected' : '' }}>More than 1,000</option>
                 </select>
             </div>
 

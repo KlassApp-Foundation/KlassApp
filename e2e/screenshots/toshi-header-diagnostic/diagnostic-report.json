@@ -1,0 +1,487 @@
+{
+  "ancestorReport": {
+    "chainLength": 3,
+    "chain": [
+      {
+        "tag": "div",
+        "id": null,
+        "classes": "toshi-root",
+        "position": "static",
+        "transform": "none",
+        "filter": "none",
+        "contain": "none",
+        "willChange": "auto",
+        "backdropFilter": "none",
+        "perspective": "none",
+        "containerType": "normal",
+        "contentVisibility": "visible",
+        "offsetParentProof": null
+      },
+      {
+        "tag": "body",
+        "id": null,
+        "classes": "font-primary antialiased min-h-screen overflow-x-hidden",
+        "position": "static",
+        "transform": "none",
+        "filter": "none",
+        "contain": "none",
+        "willChange": "auto",
+        "backdropFilter": "none",
+        "perspective": "none",
+        "containerType": "normal",
+        "contentVisibility": "visible",
+        "offsetParentProof": "NULL offsetParent"
+      },
+      {
+        "tag": "html",
+        "id": null,
+        "classes": "",
+        "position": "static",
+        "transform": "none",
+        "filter": "none",
+        "contain": "none",
+        "willChange": "auto",
+        "backdropFilter": "none",
+        "perspective": "none",
+        "containerType": "normal",
+        "contentVisibility": "visible",
+        "offsetParentProof": "NULL offsetParent"
+      }
+    ]
+  },
+  "cascadeReport": {
+    "rootComputed": {
+      "position": "static",
+      "transform": "none",
+      "marginTop": "69px",
+      "height": "831px",
+      "alignSelf": "flex-start"
+    },
+    "rootRect": {
+      "x": 1060,
+      "y": 69,
+      "width": 380,
+      "height": 831,
+      "top": 69,
+      "right": 1440,
+      "bottom": 900,
+      "left": 1060
+    },
+    "panelComputed": {
+      "position": "relative"
+    },
+    "panelRect": {
+      "x": 1060,
+      "y": 69,
+      "width": 380,
+      "height": 831,
+      "top": 69,
+      "right": 1440,
+      "bottom": 900,
+      "left": 1060
+    },
+    "headerRect": {
+      "x": 1061,
+      "y": 70,
+      "width": 378,
+      "height": 56,
+      "top": 70,
+      "right": 1439,
+      "bottom": 126,
+      "left": 1061
+    },
+    "navbarRect": {
+      "x": 0,
+      "y": 0,
+      "width": 1060,
+      "height": 68.796875,
+      "top": 0,
+      "right": 1060,
+      "bottom": 68.796875,
+      "left": 0
+    },
+    "navbarComputedHeight": "68.7969px",
+    "viewport": {
+      "w": 1440,
+      "h": 900
+    },
+    "sheetsInDocOrder": [
+      {
+        "href": "http://localhost:8080/css/dashboard-refresh.css?v=1790338663",
+        "order": 0,
+        "matches": [
+          {
+            "selector": "body [data-toshi-root]",
+            "media": null,
+            "position": "fixed",
+            "marginTop": null,
+            "height": null,
+            "alignSelf": null,
+            "important": "important"
+          },
+          {
+            "selector": "body [data-toshi-root] .toshi-toggle",
+            "media": null,
+            "position": "fixed",
+            "marginTop": null,
+            "height": "64px",
+            "alignSelf": null,
+            "important": "important"
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-form-card",
+            "media": null,
+            "position": null,
+            "marginTop": "4px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-pill",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "52px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-pill-avatar",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "38px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-pill-logo",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "24px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-pill-badge",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "38px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-panel",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "600px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-modal-overlay",
+            "media": null,
+            "position": "fixed",
+            "marginTop": null,
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-modal-box",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "85vh",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-dot",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "8px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-dot-overflow",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "18px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-progress-bar",
+            "media": null,
+            "position": null,
+            "marginTop": "0px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-btn-new-school",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": null,
+            "alignSelf": "flex-start",
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-gap-3",
+            "media": null,
+            "position": null,
+            "marginTop": "3px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-review-card",
+            "media": null,
+            "position": null,
+            "marginTop": "4px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-info-value",
+            "media": null,
+            "position": null,
+            "marginTop": "6px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-info-sub",
+            "media": null,
+            "position": null,
+            "marginTop": "2px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-tiny-note",
+            "media": null,
+            "position": null,
+            "marginTop": "2px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-attach-btn",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "32px",
+            "alignSelf": "center",
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-header-logo img",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "24px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-header-btn",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "36px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-chip-suggestion",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "44px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-confirm-card",
+            "media": null,
+            "position": "relative",
+            "marginTop": "8px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-confirm-card::before",
+            "media": null,
+            "position": "absolute",
+            "marginTop": null,
+            "height": "100%",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-confirm-card-icon",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "28px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-plan-card",
+            "media": null,
+            "position": null,
+            "marginTop": "8px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-plan-card-processing::before",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "14px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-modal-box",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "min(92vh, 920px)",
+            "alignSelf": null,
+            "important": null
+          }
+        ]
+      },
+      {
+        "href": "http://localhost:8080/vendor/toshi-ui/toshi-ui.css?v=1789941926",
+        "order": 1,
+        "matches": [
+          {
+            "selector": ".toshi-toggle-wrapper, [data-toshi-root] .toshi-toggle-wrapper",
+            "media": null,
+            "position": "relative",
+            "marginTop": null,
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-header-logo img",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "28px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-header-btn",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "32px",
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-confirm-chips-hint",
+            "media": null,
+            "position": null,
+            "marginTop": "0px",
+            "height": null,
+            "alignSelf": null,
+            "important": null
+          },
+          {
+            "selector": "[data-toshi-root] .toshi-option-card-badge",
+            "media": null,
+            "position": null,
+            "marginTop": null,
+            "height": "40px",
+            "alignSelf": null,
+            "important": null
+          }
+        ]
+      },
+      {
+        "href": "https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap",
+        "order": 2,
+        "matches": [
+          {
+            "error": "CORS/blocked: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules"
+          }
+        ]
+      }
+    ],
+    "headLinks": [
+      "http://localhost:8080/build/assets/app-B8LahT4d.css",
+      "http://localhost:8080/build/assets/app-BiRnlwxG.css",
+      "http://localhost:8080/build/assets/tailwind-BI-XdYIV.css",
+      "http://localhost:8080/css/admin.css?v=1789145581",
+      "http://localhost:8080/css/dashboard-refresh.css?v=1790338663",
+      "http://localhost:8080/vendor/toshi-ui/toshi-ui.css?v=1789941926",
+      "https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap",
+      "http://localhost:8080/css/empty-state-product-demo.css"
+    ]
+  },
+  "probe": {
+    "before": {
+      "x": 1060,
+      "y": 69,
+      "width": 380,
+      "height": 831,
+      "top": 69,
+      "right": 1440,
+      "bottom": 900,
+      "left": 1060
+    },
+    "after": {
+      "x": 1060,
+      "y": 69,
+      "width": 380,
+      "height": 831,
+      "top": 69,
+      "right": 1440,
+      "bottom": 900,
+      "left": 1060
+    },
+    "afterStyle": "static"
+  },
+  "cbProbe": {
+    "probeRect": {
+      "x": 0,
+      "y": 0,
+      "width": 10,
+      "height": 10,
+      "top": 0,
+      "right": 10,
+      "bottom": 10,
+      "left": 0
+    },
+    "viewport": {
+      "w": 1440,
+      "h": 900
+    }
+  }
+}

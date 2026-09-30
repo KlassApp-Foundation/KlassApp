@@ -1,0 +1,26 @@
+[
+  {
+    "label": "landing-375",
+    "url": "https://klassapp-staging-7mpoqg.laravel.cloud/",
+    "vw": 375,
+    "overflow": 0,
+    "wide": [],
+    "offViewportInteractive": []
+  },
+  {
+    "label": "landing-414",
+    "url": "https://klassapp-staging-7mpoqg.laravel.cloud/",
+    "vw": 414,
+    "overflow": 0,
+    "wide": [],
+    "offViewportInteractive": []
+  },
+  {
+    "label": "landing-768",
+    "url": "https://klassapp-staging-7mpoqg.laravel.cloud/",
+    "vw": 768,
+    "overflow": 0,
+    "wide": [],
+    "offViewportInteractive": []
+  }
+]

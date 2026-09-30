@@ -161,7 +161,7 @@ class OnboardingStepsServiceTest extends TestCase
             'student_size incomplete until schools.student_size is set'
         );
 
-        $this->school->update(['student_size' => 'Under 100 students']);
+        $this->school->update(['student_size' => 'Up to 500']);
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('student_size', $this->school->fresh()),
             'student_size complete when a size bucket is stored'

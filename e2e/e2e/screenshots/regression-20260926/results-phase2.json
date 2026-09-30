@@ -1,0 +1,14 @@
+[
+  {
+    "area": "attendance-today",
+    "check": "admin /admin/attendance/list returns data",
+    "pass": false,
+    "detail": "status=200 reasons=[] students241=[]"
+  },
+  {
+    "area": "attendance-scope",
+    "check": "settings page /admin/settings/academics reachable by admin",
+    "pass": false,
+    "detail": "status=404"
+  }
+]

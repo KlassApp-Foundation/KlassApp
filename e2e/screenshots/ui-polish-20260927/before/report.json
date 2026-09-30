@@ -1,0 +1,76 @@
+{
+  "phase": "before",
+  "base": "http://localhost:8080",
+  "shots": [
+    "e2e/screenshots/ui-polish-20260927/before/dashboard-1280.png",
+    "e2e/screenshots/ui-polish-20260927/before/dashboard-1440.png",
+    "e2e/screenshots/ui-polish-20260927/before/toshi-card-1440.png",
+    "e2e/screenshots/ui-polish-20260927/before/header-1440.png",
+    "e2e/screenshots/ui-polish-20260927/before/dashboard-1440-collapsed.png",
+    "e2e/screenshots/ui-polish-20260927/before/dashboard-1920.png",
+    "e2e/screenshots/ui-polish-20260927/before/mobile-375-menu-open.png",
+    "e2e/screenshots/ui-polish-20260927/before/mobile-375.png",
+    "e2e/screenshots/ui-polish-20260927/before/mobile-767-menu-open.png",
+    "e2e/screenshots/ui-polish-20260927/before/mobile-767.png"
+  ],
+  "probes": {
+    "1280": {
+      "liveBadge": 1,
+      "labelInfo": {
+        "color": "rgb(219, 234, 254)",
+        "text": "Select Academic Year",
+        "visible": true
+      },
+      "chromeInfo": {
+        "bellInNav": null,
+        "bellX": null,
+        "profileInNav": true,
+        "profileInSidebar": false,
+        "sidebarW": 192
+      }
+    },
+    "1440": {
+      "liveBadge": 1,
+      "labelInfo": {
+        "color": "rgb(219, 234, 254)",
+        "text": "Select Academic Year",
+        "visible": true
+      },
+      "chromeInfo": {
+        "bellInNav": null,
+        "bellX": null,
+        "profileInNav": true,
+        "profileInSidebar": false,
+        "sidebarW": 192
+      }
+    },
+    "1920": {
+      "liveBadge": 1,
+      "labelInfo": {
+        "color": "rgb(219, 234, 254)",
+        "text": "Select Academic Year",
+        "visible": true
+      },
+      "chromeInfo": {
+        "bellInNav": null,
+        "bellX": null,
+        "profileInNav": true,
+        "profileInSidebar": false,
+        "sidebarW": 192
+      }
+    },
+    "collapsed1440": {
+      "sidebarW": 72
+    },
+    "mobile-375": {
+      "horizontalOverflowPx": 0,
+      "burgerPresent": true,
+      "menuOpens": true
+    },
+    "mobile-767": {
+      "horizontalOverflowPx": 0,
+      "burgerPresent": true,
+      "menuOpens": true
+    }
+  }
+}

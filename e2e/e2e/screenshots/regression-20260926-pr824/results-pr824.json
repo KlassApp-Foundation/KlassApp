@@ -1,0 +1,57 @@
+[
+  {
+    "check": "admin /admin/activity renders 200 with table present",
+    "pass": true,
+    "detail": "status=200 table=true"
+  },
+  {
+    "check": "admin /admin/academic-term renders 200 with table present",
+    "pass": false,
+    "detail": "status=200 table=false"
+  },
+  {
+    "check": "admin /admin/fees-categories renders 200 with table present",
+    "pass": false,
+    "detail": "status=200 table=false"
+  },
+  {
+    "check": "admin /admin/transport renders 200 with table present",
+    "pass": true,
+    "detail": "status=200 table=true"
+  },
+  {
+    "check": "admin /admin/library/books renders 200 with table present",
+    "pass": true,
+    "detail": "status=200 table=true"
+  },
+  {
+    "check": "admin /admin/library/lends renders 200 with table present",
+    "pass": true,
+    "detail": "status=200 table=true"
+  },
+  {
+    "check": "admin /admin/library/cards renders 200 with table present",
+    "pass": false,
+    "detail": "status=200 table=false"
+  },
+  {
+    "check": "admin pages zero JS pageerrors",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "check": "teacher activity log renders",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "student activity log renders",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "check": "superadmin mail-list renders",
+    "pass": true,
+    "detail": "status=200 url=http://localhost:8080/login"
+  }
+]

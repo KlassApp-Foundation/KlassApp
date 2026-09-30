@@ -142,7 +142,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->assertSet('stepIndex', 1)
             ->assertSee('Approximate school size')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->assertSet('stepIndex', 2)
             ->assertSee('Country')
@@ -166,7 +166,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Plan Step Academy')
             ->call('next')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -232,7 +232,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Personalized Academy')
             ->call('next')
-            ->set('studentSize', '100-300 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -286,7 +286,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Preview Academy')
             ->call('next')
-            ->set('studentSize', '300-500 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -398,7 +398,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Prev Nav Academy')
             ->call('next')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

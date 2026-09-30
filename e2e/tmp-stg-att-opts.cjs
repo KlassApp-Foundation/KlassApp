@@ -1,0 +1,11 @@
+const { chromium } = require('playwright');
+const BASE='https://klassapp-staging-7mpoqg.laravel.cloud';
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext();const p=await ctx.newPage();
+await p.goto(BASE+'/login',{waitUntil:'load',timeout:90000});
+await p.fill('input[name=email]','phase4.admin@klassapp.xyz');await p.fill('input[name=password]',process.env.PW);
+await Promise.all([p.waitForNavigation({waitUntil:'load',timeout:90000}).catch(()=>null),p.click('[data-testid="ap-primary-submit"], button[type=submit]')]);
+await p.goto(BASE+'/admin/attendance/add',{waitUntil:'networkidle',timeout:90000});await p.waitForTimeout(1500);
+console.log(await p.evaluate(()=>[...document.querySelectorAll('select:not(#academic_year) option')].map(o=>JSON.stringify(o.value)+' '+o.text.trim())));
+const r=await ctx.request.get(BASE+'/admin/attendance/list');const d=await r.json();
+console.log('standardlist',JSON.stringify(d.standardlist).slice(0,600));console.log('studentlist keys',Object.keys(d.studentlist||{}));
+await b.close();})();

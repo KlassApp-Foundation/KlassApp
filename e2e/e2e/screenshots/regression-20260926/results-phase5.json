@@ -1,0 +1,212 @@
+[
+  {
+    "check": "admin@375 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "admin@375 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"block md:hidden admin-sidebar dashboard-themed-sidebar\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "admin@375 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "admin@375 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "admin@414 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "admin@414 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"block md:hidden admin-sidebar dashboard-themed-sidebar\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "admin@414 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "admin@414 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "admin@768 hamburger hidden (md+), desktop sidebar carries 2 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":2}"
+  },
+  {
+    "check": "admin@1280 hamburger hidden (md+), desktop sidebar carries 2 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":2}"
+  },
+  {
+    "check": "parent@375 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "parent@375 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 parent-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "parent@375 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "parent@375 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "parent@414 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "parent@414 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 parent-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "parent@414 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "parent@414 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "parent@768 hamburger hidden (md+), desktop sidebar carries 5 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":5}"
+  },
+  {
+    "check": "parent@1280 hamburger hidden (md+), desktop sidebar carries 5 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":5}"
+  },
+  {
+    "check": "student@375 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "student@375 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 student-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "student@375 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "student@375 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "student@414 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "student@414 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 student-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "student@414 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "student@414 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "student@768 hamburger hidden (md+), desktop sidebar carries 11 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":11}"
+  },
+  {
+    "check": "student@1280 hamburger hidden (md+), desktop sidebar carries 11 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":11}"
+  },
+  {
+    "check": "teacher@375 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "teacher@375 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 teacher-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "teacher@375 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "teacher@375 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "teacher@414 hamburger visible, drawer closed initially",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":true,\"btnDisplay\":\"flex\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":0}"
+  },
+  {
+    "check": "teacher@414 tap1 opens drawer + STAYS open (1.1s)",
+    "pass": true,
+    "detail": "{\"disp\":\"block\",\"cls\":\"w-full lg:w-48 md:w-48 teacher-sidebar dashboard-themed-sidebar lg:hidden md:hidden res_sidebar block\",\"aria\":\"true\"}"
+  },
+  {
+    "check": "teacher@414 aria-expanded flips true",
+    "pass": true,
+    "detail": "aria=true"
+  },
+  {
+    "check": "teacher@414 tap2 closes drawer",
+    "pass": true,
+    "detail": "{\"disp\":\"none\",\"aria\":\"false\"}"
+  },
+  {
+    "check": "teacher@768 hamburger hidden (md+), desktop sidebar carries 12 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":12}"
+  },
+  {
+    "check": "teacher@1280 hamburger hidden (md+), desktop sidebar carries 12 links",
+    "pass": true,
+    "detail": "{\"btnExists\":true,\"btnVisible\":false,\"btnDisplay\":\"none\",\"resDisplay\":\"none\",\"aria\":\"false\",\"desktopVisible\":true,\"desktopAnchors\":12}"
+  },
+  {
+    "check": "767px hamburger visible (boundary)",
+    "pass": true,
+    "detail": "display=flex"
+  },
+  {
+    "check": "768px hamburger hidden + sidebar visible (dead zone gone)",
+    "pass": true,
+    "detail": "{\"b\":\"none\",\"sidebar\":true}"
+  }
+]

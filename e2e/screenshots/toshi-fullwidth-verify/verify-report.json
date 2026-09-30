@@ -1,0 +1,563 @@
+{
+  "at": "2026-09-27T01:51:46.847Z",
+  "base": "http://localhost:8080",
+  "viewports": {
+    "375": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "52px",
+      "root": {
+        "x": 134.46875,
+        "y": 736,
+        "width": 216.53125,
+        "height": 52,
+        "top": 736,
+        "right": 351,
+        "bottom": 788,
+        "left": 134.46875
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "toshiHeader": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 375,
+        "height": 45,
+        "top": 0,
+        "right": 375,
+        "bottom": 45,
+        "left": 0
+      },
+      "navbarHeight": 45,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 375,
+        "height": 1158.65625,
+        "top": 0,
+        "right": 375,
+        "bottom": 1158.65625,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 45,
+        "width": 0,
+        "height": 1113.65625,
+        "top": 45,
+        "right": 0,
+        "bottom": 1158.65625,
+        "left": 0
+      },
+      "viewport": {
+        "w": 375,
+        "h": 812
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 375
+      },
+      "errors": [],
+      "checks": {
+        "notDockColumn": true,
+        "noHOverflow": true
+      }
+    },
+    "414": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "52px",
+      "root": {
+        "x": 173.46875,
+        "y": 820,
+        "width": 216.53125,
+        "height": 52,
+        "top": 820,
+        "right": 390,
+        "bottom": 872,
+        "left": 173.46875
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "toshiHeader": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 414,
+        "height": 45,
+        "top": 0,
+        "right": 414,
+        "bottom": 45,
+        "left": 0
+      },
+      "navbarHeight": 45,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 414,
+        "height": 1039.171875,
+        "top": 0,
+        "right": 414,
+        "bottom": 1039.171875,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 45,
+        "width": 0,
+        "height": 994.171875,
+        "top": 45,
+        "right": 0,
+        "bottom": 1039.171875,
+        "left": 0
+      },
+      "viewport": {
+        "w": 414,
+        "h": 896
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 414
+      },
+      "errors": [],
+      "checks": {
+        "notDockColumn": true,
+        "noHOverflow": true
+      }
+    },
+    "768": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "52px",
+      "root": {
+        "x": 527.46875,
+        "y": 948,
+        "width": 216.53125,
+        "height": 52,
+        "top": 948,
+        "right": 744,
+        "bottom": 1000,
+        "left": 527.46875
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "toshiHeader": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 47,
+        "top": 0,
+        "right": 768,
+        "bottom": 47,
+        "left": 0
+      },
+      "navbarHeight": 47,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 1071,
+        "top": 0,
+        "right": 768,
+        "bottom": 1071,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 47,
+        "width": 192,
+        "height": 1024,
+        "top": 47,
+        "right": 192,
+        "bottom": 1071,
+        "left": 0
+      },
+      "viewport": {
+        "w": 768,
+        "h": 1024
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 768
+      },
+      "errors": [],
+      "checks": {
+        "notDockColumn": true,
+        "noHOverflow": true
+      }
+    },
+    "1280": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "731px",
+      "root": {
+        "x": 1280,
+        "y": 69,
+        "width": 0,
+        "height": 731,
+        "top": 69,
+        "right": 1280,
+        "bottom": 800,
+        "left": 1280
+      },
+      "panel": {
+        "x": 1280,
+        "y": 69,
+        "width": 2,
+        "height": 731,
+        "top": 69,
+        "right": 1282,
+        "bottom": 800,
+        "left": 1280
+      },
+      "toshiHeader": {
+        "x": 1281,
+        "y": 70,
+        "width": 28,
+        "height": 56,
+        "top": 70,
+        "right": 1309,
+        "bottom": 126,
+        "left": 1281
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 68.796875,
+        "top": 0,
+        "right": 1280,
+        "bottom": 68.796875,
+        "left": 0
+      },
+      "navbarHeight": 68.796875,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 800,
+        "top": 0,
+        "right": 1280,
+        "bottom": 800,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 68.796875,
+        "width": 192,
+        "height": 731.203125,
+        "top": 68.796875,
+        "right": 192,
+        "bottom": 800,
+        "left": 0
+      },
+      "viewport": {
+        "w": 1280,
+        "h": 800
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 1280
+      },
+      "errors": [],
+      "checks": {
+        "rootIsFixed": true,
+        "rootTopIs69": true,
+        "rootMarginZero": true,
+        "rootBottomAtViewport": true,
+        "rootRightAtViewport": true,
+        "rootWidth380": false,
+        "panelFillsRoot": true,
+        "navbarFullWidth": true,
+        "appFullWidth": true,
+        "toshiHeaderInsidePanel": true,
+        "navbarHeight69": true,
+        "noHOverflow": true
+      },
+      "modalCoversNavbar": true,
+      "collapsed": {
+        "rootWidth": "0px",
+        "rootInvisible": true,
+        "pillVisible": true,
+        "pillRect": {
+          "x": 1039.46875,
+          "y": 724,
+          "width": 216.53125,
+          "height": 52,
+          "top": 724,
+          "right": 1256,
+          "bottom": 776,
+          "left": 1039.46875
+        }
+      }
+    },
+    "1440": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "831px",
+      "root": {
+        "x": 1440,
+        "y": 69,
+        "width": 0,
+        "height": 831,
+        "top": 69,
+        "right": 1440,
+        "bottom": 900,
+        "left": 1440
+      },
+      "panel": {
+        "x": 1440,
+        "y": 69,
+        "width": 2,
+        "height": 831,
+        "top": 69,
+        "right": 1442,
+        "bottom": 900,
+        "left": 1440
+      },
+      "toshiHeader": {
+        "x": 1441,
+        "y": 70,
+        "width": 28,
+        "height": 56,
+        "top": 70,
+        "right": 1469,
+        "bottom": 126,
+        "left": 1441
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 68.796875,
+        "top": 0,
+        "right": 1440,
+        "bottom": 68.796875,
+        "left": 0
+      },
+      "navbarHeight": 68.796875,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900,
+        "top": 0,
+        "right": 1440,
+        "bottom": 900,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 68.796875,
+        "width": 192,
+        "height": 831.203125,
+        "top": 68.796875,
+        "right": 192,
+        "bottom": 900,
+        "left": 0
+      },
+      "viewport": {
+        "w": 1440,
+        "h": 900
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 1440
+      },
+      "errors": [],
+      "checks": {
+        "rootIsFixed": true,
+        "rootTopIs69": true,
+        "rootMarginZero": true,
+        "rootBottomAtViewport": true,
+        "rootRightAtViewport": true,
+        "rootWidth380": false,
+        "panelFillsRoot": true,
+        "navbarFullWidth": true,
+        "appFullWidth": true,
+        "toshiHeaderInsidePanel": true,
+        "navbarHeight69": true,
+        "noHOverflow": true
+      },
+      "modalCoversNavbar": true,
+      "collapsed": {
+        "rootWidth": "0px",
+        "rootInvisible": true,
+        "pillVisible": true,
+        "pillRect": {
+          "x": 1199.46875,
+          "y": 824,
+          "width": 216.53125,
+          "height": 52,
+          "top": 824,
+          "right": 1416,
+          "bottom": 876,
+          "left": 1199.46875
+        }
+      }
+    },
+    "1920": {
+      "rootPos": "fixed",
+      "rootMarginTop": "0px",
+      "rootHeight": "1011px",
+      "root": {
+        "x": 1920,
+        "y": 69,
+        "width": 0,
+        "height": 1011,
+        "top": 69,
+        "right": 1920,
+        "bottom": 1080,
+        "left": 1920
+      },
+      "panel": {
+        "x": 1920,
+        "y": 69,
+        "width": 2,
+        "height": 1011,
+        "top": 69,
+        "right": 1922,
+        "bottom": 1080,
+        "left": 1920
+      },
+      "toshiHeader": {
+        "x": 1921,
+        "y": 70,
+        "width": 28,
+        "height": 56,
+        "top": 70,
+        "right": 1949,
+        "bottom": 126,
+        "left": 1921
+      },
+      "navbar": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 68.796875,
+        "top": 0,
+        "right": 1920,
+        "bottom": 68.796875,
+        "left": 0
+      },
+      "navbarHeight": 68.796875,
+      "app": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1080,
+        "left": 0
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 68.796875,
+        "width": 192,
+        "height": 1011.203125,
+        "top": 68.796875,
+        "right": 192,
+        "bottom": 1080,
+        "left": 0
+      },
+      "viewport": {
+        "w": 1920,
+        "h": 1080
+      },
+      "hOverflow": false,
+      "pageScroll": {
+        "scrollW": 1920
+      },
+      "errors": [],
+      "checks": {
+        "rootIsFixed": true,
+        "rootTopIs69": true,
+        "rootMarginZero": true,
+        "rootBottomAtViewport": true,
+        "rootRightAtViewport": true,
+        "rootWidth380": false,
+        "panelFillsRoot": true,
+        "navbarFullWidth": true,
+        "appFullWidth": true,
+        "toshiHeaderInsidePanel": true,
+        "navbarHeight69": true,
+        "noHOverflow": true
+      },
+      "modalCoversNavbar": true,
+      "collapsed": {
+        "rootWidth": "0px",
+        "rootInvisible": true,
+        "pillVisible": true,
+        "pillRect": {
+          "x": 1679.46875,
+          "y": 1004,
+          "width": 216.53125,
+          "height": 52,
+          "top": 1004,
+          "right": 1896,
+          "bottom": 1056,
+          "left": 1679.46875
+        }
+      }
+    }
+  },
+  "failures": [
+    "1280: rootWidth380",
+    "1440: rootWidth380",
+    "1920: rootWidth380"
+  ]
+}
