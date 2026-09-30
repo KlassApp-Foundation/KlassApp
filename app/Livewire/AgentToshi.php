@@ -344,6 +344,11 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
+        // UI switch: no panel work when AI key is missing or the school has Toshi off.
+        if (! app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled($user)) {
+            return;
+        }
+
         $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
 
         // Gate: block roles with no allowed actions or no scope

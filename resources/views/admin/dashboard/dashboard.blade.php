@@ -408,7 +408,7 @@
 
     @include('admin.reports._eot-kpi-card')
 
-    @if(!empty($openToshiOnboarding))
+    @if(!empty($openToshiOnboarding) && app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled())
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.remove('toshi-collapsed');

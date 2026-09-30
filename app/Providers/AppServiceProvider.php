@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Toshi\ToshiUiSwitch;
 use App\Observers\TeacherProfileObserver;
 use App\Observers\AcademicYearObserver;
 use App\Observers\StandardLinkObserver;
@@ -128,6 +130,10 @@ class AppServiceProvider extends ServiceProvider {
         }
 
         Paginator::useBootstrap();
+
+        Blade::if('toshiUi', function () {
+            return app(ToshiUiSwitch::class)->enabled();
+        });
 
         // Add get() helper to the AI Tool Request class for convenience
         AiToolRequest::macro('get', function (string $key, mixed $default = null): mixed {

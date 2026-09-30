@@ -6,7 +6,7 @@
             <img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="28" height="28" onerror="this.style.display='none'" />
             <span class="manual-wizard-brand-name">KlassApp</span>
         </div>
-        <span class="manual-wizard-brand-aside">Setting up without Toshi</span>
+        <span class="manual-wizard-brand-aside">@toshiUi Setting up without Toshi @else Setting up your school @endtoshiUi</span>
     </div>
 
     @if($finished)
