@@ -11,26 +11,24 @@ Show initials only when the photo test from PR6 is false: `$user->userprofile &&
 
 This replaces the `default-user.jpg` fallback in the component. **Don't delete the file yet:** the ID card and bus pass still reference it. Removing it is follow-up F1.
 
-## 2. Initials (decided 2026-09-30)
-**Initials are the given name's first letter, then the surname's first letter.** Use the separate given-name and surname fields wherever they exist; the admission form stores them separately.
+## 2. Initials (confirmed 2026-09-30)
+**Source:** `userprofiles.firstname` and `userprofiles.lastname`, which every user type uses (staff, students, parents; confirmed by the coding agent).
+- **Never `users.name`:** it's the login handle, not a person's name.
+- **No full-name splitting:** there's no splitting fallback.
 
-**Fallback:** only when a user type has no separate fields, split `FullName`:
-- the first letter of the first word, plus the first letter of the last word;
-- uppercased with `mb_strtoupper`/`mb_substr`, so "Élise" works.
+**Rule:** trim both fields, then:
 
-**Why fields come first:** Ugandan names are often written surname first. With the fields, "Mugisha" (surname) and "John" (given name) give **JM**. Splitting "Mugisha John" by position gives **MJ**, the wrong order. The fallback is a known approximation; don't guess the order from the string.
+| firstname | lastname | Initials |
+|---|---|---|
+| "John" | "Mugisha" | **JM**: firstname's first letter, then lastname's |
+| "Sarah Achieng" | "Nakato" | **SN**: only the first word of firstname |
+| "Mugisha" | "" (empty string) | **M**: one letter from firstname |
+| "" | "Nakato" | **N**: one letter from lastname (not in the brief, but don't show an empty tile when a name exists) |
+| "" or null | "" or null | none: the grey tile (section 4) |
+| no `userprofile` row | | none: the grey tile |
 
-**Open:** the coding agent is confirming which fields exist for **staff, students and parents**. Record the answer per type in the PR description, and use the fields for every type that has them.
-
-| Input | Initials |
-|---|---|
-| given "John", surname "Mugisha" | **JM** |
-| given "Sarah Achieng", surname "Nakato" | **SN** (first word of the given names only) |
-| only `FullName` "Nakato Sarah Achieng" | **NA** (fallback: first and last words) |
-| only one word, "Mugisha" | **M** |
-| no name at all | no letters: see section 4 |
-
-- **Never** derive initials from an email address or phone number, because that leaks personal data into the UI.
+- **Letters:** use `mb_substr` and `mb_strtoupper` so accented letters ("Élise" → É) work.
+- **Order:** the fields remove the need to guess from a surname-first string such as "Mugisha John".
 
 ## 3. Colour: stable, from the id
 Pick the colour with `$user->id % 4`:
@@ -72,23 +70,19 @@ Pick the colour with `$user->id % 4`:
 {{-- resources/views/components/profile-photo.blade.php (initials branch) --}}
 @php
   $has = $user && $user->userprofile && $user->userprofile->avatar != null;
-  // Field names are placeholders until confirmed per user type (§2).
-  $given   = trim($user?->given_name ?? '');
-  $surname = trim($user?->surname ?? '');
-  if ($given !== '' || $surname !== '') {
-      $g = preg_split('/\s+/u', $given, -1, PREG_SPLIT_NO_EMPTY)[0] ?? '';
-      $ini = mb_strtoupper(mb_substr($g, 0, 1) . mb_substr($surname, 0, 1));
-  } else {
-      $words = preg_split('/\s+/u', trim($user?->FullName ?? ''), -1, PREG_SPLIT_NO_EMPTY);
-      $ini = $words ? mb_strtoupper(mb_substr($words[0], 0, 1) . (count($words) > 1 ? mb_substr(end($words), 0, 1) : '')) : '';
-  }
+  // userprofiles.firstname / lastname for every user type. Never users.name (login handle).
+  $first = trim($user?->userprofile?->firstname ?? '');
+  $last  = trim($user?->userprofile?->lastname ?? '');
+  $f     = preg_split('/\s+/u', $first, -1, PREG_SPLIT_NO_EMPTY)[0] ?? '';
+  $ini   = mb_strtoupper(mb_substr($f, 0, 1) . mb_substr($last, 0, 1));   // '' when both are empty
+  $label = trim($first . ' ' . $last);
   $px = ['xs'=>32,'sm'=>40,'md'=>64,'lg'=>128,'xl'=>192][$size];
   $bg = $ini ? 'var(--d-avatar-'.(($user->id % 4) + 1).')' : 'var(--d-avatar-none)';
 @endphp
 @unless($has)
 <span class="ds-avatar ds-avatar--{{ $size }} {{ $shape === 'circle' ? 'ds-avatar--circle' : '' }}"
       style="background:{{ $bg }}"
-      @if($ini) role="img" aria-label="{{ $user->FullName }}" @else aria-hidden="true" @endif>{{ $ini }}</span>
+      @if($ini) role="img" aria-label="{{ $label }}" @else aria-hidden="true" @endif>{{ $ini }}</span>
 @endunless
 ```
 
@@ -111,9 +105,15 @@ The `box-sizing:border-box` is needed because this bundle ships no global reset 
    - A user without a photo shows the correct initials at every size in section 5.
    - The same user gets the same colour on every page.
    - `getBoundingClientRect` equals the declared size (32/40/64/128/192) with no 2px drift.
-3. **Examples:** the section 2 table as a unit test, covering fields, fallback, one word and an empty name. In particular, given "John" + surname "Mugisha" → **JM**, and an empty name → a blank slate tile with `aria-hidden`.
+3. **Examples:** the section 2 table as a unit test:
+   - "John" + "Mugisha" → **JM**
+   - "Sarah Achieng" + "Nakato" → **SN**
+   - "Mugisha" + "" → **M**
+   - "" + "" → the grey tile with `aria-hidden`
+   - no `userprofile` → the grey tile
+   - The test also asserts that `users.name` is never read.
 4. **Accessibility:**
-   - The initials tile is announced as the person's name.
+   - The initials tile is announced as the person's name (`firstname lastname`), never the login handle.
    - No page has two announcements for one person. Where the name is printed right next to the avatar, pass `decorative` to render `aria-hidden` instead.
 5. **Contrast:** axe shows no contrast failures on the avatar letters.
 6. **Print:** a PDF export of the ID card and bus pass for a user without a photo shows initials in the inline hex colour.
@@ -126,7 +126,7 @@ The `box-sizing:border-box` is needed because this bundle ships no global reset 
 
 ## Decisions (2026-09-30, user)
 - **Shape:** match the photo frame everywhere. Square with an 8px radius at 32 and 12px otherwise; round only for the 32px nav button. A photo and its initials never change shape.
-- **Name fields:** use the separate given-name and surname fields wherever they exist, and fall back to splitting `FullName` only where they don't (section 2). The coding agent is confirming per user type.
+- **Name fields (confirmed):** `userprofiles.firstname` + `userprofiles.lastname` for all user types. An empty lastname gives one letter; both empty give the grey tile. Never `users.name`, which is the login handle.
 - **`default-user.jpg`:** stays until the ID card and bus pass switch to initials (follow-up F1).
 - **Approved as specified:** the four colours, `id % 4`, the grey no-name tile, the sizes, and fixed hex colours for PDFs.
 

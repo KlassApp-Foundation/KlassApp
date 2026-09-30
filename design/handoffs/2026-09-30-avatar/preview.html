@@ -30,7 +30,7 @@ function av(id,name,size,circle){const i=initials(name);const bg=i?`var(--d-avat
 document.getElementById('pal').innerHTML=P.map((p,k)=>`<div class="sw">${av(k,'Nakato Achieng',48)}<code>${p[0]}</code><span>${p[1]} · white ${p[2]}:1 · id % 4 = ${k}</span></div>`).join('');
 const S=[['nav','32 circle',32,1],['table','32',32,0],['list','40 sm',40,0],['feedback','64 md',64,0],['ID card (print)','100',100,0],['profile','128 lg',128,0]];
 document.getElementById('sizes').innerHTML=S.map((s,k)=>`<div class="sw">${av(k+1,'Okello Brian',s[2],s[3])}<span><b>${s[0]}</b> ${s[1]}</span></div>`).join('');
-document.getElementById('rows').innerHTML=[[7,'John','Mugisha','given John + surname Mugisha'],[12,'','','full name only "Mugisha"','Mugisha'],[5,'','','no name','  '],[9,'Élise','Ouma','given Élise + surname Ouma']].map(r=>{const i=(r[1]||r[2])?initials('',r[1],r[2]):initials(r[4]);return `<span class="av" style="width:32px;height:32px;font-size:13px;border-radius:8px;background:${i?`var(--d-avatar-${(r[0]%4)+1})`:'var(--d-avatar-none)'}" ${i?`role="img" aria-label="${r[3]}"`:'aria-hidden="true"'}>${i}</span><span style="margin-right:12px">${r[3]} → ${i||'blank tile'}</span>`}).join('');
+document.getElementById('rows').innerHTML=[[7,'John','Mugisha','John + Mugisha'],[12,'Mugisha','','Mugisha + ""'],[5,'','','"" + ""'],[9,'Élise','Ouma','Élise + Ouma']].map(r=>{const i=(r[1]||r[2])?initials('',r[1],r[2]):'';return `<span class="av" style="width:32px;height:32px;font-size:13px;border-radius:8px;background:${i?`var(--d-avatar-${(r[0]%4)+1})`:'var(--d-avatar-none)'}" ${i?`role="img" aria-label="${r[3]}"`:'aria-hidden="true"'}>${i}</span><span style="margin-right:12px">${r[3]} → ${i||'blank tile'}</span>`}).join('');
 </script>
 </body>
 </html>
