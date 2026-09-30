@@ -28,7 +28,11 @@
                 @else
                     A few setup items are still open.
                 @endif
-                Work through them step by step, or let Toshi guide you in a focused panel.
+                @toshiUi
+                    Work through them step by step, or let Toshi guide you in a focused panel.
+                @else
+                    Work through them step by step in the setup wizard.
+                @endtoshiUi
             </p>
             <div class="setup-banner-actions">
                 {{-- Green acts, blue informs: this is an action, so it takes the primary
@@ -37,12 +41,14 @@
                 <a href="{{ url('/admin/onboarding/wizard') }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
                     Set up manually
                 </a>
+                @toshiUi
                 <button type="button"
                         class="ds-btn ds-btn-success ds-btn-md"
                         data-testid="setup-banner-toshi"
                         onclick="document.body.classList.remove('toshi-collapsed'); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                     Set up with Toshi
                 </button>
+                @endtoshiUi
                 @if(!empty($onboardingMissing))
                     <a href="{{ route('dismiss.onboarding.reminder') }}" class="ds-btn ds-btn-ghost ds-btn-md" data-testid="setup-banner-dismiss">
                         Dismiss

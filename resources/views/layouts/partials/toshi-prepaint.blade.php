@@ -13,6 +13,7 @@
     Same localStorage pattern as the #697 sidebar collapse.
 --}}
 @auth
+    @toshiUi
     @if(in_array(auth()->user()->usergroup_id, [1, 3, 4, 5, 11, 8, 10, 6, 7, 9]))
         <script>
         (function () {
@@ -28,4 +29,5 @@
         })();
         </script>
     @endif
+    @endtoshiUi
 @endauth

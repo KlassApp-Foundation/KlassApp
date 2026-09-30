@@ -11,10 +11,10 @@
      data-testid="empty-state-product-demo"
      data-es-demo
      role="region"
-     aria-label="Product preview: WhatsApp, Toshi, and future connections">
+     aria-label="@toshiUi Product preview: WhatsApp, Toshi, and future connections @else Product preview: WhatsApp and future connections @endtoshiUi">
     <div class="es-demo-static" data-testid="empty-state-demo-static" hidden>
         <p class="es-demo-static-title">See what KlassApp can do</p>
-        <p class="es-demo-static-text">Parents message on WhatsApp. Toshi helps finish admin tasks. More connectors are on the roadmap.</p>
+        <p class="es-demo-static-text">@toshiUi Parents message on WhatsApp. Toshi helps finish admin tasks. More connectors are on the roadmap. @else Parents message on WhatsApp. More connectors are on the roadmap. @endtoshiUi</p>
     </div>
 
     <div class="es-demo-stage" data-es-demo-stage>
@@ -44,7 +44,8 @@
             </div>
         </div>
 
-        {{-- Scene 2: Toshi browser --}}
+        {{-- Scene 2: Toshi browser (hidden when the UI switch is off) --}}
+        @toshiUi
         <div class="es-demo-scene" data-scene="1" data-testid="es-demo-scene-toshi" aria-hidden="true">
             <div class="es-demo-copy">
                 <p class="es-demo-kicker">Toshi</p>
@@ -89,9 +90,10 @@
                 </div>
             </div>
         </div>
+        @endtoshiUi
 
         {{-- Scene 3: connectors (aspirational where noted) --}}
-        <div class="es-demo-scene" data-scene="2" data-testid="es-demo-scene-connectors" aria-hidden="true">
+        <div class="es-demo-scene" data-scene="{{ app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled() ? 2 : 1 }}" data-testid="es-demo-scene-connectors" aria-hidden="true">
             <div class="es-demo-copy">
                 <p class="es-demo-kicker">Connections</p>
                 <h3 class="es-demo-headline">Meet schools where they already work</h3>
@@ -99,7 +101,7 @@
             </div>
             <div class="es-connect" aria-hidden="true">
                 <div class="es-connect-hub">
-                    <div class="es-hub-core">Toshi</div>
+                    <div class="es-hub-core">@toshiUi Toshi @else KlassApp @endtoshiUi</div>
                     <div class="es-hub-ray es-hub-ray-1"></div>
                     <div class="es-hub-ray es-hub-ray-2"></div>
                     <div class="es-hub-ray es-hub-ray-3"></div>
@@ -129,7 +131,11 @@
 
     <div class="es-demo-dots" data-es-demo-dots aria-hidden="true">
         <span class="es-dot-nav is-active" data-dot="0"></span>
+        @toshiUi
         <span class="es-dot-nav" data-dot="1"></span>
         <span class="es-dot-nav" data-dot="2"></span>
+        @else
+        <span class="es-dot-nav" data-dot="1"></span>
+        @endtoshiUi
     </div>
 </div>

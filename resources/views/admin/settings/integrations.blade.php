@@ -5,7 +5,9 @@
 
 @include('layouts.partials.page-header', [
     'title' => 'Integrations',
-    'subtitle' => 'Connect your school\'s workspace apps so Toshi can work in them. Reads are always audited; every write pauses for your approval.',
+    'subtitle' => app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled()
+        ? 'Connect your school\'s workspace apps so Toshi can work in them. Reads are always audited; every write pauses for your approval.'
+        : 'Connect your school\'s workspace apps. Reads are always audited; every write pauses for your approval.',
 ])
 
 @include('layouts.partials.settings-nav')
@@ -45,8 +47,13 @@
                                     &middot; Last used {{ $c['last_used_at']->diffForHumans() }}
                                 @endif
                             @else
-                                Toshi can list channels, search messages, and read history once connected.
-                                Posting requires your approval each time.
+                                @toshiUi
+                                    Toshi can list channels, search messages, and read history once connected.
+                                    Posting requires your approval each time.
+                                @else
+                                    Once connected, channels can be listed, messages searched, and history read.
+                                    Posting requires your approval each time.
+                                @endtoshiUi
                             @endif
                         </div>
                     </div>
@@ -82,9 +89,15 @@
     </div>
 
     <div class="mt-6 text-sm max-w-2xl" style="color: var(--d-text-secondary, #64748B);">
-        <p><strong>Safety:</strong> Toshi reads (channels, search, history) run immediately and are fully audited.
-        Writes (posting messages) always pause for a human approval before executing — the approver is recorded in the audit log.</p>
-        <p class="mt-2">Disconnecting blocks Toshi from reaching the workspace. Re-connecting re-authorizes it.</p>
+        @toshiUi
+            <p><strong>Safety:</strong> Toshi reads (channels, search, history) run immediately and are fully audited.
+            Writes (posting messages) always pause for a human approval before executing — the approver is recorded in the audit log.</p>
+            <p class="mt-2">Disconnecting blocks Toshi from reaching the workspace. Re-connecting re-authorizes it.</p>
+        @else
+            <p><strong>Safety:</strong> Reads (channels, search, history) run immediately and are fully audited.
+            Writes (posting messages) always pause for a human approval before executing — the approver is recorded in the audit log.</p>
+            <p class="mt-2">Disconnecting blocks access to the workspace. Re-connecting re-authorizes it.</p>
+        @endtoshiUi
     </div>
 </div>
 </div>

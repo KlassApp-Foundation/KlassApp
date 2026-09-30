@@ -46,7 +46,7 @@
                 <option value="Tanzania">Tanzania</option>
             @endif
         </select>
-        <p class="text-xs text-gray-500 mt-1">Saves both country and Toshi registration country.</p>
+        <p class="text-xs text-gray-500 mt-1">Saves both country and registration country.</p>
     </div>
 
 @elseif($stepKey === 'curriculum')
@@ -624,7 +624,7 @@
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-wa">Your WhatsApp number<span class="text-red-500">*</span></label>
         <input id="wizard-wa" type="text" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="+2567…" data-testid="wizard-wa-phone" />
-        <p class="text-xs text-gray-500 mt-1">Same OTP flow as Toshi — we send a 6-digit code, then link the number only after you verify it.</p>
+        <p class="text-xs text-gray-500 mt-1">We send a 6-digit code, then link the number only after you verify it.</p>
     </div>
     <div class="flex flex-wrap gap-2 mt-2 mb-3">
         <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-send-otp">

@@ -15,13 +15,23 @@
                 <div style="font-size: 13px; color: #A16207; margin-top: 4px; line-height: 1.5;">
                     <span>{{ $count }} {{ $count === 1 ? 'step' : 'steps' }} remaining:</span>
                     <span style="font-weight: 500;">{{ implode(', ', $labels) }}.</span>
-                    <span>Open the <strong>Toshi</strong> chat bubble at the bottom-right to continue setup.</span>
+                    @toshiUi
+                        <span>Open the <strong>Toshi</strong> chat bubble at the bottom-right to continue setup.</span>
+                    @else
+                        <span>Continue in the <a href="{{ url('/admin/onboarding/wizard') }}" style="font-weight:600;color:#92400E;text-decoration:underline;">setup wizard</a>.</span>
+                    @endtoshiUi
                 </div>
             </div>
             <div style="display: flex; gap: 8px; flex-shrink: 0; align-items: center;">
+                @toshiUi
                 <button onclick="fetch('{{ route('dismiss.onboarding.reminder') }}').then(function(){ document.getElementById('toshi-pill').click(); document.getElementById('onboarding-reminder').style.display='none'; })" style="padding: 12px 20px; min-height: 44px; background: #22C55E; color: #FFFFFF; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;">
                     Open Toshi
                 </button>
+                @else
+                <a href="{{ url('/admin/onboarding/wizard') }}" style="padding: 12px 20px; min-height: 44px; background: #22C55E; color: #FFFFFF; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; display: inline-flex; align-items: center;">
+                    Continue setup
+                </a>
+                @endtoshiUi
                 <a href="{{ route('dismiss.onboarding.reminder') }}" style="color: #A16207; font-size: 14px; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 6px; transition: background 0.15s;" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='transparent'">
                     Dismiss
                 </a>
