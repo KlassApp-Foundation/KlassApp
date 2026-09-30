@@ -48,7 +48,7 @@
                 <button type="button"
                         class="ds-btn ds-btn-success ds-btn-md"
                         data-testid="setup-banner-toshi"
-                        onclick="document.body.classList.remove('toshi-collapsed'); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
+                        onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                     Set up with Toshi
                 </button>
                 @endtoshiUi
