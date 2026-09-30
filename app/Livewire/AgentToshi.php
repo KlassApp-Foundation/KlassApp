@@ -4028,13 +4028,22 @@ class AgentToshi extends Component
         $this->selectedPlanId = $plan->id;
         $this->userSay("Selected plan: **{$plan->name}**");
 
-        // Complete-mode plan step: persist CurrentPlan + Subscription immediately,
+        // Complete-mode plan step: persist via OnboardingEngine (completion gate),
         // then advance to Review so draft teachers/students/terms/fees can be
         // committed via commitAll(). detectMissingSteps() scans the DB only and
         // would loop back to those steps while drafts are still uncommitted —
         // making Review structurally unreachable for new schools.
         if ($this->mode === 'complete' && $this->schoolId) {
-            $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
+            try {
+                $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->selectedPlanId = null;
+                $msg = collect($e->errors())->flatten()->first()
+                    ?: 'Finish the earlier setup steps before choosing a plan.';
+                $this->botSay("⚠️ {$msg}");
+
+                return;
+            }
             $this->botSay("**{$plan->name}** plan selected and saved. | Review your setup next.");
             $this->actionStep = null;
             $this->actionSubstep = 0;
@@ -4805,19 +4814,24 @@ class AgentToshi extends Component
 
     private function persistSelectedPlan(int $schoolId, int $planId): void
     {
-        $plan = \App\Models\Plan::find($planId);
-        if (! $plan) {
+        $school = \App\Models\School::find($schoolId);
+        if (! $school) {
             return;
         }
 
-        if ($plan->amount > 0) {
-            \App\Services\TrialService::startTrial($schoolId, $planId);
-        } else {
-            CurrentPlan::updateOrCreate(
-                ['school_id' => $schoolId],
-                ['plan_id' => $planId]
-            );
-        }
+        // Always write through OnboardingEngine (TrialService / CurrentPlan).
+        // Complete-mode keeps structure/fees in component drafts until Review
+        // commitAll — the DB gate would false-block, so skip there. Callers
+        // outside complete-mode / the plan step hit the real gate.
+        $onPlanStep = $this->actionStep === 'onboarding_plan_selection'
+            || (($this->steps[$this->step] ?? null) === 'plan_selection');
+
+        app(OnboardingEngine::class)->savePlan(
+            $school,
+            $planId,
+            skipCompletionCheck: $this->mode === 'complete' || $onPlanStep,
+            userId: auth()->id(),
+        );
 
         $adminUser = auth()->user()
             ?? User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();

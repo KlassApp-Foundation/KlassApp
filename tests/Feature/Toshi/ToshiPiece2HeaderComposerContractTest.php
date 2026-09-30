@@ -85,6 +85,15 @@ class ToshiPiece2HeaderComposerContractTest extends TestCase
         $this->assertStringContainsString('data-testid="toshi-confirm-no"', $html);
         $this->assertStringContainsString('wire:click="confirmYes"', $html);
         $this->assertStringContainsString('toshi-composer--awaiting-confirm', $html);
-        $this->assertStringContainsString('Use Yes / No above', $html);
+        $this->assertStringContainsString('data-testid="toshi-composer-reason"', $html);
+        $this->assertStringContainsString('Yes / No above', $html);
+        // Composer stays typeable so free-text yes/no parity works
+        $this->assertDoesNotMatchRegularExpression('/\breadonly\b/', $html);
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
+        $this->assertSame(
+            1,
+            (new \DOMXPath($dom))->query('//*[@id="toshi-input-panel"]')->length
+        );
     }
 }

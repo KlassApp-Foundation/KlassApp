@@ -59,6 +59,9 @@
                 document.documentElement.classList.toggle('toshi-collapsed', collapsed);
                 syncToggleGlyph();
                 persist();
+                try {
+                    window.dispatchEvent(new CustomEvent('toshi-collapsed-changed', { detail: { collapsed: !!collapsed } }));
+                } catch (e) {}
             }
             window.toshiSetCollapsed = setCollapsed; // inline handlers in the Livewire root call this
 

@@ -1,14 +1,29 @@
+{{--
+    Split-layout visibility is owned by body/html.toshi-collapsed + localStorage
+    (toshi-prepaint / toshi-embed). Livewire $visible must stay in sync so mobile
+    (no display:!important on the panel) and maximize() keep working across refresh.
+--}}
 <div x-data="{ hasText: false }"
+     x-init="
+        const syncVisibleFromDock = () => {
+            const collapsed = document.documentElement.classList.contains('toshi-collapsed')
+                || document.body.classList.contains('toshi-collapsed');
+            if (!collapsed && !$wire.maximized && !$wire.visible) {
+                $wire.set('visible', true);
+            }
+        };
+        syncVisibleFromDock();
+        window.addEventListener('toshi-collapsed-changed', syncVisibleFromDock);
+     "
      x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
      x-on:toshi-maximize.window="$wire.maximize()"
      data-toshi-root
-     class="toshi-root">
+     class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}">
     <div id="toshi-pill"
          wire:click="show"
          onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);"
          class="toshi-pill"
-         data-testid="toshi-pill"
-         style="{{ $visible || $maximized ? 'display: none;' : '' }}">
+         data-testid="toshi-pill">
         <div class="toshi-pill-avatar">
             <img src="{{ asset('images/klassapp-logo.svg') }}" class="toshi-pill-logo" alt="KlassApp">
         </div>
@@ -30,8 +45,8 @@
          title="Drag to resize · double-click to reset"></div>
 
     <div id="toshi-panel"
-         class="toshi-panel"
-         style="{{ $visible ? 'display: flex;' : 'display: none;' }}">
+         class="toshi-panel{{ $visible && !$maximized ? ' toshi-panel--open' : '' }}"
+         style="{{ $visible && !$maximized ? 'display: flex;' : 'display: none;' }}">
         <div class="toshi-header" data-testid="toshi-header">
             <div class="toshi-header-logo">
                 <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
@@ -46,7 +61,9 @@
                 <button wire:click="maximize" class="toshi-header-btn" title="Expand" data-testid="toshi-expand">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                 </button>
-                <button onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);" class="toshi-header-btn" title="Close" data-testid="toshi-close">
+                <button type="button"
+                        onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);"
+                        class="toshi-header-btn" title="Close" data-testid="toshi-close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>
@@ -891,33 +908,35 @@
         @endif
         @endif
 
-        {{-- Confirmation chips — primary UX (not free-text) --}}
+        {{-- Confirmation chips — primary UX; free-text yes/no still accepted --}}
         @if($awaitingConfirm)
         @include('livewire.partials.toshi-confirm-chips', ['variant' => 'panel'])
+        <p class="toshi-composer-reason" data-testid="toshi-composer-reason" role="status">
+            Confirm with Yes / No above — or type yes / no here.
+        </p>
         @endif
         {{-- Skip step button — shared partial --}}
         @include('livewire.partials.toshi-skip-button', ['modal' => false])
-        {{-- Composer — kit unified bar; deferred while confirm chips are active --}}
+        {{-- Composer — only mounted when docked (not maximized) so #toshi-input-panel is unique --}}
+        @unless($maximized)
         <form wire:submit.prevent="send"
               class="toshi-composer{{ $awaitingConfirm ? ' toshi-composer--awaiting-confirm' : '' }}"
               data-testid="toshi-composer">
             <div class="toshi-composer-inner">
                 <label class="toshi-attach-btn" title="Upload file">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
-                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt" @if($awaitingConfirm) disabled @endif>
+                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
                 </label>
                 <textarea rows="1" wire:model.defer="input"
-                          placeholder="{{ $awaitingConfirm ? 'Use Yes / No above…' : 'Message Toshi…' }}"
+                          placeholder="{{ $awaitingConfirm ? 'Type yes or no…' : 'Message Toshi…' }}"
                           id="toshi-input-panel"
                           data-testid="toshi-input-panel"
-                          @if($awaitingConfirm) readonly tabindex="-1" @endif
-                          x-init="if (!$el.hasAttribute('readonly')) { /* keep native focus when interactive */ }"
                           @input="
                               hasText = $el.value.trim().length > 0;
                               $el.style.height = 'auto';
                               $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                           "
-                           @keydown.enter="if(!$event.shiftKey && !$el.hasAttribute('readonly')) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                           @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                            class="toshi-composer-input"></textarea>
                 <button type="submit"
                         :disabled="!hasText"
@@ -930,6 +949,7 @@
                 </button>
             </div>
         </form>
+        @endunless
     </div>
 
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}
@@ -1713,9 +1733,13 @@
                     </div>
                 </div>
 
-                    {{-- Confirmation chips — primary UX (not free-text) --}}
+                    {{-- Confirmation chips — primary UX; free-text yes/no still accepted --}}
                     @if($awaitingConfirm)
                     @include('livewire.partials.toshi-confirm-chips', ['variant' => 'modal'])
+                    <p class="toshi-composer-reason" data-testid="toshi-composer-reason-modal" role="status"
+                       style="padding: 0 24px 8px; font-size: 12px; color: #5e5d59;">
+                        Confirm with Yes / No above — or type yes / no here.
+                    </p>
                     @endif
             {{-- Skip step button — shared partial (modal) --}}
             @include('livewire.partials.toshi-skip-button', ['modal' => true])
@@ -1739,7 +1763,8 @@
             ])
             @endif
             @endif
-            {{-- Composer: maximized modal — kit bar; deferred while confirm chips active --}}
+            {{-- Composer: maximized only — keeps #toshi-input-modal unique vs panel --}}
+            @if($maximized)
                 <form wire:submit.prevent="send"
                       class="toshi-composer{{ $awaitingConfirm ? ' toshi-composer--awaiting-confirm' : '' }}"
                       style="padding: 0 24px 16px; background: #FFFFFF;"
@@ -1748,19 +1773,18 @@
                         <div class="toshi-composer-inner" style="padding: 6px 4px 6px 6px;">
                             <label class="toshi-attach-btn" title="Upload file">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
-                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt" @if($awaitingConfirm) disabled @endif>
+                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
                             </label>
                             <textarea rows="1" wire:model.defer="input"
-                                      placeholder="{{ $awaitingConfirm ? 'Use Yes / No above…' : 'Message Toshi…' }}"
+                                      placeholder="{{ $awaitingConfirm ? 'Type yes or no…' : 'Message Toshi…' }}"
                                       id="toshi-input-modal"
                                       data-testid="toshi-input-modal"
-                                      @if($awaitingConfirm) readonly tabindex="-1" @endif
                                       @input="
                                           hasText = $el.value.trim().length > 0;
                                           $el.style.height = 'auto';
                                           $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                                       "
-                                      @keydown.enter="if(!$event.shiftKey && !$el.hasAttribute('readonly')) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                                      @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                                       class="toshi-composer-textarea"></textarea>
                             <button type="submit"
                                     :disabled="!hasText"
@@ -1774,6 +1798,7 @@
                         </div>
                     </div>
                 </form>
+            @endif
             </div>
         </div>
     </div>
