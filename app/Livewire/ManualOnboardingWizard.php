@@ -455,7 +455,7 @@ class ManualOnboardingWizard extends Component
         foreach ($names as $name) {
             $this->studentDrafts[] = [
                 'name' => $name,
-                'class' => $this->studentClass ?: $this->className,
+                'class' => trim($this->studentClass),
                 'stream' => trim($this->studentStream),
                 'parent' => '',
                 'parent_phone' => '',

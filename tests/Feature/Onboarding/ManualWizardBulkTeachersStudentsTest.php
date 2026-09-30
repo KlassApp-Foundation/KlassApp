@@ -271,6 +271,25 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $this->assertSame(0, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
     }
 
+    public function test_student_paste_does_not_default_class_to_p1(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToTeachers($component);
+        $component->call('skipOptionalStep');
+        $this->goToStepKey($component, 'students');
+
+        // No class chosen: the class select is still sitting on its placeholder.
+        $component->assertSet('studentClass', '');
+
+        $component
+            ->set('studentPaste', "Amina No Class\nBrian No Class")
+            ->call('applyStudentPaste')
+            ->assertCount('studentDrafts', 2)
+            ->assertSet('studentDrafts.0.class', '')
+            ->assertSet('studentDrafts.1.class', '');
+    }
+
     public function test_teachers_html_includes_confirm_only_when_drafts_exist(): void
     {
         $this->actingAs($this->admin);
