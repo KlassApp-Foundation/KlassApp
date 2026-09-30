@@ -1383,10 +1383,6 @@ class OnboardingEngine
                 $created = [];
                 $skipped = [];
 
-                $firstLink = StandardLink::where('school_id', $school->id)
-                    ->where('academic_year_id', $year->id)
-                    ->first();
-
                 // Pass 1: refuse unmatched classes / colliding emails / LINs before creating anyone.
                 $unmatchedClasses = [];
                 $batchEmails = [];
@@ -1519,33 +1515,32 @@ class OnboardingEngine
                             $className,
                             $stream !== '' ? $stream : null
                         );
-                    } elseif ($firstLink) {
-                        // No class provided: keep legacy first-link assignment for paste-name paths.
-                        $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
                     }
 
-                    if ($link) {
-                        $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
-                        $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
-                        $stdName = trim((string) ($link->standard?->name ?? ''));
-                        $secName = trim((string) ($link->section?->name ?? $className));
+                    $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
+                    $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
+                    $stdName = trim((string) ($link->standard?->name ?? ''));
+                    $secName = trim((string) ($link->section?->name ?? $className));
 
-                        // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
-                        if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
-                            $boardReg = '';
-                        }
-
-                        StudentAcademic::create([
-                            'school_id' => $school->id,
-                            'academic_year_id' => $year->id,
-                            'user_id' => $student->id,
-                            'standardLink_id' => $link->id,
-                            'klassapp_student_id' => $klassappId,
-                            'lin' => $lin,
-                            'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
-                            'board_registration_number' => $boardReg !== '' ? $boardReg : null,
-                        ]);
+                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                    if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
+                        $boardReg = '';
                     }
+
+                    // No class provided: the admin did not choose one, so the student is
+                    // created unenrolled (standardLink_id null) instead of silently joining
+                    // the school's first StandardLink. Matches the CSV import and the admin
+                    // Add Student form, which also leave the class empty when unchosen.
+                    StudentAcademic::create([
+                        'school_id' => $school->id,
+                        'academic_year_id' => $year->id,
+                        'user_id' => $student->id,
+                        'standardLink_id' => $link?->id,
+                        'klassapp_student_id' => $klassappId,
+                        'lin' => $lin,
+                        'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
+                        'board_registration_number' => $boardReg !== '' ? $boardReg : null,
+                    ]);
 
                     $created[] = [
                         'name'         => $name,
