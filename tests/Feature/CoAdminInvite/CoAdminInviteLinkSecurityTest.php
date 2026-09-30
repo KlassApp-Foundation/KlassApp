@@ -235,10 +235,11 @@ class CoAdminInviteLinkSecurityTest extends TestCase
 
             return $mail->inviteUrl === url('/invite/co-admin/'.$token)
                 && ! property_exists($mail, 'password')
-                && str_contains($rendered, 'Set Your Password')
+                && str_contains($rendered, 'Set your password')
                 && str_contains($rendered, url('/invite/co-admin/'.$token))
                 && ! str_contains(strtolower($rendered), 'password:**');
         });
+        // Promotion uses CoAdminInviteMail; brand-new invites use CoAdminInviteLinkMail only.
         Mail::assertNotQueued(CoAdminInviteMail::class);
     }
 
