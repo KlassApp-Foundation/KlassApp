@@ -430,9 +430,7 @@ class StaffController extends Controller
                 }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=blank(optional($user->userprofile)->date_of_birth)
-                        ? ''
-                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
+                    $data[]=\App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', '');
                 }
                 if(in_array('address', $heads))
                 {

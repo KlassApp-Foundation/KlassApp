@@ -27,7 +27,7 @@
                                     <span class="mx-2 text-gray-700 font-medium">Date Of Birth  :</span>
                                 </div>
                                 <div class="">
-                                    <p>{{ date('d-m-Y',strtotime(optional($user->userprofile)->date_of_birth)) }}</p>
+                                    <p>{{ \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth) }}</p>
                                 </div>
                             </li>
                             <li class="flex py-1">
@@ -37,9 +37,9 @@
                                 </div>
                                 <div class="">
                                     <p class="capitalize">
-                                        @if($user->userprofile->gender == 'male')
+                                        @if(optional($user->userprofile)->gender == 'male')
                                             Boy
-                                        @elseif($user->userprofile->gender == 'female')
+                                        @elseif(optional($user->userprofile)->gender == 'female')
                                             Girl
                                         @endif
                                     </p>
@@ -54,7 +54,7 @@
                                 <svg class="w-3 h-3 fill-current text-gray-800" height="682pt" viewBox="-119 -21 682 682.66669" width="682pt" xmlns="http://www.w3.org/2000/svg"><path d="m216.210938 0c-122.664063 0-222.460938 99.796875-222.460938 222.460938 0 154.175781 222.679688 417.539062 222.679688 417.539062s222.242187-270.945312 222.242187-417.539062c0-122.664063-99.792969-222.460938-222.460937-222.460938zm67.121093 287.597656c-18.507812 18.503906-42.8125 27.757813-67.121093 27.757813-24.304688 0-48.617188-9.253907-67.117188-27.757813-37.011719-37.007812-37.011719-97.226562 0-134.238281 17.921875-17.929687 41.761719-27.804687 67.117188-27.804687 25.355468 0 49.191406 9.878906 67.121093 27.804687 37.011719 37.011719 37.011719 97.230469 0 134.238281zm0 0"/></svg>
                                 <div class="w-full mx-2">
                                     <p class="text-gray-700 leading-normal">
-                                        @if($user->userprofile->address==null)
+                                        @if(optional($user->userprofile)->address==null)
                                             --
                                         @else
                                             {{ optional($user->userprofile)->address }}
@@ -96,12 +96,12 @@
                     <div class="my-3 flex flex-wrap text-xs">
                         <a href="{{url('/teacher/student/comparemark/'.$user->name)}}" class="capitalize text-white blue-bg rounded px-2 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0" target="_blank">compare marks</a>
 
-                        <a href="{{url('/teacher/marks/show?ref_name='.$user->name.'&standard='.$user->studentAcademicLatest->standardLink_id)}}" class="capitalize text-white blue-bg rounded px-2 py-1 font-medium my-1 lg:my-0 md:my-0" target="_blank">View marks</a>
+                        <a href="{{url('/teacher/marks/show?ref_name='.$user->name.'&standard='.optional($user->studentAcademicLatest)->standardLink_id)}}" class="capitalize text-white blue-bg rounded px-2 py-1 font-medium my-1 lg:my-0 md:my-0" target="_blank">View marks</a>
                     </div>
                     @endif
                 </div>
                 <div class="leading-relaxed">
-                    <p class="text-lg text-gray-700 font-semibold">ID: {{ $user->id }}</p>
+                    <p class="text-lg text-gray-700 font-semibold">Admission No: {{ $user->admissionNumber() ?? \App\Support\DateOfBirth::NOT_RECORDED }}</p>
                 </div>
                 <div class="bg-white shadow my-5">
                     <profile-tab url="{{ url('/') }}" entity_id="{{ $user->id }}" school_id="{{ $user->school_id }}" name="{{ $user->name }}" mode="teacher"></profile-tab>

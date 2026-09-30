@@ -17,9 +17,7 @@ class SiblingListResource extends JsonResource
         return[
             'fullname'=>$this->userStudent->FullName,
             'relation'=>$this->userStudent->userprofile->gender=='male' ? 'Brother':'Sister',
-            'date_of_birth'=> blank(optional($this->userStudent->userprofile)->date_of_birth)
-                ? null
-                : date('d-m-Y', strtotime($this->userStudent->userprofile->date_of_birth)),
+            'date_of_birth'=> \App\Support\DateOfBirth::formatOrNull(optional($this->userStudent->userprofile)->date_of_birth, 'd-m-Y'),
             'standard_section'=>$this->userStudent->studentAcademicLatest->standardLink->StandardSection
         ];
     }

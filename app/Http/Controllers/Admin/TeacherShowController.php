@@ -103,8 +103,8 @@ class TeacherShowController extends Controller
     {
       //
       $user = $this->findSchoolTeacherByName($name, ['standardLink']);
-      $array['standard']  = $user->standardLink->StandardName;
-      $array['section']   = $user->standardLink->section->name;
+      $array['standard']  = optional($user->standardLink)->StandardName;
+      $array['section']   = optional(optional($user->standardLink)->section)->name;
 
       return $array;
     }
@@ -135,7 +135,7 @@ class TeacherShowController extends Controller
     {
       //
       $user = $this->findSchoolTeacherByName($name, ['userprofile']);
-      $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
+      $activitylog = ActivityLog::whereIn('subject_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
       $activitylog = ActivityLogResource::collection($activitylog);
 
       return $activitylog;
@@ -145,7 +145,7 @@ class TeacherShowController extends Controller
     {
       //
       $user = $this->findSchoolTeacherByName($name, ['userprofile']);
-      $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
+      $activitylog = ActivityLog::whereIn('causer_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
       $activitylog = ActivityLogResource::collection($activitylog);
 
       return $activitylog;

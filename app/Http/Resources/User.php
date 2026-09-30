@@ -41,7 +41,7 @@ class User extends JsonResource
             'parent_id'             =>  $parent_id == null ? []:$parent_id,
             'designation'           =>  $this->teacherprofile[0]['designation'],
             'designation_display'   => $pro_design,
-            'date_of_birth'         =>  $this->userprofile->date_of_birth == null ? null:date('d M Y',strtotime($this->userprofile->date_of_birth)),
+            'date_of_birth'         =>  \App\Support\DateOfBirth::formatOrNull(optional($this->userprofile)->date_of_birth, 'd M Y'),
             'status'                =>  $this->status,
         ];
     }

@@ -41,7 +41,7 @@
                         	@endif
                         </td>
                         <td class="py-3 px-2">
-                            <label class="">{{ $userprofile->date_of_birth ?: '--' }}</label>
+                            <label class="">{{ \App\Support\DateOfBirth::format($userprofile->date_of_birth) }}</label>
                         </td>
                         <td class="py-3 px-2">
 			                @if($userprofile->status == 'active')

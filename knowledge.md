@@ -658,9 +658,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Not fixed on GitHub, by decision**: re-opening under Mucunguzi256 needs a fresh session with the reconnected account; the owner judged that not worth the cost now. This note is the record instead.
 - **Scope**: these five PR numbers only. Any *other* PR showing Elijah-ug as author (e.g. #682, #788) is still his real external work and rule #25 applies in full.
 
+<<<<<<< HEAD
 ## Current Status: October 1, 2026 (latest) — **`design/` is the source of truth for all design work.** Full Claude Design export committed under `design/system/` (tokens, components, guidelines, concepts, `SKILL.md`, `handoff/`). Handoff guides live in `design/system/guidelines/`. Sync record `design/system/github.md` last synced **2026-09-28** (`dbe68419`) — check drift against current `main` before each implementation PR. Earlier avatar package remains at `design/handoffs/2026-09-30-avatar/` (#908). Soft-launch merge batch #906–#911 MERGED tip `69524023`, staging-verified. Open: knowledge stamp [#913](https://github.com/KlassApp-Foundation/KlassApp/pull/913), profile bugs [#914](https://github.com/KlassApp-Foundation/KlassApp/pull/914), design export [#915](https://github.com/KlassApp-Foundation/KlassApp/pull/915). Next: Task 2 emails from `design/system/handoff/emails/` + Part D2 confirm-email link; Google sign-in staging verify; Toshi readiness; storage; rules. Production untouched.
 
 ## Current Status: September 30, 2026 evening (latest) — **public/uploads/ audit stamped; student-creation audit queued next; Task 2 blocked on Task B design ZIP which has not arrived; PR-state report delivered (#899/#898, nothing merged by me).**
+=======
+## Current Status: October 1, 2026 (latest) — **Soft-launch merge batch #906–#911 MERGED + staging-verified; production untouched.** Rasta's rule-#32 go-ahead: #906/#907/#908 normal merge, #909 squash-and-merge, #910/#911 after CI green. API `merged: true` for all six. Tip `69524023`. Staging deploy `depl-a2df6101-e23b-476f-929b-f3a2091ffe79` @ `69524023` → `deployment.succeeded`. Combined Playwright @375/1280 PASS (`e2e/verify-softlaunch-batch-906-911.cjs`): #907 "Needs a class" filter; #909 final size buckets on wizard (legacy Under 100 absent); #910 Toshi chrome absent for phase4 (school flag off; AI key configured separately); #911 academic-year control @375, banner `7 steps remaining.` (no space-before-period), onboarding-reminder gone. **Task B blocked**: `~/Downloads/klassapp-handoff-2026-09-29.zip` missing (only `KlassApp Design System (1).zip`) — awaiting resend. Next: profile bugs → Toshi panel bugs → `feat/e2e-toshi-driver` journeys. Production not deployed.
+
+## Current Status: September 30, 2026 evening — **public/uploads/ audit stamped; student-creation audit queued next; Task 2 blocked on Task B design ZIP which has not arrived; PR-state report delivered (#899/#898, nothing merged by me).**
+>>>>>>> origin/main
 
 - **public/uploads/ git audit (full-coverage gate)** — every file ever committed under `public/uploads/` is one of **26 files, all committed by developers, none a real runtime upload, no user data found in git**: 17 top-level + 6 `static/` files in fork import `a6784c39` (2025-07-11); `user/avatar/default-user.jpg` + `user/avatar/default-user-1.jpg` in `ec40cbf8` (2026-01-13 "fixed user image"); `klassapp_assets.png` in `172d202d` (2026-03-17); `icons/plus.svg` in `4860c91e` (2026-07-09). Zero deletions on `main` (an apparent mass-deletion in `34cbf0a1` is on unmerged side branch `feat/toshi-mcp-server-proposal`, not an ancestor of HEAD). All 26 stay tracked despite `.gitignore:23 public/uploads/*`.
 - **`default-user-1.jpg` is orphaned** — only references are our own `tests/Feature/Storage/PublicAssetResolutionTest.php:48,110` (added there by #903); no production code path names it.
@@ -13324,6 +13330,7 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **PR-state report (owner-requested, nothing merged by me):** #899 (Mucunguzi256, 2026-09-29 23:51) adds a single `ROBOTS_NOINDEX` switch — global `X-Robots-Tag: noindex, nofollow` middleware plus a routed robots.txt replacing the edge-served static file; staging currently ships no noindex anywhere (verified). #898 (Mucunguzi256, 2026-09-29 19:50) strips personal contact details from seeders/config/views/e2e artifacts in favour of env vars and placeholders. Both complete and CI-wired per their bodies; both await the owner's go-ahead. Merge order note: #899 appends at this file's EOF — when both land, resolve keep-both-sides per the owner's standing instruction.
 
+<<<<<<< HEAD
 ## Session: 2026-10-01 — design/ source-of-truth (Task B export) + queue correction
 
 **Design export:** Imported `~/Downloads/KlassApp Design System.zip` (646 files; same content as the underscore-named path) into `design/system/`. Handoff guides stay under `design/system/guidelines/` (not duplicated under `design/handoffs/`). `design/system/github.md` last sync **2026-09-28T18:24:20Z** @ `dbe68419` — agents must drift-check against `main` before each handoff PR.
@@ -13331,4 +13338,28 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 **Task 2 emails (next):** use `design/system/handoff/emails/` (newer); ignore `klassapp-handoff-2026-09-28/B-emails-code/`. Include Part D2 of `guidelines/handoff-2026-09-30-profiles.md` (Confirm email signed link + copy: account exists before confirmation / "no one can use this account until the email is confirmed"). Sign-up link + Google staging verify are separate follow-ups in the same soft-launch queue.
 
 **Also open:** #913 knowledge stamp, #914 profile bugs, #915 this design PR.
+=======
+## Session: 2026-10-01 — Soft-launch merge batch #906–#911 (rule #32 go-ahead) + combined staging pass
+
+**Authorisation**: Rasta explicit in-session go-ahead (rule #32) — merge #906/#907/#908 normally, #909 squash-and-merge, then #910/#911 once CI green.
+
+**Merged (API `merged: true` for each):**
+
+| PR | Method | Merge SHA | Notes |
+|---|---|---|---|
+| [#906](https://github.com/KlassApp-Foundation/KlassApp/pull/906) | merge | `370e7a9d` | knowledge.md uploads audit / post-launch deferrals |
+| [#907](https://github.com/KlassApp-Foundation/KlassApp/pull/907) | merge | `d21ec253` | class-less students never enrolled into first StandardLink; roster "Needs a class" |
+| [#908](https://github.com/KlassApp-Foundation/KlassApp/pull/908) | merge | `5d8683d3` | design/handoffs avatar-initials + Root Clutter Guard allowlist `design/` |
+| [#909](https://github.com/KlassApp-Foundation/KlassApp/pull/909) | **squash** | `aa67ac51` | final school-size buckets; plan over-limit notice never blocks uploads |
+| [#910](https://github.com/KlassApp-Foundation/KlassApp/pull/910) | merge | `5232f2ea` | `ToshiUiSwitch` + `@toshiUi` — hide school UI until AI key ∧ `schools.toshi_enabled` |
+| [#911](https://github.com/KlassApp-Foundation/KlassApp/pull/911) | merge | `69524023` | DashboardGreeting title-case, year selector @mobile, one step source, delete unused reminder |
+
+**Tip**: `69524023055b9593410a0188ebdd9e6dc7f23d0c` (= #911 merge). Staging deploy `depl-a2df6101-…` succeeded at that SHA.
+
+**Combined staging pass** (Playwright Chromium, `phase4.admin@klassapp.xyz` / `STAGING_DEMO_PASSWORD` via Doppler, never printed): VERIFY_PASS at 375 and 1280. Evidence: `e2e/screenshots/softlaunch-batch-906-911/REPORT.json`. Toshi toggle absent on phase4 (expected until school flag on). Production not deployed / not written.
+
+**Task B**: `~/Downloads/klassapp-handoff-2026-09-29.zip` **missing** (also no `KlassApp_Design_System (5).zip`); only `KlassApp Design System (1).zip` in Downloads — owner will resend. Task 2 emails blocked on Task B.
+
+**Queue remaining**: profile bugs → Toshi panel bugs → merge `feat/e2e-toshi-driver` → three Toshi journeys @375/1280 with AI cost → route Toshi plan step through engine completion gate; enable Toshi only on test schools.
+>>>>>>> origin/main
 

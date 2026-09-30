@@ -43,7 +43,7 @@
                   <div class="flex-grow px-2">
                     <h2 class="font-bold text-base text-gray-700">{{user['fullname']}}</h2>
                     <p class="text-sm">{{user['designation_name']}}</p>
-                    <p v-if="birthday == 'true'">{{ user['date_of_birth'] }}</p>
+                    <p v-if="birthday == 'true'">{{ user['date_of_birth'] || 'Not recorded' }}</p>
                   </div>
                 </div>
                 <div class="student_select">
