@@ -4,8 +4,9 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const COMPOSER = '#toshi-input-panel:visible';
-const SEND = 'button[title="Send"]:visible';
+// Panel composer when docked; modal composer when maximized (#917 mounts only one).
+const COMPOSER = '#toshi-input-panel:visible, #toshi-input-modal:visible';
+const SEND = '[data-testid="toshi-send"]:visible, [data-testid="toshi-send-modal"]:visible, button[title="Send"]:visible';
 
 const T = 20_000;
 
@@ -13,14 +14,25 @@ async function ensurePanel(page) {
     console.log('[toshi] ensurePanel: waiting for root (attached)');
     await page.waitForSelector('[data-toshi-root]', { state: 'attached', timeout: 60_000 });
 
-    // Prefer the in-page event path (same as the setup banner dispatch).
+    // Expand the split dock (do not maximize — modal swaps the composer id).
     if (!(await page.locator(COMPOSER).first().isVisible().catch(() => false))) {
-        console.log('[toshi] ensurePanel: dispatching maximize events');
+        console.log('[toshi] ensurePanel: expanding dock');
         await page.evaluate(() => {
-            document.body.classList.remove('toshi-collapsed');
-            window.dispatchEvent(new CustomEvent('toshi-maximize'));
+            if (typeof window.toshiSetCollapsed === 'function') {
+                window.toshiSetCollapsed(false);
+            } else {
+                document.body.classList.remove('toshi-collapsed');
+                document.documentElement.classList.remove('toshi-collapsed');
+                try { localStorage.setItem('toshi_split_collapsed', '0'); } catch (e) {}
+                window.dispatchEvent(new CustomEvent('toshi-collapsed-changed', { detail: { collapsed: false } }));
+            }
         }).catch(() => {});
-        await page.waitForTimeout(1200);
+        await page.waitForTimeout(800);
+        const pill = page.locator('[data-testid="toshi-pill"]');
+        if (await pill.isVisible().catch(() => false)) {
+            await pill.click({ timeout: 8000 }).catch(() => {});
+            await page.waitForTimeout(800);
+        }
     }
 
     if (!(await page.locator(COMPOSER).first().isVisible().catch(() => false))) {
@@ -33,8 +45,13 @@ async function ensurePanel(page) {
     }
 
     if (!(await page.locator(COMPOSER).first().isVisible().catch(() => false))) {
-        console.log('[toshi] ensurePanel: trying launcher fallback');
-        const launcher = page.locator('[title*="Toshi" i], [data-toshi-toggle], button:has-text("Toshi")').first();
+        console.log('[toshi] ensurePanel: trying toggle / launcher');
+        const toggle = page.locator('#toshi-toggle, [data-testid="toshi-toggle"]').first();
+        if (await toggle.isVisible().catch(() => false)) {
+            await toggle.click({ timeout: 8000 }).catch(() => {});
+            await page.waitForTimeout(800);
+        }
+        const launcher = page.locator('[data-testid="toshi-pill"], [title*="Toshi" i]').first();
         if (await launcher.isVisible().catch(() => false)) {
             await launcher.click({ timeout: 8000 }).catch(() => {});
             await page.waitForTimeout(1000);
