@@ -5,6 +5,7 @@ namespace Tests\Feature\DesignSystem;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -51,6 +52,27 @@ class ProfilePhotoComponentTest extends TestCase
         $this->assertStringContainsString('uploads/user/avatar/default-user.jpg', $html);
         $this->assertStringNotContainsString('src=""', $html);
         $this->assertStringContainsString('width="128" height="128"', $html);
+    }
+
+    public function test_user_with_a_stored_default_avatar_renders_the_bundled_asset(): void
+    {
+        config([
+            'filesystems.default' => 's3',
+            'filesystems.disks.s3.url' => null,
+            'filesystems.disks.s3.key' => 'test-key',
+            'filesystems.disks.s3.secret' => 'test-secret',
+            'filesystems.disks.s3.region' => 'auto',
+            'filesystems.disks.s3.bucket' => 'test-bucket',
+            'filesystems.disks.s3.endpoint' => 'https://account.eu.r2.cloudflarestorage.com',
+        ]);
+        Storage::forgetDisk('s3');
+
+        $html = $this->render('<x-profile-photo :user="$u" size="lg" />', ['u' => $this->user('uploads/male.png')]);
+
+        $this->assertStringContainsString('uploads/male.png', $html);
+        $this->assertStringNotContainsString('X-Amz', $html);
+        $this->assertStringNotContainsString('r2.cloudflarestorage.com', $html);
+        $this->assertStringNotContainsString('src=""', $html);
     }
 
     public function test_null_user_renders_default_with_empty_alt(): void
