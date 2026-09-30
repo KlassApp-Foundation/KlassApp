@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x260" name="Buttons" subtitle="Six variants, three sizes, disabled and link forms" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px;background:var(--d-canvas);font-family:var(--d-font-body)}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}.lbl{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d-muted);width:64px;flex-shrink:0}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Button } = window.KlassAppDesignSystem_df5836;
+function Demo(){return (<div>
+<div className="row"><span className="lbl">Variants</span>
+<Button>Save Changes</Button><Button variant="success">Record Payment</Button><Button variant="danger">Delete</Button><Button variant="warning">Suspend</Button><Button variant="outline">Cancel</Button><Button variant="ghost">← Back</Button></div>
+<div className="row"><span className="lbl">Sizes</span>
+<Button size="sm">Small</Button><Button size="md">Medium (base)</Button><Button size="lg">Large</Button></div>
+<div className="row"><span className="lbl">States</span>
+<Button disabled>Disabled</Button><Button variant="outline" disabled>Disabled outline</Button><Button variant="ghost" size="sm" href="#">Link button</Button></div>
+</div>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

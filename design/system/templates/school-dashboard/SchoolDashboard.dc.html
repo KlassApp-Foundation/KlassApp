@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="School dashboard" description="Staff dashboard shell: cream sidebar, KPI fold, ledger table and attention panel." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="display:flex;min-height:100vh;background:#FAFAF5;font-family:'DM Sans',system-ui,sans-serif">
+<aside style="width:252px;flex-shrink:0;background:#FFFFFC;border-right:1px solid #E2E8F0;display:flex;flex-direction:column">
+<div style="padding:20px 16px 14px;border-bottom:1px solid #E2E8F0">
+<div style="font-family:Sora,system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.02em;color:#0F172A">Klass<span style="color:#22C55E">App</span></div>
+<div style="font-size:12px;color:#94A3B8;margin-top:3px">St. Mary&rsquo;s SS, Kampala</div>
+</div>
+<nav style="padding:8px 0;flex:1;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0 8px;min-height:44px;border-radius:8px;background:rgba(34,197,94,0.24);color:#166534;font-size:14px;font-weight:600">Dashboard</div>
+<div style="font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#94A3B8;padding:14px 16px 6px">People</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0 8px;min-height:44px;border-radius:8px;color:#1E293B;font-size:14px;font-weight:500">Students</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0 8px;min-height:44px;border-radius:8px;color:#1E293B;font-size:14px;font-weight:500">Teachers</div>
+<div style="font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#94A3B8;padding:14px 16px 6px">Finance</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0 8px;min-height:44px;border-radius:8px;color:#1E293B;font-size:14px;font-weight:500">Fee payments</div>
+</nav>
+<div style="border-top:1px solid #E2E8F0;padding:14px;display:flex;align-items:center;gap:10px">
+<div style="width:34px;height:34px;border-radius:999px;background:rgba(30,111,217,0.10);color:#1E6FD9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">JN</div>
+<div style="line-height:1.3"><div style="font-size:13px;font-weight:600;color:#1E293B">Josephine N.</div><div style="font-size:11px;color:#94A3B8">Head Teacher</div></div>
+</div>
+</aside>
+<main style="flex:1;min-width:0;padding:20px">
+<div style="background:#FAFAF5;border-radius:20px;padding:24px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+<div>
+<h1 style="font-family:Sora,system-ui,sans-serif;font-size:1.8rem;font-weight:700;letter-spacing:-0.02em;color:#0F172A;margin:0">Good morning, Josephine</h1>
+<p style="font-size:0.9rem;color:#64748B;margin:6px 0 0">Term 2 2026 &middot; Week 6 &middot; 1,284 students enrolled</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:20px">
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.KpiCard" icon="users" value="1,284" label="Total Students" color="blue" hint-size="100%,132px"></x-import>
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.KpiCard" icon="dollar" value="UGX 18.4M" label="Fees Collected" color="amber" hint-size="100%,132px"></x-import>
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.KpiCard" icon="whatsapp" value="1,102" label="WhatsApp Linked" color="green" hint-size="100%,132px"></x-import>
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.KpiCard" icon="exam" value="12" label="Upcoming Exams" color="purple" hint-size="100%,132px"></x-import>
+</div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:20px">
+<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 0 0 1px #E2E8F0">
+<h3 style="font-family:Sora,system-ui,sans-serif;font-size:1rem;font-weight:600;color:#0F172A;margin:0;padding:20px 20px 12px">Recent payments</h3>
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:10px 20px;border-bottom:2px solid #1E6FD9">Student</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:right;padding:10px 20px;border-bottom:2px solid #1E6FD9">Amount</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:10px 20px;border-bottom:2px solid #1E6FD9">Status</th>
+</tr></thead>
+<tbody>
+<tr><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px;border-bottom:1px solid #E2E8F0">Nakato Sarah</td><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px;border-bottom:1px solid #E2E8F0;text-align:right;font-variant-numeric:tabular-nums">UGX 450,000</td><td style="padding:14px 20px;border-bottom:1px solid #E2E8F0"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="paid" hint-size="60px,22px">Paid</x-import></td></tr>
+<tr><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px;border-bottom:1px solid #E2E8F0">Mukasa David</td><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px;border-bottom:1px solid #E2E8F0;text-align:right;font-variant-numeric:tabular-nums">UGX 300,000</td><td style="padding:14px 20px;border-bottom:1px solid #E2E8F0"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="warning" hint-size="80px,22px">Part paid</x-import></td></tr>
+<tr><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px">Namuli Grace</td><td style="font-size:0.85rem;color:#1E293B;padding:14px 20px;text-align:right;font-variant-numeric:tabular-nums">UGX 0</td><td style="padding:14px 20px"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="unpaid" hint-size="66px,22px">Unpaid</x-import></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 0 0 1px #E2E8F0;padding:20px">
+<h3 style="font-family:Sora,system-ui,sans-serif;font-size:1rem;font-weight:600;color:#0F172A;margin:0 0 12px">Needs your attention</h3>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:999px;background:#D97706;margin-top:6px;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600;color:#1E293B">Senior 4 marks not submitted</div><div style="font-size:12px;color:#94A3B8">Mr. Opio &middot; due Friday</div></div></div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:999px;background:#1E6FD9;margin-top:6px;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600;color:#1E293B">38 parents without WhatsApp</div><div style="font-size:12px;color:#94A3B8">Reception can collect numbers</div></div></div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:999px;background:#22C55E;margin-top:6px;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600;color:#1E293B">Term 2 report cards ready</div><div style="font-size:12px;color:#94A3B8">Publish to send 1,102 messages</div></div></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.Button" variant="primary" size="sm" hint-size="130px,44px">Publish reports</x-import>
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.Button" variant="outline" size="sm" hint-size="134px,44px">Remind teachers</x-import>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</x-dc>
+</body>
+</html>

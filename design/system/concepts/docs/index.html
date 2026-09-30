@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Docs site — review</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#FAFAF5;color:#1E293B;font-family:'DM Sans',sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.wrap{max-width:1300px;margin:0 auto;padding:32px 20px 72px;display:flex;flex-direction:column;gap:32px}
+h1,h2{font-family:'Sora',sans-serif;letter-spacing:-.02em;margin:0}h1{font-size:26px}h2{font-size:19px}
+p{margin:0;line-height:1.55}.lede{color:#475569;max-width:90ch;text-wrap:pretty}
+.row{display:flex;gap:18px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}
+.col{display:flex;flex-direction:column;gap:6px;flex:none}.col small{font-size:12px;font-weight:700;color:#475569}
+.d{width:640px;height:520px;overflow:hidden;border:1px solid #E2E8F0;border-radius:10px;background:#fff}.d iframe{width:1280px;height:1040px;border:0;transform:scale(.5);transform-origin:0 0}
+.m{width:282px;height:520px;overflow:hidden;border:1px solid #E2E8F0;border-radius:10px;background:#fff}.m iframe{width:375px;height:692px;border:0;transform:scale(.752);transform-origin:0 0}
+section{border-top:1px solid rgba(120,95,60,.14);padding-top:22px;display:flex;flex-direction:column;gap:12px}
+.box{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #F1F5F9;vertical-align:top}th{font-size:12px;color:#475569}
+code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div><h1>KlassApp Docs: one VitePress site (Help + Community)</h1><p class="lede">The VitePress-style shell (docs home, a Help/Community switch, a search dialog opened with Ctrl K), six Help templates, six Community templates and the docs components (<code>styles/docs.css</code>, the <code>kd-*</code> classes). The page copy is <b>sample copy</b>, and every behaviour it describes must be checked against shipped code before it's published. Screenshot slots are striped placeholders, because no Demo Academy Uganda captures exist yet. The renders use real CSS in this browser, not staging.</p></div>
+<div id="list"></div>
+<section><h2>Screenshot rules</h2><div class="box"><table>
+<tr><th>Rule</th><th>Spec</th></tr>
+<tr><td>Data</td><td>Demo data only: <b>Demo Academy Uganda</b>, seeded demo names (for example Nakato Grace or Okello Brian), phone numbers in the 0700 000 0xx range, and UGX amounts. Never capture a real school, student, parent or phone number. Blur nothing; recapture instead.</td></tr>
+<tr><td>Desktop capture</td><td>1280 × 800 browser viewport at 2× DPR, captured by the headless screenshot job. Crop to the task area at 16:9 or 4:3, never full-page. Export as WebP at quality 80, 1280px wide, and at most 180 KB.</td></tr>
+<tr><td>Mobile capture</td><td>390 × 844 at 2× DPR, shown in the <code>.kd-shot--phone</code> frame at a maximum of 320px wide. Export as WebP at 640px wide and at most 120 KB.</td></tr>
+<tr><td>Mobile or desktop?</td><td>Parent and student tasks, WhatsApp flows, and anything a teacher does standing in class (attendance) get a mobile capture. Admin and bursar setup and reports get a desktop capture. Never show both for one step.</td></tr>
+<tr><td>Frame</td><td>Desktop captures use <code>.kd-shot</code>: a grey bar with 3 dots and the URL (<code>app.klassapp.xyz/…</code>, with no query strings or IDs). Mobile captures use a 6px dark bezel with no status bar.</td></tr>
+<tr><td>Annotations</td><td>Up to 3 numbered markers (<code>.kd-mark</code>) and 1 highlight box (<code>.kd-hl</code>), all in <code>--kd-mark</code> #B91C1C with a white halo, positioned as percentages so they survive resizing. Every marker has a matching <code>.kd-legend</code> line, because numbers alone aren't an explanation. Don't use arrows, blur or hand-drawn shapes.</td></tr>
+<tr><td>Alt text</td><td>Describe what the step shows, for example "Attendance page with the Mark today link highlighted". The caption carries the capture size and dataset.</td></tr>
+<tr><td>Staleness</td><td>Each capture's filename carries its route and date (<code>teacher-attendance-create_2026-09-29.webp</code>). The screenshot job re-runs on every release and fails the build if a route 404s.</td></tr>
+</table></div></section>
+<section><h2>Accessibility and low-end Android</h2><div class="box"><table>
+<tr><td>Contrast</td><td>Every <code>kd-*</code> text/background pair is at least 4.5:1, <b>calculated from hex, not browser-measured</b>. Body text is #1E293B on #FAFAF5 (14.1:1), links #1D4ED8 (6.47:1), secondary text #475569 (7.2:1), and the white numerals on the #B91C1C markers are 6.5:1. The live Docsify theme's link colour #1E6FD9 is borderline on the paper background, so the handoff swaps it.</td></tr>
+<tr><td>Targets</td><td>Nav links are 40px tall and stacked with no gap; the header controls, feedback buttons, pager and FAQ summaries are all at least 44px. Text is 16px on desktop and 17px on mobile.</td></tr>
+<tr><td>Motion</td><td>Nothing animates apart from smooth scrolling from the table of contents, which switches to instant under reduced motion.</td></tr>
+<tr><td>Low-end phones</td><td>No web-font weights beyond the three already loaded, no client-side search index over 150 KB, lazy-loaded images, and no layout shift (screenshots reserve their aspect ratio). Mermaid is loaded only on pages that use it. The pages still work with JavaScript off, apart from search.</td></tr>
+</table></div></section>
+</div>
+<script>
+const P=[['home','Docs home · two doors'],['role-admin','Role landing · Admin'],['role-parent','Role landing · Parent (with the WhatsApp block)'],['howto','How-to · Mark attendance'],['concept','Concept · Classes and streams'],['faq','FAQ'],['trouble','Troubleshooting'],['whatsnew',"Release notes · What's new"],['c-start','Community · Getting started'],['c-arch','Community · Architecture'],['c-contrib','Community · Contributing (public-repo rule)'],['c-conn','Community · Connectors and MCP'],['c-ref','Community · Reference'],['c-log','Community · Changelog']];
+document.getElementById('list').innerHTML=P.map(([h,t])=>`<section><h2>${t}</h2><div class="row"><div class="col"><small>1280</small><div class="d"><iframe src="site.html#${h}" title="${t} desktop" loading="lazy"></iframe></div></div><div class="col"><small>375</small><div class="m"><iframe src="site.html#${h}" title="${t} mobile" loading="lazy"></iframe></div></div></div></section>`).join('');
+</script>
+</body>
+</html>

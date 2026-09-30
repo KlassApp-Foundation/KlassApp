@@ -1,0 +1,359 @@
+<!-- @dsCard group="Concepts" viewport="1280x900" name="Hero role rotation — X-flip" subtitle="Real landing-v2 markup + split-flap flip; avatar conflict shown as A/B" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>KlassApp — hero role rotation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Lifted verbatim from resources/css/landing-preview.css ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root{
+  --brand-blue:#1E6FD9; --brand-green:#22C55E; --brand-dark:#0F172A; --brand-white:#FFFFFF;
+  --text-primary:#1E293B; --text-secondary:#64748B; --text-muted:#94A3B8; --border:#E2E8F0;
+  --font-display:'Sora',system-ui,sans-serif; --font-body:'DM Sans',system-ui,sans-serif;
+  --radius-sm:8px; --radius-md:12px;
+  --shadow-sm:0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-md:0 4px 12px rgba(15,23,42,0.07), 0 2px 4px rgba(15,23,42,0.04);
+  --paper-base:#FAFAF5; --paper-mid:#F3F0E8; --paper-deep:#EBE6DA; --paper-edge:#D4C4A8;
+  --paper-rule:rgba(120,95,60,0.07); --paper-ink-wash:rgba(92,74,48,0.03);
+  /* ADDED: landing-preview.css has no --d-* tokens. See conflict 4. */
+  --d-transition-slow:0.3s ease;
+}
+body{font-family:var(--font-body);font-weight:400;color:var(--text-primary);background:var(--paper-base);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.15;letter-spacing:-0.02em;color:var(--text-primary)}
+p{color:var(--text-secondary);line-height:1.7}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.hero{padding:48px 0 64px;background:var(--paper-base);position:relative;overflow:hidden}
+.hero-bg-vintage{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 80% at 50% 30%,var(--paper-base) 0%,var(--paper-mid) 55%,var(--paper-deep) 100%)}
+.hero-bg-vintage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 75% 70% at 50% 40%,transparent 40%,var(--paper-ink-wash) 100%),linear-gradient(180deg,rgba(212,196,168,0.16) 0%,transparent 18%,transparent 82%,rgba(196,176,140,0.18) 100%),linear-gradient(90deg,rgba(180,155,110,0.09) 0%,transparent 8%,transparent 92%,rgba(180,155,110,0.08) 100%),repeating-linear-gradient(0deg,transparent,transparent 31px,var(--paper-rule) 31px,var(--paper-rule) 32px)}
+.hero-bg-vintage::after{content:'';position:absolute;inset:0;opacity:0.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");background-size:180px 180px}
+.hero-deckle{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.28}
+.hero-deckle svg{position:absolute;width:100%;height:100%}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;position:relative;z-index:1}
+.hero-kicker{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--brand-blue);margin-bottom:20px}
+.hero h1{margin-bottom:18px;font-size:clamp(2rem,3.6vw,3rem);letter-spacing:-0.03em}
+.hero-sub{font-size:1.0625rem;color:var(--text-secondary);margin-bottom:28px;max-width:420px;line-height:1.65}
+.hero-trust{display:flex;align-items:center;gap:8px;font-size:0.8125rem;color:var(--text-muted);font-weight:500}
+.hero-trust .dot{width:4px;height:4px;border-radius:50%;background:var(--text-muted);margin:0 4px}
+
+/* .hero-preview / .hero-stage / .hero-deck — real values */
+.hero-preview{display:flex;flex-direction:column;align-items:center;position:relative;width:100%;max-width:360px;margin-left:auto;margin-right:auto}
+.hero-stage{position:relative;width:100%;height:420px;perspective:1400px}
+.hero-deck{position:absolute;inset:0;transform-style:preserve-3d}
+
+/* .hero-role-card — real geometry/colour kept; TRANSFORM+TRANSITION replaced (conflict 1) */
+.hero-role-card{
+  position:absolute;inset:12px 18px;border-radius:22px;background:#0B1220;color:#fff;
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 24px 50px -24px rgba(15,23,42,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  overflow:hidden;pointer-events:none;
+  transform-style:preserve-3d;backface-visibility:hidden;transform-origin:center center;
+  opacity:0;transform:rotateX(90deg);
+  transition:transform var(--d-transition-slow), opacity var(--d-transition-slow);
+}
+.hero-role-card.is-active{opacity:1;transform:rotateX(0deg);pointer-events:auto;z-index:3;transition-delay:0.15s}
+.hero-role-card.is-exit{opacity:0;transform:rotateX(-90deg);z-index:2;transition-delay:0s}
+.hero-role-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;font-size:0.8125rem;font-weight:600}
+.hero-role-card.wa .hero-role-hd{background:#075E54}
+.hero-role-card.drive .hero-role-hd{background:#1E3A5F}
+.hero-role-card.slack .hero-role-hd{background:#3F1F5C}
+.hero-role-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:0.6875rem;font-weight:800;background:rgba(255,255,255,0.18)}
+.hero-role-body{padding:16px;font-size:0.8125rem;line-height:1.45;color:#E2E8F0}
+.hero-role-body > *{opacity:0;transform:translateY(6px);transition:opacity 0.3s ease, transform 0.3s ease}
+.is-active .hero-role-body > *{opacity:1;transform:translateY(0)}
+.is-active .hero-role-body > :nth-child(1){transition-delay:0.30s}
+.is-active .hero-role-body > :nth-child(2){transition-delay:0.36s}
+.is-active .hero-role-body > :nth-child(3){transition-delay:0.42s}
+.is-active .hero-role-body > :nth-child(4){transition-delay:0.48s}
+.hero-bubble{background:#fff;color:#0F172A;border-radius:12px 12px 12px 4px;padding:10px 12px;max-width:92%;margin-bottom:8px}
+.hero-bubble.out{margin-left:auto;background:#DCF8C6;border-radius:12px 12px 4px 12px}
+.hero-meta{font-size:0.6875rem;color:#94A3B8;margin-top:4px}
+.hero-row{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.06);margin-bottom:8px;border:1px solid rgba(255,255,255,0.06);font-size:0.75rem}
+.hero-role-dots{display:flex;justify-content:center;gap:6px;margin-top:14px;position:relative;z-index:4}
+.hero-role-dots button{width:8px;height:8px;border-radius:50%;border:0;background:color-mix(in srgb,var(--paper-edge) 70%,var(--text-muted));cursor:pointer;padding:0;transition:width 0.2s ease,background 0.2s ease}
+.hero-role-dots button.on{background:var(--brand-green);width:18px;border-radius:999px}
+.connector-float{position:absolute;right:-28px;top:42%;z-index:5;transform:translateY(-50%);background:color-mix(in srgb,var(--paper-base) 40%,white);border:1px solid color-mix(in srgb,var(--paper-edge) 40%,var(--border));border-radius:var(--radius-md);padding:14px 16px;box-shadow:var(--shadow-md);width:180px}
+.connector-float h4{font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:10px}
+.connector-line{position:absolute;left:-40px;top:50%;width:40px;height:2px;background:linear-gradient(90deg,var(--brand-green),transparent)}
+.connector-icons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.connector-icon{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;background:#F8FAFC;border:1px solid var(--border);transition:transform 0.2s ease, box-shadow 0.2s ease}
+.connector-icon:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.connector-icon.brand-well{background:#fff;border-color:rgba(15,23,42,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.95),0 1px 2px rgba(15,23,42,0.04)}
+.brand-mark{display:block;width:18px;height:18px;flex-shrink:0}
+
+/* Real: stage floats continuously (line 2348) + its own reduced-motion guard (2349-2351) */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hero-stage{animation:float 6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.hero-stage{animation:none}}
+
+/* Real @media (max-width:900px) hero block, lines 2302-2312 */
+@media (max-width:900px){
+  .hero-inner{grid-template-columns:1fr;gap:48px}
+  .hero-content{text-align:center}
+  .hero-sub{margin-left:auto;margin-right:auto}
+  .hero-trust{justify-content:center}
+  .hero-preview{order:0;max-width:320px}
+  .hero-stage{height:380px}
+  .hero-preview .connector-float{display:none}
+  .connector-float{display:none}
+  .ab{max-width:420px;margin-left:auto;margin-right:auto;text-align:left}
+}
+
+/* Real reduced-motion block, VERBATIM (landing-preview.css 528-537) — instant swap, no fade */
+@media (prefers-reduced-motion: reduce){
+  .hero-role-card{transition:none !important;transform:none !important;opacity:0}
+  .hero-role-card.is-active{opacity:1}
+  .hero-role-card.is-exit{opacity:0}
+  .hero-role-dots{display:none}
+  .hero-role-body > *{opacity:1 !important;transform:none !important;transition:none !important}
+}
+
+/* Avatar — ruling B: K mark on all three cards, mirroring .toshi-pill-avatar */
+.hero-role-avatar{width:38px;height:38px;border-radius:50%;background:transparent;border:1px solid var(--brand-green);overflow:hidden;display:grid;place-items:center}
+.hero-role-avatar img{width:24px;height:24px;display:block}
+
+/* ── before/after reference, not shipped markup ── */
+.ab{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.ab-opt{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px;background:#fff}
+.ab-opt.sel{border-color:var(--brand-green);box-shadow:0 0 0 3px rgba(34,197,94,0.15)}
+.ab-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#075E54;border-radius:8px;font-size:0.8125rem;font-weight:600;color:#fff}
+.ab-hd .old-av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:0.6875rem;font-weight:800;background:rgba(255,255,255,0.18)}
+.ab-name{font-size:10px;font-weight:600;color:var(--text-primary);margin-top:8px}
+.ab-note{font-size:9.5px;color:var(--text-muted);line-height:1.45;margin-top:2px}
+.av-toshi{width:38px;height:38px;border-radius:50%;background:transparent;border:1px solid var(--brand-green);overflow:hidden;display:grid;place-items:center;flex-shrink:0}
+.av-toshi img{width:24px;height:24px;display:block}
+
+/* ── Handoff notes ── */
+.notes{max-width:1200px;margin:0 auto;padding:8px 24px 64px}
+h2{font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin:36px 0 12px}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 0 0 1px var(--border);padding:20px}
+.card h3{font-family:var(--font-display);font-size:0.92rem;font-weight:600;color:var(--brand-dark);margin:0 0 10px}
+.card p,.card li{font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin:0 0 7px}
+.card ul{margin:0;padding-left:18px}
+code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:0.76rem;background:var(--paper-mid);padding:1px 5px;border-radius:4px;color:var(--text-primary)}
+.flag{background:#fff8e1;border:1px solid #FDE68A;border-radius:12px;padding:16px 20px;margin-top:18px}
+.flag h3{font-family:var(--font-display);font-size:0.92rem;font-weight:600;color:#78350F;margin:0 0 8px}
+.flag p,.flag li{font-size:0.82rem;color:#78350F;line-height:1.6;margin:0 0 6px}
+.flag ul{margin:0;padding-left:18px}
+.ask{background:#fbe9e7;border:1px solid #FCA5A5}
+.ask h3,.ask p,.ask li{color:#7F1D1D}
+table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:4px}
+td code,th code{overflow-wrap:anywhere}
+td{overflow-wrap:anywhere}
+th{font-family:var(--font-display);font-size:0.68rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted);text-align:left;padding:7px 8px;border-bottom:2px solid var(--brand-blue)}
+td{font-size:0.76rem;color:var(--text-primary);padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+a{color:var(--brand-blue)}a:hover{color:#1557B0}
+</style></head><body>
+
+<section class="hero" id="hero">
+<div class="hero-bg-vintage" aria-hidden="true"></div>
+<div class="hero-deckle" aria-hidden="true">
+<svg viewBox="0 0 1200 700" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,12 C18,4 32,22 48,10 C64,-2 78,18 96,8 C112,0 128,20 148,6 C168,-4 184,16 204,10 C224,2 240,22 260,8 C280,-2 296,18 316,12 C336,4 352,24 372,10 C392,0 408,20 428,8 C448,-2 464,18 484,12 C504,4 520,22 540,10 C560,0 576,18 596,8 C616,-2 632,20 652,10 C672,2 688,22 708,8 C728,-2 744,16 764,12 C784,4 800,24 820,10 C840,0 856,18 876,8 C896,-2 912,20 932,12 C952,4 968,22 988,10 C1008,0 1024,18 1044,8 C1064,-2 1080,20 1100,10 C1120,2 1136,22 1156,8 C1172,0 1188,14 1200,6 L1200,0 L0,0 Z" fill="rgba(180,155,110,0.11)"/>
+<path d="M0,700 L0,688 C12,692 24,680 40,690 C56,696 72,682 88,690 C104,698 120,684 136,690 C152,696 168,682 184,690 C200,698 216,684 232,690 C248,696 264,682 280,690 C296,698 312,684 328,690 C344,696 360,682 376,690 C392,698 408,684 424,690 C440,696 456,682 472,690 C488,698 504,684 520,690 C536,696 552,682 568,690 C584,698 600,684 616,690 C632,696 648,682 664,690 C680,698 696,684 712,690 C728,696 744,682 760,690 C776,698 792,684 808,690 C824,696 840,682 856,690 C872,698 888,684 904,690 C920,696 936,682 952,690 C968,698 984,684 1000,690 C1016,696 1032,682 1048,690 C1064,698 1080,684 1096,690 C1112,696 1128,682 1144,690 C1160,698 1176,684 1192,692 L1200,688 L1200,700 Z" fill="rgba(160,135,95,0.1)"/>
+<path d="M0,0 L8,0 C4,40 14,80 6,120 C-2,160 12,200 8,240 C4,280 14,320 6,360 C-2,400 12,440 8,480 C4,520 14,560 6,600 C0,640 10,680 4,700 L0,700 Z" fill="rgba(140,115,75,0.07)"/>
+</svg>
+</div>
+<div class="container">
+<div class="hero-inner">
+<div class="hero-content">
+<div class="hero-kicker">Open-source agentic school protocol</div>
+<h1>The school platform that operates in the tools educationists already use.</h1>
+<p class="hero-sub">Toshi orchestrates WhatsApp, Drive, Slack, and email: one AI agent built for how schools actually work.</p>
+<div class="hero-trust"><span>Free and open (MIT)</span><span class="dot"></span><span>Self-hostable</span><span class="dot"></span><span>MCP-compatible</span></div>
+
+<div class="ab">
+<div class="ab-opt" id="optA">
+<div class="ab-hd"><span class="old-av">KA</span> Parent</div>
+<div class="ab-name">Before — superseded</div>
+<div class="ab-note">28px, <code>rgba(255,255,255,.18)</code>, initials KA / DR / #. Header 56px.</div>
+</div>
+<div class="ab-opt sel" id="optB">
+<div class="ab-hd"><span class="hero-role-avatar"><img src="../../assets/brand/klassapp-icon.svg" alt=""></span> Parent</div>
+<div class="ab-name">After — shipped (ruling B)</div>
+<div class="ab-note">38px circle, transparent, 1px green ring, 24px K. All three cards. Header 66px.</div>
+</div>
+</div>
+</div>
+
+<div class="hero-preview">
+<div class="hero-stage" id="heroRoleStage">
+<div class="hero-deck" id="heroRoleDeck" data-auto="1">
+<article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
+<div class="hero-role-hd"><span class="hero-role-avatar"><img src="../../assets/brand/klassapp-icon.svg" alt="Toshi"></span> Parent · WhatsApp</div>
+<div class="hero-role-body">
+<div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
+<div class="hero-bubble out">Thanks : fee reminder for next week too?</div>
+<div class="hero-bubble">Scheduled on WhatsApp for Monday 8am. <span class="hero-meta">8:14</span></div>
+</div>
+</article>
+<article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
+<div class="hero-role-hd"><span class="hero-role-avatar"><img src="../../assets/brand/klassapp-icon.svg" alt="Toshi"></span> Teacher · Drive</div>
+<div class="hero-role-body">
+<div class="hero-row"><span>P.4 Midterm report.pdf</span><span>Ready</span></div>
+<div class="hero-row"><span>Marks sheet · Term 2</span><span>Synced</span></div>
+<div class="hero-row"><span>Share to parents</span><span>Queued</span></div>
+<p class="hero-meta">Toshi filed the PDF to the class Drive folder after you confirmed.</p>
+</div>
+</article>
+<article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
+<div class="hero-role-hd"><span class="hero-role-avatar"><img src="../../assets/brand/klassapp-icon.svg" alt="Toshi"></span> Admin · Slack</div>
+<div class="hero-role-body">
+<div class="hero-row"><span>#school-ops</span><span>Today</span></div>
+<div class="hero-bubble">Fee collection: 86% · 3 reminders left for overdue families.</div>
+<div class="hero-bubble">Staff: 2 teachers still need Term 2 mark entry for P.5.</div>
+<p class="hero-meta">Posted by Toshi · needs your Yes to escalate.</p>
+</div>
+</article>
+</div>
+</div>
+<div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
+<div class="connector-float">
+<div class="connector-line"></div>
+<h4>Connected</h4>
+<div class="connector-icons">
+<div class="connector-icon brand-well" title="WhatsApp"><img class="brand-mark" src="../../assets/brand/whatsapp.svg" alt=""></div>
+<div class="connector-icon brand-well" title="Google Drive"><img class="brand-mark" src="../../assets/brand/google-drive.svg" alt=""></div>
+<div class="connector-icon brand-well" title="Slack"><img class="brand-mark" src="../../assets/brand/slack.svg" alt=""></div>
+<div class="connector-icon" title="Email"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></div>
+<div class="connector-icon" title="SMS"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+<div class="connector-icon" title="Calendar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div class="notes">
+<h2>What changed, and what is verbatim</h2>
+<div class="spec">
+
+<div class="card"><h3>Verbatim from the real files</h3>
+<p>Structure, ids, classes, role order and all copy are verbatim from <code>landing-v2.blade.php</code> — with <b>two deliberate deviations, both listed in the flags below</b>: <code>#heroRoleStage</code> → <code>#heroRoleDeck[data-auto="1"]</code> → three <code>article.hero-role-card</code> (<code>.wa</code>/<code>.drive</code>/<code>.slack</code>, <code>data-role</code> parent/teacher/admin), then <code>#heroRoleDots</code> and <code>.connector-float</code>. The Email/SMS/Calendar inline SVGs are real Blade source (lines 118–120), lifted as-is.</p>
+<p>Card geometry and colour are unchanged: <code>inset 12px 18px</code>, <code>radius 22px</code>, <code>#0B1220</code>, the two-part box-shadow, and the three header fills <code>#075E54</code> / <code>#1E3A5F</code> / <code>#3F1F5C</code>. Bubbles, rows, meta and dots are lifted as-is — as are the paper layers (all four <code>::before</code> background layers, the <code>feTurbulence</code> grain at <code>opacity .22</code> with <code>mix-blend-mode:multiply</code>, and the <code>.hero-deckle</code> torn-edge SVG) and the stage float.</p></div>
+
+<div class="card"><h3>The flip, as specced</h3>
+<p>Only <code>transform</code> and <code>transition</code> on <code>.hero-role-card</code> changed:</p>
+<table><thead><tr><th></th><th>Real (before)</th><th>Now</th></tr></thead><tbody>
+<tr><td>rest</td><td><code>translateZ(-80px) rotateY(18deg) scale(.92)</code></td><td><code>rotateX(90deg)</code></td></tr>
+<tr><td>active</td><td><code>translateZ(0) rotateY(0) scale(1)</code></td><td><code>rotateX(0)</code></td></tr>
+<tr><td>exit</td><td><code>translateZ(-40px) rotateY(-16deg) scale(.94)</code></td><td><code>rotateX(-90deg)</code></td></tr>
+<tr><td>timing</td><td><code>.7s cubic-bezier(.2,.8,.2,1)</code></td><td><code>0.3s ease</code></td></tr>
+</tbody></table>
+<p>Halves overlap by <code>0.15s</code> via <code>transition-delay</code> on <code>.is-active</code>. Body children stagger <code>60ms</code> (0.30 / 0.36 / 0.42 / 0.48s) so content settles after the panel lands. <code>backface-visibility:hidden</code> and <code>transform-origin:center</code> added; <code>perspective</code> stays at the real <b>1400px</b> already on <code>.hero-stage</code>.</p></div>
+
+<div class="card"><h3>Reduced motion — two real guards, both verbatim</h3>
+<p>The real file ships <b>two</b> <code>prefers-reduced-motion</code> blocks touching this hero, both kept exactly:</p>
+<ul>
+<li>The component block (528–537): <code>transition:none !important</code>, <code>transform:none !important</code> — an <b>instant swap</b>, no fade, no rotation, body stagger off, dots hidden.</li>
+<li>A separate guard at line 2349 killing <code>.hero-stage</code>'s float animation.</li>
+</ul>
+<p>Still the only place in the codebase that guards reduced motion — the app stylesheets have none.</p></div>
+
+<div class="card"><h3>The stage floats — it composes with the flip</h3>
+<p><code>.hero-stage{animation:float 6s ease-in-out infinite}</code> at line 2348 drifts the whole stage <code>−8px</code> and back, continuously. Kept verbatim.</p>
+<p>This matters for the specced transition: the card flips on X while its container is already moving on Y, so the two read together. Judge the flip timing with the float running, not against a static stage.</p></div>
+
+</div>
+
+<h2>Measured, rendered — not computed styles</h2>
+<div class="spec">
+<div class="card"><h3>Matches the real files exactly</h3>
+<table><thead><tr><th>Element</th><th><code>getBoundingClientRect()</code></th><th>Source value</th></tr></thead><tbody>
+<tr><td><code>.hero-stage</code></td><td>360×420</td><td><code>max-width:360px</code> / <code>height:420px</code></td></tr>
+<tr><td>perspective</td><td><code>1400px</code></td><td><code>1400px</code> (not the spec's 900)</td></tr>
+<tr><td><code>.hero-role-card</code></td><td>324×396</td><td><code>inset:12px 18px</code> → 360−36, 420−24</td></tr>
+<tr><td><code>.hero-role-hd</code></td><td>322×56</td><td>28px avatar + 14px×2</td></tr>
+<tr><td><code>.hero-role-avatar</code></td><td>28×28</td><td><code>width/height:28px</code></td></tr>
+<tr><td><code>.connector-float</code></td><td>180×139.6</td><td><code>width:180px</code></td></tr>
+</tbody></table>
+<p>Every card computes <code>box-sizing: border-box</code>, from the real reset on line 1 of <code>landing-preview.css</code> — so nothing drifts by border width. All 4 brand marks load (<code>naturalWidth &gt; 0</code>).</p></div>
+
+<div class="card"><h3>The shipped avatar, measured</h3>
+<table><thead><tr><th>Property</th><th>Rendered</th><th><code>styles/classes.css:915</code></th></tr></thead><tbody>
+<tr><td>size</td><td>38×38</td><td><code>width/height:38px</code></td></tr>
+<tr><td>radius</td><td><code>50%</code></td><td><code>50%</code></td></tr>
+<tr><td>background</td><td><code>rgba(0,0,0,0)</code></td><td>transparent</td></tr>
+<tr><td>border</td><td><code>1px rgb(34,197,94)</code></td><td><code>1px var(--d-green)</code></td></tr>
+<tr><td>mark inside</td><td>24×24</td><td><code>.toshi-pill-logo</code> 24px</td></tr>
+</tbody></table>
+<p>Transparent, not white — the header fill shows through the ring, which is the corrected behaviour.</p></div>
+
+<div class="card"><h3>The connector-float overlap is desktop-only</h3>
+<p><code>.connector-float</code> overlaps the message bubbles above 900px. That is real CSS: the generic rule sets <code>right:-32px</code>, and <code>.hero-preview .connector-float</code> overrides to <code>right:-28px; top:42%; z-index:5</code>. At a 360px preview a 180px panel inset by −28px covers roughly a third of the card.</p>
+<p><b>Production hides it entirely at ≤900px</b> — the real breakpoint carries both <code>.hero-preview .connector-float{display:none}</code> and <code>.connector-float{display:none}</code>. That block is now in place, so the overlap disappears below 900px exactly as production does. Left alone on desktop rather than “fixed”, but worth a look since the flip draws the eye there.</p></div>
+</div>
+
+<div class="flag"><h3>Resolved — avatar ruling B, applied</h3>
+<p><b>The K mark now sits on all three cards</b>, replacing <code>KA</code> / <code>DR</code> / <code>#</code>, per the established principle that K is Toshi's persistent bot identity across whatever tool the user is in — a profile picture, not a “who sent this” indicator. <code>.hero-role-avatar</code> is redefined to mirror <code>.toshi-pill-avatar</code>: 38px circle, transparent fill, <code>1px var(--brand-green)</code> ring, 24px mark.</p>
+<p><b>Two consequences to carry into Blade, both accepted:</b></p>
+<ul>
+<li><b>The header grows 56px → 66px</b> (measured), taking 10px from every card's body inside the fixed 420px stage. Visible in the before/after tiles above. No stage height change was made to compensate — flag if the tighter body area reads badly on the Drive card, which has the most rows.</li>
+<li><b>The three headers are now distinguished only by fill colour and label</b> — <code>#075E54</code> / <code>#1E3A5F</code> / <code>#3F1F5C</code> plus “Parent · WhatsApp” etc. The per-tool glyph cue is deliberately gone; the coloured bar carries it alone.</li>
+</ul>
+<p>The real Blade rule (28px, <code>rgba(255,255,255,0.18)</code>, text initials) is <b>superseded</b> — this is an intentional divergence from current production, not a fidelity miss.</p></div>
+
+<div class="flag"><h3>Other conflicts with the spec, flagged not reconciled</h3>
+<ul>
+<li><b><code>--d-transition-slow</code> does not exist in <code>landing-preview.css</code>.</b> That file defines its own <code>--brand-*</code> / <code>--paper-*</code> set and no <code>--d-*</code> tokens at all. I declared <code>--d-transition-slow:0.3s ease</code> locally to honour the spec literally, but on the real page you either add the token to <code>:root</code> or write <code>0.3s ease</code> inline. Flagging rather than assuming the design-system token sheet is loaded there.</li>
+<li><b>The spec said <code>perspective:900px</code>; the real stage already has <code>1400px</code>.</b> Real value wins — no change made.</li>
+<li><b>The rotation JavaScript was not in either file.</b> <code>#heroRoleDots</code> ships <b>empty</b> in the Blade and is populated at runtime, and nothing in <code>landing-v2.blade.php</code> references <code>heroRoleDeck</code>, <code>is-exit</code> or <code>data-auto</code>. So the driver lives in a JS file I have not seen. The script here is my reconstruction against the real class contract (<code>.is-active</code> / <code>.is-exit</code>, <code>data-auto</code>, dot <code>.on</code>) — <b>compare it against the real one before replacing it</b>; the timing constants especially (I used a 3.2s hold).</li>
+<li><b>No avatar exists anywhere in <code>.hero-role-body</code>.</b> The real bubbles are bare — no per-message avatar slot. So "the Toshi avatar throughout" has no existing home in the message list; adding one would be new markup, not a substitution. Not done.</li>
+<li><b>Dropped <code>reveal reveal-delay-2</code> — do not “restore” these.</b> The real element is <code>&lt;div class="hero-preview reveal reveal-delay-2"&gt;</code> (line 78). <code>landing-preview.css:57</code> sets <code>.reveal{opacity:0;transform:translateY(24px)}</code>, and only <code>.reveal.visible</code> reveals it — via an IntersectionObserver living in JS that was not in either file supplied. Keeping the classes here would render <b>the entire hero preview invisible</b>. Restore them in Blade only together with that observer — and note this means the reveal animation was <i>not</i> cut from production.</li>
+<li><b>Brand marks are <code>&lt;img&gt;</code>, not Blade components.</b> Real source uses <code>&lt;x-brand.whatsapp /&gt;</code>, <code>&lt;x-brand.google-drive /&gt;</code>, <code>&lt;x-brand.slack /&gt;</code> (lines 115–117). A static page cannot render Blade, so these point at the real extracted SVGs in <code>assets/brand/</code>. Put the components back in Blade.</li>
+<li><b>Reduced motion: real behaviour kept, verbatim.</b> Lines 528–537 set <code>transition:none !important</code> — an instant swap with no fade. The spec had asked for a cross-fade; <b>ruled in favour of the real code</b>, so this is now byte-for-byte the shipping block. Nothing to change in Blade.</li>
+<li><b>Two small omissions now restored:</b> <code>.connector-icon</code> has a real <code>transition</code> plus a <code>:hover{translateY(-2px); box-shadow:var(--shadow-sm)}</code> lift (lines 712–716) that my first pass dropped, and I had added a <code>flex-shrink:0</code> to <code>.hero-role-avatar</code> that <b>does not exist</b> in the real rule — removed.</li>
+<li><b>Box-sizing:</b> good news — <code>landing-preview.css</code> line 1 is <code>*,*::before,*::after{box-sizing:border-box}</code>. The hero is unaffected by the reset gap found in the app bundle. Measurements below are with that reset in force, as production has it.</li>
+</ul></div>
+</div>
+
+<script>
+(function(){
+  var deck = document.getElementById('heroRoleDeck');
+  var dotsWrap = document.getElementById('heroRoleDots');
+  if(!deck || !dotsWrap) return;
+  var cards = [].slice.call(deck.querySelectorAll('.hero-role-card'));
+  var i = cards.findIndex(function(c){ return c.classList.contains('is-active'); });
+  if(i < 0) i = 0;
+  var timer = null, HOLD = 3200;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  cards.forEach(function(c, n){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-label', (c.getAttribute('data-role')||'role') + ' preview');
+    b.addEventListener('click', function(){ show(n); restart(); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = [].slice.call(dotsWrap.children);
+
+  function show(n){
+    if(n === i) return;
+    cards.forEach(function(c){ c.classList.remove('is-exit'); });
+    var out = cards[i], next = cards[n];
+    out.classList.remove('is-active');
+    out.classList.add('is-exit');
+    out.setAttribute('aria-hidden','true');
+    next.classList.remove('is-exit');
+    next.classList.add('is-active');
+    next.removeAttribute('aria-hidden');
+    i = n;
+    sync();
+  }
+  function sync(){
+    dots.forEach(function(d,n){
+      d.classList.toggle('on', n === i);
+      d.setAttribute('aria-selected', n === i ? 'true' : 'false');
+    });
+  }
+  function tick(){ show((i + 1) % cards.length); }
+  function restart(){
+    if(timer) clearInterval(timer);
+    if(deck.getAttribute('data-auto') === '1' && !reduce.matches) timer = setInterval(tick, HOLD);
+  }
+  sync();
+  restart();
+})();
+</script>
+</body></html>
