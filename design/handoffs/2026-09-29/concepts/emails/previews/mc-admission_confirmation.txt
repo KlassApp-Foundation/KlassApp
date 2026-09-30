@@ -1,0 +1,7 @@
+Subject: Admission Confirmation Mail
+Preheader: Your application has been approved.
+
+Hi Sir/Madam
+Your Application No. APP-FORM-20260928101512 for the admission in Lakeview Junior School has been approved.
+Thanks & Regards
+Administration Team

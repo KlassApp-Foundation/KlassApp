@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Account card + admin dashboard (Toshi off / on)</title>
+<link rel="stylesheet" href="design-system/styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E5DF;color:var(--d-text);font-family:var(--d-font-body,'DM Sans',system-ui,sans-serif)}
+a{color:var(--d-blue)}a:hover{color:#1E3A8A}
+button{font:inherit}
+.top{position:sticky;top:0;z-index:20;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top h1{font:700 20px var(--d-font-display,'Sora',sans-serif);margin:0 auto 0 0;letter-spacing:-.02em}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px}
+.seg button{min-height:38px;padding:0 12px;border:0;border-radius:7px;background:transparent;font-weight:600;font-size:13.5px;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:16px 24px 0;max-width:1180px;font-size:14.5px;line-height:1.55;color:#334155;display:flex;flex-direction:column;gap:6px}.intro p{margin:0}
+h2.sec{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:28px 24px 0}
+.frames{display:flex;gap:32px;padding:16px 24px 32px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr>small{font-size:12px;font-weight:700;color:#334155}
+.scr{background:var(--d-canvas);border:1px solid #CFCAC0;border-radius:6px;overflow:hidden;position:relative}
+.w1280{width:1280px}.w375{width:375px}
+.ico{width:20px;height:20px;flex:none}
+/* shell */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:760px}
+.side{background:#fff;border-right:1px solid var(--d-border);display:flex;flex-direction:column}
+.side .brand{height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--d-border);font:600 15px var(--d-font-display,'Sora',sans-serif);color:#0F172A}
+.side .brand img{height:28px}
+.nav{list-style:none;margin:0;padding:10px 8px;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav a{min-height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--d-text);font-weight:600;font-size:14.5px}
+.nav a.on{background:#DCFCE7;color:#14532D}
+.foot{border-top:1px solid var(--d-border);padding:8px;position:relative}
+.trig{width:100%;min-height:56px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 8px;border:0;border-radius:12px;background:none;cursor:pointer;text-align:left;color:var(--d-text)}
+.trig:hover,.trig[aria-expanded="true"]{background:#F1F5F9}
+.trig:focus-visible,.acct a:focus-visible,.acct button:focus-visible{outline:3px solid #1E6FD9;outline-offset:2px}
+.tn{min-width:0;display:flex;flex-direction:column}
+.tn b,.tn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:left}
+.tn b{font-size:14px;color:#0F172A}.tn span{font-size:12.5px;color:var(--d-text-secondary)}
+.bell{position:absolute;right:8px;top:-52px;width:44px;height:44px;border-radius:10px;border:1px solid var(--d-border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--d-text)}
+/* account card */
+.acct{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);background:#fff;border:1px solid var(--d-border-strong);border-radius:14px;box-shadow:0 12px 32px rgba(15,23,42,.14);padding:6px;z-index:5}
+.acct .who{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 10px 12px;border-bottom:1px solid var(--d-border);margin-bottom:4px}
+.acct ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.acct li a,.acct li button{width:100%;min-height:44px;display:flex;align-items:center;gap:12px;padding:0 10px;border:0;border-radius:8px;background:none;text-decoration:none;color:var(--d-text);font-weight:600;font-size:14.5px;cursor:pointer}
+.acct li a:hover,.acct li button:hover,.acct li a:focus-visible{background:#F1F5F9}
+.acct li.sep{height:1px;background:var(--d-border);margin:4px 6px}
+.acct li.out button{color:#B91C1C}
+.av{display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;font-family:var(--d-font-display,'Sora',sans-serif);font-weight:600;letter-spacing:.02em;line-height:1;border-radius:12px}
+/* main */
+.main{display:flex;flex-direction:column;min-width:0;position:relative}
+.bar{height:64px;display:flex;align-items:center;gap:12px;padding:0 24px;background:var(--d-canvas);border-bottom:1px solid var(--d-border)}
+.bar .sch{font:600 16px var(--d-font-display,'Sora',sans-serif);color:#0F172A;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srch{min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--d-border);border-radius:10px;background:#fff;color:var(--d-text-secondary);font-size:14px}
+.ibtn{width:44px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--d-border);border-radius:10px;background:#fff;color:var(--d-text)}
+.pg{padding:24px 32px 40px;display:flex;flex-direction:column;gap:20px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hello{font:600 28px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;margin:0;color:#0F172A}
+.ctx{margin:4px 0 0;font-size:14.5px;color:var(--d-text-secondary)}
+.yr{display:flex;flex-direction:column;gap:4px}
+.yr label{font-size:13px;font-weight:700;color:var(--d-text)}
+.yr select{min-height:44px;min-width:200px;padding:0 36px 0 12px;border:1px solid var(--d-border-strong);border-radius:10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;font:600 14.5px inherit;color:#0F172A}
+.card{background:#fff;border:1px solid var(--d-border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.card h3{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A}
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px}
+.prog{display:flex;flex-direction:column;gap:8px}
+.prog .t{display:flex;justify-content:space-between;font-size:14.5px;font-weight:700}
+.track{height:10px;border-radius:999px;background:#E2E8F0;overflow:hidden}.track i{display:block;height:100%;background:var(--d-accent);border-radius:999px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{min-height:44px;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;border-bottom:1px solid var(--d-border);font-size:14.5px}
+.steps li:last-child{border-bottom:0}
+.dot{width:22px;height:22px;border-radius:50%;border:2px solid #94A3B8;display:flex;align-items:center;justify-content:center}
+.done .dot{background:var(--d-accent);border-color:var(--d-accent);color:#fff}
+.done span.l{color:var(--d-text-secondary);text-decoration:line-through}
+.next .dot{border-color:var(--d-accent)}
+.next span.l{font-weight:700;color:#0F172A}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border-radius:10px;border:1px solid var(--d-border-strong);background:#fff;color:#0F172A;font-weight:700;font-size:14.5px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--d-accent);border-color:var(--d-accent);color:#fff}
+.btn.gh{border-color:transparent;background:none;color:var(--d-text)}
+.qa{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.q{display:flex;flex-direction:column;gap:6px;padding:16px;border:1px solid var(--d-border);border-radius:14px;background:#fff;text-decoration:none;color:var(--d-text);min-height:44px}
+.q:hover{border-color:#0F172A}
+.q .qi{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#F0FDF4;color:#14532D}
+.q b{font-size:15px;color:#0F172A}
+.q span{font-size:13px;color:var(--d-text-secondary);line-height:1.4}
+.q.wait .qi{background:#F1F5F9;color:#334155}
+.q.wait span{color:#78350F}
+.empty{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:22px;border:1px dashed var(--d-border-strong);border-radius:16px;background:#fff}
+.empty b{font:600 18px var(--d-font-display,'Sora',sans-serif);color:#0F172A}
+.empty p{margin:4px 0 0;font-size:14.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px}
+.kpi b{display:block;font:600 26px var(--d-font-display,'Sora',sans-serif);color:#0F172A}.kpi span{font-size:13px;color:var(--d-text-secondary)}
+/* toshi on */
+.dock{position:absolute;right:0;top:64px;bottom:0;width:44px;border-left:1px solid #e8e6dc;background:#f5f4ed;display:flex;flex-direction:column;align-items:center;padding-top:12px}
+.dock button{width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dock img{width:24px;height:24px}
+.withdock .pg{padding-right:76px}
+/* 375 */
+.w375 .shell{grid-template-columns:1fr}
+.w375 .side{display:none}
+.w375 .bar{padding:0 12px}
+.w375 .pg{padding:16px 12px 32px;gap:16px}
+.w375 .hello{font-size:22px}
+.w375 .head{flex-direction:column;align-items:stretch}
+.w375 .yr select{width:100%}
+.w375 .setup{grid-template-columns:1fr;gap:16px}
+.w375 .qa{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w375 .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w375 .empty{grid-template-columns:1fr}
+.w375 .card{padding:16px}
+.w375 .acts .btn{flex:1}
+.w375.withdock .pg{padding-right:12px}
+.w375 .dock{top:auto;bottom:16px;right:12px;width:auto;border:1px solid #e8e6dc;border-radius:14px;padding:0}
+/* drawer for 375 account demo */
+.drawer{display:flex;flex-direction:column;width:300px;min-height:640px;background:#fff;border-right:1px solid var(--d-border)}
+.drawer .foot{margin-top:auto}
+.list{max-width:1180px;margin:8px 24px 40px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:20px 24px}
+.list h3{font:600 17px var(--d-font-display,'Sora',sans-serif);margin:0 0 10px}
+.list table{width:100%;border-collapse:collapse;font-size:13.5px}
+.list th,.list td{text-align:left;padding:8px;border-bottom:1px solid var(--d-border);vertical-align:top}
+.list th{font-size:12px;color:var(--d-text-secondary)}
+.list code{font-size:12px;background:#F1F5F9;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="top"><h1>Account card · Admin dashboard</h1>
+<div class="ctl">Toshi<div class="seg" id="c-toshi"><button data-v="off" aria-pressed="true">Off</button><button data-v="on">On</button></div></div>
+<div class="ctl">School<div class="seg" id="c-data"><button data-v="new" aria-pressed="true">New · 0 students</button><button data-v="mid">Setting up</button><button data-v="done">Set up</button></div></div>
+</div>
+<div class="intro"><p>Designed from <code>main @ 3cf3025bf5b0</code>, using demo data only. The account card replaces <code>layouts/partials/profile-dropdown</code> in <code>sidebar-footer</code>. The dashboard replaces the top of <code>admin/dashboard/dashboard</code>: the header, the setup banner, the empty-state demo, and the Toshi auto-open. Contrast is calculated from hex, not browser-measured.</p></div>
+
+<h2 class="sec">A · Account card</h2>
+<div class="frames">
+<div class="fr"><small>Desktop · sidebar footer, open (1280)</small><div class="scr" style="width:560px;height:560px;display:flex"><div class="side" style="width:248px;height:100%" id="acctD"></div><div style="flex:1;padding:24px;font-size:13.5px;color:var(--d-text-secondary)">Click the name row. Esc, a click outside, or choosing an item closes it. Arrow keys move between items.</div></div></div>
+<div class="fr"><small>Mobile · menu drawer, open (375)</small><div class="scr w375" style="height:640px;display:flex"><div class="drawer" id="acctM"></div><div style="flex:1;background:rgba(15,23,42,.35)"></div></div></div>
+</div>
+
+<h2 class="sec">B · Admin dashboard</h2>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="d"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="m"></div></div></div>
+
+<section class="list" id="entry"></section>
+
+<script>
+const P={
+ lock:'<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.68 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+ chev:'<path d="M18 15l-6-6-6 6"/>',
+ users:'<path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>',
+ exam:'<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
+ doc:'<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+ wa:'<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+ dollar:'<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+ home:'<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
+ classes:'<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>',
+ bell:'<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>',
+ search:'<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ tick:'<path d="M5 13l4 4L19 7"/>'};
+const I=(k,s=20)=>`<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
+const PAL=['#1E6FD9','#15803D','#B45309','#1E293B'];
+const ME={id:3300,fn:'Mucunguzi',ln:'Tumusiime-Rwakaikara',em:'mucunguzi.tumusiime-rwakaikara@demoacademyuganda.ac.ug'};
+function av(p,s){const i=((p.fn||'')[0]||'')+((p.ln||'')[0]||'');return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.4)}px;${s<=32?'border-radius:8px;':''}background:${PAL[p.id%4]}" aria-hidden="true">${i.toUpperCase()}</span>`}
+function acct(id,open){return `<div class="foot" data-acct="${id}"><button class="trig" aria-haspopup="menu" aria-expanded="${open}" aria-controls="${id}-menu">${av(ME,40)}<span class="tn"><b>${ME.fn} ${ME.ln}</b><span>${ME.em}</span></span>${I('chev',16)}</button>${open?`<div class="acct" id="${id}-menu" role="menu" aria-label="Account"><div class="who">${av(ME,40)}<span class="tn"><b title="${ME.fn} ${ME.ln}">${ME.fn} ${ME.ln}</b><span title="${ME.em}">${ME.em}</span></span></div><ul>
+<li role="none"><a role="menuitem" href="#">${I('lock')}Change password</a></li>
+<li role="none"><a role="menuitem" href="#">${I('user')}Edit profile</a></li>
+<li role="none"><a role="menuitem" href="#">${I('gear')}Settings</a></li>
+<li class="sep" role="separator"></li>
+<li class="out" role="none"><button role="menuitem" type="button">${I('out')}Log out</button></li></ul></div>`:''}</div>`}
+const NAV=[['home','Dashboard',1],['users','Students'],['classes','Classes'],['exam','Exams and marks'],['doc','Report cards'],['dollar','Fees'],['wa','Messages']];
+function sideInner(openAcct,id){return `<div class="brand"><img src="assets/klassapp-icon.svg" alt="">Demo Academy Uganda</div><ul class="nav">${NAV.map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct(id,openAcct)}`}
+let S={toshi:'off',data:'new',openD:true,openM:true};
+const STEPS=['School details','Academic year and terms','Classes and streams','Subjects','Teachers','Students','Fee structure'];
+function done(){return S.data==='new'?2:S.data==='mid'?4:7}
+function setupCard(mob){const d=done(),n=STEPS.length;if(d>=n)return '';
+ return `<div class="card"><div class="setup"><div style="display:flex;flex-direction:column;gap:14px"><h3>Finish setting up your school</h3><div class="prog"><div class="t"><span>${d} of ${n} steps done</span><span>${Math.round(d/n*100)}%</span></div><div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${d}" aria-label="Setup progress"><i style="width:${d/n*100}%"></i></div></div><p style="margin:0;font-size:14.5px">Next: <b>${STEPS[d]}</b>. You can stop at any step and come back later.</p><div class="acts"><a class="btn pri" href="#">Continue setup</a>${S.toshi==='on'?'<button class="btn" type="button">Set up with Toshi</button>':''}</div></div><ol class="steps" aria-label="Setup steps">${STEPS.map((s,i)=>`<li class="${i<d?'done':i===d?'next':''}"><span class="dot">${i<d?I('tick',14):''}</span><span class="l">${s}</span>${i===d?'<a href="#" style="font-weight:700;font-size:14px;min-height:44px;display:inline-flex;align-items:center">Start</a>':''}</li>`).join('')}</ol></div></div>`}
+function quick(){const d=done();const has=k=>STEPS.indexOf(k)<d;
+ const Q=[['users','Add students','One at a time or import a spreadsheet',has('Classes and streams')?'':'Add classes first'],
+ ['exam','Enter marks','For an exam, by class and subject',has('Subjects')&&has('Students')?'':'Needs subjects and students'],
+ ['doc','Generate report cards','From entered marks, per class',has('Students')?'':'Needs students and marks'],
+ ['wa','Send report cards on WhatsApp','To parents who are on WhatsApp',has('Students')?'':'Generate report cards first'],
+ ['dollar','Fees','Record payments and send reminders',has('Fee structure')?'':'Set up the fee structure first']];
+ return `<div style="display:flex;flex-direction:column;gap:10px"><h3 style="font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A">Quick actions</h3><div class="qa">${Q.map(q=>`<a class="q ${q[3]?'wait':''}" href="#"><span class="qi">${I(q[0])}</span><b>${q[1]}</b><span>${q[3]||q[2]}</span></a>`).join('')}</div></div>`}
+function body(mob){const zero=S.data!=='done';
+ const kp=zero?`<div class="empty"><div><b>No students yet</b><p>Add your first class of students to start marking attendance, entering marks and messaging parents.</p></div><div class="acts"><a class="btn pri" href="#">Add students</a><a class="btn" href="#">Import from Excel</a></div></div>`:`<div class="kpis"><div class="kpi"><b>412</b><span>Students</span></div><div class="kpi"><b>23</b><span>Teachers</span></div><div class="kpi"><b>368</b><span>Parents on WhatsApp</span></div><div class="kpi"><b>UGX 18.4M</b><span>Fees collected this term</span></div></div>`;
+ return `<div class="head"><div><h1 class="hello">Good evening, ${ME.fn}</h1><p class="ctx">2026 · Term 3 · ${zero?'0':'412'} students enrolled</p></div><div class="yr"><label for="yr-${mob?'m':'d'}">Academic year</label><select id="yr-${mob?'m':'d'}"><option selected>2026 (current)</option><option>2025</option></select></div></div>${setupCard(mob)}${kp}${quick()}`}
+function dash(mob){const on=S.toshi==='on';
+ const bar=`<div class="bar">${mob?`<button class="ibtn" aria-label="Open menu">${I('menu')}</button>`:''}<span class="sch">Demo Academy Uganda</span>${mob?`<button class="ibtn" aria-label="Search">${I('search')}</button>`:`<span class="srch">${I('search',16)}Search <kbd style="font-size:11px;border:1px solid var(--d-border);border-radius:4px;padding:0 4px">Ctrl K</kbd></span>`}</div>`;
+ const dock=on?`<div class="dock"><button type="button" aria-label="Open Toshi"><img src="assets/klassapp-icon.svg" alt=""></button></div>`:'';
+ return `<div class="shell">${mob?'':`<aside class="side">${sideInner(false,'dside')}</aside>`}<div class="main ${on?'withdock':''}">${bar}<div class="pg">${body(mob)}</div>${dock}</div></div>`}
+function draw(){document.getElementById('acctD').innerHTML=sideInner(S.openD,'ad');
+ document.getElementById('acctM').innerHTML=`<div class="brand" style="height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--d-border);font:600 15px var(--d-font-display,'Sora',sans-serif)"><img src="assets/klassapp-icon.svg" alt="" style="height:28px">Demo Academy Uganda</div><ul class="nav">${NAV.slice(0,5).map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct('am',S.openM)}`;
+ document.getElementById('d').innerHTML=dash(0);document.getElementById('m').innerHTML=dash(1);
+ document.getElementById('m').classList.toggle('withdock',S.toshi==='on');
+ document.querySelectorAll('#c-toshi button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.toshi));
+ document.querySelectorAll('#c-data button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.data))}
+document.getElementById('c-toshi').onclick=e=>{const b=e.target.closest('button');if(b){S.toshi=b.dataset.v;draw()}};
+document.getElementById('c-data').onclick=e=>{const b=e.target.closest('button');if(b){S.data=b.dataset.v;draw()}};
+document.addEventListener('click',e=>{if(e.target.closest('a[href="#"]'))e.preventDefault();
+ const t=e.target.closest('.trig');const f=e.target.closest('[data-acct]');
+ if(t){const k=f.dataset.acct==='ad'?'openD':f.dataset.acct==='am'?'openM':null;if(k){S[k]=!S[k];draw();document.querySelector(`[data-acct="${f.dataset.acct}"] ${S[k]?'.acct [role=menuitem]':'.trig'}`)?.focus()}return}
+ if(!e.target.closest('.acct')){let ch=false;if(S.openD&&!e.target.closest('#acctD')){S.openD=false;ch=true}if(S.openM&&!e.target.closest('#acctM')){S.openM=false;ch=true}if(ch)draw()}});
+document.addEventListener('keydown',e=>{const m=e.target.closest&&e.target.closest('.acct');const f=e.target.closest&&e.target.closest('[data-acct]');
+ if(e.key==='Escape'&&f){const k=f.dataset.acct==='ad'?'openD':'openM';S[k]=false;draw();document.querySelector(`[data-acct="${f.dataset.acct}"] .trig`).focus()}
+ if(m&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const it=[...m.querySelectorAll('[role=menuitem]')];let i=it.indexOf(document.activeElement);i=(i+(e.key==='ArrowDown'?1:-1)+it.length)%it.length;it[i].focus()}});
+draw();
+const E=[
+['Panel embed','<code>layouts/partials/toshi-embed.blade.php</code>','<code>@livewire(\'agent-toshi\')</code> plus the <code>#toshi-toggle</code> ▶ tab for usergroups 1, 3, 4, 5, 6, 7, 8, 9, 10 and 11. Wrap the whole partial.'],
+['Pre-paint + CSS','<code>layouts/app.blade.php</code> L22, L53, L74 · <code>layouts/superadmin-app.blade.php</code> L22, L34, L52','The <code>toshi-ui.css</code> link, <code>toshi-prepaint</code> (adds <code>html.toshi-collapsed</code>), and the embed include. When off, skip all three so <code>#app</code> gets no right margin.'],
+['Dashboard auto-open','<code>admin/dashboard/dashboard.blade.php</code> L411–416 · <code>Admin/DashboardController</code> L101','<code>$openToshiOnboarding</code> is true whenever <code>$setupIncomplete</code>, so Toshi opens maximised on <b>every</b> dashboard load until setup is done. Force it false when off. <b>Even with Toshi on, consider opening it only on the first visit.</b>'],
+['Registration hand-off','<code>Auth/RegisterController</code> (comment L28, sets <code>open_toshi_onboarding</code>)','The session flag set after sign-up. Don\u2019t set it when off.'],
+['Setup banner','<code>partials/setup-banner.blade.php</code> L31, L40–45','The "Set up with Toshi" button and the copy "or let Toshi guide you". Replaced by the setup card.'],
+['Product-demo slide','<code>partials/empty-state-product-demo.blade.php</code> (included at dashboard L20) + <code>public/js/empty-state-product-demo.js</code>','The Toshi scene, "You ask Toshi", the hub core and the static text. Replaced by the setup card and the 0-students empty state in <b>both</b> states.'],
+['Onboarding reminder','<code>partials/onboarding-reminder.blade.php</code>','The "Open Toshi" button and "Open the Toshi chat bubble…" copy (it clicks <code>#toshi-pill</code>). <b>I found no include of it in the part of the tree I scanned.</b> Confirm it\u2019s dead, then delete it.'],
+['Integrations settings','<code>admin/settings/integrations.blade.php</code> L8, L48, L85–87','The page exists so Toshi can use Slack and other workspace apps. Hide the page and its settings link when off.'],
+['Toshi activity','<code>admin/toshi_activity/show.blade.php</code> · route <code>admin.toshi.activity</code>','The page and any menu or settings link to it. <b>I didn\u2019t find the link\u2019s location</b>, because the <code>config/navigation.php</code> search was partial.'],
+['SiteAdmin settings','<code>config/navigation.php</code> L106 (<code>superadmin/toshi*</code>)','The platform Toshi settings pages. Platform scope uses <code>platform_gate</code>, not the school switch.'],
+['WhatsApp free-form','<code>config/toshi.php</code> <code>whatsapp_channel_enabled</code>','This is backend only, not a UI entry, but make sure it follows the same switch so parents never get a Toshi reply.'],
+['Manual wizard marker','<code>admin/onboarding/wizard.blade.php</code> L5–9','It already hides Toshi (<code>data-toshi-manual-wizard</code>). Nothing to add. Listed so it isn\u2019t double-handled.'],
+['Landing page','<code>partials/landing-toshi-tower.blade.php</code> and the landing sections','Marketing, outside the app. It isn\u2019t covered by this switch, so decide separately.']];
+document.getElementById('entry').innerHTML=`<h3>C · Toshi entry points found</h3><p style="margin:0 0 10px;font-size:14px">Read at <code>3cf3025bf5b0</code>. <b>The code search stopped early in <code>resources/views</code>, <code>app/</code> and <code>resources/assets/js</code>, so treat this list as a minimum.</b> Before building, run <code>grep -rniE "toshi" resources/ app/ public/js/ config/ routes/ --include=*.php --include=*.blade.php --include=*.js --include=*.vue</code> and add any hits here.</p><table><thead><tr><th>Entry point</th><th>Where</th><th>What to hide</th></tr></thead><tbody>${E.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table>`;
+</script>
+</body>
+</html>

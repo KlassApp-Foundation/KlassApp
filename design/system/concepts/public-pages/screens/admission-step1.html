@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admission form — Lakeview Junior School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pp.css">
+<style>
+.adm{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:24px 20px 48px}
+.adm-head{display:flex;align-items:center;gap:14px;padding-bottom:20px;border-bottom:1px solid var(--hair)}
+.adm-school{display:flex;flex-direction:column;gap:2px;min-width:0}
+.adm-school b{font-family:'Sora',sans-serif;font-size:18px;letter-spacing:-.01em}
+.adm-school span{font-size:13px;color:var(--ap-muted)}
+.adm-mark{width:48px;height:48px;border-radius:12px;border:1px solid var(--hair);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font:700 16px 'Sora',sans-serif;color:var(--ap-ink);flex:none}
+.steps{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.steps li{display:flex;flex-direction:column;gap:8px;font-size:12.5px;font-weight:600;color:var(--ap-muted)}
+.steps li::before{content:'';height:4px;border-radius:2px;background:color-mix(in srgb,var(--paper-edge) 55%,var(--ap-border))}
+.steps li[aria-current="step"]{color:var(--ap-ink)}
+.steps li[aria-current="step"]::before{background:var(--ap-primary)}
+.steps .n{font-family:ui-monospace,Menlo,monospace;font-weight:500;margin-right:4px}
+.step-count{margin:20px 0 0;font-size:13px;color:var(--ap-muted)}
+.adm h1{margin:4px 0 0;font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:600;letter-spacing:-.02em}
+.adm .ap-form{max-width:420px}
+.adm-actions{display:flex;gap:10px;margin-top:8px}
+.adm-actions .ap-submit{width:auto;min-width:140px}
+.adm-actions .ap-secondary{width:auto}
+@media (max-width:640px){.steps .lbl{display:none}.steps li[aria-current="step"] .lbl{display:inline}.steps{grid-template-columns:repeat(5,minmax(0,1fr))}.adm-actions{flex-direction:column-reverse}.adm-actions>*{width:100%!important}}
+</style>
+</head>
+<body>
+<div class="ap-page" data-screen-label="Public admission form · step 1">
+<div class="ap-bg-vintage" aria-hidden="true"></div>
+<div class="adm">
+<header class="adm-head">
+<div class="adm-mark" aria-hidden="true">LJ</div>
+<div class="adm-school"><b>Lakeview Junior School</b><span>Admission form · 2026–2027</span></div>
+</header>
+<ol class="steps" aria-label="Form progress">
+<li aria-current="step"><span><span class="n">1</span><span class="lbl">Class</span></span></li>
+<li><span><span class="n">2</span><span class="lbl">Student</span></span></li>
+<li><span><span class="n">3</span><span class="lbl">Academic</span></span></li>
+<li><span><span class="n">4</span><span class="lbl">Parents</span></span></li>
+<li><span><span class="n">5</span><span class="lbl">Personal</span></span></li>
+</ol>
+<p class="step-count">Step 1 of 5</p>
+<h1>Which class are you applying for?</h1>
+<form class="ap-form" onsubmit="return false">
+<div class="ap-field">
+<label class="ap-label" for="cls">Class <span aria-hidden="true" style="color:var(--ap-error)">*</span></label>
+<select id="cls" class="ap-input" required><option value="">Choose a class</option><option>P1</option><option>P2</option><option>P3</option><option>P4</option><option>P5</option><option>P6</option><option>P7</option></select>
+<p class="ap-hint">Only classes open for admission this year are listed.</p>
+</div>
+<div class="adm-actions">
+<button type="button" class="ap-secondary">Start over</button>
+<button type="submit" class="ap-submit">Next: Student</button>
+</div>
+</form>
+</div>
+</div>
+</body>
+</html>

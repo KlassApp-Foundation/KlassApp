@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Records page" description="The standard list screen: page head, filter bar, ledger table, pagination." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="min-height:100vh;background:#FAFAF5;font-family:'DM Sans',system-ui,sans-serif;padding:24px">
+<div style="max-width:1160px;margin:0 auto">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+<div>
+<h1 style="font-family:Sora,system-ui,sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em;color:#0F172A;margin:0">Students</h1>
+<p style="font-size:0.9rem;color:#64748B;margin:5px 0 0">5 of 1,284 shown &middot; Term 2 2026</p>
+</div>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.Button" variant="outline" size="sm" hint-size="104px,44px">Import list</x-import>
+<x-import component-from-global-scope="KlassAppDesignSystem_df5836.Button" variant="primary" size="sm" hint-size="108px,44px">Add student</x-import>
+</div>
+</div>
+
+<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 0 0 1px #E2E8F0;padding:14px;margin-bottom:16px">
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<input placeholder="Search by student name" style="flex:1;min-width:220px;font-family:'DM Sans',system-ui,sans-serif;font-size:0.85rem;color:#1E293B;padding:10px 14px;min-height:44px;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:8px;background:#FFFFFF" />
+<select style="width:180px;font-family:'DM Sans',system-ui,sans-serif;font-size:0.85rem;color:#1E293B;padding:10px 14px;min-height:44px;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:8px;background:#FFFFFF">
+<option>All classes</option><option>Senior 2</option><option>Senior 4</option>
+</select>
+</div>
+</div>
+
+<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 0 0 1px #E2E8F0;overflow:hidden">
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:12px 20px;border-bottom:2px solid #1E6FD9">Student name</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:12px 20px;border-bottom:2px solid #1E6FD9">Class</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:12px 20px;border-bottom:2px solid #1E6FD9">Parent</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:12px 20px;border-bottom:2px solid #1E6FD9">WhatsApp</th>
+<th style="font-family:Sora,system-ui,sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#94A3B8;text-align:left;padding:12px 20px;border-bottom:2px solid #1E6FD9">Status</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><a href="#" style="font-size:0.85rem;font-weight:600;color:#1E6FD9;text-decoration:none">Nakato Sarah</a></td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Senior 2</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Okello Anne</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">+256 772 114 220</td><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="active" hint-size="58px,22px">Active</x-import></td></tr>
+<tr><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><a href="#" style="font-size:0.85rem;font-weight:600;color:#1E6FD9;text-decoration:none">Mukasa David</a></td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Senior 2</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Mukasa John</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">+256 701 883 004</td><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="active" hint-size="58px,22px">Active</x-import></td></tr>
+<tr><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><a href="#" style="font-size:0.85rem;font-weight:600;color:#1E6FD9;text-decoration:none">Namuli Grace</a></td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Senior 4</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">Namuli Betty</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px;border-bottom:1px solid #E2E8F0">+256 758 220 991</td><td style="padding:18px 20px;border-bottom:1px solid #E2E8F0"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="active" hint-size="58px,22px">Active</x-import></td></tr>
+<tr><td style="padding:18px 20px"><a href="#" style="font-size:0.85rem;font-weight:600;color:#1E6FD9;text-decoration:none">Ssempala Isaac</a></td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px">Senior 4</td><td style="font-size:0.85rem;color:#1E293B;padding:18px 20px">Ssempala Paul</td><td style="font-size:0.85rem;color:#94A3B8;padding:18px 20px">&mdash;</td><td style="padding:18px 20px"><x-import component-from-global-scope="KlassAppDesignSystem_df5836.Badge" variant="inactive" hint-size="80px,22px">Left school</x-import></td></tr>
+</tbody>
+</table>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid #E2E8F0">
+<span style="font-size:0.8rem;color:#94A3B8">Showing 1&ndash;4 of 1,284 students</span>
+<span style="display:flex;gap:6px;align-items:center">
+<button style="font-family:'DM Sans',system-ui,sans-serif;min-width:34px;min-height:34px;border-radius:8px;border:1px solid #1E6FD9;background:#1E6FD9;color:#FFFFFF;font-size:0.8rem;font-weight:600;cursor:pointer">1</button>
+<button style="font-family:'DM Sans',system-ui,sans-serif;min-width:34px;min-height:34px;border-radius:8px;border:1px solid #E2E8F0;background:#FFFFFF;color:#1E293B;font-size:0.8rem;cursor:pointer">2</button>
+<button style="font-family:'DM Sans',system-ui,sans-serif;min-width:34px;min-height:34px;border-radius:8px;border:1px solid #E2E8F0;background:#FFFFFF;color:#1E293B;font-size:0.8rem;cursor:pointer">3</button>
+<a href="#" style="font-size:0.8rem;font-weight:600;color:#1E6FD9;text-decoration:none;padding:0 8px">Next &rarr;</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>

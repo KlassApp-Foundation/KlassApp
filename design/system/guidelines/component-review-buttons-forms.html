@@ -1,0 +1,171 @@
+<!-- @dsCard group="Component review" viewport="1200x1400" name="Buttons & forms — review" subtitle="Real classes, every state, current vs proposed side-by-side" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buttons &amp; forms — review</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-canvas);font-family:var(--d-font-body);color:var(--d-text);padding:32px clamp(16px,4vw,48px) 64px}
+a{color:var(--d-blue)}a:hover{color:#1557B0}
+h1{font-family:var(--d-font-display);font-size:1.8rem;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-family:var(--d-font-display);font-size:1.1rem;font-weight:600;margin:40px 0 4px}
+.sub{color:var(--d-text-secondary);font-size:.9rem;margin:0 0 20px;max-width:760px;text-wrap:pretty}
+.panel{background:var(--d-white);border-radius:14px;box-shadow:var(--d-shadow-sm);padding:20px;overflow-x:auto}
+table.m{border-collapse:collapse;width:100%;min-width:760px}
+table.m th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);text-align:left;font-weight:600;padding:0 12px 10px 0;white-space:nowrap}
+table.m td{padding:10px 12px 10px 0;vertical-align:middle;border-top:1px solid var(--d-border)}
+table.m td:first-child{font-size:.78rem;color:var(--d-text-secondary);white-space:nowrap;font-family:ui-monospace,Menlo,monospace}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.cr{font-size:.72rem;font-family:ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.fail{background:#FEF2F2;color:#B91C1C}.pass{background:#F0FDF4;color:#166534}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);font-weight:600;margin:0 0 12px}
+.note{font-size:.85rem;line-height:1.55;color:var(--d-text);max-width:820px;text-wrap:pretty}
+.note b{font-weight:600}
+.flag{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:.85rem;line-height:1.55}
+.flag h3{font-family:var(--d-font-display);font-size:.9rem;margin:0 0 6px;color:#92400E}
+.meas{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--d-text-secondary)}
+.fake-hover.ds-btn-primary{background:var(--d-accent-dk);border-color:var(--d-accent-dk)}
+.fake-hover.ds-btn-outline{background:var(--d-surface);border-color:var(--d-accent);color:var(--d-accent)}
+.fake-hover.ds-btn-ghost{background:var(--d-surface);color:var(--d-text)}
+.fake-hover.ds-btn-danger{background:#992a2a;border-color:#992a2a}
+.fake-active{transform:scale(.97)}
+.fake-focus{outline:2px solid var(--d-blue);outline-offset:2px}
+.fake-focus-in.ds-form-input.v2{border-color:var(--d-blue);box-shadow:var(--d-focus-ring)}
+.fake-focus-old{border-color:var(--d-accent)!important;box-shadow:0 0 0 2px rgba(201,100,66,.15)!important}
+.bp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+.bp .frame{border:1px dashed var(--d-border-strong);border-radius:10px;padding:14px;background:var(--d-white)}
+</style></head><body>
+
+<h1>Buttons &amp; forms</h1>
+<p class="sub">Every control below is rendered by the real <code>.ds-btn*</code> / <code>.ds-form*</code> rules synced from <code>dashboard-refresh.css</code>. Where a proposal exists it is opt-in via the <code>.v2</code> class from <code>styles/controls-v2.css</code> and shown next to the current rule. Hover/active/focus columns are forced with a static class so you can compare them without interacting.</p>
+
+<h2>Buttons — the real variants</h2>
+<p class="sub">The codebase ships six: <b>primary, success, danger, warning, outline, ghost</b>. There is no "secondary" — <code>.ds-btn-secondary</code> appears only in the touch-target selector list and has no rule of its own. <b>Outline is the de-facto secondary.</b></p>
+<div class="panel"><table class="m" id="btn-matrix">
+<thead><tr><th>Variant</th><th>Default</th><th>Hover</th><th>Active</th><th>Focus</th><th>Disabled</th><th>Loading (new)</th><th>Text contrast</th></tr></thead>
+<tbody>
+<tr><td>primary</td><td><button class="ds-btn ds-btn-primary">Save</button></td><td><button class="ds-btn ds-btn-primary fake-hover">Save</button></td><td><button class="ds-btn ds-btn-primary fake-active">Save</button></td><td><button class="ds-btn ds-btn-primary fake-focus">Save</button></td><td><button class="ds-btn ds-btn-primary v2" disabled>Save</button></td><td><button class="ds-btn ds-btn-primary is-loading" aria-busy="true"><span class="ds-btn-spinner"></span><span>Saving</span></button></td><td><span class="cr pass">5.02:1</span> <span class="cr pass">hover 7.1:1</span></td></tr>
+<tr><td>outline</td><td><button class="ds-btn ds-btn-outline">Cancel</button></td><td><button class="ds-btn ds-btn-outline fake-hover">Cancel</button></td><td><button class="ds-btn ds-btn-outline fake-active">Cancel</button></td><td><button class="ds-btn ds-btn-outline fake-focus">Cancel</button></td><td><button class="ds-btn ds-btn-outline v2" disabled>Cancel</button></td><td><button class="ds-btn ds-btn-outline is-loading"><span class="ds-btn-spinner"></span><span>Loading</span></button></td><td><span class="cr pass">14.4:1</span> <span class="cr pass">hover 5.02:1</span></td></tr>
+<tr><td>ghost</td><td><button class="ds-btn ds-btn-ghost">Skip</button></td><td><button class="ds-btn ds-btn-ghost fake-hover">Skip</button></td><td><button class="ds-btn ds-btn-ghost fake-active">Skip</button></td><td><button class="ds-btn ds-btn-ghost fake-focus">Skip</button></td><td><button class="ds-btn ds-btn-ghost v2" disabled>Skip</button></td><td><button class="ds-btn ds-btn-ghost is-loading"><span class="ds-btn-spinner"></span><span>Skip</span></button></td><td><span class="cr pass">4.76:1</span></td></tr>
+<tr><td>danger</td><td><button class="ds-btn ds-btn-danger">Delete</button></td><td><button class="ds-btn ds-btn-danger fake-hover">Delete</button></td><td><button class="ds-btn ds-btn-danger fake-active">Delete</button></td><td><button class="ds-btn ds-btn-danger fake-focus">Delete</button></td><td><button class="ds-btn ds-btn-danger v2" disabled>Delete</button></td><td><button class="ds-btn ds-btn-danger is-loading"><span class="ds-btn-spinner"></span><span>Deleting</span></button></td><td><span class="cr pass">4.83:1</span></td></tr>
+<tr><td>success · current</td><td><button class="ds-btn ds-btn-success">Approve</button></td><td colspan="5" class="meas">white on <code>#22C55E</code>; hover <code>#16a34a</code></td><td><span class="cr fail">2.28:1</span> <span class="cr fail">hover 3.30:1</span></td></tr>
+<tr><td>success · retired</td><td><button class="ds-btn ds-btn-primary">Approve</button></td><td colspan="5" class="meas"><b>Decided:</b> retired as a variant — <code>variant="success"</code> now renders primary. <code>--d-success</code> stays for badges, alerts and status.</td><td><span class="cr pass">5.02:1</span></td></tr>
+<tr><td>warning · current</td><td><button class="ds-btn ds-btn-warning">Remind</button></td><td colspan="5" class="meas">white on <code>--d-amber #D97706</code></td><td><span class="cr fail">3.19:1</span></td></tr>
+<tr><td>warning · v2</td><td><button class="ds-btn ds-btn-warning v2">Remind</button></td><td colspan="5" class="meas"><code>--d-warning #B45309</code> / hover <code>--d-warning-dk</code> — current hover becomes the new default</td><td><span class="cr pass">5.02:1</span></td></tr>
+</tbody></table>
+
+<div class="flag"><h3>Two real contrast failures, same bug as the --d-accent fix</h3>
+<b>Success</b> and <b>warning</b> put white text on the bright brand hues — exactly what the 2026-09-18 <code>--d-accent</code> fix corrected for primary, but those two variants were missed. Warning has a clean fix (its own hover colour <code>#B45309</code> is already <code>--d-warning</code>). <b>Success had no distinct fix</b> — the only AA-passing green is <code>#15803D</code>, which is primary. <b>Decided 2026-09-27: success is retired as a button variant.</b></div>
+</div>
+
+<h2>Sizes &amp; the 44px touch target</h2>
+<p class="sub">The three contract-tested sizes, measured live with <code>getBoundingClientRect</code>. The touch-target rule sets <code>min-height: 44px</code> on <b>every</b> <code>.ds-btn</code>, so the minimum is met at all sizes — including <code>sm</code>.</p>
+<div class="panel">
+<div class="row" id="sizes">
+<button class="ds-btn ds-btn-primary ds-btn-sm">Small</button>
+<button class="ds-btn ds-btn-primary ds-btn-md">Medium</button>
+<button class="ds-btn ds-btn-primary ds-btn-lg">Large</button>
+</div>
+<p class="meas" id="size-readout" style="margin:12px 0 0">measuring…</p>
+<p class="note" style="margin-top:14px"><b>Consequence worth knowing:</b> because 44px wins over padding, <code>sm</code> and <code>md</code> render at the <b>same height</b> — <code>sm</code> is only narrower (12px vs 18px side padding) with smaller text (0.78rem vs 0.85rem). That's the correct trade for a school app used on phones, so I've kept it. If a genuinely compact button is ever needed (dense table toolbars on desktop), the honest route is a <code>@media (pointer:fine)</code> exception — not shrinking the minimum globally.</p>
+</div>
+
+<h2>Loading — new, designed to the existing motion rules</h2>
+<div class="panel"><div class="grid2">
+<div><p class="lbl">Anatomy</p><p class="note">14px ring, 2px stroke in <code>currentColor</code> so it inherits every variant's text colour with no per-variant rule. Prepended with the existing 6px <code>gap</code>. <b>The label stays</b> ("Save" → "Saving"), so the button never changes width and nothing in the row reflows. <code>aria-busy="true"</code>, pointer events off, <code>cursor: progress</code>.</p></div>
+<div><p class="lbl">Motion</p><p class="note"><code>0.7s linear infinite</code> rotation. Under <code>prefers-reduced-motion</code> the ring stops and closes to a static 55%-opacity circle — the label change carries the state. This makes it the sixth infinite loop in the system, so it joins the reduced-motion coverage list in <code>DESIGN_SYSTEM.md</code>.</p></div>
+</div></div>
+
+<h2>Form controls — current vs proposed</h2>
+<p class="sub">Base metrics are real and unchanged: <code>padding 9px 14px</code>, <code>1px --d-border-strong</code>, <code>radius 8px</code>, <code>0.85rem</code> DM Sans, label 0.85rem/600 with 6px gap, group spacing 16px.</p>
+<div class="grid2">
+<div class="panel"><p class="lbl">Current (verbatim)</p>
+<div class="ds-form-group"><label class="ds-form-label" for="c1">School name</label><input id="c1" class="ds-form-input" value="St. Mary's College Kisubi"></div>
+<div class="ds-form-group"><label class="ds-form-label" for="c2">Focused</label><input id="c2" class="ds-form-input fake-focus-old" value="Kampala"></div>
+<div class="ds-form-group"><label class="ds-form-label ds-form-label-required" for="c3">Email</label><input id="c3" class="ds-form-input ds-form-input-error" value="bursar@stmarys"><p class="ds-form-error">Enter a full email address.</p></div>
+<div class="ds-form-group"><label class="ds-form-label" for="c4">Motto</label><input id="c4" class="ds-form-input" placeholder="Optional"><p class="ds-form-help">Shown on report cards.</p></div>
+<p class="meas" id="old-h">measuring…</p>
+</div>
+<div class="panel"><p class="lbl">Proposed (.v2)</p>
+<div class="ds-form-group"><label class="ds-form-label" for="p1">School name</label><input id="p1" class="ds-form-input v2" value="St. Mary's College Kisubi"></div>
+<div class="ds-form-group"><label class="ds-form-label" for="p2">Focused</label><input id="p2" class="ds-form-input v2 fake-focus-in" value="Kampala"></div>
+<div class="ds-form-group"><label class="ds-form-label ds-form-label-required" for="p3">Email</label><input id="p3" class="ds-form-input v2 ds-form-input-error" value="bursar@stmarys"><p class="ds-form-error">Enter a full email address.</p></div>
+<div class="ds-form-group"><label class="ds-form-label" for="p4">Motto</label><input id="p4" class="ds-form-input v2" placeholder="Optional"><p class="ds-form-help v2">Shown on report cards.</p></div>
+<p class="meas" id="new-h">measuring…</p>
+</div>
+</div>
+
+<div class="panel" style="margin-top:16px"><table class="m">
+<thead><tr><th>Change</th><th>Current</th><th>Proposed</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>height</td><td>~37px (no min)</td><td><code>min-height: 44px</code></td><td class="note">The 44px rule covers buttons and table links but never form controls — the school-details form is where this bites on phones.</td></tr>
+<tr><td>focus</td><td>green border + <b>clay</b> glow <code>rgba(201,100,66,.15)</code></td><td><code>--d-blue</code> border + <code>--d-focus-ring</code></td><td class="note">Toshi's clay leaking into app forms; the system already has a focus token and buttons already use blue. Blue informs, green acts.</td></tr>
+<tr><td>error focus</td><td><code>rgba(181,51,51,.15)</code></td><td><code>rgba(220,38,38,.20)</code></td><td class="note">Old value isn't <code>--d-red</code>; aligned to the real token.</td></tr>
+<tr><td>help text</td><td><code>--d-muted</code> <span class="cr fail">2.57:1</span></td><td><code>--d-text-secondary</code> <span class="cr pass">4.76:1</span></td><td class="note">Help text is real content, not decoration.</td></tr>
+<tr><td>disabled</td><td>no rule</td><td><code>--d-disabled-bg</code> / <code>--d-disabled</code></td><td class="note">Reuses the existing button disabled tokens.</td></tr>
+<tr><td>label size</td><td>0.85rem</td><td>shipped</td><td class="note">Moved from 0.82rem onto the scale upstream (dbe68419, <code>FormLabelTypeScaleTest</code>).</td></tr>
+</tbody></table></div>
+
+<h2>Select, textarea, disabled</h2>
+<div class="grid2">
+<div class="panel">
+<div class="ds-form-group"><label class="ds-form-label" for="s1">Class</label><select id="s1" class="ds-form-select v2"><option>Senior 2 East</option><option>Senior 2 West</option></select></div>
+<div class="ds-form-group"><label class="ds-form-label" for="s2">Academic year</label><select id="s2" class="ds-form-select v2" disabled><option>2026</option></select><p class="ds-form-help v2">Set once during onboarding.</p></div>
+</div>
+<div class="panel">
+<div class="ds-form-group"><label class="ds-form-label" for="t1">Notice to parents</label><textarea id="t1" class="ds-form-textarea v2">Visiting day is Saturday 4 October, 9am to 2pm.</textarea></div>
+<div class="ds-form-group"><label class="ds-form-label" for="t2">Registration no.</label><input id="t2" class="ds-form-input v2" value="UNEB/U0021" disabled></div>
+</div>
+</div>
+
+<h2>Checkbox &amp; radio — new family</h2>
+<p class="sub">The only real checkbox is <code>.dt-checkbox</code> (table row select: 18px, <code>accent-color: --d-blue</code>). <code>.ds-check</code> keeps those exact metrics and makes the <b>whole label row</b> the 44px target, so the 18px box never has to be.</p>
+<div class="grid2">
+<div class="panel"><p class="lbl">Checkbox</p><div class="ds-check-group">
+<label class="ds-check"><input type="checkbox" checked><span>Send fee reminders by WhatsApp</span></label>
+<label class="ds-check"><input type="checkbox"><span>Email a copy to the bursar</span></label>
+<label class="ds-check is-disabled"><input type="checkbox" disabled><span>SMS (not configured)</span></label>
+</div></div>
+<div class="panel"><p class="lbl">Radio · inline group</p><div class="ds-check-group ds-check-group--inline">
+<label class="ds-check"><input type="radio" name="t"><span>Term 1</span></label>
+<label class="ds-check"><input type="radio" name="t" checked><span>Term 2</span></label>
+<label class="ds-check"><input type="radio" name="t"><span>Term 3</span></label>
+</div><p class="meas" id="check-h">measuring…</p></div>
+</div>
+
+<h2>Responsive behaviour</h2>
+<p class="sub">No new breakpoints. The system's own: controls are <code>width: 100%</code> at every size, so they follow their grid. At <b>≤767px</b> (the same breakpoint the table card layout uses) a two-column form collapses to one, and a primary+secondary pair stacks full-width with the primary on top.</p>
+<div class="bp">
+<div class="frame"><p class="lbl">≥768 · two columns, actions right</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><input class="ds-form-input v2" value="Kisubi"><input class="ds-form-input v2" value="Wakiso"></div>
+<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="ds-btn ds-btn-outline">Cancel</button><button class="ds-btn ds-btn-primary">Save</button></div></div>
+<div class="frame" style="max-width:340px"><p class="lbl">≤767 · one column, actions stacked</p>
+<div style="display:grid;gap:16px"><input class="ds-form-input v2" value="Kisubi"><input class="ds-form-input v2" value="Wakiso"></div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px"><button class="ds-btn ds-btn-primary" style="width:100%">Save</button><button class="ds-btn ds-btn-outline" style="width:100%">Cancel</button></div></div>
+</div>
+
+<h2>Needs your call</h2>
+<div class="flag"><h3>Superadmin input override — resolved: accidental patch, unify</h3>
+<code>superadmin-app.blade.php</code> inlines <code>.tw-form-control{border:1px solid #9ca3af!important;border-radius:.25rem!important;font-size:.875rem!important}</code>. I searched the source comments and all of <code>docs/</code> for a stated reason and found none. (The "D2" in the SiteAdmin header comment refers to the header's "plain" variant, not forms; the D2 in <code>docs/research</code> is a settings-shell pattern.) <b>Limit:</b> I can't run <code>git blame</code> from here, so the commit message behind the block wasn't checked. A plausible origin is the Flowbite 1.2.0 stylesheet that only this shell loads, whose form resets the block may be countering. <b>Handoff:</b> delete the inline block, and give <code>.tw-form-control</code> the unified metrics (<code>.tw-form-control.v2</code> in <code>controls-v2.css</code>). If <code>git blame</code> turns up a deliberate commit message, stop and make it a documented variant instead.</div>
+<div class="flag"><h3>Separate follow-up — not blocking</h3>
+Only the <b>admin</b> sidebar includes the new sidebar footer (#830: profile + notifications). <b>Teacher, parent and student</b> sidebars still route profile and notifications through the header. This needs its own ticket so it doesn't get lost behind the component work.</div>
+
+<script>
+function box(el){const r=el.getBoundingClientRect();return {w:Math.round(r.width*10)/10,h:Math.round(r.height*10)/10}}
+function fmt(b){return b.w+'×'+b.h}
+function run(){
+ const s=[...document.querySelectorAll('#sizes .ds-btn')].map(box);
+ if(!s.length||s.some(b=>b.h===0))return;
+ const minH=Math.min(...s.map(b=>b.h));
+ document.getElementById('size-readout').textContent='sm '+fmt(s[0])+' · md '+fmt(s[1])+' · lg '+fmt(s[2])+' px — shortest '+minH+'px: '+(minH>=44?'meets':'FAILS')+' the 44px minimum';
+ const o=box(document.getElementById('c1')), n=box(document.getElementById('p1')), c=box(document.querySelector('.ds-check-group--inline .ds-check'));
+ document.getElementById('old-h').textContent='rendered input height: '+o.h+'px — '+(o.h>=44?'meets':'below')+' 44px';
+ document.getElementById('new-h').textContent='rendered input height: '+n.h+'px — '+(n.h>=44?'meets':'below')+' 44px';
+ document.getElementById('check-h').textContent='row hit target: '+fmt(c)+'px — '+(c.h>=44?'meets':'below')+' 44px';
+}
+window.addEventListener('load',run);
+if(document.fonts)document.fonts.ready.then(run);
+if(window.ResizeObserver){const ro=new ResizeObserver(run);['#sizes','#c1','#p1','.ds-check-group--inline'].forEach(s=>{const e=document.querySelector(s);if(e)ro.observe(e)});}
+</script>
+</body></html>

@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" viewport="700x390" name="Toshi bot avatar" subtitle="Two real treatments from the app CSS — persistent identity across every message and tool" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>*{box-sizing:border-box}body{margin:0;padding:14px;background:var(--d-white);font-family:var(--d-font-body)}.grid{display:grid;grid-template-columns:1.15fr 1fr;gap:14px}.thread{background:var(--d-canvas);border:1px solid var(--d-border);border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:9px}.msg{display:flex;gap:9px;align-items:flex-start}.msg.out{flex-direction:row-reverse}.av{width:38px;height:38px;border-radius:50%;background:transparent;border:1px solid var(--d-green);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}.av img{width:24px;height:24px;display:block}.bub{font-size:12.5px;line-height:1.45;color:var(--d-text);background:var(--d-white);border:1px solid var(--d-border);border-radius:12px;padding:8px 11px;max-width:72%}.msg.out .bub{background:rgba(201,100,66,.10);border-color:transparent}.f{font-size:10px;color:var(--d-muted);line-height:1.5;margin:8px 0 0}.row{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap}.hdr{display:flex;align-items:center;gap:10px}.hdr img{width:24px;height:24px;border-radius:2px;display:block}.hdr span{font-family:var(--d-font-display);font-size:15px;font-weight:700;color:#141413}code{font-family:ui-monospace,monospace;font-size:9.5px;background:var(--d-canvas);padding:1px 4px;border-radius:4px}</style></head><body>
+<div class="grid">
+<div>
+<div class="thread">
+<div class="msg"><span class="av"><img src="../assets/brand/klassapp-icon.svg" alt=""></span><span class="bub">Sarah's fees are cleared for Term 2. Receipt sent.</span></div>
+<div class="msg out"><span class="av"><img src="../assets/brand/klassapp-icon.svg" alt=""></span><span class="bub">Thanks — can you send the report card too?</span></div>
+<div class="msg"><span class="av"><img src="../assets/brand/klassapp-icon.svg" alt=""></span><span class="bub">Sent to your WhatsApp just now.</span></div>
+</div>
+<p class="f"><b>Same mark on every message, both directions.</b> The K is Toshi's profile picture — persistent bot identity, like any bot's avatar. It does <b>not</b> indicate who sent a message, so it never swaps to initials or a photo on inbound bubbles. Carries across WhatsApp, Drive and Slack unchanged, full colour, never recoloured to suit a bubble.</p>
+</div>
+<div>
+<p class="f" style="margin:0 0 7px"><b>The two real treatments</b></p>
+<div class="row">
+<span class="av"><img src="../assets/brand/klassapp-icon.svg" alt=""></span>
+<div><div style="font-size:10.5px;font-weight:600;color:var(--d-text)">Avatar</div><div class="f" style="margin:1px 0 0"><code>.toshi-pill-avatar</code></div></div>
+</div>
+<p class="f"><b>38px, <code>border-radius:50%</code></b>, transparent fill, <code>1px var(--d-green)</code> ring, <code>overflow:hidden</code>; mark inside at 24px (<code>.toshi-pill-logo</code>). Use this wherever Toshi appears as a participant — chat bubbles, message threads, the collapsed pill.</p>
+<div class="row" style="margin-top:12px">
+<span class="hdr"><img src="../assets/brand/klassapp-icon.svg" alt=""><span>Toshi</span></span>
+</div>
+<p class="f"><b>24px mark at <code>radius 2</code></b>, no container, beside the name in Sora 700/15px (<code>.toshi-header-logo</code>). Use this for panel chrome, not for identity in a conversation.</p>
+<p class="f"><b>It's a circle, and that's safe.</b> Measured, the mark's ink reaches only 0.909 of its half-width, so at 24px in a 38px circle it clears the clip by 8.1px — and by 1.7px even drawn edge-to-edge. Don't switch to a square fearing a crop.</p>
+<p class="f"><b>Needs <code>box-sizing:border-box</code>.</b> The real class declares <code>width:38px</code> <i>plus</i> a 1px border and renders 38px total, because production gets a global border-box reset from Tailwind — which this bundle does not ship. Without the reset it renders 40px.</p>
+</div>
+</div>
+</body></html>

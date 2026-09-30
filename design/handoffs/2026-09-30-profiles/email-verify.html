@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Email verification: message, code step, confirmed pages</title>
+<link rel="stylesheet" href="design-system/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E5DF;color:#1E293B;font-family:var(--d-font-body,'DM Sans',system-ui,sans-serif)}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+button,input{font:inherit}
+.intro{padding:20px 24px 0;max-width:1100px;font-size:14.5px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+h2.sec{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:24px 24px 0;color:#0F172A}
+.frames{display:flex;gap:32px;padding:16px 24px 28px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr>small{font-size:12px;font-weight:700;color:#334155}
+.scr{background:#FAFAF5;border:1px solid #CFCAC0;border-radius:6px;overflow:hidden}
+.w1280{width:1280px}.w375{width:375px}.w600{width:600px}
+/* email client chrome (neutral) */
+.mc{background:#fff}
+.mhd{padding:14px 18px;border-bottom:1px solid #E2E8F0;font-size:13.5px;line-height:1.6;color:#334155}
+.mhd b{color:#0F172A}
+.mbody{background:#F4F4F0;padding:24px 0}
+/* page (auth card) */
+.pg{min-height:640px;display:flex;flex-direction:column;align-items:center;padding:28px 24px 48px;background:#FAFAF5 radial-gradient(circle,#D6D3CB 1px,transparent 1.2px) 0 0/18px 18px}
+.pg>img{height:30px;align-self:flex-start}
+.w375 .pg{padding:16px 16px 32px;min-height:600px}
+.card{margin:auto 0;width:100%;max-width:440px;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.w375 .card{padding:24px 18px;margin-top:28px}
+.badge{align-self:center;width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.badge.ok{background:#DCFCE7;color:#14532D}.badge.warn{background:#FEF3C7;color:#78350F}.badge.nt{background:#fff;border:1px solid #E2E8F0;color:#1E293B}
+.card h1{font:700 26px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;margin:0;color:#0F172A}
+.w375 .card h1{font-size:22px}
+.card p{margin:0;font-size:15.5px;line-height:1.55}
+.muted{color:#475569}
+.btn{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 20px;border-radius:10px;border:1px solid #CBD5E1;background:#fff;color:#0F172A;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer}
+.btn.pri{background:#15803D;border-color:#15803D;color:#fff}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.fld{display:flex;flex-direction:column;gap:6px;text-align:left}
+.fld label{font-size:13.5px;font-weight:700;color:#0F172A}
+.otp{min-height:56px;border:1.5px solid #CBD5E1;border-radius:10px;padding:0 14px;font:600 26px/1 var(--d-font-display,'Sora',sans-serif);letter-spacing:.5em;text-align:center;background:#fff;color:#0F172A}
+.rowc{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lnkb{min-height:44px;border:0;background:none;color:#1D4ED8;font-weight:700;font-size:14.5px;cursor:pointer;padding:0 6px}
+.wait{display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;color:#334155;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#15803D}
+.small{font-size:13.5px}
+.tag{font-size:12px;font-weight:700;color:#334155;background:#fff;border:1px solid #CFCAC0;border-radius:999px;padding:2px 10px}
+.notes{max-width:1100px;margin:0 24px 48px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:18px 22px;font-size:14px;line-height:1.55}
+.notes h3{font:600 16px var(--d-font-display,'Sora',sans-serif);margin:0 0 8px}
+.notes ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.notes code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="intro"><p><b>Email verification with a code and a link.</b> The message gives both the 6-digit code and a <b>Confirm email</b> button, which opens a signed link. The sign-up tab accepts either. When the link is opened on another device, that device shows a confirmation page, and the original tab continues on its own.</p><p>Designed from <code>main @ 3cf3025bf5b0</code>, on top of #904's code flow. The email uses the Task B shell: 600px tables, system fonts, the PNG logo, hex colours only. Demo data only. Contrast is calculated from hex, not browser-measured.</p></div>
+
+<h2 class="sec">1 · Verification email</h2>
+<div class="frames">
+<div class="fr"><small>600 · desktop mail client</small><div class="scr w600"><div class="mc"><div class="mhd"><b>Your KlassApp code is 482 915</b><br>From: KlassApp &lt;no-reply@klassapp.xyz&gt;<br>Preview: Enter it on the sign-up page, or tap Confirm email.</div><div class="mbody" id="e600"></div></div></div></div>
+<div class="fr"><small>375 · phone mail app</small><div class="scr w375"><div class="mc"><div class="mhd"><b>Your KlassApp code is 482 915</b><br>KlassApp · now</div><div class="mbody" style="padding:12px 0" id="e375"></div></div></div></div>
+</div>
+
+<h2 class="sec">2 · Sign-up tab, "Check your email" (updated copy)</h2>
+<div class="frames">
+<div class="fr"><small>1280 · form column only (full page in dashboard-v2.html)</small><div class="scr" style="width:640px"><div class="pg" style="min-height:560px" id="c-d"></div></div></div>
+<div class="fr"><small>375</small><div class="scr w375"><div class="pg" id="c-m"></div></div></div>
+</div>
+
+<h2 class="sec">3 · Link opened on another device: "Email confirmed"</h2>
+<div class="frames">
+<div class="fr"><small>1280</small><div class="scr w1280"><div class="pg" id="o-d"></div></div></div>
+<div class="fr"><small>375 (the usual case: the email is opened on a phone)</small><div class="scr w375"><div class="pg" id="o-m"></div></div></div>
+</div>
+
+<h2 class="sec">4 · Other link states</h2>
+<div class="frames">
+<div class="fr"><small>Same browser as sign-up · 375</small><div class="scr w375"><div class="pg" id="s-m"></div></div></div>
+<div class="fr"><small>Expired or already used · 375</small><div class="scr w375"><div class="pg" id="x-m"></div></div></div>
+<div class="fr"><small>Invalid link (tampered or incomplete) · 375</small><div class="scr w375"><div class="pg" id="i-m"></div></div></div>
+</div>
+
+<section class="notes"><h3>Behaviour</h3><ol>
+<li><b>One message, two ways to confirm:</b> the 6-digit code from #904 and a signed link (<code>URL::temporarySignedRoute('register.verify.link', $expires, ['token' =&gt; …])</code>). Both expire at the same time as the code, and <b>using either one uses up both</b>.</li>
+<li><b>Opening the link never signs that device in.</b> It only marks the email as confirmed. That's why the other-device page asks you to continue on the original tab, or to sign in here.</li>
+<li><b>The original tab continues on its own:</b> it checks <code>GET /register/verify/status</code> every 5 seconds while visible, and on <code>visibilitychange</code>. When the email is confirmed, it moves on to the next step (onboarding) with a "Email confirmed" toast. It stops checking after the code expires.</li>
+<li><b>Same browser:</b> if the link is opened in the browser that holds the pending sign-up session, it goes straight to the next step. No confirmation page is shown.</li>
+<li><b>Link scanners:</b> some mail systems open links automatically. The link therefore lands on a page with a <b>Confirm email</b> button that <b>POSTs</b> the token, so a plain GET never confirms by itself. (Not drawn: it looks like screen 3 before confirming, with one primary button.)</li>
+</ol></section>
+
+<script>
+const LOGO='assets/klassapp-logo-email-2x.png';
+function email(w){const pad=w<400?20:40;return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr><td align="center" style="padding:0 ${w<400?8:0}px">
+<table role="presentation" width="${w<400?'100%':600}" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:600px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px">
+<tr><td style="padding:${pad-8}px ${pad}px 0;background:#FFFFFF"><img src="${LOGO}" width="140" height="34" alt="KlassApp" style="display:block;border:0;height:34px;width:140px;background:#FFFFFF"></td></tr>
+<tr><td style="padding:24px ${pad}px 0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1E293B">
+<h1 style="margin:0 0 12px;font-size:${w<400?22:24}px;line-height:1.25;color:#0F172A;font-weight:700">Confirm your email</h1>
+<p style="margin:0 0 20px;font-size:16px;line-height:1.55">Enter this code on the KlassApp sign-up page:</p>
+<p style="margin:0 0 20px;font-size:${w<400?32:36}px;line-height:1;font-weight:700;letter-spacing:6px;color:#0F172A;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">482 915</p>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.55">Or confirm with one tap:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse${w<400?';width:100%':''}"><tr><td align="center" bgcolor="#15803D" style="border-radius:10px;background:#15803D"><a href="#" style="display:block;padding:14px 28px;min-height:48px;line-height:20px;font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:10px;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">Confirm email</a></td></tr></table>
+<p style="margin:20px 0 0;font-size:14.5px;line-height:1.55;color:#334155">The code and the button work for <b>[same expiry as #904]</b> and can be used once. If you open this on another phone or computer, you'll still need to continue on the device where you signed up.</p>
+</td></tr>
+<tr><td style="padding:24px ${pad}px ${pad-8}px;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<p style="margin:0;padding-top:16px;border-top:1px solid #E2E8F0;font-size:13.5px;line-height:1.55;color:#475569">Didn't sign up for KlassApp? You can ignore this email; no account is created until the email is confirmed.<br>Button not working? Copy this link: <a href="#" style="color:#1D4ED8;word-break:break-all">https://klassapp.xyz/register/verify/link?token=…&amp;signature=…</a></p>
+</td></tr></table></td></tr></table>`}
+document.getElementById('e600').innerHTML=email(600);document.getElementById('e375').innerHTML=email(375);
+const L=(n,s=28)=>`<i data-lucide="${n}" style="width:${s}px;height:${s}px" aria-hidden="true"></i>`;
+const logo='<img src="assets/klassapp-horizontal-light.svg" alt="KlassApp">';
+function check(m){return `${logo}<form class="card" onsubmit="return false"><span class="badge nt">${L('mail')}</span><h1>Check your email</h1><p>We sent a message to <b>mucunguzi@demoacademyuganda.ac.ug</b>. Tap <b>Confirm email</b> in it, or enter the 6-digit code here.</p><div class="fld"><label for="otp${m}">6-digit code</label><input class="otp" id="otp${m}" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="••••••"></div><button class="btn pri" type="submit">Confirm email</button><div class="wait" role="status"><span class="dot" aria-hidden="true"></span>Confirmed on your phone? This page continues on its own.</div><div class="rowc"><button class="lnkb" type="button">Resend</button><button class="lnkb" type="button">Change email</button></div></form>`}
+function other(){return `${logo}<div class="card"><span class="badge ok">${L('circle-check')}</span><h1>Email confirmed</h1><p><b>mucunguzi@demoacademyuganda.ac.ug</b> is confirmed.</p><p class="muted">Go back to the device where you signed up. That page continues on its own.</p><div class="stack"><a class="btn" href="#">Sign in on this device instead</a></div><p class="small muted">You can close this page.</p></div>`}
+function same(){return `${logo}<div class="card" style="text-align:left"><p class="small" style="display:flex;gap:10px;align-items:center;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 12px;color:#14532D;font-weight:700" role="status">${L('circle-check',20)}Email confirmed</p><h1 style="text-align:left">Set up your school</h1><p class="muted">The sign-up continues straight into onboarding step 1. No separate confirmation page.</p><span class="tag" style="align-self:flex-start">onboarding step 1 (existing)</span></div>`}
+function expired(){return `${logo}<div class="card"><span class="badge warn">${L('clock')}</span><h1>This link has expired</h1><p>Confirmation links work once, for a limited time. Ask for a new code and we'll send another message.</p><div class="stack"><a class="btn pri" href="#">Send a new code</a><a class="btn" href="#">Sign in</a></div><p class="small muted">Already confirmed? Just sign in.</p></div>`}
+function invalid(){return `${logo}<div class="card"><span class="badge warn">${L('link-2-off')}</span><h1>This link doesn't work</h1><p>It may have been cut off when copied. Open the email again and tap <b>Confirm email</b>, or enter the 6-digit code instead.</p><div class="stack"><a class="btn pri" href="#">Enter the code</a></div></div>`}
+document.getElementById('c-d').innerHTML=check('d');document.getElementById('c-m').innerHTML=check('m');
+document.getElementById('o-d').innerHTML=other();document.getElementById('o-m').innerHTML=other();
+document.getElementById('s-m').innerHTML=same();document.getElementById('x-m').innerHTML=expired();document.getElementById('i-m').innerHTML=invalid();
+if(window.lucide)lucide.createIcons({attrs:{'stroke-width':1.75}});
+document.addEventListener('click',e=>{if(e.target.closest('a[href="#"]'))e.preventDefault()});
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* ════════════════════════════════════════════════════════════════════
+   controls-v2.css — PROPOSED button + form additions (2026-09-27)
+   STATUS: PENDING REVIEW. Nothing here exists in the app CSS yet.
+   Every value is an existing token or a value already in dashboard-refresh.css.
+   Base rules (.ds-btn, .ds-form-input …) stay in classes.css, verbatim.
+   Review page: guidelines/component-review-buttons-forms.html
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── REAL, synced: .ds-btn-md exists upstream (contract-tested in
+   TableAndButtonClassContractTest) but was missing from this copy. ── */
+.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }
+
+/* ── Loading (NEW) — no loading state exists upstream. Label stays in place
+   so the button never changes width; a 14px ring is prepended. ── */
+.ds-btn.is-loading { pointer-events: none; cursor: progress; }
+.ds-btn-spinner {
+    width: 14px; height: 14px; flex-shrink: 0; box-sizing: border-box;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 999px;
+    animation: ds-btn-spin 0.7s linear infinite;
+}
+@keyframes ds-btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .ds-btn-spinner { animation: none; border-right-color: currentColor; opacity: .55; }
+}
+
+/* ── Contrast fixes (PROPOSED — same correction already applied to --d-accent) ──
+   .ds-btn-success: white on #22C55E = 2.28:1 (fail).  hover #16a34a = 3.30:1 (fail).
+   .ds-btn-warning: white on #D97706 = 3.19:1 (fail). */
+/* .ds-btn-success — RETIRED as a distinct variant (decision 2026-09-27). The only
+   AA-passing green is #15803D, which is primary, so a separate name had no value.
+   The Button component maps variant="success" to primary. --d-success stays as a
+   token for badges, alerts and status indicators. */
+.ds-btn-warning.v2 { background: var(--d-warning); border-color: var(--d-warning); color: var(--d-text-on-accent); }
+.ds-btn-warning.v2:hover { background: var(--d-warning-dk); border-color: var(--d-warning-dk); }
+
+/* Disabled: upstream stacks opacity .5 ON TOP of the muted bg/text, a double
+   dim. Proposed: drop the opacity, keep the tokens. */
+.ds-btn.v2:disabled, .ds-btn.v2.disabled { opacity: 1; }
+
+/* ── Forms ── */
+/* Touch target: inputs render ~37px tall (9px padding × 2 + 0.85rem line + 2px border);
+   the 44px rule covers buttons and table links but never form controls. */
+.ds-form-input.v2, .ds-form-select.v2 { min-height: var(--d-touch-target-min); box-sizing: border-box; }
+.ds-form-textarea.v2 { min-height: 96px; resize: vertical; line-height: 1.5; box-sizing: border-box; }
+
+/* Focus: upstream uses a CLAY glow rgba(201,100,66,.15) — Toshi's colour leaking
+   into app forms. Proposed: the system's own --d-focus-ring (blue, as buttons use). */
+.ds-form-input.v2:focus, .ds-form-select.v2:focus, .ds-form-textarea.v2:focus {
+    border-color: var(--d-blue); box-shadow: var(--d-focus-ring);
+}
+.ds-form-input-error.v2, .ds-form-input-error.v2:focus { border-color: var(--d-red); }
+.ds-form-input-error.v2:focus { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.20); }
+
+.ds-form-input.v2:disabled, .ds-form-select.v2:disabled, .ds-form-textarea.v2:disabled {
+    background: var(--d-disabled-bg); color: var(--d-disabled); cursor: not-allowed; border-color: var(--d-border);
+}
+.ds-form-input.v2[readonly] { background: var(--d-surface); }
+
+/* Help text: --d-muted #94A3B8 on white = 2.56:1 (fail). --d-text-secondary = 4.76:1. */
+.ds-form-help.v2 { color: var(--d-text-secondary); }
+
+/* ── Checkbox / radio (NEW family) — extends the only real checkbox, .dt-checkbox
+   (18px, accent-color --d-blue). The whole row is the 44px hit target. ── */
+.ds-check {
+    display: inline-flex; align-items: center; gap: 10px;
+    min-height: var(--d-touch-target-min);
+    font-family: var(--d-font-body); font-size: 0.85rem; color: var(--d-text);
+    cursor: pointer;
+}
+.ds-check input {
+    width: 18px; height: 18px; min-width: 18px; margin: 0;
+    accent-color: var(--d-blue); cursor: pointer;
+}
+.ds-check input:focus-visible { outline: 2px solid var(--d-blue); outline-offset: 2px; }
+.ds-check.is-disabled { color: var(--d-disabled); cursor: not-allowed; }
+.ds-check.is-disabled input { cursor: not-allowed; }
+.ds-check-group { display: flex; flex-direction: column; gap: 0; }
+.ds-check-group--inline { flex-direction: row; flex-wrap: wrap; column-gap: 20px; }
+
+/* ── Legacy .tw-form-control → unified input (DECIDED 2026-09-27) ──
+   superadmin-app.blade.php inlines .tw-form-control{border:1px solid #9ca3af!important;
+   border-radius:.25rem!important;font-size:.875rem!important}. No comment, doc or
+   decision record explains it (searched source + docs/; the "D2" in the SiteAdmin
+   header comment is the header variant, unrelated). Treated as an accidental patch:
+   delete the inline block and let the legacy class take the unified metrics. */
+.tw-form-control.v2 {
+    width: 100%; min-height: var(--d-touch-target-min); box-sizing: border-box;
+    padding: 9px 14px; border: 1px solid var(--d-border-strong); border-radius: 8px;
+    font-family: var(--d-font-body); font-size: 0.85rem; color: var(--d-text); background: var(--d-white);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; outline: none;
+}
+.tw-form-control.v2:focus { border-color: var(--d-blue); box-shadow: var(--d-focus-ring); }

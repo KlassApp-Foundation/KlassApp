@@ -1,0 +1,100 @@
+<!-- @dsCard group="Concepts" viewport="1100x640" name="Toshi orbit — audited fixes" subtitle="Real partial with the 7 approved fixes applied, for verification before handoff" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Toshi orbit — fixed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--brand-blue:#1E6FD9;--brand-green:#22C55E;--brand-dark:#0F172A;--brand-white:#FFFFFF;--border:#E2E8F0;--radius-xl:20px;--radius-lg:16px}
+*{box-sizing:border-box}body{margin:0;padding:24px;background:#FAFAF5;font-family:system-ui,sans-serif}
+a{color:var(--brand-blue)}a:hover{color:var(--brand-dark)}
+.toshi-tower{margin:0;background:var(--brand-white);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:0 0 0 1px var(--border);overflow:hidden}
+.toshi-tower-stage{position:relative;width:100%;max-width:1100px;margin:0 auto}
+.toshi-tower-stage svg{position:relative;z-index:1;display:block;width:100%;height:auto}
+.toshi-depth{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 40% 55% at 50% 46%,rgba(34,197,94,.10),transparent 70%)}
+.tt-g{fill:var(--brand-green)}.tt-gs{stroke:var(--brand-green)}.tt-bs{stroke:var(--brand-blue)}.tt-d{fill:var(--brand-dark)}
+.tt-stop-g{stop-color:var(--brand-green)}.tt-stop-b{stop-color:var(--brand-blue)}.tt-stop-d{stop-color:var(--brand-dark)}
+.tt-tile rect{fill:var(--brand-white);stroke:var(--border)}
+.tt-tile{transform-box:fill-box;transform-origin:50% 50%;filter:url(#tt-shadow)}
+.tt-beat{fill:none;stroke:var(--brand-green);stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+.tt-spin{opacity:.75;transform-box:view-box;transform-origin:500px 330px}
+.tt-orbit{transform-box:view-box;transform-origin:500px 330px;opacity:.9}
+.tt-mer{transform-box:fill-box;transform-origin:50% 50%;transform:scaleX(var(--ms))}
+.tt-k{transform-box:fill-box;transform-origin:50% 50%}.tt-k+.tt-k{opacity:0}
+@media (prefers-reduced-motion:no-preference){
+ .tt-spin{animation:tt-spin 16s linear infinite}.tt-spin-b{animation-duration:11s;animation-direction:reverse}
+ .tt-orbit{animation:tt-spin 26s linear infinite}
+ @keyframes tt-spin{to{transform:rotate(360deg)}}
+ .tt-k,.tt-k+.tt-k{animation:tt-k 32s linear infinite;animation-delay:var(--kd)}
+ @keyframes tt-k{0.000%{transform:translateX(0.00px) scaleX(1.000);opacity:1}4.167%{transform:translateX(12.16px) scaleX(0.966);opacity:1}8.333%{transform:translateX(23.50px) scaleX(0.866);opacity:1}12.500%{transform:translateX(33.23px) scaleX(0.707);opacity:1}16.667%{transform:translateX(40.70px) scaleX(0.500);opacity:1}20.833%{transform:translateX(45.40px) scaleX(0.259);opacity:1}25.000%{transform:translateX(47.00px) scaleX(0.020);opacity:0}29.167%{transform:translateX(45.40px) scaleX(0.020);opacity:0}33.333%{transform:translateX(40.70px) scaleX(0.020);opacity:0}37.500%{transform:translateX(33.23px) scaleX(0.020);opacity:0}41.667%{transform:translateX(23.50px) scaleX(0.020);opacity:0}45.833%{transform:translateX(12.16px) scaleX(0.020);opacity:0}50.000%{transform:translateX(0.00px) scaleX(0.020);opacity:0}54.167%{transform:translateX(-12.16px) scaleX(0.020);opacity:0}58.333%{transform:translateX(-23.50px) scaleX(0.020);opacity:0}62.500%{transform:translateX(-33.23px) scaleX(0.020);opacity:0}66.667%{transform:translateX(-40.70px) scaleX(0.020);opacity:0}70.833%{transform:translateX(-45.40px) scaleX(0.020);opacity:0}75.000%{transform:translateX(-47.00px) scaleX(0.020);opacity:0}79.167%{transform:translateX(-45.40px) scaleX(0.259);opacity:1}83.333%{transform:translateX(-40.70px) scaleX(0.500);opacity:1}87.500%{transform:translateX(-33.23px) scaleX(0.707);opacity:1}91.667%{transform:translateX(-23.50px) scaleX(0.866);opacity:1}95.833%{transform:translateX(-12.16px) scaleX(0.966);opacity:1}100.000%{transform:translateX(-0.00px) scaleX(1.000);opacity:1}}
+ .tt-mer{animation:tt-mer 32s ease-in-out infinite;animation-delay:calc(var(--m) * -4s)}
+ @keyframes tt-mer{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}100%{transform:scaleX(1)}}
+ .tt-core-pulse{animation:tt-core-pulse 4.5s ease-in-out infinite}
+ @keyframes tt-core-pulse{0%,100%{opacity:.26}50%{opacity:.55}}
+ .tt-beat{animation:tt-beat 18s ease-out infinite;animation-delay:var(--d,0s)}
+ @keyframes tt-beat{0%{opacity:0;transform:scale(.35)}4%{opacity:.55;transform:scale(1)}8%{opacity:0;transform:scale(1.4)}100%{opacity:0;transform:scale(1.4)}}
+}
+@media (max-width:700px){
+ .tt-x{display:none}
+ .tt-core{transform-box:fill-box;transform-origin:50% 50%;transform:scale(1.3)}
+ .tt-tile{transform:scale(1.45)}
+ .tt-beat{animation-delay:var(--dm,0s)}
+}
+</style></head><body>
+<div class="toshi-tower" id="toshiTower">
+<div class="toshi-tower-stage">
+<div class="toshi-depth" aria-hidden="true"></div>
+<svg class="tt-svg" viewBox="120 150 760 420" aria-hidden="true" focusable="false">
+<defs>
+<radialGradient id="tt-glow"><stop offset="0" class="tt-stop-g" stop-opacity=".42"/><stop offset=".55" class="tt-stop-g" stop-opacity=".16"/><stop offset="1" class="tt-stop-g" stop-opacity="0"/></radialGradient>
+<radialGradient id="tt-emis"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".62" stop-color="#FFFFFF" stop-opacity=".92"/><stop offset="1" class="tt-stop-g" stop-opacity=".35"/></radialGradient>
+<radialGradient id="tt-ao"><stop offset="0" class="tt-stop-d" stop-opacity=".38"/><stop offset="1" class="tt-stop-d" stop-opacity="0"/></radialGradient>
+<radialGradient id="tt-floor"><stop offset="0" class="tt-stop-d" stop-opacity=".16"/><stop offset="1" class="tt-stop-d" stop-opacity="0"/></radialGradient>
+<linearGradient id="tt-ring-outer" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="tt-stop-g" stop-opacity="0"/><stop offset=".45" class="tt-stop-g" stop-opacity=".5"/><stop offset="1" class="tt-stop-b" stop-opacity="0"/></linearGradient>
+<linearGradient id="tt-ring-inner" x1="0" y1="1" x2="1" y2="0"><stop offset="0" class="tt-stop-g" stop-opacity="0"/><stop offset=".5" class="tt-stop-g" stop-opacity=".45"/><stop offset="1" class="tt-stop-g" stop-opacity="0"/></linearGradient>
+<filter id="tt-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+<filter id="tt-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="3" stdDeviation="4.5" flood-color="#0F172A" flood-opacity=".18"/></filter>
+<clipPath id="tt-globe-clip"><circle cx="500" cy="330" r="63"/></clipPath>
+<radialGradient id="tt-pulse"><stop offset=".62" class="tt-stop-g" stop-opacity="0"/><stop offset=".8" class="tt-stop-g" stop-opacity=".7"/><stop offset="1" class="tt-stop-g" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="500" cy="520" rx="280" ry="46" fill="url(#tt-floor)"/>
+<ellipse cx="500" cy="452" rx="150" ry="32" fill="url(#tt-ao)" filter="url(#tt-soft)"/>
+<g class="tt-glow"><ellipse cx="500" cy="330" rx="168" ry="168" fill="url(#tt-glow)"/></g>
+<!-- back halves: under the core -->
+<g class="tt-rings">
+<path d="M156 330 A344 132 0 0 1 844 330" fill="none" stroke="url(#tt-ring-outer)" stroke-width="3"/>
+<path d="M288 330 A212 84 0 0 1 712 330" fill="none" stroke="url(#tt-ring-inner)" stroke-width="2.5"/>
+<ellipse class="tt-spin tt-spin-a" cx="500" cy="330" rx="344" ry="132" fill="none" stroke="rgba(34,197,94,.55)" stroke-width="3" stroke-linecap="round" stroke-dasharray="80 1580"/>
+<ellipse class="tt-spin tt-spin-b" cx="500" cy="330" rx="212" ry="84" fill="none" stroke="rgba(34,197,94,.7)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50 820"/>
+</g>
+<g class="tt-orbit"><circle cx="823.3" cy="375.1" r="3.2" fill="rgba(34,197,94,.55)"/><circle cx="440.3" cy="460" r="2.8" fill="rgba(30,111,217,.45)"/><circle cx="156" cy="330" r="3.4" fill="rgba(34,197,94,.75)"/><circle cx="440.3" cy="200" r="3" fill="rgba(34,197,94,.55)"/><circle cx="606" cy="402.7" r="2.8" fill="rgba(34,197,94,.75)"/><circle cx="394" cy="257.3" r="2.6" fill="rgba(30,111,217,.45)"/></g>
+<g class="tt-core">
+<circle class="tt-core-pulse" cx="500" cy="330" r="80" fill="url(#tt-pulse)" opacity=".35"/>
+<circle cx="500" cy="330" r="64" fill="url(#tt-emis)"/>
+<g class="tt-globe" clip-path="url(#tt-globe-clip)" fill="none" style="stroke:var(--brand-green)" aria-hidden="true">
+<g stroke-opacity=".28" stroke-width="1"><ellipse cx="500" cy="298" rx="55" ry="7"/><ellipse cx="500" cy="362" rx="55" ry="7"/></g>
+<ellipse cx="500" cy="330" rx="64" ry="10" stroke-opacity=".42" stroke-width="1.2"/>
+<g class="tt-k" style="--kd:0s"><image href="../../assets/brand/klassapp-icon.svg" x="484" y="314" width="32" height="32"/></g><g class="tt-k" style="--kd:-16s"><image href="../../assets/brand/klassapp-icon.svg" x="484" y="314" width="32" height="32"/></g>
+<g class="tt-meridians" stroke-opacity=".34" stroke-width="1"><circle class="tt-mer" cx="500" cy="330" r="63" vector-effect="non-scaling-stroke" style="--m:0;--ms:1"/><circle class="tt-mer" cx="500" cy="330" r="63" vector-effect="non-scaling-stroke" style="--m:1;--ms:.71"/><circle class="tt-mer" cx="500" cy="330" r="63" vector-effect="non-scaling-stroke" style="--m:2;--ms:0"/><circle class="tt-mer" cx="500" cy="330" r="63" vector-effect="non-scaling-stroke" style="--m:3;--ms:-.71"/></g>
+</g>
+<circle cx="500" cy="330" r="64" fill="none" class="tt-gs" stroke-opacity=".75" stroke-width="3"/>
+</g>
+<!-- front halves: over the core -->
+<g class="tt-rings-front">
+<path d="M156 330 A344 132 0 0 0 844 330" fill="none" stroke="url(#tt-ring-outer)" stroke-width="3"/>
+<path d="M288 330 A212 84 0 0 0 712 330" fill="none" stroke="url(#tt-ring-inner)" stroke-width="2.5"/>
+</g>
+<g class="tt-nodes">
+<g transform="translate(712 330)" class="tt-node"><circle class="tt-beat" r="30" style="--d:0s;--dm:0s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/whatsapp.svg" x="-14" y="-14" width="28" height="28"/></g></g>
+<g transform="translate(606 402.7)" class="tt-node"><circle class="tt-beat" r="30" style="--d:3s;--dm:3s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/google-drive.svg" x="-14" y="-14" width="28" height="28"/></g></g>
+<g transform="translate(394 402.7)" class="tt-node"><circle class="tt-beat" r="30" style="--d:6s;--dm:9s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/slack.svg" x="-14" y="-14" width="28" height="28"/></g></g>
+<g transform="translate(288 330)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:9s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><g transform="translate(-12 -12)"><rect x="2" y="4" width="20" height="16" rx="2.5" fill="none" class="tt-bs" stroke-width="2"/><path d="M3 6l9 7 9-7" fill="none" class="tt-bs" stroke-width="2"/></g></g></g>
+<g transform="translate(394 257.3)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:12s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><g transform="translate(-12 -12)"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" class="tt-gs" stroke-width="2"/></g></g></g>
+<g transform="translate(606 257.3)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:15s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><g transform="translate(-12 -12)"><rect x="3" y="4" width="18" height="17" rx="2.5" fill="none" class="tt-bs" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" fill="none" class="tt-bs" stroke-width="2"/></g></g></g>
+<g transform="translate(797.9 396)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:1.5s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/anthropic-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+<g transform="translate(500 462)" class="tt-node"><circle class="tt-beat" r="30" style="--d:4.5s;--dm:6s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/openai-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+<g transform="translate(202.1 396)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:7.5s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/xai-grok-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+<g transform="translate(202.1 264)" class="tt-node"><circle class="tt-beat" r="30" style="--d:10.5s;--dm:12s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/google-gemini-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+<g transform="translate(500 198)" class="tt-node tt-x"><circle class="tt-beat" r="30" style="--d:13.5s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/moonshot-kimi-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+<g transform="translate(797.9 264)" class="tt-node"><circle class="tt-beat" r="30" style="--d:16.5s;--dm:15s"/><g class="tt-tile"><rect x="-28" y="-28" width="56" height="56" rx="15" stroke-width="1"/><image href="../../assets/brand/models/zhipu-zai-mark.svg" x="-11" y="-11" width="22" height="22"/></g></g>
+</g>
+</svg>
+</div></div>
+</body></html>

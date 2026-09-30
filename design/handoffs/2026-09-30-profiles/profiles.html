@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile pages — student, staff, parent</title>
+<link rel="stylesheet" href="design-system/styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E5DF;color:var(--d-text);font-family:var(--d-font-body,'DM Sans',system-ui,sans-serif)}
+a{color:var(--d-blue)}a:hover{color:#1E3A8A}
+button{font:inherit}
+.top{position:sticky;top:0;z-index:10;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top h1{font:700 20px var(--d-font-display,'Sora',sans-serif);margin:0 auto 0 0;letter-spacing:-.02em}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px}
+.seg button{min-height:38px;padding:0 12px;border:0;border-radius:7px;background:transparent;font-weight:600;font-size:13.5px;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:16px 24px 0;max-width:1180px;font-size:14.5px;line-height:1.55;color:#334155;display:flex;flex-direction:column;gap:6px}
+.intro p{margin:0}
+.frames{display:flex;gap:32px;padding:20px 24px 40px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}
+.fr>small{font-size:12px;font-weight:700;color:#334155}
+.scr{background:var(--d-canvas);border:1px solid #CFCAC0;border-radius:6px;overflow:hidden}
+.w1280{width:1280px}.w375{width:375px}
+/* app chrome (simplified) */
+.bar{height:56px;display:flex;align-items:center;gap:12px;padding:0 24px;background:#fff;border-bottom:1px solid var(--d-border)}
+.bar .crumb{font-size:14px;color:var(--d-text-secondary)}.bar .crumb b{color:var(--d-text)}
+.w375 .bar{padding:0 12px}
+.back{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text);text-decoration:none;font-size:18px}
+.pg{padding:24px 32px 40px;display:flex;flex-direction:column;gap:20px}
+.w375 .pg{padding:16px 12px 32px;gap:16px}
+/* header */
+.hd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:24px;align-items:center;background:#fff;border:1px solid var(--d-border);border-radius:16px;padding:24px}
+.w375 .hd{grid-template-columns:auto minmax(0,1fr);gap:14px;padding:16px}
+.w375 .hd .acts{grid-column:1/-1}
+.name{font:600 28px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;margin:0;color:#0F172A}
+.w375 .name{font-size:21px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:14.5px;color:var(--d-text)}
+.meta span{display:inline-flex;align-items:center;gap:6px}
+.meta .k{color:var(--d-text-secondary)}
+.w375 .meta{flex-direction:column;gap:4px;font-size:14px}
+.badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:700}
+.b-active{background:#DCFCE7;color:#14532D}.b-inactive{background:#F1F5F9;color:#334155}.b-exit{background:#FEF3C7;color:#78350F}.b-role{background:#DBEAFE;color:#1E3A8A}
+.noclass{display:inline-flex;align-items:center;gap:8px;color:#78350F;font-weight:600}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.w375 .acts{justify-content:stretch}.w375 .acts .btn{flex:1}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border-radius:10px;border:1px solid var(--d-border-strong);background:#fff;color:#0F172A;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--d-accent);border-color:var(--d-accent);color:#fff}
+.btn.lnk{border:0;background:none;color:var(--d-blue);padding:0 4px;min-height:44px}
+.btn.more{width:44px;padding:0;flex:none!important}
+/* avatar */
+.av{display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;font-family:var(--d-font-display,'Sora',sans-serif);font-weight:600;letter-spacing:.02em;line-height:1;border-radius:12px}
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--d-border);overflow-x:auto;scrollbar-width:none}
+.tabs button{min-height:44px;padding:0 16px;border:0;background:none;font-weight:600;font-size:14.5px;color:var(--d-text-secondary);border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:#0F172A;border-bottom-color:var(--d-accent)}
+.scope{font-size:13.5px;color:var(--d-text);background:#F8FAFC;border:1px solid var(--d-border);border-radius:10px;padding:10px 14px}
+/* panels */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.w375 .grid2{grid-template-columns:1fr}
+.card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.w375 .card{padding:16px}
+.card h3{font:600 16px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A}
+dl.kv{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:10px 16px;margin:0;font-size:14.5px}
+.w375 dl.kv{grid-template-columns:minmax(0,120px) minmax(0,1fr)}
+dl.kv dt{color:var(--d-text-secondary)}dl.kv dd{margin:0;overflow-wrap:anywhere}
+.stat{display:flex;gap:28px;flex-wrap:wrap}
+.stat div{display:flex;flex-direction:column;gap:2px}
+.stat b{font:600 26px var(--d-font-display,'Sora',sans-serif);color:#0F172A}
+.stat span{font-size:13px;color:var(--d-text-secondary)}
+.owed{color:#92400E!important}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--d-border)}
+th{font-size:12.5px;color:var(--d-text-secondary);font-weight:700}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.empty{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:28px 20px;background:#fff;border:1px dashed var(--d-border-strong);border-radius:14px}
+.empty b{font:600 16px var(--d-font-display,'Sora',sans-serif);color:#0F172A}
+.empty p{margin:0;font-size:14.5px;color:var(--d-text);max-width:520px}
+.req{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+.req p{margin:0;font-size:14px}
+.kid{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--d-border)}
+.kid:last-child{border-bottom:0}
+.kid .nm{font-weight:700;color:#0F172A}.kid .sub{font-size:13.5px;color:var(--d-text-secondary)}
+.kid .ql{display:flex;gap:8px}
+.w375 .kid{grid-template-columns:auto minmax(0,1fr)}.w375 .kid .ql{grid-column:1/-1}.w375 .kid .ql .btn{flex:1}
+.contact{display:flex;flex-direction:column;gap:4px}
+.contact a{min-height:44px;display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600}
+.cl{display:flex;flex-direction:column}
+.cl div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--d-border);font-size:14.5px}
+.cl div:last-child{border-bottom:0}
+.tag{font-size:12.5px;font-weight:700;color:#14532D;background:#DCFCE7;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.wrong{max-width:1180px;margin:0 24px 40px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:20px 24px}
+.wrong h2{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0 0 10px}
+.wrong ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14.5px;line-height:1.5}
+.wrong code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:4px}
+.wrong .v{font-size:12px;font-weight:700;color:#14532D}
+</style>
+</head>
+<body>
+<div class="top">
+<h1>Profile pages</h1>
+<div class="ctl">Profile<div class="seg" id="c-type"><button data-v="student" aria-pressed="true">Student</button><button data-v="staff">Staff</button><button data-v="parent">Parent</button></div></div>
+<div class="ctl" id="w-viewer">Viewer<div class="seg" id="c-viewer"></div></div>
+<div class="ctl">Data<div class="seg" id="c-data"><button data-v="full" aria-pressed="true">Filled</button><button data-v="empty">Empty tabs</button><button data-v="noclass" id="nc">No class</button></div></div>
+</div>
+<div class="intro">
+<p>Designed from <code>main @ 3cf3025bf5b0</code>. Demo data is Demo Academy Uganda only. Every avatar is the default-avatar spec (initials from <code>userprofiles.firstname</code>/<code>lastname</code>, colour by <code>id % 4</code>, square 12px frame) because no demo photos exist. Swap in <code>&lt;x-profile-photo&gt;</code> with a real photo and the frame stays identical.</p>
+<p>Tabs, their order and the default come from the Task C matrix. A tab or field a viewer never sees is <b>absent</b>, not disabled. The server must not send it (see handoff P1). Contrast is calculated from hex, not browser-measured.</p>
+</div>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="d"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="m"></div></div></div>
+<section class="wrong" id="wrong"></section>
+<script>
+const PAL=['#1E6FD9','#15803D','#B45309','#1E293B'];
+function ini(f,l){f=(f||'').trim().split(/\s+/)[0]||'';l=(l||'').trim();return (([...f][0]||'')+([...l][0]||'')).toLocaleUpperCase()}
+function av(p,s){const i=ini(p.fn,p.ln);return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.4)}px;${s<=32?'border-radius:8px;':''}background:${i?PAL[p.id%4]:'#64748B'}" ${i?`role="img" aria-label="${p.fn} ${p.ln}"`:'aria-hidden="true"'}>${i}</span>`}
+const ugx=v=>'UGX '+v.toLocaleString('en-UG');
+const STU={id:1087,fn:'Brian',ln:'Okello',adm:'DAU/24/0087',cls:'P.5 Blue',status:'active',sex:'Male',dob:'14 Mar 2015',lin:'U0012873451',par:[{fn:'Grace',ln:'Achieng',id:2210,rel:'Mother',ph:'0772 418 205',wa:1},{fn:'Peter',ln:'Okello',id:2211,rel:'Father',ph:'0701 552 930',wa:0}]};
+const VIEW={
+ admin:{l:'Admin',tabs:['Overview','Attendance','Marks','Fees','Health','Library'],scope:'',acts:['edit','more']},
+ ct:{l:'Class teacher',tabs:['Attendance','Marks','Overview','Discipline','Health'],scope:'You are the class teacher of P.5 Blue. Fee balance isn\u2019t shown to class teachers.',acts:['msg']},
+ bursar:{l:'Bursar',tabs:['Fees','Overview'],scope:'Bursar view: attendance, marks, health and date of birth are not sent.',acts:['remind']}};
+const STAFF={
+ teacher:{id:3302,fn:'Sarah',ln:'Nakato',role:'Teacher',status:'active',ph:'0759 003 118',em:'s.nakato@demoacademy.ug',wa:1,cls:[['P.5 Blue','Class teacher'],['Mathematics','P.5 Blue · P.6 Red'],['Science','P.5 Blue']],tabs:['Overview','Classes','Attendance','Leave','Documents']},
+ admin:{id:3300,fn:'Isaac',ln:'Ssemanda',role:'School admin',status:'active',ph:'0782 660 471',em:'admin@demoacademy.ug',wa:1,cls:[],tabs:['Overview','Classes','Attendance','Leave','Documents']}};
+const PAR={id:2210,fn:'Grace',ln:'Achieng',status:'active',ph:'0772 418 205',wa:1,em:'',dist:'Wakiso',kids:[{id:1087,fn:'Brian',ln:'Okello',cls:'P.5 Blue',bal:180000,rep:'Term 2 report'},{id:1090,fn:'Joy',ln:'Okello',cls:'P.2 Green',bal:0,rep:'Term 2 report'}],tabs:['Children','Overview','Messages']};
+let S={type:'student',viewer:'admin',data:'full',tab:null};
+const EMPTY={
+ Overview:['Nothing recorded yet','Details appear here after the admission form or an edit is saved.','Edit details','admin'],
+ Attendance:['No attendance marked yet this term','It appears after the class teacher marks the first register.','',''],
+ Marks:['No marks entered yet this term','Marks appear once a teacher enters them for an exam.','',''],
+ Fees:['No fee structure for P.5 Blue this term','Set up the term\u2019s fees before recording payments.','Set up fees','admin'],
+ Health:['No health notes recorded','Parents add allergies or support needs on the admission form. Only authorised staff can see them.','',''],
+ Library:['No books borrowed','Loans appear here when the librarian issues a book.','',''],
+ Discipline:['No discipline records','That\u2019s good news. Records appear here if any are added.','',''],
+ Classes:['Not teaching any classes','Assign classes and subjects to include this person in timetables and marks entry.','Assign classes','admin'],
+ Leave:['No leave taken this year','Leave requests and approvals appear here.','',''],
+ Documents:['No documents uploaded','Upload contracts, certificates or IDs. Only admins can see them.','Upload document','admin'],
+ Children:['No children linked yet','Link this parent to their child so they get reports and fee messages on WhatsApp.','Link a child','admin'],
+ Messages:['No messages yet','WhatsApp messages sent to this parent appear here.','','']};
+function empty(t,vw){const e=EMPTY[t];return `<div class="empty"><b>${e[0]}</b><p>${e[1]}</p>${e[2]&&(e[3]!=='admin'||vw==='admin')?`<button class="btn">${e[2]}</button>`:''}</div>`}
+function stuTab(t,vw){const E=S.data==='empty';if(E&&t!=='Overview')return empty(t,vw);
+ if(t==='Overview'){const rows=[['Admission no',STU.adm],['Class',S.data==='noclass'?'No class':STU.cls]];if(vw!=='bursar'){rows.push(['Sex',STU.sex],['Date of birth',STU.dob]);if(vw==='admin')rows.push(['LIN',STU.lin])}
+  const par=vw==='ct'?STU.par:vw==='bursar'?STU.par:STU.par;
+  return `<div class="grid2"><div class="card"><h3>Student</h3><dl class="kv">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl></div><div class="card"><h3>Parents and guardians</h3>${E?`<p style="margin:0;font-size:14.5px">No parent linked yet.</p>${vw==='admin'?'<button class="btn" style="align-self:flex-start">Link a parent</button>':''}`:par.map(p=>`<div class="kid" style="grid-template-columns:auto minmax(0,1fr)">${av(p,40)}<div><div class="nm">${p.fn} ${p.ln}</div><div class="sub">${p.rel} · <a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}</a>${p.wa?' · on WhatsApp':''}</div></div></div>`).join('')}</div></div>`}
+ if(t==='Attendance')return `<div class="card"><h3>This term</h3><div class="stat"><div><b>88%</b><span>present</span></div><div><b>6</b><span>days absent</span></div><div><b>3</b><span>days late</span></div></div><table><thead><tr><th>Date</th><th>Status</th><th>Marked by</th></tr></thead><tbody><tr><td>29 Sep</td><td>Absent</td><td>S. Nakato</td></tr><tr><td>26 Sep</td><td>Present</td><td>S. Nakato</td></tr><tr><td>25 Sep</td><td>Late</td><td>S. Nakato</td></tr></tbody></table></div>`;
+ if(t==='Marks')return `<div class="card"><h3>Term 2 · Mid-term exams</h3><table><thead><tr><th>Subject</th><th class="n">Mark</th><th>Grade</th></tr></thead><tbody><tr><td>English</td><td class="n">68</td><td>C3</td></tr><tr><td>Mathematics</td><td class="n">61</td><td>C4</td></tr><tr><td>Science</td><td class="n">72</td><td>C3</td></tr><tr><td>Social Studies</td><td class="n">55</td><td>C5</td></tr></tbody></table></div>`;
+ if(t==='Fees')return `<div class="card"><h3>Term 2 · 2026</h3><div class="stat"><div><b class="owed">${ugx(180000)}</b><span>balance</span></div><div><b>${ugx(270000)}</b><span>paid of ${ugx(450000)}</span></div></div><table><thead><tr><th>Date</th><th>Method</th><th class="n">Amount</th></tr></thead><tbody><tr><td>2 Aug</td><td>SchoolPay</td><td class="n">${ugx(270000)}</td></tr></tbody></table>${vw==='bursar'?'<div class="acts" style="justify-content:flex-start"><button class="btn pri">Record payment</button><button class="btn">Send reminder on WhatsApp</button></div>':''}</div>`;
+ if(t==='Health')return `<div class="card"><div class="req"><p>Health notes are shown on request, and each view is logged.</p><button class="btn">Show health notes</button></div><p style="margin:0;font-size:13.5px;color:var(--d-text-secondary)">Used only to care for the child. Visible only to authorised staff.</p></div>`;
+ if(t==='Library')return `<div class="card"><h3>On loan</h3><table><thead><tr><th>Book</th><th>Due</th></tr></thead><tbody><tr><td>Primary Maths 5</td><td>3 Oct</td></tr></tbody></table></div>`;
+ if(t==='Discipline')return `<div class="card"><h3>This year</h3><table><thead><tr><th>Date</th><th>Note</th><th>Recorded by</th></tr></thead><tbody><tr><td>12 Jul</td><td>Late to class three days in a row; parent informed</td><td>S. Nakato</td></tr></tbody></table></div>`;}
+function stuHeader(vw,mob){const v=VIEW[vw],nc=S.data==='noclass';
+ const acts=v.acts.map(a=>a==='edit'?'<button class="btn">Edit</button>':a==='more'?'<button class="btn more" aria-label="More actions">\u22EF</button>':a==='msg'?'<button class="btn">Message parent</button>':a==='remind'?'<button class="btn pri">Send fee reminder</button>':'').join('');
+ return `<div class="hd">${av(STU,mob?64:128)}<div><h1 class="name">${STU.fn} ${STU.ln}</h1><div class="meta"><span>${nc?`<span class="noclass">No class</span>${vw==='admin'?'<a class="btn lnk" href="#">Assign class</a>':''}`:`<b>${STU.cls}</b>`}</span><span><span class="k">Admission no</span> ${STU.adm}</span><span><span class="badge b-active">Active</span></span></div></div><div class="acts">${acts}</div></div>`}
+function staffView(k,mob){const p=STAFF[k],E=S.data==='empty'||k==='admin';const t=S.tab&&p.tabs.includes(S.tab)?S.tab:p.tabs[0];S.tab=t;
+ const hd=`<div class="hd">${av(p,mob?64:128)}<div><h1 class="name">${p.fn} ${p.ln}</h1><div class="meta"><span><span class="badge b-role">${p.role}</span></span>${p.cls[0]&&p.cls[0][1]==='Class teacher'&&S.data!=='empty'?`<span>Class teacher of <b>${p.cls[0][0]}</b></span>`:''}<span><span class="badge b-active">Active</span></span></div></div><div class="acts"><button class="btn">Edit</button><button class="btn more" aria-label="More actions">\u22EF</button></div></div>`;
+ let body;
+ if(t==='Overview')body=`<div class="grid2"><div class="card"><h3>Classes and subjects</h3>${E?`<p style="margin:0;font-size:14.5px">Not teaching any classes.</p><button class="btn" style="align-self:flex-start">Assign classes</button>`:`<div class="cl">${p.cls.map(c=>`<div><b>${c[0]}</b><span>${c[1]==='Class teacher'?'<span class="tag">Class teacher</span>':c[1]}</span></div>`).join('')}</div>`}</div><div class="card"><h3>Contact</h3><div class="contact"><a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}${p.wa?' <span style="font-weight:500;color:var(--d-text-secondary)">· on WhatsApp</span>':''}</a><a href="mailto:${p.em}">${p.em}</a></div></div></div>`;
+ else if(t==='Classes'&&!E)body=`<div class="card"><h3>Teaching this term</h3><table><thead><tr><th>Class</th><th>Subject</th><th>Role</th></tr></thead><tbody><tr><td>P.5 Blue</td><td>Mathematics, Science</td><td><span class="tag">Class teacher</span></td></tr><tr><td>P.6 Red</td><td>Mathematics</td><td>Subject teacher</td></tr></tbody></table></div>`;
+ else if(S.data!=='empty'&&t==='Attendance')body=`<div class="card"><h3>This term</h3><div class="stat"><div><b>97%</b><span>present</span></div><div><b>2</b><span>days absent</span></div></div></div>`;
+ else if(S.data!=='empty'&&t==='Leave')body=`<div class="card"><h3>This year</h3><table><thead><tr><th>Dates</th><th>Type</th><th>Status</th></tr></thead><tbody><tr><td>4–5 Aug</td><td>Sick leave</td><td>Approved</td></tr></tbody></table></div>`;
+ else body=empty(t,'admin');
+ return hd+tabs(p.tabs,t)+body}
+function parentView(mob){const p=PAR,E=S.data==='empty';const t=S.tab&&p.tabs.includes(S.tab)?S.tab:p.tabs[0];S.tab=t;
+ const hd=`<div class="hd">${av(p,mob?64:128)}<div><h1 class="name">${p.fn} ${p.ln}</h1><div class="meta"><span><span class="badge b-role">Parent</span></span><span><a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}</a>${p.wa?' · on WhatsApp':''}</span><span><span class="badge b-active">Active</span></span></div></div><div class="acts"><button class="btn">Edit</button><button class="btn more" aria-label="More actions">\u22EF</button></div></div>`;
+ let body;
+ if(t==='Children')body=E?empty('Children','admin'):`<div class="card"><h3>Children at Demo Academy Uganda</h3>${p.kids.map(k=>`<div class="kid">${av(k,40)}<div><div class="nm">${k.fn} ${k.ln}</div><div class="sub">${k.cls} · ${k.bal?`<span class="owed">${ugx(k.bal)} due</span>`:'Fees cleared'}</div></div><div class="ql"><a class="btn" href="#">Report card</a><a class="btn" href="#">Fees</a></div></div>`).join('')}</div>`;
+ else if(t==='Overview')body=`<div class="card"><h3>Contact</h3><dl class="kv"><dt>Phone</dt><dd><a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}</a> · on WhatsApp</dd><dt>Email</dt><dd>${p.em||'<span style="color:var(--d-text-secondary)">Not given</span>'}</dd><dt>District</dt><dd>${p.dist}</dd></dl></div>`;
+ else body=E?empty('Messages','admin'):`<div class="card"><h3>Recent WhatsApp messages</h3><table><thead><tr><th>Date</th><th>Message</th></tr></thead><tbody><tr><td>29 Sep</td><td>Brian was absent today.</td></tr><tr><td>20 Sep</td><td>Fee reminder: UGX 180,000 due for Brian.</td></tr></tbody></table></div>`;
+ return hd+tabs(p.tabs,t)+body}
+function tabs(list,t){return `<div class="tabs" role="tablist">${list.map(x=>`<button role="tab" aria-selected="${x===t}" data-tab="${x}">${x}</button>`).join('')}</div>`}
+function studentView(mob){const v=VIEW[S.viewer];const t=S.tab&&v.tabs.includes(S.tab)?S.tab:v.tabs[0];S.tab=t;
+ return stuHeader(S.viewer,mob)+(v.scope?`<div class="scope">${v.scope}</div>`:'')+tabs(v.tabs,t)+stuTab(t,S.viewer)}
+function screen(mob){const crumb=S.type==='student'?'Students':S.type==='staff'?'Staff':'Parents';
+ const inner=S.type==='student'?studentView(mob):S.type==='staff'?staffView(S.viewer,mob):parentView(mob);
+ return `<div class="bar"><a class="back" href="#" aria-label="Back to ${crumb}">\u2190</a><span class="crumb">${crumb} / <b>Profile</b></span></div><div class="pg">${inner}</div>`}
+function viewerSeg(){const o=S.type==='student'?[['admin','Admin'],['ct','Class teacher'],['bursar','Bursar']]:S.type==='staff'?[['teacher','Teacher'],['admin','School admin']]:[['admin','Admin']];
+ if(!o.some(x=>x[0]===S.viewer))S.viewer=o[0][0];
+ document.getElementById('c-viewer').innerHTML=o.map(x=>`<button data-v="${x[0]}" aria-pressed="${x[0]===S.viewer}">${x[1]}</button>`).join('');
+ document.querySelector('#w-viewer').firstChild.textContent=S.type==='staff'?'Person ':'Viewer ';
+ document.getElementById('nc').style.display=S.type==='student'?'':'none';if(S.type!=='student'&&S.data==='noclass')S.data='full'}
+function draw(){viewerSeg();document.getElementById('d').innerHTML=screen(0);document.getElementById('m').innerHTML=screen(1);
+ document.querySelectorAll('#c-type button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.type));
+ document.querySelectorAll('#c-data button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.data))}
+document.getElementById('c-type').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.type=b.dataset.v;S.tab=null;draw()};
+document.getElementById('c-viewer').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.viewer=b.dataset.v;S.tab=null;draw()};
+document.getElementById('c-data').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.data=b.dataset.v;draw()};
+document.querySelector('.frames').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){S.tab=b.dataset.tab;draw()}if(e.target.closest('a[href="#"]'))e.preventDefault()};
+draw();
+const W=[
+['Student header shows the database id, not the admission number.','<code>admin/member/show</code>, <code>admin/teacher/show</code> and <code>admin/parent/show</code> all print <code>ID: {{ $user-&gt;id }}</code>.'],
+['Class and status are missing from the student header.','Neither appears in the page. Status exists only as the Activate/Deactivate/Exit links in a hidden menu, so there\u2019s no "No class" state and no way to see an exited student at a glance.'],
+['Empty dates print 01-01-1970.','<code>date(\'d-m-Y\', strtotime(optional(...)-&gt;date_of_birth))</code> turns a null date into the Unix epoch (student and teacher pages).'],
+['Pages crash when a user has no profile row.','<code>$user-&gt;userprofile-&gt;gender</code>, <code>-&gt;address</code> and <code>-&gt;alternate_no</code> have no <code>optional()</code>, unlike the line above them.'],
+['Three different name sources.','Student uses <code>displayName</code>, teacher and parent use <code>FullName</code>, and URLs and forms use <code>users.name</code> (the login handle). All should come from <code>userprofiles.firstname</code> + <code>lastname</code>.'],
+['Sex is worded differently on each page.','The student page maps male/female to "Boy"/"Girl" and prints nothing for any other value. The teacher page prints the raw lowercase value.'],
+['Every viewer gets the same 13 student tabs, always opening on "Profile".','The Vue <code>ProfileTab</code> shows Profile, Timeline, Parents, Siblings, Disciplines, Notes, Library, Documents, Attendances, Medical History, Fees, Leave History and <b>Bank Details</b> (on a child\u2019s profile). Only Notes is gated (<code>mode == \'admin\'</code>), and only on the client. <b>I haven\u2019t verified whether each tab\u2019s API call is scoped server-side.</b> P1 must check this.'],
+['Medical History is a normal tab for everyone.','It isn\u2019t on request and isn\u2019t logged. Task C says health is on request, logged, and never in lists.'],
+['Delete has no confirmation on student and teacher pages.','It\u2019s a <code>type="submit"</code> button in a form next to Edit. The parent page confirms, but its message reads "Do you want to change the Delete Parent ?".'],
+['Visible stray markup on the parent page.','<code>&lt;form ... class="inline"&gt;x items-center mr-2" id="delete"&gt;</code> renders the text <i>x items-center mr-2" id="delete"&gt;</i> beside the Delete button.'],
+['Targets are far below 44px.','Edit and Delete are <code>text-xs p-1</code> (about 20px tall). The student actions menu is a <code>w-6 h-6</code> (24px) dot. Status and password links are <code>px-2 py-1 text-xs</code>.'],
+['Phone and email aren\u2019t links.','They use <code>href="#"</code> instead of <code>tel:</code>/<code>mailto:</code>, and WhatsApp isn\u2019t indicated.'],
+['Old alert library and colours.','Each page loads SweetAlert v1 from an unpinned <code>unpkg.com/sweetalert</code> URL, with <code>#3085d6</code>/<code>#d33</code> buttons. After Cancel it shows a second "Cancelled" alert. This should move to the unified dialog (resync phase 2).'],
+['The photo column overflows at tablet width.','Student and parent use <code>md:w-1/5</code> (about 144px at 768) around a 192px <code>xl</code> photo. The teacher page already switched to <code>md:w-full</code>.'],
+['Inconsistent page headers and colours.','The student page uses <code>ds-page-head</code>, the teacher page uses the old <code>admin-h1</code>. The action colours are <code>blue-bg</code>, <code>bg-red-600</code>, <code>custom-green</code>, <code>bg-purple-500</code> and <code>text-teal-500</code>, none of them from the button system.'],
+['Duplicate ids.','<code>id="status"</code> is repeated on every status link, and <code>id="Capa_1"</code> on every inline icon SVG.'],
+['Parent profile doesn\u2019t lead with the children.','Children sit in a "My Children" tab behind Profile and Timeline, with no report card or fee link.'],
+['Teacher classes and subjects are hidden in a tab.','"Assigned Classes" isn\u2019t in the header or overview, so you can\u2019t see what someone teaches without clicking.']];
+document.getElementById('wrong').innerHTML=`<h2>What the current profile pages get wrong</h2><p style="margin:0 0 12px;font-size:14px">Read from source at <code>3cf3025bf5b0</code>: <code>admin/member/show</code> (student), <code>admin/teacher/show</code>, <code>admin/parent/show</code> and the three <code>ProfileTab.vue</code>. <b><code>admin/staff/show</code> wasn\u2019t re-read in this pass.</b> Earlier reads found the same layout with its own photo sizing.</p><ol>${W.map(w=>`<li><b>${w[0]}</b> ${w[1]}</li>`).join('')}</ol>`;
+</script>
+</body>
+</html>

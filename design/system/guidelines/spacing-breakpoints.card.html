@@ -1,0 +1,17 @@
+<!-- @dsCard group="Spacing" viewport="700x300" name="Breakpoints" subtitle="The real media queries — no invented ladder" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>body{margin:0;padding:14px;background:var(--d-white);font-family:var(--d-font-body)}table{width:100%;border-collapse:collapse}th{font-family:var(--d-font-display);font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d-muted);text-align:left;padding:7px 8px;border-bottom:2px solid var(--d-blue)}td{font-size:11px;color:var(--d-text);padding:7px 8px;border-bottom:1px solid var(--d-border);vertical-align:top}code{font-family:ui-monospace,monospace;font-size:10px;background:var(--d-canvas);padding:1px 4px;border-radius:4px;white-space:nowrap}.f{font-size:10px;color:var(--d-muted);line-height:1.5;margin:10px 0 0}</style></head><body>
+<table>
+<thead><tr><th>Query</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>max-width: 767px</code></td><td>Ledger tables restack as cards — <code>thead</code> hidden, each <code>td</code> shows its <code>data-label</code></td></tr>
+<tr><td><code>max-width: 768px</code></td><td>Ledger cell padding → 12px; pagination becomes a left-aligned column</td></tr>
+<tr><td><code>max-width: 640px</code></td><td>Toshi panel full-screen; wizard nav restacks; setup banner → column</td></tr>
+<tr><td><code>min-width: 640px</code></td><td>Wizard plan cards → exactly 3 columns</td></tr>
+<tr><td><code>min-width: 641px</code></td><td>Toshi panel back to floating 16px radius</td></tr>
+<tr><td><code>max-width: 480px</code></td><td>Toshi confirmation-card padding → 14px</td></tr>
+<tr><td><code>(hover:none) and (pointer:coarse)</code></td><td>Table links/buttons forced to 44px</td></tr>
+<tr><td><code>(hover:hover) and (pointer:fine)</code></td><td><b>All nav hover states live only here</b> — never write a bare <code>:hover</code> for nav</td></tr>
+</tbody>
+</table>
+<p class="f">767 and 768 are deliberately one apart, so no width is both a card list and a padded table. KPI tiles need no query at all: <code>repeat(auto-fill, minmax(220px, 1fr))</code>. <b>Gaps:</b> the ≥1280px Toshi docking rule and any sidebar collapse live in <code>toshi-ui.css</code>, which was not in the synced bundle; and there is <b>no <code>prefers-reduced-motion</code> query anywhere</b> despite three looping animations.</p>
+</body></html>

@@ -1,0 +1,379 @@
+<!-- @dsCard group="Concepts" viewport="1280x900" name="Toshi tower — isometric hero" subtitle="Layered iso tower — tools and models surface one at a time from inside their cubes" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>KlassApp — Isometric layer tower concept</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+body{margin:0;background:var(--d-canvas);font-family:var(--d-font-body);color:var(--d-text)}
+.wrap{max-width:1280px;margin:0 auto;padding:40px 24px 64px}
+.eyebrow{font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--d-muted);margin:0 0 10px}
+h1{font-family:var(--d-font-display);font-size:2.1rem;font-weight:700;letter-spacing:-.02em;color:var(--d-dark);margin:0 0 8px;line-height:1.1}
+.lede{font-size:1rem;color:var(--d-text-secondary);margin:0;max-width:62ch;line-height:1.6}
+.stage{margin:28px 0 0;background:var(--d-white);border:1px solid var(--d-border);border-radius:20px;box-shadow:0 0 0 1px var(--d-border);overflow:hidden}
+.stage svg{display:block;width:100%;height:auto}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:22px 28px 0;border-top:1px solid var(--d-border)}
+.legend.cores{border-top:0;padding:16px 28px 26px}
+.leg-item{display:flex;gap:11px;align-items:flex-start}
+.leg-cube{width:22px;height:22px;flex-shrink:0;border-radius:5px;margin-top:2px}
+.leg-name{font-family:var(--d-font-display);font-size:.9rem;font-weight:600;color:var(--d-dark);margin:0}
+.leg-sub{font-size:.78rem;color:var(--d-text-secondary);margin:3px 0 0;line-height:1.5}
+h2{font-family:var(--d-font-display);font-size:1.1rem;font-weight:600;color:var(--d-dark);margin:40px 0 12px}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--d-white);border:1px solid var(--d-border);border-radius:14px;box-shadow:0 0 0 1px var(--d-border);padding:20px}
+.card h3{font-family:var(--d-font-display);font-size:.92rem;font-weight:600;color:var(--d-dark);margin:0 0 10px}
+.card p,.card li{font-size:.82rem;color:var(--d-text-secondary);line-height:1.6;margin:0 0 7px}
+.card ul{margin:0;padding-left:18px}
+code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.76rem;background:var(--d-canvas);padding:1px 5px;border-radius:4px;color:var(--d-text)}
+table{width:100%;border-collapse:collapse;margin-top:4px}
+th{font-family:var(--d-font-display);font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d-muted);text-align:left;padding:7px 8px;border-bottom:2px solid var(--d-blue)}
+td{font-size:.78rem;color:var(--d-text);padding:7px 8px;border-bottom:1px solid var(--d-border);vertical-align:top}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+.flag{background:#fff8e1;border:1px solid #FDE68A;border-radius:12px;padding:16px 20px;margin-top:20px}
+.flag h3{font-family:var(--d-font-display);font-size:.92rem;font-weight:600;color:#78350F;margin:0 0 8px}
+.flag p,.flag li{font-size:.82rem;color:#78350F;line-height:1.6;margin:0 0 6px}
+.flag ul{margin:0;padding-left:18px}
+a{color:var(--d-blue)}a:hover{color:#1557B0}
+@media (prefers-reduced-motion:no-preference){
+ .float-toshi{animation:bob 6s ease-in-out infinite}
+ @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+}
+
+.orb,.mo{opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+.orb-a{transform:translate(540px,650px);opacity:1}
+.orb-b{transform:translate(700px,650px)}
+.orb-c{transform:translate(540px,650px)}
+.mo-1{transform:translate(560px,527px);opacity:1}
+.mo-3,.mo-5{transform:translate(560px,527px)}
+.mo-2,.mo-4,.mo-6{transform:translate(680px,527px)}
+@media (prefers-reduced-motion: no-preference){
+ @keyframes coreL{
+  0%{transform:translate(540px,650px) scale(.25);opacity:0}
+  3%{transform:translate(540px,650px) scale(1.06);opacity:1}
+  5%{transform:translate(540px,650px) scale(1);opacity:1}
+  29%{transform:translate(540px,650px) scale(1);opacity:1}
+  33%{transform:translate(540px,650px) scale(.25);opacity:0}
+  100%{transform:translate(540px,650px) scale(.25);opacity:0}
+ }
+ @keyframes coreR{
+  0%{transform:translate(700px,650px) scale(.25);opacity:0}
+  3%{transform:translate(700px,650px) scale(1.06);opacity:1}
+  5%{transform:translate(700px,650px) scale(1);opacity:1}
+  29%{transform:translate(700px,650px) scale(1);opacity:1}
+  33%{transform:translate(700px,650px) scale(.25);opacity:0}
+  100%{transform:translate(700px,650px) scale(.25);opacity:0}
+ }
+ .orb-a{animation:coreL 12s linear infinite;animation-delay:-2s}
+ .orb-b{animation:coreR 12s linear infinite;animation-delay:2s}
+ .orb-c{animation:coreL 12s linear infinite;animation-delay:6s}
+ @keyframes modelL{
+  0%{transform:translate(560px,527px) scale(.25);opacity:0}
+  2.33%{transform:translate(560px,527px) scale(1.06);opacity:1}
+  3.73%{transform:translate(560px,527px) scale(1);opacity:1}
+  14%{transform:translate(560px,527px) scale(1);opacity:1}
+  16.7%{transform:translate(560px,527px) scale(.25);opacity:0}
+  100%{transform:translate(560px,527px) scale(.25);opacity:0}
+ }
+ @keyframes modelR{
+  0%{transform:translate(680px,527px) scale(.25);opacity:0}
+  2.33%{transform:translate(680px,527px) scale(1.06);opacity:1}
+  3.73%{transform:translate(680px,527px) scale(1);opacity:1}
+  14%{transform:translate(680px,527px) scale(1);opacity:1}
+  16.7%{transform:translate(680px,527px) scale(.25);opacity:0}
+  100%{transform:translate(680px,527px) scale(.25);opacity:0}
+ }
+ .mo-1,.mo-3,.mo-5{animation:modelL 18s linear infinite}
+ .mo-2,.mo-4,.mo-6{animation:modelR 18s linear infinite}
+ .mo-1{animation-delay:-1.5s}.mo-2{animation-delay:1.5s}.mo-3{animation-delay:4.5s}
+ .mo-4{animation-delay:7.5s}.mo-5{animation-delay:10.5s}.mo-6{animation-delay:13.5s}
+}
+</style></head><body>
+<div class="wrap">
+<p class="eyebrow">Landing page · concept for implementation</p>
+<h1>Not just software. A protocol.</h1>
+<p class="lede">Three layers, stacked and load-bearing: an open protocol underneath, KlassApp's core on top of it, and Toshi above — kept in its own warm palette on purpose. The tools a school already runs live inside the core, surfacing one at a time on its faces. The models behind Toshi do the same, one layer up.</p>
+
+<div class="stage">
+<svg viewBox="216 380 808 518" role="img" aria-labelledby="t d">
+<title id="t">KlassApp isometric layer tower</title>
+<desc id="d">An isometric tower of three stacked layers — a dark protocol slab carrying three small cores, a green KlassApp core block, and a floating clay Toshi block topped by an upright tile bearing the KlassApp K mark. The integrated tools — WhatsApp, Google Drive and Slack — surface one at a time on the green core block's two visible faces, each growing out of the surface, holding, and sinking back in. The six AI models behind Toshi do the same on the clay block above: Anthropic, OpenAI, Grok, Gemini, Kimi and Z.ai, one at a time.</desc>
+<defs>
+<radialGradient id="fade" gradientUnits="userSpaceOnUse" cx="620" cy="700" r="400"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<mask id="floorMask"><rect x="80" y="560" width="1090" height="338" fill="url(#fade)"/></mask>
+<mask id="toshiTrack"><rect x="550" y="500" width="140" height="100" fill="#fff"/><path d="M500 468 L620 408 L740 468 L620 528 Z" fill="#000"/></mask>
+<mask id="coreTrack"><rect x="510" y="570" width="220" height="160" fill="#fff"/><path d="M460 560 L620 480 L780 560 L620 640 Z" fill="#000"/></mask>
+<filter id="soft" x="-40%" y="-60%" width="180%" height="240%"><feGaussianBlur stdDeviation="17"/></filter>
+</defs>
+
+<!-- ground: faint isometric floor, symmetric about the tower axis, fading out via mask so no hairline dead-ends -->
+<g mask="url(#floorMask)" stroke="#CBD5E1" stroke-width="1" opacity=".5">
+<path d="M360 470 L880 730"/><path d="M360 590 L880 850"/>
+<path d="M360 730 L880 470"/><path d="M360 850 L880 590"/>
+</g>
+<path d="M620 745 L905 887 L620 1029 L335 887 Z" fill="#0F172A" opacity=".07" filter="url(#soft)"/>
+
+<!-- ─── Layer 1 · Protocol slab ─── -->
+<g>
+<path d="M620 785 L870 660 L870 714 L620 839 Z" fill="#0F172A"/>
+<path d="M370 660 L620 785 L620 839 L370 714 Z" fill="#1E293B"/>
+<path d="M370 660 L620 535 L870 660 L620 785 Z" fill="#334155"/>
+<path d="M370 687 L620 812" stroke="#0F172A" stroke-width="1" opacity=".55"/>
+</g>
+<!-- three protocol cores seated on the slab's exposed margin: Open Source · MCP Compatible · Community-Driven -->
+<g stroke="#94A3B8" stroke-width="1">
+<g><path d="M415 663 L449 646 L449 664 L415 681 Z" fill="#CBD5E1"/><path d="M381 646 L415 663 L415 681 L381 664 Z" fill="#E2E8F0"/><path d="M381 646 L415 629 L449 646 L415 663 Z" fill="#FFFFFF"/></g>
+<g><path d="M825 663 L859 646 L859 664 L825 681 Z" fill="#CBD5E1"/><path d="M791 646 L825 663 L825 681 L791 664 Z" fill="#E2E8F0"/><path d="M791 646 L825 629 L859 646 L825 663 Z" fill="#FFFFFF"/></g>
+</g>
+
+<!-- ─── Layer 2 · KlassApp core · dominant by height, not width ─── -->
+<g>
+<path d="M620 640 L780 560 L780 660 L620 740 Z" fill="#16A34A"/>
+<path d="M460 560 L620 640 L620 740 L460 660 Z" fill="#22C55E"/>
+<path d="M460 560 L620 480 L780 560 L620 640 Z" fill="#4ADE80"/>
+<g stroke="#16A34A" stroke-width="1" opacity=".55"><path d="M460 593 L620 673"/><path d="M460 626 L620 706"/></g>
+</g>
+<!-- front core drawn after the block so it reads as seated in front of it -->
+<g stroke="#94A3B8" stroke-width="1">
+<g><path d="M620 765 L654 748 L654 766 L620 783 Z" fill="#CBD5E1"/><path d="M586 748 L620 765 L620 783 L586 766 Z" fill="#E2E8F0"/><path d="M586 748 L620 731 L654 748 L620 765 Z" fill="#FFFFFF"/></g>
+</g>
+
+<!-- ─── Layer 3 · Toshi · clay, floating 34px clear of the core ─── -->
+<g class="float-toshi">
+<path d="M620 528 L740 468 L740 526 L620 586 Z" fill="#b55738"/>
+<path d="M500 468 L620 528 L620 586 L500 526 Z" fill="#c96442"/>
+<path d="M500 468 L620 408 L740 468 L620 528 Z" fill="#f5f4ed"/>
+<path d="M500 497 L620 557" stroke="#b55738" stroke-width="1" opacity=".5"/>
+<!-- Toshi's own icon: the real K mark on an UPRIGHT tile standing on the top face.
+     Never skewed onto the isometric plane. Iso ellipse below seats it. -->
+<ellipse cx="620" cy="468" rx="27" ry="13.5" fill="#b55738" opacity=".16"/>
+<rect x="588" y="404" width="64" height="64" rx="14" fill="#FFFFFF" stroke="#e8e6dc"/>
+<g transform="translate(598 414) scale(0.022000)" aria-hidden="true"><defs>
+    <linearGradient id="Gradient1" x1="1478.19" x2="1488.68" y1="369.001" y2="1043.03" gradientUnits="userSpaceOnUse">
+      <stop class="stop0" offset="0" stop-color="#13904D"></stop>
+      <stop class="stop1" offset="1" stop-color="#2DC35E"></stop>
+    </linearGradient>
+    <linearGradient id="Gradient2" x1="411.787" x2="498.979" y1="1097.71" y2="373.321" gradientUnits="userSpaceOnUse">
+      <stop class="stop0" offset="0" stop-color="#004093"></stop>
+      <stop class="stop1" offset="1" stop-color="#0273D4"></stop>
+    </linearGradient>
+    <linearGradient id="Gradient3" x1="1030.69" x2="1367.99" y1="1565" y2="1336.37" gradientUnits="userSpaceOnUse">
+      <stop class="stop0" offset="0" stop-color="#004693"></stop>
+      <stop class="stop1" offset="1" stop-color="#006DD4"></stop>
+    </linearGradient>
+    <linearGradient id="Gradient4" x1="491.171" x2="790.601" y1="1747.78" y2="1371.88" gradientUnits="userSpaceOnUse">
+      <stop class="stop0" offset="0" stop-color="#01449A"></stop>
+      <stop class="stop1" offset="1" stop-color="#0269C8"></stop>
+    </linearGradient>
+    <linearGradient id="Gradient5" x1="871.397" x2="571.671" y1="1406.03" y2="822.884" gradientUnits="userSpaceOnUse">
+      <stop class="stop0" offset="0" stop-color="#00734A"></stop>
+      <stop class="stop1" offset="1" stop-color="#36D661"></stop>
+    </linearGradient>
+  </defs>
+  <path fill="url(#Gradient5)" d="M 379.054 1666.76 C 378.365 1665.45 378.165 1663.5 378.163 1662.03 C 378.732 1587.24 378.861 1512.45 378.552 1437.66 C 378.35 1356.23 378.225 1274.72 378.315 1193.29 C 378.768 1187.55 377.507 1183.91 381.752 1179.39 C 403.067 1156.69 426.336 1135.11 448.644 1113.48 L 566.404 998.575 L 945.423 628.387 C 949.278 633.293 954.697 637.718 958.946 642.462 C 971.816 656.832 985.261 670.31 998.767 684.068 C 1033.36 719.453 1067.56 755.229 1101.35 791.388 C 1113.14 803.883 1133.99 823.393 1144.05 835.571 C 1161.64 840.033 1196.54 843.669 1210.94 849.245 L 884.871 1170.7 L 778.743 1274.83 C 770.938 1282.54 738.93 1312.4 735.325 1319.76 L 735.132 1554.01 L 735.13 1626.98 C 735.156 1639.1 734.681 1655.68 735.619 1667.19 C 707.682 1665.48 666.971 1666.67 637.779 1666.69 L 458.841 1666.84 C 436.755 1666.87 400.182 1668.11 379.054 1666.76 z"></path>
+  <path fill="url(#Gradient4)" d="M 379.054 1666.76 C 379.341 1666.05 442.691 1604.27 450.708 1596.46 L 636.037 1414.65 C 648.337 1402.51 725.377 1324.94 735.325 1319.76 L 735.132 1554.01 L 735.13 1626.98 C 735.156 1639.1 734.681 1655.68 735.619 1667.19 C 707.682 1665.48 666.971 1666.67 637.779 1666.69 L 458.841 1666.84 C 436.755 1666.87 400.182 1668.11 379.054 1666.76 z"></path>
+  <path fill="url(#Gradient3)" d="M 1092.45 1042.71 C 1095.82 1043.45 1098.08 1046.28 1100.19 1048.92 L 1423.81 1453.11 L 1528.25 1583.45 L 1568.43 1633.25 C 1577.98 1645.11 1586.08 1654.19 1594.63 1666.89 C 1575.65 1668.71 1546.64 1666.46 1526.22 1666.63 C 1491.29 1666.83 1456.36 1666.83 1421.43 1666.63 C 1396.97 1666.68 1373.82 1667.35 1349.25 1666.78 L 1210.41 1666.8 C 1198.24 1666.84 1150.53 1667.86 1141.71 1665.56 C 1132.55 1656.82 1114.46 1633.21 1106.06 1622.69 L 1040.17 1539.83 L 917.923 1386.61 L 875.279 1332.7 C 868.598 1324.32 844.633 1297.43 844.403 1289.09 C 849.305 1280.32 881.095 1250.52 889.536 1242.38 L 944.167 1189.16 L 1034.78 1099.52 C 1046.73 1087.51 1058.35 1075.95 1070.69 1064.3 C 1078.19 1057.22 1084.35 1049.49 1092.45 1042.71 z"></path>
+  <path fill="#29BF5D" d="M 378.864 350.858 C 385.088 348.768 450.325 349.948 461.644 349.979 L 622.362 350.001 L 700.987 349.972 C 709.322 349.987 725.372 349.089 732.865 350.078 C 736.897 356.014 735.183 451.793 735.073 466.536 L 735.147 584.984 L 735.089 688.086 C 735.175 703.102 736.427 736.248 734.864 750.155 C 723.477 763.143 709.116 777.04 696.554 788.99 C 650.548 832.75 606.335 880.404 559.2 922.84 C 553.485 929.758 540.665 941.688 533.636 948.596 L 478.624 1002.24 L 416.254 1064.18 C 408.25 1072.17 386.579 1094.81 378.945 1099.47 C 379.279 1084.83 378.601 1068.03 378.593 1053 L 378.565 934.469 L 378.317 555.985 L 378.376 420.358 C 378.365 403.566 377.247 365.807 378.864 350.858 z"></path>
+  <path fill="url(#Gradient2)" d="M 378.864 350.858 C 384.578 355.299 394.789 366.74 400.483 372.668 C 411.189 383.686 421.978 394.623 432.849 405.478 L 510.577 483.974 C 525.592 499.16 542.304 515.403 556.629 531.076 C 557.775 564.211 556.95 601.948 556.935 635.532 L 556.991 826.478 C 557.016 841.809 555.929 912.754 559.2 922.84 C 553.485 929.758 540.665 941.688 533.636 948.596 L 478.624 1002.24 L 416.254 1064.18 C 408.25 1072.17 386.579 1094.81 378.945 1099.47 C 379.279 1084.83 378.601 1068.03 378.593 1053 L 378.565 934.469 L 378.317 555.985 L 378.376 420.358 C 378.365 403.566 377.247 365.807 378.864 350.858 z"></path>
+  <path fill="url(#Gradient1)" d="M 937.312 308.43 L 1252.36 347.197 C 1272.83 349.59 1405.89 362.449 1414.84 368.145 C 1424.19 377.072 1434.1 389.5 1442.59 399.548 C 1454.91 414.191 1467.34 428.742 1479.89 443.199 L 1630.48 619.466 L 1675.74 672.676 C 1687.47 686.702 1705.13 708.327 1717.88 720.982 C 1695.59 716.864 1673.25 712.953 1650.88 709.25 C 1638.09 707.257 1616.76 705.097 1605.36 701.885 C 1604.61 732.845 1604.34 763.815 1604.55 794.784 C 1604.6 807.173 1604.11 829.33 1605.21 841.082 C 1617.05 850.147 1625.98 857.245 1628.03 872.979 C 1631.53 900.001 1614.71 901.771 1612.94 916.456 C 1612.05 923.921 1632.93 1031.15 1636.64 1043.31 C 1614.22 1042.77 1565.97 1041.94 1544.62 1043.67 C 1545.82 1026.54 1554.47 990.553 1557.82 972.228 C 1559.98 960.333 1566.7 924.142 1570 913.639 C 1542.73 889.862 1543.37 861.146 1575.13 841.893 C 1574.3 796.018 1573.54 742.854 1574.9 696.95 C 1539.15 690.118 1504.3 684.666 1468.63 678.477 L 1325.57 653.111 C 1315.35 651.32 1256.34 642.965 1251.54 639.709 C 1242.38 634.536 1215.19 603.544 1206.28 594.124 C 1176.73 563.34 1147.47 532.268 1118.52 500.915 C 1098.9 479.888 1078.86 459.663 1059.12 438.904 L 937.312 308.43 z"></path>
+  <path fill="#29BF5D" d="M937.312 308.43 1252.36 347.197C1272.83 349.59 1405.89 362.449 1414.84 368.145 1411.43 370.052 1409.86 371.364 1407.76 374.696 1392.78 398.468 1378.92 423.344 1364.6 447.535L1283.49 584.49C1274.6 599.777 1261.05 626.358 1251.54 639.709 1242.38 634.536 1215.19 603.544 1206.28 594.124 1176.73 563.34 1147.47 532.268 1118.52 500.915 1098.9 479.888 1078.86 459.663 1059.12 438.904L937.312 308.43zM1038.4 470.135C1090.07 522.924 1140.44 578.973 1192 631.943 1206.92 647.269 1218.38 661.26 1234.09 676.407 1214.06 709.779 1189.79 755.958 1171.84 791.027 1163.68 786.364 1144.73 765.511 1137.14 757.585L1071.2 687.857 1018.21 632.561C1003.89 617.834 987.836 602.34 974.91 586.522 978.152 576.051 1030.31 480.696 1038.4 470.135z"></path>
+  <path fill="#199D52" d="M 1234.09 676.407 C 1245.79 676.678 1293.5 686.34 1307.03 688.716 L 1439.53 711.058 C 1463.12 715.06 1492.35 721.213 1515.56 723.513 C 1509.73 736.661 1456.18 834.366 1450.05 838.743 C 1429.6 838.933 1396.42 830.359 1375.38 827.045 C 1341.85 821.764 1308.19 815.252 1274.81 809.412 L 1207.06 797.913 C 1199.55 796.641 1178.04 793.402 1171.84 791.027 C 1189.79 755.958 1214.06 709.779 1234.09 676.407 z"></path></g>
+<g class="model-slots">
+<g class="mo mo-1" aria-label="anthropic"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-11 -4.15) scale(0.23913)" aria-hidden="true">
+<path d="M66.4915 0H52.5029L78.0115 64H92.0001L66.4915 0Z" fill="#141413"></path>
+<path d="M26.08 0L0.571472 64H14.8343L20.0512 50.56H46.7374L51.9543 64H66.2172L40.7086 0H26.08ZM24.6647 38.6743L33.3943 16.1829L42.1239 38.6743H24.6647Z" fill="#141413"></path></g></g>
+<g class="mo mo-2" aria-label="openai"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-13.22 -9.71) scale(1.321321)" aria-hidden="true"><path d="M11.248 18.25q-.825 0-1.568-.314a4.3 4.3 0 0 1-1.32-.874 4 4 0 0 1-1.304.214 4 4 0 0 1-2.046-.544 4.27 4.27 0 0 1-1.518-1.485 4 4 0 0 1-.56-2.095q0-.48.131-1.04A4.4 4.4 0 0 1 2.04 10.71a4.07 4.07 0 0 1 .017-3.4 4.2 4.2 0 0 1 1.056-1.418 3.8 3.8 0 0 1 1.6-.842 3.9 3.9 0 0 1 .76-1.683q.593-.759 1.451-1.188a4.04 4.04 0 0 1 1.832-.429q.825 0 1.567.313.742.314 1.32.875a4 4 0 0 1 1.304-.215q1.106 0 2.046.545a4.14 4.14 0 0 1 1.501 1.485q.578.941.578 2.095 0 .48-.132 1.04.66.61 1.023 1.419.363.792.363 1.666 0 .892-.38 1.717a4.3 4.3 0 0 1-1.072 1.435 3.8 3.8 0 0 1-1.584.825 3.8 3.8 0 0 1-.775 1.683 4.06 4.06 0 0 1-1.436 1.188 4.04 4.04 0 0 1-1.832.429m-4.076-2.062q.825 0 1.435-.347l3.103-1.782a.36.36 0 0 0 .164-.313v-1.42L7.881 14.62a.67.67 0 0 1-.726 0l-3.118-1.798a.5.5 0 0 1-.017.115v.198q0 .841.396 1.551.413.693 1.139 1.089a3.2 3.2 0 0 0 1.617.412m.165-2.69a.4.4 0 0 0 .181.05q.083 0 .165-.05l1.238-.71-3.977-2.31a.7.7 0 0 1-.363-.643v-3.58q-.825.362-1.32 1.122a2.9 2.9 0 0 0-.495 1.65q0 .809.413 1.55.412.743 1.072 1.123zm3.91 3.663q.875 0 1.585-.396a2.96 2.96 0 0 0 1.534-2.64v-3.564a.32.32 0 0 0-.165-.297l-1.254-.726v4.604a.7.7 0 0 1-.363.643l-3.119 1.799a3 3 0 0 0 1.783.577m.627-6.039V8.878L10.01 7.822 8.129 8.878v2.244l1.881 1.056zM7.057 5.859a.7.7 0 0 1 .363-.644l3.119-1.798a3 3 0 0 0-1.782-.578q-.874 0-1.584.396A2.96 2.96 0 0 0 6.05 4.324a3.07 3.07 0 0 0-.396 1.551v3.547q0 .199.165.314l1.237.726zm8.383 7.887q.825-.364 1.303-1.123.495-.758.495-1.65a3.15 3.15 0 0 0-.412-1.55q-.413-.743-1.073-1.123l-3.086-1.782q-.099-.065-.181-.049a.3.3 0 0 0-.165.05l-1.238.692 3.993 2.327a.6.6 0 0 1 .264.264.64.64 0 0 1 .1.363zm-3.317-8.382a.63.63 0 0 1 .726 0l3.135 1.831v-.297q0-.792-.396-1.501a2.86 2.86 0 0 0-1.105-1.155q-.71-.43-1.65-.43-.825 0-1.436.347L8.294 5.941a.36.36 0 0 0-.165.314v1.418z"></path></g></g>
+<g class="mo mo-3" aria-label="xai-grok"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-11 -7.5) scale(0.021484)" aria-hidden="true">
+<path d="M395.479 633.828L735.91 381.105C752.599 368.715 776.454 373.548 784.406 392.792C826.26 494.285 807.561 616.253 724.288 699.996C641.016 783.739 525.151 802.104 419.247 760.277L303.556 814.143C469.49 928.202 670.987 899.995 796.901 773.282C896.776 672.843 927.708 535.937 898.785 412.476L899.047 412.739C857.105 231.37 909.358 158.874 1016.4 10.6326C1018.93 7.11771 1021.47 3.60279 1024 0L883.144 141.651V141.212L395.392 633.916" fill="#0A0A0A"></path>
+<path d="M325.226 695.251C206.128 580.84 226.662 403.776 328.285 301.668C403.431 226.097 526.549 195.254 634.026 240.596L749.454 186.994C728.657 171.88 702.007 155.623 671.424 144.2C533.19 86.9942 367.693 115.465 255.323 228.382C147.234 337.081 113.244 504.215 171.613 646.833C215.216 753.423 143.739 828.818 71.7385 904.916C46.2237 931.893 20.6216 958.87 0 987.429L325.139 695.339" fill="#0A0A0A"></path></g></g>
+<g class="mo mo-4" aria-label="google-gemini"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-11 -7.5) scale(0.785714)" aria-hidden="true">
+<path d="M14 28C14 26.0633 13.6267 24.2433 12.88 22.54C12.1567 20.8367 11.165 19.355 9.905 18.095C8.645 16.835 7.16333 15.8433 5.46 15.12C3.75667 14.3733 1.93667 14 0 14C1.93667 14 3.75667 13.6383 5.46 12.915C7.16333 12.1683 8.645 11.165 9.905 9.905C11.165 8.645 12.1567 7.16333 12.88 5.46C13.6267 3.75667 14 1.93667 14 0C14 1.93667 14.3617 3.75667 15.085 5.46C15.8317 7.16333 16.835 8.645 18.095 9.905C19.355 11.165 20.8367 12.1683 22.54 12.915C24.2433 13.6383 26.0633 14 28 14C26.0633 14 24.2433 14.3733 22.54 15.12C20.8367 15.8433 19.355 16.835 18.095 18.095C16.835 19.355 15.8317 20.8367 15.085 22.54C14.3617 24.2433 14 26.0633 14 28Z" fill="url(#paint0_radial_16771_53212)"></path>
+<defs>
+<radialGradient id="paint0_radial_16771_53212" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(2.77876 11.3795) rotate(18.6832) scale(29.8025 238.737)">
+<stop offset="0.0671246" stop-color="#9168C0"></stop>
+<stop offset="0.342551" stop-color="#5684D1"></stop>
+<stop offset="0.672076" stop-color="#1BA1E3"></stop>
+</radialGradient>
+</defs></g></g>
+<g class="mo mo-5" aria-label="moonshot-kimi"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-10.56 -7.5) scale(0.88)" aria-hidden="true">
+<path d="M21.7202 0.939941C22.9502 0.939941 23.9502 1.93994 23.9502 3.16994C23.9502 4.39994 22.9502 5.39994 21.7202 5.39994H19.7502C19.6002 5.39994 19.4902 5.27994 19.4902 5.13994V3.16994C19.4902 1.93994 20.4902 0.939941 21.7202 0.939941Z" fill="#1783FF"></path>
+<path d="M9.39 13.9501L17.82 5.59012C17.98 5.43012 17.89 5.12012 17.68 5.12012H13.14C13.14 5.12012 13.04 5.14012 13 5.18012L3.92 14.1901C3.78 14.3301 3.57 14.2101 3.57 13.9801V5.39012C3.57 5.24012 3.47 5.12012 3.35 5.12012H0.219999C0.0999993 5.12012 0 5.24012 0 5.39012V23.9201C0 24.0701 0.0999993 24.1901 0.219999 24.1901H3.35C3.47 24.1901 3.57 24.0701 3.57 23.9201V20.1401C3.57 20.0601 3.6 19.9801 3.65 19.9301L6.47 17.1401C6.54 17.0701 6.63 17.0601 6.71 17.1101L14.24 22.6501C15.47 23.4801 16.85 23.9901 18.25 24.1401C18.37 24.1501 18.48 24.0301 18.48 23.8701V20.3101C18.48 20.1701 18.4 20.0601 18.29 20.0501C17.47 19.9201 16.66 19.6001 15.94 19.1101L9.42 14.3901C9.28 14.3001 9.27 14.0701 9.39 13.9501Z" fill="black"></path></g></g>
+<g class="mo mo-6" aria-label="zhipu-zai"><rect x="-16" y="-12.5" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#e8e6dc"/><g transform="translate(-11 -7.5) scale(0.733333)" aria-hidden="true">
+
+<g id="图层_2">
+</g>
+<g id="图层_1">
+&#x9;<path class="st194" d="M24.51,28.51H5.49c-2.21,0-4-1.79-4-4V5.49c0-2.21,1.79-4,4-4h19.03c2.21,0,4,1.79,4,4v19.03   C28.51,26.72,26.72,28.51,24.51,28.51z"></path>
+&#x9;<g>
+&#x9;&#x9;<g>
+&#x9;&#x9;&#x9;<g>
+&#x9;&#x9;&#x9;&#x9;<g>
+&#x9;&#x9;&#x9;&#x9;&#x9;<path class="st23" d="M15.47,7.1l-1.3,1.85c-0.2,0.29-0.54,0.47-0.9,0.47h-7.1V7.09C6.16,7.1,15.47,7.1,15.47,7.1z"></path>
+&#x9;&#x9;&#x9;&#x9;&#x9;<polygon class="st23" points="24.3,7.1 13.14,22.91 5.7,22.91 16.86,7.1      "></polygon>
+&#x9;&#x9;&#x9;&#x9;&#x9;<path class="st23" d="M14.53,22.91l1.31-1.86c0.2-0.29,0.54-0.47,0.9-0.47h7.09v2.33H14.53z"></path>
+&#x9;&#x9;&#x9;&#x9;</g>
+&#x9;&#x9;&#x9;</g>
+&#x9;&#x9;</g>
+&#x9;</g>
+</g></g></g>
+</g>
+
+</g>
+</g>
+
+<!-- ─── The three integrated tools live inside the core block and surface one at a time
+     on its two visible faces, alternating left/right. Real official marks. ─── -->
+<g class="tool-slots">
+<g class="orb orb-a"><ellipse cx="0" cy="34" rx="20" ry="6" fill="#0F172A" opacity=".12"/><rect x="-28" y="-28" width="56" height="56" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/><g transform="translate(-20 -20) scale(0.228291)" aria-hidden="true"><path fill="#25D366" d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.313-6.179 22.558 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.517 31.126 8.523h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.928z"></path><path fill="#fff" fill-rule="evenodd" d="M68.772 55.603c-1.378-3.061-2.828-3.123-4.137-3.176l-3.524-.043c-1.226 0-3.218.46-4.902 2.3s-6.435 6.287-6.435 15.332 6.588 17.785 7.506 19.013 12.718 20.381 31.405 27.75c15.529 6.124 18.689 4.906 22.061 4.6s10.877-4.447 12.408-8.74 1.532-7.971 1.073-8.74-1.685-1.226-3.525-2.146-10.877-5.367-12.562-5.981-2.91-.919-4.137.921-4.746 5.979-5.819 7.206-2.144 1.381-3.984.462-7.76-2.861-14.784-9.124c-5.465-4.873-9.154-10.891-10.228-12.73s-.114-2.835.808-3.751c.825-.824 1.838-2.147 2.759-3.22s1.224-1.84 1.836-3.065.307-2.301-.153-3.22-4.032-10.011-5.666-13.647"></path></g></g>
+<g class="orb orb-b"><ellipse cx="0" cy="34" rx="20" ry="6" fill="#0F172A" opacity=".12"/><rect x="-28" y="-28" width="56" height="56" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/><g transform="translate(-20 -20) scale(0.458191)" aria-hidden="true"><path fill="#0066da" d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"></path><path fill="#00ac47" d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"></path><path fill="#ea4335" d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"></path><path fill="#00832d" d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"></path><path fill="#2684fc" d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"></path><path fill="#ffba00" d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"></path></g></g>
+<g class="orb orb-c"><ellipse cx="0" cy="34" rx="20" ry="6" fill="#0F172A" opacity=".12"/><rect x="-28" y="-28" width="56" height="56" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/><g transform="translate(-20 -20) scale(0.314964)" aria-hidden="true"><path fill="#E01E5A" d="M27.2 80c0 7.3-5.9 13.2-13.2 13.2C6.7 93.2.8 87.3.8 80c0-7.3 5.9-13.2 13.2-13.2h13.2V80zm6.6 0c0-7.3 5.9-13.2 13.2-13.2 7.3 0 13.2 5.9 13.2 13.2v33c0 7.3-5.9 13.2-13.2 13.2-7.3 0-13.2-5.9-13.2-13.2V80z"></path><path fill="#36C5F0" d="M47 27c-7.3 0-13.2-5.9-13.2-13.2C33.8 6.5 39.7.6 47 .6c7.3 0 13.2 5.9 13.2 13.2V27H47zm0 6.7c7.3 0 13.2 5.9 13.2 13.2 0 7.3-5.9 13.2-13.2 13.2H13.9C6.6 60.1.7 54.2.7 46.9c0-7.3 5.9-13.2 13.2-13.2H47z"></path><path fill="#2EB67D" d="M99.9 46.9c0-7.3 5.9-13.2 13.2-13.2 7.3 0 13.2 5.9 13.2 13.2 0 7.3-5.9 13.2-13.2 13.2H99.9V46.9zm-6.6 0c0 7.3-5.9 13.2-13.2 13.2-7.3 0-13.2-5.9-13.2-13.2V13.8C66.9 6.5 72.8.6 80.1.6c7.3 0 13.2 5.9 13.2 13.2v33.1z"></path><path fill="#ECB22E" d="M80.1 99.8c7.3 0 13.2 5.9 13.2 13.2 0 7.3-5.9 13.2-13.2 13.2-7.3 0-13.2-5.9-13.2-13.2V99.8h13.2zm0-6.6c-7.3 0-13.2-5.9-13.2-13.2 0-7.3 5.9-13.2 13.2-13.2h33.1c7.3 0 13.2 5.9 13.2 13.2 0 7.3-5.9 13.2-13.2 13.2H80.1z"></path></g></g>
+</g>
+
+</svg>
+
+<div class="legend">
+<div class="leg-item"><span class="leg-cube" style="background:#c96442"></span><div><p class="leg-name">Toshi</p><p class="leg-sub">Top block, floating clear of the stack, marked with the K. Clay palette, kept out of the core brand on purpose.</p></div></div>
+<div class="leg-item"><span class="leg-cube" style="background:#22C55E"></span><div><p class="leg-name">KlassApp core</p><p class="leg-sub">Students, fees, marks, reports. Tallest block in the stack — dominant by height.</p></div></div>
+<div class="leg-item"><span class="leg-cube" style="background:#1E293B"></span><div><p class="leg-name">Protocol</p><p class="leg-sub">The slab everything rests on. Open, interoperable, community-run.</p></div></div>
+<div class="leg-item"><span class="leg-cube" style="background:#FFFFFF;border:1px solid #E2E8F0"></span><div><p class="leg-name">WhatsApp · Google Drive · Slack</p><p class="leg-sub">The integrated tools, kept inside the core and surfacing one at a time on its faces, on their real official marks.</p></div></div>
+</div>
+<div class="legend cores">
+<div class="leg-item"><span class="leg-cube" style="background:#FFFFFF;border:1px solid #CBD5E1"></span><div><p class="leg-name">Open Source</p><p class="leg-sub">Left core on the slab. The substrate is inspectable.</p></div></div>
+<div class="leg-item"><span class="leg-cube" style="background:#FFFFFF;border:1px solid #CBD5E1"></span><div><p class="leg-name">MCP Compatible</p><p class="leg-sub">Front core. Toshi and third parties speak the same protocol.</p></div></div>
+<div class="leg-item"><span class="leg-cube" style="background:#FFFFFF;border:1px solid #CBD5E1"></span><div><p class="leg-name">Community-Driven</p><p class="leg-sub">Right core. Schools extend it, not just consume it.</p></div></div>
+</div>
+</div>
+
+<h2>Handoff spec</h2>
+<div class="spec">
+
+<div class="card"><h3>Isometric projection</h3>
+<p>2:1 dimetric — every face angle is <code>±26.57°</code> (<code>slope 0.5</code>). One rule generates the whole scene, so new blocks stay consistent:</p>
+<ul>
+<li>Top face: <code>(cx−W,cy) (cx,cy−W/2) (cx+W,cy) (cx,cy+W/2)</code></li>
+<li>Left face: drops <code>H</code> from the left and bottom vertices</li>
+<li>Right face: drops <code>H</code> from the bottom and right vertices</li>
+<li>Stacking: a block resting on another has <code>cy = cy_below − H_self</code></li>
+</ul>
+<p>Blocks: protocol <code>cy 660 · W 250 · H 54</code>, core <code>cy 560 · W 160 · H 100</code>, Toshi <code>cy 468 · W 120 · H 58</code> (34px float gap above the core). <b>The core is dominant by height, not width</b> — it is the tallest block, while staying narrow enough that the slab keeps a 90px exposed margin for the three protocol cores to sit on. Widen the core and they disappear behind it.</p></div>
+
+<div class="card"><h3>Face shading — flat, no gradients</h3>
+<p>Depth comes from three flat tones per block, not gradients. That is deliberate: the app's own surfaces carry depth with flat tints and the 1px outline-ring shadow, never gradients, so an illustration full of them would read as foreign inside the app.</p>
+<table><thead><tr><th>Layer</th><th>Top</th><th>Left</th><th>Right</th></tr></thead><tbody>
+<tr><td>Protocol</td><td><span class="sw" style="background:#334155"></span>#334155</td><td><span class="sw" style="background:#1E293B"></span>#1E293B</td><td><span class="sw" style="background:#0F172A"></span>#0F172A</td></tr>
+<tr><td>Core</td><td><span class="sw" style="background:#4ADE80"></span>#4ADE80</td><td><span class="sw" style="background:#22C55E"></span>#22C55E</td><td><span class="sw" style="background:#16A34A"></span>#16A34A</td></tr>
+<tr><td>Toshi</td><td><span class="sw" style="background:#f5f4ed"></span>#f5f4ed</td><td><span class="sw" style="background:#c96442"></span>#c96442</td><td><span class="sw" style="background:#b55738"></span>#b55738</td></tr>
+<tr><td>Cores</td><td><span class="sw" style="background:#FFFFFF;border:1px solid #CBD5E1"></span>#FFFFFF</td><td><span class="sw" style="background:#E2E8F0"></span>#E2E8F0</td><td><span class="sw" style="background:#CBD5E1"></span>#CBD5E1</td></tr>
+</tbody></table>
+<p>Every value is an existing token — <code>--d-dark-border/-surface/--d-dark</code>, core greens <code>#4ADE80</code> (literal — no current token) / <code>--d-green #22C55E</code> / <code>#16A34A</code> (literal — <code>--d-accent-dk</code> is now <code>#166534</code>, and <code>--d-accent</code> is <code>#15803D</code>; neither is used here), <code>--toshi-warm-bg/--toshi-accent/--toshi-accent-hover</code> (live value <code>#b55738</code>), <code>--d-white/--d-border/--d-border-strong</code>. Two core greens are literals rather than tokens, as noted; nothing else was mixed or invented.</p></div>
+
+<div class="card"><h3>Surfacing from inside the cube — the mechanic</h3>
+<p><b>The icons belong to the cube, not to a ring around it.</b> Each one grows out of a face centre, holds long enough to be read, then sinks back into the solid — and <b>only one is out at a time per cube</b>, so there is never a crowd to scan. The two visible faces alternate: left, then right, then left.</p>
+<p>Core block, <code>12s linear</code>, three tools at <code>4s</code> steps. Emergence anchors are the true centroids of the two visible faces — <code>540,650</code> (left) and <code>700,650</code> (right):</p>
+<table><thead><tr><th>Phase</th><th>Scale</th><th>Opacity</th></tr></thead><tbody>
+<tr><td>0% — inside the solid</td><td><code>0.25</code></td><td><code>0</code></td></tr>
+<tr><td>3% — breaks the surface</td><td><code>1.06</code></td><td><code>1</code></td></tr>
+<tr><td>5% — settles</td><td><code>1.00</code></td><td><code>1</code></td></tr>
+<tr><td>29% — held for reading</td><td><code>1.00</code></td><td><code>1</code></td></tr>
+<tr><td>33% — back inside</td><td><code>0.25</code></td><td><code>0</code></td></tr>
+</tbody></table>
+<p>The <code>1.06</code> overshoot is the whole trick: a linear scale-up reads as a tile fading in, while a slight overshoot settling back to <code>1</code> reads as something <i>pushed out</i> from within. <code>transform-box: fill-box</code> with <code>transform-origin: 50% 50%</code> makes each tile scale about its own centre — without it, CSS scales SVG groups about the <b>viewBox</b> centre and the tile slides across the illustration as it shrinks.</p>
+<p><b>Emerged tiles must stay inside their face's silhouette</b> — that is what makes them read as sitting on the solid rather than floating beside it. Core tiles clear it easily: a 56px tile on the core's left face spans <code>y 622–678</code> inside a <code>614–686</code> band, and the core block does not bob.</p>
+<p><b>The Toshi tiles are the tight case, because that block bobs.</b> For a 32px tile spanning <code>x 544–576</code>, the face's usable band is bounded by its top edge at the tile's <b>right</b> x (<code>506</code>, not the 489.5 you get from the left x — use the binding corner) and its bottom edge at the tile's <b>left</b> x (<code>548</code>): a 42px band. The <code>-7px</code> bob consumes 7 of that, leaving <b>35px</b>, so the tiles are <b>32×32</b> at local offset <code>y +3.5</code> (rendered centre <code>530.5</code>) — about 1.5px of slack at both bob extremes. They previously sat at the centroid (offset 0) at 34×34, which had 3.5px of margin at rest and went <b>3.5px outside the face at the bob peak</b>. <b>Model tiles carry no ground shadow</b> for the same reason the removed text pill didn't: there is no vertical room for one inside the face.</p>
+<p><b>The real constraint is the slant, not a half-width budget.</b> An earlier version of this note said a tile just had to stay inside the face's 120px half-width — that is wrong and it produced a real bug (a 70×34 pill overhanging the clay face by 11px). The face is a <b>parallelogram of 58px vertical thickness with slope 0.5</b>, so a tile of width <var>w</var> loses <code>w/2</code> of that thickness to the drop across its own span. The usable band for a tile spanning <code>x 525–595</code> is only <b>23px</b>, and the <code>-7px</code> bob eats a further 7, leaving <b>16px</b>. So: a 34px-tall tile can be at most <b>48px wide</b>; a 70px-wide tile at most <b>16px tall</b>. <code>70×34</code> does not fit anywhere on this face at any position.</p>
+<p><b>Before shipping any change to a tile's size, re-run the corner test:</b> four corners, evaluated at <b>both</b> <code>b=0</code> and <code>b=-7</code>, point-in-polygon against that face's quad — <code>M500 468 L620 528 L620 586 L500 526</code> (left) and <code>M620 528 L740 468 L740 526 L620 586</code> (right, which mirrors to the same band). Do not substitute a width-only check, do not measure the top edge at the wrong x, and do not test at rest only: every regression on this card so far has been one of those three shortcuts.</p>
+<p><b>Measured:</b> never more than <b>one visible per cube</b> across a full cycle, landing exactly on <code>540,650</code> / <code>700,650</code> and <code>560,527</code> / <code>680,527</code>. There is a deliberate beat between hand-offs, and it is worth stating exactly because it looks like a bug when you sample it: each cube is <b>empty for ~0.45s</b> between tiles. Derived from the keyframes rather than eyeballed — the core's opacity clears <code>0.5</code> from <code>1.5%</code> to <code>31%</code> of <code>12s</code> (3.54s visible, slots every 4s), the models' from <code>1.17%</code> to <code>15.35%</code> of <code>18s</code> (2.55s visible, slots every 3s). Sampling on a 1.2s timer against a 3s slot aliases straight into that gap and will report the cube bare in half your samples; that is the sampler, not the animation. Shorten the gap by extending the hold (<code>12%</code> → <code>13.5%</code>), never by overlapping two tiles.</p>
+<p>The earlier orbit, its dashed track rings and the long routed connector lines are all <b>gone</b>. Do not reinstate them: a ring drawn around the block contradicts the idea that the tools are <i>inside</i> it.</p></div>
+
+<div class="card"><h3>The tool tiles</h3>
+<p><b>Upright, never skewed</b> — a tile scales and fades but is never rotated or sheared, so the marks stay square to the viewer at every phase. 56×56, <code>radius 13</code>, <code>--d-white</code> fill, <code>1px --d-border</code> — same hairline-ring language as <code>.ds-card</code>, sized down from the old static 88×88 because three of them now share the hub's footprint.</p>
+<p>Each tile is drawn centred on its own origin (<code>x/y −28</code>) so one <code>translate()</code> keyframe positions it. Draw order puts the tile group <b>after</b> the core block, so a tile on a visible face paints on top of that face — reading as mounted on the solid.</p>
+<p>The marks are the real official SVGs from <code>assets/brand/</code>, <b>inlined verbatim</b> — path data untouched, each wrapped in <code>translate(-20 -20) scale()</code> to land at 40px centred on the tile (WhatsApp <code>0.228291</code>, Drive <code>0.458191</code>, Slack <code>0.314964</code> — the old 44px scales × <code>40/44</code>, so the path data itself was never retouched). Inlined rather than <code>&lt;image href&gt;</code> so there is no external fetch and the marks are real nodes. They sit on an <b>upright</b> plane precisely so no isometric matrix distorts them — third-party marks must never be skewed, recoloured or monochromed.</p>
+<p><b>Per-tile labels were dropped.</b> A label under a surfacing tile crosses the dark slab and the green face, where <code>--d-text-secondary #64748B</code> fails contrast on both. The marks are self-identifying and the legend beneath names all three — no moving text.</p></div>
+
+<div class="card"><h3>Toshi's icon tile</h3>
+<p>Toshi carries the real <b>K mark</b> — <code>klassapp-icon.svg</code>, inlined verbatim including its five brand gradients, scaled <code>0.022</code> (2000 → 44px).</p>
+<p>It sits on a <b>64px upright tile</b>, <code>radius 14</code>, <code>--d-white</code> fill, <code>1px --toshi-border #e8e6dc</code> — the border token is Toshi's, not the app's, so the tile belongs to the clay layer it stands on.</p>
+<p><b>Upright, never skewed.</b> The tile's bottom edge lands exactly on the top face's centre <code>(620,468)</code> so it reads as standing on the surface, seated by an iso ellipse <code>rx 27 · ry 13.5</code> at <code>--toshi-accent-hover</code> (live value <code>#b55738</code>) <code>opacity .16</code>. The <code>rx:ry</code> 2:1 ratio is what makes the shadow lie flat on the plane.</p>
+<p>It lives inside the <code>.float-toshi</code> group, so tile, shadow and block bob as one object.</p></div>
+
+<div class="card"><h3>The models, on the Toshi cube</h3>
+<p>Same mechanic one layer up, and deliberately so — the models belong <i>inside</i> Toshi exactly as the tools belong inside the core. Anchors are the centroids of the Toshi block's two visible faces, <code>560,527</code> (left) and <code>680,527</code> (right). <code>18s linear</code>, six marks at <code>3s</code> steps, one out at a time.</p>
+<p><b>The group sits inside <code>.float-toshi</code></b>, so the marks bob with the block they live in rather than sliding against it. Nested CSS transforms compose cleanly: the tile's own <code>translate()</code> is in viewBox units and is unaffected by the parent's <code>translateY</code> bob.</p>
+<p><b>The name pill it replaces is gone.</b> Provider names cross-fading in a static pill were a stand-in for marks I did not have. <b>The K tile is untouched</b> — 64px, <code>scale(0.022)</code>, still the only thing standing on the top face, and still the one mark that never retracts.</p>
+<p>Tiles are <b>32×32</b>, <code>radius 8</code>, <code>1px --toshi-border</code> — Toshi's border token, not the app's, so they read as belonging to the clay layer. Marks land in a 22px box; all six are the same size, with no special-cased tile.</p></div>
+
+<div class="card"><h3>Motion</h3>
+<p>All optional and all inside <code>@media (prefers-reduced-motion: no-preference)</code>.</p>
+<ul>
+<li>Core tools surfacing: <code>12s linear infinite</code>, three tiles at <code>4s</code> steps — out for ~3.5s each, with a <code>1.06</code> overshoot on the way out</li>
+<li>Toshi block: <code>translateY(−7px)</code> over <code>6s ease-in-out</code> — reinforces that it sits apart from the stack</li>
+<li>Models surfacing: <code>18s linear infinite</code>, six marks at <code>3s</code> steps — out for ~2.55s each, same overshoot, on the Toshi block's own two faces</li>
+</ul>
+<p>No bounce, no spring, no scale-up — consistent with the system's restrained motion. Note this illustration <b>adds</b> the reduced-motion guard the product stylesheets still lack.</p></div>
+
+<div class="card"><h3>Blade / CSS structure</h3>
+<p>Ship as one inline <code>&lt;svg&gt;</code> partial, not an <code>&lt;img&gt;</code> — the marks need to be real nodes and the motion needs CSS reach.</p>
+<ul>
+<li><code>resources/views/marketing/partials/layer-tower.blade.php</code></li>
+<li><code>viewBox="216 380 808 518"</code>, <code>width:100%; height:auto</code> — scales with no breakpoints</li>
+<li>Keep <code>role="img"</code> plus the <code>&lt;title&gt;</code>/<code>&lt;desc&gt;</code> pair; the tower carries real meaning</li>
+<li>Face fills can move to <code>var(--d-…)</code> tokens once the marketing layout links the token sheet</li>
+<li>Floor hairlines fade out through <code>mask="url(#floorMask)"</code> — a mask, not a visible gradient fill, so the no-gradient rule above still holds. They are symmetric about <code>x=620</code>; never let one terminate outside the slab silhouette.</li>
+<li>Below ~900px, drop the floor lines; the tiles sit inside the block footprint so nothing needs reflow, and the legend beneath carries all the naming</li>
+<li>Both animations are pure CSS on <code>&lt;g&gt;</code> elements set to <code>transform-box: fill-box</code> so each tile scales about its own centre; <code>translate()</code> values stay viewBox user units — no JS, no <code>requestAnimationFrame</code>, nothing to tear down on navigation</li>
+<li><b>The first frame must never be empty.</b> <code>.orb-a</code> and <code>.mo-1</code> carry <b>negative</b> delays (<code>-2s</code> / <code>-1.5s</code>) so each cube starts already mid-hold with one tile out. Without them both cubes render bare at <code>t=0</code> — and <code>t=0</code> is exactly what a card thumbnail, a PDF export and any screenshot capture. The remaining tiles are re-staggered off those phases (<code>2s/6s</code>; <code>1.5s…16.5s</code>) so the rhythm and the ~0.4s beat are unchanged. If you retime this, re-check the still frame, not just the loop.</li>
+<li>Reduced motion: the base rules (<code>.orb-a</code>, <code>.mo-1</code> at <code>opacity:1</code>) park one tile per cube at full size on a face, so the motionless render is composed rather than empty</li>
+</ul></div>
+
+</div>
+
+<div class="flag"><h3>Resolved — the six model marks are in</h3>
+<p>The real official SVGs were supplied and are now inlined from <code>assets/brand/models/&lt;name&gt;-mark.svg</code>: Anthropic, OpenAI, Grok (xAI), Gemini, Kimi (Moonshot) and Z.ai. Nothing was drawn, traced or recoloured — each mark's own path data and fills are untouched, wrapped only in a <code>translate() scale()</code> that centres it on its tile.</p>
+<p><b>They arrived with C2PA provenance metadata and that has to be stripped.</b> Every file carried an <code>&lt;metadata&gt;&lt;c2pa:manifest&gt;</code> block of base64 — 8–15 KB each, 54 KB across the seven files supplied, more than the entire rest of this page. Worse, it is fatal when inlined: the <code>xmlns:c2pa</code> namespace is declared on the file's own <code>&lt;svg&gt;</code> root, so lifting the children into this document leaves <code>c2pa:manifest</code> with an <b>unbound prefix</b> and the whole SVG fails to parse. If you re-export these marks, strip the metadata block before inlining — or reference them with <code>&lt;img src&gt;</code>, where the root element survives and the namespace stays bound.</p>
+<p><b>Per-provider scales</b> (each computed from that file's real viewBox, to a 22px box): Anthropic <code>0.239130</code> · OpenAI <code>1.321321</code> · Grok <code>0.021484</code> · Gemini <code>0.785714</code> · Kimi <code>0.88</code> · Z.ai <code>0.733333</code>. Gemini and DeepSeek carry their own <code>&lt;defs&gt;</code> gradients, which are preserved — do not flatten them to a solid.</p>
+<p><b>DeepSeek was cut from the set — six slots, not seven.</b> The only artwork supplied for it is a <code>195.02 × 41.36</code> wordmark, aspect 4.7:1 against the others' ~1:1. Scaled into a tile it rendered at ~9.8px cap height and read as mush beside six crisp glyphs; a wider tile then failed the face-containment test (width and height trade off on this slant — a 70px-wide tile cannot exceed ~16px in height, so no square-ish wide tile fits), and the 70×14 capsule that did fit turned one slot into a text label among six logos. Each fix traded one defect for another, so the slot is gone rather than shipped broken.</p>
+<p><b>To add it back:</b> DeepSeek's <b>icon-only</b> mark (the whale glyph without the wordmark) drops straight into a standard <code>32×32</code> tile at local offset <code>y +3.5</code>, at a scale computed like the other six, and the cycle returns to <code>21s</code> with <code>3s</code> steps and delays at <code>−1.5s … 16.5s</code>. Note that seven slots do <i>not</i> alternate faces evenly — an odd count puts two consecutive tiles on the same side once per lap. Ask DeepSeek brand resources for the icon lockup; do not crop the wordmark down to its glyph.</p></div>
+
+<div class="flag"><h3>Flagged — verify before this ships</h3>
+<ul>
+<li><b>This composition was authored before any landing-page source existed.</b> At the time, <code>ds-bundle</code> errored on every read and no marketing Blade was in the project, so the hub/connector diagram being replaced and the Protocol Cores section's real markup were never seen. <b>That has since changed</b> — <code>uploads/landing-v2.blade.php.txt</code> and <code>uploads/landing-preview.css</code> were later supplied and read in full (the hero in <code>concepts/hero-role-rotate/</code> is built from them). <b>The tower has not yet been re-checked against that source.</b> Do not re-request files that are already here; the open task is a diff, not an upload.</li>
+<li><b>Consequence:</b> layer <i>semantics</i> and the three core names are exactly as you specified, and every colour, font and radius is a real token from this system — but the composition's fit against the live section (width, vertical rhythm, whether the legend beneath duplicates copy already on the page) is still unverified. Worth noting from the source that <i>was</i> read: the landing page sets its own <code>--brand-*</code>/<code>--paper-*</code> tokens and ships no <code>--d-*</code> variables, so the token names quoted in these notes resolve in the app but not on the marketing page. Expect to retune spacing in Cursor.</li>
+<li><b>The KlassApp mark now appears once</b>, on Toshi's upright tile. The core block still carries no mark — the green <i>is</i> the brand there. If you want the K on the core too, it goes on another upright tile, never skewed onto the iso plane.</li>
+<li><b>Copy in the visual</b> — the tile labels and the legend beneath ("Clay palette, kept out of the core brand on purpose", "Students, fees, marks, reports", "Open, interoperable, community-run") is written to the documented voice, not lifted from the page. Swap in the real section copy if it already says these things.</li>
+<li><b>The KlassApp mark is absent by choice.</b> The core block is the brand here. If you want the real logo on the core's top face, use <code>klassapp-icon.svg</code> upright on a floating tile rather than skewed onto the iso plane — the mark must not be distorted.</li>
+</ul></div>
+
+<h2>Separate deliverable — hero role rotation</h2>
+<p class="lede" style="margin-bottom:18px">Not part of the tower. Two changes to the hero's rotating role mockup, specified here so both land in the same handoff.</p>
+<div class="spec">
+
+<div class="card"><h3>Geometric flip on role change</h3>
+<p>An <b>X-axis flip</b> — the role panel hinges away top-to-bottom and the next one hinges in behind it, split-flap style. X rather than Y because the hinge axis then echoes the tower's stacked horizontal planes; a Y-axis spin reads as a carousel and fights that.</p>
+<ul>
+<li>Container: <code>perspective: 900px</code></li>
+<li>Panels: <code>transform-style: preserve-3d</code>, <code>backface-visibility: hidden</code>, <code>transform-origin: center</code></li>
+<li>Outgoing: <code>rotateX(0) → rotateX(-90deg)</code>, opacity <code>1 → 0</code>, <code>0.3s ease</code></li>
+<li>Incoming: <code>rotateX(90deg) → rotateX(0)</code>, opacity <code>0 → 1</code>, <code>0.3s ease</code>, delayed <code>0.15s</code> so the two overlap by half</li>
+<li>Hold <code>3.2s</code> per role; if the label wraps to two lines, stagger them <code>60ms</code> — the same stagger the KPI tiles already use</li>
+<li><code>prefers-reduced-motion: reduce</code> → opacity cross-fade at <code>0.2s</code>, no rotation, no perspective</li>
+</ul>
+<p><code>0.3s ease</code> is <code>--d-transition-slow</code>, the system's existing entrance duration. No bounce, no spring, no overshoot.</p></div>
+
+<div class="card"><h3>K mark as the mockup avatar</h3>
+<p>Replace the generic avatar placeholder in the rotating chat/phone mockup with the real <code>klassapp-icon.svg</code>. This is <b>Toshi's persistent bot avatar</b> — constant across every message and every tool surface, not a per-sender indicator.</p>
+<ul>
+<li><b>Use the real avatar class: <code>.toshi-pill-avatar</code></b> — 38px, <code>border-radius: 50%</code>, transparent fill, <code>1px var(--d-green)</code> ring, <code>overflow: hidden</code>, with the mark inside at 24px (<code>.toshi-pill-logo</code>). This already exists in the app CSS and is already Toshi's identity treatment, so the mockup should reuse it rather than introduce a new avatar shape.</li>
+<li><b>The circle is safe — don't substitute a square.</b> Measured, the mark's ink reaches only <code>0.909</code> of its half-width from centre, so at 24px inside a 38px circle it clears the clip by 8.1px, and by 1.7px even drawn edge-to-edge. There is no cropping problem to design around.</li>
+<li><b>Set <code>box-sizing: border-box</code>.</b> The real class declares <code>width: 38px</code> <i>plus</i> a 1px border; it renders 38px total in the app because Tailwind's preflight supplies a global border-box reset. This design-system bundle does not ship Tailwind, so in a bare page the same declaration renders 40px.</li>
+<li><code>--d-white</code> fill is <b>not</b> used — the real class is transparent, so the bubble or pill colour shows through the ring. Keep it that way.</li>
+<li>Inline the SVG rather than <code>&lt;img&gt;</code>, and strip the C2PA <code>&lt;metadata&gt;</code> block: its <code>xmlns:c2pa</code> is declared on the root, so inlining the children alone leaves an unbound prefix and the whole SVG fails to parse. This bit me building the tower.</li>
+</ul></div>
+
+</div>
+
+<div class="flag"><h3>Flagged — the hero additions</h3>
+<ul>
+<li><b>Superseded — this section is now implemented.</b> It was written as a blind spec before any landing-page source existed. The real hero has since been read and built: see <a href="../hero-role-rotate/index.html">concepts/hero-role-rotate/</a>, which uses the real <code>#heroRoleStage</code>/<code>#heroRoleDeck</code> markup, the three real role cards, the real <code>1400px</code> perspective, and carries the K mark on all three cards per the settled ruling. <b>Treat that file as the source of truth for the hero; the notes below are kept only for the reasoning behind the flip.</b></li>
+<li><b>The flip is a new motion primitive.</b> There is no <code>perspective</code>, no <code>rotateX/Y</code>, and no 3D transform anywhere in either stylesheet today — the documented vocabulary is a 1px hover lift and a <code>0.97</code> press scale, nothing rotational. Adding a flip is a deliberate extension; keep it in the hero and don't let it become a general pattern without a decision.</li>
+<li><b>Avatar semantics — settled.</b> The K is <b>Toshi's persistent bot identity</b>, the same way any bot's profile picture stays constant regardless of message content. Use it on <b>every</b> message instance in the mockup, in whichever tool the user is in (WhatsApp, Drive, Slack). It is <b>not</b> a "who sent this" indicator, so there is no rule about sender vs recipient bubbles.</li>
+<li><b>Reduced motion is unresolved product-wide.</b> Neither stylesheet has a <code>prefers-reduced-motion</code> query despite existing looping animations. The guard above is scoped to this hero; the wider gap is still your call.</li>
+</ul></div>
+
+</div></body></html>

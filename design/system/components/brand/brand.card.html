@@ -1,0 +1,26 @@
+<!-- @dsCard group="Components" viewport="700x200" name="Brand marks" subtitle="WhatsApp, Google Drive and Slack — the tools KlassApp lives inside" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px;background:var(--d-canvas);font-family:var(--d-font-body)}.row{display:flex;align-items:center;gap:12px;margin-bottom:14px}.chip{display:inline-flex;align-items:center;gap:10px;background:var(--d-white);border:1px solid var(--d-border);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--d-text)}.sizes{display:flex;align-items:flex-end;gap:16px}.cap{font-size:11px;color:var(--d-muted);margin-top:6px;text-align:center}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { WhatsAppMark, GoogleDriveMark, SlackMark } = window.KlassAppDesignSystem_df5836;
+function Demo(){return (<div>
+<div className="row">
+<span className="chip"><WhatsAppMark style={{width:20,height:20}}/> 1,102 parents on WhatsApp</span>
+<span className="chip"><GoogleDriveMark style={{width:20}}/> Reports synced to Drive</span>
+<span className="chip"><SlackMark style={{width:20,height:20}}/> Staff room connected</span>
+</div>
+<div className="sizes">
+<div><WhatsAppMark style={{width:16,height:16}}/><div className="cap">16</div></div>
+<div><WhatsAppMark style={{width:24,height:24}}/><div className="cap">24</div></div>
+<div><WhatsAppMark style={{width:40,height:40}}/><div className="cap">40</div></div>
+<div><GoogleDriveMark style={{width:40}}/><div className="cap">40</div></div>
+<div><SlackMark style={{width:40,height:40}}/><div className="cap">40</div></div>
+</div>
+</div>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

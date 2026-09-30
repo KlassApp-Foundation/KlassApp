@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin dashboard v2 + sign-up</title>
+<link rel="stylesheet" href="design-system/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E5DF;color:var(--d-text);font-family:var(--d-font-body,'DM Sans',system-ui,sans-serif)}
+a{color:var(--d-blue)}a:hover{color:#1E3A8A}
+button,select,input{font:inherit}
+.top{position:sticky;top:0;z-index:20;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top h1{font:700 20px var(--d-font-display,'Sora',sans-serif);margin:0 auto 0 0;letter-spacing:-.02em}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px}
+.seg button{min-height:38px;padding:0 12px;border:0;border-radius:7px;background:transparent;font-weight:600;font-size:13.5px;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:16px 24px 0;max-width:1180px;font-size:14.5px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+h2.sec{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:24px 24px 0}
+.frames{display:flex;gap:32px;padding:16px 24px 32px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr>small{font-size:12px;font-weight:700;color:#334155}
+.scr{background:var(--d-canvas);border:1px solid #CFCAC0;border-radius:6px;overflow:hidden;position:relative}
+.w1280{width:1280px}.w375{width:375px}
+.ico{width:20px;height:20px;flex:none}
+/* shell */
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:860px}
+.side{background:var(--d-canvas);display:flex;flex-direction:column;padding:16px 12px 12px;gap:4px}
+.brandrow{height:48px;display:flex;align-items:center;padding:0 8px;margin-bottom:8px}
+.brandrow img{height:28px}
+.grp{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--d-text-secondary);padding:14px 12px 4px}
+.nav{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.nav a{min-height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--d-text);font-weight:500;font-size:14.5px}
+.nav a:hover{background:#F1F5F9}
+.nav a.on{background:#E8EFE7;color:#0F172A;font-weight:700}
+.new{margin-left:auto;font-size:11.5px;font-weight:700;color:#14532D;background:#DCFCE7;border-radius:999px;padding:2px 8px}
+.sfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:12px}
+.chip{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--d-border);border-radius:12px;background:#fff;text-decoration:none;color:var(--d-text);min-height:44px}
+.chip:hover{border-color:var(--d-border-strong)}
+.chip .r{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip b{font-size:14px;color:#0F172A}.chip small{font-size:12.5px;color:var(--d-text-secondary)}
+.chip .n{font-size:12px;font-weight:700;color:#14532D;background:#DCFCE7;border-radius:999px;padding:2px 8px}
+.bar{height:4px;border-radius:999px;background:#E2E8F0;overflow:hidden}.bar i{display:block;height:100%;background:var(--d-accent)}
+.trig{width:100%;min-height:56px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 8px;border:0;border-radius:12px;background:none;cursor:pointer;text-align:left;color:var(--d-text)}
+.trig:hover{background:#F1F5F9}
+.tn{min-width:0;display:flex;flex-direction:column}
+.tn b,.tn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn b{font-size:14px;color:#0F172A}.tn span{font-size:12.5px;color:var(--d-text-secondary)}
+.av{display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;font-family:var(--d-font-display,'Sora',sans-serif);font-weight:600;letter-spacing:.02em;line-height:1;border-radius:12px}
+/* main panel */
+.main{padding:12px 12px 12px 0;min-width:0;position:relative}
+.panel{background:#fff;border:1px solid var(--d-border);border-radius:16px;min-height:100%;padding:36px 40px 40px;display:flex;flex-direction:column;gap:28px}
+.withdock .panel{margin-right:52px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.wb{margin:0;font-size:15px;color:var(--d-text-secondary)}
+.sch{font:600 32px/1.15 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.025em;margin:4px 0 0;color:#0F172A}
+.yr{display:flex;flex-direction:column;gap:4px}
+.yr label{font-size:13px;font-weight:700;color:var(--d-text)}
+.yr select{min-height:44px;min-width:200px;padding:0 36px 0 12px;border:1px solid var(--d-border-strong);border-radius:10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;font-weight:600;font-size:14.5px;color:#0F172A}
+.ban{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:22px 64px 22px 24px;border:1px solid #BBF7D0;border-radius:14px;background:#F0FDF4}
+.ban h3{font:600 19px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A}
+.ban p{margin:6px 0 10px;font-size:14.5px;color:var(--d-text)}
+.ban .bar{height:6px;max-width:360px;background:#DCFCE7}
+.ban .x{position:absolute;top:10px;right:10px;width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--d-text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ban .x:hover{background:#DCFCE7}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border-radius:10px;border:1px solid var(--d-border-strong);background:#fff;color:#0F172A;font-weight:700;font-size:14.5px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--d-accent);border-color:var(--d-accent);color:#fff}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;align-items:start}
+.cols h3.t{font:600 17px var(--d-font-display,'Sora',sans-serif);margin:0 0 12px;color:#0F172A}
+.qa{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.q{display:flex;flex-direction:column;gap:6px;padding:20px;border:1px solid var(--d-border);border-radius:14px;background:#fff radial-gradient(circle,#E2E8F0 1px,transparent 1.2px) 0 0/14px 14px;text-decoration:none;color:var(--d-text);min-height:44px}
+.q:hover{border-color:#0F172A}
+.q:last-child:nth-child(odd){grid-column:1/-1}
+.q .qi{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--d-border);color:#0F172A;margin-bottom:10px}
+.q b{font-size:16px;color:#0F172A}
+.q span{font-size:14px;color:var(--d-text-secondary);line-height:1.45}
+.q.wait span{color:#78350F}
+.snap{border:1px solid var(--d-border);border-radius:14px;background:#fff;overflow:hidden}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--d-border)}
+.srow:last-child{border-bottom:0}
+.srow b{display:block;font-size:15px;color:#0F172A}.srow small{font-size:13px;color:var(--d-text-secondary)}
+.srow .v{font:600 22px var(--d-font-display,'Sora',sans-serif);color:#0F172A;white-space:nowrap}
+.srow .v.dim{color:var(--d-text-secondary);font-size:18px}
+.es{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:32px 20px}
+.es .ei{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--d-border);color:var(--d-text)}
+.es p{margin:0;font-size:15px;color:var(--d-text);max-width:260px}
+.dock{position:absolute;right:12px;top:12px;bottom:12px;width:44px;border:1px solid #e8e6dc;border-radius:12px;background:#f5f4ed;display:flex;flex-direction:column;align-items:center;padding-top:8px}
+.dock button{width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dock img{width:24px;height:24px}
+.ea{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:#78350F;background:#FEF3C7;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.ea-v{writing-mode:vertical-rl;padding:8px 3px;margin-top:6px}
+.w375 .ea-v{display:none}
+.w375 .dock button{width:auto;padding:0 12px;gap:8px}
+.w375 .dock button::after{content:'Early access';font-size:11.5px;font-weight:700;color:#78350F;background:#FEF3C7;border-radius:999px;padding:2px 8px}
+.otp{min-height:56px;border:1.5px solid var(--d-border-strong);border-radius:10px;padding:0 14px;font:600 26px/1 var(--d-font-display,'Sora',sans-serif);letter-spacing:.5em;text-align:center;background:#fff;color:#0F172A}
+.pw{position:relative}.pw input{width:100%;padding-right:56px}.pw button{position:absolute;right:2px;top:2px;width:44px;height:44px;border:0;background:none;border-radius:8px;color:var(--d-text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lnkb{min-height:44px;border:0;background:none;color:var(--d-blue);font-weight:700;font-size:14.5px;cursor:pointer;padding:0 6px}
+.rowc{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+/* 375 */
+.w375 .shell{grid-template-columns:1fr;min-height:auto}
+.w375 .side{display:none}
+.w375 .main{padding:0}
+.mbar{display:none}
+.w375 .mbar{height:56px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--d-border);background:var(--d-canvas)}
+.w375 .mbar img{height:24px;margin-right:auto}
+.ibtn{width:44px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:10px;background:none;color:var(--d-text)}
+.w375 .panel{border:0;border-radius:0;padding:20px 16px 32px;gap:20px}
+.w375 .withdock .panel,.w375 .panel{margin-right:0}
+.w375 .sch{font-size:24px}
+.w375 .head{flex-direction:column;align-items:stretch}
+.w375 .yr select{width:100%}
+.w375 .ban{grid-template-columns:1fr;padding:18px 52px 18px 16px}
+.w375 .ban .acts .btn{flex:1}
+.w375 .cols{grid-template-columns:1fr;gap:24px}
+.w375 .qa{grid-template-columns:1fr}
+.w375 .q{padding:16px;flex-direction:row;align-items:center;gap:14px;flex-wrap:wrap}
+.w375 .q .qi{margin:0}
+.w375 .q .qt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.w375 .dock{top:auto;bottom:16px;right:16px;width:auto;height:auto;padding:0;border-radius:14px}
+.drawer{width:300px;min-height:760px;display:flex;flex-direction:column;background:var(--d-canvas);padding:12px;gap:2px;border-right:1px solid var(--d-border)}
+/* sign-up */
+.su{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:800px}
+.su-l{background:var(--d-canvas) radial-gradient(circle,#D6D3CB 1px,transparent 1.2px) 0 0/18px 18px;border-right:1px solid var(--d-border);padding:48px 64px;display:flex;flex-direction:column}
+.su-l img{height:32px;align-self:flex-start}
+.su-l .mid{margin:auto 0;display:flex;flex-direction:column;gap:18px;max-width:480px}
+.su-l h1{font:700 44px/1.1 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.03em;margin:0;color:#0F172A}
+.su-l h1 em{font-style:normal;color:#15803D}
+.su-l .lede{margin:0;font-size:17px;line-height:1.5;color:var(--d-text)}
+.su-l ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.su-l li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;font-size:15.5px;color:var(--d-text)}
+.su-l li svg{color:#15803D;margin-top:2px}
+.su-l .oss{font-size:13.5px;color:var(--d-text-secondary)}
+.su-r{background:#fff;padding:24px 48px;display:flex;flex-direction:column}
+.su-r .have{display:flex;justify-content:flex-end;align-items:center;gap:12px;font-size:14.5px;color:var(--d-text-secondary)}
+.card{margin:auto;width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px}
+.card h2{font:700 26px var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;margin:0 0 6px;text-align:center;color:#0F172A}
+.g{min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--d-border-strong);border-radius:10px;background:#fff;color:#1E293B;font-size:15px;font-weight:600;text-decoration:none}
+.g:hover{background:#F8FAFC}
+.or{display:flex;align-items:center;gap:14px;color:var(--d-text-secondary);font-size:13px}.or::before,.or::after{content:'';flex:1;height:1px;background:var(--d-border)}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:13.5px;font-weight:700;color:#0F172A}
+.fld input{min-height:48px;border:1.5px solid var(--d-border-strong);border-radius:10px;padding:0 14px;font-size:15px;background:#fff;color:#1E293B}
+.fld input:focus{outline:3px solid rgba(21,128,61,.25);border-color:#15803D}
+.fld small{font-size:13px;color:var(--d-text-secondary)}
+.sub{min-height:48px;border:0;border-radius:10px;background:var(--d-accent);color:#fff;font-weight:700;font-size:15.5px;cursor:pointer}
+.terms{margin:4px 0 0;text-align:center;font-size:13px;color:var(--d-text-secondary)}
+.terms a{display:inline-block;padding:13.5px 2px;margin:-13.5px 0;line-height:17px}
+.w375 .su{grid-template-columns:1fr;min-height:auto}
+.w375 .su-l{border-right:0;border-bottom:1px solid var(--d-border);padding:24px 16px}
+.w375 .su-l .mid{margin:20px 0 0;gap:12px}
+.w375 .su-l h1{font-size:28px}
+.w375 .su-l .lede{font-size:15.5px}
+.w375 .su-l li{font-size:14.5px}
+.w375 .su-r{padding:16px 16px 32px;order:-1}
+.w375 .card{margin:16px 0 0}
+.w375 .su-l .hideM{display:none}
+</style>
+</head>
+<body>
+<div class="top"><h1>Admin dashboard v2 · Sign-up</h1>
+<div class="ctl">Toshi<div class="seg" id="c-toshi"><button data-v="off" aria-pressed="true">Off</button><button data-v="on">On</button></div></div>
+<div class="ctl">School<div class="seg" id="c-data"><button data-v="new" aria-pressed="true">New · 0 students</button><button data-v="mid">Setting up</button><button data-v="done">Set up</button></div></div>
+<div class="ctl">Banner<div class="seg" id="c-ban"><button data-v="show" aria-pressed="true">Showing</button><button data-v="dismissed">Dismissed → chip</button></div></div>
+<div class="ctl">Sign-up<div class="seg" id="c-su"><button data-v="details" aria-pressed="true">1 · Email + password</button><button data-v="code">2 · Email code</button></div></div>
+</div>
+<div class="intro"><p>These layouts borrow patterns from the TinyFish console: small "Welcome back" over a large title, one dismissible banner, cards on the left with a snapshot on the right, grouped sidebar labels, a setup chip and a split sign-up page. Icons are Lucide (<code>lucide@0.460.0</code>), per the icon spec in <code>concepts/icons/</code>. The brand is KlassApp throughout: paper canvas, #15803D green, Sora and DM Sans, the KlassApp logo, 44px targets and 4.5:1 text. Contrast is calculated from hex, not browser-measured. Designed from <code>main @ 3cf3025bf5b0</code>, with demo data only.</p></div>
+
+<h2 class="sec">Dashboard</h2>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="d"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="m"></div></div><div class="fr"><small>Mobile menu drawer · 375</small><div class="scr" style="width:375px;display:flex"><div class="drawer" id="dr"></div><div style="flex:1;background:rgba(15,23,42,.35)"></div></div></div></div>
+
+<h2 class="sec">Sign-up</h2>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="sd"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="sm"></div></div></div>
+
+<script>
+const P={
+ home:'<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
+ users:'<path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>',
+ staff:'<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>',
+ classes:'<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>',
+ att:'<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>',
+ exam:'<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
+ doc:'<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+ wa:'<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+ dollar:'<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+ gear:'<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+ help:'<path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+ x:'<path d="M6 18L18 6M6 6l12 12"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ search:'<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>',
+ dots:'<path d="M12 5v.01M12 12v.01M12 19v.01"/>',
+ check:'<path d="M5 13l4 4L19 7"/>',
+ arrow:'<path d="M9 5l7 7-7 7"/>'};
+const LU={home:'house',users:'graduation-cap',parents:'users',staff:'id-card',adduser:'user-plus',classes:'school',att:'clipboard-check',exam:'notebook-pen',doc:'file-text',wa:'message-square',dollar:'banknote',gear:'settings',help:'circle-help',x:'x',menu:'menu',search:'search',dots:'ellipsis-vertical',check:'check',arrow:'arrow-right',eye:'eye',mail:'mail'};
+const I=(k,s=20)=>k==='wabrand'?`<img src="assets/whatsapp.svg" alt="" width="${s}" height="${s}" class="ico">`:`<i data-lucide="${LU[k]||k}" class="ico" data-s="${s}" aria-hidden="true"></i>`;
+function paintIcons(){if(!window.lucide)return;lucide.createIcons({attrs:{'stroke-width':2}});document.querySelectorAll('svg[data-s]').forEach(s=>{const n=+s.dataset.s;s.setAttribute('width',n);s.setAttribute('height',n);s.setAttribute('stroke-width',n>=24?1.75:2)})}
+const ME={id:3300,fn:'Mucunguzi',ln:'Tumusiime',em:'mucunguzi.tumusiime@demoacademyuganda.ac.ug'};
+const av=(p,s)=>`<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.4)}px;background:#1E6FD9" aria-hidden="true">${p.fn[0]}${p.ln[0]}</span>`;
+const G='<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>';
+let S={toshi:'off',data:'new',ban:'show',su:'details'};
+const TOTAL=7,DONE={new:2,mid:4,done:7};
+const GROUPS=[[null,[['home','Dashboard',1]]],['People',[['users','Students'],['staff','Staff'],['parents','Parents']]],['Academics',[['classes','Classes'],['att','Attendance'],['exam','Exams and marks'],['doc','Report cards',0,1]]],['Money',[['dollar','Fees']]],['Messages',[['wa','Messaging']]],['School',[['gear','Settings'],['help','Help']]]];
+function nav(){return GROUPS.map(g=>`${g[0]?`<div class="grp">${g[0]}</div>`:''}<ul class="nav">${g[1].map(n=>`<li><a href="#" class="${n[2]?'on':''}" ${n[2]?'aria-current="page"':''}>${I(n[0])}${n[1]}${n[3]?'<span class="new">New</span>':''}</a></li>`).join('')}</ul>`).join('')}
+function chip(){const d=DONE[S.data];if(S.ban!=='dismissed'||d>=TOTAL)return '';return `<a class="chip" href="#" aria-label="Finish setup, ${d} of ${TOTAL} steps done"><span class="r"><b>Finish setup</b><span class="n">${d}/${TOTAL}</span></span><small>Next: ${['School details','Academic year and terms','Classes and streams','Subjects','Teachers','Students','Fee structure'][d]}</small><span class="bar"><i style="width:${d/TOTAL*100}%"></i></span></a>`}
+function foot(){return `<div class="sfoot">${chip()}<button class="trig" aria-haspopup="menu" aria-expanded="false">${av(ME,40)}<span class="tn"><b>${ME.fn} ${ME.ln}</b><span>${ME.em}</span></span>${I('dots',18)}</button></div>`}
+function banner(){const d=DONE[S.data];if(S.ban==='dismissed'||d>=TOTAL)return '';return `<section class="ban" aria-label="Setup"><div><h3>Finish setting up Demo Academy Uganda</h3><p><b>${d} of ${TOTAL} steps done.</b> Next: ${['School details','Academic year and terms','Classes and streams','Subjects','Teachers','Students','Fee structure'][d]}.</p><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${TOTAL}" aria-valuenow="${d}" aria-label="Setup progress"><i style="width:${d/TOTAL*100}%"></i></div></div><div class="acts"><a class="btn pri" href="#">Continue setup ${I('arrow',16)}</a>${S.toshi==='on'?'<button class="btn" type="button">Set up with Toshi <span class="ea">Early access</span></button>':''}</div><button class="x" type="button" aria-label="Hide setup banner. Progress stays in the sidebar.">${I('x')}</button></section>`}
+function quick(){const d=DONE[S.data];const has=i=>i<d;
+ const Q=[['adduser','Add students','One at a time or import from Excel.',has(2)?'':'Add classes first'],
+ ['exam','Enter marks','For an exam, by class and subject.',has(3)&&has(5)?'':'Needs subjects and students'],
+ ['doc','Generate report cards','From entered marks, per class.',has(5)?'':'Needs students and marks'],
+ ['wabrand','Send report cards on WhatsApp','To parents with a WhatsApp number.',has(5)?'':'Generate report cards first'],
+ ['dollar','Fees','Record payments and send reminders.',has(6)?'':'Set up the fee structure first']];
+ return `<div><h3 class="t">Quick actions</h3><div class="qa">${Q.map(q=>`<a class="q ${q[3]?'wait':''}" href="#"><span class="qi">${I(q[0])}</span><span class="qt"><b>${q[1]}</b><span>${q[3]||q[2]}</span></span></a>`).join('')}</div></div>`}
+function snap(){const zero=S.data!=='done';
+ const body=zero?`<div class="es"><span class="ei">${I('users',24)}</span><p>No students yet. Add them to see this snapshot.</p><a class="btn pri" href="#">Add students</a></div>`:
+ [['Students','Enrolled in 2026','412'],['Fees collected','Term 3 · of UGX 61.2M billed','UGX 18.4M'],['Attendance today','386 of 412 marked present','94%'],['Report cards sent','Term 2 · on WhatsApp','368']].map(r=>`<div class="srow"><div><b>${r[0]}</b><small>${r[1]}</small></div><span class="v">${r[2]}</span></div>`).join('');
+ return `<div><h3 class="t">School snapshot</h3><div class="snap">${body}</div></div>`}
+function dash(mob){const on=S.toshi==='on';
+ const main=`<div class="main ${on?'withdock':''}"><div class="mbar"><button class="ibtn" aria-label="Open menu">${I('menu')}</button><img src="assets/klassapp-horizontal-light.svg" alt="KlassApp"><button class="ibtn" aria-label="Search">${I('search')}</button></div><div class="panel"><div class="head"><div><p class="wb">Welcome back, ${ME.fn}</p><h1 class="sch">Demo Academy Uganda</h1></div><div class="yr"><label for="yr${mob?'m':'d'}">Academic year</label><select id="yr${mob?'m':'d'}"><option selected>2026 (current)</option><option>2025</option></select></div></div>${banner()}<div class="cols">${quick()}${snap()}</div></div>${on?`<div class="dock"><button type="button" aria-label="Open Toshi, early access"><img src="assets/klassapp-icon.svg" alt=""></button><span class="ea ea-v" aria-hidden="true">Early access</span></div>`:''}</div>`;
+ return `<div class="shell">${mob?'':`<aside class="side"><div class="brandrow"><img src="assets/klassapp-horizontal-light.svg" alt="KlassApp"></div>${nav()}${foot()}</aside>`}${main}</div>`}
+function signup(mob){return `<div class="su"><div class="su-l"><img src="assets/klassapp-horizontal-light.svg" alt="KlassApp"><div class="mid"><h1>Run your school <em>where parents already are</em></h1><p class="lede">Attendance, marks, report cards and fees in one place, shared with parents on WhatsApp.</p><ul>${['Parents get report cards and fee balances on WhatsApp. No app to install.','Guided setup, one step at a time. Stop and come back whenever you like.','Built for Ugandan schools: LIN, PLE and UCE, streams, day and boarding.','Start free.'].map(t=>`<li>${I('check',20)}<span>${t}</span></li>`).join('')}</ul></div><p class="oss hideM">The source is public on GitHub; supported self-hosting opens after an independent security review.</p></div>
+ <div class="su-r"><div class="have">Have an account? <a class="btn" href="#">Sign in</a></div>${S.su==='details'?`<form class="card" onsubmit="return false"><h2>Create your school account</h2><a class="g" href="#">${G}Continue with Google</a><div class="or">or</div><div class="fld"><label for="em${mob?'m':'d'}">Email address</label><input id="em${mob?'m':'d'}" type="email" autocomplete="email" placeholder="you@yourschool.ac.ug"></div><div class="fld"><label for="pw${mob?'m':'d'}">Password</label><div class="pw"><input id="pw${mob?'m':'d'}" type="password" autocomplete="new-password" aria-describedby="pwh${mob?'m':'d'}"><button type="button" aria-label="Show password">${I('eye')}</button></div><small id="pwh${mob?'m':'d'}">Use the rules the app already enforces (hint text from the existing validation).</small></div><button class="sub" type="submit">Create account</button><p class="terms">Next, we'll email you a 6-digit code to confirm your address. By continuing you agree to KlassApp's <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>`:`<form class="card" onsubmit="return false"><span style="align-self:center;width:48px;height:48px;border-radius:12px;border:1px solid var(--d-border);display:flex;align-items:center;justify-content:center">${I('mail',24)}</span><h2>Check your email</h2><p style="margin:-6px 0 4px;text-align:center;font-size:15px">We sent a message to <b>mucunguzi@demoacademyuganda.ac.ug</b>. Tap <b>Confirm email</b> in it, or enter the 6-digit code here.</p><div class="fld"><label for="otp${mob?'m':'d'}">6-digit code</label><input class="otp" id="otp${mob?'m':'d'}" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="••••••"></div><button class="sub" type="submit">Confirm email</button><div class="rowc"><button class="lnkb" type="button">Resend code</button><button class="lnkb" type="button">Change email</button></div><p class="terms">Opened the message on your phone? Tap Confirm email there, and this page continues on its own. The code and the button both expire after the time set in the app. Check your spam folder if the message hasn't arrived.</p>`}</form></div></div>`}
+function draw(){document.getElementById('d').innerHTML=dash(0);document.getElementById('m').innerHTML=dash(1);
+ document.getElementById('dr').innerHTML=`<div class="brandrow"><img src="assets/klassapp-horizontal-light.svg" alt="KlassApp"></div>${nav()}${foot()}`;
+ document.getElementById('sd').innerHTML=signup(0);document.getElementById('sm').innerHTML=signup(1);
+ [['c-toshi','toshi'],['c-data','data'],['c-ban','ban'],['c-su','su']].forEach(([id,k])=>document.querySelectorAll('#'+id+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S[k])));paintIcons()}
+[['c-toshi','toshi'],['c-data','data'],['c-ban','ban'],['c-su','su']].forEach(([id,k])=>document.getElementById(id).onclick=e=>{const b=e.target.closest('button');if(b){S[k]=b.dataset.v;draw()}});
+document.addEventListener('click',e=>{if(e.target.closest('a[href="#"]'))e.preventDefault();if(e.target.closest('.ban .x')){S.ban='dismissed';draw()}});
+draw();
+</script>
+</body>
+</html>
