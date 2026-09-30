@@ -200,7 +200,7 @@ class WizardToshiSyncPlanStepTest extends TestCase
             'registration_country' => 'Uganda',
             'ministry_code' => 'EMIS-SYNC',
             'uneb_center_number' => '',
-            'student_size' => '100-300 students',
+            'student_size' => 'Up to 500',
             'school_category' => 'primary',
         ]);
 

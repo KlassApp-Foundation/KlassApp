@@ -86,7 +86,10 @@ class StudentController extends Controller
         }
 
         $standardFilter = $request->input('standard');
-        if ($standardFilter) {
+        if ($standardFilter === 'none') {
+            // "Needs a class": latest academic row has no StandardLink (or none exists).
+            $query->whereNull('latest_sa.standardLink_id');
+        } elseif ($standardFilter) {
             // School-scoped: a crafted foreign StandardLink id must not leak
             // another school's class-link data into this filter (IDOR).
             // Fail-safe: ignored when the id does not belong to this school.

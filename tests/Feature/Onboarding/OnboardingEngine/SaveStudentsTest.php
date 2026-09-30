@@ -159,8 +159,11 @@ class SaveStudentsTest extends TestCase
         $this->assertEquals($this->year->id, $academic->academic_year_id);
     }
 
-    public function test_assigns_to_first_class_when_no_class_specified(): void
+    public function test_student_without_class_is_created_unenrolled(): void
     {
+        // The admin did not choose a class, so the engine must NOT silently
+        // enrol the student in the school's first StandardLink (the removed
+        // $firstLink fallback). The student still exists with a KlassApp ID.
         $engine = app(OnboardingEngine::class);
 
         $result = $engine->saveStudents($this->school, $this->year, [
@@ -168,10 +171,32 @@ class SaveStudentsTest extends TestCase
         ]);
 
         $student = User::where('usergroup_id', 6)->where('school_id', $this->school->id)->first();
+        $this->assertNotNull($student);
+
         $academic = StudentAcademic::where('user_id', $student->id)->first();
         $this->assertNotNull($academic);
-        // Falls back to first StandardLink
-        $this->assertEquals($this->link->id, $academic->standardLink_id);
+        $this->assertNull($academic->standardLink_id);
+        $this->assertNotNull($academic->klassapp_student_id);
+        $this->assertNull($result['created'][0]['class']);
+    }
+
+    public function test_paste_shape_name_only_drafts_are_all_unenrolled(): void
+    {
+        // Wizard paste / Toshi commit funnel name-only records into the engine.
+        // None of them may land in the first StandardLink.
+        $engine = app(OnboardingEngine::class);
+
+        $engine->saveStudents($this->school, $this->year, [
+            ['name' => 'Amara Nansubuga'],
+            ['name' => 'Kiiza Ssemakula'],
+            ['name' => 'Sarah Achieng'],
+        ]);
+
+        $this->assertSame(3, StudentAcademic::where('school_id', $this->school->id)->count());
+        $this->assertSame(
+            0,
+            StudentAcademic::where('school_id', $this->school->id)->whereNotNull('standardLink_id')->count()
+        );
     }
 
     public function test_marks_email_verified(): void

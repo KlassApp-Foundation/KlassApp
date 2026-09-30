@@ -225,7 +225,7 @@ class OnboardingEngineParityTest extends TestCase
         $component
             ->set('schoolName', $payload['school_name'])
             ->call('next')
-            ->set('studentSize', '100-300 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -341,7 +341,7 @@ class OnboardingEngineParityTest extends TestCase
             ->set('mode', 'complete')
             ->set('schoolId', $school->id)
             ->set('schoolName', $payload['school_name'])
-            ->set('studentSize', '100-300 students')
+            ->set('studentSize', 'Up to 500')
             ->set('curriculum', 'uneb')
             ->set('schoolCountry', 'Uganda')
             ->set('ministryCode', $payload['ministry_code'])

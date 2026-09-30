@@ -62,7 +62,7 @@ class UserDetail extends JsonResource
                 ? null
                 : date('Y') - date('Y', strtotime($this->userprofile->date_of_birth)),
             'ref_id'                    => $this->ref_id,
-            'class'                     => $this->studentAcademicLatest->standardLink->StandardSection,
+            'class'                     => $this->studentAcademicLatest?->standardLink?->StandardSection ?? 'No class',
             'transport_mode'            => ucwords(str_replace('_', ' ', $this->studentAcademicLatest->mode_of_transport)),
             'driver_name'               => $this->studentAcademicLatest->transport_details['driver_name'],
             'driver_number'             => $this->studentAcademicLatest->transport_details['driver_contact_number'],

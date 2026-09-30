@@ -97,7 +97,7 @@ class WizardStructureClassTeacherTest extends TestCase
         $component
             ->set('schoolName', 'Structure Wizard School')
             ->call('next')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

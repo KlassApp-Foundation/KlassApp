@@ -94,7 +94,7 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $component
             ->set('schoolName', 'Bulk Upload Academy')
             ->call('next')
-            ->set('studentSize', '100-300 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
