@@ -13,7 +13,7 @@
                 <p style="margin: 0 0 16px; line-height: 1.6;">Hello {{ $name ?? 'User' }},</p>
                 <p style="margin: 0 0 16px; line-height: 1.6;">Use the verification code below to complete your registration:</p>
                 <p style="margin: 0 0 20px; font-size: 30px; font-weight: 700; letter-spacing: 4px; color: #1d4ed8;">{{ $otp }}</p>
-                <p style="margin: 0 0 8px; line-height: 1.6;">This code expires in 5 minutes.</p>
+                <p style="margin: 0 0 8px; line-height: 1.6;">This code expires in {{ $minutes ?? 5 }} minutes.</p>
                 <p style="margin: 0; line-height: 1.6; color: #64748b; font-size: 13px;">If you did not request this code, you can safely ignore this email.</p>
             </td>
         </tr>

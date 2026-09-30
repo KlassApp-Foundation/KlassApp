@@ -26,7 +26,7 @@ class Authentication extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id' , 'type' , 'token' , 'ip_address' , 'expires_on' , 'status'
+        'user_id' , 'type' , 'token' , 'ip_address' , 'expires_on' , 'status' , 'attempts' , 'locked_until'
     ];
 
     /**
@@ -34,7 +34,10 @@ class Authentication extends Model
      *
      * @var array
      */
-    protected $dates = ['deleted_at' , 'expires_on'];
+    protected $casts = [
+        'expires_on' => 'datetime',
+        'locked_until' => 'datetime',
+    ];
 
     public function user()
     {

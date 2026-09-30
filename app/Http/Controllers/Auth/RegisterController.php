@@ -9,11 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Mail\AdminNotifyNewUserMail;
 use App\Models\User;
+use App\Services\EmailVerificationCodeService;
 use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -45,7 +45,7 @@ class RegisterController extends Controller
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 
-    public function register(RegisterRequest $request, SchoolSignupBootstrapService $bootstrap)
+    public function register(RegisterRequest $request, SchoolSignupBootstrapService $bootstrap, EmailVerificationCodeService $verificationCodes)
     {
         try {
             $user = $bootstrap->bootstrap([
@@ -53,8 +53,17 @@ class RegisterController extends Controller
                 'email' => $request->validated('email'),
                 'phone' => $request->validated('phone'),
                 'password' => $request->validated('password'),
-                'email_verified' => true,
             ]);
+
+            // bootstrap() marks new school admins as verified; the account must not
+            // be usable until the emailed 6-digit code is confirmed instead.
+            $user->forceFill([
+                'email_verified' => 0,
+                'email_verified_at' => null,
+            ])->save();
+
+            $verificationCodes->issue($user, $request->ip());
+            $request->session()->put('pending_verification_user_id', $user->id);
 
             event(new Registered($user));
             $this->dispatchRegistrationSideEffects($user);
@@ -68,16 +77,8 @@ class RegisterController extends Controller
             ]);
         }
 
-        $this->guard()->login($user);
-
-        return redirect($this->redirectPath())
-            ->with('open_toshi_onboarding', true)
-            ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
-    }
-
-    protected function guard()
-    {
-        return Auth::guard();
+        return redirect()->route('register.verify')
+            ->with('status', 'We sent a 6-digit code to '.$user->email.'. Enter it to finish signing up.');
     }
 
     private function dispatchRegistrationSideEffects(User $user): void

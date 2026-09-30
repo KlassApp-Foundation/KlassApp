@@ -147,6 +147,14 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
+Route::get('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
+    ->name('register.verify');
+Route::post('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'verify'])
+    ->name('register.verify.submit');
+Route::post('/register/verify/resend', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('register.verify.resend');
+
 // Teacher invite link — one-time password-set flow (no credentials in email)
 Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])
     ->name('teacher.invite.form');
