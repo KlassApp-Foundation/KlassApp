@@ -122,8 +122,8 @@ class IdentityStepsTest extends TestCase
     {
         $school = $this->createSchool('Size Test School');
 
-        app(OnboardingEngine::class)->saveStudentSize($school, 'Under 100 students');
-        $this->assertSame('Under 100 students', $school->fresh()->student_size);
+        app(OnboardingEngine::class)->saveStudentSize($school, 'Up to 500');
+        $this->assertSame('Up to 500', $school->fresh()->student_size);
 
         try {
             app(OnboardingEngine::class)->saveStudentSize($school, 'Over 3,000 students');

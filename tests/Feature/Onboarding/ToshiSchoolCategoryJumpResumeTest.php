@@ -47,7 +47,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
             'curriculum' => 'uneb',
             'registration_country' => 'Uganda',
             'school_category' => null,
-            'student_size' => 'Under 100 students',
+            'student_size' => 'Up to 500',
             'toshi_enabled' => 1,
         ]);
 

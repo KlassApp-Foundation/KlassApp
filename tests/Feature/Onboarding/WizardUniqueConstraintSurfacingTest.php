@@ -95,7 +95,7 @@ class WizardUniqueConstraintSurfacingTest extends TestCase
         $component
             ->set('schoolName', 'Unique Constraint Primary')
             ->call('next')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

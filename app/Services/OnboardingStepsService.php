@@ -31,10 +31,9 @@ class OnboardingStepsService
      * @var list<string>
      */
     public const STUDENT_SIZE_OPTIONS = [
-        'Under 100 students',
-        '100-300 students',
-        '300-500 students',
-        '500+ students',
+        'Up to 500',
+        'Up to 1,000',
+        'More than 1,000',
     ];
 
     /**

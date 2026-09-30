@@ -105,7 +105,7 @@ class WizardReviewPanelsKitContractTest extends TestCase
         $component
             ->set('schoolName', 'Review Subjects Academy')
             ->call('next')
-            ->set('studentSize', '100-300 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
