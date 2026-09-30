@@ -35,6 +35,7 @@
                     <label class="ds-label" for="students-class">Class</label>
                     <select id="students-class" name="standard" class="ds-form-select">
                         <option value="">All classes</option>
+                        <option value="none" {{ ($standardFilter ?? '') === 'none' ? 'selected' : '' }}>Needs a class</option>
                         @foreach($standardLinks as $link)
                             <option value="{{ $link->id }}" {{ (string) $link->id === (string) ($standardFilter ?? '') ? 'selected' : '' }}>
                                 {{ $link->StandardSection }}
@@ -137,7 +138,7 @@
                                     {{ $student->class_name }}
                                 </span>
                             @else
-                                <span class="text-gray-400 text-xs">—</span>
+                                <span class="text-gray-500 text-xs font-medium" data-testid="student-no-class">No class</span>
                             @endif
                         </td>
                         <td data-label="Parent">
