@@ -42,9 +42,29 @@ trait Common
      * buckets are private, so when the disk has no public base URL configured
      * we hand out a short lived signed URL instead (R2 presigned GET); public
      * buckets configured with a url are served directly.
+     *
+     * Two kinds of path never reach the disk: absolute URLs (social avatars
+     * already are display URLs) and bundled assets that ship in public/ —
+     * #892 moved the default disk to an object-storage bucket where those
+     * files do not exist, so resolving them there signs a URL to a missing
+     * object and every default avatar breaks.
      */
     public function fileUrlForStoredFile($file, $disk = null)
     {
+        $file = (string) $file;
+
+        if (preg_match('#^https?://#i', $file) === 1) {
+            return $file;
+        }
+
+        if (is_file(public_path($file))) {
+            return asset($file);
+        }
+
+        if ($file === 'uploads/images.jpg') {
+            return asset('uploads/user/avatar/default-user.jpg');
+        }
+
         $disk = $disk ?: config('filesystems.default');
         $storage = \Storage::disk($disk);
 
