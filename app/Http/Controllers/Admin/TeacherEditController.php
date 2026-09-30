@@ -52,7 +52,7 @@ class TeacherEditController extends Controller
 
       $array['firstname']         = $userprofile->firstname;
       $array['lastname']          = $userprofile->lastname;
-      $array['date_of_birth']     = date('Y-m-d',strtotime($userprofile->date_of_birth));
+      $array['date_of_birth']     = \App\Support\DateOfBirth::formatOrNull($userprofile->date_of_birth, 'Y-m-d') ?? '';
       $array['gender']            = $userprofile->gender;
       $array['blood_group']       = $userprofile->blood_group;
       $array['aadhar_number']     = $userprofile->aadhar_number==NULL ? '':$userprofile->aadhar_number;

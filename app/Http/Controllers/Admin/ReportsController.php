@@ -266,9 +266,7 @@ class ReportsController extends Controller
                             $user->studentAcademicLatest->standardLink->StandardSection,
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,
-                            blank(optional($user->userprofile)->date_of_birth)
-                                ? ''
-                                : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
+                            \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                         ]);
                     }
                 }
@@ -307,9 +305,7 @@ class ReportsController extends Controller
                             $user->getTeacherDetails()['designation']=='others' ? $user->getTeacherDetails()['sub_designation']:$user->getTeacherDetails()['designation'],
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,
-                            blank(optional($user->userprofile)->date_of_birth)
-                                ? ''
-                                : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
+                            \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                             $user->mobile_no,
                         ]);
                     }
@@ -358,7 +354,7 @@ class ReportsController extends Controller
                         $user->userprofile->firstname,
                         $user->userprofile->lastname, 
                         $user->userprofile->gender,
-                        date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                        \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,
@@ -412,7 +408,7 @@ class ReportsController extends Controller
                         $user->userprofile->firstname,
                         $user->userprofile->lastname, 
                         $user->userprofile->gender,
-                        date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                        \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,
@@ -467,7 +463,7 @@ class ReportsController extends Controller
                         $user->userprofile->firstname,
                         $user->userprofile->lastname, 
                         $user->userprofile->gender,
-                        date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                        \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,

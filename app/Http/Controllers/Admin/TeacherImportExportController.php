@@ -49,7 +49,7 @@ class TeacherImportExportController extends Controller
                     $user->userprofile->firstname,
                     $user->userprofile->lastname,
                     $user->userprofile->gender,
-                    date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                    \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
                     $user->userprofile->country->name,
@@ -244,9 +244,7 @@ exit;
                 }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=blank(optional($user->userprofile)->date_of_birth)
-                        ? ''
-                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
+                    $data[]=\App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', '');
                 }
                 if(in_array('address', $heads))
                 {

@@ -24,7 +24,7 @@ class MeController extends Controller
         $details = $user->getTeacherDetails();
         
         $myInfo['fullname']                     = $user->FullName;
-        $myInfo['dateOfBirth']                  = $user->userprofile->date_of_birth=='' ? null:date('d M Y',strtotime($user->userprofile->date_of_birth));
+        $myInfo['dateOfBirth']                  = \App\Support\DateOfBirth::formatOrNull(optional($user->userprofile)->date_of_birth, 'd M Y');
         $myInfo['employeeId']                   = $details['employee_id'];
         $myInfo['designation']                  = ucfirst($details['designation']);
         $myInfo['subDesignation']               = ($details['sub_designation']!=null?ucfirst($details['sub_designation']):'');
@@ -51,7 +51,7 @@ class MeController extends Controller
         $myInfo['city']                         = ucfirst($user->userprofile->city->name);
         $myInfo['pincode']                      = $user->userprofile->pincode;
         
-        $myInfo['age']                          = date('Y')-date('Y',strtotime(optional($user->userprofile)->date_of_birth));
+        $myInfo['age']                          = \App\Support\DateOfBirth::age(optional($user->userprofile)->date_of_birth);
         $myInfo['classTeacher']                 = $user->standardLink->StandardSection;
         $myInfo['permissions']                  = Auth::user()->teacher_designations ?? [];
 
