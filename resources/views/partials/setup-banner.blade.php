@@ -6,10 +6,16 @@
 @php
     $showSetup = !empty($setupIncomplete) || (!empty($onboardingMissing) && !session('onboarding_reminder_dismissed'));
     $showBanner = $showSetup && (auth()->user()->usergroup_id ?? null) == 3;
-    $labels = !empty($onboardingMissing)
-        ? \App\Helpers\OnboardingHelper::getMissingLabels($onboardingMissing)
-        : [];
-    $stepCount = count($labels);
+    // Single source: OnboardingStepsService::incompleteSteps (passed as $onboardingSteps).
+    $incompleteSteps = $onboardingSteps ?? [];
+    if ($incompleteSteps === [] && !empty($onboardingMissing) && auth()->user()?->school) {
+        $incompleteSteps = \App\Services\OnboardingStepsService::incompleteSteps(
+            auth()->user()->school,
+            auth()->id()
+        );
+    }
+    $stepCount = count($incompleteSteps);
+    $labels = array_map(static fn (array $step): string => (string) ($step['label'] ?? $step['key'] ?? ''), $incompleteSteps);
 @endphp
 
 @if($showBanner)
@@ -19,12 +25,9 @@
         </div>
         <div class="setup-banner-body">
             <h2 class="setup-banner-title">Finish school setup</h2>
-            <p class="setup-banner-text">
+            <p class="setup-banner-text" data-testid="setup-banner-steps">
                 @if($stepCount > 0)
-                    {{ $stepCount }} {{ $stepCount === 1 ? 'step' : 'steps' }} remaining
-                    @if($stepCount <= 6)
-                        ({{ implode(', ', $labels) }})
-                    @endif.
+                    {{ $stepCount }} {{ $stepCount === 1 ? 'step' : 'steps' }} remaining{{ $stepCount <= 6 ? ' ('.implode(', ', $labels).')' : '' }}.
                 @else
                     A few setup items are still open.
                 @endif

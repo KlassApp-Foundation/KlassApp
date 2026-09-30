@@ -107,9 +107,9 @@
         <ul class="navbar-nav mr-auto flex"></ul>
     </div>
 
-    <div class="flex {{ $variant === 'dashboard' ? 'flex-col-reverse lg:flex-row md:flex-row' : '' }} items-center">
+    <div class="flex flex-row flex-wrap items-center gap-2 {{ $variant === 'dashboard' ? 'justify-end' : '' }}">
         @if($showAcademicYear)
-            <div class="hidden lg:block md:block">
+            <div class="dashboard-ay-selector" data-testid="dashboard-ay-selector">
                 <nav-bar></nav-bar>
             </div>
         @endif
