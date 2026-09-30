@@ -52,7 +52,7 @@ class RoomInvitationMail extends Mailable implements ShouldQueue
                   $message = str_replace(':title',$this->info->name, $message);
                   $message = str_replace(':description',$this->info->description, $message);
                   $message = str_replace(':message','<a href="'.$url.'">Join Here</a>', $message);
-       return $this->markdown('emails.mailcontent')
+       return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                    ->subject($subject)
                    ->with([
                        'content' => $message,

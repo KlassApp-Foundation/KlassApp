@@ -28,7 +28,7 @@ class TestMail extends Mailable implements ShouldQueue
      */
     public function build()
     {      
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
             ->subject('Test from GegoK12')
             ->with([
                 'content' => 'Mail Send Successfully',

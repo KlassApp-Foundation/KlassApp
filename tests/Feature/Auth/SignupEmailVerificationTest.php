@@ -227,7 +227,7 @@ class SignupEmailVerificationTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('grace@example.com');
-        $response->assertSee('Verify Your Email');
+        $response->assertSee('Check your email');
     }
 
     public function test_verification_redirects_to_signup_without_a_pending_session(): void

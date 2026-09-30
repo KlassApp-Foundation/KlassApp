@@ -1,16 +1,20 @@
-@component('mail::message')
-# You're invited!
+@php($hours = (int) config('invites.expiry_hours', 72))
+<x-mail::message :preheader="isset($expiresAt) ? 'Set your password to get started. The link expires in '.$hours.' hours.' : 'Set your password to get started.'">
+# Set your password
 
-You've been invited to join **{{ $schoolName }}** on KlassApp as a **Co-Admin**.
+You've been invited to join **{{ $schoolName }}** as a **Co-Admin**.
 
-Click the button below to set your own password and activate your account. This link is one-time use and expires **{{ $expiresAt->diffForHumans() }}** ({{ $expiresAt->format('j M Y, g:i A') }}).
+Set a password to activate your account.
 
-@component('mail::button', ['url' => $inviteUrl, 'color' => 'green'])
-Set Your Password
-@endcomponent
+<x-mail::button :url="$inviteUrl">Set your password</x-mail::button>
 
-If you did not expect this invitation, you can safely ignore this email — no account will be created unless you set a password.
+@isset($expiresAt)
+<span class="muted">This link works once and expires in **{{ $hours }} hours** ({{ $expiresAt->format('j M Y, g:i A') }}).</span>
+@endisset
 
-Thanks,<br>
-{{ config('app.name') }}
-@endcomponent
+<x-slot:subcopy>
+Button not working? Paste this link into your browser: <span class="break-all">[{{ $inviteUrl }}]({{ $inviteUrl }})</span>
+
+Not expecting this? Ignore this email. @isset($expiresAt)No account is created unless you set a password.@else Nobody can sign in without a password you set.@endisset
+</x-slot:subcopy>
+</x-mail::message>

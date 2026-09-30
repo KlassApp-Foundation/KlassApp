@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Toshi\ToshiUiSwitch;
 use App\Observers\TeacherProfileObserver;
@@ -56,6 +59,11 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() { 
+        // Named limiters keep their own counters. Plain `throttle:N,M` shares ONE counter per
+        // IP across every such route, which would let status polling starve the 3/min resend limit.
+        RateLimiter::for('verify-status', fn (Request $request) => Limit::perMinute(60)->by('verify-status|'.$request->ip()));
+        RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
+
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)
         if (config('app.debug')) {
             error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);

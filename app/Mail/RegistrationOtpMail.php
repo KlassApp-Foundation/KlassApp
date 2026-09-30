@@ -23,8 +23,8 @@ class RegistrationOtpMail extends Mailable
     public function build()
     {
         return $this->from(config('mail.from.address'), config('mail.from.name'))
-            ->subject('Your KlassApp verification code')
-            ->view('emails.registration_otp')
+            ->subject($this->otp.' is your KlassApp code')
+            ->markdown('emails.registration_otp')
             ->with([
                 'name' => $this->user->name,
                 'otp' => $this->otp,

@@ -435,7 +435,7 @@ class ToshiActionService
     // ── Teacher ──
 
     /**
-     * Add a teacher: creates User + Userprofile, emails temporary credentials.
+     * Add a teacher: creates User + Userprofile, emails a link to set their own password (never a password).
      * Optional class name sets class-teacher assignment and is named in the invite.
      */
     public static function addTeacher(User $admin, array $data): array
@@ -495,7 +495,7 @@ class ToshiActionService
         try {
             DB::beginTransaction();
 
-            $credentials = UserProvisioning::randomPasswordCredentials();
+            $credentials = UserProvisioning::randomPasswordAttributes();
 
             $teacher = User::create([
                 'school_id' => $schoolId,
@@ -536,7 +536,6 @@ class ToshiActionService
                 Mail::to($email)->queue(new TeacherInviteMail(
                     $name,
                     $email,
-                    $credentials['plain'],
                     $schoolName,
                     $className,
                 ));
@@ -553,7 +552,7 @@ class ToshiActionService
 
             return self::result(
                 true,
-                "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with login credentials.",
+                "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with a link to set their password.",
                 [
                     'user_id' => $teacher->id,
                     'email' => $email,

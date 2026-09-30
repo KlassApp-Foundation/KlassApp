@@ -51,7 +51,7 @@ class ResetPassword extends Mailable implements ShouldQueue
       $mail_content = str_replace(":name",$this->userdetails->FullName,$mail_content);
       $mail_content = str_replace(":resetlink",$url,$mail_content);
       $mail_content = str_replace(":url",$url,$mail_content);
-      return $this->markdown('emails.mailcontent')
+      return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                   ->subject($subject)
                   ->with([
                        'content' => $mail_content,

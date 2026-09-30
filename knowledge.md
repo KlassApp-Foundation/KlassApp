@@ -13357,3 +13357,17 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Queue remaining**: Task 2 emails (#916) → Toshi readiness → dashboard/sidebar/icons → storage → rules.
 
+
+## Session: 2026-10-01 — Task 2 emails (B1 shell) + Part D2 confirm-email link (one PR, branch `feat/task2-emails-confirm-link`)
+
+**Source:** `design/system/handoff/emails/` copied to app paths (not the old `B-emails-code/`). Theme `klassapp` set in `config/mail.php`; `public/images/email/` PNG logos now un-ignored in `.gitignore` (Outlook doesn't render SVG). Deleted password-bearing `teacher-invite` / `co-admin-invite` views and the unused `emails/admin/resetpassword`. Invite expiry was already 72h via `config('invites.expiry_hours')` (#875); views now read the hours from config instead of hard-coding.
+
+**Copy decision for #904:** the account row exists before confirmation, so the verification email footer says "no one can use this account until the email is confirmed", never "no account is created".
+
+**D2 design:** code and link are two `authentications` rows (`email_verification`, `email_verification_link`; link token = sha256 of 64 random chars, tied to `user_id`), same expiry as the code; `URL::temporarySignedRoute('register.verify.link')`. Confirming by either, or resending, marks both used. GET on the link only renders a Confirm button; only the POST confirms (403 bad/missing signature, 410 expired/used/unknown). Same browser (pending signup session matches the token's user) → login + onboarding toast; any other device → "Email confirmed — continue where you signed up", never signed in. `GET /register/verify/status` → `{confirmed}` for the pending session only; the verify page polls every 5s + `visibilitychange`, then POSTs `/register/verify/continue`.
+
+**Gotchas worth keeping:**
+- Laravel `throttle:N,M` shares ONE counter per IP across every route using it. Adding `throttle:60,1` to the status poll would have starved the existing `throttle:3,1` resend limit (429 on resend). Use named limiters (`verify-status`, `verify-link` in `AppServiceProvider`).
+- Markdown mailables auto-render the text part from the same view with *text* components; a custom `<x-mail::code>` therefore needs `resources/views/vendor/mail/text/code.blade.php` or every send without an explicit `->text()` throws "View [code] not found".
+- `view('emails.x')->render()` no longer works for markdown views (no `mail::` hint path); render through the Mailable.
+- `TeacherInviteMail` / `CoAdminInviteMail` no longer accept or render a password; Toshi `addTeacher` no longer retains the plain password (`randomPasswordAttributes`) and the new teacher gets a set-password link to `/password/reset`.

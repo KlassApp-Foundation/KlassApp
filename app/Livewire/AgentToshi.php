@@ -6671,7 +6671,7 @@ class AgentToshi extends Component
                             $schoolName = optional(\App\Models\School::find($schoolId))->name ?? 'your school';
                             Mail::to($coAdminUser->email)->queue(new CoAdminInviteMail(
                                 $coAdminUser->name, $coAdminUser->email,
-                                null, $schoolName, true
+                                $schoolName, true
                             ));
                         } catch (\Exception $e) {
                             \Log::warning('Co-admin promotion email failed: ' . $e->getMessage());
