@@ -1,9 +1,7 @@
 # E2E onboarding suite (staging only)
 
-Journeys: **3 school types** driven through the manual onboarding wizard. Each journey starts
-from the public sign-up page and ends on the new school's admin dashboard, fully set up.
-
-(The Toshi-assisted driver is tracked on the feat/e2e-toshi-driver branch; it is not part of this change.)
+Six journeys: **3 school types × 2 modes** (manual wizard, Toshi-assisted), each starting
+from the public sign-up page and ending on the new school's admin dashboard, fully set up.
 
 **School types**
 | id | type | category | classes created |
@@ -13,7 +11,7 @@ from the public sign-up page and ends on the new school's admin dashboard, fully
 | `oalevel` | Secondary O & A-Level | `o_a_level` | Senior One–Six (streams used for combinations, e.g. PCM) |
 
 **Journey ids (for `--journey=`)**:
-`primary-manual`, `olevel-manual`, `oalevel-manual`
+`primary-manual`, `primary-toshi`, `olevel-manual`, `olevel-toshi`, `oalevel-manual`, `oalevel-toshi`
 
 ## Commands
 
@@ -24,11 +22,11 @@ npm run e2e:onboarding -- --headed --journey=primary-manual
 # Playwright UI mode — pick a journey, step through it, watch each click:
 npm run e2e:onboarding -- --ui
 
-# Full run: all journeys × both widths (1280 desktop + 375 mobile):
+# Full run: all 6 journeys × both widths (1280 desktop + 375 mobile):
 npm run e2e:onboarding
 
 # One journey, one width:
-npm run e2e:onboarding -- --journey=oalevel-manual --project=desktop-1280
+npm run e2e:onboarding -- --journey=oalevel-toshi --project=desktop-1280
 
 # Open the HTML report after a run:
 npx playwright show-report e2e/onboarding/report
@@ -36,7 +34,7 @@ npx playwright show-report e2e/onboarding/report
 
 Every run records **video, per-step screenshots and a trace** (Playwright defaults in this
 config). Artifacts (per journey): `e2e/onboarding/artifacts/<journey>-<stamp>/` —
-`summary.json`, `health.json`, `outcomes.json`.
+`summary.json`, `conversation.md` (Toshi), `health.json`, `outcomes.json`.
 
 ## Safety rules baked in
 
@@ -69,8 +67,8 @@ Refuses schools that are not `is_test=1` or not named `E2E …`.
 e2e/onboarding/
   playwright.config.js   # staging guard, 2 viewports, video/trace/report
   run.mjs                # command launcher (--journey / --headed / --ui / passthrough)
-  lib/                   # signup battery, wizard driver, outcomes, health, bridge
-  journeys/              # manual.spec.js (tagged @<journey-id>)
+  lib/                   # signup battery, wizard driver, toshi driver, outcomes, health, bridge
+  journeys/              # manual.spec.js + toshi.spec.js (tagged @<journey-id>)
   artifacts/             # per-run output (gitignored)
   report/                # HTML report (gitignored)
 ```
