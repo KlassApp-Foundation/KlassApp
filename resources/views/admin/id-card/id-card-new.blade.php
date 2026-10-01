@@ -151,7 +151,7 @@
                                                     <div style="text-align: center;">
                                                     <p style="padding-top: 4px;padding-bottom: 4px;color: #4a5568;"><b>D.O.B</b></p>
                                                     <p style="padding-top: 2px;padding-bottom: 2px;"><span >
-                                                     {{ optional($user->userprofile)->date_of_birth ? \Carbon\Carbon::parse($user->userprofile->date_of_birth)->format('d-m-Y') : '' }}
+                                                     {{ \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth) }}
                                                     </span></p>
                                                     </div>
                                                 </td>

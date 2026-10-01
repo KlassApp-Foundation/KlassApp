@@ -19,6 +19,15 @@
             </div>
         @endif
 
+        @if (session('overlimit'))
+            <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded relative w-full md:w-1/2" role="status" data-testid="overlimit-flash">
+                <span class="block sm:inline">{{ session('overlimit') }}</span>
+                <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">&times;</span>
+                {{ session()->forget('overlimit') }}
+            </div>
+        @endif
+
         {{--
             Validation + thrown-message errors (e.g. MarksLockedException:
             "Marks are locked and cannot be edited... Contact the admin if you

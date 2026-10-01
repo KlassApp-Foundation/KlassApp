@@ -40,7 +40,7 @@ class BirthdayReminderMail extends Mailable implements ShouldQueue
         
         $mail_content = str_replace(":message",$this->reminder->data['message'],$mail_content);
           
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                         ->subject($subject)
                         ->with([
                             'content' => $mail_content,

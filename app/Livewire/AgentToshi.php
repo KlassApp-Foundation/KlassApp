@@ -344,6 +344,11 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
+        // UI switch: no panel work when AI key is missing or the school has Toshi off.
+        if (! app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled($user)) {
+            return;
+        }
+
         $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
 
         // Gate: block roles with no allowed actions or no scope
@@ -835,6 +840,10 @@ class AgentToshi extends Component
     {
         $this->actionStep = null;
         $this->actionSubstep = 0;
+        // Leaving a yes/no gate for a button-driven step (category, plan, …)
+        // must unlock the composer — otherwise chips/readonly stick incorrectly.
+        $this->awaitingConfirm = false;
+        $this->pendingToolConfirm = null;
 
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
@@ -893,7 +902,7 @@ class AgentToshi extends Component
     {
         return match ($key) {
             'school_name' => "What's the real name of your school? (You can keep refining it later.)",
-            'student_size' => "Roughly how many students does your school have? Reply with one of: **Under 100 students**, **100-300 students**, **300-500 students**, or **500+ students**.",
+            'student_size' => "Roughly how many students does your school have? Reply with one of: **Up to 500**, **Up to 1,000**, or **More than 1,000**.",
             'curriculum' => "Which curriculum does your school follow? I recommend **UNEB** for most Ugandan schools. Reply with UNEB, Cambridge, Montessori, or Other.",
             'school_category' => "What type of school is this? Pick a category below — it sets default classes, subjects, and grading (all editable later). You can also reply with **Primary**, **Nursery only**, **Primary + Nursery**, **O-Level**, or **O-Level + A-Level**.",
             'country' => "Which country is your school in? (e.g. **Uganda**, Kenya, Tanzania)",
@@ -2801,8 +2810,10 @@ class AgentToshi extends Component
                 $this->$key = $value;
             }
         }
-        // Always start closed on refresh — user clicks pill to open
-        $this->visible = false;
+        // Dock open/closed is owned by localStorage + body/html.toshi-collapsed
+        // (toshi-prepaint / toshi-embed). Do not force $visible=false here — that
+        // fought CSS persistence under 1280 (#917). Reset maximized only so a
+        // refreshed page does not reopen the full-screen modal unexpectedly.
         $this->maximized = false;
         return true;
     }
@@ -4023,13 +4034,22 @@ class AgentToshi extends Component
         $this->selectedPlanId = $plan->id;
         $this->userSay("Selected plan: **{$plan->name}**");
 
-        // Complete-mode plan step: persist CurrentPlan + Subscription immediately,
+        // Complete-mode plan step: persist via OnboardingEngine (completion gate),
         // then advance to Review so draft teachers/students/terms/fees can be
         // committed via commitAll(). detectMissingSteps() scans the DB only and
         // would loop back to those steps while drafts are still uncommitted —
         // making Review structurally unreachable for new schools.
         if ($this->mode === 'complete' && $this->schoolId) {
-            $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
+            try {
+                $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->selectedPlanId = null;
+                $msg = collect($e->errors())->flatten()->first()
+                    ?: 'Finish the earlier setup steps before choosing a plan.';
+                $this->botSay("⚠️ {$msg}");
+
+                return;
+            }
             $this->botSay("**{$plan->name}** plan selected and saved. | Review your setup next.");
             $this->actionStep = null;
             $this->actionSubstep = 0;
@@ -4666,22 +4686,39 @@ class AgentToshi extends Component
 
         $compact = strtolower(preg_replace('/\s+/', '', $raw) ?? '');
         $aliases = [
-            'under100' => 'Under 100 students',
-            'under100students' => 'Under 100 students',
-            '<100' => 'Under 100 students',
-            '100-300' => '100-300 students',
-            '100-300students' => '100-300 students',
-            '100to300' => '100-300 students',
-            '100to300students' => '100-300 students',
-            '300-500' => '300-500 students',
-            '300-500students' => '300-500 students',
-            '300to500' => '300-500 students',
-            '300to500students' => '300-500 students',
-            '500+' => '500+ students',
-            '500+students' => '500+ students',
-            '500plus' => '500+ students',
-            '500plusstudents' => '500+ students',
-            'over500' => '500+ students',
+            'upto500' => 'Up to 500',
+            'up500' => 'Up to 500',
+            '<500' => 'Up to 500',
+            '0-500' => 'Up to 500',
+            '0to500' => 'Up to 500',
+            '500' => 'Up to 500',
+            'upto1000' => 'Up to 1,000',
+            'upto1,000' => 'Up to 1,000',
+            'up1000' => 'Up to 1,000',
+            '<1000' => 'Up to 1,000',
+            '501-1000' => 'Up to 1,000',
+            '501to1000' => 'Up to 1,000',
+            '1000' => 'Up to 1,000',
+            'morethan1000' => 'More than 1,000',
+            '>1000' => 'More than 1,000',
+            '1000+' => 'More than 1,000',
+            'over1000' => 'More than 1,000',
+            'under100' => 'Up to 500',
+            'under100students' => 'Up to 500',
+            '<100' => 'Up to 500',
+            '100-300' => 'Up to 500',
+            '100-300students' => 'Up to 500',
+            '100to300' => 'Up to 500',
+            '100to300students' => 'Up to 500',
+            '300-500' => 'Up to 500',
+            '300-500students' => 'Up to 500',
+            '300to500' => 'Up to 500',
+            '300to500students' => 'Up to 500',
+            '500+' => 'Up to 1,000',
+            '500+students' => 'Up to 1,000',
+            '500plus' => 'Up to 1,000',
+            '500plusstudents' => 'Up to 1,000',
+            'over500' => 'Up to 1,000',
         ];
 
         return $aliases[$compact] ?? null;
@@ -4783,19 +4820,24 @@ class AgentToshi extends Component
 
     private function persistSelectedPlan(int $schoolId, int $planId): void
     {
-        $plan = \App\Models\Plan::find($planId);
-        if (! $plan) {
+        $school = \App\Models\School::find($schoolId);
+        if (! $school) {
             return;
         }
 
-        if ($plan->amount > 0) {
-            \App\Services\TrialService::startTrial($schoolId, $planId);
-        } else {
-            CurrentPlan::updateOrCreate(
-                ['school_id' => $schoolId],
-                ['plan_id' => $planId]
-            );
-        }
+        // Always write through OnboardingEngine (TrialService / CurrentPlan).
+        // Complete-mode keeps structure/fees in component drafts until Review
+        // commitAll — the DB gate would false-block, so skip there. Callers
+        // outside complete-mode / the plan step hit the real gate.
+        $onPlanStep = $this->actionStep === 'onboarding_plan_selection'
+            || (($this->steps[$this->step] ?? null) === 'plan_selection');
+
+        app(OnboardingEngine::class)->savePlan(
+            $school,
+            $planId,
+            skipCompletionCheck: $this->mode === 'complete' || $onPlanStep,
+            userId: auth()->id(),
+        );
 
         $adminUser = auth()->user()
             ?? User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
@@ -6446,6 +6488,10 @@ class AgentToshi extends Component
                     ];
                 }, $this->teacherList);
                 app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+                if (! $teacherOver['success']) {
+                    $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                }
 
                 // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
                 $this->persistTeacherLinksFromCollectedData($school, $academicYear);
@@ -6581,6 +6627,10 @@ class AgentToshi extends Component
                         ];
                     }, $this->teacherList);
                     app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                    $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+                    if (! $teacherOver['success']) {
+                        $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                    }
                 }
 
                 // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
@@ -6601,6 +6651,11 @@ class AgentToshi extends Component
                         : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
                     $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
                     app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
+
+                    $overLimit = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'students');
+                    if (! $overLimit['success']) {
+                        $this->botSay("⚠️ {$overLimit['message']} Every student was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                    }
                 }
 
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
@@ -6644,7 +6699,7 @@ class AgentToshi extends Component
                             $schoolName = optional(\App\Models\School::find($schoolId))->name ?? 'your school';
                             Mail::to($coAdminUser->email)->queue(new CoAdminInviteMail(
                                 $coAdminUser->name, $coAdminUser->email,
-                                null, $schoolName, true
+                                $schoolName, true
                             ));
                         } catch (\Exception $e) {
                             \Log::warning('Co-admin promotion email failed: ' . $e->getMessage());

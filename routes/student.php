@@ -1,7 +1,7 @@
 <?php
 
 //dashboard
-Route::get( '/dashboard', 'DashboardController@index' );
+Route::get( '/dashboard', 'DashboardController@index' )->name('student.dashboard');
 Route::get('/dashboard/tasklist/{task_flag}','DashboardController@list');
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
 

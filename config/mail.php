@@ -82,7 +82,7 @@ return [
     */
 
     'markdown' => [
-        'theme' => 'default',
+        'theme' => 'klassapp',
 
         'paths' => [
             resource_path('views/vendor/mail'),

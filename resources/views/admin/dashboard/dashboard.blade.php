@@ -408,10 +408,15 @@
 
     @include('admin.reports._eot-kpi-card')
 
-    @if(!empty($openToshiOnboarding))
+    @if(!empty($openToshiOnboarding) && app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled())
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        document.body.classList.remove('toshi-collapsed');
+        // Persist expanded dock (localStorage) — classList.remove alone did not.
+        if (window.toshiSetCollapsed) window.toshiSetCollapsed(false);
+        else {
+          document.body.classList.remove('toshi-collapsed');
+          document.documentElement.classList.remove('toshi-collapsed');
+        }
         // Wave 3: open Toshi maximized (existing modal layout), not the narrow pill panel.
         window.dispatchEvent(new CustomEvent('toshi-maximize'));
       });

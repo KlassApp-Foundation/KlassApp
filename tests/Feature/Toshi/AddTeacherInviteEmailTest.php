@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -110,7 +109,7 @@ class AddTeacherInviteEmailTest extends TestCase
         ]);
     }
 
-    public function test_add_teacher_queues_invite_mail_with_plain_password(): void
+    public function test_add_teacher_queues_link_only_invite_mail_without_a_password(): void
     {
         $result = ToshiActionService::addTeacher($this->admin, [
             'name' => 'Jane Teacher',
@@ -128,10 +127,16 @@ class AddTeacherInviteEmailTest extends TestCase
 
         Mail::assertQueued(TeacherInviteMail::class, function (TeacherInviteMail $mail) use ($teacher) {
             return $mail->email === 'jane.teacher@test.sch.ug'
-                && $mail->password !== ''
                 && $mail->className === null
-                && Hash::check($mail->password, $teacher->password);
+                && ! property_exists($mail, 'password')
+                && $mail->existingAccount === false;
         });
+
+        // Rendered email carries a set-password link, never a credential.
+        $mails = Mail::queued(TeacherInviteMail::class);
+        $html = $mails->first()->render();
+        $this->assertStringContainsString('Set your password', $html);
+        $this->assertStringNotContainsString('Password:', $html);
     }
 
     public function test_add_teacher_with_class_assigns_class_teacher_and_names_class_in_mail(): void

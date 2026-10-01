@@ -44,7 +44,7 @@ class ChangePassword extends Mailable implements ShouldQueue
         $mail_content = $mailtemplate->mail_content;
         $mail_content = str_replace(":name",$this->user->FullName,$mail_content);
 
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                   ->subject($subject)
                   ->with([
                        'content' => $mail_content,

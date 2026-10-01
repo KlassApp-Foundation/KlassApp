@@ -20,6 +20,12 @@
                 <form style="padding: 10px;margin-bottom: unset;" action="{{ url('admin/importUsers') }}" class="form-horizontal" method="post" enctype="multipart/form-data">
                     @csrf
                     @include('partials.message')
+                    @if(session('overlimit'))
+                        <div class="alert alert-warning" role="status" style="margin: 10px 0;">
+                            {{ session('overlimit') }}
+                            <a href="/pricing">Upgrade your plan</a>.
+                        </div>
+                    @endif
                     {{ session()->forget('count') }}
                     {{ session()->forget('insertedcount') }}
                     <div class="flex flex-col">

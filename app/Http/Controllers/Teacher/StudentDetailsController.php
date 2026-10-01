@@ -129,7 +129,7 @@ class StudentDetailsController extends Controller
         $user = $this->authorizeRosterStudent($name);
         $user->load('userprofile');
 
-        $activitylog = ActivityLog::where('subject_id', $user->userprofile->id)->orWhere('subject_id', $user->members[0]['id'])->paginate(5);
+        $activitylog = ActivityLog::whereIn('subject_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
 
         return ActivityLogResource::collection($activitylog);
     }
@@ -139,7 +139,7 @@ class StudentDetailsController extends Controller
         $user = $this->authorizeRosterStudent($name);
         $user->load('userprofile');
 
-        $activitylog = ActivityLog::where('causer_id', $user->userprofile->id)->orWhere('causer_id', $user->members[0]['id'])->paginate(5);
+        $activitylog = ActivityLog::whereIn('causer_id', array_values(array_filter([optional($user->userprofile)->id, data_get($user->members->first(), 'id')])))->paginate(5);
 
         return ActivityLogResource::collection($activitylog);
     }

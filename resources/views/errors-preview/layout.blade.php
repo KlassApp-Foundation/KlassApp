@@ -287,7 +287,9 @@
                 <span class="err-preview-badge">Preview</span>
             @endif
             <div class="err-brand-row">
-                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-brand-logo" alt="KlassApp">
+                <a href="{{ url('/') }}" aria-label="KlassApp home">
+                    <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-brand-logo" alt="KlassApp">
+                </a>
                 <div class="err-brand-copy">
                     <p class="err-brand-tagline">Something went off the page</p>
                     <p class="err-brand-support">You are still on KlassApp. Use the actions to get back on track.</p>
@@ -296,7 +298,9 @@
         </aside>
         <div class="err-form-panel">
             <div class="err-card">
-                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-logo" alt="KlassApp">
+                <a href="{{ url('/') }}" aria-label="KlassApp home">
+                    <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-logo" alt="KlassApp">
+                </a>
                 @yield('icon')
                 <div class="err-code">Error @yield('code')</div>
                 <h1 class="err-title">@yield('title')</h1>

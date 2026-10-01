@@ -383,6 +383,21 @@ public function scopeStudents($query)
         return $query;
     }
 
+    /**
+     * Admission number (the KLS ID) for display. users.registration_number is canonical;
+     * userprofiles.registration_number is the legacy second copy. Null when neither is set.
+     */
+    public function admissionNumber(): ?string
+    {
+        foreach ([$this->registration_number, optional($this->userprofile)->registration_number] as $candidate) {
+            if (filled($candidate)) {
+                return (string) $candidate;
+            }
+        }
+
+        return null;
+    }
+
     public function scopeByAdmissionNumber($query , $admission_number)
     {
         $query->where('registration_number','LIKE',$admission_number.'%');

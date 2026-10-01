@@ -177,7 +177,7 @@ class PlanLimitEnforcementTest extends TestCase
     // ── ToshiActionService integration tests ──
 
     /** @test */
-    public function toshi_add_student_blocked_when_at_plan_limit(): void
+    public function toshi_add_student_saves_with_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 students
         User::factory()->count(2)->create([
@@ -187,12 +187,16 @@ class PlanLimitEnforcementTest extends TestCase
 
         $result = ToshiActionService::addStudent($this->admin, ['name' => 'Excess Student']);
 
-        $this->assertFalse($result['success']);
+        $this->assertTrue($result['success'], 'over-limit must not block Toshi student create');
         $this->assertStringContainsString('allows a maximum of 2 students', $result['message']);
+        $this->assertSame(
+            3,
+            User::where('school_id', $this->schoolId)->where('usergroup_id', 6)->count()
+        );
     }
 
     /** @test */
-    public function toshi_add_teacher_blocked_when_at_plan_limit(): void
+    public function toshi_add_teacher_saves_with_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 teachers
         User::factory()->count(2)->create([
@@ -204,12 +208,12 @@ class PlanLimitEnforcementTest extends TestCase
             'name' => 'Excess Teacher', 'email' => 'excess@teacher.test',
         ]);
 
-        $this->assertFalse($result['success']);
+        $this->assertTrue($result['success'], 'over-limit must not block Toshi teacher create');
         $this->assertStringContainsString('allows a maximum of 2 teachers', $result['message']);
     }
 
     /** @test */
-    public function toshi_add_coadmin_blocked_when_at_plan_limit(): void
+    public function toshi_add_coadmin_saves_with_notice_when_at_plan_limit(): void
     {
         // Admin exists from setUp + 1 more = 2 total (at limit)
         User::factory()->create([
@@ -221,14 +225,14 @@ class PlanLimitEnforcementTest extends TestCase
             'name' => 'Excess Admin', 'email' => 'excess@admin.test',
         ]);
 
-        $this->assertFalse($result['success']);
+        $this->assertTrue($result['success'], 'over-limit must not block Toshi co-admin invite');
         $this->assertStringContainsString('allows a maximum of 2 administrators', $result['message']);
     }
 
     // ── HTTP StudentController integration tests ──
 
     /** @test */
-    public function student_controller_store_blocked_when_at_plan_limit(): void
+    public function student_controller_store_saves_with_overlimit_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 students
         User::factory()->count(2)->create([
@@ -246,7 +250,8 @@ class PlanLimitEnforcementTest extends TestCase
             'class'     => 'Primary 1',
         ]);
 
-        $response->assertSessionHasErrors('plan_limit');
+        $response->assertSessionMissing('errors');
+        $response->assertSessionHas('overlimit');
         $response->assertRedirect();
     }
 

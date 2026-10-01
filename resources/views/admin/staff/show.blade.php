@@ -30,7 +30,7 @@
                                 </li>
 
                                 <li class="mx-2">
-                                    <form action="{{ url('/admin/staff/delete', ['name'=>$user->name]) }}" method="POST" class="text-white text-xs flex items-center bg-red-600 rounded p-1" id="delete">
+                                    <form action="{{ url('/admin/staff/delete', ['name'=>$user->name]) }}" method="POST" class="text-white text-xs flex items-center bg-red-600 rounded p-1" id="delete" data-confirm-delete="Delete {{ filled($user->displayName) ? $user->displayName : 'this staff' }}? This cannot be undone.">
                                         @csrf
                                         @method('delete')
                                    
@@ -50,7 +50,7 @@
                                     <span class="mx-2 text-gray-700 font-medium">Date Of Birth  :</span>
                                 </div>
                                 <div class="">
-                                    <p>{{ date('d-m-Y',strtotime(optional($user->userprofile)->date_of_birth)) }}</p>
+                                    <p>{{ \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth) }}</p>
                                 </div>
                             </li>
                             <li class="flex py-1">
@@ -94,7 +94,7 @@
         S214.952,192.008,184.08,192.008z"></path></g></g></g></svg>
                                 <div class="w-full mx-2">
                                     <p class="text-gray-700 leading-normal">
-                                        @if($user->userprofile->address==null)
+                                        @if(optional($user->userprofile)->address==null)
                                             --
                                         @else
                                             {{ optional($user->userprofile)->address }}
@@ -171,7 +171,7 @@
                     </div>
                 </div>
                 <div class="leading-relaxed">
-                    <p class="text-lg text-gray-700 font-semibold">ID: {{ $user->id }}</p>
+                    <p class="text-lg text-gray-700 font-semibold">Employee ID: {{ optional($user->teacherprofile->first())->employee_id ?: \App\Support\DateOfBirth::NOT_RECORDED }}</p>
                     <change-credential url="{{url('/')}}" name="{{$user->name}}"  ></change-credential>
                 </div>
                 <div class="bg-white shadow my-5">
@@ -182,6 +182,8 @@
             </div>
         </div>
     </div>
+
+@include('partials.confirm-delete-script')
 
 @endsection
 

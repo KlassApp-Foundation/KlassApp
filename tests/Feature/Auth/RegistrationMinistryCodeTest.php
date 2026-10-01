@@ -48,7 +48,7 @@ class RegistrationMinistryCodeTest extends TestCase
 
         $response->assertStatus(302);
         $response->assertSessionHasNoErrors();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect(route('register.verify'));
 
         $school = School::where('email', 'reg-ministry@example.com')->first();
         $this->assertNotNull($school, 'School was not created');

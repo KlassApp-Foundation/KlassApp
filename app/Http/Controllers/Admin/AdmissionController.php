@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\AdmissionUser;
 use App\Traits\SmsProcess;
 use App\Models\StandardLink;
+use App\Services\ToshiActionService;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;
@@ -179,6 +180,16 @@ class AdmissionController extends Controller
             );
 
             $res['success'] = $message;
+
+            // Approved+paid creates a student — over plan limit is a notice, never a block.
+            if ($request->application_status == 'Approved' && $request->payment_status == 'paid') {
+                $notice = ToshiActionService::planLimitNotice((int) Auth::user()->school_id, 'students');
+                if ($notice !== null) {
+                    $res['overlimit'] = $notice;
+                    session()->flash('overlimit', $notice);
+                }
+            }
+
             return $res;
         }
         catch(Exception $e)

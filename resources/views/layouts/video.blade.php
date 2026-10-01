@@ -9,7 +9,9 @@
   <body id="app">
   <div class="fixed w-full h-full overflow-auto">
   <div class="fixed bg-white px-5 py-2 rounded-b-lg mx-2 lg:mx-16 z-40">
-  	<img src="{{asset('images/klassapp-logo-primary.svg')}}" class="h-8 lg:h-12 w-auto">
+  	<a href="{{ url('/') }}" aria-label="KlassApp home">
+  		<img src="{{asset('images/klassapp-logo-primary.svg')}}" class="h-8 lg:h-12 w-auto" alt="KlassApp">
+  	</a>
   </div>
   @include('pages.video.__video-bar')
   @yield('content')

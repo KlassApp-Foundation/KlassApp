@@ -1,0 +1,171 @@
+<!-- @dsCard group="Component review" viewport="1200x1100" name="Tables — review" subtitle="Search, filter, sort, select, paginate, load, empty — on the real ledger" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tables — review</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-canvas);font-family:var(--d-font-body);color:var(--d-text);padding:32px clamp(12px,4vw,48px) 64px}
+a{color:var(--d-blue)}a:hover{color:#1557B0}
+h1{font-family:var(--d-font-display);font-size:1.8rem;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-family:var(--d-font-display);font-size:1.1rem;font-weight:600;margin:40px 0 4px}
+.sub{color:var(--d-text-secondary);font-size:.9rem;margin:0 0 16px;max-width:780px;text-wrap:pretty}
+.panel{background:var(--d-white);border-radius:14px;box-shadow:var(--d-shadow-sm);padding:20px}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.demo-ctrls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:16px}
+table.m{border-collapse:collapse;width:100%}
+table.m th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);text-align:left;font-weight:600;padding:0 12px 8px 0}
+table.m td{padding:10px 12px 10px 0;border-top:1px solid var(--d-border);font-size:.85rem;line-height:1.5;vertical-align:top}
+table.m td:first-child{white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;color:var(--d-text-secondary)}
+.cr{font-size:.72rem;font-family:ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.fail{background:#FEF2F2;color:#B91C1C}.pass{background:#F0FDF4;color:#166534}
+.flag{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:.85rem;line-height:1.55}
+.flag h3{font-family:var(--d-font-display);font-size:.9rem;margin:0 0 6px;color:#92400E}
+.meas{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--d-text-secondary)}
+.phone{max-width:390px;border:1px dashed var(--d-border-strong);border-radius:14px;padding:12px;background:var(--d-canvas)}
+</style></head><body>
+
+<h1>Tables</h1>
+<p class="sub">One working table, built on the real <code>.ds-table-ledger</code>, <code>.dt-*</code> pagination, density toggle and <code>.dt-badge</code> rules. What upstream doesn't have — search, filters, active-filter chips, bulk actions, loading rows — is new, in <code>styles/tables-v2.css</code>. It's meant to replace the ~110 raw <code>&lt;table&gt;</code> instances still queued. Try it: search, filter, sort by any header, select rows, page through, switch density.</p>
+
+<div class="demo-ctrls">
+<button class="ds-btn ds-btn-outline ds-btn-sm" id="sim-load">Simulate loading</button>
+<button class="ds-btn ds-btn-outline ds-btn-sm" id="sim-refresh">Simulate refresh (data already shown)</button>
+</div>
+
+<div class="panel">
+<div id="toolbar" class="dt-toolbar">
+ <div class="dt-toolbar-start">
+  <div class="dt-search">
+   <svg class="dt-search-icon ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+   <input id="q" class="ds-form-input v2" type="search" placeholder="Search name or admission no." aria-label="Search students">
+   <button class="dt-search-clear" id="q-clear" aria-label="Clear search" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+  </div>
+  <select id="f-class" class="ds-form-select v2 dt-filter" aria-label="Filter by class"><option value="">All classes</option></select>
+  <select id="f-status" class="ds-form-select v2 dt-filter" aria-label="Filter by status"><option value="">Any status</option><option value="paid">Paid</option><option value="partial">Partial</option><option value="unpaid">Unpaid</option></select>
+ </div>
+ <div class="dt-toolbar-end">
+  <span class="dt-result-count" id="count" aria-live="polite"></span>
+  <button class="dt-density-btn active" id="d-comf" title="Comfortable rows" aria-pressed="true">☰</button>
+  <button class="dt-density-btn" id="d-comp" title="Compact rows" aria-pressed="false">≡</button>
+ </div>
+</div>
+<div id="bulkbar" class="dt-bulkbar" hidden>
+ <span class="dt-bulkbar-count" id="bulk-n"></span>
+ <button class="ds-btn ds-btn-ghost ds-btn-sm" id="bulk-clear">Clear selection</button>
+ <button class="ds-btn ds-btn-outline ds-btn-sm" style="background:#fff">Export CSV</button>
+ <button class="ds-btn ds-btn-primary ds-btn-sm" id="bulk-remind">Send fee reminder</button>
+</div>
+<div id="chips" class="dt-chips" hidden></div>
+<div class="ds-table-wrap" id="wrap">
+<table class="ds-table-ledger v2 dt-comfortable ds-table-card-mobile" id="tbl">
+<thead><tr>
+ <th class="dt-cell-check" style="cursor:default"><input type="checkbox" class="dt-checkbox" id="all" aria-label="Select all on this page"></th>
+ <th data-k="name" tabindex="0" aria-sort="ascending">Student <span class="dt-sort-arrow">▴</span></th>
+ <th data-k="cls" tabindex="0" aria-sort="none">Class <span class="dt-sort-arrow">▴</span></th>
+ <th data-k="fee" tabindex="0" aria-sort="none" class="dt-cell-num">Term fee <span class="dt-sort-arrow">▴</span></th>
+ <th data-k="paid" tabindex="0" aria-sort="none" class="dt-cell-num">Paid <span class="dt-sort-arrow">▴</span></th>
+ <th data-k="bal" tabindex="0" aria-sort="none" class="dt-cell-num">Balance <span class="dt-sort-arrow">▴</span></th>
+ <th data-k="status" tabindex="0" aria-sort="none">Status <span class="dt-sort-arrow">▴</span></th>
+</tr></thead>
+<tbody id="tb"></tbody>
+</table>
+</div>
+<div class="dt-pagination v2" id="pager"></div>
+</div>
+
+<h2>Empty states the table owns</h2>
+<p class="sub">Two different situations, never merged. Copy follows <code>DESIGN_SYSTEM.md</code>: name the gap, offer the next action — never "No data available".</p>
+<div class="grid2">
+<div class="panel"><div class="ds-table-empty v2">
+ <svg class="ic" viewBox="0 0 24 24" style="width:28px;height:28px;color:var(--d-text-secondary);margin-bottom:12px" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+ <p class="ds-empty-state-title">No fee records for Term 2 yet</p>
+ <p class="ds-empty-state-desc">Import this term's payments from SchoolPay, or add them one by one.</p>
+ <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center"><button class="ds-btn ds-btn-outline">Add a payment</button><button class="ds-btn ds-btn-primary">Import from SchoolPay</button></div>
+</div><p class="meas">Zero data · toolbar hidden (nothing to search)</p></div>
+<div class="panel"><div class="ds-table-empty v2">
+ <svg class="ic" viewBox="0 0 24 24" style="width:28px;height:28px;color:var(--d-text-secondary);margin-bottom:12px" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+ <p class="ds-empty-state-title">No students match “Nakato” in Senior 3</p>
+ <p class="ds-empty-state-desc">Check the spelling, or search all classes.</p>
+ <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center"><button class="ds-btn ds-btn-outline">Clear filters</button></div>
+</div><p class="meas">No results · toolbar and chips stay, so the fix is one tap away</p></div>
+</div>
+
+<h2>Mobile · ≤767px</h2>
+<p class="sub">The real <code>.ds-table-card-mobile</code> rule turns every row into a card with <code>data-label</code> captions. The toolbar stacks: search takes the full width, the two filters share a row.</p>
+<div class="phone"><div class="dt-toolbar" style="margin-bottom:8px">
+ <div class="dt-search" style="max-width:none;flex-basis:100%"><svg class="dt-search-icon ic" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input class="ds-form-input v2" placeholder="Search name or admission no."></div>
+ <select class="ds-form-select v2 dt-filter" style="flex:1 1 140px"><option>All classes</option></select><select class="ds-form-select v2 dt-filter" style="flex:1 1 140px"><option>Any status</option></select>
+</div>
+<div style="background:#fff;border:1px solid var(--d-border);border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);font-size:.85rem">
+ <div style="display:flex;gap:8px;align-items:center;padding:6px 0"><span style="font:600 .72rem var(--d-font-display);letter-spacing:.03em;text-transform:uppercase;color:var(--d-text-secondary);min-width:90px">Student</span><span class="dt-person"><b>Achieng Grace</b><small>SMK/2024/0117</small></span></div>
+ <div style="display:flex;gap:8px;align-items:center;padding:6px 0"><span style="font:600 .72rem var(--d-font-display);letter-spacing:.03em;text-transform:uppercase;color:var(--d-text-secondary);min-width:90px">Balance</span><span style="font-variant-numeric:tabular-nums">UGX 450,000</span></div>
+ <div style="display:flex;gap:8px;align-items:center;padding:6px 0"><span style="font:600 .72rem var(--d-font-display);letter-spacing:.03em;text-transform:uppercase;color:var(--d-text-secondary);min-width:90px">Status</span><span class="dt-badge dt-badge-partial">Partial</span></div>
+</div>
+<p class="meas" style="margin:8px 0 0">Caption: .v2 raises 0.65rem --d-muted (2.57:1) → 0.72rem --d-text-secondary</p></div>
+
+<h2>What changed, and why</h2>
+<div class="panel"><table class="m"><thead><tr><th>Item</th><th>Real / new</th><th>Notes</th></tr></thead><tbody>
+<tr><td>header text</td><td>real → .v2</td><td>Sora 0.72rem uppercase in <code>--d-muted</code> <span class="cr fail">2.57:1</span> → <code>--d-text-secondary</code> <span class="cr pass">4.76:1</span>. The 2px blue header rule, sticky thead and green hover rail are untouched.</td></tr>
+<tr><td>sort</td><td>real + a11y</td><td>Upstream shows sort with <code>th.active</code> + a rotated arrow, but screen readers get nothing. .v2 drives it from <code>aria-sort</code>, and headers are focusable (Enter/Space sorts). Numeric columns right-align their header to match <code>.dt-cell-num</code>.</td></tr>
+<tr><td>search</td><td>new</td><td>The v2 input with a 16px search icon (<code>Icon.jsx</code> path) and a 44×44 clear button. Matches name or admission number, debounced 150ms.</td></tr>
+<tr><td>filters</td><td>new</td><td>Plain <code>.ds-form-select.v2</code> dropdowns, not a custom filter popover. Each active filter becomes a removable chip: a 30px pill inside a 44px hit area, in the blue "informs" tint also used by <code>.dt-badge-present</code>.</td></tr>
+<tr><td>selection</td><td>real + new</td><td>Real <code>.dt-checkbox</code> and <code>tr.dt-selected</code> (blue rail). New: the header checkbox goes indeterminate, and the toolbar is swapped for a dark bulk-action bar that counts the selection. Selection survives sorting and filtering.</td></tr>
+<tr><td>pagination</td><td>real</td><td><code>.dt-page-btn</code> declares 36×36 but also <code>min-width/height: 44px</code>, so it renders 44 — measured <span id="pg-m" class="meas">…</span>. The page resets to 1 on any search or filter change.</td></tr>
+<tr><td>loading</td><td>new</td><td><b>First load:</b> skeleton rows with the page's own column widths. <b>Refresh:</b> the rows stay and a 2px blue bar runs along the top, so nothing jumps. Both go static under reduced motion.</td></tr>
+</tbody></table>
+<div class="flag"><h3>Hard-coded colours in the real ledger (flagged, not changed)</h3>
+<code>tr.dt-selected</code> is <code>#E8F0FE</code>, <code>tr.dt-row-alt</code> is <code>#F8F5F0</code>, and the badge fills (<code>#F0FDF4</code>, <code>#FEF2F2</code>, <code>#FFFBEB</code>, <code>#EFF6FF</code>) aren't tokens. They're consistent enough to work, but they belong in <code>colors.css</code> as tint tokens before the 110-table migration copies them another 110 times.</div>
+</div>
+
+<script>
+const CLASSES=['Senior 1 East','Senior 2 East','Senior 2 West','Senior 3','Senior 4'];
+const NAMES=['Achieng Grace','Mugisha Brian','Nakato Esther','Okello Daniel','Namubiru Sarah','Kato Joseph','Atuhaire Faith','Ssempijja Ivan','Akello Joan','Byaruhanga Paul','Nansubuga Mary','Tumusiime Allan','Apio Rebecca','Kizza Samuel','Nabirye Ruth','Opio Martin','Kyomuhendo Lydia','Wasswa Peter','Auma Christine','Lubega Henry','Nyakato Irene','Ochieng Moses','Babirye Diana'];
+const FEE=[950000,1100000,1100000,1250000,1250000];
+const rows=NAMES.map((n,i)=>{const c=i%5,fee=FEE[c];const p=[fee,fee,Math.round(fee*.6/10000)*10000,0,Math.round(fee*.3/10000)*10000][i%5===0?0:(i*7)%5];const bal=fee-p;return{id:i,name:n,adm:'SMK/'+(2022+(i%3))+'/'+String(100+i*7).padStart(4,'0'),cls:CLASSES[c],fee,paid:p,bal,status:bal===0?'paid':p===0?'unpaid':'partial'}});
+const S={q:'',cls:'',status:'',sort:'name',dir:1,page:1,per:8,sel:new Set(),loading:false,busy:false};
+const $=id=>document.getElementById(id);
+const ugx=n=>'UGX '+n.toLocaleString('en-US');
+CLASSES.forEach(c=>$('f-class').insertAdjacentHTML('beforeend',`<option>${c}</option>`));
+function view(){let r=rows.filter(x=>(!S.q||(x.name+' '+x.adm).toLowerCase().includes(S.q.toLowerCase()))&&(!S.cls||x.cls===S.cls)&&(!S.status||x.status===S.status));r.sort((a,b)=>(a[S.sort]>b[S.sort]?1:a[S.sort]<b[S.sort]?-1:0)*S.dir);return r}
+function render(){
+ const all=view(),pages=Math.max(1,Math.ceil(all.length/S.per));if(S.page>pages)S.page=pages;
+ const pg=all.slice((S.page-1)*S.per,S.page*S.per);
+ $('count').textContent=all.length+' of '+rows.length+' students';
+ document.querySelectorAll('#tbl th[data-k]').forEach(th=>th.setAttribute('aria-sort',th.dataset.k===S.sort?(S.dir>0?'ascending':'descending'):'none'));
+ const tb=$('tb');
+ if(S.loading){tb.innerHTML=Array.from({length:5},()=>`<tr class="dt-loading-row"><td class="dt-cell-check"></td><td><span class="dt-skel" style="width:70%"></span><span class="dt-skel" style="width:40%;margin-top:8px;height:10px"></span></td><td><span class="dt-skel" style="width:80%"></span></td><td><span class="dt-skel" style="width:70%;margin-left:auto"></span></td><td><span class="dt-skel" style="width:60%;margin-left:auto"></span></td><td><span class="dt-skel" style="width:60%;margin-left:auto"></span></td><td><span class="dt-skel" style="width:56px;height:24px;border-radius:999px"></span></td></tr>`).join('');$('pager').innerHTML='';$('all').disabled=true;return}
+ $('all').disabled=false;
+ if(!all.length){const what=S.q?`“${S.q}”`:'these filters';tb.innerHTML=`<tr><td colspan="7" style="padding:0"><div class="ds-table-empty v2"><p class="ds-empty-state-title">No students match ${what}${S.cls?' in '+S.cls:''}</p><p class="ds-empty-state-desc">Check the spelling, or clear the filters to see everyone.</p><button class="ds-btn ds-btn-outline" style="margin-top:16px" onclick="clearAll()">Clear filters</button></div></td></tr>`;}
+ else tb.innerHTML=pg.map(x=>`<tr class="${S.sel.has(x.id)?'dt-selected':''}"><td class="dt-cell-check" data-label=""><input type="checkbox" class="dt-checkbox" data-id="${x.id}" ${S.sel.has(x.id)?'checked':''} aria-label="Select ${x.name}"></td><td data-label="Student"><span class="dt-person"><b>${x.name}</b><small>${x.adm}</small></span></td><td data-label="Class">${x.cls}</td><td data-label="Term fee" class="dt-cell-num">${ugx(x.fee)}</td><td data-label="Paid" class="dt-cell-num">${ugx(x.paid)}</td><td data-label="Balance" class="dt-cell-num">${x.bal?ugx(x.bal):'—'}</td><td data-label="Status" class="dt-cell-badge"><span class="dt-badge dt-badge-${x.status}">${x.status[0].toUpperCase()+x.status.slice(1)}</span></td></tr>`).join('');
+ const onPage=pg.filter(x=>S.sel.has(x.id)).length;$('all').checked=pg.length>0&&onPage===pg.length;$('all').indeterminate=onPage>0&&onPage<pg.length;
+ const from=all.length?(S.page-1)*S.per+1:0,to=Math.min(S.page*S.per,all.length);
+ let btns='';for(let i=1;i<=pages;i++)btns+=`<button class="dt-page-btn ${i===S.page?'active':''}" data-p="${i}" ${i===S.page?'aria-current="page"':''}>${i}</button>`;
+ $('pager').innerHTML=all.length?`<span class="dt-pagination-info">Showing ${from}–${to} of ${all.length}</span><span class="dt-pagination-pages"><button class="dt-page-nav" data-p="${S.page-1}" ${S.page===1?'disabled':''}>‹ Prev</button>${btns}<button class="dt-page-nav" data-p="${S.page+1}" ${S.page===pages?'disabled':''}>Next ›</button></span>`:'';
+ const n=S.sel.size;$('bulkbar').hidden=!n;$('toolbar').hidden=!!n;$('bulk-n').textContent=n+(n===1?' student':' students')+' selected';
+ const ch=[];if(S.q)ch.push(['q','Search: '+S.q]);if(S.cls)ch.push(['cls',S.cls]);if(S.status)ch.push(['status',S.status[0].toUpperCase()+S.status.slice(1)]);
+ $('chips').hidden=!ch.length||!!n;$('chips').innerHTML=ch.map(([k,l])=>`<button class="dt-chip" data-k="${k}" aria-label="Remove filter ${l}"><span>${l}<svg class="ic" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></span></button>`).join('')+(ch.length>1?'<button class="dt-chip-clear" onclick="clearAll()">Clear all</button>':'');
+ $('q-clear').hidden=!S.q;
+ const b=document.querySelector('.dt-page-btn');if(b){const r=b.getBoundingClientRect();if(r.height)$('pg-m').textContent=Math.round(r.width)+'×'+Math.round(r.height)+'px';}
+}
+function clearAll(){S.q='';S.cls='';S.status='';$('q').value='';$('f-class').value='';$('f-status').value='';S.page=1;render()}
+let t;$('q').addEventListener('input',e=>{clearTimeout(t);t=setTimeout(()=>{S.q=e.target.value.trim();S.page=1;render()},150)});
+$('q-clear').onclick=()=>{S.q='';$('q').value='';S.page=1;render();$('q').focus()};
+$('f-class').onchange=e=>{S.cls=e.target.value;S.page=1;render()};
+$('f-status').onchange=e=>{S.status=e.target.value;S.page=1;render()};
+function sortBy(k){if(S.sort===k)S.dir*=-1;else{S.sort=k;S.dir=1}render()}
+document.querySelectorAll('#tbl th[data-k]').forEach(th=>{th.onclick=()=>sortBy(th.dataset.k);th.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();sortBy(th.dataset.k)}}});
+$('tb').addEventListener('change',e=>{const id=+e.target.dataset.id;if(e.target.checked)S.sel.add(id);else S.sel.delete(id);render()});
+$('all').onchange=e=>{const pg=view().slice((S.page-1)*S.per,S.page*S.per);pg.forEach(x=>e.target.checked?S.sel.add(x.id):S.sel.delete(x.id));render()};
+$('pager').addEventListener('click',e=>{const p=e.target.closest('[data-p]');if(p&&!p.disabled){S.page=+p.dataset.p;render()}});
+$('chips').addEventListener('click',e=>{const c=e.target.closest('.dt-chip');if(!c)return;S[c.dataset.k]='';if(c.dataset.k==='q')$('q').value='';if(c.dataset.k==='cls')$('f-class').value='';if(c.dataset.k==='status')$('f-status').value='';S.page=1;render()});
+$('bulk-clear').onclick=()=>{S.sel.clear();render()};
+$('bulk-remind').onclick=function(){const b=this;b.classList.add('is-loading');b.innerHTML='<span class="ds-btn-spinner"></span><span>Sending</span>';setTimeout(()=>{b.classList.remove('is-loading');b.textContent='Send fee reminder';S.sel.clear();render()},1200)};
+function dens(c){$('tbl').classList.toggle('dt-compact',c);$('tbl').classList.toggle('dt-comfortable',!c);$('d-comp').classList.toggle('active',c);$('d-comf').classList.toggle('active',!c);$('d-comp').setAttribute('aria-pressed',c);$('d-comf').setAttribute('aria-pressed',!c)}
+$('d-comf').onclick=()=>dens(false);$('d-comp').onclick=()=>dens(true);
+$('sim-load').onclick=()=>{S.loading=true;render();setTimeout(()=>{S.loading=false;render()},1400)};
+$('sim-refresh').onclick=()=>{$('wrap').classList.add('dt-busy');setTimeout(()=>$('wrap').classList.remove('dt-busy'),1400)};
+render();window.addEventListener('load',render);
+</script>
+</body></html>

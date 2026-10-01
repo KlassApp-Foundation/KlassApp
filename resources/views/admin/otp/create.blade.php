@@ -178,7 +178,9 @@
   <div class="klass-otp-shell">
     <div class="klass-otp-intro">
       <a href="{{ url('/') }}" class="klass-otp-logo-wrap" aria-label="KlassApp Home">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-otp-logo" alt="KlassApp">
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-otp-logo" alt="KlassApp">
+        </a>
       </a>
       <h1 class="klass-otp-title">{{ __('Verify OTP') }}</h1>
       <p class="klass-otp-subtitle">Enter the verification code sent to {{ optional(auth()->user())->email }}.</p>

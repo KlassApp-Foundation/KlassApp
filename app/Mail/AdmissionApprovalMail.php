@@ -39,6 +39,6 @@ class AdmissionApprovalMail extends Mailable implements ShouldQueue
         $mail_content = str_replace(":application_no",$this->data['application_no'],$mail_content);
         $mail_content = str_replace(":school_name",$this->data['school_name'],$mail_content);
           
-        return $this->markdown('emails.mailcontent')->subject($template->subject)->with(['content' => $mail_content]);
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')->subject($template->subject)->with(['content' => $mail_content]);
     }
 }

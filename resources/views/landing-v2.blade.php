@@ -24,7 +24,7 @@
 {{-- Live cutover: Open Design klassapp-landing-v3 on /. Legacy /landing-preview redirects here. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <a href="{{ url('/') }}#hero" class="navbar-logo" aria-label="KlassApp">
+    <a href="{{ url('/') }}" class="navbar-logo" aria-label="KlassApp home">
       <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="navbar-logo-img" width="36" height="36" />
     </a>
     <ul class="navbar-links">
@@ -884,7 +884,9 @@
   <div class="container site-footer-inner">
     <div class="site-footer-row">
       <div class="site-footer-brand">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
+        </a>
         <p class="site-footer-tagline">Educationists' tools connected by intelligence.</p>
       </div>
       <nav class="site-footer-links" aria-label="Footer">

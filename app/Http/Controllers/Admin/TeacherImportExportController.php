@@ -49,7 +49,7 @@ class TeacherImportExportController extends Controller
                     $user->userprofile->firstname,
                     $user->userprofile->lastname,
                     $user->userprofile->gender,
-                    date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                    \App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', ''),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
                     $user->userprofile->country->name,
@@ -98,23 +98,12 @@ class TeacherImportExportController extends Controller
         //
         $school_id = Auth::user()->school_id;
 
-        // ── Plan limit check — reject whole batch upfront if at/over limit ──
-        $limit = ToshiActionService::enforcePlanLimit($school_id, 'teachers');
-        if (!$limit['success']) {
-            return back()->with('failmessage', $limit['message']);
-        }
-
         try
         {
             Excel::import(new TeachersImport,$request->file('import_file'));
-            $count = Session::get('count');
 
-
-            if($count != 0)
-            {
-                return back()->with('failmessage','You can add only '.$count.' Members');
-            }
-
+            // Do not hard-fail on Session::get('count') — TeachersImport no longer sets it,
+            // and a polluted session would falsely reject a successful import.
             $insertedcount = Session::get('insertedcount');
             if($insertedcount > 0)
             {
@@ -128,12 +117,19 @@ class TeacherImportExportController extends Controller
                     LOGNAME_IMPORT_TEACHER,
                     $message
                 );
-                return back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
+                $redirect = back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
             }
             else
             {
-                return back()->with('failmessage',trans('messages.insert_failure_msg'));
+                $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
             }
+
+            // Over plan limit is a NOTICE, never a block (same rule as student import).
+            $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'teachers');
+
+            return $overLimit['success']
+                ? $redirect
+                : $redirect->with('overlimit', $overLimit['message']);
         }
         catch(Exception $e)
         {
@@ -244,9 +240,7 @@ exit;
                 }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=blank(optional($user->userprofile)->date_of_birth)
-                        ? ''
-                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
+                    $data[]=\App\Support\DateOfBirth::format(optional($user->userprofile)->date_of_birth, 'd-m-Y', '');
                 }
                 if(in_array('address', $heads))
                 {

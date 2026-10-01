@@ -3965,6 +3965,32 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     padding-bottom: 0 !important;
 }
 
+/* Academic year selector: always in the header (incl. mobile), labelled, compact. */
+.dashboard-ay-selector {
+    min-width: 9.5rem;
+    max-width: 14rem;
+}
+.dashboard-ay {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0;
+}
+.dashboard-ay-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--d-text-secondary, #64748B);
+    margin: 0;
+}
+.dashboard-ay-select {
+    min-height: 36px;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+}
+
 /* Dashboard gender legend swatches — match the chart series (boys #304ffe,
    girls #B45309 AA amber). Scoped to the admin dashboard; the adminstyle.scss
    .bar-bg-* defaults (#417dfc / #ffa601) still serve the superadmin widget. */

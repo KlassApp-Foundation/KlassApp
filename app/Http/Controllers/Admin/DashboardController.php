@@ -145,25 +145,7 @@ class DashboardController extends Controller
      */
     private function dashboardGreeting(User $user): array
     {
-        $hour = (int) now()->timezone(config('app.timezone'))->format('G');
-        if ($hour < 12) {
-            $phrase = 'Good morning';
-        } elseif ($hour < 17) {
-            $phrase = 'Good afternoon';
-        } else {
-            $phrase = 'Good evening';
-        }
-
-        $profile = $user->userprofile;
-        $name = trim((string) ($profile->firstname ?? ''));
-        if ($name === '') {
-            $name = explode(' ', (string) $user->name)[0] ?: 'Admin';
-        }
-
-        return [
-            'phrase' => $phrase,
-            'name' => $name,
-        ];
+        return \App\Support\DashboardGreeting::for($user, 'Admin');
     }
 
     /**

@@ -108,6 +108,8 @@ public/images/*
 !public/images/klassapp-stacked-dark.svg
 !public/images/whatsapp.svg
 !public/images/slack.svg
+# Email shell logo (PNG: Outlook does not render SVG)
+!public/images/email/
 !public/images/google-drive.svg
 !public/images/brand/
 !public/images/brand/models/
@@ -130,3 +132,7 @@ public/css/app.css.map
 
 # Local-only known-failures — honoured by scripts/test-guard.sh when present; CI never sees it.
 /tests/known-failures.local.txt
+
+# === E2E onboarding suite output ===
+e2e/onboarding/artifacts/
+e2e/onboarding/report/

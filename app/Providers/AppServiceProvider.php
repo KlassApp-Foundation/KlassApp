@@ -2,7 +2,13 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Toshi\ToshiUiSwitch;
 use App\Observers\TeacherProfileObserver;
 use App\Observers\AcademicYearObserver;
 use App\Observers\StandardLinkObserver;
@@ -54,6 +60,26 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() { 
+        // OpenCode Go gateway rejects session-less requests (MissingSessionID).
+        // Attach the session id to any HTTP request heading for the host of the
+        // configured OpenAI-compatible provider (Toshi's LLM path, health checks).
+        Http::globalRequestMiddleware(function ($request) {
+            $sessionId = config('services.opencode_gateway.session_id');
+            $providerHost = parse_url((string) config('ai.providers.openai-compatible.url'), PHP_URL_HOST);
+
+            if (filled($sessionId) && filled($providerHost)
+                && parse_url((string) $request->getUri(), PHP_URL_HOST) === $providerHost) {
+                return $request->withHeader('x-opencode-session', $sessionId);
+            }
+
+            return $request;
+        });
+
+        // Named limiters keep their own counters. Plain `throttle:N,M` shares ONE counter per
+        // IP across every such route, which would let status polling starve the 3/min resend limit.
+        RateLimiter::for('verify-status', fn (Request $request) => Limit::perMinute(60)->by('verify-status|'.$request->ip()));
+        RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
+
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)
         if (config('app.debug')) {
             error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
@@ -128,6 +154,10 @@ class AppServiceProvider extends ServiceProvider {
         }
 
         Paginator::useBootstrap();
+
+        Blade::if('toshiUi', function () {
+            return app(ToshiUiSwitch::class)->enabled();
+        });
 
         // Add get() helper to the AI Tool Request class for convenience
         AiToolRequest::macro('get', function (string $key, mixed $default = null): mixed {

@@ -128,7 +128,9 @@
   <div class="klass-auth-inner">
     <div class="klass-auth-intro">
       <span class="klass-auth-logo-frame">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+        </a>
       </span>
       <h1 class="klass-auth-title">{{ __('Set New Password') }}</h1>
       <p class="klass-auth-sub">Choose a new password for your account.</p>

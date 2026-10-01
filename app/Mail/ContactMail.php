@@ -41,7 +41,7 @@ class ContactMail extends Mailable implements ShouldQueue
         $mail_content = str_replace(":role",$this->contact->role,$mail_content);
         $mail_content = str_replace(":serve_at",$this->contact->serve_at,$mail_content);
      
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                     ->subject($subject)
                     ->with([
                         'content' => $mail_content,

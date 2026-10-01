@@ -39,7 +39,7 @@ class AdminNotifyNewUserMail extends Mailable implements ShouldQueue
         $mail_content   =   str_replace(":mail",$this->user->email,$mail_content);
      
             return $this->from(config('mail.from.address'), config('mail.from.name'))
-                        ->markdown('emails.mailcontent')
+                        ->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                         ->subject($subject)
                         ->with([
                             'content' => $mail_content,

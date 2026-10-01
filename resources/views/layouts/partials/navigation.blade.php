@@ -74,18 +74,18 @@
             @elseif($brandLogo === 'klassapp')
                 {{-- A parent can have children at several schools, so one school's logo
                      would be wrong here; the children/schools menu carries identity. --}}
-                <a class="h-10 object-contain" href="{{ route($brandRoute) }}" aria-label="KlassApp">
+                <a class="h-10 object-contain" href="{{ route($brandRoute) }}" aria-label="KlassApp home">
                     <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
                          class="h-10 w-auto object-contain mr-3"
                          alt="KlassApp"
                          onerror="this.onerror=null;this.src='{{ asset('images/klassapp-logo.svg') }}';">
                 </a>
-                <a class="parent-brand-name {{ $nameClass }}" href="{{ route($brandRoute) }}">
+                <a class="parent-brand-name {{ $nameClass }}" href="{{ route($brandRoute) }}" aria-label="KlassApp home">
                     <strong>KlassApp</strong>
                 </a>
             @else
                 <a class="h-10 object-contain" href="{{ route($brandRoute) }}"
-                   aria-label="{{ $navSchool ? ucwords($navSchool->name).' dashboard' : 'Dashboard' }}">
+                   aria-label="KlassApp home">
                     <img src="{{ $schoolLogo ?: asset('images/klassapp-logo-primary.svg') }}"
                          class="h-10 w-auto object-contain mr-3"
                          alt="{{ $schoolLogo ? ucwords($navSchool->name).' logo' : 'KlassApp' }}"
@@ -107,9 +107,9 @@
         <ul class="navbar-nav mr-auto flex"></ul>
     </div>
 
-    <div class="flex {{ $variant === 'dashboard' ? 'flex-col-reverse lg:flex-row md:flex-row' : '' }} items-center">
+    <div class="flex flex-row flex-wrap items-center gap-2 {{ $variant === 'dashboard' ? 'justify-end' : '' }}">
         @if($showAcademicYear)
-            <div class="hidden lg:block md:block">
+            <div class="dashboard-ay-selector" data-testid="dashboard-ay-selector">
                 <nav-bar></nav-bar>
             </div>
         @endif
@@ -152,7 +152,7 @@
                 <div class="navbar-menu {{ $variant === 'dashboard' ? 'ml-5' : 'lg:ml-5 md:ml-3' }}">
                     <ul class="navbar-nav ml-auto flex items-center">
                         @if($extraPricing)
-                            <li class="mx-2 hidden lg:block"><a href="{{ url('/pricing') }}">{{ __('Pricing') }}</a></li>
+                            <li class="mx-2 hidden lg:block"><a href="/pricing">{{ __('Pricing') }}</a></li>
                         @endif
                         @guest
                             <li class="nav-item px-2">
