@@ -862,6 +862,27 @@
             </div>
             @endif
         </div>
+        {{-- Setup finished (assistant off): next-step links — never a model path --}}
+        @if($mode === 'done' && $scope === 'school')
+        <div class="shrink-0" style="padding: 8px 16px 12px; background: #FFFFFF; border-top: 1px solid #f0f0f0;" data-testid="toshi-setup-done">
+            <p class="toshi-label" style="margin-bottom: 8px;">Here's what to do next</p>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <a href="{{ url('/admin/student/add') }}" data-testid="toshi-next-add-students"
+                   style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f5f4ed; border: 1px solid #e8e6dc; border-radius: 10px; font-size: 13px; font-weight: 500; color: #141413; text-decoration: none;">
+                    <span>👤</span> Add students
+                </a>
+                <a href="{{ route('admin.marks') }}" data-testid="toshi-next-enter-marks"
+                   style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f5f4ed; border: 1px solid #e8e6dc; border-radius: 10px; font-size: 13px; font-weight: 500; color: #141413; text-decoration: none;">
+                    <span>📝</span> Enter marks
+                </a>
+                <a href="{{ route('admin.reports.cards.index') }}" data-testid="toshi-next-report-cards"
+                   style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f5f4ed; border: 1px solid #e8e6dc; border-radius: 10px; font-size: 13px; font-weight: 500; color: #141413; text-decoration: none;">
+                    <span>📄</span> Send report cards
+                </a>
+            </div>
+        </div>
+        @endif
+
         {{-- Quick action chips --}}
         @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
         <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">

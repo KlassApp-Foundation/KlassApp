@@ -12,7 +12,7 @@ class ToshiActivityController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless(app(ToshiUiSwitch::class)->enabled(), 404);
+        abort_unless(app(ToshiUiSwitch::class)->assistantEnabled(), 404);
 
         $user = Auth::user();
         $schoolId = $user->school_id;

@@ -60,5 +60,10 @@ for (const [typeId, tag] of JOURNEYS) {
         console.log(`\n[${tag}] summary: ${dir}/summary.json — turns=${run.turns}, failed checks=${verdict.failed.length}, findings=${findings.length}`);
 
         expect(page.url()).toContain('/admin/');
+        expect(run.done, `Toshi journey must reach a completion signal (turns=${run.turns})`).toBeTruthy();
+        expect(
+            verdict.failed,
+            `Hard outcome checks failed: ${verdict.failed.map((f) => f.name + ' — ' + f.detail).join('; ')}`,
+        ).toEqual([]);
     });
 }

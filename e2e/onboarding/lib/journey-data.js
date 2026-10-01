@@ -66,7 +66,7 @@ function buildJourneyData({ typeId, mode }) {
         date: today(),
         type,
         mode,
-        schoolName: `E2E ${type.label} ${mode === 'manual' ? 'Manual' : 'Toshi'} ${today()}`,
+        schoolName: `E2E ${type.label} ${mode === 'manual' ? 'Manual' : 'Toshi'} ${today()} ${suffix}`,
         admin: {
             name: `Suite Admin ${nameTag}`,
             email: `e2e.${typeId}.${mode}.${suffix}@example.com`,

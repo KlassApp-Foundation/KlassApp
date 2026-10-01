@@ -667,8 +667,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 1, 2026 (latest) — Soft-launch docs #922 + robots #899 MERGED; positioning PR in flight
+## Current Status: October 1, 2026 (latest) — Toshi onboarding-without-AI PR [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) open
 
+- **#929 OPEN** `feat/toshi-onboarding-without-ai` tip `be3278cd` — onboarding/assistant switch split + `mode=done`; e2e driver now drives checklist (bot-transcript-only decide, Yes chips, required Set up rows). Staging `primary-toshi@1280` reaches plan+review; **Confirm stuck on `main`** because complete-mode commit rejected the school admin's own `adminEmail` — fixed in tip (PHPUnit green). Merge still `REVIEW_REQUIRED` / `mergeable_state=blocked`.
 - **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
 - **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
 - **#924 MERGED** earlier this session (logo→home).
@@ -2504,6 +2505,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929
+- **Work done**: (1a) Mapped scripted vs AI call sites in Toshi onboarding. (1b) Split `ToshiUiSwitch` into `onboardingEnabled` / `assistantEnabled`; panel shows without AI key; `exitCompletingSetupMode` → `mode=done` with next-step links when assistant off; free text → `fallbackMessage`; guards on `handleAssistantQuery` / MCP resume; Blade `@toshiAssistant` / `@toshiOnboarding`; stop setting `toshi_enabled=1` during curriculum/commit. (1c) E2E stall root cause: wrong size answer `100-300 students` + `recent.slice(-5)` blocking re-prompts; fixed driver + size aliases. (1d) Hardened outcome checks / fail test if `!done` or DB checks fail.
+- **PR**: [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) · branch `feat/toshi-onboarding-without-ai` · tip `be3278cd`
+- **Files**: `ToshiUiSwitch`, `AgentToshi` (incl. complete-mode commit email fix + `exitCompletingSetupMode` after commit), `AppServiceProvider`, `ToshiActivityController`, blades, PHPUnit, `e2e/onboarding/lib/{toshi,journey-data,outcomes,signup}.js`
+- **Status**: 🚧 PR open; merge **blocked** (`REVIEW_REQUIRED`). Local PHPUnit for switch + confirm-onboarding green. Staging journey progress: name→…→terms→plan→review; **Confirm loops on `main`** until tip deploys.
+- **Edge cases / findings**:
+  1. `decide()` was matching checklist labels (`Academic terms` → `yes` as school name). Fixed: bot-bubble-only matching, name over name-ok, Yes chips, required Set up before optional Teachers.
+  2. Auto-skip of "Skip this step" was skipping fees/WhatsApp (also skippable). Narrowed to teachers/students only.
+  3. **Complete-mode `commit()` rejected `adminEmail` when it equals the logged-in school admin** — left Confirm & Complete Setup stuck forever; draft terms never persisted. Fixed in tip + regression test. Staging cannot prove until #929 merges/deploys.
+  4. Chicken-egg: assistant-off finished state + commit fix need #929 on staging; merge gate wants green journeys first.
 
 ### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
 - **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.
