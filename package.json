@@ -2,13 +2,15 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "vite build && npm run docs:build",
         "test:e2e": "playwright test",
         "test:e2e:headed": "playwright test --headed",
         "test:e2e:prod-uganda": "PLAYWRIGHT_BASE_URL=https://klassapp.xyz playwright test --project=prod e2e/prod-uganda-onboarding.spec.js",
         "build-subscriptioninfo": "cd nova-components/Subscriptioninfo && npm run dev",
         "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod",
-        "e2e:onboarding": "node e2e/onboarding/run.mjs"
+        "e2e:onboarding": "node e2e/onboarding/run.mjs",
+        "docs:build": "vitepress build docs-site",
+        "docs:dev": "vitepress dev docs-site"
     },
     "devDependencies": {
         "@playwright/test": "^1.62.1",
@@ -26,6 +28,7 @@
         "sass": "^1.26.10",
         "tailwindcss": "^4.3.3",
         "vite": "^8.1.5",
+        "vitepress": "^1.6.4",
         "vue": "3.5.40"
     },
     "dependencies": {

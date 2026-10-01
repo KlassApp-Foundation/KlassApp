@@ -136,3 +136,7 @@ public/css/app.css.map
 # === E2E onboarding suite output ===
 e2e/onboarding/artifacts/
 e2e/onboarding/report/
+# VitePress soft-launch preview (built by npm run docs:build). Never use public/docs until Docsify cutover.
+/public/docs/
+/public/docs-preview/
+/docs-site/dist/

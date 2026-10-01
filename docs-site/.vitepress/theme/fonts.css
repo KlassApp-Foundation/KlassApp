@@ -1,0 +1,6 @@
+/* Self-hosted, latin subset only — no Google Fonts request on slow networks.
+   Copy the woff2 files from @fontsource/dm-sans and @fontsource/sora into docs-site/public/fonts/.
+   Three files only (~45 KB total, estimated): DM Sans 400 + 700, Sora 600. Other weights fall back to the nearest file. */
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/docs-preview/fonts/dm-sans-latin-400.woff2) format('woff2')}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:700;font-display:swap;src:url(/docs-preview/fonts/dm-sans-latin-700.woff2) format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:600;font-display:swap;src:url(/docs-preview/fonts/sora-latin-600.woff2) format('woff2')}

@@ -15,6 +15,13 @@ Route::get('/docs/{path?}', DocsController::class)
     ->where('path', '.*')
     ->name('docs');
 
+// Soft-launch Help hub. VitePress builds to public/docs-preview (npm run docs:build)
+// so the live Docsify /docs route stays unchanged until cutover.
+Route::redirect('/help', '/docs-preview/help/', 302)->name('help');
+Route::get('/help/{path}', function (string $path) {
+    return redirect('/docs-preview/help/'.ltrim($path, '/'), 302);
+})->where('path', '.*')->name('help.path');
+
 // Locked v3 landing — live cutover on /. Legacy preview URL redirects.
 Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
 
