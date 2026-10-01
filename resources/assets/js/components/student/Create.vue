@@ -178,8 +178,8 @@
             </div>
         </div>
 
-        {{-- Soft-launch 1c: Address lives inside the create shell (full width),
-             not as a portal sibling of Gender in an unclosed lg:flex-row. --}}
+        <!-- Soft-launch 1c: Address lives inside the create shell (full width),
+             not as a portal sibling of Gender in an unclosed lg:flex-row. -->
         <div class="tw-form-group w-full" data-testid="student-create-address">
             <div class="mb-2">
                 <label for="address" class="tw-form-label">Address</label>
