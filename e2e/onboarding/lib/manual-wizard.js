@@ -152,9 +152,15 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
                 err = await clickNext(page, shotDir, 'school-name');
                 if (err) { record.wizardErrors.push(err); }
                 if (!record.prevExercised) {
+                    const beforePrev = (await title(page)).toLowerCase();
                     await page.locator(PREV).click({ timeout: T });
-                    await waitIdle(page, 900);
-                    const backTitle = (await title(page)).toLowerCase();
+                    const prevDeadline = Date.now() + 15_000;
+                    let backTitle = beforePrev;
+                    while (Date.now() < prevDeadline) {
+                        await waitIdle(page, 400);
+                        backTitle = (await title(page)).toLowerCase();
+                        if (backTitle && backTitle !== beforePrev) break;
+                    }
                     record.prevExercised = true;
                     if (!backTitle.includes('school name')) findings.push(`wizard prev returned to unexpected step: ${backTitle}`);
                     err = await clickNext(page, shotDir, 'school-name-again');
@@ -193,7 +199,8 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
             } else if (t.includes('academic year')) {
                 err = await clickNext(page, shotDir, 'academic-year');
                 if (err) record.wizardErrors.push(err);
-            } else if (t.includes('structure')) {
+            } else if (t.startsWith('structure') || t.includes('structure &')) {
+                // Not "fee structures" — that title also contains the substring.
                 await page.waitForSelector('[data-testid="wizard-structure-step"]', { timeout: 30_000 });
                 const card = page.locator('[data-testid^="wizard-structure-class-"]').filter({ hasText: data.type.streamClassExample }).first();
                 if (await card.count()) {
