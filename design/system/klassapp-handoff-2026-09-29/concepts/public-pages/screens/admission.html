@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admission form (Uganda) — Lakeview Junior School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pp.css">
+<style>
+.adm{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:24px 20px 48px}
+.adm-head{display:flex;align-items:center;gap:14px;padding-bottom:20px;border-bottom:1px solid var(--hair)}
+.adm-school{display:flex;flex-direction:column;gap:2px;min-width:0}
+.adm-school b{font-family:'Sora',sans-serif;font-size:18px;letter-spacing:-.01em}
+.adm-school span{font-size:13px;color:var(--ap-muted)}
+.adm-mark{width:48px;height:48px;border-radius:12px;border:1px solid var(--hair);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font:700 16px 'Sora',sans-serif;color:var(--ap-ink);flex:none}
+.steps{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.steps li{display:flex;flex-direction:column;gap:8px;font-size:12.5px;font-weight:600;color:var(--ap-muted)}
+.steps li::before{content:'';height:4px;border-radius:2px;background:color-mix(in srgb,var(--paper-edge) 55%,var(--ap-border))}
+.steps li.done::before{background:color-mix(in srgb,var(--ap-primary) 45%,#fff)}
+.steps li[aria-current="step"]{color:var(--ap-ink)}
+.steps li[aria-current="step"]::before{background:var(--ap-primary)}
+.steps .n{font-family:ui-monospace,Menlo,monospace;font-weight:500;margin-right:4px}
+.step-count{margin:20px 0 0;font-size:13px;color:var(--ap-muted)}
+.adm h1{margin:4px 0 0;font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:600;letter-spacing:-.02em;text-wrap:pretty}
+.adm h2{margin:12px 0 0;font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:600}
+.adm .ap-form{max-width:520px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.opt{font-weight:500;color:var(--ap-muted);font-size:.85em}
+.req{color:var(--ap-error)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg label{min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 14px;border:1px solid var(--ap-border);border-radius:10px;background:#fff;font-weight:600;cursor:pointer}
+.seg input,.chk input{accent-color:var(--ap-primary);width:18px;height:18px}
+.chk{min-height:44px;display:flex;align-items:center;gap:10px;font-weight:500}
+.up{min-height:56px;display:flex;align-items:center;gap:12px;border:1px dashed var(--ap-border);border-radius:10px;padding:10px 14px;background:rgba(255,255,255,.7);cursor:pointer}
+.up b{font-weight:600}.up span{font-size:13px;color:var(--ap-muted)}
+.up input{position:absolute;opacity:0;width:1px;height:1px}
+.notice{border:1px solid var(--hair);border-radius:10px;padding:10px 14px;background:rgba(255,255,255,.7);font-size:14px}
+.adm-actions{display:flex;gap:10px;margin-top:8px}
+.adm-actions .ap-submit{width:auto;min-width:160px}
+.adm-actions .ap-secondary{width:auto}
+.state{max-width:520px;display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.state p{margin:0;line-height:1.55}
+.alert{border:1px solid #FCA5A5;background:#FEF2F2;color:#7F1D1D;border-radius:10px;padding:12px 14px;font-size:14px}
+[hidden]{display:none!important}
+@media (max-width:640px){.two{grid-template-columns:1fr}.steps .lbl{display:none}.steps li[aria-current="step"] .lbl{display:inline}.adm-actions{flex-direction:column-reverse}.adm-actions>*{width:100%!important}}
+</style>
+</head>
+<body>
+<div class="ap-page" data-screen-label="Public admission form · Uganda">
+<div class="ap-bg-vintage" aria-hidden="true"></div>
+<div class="adm">
+<header class="adm-head">
+<div class="adm-mark" aria-hidden="true">LJ</div>
+<div class="adm-school"><b>Lakeview Junior School</b><span>Admission form · Term 1, 2027</span></div>
+</header>
+
+<div id="form">
+<ol class="steps" aria-label="Form progress" id="steps"></ol>
+<p class="step-count" id="count"></p>
+
+<section data-step="1">
+<h1>Which class is your child applying for?</h1>
+<form class="ap-form" onsubmit="return false">
+<div class="ap-field"><label class="ap-label" for="cls">Class applying for <span class="req" aria-hidden="true">*</span></label>
+<select id="cls" class="ap-input" required><option value="">Choose a class</option><option>Baby class</option><option>Middle class</option><option>Top class</option><option>P.1</option><option>P.2</option><option>P.3</option><option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option><option>S.1</option><option>S.2</option><option>S.3</option><option>S.4</option><option>S.5</option><option>S.6</option></select>
+<p class="ap-hint">Only classes open for admission are listed.</p></div>
+<div class="ap-field" id="boardingF"><span class="ap-label">Day or boarding <span class="req" aria-hidden="true">*</span></span>
+<div class="seg" role="radiogroup" aria-label="Day or boarding"><label><input type="radio" name="db" checked> Day</label><label><input type="radio" name="db"> Boarding</label></div>
+<p class="ap-hint">Shown only when the school offers boarding.</p></div>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="term">Term of entry <span class="req" aria-hidden="true">*</span></label><select id="term" class="ap-input"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
+<div class="ap-field"><label class="ap-label" for="yr">Year <span class="req" aria-hidden="true">*</span></label><select id="yr" class="ap-input"><option>2027</option><option>2026</option></select></div>
+</div>
+</form>
+</section>
+
+<section data-step="2">
+<h1>About the student</h1>
+<form class="ap-form" onsubmit="return false">
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="sn">Surname <span class="req" aria-hidden="true">*</span></label><input id="sn" class="ap-input" autocomplete="family-name"></div>
+<div class="ap-field"><label class="ap-label" for="gn">Given names <span class="req" aria-hidden="true">*</span></label><input id="gn" class="ap-input" autocomplete="given-name"></div>
+</div>
+<div class="two">
+<div class="ap-field"><span class="ap-label">Sex <span class="req" aria-hidden="true">*</span></span><div class="seg" role="radiogroup" aria-label="Sex"><label><input type="radio" name="sx"> Female</label><label><input type="radio" name="sx"> Male</label></div></div>
+<div class="ap-field"><label class="ap-label" for="dob">Date of birth <span class="req" aria-hidden="true">*</span></label><input id="dob" type="date" class="ap-input"></div>
+</div>
+<div class="ap-field"><label class="ap-label" for="nat">Nationality <span class="req" aria-hidden="true">*</span></label><select id="nat" class="ap-input"><option selected>Ugandan</option><option>Kenyan</option><option>Rwandan</option><option>South Sudanese</option><option>Tanzanian</option><option>Congolese (DRC)</option><option>Other</option></select></div>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="dist">Home district <span class="req" aria-hidden="true">*</span></label><input id="dist" class="ap-input" list="districts" placeholder="Start typing, e.g. Wakiso"></div>
+<div class="ap-field"><label class="ap-label" for="vil">Village or town <span class="opt">(optional)</span></label><input id="vil" class="ap-input"></div>
+</div>
+<datalist id="districts"><option>Kampala</option><option>Wakiso</option><option>Mukono</option><option>Gulu</option><option>Mbarara</option><option>Jinja</option></datalist>
+<div class="ap-field"><label class="ap-label" for="lin">Learner Identification Number (LIN) <span class="opt">(optional)</span></label><input id="lin" class="ap-input" inputmode="text"><p class="ap-hint">If known. It's on previous report cards or with the last school.</p></div>
+<div class="ap-field"><label class="ap-label" for="rel">Religion <span class="opt">(optional)</span></label><select id="rel" class="ap-input"><option value="">Prefer not to say</option><option>Anglican</option><option>Catholic</option><option>Muslim</option><option>Pentecostal / Born again</option><option>Seventh-day Adventist</option><option>Orthodox</option><option>Other</option></select></div>
+<div class="ap-field"><span class="ap-label">Passport photo <span class="opt">(optional)</span></span><label class="up"><input type="file" accept="image/*"><b>Add a photo</b><span>JPG or PNG, up to 2 MB</span></label></div>
+<div class="ap-field"><span class="ap-label">Birth certificate or baptism card <span class="opt">(optional)</span></span><label class="up"><input type="file" accept="image/*,application/pdf"><b>Add a document</b><span>Photo or PDF, up to 5 MB</span></label></div>
+</form>
+</section>
+
+<section data-step="3">
+<h1>Previous schooling</h1>
+<form class="ap-form" onsubmit="return false">
+<p class="ap-hint" id="acadNote"></p>
+<div class="ap-field"><label class="ap-label" for="ps">Previous school <span id="psReq"></span></label><input id="ps" class="ap-input"></div>
+<div class="ap-field"><label class="ap-label" for="lc">Last class completed <span id="lcReq"></span></label><input id="lc" class="ap-input" placeholder="e.g. P.4"></div>
+<div id="ple" hidden>
+<h2>PLE results</h2>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="pleI">PLE index number <span class="req" aria-hidden="true">*</span></label><input id="pleI" class="ap-input" placeholder="e.g. 012345/001"></div>
+<div class="ap-field"><label class="ap-label" for="pleA">PLE aggregate <span class="req" aria-hidden="true">*</span></label><input id="pleA" class="ap-input" inputmode="numeric" placeholder="4–36"></div>
+</div></div>
+<div id="uce" hidden>
+<h2>UCE results</h2>
+<div class="ap-field"><label class="ap-label" for="uceI">UCE index number <span class="req" aria-hidden="true">*</span></label><input id="uceI" class="ap-input" placeholder="e.g. U0123/045"></div>
+<div class="ap-field"><label class="ap-label" for="uceR">UCE results summary <span class="req" aria-hidden="true">*</span></label><textarea id="uceR" class="ap-input" rows="3" style="min-height:96px;padding-top:10px" placeholder="Subjects and grades, or the division"></textarea></div>
+</div>
+</form>
+</section>
+
+<section data-step="4">
+<h1>Parent or guardian</h1>
+<form class="ap-form" onsubmit="return false">
+<h2>Primary contact</h2>
+<div class="ap-field"><label class="ap-label" for="p1n">Full name <span class="req" aria-hidden="true">*</span></label><input id="p1n" class="ap-input" autocomplete="name"></div>
+<div class="ap-field"><label class="ap-label" for="p1r">Relationship to the child <span class="req" aria-hidden="true">*</span></label><select id="p1r" class="ap-input"><option value="">Choose</option><option>Mother</option><option>Father</option><option>Guardian</option><option>Grandparent</option><option>Aunt / Uncle</option><option>Sibling</option><option>Other</option></select></div>
+<div class="ap-field"><label class="ap-label" for="p1p">Phone <span class="req" aria-hidden="true">*</span></label><input id="p1p" class="ap-input" type="tel" inputmode="tel" placeholder="07XX XXX XXX" autocomplete="tel">
+<label class="chk"><input type="checkbox" checked> This number is on WhatsApp</label><p class="ap-hint">The school sends reports and fee reminders here.</p></div>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="p1a">Alternative phone <span class="opt">(optional)</span></label><input id="p1a" class="ap-input" type="tel"></div>
+<div class="ap-field"><label class="ap-label" for="p1e">Email <span class="opt">(optional)</span></label><input id="p1e" class="ap-input" type="email"></div>
+</div>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="p1o">Occupation <span class="opt">(optional)</span></label><input id="p1o" class="ap-input"></div>
+<div class="ap-field"><label class="ap-label" for="p1d">District of residence <span class="req" aria-hidden="true">*</span></label><input id="p1d" class="ap-input" list="districts"></div>
+</div>
+<h2>Second parent or guardian <span class="opt">(optional)</span></h2>
+<button type="button" class="ap-secondary" style="width:auto" onclick="this.nextElementSibling.hidden=false;this.hidden=true">Add a second parent or guardian</button>
+<div hidden><div class="ap-field"><label class="ap-label" for="p2n">Full name</label><input id="p2n" class="ap-input"></div><div class="ap-field"><label class="ap-label" for="p2p">Phone</label><input id="p2p" class="ap-input" type="tel"></div><p class="ap-hint">Relationship, alternative phone, email, occupation and district follow the same layout as above, all optional.</p></div>
+<h2>Emergency contact <span class="opt">(if different)</span></h2>
+<div class="ap-field"><label class="ap-label" for="en">Name</label><input id="en" class="ap-input"></div>
+<div class="two">
+<div class="ap-field"><label class="ap-label" for="er">Relationship</label><input id="er" class="ap-input"></div>
+<div class="ap-field"><label class="ap-label" for="ep">Phone</label><input id="ep" class="ap-input" type="tel"></div>
+</div>
+</form>
+</section>
+
+<section data-step="5">
+<h1>Health and support</h1>
+<form class="ap-form" onsubmit="return false">
+<p class="notice">Used only to care for your child. Visible only to authorised staff.</p>
+<div class="ap-field"><label class="ap-label" for="med">Allergies or medical conditions <span class="opt">(optional)</span></label><textarea id="med" class="ap-input" rows="3" style="min-height:96px;padding-top:10px"></textarea></div>
+<div class="ap-field"><label class="ap-label" for="sen">Special needs or disability support <span class="opt">(optional)</span></label><textarea id="sen" class="ap-input" rows="3" style="min-height:96px;padding-top:10px"></textarea></div>
+</form>
+</section>
+
+<div class="adm-actions" style="max-width:520px">
+<button type="button" class="ap-secondary" id="back">Back</button>
+<button type="button" class="ap-submit" id="next">Next</button>
+</div>
+</div>
+
+<div class="state" id="s-done" hidden><h1>Application sent</h1><p>Lakeview Junior School has your application for <b id="doneCls">P.5</b>. They'll contact you on the phone number you gave, usually within a week.</p><p class="ap-hint">Reference LJ-2027-0142. Keep it for any questions.</p></div>
+<div class="state" id="s-error" hidden><div class="alert" role="alert">We couldn't send your application. Nothing you entered has been lost.</div><p>Please try again in a minute. If it keeps happening, call the school on 0414 000 000 and quote reference <b>LJ-ERR-7F2A</b>.</p><div class="adm-actions"><button class="ap-submit" type="button">Try again</button></div></div>
+<div class="state" id="s-closed" hidden><h1>Admissions are closed right now</h1><p>Lakeview Junior School isn't taking applications through this form at the moment.</p><p>Contact the school office to ask when admissions reopen.</p></div>
+</div>
+</div>
+<script>
+const L=['Class','Student','Academic','Parents','Health'];let s=1;
+const st=document.getElementById('steps');
+function cls(){return document.getElementById('cls').value}
+function acad(){const c=cls(),early=/Baby|Middle|Top|P\.1$/.test(c);
+ document.getElementById('psReq').innerHTML=document.getElementById('lcReq').innerHTML=early?'<span class="opt">(optional)</span>':'<span class="req" aria-hidden="true">*</span>';
+ document.getElementById('acadNote').textContent=early?'Optional for nursery and P.1.':c?'Required for '+c+'.':'Choose a class in step 1 first.';
+ document.getElementById('ple').hidden=c!=='S.1';document.getElementById('uce').hidden=c!=='S.5';}
+function draw(){st.innerHTML=L.map((l,i)=>`<li class="${i+1<s?'done':''}" ${i+1===s?'aria-current="step"':''}><span><span class="n">${i+1}</span><span class="lbl">${l}</span></span></li>`).join('');
+ document.getElementById('count').textContent=`Step ${s} of 5`;
+ document.querySelectorAll('[data-step]').forEach(x=>x.hidden=+x.dataset.step!==s);
+ document.getElementById('back').textContent=s===1?'Start over':'Back';
+ document.getElementById('next').textContent=s===5?'Send application':'Next: '+L[s];acad();}
+document.getElementById('next').onclick=()=>{if(s<5){s++;draw();scrollTo(0,0)}else{document.getElementById('form').hidden=true;document.getElementById('doneCls').textContent=cls()||'the class you chose';document.getElementById('s-done').hidden=false}};
+document.getElementById('back').onclick=()=>{if(s>1){s--;draw()}};
+document.getElementById('cls').onchange=acad;
+const h=location.hash.slice(1);
+if(/^step[1-5]$/.test(h)){s=+h[4];if(s>=3)document.getElementById('cls').value=h==='step3'?'S.1':'P.5'}
+if(h==='noboarding')document.getElementById('boardingF').hidden=true;
+if(['done','error','closed'].includes(h)){document.getElementById('form').hidden=true;document.getElementById('s-'+h).hidden=false}
+draw();
+</script>
+</body>
+</html>

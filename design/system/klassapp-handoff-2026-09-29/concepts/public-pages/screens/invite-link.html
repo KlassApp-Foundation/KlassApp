@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invite link — KlassApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pp.css">
+</head>
+<body>
+<div class="ap-page" data-screen-label="Invite · link states">
+<div class="ap-bg-vintage" aria-hidden="true"></div>
+<div class="ap-shell">
+<aside class="ap-brand-panel">
+<div class="ap-brand-row">
+<img src="../../../assets/brand/klassapp-icon.svg" class="ap-brand-logo" alt="KlassApp">
+<div class="ap-brand-copy">
+<p class="ap-brand-tagline">School operations on one protocol</p>
+<p class="ap-brand-support">Classes, fees, and parent updates from one connected system.</p>
+</div>
+</div>
+</aside>
+<main class="ap-form-panel">
+<div class="ap-card" id="card"></div>
+</main>
+</div>
+</div>
+<script>
+const S={
+expired:{t:'This invite has expired',s:'It expired on 2 Oct 2026 at 9:40 PM. Invite links last 72 hours.',a:'<a class="ap-submit" href="#">Go to sign in</a>',m:'Ask your school admin to send a new invite. It will arrive at the same email address.'},
+claimed:{t:'This invite has already been used',s:'An account was created with it. Sign in with that email and the password you chose.',a:'<a class="ap-submit" href="#">Sign in</a><a class="ap-secondary" href="#">Forgot password?</a>',m:''},
+invalid:{t:'This invite link doesn\'t work',s:'It may be incomplete. Open the link straight from the email rather than copying it.',a:'<a class="ap-submit" href="#">Go to sign in</a>',m:'Still stuck? Ask your school admin to send a new invite.'}};
+const k=(location.hash||'#expired').slice(1),v=S[k]||S.expired;
+document.getElementById('card').innerHTML=`<div class="err-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${k==='claimed'?'<path d="M20 6 9 17l-5-5"/>':k==='expired'?'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>':'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'}</svg></div><h1 class="ap-title">${v.t}</h1><p class="ap-sub">${v.s}</p><div class="ap-actions">${v.a}</div>${v.m?`<p class="ap-meta">${v.m}</p>`:''}`;
+document.querySelector('.err-icon svg').setAttribute('stroke',k==='claimed'?'#15803D':'#B45309');
+</script>
+</body>
+</html>

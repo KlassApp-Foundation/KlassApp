@@ -34,6 +34,7 @@
               "concepts/quickstart/**",
               "klassapp-handoff-2026-09-29-docs/design-system/concepts/quickstart/**",
               "klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/**",
+              "klassapp-handoff-2026-10-01-documents/template/**",
               "ui_kits/onboarding-wizard/**",
               "ui_kits/school-dashboard/**",
               "ui_kits/toshi-assistant/**"

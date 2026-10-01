@@ -1,8 +1,6 @@
 # KlassApp Design System
 
-**Tagline:** An open education protocol for humans and agents.
-
-**Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
+**KlassApp is the school platform that operates in the tools educationists already use.** It is a school-management product for East African schools — student rosters, classes, fee ledgers, exam marks, report cards — whose distinguishing move is that it doesn't demand a new habit: parents are reached on **WhatsApp**, documents land in **Google Drive**, staff chatter stays in **Slack**, and an in-app assistant called **Toshi** does the multi-step office work on request.
 
 The product surfaces this system covers:
 
@@ -280,6 +278,22 @@ is a product decision, so nothing was invented here.
 - **Sign-up page:** value points on the left, Google and email on the right.
 
 **Dashboard v1 with Toshi off (superseded by v2):** nothing on the page mentions Toshi. In its place is a setup card ("{done} of {total} steps done", from one source), a "No students yet" empty state, and five quick actions. The greeting uses the first name in normal case, and the academic-year selector has a label and shows on mobile too.
+
+**Brand rule (2026-10-01): KlassApp is a global product.**
+- No country-only or level-only framing in marketing, blog, social or docs. KlassApp is for schools from nursery to secondary.
+- Sample data uses the seeded demo schools: "Demo Junior School" (nursery and primary) and "Demo Senior School" (O and A level), and currency comes from settings.
+- The founding-schools offer has no stated limit.
+- Product features specific to one curriculum, such as LIN, PLE or UCE fields, can be described in that school's own settings and docs. They're never the headline.
+
+**Logo on docs and files (2026-10-01):** use the **stacked light** lockup (`klassapp-stacked-light.svg`) on documents, quick starts and the docs site, not the horizontal one. Sizes: formal documents 19 mm, quick starts 16 mm, docs header 44 px, docs footer 48 px. Social posts use stacked too (96 px at 1080 wide), except the wide X post (1600 × 900), which keeps the horizontal lockup. App screens and emails keep the horizontal lockup.
+
+**Formal document template (2026-10-01).** `templates/formal-document/FormalDocument.dc.html` covers policies, terms, DPAs, letters and invoices on A4 or US Letter.
+- **First page:** a header with the stacked logo and a metadata block.
+- **Later pages:** a running header (icon, title, version), and a footer on every page ("Page X of Y").
+- **Styles:** Sora and DM Sans heading and body styles, the `KA Table` style, and signature blocks.
+- **Draft:** a "Draft for review" band, tag and watermark.
+- **Signed:** a `signed` state shows the acceptance block (name, title, school, version, date and time with UTC offset, reference, acceptance ID) in place of handwritten signature lines. The in-app click-to-accept page is `concepts/contracts/dpa-accept.html`.
+- **Word:** a `.dotx` spec with exact fonts, fallbacks, sizes and hex colours is in `guidelines/handoff-2026-10-01-formal-documents.md`.
 
 ---
 

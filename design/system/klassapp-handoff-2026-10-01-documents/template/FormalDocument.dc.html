@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Formal document" description="Policies, terms, DPAs, letters and invoices on A4 or US Letter: first-page logo header, running header and footer with page X of Y, heading and table styles, a Draft for review state and signature blocks." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="./doc-page.js"></script>
+<style>doc-page:not(:defined){visibility:hidden}body{margin:0}</style>
+</helmet>
+<doc-page size="{{ paper }}">
+<section class="page" id="p1" data-screen-label="01 First page">
+<div style="position:relative;height:100cqh;padding:16mm 18mm 14mm;display:flex;flex-direction:column;font-family:'DM Sans',Calibri,Arial,sans-serif;font-size:10.5pt;line-height:1.5;color:#1E293B;background:#FFFFFF;box-sizing:border-box">
+<sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden"><span style="transform:rotate(-30deg);font:700 64pt/1 Sora,'Segoe UI',Arial,sans-serif;letter-spacing:.06em;color:#FDE68A;opacity:.55;white-space:nowrap">DRAFT</span></div>
+<div style="position:relative;display:flex;justify-content:space-between;gap:12px;align-items:center;background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;border-radius:6px;padding:2.2mm 4mm;margin-bottom:6mm;font-size:9pt;font-weight:700"><span>DRAFT FOR REVIEW</span><span style="font-weight:600">Not binding until signed. Comments to legal@klassapp.xyz by 15 Oct 2026</span></div>
+</sc-if>
+<sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;display:flex;justify-content:space-between;gap:12px;align-items:center;background:#F0FDF4;border:1px solid #BBF7D0;color:#14532D;border-radius:6px;padding:2.2mm 4mm;margin-bottom:6mm;font-size:9pt;font-weight:700"><span>ACCEPTED ELECTRONICALLY</span><span style="font-weight:600">1 October 2026, 14:32 (UTC+03:00) · ACC-7F3K-92QD</span></div>
+</sc-if>
+<header style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;padding-bottom:5mm;border-bottom:1.5pt solid #15803D">
+<img src="./assets/klassapp-stacked-light.svg" alt="KlassApp" style="height:19mm;width:auto;display:block">
+<dl style="margin:0;display:grid;grid-template-columns:auto auto;gap:1mm 5mm;font-size:8.5pt;line-height:1.35;color:#475569;text-align:right">
+<dt>Document</dt><dd style="margin:0;color:#0F172A;font-weight:600">Data Processing Agreement</dd>
+<dt>Reference</dt><dd style="margin:0;color:#0F172A">KA-DPA-2026-014</dd>
+<dt>Version</dt><dd style="margin:0;color:#0F172A">1.2</dd>
+<dt>Effective</dt><dd style="margin:0;color:#0F172A">1 November 2026</dd>
+</dl>
+</header>
+<div style="position:relative;padding-top:9mm">
+<p style="margin:0 0 2mm;font-size:9pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#15803D">Agreement</p>
+<h1 style="margin:0 0 4mm;font:700 24pt/1.15 Sora,'Segoe UI',Arial,sans-serif;letter-spacing:-.02em;color:#0F172A">Data Processing Agreement</h1>
+<p style="margin:0 0 7mm;font-size:11.5pt;line-height:1.5;color:#334155;max-width:150mm">How KlassApp processes personal data on behalf of a school that uses the platform.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-bottom:8mm">
+<div style="border:1px solid #E2E8F0;border-radius:6px;padding:4mm 5mm"><p style="margin:0 0 1mm;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569">Processor</p><p style="margin:0;font-weight:700;color:#0F172A">KlassApp</p><p style="margin:0;color:#334155">[Legal entity name], [registered address]</p></div>
+<div style="border:1px solid #E2E8F0;border-radius:6px;padding:4mm 5mm"><p style="margin:0 0 1mm;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569">Controller</p><p style="margin:0;font-weight:700;color:#0F172A">Demo Junior School</p><p style="margin:0;color:#334155">[School legal name], [address]</p></div>
+</div>
+<h2 style="margin:0 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">1.</span> Purpose and scope</h2>
+<p style="margin:0 0 3mm">This agreement applies whenever the School uses KlassApp to record, store or share personal data about students, parents, guardians and staff. It forms part of the KlassApp Terms of Service.</p>
+<h3 style="margin:4mm 0 1.5mm;font:600 11pt/1.3 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A">1.1 What KlassApp processes</h3>
+<ul style="margin:0 0 3mm;padding-left:6mm">
+<li style="margin-bottom:1mm">Identity and contact details entered by the School.</li>
+<li style="margin-bottom:1mm">Academic records: classes, attendance, marks and report cards.</li>
+<li style="margin-bottom:1mm">Fee records and payment references.</li>
+<li>Health and support notes, only where the School chooses to record them.</li>
+</ul>
+<h3 style="margin:4mm 0 1.5mm;font:600 11pt/1.3 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A">1.2 What KlassApp does not do</h3>
+<p style="margin:0">KlassApp does not sell personal data, use it for advertising, or use it for any purpose the School has not instructed.</p>
+</div>
+<footer style="position:relative;margin-top:auto;padding-top:3mm;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;gap:8mm;font-size:8pt;line-height:1.4;color:#475569">
+<span>KlassApp · Data Processing Agreement · v1.2 · KA-DPA-2026-014</span><span style="white-space:nowrap">Page 1 of 3</span>
+</footer>
+</div>
+</section>
+<section class="page" id="p2" data-screen-label="02 Running page">
+<div style="position:relative;height:100cqh;padding:12mm 18mm 14mm;display:flex;flex-direction:column;font-family:'DM Sans',Calibri,Arial,sans-serif;font-size:10.5pt;line-height:1.5;color:#1E293B;background:#FFFFFF;box-sizing:border-box">
+<sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden"><span style="transform:rotate(-30deg);font:700 64pt/1 Sora,'Segoe UI',Arial,sans-serif;letter-spacing:.06em;color:#FDE68A;opacity:.55;white-space:nowrap">DRAFT</span></div>
+</sc-if>
+<header style="position:relative;display:flex;justify-content:space-between;align-items:center;gap:8mm;padding-bottom:2.5mm;margin-bottom:8mm;border-bottom:1px solid #E2E8F0;font-size:8pt;color:#475569">
+<span style="display:flex;align-items:center;gap:2.5mm"><img src="./assets/klassapp-icon.svg" alt="" style="height:5mm;width:5mm;display:block"><span style="color:#0F172A;font-weight:600">Data Processing Agreement</span></span>
+<span style="display:flex;gap:3mm;align-items:center"><sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}"><span style="background:#FEF3C7;color:#78350F;font-weight:700;border-radius:3px;padding:0.4mm 2mm">DRAFT FOR REVIEW</span></sc-if><sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}"><span style="background:#DCFCE7;color:#14532D;font-weight:700;border-radius:3px;padding:0.4mm 2mm">ACCEPTED 1 OCT 2026</span></sc-if><span>Version 1.2</span></span>
+</header>
+<div style="position:relative">
+<h2 style="margin:0 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">2.</span> Sub-processors</h2>
+<p style="margin:0 0 4mm">KlassApp uses the following sub-processors. The School will be told at least 30 days before any new sub-processor is added.</p>
+<table style="width:100%;border-collapse:collapse;font-size:9.5pt;line-height:1.4;margin-bottom:2mm">
+<thead><tr>
+<th style="text-align:left;padding:2.2mm 3mm;background:#F1F5F9;border-top:1.5pt solid #0F172A;border-bottom:1px solid #CBD5E1;font-weight:700;color:#0F172A">Sub-processor</th>
+<th style="text-align:left;padding:2.2mm 3mm;background:#F1F5F9;border-top:1.5pt solid #0F172A;border-bottom:1px solid #CBD5E1;font-weight:700;color:#0F172A">Purpose</th>
+<th style="text-align:left;padding:2.2mm 3mm;background:#F1F5F9;border-top:1.5pt solid #0F172A;border-bottom:1px solid #CBD5E1;font-weight:700;color:#0F172A">Data location</th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">[Hosting provider]</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">Application hosting and database</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">[Region]</td></tr>
+<tr><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">Meta Platforms (WhatsApp Cloud API)</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">Messages to parents and staff</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">[Region]</td></tr>
+<tr><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">[Email provider]</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">Account and notification emails</td><td style="padding:2.2mm 3mm;border-bottom:1px solid #E2E8F0">[Region]</td></tr>
+<tr><td style="padding:2.2mm 3mm;border-bottom:1.5pt solid #0F172A">[Payments provider]</td><td style="padding:2.2mm 3mm;border-bottom:1.5pt solid #0F172A">Fee payment references</td><td style="padding:2.2mm 3mm;border-bottom:1.5pt solid #0F172A">[Region]</td></tr>
+</tbody>
+</table>
+<p style="margin:0 0 6mm;font-size:8.5pt;color:#475569">Table 1. Sub-processors as of version 1.2.</p>
+<h2 style="margin:0 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">3.</span> Security</h2>
+<p style="margin:0 0 3mm">KlassApp keeps each school's data separate, encrypts it in transit and at rest, and limits staff access to what is needed to run the service.</p>
+<div style="border:1px solid #BFDBFE;background:#EFF6FF;border-radius:6px;padding:3.5mm 4.5mm;margin:0 0 5mm;color:#1E3A8A"><p style="margin:0 0 1mm;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Note</p><p style="margin:0">Health and support notes are visible only to staff the School authorises, and each view is logged.</p></div>
+<h2 style="margin:0 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">4.</span> Breach notification</h2>
+<p style="margin:0">KlassApp will tell the School without undue delay, and within 72 hours, after becoming aware of a personal data breach affecting the School's data.</p>
+</div>
+<footer style="position:relative;margin-top:auto;padding-top:3mm;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;gap:8mm;font-size:8pt;line-height:1.4;color:#475569">
+<span>KlassApp · Data Processing Agreement · v1.2 · KA-DPA-2026-014</span><span style="white-space:nowrap">Page 2 of 3</span>
+</footer>
+</div>
+</section>
+<section class="page" id="p3" data-screen-label="03 Signatures">
+<div style="position:relative;height:100cqh;padding:12mm 18mm 14mm;display:flex;flex-direction:column;font-family:'DM Sans',Calibri,Arial,sans-serif;font-size:10.5pt;line-height:1.5;color:#1E293B;background:#FFFFFF;box-sizing:border-box">
+<sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden"><span style="transform:rotate(-30deg);font:700 64pt/1 Sora,'Segoe UI',Arial,sans-serif;letter-spacing:.06em;color:#FDE68A;opacity:.55;white-space:nowrap">DRAFT</span></div>
+</sc-if>
+<header style="position:relative;display:flex;justify-content:space-between;align-items:center;gap:8mm;padding-bottom:2.5mm;margin-bottom:8mm;border-bottom:1px solid #E2E8F0;font-size:8pt;color:#475569">
+<span style="display:flex;align-items:center;gap:2.5mm"><img src="./assets/klassapp-icon.svg" alt="" style="height:5mm;width:5mm;display:block"><span style="color:#0F172A;font-weight:600">Data Processing Agreement</span></span>
+<span style="display:flex;gap:3mm;align-items:center"><sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}"><span style="background:#FEF3C7;color:#78350F;font-weight:700;border-radius:3px;padding:0.4mm 2mm">DRAFT FOR REVIEW</span></sc-if><sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}"><span style="background:#DCFCE7;color:#14532D;font-weight:700;border-radius:3px;padding:0.4mm 2mm">ACCEPTED 1 OCT 2026</span></sc-if><span>Version 1.2</span></span>
+</header>
+<div style="position:relative">
+<h2 style="margin:0 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">5.</span> Term and deletion</h2>
+<p style="margin:0 0 3mm">This agreement lasts as long as the School uses KlassApp. When the School stops, KlassApp will return the School's data on request and delete it within 90 days, unless the law requires it to be kept longer.</p>
+<sc-if value="{{ unsigned }}" hint-placeholder-val="{{ true }}">
+<h2 style="margin:6mm 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">6.</span> Signatures</h2>
+<p style="margin:0 0 7mm">Signed by the authorised representatives of each party.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10mm">
+<div style="display:flex;flex-direction:column;gap:5mm">
+<p style="margin:0;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#15803D">For KlassApp</p>
+<div><div style="height:16mm;border-bottom:1px solid #0F172A"></div><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Signature</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A">[Full name]</p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Name</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A">[Title]</p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Title</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A"></p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Date</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:5mm">
+<p style="margin:0;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#15803D">For the School</p>
+<div><div style="height:16mm;border-bottom:1px solid #0F172A"></div><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Signature</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A">[Full name]</p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Name</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A">[Title]</p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Title</p></div>
+<div><p style="margin:0;min-height:6mm;border-bottom:1px solid #CBD5E1;color:#0F172A"></p><p style="margin:1mm 0 0;font-size:8.5pt;color:#475569">Date</p></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
+<h2 style="margin:6mm 0 2.5mm;font:600 14pt/1.25 Sora,'Segoe UI',Arial,sans-serif;color:#0F172A"><span style="color:#15803D">6.</span> Acceptance</h2>
+<p style="margin:0 0 6mm">This agreement was accepted electronically in KlassApp by an authorised representative of the School. KlassApp's terms were offered as published; no handwritten signature is required.</p>
+<div style="display:grid;grid-template-columns:1fr 1.35fr;gap:8mm;align-items:start">
+<div style="border:1px solid #E2E8F0;border-radius:6px;padding:4mm 5mm">
+<p style="margin:0 0 3mm;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569">Offered by KlassApp</p>
+<dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:1.6mm 4mm;font-size:9.5pt;line-height:1.4"><dt style="color:#475569">Entity</dt><dd style="margin:0;color:#0F172A;">[Legal entity name]</dd><dt style="color:#475569">Document</dt><dd style="margin:0;color:#0F172A;">Data Processing Agreement</dd><dt style="color:#475569">Version</dt><dd style="margin:0;color:#0F172A;">1.2</dd><dt style="color:#475569">Published</dt><dd style="margin:0;color:#0F172A;">1 October 2026</dd></dl>
+</div>
+<div style="border:1.5pt solid #15803D;border-radius:6px;padding:4mm 5mm">
+<p style="margin:0 0 3mm;font-size:8.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#15803D">Accepted for the School</p>
+<dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:1.6mm 4mm;font-size:9.5pt;line-height:1.4"><dt style="color:#475569">Name</dt><dd style="margin:0;color:#0F172A;">Mucunguzi Tumusiime</dd><dt style="color:#475569">Title</dt><dd style="margin:0;color:#0F172A;">Head teacher</dd><dt style="color:#475569">School</dt><dd style="margin:0;color:#0F172A;">Demo Junior School</dd><dt style="color:#475569">Version</dt><dd style="margin:0;color:#0F172A;">1.2</dd><dt style="color:#475569">Date and time</dt><dd style="margin:0;color:#0F172A;">1 October 2026, 14:32 (UTC+03:00)</dd><dt style="color:#475569">Reference</dt><dd style="margin:0;color:#0F172A;">KA-DPA-2026-014</dd><dt style="color:#475569">Acceptance ID</dt><dd style="margin:0;color:#0F172A;font-family:ui-monospace,Consolas,'Courier New',monospace;font-size:9pt">ACC-7F3K-92QD</dd><dt style="color:#475569">Method</dt><dd style="margin:0;color:#0F172A;">Click-to-accept in KlassApp, signed in as m.tumusiime@demojuniorschool.ac.ug</dd></dl>
+</div>
+</div>
+<p style="margin:5mm 0 0;font-size:8.5pt;line-height:1.45;color:#475569">Document fingerprint (SHA-256 of the version accepted): <span style="font-family:ui-monospace,Consolas,'Courier New',monospace;color:#0F172A;word-break:break-all">3b9c 7e21 a4f0 58d6 … 0c9e e41a</span><br>KlassApp keeps the acceptance record for as long as the agreement is in force. Keep this PDF with the School's records.</p>
+</sc-if>
+</div>
+<footer style="position:relative;margin-top:auto;padding-top:3mm;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;gap:8mm;font-size:8pt;line-height:1.4;color:#475569">
+<span>KlassApp · Data Processing Agreement · v1.2 · KA-DPA-2026-014</span><span style="white-space:nowrap">Page 3 of 3</span>
+</footer>
+</div>
+</section>
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;paper&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a4&quot;,&quot;letter&quot;],&quot;default&quot;:&quot;a4&quot;,&quot;tsType&quot;:&quot;'a4' | 'letter'&quot;,&quot;section&quot;:&quot;Page&quot;},&quot;draft&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;},&quot;signed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;}}">
+class Component extends DCLogic {
+  remeasure() {
+    const go = () => document.querySelectorAll('doc-page').forEach(d => d._measure && d._measure());
+    requestAnimationFrame(() => { go(); setTimeout(go, 150); });
+  }
+  componentDidMount() {
+    this.remeasure();
+    customElements.whenDefined('doc-page').then(() => this.remeasure());
+  }
+  componentDidUpdate(prev) {
+    if (prev.paper !== this.props.paper || prev.draft !== this.props.draft || prev.signed !== this.props.signed) this.remeasure();
+  }
+  renderVals() {
+    const signed = !!(this.props.signed ?? false);
+    const draft = this.props.draft ?? true;
+    return { paper: this.props.paper ?? 'a4', showDraft: draft && !signed, signed, unsigned: !signed };
+  }
+}
+</script>
+</body>
+</html>

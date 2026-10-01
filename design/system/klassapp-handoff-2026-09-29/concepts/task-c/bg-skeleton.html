@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Landing background skeleton</title>
+<style>
+:root{--paper-base:#FAFAF5;--paper-mid:#F3F0E8;--paper-deep:#EBE6DA;--paper-edge:#D4C4A8;--paper-ink-wash:rgba(92,74,48,.03);--paper-rule:rgba(120,95,60,.07);--border:#E2E8F0;--ink:#0F172A}
+*{box-sizing:border-box}body{margin:0;background:var(--paper-base);font-family:'DM Sans',system-ui,sans-serif;color:var(--ink)}
+.c{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+section{position:relative;padding:72px 0}
+.h{height:14px;border-radius:7px;background:rgba(15,23,42,.72);margin:0 auto 12px;max-width:420px}
+.h.s{height:9px;background:rgba(15,23,42,.22);max-width:560px}
+.k{font:700 11px/1 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#475569;text-align:center;margin-bottom:14px}
+nav{height:64px;display:flex;align-items:center;justify-content:space-between;max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+nav i{width:96px;height:18px;border-radius:6px;background:#15803D;display:block}nav b{width:220px;height:10px;border-radius:5px;background:rgba(15,23,42,.2);display:block}
+.hero{padding:40px 0 88px;overflow:hidden}
+.hero .row{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.hero .h{margin:0 0 12px;max-width:none;height:26px}.hero .h.s{height:10px}
+.dev{background:#fff;border:1px solid var(--border);border-radius:16px;height:300px;box-shadow:0 20px 50px -24px rgba(15,23,42,.25);position:relative}
+.dev::before{content:'';position:absolute;inset:12px 12px auto;height:10px;border-radius:5px;background:#F1F5F9}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.card{height:140px;border-radius:16px;background:#fff;border:1px solid var(--border)}
+.orbit{height:300px;border-radius:24px;margin-top:24px;position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(255,255,255,.78));border:1px solid var(--border)}
+.orbit::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(15,23,42,.05) 1px,transparent 1px);background-size:22px 22px;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 85%);mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 85%)}
+.orbit i{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.35),transparent 70%)}
+.five{grid-template-columns:repeat(5,1fr)}.five .card{height:180px}
+footer{background:#F8FAFC;padding:48px 0;border-top:1px solid var(--border)}
+footer .h{max-width:200px;margin:0}
+.lbl{position:absolute;right:10px;top:8px;z-index:3;font:600 11px 'DM Sans',sans-serif;color:#7C2D12;background:#FFEDD5;border-radius:6px;padding:2px 6px}
+@media(max-width:760px){.hero .row{grid-template-columns:1fr}.grid,.five{grid-template-columns:1fr}.card{height:96px}.five .card{height:110px}.dev{height:230px}section{padding:52px 0}}
+/* NOW: vintage in hero only, flat paper after, cool footer */
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 90% 80% at 50% 30%,var(--paper-base) 0%,var(--paper-mid) 55%,var(--paper-deep) 100%)}
+.hero-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 75% 70% at 50% 40%,transparent 40%,var(--paper-ink-wash) 100%),linear-gradient(180deg,rgba(212,196,168,.16) 0%,transparent 18%,transparent 82%,rgba(196,176,140,.14) 100%),repeating-linear-gradient(0deg,transparent 0 31px,var(--paper-rule) 31px 32px)}
+.glow{position:absolute;pointer-events:none;border-radius:50%}
+/* A · one continuous paper */
+.A .hero-bg{background:radial-gradient(ellipse 90% 80% at 50% 30%,var(--paper-base) 0%,var(--paper-mid) 70%,var(--paper-mid) 100%);-webkit-mask-image:linear-gradient(180deg,#000 70%,transparent);mask-image:linear-gradient(180deg,#000 70%,transparent)}
+.A .hero-bg::before{-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent);mask-image:linear-gradient(180deg,#000 60%,transparent)}
+.A .page{background:linear-gradient(180deg,var(--paper-base) 0%,var(--paper-mid) 50%,var(--paper-base) 100%)}
+.A footer{background:var(--paper-mid);border-top-color:rgba(120,95,60,.14)}
+.A .dev{box-shadow:0 1px 0 rgba(120,95,60,.08),0 24px 48px -28px rgba(92,74,48,.35)}
+/* B · paper + mist bands */
+.B .hero-bg{-webkit-mask-image:linear-gradient(180deg,#000 75%,transparent);mask-image:linear-gradient(180deg,#000 75%,transparent)}
+.B .band{background:linear-gradient(180deg,var(--paper-base),var(--paper-mid) 64px,var(--paper-mid) calc(100% - 64px),var(--paper-base))}
+.B footer{background:var(--paper-mid);border-top-color:rgba(120,95,60,.14)}
+/* C · quiet grid */
+.C .hero-bg{-webkit-mask-image:linear-gradient(180deg,#000 75%,transparent);mask-image:linear-gradient(180deg,#000 75%,transparent)}
+.C .page{position:relative}
+.C .page::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(92,74,48,.09) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 240px,#000 calc(100% - 240px),transparent);mask-image:linear-gradient(180deg,transparent,#000 240px,#000 calc(100% - 240px),transparent)}
+.C .orbit::after{display:none}
+.C footer{background:var(--paper-base);border-top-color:rgba(120,95,60,.14)}
+</style>
+</head>
+<body>
+<span class="lbl" id="lbl"></span>
+<div class="hero-wrap" style="position:relative"><div class="hero-bg" aria-hidden="true"></div>
+<nav><i></i><b></b></nav>
+<section class="hero"><div class="c row"><div><div class="h" style="width:92%"></div><div class="h" style="width:70%"></div><div class="h s" style="width:85%;margin-top:18px"></div><div class="h s" style="width:60%"></div></div><div class="dev"></div></div></section>
+</div>
+<div class="page">
+<section><div class="c"><div class="k">Meet Toshi</div><div class="h"></div><div class="h s"></div><div class="orbit"><i></i></div><div class="grid"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div></div></section>
+<section class="band"><div class="c"><div class="k">How it works</div><div class="h"></div><div class="h s"></div><div class="grid"><div class="card" style="height:220px"></div><div class="card" style="height:220px"></div><div class="card" style="height:220px"></div></div></div></section>
+<section><div class="c"><div class="k">Infrastructure</div><div class="h"></div><div class="grid five"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div></div></section>
+<section class="band"><div class="c"><div class="k">Protocol</div><div class="h"></div><div class="h s"></div><div class="grid"><div class="card"></div><div class="card"></div><div class="card"></div></div></div></section>
+<section><div class="c"><div class="k">FAQ</div><div class="h"></div><div class="card" style="height:52px;margin-top:20px"></div><div class="card" style="height:52px;margin-top:10px"></div><div class="card" style="height:52px;margin-top:10px"></div></div></section>
+</div>
+<footer><div class="c"><div class="h"></div></div></footer>
+<script>
+const o=(location.hash.slice(1)||'now').toUpperCase();if(o!=='NOW')document.body.classList.add(o);
+document.getElementById('lbl').textContent={NOW:'Now (staging)',A:'A · One paper',B:'B · Paper + mist bands',C:'C · Quiet grid'}[o];
+</script>
+</body>
+</html>
