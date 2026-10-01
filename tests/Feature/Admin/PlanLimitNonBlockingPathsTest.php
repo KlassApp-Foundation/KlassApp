@@ -116,7 +116,8 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Upgrade Plan to Add More Students', false);
         $response->assertSee('create-member', false);
-        $response->assertSee('href="/pricing"', false);
+        $response->assertSee('Talk to sales', false);
+        $response->assertSee('source=sales', false);
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 

@@ -16,8 +16,8 @@ use Tests\TestCase;
 /**
  * Founding schools must always be able to add teaching/support staff from the
  * dashboard. Plan over-limit is a notice (same rule as student CSV import),
- * never a hard "Upgrade Plan to Add More Staff" gate. Upgrade hrefs must be
- * root-relative (/pricing) so a wrong APP_URL cannot emit 127.0.0.1:8899.
+ * never a hard "Upgrade Plan to Add More Staff" gate. CTAs must be Talk to sales
+ * (sales lead form) so a wrong APP_URL cannot emit 127.0.0.1:8899/pricing.
  */
 class StaffPlanLimitNonBlockingTest extends TestCase
 {
@@ -152,7 +152,8 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         $response->assertDontSee('Upgrade Plan to Add More Staff', false);
         $response->assertSee('add-tab-teacher', false);
         $response->assertSee('data-testid="staff-overlimit-notice"', false);
-        $response->assertSee('href="/pricing"', false);
+        $response->assertSee('Talk to sales', false);
+        $response->assertSee('source=sales', false);
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
@@ -174,14 +175,15 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Upgrade Plan to Add More Teachers', false);
         $response->assertSee('Add Support Staff', false);
-        $response->assertSee('href="/pricing"', false);
+        $response->assertSee('Talk to sales', false);
+        $response->assertSee('source=sales', false);
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
     /** @test */
-    public function admin_upgrade_and_pricing_blades_use_relative_pricing_href(): void
+    public function admin_upgrade_and_pricing_blades_use_talk_to_sales(): void
     {
-        // Regression: url('/pricing') baked APP_URL (e.g. 127.0.0.1:8899) into CTAs.
+        // Soft-launch: CTAs go to the sales lead form, not /pricing.
         $paths = [
             resource_path('views/admin/member/create.blade.php'),
             resource_path('views/admin/files/videos/create.blade.php'),
@@ -200,12 +202,17 @@ class StaffPlanLimitNonBlockingTest extends TestCase
             $this->assertStringNotContainsString(
                 "url('/pricing')",
                 $contents,
-                basename($path).' must not use url(\'/pricing\') (hard-codes APP_URL host)'
+                basename($path)." must not use url('/pricing')"
             );
             $this->assertStringNotContainsString(
-                'url("/pricing")',
+                'href="/pricing"',
                 $contents,
-                basename($path).' must not use url("/pricing")'
+                basename($path).' must not link to /pricing'
+            );
+            $this->assertStringContainsString(
+                'talkToSalesUrl()',
+                $contents,
+                basename($path).' must use SiteHelper::talkToSalesUrl()'
             );
         }
     }
