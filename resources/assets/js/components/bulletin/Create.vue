@@ -1,6 +1,11 @@
 <template>
     <div class="">
-        <div class="bulletin shadow px-4 py-1 bg-white" v-if="parseInt(this.count) <= parseInt(this.no_of_bulletins)">
+        <!-- Plan over-limit is a notice, never a hard block. 0 / missing = unlimited. -->
+        <div v-if="isOverBulletinLimit" class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded my-3" role="status" data-testid="bulletins-overlimit-notice">
+            Your plan allows a maximum of {{ no_of_bulletins }} magazines. Please upgrade to add more.
+            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+        </div>
+        <div class="bulletin shadow px-4 py-1 bg-white">
             <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
             <div class="my-5">
                 <div class="">
@@ -60,17 +65,21 @@
             </div>
         </div>
 
-        <div v-if="parseInt(this.count) > parseInt(this.no_of_bulletins)">
-            <a href="/pricing"> 
-                <button type="submit" class="no-underline text-white px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">Upgrade Plan to Add More Magazines</button>
-            </a>
-        </div>
     </div>
 </template>
 
 <script>
     export default {
         props:['count','no_of_bulletins'],
+        computed: {
+            isOverBulletinLimit() {
+                const limit = parseInt(this.no_of_bulletins, 10);
+                if (!limit || limit <= 0 || Number.isNaN(limit)) {
+                    return false; // 0 / missing = unlimited
+                }
+                return parseInt(this.count, 10) >= limit;
+            },
+        },
         data(){
             return{
                 bulletin:[],

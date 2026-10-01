@@ -10,25 +10,24 @@
         <span class="mx-3"> Add Student</span>
     </h1>
     @include('partials.message')
-    @if($count < $subscription->plan->no_of_students)
-        <form method="POST" action="" enctype="multipart/form-data">
-            @csrf
-
-            <create-member url="{{url('/')}}"></create-member>
-
-            <portal to="address">
-                <div class="w-full">
-                    <x-form-group name="address" label="Address" type="text" :value="old('address')"></x-form-group>
-                </div>
-            </portal>
-        </form>
-    @else
-        <a href="/pricing"> 
-            <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-                Upgrade Plan to Add More Students
-            </button>
-        </a>
+    {{-- Plan over-limit is a notice, never a hard block (same rule as student CSV import). --}}
+    @if(!empty($planLimitNotice))
+        <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded relative w-full md:w-1/2 mb-3" role="status" data-testid="student-overlimit-notice">
+            <span class="block sm:inline">{{ $planLimitNotice }}</span>
+            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+        </div>
     @endif
+    <form method="POST" action="" enctype="multipart/form-data">
+        @csrf
+
+        <create-member url="{{url('/')}}"></create-member>
+
+        <portal to="address">
+            <div class="w-full">
+                <x-form-group name="address" label="Address" type="text" :value="old('address')"></x-form-group>
+            </div>
+        </portal>
+    </form>
 </div>
 
 @endsection

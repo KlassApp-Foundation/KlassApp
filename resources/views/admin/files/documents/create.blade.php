@@ -11,7 +11,17 @@
       <div class="bg-white shadow my-5">
        @include('layouts.partials.customtab')
 
-       @if($count < $subscription->plan->no_of_files)
+      {{-- Plan over-limit is a notice, never a hard block. --}}
+      @php
+        $fileLimit = (int) (optional(optional($subscription)->plan)->no_of_files ?? 0);
+        $fileOverLimit = $fileLimit > 0 && $count >= $fileLimit;
+      @endphp
+      @if($fileOverLimit)
+        <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded mx-2 mb-3" role="status" data-testid="files-overlimit-notice">
+            Your plan allows a maximum of {{ $fileLimit }} files. Please upgrade to add more.
+            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+        </div>
+      @endif
       <div class="px-3 py-3 mx-2">
    <form method="post" action="{{url('/admin/files')}}" enctype="multipart/form-data">
        @csrf
@@ -63,13 +73,6 @@
 
 </form>
 </div>
-@else
-    <a href="/pricing"> 
-        <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-            Upgrade Plan to Add More Files
-        </button>
-    </a>
-@endif
 
 </div>
 <div class="custom-table py-3">

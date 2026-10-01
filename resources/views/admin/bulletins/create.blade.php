@@ -10,7 +10,7 @@
       </a>
       <span class="mx-3">Magazine</span>
     </h1>
-    <create-bulletin count="{{ $count }}" no_of_bulletins="{{ $subscription->plan->no_of_bulletins }}"></create-bulletin>  
+    <create-bulletin count="{{ $count }}" no_of_bulletins="{{ optional(optional($subscription)->plan)->no_of_bulletins ?? 0 }}"></create-bulletin>  
 </div>
 
 @endsection

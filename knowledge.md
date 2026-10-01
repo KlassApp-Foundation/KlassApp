@@ -658,7 +658,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Not fixed on GitHub, by decision**: re-opening under Mucunguzi256 needs a fresh session with the reconnected account; the owner judged that not worth the cost now. This note is the record instead.
 - **Scope**: these five PR numbers only. Any *other* PR showing Elijah-ug as author (e.g. #682, #788) is still his real external work and rule #25 applies in full.
 
-## Current Status: October 1, 2026 (latest) — **Staff dashboard plan-limit hard-gate fix** [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921) (`fix/staff-plan-limit-nonblocking` @ `929a50e7`). Root cause: Freemium/`no_of_users=0` (unlimited) compared as `$count < 0` on Subscription (billing), so founding schools saw "Upgrade Plan to Add More Staff" with no form. Fix: always show form; use `ToshiActionService::enforcePlanLimit` (CurrentPlan; `<=0` = unlimited); over-limit is a notice after save (same rule as student import); upgrade hrefs root-relative `/pricing` (no `url('/pricing')` / APP_URL host). #919 MERGED `ed659fdc`; #920 MERGED `271b38ae`. Google E2E + Toshi journeys wait on Rasta AI-key confirm. Production untouched.
+## Positioning (locked — only wording to use)
+
+> Owner-set 2026-10-01. Every public surface, README, design-system README, landing, footer, and meta description must use **exactly** these two lines. Do not invent variants. Replacements of older copy are pending owner approval of the removal list in the Session Log.
+
+- **Tagline:** An open education protocol for humans and agents.
+- **Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
+
+**Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
+
+## Current Status: October 1, 2026 (latest) — **Plan-limit non-blocking widened on [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921)** (`fix/staff-plan-limit-nonblocking`). Staff + students + Toshi addStudent/addTeacher/addCoAdmin + bulletins/files/videos create UI: save first, upgrade notice after; `planLimitNotice()` helper. Positioning locked (section above) — copy replacements pending owner approval of removal list. #919 MERGED `ed659fdc`; #920 MERGED `271b38ae`. Google E2E + Toshi journeys wait on Rasta AI-key confirm. Production untouched.
 
 ## Current Status: October 1, 2026 — **`design/` is the source of truth for all design work.** Full Claude Design export under `design/system/` (tokens, components, guidelines, concepts, `SKILL.md`, `handoff/`). Sync record `design/system/github.md` last synced **2026-09-28** (`dbe68419`) — drift-check against `main` before each implementation PR. Soft-launch #906–#911 MERGED tip `69524023` staging-verified. Rule-#32 go-ahead: [#913](https://github.com/KlassApp-Foundation/KlassApp/pull/913) MERGED; [#914](https://github.com/KlassApp-Foundation/KlassApp/pull/914) MERGED `aa64c73c`; [#915](https://github.com/KlassApp-Foundation/KlassApp/pull/915) this design export; [#916](https://github.com/KlassApp-Foundation/KlassApp/pull/916) Task 2 emails+D2 next. Production untouched.
 
@@ -2486,12 +2495,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-10-01: Staff "Upgrade Plan to Add More Staff" non-blocking + relative `/pricing`
-- **Work done**: Diagnosed dashboard teaching/support staff create gate. Blade used `Subscription.plan.no_of_users` with `$count < limit`; Freemium seeds `no_of_users=0` (unlimited), so `$count < 0` always false → hard Upgrade CTA and no form. Also wrong source (Subscription = billing audit; runtime limits are CurrentPlan via `enforcePlanLimit`). Made create forms always available; notice-only when over a real limit; teacher import no longer rejects the batch upfront; flash `overlimit` after save; replaced in-app `url('/pricing')` upgrade/nav/footer CTAs with root-relative `/pricing` (emails still use absolute `url()`). Tests: `StaffPlanLimitNonBlockingTest` (failing-then-passing freemium gate + at-limit notice + relative href audit). Full `test-guard` OK (2013 tests, 0 new failures).
-- **Files**: `TeacherAddController`, `StaffController`, `TeacherImportExportController`, `admin/teacher|staff/create.blade.php`, `partials/message.blade.php`, member/files/payment/nav/footer pricing hrefs, `tests/Feature/Admin/StaffPlanLimitNonBlockingTest.php`, `knowledge.md`.
-- **Key decisions**: Same non-blocking rule as student CSV import (#909 pattern). Do not block founding-school staffing. Pricing links never bake APP_URL host into href.
-- **Status**: PR [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921) on `fix/staff-plan-limit-nonblocking` @ `929a50e7`. #919/`ed659fdc` + #920/`271b38ae` already `merged: true`. Google E2E + three Toshi journeys still blocked on Rasta staging AI-key confirm. Production untouched.
-- **Edge cases**: Student single-create (`member/create`) still hard-gates on Subscription `no_of_students` (same `0` = unlimited bug class) — out of this PR's staff scope; pricing href only fixed there. Support-staff page historically counted ug5 teachers for the gate; notice now uses enforcePlanLimit teachers pool.
+### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
+- **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.
+- **Locked copy**:
+  - Tagline: `An open education protocol for humans and agents.`
+  - Description: `KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.`
+- **Status**: Recorded. Removals/replacements **blocked until owner approves** the report list.
+- **Edge cases**: Live `/` is `landing-v2` (no OG/Twitter today). Legacy `landing`/`landing2` still carry "Parent's Pocket" / WhatsApp-first OG. Email footers are copyright-only (no tagline to swap).
+
+### 2026-10-01: Plan-limit non-blocking across data-entry paths + relative `/pricing`
+- **Work done**: Root cause was Subscription blade gates treating `no_of_*=0` as limit 0 (`$count < 0` → always Upgrade). Widened soft-launch rule: teaching/support staff create+import, student create+store, Toshi `addStudent`/`addTeacher`/`addCoAdmin` (notice after save), bulletins Vue (0=unlimited; form always shown), files/videos create blades. Added `ToshiActionService::planLimitNotice()`. Relative `/pricing` on in-app upgrade CTAs. Regression: marks/attendance/fees/timetable/admission/OnboardingEngine have no plan truncate/block; parents create ungated (tested). Student CSV + wizard already notice-only (#909). Full `test-guard` OK (2019 tests, 0 new failures).
+- **Files**: `ToshiActionService`, `TeacherAddController`, `StaffController`, `TeacherImportExportController`, `StudentController`, teacher/staff/member/files/bulletins blades, `bulletin/Create.vue`, `partials/message`, pricing hrefs, `StaffPlanLimitNonBlockingTest`, `PlanLimitNonBlockingPathsTest`, `PlanLimitEnforcementTest`, `ToshiOnboardingTest`, `knowledge.md`.
+- **Key decisions**: `enforcePlanLimit` success=false is advisory only — never a hard gate. Google Classroom connector (#728) dormant — no live write path. Events Vue upgrade UI already commented out.
+- **Status**: PR [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921). Google E2E + Toshi journeys wait on AI-key confirm. Production untouched.
+- **Edge cases**: Live media upload uses `mediafiles/create1` (no gate). Freemium seeder has finite limits (5/100); unlimited still encoded as `0` in many tests.
 
 ### 2026-09-17: Endor local-secrets triage + Maps key env migration
 - **Work done**: Triaged all 14 Endor `--secrets --local` findings. Moved GeGoK12 hardcoded Google Maps key out of 9 Blade views into `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')`. Removed commented MSG91 authkey from `MSG91.php`. Redacted retired Evolution API keys in `knowledge.md` (missed by #655). Removed dead Evolution/postgres/n8n stubs from `docker-compose.prod.yml`. Left WhatsApp `TOKEN_ALPHABET` and test `deputy-pass-123` as false positives.
