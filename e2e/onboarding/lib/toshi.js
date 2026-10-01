@@ -85,15 +85,29 @@ async function botTranscript(page, { lastOnly = false } = {}) {
 }
 
 async function clickContinueIfPresent(page) {
+    // Prefer the term-current Continue (always advances).
+    const termContinue = page.locator('[data-testid="toshi-term-current-continue"]:visible');
+    if (await termContinue.count().catch(() => 0)) {
+        const ok = await termContinue.first().click({ timeout: 8000 }).then(() => true).catch(() => false);
+        if (ok) {
+            console.log('[toshi] clicked term-current Continue');
+            return 'term-current Continue';
+        }
+    }
+
     const btns = page.locator('[data-toshi-root] button:visible').filter({ hasText: /^\s*Continue\b/i });
     const n = await btns.count().catch(() => 0);
-    if (n === 0) return null;
-    const b = btns.last();
-    const label = ((await b.innerText().catch(() => '')) || '').trim();
-    const ok = await b.click({ timeout: 8000 }).then(() => true).catch(() => false);
-    if (ok) {
-        console.log(`[toshi] clicked continue "${label.slice(0, 40)}"`);
-        return label || true;
+    for (let i = n - 1; i >= 0; i--) {
+        const b = btns.nth(i);
+        const label = ((await b.innerText().catch(() => '')) || '').trim();
+        // Continue (0) is a no-op for subjects (requires ≥1) and spins the driver.
+        const counted = label.match(/Continue\s*\((\d+)\)/i);
+        if (counted && Number(counted[1]) === 0) continue;
+        const ok = await b.click({ timeout: 8000 }).then(() => true).catch(() => false);
+        if (ok) {
+            console.log(`[toshi] clicked continue "${label.slice(0, 40)}"`);
+            return label || true;
+        }
     }
     return null;
 }
@@ -104,22 +118,48 @@ async function hasConfirmChips(page) {
 }
 
 /**
- * Click the first incomplete checklist row ("Set up" / "Add later").
- * Used when the panel shows the setup list but no actionable bot prompt yet.
+ * Click the next incomplete checklist row. Prefer required (warning) over
+ * optional (info). Skip keys already opened this run when alternatives exist.
  */
-async function clickNextSetupRow(page) {
+async function clickNextSetupRow(page, state = {}) {
+    const opened = state.openedSetup || {};
     const rows = page.locator('[data-testid="toshi-setup-list"] [data-testid^="toshi-setup-row-"]:visible');
     const n = await rows.count().catch(() => 0);
+    const candidates = [];
     for (let i = 0; i < n; i++) {
         const row = rows.nth(i);
         const tone = (await row.getAttribute('data-tone').catch(() => '')) || '';
-        if (tone === 'positive') continue; // already done
+        if (tone === 'positive') continue;
+        const testid = (await row.getAttribute('data-testid').catch(() => '')) || '';
+        const key = testid.replace(/^toshi-setup-row-/, '');
         const label = ((await row.locator('.toshi-setup-row-label').innerText().catch(() => '')) || '').trim();
-        const ok = await row.click({ timeout: 8000 }).then(() => true).catch(() => false);
-        if (ok) {
-            console.log(`[toshi] clicked setup row "${label || row}"`);
-            return label || true;
+        candidates.push({ row, tone, key, label, opened: !!opened[key] });
+    }
+    if (candidates.length === 0) return null;
+
+    const rank = (c) => {
+        const req = c.tone === 'warning' ? 0 : 1;
+        const fresh = c.opened ? 1 : 0;
+        const prefer = ['plan_selection', 'whatsapp_verify', 'fees', 'terms', 'students', 'teachers'].indexOf(c.key);
+        const prefScore = prefer === -1 ? 50 : prefer;
+        return [req, fresh, prefScore];
+    };
+    candidates.sort((a, b) => {
+        const ra = rank(a);
+        const rb = rank(b);
+        for (let i = 0; i < ra.length; i++) {
+            if (ra[i] !== rb[i]) return ra[i] - rb[i];
         }
+        return 0;
+    });
+
+    const pick = candidates[0];
+    const ok = await pick.row.click({ timeout: 8000 }).then(() => true).catch(() => false);
+    if (ok) {
+        state.openedSetup = opened;
+        state.openedSetup[pick.key] = true;
+        console.log(`[toshi] clicked setup row "${pick.label}" (${pick.key}, tone=${pick.tone})`);
+        return pick.label || pick.key;
     }
     return null;
 }
@@ -241,7 +281,8 @@ function decide(text, data, state) {
         { key: 'category', re: /what type of school is this|pick a category below|nursery only|o-level \+ a-level/i, answer: data.type.categoryAnswer },
         { key: 'emis', re: /emis \/ ministry code|ministry code\?/i, answer: data.emisCode },
         { key: 'uneb', re: /uneb centre number|uneb center number/i, answer: 'skip' },
-        { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct\?/i, answer: 'yes', needsConfirm: true },
+        { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct\?|academic year:\s*\d{4}.*is that correct/i, answer: 'yes', needsConfirm: true },
+        { key: 'term-current', re: /which term is \*\*current\*\*|mark current|tap \*\*mark current\*\*/i, answer: null, clickContinue: true },
         { key: 'classes', re: /classes are ready|add streams|type \*\*done\*\* to continue/i, answer: 'done' },
         { key: 'subjects', re: /set up subjects per class|subjects per class/i, answer: 'done' },
         // Generic confirm after defaults were seeded (subjects/terms/etc.).
@@ -298,6 +339,11 @@ function decide(text, data, state) {
         return { wait: true, key, answer: top.rule.answer };
     }
     if (top.rule.dynamic && !top.rule.answer) return { wait: true, key };
+    if (top.rule.clickContinue) {
+        state.lastKey = key;
+        state.lastFingerprint = fingerprint;
+        return { key, answer: null, clickContinue: true };
+    }
     state.lastKey = key;
     state.lastFingerprint = fingerprint;
     return { key, answer: top.rule.answer };
@@ -305,7 +351,7 @@ function decide(text, data, state) {
 
 async function runToshiJourney(page, data, findings = [], opts = {}) {
     const shotDir = opts.shotDir || null;
-    const state = { answered: {}, code: null, hasYesChip: false };
+    const state = { answered: {}, code: null, hasYesChip: false, openedSetup: {} };
     const conversation = [];
     let turns = 0;
     let done = false;
@@ -334,6 +380,24 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             conversation.push({ turn: ++turns, sent: `[continue] ${continued}` });
             await page.waitForTimeout(2000);
             continue;
+        }
+
+        // Final review confirm commits draft terms/teachers/fees to the DB.
+        const reviewConfirm = page.locator('[data-toshi-root] button:visible').filter({ hasText: /confirm|finish setup|looks good/i });
+        const reviewWire = page.locator('button[wire\\:click="confirmOnboarding"]:visible');
+        if ((await reviewWire.count().catch(() => 0)) > 0 || /review\s*&\s*confirm/i.test(panelText)) {
+            const btn = (await reviewWire.count()) ? reviewWire.first() : reviewConfirm.first();
+            if (await btn.isVisible().catch(() => false)) {
+                await btn.click({ timeout: 10_000 }).catch(() => {});
+                conversation.push({ turn: ++turns, sent: '[review] confirmOnboarding' });
+                await page.waitForTimeout(3000);
+                const after = await botTranscript(page, { lastOnly: true });
+                if (/all done|everything looks set up|your school is set up|here'?s what to do next/i.test(after || panelText)) {
+                    done = true;
+                    break;
+                }
+                continue;
+            }
         }
 
         // Plan buttons?
@@ -384,8 +448,8 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         if (!decision) {
             // No bot prompt matched — open the next incomplete checklist step so a prompt appears.
             state.nullStreak = (state.nullStreak || 0) + 1;
-            if (state.nullStreak <= 8) {
-                const opened = await clickNextSetupRow(page);
+            if (state.nullStreak <= 10) {
+                const opened = await clickNextSetupRow(page, state);
                 if (opened) {
                     conversation.push({ turn: ++turns, sent: `[setup] ${opened}` });
                     await page.waitForTimeout(2000);
@@ -400,6 +464,14 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         }
         state.nullStreak = 0;
         if (decision.done) { done = true; break; }
+        if (decision.clickContinue) {
+            const cont = await clickContinueIfPresent(page);
+            if (cont) {
+                conversation.push({ turn: ++turns, sent: `[continue] ${cont}` });
+                await page.waitForTimeout(2000);
+                continue;
+            }
+        }
         if (decision.wait) {
             state.confirmWaitStreak = (state.confirmWaitStreak || 0) + 1;
             if (decision.reason === 'needs-confirm-chips' && state.confirmWaitStreak >= 4) {
@@ -420,8 +492,9 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         // Same key thrice → stuck on a stale prompt; jump checklist instead.
         state.keyCounts = state.keyCounts || {};
         state.keyCounts[decision.key] = (state.keyCounts[decision.key] || 0) + 1;
-        if (state.keyCounts[decision.key] >= 3 && !decision.needsConfirm) {
-            const opened = await clickNextSetupRow(page);
+        const isConfirmKey = ['name-ok', 'ay', 'terms-ok', 'confirm-generic'].includes(decision.key);
+        if (state.keyCounts[decision.key] >= 3 && !isConfirmKey) {
+            const opened = await clickNextSetupRow(page, state);
             if (opened) {
                 conversation.push({ turn: ++turns, sent: `[setup-unstick] ${opened}` });
                 state.keyCounts[decision.key] = 0;
@@ -437,6 +510,11 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
                 await page.waitForTimeout(2000);
                 continue;
             }
+        }
+
+        if (decision.answer == null) {
+            await page.waitForTimeout(1200);
+            continue;
         }
 
         conversation.push({ turn: ++turns, sent: decision.answer });
