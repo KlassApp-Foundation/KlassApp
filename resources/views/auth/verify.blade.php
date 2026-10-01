@@ -106,7 +106,9 @@
       </svg>
     </div>
     <span class="klass-auth-logo-frame">
-      <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+      <a href="{{ url('/') }}" aria-label="KlassApp home">
+        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+      </a>
     </span>
     <h1 class="klass-auth-title">{{ __('Verify Your Email Address') }}</h1>
 

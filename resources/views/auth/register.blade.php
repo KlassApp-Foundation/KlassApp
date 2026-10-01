@@ -206,7 +206,9 @@
 @section('content')
 <div class="klass-register-page">
   <div class="klass-register-card">
-    <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-register-logo" alt="KlassApp">
+    <a href="{{ url('/') }}" aria-label="KlassApp home">
+      <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-register-logo" alt="KlassApp">
+    </a>
     <p class="klass-intro-title">Create your KlassApp account</p>
     <p class="klass-intro-sub">Name, email, and WhatsApp — then finish school setup with Toshi.</p>
 

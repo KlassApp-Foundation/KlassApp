@@ -74,18 +74,18 @@
             @elseif($brandLogo === 'klassapp')
                 {{-- A parent can have children at several schools, so one school's logo
                      would be wrong here; the children/schools menu carries identity. --}}
-                <a class="h-10 object-contain" href="{{ route($brandRoute) }}" aria-label="KlassApp">
+                <a class="h-10 object-contain" href="{{ route($brandRoute) }}" aria-label="KlassApp home">
                     <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
                          class="h-10 w-auto object-contain mr-3"
                          alt="KlassApp"
                          onerror="this.onerror=null;this.src='{{ asset('images/klassapp-logo.svg') }}';">
                 </a>
-                <a class="parent-brand-name {{ $nameClass }}" href="{{ route($brandRoute) }}">
+                <a class="parent-brand-name {{ $nameClass }}" href="{{ route($brandRoute) }}" aria-label="KlassApp home">
                     <strong>KlassApp</strong>
                 </a>
             @else
                 <a class="h-10 object-contain" href="{{ route($brandRoute) }}"
-                   aria-label="{{ $navSchool ? ucwords($navSchool->name).' dashboard' : 'Dashboard' }}">
+                   aria-label="KlassApp home">
                     <img src="{{ $schoolLogo ?: asset('images/klassapp-logo-primary.svg') }}"
                          class="h-10 w-auto object-contain mr-3"
                          alt="{{ $schoolLogo ? ucwords($navSchool->name).' logo' : 'KlassApp' }}"
