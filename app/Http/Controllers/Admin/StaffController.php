@@ -12,10 +12,10 @@ use Illuminate\Http\Request;
 use App\Traits\RegisterUser;
 use App\Traits\LogActivity;
 use App\Traits\Common;
-use App\Models\Subscription;
 use App\Models\Userprofile;
 use App\Models\TeacherProfile;
 use App\Helpers\SiteHelper;
+use App\Services\ToshiActionService;
 use App\Models\User;
 use League\Csv\Writer;
 use Exception;
@@ -61,11 +61,13 @@ class StaffController extends Controller
      */
     public function create()
     {
-        //
-         $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',5)->count();
-      $subscription = Subscription::with('plan')->where('school_id',Auth::user()->school_id)->first();
+      $schoolId = (int) Auth::user()->school_id;
+      // CurrentPlan + treat no_of_users <= 0 as unlimited (never hard-block the form).
+      $limit = ToshiActionService::enforcePlanLimit($schoolId, 'teachers');
 
-      return view('/admin/staff/create',['count'=>$count , 'subscription'=>$subscription]);
+      return view('/admin/staff/create', [
+          'planLimitNotice' => $limit['success'] ? null : $limit['message'],
+      ]);
     }
 
     /**
@@ -123,7 +125,15 @@ class StaffController extends Controller
           $mes
         );
 
-        return redirect()->back()->with('successmessage',$mes);
+        $redirect = redirect()->back()->with('successmessage', $mes);
+
+        // Over plan limit is a notice after save — never block founding-school staffing.
+        $overLimit = ToshiActionService::enforcePlanLimit((int) $school_id, 'teachers');
+        if (!$overLimit['success']) {
+            $redirect->with('overlimit', $overLimit['message']);
+        }
+
+        return $redirect;
       }
       catch(Exception $e)
       {

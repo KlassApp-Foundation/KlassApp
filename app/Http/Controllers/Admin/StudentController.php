@@ -12,7 +12,6 @@ use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Models\StudentParentLink;
-use App\Models\Subscription;
 use App\Traits\MemberProcess;
 use App\Traits\RegisterUser;
 use App\Models\StudentAcademic;
@@ -202,10 +201,12 @@ class StudentController extends Controller
      */
     public function create()
     {
-      //
-      $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',6)->count();
-      $subscription = Subscription::with('plan')->where('school_id',Auth::user()->school_id)->first();
-      return view('/admin/member/create',['count'=>$count , 'subscription'=>$subscription]);
+      $schoolId = (int) Auth::user()->school_id;
+      $limit = ToshiActionService::enforcePlanLimit($schoolId, 'students');
+
+      return view('/admin/member/create', [
+          'planLimitNotice' => $limit['success'] ? null : $limit['message'],
+      ]);
     }
 
     public function member()
@@ -251,12 +252,6 @@ class StudentController extends Controller
       {
         $school_id = Auth::user()->school_id;
 
-        // ── Plan limit check (uses shared enforcePlanLimit on CurrentPlan) ──
-        $limit = ToshiActionService::enforcePlanLimit($school_id, 'students');
-        if (!$limit['success']) {
-            return redirect()->back()->withErrors(['plan_limit' => $limit['message']]);
-        }
-
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
         $file = $request->file('avatar');
@@ -284,8 +279,15 @@ class StudentController extends Controller
           $mes
         );
 
-        // create class student from here
-        return redirect()->back()->with('successmessage',$mes);
+        $redirect = redirect()->back()->with('successmessage', $mes);
+
+        // Over plan limit is a notice after save — never block founding-school enrolment.
+        $overLimit = ToshiActionService::enforcePlanLimit((int) $school_id, 'students');
+        if (!$overLimit['success']) {
+            $redirect->with('overlimit', $overLimit['message']);
+        }
+
+        return $redirect;
       }
       catch(Exception $e)
       {

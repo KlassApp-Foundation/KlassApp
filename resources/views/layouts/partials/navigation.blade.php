@@ -152,7 +152,7 @@
                 <div class="navbar-menu {{ $variant === 'dashboard' ? 'ml-5' : 'lg:ml-5 md:ml-3' }}">
                     <ul class="navbar-nav ml-auto flex items-center">
                         @if($extraPricing)
-                            <li class="mx-2 hidden lg:block"><a href="{{ url('/pricing') }}">{{ __('Pricing') }}</a></li>
+                            <li class="mx-2 hidden lg:block"><a href="/pricing">{{ __('Pricing') }}</a></li>
                         @endif
                         @guest
                             <li class="nav-item px-2">

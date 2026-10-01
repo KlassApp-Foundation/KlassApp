@@ -1695,6 +1695,11 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['teacherName' => $reason]);
         }
 
+        $teacherOver = ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+        if (! $teacherOver['success']) {
+            $this->overLimitNotice = $teacherOver['message'];
+        }
+
         $this->teacherDrafts = [];
     }
 
