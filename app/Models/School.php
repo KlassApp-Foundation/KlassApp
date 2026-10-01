@@ -78,10 +78,11 @@ class School extends Model
     {
         static::creating(function (School $school): void {
             // Keep mode + legacy flag coherent when either is set alone.
+            // Default for new schools: onboarding (setup guide), never assistant.
             if ($school->toshi_mode === null) {
                 $school->toshi_mode = (bool) $school->toshi_enabled
                     ? \App\Enums\ToshiMode::Assistant
-                    : \App\Enums\ToshiMode::Preview;
+                    : \App\Enums\ToshiMode::Onboarding;
             }
             $school->toshi_enabled = $school->toshi_mode === \App\Enums\ToshiMode::Assistant ? 1 : 0;
         });

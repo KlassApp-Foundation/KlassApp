@@ -8,8 +8,8 @@ use App\Models\User;
 /**
  * Three UI modes for Toshi entry points a school user can see.
  *
- * - Preview (default): panel visible, Coming soon, no scripted onboarding, no AI.
- * - Onboarding: scripted setup without an AI key (#929).
+ * - Onboarding (signup default): scripted setup guide without an AI key.
+ * - Preview (per-school fallback): panel visible, Coming soon, no scripted guide, no AI.
  * - Assistant: free-form + model when an AI key is configured AND mode is assistant.
  *
  * Rasta can flip a school between modes via `schools.toshi_mode` (no code change).
@@ -25,7 +25,7 @@ class ToshiUiSwitch
         $user ??= auth()->user();
 
         if (! $user) {
-            return ToshiMode::Preview;
+            return ToshiMode::Onboarding;
         }
 
         if ((int) $user->usergroup_id === 1 && $user->school_id === null) {
@@ -34,26 +34,25 @@ class ToshiUiSwitch
 
         $school = $user->school;
         if ($school === null) {
-            return ToshiMode::Preview;
+            return ToshiMode::Onboarding;
         }
 
-        // Legacy bridge: toshi_enabled=1 always means assistant (raw inserts and
-        // older callers often omit toshi_mode, which defaults to preview).
+        // Legacy bridge: toshi_enabled=1 always means assistant.
         if ((bool) $school->toshi_enabled) {
             return ToshiMode::Assistant;
         }
 
         $raw = $school->toshi_mode ?? null;
         if ($raw instanceof ToshiMode) {
-            return $raw === ToshiMode::Assistant ? ToshiMode::Preview : $raw;
+            return $raw === ToshiMode::Assistant ? ToshiMode::Onboarding : $raw;
         }
         if (is_string($raw) && $raw !== '') {
-            $mode = ToshiMode::tryFrom($raw) ?? ToshiMode::Preview;
+            $mode = ToshiMode::tryFrom($raw) ?? ToshiMode::Onboarding;
 
-            return $mode === ToshiMode::Assistant ? ToshiMode::Preview : $mode;
+            return $mode === ToshiMode::Assistant ? ToshiMode::Onboarding : $mode;
         }
 
-        return ToshiMode::Preview;
+        return ToshiMode::Onboarding;
     }
 
     public function previewMode(?User $user = null): bool

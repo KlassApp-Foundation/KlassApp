@@ -456,7 +456,9 @@ class AgentToshi extends Component
             }
 
             $this->mode = 'complete';
-            if (request()->boolean('toshi_onboarding') || session()->pull('open_toshi_onboarding')) {
+            // Drain legacy flash; never auto-maximize after signup (blocks Manual @375).
+            session()->pull('open_toshi_onboarding');
+            if (request()->boolean('toshi_onboarding')) {
                 $this->visible = true;
                 $this->maximized = true;
             }
@@ -892,25 +894,46 @@ class AgentToshi extends Component
 
     /**
      * Finished-state when scripted onboarding is done but the AI assistant is off.
+     * Soft launch: show the Coming soon card (same UI as preview) — no AI path.
      */
     private function enterSetupDoneMode(?string $message = null): void
     {
-        $this->mode = 'done';
+        $this->mode = 'preview';
         $this->step = 99;
         $this->substep = 0;
         $this->actionStep = null;
         $this->actionSubstep = 0;
         $this->pendingToolConfirm = null;
         $this->awaitingConfirm = false;
+        $this->messages = [];
+        $this->maximized = false;
+        // $message retained for callers; Coming soon card carries the copy.
+        unset($message);
+    }
 
-        $intro = $message ?: 'Your school is set up.';
-        $this->botSay(
-            "{$intro}\n\n"
-            ."Here's what to do next:\n"
-            ."• **Add students**\n"
-            ."• **Enter marks**\n"
-            ."• **Send report cards**"
-        );
+    /**
+     * Soft-launch: no active setup step — show Coming soon (no AI / MCP).
+     */
+    private function enterComingSoonMode(): void
+    {
+        $this->enterSetupDoneMode();
+        $this->persistState();
+    }
+
+    /**
+     * Soft-launch: unrecognised free-form mid-setup stays on the current step,
+     * re-asks the question (chips stay available), and notes Coming soon.
+     */
+    private function repromptCurrentSetupStepForUnhandledFreeForm(): void
+    {
+        if (is_string($this->actionStep) && str_starts_with($this->actionStep, 'onboarding_')) {
+            $key = substr($this->actionStep, strlen('onboarding_'));
+            $this->botSay(self::onboardingPromptForStep($key));
+        } elseif (in_array($this->mode, ['create', 'complete'], true)) {
+            $this->callStepHandler('');
+        }
+
+        $this->botSay("Toshi's assistant is coming soon; for now, please choose one of the options above.");
     }
 
     /**
@@ -1739,9 +1762,7 @@ class AgentToshi extends Component
     {
         if ($targetMode === 'assistant') {
             if (! $this->isAssistantEnabled()) {
-                $this->messages = [];
-                $this->enterSetupDoneMode('Your school is set up.');
-                $this->botSay('The Toshi assistant is not enabled for your school yet.');
+                $this->enterSetupDoneMode();
                 $this->persistState();
 
                 return;
@@ -4082,26 +4103,24 @@ class AgentToshi extends Component
             }
         }
 
+        // Setup finished / Coming soon — before actionStep, so a stale action
+        // cannot keep free-form inside scripted handlers after setup is done.
+        if (in_array($this->mode, ['done', 'preview'], true)) {
+            $this->enterComingSoonMode();
+
+            return;
+        }
+
         // Active action flow (multi-step, e.g. add student, enter marks)
         if ($this->actionStep) {
             $this->handleActionFlow($text);
             return;
         }
 
-        // Setup finished, assistant off — never enter the model path.
-        if ($this->mode === 'done') {
-            $this->fallbackMessage();
-
-            return;
-        }
-
         // Assistant mode — school is set up, Toshi can answer questions
         if ($this->mode === 'assistant') {
             if (! $this->isAssistantEnabled()) {
-                $this->messages = [];
-                $this->enterSetupDoneMode();
-                $this->persistState();
-                $this->fallbackMessage();
+                $this->enterComingSoonMode();
 
                 return;
             }
@@ -4801,11 +4820,9 @@ class AgentToshi extends Component
     {
         $normalized = $this->normalizeStudentSizeInput($text);
         if ($normalized === null) {
-            $options = implode(', ', array_map(
-                fn (string $o) => "**{$o}**",
-                \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS
-            ));
-            $this->botSay("Please choose one of: {$options}.");
+            // Soft launch: stay on this step; re-ask with chips + Coming soon hint.
+            // Do not leave scripted onboarding for free-form / assistant.
+            $this->repromptCurrentSetupStepForUnhandledFreeForm();
 
             return;
         }
