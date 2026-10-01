@@ -5,17 +5,18 @@ import { legacyHashMap } from './legacy-hash-map'
 
 export default defineConfig({
   title: 'KlassApp Docs',
-  description: 'Help for schools using KlassApp, and docs for contributors.',
-  lang: 'en-UG',
-  base: '/docs/',
-  outDir: '../public/docs',          // served by the rewritten DocsController (see HANDOFF P1)
+  description: 'An open education protocol for humans and agents. KlassApp runs in the tools educationists already use — Slack, spreadsheets, WhatsApp — with Toshi, your school\'s AI assistant.',
+  lang: 'en',
+  base: '/docs-preview/',
+  // Soft-launch: build to docs-preview so live Docsify /docs is unchanged until cutover.
+  outDir: '../public/docs-preview',
   cleanUrls: true,
   srcExclude: ['**/_templates/**'],
   lastUpdated: true,
   appearance: false,                 // one light theme; dark mode doubles the QA surface on low-end phones
   head: [
-    ['link', { rel: 'icon', href: '/docs/favicon.svg', type: 'image/svg+xml' }],
-    ['link', { rel: 'preload', href: '/docs/fonts/dm-sans-latin-400.woff2', as: 'font', type: 'font/woff2', crossorigin: '' }],
+    ['link', { rel: 'icon', href: '/docs-preview/favicon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'preload', href: '/docs-preview/fonts/dm-sans-latin-400.woff2', as: 'font', type: 'font/woff2', crossorigin: '' }],
     ['script', {}, 'window.__KA_HASH_MAP__=' + JSON.stringify(legacyHashMap) + ';' +
       "(function(){var h=location.hash;if(h.indexOf('#/')!==0)return;var m=window.__KA_HASH_MAP__||{};var k=location.pathname.replace(/\\/$/,'')+'/'+h.slice(2).replace(/\\.md$/,'').replace(/\\?.*$/,'');var t=m[k];if(t)location.replace(t);})()"],
   ],

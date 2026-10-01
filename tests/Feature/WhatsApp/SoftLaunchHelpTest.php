@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Soft-launch WhatsApp menu update:
- * - unknown numbers get the soft-launch intro (DEMO keyword + klassapp.xyz links);
+ * - unknown numbers get the soft-launch intro (DEMO try-demo, JOIN apply, klassapp.xyz links);
  * - every known role gets a Help option (role_help text + Help/privacy links);
  * - the parent menu keeps REPORT/HELP/Dashboard rows (WEB_LOGIN last).
  */
@@ -66,12 +66,34 @@ class SoftLaunchHelpTest extends TestCase
 
         $this->assertSame('unrecognized_prompt', $captured['flowType']);
         $this->assertStringContainsString('soft launch', $captured['message']);
+        $this->assertStringContainsString('Want your school to join? Reply JOIN.', $captured['message']);
         $this->assertStringContainsString('https://klassapp.xyz', $captured['message']);
         $this->assertStringContainsString('https://klassapp.xyz/help', $captured['message']);
         $this->assertStringContainsString('https://klassapp.xyz/privacy', $captured['message']);
         $this->assertSame('demo', $captured['buttons'][0]['id']);
         $this->assertStringContainsString('Try Demo', $captured['buttons'][0]['title']);
         $this->assertStringContainsString('Request Link', $captured['buttons'][2]['title']);
+    }
+
+    public function test_unknown_number_typing_join_returns_interest_ack(): void
+    {
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->andReturnUsing(function (string $phone, string $message, ?string $flowType = null) use (&$captured) {
+                $captured = compact('message', 'flowType');
+
+                return ['success' => true, 'message_id' => 'join'];
+            });
+        $whatsApp->shouldNotReceive('sendInteractiveButtons');
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeUnrecognized('JOIN');
+
+        $this->assertSame('school_join_interest', $captured['flowType']);
+        $this->assertStringContainsString('https://klassapp.xyz', $captured['message']);
+        $this->assertStringContainsString('DEMO', $captured['message']);
     }
 
     public function test_unknown_number_typing_demo_without_config_degrades_to_text(): void

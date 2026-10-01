@@ -17,7 +17,7 @@ All marks for the term must be entered. Check the Missing Marks Report — you f
 
 In the sidebar, choose <UiPath to="Report Cards" />.
 
-<Shot src="/docs/img/admin-report-cards_2026-10-01.webp" alt="Report Cards page" url="app.klassapp.xyz/admin/reports/cards" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-report-cards_2026-10-01.webp" alt="Report Cards page" url="app.klassapp.xyz/admin/reports/cards" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 </Shot>
 </Step>
 <Step title="Choose the class and term">

@@ -14,7 +14,7 @@ Put exam marks in per class and subject. Teachers can enter marks for their own 
 
 In the sidebar, choose <UiPath to="Exams & Marks" />.
 
-<Shot src="/docs/img/admin-exams_2026-10-01.webp" alt="Exams & Marks page" url="app.klassapp.xyz/admin/exams" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-exams_2026-10-01.webp" alt="Exams & Marks page" url="app.klassapp.xyz/admin/exams" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 </Shot>
 </Step>
 <Step title="Open the exam">

@@ -1089,6 +1089,19 @@ class WhatsAppController extends Controller
             }
         }
 
+        // ── JOIN: school soft-launch interest (DEMO remains "try the demo") ──
+        if (strtolower($trimmed) === 'join') {
+            $sendText(
+                "Thanks for your interest.\n\n"
+                . "KlassApp is in soft launch — school roll-out is by invitation.\n"
+                . "Register your school at https://klassapp.xyz and we'll be in touch.\n\n"
+                . "Want to explore first? Reply DEMO to try a sample school.",
+                'school_join_interest'
+            );
+
+            return;
+        }
+
         // ── DEMO: auto-link to configured demo parent (never hardcode school_id) ──
         if (strtolower($trimmed) === 'demo') {
             $demoParentId = (int) config('services.whatsapp.demo_parent_user_id', 104);
@@ -1181,9 +1194,10 @@ class WhatsAppController extends Controller
         // Free-text name/school search removed — only KLS ID (above) or Request Link Flow.
         $sendButtons(
             "👋 *Welcome to KlassApp!* 🎓\n\n"
-            . "KlassApp puts report cards, fees and attendance from your school "
-            . "into your WhatsApp. We're in soft launch — demo accounts are open, "
-            . "school roll-out is by invitation.\n\n"
+            . "KlassApp is an education protocol that runs in the tools "
+            . "educationists already use. We're in soft launch — demo accounts "
+            . "are open, school roll-out is by invitation.\n\n"
+            . "Want your school to join? Reply JOIN.\n"
             . "Tap *Try Demo* to explore with sample data.\n"
             . "Tap *Link help* for KlassApp ID instructions, or *Request Link* "
             . "to submit a short form your school will review.\n\n"

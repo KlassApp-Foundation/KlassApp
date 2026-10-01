@@ -17,7 +17,7 @@ Add your classes and streams first, so each student goes into the right class.
 
 In the sidebar, choose <UiPath to="Students" />.
 
-<Shot src="/docs/img/admin-students_2026-10-01.webp" alt="Students page showing the Add student and Import list buttons" url="app.klassapp.xyz/admin/students" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-students_2026-10-01.webp" alt="Students page showing the Add student and Import list buttons" url="app.klassapp.xyz/admin/students" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 <Mark box :x="72" :y="14" :w="14" :h="6" />
 </Shot>
 </Step>
@@ -34,7 +34,7 @@ Choose <Btn>Import list</Btn> and paste rows straight from WhatsApp or a documen
 
 Choose <Btn>Import list</Btn>, download the template, fill it in, and upload it. The import shows how many rows were added and which rows were skipped.
 
-<Shot src="/docs/img/admin-import_2026-10-01.webp" alt="Student import page" url="app.klassapp.xyz/admin/import" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-import_2026-10-01.webp" alt="Student import page" url="app.klassapp.xyz/admin/import" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 </Shot>
 </Step>
 </Steps>

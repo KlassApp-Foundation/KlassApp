@@ -19,7 +19,7 @@ Report cards only go out for a student whose marks for the term are approved. Ap
 
 A parent sends the word "report" to the school's KlassApp number. KlassApp replies with the child's report card as a PDF.
 
-<Shot src="/docs/img/admin-whatsapp-dashboard_2026-10-01.webp" alt="WhatsApp messaging dashboard" url="app.klassapp.xyz/admin/whatsapp/dashboard" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-whatsapp-dashboard_2026-10-01.webp" alt="WhatsApp messaging dashboard" url="app.klassapp.xyz/admin/whatsapp/dashboard" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 </Shot>
 </Step>
 <Step title="More than one child">

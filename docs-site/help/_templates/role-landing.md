@@ -8,7 +8,7 @@ role: teacher
 One-line lede: what this role does in KlassApp.
 
 ## Start here
-<RoleCards :items="[{title:'Mark attendance',text:'Before 9:00 each morning',link:'/docs/help/teachers/attendance'}]" />
+<RoleCards :items="[{title:'Mark attendance',text:'Before 9:00 each morning',link:'/docs-preview/help/teachers/attendance'}]" />
 
 ## Popular tasks
 - [Mark today's attendance](/help/teachers/attendance)

@@ -19,7 +19,7 @@ Keyword checks against the live app (`app/Http/Controllers/Api/WhatsAppControlle
 
 The link works for 7 days. After that, send *report* again.
 
-https://klassapp.xyz/docs/help/send-report-cards-whatsapp
+https://klassapp.xyz/help/send-report-cards-whatsapp
 ```
 
 ## 2. Parent — know what you owe (fees)
@@ -33,7 +33,7 @@ https://klassapp.xyz/docs/help/send-report-cards-whatsapp
 
 You never have to click anything to see your balance — you get a message when it changes.
 
-https://klassapp.xyz/docs/help/parents/whatsapp
+https://klassapp.xyz/help/parents/whatsapp
 ```
 
 ## 3. Teacher — mark attendance
@@ -48,7 +48,7 @@ https://klassapp.xyz/docs/help/parents/whatsapp
 
 Parents of absent students get a WhatsApp message the same morning.
 
-https://klassapp.xyz/docs/help/teachers/attendance
+https://klassapp.xyz/help/teachers/attendance
 ```
 
 ## 4. Teacher — enter marks
@@ -63,7 +63,7 @@ https://klassapp.xyz/docs/help/teachers/attendance
 
 Marks stay private until the headteacher publishes results.
 
-https://klassapp.xyz/docs/help/marks
+https://klassapp.xyz/help/marks
 ```
 
 ## 5. Bursar — send fee reminders
@@ -79,7 +79,7 @@ https://klassapp.xyz/docs/help/marks
 
 Each parent gets one WhatsApp message with their own balance only.
 
-https://klassapp.xyz/docs/help/bursars/
+https://klassapp.xyz/help/bursars/
 ```
 
 ## 6. Admin — publish and share report cards
@@ -94,7 +94,7 @@ https://klassapp.xyz/docs/help/bursars/
 
 Parents who ask get the PDF straight in their WhatsApp chat.
 
-https://klassapp.xyz/docs/help/generate-report-cards
+https://klassapp.xyz/help/generate-report-cards
 ```
 
 ## Measured sizes

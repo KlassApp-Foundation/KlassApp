@@ -4,7 +4,7 @@ import { computed } from 'vue'
 const route = useRoute()
 // useRoute().path is relative to the base (/help/...), but keep it robust if /docs is prefixed
 const path = computed(() => {
-  const p = route.path.replace(/^\/docs/, '')
+  const p = route.path.replace(/^\/docs-preview/, '')
   if (p.startsWith('/privacy') || p.startsWith('/terms')) return ''
   return p.startsWith('/help') ? p : ''
 })

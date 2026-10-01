@@ -5,7 +5,7 @@ import { helpSidebar, communitySidebar } from '../../sidebars'
 const route = useRoute(); const { page, frontmatter } = useData()
 const crumbs = computed(() => {
   if (frontmatter.value.breadcrumbs === false) return []
-  const p = route.path.replace(/^\/docs/, '')
+  const p = route.path.replace(/^\/docs-preview/, '')
   const [section, sb] = p.startsWith('/help/') ? ['Help', helpSidebar] : p.startsWith('/community/') ? ['Community', communitySidebar] : [null, []]
   if (!section) return []
   const out = [{ text: 'Docs', link: withBase('/') }, { text: section, link: withBase(section === 'Help' ? '/help/' : '/community/') }]

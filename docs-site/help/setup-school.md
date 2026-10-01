@@ -17,7 +17,7 @@ You must be signed in as the admin who signed the school up.
 
 In the sidebar, choose <UiPath to="Settings" />.
 
-<Shot src="/docs/img/admin-settings_2026-10-01.webp" alt="KlassApp admin settings page" url="app.klassapp.xyz/admin/settings" :w="1280" :h="720" caption="Desktop 1280 × 720 · Demo Academy Uganda (demo)">
+<Shot src="/docs-preview/img/admin-settings_2026-10-01.webp" alt="KlassApp admin settings page" url="app.klassapp.xyz/admin/settings" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
 </Shot>
 </Step>
 <Step title="Check the school details">

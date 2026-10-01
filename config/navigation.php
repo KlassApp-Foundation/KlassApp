@@ -38,7 +38,7 @@ return [
             'item_class' => 'py-3 px-3 dashboard-menu-item',
             'active_class' => 'active dashboard-active',
             // Bottom-of-sidebar link (was the tail of layouts/admin/menu.blade.php).
-            'footer' => ['label' => 'Help & Docs', 'href' => 'https://docs.klassapp.com', 'external' => true],
+            'footer' => ['label' => 'Help & Docs', 'href' => 'https://klassapp.xyz/help', 'external' => true],
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'admin/dashboard', 'active' => ['dashboard']],
             ],
