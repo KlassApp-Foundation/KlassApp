@@ -110,5 +110,12 @@ return [
         'leads_email' => env('LEADS_EMAIL'),
         'booking_url' => env('DEMO_BOOKING_URL'),
     ],
+
+    // OpenCode Go gateway: requests to the configured OpenAI-compatible
+    // provider's host carry this session id (the gateway rejects
+    // session-less requests with MissingSessionID). Any stable UUID works.
+    'opencode_gateway' => [
+        'session_id' => env('OPENCODE_GATEWAY_SESSION_ID'),
+    ],
 ];
 

@@ -10,25 +10,24 @@
         <span class="mx-3">Add Teaching Staff</span>
     </h1>
     @include('partials.message')
-    @if($count < $subscription->plan->no_of_users)
-        <form method="POST" action="" enctype="multipart/form-data">
-            @csrf
-            <add-tab-teacher url="{{ url('/') }}" staff="teaching" teacher_name=null type="add"></add-tab-teacher>
-            <portal-target name="add_teacherprofile"></portal-target>
-
-            <portal to="address">
-                <div class="w-full">
-                    <x-form-group name="address" label="Address" type="text" :value="old('address')"></x-form-group>
-                </div>
-            </portal>
-        </form>
-    @else
-        <a href="{{ url('/pricing') }}"> 
-            <button class="no-underline text-white px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-                Upgrade Plan to Add More Staff
-            </button>
-        </a>
+    {{-- Plan over-limit is a notice, never a hard block (same rule as student import). --}}
+    @if(!empty($planLimitNotice))
+        <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded relative w-full md:w-1/2 mb-3" role="status" data-testid="staff-overlimit-notice">
+            <span class="block sm:inline">{{ $planLimitNotice }}</span>
+            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+        </div>
     @endif
+    <form method="POST" action="" enctype="multipart/form-data">
+        @csrf
+        <add-tab-teacher url="{{ url('/') }}" staff="teaching" teacher_name=null type="add"></add-tab-teacher>
+        <portal-target name="add_teacherprofile"></portal-target>
+
+        <portal to="address">
+            <div class="w-full">
+                <x-form-group name="address" label="Address" type="text" :value="old('address')"></x-form-group>
+            </div>
+        </portal>
+    </form>
 </div>
 
 @endsection

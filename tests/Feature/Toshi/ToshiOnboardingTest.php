@@ -391,12 +391,16 @@ class ToshiOnboardingTest extends TestCase
         $adminUser = \App\Models\User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
         $this->assertNotNull($adminUser, 'School admin must exist');
 
-        // 7. Adding more students is now blocked at the Growth limit
-        $blocked = \App\Services\ToshiActionService::enforcePlanLimit($schoolId, 'students');
-        $this->assertFalse($blocked['success'], 'Growth allows 2 students; further adds must be blocked');
-        $this->assertStringContainsString('2 students', $blocked['message']);
-        $this->assertStringContainsString('Growth', $blocked['message']);
-        $this->assertStringNotContainsString('<', $blocked['message']);
+        // 7. At Growth limit: enforcePlanLimit reports over-limit (notice), but adds must still succeed
+        $notice = \App\Services\ToshiActionService::enforcePlanLimit($schoolId, 'students');
+        $this->assertFalse($notice['success'], 'Growth allows 2 students; further adds surface an upgrade notice');
+        $this->assertStringContainsString('2 students', $notice['message']);
+        $this->assertStringContainsString('Growth', $notice['message']);
+        $this->assertStringNotContainsString('<', $notice['message']);
+
+        $added = \App\Services\ToshiActionService::addStudent($adminUser, ['name' => 'Fifth Over Limit']);
+        $this->assertTrue($added['success'], 'plan over-limit must never block Toshi student create');
+        $this->assertStringContainsString('upgrade', strtolower($added['message']));
     }
 
     /** @test */

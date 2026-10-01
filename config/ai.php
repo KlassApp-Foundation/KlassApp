@@ -134,8 +134,8 @@ return [
             'models' => [
                 'text' => [
                     'default' => env('OPENAI_COMPATIBLE_MODEL', 'deepseek-chat'),
-                    'cheapest' => env('OPENAI_COMPATIBLE_FALLBACK_MODEL', 'meta/llama-3.1-70b-instruct'),
-                    'smartest' => env('TOSHI_LLM_MODEL', 'meta/llama-3.1-8b-instruct'),
+                    'cheapest' => env('OPENAI_COMPATIBLE_FALLBACK_MODEL'),
+                    'smartest' => env('TOSHI_LLM_MODEL'),
                 ],
             ],
         ],

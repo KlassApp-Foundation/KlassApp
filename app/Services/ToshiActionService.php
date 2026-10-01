@@ -131,8 +131,13 @@ class ToshiActionService
      * changes and is already used by DashboardController and ToshiAssistantService).
      *
      * Returns a standard result array:
-     *   ['success' => true,  'message' => '']            → under limit, proceed
-     *   ['success' => false, 'message' => '...upgrade...'] → over limit, blocked
+     *   ['success' => true,  'message' => '']            → under limit
+     *   ['success' => false, 'message' => '...upgrade...'] → at/over limit (NOTICE only)
+     *
+     * Soft-launch rule (2026-10-01): callers must NEVER hard-block create/import on
+     * this result. Always save the data, then surface `$message` as an upgrade notice
+     * (HTTP session `overlimit`, Toshi reply suffix, wizard banner). A limit of 0
+     * (or missing CurrentPlan) means unlimited.
      *
      * The message is plain-text safe for both HTTP flash contexts and Toshi/WhatsApp
      * conversational use (no HTML, no route-dependent phrasing).
@@ -168,6 +173,17 @@ class ToshiActionService
         }
 
         return self::result(true, '');
+    }
+
+    /**
+     * Advisory notice string when the school is at/over a plan limit, else null.
+     * Prefer this over treating enforcePlanLimit() as a hard gate.
+     */
+    public static function planLimitNotice(int $schoolId, string $type): ?string
+    {
+        $limit = self::enforcePlanLimit($schoolId, $type);
+
+        return $limit['success'] ? null : $limit['message'];
     }
 
     // ── Role Capabilities ──
@@ -388,11 +404,6 @@ class ToshiActionService
             return self::result(false, 'You are not assigned to a school.');
         }
 
-        $limit = self::enforcePlanLimit($schoolId, 'students');
-        if (!$limit['success']) {
-            return $limit;
-        }
-
         $name = trim($data['name'] ?? '');
         if ($name === '' || strlen($name) < 3) {
             return self::result(false, 'Student name must be at least 3 characters.');
@@ -428,6 +439,10 @@ class ToshiActionService
         if ($className) {
             $msg .= " Assigned to class **{$className}**.";
         }
+        // Plan over-limit is a notice after save — never block.
+        if ($notice = self::planLimitNotice($schoolId, 'students')) {
+            $msg .= ' '.$notice;
+        }
 
         return self::result(true, $msg, ['user_id' => $userId, 'email' => $email]);
     }
@@ -446,11 +461,6 @@ class ToshiActionService
         $schoolId = $admin->school_id;
         if (! $schoolId) {
             return self::result(false, 'You are not assigned to a school.');
-        }
-
-        $limit = self::enforcePlanLimit($schoolId, 'teachers');
-        if (! $limit['success']) {
-            return $limit;
         }
 
         $name = trim($data['name'] ?? '');
@@ -550,9 +560,14 @@ class ToshiActionService
                 ? "as class teacher for **{$className}**"
                 : 'as a teacher';
 
+            $msg = "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with a link to set their password.";
+            if ($notice = self::planLimitNotice($schoolId, 'teachers')) {
+                $msg .= ' '.$notice;
+            }
+
             return self::result(
                 true,
-                "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with a link to set their password.",
+                $msg,
                 [
                     'user_id' => $teacher->id,
                     'email' => $email,
@@ -583,11 +598,6 @@ class ToshiActionService
             return self::result(false, 'You are not assigned to a school.');
         }
 
-        $limit = self::enforcePlanLimit($schoolId, 'admins');
-        if (!$limit['success']) {
-            return $limit;
-        }
-
         $name = trim($data['name'] ?? '');
         $email = trim($data['email'] ?? '');
         if ($name === '' || $email === '') {
@@ -609,7 +619,12 @@ class ToshiActionService
             ['invite' => $invite, 'token' => $token] = CoAdminInviteLinkService::issue($school, $email, $name);
             CoAdminInviteLinkService::sendEmail($invite, $token, $school);
 
-            return self::result(true, "Co-admin invite for **{$name}** created. An invite email was sent to **{$email}** — they will set their own password to activate the account.", [
+            $msg = "Co-admin invite for **{$name}** created. An invite email was sent to **{$email}** — they will set their own password to activate the account.";
+            if ($notice = self::planLimitNotice($schoolId, 'admins')) {
+                $msg .= ' '.$notice;
+            }
+
+            return self::result(true, $msg, [
                 'email' => $email,
             ]);
         } catch (\Exception $e) {
