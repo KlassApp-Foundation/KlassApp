@@ -1,0 +1,7 @@
+---
+title: KlassApp for teachers
+---
+
+# KlassApp for teachers
+
+This page is scaffolded but not yet written for the soft launch. Use the soft-launch basics in the sidebar meanwhile.
