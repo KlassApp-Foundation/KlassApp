@@ -16,12 +16,15 @@ import UiPath from './components/UiPath.vue'
 import WhatsAppInstead from './components/WhatsAppInstead.vue'
 import Role from './components/Role.vue'
 import RoleCards from './components/RoleCards.vue'
+import DraftBanner from './components/DraftBanner.vue'
+import VersionBadge from './components/VersionBadge.vue'
 
 export default {
   extends: DefaultTheme,
   Layout: () => h(DefaultTheme.Layout, null, {
     'nav-bar-content-before': () => h(SectionSwitch),
-    'doc-before': () => h(Breadcrumbs),
+    'nav-bar-content-after': () => h(VersionBadge),
+    'doc-before': () => [h(DraftBanner), h(Breadcrumbs)],
     'doc-footer-before': () => h(Feedback),
   }),
   enhanceApp({ app }) {
