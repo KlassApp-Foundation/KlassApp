@@ -43,6 +43,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Robots Noindex
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, every response carries an "X-Robots-Tag: noindex, nofollow"
+    | header and /robots.txt disallows all crawling. Enable per environment via
+    | ROBOTS_NOINDEX (staging/previews: true; production: false/unset). The
+    | static public/robots.txt was removed — the edge serves public/ files
+    | before Laravel, which would shadow a route-based robots.txt.
+    |
+    */
+
+    'robots_noindex' => filter_var(env('ROBOTS_NOINDEX', false), FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

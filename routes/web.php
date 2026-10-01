@@ -18,6 +18,21 @@ Route::get('/docs/{path?}', DocsController::class)
 // Locked v3 landing — live cutover on /. Legacy preview URL redirects.
 Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
 
+// Served from a route because public/robots.txt was removed: the edge serves
+// static public/ files before Laravel ever runs, so a static file would shadow
+// this route. Body is driven by ROBOTS_NOINDEX (see config/app.php).
+Route::get('/robots.txt', function () {
+    $body = config('app.robots_noindex')
+        ? "User-agent: *\nDisallow: /\n"
+        : "User-agent: *\nDisallow:\n"; // byte-identical to the old static file
+
+    return response($body, 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        // Config-driven response — keep the edge/CDN from caching it.
+        'Cache-Control' => 'no-cache, no-store, private',
+    ]);
+})->name('robots');
+
 // Auth/error design-review URLs (still serve the same shells for e2e/regression).
 // Live /login, /register, password/*, and errors/{404,419,500} now use these designs.
 Route::prefix('preview')->name('preview.')->group(function () {
