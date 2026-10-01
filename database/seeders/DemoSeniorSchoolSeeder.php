@@ -334,7 +334,7 @@ class DemoSeniorSchoolSeeder extends Seeder
                     [
                         'standardLink_id' => $link->id,
                         'academic_status' => 'pass',
-                        'lin' => $n % 3 === 0 ? 'UG-DEMO-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
+                        'lin' => $n % 3 === 0 ? 'UG-SEN-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
                     ]
                 );
                 unset($academic);
