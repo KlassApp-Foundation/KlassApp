@@ -230,7 +230,9 @@
         width: 0 !important;
     }
 
-    body.toshi-collapsed [data-toshi-root] .toshi-panel {
+    body.toshi-collapsed [data-toshi-root] .toshi-panel,
+    html.toshi-collapsed [data-toshi-root] .toshi-panel {
+        display: none !important;
         transform: none !important;
         border-left: none !important;
         box-shadow: none !important;
@@ -381,7 +383,9 @@
         display: flex !important;
     }
 
-    [data-toshi-root] .toshi-panel {
+    /* Soft-launch 1b: hide drawer while collapsed is handled globally above
+       (body/html.toshi-collapsed … display:none !important). Open-state rules: */
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-panel {
         position: fixed !important;
         /* Sit below the app header so the first checklist/preview row is never clipped. */
         top: var(--toshi-header-offset, 69px) !important;

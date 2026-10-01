@@ -2970,9 +2970,12 @@ class AgentToshi extends Component
             }
         }
         // Dock open/closed is owned by localStorage + body/html.toshi-collapsed
-        // (toshi-prepaint / toshi-embed). Do not force $visible=false here — that
-        // fought CSS persistence under 1280 (#917). Reset maximized only so a
-        // refreshed page does not reopen the full-screen modal unexpectedly.
+        // (toshi-prepaint / toshi-embed). Soft-launch 1b: never restore a prior
+        // open/maximized paint — session used to leave $visible=true and the
+        // ≤1279 drawer CSS painted over the page even while collapsed. The
+        // Alpine syncVisibleFromDock handler re-opens $visible when the user
+        // expands the dock.
+        $this->visible = false;
         $this->maximized = false;
         return true;
     }
