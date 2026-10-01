@@ -121,6 +121,11 @@ async function hasConfirmChips(page) {
  * Click the next incomplete checklist row. Prefer required (warning) over
  * optional (info). Skip keys already opened this run when alternatives exist.
  */
+async function hasRequiredSetupPending(page) {
+    const rows = page.locator('[data-testid="toshi-setup-list"] [data-testid^="toshi-setup-row-"][data-tone="warning"]:visible');
+    return (await rows.count().catch(() => 0)) > 0;
+}
+
 async function clickNextSetupRow(page, state = {}) {
     const opened = state.openedSetup || {};
     const rows = page.locator('[data-testid="toshi-setup-list"] [data-testid^="toshi-setup-row-"]:visible');
@@ -382,6 +387,19 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             continue;
         }
 
+        // Skip optional step when required checklist items remain.
+        if (await hasRequiredSetupPending(page)) {
+            const skipBtn = page.locator('[data-toshi-root] button:visible').filter({ hasText: /skip this step/i });
+            if ((await skipBtn.count().catch(() => 0)) > 0) {
+                await skipBtn.first().click({ timeout: 8000 }).catch(() => {});
+                conversation.push({ turn: ++turns, sent: '[skip] this step' });
+                state.lastKey = null;
+                state.lastFingerprint = null;
+                await page.waitForTimeout(2000);
+                continue;
+            }
+        }
+
         // Final review confirm commits draft terms/teachers/fees to the DB.
         const reviewConfirm = page.locator('[data-toshi-root] button:visible').filter({ hasText: /confirm|finish setup|looks good/i });
         const reviewWire = page.locator('button[wire\\:click="confirmOnboarding"]:visible');
@@ -464,6 +482,18 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         }
         state.nullStreak = 0;
         if (decision.done) { done = true; break; }
+        // Skip optional teachers/students while required checklist steps remain.
+        if ((decision.key === 'teachers' || decision.key === 'students' || decision.key === 'teachers-done' || decision.key === 'students-done')
+            && await hasRequiredSetupPending(page)) {
+            const opened = await clickNextSetupRow(page, state);
+            if (opened) {
+                conversation.push({ turn: ++turns, sent: `[setup-skip-optional] ${opened}` });
+                state.lastKey = null;
+                state.lastFingerprint = null;
+                await page.waitForTimeout(2000);
+                continue;
+            }
+        }
         if (decision.clickContinue) {
             const cont = await clickContinueIfPresent(page);
             if (cont) {
@@ -476,6 +506,20 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             state.confirmWaitStreak = (state.confirmWaitStreak || 0) + 1;
             if (decision.reason === 'needs-confirm-chips' && state.confirmWaitStreak >= 4) {
                 console.log(`[toshi] confirm chips missing for ${decision.key}; typing answer`);
+            } else if (state.confirmWaitStreak >= 5) {
+                // Same fingerprint / in-flight wait stuck — clear and jump checklist.
+                console.log(`[toshi] wait stuck on ${decision.key}; clearing fingerprint + setup jump`);
+                state.lastKey = null;
+                state.lastFingerprint = null;
+                state.confirmWaitStreak = 0;
+                const opened = await clickNextSetupRow(page, state);
+                if (opened) {
+                    conversation.push({ turn: ++turns, sent: `[setup-wait] ${opened}` });
+                    await page.waitForTimeout(2000);
+                } else {
+                    await page.waitForTimeout(1200);
+                }
+                continue;
             } else {
                 await page.waitForTimeout(1500);
                 continue;
