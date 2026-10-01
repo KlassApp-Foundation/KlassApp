@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Toshi;
 
+use App\Enums\ToshiMode;
 use App\Livewire\AgentToshi;
 use App\Models\School;
 use App\Models\User;
@@ -42,6 +43,7 @@ class ToshiOnboardingMultiTurnTest extends TestCase
             'slug' => 'multi-turn-school',
             'status' => 1,
             'toshi_enabled' => 0,
+            'toshi_mode' => ToshiMode::Onboarding,
             'curriculum' => null,
         ]);
 
@@ -68,7 +70,7 @@ class ToshiOnboardingMultiTurnTest extends TestCase
     public function test_complete_mode_advances_past_five_turns_with_assistant_off(): void
     {
         Config::set('toshi.sdk_v2_enabled', true);
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $sdk = \Mockery::mock(\App\AiAgents\ToshiSdkV2Service::class);
         $sdk->shouldNotReceive('ask');

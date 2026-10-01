@@ -215,6 +215,7 @@
         flex: 1;
         overflow-y: auto;
         min-height: 0;
+        padding-top: 4px; /* first row never hugs the header seam */
     }
 
     body.toshi-collapsed [data-toshi-root] {
@@ -382,18 +383,21 @@
 
     [data-toshi-root] .toshi-panel {
         position: fixed !important;
-        top: 0;
+        /* Sit below the app header so the first checklist/preview row is never clipped. */
+        top: var(--toshi-header-offset, 69px) !important;
         right: 0;
         bottom: 0;
         left: auto !important;
         width: min(420px, 92vw) !important;
-        height: 100vh !important;
+        height: auto !important;
         max-height: none !important;
         border-radius: 0 !important;
         border: none;
         border-left: 1px solid #e8e6dc;
         box-shadow: -8px 0 28px rgba(20, 20, 19, 0.18) !important;
         z-index: 9998;
+        display: flex !important;
+        flex-direction: column;
         animation: toshi-drawer-in 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
@@ -441,6 +445,52 @@
     --toshi-border-kit: #e8e6dc;
     --toshi-ink: #141413;
     --toshi-muted: #5e5d59;
+}
+
+/* Soft-launch preview: Coming soon card + disabled composer (all viewports) */
+[data-toshi-root] .toshi-messages-area {
+    padding-top: 4px; /* first row never hugs the header seam */
+}
+[data-toshi-root] .toshi-preview-card {
+    margin: 16px 14px;
+    padding: 20px 18px;
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+}
+[data-toshi-root] .toshi-preview-eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--toshi-clay);
+}
+[data-toshi-root] .toshi-preview-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--toshi-ink);
+    font-family: 'Sora', sans-serif;
+}
+[data-toshi-root] .toshi-preview-body {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--toshi-muted);
+}
+[data-toshi-root] .toshi-preview-note {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--toshi-ink);
+}
+[data-toshi-root] .toshi-composer--preview {
+    opacity: 0.85;
+}
+[data-toshi-root] .toshi-composer--preview .toshi-composer-input:disabled {
+    cursor: not-allowed;
+    background: #f8f7f2;
 }
 
 [data-toshi-root] .toshi-header {

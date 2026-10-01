@@ -15,10 +15,10 @@
         syncVisibleFromDock();
         window.addEventListener('toshi-collapsed-changed', syncVisibleFromDock);
      "
-     x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
-     x-on:toshi-maximize.window="$wire.maximize()"
+     x-on:toshi-run-plan-step.window="if ($wire.mode !== 'preview') setTimeout(() => $wire.executeNextPlanStep(), 200)"
+     x-on:toshi-maximize.window="if ($wire.mode !== 'preview') $wire.maximize()"
      data-toshi-root
-     class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}">
+     class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}{{ $mode === 'preview' ? ' toshi-root--preview' : '' }}">
     <div id="toshi-pill"
          wire:click="show"
          onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);"
@@ -52,15 +52,19 @@
                 <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
                 <span>Toshi</span>
             </div>
+            @unless($mode === 'preview')
             {{-- Mode dropdown — shared partial --}}
             @include('livewire.partials.toshi-mode-dropdown')
+            @endunless
             <div class="toshi-header-actions">
+                @unless($mode === 'preview')
                 <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" data-testid="toshi-restart">
                     ↻ Restart
                 </button>
                 <button wire:click="maximize" class="toshi-header-btn" title="Expand" data-testid="toshi-expand">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                 </button>
+                @endunless
                 <button type="button"
                         onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);"
                         class="toshi-header-btn" title="Close" data-testid="toshi-close">
@@ -70,6 +74,19 @@
         </div>
         <div class="toshi-messages-area"
              x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))">
+            @if($mode === 'preview')
+            <div class="toshi-preview-card" data-testid="toshi-preview-coming-soon">
+                <p class="toshi-preview-eyebrow">Coming soon</p>
+                <h3 class="toshi-preview-title">Meet Toshi</h3>
+                <p class="toshi-preview-body">
+                    KlassApp is an education protocol that runs in the tools educationists already use.
+                    Admins manage school operations in Slack, teachers enter marks from spreadsheets,
+                    and parents receive their children's school updates on WhatsApp — all by chatting
+                    in natural language with Toshi, your school's AI assistant.
+                </p>
+                <p class="toshi-preview-note">Founding schools will be the first to try Toshi.</p>
+            </div>
+            @else
             @foreach($messages as $msg)
                 @php $isUser = $msg['role'] === 'user'; @endphp
                 <div class="{{ $isUser ? 'toshi-msg-row-end' : 'toshi-msg-row' }}">
@@ -929,6 +946,32 @@
         @endif
         @endif
 
+        @endif {{-- end non-preview messages --}}
+
+        @if($mode === 'preview')
+        <div class="toshi-composer toshi-composer--preview" data-testid="toshi-composer-preview">
+            <p class="toshi-composer-reason" data-testid="toshi-composer-reason" role="status">
+                Messaging is paused while Toshi is in preview. Founding schools will be the first to try Toshi.
+            </p>
+            <div class="toshi-composer-inner">
+                <textarea rows="1"
+                          id="toshi-input-panel"
+                          data-testid="toshi-input-panel"
+                          placeholder="Coming soon — messaging disabled in preview"
+                          disabled
+                          aria-disabled="true"
+                          class="toshi-composer-input"></textarea>
+                <button type="button"
+                        disabled
+                        aria-disabled="true"
+                        data-testid="toshi-send"
+                        style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #CBD5E1; cursor: not-allowed; margin-right: 2px; border-radius: 8px;"
+                        title="Coming soon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                </button>
+            </div>
+        </div>
+        @else
         {{-- Confirmation chips — primary UX; free-text yes/no still accepted --}}
         @if($awaitingConfirm)
         @include('livewire.partials.toshi-confirm-chips', ['variant' => 'panel'])
@@ -971,6 +1014,7 @@
             </div>
         </form>
         @endunless
+        @endif {{-- end preview vs live composer --}}
     </div>
 
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}

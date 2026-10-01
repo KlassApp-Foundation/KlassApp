@@ -45,13 +45,23 @@ for (const [typeId, tag] of JOURNEYS) {
         await health.checkNoHorizontalScroll(page, 'dashboard', findings);
 
         // 4) Manual wizard via the dashboard banner.
+        // On mobile, a maximized Toshi overlay used to intercept the banner click
+        // forever (actionability). Prefer a short click timeout, then navigate.
         const banner = page.locator('[data-testid="setup-banner-manual"]');
+        let openedViaBanner = false;
         if (await banner.isVisible({ timeout: 15_000 }).catch(() => false)) {
-            await banner.click();
+            try {
+                await banner.click({ timeout: 5_000 });
+                openedViaBanner = true;
+            } catch {
+                findings.push('setup banner click blocked (overlay?); navigating directly to wizard');
+            }
         } else {
             findings.push('setup banner "Set up manually" not visible; navigating directly to wizard');
         }
-        await page.waitForURL(/onboarding\/wizard|\/admin\/dashboard/, { timeout: 30_000 }).catch(() => {});
+        if (openedViaBanner) {
+            await page.waitForURL(/onboarding\/wizard|\/admin\/dashboard/, { timeout: 30_000 }).catch(() => {});
+        }
         if (!/onboarding\/wizard/.test(page.url())) {
             await page.goto('/admin/onboarding/wizard', { waitUntil: 'domcontentloaded' });
         }
