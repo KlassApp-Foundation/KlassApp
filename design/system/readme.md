@@ -1,6 +1,8 @@
 # KlassApp Design System
 
-**KlassApp is the school platform that operates in the tools educationists already use.** It is a school-management product for East African schools — student rosters, classes, fee ledgers, exam marks, report cards — whose distinguishing move is that it doesn't demand a new habit: parents are reached on **WhatsApp**, documents land in **Google Drive**, staff chatter stays in **Slack**, and an in-app assistant called **Toshi** does the multi-step office work on request.
+**Tagline:** An open education protocol for humans and agents.
+
+**Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
 
 The product surfaces this system covers:
 

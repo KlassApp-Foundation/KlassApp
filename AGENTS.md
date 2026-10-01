@@ -6,6 +6,9 @@
 
 See TOOLING.md for the full stack reference — which tool to use for which kind of task.
 
+
+**Project:** KlassApp — An open education protocol for humans and agents. KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant. The source is public on GitHub; supported self-hosting opens after an independent security review.
+
 ## Environment reality check
 
 Production is **Laravel Cloud** (`klassapp.xyz`, EU-West-1). Staging exists on the same Cloud app with **demo/seed data only**. The DigitalOcean droplet (`root@46.101.111.131` / `sms-app` Docker) is **retired** — do not SSH it, do not plan work that depends on that host, and do not treat droplet SSH as production access.
