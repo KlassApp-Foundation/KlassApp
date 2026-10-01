@@ -2510,8 +2510,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: (1a) Mapped scripted vs AI call sites in Toshi onboarding. (1b) Split `ToshiUiSwitch` into `onboardingEnabled` / `assistantEnabled`; panel shows without AI key; `exitCompletingSetupMode` → `mode=done` with next-step links when assistant off; free text → `fallbackMessage`; guards on `handleAssistantQuery` / MCP resume; Blade `@toshiAssistant` / `@toshiOnboarding`; stop setting `toshi_enabled=1` during curriculum/commit. (1c) E2E stall root cause: wrong size answer `100-300 students` + `recent.slice(-5)` blocking re-prompts; fixed driver + size aliases. (1d) Hardened outcome checks / fail test if `!done` or DB checks fail.
 - **PR**: [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) · branch `feat/toshi-onboarding-without-ai` · tip `2a4489b4`
 - **Files**: `ToshiUiSwitch`, `AgentToshi`, `AppServiceProvider`, `ToshiActivityController`, agent-toshi + mode-dropdown blades, `ToshiUiSwitchTest`, `ToshiOnboardingMultiTurnTest`, `e2e/onboarding/lib/{toshi,outcomes}.js`, `toshi.spec.js`
-- **Status**: 🚧 PR open; local PHPUnit green; staging journeys + merge pending
-- **Edge cases**: Staging tracks `main` — journeys with assistant-off need this tip deployed; chicken-egg vs merge-after-journeys gate.
+- **Status**: 🚧 PR open (tip `a022c057`); CI green on `28323d6d` + follow-ups; **merge blocked** (`REVIEW_REQUIRED` — cannot self-approve; `--admin` not used). Staging journeys **not green** yet.
+- **Edge cases / findings**:
+  1. Staging tracks `main` — assistant-off panel behaviour needs #929 deployed before journeys can prove it.
+  2. Signup e2e now needs `/register/verify` (fixed in PR: bridge re-issues code). Doppler `CLOUD_AGENT_TOOLING` failed locally; bridge works when token is exported from Cursor MCP config into the env.
+  3. Journey driver `decide()` still misfires on staging tip of `main`: first answer was `yes` → school renamed to `yes-2` (unique suffix). Two fix attempts (recent-window + last-900chars) insufficient; needs a third pass that prefers `name` over `name-ok` and/or requires confirm-chips before answering yes. Hard checks correctly failed (13).
 
 ### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
 - **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.
