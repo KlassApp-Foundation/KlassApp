@@ -8,7 +8,13 @@
         const syncVisibleFromDock = () => {
             const collapsed = document.documentElement.classList.contains('toshi-collapsed')
                 || document.body.classList.contains('toshi-collapsed');
-            if (!collapsed && !$wire.maximized && !$wire.visible) {
+            // Soft-launch 1b: dock owns open/closed. Never leave Livewire
+            // $visible=true while collapsed (mobile CSS used to paint the drawer
+            // anyway); only lift visible when the user expands the dock.
+            if (collapsed) {
+                if ($wire.visible) $wire.set('visible', false);
+                if ($wire.maximized) $wire.set('maximized', false);
+            } else if (!$wire.maximized && !$wire.visible) {
                 $wire.set('visible', true);
             }
         };
