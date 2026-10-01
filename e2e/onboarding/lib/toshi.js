@@ -68,17 +68,34 @@ async function snapshot(page) {
 }
 
 /** Bot chat lines only — excludes checklist labels that false-match decide() rules. */
-async function botTranscript(page) {
+async function botTranscript(page, { lastOnly = false } = {}) {
     const bots = page.locator('[data-toshi-root] .toshi-msg-bot');
     const n = await bots.count().catch(() => 0);
     if (n === 0) return '';
+    if (lastOnly) {
+        return ((await bots.nth(n - 1).innerText({ timeout: 3000 }).catch(() => '')) || '').trim();
+    }
     const parts = [];
-    // Last ~12 bot bubbles is enough context without replaying the whole history.
-    const start = Math.max(0, n - 12);
+    // Keep a short window for code extraction; decide() uses lastOnly.
+    const start = Math.max(0, n - 6);
     for (let i = start; i < n; i++) {
         parts.push(((await bots.nth(i).innerText({ timeout: 3000 }).catch(() => '')) || '').trim());
     }
     return parts.filter(Boolean).join('\n');
+}
+
+async function clickContinueIfPresent(page) {
+    const btns = page.locator('[data-toshi-root] button:visible').filter({ hasText: /^\s*Continue\b/i });
+    const n = await btns.count().catch(() => 0);
+    if (n === 0) return null;
+    const b = btns.last();
+    const label = ((await b.innerText().catch(() => '')) || '').trim();
+    const ok = await b.click({ timeout: 8000 }).then(() => true).catch(() => false);
+    if (ok) {
+        console.log(`[toshi] clicked continue "${label.slice(0, 40)}"`);
+        return label || true;
+    }
+    return null;
 }
 
 async function hasConfirmChips(page) {
@@ -227,6 +244,8 @@ function decide(text, data, state) {
         { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct\?/i, answer: 'yes', needsConfirm: true },
         { key: 'classes', re: /classes are ready|add streams|type \*\*done\*\* to continue/i, answer: 'done' },
         { key: 'subjects', re: /set up subjects per class|subjects per class/i, answer: 'done' },
+        // Generic confirm after defaults were seeded (subjects/terms/etc.).
+        { key: 'confirm-generic', re: /is this correct\b|does this look (right|correct)|look good\?/i, answer: 'yes', needsConfirm: true },
         { key: 'teachers', re: /let'?s add teachers|paste their names/i, answer: data.teachers.join('\n') },
         { key: 'teachers-done', re: /more teachers|another teacher|type 'done'/i, answer: 'done' },
         { key: 'students', re: /let'?s add students|students' names|paste.*students/i, answer: data.students.join('\n') },
@@ -302,11 +321,20 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             await page.waitForTimeout(600);
         }
         const panelText = await snapshot(page);
-        const text = await botTranscript(page);
+        const textWindow = await botTranscript(page);
+        const text = await botTranscript(page, { lastOnly: true });
         state.hasYesChip = await hasConfirmChips(page);
-        const cm = (text || panelText).match(/verification code is:?\s*(\d{6})/i)
-            || (text || panelText).match(/code[: ]+(\d{6})/i);
+        const cm = (textWindow || panelText).match(/verification code is:?\s*(\d{6})/i)
+            || (textWindow || panelText).match(/code[: ]+(\d{6})/i);
         if (cm) state.code = cm[1];
+
+        // Inline Continue (subjects/teachers/fees) beats free-text.
+        const continued = await clickContinueIfPresent(page);
+        if (continued) {
+            conversation.push({ turn: ++turns, sent: `[continue] ${continued}` });
+            await page.waitForTimeout(2000);
+            continue;
+        }
 
         // Plan buttons?
         const planButtons = page.locator('button[wire\\:click*="selectPlan"]:visible');
@@ -319,21 +347,44 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             if (!clicked && (await planButtons.count())) { await planButtons.first().click({ timeout: 10_000 }); clicked = 'first plan'; }
             conversation.push({ turn: ++turns, sent: `[plan] ${clicked}` });
             await page.waitForTimeout(2500);
-            const after = await botTranscript(page);
-            if (/plan selected|saved|all done|everything looks set up|your school is set up/i.test(after.slice(-1200))) { done = true; break; }
+            const after = await botTranscript(page, { lastOnly: true });
+            if (/plan selected|saved|all done|everything looks set up|your school is set up/i.test(after)) { done = true; break; }
             continue;
         }
 
-        if (/all done|everything looks set up|setup complete|your school is set up|here'?s what to do next/i.test((text || panelText).slice(-1200))) {
+        if (/all done|everything looks set up|setup complete|your school is set up|here'?s what to do next/i.test(text || textWindow.slice(-400))) {
             done = true;
             break;
+        }
+
+        // Confirm chips up: if the latest bubble is a confirm prompt (or nothing
+        // actionable), click Yes. Probe decide with a throwaway state so we don't
+        // poison lastKey/fingerprint.
+        if (state.hasYesChip) {
+            const confirmish = /is (the name|this) correct|look (right|good|correct)|yes\s*\/\s*no/i.test(text);
+            const probe = decide(text, data, {
+                answered: { ...state.answered },
+                hasYesChip: true,
+                code: state.code,
+            });
+            const probeIsConfirm = probe && (probe.key === 'name-ok' || probe.key === 'ay'
+                || probe.key === 'terms-ok' || probe.key === 'confirm-generic'
+                || probe.reason === 'needs-confirm-chips');
+            if (confirmish || !probe || probeIsConfirm) {
+                if (await tryQuickReply(page, 'yes')) {
+                    conversation.push({ turn: ++turns, sent: '[chip] yes' });
+                    console.log(`[toshi] turn ${turns}: [chip] yes (latest: ${text.slice(0, 80).replace(/\n/g, ' ')})`);
+                    await page.waitForTimeout(2000);
+                    continue;
+                }
+            }
         }
 
         const decision = decide(text, data, state);
         if (!decision) {
             // No bot prompt matched — open the next incomplete checklist step so a prompt appears.
             state.nullStreak = (state.nullStreak || 0) + 1;
-            if (state.nullStreak <= 6) {
+            if (state.nullStreak <= 8) {
                 const opened = await clickNextSetupRow(page);
                 if (opened) {
                     conversation.push({ turn: ++turns, sent: `[setup] ${opened}` });
@@ -351,9 +402,7 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         if (decision.done) { done = true; break; }
         if (decision.wait) {
             state.confirmWaitStreak = (state.confirmWaitStreak || 0) + 1;
-            // Confirm prompt without chips yet — don't click setup rows forever.
             if (decision.reason === 'needs-confirm-chips' && state.confirmWaitStreak >= 4) {
-                // Fall through: answer yes via typed reply once chips still missing after waits.
                 console.log(`[toshi] confirm chips missing for ${decision.key}; typing answer`);
             } else {
                 await page.waitForTimeout(1500);
@@ -366,6 +415,28 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         // Never send bare yes/no/skip as a school name.
         if (decision.key === 'name' && /^(yes|no|skip|done|ok)$/i.test(String(decision.answer || '').trim())) {
             decision.answer = data.schoolName;
+        }
+
+        // Same key thrice → stuck on a stale prompt; jump checklist instead.
+        state.keyCounts = state.keyCounts || {};
+        state.keyCounts[decision.key] = (state.keyCounts[decision.key] || 0) + 1;
+        if (state.keyCounts[decision.key] >= 3 && !decision.needsConfirm) {
+            const opened = await clickNextSetupRow(page);
+            if (opened) {
+                conversation.push({ turn: ++turns, sent: `[setup-unstick] ${opened}` });
+                state.keyCounts[decision.key] = 0;
+                await page.waitForTimeout(2000);
+                continue;
+            }
+        }
+
+        // Composer is yes/no gated but rule wants "done" — confirm instead.
+        if (state.hasYesChip && /^(done|ok|skip)$/i.test(String(decision.answer || '').trim())) {
+            if (await tryQuickReply(page, 'yes')) {
+                conversation.push({ turn: ++turns, sent: `[chip] yes (instead of ${decision.answer})` });
+                await page.waitForTimeout(2000);
+                continue;
+            }
         }
 
         conversation.push({ turn: ++turns, sent: decision.answer });
