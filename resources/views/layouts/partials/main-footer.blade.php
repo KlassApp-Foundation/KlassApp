@@ -41,7 +41,7 @@
         <div class="flex">
         <ul class="flex-grow text-gray-500 text-sm m-0">
             <li class="mb-4">
-                <a href="{{ url('/pricing') }}" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
+                <a href="/pricing" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
                 Pricing</a>
             </li>
             <li class="mb-4">

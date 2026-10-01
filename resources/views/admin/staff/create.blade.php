@@ -10,59 +10,58 @@
         <span class="mx-3">Add Support Staff</span>
     </h1>
     @include('partials.message')
-    @if($count < $subscription->plan->no_of_users)
-        <form method="POST" action="" enctype="multipart/form-data">
-            @csrf
-            <add-tab-teacher url="{{ url('/') }}" staff="non_teaching" teacher_name=null type="add"></add-tab-teacher>
-            <portal-target name="add_teacherprofile"></portal-target>
+    {{-- Plan over-limit is a notice, never a hard block (same rule as student import). --}}
+    @if(!empty($planLimitNotice))
+        <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded relative w-full md:w-1/2 mb-3" role="status" data-testid="staff-overlimit-notice">
+            <span class="block sm:inline">{{ $planLimitNotice }}</span>
+            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+        </div>
+    @endif
+    <form method="POST" action="" enctype="multipart/form-data">
+        @csrf
+        <add-tab-teacher url="{{ url('/') }}" staff="non_teaching" teacher_name=null type="add"></add-tab-teacher>
+        <portal-target name="add_teacherprofile"></portal-target>
 
-            <portal to="address">
-                <div class="flex flex-col lg:flex-row md:flex-row">
-                    <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
-                        <div class="lg:mr-8 md:mr-8">
-                            <div class="mb-2">
-                                <label for="address" class="tw-form-label">Address<span class="text-red-500">*</span> </label>
-                            </div>
-                            <div class="mb-2 w-full relative">
-                                <input type="text" name="address" class="tw-form-control w-full" id="address" value="{{old('address')}}" required="Address is required"> 
-                                <span class="absolute m-2 top-0 right-0">
-                                    <a href="#" onclick="codeAddress(); return false;" dusk="getCords" id="getCords">
-                                        <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30.239px" height="30.239px" viewBox="0 0 30.239 30.239" xml:space="preserve" class="w-4 h-4 fill-current text-gray-600"><g><path d="M20.194,3.46c-4.613-4.613-12.121-4.613-16.734,0c-4.612,4.614-4.612,12.121,0,16.735 c4.108,4.107,10.506,4.547,15.116,1.34c0.097,0.459,0.319,0.897,0.676,1.254l6.718,6.718c0.979,0.977,2.561,0.977,3.535,0 c0.978-0.978,0.978-2.56,0-3.535l-6.718-6.72c-0.355-0.354-0.794-0.577-1.253-0.674C24.743,13.967,24.303,7.57,20.194,3.46z M18.073,18.074c-3.444,3.444-9.049,3.444-12.492,0c-3.442-3.444-3.442-9.048,0-12.492c3.443-3.443,9.048-3.443,12.492,0 C21.517,9.026,21.517,14.63,18.073,18.074z"></path></g></svg>
-                                    </a>
-                                </span>
-                            </div>
-                        </div>   
+        <portal to="address">
+            <div class="flex flex-col lg:flex-row md:flex-row">
+                <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label for="address" class="tw-form-label">Address<span class="text-red-500">*</span> </label>
+                        </div>
+                        <div class="mb-2 w-full relative">
+                            <input type="text" name="address" class="tw-form-control w-full" id="address" value="{{old('address')}}" required="Address is required"> 
+                            <span class="absolute m-2 top-0 right-0">
+                                <a href="#" onclick="codeAddress(); return false;" dusk="getCords" id="getCords">
+                                    <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30.239px" height="30.239px" viewBox="0 0 30.239 30.239" xml:space="preserve" class="w-4 h-4 fill-current text-gray-600"><g><path d="M20.194,3.46c-4.613-4.613-12.121-4.613-16.734,0c-4.612,4.614-4.612,12.121,0,16.735 c4.108,4.107,10.506,4.547,15.116,1.34c0.097,0.459,0.319,0.897,0.676,1.254l6.718,6.718c0.979,0.977,2.561,0.977,3.535,0 c0.978-0.978,0.978-2.56,0-3.535l-6.718-6.72c-0.355-0.354-0.794-0.577-1.253-0.674C24.743,13.967,24.303,7.57,20.194,3.46z M18.073,18.074c-3.444,3.444-9.049,3.444-12.492,0c-3.442-3.444-3.442-9.048,0-12.492c3.443-3.443,9.048-3.443,12.492,0 C21.517,9.026,21.517,14.63,18.073,18.074z"></path></g></svg>
+                                </a>
+                            </span>
+                        </div>
+                    </div>   
+                </div>
+
+                <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+                    <div class="lg:mr-8 md:mr-8">
+                        <div id="map_canvas" class="tw-form-control w-full" style="height: 250px;"></div>
                     </div>
+                </div> 
 
-                    <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
-                        <div class="lg:mr-8 md:mr-8">
-                            <div id="map_canvas" class="tw-form-control w-full" style="height: 250px;"></div>
-                        </div>
-                    </div> 
-
-                    <div class="form-group" hidden>
-                        <label for="latitude" class="col-md-4 control-label">Latitude</label>
-                        <div class="col-md-6">
-                            <input id="latitude" type="text" class="tw-form-control w-1/2" name="latitude" value="{{old('latitude')}}"> 
-                        </div>
-                    </div>
-
-                    <div class="form-group" hidden>
-                        <label for="longitude" class="col-md-4 control-label">Longitude</label>
-                        <div class="col-md-6">
-                            <input id="longitude" type="text" class="tw-form-control w-1/2" name="longitude" value="{{old('longitude')}}"> 
-                        </div>
+                <div class="form-group" hidden>
+                    <label for="latitude" class="col-md-4 control-label">Latitude</label>
+                    <div class="col-md-6">
+                        <input id="latitude" type="text" class="tw-form-control w-1/2" name="latitude" value="{{old('latitude')}}"> 
                     </div>
                 </div>
-            </portal>
-        </form>
-    @else
-        <a href="{{ url('/pricing') }}"> 
-            <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-                Upgrade Plan to Add More Teachers
-            </button>
-        </a>
-    @endif
+
+                <div class="form-group" hidden>
+                    <label for="longitude" class="col-md-4 control-label">Longitude</label>
+                    <div class="col-md-6">
+                        <input id="longitude" type="text" class="tw-form-control w-1/2" name="longitude" value="{{old('longitude')}}"> 
+                    </div>
+                </div>
+            </div>
+        </portal>
+    </form>
 </div>
 
 @endsection

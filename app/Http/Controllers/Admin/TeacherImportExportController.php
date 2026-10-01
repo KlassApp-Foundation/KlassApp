@@ -98,12 +98,6 @@ class TeacherImportExportController extends Controller
         //
         $school_id = Auth::user()->school_id;
 
-        // ── Plan limit check — reject whole batch upfront if at/over limit ──
-        $limit = ToshiActionService::enforcePlanLimit($school_id, 'teachers');
-        if (!$limit['success']) {
-            return back()->with('failmessage', $limit['message']);
-        }
-
         try
         {
             Excel::import(new TeachersImport,$request->file('import_file'));
@@ -128,12 +122,19 @@ class TeacherImportExportController extends Controller
                     LOGNAME_IMPORT_TEACHER,
                     $message
                 );
-                return back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
+                $redirect = back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
             }
             else
             {
-                return back()->with('failmessage',trans('messages.insert_failure_msg'));
+                $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
             }
+
+            // Over plan limit is a NOTICE, never a block (same rule as student import).
+            $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'teachers');
+
+            return $overLimit['success']
+                ? $redirect
+                : $redirect->with('overlimit', $overLimit['message']);
         }
         catch(Exception $e)
         {

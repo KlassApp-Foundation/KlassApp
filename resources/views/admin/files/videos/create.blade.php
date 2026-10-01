@@ -177,7 +177,7 @@
                     </form>
                 </div>
             @else
-                <a href="{{ url('/pricing') }}"> 
+                <a href="/pricing"> 
                     <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">Upgrade Plan to Add More Videos</button>
                 </a>
             @endif
