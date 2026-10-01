@@ -691,6 +691,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Separate GitHub identity for agents — agent pushes use the human admin account today.
 - Rest of the design queue — Task A resync, public pages pass, Task C + Task D docs.
 - Backups in own bucket — proposal above.
+- **Staff plan-limit notice uses the teachers bucket** (2026-10-01): `StaffController` flashes `enforcePlanLimit(..., 'teachers')` (counts `usergroup_id=5`) while support-staff rows use other usergroups (4/8/10–13). Soft-launch notices stay non-blocking; retarget the staff notice to a real staff count (or a dedicated plan column) after launch.
 - **knowledge.md split proposal (owner decision, not done)**: move current-status/decisions/infra into a short current file and monthly session logs under `docs/knowledge/sessions/`, keeping `knowledge.md` as a pointer stub — every session currently loads all 13,277 lines.
 
 ### Decisions logged 2026-09-30
