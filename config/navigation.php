@@ -46,7 +46,9 @@ return [
                 [
                     'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
                     'items' => [
-                        ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'parents', 'parent', 'teachers', 'teacher', 'staff', 'staffs', 'alumni', 'blocked_students']],
+                        // Soft-launch 1d: only student-area segments — do not steal
+                        // Teachers/Parents/Staff active state via shared aliases.
+                        ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'alumni', 'blocked_students']],
                         ['label' => 'Teachers', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
                         ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
                         ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink']],
