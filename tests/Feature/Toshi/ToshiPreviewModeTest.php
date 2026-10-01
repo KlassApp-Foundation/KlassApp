@@ -17,8 +17,9 @@ use Mockery;
 use Tests\TestCase;
 
 /**
- * Soft-launch default: every school starts in Toshi preview mode.
+ * Soft-launch per-school fallback: toshi_mode=preview.
  * Panel stays visible/collapsed; Coming soon; no scripted onboarding, AI, or MCP.
+ * Signup default is onboarding (see ToshiOnboardingDefaultTest).
  */
 class ToshiPreviewModeTest extends TestCase
 {
@@ -43,7 +44,7 @@ class ToshiPreviewModeTest extends TestCase
             'slug' => Str::random(10),
             'status' => 1,
             'toshi_enabled' => 0,
-            // Intentionally omit toshi_mode — DB default must be preview.
+            'toshi_mode' => ToshiMode::Preview,
         ]);
 
         $this->admin = User::create([
@@ -57,7 +58,7 @@ class ToshiPreviewModeTest extends TestCase
         ]);
     }
 
-    public function test_new_school_defaults_to_preview_mode(): void
+    public function test_preview_mode_disables_onboarding_and_assistant(): void
     {
         $this->school->refresh();
         $this->assertSame(ToshiMode::Preview, $this->school->toshi_mode);

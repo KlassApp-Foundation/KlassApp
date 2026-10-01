@@ -17,9 +17,9 @@ use Mockery;
 use Tests\TestCase;
 
 /**
- * Soft-launch switches (post-preview):
- * - Preview (default): panel only, Coming soon
- * - Onboarding: scripted setup, no AI key required
+ * Soft-launch switches:
+ * - Onboarding (signup default): scripted setup, no AI key required
+ * - Preview (per-school fallback): panel only, Coming soon
  * - Assistant: AI key AND toshi_mode=assistant
  */
 class ToshiUiSwitchTest extends TestCase
@@ -121,7 +121,7 @@ class ToshiUiSwitchTest extends TestCase
         $response->assertSee('Set up with Toshi', false);
     }
 
-    public function test_exit_completing_setup_lands_in_done_when_assistant_off(): void
+    public function test_exit_completing_setup_lands_in_coming_soon_when_assistant_off(): void
     {
         Config::set('toshi.sdk_v2_enabled', true);
         $this->school->setToshiMode(ToshiMode::Onboarding);
@@ -138,26 +138,18 @@ class ToshiUiSwitchTest extends TestCase
             ->set('schoolId', $this->school->id)
             ->set('scope', 'school')
             ->call('switchMode', 'assistant')
-            ->assertSet('mode', 'done')
-            ->assertSee('Your school is set up', false)
-            ->assertSee('Here\'s what to do next', false)
-            ->assertSee('Add students', false)
-            ->assertSee('Enter marks', false)
-            ->assertSee('Send report cards', false)
-            ->assertSee('data-testid="toshi-setup-done"', false);
+            ->assertSet('mode', 'preview')
+            ->assertSee('Coming soon', false)
+            ->assertSee('data-testid="toshi-preview-coming-soon"', false);
 
         $component->set('input', 'what can you do about fees?')
             ->call('send')
-            ->assertSet('mode', 'done');
+            ->assertSet('mode', 'preview');
 
-        $botTexts = collect($component->get('messages'))
-            ->where('role', 'bot')
-            ->pluck('text')
-            ->implode("\n");
-        $this->assertStringContainsString("I'm not sure about that yet", $botTexts);
+        $this->assertSame([], $component->get('messages'));
     }
 
-    public function test_done_mode_never_reaches_sdk_or_mcp_resume(): void
+    public function test_post_setup_freeform_shows_coming_soon_and_blocks_mcp(): void
     {
         Config::set('toshi.sdk_v2_enabled', true);
         $this->school->setToshiMode(ToshiMode::Onboarding);
@@ -181,11 +173,15 @@ class ToshiUiSwitchTest extends TestCase
                 'scope' => 'school',
             ]);
 
+        // Legacy done → Coming soon card; free-form must not hit the model.
         $component->set('input', 'add three students please')
             ->call('send')
-            ->assertSet('mode', 'done');
+            ->assertSet('mode', 'preview')
+            ->assertSee('Coming soon', false);
 
-        // Stale MCP resume payload must not call the model when assistant is off.
+        $this->assertSame([], $component->get('messages'));
+
+        // Stale MCP resume payload must not run when Coming soon is showing.
         $component->set('pendingToolConfirm', [
             'tool' => 'toolAddStudent',
             'args' => ['name' => 'Test'],
@@ -198,11 +194,7 @@ class ToshiUiSwitchTest extends TestCase
             ->set('awaitingConfirm', true)
             ->call('confirmYes');
 
-        $botTexts = collect($component->get('messages'))
-            ->where('role', 'bot')
-            ->pluck('text')
-            ->implode("\n");
-        $this->assertStringContainsString('assistant is off', $botTexts);
+        $this->assertNotNull($component->get('pendingToolConfirm'), 'preview must not consume MCP confirm');
     }
 
     public function test_toshi_activity_404_when_assistant_off(): void
