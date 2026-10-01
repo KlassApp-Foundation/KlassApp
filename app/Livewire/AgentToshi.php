@@ -344,9 +344,29 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
-        // Panel / scripted onboarding: available without an AI key.
-        // Assistant (model) is gated separately via assistantEnabled().
-        if (! app(\App\Services\Toshi\ToshiUiSwitch::class)->onboardingEnabled($user)) {
+        // Panel visibility (preview / onboarding / assistant). Scripted setup and
+        // the model are gated separately via onboardingEnabled / assistantEnabled.
+        $switch = app(\App\Services\Toshi\ToshiUiSwitch::class);
+        if (! $switch->enabled($user)) {
+            return;
+        }
+
+        // Soft-launch preview: panel stays available but never runs scripted
+        // onboarding, AI, or MCP — Coming soon card only.
+        if ($switch->previewMode($user)) {
+            $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
+            $this->scope = $this->capabilities['scope'] ?? 'school';
+            $this->schoolId = $user->school_id;
+            $this->mode = 'preview';
+            $this->step = 99;
+            $this->messages = [];
+            $this->visible = false;
+            $this->maximized = false;
+
+            return;
+        }
+
+        if (! $switch->onboardingEnabled($user) && ! $switch->assistantEnabled($user)) {
             return;
         }
 
@@ -1202,6 +1222,10 @@ class AgentToshi extends Component
     // ── Button-driven confirm/edit ──
     public function confirmYes()
     {
+        if ($this->mode === 'preview') {
+            return;
+        }
+
         $this->awaitingConfirm = false;
 
         // Check for pending tool confirmation first
@@ -1273,6 +1297,10 @@ class AgentToshi extends Component
     }
     public function confirmNo()
     {
+        if ($this->mode === 'preview') {
+            return;
+        }
+
         $this->awaitingConfirm = false;
 
         // Check for pending tool confirmation
@@ -3966,6 +3994,12 @@ class AgentToshi extends Component
     // ── Handle user input ──
     public function send()
     {
+        if ($this->mode === 'preview') {
+            $this->input = '';
+
+            return;
+        }
+
         $text = trim($this->input);
         if ($text === '') return;
 

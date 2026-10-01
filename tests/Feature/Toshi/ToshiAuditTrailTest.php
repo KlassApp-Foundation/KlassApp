@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Toshi;
 
+use App\Enums\ToshiMode;
 use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\User;
@@ -40,6 +41,8 @@ class ToshiAuditTrailTest extends TestCase
             'phone' => '070' . random_int(1000000, 9999999),
             'status' => 1,
             'registration_country' => 'Uganda',
+            'toshi_mode' => ToshiMode::Assistant,
+            'toshi_enabled' => 1,
         ]);
     }
 

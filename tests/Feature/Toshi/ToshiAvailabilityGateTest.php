@@ -40,6 +40,7 @@ class ToshiAvailabilityGateTest extends TestCase
             'status' => 1,
             'registration_country' => 'Uganda',
             'toshi_enabled' => 1,
+            'toshi_mode' => 'assistant',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -52,6 +53,7 @@ class ToshiAvailabilityGateTest extends TestCase
             'status' => 1,
             'registration_country' => 'Uganda',
             'toshi_enabled' => 0,
+            'toshi_mode' => 'preview',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

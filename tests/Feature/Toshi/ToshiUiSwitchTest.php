@@ -3,6 +3,7 @@
 namespace Tests\Feature\Toshi;
 
 use App\AiAgents\ToshiSdkV2Service;
+use App\Enums\ToshiMode;
 use App\Livewire\AgentToshi;
 use App\Models\School;
 use App\Models\User;
@@ -16,9 +17,10 @@ use Mockery;
 use Tests\TestCase;
 
 /**
- * Soft-launch switches:
- * - Onboarding: every school, no AI key required
- * - Assistant: AI key AND schools.toshi_enabled
+ * Soft-launch switches (post-preview):
+ * - Preview (default): panel only, Coming soon
+ * - Onboarding: scripted setup, no AI key required
+ * - Assistant: AI key AND toshi_mode=assistant
  */
 class ToshiUiSwitchTest extends TestCase
 {
@@ -43,6 +45,7 @@ class ToshiUiSwitchTest extends TestCase
             'slug' => Str::random(10),
             'status' => 1,
             'toshi_enabled' => 0,
+            'toshi_mode' => ToshiMode::Onboarding,
         ]);
 
         $this->admin = User::create([
@@ -58,29 +61,29 @@ class ToshiUiSwitchTest extends TestCase
 
     public function test_onboarding_enabled_without_ai_key(): void
     {
-        // phpunit.xml forces a placeholder OPENAI key — assistant still needs toshi_enabled.
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $switch = app(ToshiUiSwitch::class);
 
         $this->assertTrue($switch->onboardingEnabled($this->admin->fresh()));
         $this->assertTrue($switch->enabled($this->admin->fresh()));
         $this->assertFalse($switch->assistantEnabled($this->admin->fresh()));
+        $this->assertFalse($switch->previewMode($this->admin->fresh()));
     }
 
-    public function test_assistant_requires_ai_key_and_school_flag(): void
+    public function test_assistant_requires_ai_key_and_school_mode(): void
     {
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
         Config::set('ai.providers.openai-compatible.key', 'sk-test');
         Config::set('toshi.api_key', 'sk-test');
 
         $switch = app(ToshiUiSwitch::class);
         $this->assertFalse(
             $switch->assistantEnabled($this->admin->fresh()),
-            'Key alone is not enough when toshi_enabled is off',
+            'Key alone is not enough when mode is not assistant',
         );
 
-        $this->school->update(['toshi_enabled' => 1]);
+        $this->school->setToshiMode(ToshiMode::Assistant);
         $this->assertTrue($switch->assistantEnabled($this->admin->fresh()));
 
         Config::set('ai.providers.openai-compatible.key', '');
@@ -92,7 +95,7 @@ class ToshiUiSwitchTest extends TestCase
     {
         Config::set('ai.providers.openai-compatible.key', '');
         Config::set('toshi.api_key', '');
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $response = $this->actingAs($this->admin->fresh())->get('/admin/dashboard');
         if ($response->isRedirect()) {
@@ -107,7 +110,7 @@ class ToshiUiSwitchTest extends TestCase
     {
         Config::set('ai.providers.openai-compatible.key', '');
         Config::set('toshi.api_key', '');
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $response = $this->actingAs($this->admin->fresh())->get('/admin/dashboard');
         if ($response->isRedirect()) {
@@ -121,7 +124,7 @@ class ToshiUiSwitchTest extends TestCase
     public function test_exit_completing_setup_lands_in_done_when_assistant_off(): void
     {
         Config::set('toshi.sdk_v2_enabled', true);
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $sdk = Mockery::mock(ToshiSdkV2Service::class);
         $sdk->shouldNotReceive('ask');
@@ -157,7 +160,7 @@ class ToshiUiSwitchTest extends TestCase
     public function test_done_mode_never_reaches_sdk_or_mcp_resume(): void
     {
         Config::set('toshi.sdk_v2_enabled', true);
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $sdk = Mockery::mock(ToshiSdkV2Service::class);
         $sdk->shouldNotReceive('ask');
@@ -206,7 +209,7 @@ class ToshiUiSwitchTest extends TestCase
     {
         Config::set('ai.providers.openai-compatible.key', '');
         Config::set('toshi.api_key', '');
-        $this->school->update(['toshi_enabled' => 0]);
+        $this->school->setToshiMode(ToshiMode::Onboarding);
 
         $activity = $this->actingAs($this->admin->fresh())->get('/admin/toshi-activity');
         if ($activity->isRedirect()) {

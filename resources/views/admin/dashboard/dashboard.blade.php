@@ -408,7 +408,7 @@
 
     @include('admin.reports._eot-kpi-card')
 
-    @if(!empty($openToshiOnboarding) && app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled())
+    @if(!empty($openToshiOnboarding) && app(\App\Services\Toshi\ToshiUiSwitch::class)->onboardingEnabled())
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         // Persist expanded dock (localStorage) — classList.remove alone did not.

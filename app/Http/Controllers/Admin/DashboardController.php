@@ -98,9 +98,14 @@ class DashboardController extends Controller
         $setupIncomplete = ! empty($dashboard['setupIncomplete'])
             || (Auth::user()->usergroup_id === 3 && ! empty($onboardingMissing));
 
-        $openToshiOnboarding = $request->boolean('toshi_onboarding')
-            || session()->pull('open_toshi_onboarding', false)
-            || $setupIncomplete;
+        // Auto-open Toshi only in onboarding/assistant modes — never in preview
+        // (soft launch: founding schools set up manually; Toshi stays collapsed).
+        $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
+        $openToshiOnboarding = $toshiSwitch->onboardingEnabled()
+            && (
+                $request->boolean('toshi_onboarding')
+                || session()->pull('open_toshi_onboarding', false)
+            );
 
         $pendingApprovals = $school_id
             ? Approval::where('state', PendingState::class)

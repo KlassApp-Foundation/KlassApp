@@ -54,12 +54,38 @@ class School extends Model
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
         'exam_type_preferences',
         'toshi_enabled',
+        'toshi_mode',
         'report_template',
     ];
 
     protected $casts = [
         'exam_type_preferences' => 'array',
+        'toshi_mode' => \App\Enums\ToshiMode::class,
     ];
+
+    /**
+     * Set Toshi surface mode and keep legacy `toshi_enabled` in sync.
+     */
+    public function setToshiMode(\App\Enums\ToshiMode $mode): void
+    {
+        $this->forceFill([
+            'toshi_mode' => $mode,
+            'toshi_enabled' => $mode === \App\Enums\ToshiMode::Assistant ? 1 : 0,
+        ])->save();
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (School $school): void {
+            // Keep mode + legacy flag coherent when either is set alone.
+            if ($school->toshi_mode === null) {
+                $school->toshi_mode = (bool) $school->toshi_enabled
+                    ? \App\Enums\ToshiMode::Assistant
+                    : \App\Enums\ToshiMode::Preview;
+            }
+            $school->toshi_enabled = $school->toshi_mode === \App\Enums\ToshiMode::Assistant ? 1 : 0;
+        });
+    }
 
        // linked to SUBJECTS =====FOR UGANDAN SCHOOLS=========
 

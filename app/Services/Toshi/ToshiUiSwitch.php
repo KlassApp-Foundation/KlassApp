@@ -2,23 +2,67 @@
 
 namespace App\Services\Toshi;
 
+use App\Enums\ToshiMode;
 use App\Models\User;
 
 /**
- * Two UI switches for Toshi entry points a school user can see.
+ * Three UI modes for Toshi entry points a school user can see.
  *
- * - Onboarding (scripted): available to every school, no AI key required.
- * - Assistant (free-form + model): only when an AI key is configured AND the
- *   school has early-access (`schools.toshi_enabled`). Siteadmins without a
- *   school see the assistant only when an AI key is set (platform scope is
- *   gated separately by ToshiAvailabilityGate).
+ * - Preview (default): panel visible, Coming soon, no scripted onboarding, no AI.
+ * - Onboarding: scripted setup without an AI key (#929).
+ * - Assistant: free-form + model when an AI key is configured AND mode is assistant.
  *
- * `enabled()` remains the panel-visibility gate and follows onboarding.
+ * Rasta can flip a school between modes via `schools.toshi_mode` (no code change).
+ * `schools.toshi_enabled` stays synced for legacy readers (1 only in assistant mode).
  */
 class ToshiUiSwitch
 {
     /**
-     * Panel / scripted onboarding may show. Does not require an AI key.
+     * Resolve the school's Toshi mode. Siteadmins without a school keep platform tools.
+     */
+    public function mode(?User $user = null): ToshiMode
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return ToshiMode::Preview;
+        }
+
+        if ((int) $user->usergroup_id === 1 && $user->school_id === null) {
+            return ToshiMode::Assistant;
+        }
+
+        $school = $user->school;
+        if ($school === null) {
+            return ToshiMode::Preview;
+        }
+
+        // Legacy bridge: toshi_enabled=1 always means assistant (raw inserts and
+        // older callers often omit toshi_mode, which defaults to preview).
+        if ((bool) $school->toshi_enabled) {
+            return ToshiMode::Assistant;
+        }
+
+        $raw = $school->toshi_mode ?? null;
+        if ($raw instanceof ToshiMode) {
+            return $raw === ToshiMode::Assistant ? ToshiMode::Preview : $raw;
+        }
+        if (is_string($raw) && $raw !== '') {
+            $mode = ToshiMode::tryFrom($raw) ?? ToshiMode::Preview;
+
+            return $mode === ToshiMode::Assistant ? ToshiMode::Preview : $mode;
+        }
+
+        return ToshiMode::Preview;
+    }
+
+    public function previewMode(?User $user = null): bool
+    {
+        return $this->mode($user) === ToshiMode::Preview;
+    }
+
+    /**
+     * Scripted onboarding + "Set up with Toshi" may show.
      */
     public function onboardingEnabled(?User $user = null): bool
     {
@@ -32,7 +76,11 @@ class ToshiUiSwitch
             return true;
         }
 
-        return $user->school_id !== null;
+        if ($user->school_id === null) {
+            return false;
+        }
+
+        return in_array($this->mode($user), [ToshiMode::Onboarding, ToshiMode::Assistant], true);
     }
 
     /**
@@ -54,17 +102,25 @@ class ToshiUiSwitch
             return true;
         }
 
-        $school = $user->school;
-
-        return $school !== null && (bool) $school->toshi_enabled;
+        return $this->mode($user) === ToshiMode::Assistant;
     }
 
     /**
-     * Panel visibility — scripted onboarding is available without an AI key.
+     * Panel visibility — preview, onboarding, and assistant all show the panel.
      */
     public function enabled(?User $user = null): bool
     {
-        return $this->onboardingEnabled($user);
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ((int) $user->usergroup_id === 1 && $user->school_id === null) {
+            return true;
+        }
+
+        return $user->school_id !== null;
     }
 
     public function hasAiKey(): bool

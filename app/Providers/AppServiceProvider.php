@@ -159,6 +159,10 @@ class AppServiceProvider extends ServiceProvider {
             return app(ToshiUiSwitch::class)->enabled();
         });
 
+        Blade::if('toshiPreview', function () {
+            return app(ToshiUiSwitch::class)->previewMode();
+        });
+
         Blade::if('toshiOnboarding', function () {
             return app(ToshiUiSwitch::class)->onboardingEnabled();
         });
