@@ -13301,7 +13301,6 @@ WhatsApp webhook hardening in progress.
 - phase-4-roster-demo-school renamed "Phase 4 Roster Test Fixture", is_test=1/is_demo=0 — never for captures; capture scripts target demo-academy-uganda.
 - Docs handoff confirmed VitePress (klassapp.xyz/docs/help/ + /docs/community/), not Docsify.
 
-<<<<<<< HEAD
 ### 2026-09-30: Staging URL + queued docs-domain redirect work
 - **Staging canonical URL**: `https://test.klassapp.xyz` (APP_URL updated; the old `https://klassapp-staging-7mpoqg.laravel.cloud` address still works). Capture and verification scripts should use `test.klassapp.xyz` from now on. Note: DNS for the subdomain is fresh — if `curl` fails with "Could not resolve host" while `dig +short test.klassapp.xyz @8.8.8.8` returns `103.133.1.1`, it's a stale local resolver cache; `curl --resolve test.klassapp.xyz:443:103.133.1.1` works.
 - **QUEUED (blocked on VitePress going live)** — docs domain work, add to the docs work when `klassapp.xyz/docs/` is actually VitePress (as of 2026-09-30 it still serves the Docsify shell, `/docs/help/` 404s, `docs.klassapp.xyz` has no DNS record):
@@ -13310,7 +13309,7 @@ WhatsApp webhook hardening in progress.
   3. Test first on staging with a staging docs host before doing the production domain.
 - **Staging noindex status (read-only check, 2026-09-30)**: staging currently sends **no** `X-Robots-Tag` header and renders **no** `<meta robots>` tag on `/`, `/login`, `/register`, `/password/reset`, 404, and `/contact` (redirect); `robots.txt` is open (`User-agent: * / Disallow:`) on both staging and production. No noindex mechanism exists in the codebase (only `tests/Feature/LandingAuthErrorCutoverTest.php:20` asserts landing pages do NOT contain `noindex,nofollow`).
 - **PR #899 OPEN** (`feat/robots-noindex`, tip `29955e48`) — noindex switch `ROBOTS_NOINDEX` (default false = production unchanged). Global `AddRobotsNoindexHeader` middleware stamps `X-Robots-Tag: noindex, nofollow` on every response type (page/redirect/404/500/download); static `public/robots.txt` **removed** (edge serves `public/` before Laravel — confirmed via Cloud docs + empirical staging probe: static `etag`/`last-modified`/no session cookie/CF HIT vs Laravel-served 404 with session cookie) and replaced by a `/robots.txt` route (`Disallow: /` when on; byte-identical allow-all when off, with `no-cache, no-store, private` — `robots.txt` was edge-cached at CF HIT/age 1245). Tests: `tests/Feature/RobotsNoindexTest.php` (3 tests / 17 assertions OK); guarded full suite **1884 tests, 0 failures, exit 0**. **Pending ops step with merge: set `ROBOTS_NOINDEX=true` on the staging (and preview) environments** — this session had no Laravel Cloud access; until the var is set the switch is inert on staging. Post-deploy staging verify: `curl -sD- https://test.klassapp.xyz/robots.txt`.
-=======
+
 ## Session: 2026-09-30 — Soft-launch batch: rule #32, default avatars, sign-up email verification, wizard paste class (4 PRs merged)
 
 **Scope given by Rasta**: four ordered tasks for the Saturday 3 Oct soft launch, one PR at a time, each with a failing-then-passing test, full suite green, CI green, and a real-browser staging check at 375 and 1280. Plus a read-only production count to decide whether the primary-class issue needed work.
@@ -13407,4 +13406,3 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 - Markdown mailables auto-render the text part from the same view with *text* components; a custom `<x-mail::code>` therefore needs `resources/views/vendor/mail/text/code.blade.php` or every send without an explicit `->text()` throws "View [code] not found".
 - `view('emails.x')->render()` no longer works for markdown views (no `mail::` hint path); render through the Mailable.
 - `TeacherInviteMail` / `CoAdminInviteMail` no longer accept or render a password; Toshi `addTeacher` no longer retains the plain password (`randomPasswordAttributes`) and the new teacher gets a set-password link to `/password/reset`.
->>>>>>> origin/main
