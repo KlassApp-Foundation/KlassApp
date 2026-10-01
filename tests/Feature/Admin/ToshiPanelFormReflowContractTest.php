@@ -36,9 +36,11 @@ class ToshiPanelFormReflowContractTest extends TestCase
         $vue = file_get_contents(resource_path('assets/js/components/student/Create.vue'));
 
         // Gender row must close before Address; Address is a full-width block
-        // (optional Blade comment may sit between the closing divs and Address).
+        // (optional HTML comment may sit between the closing divs and Address).
+        // Do not use Blade {{-- --}} inside .vue — Vite parses {{ as interpolation.
+        $this->assertStringNotContainsString('{{--', $vue);
         $this->assertMatchesRegularExpression(
-            '/for="gender".*?<\/div>\s*<\/div>\s*<\/div>\s*(?:\{\{--.*?--\}\}\s*)?<div[^>]*data-testid="student-create-address"/s',
+            '/for="gender".*?<\/div>\s*<\/div>\s*<\/div>\s*(?:<!--.*?-->\s*)?<div[^>]*data-testid="student-create-address"/s',
             $vue,
             'Gender lg:flex-row must close before the Address block',
         );
