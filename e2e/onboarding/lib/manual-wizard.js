@@ -48,12 +48,39 @@ async function readWizardError(page) {
     return '';
 }
 
+/**
+ * Click Continue and wait until the step actually advances (or an error banner
+ * appears). A short sleep alone races Livewire morphs and can skip Structure
+ * when the stale title still says "Academic year".
+ */
 async function clickNext(page, shotDir, tag) {
+    const before = (await title(page)).toLowerCase();
     await page.locator(NEXT).click({ timeout: T });
-    await waitIdle(page, 1100);
-    const err = await readWizardError(page);
-    if (err) console.log(`[wizard] ${tag}: ERROR after next: ${err}`);
-    return err;
+
+    const deadline = Date.now() + 30_000;
+    let err = '';
+    while (Date.now() < deadline) {
+        await waitIdle(page, 400);
+        err = await readWizardError(page);
+        if (err) {
+            console.log(`[wizard] ${tag}: ERROR after next: ${err}`);
+            return err;
+        }
+        // Review / completion surfaces mean we left the step loop path.
+        if (await page.locator('[data-testid="wizard-review"]').isVisible().catch(() => false)) {
+            return '';
+        }
+        if (await page.locator('[data-testid="wizard-completion-suggestions"]').isVisible().catch(() => false)) {
+            return '';
+        }
+        const after = (await title(page)).toLowerCase();
+        if (after && after !== before) {
+            return '';
+        }
+    }
+
+    console.log(`[wizard] ${tag}: title still "${before}" after next (no advance within 30s)`);
+    return await readWizardError(page);
 }
 
 async function selectByLabelOrValue(page, selector, label) {
@@ -166,7 +193,7 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
             } else if (t.includes('academic year')) {
                 err = await clickNext(page, shotDir, 'academic-year');
                 if (err) record.wizardErrors.push(err);
-            } else if (t.startsWith('structure')) {
+            } else if (t.includes('structure')) {
                 await page.waitForSelector('[data-testid="wizard-structure-step"]', { timeout: 30_000 });
                 const card = page.locator('[data-testid^="wizard-structure-class-"]').filter({ hasText: data.type.streamClassExample }).first();
                 if (await card.count()) {
@@ -176,7 +203,13 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
                     await waitIdle(page, 400);
                     await addBtn.click({ timeout: T });
                     await waitIdle(page, 900);
-                    record.streamAdded = data.type.streamName;
+                    // Confirm the chip/label appeared before counting the stream as added.
+                    const chip = card.getByText(data.type.streamName, { exact: false });
+                    if (await chip.first().isVisible().catch(() => false)) {
+                        record.streamAdded = data.type.streamName;
+                    } else {
+                        findings.push(`structure step: added "${data.type.streamName}" but label not visible on ${data.type.streamClassExample}`);
+                    }
                 } else {
                     findings.push(`structure step: class card for ${data.type.streamClassExample} not found`);
                 }
