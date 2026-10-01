@@ -104,7 +104,9 @@
 <body>
     <div class="klass-error-shell">
         <div style="margin-bottom:32px;">
-            <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
+            <a href="{{ url('/') }}" aria-label="KlassApp home">
+                <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
+            </a>
         </div>
         @yield('icon', '')
         @hasSection('code')

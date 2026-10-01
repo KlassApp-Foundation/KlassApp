@@ -190,7 +190,9 @@
 </head>
 <body>
     <div class="onboarding-card">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="onboarding-logo" onerror="this.style.display='none'">
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="onboarding-logo" onerror="this.style.display='none'">
+        </a>
 
         <div style="text-align: center;">
             <span class="onboarding-badge">Google Sign-in</span>

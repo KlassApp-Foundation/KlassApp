@@ -109,7 +109,9 @@
   <div class="klass-auth-inner">
     <div class="klass-auth-intro">
       <span class="klass-auth-logo-frame">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
+        </a>
       </span>
       <h1 class="klass-auth-title">{{ __('Enter Reset Code') }}</h1>
       <p class="klass-auth-sub">Enter the 6-digit code sent to <strong>{{ $email }}</strong>.</p>

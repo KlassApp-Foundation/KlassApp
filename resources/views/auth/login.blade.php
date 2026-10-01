@@ -85,9 +85,9 @@
 @section('content')
 <div class="klass-login-form">
   <div class="klass-login-intro">
-    <span class="klass-login-logo-frame">
+    <a href="{{ url('/') }}" class="klass-login-logo-frame" aria-label="KlassApp home">
       <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-login-logo" alt="KlassApp">
-    </span>
+    </a>
     <p class="klass-intro-title">Welcome back</p>
     <p class="klass-intro-sub">Sign in to your school dashboard.</p>
   </div>
