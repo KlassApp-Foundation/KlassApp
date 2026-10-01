@@ -27,8 +27,8 @@ if not php.strip():
 b64 = base64.b64encode(php.encode()).decode()
 cmd = "php artisan tinker --execute=\"eval(base64_decode('%s'))\"" % b64
 
-create_tries = int(os.environ.get("E2E_BRIDGE_CREATE_TRIES", "4"))
-poll_tries = int(os.environ.get("E2E_BRIDGE_TRIES", "120"))
+create_tries = int(os.environ.get("E2E_BRIDGE_CREATE_TRIES", "3"))
+poll_tries = int(os.environ.get("E2E_BRIDGE_TRIES", "36"))  # 36*5s ≈ 3m per create
 poll_sleep = float(os.environ.get("E2E_BRIDGE_POLL_SLEEP", "5"))
 
 last_err = None

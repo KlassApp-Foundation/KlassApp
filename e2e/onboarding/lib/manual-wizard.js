@@ -48,12 +48,39 @@ async function readWizardError(page) {
     return '';
 }
 
+/**
+ * Click Continue and wait until the step actually advances (or an error banner
+ * appears). A short sleep alone races Livewire morphs and can skip Structure
+ * when the stale title still says "Academic year".
+ */
 async function clickNext(page, shotDir, tag) {
+    const before = (await title(page)).toLowerCase();
     await page.locator(NEXT).click({ timeout: T });
-    await waitIdle(page, 1100);
-    const err = await readWizardError(page);
-    if (err) console.log(`[wizard] ${tag}: ERROR after next: ${err}`);
-    return err;
+
+    const deadline = Date.now() + 30_000;
+    let err = '';
+    while (Date.now() < deadline) {
+        await waitIdle(page, 400);
+        err = await readWizardError(page);
+        if (err) {
+            console.log(`[wizard] ${tag}: ERROR after next: ${err}`);
+            return err;
+        }
+        // Review / completion surfaces mean we left the step loop path.
+        if (await page.locator('[data-testid="wizard-review"]').isVisible().catch(() => false)) {
+            return '';
+        }
+        if (await page.locator('[data-testid="wizard-completion-suggestions"]').isVisible().catch(() => false)) {
+            return '';
+        }
+        const after = (await title(page)).toLowerCase();
+        if (after && after !== before) {
+            return '';
+        }
+    }
+
+    console.log(`[wizard] ${tag}: title still "${before}" after next (no advance within 30s)`);
+    return await readWizardError(page);
 }
 
 async function selectByLabelOrValue(page, selector, label) {
@@ -125,9 +152,15 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
                 err = await clickNext(page, shotDir, 'school-name');
                 if (err) { record.wizardErrors.push(err); }
                 if (!record.prevExercised) {
+                    const beforePrev = (await title(page)).toLowerCase();
                     await page.locator(PREV).click({ timeout: T });
-                    await waitIdle(page, 900);
-                    const backTitle = (await title(page)).toLowerCase();
+                    const prevDeadline = Date.now() + 15_000;
+                    let backTitle = beforePrev;
+                    while (Date.now() < prevDeadline) {
+                        await waitIdle(page, 400);
+                        backTitle = (await title(page)).toLowerCase();
+                        if (backTitle && backTitle !== beforePrev) break;
+                    }
                     record.prevExercised = true;
                     if (!backTitle.includes('school name')) findings.push(`wizard prev returned to unexpected step: ${backTitle}`);
                     err = await clickNext(page, shotDir, 'school-name-again');
@@ -166,7 +199,8 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
             } else if (t.includes('academic year')) {
                 err = await clickNext(page, shotDir, 'academic-year');
                 if (err) record.wizardErrors.push(err);
-            } else if (t.startsWith('structure')) {
+            } else if (t.startsWith('structure') || t.includes('structure &')) {
+                // Not "fee structures" — that title also contains the substring.
                 await page.waitForSelector('[data-testid="wizard-structure-step"]', { timeout: 30_000 });
                 const card = page.locator('[data-testid^="wizard-structure-class-"]').filter({ hasText: data.type.streamClassExample }).first();
                 if (await card.count()) {
@@ -176,6 +210,7 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
                     await waitIdle(page, 400);
                     await addBtn.click({ timeout: T });
                     await waitIdle(page, 900);
+                    // Persistence is asserted via DB outcomes ("Primary One Blue"); UI chip text varies.
                     record.streamAdded = data.type.streamName;
                 } else {
                     findings.push(`structure step: class card for ${data.type.streamClassExample} not found`);

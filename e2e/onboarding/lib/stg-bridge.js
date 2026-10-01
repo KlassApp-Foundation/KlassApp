@@ -8,8 +8,9 @@ function sleepMs(ms) {
 
 const PY = process.env.E2E_PYTHON || 'python3';
 const BRIDGE = path.join(__dirname, 'stg_bridge.py');
-const DEFAULT_TIMEOUT_MS = Number(process.env.E2E_BRIDGE_TIMEOUT_MS || 12 * 60_000);
-const RETRIES = Number(process.env.E2E_BRIDGE_NODE_RETRIES || 3);
+// Keep under the 25m journey timeout: wake + setTestFlag + fetchOutcome must fit.
+const DEFAULT_TIMEOUT_MS = Number(process.env.E2E_BRIDGE_TIMEOUT_MS || 3 * 60_000);
+const RETRIES = Number(process.env.E2E_BRIDGE_NODE_RETRIES || 2);
 
 function runStagingPhp(php, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     let lastErr = null;
