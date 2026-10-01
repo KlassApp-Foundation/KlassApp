@@ -4647,8 +4647,8 @@ class AgentToshi extends Component
 
                 return;
             }
-            $school->toshi_enabled = 1;
-            $school->save();
+            // Do not flip schools.toshi_enabled here — that gates the AI assistant
+            // (early access), not scripted onboarding.
         }
 
         $this->botSay("✅ Curriculum set to **" . strtoupper($choice) . "**.");
@@ -6720,7 +6720,8 @@ class AgentToshi extends Component
                         && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
                         $school->uneb_center_number = $this->unebCenterNumber;
                     }
-                    $school->toshi_enabled = 1;
+                    // Persist identity fields only — do not enable the AI assistant
+                    // as a side effect of create/complete onboarding.
                     $school->save();
 
                     if ($this->selectedPlanId && ! CurrentPlan::where('school_id', $schoolId)->exists()) {
