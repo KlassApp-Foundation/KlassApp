@@ -52,9 +52,9 @@
             </div>
 
             @if($nearLimit)
-                <a href="#" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1E6FD9; color: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s;"
+                <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1E6FD9; color: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s;"
                    onmouseover="this.style.background='#1A5FC0'" onmouseout="this.style.background='#1E6FD9'">
-                    Upgrade
+                    Talk to sales
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
             @endif
@@ -65,12 +65,11 @@
         <div style="font-size: 14px; color: #475569;">
             <span style="font-weight: 600; color: #0F172A;">No active plan.</span> Your school is running without a subscription limit. Subscribe to unlock student and teacher capacity tracking.
         </div>
-        <a href="javascript:void(0)"
-           title="Contact your super administrator to upgrade your plan"
-           onclick="alert('Contact your KlassApp administrator to subscribe to a plan.')"
+        <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}"
+           title="Talk to sales about a plan for your school"
            style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; background: #1E6FD9; color: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s; white-space: nowrap;"
            onmouseover="this.style.background='#1A5FC0'" onmouseout="this.style.background='#1E6FD9'">
-            View Plans
+            Talk to sales
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
     </div>

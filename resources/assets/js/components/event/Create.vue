@@ -237,8 +237,8 @@
         </div>
 
        <!--  <div v-if="parseInt(this.count)>parseInt(this.no_of_events)">
-            <a href="/pricing"> 
-                <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">Upgrade Plan to Add More Events</button>
+            <a href="/?source=sales#demo"> 
+                <button type="submit" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">Talk to sales</button>
             </a>
         </div> -->
 

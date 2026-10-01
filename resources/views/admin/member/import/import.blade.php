@@ -23,7 +23,7 @@
                     @if(session('overlimit'))
                         <div class="alert alert-warning" role="status" style="margin: 10px 0;">
                             {{ session('overlimit') }}
-                            <a href="/pricing">Upgrade your plan</a>.
+                            <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}">Talk to sales</a>.
                         </div>
                     @endif
                     {{ session()->forget('count') }}

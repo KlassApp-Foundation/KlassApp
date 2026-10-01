@@ -13,7 +13,7 @@
 		<div class="ka-links" id="kaLinks">
 			<a href="#features">Features</a>
 			<a href="#how">How it works</a>
-			<a href="#pricing">Pricing</a>
+			<a href="/?source=sales#demo">Talk to sales</a>
 			<a href="#testimonials">Testimonials</a>
 		</div>
 		<div class="ka-nav-actions">

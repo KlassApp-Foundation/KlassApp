@@ -804,4 +804,13 @@ class SiteHelper
 
         return "WhatsApp the school office: {$phone}";
     }
+
+    /**
+     * Public lead form for sales (same Book-a-demo form, source_page=sales).
+     * Fragment must stay literal so browsers land on #demo.
+     */
+    public static function talkToSalesUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/') . '/?source=sales#demo';
+    }
 }

@@ -3,7 +3,7 @@
         <!-- Plan over-limit is a notice, never a hard block. 0 / missing = unlimited. -->
         <div v-if="isOverBulletinLimit" class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded my-3" role="status" data-testid="bulletins-overlimit-notice">
             Your plan allows a maximum of {{ no_of_bulletins }} magazines. Please upgrade to add more.
-            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+            <a href="/?source=sales#demo" class="font-semibold underline ml-1">Talk to sales</a>
         </div>
         <div class="bulletin shadow px-4 py-1 bg-white">
             <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>

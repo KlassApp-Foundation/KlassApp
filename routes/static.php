@@ -34,8 +34,7 @@ Route::view( '/school-librarian-app', 'pages.school-librarian-app' );
 Route::view( '/school-parents-app', 'pages.parents-app' );
 Route::view( '/school-students-app', 'pages.students-app' );
 Route::view( '/school-teachers-app', 'pages.teachers-app' );
-//pricing
-Route::get( '/pricing', 'PricingController@create' );
+// Pricing page removed — /pricing is a 301 to the sales lead form in routes/web.php.
 //about
 Route::get( '/about', 'AboutController@index' );
 //privacypolicy

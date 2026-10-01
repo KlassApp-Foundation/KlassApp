@@ -16,7 +16,7 @@ class LegacyMarketingRedirectsTest extends TestCase
             '/landing'  => '/',
             '/landing2' => '/',
             '/features' => '/',
-            '/pricing'  => '/',
+            '/pricing'  => '/?source=sales#demo',
             '/schools'  => '/',
             '/demo'     => '/#demo',
             '/contact'  => '/#demo',
@@ -26,9 +26,17 @@ class LegacyMarketingRedirectsTest extends TestCase
             $response = $this->get($path);
 
             $this->assertSame(301, $response->getStatusCode(), "Expected 301 for {$path}");
+            $location = (string) $response->headers->get('Location');
+
+            if ($path === '/pricing') {
+                $this->assertStringContainsString('source=sales', $location, 'Pricing must land on the sales lead form');
+                $this->assertStringContainsString('#demo', $location, "Literal fragment required for {$path}");
+                $this->assertStringNotContainsString('%23', $location, "Fragment must not be percent-encoded for {$path}");
+                continue;
+            }
+
             $response->assertRedirect($target);
 
-            $location = (string) $response->headers->get('Location');
             if (str_contains($target, '#')) {
                 $this->assertStringContainsString('#demo', $location, "Literal fragment required for {$path}");
                 $this->assertStringNotContainsString('%23', $location, "Fragment must not be percent-encoded for {$path}");

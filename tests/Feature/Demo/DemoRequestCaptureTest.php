@@ -58,6 +58,29 @@ class DemoRequestCaptureTest extends TestCase
         });
     }
 
+    public function test_sales_source_is_stored_and_redirects_to_sales_form(): void
+    {
+        $response = $this->post('/demo-request', $this->payload([
+            'source_page' => 'sales',
+            'email'       => 'sales@sunrise.test',
+        ]));
+
+        $response->assertRedirect(url('/') . '?source=sales#demo');
+        $this->assertDatabaseHas('demo_requests', [
+            'email'       => 'sales@sunrise.test',
+            'source_page' => 'sales',
+        ]);
+    }
+
+    public function test_landing_sales_query_shows_talk_to_sales_copy_and_source(): void
+    {
+        $this->get('/?source=sales')
+            ->assertOk()
+            ->assertSee('Talk to sales')
+            ->assertSee('name="source_page"', false)
+            ->assertSee('value="sales"', false);
+    }
+
     public function test_honeypot_is_silently_accepted_and_dropped(): void
     {
         $response = $this->post('/demo-request', $this->payload(['website' => 'http://spam.example']));
