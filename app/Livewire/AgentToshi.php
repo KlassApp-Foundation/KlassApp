@@ -840,6 +840,10 @@ class AgentToshi extends Component
     {
         $this->actionStep = null;
         $this->actionSubstep = 0;
+        // Leaving a yes/no gate for a button-driven step (category, plan, …)
+        // must unlock the composer — otherwise chips/readonly stick incorrectly.
+        $this->awaitingConfirm = false;
+        $this->pendingToolConfirm = null;
 
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
@@ -2806,8 +2810,10 @@ class AgentToshi extends Component
                 $this->$key = $value;
             }
         }
-        // Always start closed on refresh — user clicks pill to open
-        $this->visible = false;
+        // Dock open/closed is owned by localStorage + body/html.toshi-collapsed
+        // (toshi-prepaint / toshi-embed). Do not force $visible=false here — that
+        // fought CSS persistence under 1280 (#917). Reset maximized only so a
+        // refreshed page does not reopen the full-screen modal unexpectedly.
         $this->maximized = false;
         return true;
     }
