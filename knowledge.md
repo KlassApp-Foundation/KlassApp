@@ -667,8 +667,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 1, 2026 (latest) — Soft-launch docs #922 + robots #899 MERGED; positioning PR in flight
+## Current Status: October 1, 2026 (latest) — Toshi onboarding-without-AI PR [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) open
 
+- **#929 OPEN** `feat/toshi-onboarding-without-ai` tip `2a4489b4` — split `ToshiUiSwitch` into onboarding (no AI key) vs assistant (key + `toshi_enabled`); `mode=done` finished state when assistant off; stop flipping `toshi_enabled=1` during onboarding; e2e stall fix + hard outcome checks. Staging journeys + merge pending CI green.
 - **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
 - **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
 - **#924 MERGED** earlier this session (logo→home).
@@ -2504,6 +2505,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929
+- **Work done**: (1a) Mapped scripted vs AI call sites in Toshi onboarding. (1b) Split `ToshiUiSwitch` into `onboardingEnabled` / `assistantEnabled`; panel shows without AI key; `exitCompletingSetupMode` → `mode=done` with next-step links when assistant off; free text → `fallbackMessage`; guards on `handleAssistantQuery` / MCP resume; Blade `@toshiAssistant` / `@toshiOnboarding`; stop setting `toshi_enabled=1` during curriculum/commit. (1c) E2E stall root cause: wrong size answer `100-300 students` + `recent.slice(-5)` blocking re-prompts; fixed driver + size aliases. (1d) Hardened outcome checks / fail test if `!done` or DB checks fail.
+- **PR**: [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) · branch `feat/toshi-onboarding-without-ai` · tip `2a4489b4`
+- **Files**: `ToshiUiSwitch`, `AgentToshi`, `AppServiceProvider`, `ToshiActivityController`, agent-toshi + mode-dropdown blades, `ToshiUiSwitchTest`, `ToshiOnboardingMultiTurnTest`, `e2e/onboarding/lib/{toshi,outcomes}.js`, `toshi.spec.js`
+- **Status**: 🚧 PR open; local PHPUnit green; staging journeys + merge pending
+- **Edge cases**: Staging tracks `main` — journeys with assistant-off need this tip deployed; chicken-egg vs merge-after-journeys gate.
 
 ### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
 - **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.

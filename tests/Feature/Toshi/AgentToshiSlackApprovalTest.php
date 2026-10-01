@@ -143,6 +143,7 @@ class AgentToshiSlackApprovalTest extends TestCase
             'email' => 'slack-panel-' . uniqid() . '@test.sch.ug',
             'phone' => '070' . random_int(1000000, 9999999),
             'status' => 1,
+            'toshi_enabled' => 1, // assistant must be on for MCP approval resume
             'registration_country' => 'Uganda',
             'created_at' => now(),
             'updated_at' => now(),
