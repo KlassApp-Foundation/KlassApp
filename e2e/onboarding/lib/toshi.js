@@ -145,7 +145,7 @@ async function clickNextSetupRow(page, state = {}) {
     const rank = (c) => {
         const req = c.tone === 'warning' ? 0 : 1;
         const fresh = c.opened ? 1 : 0;
-        const prefer = ['plan_selection', 'whatsapp_verify', 'fees', 'terms', 'students', 'teachers'].indexOf(c.key);
+        const prefer = ['terms', 'fees', 'whatsapp_verify', 'plan_selection', 'students', 'teachers'].indexOf(c.key);
         const prefScore = prefer === -1 ? 50 : prefer;
         return [req, fresh, prefScore];
     };
@@ -387,12 +387,13 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             continue;
         }
 
-        // Skip optional step when required checklist items remain.
-        if (await hasRequiredSetupPending(page)) {
+        // Skip only optional teachers/students — never auto-skip fees/whatsapp/plan.
+        if (/let'?s add (teachers|students)|paste their names/i.test(text)
+            && await hasRequiredSetupPending(page)) {
             const skipBtn = page.locator('[data-toshi-root] button:visible').filter({ hasText: /skip this step/i });
             if ((await skipBtn.count().catch(() => 0)) > 0) {
                 await skipBtn.first().click({ timeout: 8000 }).catch(() => {});
-                conversation.push({ turn: ++turns, sent: '[skip] this step' });
+                conversation.push({ turn: ++turns, sent: '[skip] optional step' });
                 state.lastKey = null;
                 state.lastFingerprint = null;
                 await page.waitForTimeout(2000);
@@ -401,18 +402,21 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
         }
 
         // Final review confirm commits draft terms/teachers/fees to the DB.
-        const reviewConfirm = page.locator('[data-toshi-root] button:visible').filter({ hasText: /confirm|finish setup|looks good/i });
-        const reviewWire = page.locator('button[wire\\:click="confirmOnboarding"]:visible');
-        if ((await reviewWire.count().catch(() => 0)) > 0 || /review\s*&\s*confirm/i.test(panelText)) {
-            const btn = (await reviewWire.count()) ? reviewWire.first() : reviewConfirm.first();
-            if (await btn.isVisible().catch(() => false)) {
-                await btn.click({ timeout: 10_000 }).catch(() => {});
+        const confirmBtn = page.locator('#confirm-btn:visible, button[wire\\:click="confirmOnboarding"]:visible').first();
+        if (await confirmBtn.isVisible().catch(() => false)) {
+            state.reviewAttempts = (state.reviewAttempts || 0) + 1;
+            if (state.reviewAttempts <= 2) {
+                await confirmBtn.click({ timeout: 10_000 }).catch(() => {});
                 conversation.push({ turn: ++turns, sent: '[review] confirmOnboarding' });
-                await page.waitForTimeout(3000);
+                await page.waitForTimeout(3500);
                 const after = await botTranscript(page, { lastOnly: true });
-                if (/all done|everything looks set up|your school is set up|here'?s what to do next/i.test(after || panelText)) {
+                const panelAfter = await snapshot(page);
+                if (/all done|everything looks set up|your school is set up|here'?s what to do next/i.test(after || panelAfter)) {
                     done = true;
                     break;
+                }
+                if (/already in use|already exists|⚠️/i.test(after)) {
+                    findings.push('Review confirm blocked: ' + after.slice(0, 160));
                 }
                 continue;
             }

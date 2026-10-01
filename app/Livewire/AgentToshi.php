@@ -6207,13 +6207,18 @@ class AgentToshi extends Component
             return;
         }
 
-        // Pre-flight: check if admin email is already taken
-        if ($this->adminEmail && \App\Models\User::where('email', $this->adminEmail)->exists()) {
+        // Create-mode only: a brand-new admin email must be unique.
+        // Complete-mode school admins already exist — blocking on their own
+        // email left Confirm & Complete Setup permanently stuck (review card
+        // never committed, draft terms/fees never persisted).
+        if ($this->mode !== 'complete' && $this->adminEmail
+            && \App\Models\User::where('email', $this->adminEmail)->exists()) {
             $this->botSay("⚠️ The email **{$this->adminEmail}** is already in use. Use the **Edit** button to choose a different admin email.");
             return;
         }
 
         try {
+            $wasComplete = $this->mode === 'complete';
             $this->resolveCollectedDataForCommit();
             $this->commitAll();
             $this->deleteDraft();
@@ -6224,16 +6229,16 @@ class AgentToshi extends Component
             $this->reviewData['adminHasPassword'] = !empty($this->adminPassword);
             $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
             $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
-            $this->reviewData['mode'] = $this->mode;
+            $this->reviewData['mode'] = $wasComplete ? 'complete' : $this->mode;
             $this->step = 99;
-            // Welcome message for school admin completing setup
-            if ($this->mode === 'complete') {
+            if ($wasComplete) {
+                // Assistant off → mode=done with next-step links; assistant on → assistant.
                 $schoolName = optional(\App\Models\School::find($this->schoolId))->name ?? 'your school';
-                $this->botSay("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
+                $this->exitCompletingSetupMode("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
+            } else {
+                // Super admin stays in create mode to onboard another school.
+                $this->mode = 'create';
             }
-            // After completing onboarding: school admin goes to assistant mode for Q&A,
-            // super admin stays in create mode to onboard another school.
-            $this->mode = $this->mode === 'complete' ? 'assistant' : 'create';
         } catch (\Illuminate\Validation\ValidationException $e) {
             $msg = collect($e->errors())->flatten()->first() ?: 'Please check the form and try again.';
             $this->botSay('⚠️ '.$msg);
