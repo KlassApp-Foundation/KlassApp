@@ -54,7 +54,13 @@
                 <h2 class="text-sm font-semibold text-slate-900">Staff directory</h2>
                 <p class="mt-0.5 text-xs text-slate-500">{{ number_format($count) }} staff member{{ $count === 1 ? '' : 's' }} shown</p>
             </div>
-            <a href="{{ url('/admin/import') }}" class="ds-btn ds-btn-ghost text-sm">Import list</a>
+            <div class="flex items-center gap-2 flex-wrap">
+                <a href="{{ url('/admin/import') }}" class="ds-btn ds-btn-ghost text-sm">Import list</a>
+                <a href="{{ url('/admin/teacher/add') }}" class="ds-btn ds-btn-primary text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Add teacher
+                </a>
+            </div>
         </div>
         @if ($teachers->isEmpty())
             <div class="ds-table-empty ds-empty-state">
