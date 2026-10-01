@@ -1,6 +1,6 @@
 // Staging DB outcome checks for a journey school (read-only queries + the
 // is_test flag write that marks every E2E school).
-const { runStagingJson } = require('./stg-bridge');
+const { runStagingJson, wakeStaging } = require('./stg-bridge');
 
 const phpStr = (v) => JSON.stringify(String(v));
 
@@ -38,6 +38,7 @@ function setTestFlag(email) {
 }
 
 function fetchOutcome(email) {
+    wakeStaging();
     return runStagingJson(`
         $email = ${phpStr(email)};
         $u = \\App\\Models\\User::where('email', $email)->first();
