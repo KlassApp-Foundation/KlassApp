@@ -168,20 +168,22 @@ async function waitForNewContent(page, pattern, timeout = 90_000) {
 }
 
 function decide(text, data, state) {
-    const tail = text.slice(-4000);
+    // Only the latest bot prompt — older "Is the name correct?" lines in the
+    // chat history must not keep winning after the conversation has moved on.
+    const tail = text.slice(-900);
     const rules = [
         { key: 'name', re: /real name of your school|what's the (real )?name|school name\?/i, answer: data.schoolName },
         { key: 'name-ok', re: /is the name correct|name correct\?/i, answer: 'yes' },
         // Must match OnboardingStepsService::STUDENT_SIZE_OPTIONS exactly (or a known alias).
-        { key: 'size', re: /how many students|school size|up to 500|more than 1,000/i, answer: 'Up to 500' },
+        { key: 'size', re: /how many students|school size|up to 500|more than 1,000|approximate school size/i, answer: 'Up to 500' },
         { key: 'country', re: /which country/i, answer: 'Uganda' },
-        { key: 'curriculum', re: /which curriculum|board \/ curriculum/i, answer: 'UNEB' },
-        { key: 'category', re: /what type of school|category below|nursery only|o-level \+ a-level/i, answer: data.type.categoryAnswer },
+        { key: 'curriculum', re: /which curriculum|board \/ curriculum|curriculum does your school/i, answer: 'UNEB' },
+        { key: 'category', re: /what type of school|category below|nursery only|o-level \+ a-level|school category/i, answer: data.type.categoryAnswer },
         { key: 'emis', re: /emis \/ ministry|ministry code/i, answer: data.emisCode },
         { key: 'uneb', re: /uneb centre|uneb center/i, answer: 'skip' },
-        { key: 'ay', re: /academic year next|is \d{4} correct/i, answer: 'yes' },
-        { key: 'classes', re: /classes are ready/i, answer: 'done' },
-        { key: 'subjects', re: /subjects per class/i, answer: 'done' },
+        { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct/i, answer: 'yes' },
+        { key: 'classes', re: /classes are ready|add streams|type \*\*done\*\* to continue/i, answer: 'done' },
+        { key: 'subjects', re: /subjects per class|set up subjects/i, answer: 'done' },
         { key: 'teachers', re: /add teachers|paste their names/i, answer: data.teachers.join('\n') },
         { key: 'teachers-done', re: /more teachers|another teacher|type 'done'/i, answer: 'done' },
         { key: 'students', re: /add students|students' names|paste.*students/i, answer: data.students.join('\n') },
@@ -191,6 +193,7 @@ function decide(text, data, state) {
         { key: 'fee-amount', re: /amount|how much/i, answer: data.fee.amount },
         { key: 'wa', re: /verify your whatsapp|whatsapp number/i, answer: data.admin.phoneE164 },
         { key: 'wa-code', re: /6-digit code|verification code/i, answer: state.code || null, dynamic: true },
+        { key: 'done-next', re: /your school is set up|here'?s what to do next/i, answer: null, done: true },
     ];
 
     const candidates = [];
@@ -203,20 +206,18 @@ function decide(text, data, state) {
     }
     candidates.sort((a, b) => b.idx - a.idx);
 
-    // Always prefer the most recent matching prompt in the tail. A fixed
-    // "already answered" window of 5 keys used to stall journeys when a step
-    // re-prompted (e.g. invalid size) — the driver refused to re-send and sat idle.
-    // Only suppress a key when it was our immediately previous send AND the panel
-    // text length has not changed (same prompt still on screen, send may be in flight).
     if (candidates.length === 0) return null;
     const top = candidates[0];
     const key = top.rule.key;
-    if (state.lastKey === key && state.lastTailLen === tail.length) {
+    if (top.rule.done) return { key, done: true };
+    // Suppress only while the recent prompt fingerprint is unchanged (send in flight).
+    const fingerprint = tail.slice(-160);
+    if (state.lastKey === key && state.lastFingerprint === fingerprint) {
         return { wait: true, key };
     }
     if (top.rule.dynamic && !top.rule.answer) return { wait: true, key };
     state.lastKey = key;
-    state.lastTailLen = tail.length;
+    state.lastFingerprint = fingerprint;
     return { key, answer: top.rule.answer };
 }
 
@@ -272,6 +273,7 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             continue;
         }
         state.nullStreak = 0;
+        if (decision.done) { done = true; break; }
         if (decision.wait) { await page.waitForTimeout(1500); continue; }
 
         conversation.push({ turn: ++turns, sent: decision.answer });
