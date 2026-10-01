@@ -124,7 +124,7 @@ return [
     | Fallback model — used when the primary model fails (404, timeout, etc.).
     | Set to empty to disable fallback behaviour.
     */
-    'fallback_model' => 'meta/llama-3.1-70b-instruct',
+    'fallback_model' => env('TOSHI_FALLBACK_MODEL'),
 
     /*
     | Model to use for escalated (complex) queries. When set, queries classified
