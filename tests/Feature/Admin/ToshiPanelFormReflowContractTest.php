@@ -47,6 +47,18 @@ class ToshiPanelFormReflowContractTest extends TestCase
         $this->assertStringContainsString('data-testid="student-create-address"', $vue);
         $this->assertStringContainsString('name="address"', $vue);
         $this->assertStringNotContainsString('<portal-target name="address"', $vue);
+
+        // Closing the Gender lg:flex-row early must not leave an orphan </div>
+        // before </template> (staging Vite failed with "Invalid end tag").
+        if (! preg_match('/<template>(.*)<\/template>/s', $vue, $m)) {
+            $this->fail('Create.vue missing <template> block');
+        }
+        $template = $m[1];
+        $this->assertSame(
+            preg_match_all('/<div\b/', $template),
+            preg_match_all('/<\/div>/', $template),
+            'student Create.vue <template> div open/close counts must match',
+        );
     }
 
     public function test_student_create_blade_no_longer_portals_address_outside_shell(): void
