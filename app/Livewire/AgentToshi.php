@@ -6488,6 +6488,10 @@ class AgentToshi extends Component
                     ];
                 }, $this->teacherList);
                 app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+                if (! $teacherOver['success']) {
+                    $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                }
 
                 // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
                 $this->persistTeacherLinksFromCollectedData($school, $academicYear);
@@ -6623,6 +6627,10 @@ class AgentToshi extends Component
                         ];
                     }, $this->teacherList);
                     app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                    $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+                    if (! $teacherOver['success']) {
+                        $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                    }
                 }
 
                 // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink

@@ -218,4 +218,28 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $this->assertNotNull($notice);
         $this->assertStringContainsString('upgrade', strtolower($notice));
     }
+
+    /** @test */
+    public function teacher_import_does_not_hard_fail_on_stale_session_count(): void
+    {
+        $contents = file_get_contents(app_path('Http/Controllers/Admin/TeacherImportExportController.php'));
+        $this->assertStringNotContainsString(
+            "You can add only '.$count.' Members",
+            $contents,
+            'dead Session::get(count) hard-fail must stay removed'
+        );
+        $this->assertStringContainsString('overlimit', $contents);
+    }
+
+    /** @test */
+    public function admission_approve_and_teacher_link_import_flash_overlimit_after_save(): void
+    {
+        $admission = file_get_contents(app_path('Http/Controllers/Admin/AdmissionController.php'));
+        $this->assertStringContainsString('planLimitNotice', $admission);
+        $this->assertStringContainsString("session()->flash('overlimit'", $admission);
+
+        $links = file_get_contents(app_path('Http/Controllers/Admin/TeacherLinkImportController.php'));
+        $this->assertStringContainsString('enforcePlanLimit', $links);
+        $this->assertStringContainsString('overlimit', $links);
+    }
 }

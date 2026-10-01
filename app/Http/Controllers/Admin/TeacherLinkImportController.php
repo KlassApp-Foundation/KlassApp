@@ -181,7 +181,15 @@ class TeacherLinkImportController extends Controller
                 "Imported {$created} teacher links"
             );
 
-            return back()->with('success', $message);
+            $redirect = back()->with('success', $message);
+
+            // Provisioning new teachers above plan limit is a notice, never a block.
+            $overLimit = \App\Services\ToshiActionService::enforcePlanLimit((int) $schoolId, 'teachers');
+            if (! $overLimit['success']) {
+                $redirect->with('overlimit', $overLimit['message']);
+            }
+
+            return $redirect;
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Database error: ' . $e->getMessage());

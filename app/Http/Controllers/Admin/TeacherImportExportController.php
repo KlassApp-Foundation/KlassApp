@@ -101,14 +101,9 @@ class TeacherImportExportController extends Controller
         try
         {
             Excel::import(new TeachersImport,$request->file('import_file'));
-            $count = Session::get('count');
 
-
-            if($count != 0)
-            {
-                return back()->with('failmessage','You can add only '.$count.' Members');
-            }
-
+            // Do not hard-fail on Session::get('count') — TeachersImport no longer sets it,
+            // and a polluted session would falsely reject a successful import.
             $insertedcount = Session::get('insertedcount');
             if($insertedcount > 0)
             {
