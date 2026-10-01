@@ -1181,9 +1181,15 @@ class WhatsAppController extends Controller
         // Free-text name/school search removed — only KLS ID (above) or Request Link Flow.
         $sendButtons(
             "👋 *Welcome to KlassApp!* 🎓\n\n"
+            . "KlassApp puts report cards, fees and attendance from your school "
+            . "into your WhatsApp. We're in soft launch — demo accounts are open, "
+            . "school roll-out is by invitation.\n\n"
             . "Tap *Try Demo* to explore with sample data.\n"
             . "Tap *Link help* for KlassApp ID instructions, or *Request Link* "
-            . "to submit a short form your school will review.",
+            . "to submit a short form your school will review.\n\n"
+            . "Website: https://klassapp.xyz\n"
+            . "Guides: https://klassapp.xyz/help\n"
+            . "Privacy: https://klassapp.xyz/privacy",
             [
                 ['title' => '🎯 Try Demo', 'id' => 'demo'],
                 ['title' => '🔗 Link help', 'id' => 'link_help'],
@@ -1475,8 +1481,14 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Universal: menu/help
-        if ($match(['menu', 'help', 'start', 'options', 'demo', '❓ help & options'])) {
+        // Universal: role-specific how-to guides (keep above the menu branch)
+        if ($match(['help', 'howto', 'how to', 'guide'])) {
+            $this->sendHelp($user, $phone, $whatsAppService);
+            return;
+        }
+
+        // Universal: menu
+        if ($match(['menu', 'start', 'options', 'demo', '❓ help & options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
@@ -1700,6 +1712,65 @@ class WhatsAppController extends Controller
     }
 
     /**
+     * Send role-specific how-to help, plus Help/privacy links. Every known
+     * user reaches this with the "help" keyword (or the HELP button).
+     */
+    private function sendHelp(WhatsAppUser $user, string $phone, $whatsAppService): void
+    {
+        $role = $user->user->usergroup_id;
+
+        $body = match ($role) {
+            7 => "📖 *Help — for parents*\n\n"
+                . "*report* — get your child's report card (PDF)\n"
+                . "*fees* — check what you owe\n"
+                . "*attendance* — see your child's record\n"
+                . "*web login* — open the parent portal\n"
+                . "*link* — add another child\n"
+                . "*menu* — see all options",
+            5 => "📖 *Help — for teachers*\n\n"
+                . "*marks* — enter marks for your subject\n"
+                . "*attendance* — mark today's attendance\n"
+                . "*timetable* — see your timetable\n"
+                . "*assignments* — see homework\n"
+                . "*menu* — see all options",
+            3 => "📖 *Help — for school admins*\n\n"
+                . "*students* — student list\n"
+                . "*staff* — staff list\n"
+                . "*exams* — exams and marks status\n"
+                . "*fees* — fees summary\n"
+                . "*reports* — school analytics\n"
+                . "*menu* — see all options",
+            6 => "📖 *Help — for students*\n\n"
+                . "*grades* — your latest results\n"
+                . "*attendance* — your attendance\n"
+                . "*fees* — what you owe\n"
+                . "*timetable* — your timetable\n"
+                . "*homework* — your homework\n"
+                . "*menu* — see all options",
+            10 => "📖 *Help — for the front office*\n\n"
+                . "*calls* — today's call log\n"
+                . "*notices* — school notices\n"
+                . "*events* — school calendar\n"
+                . "*menu* — see all options",
+            11 => "📖 *Help — for the bursar*\n\n"
+                . "*fees* — fees summary\n"
+                . "*reports* — payment analytics\n"
+                . "*events* — school calendar\n"
+                . "*menu* — see all options",
+            default => "📖 *Help*\n\n"
+                . "Type *menu* to see what you can do here.\n",
+        };
+
+        $body .= "\n\nMore guides: https://klassapp.xyz/help\nPrivacy: https://klassapp.xyz/privacy";
+
+        $whatsAppService->sendText($phone, $body, 'role_help', $user->user_id);
+
+        if ($role !== 7) {
+            $this->sendMenuButtons($phone, $role, $user->user_id);
+        }
+    }
+
+    /**
      * Send the main menu to a WhatsApp user.
      *
      * @param WhatsAppUser $user
@@ -1736,6 +1807,7 @@ class WhatsAppController extends Controller
                         ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View latest exam scores'],
                         ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
                         ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
+                        ['id' => 'HELP', 'title' => 'Help', 'description' => 'See what you can ask for'],
                         ['id' => 'WEB_LOGIN', 'title' => 'Dashboard', 'description' => 'Open the full parent portal'],
                     ],
                 ]],
@@ -1791,7 +1863,7 @@ class WhatsAppController extends Controller
             default => 'User',
         };
 
-        $menuBody = "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword.";
+        $menuBody = "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword. Reply *help* for how-to guides.";
 
         $this->businessApi->sendInteractiveButtons(
             $phone,
