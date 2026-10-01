@@ -660,12 +660,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Positioning (locked — only wording to use)
 
-> Owner-set 2026-10-01. Every public surface, README, design-system README, landing, footer, and meta description must use **exactly** these two lines. Do not invent variants. Replacements of older copy are pending owner approval of the removal list in the Session Log.
+> Owner-set 2026-10-01. Every public surface, README, design-system README, landing, footer, and meta description must use **exactly** these two lines. Do not invent variants. Soft-launch replacement pass authorised 2026-10-01 (task 6). Use only the Tagline + Description below.
 
 - **Tagline:** An open education protocol for humans and agents.
 - **Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
+
+## Current Status: October 1, 2026 (latest) — Soft-launch docs #922 + robots #899 MERGED; positioning PR in flight
+
+- **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
+- **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
+- **#924 MERGED** earlier this session (logo→home).
+- **#898** personal-data removal — open, awaiting Rasta review (do not merge).
+- **Deferred:** staff create flashes teachers plan-limit notice (teachers bucket vs support-staff usergroups).
+- **Positioning:** replacement pass on `chore/positioning-everywhere` (task 6). Demo schools (task 7) next. Toshi journeys wait on staging vars.
 
 ## Current Status: October 1, 2026 (latest) — **Plan-limit non-blocking widened on [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921)** (`fix/staff-plan-limit-nonblocking`). Staff + students + Toshi addStudent/addTeacher/addCoAdmin + bulletins/files/videos create UI: save first, upgrade notice after; `planLimitNotice()` helper. Positioning locked (section above) — copy replacements pending owner approval of removal list. #919 MERGED `ed659fdc`; #920 MERGED `271b38ae`. Google E2E + Toshi journeys wait on Rasta AI-key confirm. Production untouched.
 

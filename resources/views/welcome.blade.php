@@ -272,7 +272,7 @@
 <!-- FOOTER -->
 <footer style="padding:48px 24px;border-top:1px solid rgba(255,255,255,0.08);background:#0D1526;">
 	<div class="ka-container" style="display:grid;grid-template-columns:1fr auto 1fr;gap:32px;align-items:start;max-width:1200px;">
-		<div class="footer-brand"><img src="{{ $logo }}" alt="KlassApp" class="ka-brand-logo"><div class="footer-tagline">Smarter schools start here.</div></div>
+		<div class="footer-brand"><img src="{{ $logo }}" alt="KlassApp" class="ka-brand-logo"><div class="footer-tagline">An open education protocol for humans and agents.</div></div>
 		<div class="footer-links">
 			<a href="#" style="color:rgba(255,255,255,0.55);text-decoration:none;">Terms</a>
 			<a href="#" style="color:rgba(255,255,255,0.55);text-decoration:none;">Privacy</a>

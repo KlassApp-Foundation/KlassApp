@@ -63,8 +63,8 @@ const absentIds = ['community', 'open-source'];
         protocolMesh: !!document.querySelector('.mesh .mesh-hub'),
         openSourceCard: text.includes('MIT licensed. Source and self-hosting will open publicly after an independent security review'),
         prodFooter: !!document.querySelector('footer.site-footer')
-          && text.includes("Educationists' tools connected by intelligence.")
-          && !text.includes('Smarter schools start here.')
+          && text.includes("An open education protocol for humans and agents.")
+          && !text.includes("Educationists' tools connected by intelligence.")
           && !!document.querySelector('.site-footer-wordmark')
           && !text.includes('Stay in the loop')
           && !document.querySelector('.footer-columns')

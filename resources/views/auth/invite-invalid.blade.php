@@ -8,7 +8,7 @@
   @include('auth.preview._paper-bg')
   <div class="ap-shell">
     @include('auth.preview._brand-panel', [
-      'tagline' => 'School operations on one protocol',
+      'tagline' => 'An open education protocol for humans and agents.',
       'support' => 'Classes, fees, and parent updates from one connected system.',
     ])
     <div class="ap-form-panel">

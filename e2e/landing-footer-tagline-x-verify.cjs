@@ -12,9 +12,9 @@ const BASE = (process.env.PREVIEW_BASE || 'http://127.0.0.1:8000').replace(/\/$/
 const OUT = path.join(__dirname, 'screenshots/landing-footer-tagline-x');
 fs.mkdirSync(OUT, { recursive: true });
 
-const TAGLINE = "Educationists' tools connected by intelligence.";
+const TAGLINE = "An open education protocol for humans and agents.";
 const X_HREF = 'https://x.com/Klass_App';
-const OLD_TAGLINE = 'Smarter schools start here.';
+const OLD_TAGLINE = "Educationists' tools connected by intelligence.";
 const OLD_X = 'https://x.com/klassapp';
 
 const viewports = [
