@@ -67,13 +67,54 @@ async function snapshot(page) {
     return page.locator('[data-toshi-root]').first().innerText({ timeout: 15_000 }).catch(() => '');
 }
 
+/** Bot chat lines only — excludes checklist labels that false-match decide() rules. */
+async function botTranscript(page) {
+    const bots = page.locator('[data-toshi-root] .toshi-msg-bot');
+    const n = await bots.count().catch(() => 0);
+    if (n === 0) return '';
+    const parts = [];
+    // Last ~12 bot bubbles is enough context without replaying the whole history.
+    const start = Math.max(0, n - 12);
+    for (let i = start; i < n; i++) {
+        parts.push(((await bots.nth(i).innerText({ timeout: 3000 }).catch(() => '')) || '').trim());
+    }
+    return parts.filter(Boolean).join('\n');
+}
+
+async function hasConfirmChips(page) {
+    const yes = page.locator('[data-toshi-root] button:visible').filter({ hasText: /^\s*Yes/i });
+    return (await yes.count().catch(() => 0)) > 0;
+}
+
+/**
+ * Click the first incomplete checklist row ("Set up" / "Add later").
+ * Used when the panel shows the setup list but no actionable bot prompt yet.
+ */
+async function clickNextSetupRow(page) {
+    const rows = page.locator('[data-testid="toshi-setup-list"] [data-testid^="toshi-setup-row-"]:visible');
+    const n = await rows.count().catch(() => 0);
+    for (let i = 0; i < n; i++) {
+        const row = rows.nth(i);
+        const tone = (await row.getAttribute('data-tone').catch(() => '')) || '';
+        if (tone === 'positive') continue; // already done
+        const label = ((await row.locator('.toshi-setup-row-label').innerText().catch(() => '')) || '').trim();
+        const ok = await row.click({ timeout: 8000 }).then(() => true).catch(() => false);
+        if (ok) {
+            console.log(`[toshi] clicked setup row "${label || row}"`);
+            return label || true;
+        }
+    }
+    return null;
+}
+
 async function tryQuickReply(page, answer) {
     const a = String(answer).trim().toLowerCase();
     const map = {
-        'yes': /^(yes|correct|ok)$/i,
-        'no': /^no$/i,
-        'skip': /^skip/i,
-        'done': /^(done|continue|ok)$/i,
+        // "Yes ✓" / "Yes ✔" chips — allow trailing checkmarks / whitespace
+        'yes': /^\s*yes(\s*[✓✔✔️])?\s*$/i,
+        'no': /^\s*no\s*$/i,
+        'skip': /^\s*skip/i,
+        'done': /^\s*(done|continue|ok)\s*$/i,
     };
     const matcher = map[a] || null;
     const buttons = page.locator('[data-toshi-root] button:visible');
@@ -81,10 +122,12 @@ async function tryQuickReply(page, answer) {
     for (let i = 0; i < n; i++) {
         const b = buttons.nth(i);
         const txt = ((await b.innerText({ timeout: 3000 }).catch(() => '')) || '').trim();
-        const norm = txt.toLowerCase();
+        const norm = txt.toLowerCase().replace(/\s+/g, ' ');
+        // Never treat checklist "Set up →" rows as quick-replies for free-text answers.
+        if (/toshi-setup-row/i.test((await b.getAttribute('data-testid').catch(() => '')) || '')) continue;
         const matches = (matcher && matcher.test(txt))
             || norm === a
-            || (a.length > 3 && norm.includes(a));
+            || (a.length > 3 && !matcher && norm.includes(a));
         if (!matches) continue;
         const ok = await b.click({ timeout: 8000 }).then(() => true).catch(() => false);
         if (ok) {
@@ -168,30 +211,32 @@ async function waitForNewContent(page, pattern, timeout = 90_000) {
 }
 
 function decide(text, data, state) {
-    // Only the latest bot prompt — older "Is the name correct?" lines in the
-    // chat history must not keep winning after the conversation has moved on.
+    // `text` must be bot-message transcript only (see botTranscript). Checklist
+    // labels like "Academic terms" / "Approximate school size" false-match otherwise.
     const tail = text.slice(-900);
     const rules = [
-        { key: 'name', re: /real name of your school|what's the (real )?name|school name\?/i, answer: data.schoolName },
-        { key: 'name-ok', re: /is the name correct|name correct\?/i, answer: 'yes' },
+        { key: 'name', re: /real name of your school|what's the (real )?name of your school|type the correct school name/i, answer: data.schoolName },
+        { key: 'name-ok', re: /is the name correct\b/i, answer: 'yes', needsConfirm: true },
         // Must match OnboardingStepsService::STUDENT_SIZE_OPTIONS exactly (or a known alias).
-        { key: 'size', re: /how many students|school size|up to 500|more than 1,000|approximate school size/i, answer: 'Up to 500' },
-        { key: 'country', re: /which country/i, answer: 'Uganda' },
-        { key: 'curriculum', re: /which curriculum|board \/ curriculum|curriculum does your school/i, answer: 'UNEB' },
-        { key: 'category', re: /what type of school|category below|nursery only|o-level \+ a-level|school category/i, answer: data.type.categoryAnswer },
-        { key: 'emis', re: /emis \/ ministry|ministry code/i, answer: data.emisCode },
-        { key: 'uneb', re: /uneb centre|uneb center/i, answer: 'skip' },
-        { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct/i, answer: 'yes' },
+        { key: 'size', re: /how many students does your school|roughly how many students|reply with one of:\s*\*\*up to 500/i, answer: 'Up to 500' },
+        { key: 'country', re: /which country is your school/i, answer: 'Uganda' },
+        { key: 'curriculum', re: /which curriculum does your school|i recommend \*\*uneb\*\*/i, answer: 'UNEB' },
+        { key: 'category', re: /what type of school is this|pick a category below|nursery only|o-level \+ a-level/i, answer: data.type.categoryAnswer },
+        { key: 'emis', re: /emis \/ ministry code|ministry code\?/i, answer: data.emisCode },
+        { key: 'uneb', re: /uneb centre number|uneb center number/i, answer: 'skip' },
+        { key: 'ay', re: /academic year next|is \*\*\d{4}\*\* correct|is \d{4} correct\?/i, answer: 'yes', needsConfirm: true },
         { key: 'classes', re: /classes are ready|add streams|type \*\*done\*\* to continue/i, answer: 'done' },
-        { key: 'subjects', re: /subjects per class|set up subjects/i, answer: 'done' },
-        { key: 'teachers', re: /add teachers|paste their names/i, answer: data.teachers.join('\n') },
+        { key: 'subjects', re: /set up subjects per class|subjects per class/i, answer: 'done' },
+        { key: 'teachers', re: /let'?s add teachers|paste their names/i, answer: data.teachers.join('\n') },
         { key: 'teachers-done', re: /more teachers|another teacher|type 'done'/i, answer: 'done' },
-        { key: 'students', re: /add students|students' names|paste.*students/i, answer: data.students.join('\n') },
+        { key: 'students', re: /let'?s add students|students' names|paste.*students/i, answer: data.students.join('\n') },
         { key: 'students-done', re: /more students|another student/i, answer: 'done' },
-        { key: 'terms', re: /academic terms|set up.*terms/i, answer: 'yes' },
-        { key: 'fees', re: /fee categor|fee name|add fee/i, answer: data.fee.name },
-        { key: 'fee-amount', re: /amount|how much/i, answer: data.fee.amount },
-        { key: 'wa', re: /verify your whatsapp|whatsapp number/i, answer: data.admin.phoneE164 },
+        // Any reply on substep 0 seeds default terms then asks for confirm.
+        { key: 'terms', re: /let'?s set up academic terms/i, answer: 'ok' },
+        { key: 'terms-ok', re: /default ugandan terms set/i, answer: 'yes', needsConfirm: true },
+        { key: 'fees', re: /add fee categories|type a fee name/i, answer: data.fee.name },
+        { key: 'fee-amount', re: /how much|amount for|fee amount/i, answer: data.fee.amount },
+        { key: 'wa', re: /verify your whatsapp number|whatsapp number for school/i, answer: data.admin.phoneE164 },
         { key: 'wa-code', re: /6-digit code|verification code/i, answer: state.code || null, dynamic: true },
         { key: 'done-next', re: /your school is set up|here'?s what to do next/i, answer: null, done: true },
     ];
@@ -207,13 +252,31 @@ function decide(text, data, state) {
     candidates.sort((a, b) => b.idx - a.idx);
 
     if (candidates.length === 0) return null;
-    const top = candidates[0];
+
+    // Prefer collecting a school name over confirming one until we've sent a name.
+    let top = candidates[0];
+    if (top.rule.key === 'name-ok' && !state.answered.name) {
+        const nameCand = candidates.find((c) => c.rule.key === 'name');
+        if (nameCand) {
+            top = nameCand;
+        } else {
+            // Confirm chips for a name we never typed — force the journey school name.
+            return { key: 'name', answer: data.schoolName };
+        }
+    }
+
     const key = top.rule.key;
     if (top.rule.done) return { key, done: true };
+
+    // Yes/no answers must only fire when confirm chips (or an explicit confirm prompt) are up.
+    if (top.rule.needsConfirm && !state.hasYesChip) {
+        return { wait: true, key, reason: 'needs-confirm-chips', answer: top.rule.answer };
+    }
+
     // Suppress only while the recent prompt fingerprint is unchanged (send in flight).
     const fingerprint = tail.slice(-160);
     if (state.lastKey === key && state.lastFingerprint === fingerprint) {
-        return { wait: true, key };
+        return { wait: true, key, answer: top.rule.answer };
     }
     if (top.rule.dynamic && !top.rule.answer) return { wait: true, key };
     state.lastKey = key;
@@ -223,7 +286,7 @@ function decide(text, data, state) {
 
 async function runToshiJourney(page, data, findings = [], opts = {}) {
     const shotDir = opts.shotDir || null;
-    const state = { answered: {}, code: null };
+    const state = { answered: {}, code: null, hasYesChip: false };
     const conversation = [];
     let turns = 0;
     let done = false;
@@ -238,8 +301,11 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             await ensurePanel(page).catch((e) => console.log('[toshi] reopen failed: ' + String(e).slice(0, 120)));
             await page.waitForTimeout(600);
         }
-        const text = await snapshot(page);
-        const cm = text.match(/verification code is:?\s*(\d{6})/i) || text.match(/code[: ]+(\d{6})/i);
+        const panelText = await snapshot(page);
+        const text = await botTranscript(page);
+        state.hasYesChip = await hasConfirmChips(page);
+        const cm = (text || panelText).match(/verification code is:?\s*(\d{6})/i)
+            || (text || panelText).match(/code[: ]+(\d{6})/i);
         if (cm) state.code = cm[1];
 
         // Plan buttons?
@@ -253,33 +319,61 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             if (!clicked && (await planButtons.count())) { await planButtons.first().click({ timeout: 10_000 }); clicked = 'first plan'; }
             conversation.push({ turn: ++turns, sent: `[plan] ${clicked}` });
             await page.waitForTimeout(2500);
-            const after = await snapshot(page);
-            if (/plan selected|saved|all done|everything looks set up/i.test(after.slice(-1200))) { done = true; break; }
+            const after = await botTranscript(page);
+            if (/plan selected|saved|all done|everything looks set up|your school is set up/i.test(after.slice(-1200))) { done = true; break; }
             continue;
         }
 
-        if (/all done|everything looks set up|setup complete|your school is set up|here'?s what to do next/i.test(text.slice(-1200))) {
+        if (/all done|everything looks set up|setup complete|your school is set up|here'?s what to do next/i.test((text || panelText).slice(-1200))) {
             done = true;
             break;
         }
 
         const decision = decide(text, data, state);
         if (!decision) {
+            // No bot prompt matched — open the next incomplete checklist step so a prompt appears.
             state.nullStreak = (state.nullStreak || 0) + 1;
+            if (state.nullStreak <= 6) {
+                const opened = await clickNextSetupRow(page);
+                if (opened) {
+                    conversation.push({ turn: ++turns, sent: `[setup] ${opened}` });
+                    await page.waitForTimeout(2000);
+                    continue;
+                }
+            }
             if (state.nullStreak % 4 === 1) {
-                console.log('[toshi] waiting; tail: ' + text.slice(-260).replace(/\n/g, ' | '));
+                console.log('[toshi] waiting; bot-tail: ' + text.slice(-260).replace(/\n/g, ' | '));
             }
             await page.waitForTimeout(1500);
             continue;
         }
         state.nullStreak = 0;
         if (decision.done) { done = true; break; }
-        if (decision.wait) { await page.waitForTimeout(1500); continue; }
+        if (decision.wait) {
+            state.confirmWaitStreak = (state.confirmWaitStreak || 0) + 1;
+            // Confirm prompt without chips yet — don't click setup rows forever.
+            if (decision.reason === 'needs-confirm-chips' && state.confirmWaitStreak >= 4) {
+                // Fall through: answer yes via typed reply once chips still missing after waits.
+                console.log(`[toshi] confirm chips missing for ${decision.key}; typing answer`);
+            } else {
+                await page.waitForTimeout(1500);
+                continue;
+            }
+        } else {
+            state.confirmWaitStreak = 0;
+        }
+
+        // Never send bare yes/no/skip as a school name.
+        if (decision.key === 'name' && /^(yes|no|skip|done|ok)$/i.test(String(decision.answer || '').trim())) {
+            decision.answer = data.schoolName;
+        }
 
         conversation.push({ turn: ++turns, sent: decision.answer });
-        console.log(`[toshi] turn ${turns}: sent ${JSON.stringify(decision.answer).slice(0, 80)}`);
+        console.log(`[toshi] turn ${turns}: [${decision.key}] sent ${JSON.stringify(decision.answer).slice(0, 80)}`);
         try {
             await send(page, decision.answer);
+            state.answered[decision.key] = true;
+            state.confirmWaitStreak = 0;
         } catch (e) {
             state.sendErrors = (state.sendErrors || 0) + 1;
             console.log(`[toshi] send failed (${state.sendErrors}): ${String(e.message || e).slice(0, 120)}`);
@@ -302,4 +396,4 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
     return { turns, conversation, done, codeShown: !!state.code };
 }
 
-module.exports = { ensurePanel, snapshot, send, waitForNewContent, runToshiJourney };
+module.exports = { ensurePanel, snapshot, botTranscript, send, waitForNewContent, runToshiJourney, decide };
