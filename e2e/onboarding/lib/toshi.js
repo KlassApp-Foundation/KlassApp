@@ -172,7 +172,8 @@ function decide(text, data, state) {
     const rules = [
         { key: 'name', re: /real name of your school|what's the (real )?name|school name\?/i, answer: data.schoolName },
         { key: 'name-ok', re: /is the name correct|name correct\?/i, answer: 'yes' },
-        { key: 'size', re: /how many students|school size|under 100 students/i, answer: '100-300 students' },
+        // Must match OnboardingStepsService::STUDENT_SIZE_OPTIONS exactly (or a known alias).
+        { key: 'size', re: /how many students|school size|up to 500|more than 1,000/i, answer: 'Up to 500' },
         { key: 'country', re: /which country/i, answer: 'Uganda' },
         { key: 'curriculum', re: /which curriculum|board \/ curriculum/i, answer: 'UNEB' },
         { key: 'category', re: /what type of school|category below|nursery only|o-level \+ a-level/i, answer: data.type.categoryAnswer },
@@ -202,16 +203,21 @@ function decide(text, data, state) {
     }
     candidates.sort((a, b) => b.idx - a.idx);
 
-    const recent = state.recent || (state.recent = []);
-    for (const c of candidates) {
-        const key = c.rule.key;
-        if (recent.includes(key)) continue;
-        if (c.rule.dynamic && !c.rule.answer) return { wait: true, key };
-        recent.push(key);
-        state.recent = recent.slice(-5);
-        return { key, answer: c.rule.answer };
+    // Always prefer the most recent matching prompt in the tail. A fixed
+    // "already answered" window of 5 keys used to stall journeys when a step
+    // re-prompted (e.g. invalid size) — the driver refused to re-send and sat idle.
+    // Only suppress a key when it was our immediately previous send AND the panel
+    // text length has not changed (same prompt still on screen, send may be in flight).
+    if (candidates.length === 0) return null;
+    const top = candidates[0];
+    const key = top.rule.key;
+    if (state.lastKey === key && state.lastTailLen === tail.length) {
+        return { wait: true, key };
     }
-    return null;
+    if (top.rule.dynamic && !top.rule.answer) return { wait: true, key };
+    state.lastKey = key;
+    state.lastTailLen = tail.length;
+    return { key, answer: top.rule.answer };
 }
 
 async function runToshiJourney(page, data, findings = [], opts = {}) {
@@ -251,7 +257,10 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
             continue;
         }
 
-        if (/all done|everything looks set up|setup complete/i.test(text.slice(-1200))) { done = true; break; }
+        if (/all done|everything looks set up|setup complete|your school is set up|here'?s what to do next/i.test(text.slice(-1200))) {
+            done = true;
+            break;
+        }
 
         const decision = decide(text, data, state);
         if (!decision) {
