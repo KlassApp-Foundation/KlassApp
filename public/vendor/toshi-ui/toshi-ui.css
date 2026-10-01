@@ -153,6 +153,30 @@
         transition: none !important;
     }
 
+    /*
+     * Soft-launch 1c — toshi-form-reflow
+     * Viewport `lg:` (≥1024) keeps multi-column rows while the dock shrinks
+     * main by --toshi-w. Stack those rows and force lg:w-1/* to full width
+     * so Gender/Country/City/Joining Date are not clipped under the panel.
+     */
+    body:not(.toshi-collapsed) main .flex.lg\:flex-row,
+    html:not(.toshi-collapsed) main .flex.lg\:flex-row {
+        flex-direction: column !important;
+    }
+    body:not(.toshi-collapsed) main [class*="lg:w-1/"],
+    html:not(.toshi-collapsed) main [class*="lg:w-1/"] {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    body:not(.toshi-collapsed) main .bg-white.shadow,
+    html:not(.toshi-collapsed) main .bg-white.shadow,
+    body:not(.toshi-collapsed) main .dashboard-shell,
+    html:not(.toshi-collapsed) main .dashboard-shell {
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
     /* ── Resize handle: the draggable boundary between content and Toshi ──
        Sits on the dock's left edge, same top band as the panel. Pointer events
        only on desktop ≥1280 (the handle markup is inside the root; sub-1280

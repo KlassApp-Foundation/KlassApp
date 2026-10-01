@@ -1,6 +1,6 @@
 <template>
     <div
-        class="px-3 overflow-x-scroll lg:overflow-x-auto md:overflow-x-auto py-3 bg-white shadow"
+        class="px-3 overflow-x-auto py-3 bg-white shadow min-w-0"
         v-bind:class="[this.profile_tab == 1 ? 'block' : 'hidden']"
     >
         <div
