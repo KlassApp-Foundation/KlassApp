@@ -667,13 +667,24 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 2, 2026 (latest) — **Soft-launch plan 1g→6 shipped on `main` tip `3e25b231`**
+
+- **Soft launch Sat 3 Oct** — staging `test.klassapp.xyz` only; **production not deployed / no prod writes**.
+- **1a–2 MERGED** through [#946](https://github.com/KlassApp-Foundation/KlassApp/pull/946) (dashboard collapsed width).
+- **1g MERGED** [#947](https://github.com/KlassApp-Foundation/KlassApp/pull/947) `4dfdf010` — `NoSchoolGetsAiByDefaultTest` + AGENTS.md rule #33 (AI opt-in per school).
+- **Task 3 journeys** — manual PASS both VP; Toshi FAIL both VP → **Friday Toshi NO-GO** (not re-run).
+- **4 MERGED** [#948](https://github.com/KlassApp-Foundation/KlassApp/pull/948) `378cbac2` — Account card Part A. Staging deploy succeeded @ `378cbac2`. Playwright @1280 menu open PASS; @375 `account-card__trigger` present.
+- **5 MERGED** [#928](https://github.com/KlassApp-Foundation/KlassApp/pull/928) `7fe470dc` (Talk to sales) + [#898](https://github.com/KlassApp-Foundation/KlassApp/pull/898) `3e25b231` (personal-data removal). Staging tip deploy @ `3e25b231` succeeded. **Prod RO inventory** (Commands API): schools=52, active_users=2292, inactive=26, exit=0. **Staging cleanup**: deleted 124 `authentications` rows for E2E users, then `test:purge-schools --force` for 31 `is_test` E2E schools.
+- **Never merge:** #682, #890 (Elijah-ug). Other open PRs untouched.
+- **Friday call:** Toshi journeys NO-GO; manual path green.
+
 ## Current Status: October 1, 2026 (latest) — **#929 MERGED** `85ccef59` (admin merge, Rasta rule-#32 go-ahead)
 
 - **#929 MERGED** `85ccef59` — Toshi onboarding without AI: `onboardingEnabled` / `assistantEnabled` split; `mode=done` when assistant off; complete-mode commit no longer blocks on school admin's own email; e2e driver checklist-aware. Admin-merged with Rasta's go-ahead (author can't self-approve). Staging journeys + soft-launch steps 2–4 in progress.
 - **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
 - **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
 - **#924 MERGED** earlier this session (logo→home).
-- **#898** personal-data removal — open, awaiting Rasta review (do not merge).
+- **#898 MERGED** `3e25b231` — personal-data removal (soft-launch task 5).
 - **Deferred:** staff create flashes teachers plan-limit notice (teachers bucket vs support-staff usergroups).
 - **Positioning:** replacement pass on `chore/positioning-everywhere` (task 6). Demo schools (task 7) next. Toshi journeys wait on staging vars.
 
@@ -2505,6 +2516,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-02: Soft-launch plan closeout (1g → 6)
+- **Work done**: Confirmed 1g already on main; shipped account card Part A; admin-merged #928/#898 after CI green + update-branch onto main; staging account-card spot-check; staging E2E purge (after authentications FK clear); prod read-only inventory; this knowledge stamp.
+- **PRs / SHAs (GitHub API `merged: true`)**:
+  - [#947](https://github.com/KlassApp-Foundation/KlassApp/pull/947) 1g AI opt-in — `4dfdf010`
+  - [#948](https://github.com/KlassApp-Foundation/KlassApp/pull/948) account card Part A — `378cbac2`
+  - [#928](https://github.com/KlassApp-Foundation/KlassApp/pull/928) Talk to sales — `7fe470dc`
+  - [#898](https://github.com/KlassApp-Foundation/KlassApp/pull/898) personal-data removal — `3e25b231` (`origin/main` tip at stamp)
+- **Evidence**: CI test-guard green on #948/#928/#898; staging deploy succeeded @ `3e25b231`; Playwright `hasPartA` true @375/1280; prod RO tinker counts only.
+- **Status**: ✅ Soft-launch ordered remaining work 1g→6 complete on `main`. Production untouched.
+- **Edge cases**: `test:purge-schools` needed prior `authentications` delete (FK 1451). Non-E2E junk schools (Suite/Verify/yes) left alone (outside purge rails). Friday Toshi journey NO-GO unchanged.
 
 ### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929 MERGED
 - **Work done**: (1a–1c) Onboarding/assistant switch split; `mode=done` when assistant off; e2e stall + decide() checklist false-match fixes; complete-mode commit no longer blocks on school admin's own email. (1d) Journeys pending post-merge staging deploy.
