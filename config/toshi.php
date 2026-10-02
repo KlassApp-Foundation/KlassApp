@@ -260,8 +260,19 @@ return [
             'timeout' => 30,
             'skill' => \App\AiAgents\Skills\SlackSkill::class,
             'default_write_mode' => 'deny',
-            'read_tools' => ['slack_list_channels', 'slack_search', 'slack_get_channel_history'],
-            'write_tools' => ['slack_post_message'],
+            // Live names from mcp.slack.com (see tests/fixtures/slack-mcp-live-tool-names.json).
+            // Wrong names under mode=classify misclassify reads as writes → stranded HITL.
+            'read_tools' => [
+                'slack_search_channels',
+                'slack_search_public',
+                'slack_read_channel',
+                'slack_read_thread',
+            ],
+            'write_tools' => [
+                'slack_send_message',
+                'slack_schedule_message',
+                'slack_send_message_draft',
+            ],
             'enabled' => env('TOSHI_SLACK_CHANNEL_ENABLED', false),
             'allows_custom_endpoint' => false,
         ],

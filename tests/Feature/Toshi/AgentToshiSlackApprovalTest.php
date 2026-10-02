@@ -3,6 +3,7 @@
 namespace Tests\Feature\Toshi;
 
 use App\AiAgents\Skills\SlackSkill;
+use App\Exceptions\PendingMcpApprovalException;
 use App\Livewire\AgentToshi;
 use App\Mcp\Servers\SpikeSlackMockServer;
 use App\Models\ActivityLog;
@@ -161,9 +162,14 @@ class AgentToshiSlackApprovalTest extends TestCase
             'Posted.',
         ]);
 
-        (new \App\AiAgents\Tools\RouteToSlackSkillTool)->handle(
-            new \Laravel\Ai\Tools\Request(['query' => 'Post "Fee reminders go out Friday." to #general'])
-        );
+        try {
+            (new \App\AiAgents\Tools\RouteToSlackSkillTool)->handle(
+                new \Laravel\Ai\Tools\Request(['query' => 'Post "Fee reminders go out Friday." to #general'])
+            );
+            $this->fail('Pause must throw PendingMcpApprovalException');
+        } catch (PendingMcpApprovalException) {
+            // expected
+        }
 
         $payload = ToshiActionService::$pendingConfirmPayload;
         $this->assertNotNull($payload, 'Pause must populate the side-channel');

@@ -4,8 +4,10 @@ namespace App\AiAgents;
 
 use App\Ai\Agents\PlatformOperationsAgent;
 use App\Enums\ToshiScope;
+use App\Exceptions\PendingMcpApprovalException;
 use App\Models\User;
 use App\Services\Toshi\ToshiAvailabilityGate;
+use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Streaming\Events\TextDelta;
 
@@ -69,7 +71,7 @@ class ToshiSdkV2Service
 
         try {
             // Reset the side-channel before each query
-            \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+            ToshiActionService::$pendingConfirmPayload = null;
 
             // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
             // Platform → PlatformOperationsAgent; ug4 → DeputyAdminOperationsAgent;
@@ -90,9 +92,19 @@ class ToshiSdkV2Service
                     9 => new AlumniOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
-            $response = method_exists($agent, 'run')
-                ? $agent->run($query)
-                : $agent->prompt($query)->text;
+
+            try {
+                $response = method_exists($agent, 'run')
+                    ? $agent->run($query)
+                    : $agent->prompt($query)->text;
+            } catch (PendingMcpApprovalException) {
+                // Nested MCP skill aborted the parent loop after filling the
+                // side-channel — surface the confirm card (do not fall back).
+                return $this->consumePendingConfirmPayload()
+                    ?? throw new PendingMcpApprovalException(
+                        'MCP approval pause was signalled without a side-channel payload.'
+                    );
+            }
 
             Log::info('SDK v2 path: agent dispatched', [
                 'user_id' => $user->id,
@@ -102,27 +114,66 @@ class ToshiSdkV2Service
                 'agent' => $agent::class,
             ]);
 
-            // Check if a write tool stored a confirmation payload
-            // (more reliable than parsing the LLM's potentially reformatted response)
-            $payload = \App\Services\ToshiActionService::$pendingConfirmPayload;
-            if ($payload !== null && isset($payload['tool'])) {
-                \App\Services\ToshiActionService::$pendingConfirmPayload = null;
-                return json_encode([
-                    '__tier2_confirm' => true,
-                    'tool' => $payload['tool'],
-                    'args' => $payload['args'],
-                    'preview' => $payload['preview'],
-                ] + (isset($payload['mcp_resume']) ? ['mcp_resume' => $payload['mcp_resume']] : []));
+            // Prefer side-channel over LLM text — covers Orchestrator::run()
+            // swallowing PendingMcpApprovalException into null.
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                return $confirm;
             }
 
             return $response;
+        } catch (PendingMcpApprovalException $e) {
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                return $confirm;
+            }
+
+            Log::warning('SDK v2 MCP approval pause missing side-channel', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         } catch (\Throwable $e) {
+            // Nested pause may have filled the side-channel before a later
+            // failure — never strand a pending approval without a UI card.
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                Log::warning('SDK v2 path failed after MCP pause; surfacing confirm card', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return $confirm;
+            }
+
             Log::warning('SDK v2 path failed, falling back', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
+    }
+
+    /**
+     * Drain ToshiActionService::$pendingConfirmPayload into panel JSON.
+     */
+    private function consumePendingConfirmPayload(): ?string
+    {
+        $payload = ToshiActionService::$pendingConfirmPayload;
+        if ($payload === null || ! isset($payload['tool'])) {
+            return null;
+        }
+
+        ToshiActionService::$pendingConfirmPayload = null;
+
+        return json_encode([
+            '__tier2_confirm' => true,
+            'tool' => $payload['tool'],
+            'args' => $payload['args'],
+            'preview' => $payload['preview'],
+        ] + (isset($payload['mcp_resume']) ? ['mcp_resume' => $payload['mcp_resume']] : []));
     }
 
     /**
@@ -151,7 +202,7 @@ class ToshiSdkV2Service
         }
 
         try {
-            \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+            ToshiActionService::$pendingConfirmPayload = null;
 
             // Scope router (same as ask()) — not an SDK Sub-Agent.
             $agent = $scope === ToshiScope::Platform
@@ -169,19 +220,26 @@ class ToshiSdkV2Service
                 };
             $fullText = '';
 
-            $agent
-                ->stream($query)
-                ->each(function ($event) use ($onChunk, &$fullText) {
-                    if ($event instanceof TextDelta) {
-                        $fullText .= $event->delta;
-                        $onChunk($event->delta);
-                    }
-                })
-                ->then(function ($response) use (&$fullText) {
-                    if (!empty($response->text)) {
-                        $fullText = $response->text;
-                    }
-                });
+            try {
+                $agent
+                    ->stream($query)
+                    ->each(function ($event) use ($onChunk, &$fullText) {
+                        if ($event instanceof TextDelta) {
+                            $fullText .= $event->delta;
+                            $onChunk($event->delta);
+                        }
+                    })
+                    ->then(function ($response) use (&$fullText) {
+                        if (! empty($response->text)) {
+                            $fullText = $response->text;
+                        }
+                    });
+            } catch (PendingMcpApprovalException) {
+                return $this->consumePendingConfirmPayload()
+                    ?? throw new PendingMcpApprovalException(
+                        'MCP approval pause was signalled without a side-channel payload.'
+                    );
+            }
 
             Log::info('SDK v2 path: streamed', [
                 'user_id' => $user->id,
@@ -191,24 +249,35 @@ class ToshiSdkV2Service
                 'agent' => $agent::class,
             ]);
 
-            // Check for pending tool confirmation
-            $payload = \App\Services\ToshiActionService::$pendingConfirmPayload;
-            if ($payload !== null && isset($payload['tool'])) {
-                \App\Services\ToshiActionService::$pendingConfirmPayload = null;
-                return json_encode([
-                    '__tier2_confirm' => true,
-                    'tool' => $payload['tool'],
-                    'args' => $payload['args'],
-                    'preview' => $payload['preview'],
-                ] + (isset($payload['mcp_resume']) ? ['mcp_resume' => $payload['mcp_resume']] : []));
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                return $confirm;
             }
 
             return $fullText;
+        } catch (PendingMcpApprovalException $e) {
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                return $confirm;
+            }
+
+            Log::warning('SDK v2 stream MCP approval pause missing side-channel', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         } catch (\Throwable $e) {
+            $confirm = $this->consumePendingConfirmPayload();
+            if ($confirm !== null) {
+                return $confirm;
+            }
+
             Log::warning('SDK v2 stream failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

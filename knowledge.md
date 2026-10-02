@@ -673,6 +673,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Tests: signup/default/preview set 33 passed; onboarding + filtered Toshi UI 455 passed. Failing-then-passing: 10 failed before `configuredDefault()`, green after.
 - Rebased onto `origin/main` `7fbe8aef` (#953). Staging verification is post-merge: staging is branch-bound to `main`. Production not deployed.
 
+## Current Status: October 2, 2026 (latest) — **Slack §6c fix PR #955 OPEN (CI green); re-run blocked on merge review; wave-1 NOT done; Classroom #728 still blocked**
+
+Follow-up to the §6c FAIL stamp below. **Production untouched.** No staging deploy of this fix yet.
+
+- **Fix PR [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955)** (`fix/slack-6c-catalog-and-approval-ui`, tip `d8188465` or later) — two diagnosed causes only:
+  1. Catalog alignment: `config/toshi.php` Slack `read_tools`/`write_tools` match live MCP names (`slack_search_channels`, `slack_search_public`, `slack_read_channel`, `slack_read_thread` / `slack_send_message`, `slack_schedule_message`, `slack_send_message_draft`); snapshot + `SlackMcpCatalogToolNamesTest`.
+  2. Nested-pause UI: `PendingMcpApprovalException` from `RouteToSlackSkillTool` → Orchestrator rethrow → `ToshiSdkV2Service` `__tier2_confirm` (no stranded pending_approval without a confirm card).
+- **CI:** test-guard + guards green. **Merge:** blocked by branch protection (author cannot self-approve; admin merge not used — AGENTS rule #32). §6c staging re-run **pending merge + staging deploy**.
+- **Out of scope this pass (unchanged):** student-name keyword trap; Gemini tool-calling PARTIAL_FAIL — for orchestrator/Agent-tools work.
+- **Classroom [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728):** still **do not merge** until §6c re-run passes.
+- **Prior FAIL stamp below** remains the last live §6c agent-loop result until the re-run.
+
 ## Current Status: October 2, 2026 (latest) — **Slack §6c E2E FAILED on staging (Gemini); wave-1 NOT done; Classroom #728 still blocked**
 
 Verified after a live staging agent-loop pass with Gemini. **Production untouched.** No app code patched this pass. Classroom PR [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728) remains **not merged** and still blocked on a green §6c.
@@ -2544,6 +2556,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+
+### 2026-10-02: Slack §6c catalog + nested approval UI fix (PR #955)
+- **Work done**: Aligned Slack MCP catalog tool names to live snapshot; threw PendingMcpApprovalException on nested pause so confirm card surfaces; catalog drift test + nested-pause tests; PR opened; CI green; merge blocked on review (no admin bypass).
+- **Files modified**: config/toshi.php; RouteToSlackSkillTool; ToshiOrchestrator; ToshiSdkV2Service; SlackSkill; PendingMcpApprovalException; SlackMcpCatalogToolNamesTest; NestedMcpApprovalSurfacingTest; SlackMcpApprovalFlowTest; AgentToshiSlackApprovalTest; tests/fixtures/slack-mcp-live-tool-names.json; knowledge.md
+- **Key decisions**: Scope limited to two diagnosed §6c root causes; do not touch keyword trap / Gemini PARTIAL_FAIL; no admin merge without rule-#32 go-ahead.
+- **Status**: 🚧 PR #955 open — https://github.com/KlassApp-Foundation/KlassApp/pull/955 — §6c re-run pending merge+staging deploy
+- **Edge cases flagged**: Vendor symlink in worktree pointed autoload at main app/ (use real composer install in worktrees); unknown live tools under classify still gate as writes (intentional fail-closed).
 
 ### 2026-10-02: Slack §6c E2E FAIL on staging (Gemini)
 - **Work done**: Ran Slack §6c live agent-loop E2E on staging with Gemini. Documented FAIL in Current Status + checklist §6c. Confirmed staging LLM still OK. Did **not** patch app code; production untouched; #728 not merged. Left staging fixture note (school_id=2 + synthetic admin 553) for post-follow-up deactivation.
