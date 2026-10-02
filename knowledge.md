@@ -667,13 +667,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 1, 2026 (latest) — **#929 MERGED** `85ccef59` (admin merge, Rasta rule-#32 go-ahead)
+## Current Status: October 2, 2026 (latest) — **Soft-launch UI batch + journeys + AI opt-in + account card shipped; Friday Toshi CTA NO-GO**
+
+- **Tip of `main`:** `3e25b231` (includes #898 personal-data removal + #928 talk-to-sales after soft-launch PRs).
+- **Soft-launch PRs MERGED (admin, Rasta rule-#32):** #938–#946 (1a–2), **#947** AI opt-in `4dfdf010` (`NoSchoolGetsAiByDefaultTest` + AGENTS.md rule 33), **#948** account card Part A `378cbac2`.
+- **Staging deploy:** `depl-a2e1cd88-…` @ `3e25b231` succeeded. Account card Playwright 375+1280 PASS (`e2e/screenshots/softlaunch-4-account-card/`).
+- **Journeys (task 3):** Manual 6/6 PASS (primary/olevel/oalevel × 375/1280). Toshi **0/6 FAIL** — hard checks `three terms` (`terms=[]`) + `whatsapp linked` (`rows=0`); review confirm wrong class names (`Primary 1` / `Senior 1` / `Baby Class`). **Friday “Set up with Toshi” = NO-GO.**
+- **Staging cleanup:** active schools left = Phase 4 Roster Test Fixture (1), Demo Academy Uganda (7), Demo Junior (38), Demo Senior (39); **64** others set `status=0` (no deletes).
+- **Production RO inventory** (`comm-a2e1cff7`, no writes): 52 schools (50 active); 50 with `toshi_enabled=1` (only Lakeview Junior 53 + Model Hill 54 are 0); users 2318 / active 2292; `toshi_mode` column **not on prod yet** (1g not deployed to production). Production not deployed this session.
+- **Open / leave alone:** #682, #890 (Elijah-ug); #822, #821, #786, #732, #728, #935, #936 as previously listed.
+
+## Current Status: October 1, 2026 — **#929 MERGED** `85ccef59` (admin merge, Rasta rule-#32 go-ahead)
 
 - **#929 MERGED** `85ccef59` — Toshi onboarding without AI: `onboardingEnabled` / `assistantEnabled` split; `mode=done` when assistant off; complete-mode commit no longer blocks on school admin's own email; e2e driver checklist-aware. Admin-merged with Rasta's go-ahead (author can't self-approve). Staging journeys + soft-launch steps 2–4 in progress.
 - **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
 - **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
 - **#924 MERGED** earlier this session (logo→home).
-- **#898** personal-data removal — open, awaiting Rasta review (do not merge).
+- **#898** personal-data removal — later MERGED `3e25b231` (2026-10-02).
 - **Deferred:** staff create flashes teachers plan-limit notice (teachers bucket vs support-staff usergroups).
 - **Positioning:** replacement pass on `chore/positioning-everywhere` (task 6). Demo schools (task 7) next. Toshi journeys wait on staging vars.
 
@@ -2505,6 +2515,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-02: Soft-launch finish — journeys NO-GO, 1g + account card, cleanup, prod RO
+- **Work done:** Completed soft-launch queue after 1a–2 already on main. Task 3 journeys on staging (manual PASS both viewports; Toshi FAIL both — terms/WhatsApp/wrong class names). **#947** AI opt-in defaults + `NoSchoolGetsAiByDefaultTest` + AGENTS.md rule 33 MERGED `4dfdf010`. **#948** sidebar account card Part A MERGED `378cbac2` (Playwright 375/1280 PASS). #928/`7fe470dc` + #898/`3e25b231` already merged. Staging cleanup: 64 schools → `status=0`; keep Phase 4 + three Demo schools. Prod RO inventory only (`comm-a2e1cff7`). Staging deploy `depl-a2e1cd88-…` @ `3e25b231`. Production not deployed.
+- **Files:** AgentToshi / CreateSchool / SchoolService / demo seeders; `NoSchoolGetsAiByDefaultTest`; profile-dropdown + dashboard-refresh.css + custom.js; AGENTS.md rule 33; this knowledge stamp.
+- **Decisions:** Friday Toshi CTA NO-GO until all Toshi journeys pass at both viewports. AI remains opt-in for new schools; prod still lacks `toshi_mode` until a production deploy.
+- **Status:** Soft-launch code path complete for this plan; Toshi journey product bugs remain open.
+- **Edge cases:** Staging Commands need Doppler `CLOUD_AGENT_TOOLING` (MCP token alone 403s Commands). Prod school column is `school_category`, not `category`.
 
 ### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929 MERGED
 - **Work done**: (1a–1c) Onboarding/assistant switch split; `mode=done` when assistant off; e2e stall + decide() checklist false-match fixes; complete-mode commit no longer blocks on school admin's own email. (1d) Journeys pending post-merge staging deploy.
