@@ -344,8 +344,29 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
-        // UI switch: no panel work when AI key is missing or the school has Toshi off.
-        if (! app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled($user)) {
+        // Panel visibility (preview / onboarding / assistant). Scripted setup and
+        // the model are gated separately via onboardingEnabled / assistantEnabled.
+        $switch = app(\App\Services\Toshi\ToshiUiSwitch::class);
+        if (! $switch->enabled($user)) {
+            return;
+        }
+
+        // Soft-launch preview: panel stays available but never runs scripted
+        // onboarding, AI, or MCP — Coming soon card only.
+        if ($switch->previewMode($user)) {
+            $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
+            $this->scope = $this->capabilities['scope'] ?? 'school';
+            $this->schoolId = $user->school_id;
+            $this->mode = 'preview';
+            $this->step = 99;
+            $this->messages = [];
+            $this->visible = false;
+            $this->maximized = false;
+
+            return;
+        }
+
+        if (! $switch->onboardingEnabled($user) && ! $switch->assistantEnabled($user)) {
             return;
         }
 
@@ -363,36 +384,51 @@ class AgentToshi extends Component
             // exits stale complete-mode instead of showing 1/18 + red ❌ forever.
             if ($this->scope === 'school' && $user->school_id && $user->usergroup_id === 3) {
                 $this->reconcileSchoolOnboardingMode($user);
+                $this->demoteAssistantIfDisabled();
                 if ($this->mode === 'assistant' && empty($this->messages)) {
                     $this->botSay($this->getAssistantGreeting());
                 }
+
                 return;
             }
 
+            $this->demoteAssistantIfDisabled();
             if ($this->mode === 'assistant' && empty($this->messages)) {
                 $this->botSay($this->getAssistantGreeting());
             }
+
             return;
         }
 
         // ── Platform scope (super admin) ──
         if ($this->scope === 'platform') {
-            $this->mode = 'assistant';
             $this->step = 99;
-
-            $greeting = $this->getAssistantGreeting();
 
             $draft = OnboardingSession::where('user_id', $user->id)
                 ->where('status', 'draft')
                 ->latest()
                 ->first();
-            if ($draft) {
-                $stepName = $this->steps[$draft->step] ?? 'setup';
-                $greeting .= " By the way, you have an unfinished school setup on the **" . ucfirst(str_replace('_', ' ', $stepName)) . "** step. Say **'create school'** to start fresh or continue where you left off.";
-                $this->draftSessionId = $draft->id;
+
+            if ($this->isAssistantEnabled()) {
+                $this->mode = 'assistant';
+                $greeting = $this->getAssistantGreeting();
+                if ($draft) {
+                    $stepName = $this->steps[$draft->step] ?? 'setup';
+                    $greeting .= " By the way, you have an unfinished school setup on the **" . ucfirst(str_replace('_', ' ', $stepName)) . "** step. Say **'create school'** to start fresh or continue where you left off.";
+                    $this->draftSessionId = $draft->id;
+                }
+                $this->botSay($greeting);
+            } else {
+                $this->mode = 'done';
+                $greeting = "Hi! Use **/create** to set up a new school.";
+                if ($draft) {
+                    $stepName = $this->steps[$draft->step] ?? 'setup';
+                    $greeting .= " You also have an unfinished school setup on the **" . ucfirst(str_replace('_', ' ', $stepName)) . "** step.";
+                    $this->draftSessionId = $draft->id;
+                }
+                $this->botSay($greeting);
             }
 
-            $this->botSay($greeting);
             return;
         }
 
@@ -407,27 +443,54 @@ class AgentToshi extends Component
                 : [];
 
             if (empty($missing)) {
-                $this->mode = 'assistant';
-                $this->step = 99;
-                $this->botSay($this->getAssistantGreeting());
+                if ($this->isAssistantEnabled()) {
+                    $this->mode = 'assistant';
+                    $this->step = 99;
+                    $this->botSay($this->getAssistantGreeting());
+                } else {
+                    $this->enterSetupDoneMode();
+                    $this->persistState();
+                }
+
                 return;
             }
 
             $this->mode = 'complete';
-            if (request()->boolean('toshi_onboarding') || session()->pull('open_toshi_onboarding')) {
+            // Drain legacy flash; never auto-maximize after signup (blocks Manual @375).
+            session()->pull('open_toshi_onboarding');
+            if (request()->boolean('toshi_onboarding')) {
                 $this->visible = true;
                 $this->maximized = true;
             }
             $this->botSay("Hello! Let's finish setting up **{$school->name}** on KlassApp.");
             $this->detectMissingSteps();
+
             return;
         }
 
-        // ── Fallback: assistant mode ──
-        $this->mode = 'assistant';
-        $this->scope = 'school';
-        $this->step = 99;
-        $this->botSay($this->getAssistantGreeting());
+        // ── Fallback ──
+        if ($this->isAssistantEnabled()) {
+            $this->mode = 'assistant';
+            $this->scope = 'school';
+            $this->step = 99;
+            $this->botSay($this->getAssistantGreeting());
+        } else {
+            $this->scope = 'school';
+            $this->enterSetupDoneMode();
+            $this->persistState();
+        }
+    }
+
+    /**
+     * If session restored assistant mode but the school/key gate is off, land in done.
+     */
+    private function demoteAssistantIfDisabled(): void
+    {
+        if ($this->mode === 'assistant' && ! $this->isAssistantEnabled()) {
+            $this->messages = [];
+            $this->enterSetupDoneMode();
+            $this->persistState();
+        }
     }
 
     /**
@@ -799,22 +862,88 @@ class AgentToshi extends Component
 
     /**
      * Exit Completing Setup UI (mode badge, 1/18 bar, red ❌ checklist messages).
+     *
+     * When the assistant is off for this school, land in mode=done (finished
+     * state with next-step links) — never assistant mode, never a model call.
      */
     private function exitCompletingSetupMode(?string $message = null): void
     {
-        $this->mode = 'assistant';
         $this->step = 99;
         $this->substep = 0;
         $this->actionStep = null;
         $this->actionSubstep = 0;
+        $this->pendingToolConfirm = null;
+        $this->awaitingConfirm = false;
         $this->messages = [];
-        if ($message) {
-            $this->botSay($message);
-            $this->botSay('If you need help with anything, just ask.');
+
+        $user = auth()->user() ?? auth('web')->user();
+        if (app(\App\Services\Toshi\ToshiUiSwitch::class)->assistantEnabled($user)) {
+            $this->mode = 'assistant';
+            if ($message) {
+                $this->botSay($message);
+                $this->botSay('If you need help with anything, just ask.');
+            } else {
+                $this->botSay($this->getAssistantGreeting());
+            }
         } else {
-            $this->botSay($this->getAssistantGreeting());
+            $this->enterSetupDoneMode($message);
         }
+
         $this->persistState();
+    }
+
+    /**
+     * Finished-state when scripted onboarding is done but the AI assistant is off.
+     * Soft launch: show the Coming soon card (same UI as preview) — no AI path.
+     */
+    private function enterSetupDoneMode(?string $message = null): void
+    {
+        $this->mode = 'preview';
+        $this->step = 99;
+        $this->substep = 0;
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+        $this->pendingToolConfirm = null;
+        $this->awaitingConfirm = false;
+        $this->messages = [];
+        $this->maximized = false;
+        // $message retained for callers; Coming soon card carries the copy.
+        unset($message);
+    }
+
+    /**
+     * Soft-launch: no active setup step — show Coming soon (no AI / MCP).
+     */
+    private function enterComingSoonMode(): void
+    {
+        $this->enterSetupDoneMode();
+        $this->persistState();
+    }
+
+    /**
+     * Soft-launch: unrecognised free-form mid-setup stays on the current step,
+     * re-asks the question (chips stay available), and notes Coming soon.
+     */
+    private function repromptCurrentSetupStepForUnhandledFreeForm(): void
+    {
+        if (is_string($this->actionStep) && str_starts_with($this->actionStep, 'onboarding_')) {
+            $key = substr($this->actionStep, strlen('onboarding_'));
+            $this->botSay(self::onboardingPromptForStep($key));
+        } elseif (in_array($this->mode, ['create', 'complete'], true)) {
+            $this->callStepHandler('');
+        }
+
+        $this->botSay("Toshi's assistant is coming soon; for now, please choose one of the options above.");
+    }
+
+    /**
+     * True when free-form AI assistant paths may run for the current user.
+     */
+    private function isAssistantEnabled(): bool
+    {
+        $user = auth()->user() ?? auth('web')->user();
+
+        return app(\App\Services\Toshi\ToshiUiSwitch::class)->assistantEnabled($user);
     }
 
     /**
@@ -1116,6 +1245,10 @@ class AgentToshi extends Component
     // ── Button-driven confirm/edit ──
     public function confirmYes()
     {
+        if ($this->mode === 'preview') {
+            return;
+        }
+
         $this->awaitingConfirm = false;
 
         // Check for pending tool confirmation first
@@ -1133,6 +1266,11 @@ class AgentToshi extends Component
             // executes through ApprovableMcpTool::handle (single legal write
             // path) and audits via the resolved-approval listeners.
             if ($mcpResume !== null) {
+                if (! $this->isAssistantEnabled()) {
+                    $this->botSay('The Toshi assistant is off for your school. This approval was not sent.');
+
+                    return;
+                }
                 $this->resumeMcpApproval($mcpResume, approved: true);
                 return;
             }
@@ -1182,6 +1320,10 @@ class AgentToshi extends Component
     }
     public function confirmNo()
     {
+        if ($this->mode === 'preview') {
+            return;
+        }
+
         $this->awaitingConfirm = false;
 
         // Check for pending tool confirmation
@@ -1196,6 +1338,11 @@ class AgentToshi extends Component
             // resolved-approval listener audits it as approval_rejected.
             if ($mcpResume !== null) {
                 $this->planPendingConfirmStep = -1;
+                if (! $this->isAssistantEnabled()) {
+                    $this->botSay('The Toshi assistant is off for your school. This approval was not sent.');
+
+                    return;
+                }
                 $this->resumeMcpApproval($mcpResume, approved: false);
                 return;
             }
@@ -1414,6 +1561,12 @@ class AgentToshi extends Component
      */
     private function resumeMcpApproval(array $resume, bool $approved): void
     {
+        if (! $this->isAssistantEnabled()) {
+            $this->botSay('The Toshi assistant is off for your school. This approval was not sent.');
+
+            return;
+        }
+
         $agentClass = $resume['agent_class'] ?? null;
         $conversationId = $resume['conversation_id'] ?? null;
         $approvalId = $resume['approval_id'] ?? null;
@@ -1608,6 +1761,12 @@ class AgentToshi extends Component
     public function switchMode(string $targetMode): void
     {
         if ($targetMode === 'assistant') {
+            if (! $this->isAssistantEnabled()) {
+                $this->enterSetupDoneMode();
+                $this->persistState();
+
+                return;
+            }
             $this->mode = 'assistant';
             $this->step = 99;
             $this->actionStep = null;
@@ -2811,9 +2970,12 @@ class AgentToshi extends Component
             }
         }
         // Dock open/closed is owned by localStorage + body/html.toshi-collapsed
-        // (toshi-prepaint / toshi-embed). Do not force $visible=false here — that
-        // fought CSS persistence under 1280 (#917). Reset maximized only so a
-        // refreshed page does not reopen the full-screen modal unexpectedly.
+        // (toshi-prepaint / toshi-embed). Soft-launch 1b: never restore a prior
+        // open/maximized paint — session used to leave $visible=true and the
+        // ≤1279 drawer CSS painted over the page even while collapsed. The
+        // Alpine syncVisibleFromDock handler re-opens $visible when the user
+        // expands the dock.
+        $this->visible = false;
         $this->maximized = false;
         return true;
     }
@@ -2965,6 +3127,13 @@ class AgentToshi extends Component
     // ── Assistant mode — keyword router first (zero cost), then LLM, then fallback ──
     private function handleAssistantQuery(string $text): void
     {
+        // Defense in depth: never reach the SDK / model when the assistant is off.
+        if (! $this->isAssistantEnabled()) {
+            $this->fallbackMessage();
+
+            return;
+        }
+
         // Reset cross-request flags — Livewire properties persist between queries
         $this->streamingMessagePlaced = false;
         $this->streamingMessageId = '';
@@ -3849,6 +4018,12 @@ class AgentToshi extends Component
     // ── Handle user input ──
     public function send()
     {
+        if ($this->mode === 'preview') {
+            $this->input = '';
+
+            return;
+        }
+
         $text = trim($this->input);
         if ($text === '') return;
 
@@ -3931,6 +4106,14 @@ class AgentToshi extends Component
             }
         }
 
+        // Setup finished / Coming soon — before actionStep, so a stale action
+        // cannot keep free-form inside scripted handlers after setup is done.
+        if (in_array($this->mode, ['done', 'preview'], true)) {
+            $this->enterComingSoonMode();
+
+            return;
+        }
+
         // Active action flow (multi-step, e.g. add student, enter marks)
         if ($this->actionStep) {
             $this->handleActionFlow($text);
@@ -3939,6 +4122,12 @@ class AgentToshi extends Component
 
         // Assistant mode — school is set up, Toshi can answer questions
         if ($this->mode === 'assistant') {
+            if (! $this->isAssistantEnabled()) {
+                $this->enterComingSoonMode();
+
+                return;
+            }
+
             // Phase 3: Check if the query is a multi-step batch.
             // If so, show a plan card instead of going straight to the orchestrator.
             $plan = app(\App\Services\ToshiPlanService::class)->generatePlan($text);
@@ -4514,8 +4703,8 @@ class AgentToshi extends Component
 
                 return;
             }
-            $school->toshi_enabled = 1;
-            $school->save();
+            // Do not flip schools.toshi_enabled here — that gates the AI assistant
+            // (early access), not scripted onboarding.
         }
 
         $this->botSay("✅ Curriculum set to **" . strtoupper($choice) . "**.");
@@ -4634,11 +4823,9 @@ class AgentToshi extends Component
     {
         $normalized = $this->normalizeStudentSizeInput($text);
         if ($normalized === null) {
-            $options = implode(', ', array_map(
-                fn (string $o) => "**{$o}**",
-                \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS
-            ));
-            $this->botSay("Please choose one of: {$options}.");
+            // Soft launch: stay on this step; re-ask with chips + Coming soon hint.
+            // Do not leave scripted onboarding for free-form / assistant.
+            $this->repromptCurrentSetupStepForUnhandledFreeForm();
 
             return;
         }
@@ -4691,6 +4878,9 @@ class AgentToshi extends Component
             '<500' => 'Up to 500',
             '0-500' => 'Up to 500',
             '0to500' => 'Up to 500',
+            '100-300' => 'Up to 500',
+            '100-300students' => 'Up to 500',
+            'under500' => 'Up to 500',
             '500' => 'Up to 500',
             'upto1000' => 'Up to 1,000',
             'upto1,000' => 'Up to 1,000',
@@ -6071,13 +6261,18 @@ class AgentToshi extends Component
             return;
         }
 
-        // Pre-flight: check if admin email is already taken
-        if ($this->adminEmail && \App\Models\User::where('email', $this->adminEmail)->exists()) {
+        // Create-mode only: a brand-new admin email must be unique.
+        // Complete-mode school admins already exist — blocking on their own
+        // email left Confirm & Complete Setup permanently stuck (review card
+        // never committed, draft terms/fees never persisted).
+        if ($this->mode !== 'complete' && $this->adminEmail
+            && \App\Models\User::where('email', $this->adminEmail)->exists()) {
             $this->botSay("⚠️ The email **{$this->adminEmail}** is already in use. Use the **Edit** button to choose a different admin email.");
             return;
         }
 
         try {
+            $wasComplete = $this->mode === 'complete';
             $this->resolveCollectedDataForCommit();
             $this->commitAll();
             $this->deleteDraft();
@@ -6088,16 +6283,16 @@ class AgentToshi extends Component
             $this->reviewData['adminHasPassword'] = !empty($this->adminPassword);
             $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
             $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
-            $this->reviewData['mode'] = $this->mode;
+            $this->reviewData['mode'] = $wasComplete ? 'complete' : $this->mode;
             $this->step = 99;
-            // Welcome message for school admin completing setup
-            if ($this->mode === 'complete') {
+            if ($wasComplete) {
+                // Assistant off → mode=done with next-step links; assistant on → assistant.
                 $schoolName = optional(\App\Models\School::find($this->schoolId))->name ?? 'your school';
-                $this->botSay("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
+                $this->exitCompletingSetupMode("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
+            } else {
+                // Super admin stays in create mode to onboard another school.
+                $this->mode = 'create';
             }
-            // After completing onboarding: school admin goes to assistant mode for Q&A,
-            // super admin stays in create mode to onboard another school.
-            $this->mode = $this->mode === 'complete' ? 'assistant' : 'create';
         } catch (\Illuminate\Validation\ValidationException $e) {
             $msg = collect($e->errors())->flatten()->first() ?: 'Please check the form and try again.';
             $this->botSay('⚠️ '.$msg);
@@ -6373,7 +6568,9 @@ class AgentToshi extends Component
                     'curriculum'    => $this->curriculum ?: 'uneb',
                     'school_pay_api_password' => $this->schoolPayPassword ?: null,
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
-                    'toshi_enabled' => 1,
+                    // Soft-launch 1g: AI is opt-in — never enable assistant on create.
+                    'toshi_enabled' => 0,
+                    'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
@@ -6584,7 +6781,8 @@ class AgentToshi extends Component
                         && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
                         $school->uneb_center_number = $this->unebCenterNumber;
                     }
-                    $school->toshi_enabled = 1;
+                    // Persist identity fields only — do not enable the AI assistant
+                    // as a side effect of create/complete onboarding.
                     $school->save();
 
                     if ($this->selectedPlanId && ! CurrentPlan::where('school_id', $schoolId)->exists()) {

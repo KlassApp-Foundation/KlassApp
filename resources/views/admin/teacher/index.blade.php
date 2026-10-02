@@ -6,7 +6,7 @@
     @include('layouts.partials.page-header', [
         'title' => 'Teachers',
         'subtitle' => 'A clear view of your teaching team and staff accounts.',
-        'actions' => '<span class="ds-kpi-card !px-3 !py-2"><span class="ds-kpi-value !text-lg">' . $count . '</span><span class="ds-kpi-label">Total staff</span></span>'
+        'actions' => '<span class="ds-kpi-card !px-3 !py-2 inline-flex items-baseline gap-2"><span class="ds-kpi-value !text-lg !m-0">' . $count . '</span><span class="ds-kpi-label !m-0">Total staff</span></span>'
     ])
 
     @include('partials.message')
@@ -18,7 +18,7 @@
                     <label class="ds-label" for="teachers-search">Search staff</label>
                     <div class="relative">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
-                        <input id="teachers-search" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Name, email or phone" class="ds-form-input pl-10">
+                        <input id="teachers-search" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Name, email or phone" class="ds-form-input ds-form-input--with-icon pl-10">
                     </div>
                 </div>
                 <div class="w-[112px]">
@@ -54,7 +54,13 @@
                 <h2 class="text-sm font-semibold text-slate-900">Staff directory</h2>
                 <p class="mt-0.5 text-xs text-slate-500">{{ number_format($count) }} staff member{{ $count === 1 ? '' : 's' }} shown</p>
             </div>
-            <a href="{{ url('/admin/import') }}" class="ds-btn ds-btn-ghost text-sm">Import list</a>
+            <div class="flex items-center gap-2 flex-wrap">
+                <a href="{{ url('/admin/import') }}" class="ds-btn ds-btn-ghost text-sm">Import list</a>
+                <a href="{{ url('/admin/teacher/add') }}" class="ds-btn ds-btn-primary text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Add teacher
+                </a>
+            </div>
         </div>
         @if ($teachers->isEmpty())
             <div class="ds-table-empty ds-empty-state">

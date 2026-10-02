@@ -2,6 +2,7 @@
 <div x-data="{ open: false }" @click.away="open = false" style="position:relative;">
     <button @click="open = !open" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;border:1px solid #e8e6dc;background:#FFFFFF;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;color:#5e5d59;transition:all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
         @if($mode === 'assistant')<span style="color:#22C55E;">●</span> Toshi Agent
+        @elseif($mode === 'done')<span style="color:#22C55E;">●</span> School ready
         @elseif($mode === 'create')<span style="color:#D97706;">●</span> Creating School
         @else<span style="color:#1E6FD9;">●</span> Completing Setup ✅
         @endif
@@ -18,10 +19,12 @@
             @if($mode === 'create')<span style="margin-left:auto;color:#D97706;">✓</span>@endif
         </button>
         @else
+        @toshiAssistant
         <button wire:click="switchMode('assistant')" type="button" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;border-radius:6px;background:{{ $mode === 'assistant' ? '#F0FDF4' : 'transparent' }};cursor:pointer;font-size:13px;text-align:left;color:#141413;font-weight:{{ $mode === 'assistant' ? '600' : '400' }};" onmouseover="this.style.background='#F5F5F5'" onmouseout="this.style.background='{{ $mode === 'assistant' ? '#F0FDF4' : 'transparent' }}'">
             <span style="color:#22C55E;font-size:16px;">💬</span> <span>Toshi Agent</span>
             @if($mode === 'assistant')<span style="margin-left:auto;color:#22C55E;">✓</span>@endif
         </button>
+        @endtoshiAssistant
         @endif
         <div style="border-top:1px solid #f0f0f0;margin:4px 0;"></div>
         <div style="padding:6px 10px;font-size:11px;color:#87867f;line-height:1.4;">

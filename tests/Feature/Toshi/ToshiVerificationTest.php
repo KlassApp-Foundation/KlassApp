@@ -207,6 +207,8 @@ class ToshiVerificationTest extends TestCase
             'phone' => '070' . random_int(1000000, 9999999),
             'status' => 1,
             'registration_country' => 'Uganda',
+            'toshi_mode' => \App\Enums\ToshiMode::Assistant,
+            'toshi_enabled' => 1,
         ]);
     }
 }

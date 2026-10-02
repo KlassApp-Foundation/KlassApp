@@ -120,7 +120,8 @@ class DemoJuniorSchoolSeeder extends Seeder
             'status' => 1,
             'is_demo' => 1,
             'is_test' => 1,
-            'toshi_enabled' => 1,
+            'toshi_enabled' => 0,
+            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
         ])->save();
 
         $this->school = $school->refresh();
@@ -331,7 +332,7 @@ class DemoJuniorSchoolSeeder extends Seeder
                     [
                         'standardLink_id' => $link->id,
                         'academic_status' => 'pass',
-                        'lin' => $n % 3 === 0 ? 'UG-DEMO-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
+                        'lin' => $n % 3 === 0 ? 'UG-JUN-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
                     ]
                 );
                 unset($academic);

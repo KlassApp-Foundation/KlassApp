@@ -1,5 +1,6 @@
 // Signup driver + validation battery for the public /register form.
 const { expect } = require('@playwright/test');
+const { runStagingJson } = require('./stg-bridge');
 
 async function open(page) {
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
@@ -73,10 +74,40 @@ async function runValidationBattery(page, data) {
     return results;
 }
 
+/**
+ * Soft-launch #904: register lands on /register/verify. Staging mail is log-only,
+ * so re-issue a fresh code via the Cloud bridge and submit it in the browser.
+ */
+async function completeEmailVerification(page, data) {
+    const issued = runStagingJson(`
+        $email = ${JSON.stringify(data.admin.email)};
+        $u = \\App\\Models\\User::where('email', $email)->first();
+        if (! $u) { echo "<<<E2E-JSON>>>" . json_encode(['ok' => false, 'error' => 'user-not-found']); return; }
+        $code = app(\\App\\Services\\EmailVerificationCodeService::class)->issue($u);
+        echo "<<<E2E-JSON>>>" . json_encode(['ok' => true, 'code' => $code]);
+    `);
+    if (! issued.ok || ! issued.code) {
+        throw new Error('e2e signup: could not issue verification code on staging: ' + JSON.stringify(issued));
+    }
+
+    const codeInput = page.locator('input[name="code"], #code, input[placeholder="000000"]').first();
+    await expect(codeInput).toBeVisible({ timeout: 30_000 });
+    await codeInput.fill(String(issued.code));
+    await page.getByRole('button', { name: /confirm email/i }).click();
+    await page.waitForLoadState('load', { timeout: 90_000 }).catch(() => {});
+}
+
 async function signupValid(page, data) {
     await open(page);
     await fill(page, data);
     await submit(page);
+
+    const url = page.url();
+    const body = await page.locator('body').innerText().catch(() => '');
+    if (/register\/verify/i.test(url) || /check your email|6-digit code/i.test(body)) {
+        await completeEmailVerification(page, data);
+    }
+
     await page.waitForURL(/\/admin\/dashboard/, { timeout: 120_000 });
     const errors = await readErrors(page).catch(() => []);
     return { landedOnDashboard: /\/admin\/dashboard/.test(page.url()), inlineErrors: errors };

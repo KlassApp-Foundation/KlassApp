@@ -101,8 +101,10 @@ class ProfilePhotoComponentTest extends TestCase
         $this->assertStringContainsString('--d-avatar-ring: rgba(34, 197, 94, 0.3);', file_get_contents(public_path('css/dashboard-refresh.css')));
 
         $dropdown = file_get_contents(resource_path('views/layouts/partials/profile-dropdown.blade.php'));
-        $this->assertStringContainsString('<x-profile-photo :user="Auth::user()" size="xs" shape="circle"', $dropdown);
-        $this->assertSame(2, substr_count($dropdown, '<x-profile-photo :user="Auth::user()" size="sm"'));
+        // Soft-launch Part A: 40px square trigger + menu header (no circle xs).
+        $this->assertStringNotContainsString('size="xs" shape="circle"', $dropdown);
+        // Trigger + if/else header photos (only one header branch renders at runtime).
+        $this->assertSame(3, substr_count($dropdown, '<x-profile-photo :user="Auth::user()" size="sm"'));
         $this->assertStringNotContainsString('rgba(34,197,94,0.3)', $dropdown);
         $this->assertStringNotContainsString('AvatarPath', $dropdown);
 

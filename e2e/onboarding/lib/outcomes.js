@@ -1,6 +1,6 @@
 // Staging DB outcome checks for a journey school (read-only queries + the
 // is_test flag write that marks every E2E school).
-const { runStagingJson } = require('./stg-bridge');
+const { runStagingJson, wakeStaging } = require('./stg-bridge');
 
 const phpStr = (v) => JSON.stringify(String(v));
 
@@ -38,6 +38,7 @@ function setTestFlag(email) {
 }
 
 function fetchOutcome(email) {
+    wakeStaging();
     return runStagingJson(`
         $email = ${phpStr(email)};
         $u = \\App\\Models\\User::where('email', $email)->first();
@@ -52,6 +53,7 @@ function fetchOutcome(email) {
                 'category' => $school?->school_category,
                 'curriculum' => $school?->curriculum,
                 'registration_country' => $school?->registration_country,
+                'emis' => $school?->ministry_code,
             ],
             'sections' => \\App\\Models\\Section::where('school_id', $sid)->orderBy('id')->pluck('name')->all(),
             'standards' => \\App\\Models\\Standard::where('school_id', $sid)->orderBy('id')->pluck('name')->all(),
@@ -82,10 +84,13 @@ function evaluate(out, data) {
     const findings = [];
     const add = (name, ok, detail) => checks.push({ name, ok, detail: detail ?? '' });
 
+    // Hard checks: a pass means the school was actually set up in the DB
+    // (not merely that the chat looked finished). Soft findings stay below.
     add('school flagged is_test', out.school.is_test === 1, `is_test=${out.school.is_test}`);
     add('school named E2E ...', String(out.school.name || '').startsWith('E2E '), out.school.name);
     add('category set', out.school.category === data.type.category, `category=${out.school.category}`);
     add('curriculum UNEB', String(out.school.curriculum || '').toLowerCase().includes('uneb'), `curriculum=${out.school.curriculum}`);
+    add('country Uganda', String(out.school.registration_country || '').toLowerCase().includes('uganda'), `country=${out.school.registration_country}`);
 
     const missingSections = data.type.sections.filter((s) => !out.sections.includes(s));
     const extraSections = out.sections.filter((s) => !data.type.sections.includes(s));
@@ -103,6 +108,7 @@ function evaluate(out, data) {
     }
     add('whatsapp linked', out.whatsapp >= 1, `rows=${out.whatsapp}`);
     add('plan selected', out.plan >= 1, `rows=${out.plan}`);
+    add('school id present', Number(out.school_id) > 0, `school_id=${out.school_id}`);
 
     if (data.mode === 'manual') {
         // Streams are section-per-stream: '<Class> <Stream>' (e.g. 'Primary One Blue').

@@ -27,7 +27,7 @@
                     <label class="ds-label" for="students-search">Search</label>
                     <div class="relative">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input id="students-search" type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search by student name" class="ds-form-input pl-10">
+                        <input id="students-search" type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search by student name" class="ds-form-input ds-form-input--with-icon pl-10">
                     </div>
                 </div>
 

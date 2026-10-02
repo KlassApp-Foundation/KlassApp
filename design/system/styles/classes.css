@@ -390,6 +390,12 @@ a.ds-kpi-card:hover {
 
 .ds-form-input::placeholder { color: var(--d-muted); }
 
+/* Icon-prefixed search fields: .ds-form-input shorthand padding otherwise beats Tailwind pl-10 */
+.ds-form-input.ds-form-input--with-icon {
+    padding-left: 2.5rem;
+}
+
+
 .ds-form-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e5d59' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -588,10 +594,16 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     border-color: #b45309;
 }
 
-/* ── Profile Dropdown ──
-   The .profile-click JS toggles .open on click. This rule shows the dropdown. */
+/* ── Profile Dropdown / soft-launch account card (Part A) ──
+   Mirror of public/css/dashboard-refresh.css account-card rules. */
 
-.profile-click.open .user-dtl {
+.profile-click.account-card {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+}
+.profile-click.open .account-card__menu.user-dtl {
     display: block !important;
 }
 

@@ -541,6 +541,12 @@ a.ds-kpi-card:hover {
 
 .ds-form-input::placeholder { color: var(--d-muted); }
 
+/* Icon-prefixed search fields: .ds-form-input shorthand padding otherwise beats Tailwind pl-10 */
+.ds-form-input.ds-form-input--with-icon {
+    padding-left: 2.5rem;
+}
+
+
 .ds-form-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e5d59' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -757,11 +763,161 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     border-color: var(--d-warning-dk);
 }
 
-/* ── Profile Dropdown ──
-   The .profile-click JS toggles .open on click. This rule shows the dropdown. */
+/* ── Profile Dropdown / soft-launch account card (Part A) ──
+   The .profile-click JS toggles .open; the menu opens above the footer trigger. */
 
-.profile-click.open .user-dtl {
+.profile-click.account-card {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+}
+.account-card__trigger {
+    width: 100%;
+    min-height: 56px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--d-text, #0F172A);
+}
+.account-card__trigger:hover,
+.profile-click.open .account-card__trigger {
+    background: #F1F5F9;
+}
+.account-card__trigger:focus-visible,
+.account-card__item:focus-visible {
+    outline: 3px solid #1E6FD9;
+    outline-offset: 2px;
+}
+.account-card__identity {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.account-card__name,
+.account-card__email {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: ltr;
+    text-align: left;
+}
+.account-card__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+}
+.account-card__email {
+    font-size: 12.5px;
+    color: var(--d-text-secondary, #64748B);
+}
+.account-card__chevron {
+    flex-shrink: 0;
+    color: var(--d-text-secondary, #64748B);
+}
+.account-card__menu.user-dtl {
+    display: none;
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: calc(100% + 6px);
+    top: auto;
+    width: auto;
+    margin: 0;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid var(--d-border-strong, #CBD5E1);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+    z-index: 40;
+}
+.profile-click.open .account-card__menu.user-dtl {
     display: block !important;
+}
+.account-card__who {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 10px 10px 12px;
+    border-bottom: 1px solid var(--d-border, #E2E8F0);
+    margin-bottom: 4px;
+}
+.account-card__who-photo {
+    display: flex;
+    text-decoration: none;
+}
+.account-card__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.account-card__item {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    text-decoration: none;
+    color: var(--d-text, #0F172A);
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    text-align: left;
+}
+.account-card__item:hover {
+    background: #F1F5F9;
+}
+.account-card__item .dtl-icon {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: inherit;
+}
+.account-card__item--danger {
+    color: #B91C1C;
+}
+.account-card__sep {
+    height: 1px;
+    background: var(--d-border, #E2E8F0);
+    margin: 4px 6px;
+    list-style: none;
+}
+.account-card__logout-form {
+    margin: 0;
+}
+
+/* Collapsed rail: avatar-only trigger; card opens to the right */
+body.sidebar-collapsed #admin-sidebar .account-card__identity,
+body.sidebar-collapsed #admin-sidebar .account-card__chevron {
+    display: none;
+}
+body.sidebar-collapsed #admin-sidebar .account-card__trigger {
+    width: 48px;
+    min-height: 48px;
+    padding: 4px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+}
+body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
+    left: calc(100% + 8px);
+    right: auto;
+    bottom: 0;
+    width: 280px;
 }
 
 /* ── Layout Override ──
@@ -3512,29 +3668,17 @@ body.toshi-manual-wizard [data-toshi-root] {
     background: #E2E8F0;
 }
 
-/* ── Sidebar footer (profile + notifications, relocated from the header) ──
-   The .profile-click JS toggles .open on click; .user-dtl opens ABOVE the
-   footer anchor (bottom-anchored menu). The notification drawer is
-   position:fixed and position-independent. In the collapsed rail the footer
-   centres its icons and the user name hides like the menu labels. */
+/* ── Sidebar footer (profile + notifications, relocated from the header) ── */
 .dashboard-sidebar-footer {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 12px;
+    padding: 8px;
     border-top: 1px solid var(--d-border, #E2E8F0);
     position: relative;
     flex-shrink: 0;
 }
-.dashboard-sidebar-footer .profile-click { display: flex; align-items: center; min-width: 0; }
-.dashboard-sidebar-footer .profile-click img { width: 32px; height: 32px; flex-shrink: 0; }
-.dashboard-sidebar-footer .user-dtl {
-    /* Anchor to the footer, opening upward; inherits card styling from app.css */
-    bottom: calc(100% + 8px);
-    top: auto;
-    right: 8px;
-    margin-top: 0;
-}
+.dashboard-sidebar-footer .profile-click { display: flex; align-items: center; min-width: 0; flex: 1; }
 .dashboard-sidebar-footer-bell { display: flex; align-items: center; }
 .dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
 .dashboard-sidebar-footer-bell svg.w-8 { width: 22px; height: 22px; color: var(--d-text-secondary, #64748B); }
@@ -3543,11 +3687,19 @@ body.toshi-manual-wizard [data-toshi-root] {
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { justify-content: center; padding-left: 0.25rem; padding-right: 0.25rem; }
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
 
-/* Mobile menu sidebar (res_sidebar) — dark surface, so lift the footer chrome */
+/* Mobile menu drawer — account card stays light; chrome tint for the footer edge */
 #res_sidebar .dashboard-sidebar-footer { border-top-color: rgba(255,255,255,0.15); }
 #res_sidebar .dashboard-sidebar-footer-bell svg { color: #E2E8F0; }
-#res_sidebar .dashboard-sidebar-footer .user-info .user-name { color: #F8FAFC; }
-#res_sidebar .dashboard-sidebar-footer .user-info .user-email { color: #94A3B8; }
+#res_sidebar .account-card__trigger:hover,
+#res_sidebar .profile-click.open .account-card__trigger { background: rgba(255,255,255,0.08); }
+#res_sidebar .account-card__name { color: #F8FAFC; }
+#res_sidebar .account-card__email { color: #94A3B8; }
+#res_sidebar .account-card__chevron { color: #94A3B8; }
+#res_sidebar .account-card__menu.user-dtl {
+    left: 8px;
+    right: 8px;
+    width: auto;
+}
 
 /* ── Reduced motion ────────────────────────────────────────────────────────
    Disables every infinite loop in this stylesheet:

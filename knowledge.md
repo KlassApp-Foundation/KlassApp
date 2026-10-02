@@ -667,8 +667,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 1, 2026 (latest) — Soft-launch docs #922 + robots #899 MERGED; positioning PR in flight
+## Current Status: October 1, 2026 (latest) — **#929 MERGED** `85ccef59` (admin merge, Rasta rule-#32 go-ahead)
 
+- **#929 MERGED** `85ccef59` — Toshi onboarding without AI: `onboardingEnabled` / `assistantEnabled` split; `mode=done` when assistant off; complete-mode commit no longer blocks on school admin's own email; e2e driver checklist-aware. Admin-merged with Rasta's go-ahead (author can't self-approve). Staging journeys + soft-launch steps 2–4 in progress.
 - **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
 - **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
 - **#924 MERGED** earlier this session (logo→home).
@@ -2504,6 +2505,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929 MERGED
+- **Work done**: (1a–1c) Onboarding/assistant switch split; `mode=done` when assistant off; e2e stall + decide() checklist false-match fixes; complete-mode commit no longer blocks on school admin's own email. (1d) Journeys pending post-merge staging deploy.
+- **PR**: [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) · **MERGED** `85ccef59` (admin-merged with Rasta's go-ahead; author can't self-approve)
+- **Files**: `ToshiUiSwitch`, `AgentToshi`, `AppServiceProvider`, `ToshiActivityController`, blades, PHPUnit, `e2e/onboarding/lib/{toshi,journey-data,outcomes,signup}.js`
+- **Status**: ✅ MERGED to `main`; staging deploy + manual/Toshi journeys in progress
+- **Edge cases / findings**:
+  1. `decide()` matched checklist labels (`Academic terms` → `yes` as school name) — fixed bot-bubble-only matching.
+  2. Complete-mode `commit()` email uniqueness check blocked Confirm forever — fixed before merge.
+  3. Staging cleanup / #928 / #898 / dashboard / account-card follow under the same rule-#32 plan go-ahead.
 
 ### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
 - **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.

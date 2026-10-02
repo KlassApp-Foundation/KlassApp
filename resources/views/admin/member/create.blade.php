@@ -21,12 +21,6 @@
         @csrf
 
         <create-member url="{{url('/')}}"></create-member>
-
-        <portal to="address">
-            <div class="w-full">
-                <x-form-group name="address" label="Address" type="text" :value="old('address')"></x-form-group>
-            </div>
-        </portal>
     </form>
 </div>
 

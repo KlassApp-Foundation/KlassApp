@@ -33,7 +33,7 @@ class NavigationController extends Controller
 
         $array['current_year'] = $current_year;
 
-        return json_encode($array);
+        return response()->json($array);
     }
 
     public function index(Request $request)

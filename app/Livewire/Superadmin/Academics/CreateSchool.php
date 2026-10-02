@@ -47,7 +47,7 @@ class CreateSchool extends Component
     #[Rule('nullable|string|max:50')]
     public $uneb_center_number;
 
-    public $toshi_enabled = true;
+    public $toshi_enabled = false;
 
     public $status = 1;
 

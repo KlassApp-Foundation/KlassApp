@@ -56,8 +56,10 @@ function buildJourneyData({ typeId, mode }) {
     const suffix = String(stamp).slice(-6);
     // Person-name fields accept letters/spaces/'/- only — map digits to letters.
     const nameTag = suffix.split('').map((d) => String.fromCharCode(97 + Number(d))).join('');
-    // Non-real Ugandan-shaped numbers only (070-prefix, 000-padded block).
-    const phoneLocal = `070${suffix}${String(stamp % 10)}`;
+    // Non-real Ugandan-shaped numbers only (070-prefix). Use more of the stamp
+    // so parallel/retry runs do not collide on the last 6 digits alone.
+    const phoneDigits = String(stamp).slice(-7); // 7 digits after 070 → 10 total
+    const phoneLocal = `070${phoneDigits}`;
     const phoneE164 = `+256${phoneLocal.slice(1)}`;
     return {
         stamp,
@@ -66,7 +68,7 @@ function buildJourneyData({ typeId, mode }) {
         date: today(),
         type,
         mode,
-        schoolName: `E2E ${type.label} ${mode === 'manual' ? 'Manual' : 'Toshi'} ${today()}`,
+        schoolName: `E2E ${type.label} ${mode === 'manual' ? 'Manual' : 'Toshi'} ${today()} ${suffix}`,
         admin: {
             name: `Suite Admin ${nameTag}`,
             email: `e2e.${typeId}.${mode}.${suffix}@example.com`,

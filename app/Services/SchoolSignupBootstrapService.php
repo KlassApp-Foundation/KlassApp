@@ -142,7 +142,9 @@ class SchoolSignupBootstrapService
             'phone' => $phone,
             'slug' => Str::slug($name),
             'status' => '1',
-            'toshi_enabled' => 1,
+            // Soft launch: scripted setup guide on, never the AI assistant by default.
+            'toshi_enabled' => 0,
+            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
             'curriculum' => null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

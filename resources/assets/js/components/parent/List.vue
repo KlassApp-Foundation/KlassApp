@@ -7,10 +7,14 @@
                         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Parents</h1>
                         <p class="text-sm text-gray-600 dark:text-gray-400">View, search and manage all parents.</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <a :href="url+'/admin/parents'" class="ds-btn ds-btn-ghost text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                             Reset
+                        </a>
+                        <a :href="url+'/admin/parent/add'" class="ds-btn ds-btn-primary text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                            Add parent
                         </a>
                     </div>
                 </div>

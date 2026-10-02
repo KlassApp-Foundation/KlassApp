@@ -56,7 +56,8 @@ class RegistrationFlowTest extends TestCase
         $this->assertNotNull($school);
         $this->assertSame("John's School", $school->name);
         $this->assertNull($school->curriculum);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
     }
 
     /** @test */

@@ -98,9 +98,13 @@ class DashboardController extends Controller
         $setupIncomplete = ! empty($dashboard['setupIncomplete'])
             || (Auth::user()->usergroup_id === 3 && ! empty($onboardingMissing));
 
-        $openToshiOnboarding = $request->boolean('toshi_onboarding')
-            || session()->pull('open_toshi_onboarding', false)
-            || $setupIncomplete;
+        // Never auto-open / auto-maximize after signup. Drain the legacy session
+        // flash so it cannot force a fullscreen Toshi overlay (blocks Manual @375).
+        // Explicit ?toshi_onboarding=1 still expands for intentional deep-links.
+        session()->pull('open_toshi_onboarding', false);
+        $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
+        $openToshiOnboarding = $toshiSwitch->onboardingEnabled()
+            && $request->boolean('toshi_onboarding');
 
         $pendingApprovals = $school_id
             ? Approval::where('state', PendingState::class)
