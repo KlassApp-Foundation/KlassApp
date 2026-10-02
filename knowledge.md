@@ -667,7 +667,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 2, 2026 (latest) — **Soft-launch UI batch + journeys + AI opt-in + account card shipped; Friday Toshi CTA NO-GO**
+## Current Status: October 2, 2026 (latest) — **Toshi docs drift corrected; staging LLM = Gemini; Slack §6c UNBLOCKED not yet run; Classroom stays on #728 only**
+
+Verified against live staging + `origin/main` (architecture audit [`docs/architecture/toshi-shape-2026-09.md`](docs/architecture/toshi-shape-2026-09.md) + follow-up ops). **Production untouched.**
+
+- **Staging LLM: FIXED** — Toshi uses Gemini via the hard-coded `openai-compatible` path (`OPENAI_COMPATIBLE_URL` → `generativelanguage.googleapis.com` OpenAI-compatible shim, `OPENAI_COMPATIBLE_MODEL=gemini-3.8-flash`). Staging deploy after env set: `depl-a2e1f9d7-…` **succeeded**. `php artisan toshi:llm-health` → **OK** (provider `openai-compatible`, host `generativelanguage.googleapis.com`). **Staging only** — production LLM env not changed.
+- **Slack §6c: UNBLOCKED, NOT YET RUN** — Earlier Current Status / checklist framing (“deferred because staging LLM gap”) is **stale**. The LLM gate that blocked agent-loop verification is gone; §6c was simply never re-entered after the fix. Connect flow remains proven (real OAuth + registry row). Tool-use E2E (reads, write-gate pause, approve/reject audit, real-vs-mock shapes) is the **next concrete action** — see `docs/ops/slack-connector-go-live-checklist.md` §6c. Slack wave-1 is **not** genuinely done until that pass.
+- **Classroom: code only on open PR [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728)** — title: “code complete, dormant — NOT end-to-end verified.” **Not merged to `main`** (zero Classroom Skill/server/OAuth on `main`). Prerequisite **(a) staging LLM** = met; prerequisite **(b) Slack §6c E2E pass** = still unmet. Hard sequencing stands: **do not merge #728 until §6c passes**. Not folded into this docs pass.
+- **Drive `drive.file` + Picker — product DIRECTION stamped (not a build green-light)** — Distinct from the earlier-rejected pre-GA Drive MCP / `drive.readonly` paths. Direction: customer-facing connect using **`drive.file` + Google Picker** (per-file access after user picks), as a Tier-1 **connector** (not a channel). Shape reference: `docs/architecture/toshi-shape-2026-09.md` §6e. **No implementation started**; still needs its own scoping pass before any code. Plan headers updated accordingly.
+- **Shape audit on `main`:** [#952](https://github.com/KlassApp-Foundation/KlassApp/pull/952) MERGED `cb8e19bf` — `docs/architecture/toshi-shape-2026-09.md`.
+- **Never merge (external):** #682, #890 (Elijah-ug / Elicom256).
+
+## Current Status: October 2, 2026 — **Soft-launch UI batch + journeys + AI opt-in + account card shipped; Friday Toshi CTA NO-GO**
 
 - **Tip of `main`:** `3e25b231` (includes #898 personal-data removal + #928 talk-to-sales after soft-launch PRs).
 - **Soft-launch PRs MERGED (admin, Rasta rule-#32):** #938–#946 (1a–2), **#947** AI opt-in `4dfdf010` (`NoSchoolGetsAiByDefaultTest` + AGENTS.md rule 33), **#948** account card Part A `378cbac2`.
@@ -2515,6 +2526,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-02: Correct Toshi docs drift (LLM / Slack §6c / Classroom / Drive direction)
+- **Work done**: Stamped Current Status to match verified reality after the shape audit (`docs/architecture/toshi-shape-2026-09.md`): staging LLM = Gemini via openai-compatible (`gemini-3.8-flash`, health OK, staging-only); Slack §6c reframed UNBLOCKED / NOT YET RUN (no longer “blocked on LLM”); Classroom = open PR #728 only, still blocked on §6c; Drive `drive.file`+Picker stamped as direction without build green-light. Updated `docs/ops/slack-connector-go-live-checklist.md` §6c and plan-doc headers. Docs-only; production untouched; #728 not merged.
+- **Files modified**: `knowledge.md`, `docs/ops/slack-connector-go-live-checklist.md`, `docs/plans/toshi-direct-google-integrations-and-custom-connector-registry-plan.md`, `docs/plans/toshi-mcp-connector-registry-and-shortlist-reeval-plan.md`
+- **Key decisions**: Direction ≠ go-ahead for Drive; Classroom hard sequencing unchanged; §6c is the next concrete action (live agent-loop pass — separate task after this docs commit).
+- **Status**: ✅ Docs drift corrected (this entry); Slack §6c E2E still pending until the live agent-loop pass.
+- **Edge cases flagged**: Staging Slack connector row is now live-invocable with a working LLM — treat unrun §6c as urgent, not dormant-safe.
 
 ### 2026-10-02: Soft-launch finish — journeys NO-GO, 1g + account card, cleanup, prod RO
 - **Work done:** Completed soft-launch queue after 1a–2 already on main. Task 3 journeys on staging (manual PASS both viewports; Toshi FAIL both — terms/WhatsApp/wrong class names). **#947** AI opt-in defaults + `NoSchoolGetsAiByDefaultTest` + AGENTS.md rule 33 MERGED `4dfdf010`. **#948** sidebar account card Part A MERGED `378cbac2` (Playwright 375/1280 PASS). #928/`7fe470dc` + #898/`3e25b231` already merged. Staging cleanup: 64 schools → `status=0`; keep Phase 4 + three Demo schools. Prod RO inventory only (`comm-a2e1cff7`). Staging deploy `depl-a2e1cd88-…` @ `3e25b231`. Production not deployed.
