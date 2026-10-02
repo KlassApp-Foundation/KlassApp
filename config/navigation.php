@@ -64,6 +64,7 @@ return [
                     'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
                     'items' => [
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
+                        ['label' => 'Admissions', 'icon' => 'students', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
                         ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
@@ -219,17 +220,13 @@ return [
         // ───────────────────────────── Stock Keeper ─────────────────────────────
         // NOTE: the stock module has no routes yet (stock/* is empty), so this menu
         // is currently unreachable — kept data-identical, flagged in the audit.
+        // Soft-launch 1f: stock module has no routes — hide Stock nav everywhere.
         'stock' => [
             'prefix' => 'stock',
             'layout' => 'flat',
             'item_class' => 'py-3 px-3',
             'items' => [
-                ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'stock/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Products', 'icon' => 'reports', 'url' => 'stock/products', 'active' => ['products', 'product']],
-                ['label' => 'Categories', 'icon' => 'subjects', 'url' => 'stock/categories', 'active' => ['categories', 'category']],
-                ['label' => 'Suppliers', 'icon' => 'parents', 'url' => 'stock/suppliers', 'active' => ['suppliers', 'supplier']],
-                ['label' => 'Orders', 'icon' => 'reports', 'url' => 'stock/orders', 'active' => ['orders', 'order']],
-                ['label' => 'Data Exports', 'icon' => 'reports', 'url' => 'stock/reports', 'active' => ['reports', 'report']],
+                // intentionally empty
             ],
         ],
 
