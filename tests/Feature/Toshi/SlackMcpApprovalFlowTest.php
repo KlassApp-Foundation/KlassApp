@@ -4,6 +4,7 @@ namespace Tests\Feature\Toshi;
 
 use App\AiAgents\Skills\SlackSkill;
 use App\AiAgents\Tools\RouteToSlackSkillTool;
+use App\Exceptions\PendingMcpApprovalException;
 use App\Mcp\Servers\SpikeSlackMockServer;
 use App\Models\ActivityLog;
 use App\Models\User;
@@ -95,19 +96,20 @@ class SlackMcpApprovalFlowTest extends TestCase
             'Slack message posted after approval.',
         ]);
 
-        $result = (new RouteToSlackSkillTool)->handle(new Request([
-            'query' => 'Post "Fee reminders go out Friday." to #general on Slack.',
-        ]));
-
-        // ── Paused, not executed ──
-        $decoded = json_decode($result, true);
-        $this->assertTrue(($decoded['__tier2_confirm'] ?? false) === true, 'Write must surface a confirmation payload, got: '.substr($result, 0, 200));
-        $this->assertSame('mcp_tools_spike-slack-post-message', $decoded['tool']);
-        $this->assertSame('#general', $decoded['args']['channel']);
+        try {
+            (new RouteToSlackSkillTool)->handle(new Request([
+                'query' => 'Post "Fee reminders go out Friday." to #general on Slack.',
+            ]));
+            $this->fail('Write pause must throw PendingMcpApprovalException to abort the parent loop');
+        } catch (PendingMcpApprovalException) {
+            // expected — aborts Orchestrator so the confirm card is not stranded
+        }
 
         // Side-channel carries the resume coordinates for the panel.
         $payload = ToshiActionService::$pendingConfirmPayload;
         $this->assertNotNull($payload, 'RouteToSlackSkillTool must populate the side-channel on pause');
+        $this->assertSame('mcp_tools_spike-slack-post-message', $payload['tool']);
+        $this->assertSame('#general', $payload['args']['channel']);
         $this->assertSame(SlackSkill::class, $payload['mcp_resume']['agent_class']);
         $this->assertNotNull($payload['mcp_resume']['conversation_id'], 'Paused conversation must be persisted for resume');
         $this->assertNotNull($payload['mcp_resume']['approval_id']);
@@ -176,12 +178,14 @@ class SlackMcpApprovalFlowTest extends TestCase
             'Cancelled.',
         ]);
 
-        $result = (new RouteToSlackSkillTool)->handle(new Request([
-            'query' => 'Post "Staff meeting moved to 4pm." to #staff-alerts.',
-        ]));
-
-        $decoded = json_decode($result, true);
-        $this->assertTrue(($decoded['__tier2_confirm'] ?? false) === true);
+        try {
+            (new RouteToSlackSkillTool)->handle(new Request([
+                'query' => 'Post "Staff meeting moved to 4pm." to #staff-alerts.',
+            ]));
+            $this->fail('Write pause must throw PendingMcpApprovalException');
+        } catch (PendingMcpApprovalException) {
+            // expected
+        }
 
         $payload = ToshiActionService::$pendingConfirmPayload;
         $this->assertNotNull($payload);

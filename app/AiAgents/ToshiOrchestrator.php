@@ -186,12 +186,18 @@ PROMPT;
     {
         try {
             $response = $this->prompt($query);
+
             return $response->text;
+        } catch (\App\Exceptions\PendingMcpApprovalException $e) {
+            // Nested MCP skill paused — must bubble to ToshiSdkV2Service so the
+            // confirm card is shown (do not swallow into null/fallbackMessage).
+            throw $e;
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('ToshiOrchestrator failed', [
                 'error' => $e->getMessage(),
                 'query' => $query,
             ]);
+
             return null;
         }
     }

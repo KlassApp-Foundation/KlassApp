@@ -1,0 +1,15 @@
+{
+  "_comment": "Recorded from staging live Mcp::client('slack')->tools() on 2026-10-02 (school_id=2, oauth_remote). Update this snapshot intentionally when Slack MCP renames tools — the catalog test will fail on drift.",
+  "recorded_at": "2026-10-02",
+  "read_tools": [
+    "slack_read_channel",
+    "slack_read_thread",
+    "slack_search_channels",
+    "slack_search_public"
+  ],
+  "write_tools": [
+    "slack_schedule_message",
+    "slack_send_message",
+    "slack_send_message_draft"
+  ]
+}
