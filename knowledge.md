@@ -667,7 +667,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 2, 2026 (latest) — **Toshi docs drift corrected; staging LLM = Gemini; Slack §6c UNBLOCKED not yet run; Classroom stays on #728 only**
+## Current Status: October 2, 2026 (latest) — **Slack §6c E2E FAILED on staging (Gemini); wave-1 NOT done; Classroom #728 still blocked**
+
+Verified after a live staging agent-loop pass with Gemini. **Production untouched.** No app code patched this pass. Classroom PR [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728) remains **not merged** and still blocked on a green §6c.
+
+- **Staging LLM: still OK** — Gemini via `openai-compatible` (`gemini-3.8-flash`); prior `toshi:llm-health` OK stands. This failure is **not** an LLM-down regression.
+- **Slack §6c: RUN 2026-10-02 — FAILED** — Not unrun. Live Toshi conversation exercised the agent loop. Local evidence: `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` (may not be committed). Checklist §6c stamped FAIL — see `docs/ops/slack-connector-go-live-checklist.md`.
+- **Gemini PARTIAL outcome** — `RouteToSlackSkillTool` invoked; MCP tool `mcp_tools_slack_search_channels` stuck `pending_approval`; **no UI confirm card** appeared; write / approve / reject paths **not exercised**. Five §6c checks → FAIL.
+- **Suspected root cause (catalog name mismatch)** — config `read_tools` lists `slack_list_channels` / `slack_search` / `slack_get_channel_history`, but the live tool name observed was `slack_search_channels`. Follow-up should reconcile catalog vs live MCP tool names before re-running §6c. **Do not** claim Slack wave-1 done.
+- **Classroom: still only open PR #728** — prerequisite (b) §6c E2E pass remains unmet. Hard sequencing unchanged: **do not merge #728 until §6c passes**.
+- **Staging fixture note (deactivate after follow-up)** — `school_id=2` temporarily activated + Toshi assistant for the run; synthetic admin `phase4.slack-e2e@klassapp.xyz` (user id **553**) created for E2E. Leave inactive / clean up after the next §6c attempt — do not leave demo school permanently “live-E2E” without intent.
+- **Prior Oct 2 stamp (docs drift / LLM fix / §6c unblocked framing)** — superseded for §6c run-state only; LLM + Classroom + Drive direction facts below still apply unless contradicted above.
+
+## Current Status: October 2, 2026 — **Toshi docs drift corrected; staging LLM = Gemini; Slack §6c UNBLOCKED not yet run; Classroom stays on #728 only** *(superseded for §6c — see latest FAIL stamp above)*
 
 Verified against live staging + `origin/main` (architecture audit [`docs/architecture/toshi-shape-2026-09.md`](docs/architecture/toshi-shape-2026-09.md) + follow-up ops). **Production untouched.**
 
@@ -2526,6 +2538,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-02: Slack §6c E2E FAIL on staging (Gemini)
+- **Work done**: Ran Slack §6c live agent-loop E2E on staging with Gemini. Documented FAIL in Current Status + checklist §6c. Confirmed staging LLM still OK. Did **not** patch app code; production untouched; #728 not merged. Left staging fixture note (school_id=2 + synthetic admin 553) for post-follow-up deactivation.
+- **Files modified**: `knowledge.md`, `docs/ops/slack-connector-go-live-checklist.md` (docs-only stamp PR)
+- **Key decisions**: Wave-1 is **not** done. §6c is FAILED (run, not unrun). Suspected catalog mismatch (`slack_list_channels`/`slack_search`/`slack_get_channel_history` vs live `slack_search_channels`). Gemini path PARTIAL: RouteToSlackSkillTool yes; `mcp_tools_slack_search_channels` pending_approval with no UI confirm card; write/approve/reject not reached. Classroom #728 stays blocked.
+- **Status**: ✅ Docs FAIL stamp (this entry); 🚧 §6c still red until catalog/UI-confirm follow-up + re-run
+- **Edge cases flagged**: Evidence path `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` is local and may not be committed. Staging school_id=2 + user 553 need deactivation after follow-up.
+
 
 ### 2026-10-02: Correct Toshi docs drift (LLM / Slack §6c / Classroom / Drive direction)
 - **Work done**: Stamped Current Status to match verified reality after the shape audit (`docs/architecture/toshi-shape-2026-09.md`): staging LLM = Gemini via openai-compatible (`gemini-3.8-flash`, health OK, staging-only); Slack §6c reframed UNBLOCKED / NOT YET RUN (no longer “blocked on LLM”); Classroom = open PR #728 only, still blocked on §6c; Drive `drive.file`+Picker stamped as direction without build green-light. Updated `docs/ops/slack-connector-go-live-checklist.md` §6c and plan-doc headers. Docs-only; production untouched; #728 not merged.
