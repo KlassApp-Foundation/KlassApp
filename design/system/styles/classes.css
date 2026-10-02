@@ -594,10 +594,16 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     border-color: #b45309;
 }
 
-/* ── Profile Dropdown ──
-   The .profile-click JS toggles .open on click. This rule shows the dropdown. */
+/* ── Profile Dropdown / soft-launch account card (Part A) ──
+   Mirror of public/css/dashboard-refresh.css account-card rules. */
 
-.profile-click.open .user-dtl {
+.profile-click.account-card {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+}
+.profile-click.open .account-card__menu.user-dtl {
     display: block !important;
 }
 

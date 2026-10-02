@@ -1,32 +1,101 @@
 
-
 $(document).ready(function(){
-  // Profile dropdown toggle
-  $(document).on('click', '.profile-click', function(e) {
-    if ($(e.target).closest('.user-dtl').length) return; // ignore clicks inside dropdown
+  function accountItems($root) {
+    return $root.find('[role="menuitem"]:visible');
+  }
+
+  function closeAccountCard($root) {
+    if (!$root || !$root.length) return;
+    $root.removeClass('open');
+    $root.find('[data-account-trigger]').attr('aria-expanded', 'false');
+    $root.find('[data-account-menu]').attr('hidden', true);
+  }
+
+  function openAccountCard($root) {
+    $('.profile-click.account-card').each(function () {
+      if (this !== $root[0]) closeAccountCard($(this));
+    });
+    $('.profile-click').not($root).removeClass('open');
+    $root.addClass('open');
+    $root.find('[data-account-trigger]').attr('aria-expanded', 'true');
+    $root.find('[data-account-menu]').removeAttr('hidden');
+    var $first = accountItems($root).first();
+    if ($first.length) {
+      $first.trigger('focus');
+    }
+  }
+
+  // Profile / account card toggle
+  $(document).on('click', '.profile-click.account-card [data-account-trigger]', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var $root = $(this).closest('.profile-click.account-card');
+    if ($root.hasClass('open')) {
+      closeAccountCard($root);
+      $(this).trigger('focus');
+    } else {
+      openAccountCard($root);
+    }
+  });
+
+  // Legacy .profile-click without account-card (if any remain)
+  $(document).on('click', '.profile-click:not(.account-card)', function(e) {
+    if ($(e.target).closest('.user-dtl').length) return;
     var $parent = $(this);
     var wasOpen = $parent.hasClass('open');
-
-    // Close all other open dropdowns
     $('.profile-click').removeClass('open');
-
     if (!wasOpen) {
       $parent.addClass('open');
       e.stopPropagation();
     }
   });
 
-  // Close on outside click
-  $(document).on('click', function(e) {
+  // Close on outside pointerdown (handoff: pointerdown outside card+trigger)
+  $(document).on('pointerdown', function(e) {
     if (!$(e.target).closest('.profile-click.open').length) {
+      $('.profile-click.account-card.open').each(function () {
+        closeAccountCard($(this));
+      });
       $('.profile-click').removeClass('open');
     }
   });
 
-  // Close on Escape
+  // Keyboard: Esc, arrows, Tab out
   $(document).on('keydown', function(e) {
+    var $open = $('.profile-click.account-card.open');
+    if (!$open.length) {
+      if (e.key === 'Escape') {
+        $('.profile-click').removeClass('open');
+      }
+      return;
+    }
+
+    var $items = accountItems($open);
+    var $trigger = $open.find('[data-account-trigger]');
+
     if (e.key === 'Escape') {
-      $('.profile-click').removeClass('open');
+      e.preventDefault();
+      closeAccountCard($open);
+      $trigger.trigger('focus');
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      closeAccountCard($open);
+      return;
+    }
+
+    if (!$items.length) return;
+
+    var idx = $items.index(document.activeElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      var next = idx < 0 ? 0 : (idx + 1) % $items.length;
+      $items.eq(next).trigger('focus');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      var prev = idx < 0 ? $items.length - 1 : (idx - 1 + $items.length) % $items.length;
+      $items.eq(prev).trigger('focus');
     }
   });
 });
@@ -48,8 +117,7 @@ $(document).ready(function(){
     if($('#'+id).hasClass('hidden')){
       $('#'+id).removeClass('hidden').addClass('block');
     }
-      else
-      {
+    else if($('#'+id).hasClass('block')) {
       $('#'+id).removeClass('block').addClass('hidden');
     }
   }
