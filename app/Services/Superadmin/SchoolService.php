@@ -25,6 +25,14 @@ class SchoolService
     {
         $validated = $this->validate($data, null);
 
+        // Soft-launch 1g: AI is opt-in. Site-admin create must not default assistant on.
+        if (! array_key_exists('toshi_enabled', $validated) || $validated['toshi_enabled'] === null) {
+            $validated['toshi_enabled'] = 0;
+        }
+        if (! array_key_exists('toshi_mode', $validated) || $validated['toshi_mode'] === null) {
+            $validated['toshi_mode'] = \App\Enums\ToshiMode::Onboarding;
+        }
+
         return School::create($validated);
     }
 
@@ -79,6 +87,7 @@ class SchoolService
             'curriculum' => 'nullable|string|max:255',
             'status' => 'nullable',
             'toshi_enabled' => 'nullable|boolean',
+            'toshi_mode' => 'nullable|in:onboarding,preview,assistant',
         ];
 
         if (Schema::hasColumn('schools', 'uneb_center_number')) {

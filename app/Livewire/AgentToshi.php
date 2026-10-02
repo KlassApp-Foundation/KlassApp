@@ -6568,7 +6568,9 @@ class AgentToshi extends Component
                     'curriculum'    => $this->curriculum ?: 'uneb',
                     'school_pay_api_password' => $this->schoolPayPassword ?: null,
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
-                    'toshi_enabled' => 1,
+                    // Soft-launch 1g: AI is opt-in — never enable assistant on create.
+                    'toshi_enabled' => 0,
+                    'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
