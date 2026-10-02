@@ -46,6 +46,18 @@ class SchoolCategorySeeder
         'o_a_level' => ['o-level', 'a-level'],
     ];
 
+    /**
+     * Tier-band standard names. These identify a grading phase on `standards`,
+     * never a concrete class on `sections`. Journey/outcome checks must assert
+     * section names (see expectedSectionNames), not these values.
+     */
+    public const TIER_BAND_STANDARD_NAMES = [
+        'nursery',
+        'primary',
+        'o-level',
+        'a-level',
+    ];
+
     /** Sections per level type (K12 Uganda naming; matches AcademicSetupService). */
     private const SECTIONS = [
         'nursery' => ['Baby Class', 'Middle Class', 'Top Class'],
@@ -56,6 +68,28 @@ class SchoolCategorySeeder
         'o-level' => ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four'],
         'a-level' => ['Senior Five', 'Senior Six'],
     ];
+
+    /**
+     * Canonical class (section) names the category seeder creates.
+     * Used by tests and E2E hard checks — never confuse with standards.name.
+     *
+     * @return list<string>
+     */
+    public static function expectedSectionNames(string $category): array
+    {
+        if (! array_key_exists($category, self::CATEGORY_STANDARDS)) {
+            return [];
+        }
+
+        $names = [];
+        foreach (self::CATEGORY_STANDARDS[$category] as $levelType) {
+            foreach (self::SECTIONS[$levelType] as $sectionName) {
+                $names[] = $sectionName;
+            }
+        }
+
+        return $names;
+    }
 
     /**
      * Subjects per level type, keyed by UNEB subject code where one can be

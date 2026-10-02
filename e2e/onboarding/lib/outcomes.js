@@ -92,6 +92,15 @@ function evaluate(out, data) {
     add('curriculum UNEB', String(out.school.curriculum || '').toLowerCase().includes('uneb'), `curriculum=${out.school.curriculum}`);
     add('country Uganda', String(out.school.registration_country || '').toLowerCase().includes('uganda'), `country=${out.school.registration_country}`);
 
+    // Classes = sections.name (Primary One / Senior One…). standards.name holds
+    // tier bands (primary / o-level) — never treat those as the class list.
+    const TIER_BANDS = ['nursery', 'primary', 'o-level', 'a-level'];
+    const tierBandAsClass = out.sections.filter((s) => TIER_BANDS.includes(s));
+    add(
+        'classes are section names not tier bands',
+        tierBandAsClass.length === 0,
+        `tier_band_sections=[${tierBandAsClass}] standards=[${out.standards}]`,
+    );
     const missingSections = data.type.sections.filter((s) => !out.sections.includes(s));
     const extraSections = out.sections.filter((s) => !data.type.sections.includes(s));
     add('classes/sections for type', missingSections.length === 0, `expected=${data.type.sections.length} actual=${out.sections.length} missing=[${missingSections}] extra=[${extraSections}]`);
