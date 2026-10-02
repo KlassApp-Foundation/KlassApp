@@ -405,7 +405,7 @@ class SiteHelper
     public static function getNonTeachingDesignations()
     {
         return Cache::remember( "non_teaching_designations", env('CACHE_TIME'), function () {
-              $name = array('Accountant','Receptionist','Librarian','Lab Assistant','Clerk','Stock Keeper','Peon','Driver','Helpers','Security','Transport Coordinator','Others');
+              $name = array('Accountant','Receptionist','Librarian','Lab Assistant','Clerk','Peon','Driver','Helpers','Security','Transport Coordinator','Others');
             $id = array('accountant','receptionist','librarian','lab_assistant','clerk','stock_keeper','peon','driver','helpers','security','transport_coordinator','others');
 
 
