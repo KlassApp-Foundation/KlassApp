@@ -19,6 +19,7 @@ Overview hub: [DeepWiki — KlassApp](https://deepwiki.com/KlassApp-Foundation/K
 
 ## Also in this repo
 
+- **Toshi end-to-end shape (code audit):** [`architecture/toshi-shape-2026-09.md`](architecture/toshi-shape-2026-09.md)
 - Contribute / run tests: [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 - Agent rules (AI maintainers): [`AGENTS.md`](../AGENTS.md)
 - Fork history: [`project-provenance.md`](project-provenance.md)
