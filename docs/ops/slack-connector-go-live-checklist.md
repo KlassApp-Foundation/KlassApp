@@ -233,7 +233,13 @@ pinned; this is a green verification, not a gap. Proceed with Batch A/B as writt
 if the pilot school wants Slack restricted to the full-school-admin only, that is a
 product choice to revisit, not a defect.)
 
-## 6c. STATUS (updated 2026-10-02): connect flow VERIFIED; agent-loop E2E **UNBLOCKED, NOT YET RUN** — **next concrete action**
+## 6c. STATUS (updated 2026-10-02): connect flow VERIFIED; agent-loop E2E **RUN 2026-10-02 — FAILED** (see knowledge Current Status)
+
+**Outcome: FAIL.** Live Gemini agent-loop pass on staging. Evidence: `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` (local; may not be committed). Production untouched; no app code patched this pass; Classroom #728 still blocked. Slack wave-1 is **not** done.
+
+**Observed (PARTIAL):** `RouteToSlackSkillTool` invoked; `mcp_tools_slack_search_channels` stuck `pending_approval`; no UI confirm card; write / approve / reject **not** exercised. Suspected catalog name mismatch: config `read_tools` has `slack_list_channels` / `slack_search` / `slack_get_channel_history` vs live tool `slack_search_channels`.
+
+**Five checks — outcome FAIL:**
 
 **What is verified working, end-to-end, against real Slack (not mocks):**
 
@@ -248,7 +254,7 @@ product choice to revisit, not a defect.)
 - Staging Toshi LLM is **FIXED**: Gemini via `openai-compatible` (`OPENAI_COMPATIBLE_MODEL=gemini-3.8-flash`, host `generativelanguage.googleapis.com`); `toshi:llm-health` **OK** after deploy `depl-a2e1f9d7-…`. Production LLM untouched.
 - §6c was simply **never re-entered** after the LLM fix landed — not still waiting on an LLM gap.
 
-**What remains UNRUN (the next concrete action — do this before calling Slack wave-1 done):**
+**Five checks (listed — outcome FAIL on 2026-10-02 re-run):**
 
 1. **Read tool E2E** — `slack_list_channels` / `slack_search` / `slack_get_channel_history` through a **live Toshi conversation** (Orchestrator → `RouteToSlackSkillTool` → `SlackSkill`), not a direct code bypass of the agent loop.
 2. **Write-gate pause** — a conversational ask that should call `slack_post_message` must **PAUSE** for approval via `ApprovableMcpTool` (`TOSHI_SLACK_MCP_WRITE_MODE=classify`, master switch on — already set on staging).
@@ -260,11 +266,13 @@ product choice to revisit, not a defect.)
 
 **What this state is and is NOT:**
 
-- It IS: **connection mechanism proven** + **LLM unblocked** — ready to run the five checks above.
-- It is NOT: **"Slack wave-1 is done."** Agent-loop tool-use is still unproven until §6c is run and stamped passing. That gap **must** close before any pilot school goes live with real usage.
+- It IS: **connection mechanism proven** + **LLM still OK** + §6c **ran and FAILED** on Gemini (PARTIAL route; stuck pending_approval / no confirm UI).
+- It is NOT: **"Slack wave-1 is done."** Re-run after catalog/UI-confirm follow-up. That gap **must** close before any pilot school goes live with real usage.
 - Classroom PR [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728) stays **blocked from merge** until this §6c pass succeeds (hard sequencing).
 
-**Connection state decision (2026-09-20, still stands):** demo-school connector row LEFT ACTIVE (option a). Disconnect later only via Integrations UI if needed — never a hand-edited DB write. (The old “dormant because no LLM” rationale no longer applies; the row is now live-invocable — treat §6c as urgent.)
+**Staging fixture note:** `school_id=2` temporarily activated + Toshi assistant; synthetic admin `phase4.slack-e2e@klassapp.xyz` (id 553) created for E2E — **deactivate after follow-up**.
+
+**Connection state decision (2026-09-20, still stands):** demo-school connector row LEFT ACTIVE (option a). Disconnect later only via Integrations UI if needed — never a hand-edited DB write.
 
 ## 7. Rollback plan
 
