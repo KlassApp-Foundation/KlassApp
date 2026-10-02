@@ -143,10 +143,17 @@
         transition: margin-right 0.25s ease;
     }
 
+    /* Soft-launch 2: when the dock is collapsed, reclaim the full content width.
+       !important beats any leftover open-dock margin / width:auto rules. */
     body.toshi-collapsed main,
-    html.toshi-collapsed main {
-        margin-right: 0;
+    html.toshi-collapsed main,
+    body.toshi-collapsed .dashboard-content-area,
+    html.toshi-collapsed .dashboard-content-area,
+    body.toshi-collapsed .superadmin-content,
+    html.toshi-collapsed .superadmin-content {
+        margin-right: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
     }
 
     body.toshi-resizing main {
