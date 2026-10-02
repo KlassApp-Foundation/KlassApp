@@ -673,6 +673,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Tests: signup/default/preview set 33 passed; onboarding + filtered Toshi UI 455 passed. Failing-then-passing: 10 failed before `configuredDefault()`, green after.
 - Rebased onto `origin/main` `7fbe8aef` (#953). Staging verification is post-merge: staging is branch-bound to `main`. Production not deployed.
 
+## Current Status: October 2, 2026 (latest) — **Slack §6c re-run after #955 FAILED; wave-1 NOT done; Classroom #728 still blocked**
+
+Verified live staging agent-loop re-run after [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) MERGED `c1baafed` + staging deploy `depl-a2e2c213-…` **succeeded** at that SHA. **Production untouched.** No further app patches this pass (stop-on-fail).
+
+- **#955 MERGED** `c1baafed3393d5a5b6161ead85718bf11249d64c` (admin merge, Rasta rule-#32 go-ahead) — catalog live tool names + nested `PendingMcpApprovalException` confirm-card surfacing. CI was green; diff scoped to diagnosed files only.
+- **Staging deploy:** `depl-a2e2c213-98f6-4267-b53f-de44ea73cced` @ `c1baafed` → `deployment.succeeded`.
+- **§6c re-run: FAIL** — evidence `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` (run3). Login + Toshi open PASS; Slack read / write-gate pause / approve / reject **not proven**. Script blocked at `no_write_tool_pause`. Observed reply path looked like **student-name keyword / chip fallback** (orchestrator routing), not a clean Slack Skill read — so the #955 catalog + nested-approval fixes were **not clearly exercised** by this run. Those routing/LLM issues remain **explicitly out of scope** (queued for orchestrator/Agent-tools work); do not claim they are fixed.
+- **Slack wave-1: still NOT done.** Do **not** stamp done.
+- **Classroom [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728):** still **not eligible** for merge-readiness review until a green §6c. Hard sequencing unchanged.
+- **Fixture:** school_id=2 + synthetic admin restored inactive/preview after the run.
+
 ## Current Status: October 2, 2026 (latest) — **Slack §6c fix PR #955 OPEN (CI green); re-run blocked on merge review; wave-1 NOT done; Classroom #728 still blocked**
 
 Follow-up to the §6c FAIL stamp below. **Production untouched.** No staging deploy of this fix yet.
@@ -2557,6 +2568,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+
+### 2026-10-02: Slack §6c re-run after #955 — FAIL
+- **Work done**: Admin-merged #955 `c1baafed`; staging deploy succeeded; re-ran §6c once; FAIL; stamped knowledge; no further patches.
+- **Files modified**: knowledge.md; docs/ops/slack-connector-go-live-checklist.md (status only)
+- **Key decisions**: Stop on fail per scoped task; keyword trap / Gemini PARTIAL_FAIL remain out of scope; #728 stays blocked.
+- **Status**: ❌ §6c FAIL after #955 — wave-1 not done
+- **Edge cases flagged**: E2E may PASS-mark list-channels on non-Slack student-match replies — treat evidence, not script booleans, as truth.
 
 ### 2026-10-02: Slack §6c catalog + nested approval UI fix (PR #955)
 - **Work done**: Aligned Slack MCP catalog tool names to live snapshot; threw PendingMcpApprovalException on nested pause so confirm card surfaces; catalog drift test + nested-pause tests; PR opened; CI green; merge blocked on review (no admin bypass).

@@ -233,11 +233,11 @@ pinned; this is a green verification, not a gap. Proceed with Batch A/B as writt
 if the pilot school wants Slack restricted to the full-school-admin only, that is a
 product choice to revisit, not a defect.)
 
-## 6c. STATUS (updated 2026-10-02): connect flow VERIFIED; agent-loop E2E **RUN 2026-10-02 — FAILED** (last run); fix PR [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) OPEN — re-run pending merge+staging deploy (see knowledge Current Status)
+## 6c. STATUS (updated 2026-10-02): connect flow VERIFIED; agent-loop E2E **re-run 2026-10-02 after #955 still FAIL**; wave-1 **not** done; Classroom [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728) still blocked (see knowledge Current Status)
 
 **Outcome: FAIL.** Live Gemini agent-loop pass on staging. Evidence: `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` (local; may not be committed). Production untouched; no app code patched this pass; Classroom #728 still blocked. Slack wave-1 is **not** done.
 
-**Fix follow-up:** PR [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) open (catalog names + nested approval UI); CI green; merge blocked on review. §6c re-run **pending** merge + staging deploy. Last live run result remains **FAIL** until that re-run.
+**Re-run after #955:** [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) MERGED `c1baafed` + staging deploy `depl-a2e2c213-…` succeeded; §6c re-run still **FAIL** (`REPORT.json` run3 — blocked at `no_write_tool_pause`; keyword/chip path, #955 fixes not clearly exercised). Wave-1 not done; #728 still blocked.
 
 **Observed (PARTIAL):** `RouteToSlackSkillTool` invoked; `mcp_tools_slack_search_channels` stuck `pending_approval`; no UI confirm card; write / approve / reject **not** exercised. Suspected catalog name mismatch: config `read_tools` has `slack_list_channels` / `slack_search` / `slack_get_channel_history` vs live tool `slack_search_channels`.
 
