@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Landing backgrounds + open-source copy (Task C4, C5)</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#FAFAF5;color:#1E293B;font-family:'DM Sans',sans-serif;font-size:15px}
+a{color:#15803D}a:hover{color:#166534}
+.wrap{max-width:1300px;margin:0 auto;padding:32px 20px 72px;display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:'Sora',sans-serif;letter-spacing:-.02em;margin:0}h1{font-size:26px}h2{font-size:19px}h3{font-size:15px}
+p{margin:0;line-height:1.55;text-wrap:pretty}.lede{color:#475569;max-width:88ch}
+ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;line-height:1.5}
+.row{display:flex;gap:18px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}
+.col{display:flex;flex-direction:column;gap:6px;flex:none}
+.col small{font-size:12px;font-weight:700;color:#475569}
+.d{width:576px;height:720px;overflow:hidden;border:1px solid #E2E8F0;border-radius:10px;background:#fff}
+.d iframe{width:1280px;height:1600px;border:0;transform:scale(.45);transform-origin:0 0}
+.m{width:225px;height:720px;overflow:hidden;border:1px solid #E2E8F0;border-radius:10px;background:#fff}
+.m iframe{width:375px;height:1200px;border:0;transform:scale(.6);transform-origin:0 0}
+.opt{display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(120,95,60,.14);padding-top:22px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px}
+.box{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;font-size:14.5px}
+.box dt{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em}.box dd{margin:0 0 6px}
+code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:5px}
+.rec{font-size:12px;font-weight:700;color:#14532D;background:#DCFCE7;border-radius:999px;padding:2px 9px;align-self:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div>
+<h1>Landing background, hero included</h1>
+<p class="lede">This audit was read from <code>landing-preview.css</code> (the staging copy you uploaded). The renders are structural skeletons that use the real background CSS, with grey blocks standing in for content, so compare them for the backgrounds only. They were rendered in this browser, not on staging.</p>
+</div>
+<div class="box">
+<h3>What's there now, top to bottom</h3>
+<ul>
+<li><b>Hero:</b> <code>.hero-bg-vintage</code> is a paper radial (base → mid → deep), an ink-wash vignette, edge browning, and 32px ruled lines. It stops hard at the hero's bottom edge, so there's a visible seam into the flat paper below.</li>
+<li><b>Body:</b> flat <code>--paper-base</code> #FAFAF5 for everything else. Depth comes only from per-section radial glows: violet in how-it-works (0.04), green in trust (0.07), blue, violet and amber in the mesh, and violet or amber on each Toshi card. That's five tints with no shared rule.</li>
+<li><b>Dot grid:</b> it exists only inside <code>.toshi-visual::after</code>, 1px at 5% ink, masked to fade downward. It's a single-use motif.</li>
+<li><b>Hero cards:</b> white device frames with a cool slate shadow on warm paper. They read slightly pasted-on; the debox concept softened their borders but not their shadow hue.</li>
+<li><b>Footer:</b> <code>#F8FAFC</code>, a cool slate. It's the only cool surface on the page, so it breaks from the paper at the very end.</li>
+<li><b>After debox:</b> the sections no longer have card walls to separate them, so the background has to carry the rhythm. Right now it can't, because it's one flat colour.</li>
+</ul>
+</div>
+
+<div class="opt"><h2>Now</h2><div class="row"><div class="col"><small>1280</small><div class="d"><iframe src="bg-skeleton.html#now" title="Now 1280"></iframe></div></div><div class="col"><small>375</small><div class="m"><iframe src="bg-skeleton.html#now" title="Now 375"></iframe></div></div></div></div>
+
+<div class="opt"><h2>A · One paper</h2><p class="lede">The hero's vintage paper fades out over the hero's bottom 30%, instead of stopping, into one long base → mid → base gradient that runs the whole page. The footer moves to <code>--paper-mid</code>, and the device frames get a warm shadow (<code>rgba(92,74,48,.35)</code>). Section glows are kept only where they mark Toshi: the orbit and the tower. This is the quietest option and closest to the current look.</p><span class="rec">Recommended</span>
+<div class="row"><div class="col"><small>1280</small><div class="d"><iframe src="bg-skeleton.html#a" title="A 1280"></iframe></div></div><div class="col"><small>375</small><div class="m"><iframe src="bg-skeleton.html#a" title="A 375"></iframe></div></div></div></div>
+
+<div class="opt"><h2>B · Paper + mist bands</h2><p class="lede">Alternate sections sit on <code>--paper-mid</code> bands, each with 64px feathered edges rather than hard seams. After debox, this gives the page scannable rhythm. The trade-off: FAQ and protocol shift if a section is added or removed, so the band order must be set per section, not by <code>:nth-child</code>.</p>
+<div class="row"><div class="col"><small>1280</small><div class="d"><iframe src="bg-skeleton.html#b" title="B 1280"></iframe></div></div><div class="col"><small>375</small><div class="m"><iframe src="bg-skeleton.html#b" title="B 375"></iframe></div></div></div></div>
+
+<div class="opt"><h2>C · Quiet grid</h2><p class="lede">The orbit's dot grid becomes the page's connective tissue: one static, page-wide warm-ink dot layer at 9% on a 24px grid, fading in after the hero and out before the footer. It's the strongest "infrastructure" signal. It's also the busiest option, and on low-contrast phone screens it can read as noise. The orbit panel drops its own grid so it isn't doubled.</p>
+<div class="row"><div class="col"><small>1280</small><div class="d"><iframe src="bg-skeleton.html#c" title="C 1280"></iframe></div></div><div class="col"><small>375</small><div class="m"><iframe src="bg-skeleton.html#c" title="C 375"></iframe></div></div></div></div>
+
+<div class="box"><h3>Rules for whichever you pick</h3><ul><li>Everything is static: no animated backgrounds, no <code>background-attachment: fixed</code> (it's expensive on mobile), and no blur.</li><li>Every background uses <code>--paper-*</code> tokens only. No new colours, and text contrast is unchanged because each surface stays at or lighter than <code>--paper-mid</code> (#F3F0E8). <code>--text-secondary</code> #64748B on #F3F0E8 calculates to 4.18:1, which fails 4.5:1. Option A or B therefore requires body copy on mid-paper to use #475569 (6.65:1 calculated). This is not browser-measured.</li><li>Nothing changes under reduced motion, because nothing moves.</li></ul></div>
+
+<div>
+<h1>Open-source copy: pick one stance</h1>
+<p class="lede">The live page currently says three different things. The banner says "open source and self-hostable … MIT licensed". The hero CTA says "Get notified when we open source". The protocol section says "self-hosted when we open source" and "Source and self-hosting will open publicly after an independent security review". The banner's "MIT licensed" text also measures 1.34:1 (from your contrast catalog).</p>
+</div>
+<div class="cols">
+<div class="box"><h3>Stance 1 · Open today</h3><dl>
+<dt>Banner</dt><dd>KlassApp is open source under the MIT licence. <a href="#">Read the code on GitHub</a></dd>
+<dt>Hero secondary CTA</dt><dd>View the source</dd>
+<dt>Protocol intro</dt><dd>KlassApp is open infrastructure: designed to be extended, self-hosted, and shaped by the education community.</dd>
+<dt>Open Source card</dt><dd>MIT licensed. Read it, run it on your own servers, or contribute. No vendor lock-in.</dd>
+<dt>Requires</dt><dd>The public repo is live and the self-hosting docs exist before this ships.</dd></dl></div>
+<div class="box"><h3>Stance 2 · Opening later</h3><dl>
+<dt>Banner</dt><dd>KlassApp will be open source under the MIT licence after an independent security review. <a href="#">Get notified</a></dd>
+<dt>Hero secondary CTA</dt><dd>Get notified when we open source</dd>
+<dt>Protocol intro</dt><dd>KlassApp is open infrastructure: designed to be extended, self-hostable once the source opens, and shaped by the education community.</dd>
+<dt>Open Source card</dt><dd>Will be MIT licensed. Source and self-hosting open publicly after an independent security review. No vendor lock-in.</dd>
+<dt>Requires</dt><dd>Remove "is open source and self-hostable" from the banner, and add the amber "Coming" badge to the Open Source card to match Provable.</dd></dl></div>
+</div>
+</div>
+</body>
+</html>

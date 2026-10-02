@@ -163,7 +163,7 @@ const P={
  tick:'<path d="M5 13l4 4L19 7"/>'};
 const I=(k,s=20)=>`<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 const PAL=['#1E6FD9','#15803D','#B45309','#1E293B'];
-const ME={id:3300,fn:'Mucunguzi',ln:'Tumusiime-Rwakaikara',em:'mucunguzi.tumusiime-rwakaikara@demoacademyuganda.ac.ug'};
+const ME={id:3300,fn:'Mucunguzi',ln:'Tumusiime-Rwakaikara',em:'mucunguzi.tumusiime-rwakaikara@demojuniorschool.ac.ug'};
 function av(p,s){const i=((p.fn||'')[0]||'')+((p.ln||'')[0]||'');return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.4)}px;${s<=32?'border-radius:8px;':''}background:${PAL[p.id%4]}" aria-hidden="true">${i.toUpperCase()}</span>`}
 function acct(id,open){return `<div class="foot" data-acct="${id}"><button class="trig" aria-haspopup="menu" aria-expanded="${open}" aria-controls="${id}-menu">${av(ME,40)}<span class="tn"><b>${ME.fn} ${ME.ln}</b><span>${ME.em}</span></span>${I('chev',16)}</button>${open?`<div class="acct" id="${id}-menu" role="menu" aria-label="Account"><div class="who">${av(ME,40)}<span class="tn"><b title="${ME.fn} ${ME.ln}">${ME.fn} ${ME.ln}</b><span title="${ME.em}">${ME.em}</span></span></div><ul>
 <li role="none"><a role="menuitem" href="#">${I('lock')}Change password</a></li>
@@ -172,7 +172,7 @@ function acct(id,open){return `<div class="foot" data-acct="${id}"><button class
 <li class="sep" role="separator"></li>
 <li class="out" role="none"><button role="menuitem" type="button">${I('out')}Log out</button></li></ul></div>`:''}</div>`}
 const NAV=[['home','Dashboard',1],['users','Students'],['classes','Classes'],['exam','Exams and marks'],['doc','Report cards'],['dollar','Fees'],['wa','Messages']];
-function sideInner(openAcct,id){return `<div class="brand"><img src="../../assets/brand/klassapp-icon.svg" alt="">Demo Academy Uganda</div><ul class="nav">${NAV.map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct(id,openAcct)}`}
+function sideInner(openAcct,id){return `<div class="brand"><img src="../../assets/brand/klassapp-icon.svg" alt="">Demo Junior School</div><ul class="nav">${NAV.map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct(id,openAcct)}`}
 let S={toshi:'off',data:'new',openD:true,openM:true};
 const STEPS=['School details','Academic year and terms','Classes and streams','Subjects','Teachers','Students','Fee structure'];
 function done(){return S.data==='new'?2:S.data==='mid'?4:7}
@@ -189,11 +189,11 @@ function body(mob){const zero=S.data!=='done';
  const kp=zero?`<div class="empty"><div><b>No students yet</b><p>Add your first class of students to start marking attendance, entering marks and messaging parents.</p></div><div class="acts"><a class="btn pri" href="#">Add students</a><a class="btn" href="#">Import from Excel</a></div></div>`:`<div class="kpis"><div class="kpi"><b>412</b><span>Students</span></div><div class="kpi"><b>23</b><span>Teachers</span></div><div class="kpi"><b>368</b><span>Parents on WhatsApp</span></div><div class="kpi"><b>UGX 18.4M</b><span>Fees collected this term</span></div></div>`;
  return `<div class="head"><div><h1 class="hello">Good evening, ${ME.fn}</h1><p class="ctx">2026 · Term 3 · ${zero?'0':'412'} students enrolled</p></div><div class="yr"><label for="yr-${mob?'m':'d'}">Academic year</label><select id="yr-${mob?'m':'d'}"><option selected>2026 (current)</option><option>2025</option></select></div></div>${setupCard(mob)}${kp}${quick()}`}
 function dash(mob){const on=S.toshi==='on';
- const bar=`<div class="bar">${mob?`<button class="ibtn" aria-label="Open menu">${I('menu')}</button>`:''}<span class="sch">Demo Academy Uganda</span>${mob?`<button class="ibtn" aria-label="Search">${I('search')}</button>`:`<span class="srch">${I('search',16)}Search <kbd style="font-size:11px;border:1px solid var(--d-border);border-radius:4px;padding:0 4px">Ctrl K</kbd></span>`}</div>`;
+ const bar=`<div class="bar">${mob?`<button class="ibtn" aria-label="Open menu">${I('menu')}</button>`:''}<span class="sch">Demo Junior School</span>${mob?`<button class="ibtn" aria-label="Search">${I('search')}</button>`:`<span class="srch">${I('search',16)}Search <kbd style="font-size:11px;border:1px solid var(--d-border);border-radius:4px;padding:0 4px">Ctrl K</kbd></span>`}</div>`;
  const dock=on?`<div class="dock"><button type="button" aria-label="Open Toshi"><img src="../../assets/brand/klassapp-icon.svg" alt=""></button></div>`:'';
  return `<div class="shell">${mob?'':`<aside class="side">${sideInner(false,'dside')}</aside>`}<div class="main ${on?'withdock':''}">${bar}<div class="pg">${body(mob)}</div>${dock}</div></div>`}
 function draw(){document.getElementById('acctD').innerHTML=sideInner(S.openD,'ad');
- document.getElementById('acctM').innerHTML=`<div class="brand" style="height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--d-border);font:600 15px var(--d-font-display,'Sora',sans-serif)"><img src="../../assets/brand/klassapp-icon.svg" alt="" style="height:28px">Demo Academy Uganda</div><ul class="nav">${NAV.slice(0,5).map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct('am',S.openM)}`;
+ document.getElementById('acctM').innerHTML=`<div class="brand" style="height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--d-border);font:600 15px var(--d-font-display,'Sora',sans-serif)"><img src="../../assets/brand/klassapp-icon.svg" alt="" style="height:28px">Demo Junior School</div><ul class="nav">${NAV.slice(0,5).map(n=>`<li><a href="#" class="${n[2]?'on':''}">${I(n[0])}${n[1]}</a></li>`).join('')}</ul>${acct('am',S.openM)}`;
  document.getElementById('d').innerHTML=dash(0);document.getElementById('m').innerHTML=dash(1);
  document.getElementById('m').classList.toggle('withdock',S.toshi==='on');
  document.querySelectorAll('#c-toshi button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.toshi));

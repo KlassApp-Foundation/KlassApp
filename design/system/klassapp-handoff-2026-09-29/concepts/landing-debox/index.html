@@ -1,0 +1,160 @@
+<!-- @dsCard group="Concepts" viewport="1280x900" name="Landing de-box — Phase 2" subtitle="Before/after for the 12 boxed-by-habit items: ledger rules + ambient glow replace cards" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Landing — free-floating redesign (Phase 2)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--brand-blue:#1E6FD9;--brand-green:#22C55E;--brand-accent:#15803D;--brand-dark:#0F172A;--brand-light:#F8FAFC;--brand-white:#FFFFFF;--text-primary:#1E293B;--text-secondary:#64748B;--border:#E2E8F0;--violet-accent:#8B5CF6;--brand-amber:#D97706;--radius-md:12px;--radius-lg:16px;--shadow-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);--font-display:'Sora',system-ui,sans-serif;--font-body:'DM Sans',system-ui,sans-serif;--paper-base:#FAFAF5;--paper-mid:#F3F0E8;--paper-edge:#D4C4A8;
+/* the one new rule: a ledger hairline, echoing the hero's paper ledger rules */
+--ledger:rgba(120,95,60,.14)}
+*{box-sizing:border-box}body{margin:0;font-family:var(--font-body);color:var(--text-primary);background:#fff;-webkit-font-smoothing:antialiased}
+a{color:var(--brand-blue)}a:hover{color:var(--brand-dark)}
+.intro{max-width:1180px;margin:0 auto;padding:40px 24px 8px}
+.intro h1{font-family:var(--font-display);font-size:1.6rem;margin:0 0 8px;letter-spacing:-.02em}
+.intro p{color:var(--text-secondary);margin:0;max-width:78ch;line-height:1.6;font-size:.95rem}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px 28px;margin:20px 0 0;padding:0;list-style:none}
+.rules li{font-size:.84rem;line-height:1.55;color:var(--text-secondary);padding-top:10px;border-top:1px solid var(--ledger)}.rules b{color:var(--text-primary)}
+.cmp{max-width:1180px;margin:0 auto;padding:36px 24px 0}
+.cmp h2{font-family:var(--font-display);font-size:1rem;margin:0 0 12px;display:flex;gap:10px;align-items:baseline}
+.cmp h2 small{font-family:var(--font-body);font-weight:500;font-size:.8rem;color:var(--text-secondary)}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.pair{grid-template-columns:1fr}}
+.pane{position:relative;border-radius:14px;overflow:hidden;padding:46px 28px 32px;outline:1px solid var(--border)}
+.tag{position:absolute;top:10px;right:12px;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:#fff;border:1px solid var(--border);color:var(--text-secondary);z-index:3}
+.tag.after{color:var(--brand-accent);border-color:rgba(21,128,61,.3)}
+/* section surfaces (real) */
+.s-white{background:var(--brand-white)}.s-light{background:var(--brand-light)}
+.s-toshi{background:var(--brand-white)}
+.s-toshi.after::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 40%,rgba(34,197,94,.08),transparent 70%);pointer-events:none}
+.s-paper{background:radial-gradient(ellipse 90% 80% at 50% 30%,var(--paper-base) 0%,var(--paper-mid) 100%)}
+.pane>*:not(.tag){position:relative;z-index:1}
+/* BEFORE — current card values */
+.b-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.b-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow-sm)}
+.b-card.ns{box-shadow:none}
+/* AFTER — floating item */
+.f-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 28px}
+@media (max-width:640px){.b-grid,.f-grid{grid-template-columns:1fr}}
+.f-item{padding-top:16px;border-top:1px solid var(--ledger)}
+.ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;margin-bottom:12px;color:var(--brand-accent);background:linear-gradient(165deg,#fff 0%,rgba(34,197,94,.10) 100%);border:1px solid rgba(34,197,94,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 6px 14px -8px rgba(15,23,42,.25)}
+.ico.v{color:#6D28D9;background:linear-gradient(165deg,#fff 0%,rgba(139,92,246,.10) 100%);border-color:rgba(139,92,246,.22)}
+.ico.a{color:#B45309;background:linear-gradient(165deg,#fff 0%,rgba(217,119,6,.10) 100%);border-color:rgba(217,119,6,.22)}
+.ico.b{color:var(--brand-blue);background:linear-gradient(165deg,#fff 0%,rgba(30,111,217,.10) 100%);border-color:rgba(30,111,217,.22)}
+.ico svg{width:18px;height:18px}
+h3{font-family:var(--font-display);font-size:.95rem;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.p{font-size:.86rem;line-height:1.6;color:var(--text-secondary);margin:0}
+.kick{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 3px}
+/* pillars */
+.pill5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.pill5.f{gap:26px 24px}
+@media (max-width:980px){.pill5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.future{border:1.5px dashed rgba(217,119,6,.55);border-radius:var(--radius-lg);padding:14px;background:linear-gradient(180deg,#fff 0%,rgba(217,119,6,.05) 100%)}
+.f .future{margin-top:-1px}
+.badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#92400E;background:rgba(217,119,6,.12);border-radius:999px;padding:2px 7px;margin-left:4px;vertical-align:1px}
+.note{margin:8px 0 0;font-size:.75rem;font-weight:500;color:#B45309}
+/* compare */
+.b-cmp{display:grid;gap:10px}
+.b-row{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:#fff;box-shadow:var(--shadow-sm)}
+.b-row>div{padding:14px 16px}.b-row>div:first-child{background:color-mix(in srgb,var(--brand-light) 55%,white);border-right:1px solid var(--border)}.b-row>div:last-child{background:color-mix(in srgb,var(--brand-green) 5%,white)}
+.f-cmp{position:relative;display:grid;grid-template-columns:1fr 1fr}
+.f-cmp::after{content:'';position:absolute;top:0;bottom:0;left:50%;width:50%;background:linear-gradient(180deg,rgba(34,197,94,.07),rgba(34,197,94,.03));border-radius:14px;z-index:-1}
+.f-cmp>div{padding:14px 18px;border-top:1px solid var(--ledger)}
+.f-cmp>div:nth-child(odd){border-right:1px solid var(--ledger)}
+.f-cmp .hd{border-top:0;padding-top:0}
+.lab{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 4px}
+.lab.k{color:var(--brand-accent)}
+.cmp-p{font-size:.88rem;line-height:1.55;margin:0}
+.lead{font-size:.9375rem;color:var(--text-secondary);margin:0 0 16px}
+/* HITL */
+.b-hitl{display:flex;gap:14px;align-items:flex-start;border-radius:var(--radius-md);background:linear-gradient(165deg,rgba(139,92,246,.08) 0%,rgba(255,255,255,.95) 55%);border:1px solid rgba(139,92,246,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 6px 18px rgba(139,92,246,.08);padding:16px 18px}
+.f-hitl{display:flex;gap:16px;align-items:flex-start;max-width:62ch;margin:0 auto}
+.f-hitl .halo{position:relative;flex-shrink:0}
+.f-hitl .halo::before{content:'';position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.20),transparent 70%)}
+/* FAQ */
+.b-faq{display:grid;gap:10px}
+.b-faq details{border:1px solid var(--border);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-sm);padding:0 18px}
+summary{list-style:none;cursor:pointer;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;font-weight:600;font-size:.95rem}
+summary::-webkit-details-marker{display:none}
+.chev{width:18px;height:18px;flex-shrink:0;color:var(--text-secondary);transition:transform .2s}
+details[open] .chev{transform:rotate(180deg)}
+details p{margin:0 0 16px;color:var(--text-secondary);font-size:.9rem;line-height:1.6}
+.f-faq details{border-bottom:1px solid var(--ledger)}.f-faq details:first-child{border-top:1px solid var(--ledger)}
+.f-faq summary{padding:0 4px}.f-faq details p{padding:0 4px}
+.f-faq summary:hover .chev{color:var(--brand-accent)}
+summary:focus-visible{outline:3px solid rgba(30,111,217,.55);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+/* connected float */
+.cf-stage{min-height:150px;display:grid;place-items:center}
+.b-cf{background:color-mix(in srgb,var(--paper-base) 40%,white);border:1px solid color-mix(in srgb,var(--paper-edge) 40%,var(--border));border-radius:var(--radius-md);box-shadow:0 4px 12px rgba(15,23,42,.07),0 2px 4px rgba(15,23,42,.04);padding:14px 16px}
+.cf h4{margin:0 0 8px;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary)}
+.wells{display:flex;gap:8px}
+.well{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:#fff;border:1px solid rgba(15,23,42,.10);box-shadow:0 4px 10px -6px rgba(15,23,42,.25)}
+.well img{width:18px;height:18px}.well svg{width:16px;height:16px}
+.b-cf .well{background:var(--brand-light);border:1px solid var(--border);box-shadow:none}
+.f-cf{position:relative;text-align:center}
+.f-cf::after{content:'';position:absolute;left:8%;right:8%;bottom:-16px;height:18px;background:radial-gradient(ellipse at center,rgba(92,74,48,.16),transparent 70%)}
+.f-cf h4{display:flex;align-items:center;justify-content:center;gap:6px}
+.f-cf h4::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-green);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+/* trust strip */
+.ts{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:center;align-items:center;font-size:.875rem;color:var(--text-secondary)}
+.ts span{display:inline-flex;align-items:center;gap:8px;font-weight:600}.ts span::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--brand-accent)}
+.ts a{font-weight:600;text-decoration:none}
+.b-ts{border-bottom:1px solid var(--border);padding-bottom:18px}
+/* how it works */
+.hiw-tower{height:190px;border-radius:14px;display:grid;place-items:center;text-align:center;font-size:.8rem;color:var(--text-secondary);background:radial-gradient(ellipse 55% 70% at 50% 45%,rgba(34,197,94,.10),transparent 70%),radial-gradient(rgba(15,23,42,.06) 1px,transparent 1px) 0 0/18px 18px;margin-bottom:26px}
+.hiw-tower b{display:block;font-family:var(--font-display);color:var(--text-primary);font-size:.9rem}
+.hub{display:flex;justify-content:center;margin-bottom:18px}.hub span{background:#fff;border:1.5px solid rgba(139,92,246,.25);border-radius:100px;padding:8px 16px;font-size:.8rem;font-weight:600;box-shadow:0 0 24px rgba(139,92,246,.12)}
+.prev{height:78px;border-radius:var(--radius-md);background:var(--brand-light);border:1px solid var(--border);margin-bottom:12px;display:flex;align-items:flex-start;padding:8px 10px;gap:4px}
+.prev i{width:6px;height:6px;border-radius:50%;background:#CBD5E1}
+.f .prev{border-color:transparent;box-shadow:0 10px 24px -14px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.05)}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.steps li{font-size:.82rem;color:var(--text-secondary);display:flex;gap:8px;align-items:baseline}.steps li::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--brand-green);flex-shrink:0;transform:translateY(-1px)}
+.num{font-family:var(--font-display);font-size:.72rem;color:var(--text-secondary);font-weight:600;margin:0 0 4px}
+.check{max-width:1180px;margin:40px auto 0;padding:0 24px 56px}
+.check .rules li{border-top-color:var(--border)}
+</style></head><body>
+
+<div class="intro">
+<h1>Free-floating redesign — Phase 2</h1>
+<p>Each section shows <b>Before</b> (the current card values, taken from <code>landing-preview.css</code>) next to <b>After</b>, on the section's real surface. The system, applied everywhere below:</p>
+<ul class="rules">
+<li><b>Ledger rules replace card edges.</b> Each item gets a 1px hairline above it, in the hero's own ledger-rule colour family (<code>rgba(120,95,60,.14)</code>). This is the scanning structure: the eye reads rows from the rules.</li>
+<li><b>Depth moves to the icon, not the container.</b> The icon tile keeps its tinted gradient and soft shadow (the <code>.ka-node</code> recipe), so each item has one anchor point.</li>
+<li><b>Alignment and gap do the grouping.</b> The grid gaps grow from 14px to about 28px, so the white space between items reads as separation.</li>
+<li><b>The section's ambient layer is the backdrop.</b> Green glow for Toshi, paper for the hero, alternating light and white elsewhere. Nothing new is invented.</li>
+</ul></div>
+<div id="out"></div>
+
+<div class="check"><h2 style="font-family:var(--font-display);font-size:1rem;margin:0 0 4px">What this doesn't touch</h2><ul class="rules">
+<li><b>Contrast:</b> body text is <code>#64748B</code>, at 4.76:1 on white and 4.55:1 on <code>--brand-light</code>. Amber note <code>#B45309</code>: 5.02:1. Both honesty lines are unchanged in wording and position.</li>
+<li><b>Tap targets:</b> each FAQ summary is 56px tall and spans the full width (the cards were 56px too).</li>
+<li><b>Motion:</b> the chevron rotation is the only transition added, and it's off under reduced motion. The orbit and tower internals are unchanged.</li>
+<li><b>Stays boxed:</b> the Provable pillar (dashed amber), device frames, screenshots, app mockups, the orchestration panel, and the navbar.</li>
+</ul></div>
+
+<script>
+const I={user:'<circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/>',globe:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>',bolt:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',pin:'<path d="M12 2a7 7 0 017 7c0 2.5-1.5 4.5-3 6l-1.5 2.5a1 1 0 01-1.7 0L11 15c-1.5-1.5-3-3.5-3-6a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/>',plug:'<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>',pulse:'<path d="M3 12h4l3-9 4 18 3-9h4"/>',sun:'<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',people:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',check:'<path d="M9 12l2 2 4-4"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>'};
+const ic=(k,c='')=>`<div class="ico ${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">${I[k]}</svg></div>`;
+const chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+const caps=[['user','','Role-Aware',"Toshi adapts its responses based on who's asking: teacher, parent, admin, or student. Each role gets exactly what they need."],['globe','','Multi-Channel','Works across WhatsApp, email, Slack, SMS, and the dashboard simultaneously. One agent, every channel your school uses.'],['bolt','v','Action-Taking',"Doesn't just answer questions: sends messages, generates reports, updates records, and schedules follow-ups automatically."],['pin','a','Context-Aware','Remembers term dates, student histories, school policies, and communication patterns. Every interaction builds on the last.'],['plug','','Extensible',"Connect new tools through MCP servers or custom connectors. Toshi's capabilities grow with your school's needs."],['shield','v','Safe by Design','Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.']];
+const pil=[['lock','','Secure','Protected by design',"Your school's data is protected by design, not by promise."],['pulse','b','Scalable','Grows with your school','From a single classroom to an entire district.'],['shield','','Private','Scoped by default','Parents see only their own children.'],['sun','b','Interoperable','Tools you already use','WhatsApp, Drive, Slack. No need to learn new tools.']];
+const fut=`${ic('plug','a')}<p class="kick">Provable <span class="badge">Coming</span></p><h3>Cryptographically verifiable records</h3><p class="p">We're building toward records that are cryptographically provable.</p><p class="note">Stated direction. Not a live feature yet.</p>`;
+const cmp=[['Fee reminders mean phone calls and follow-up visits','Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use'],['Report cards are printed and sent home, sometimes lost along the way','Parents get results the moment marks are finalized, on their connected channels']];
+const faq=[['Do parents need to download an app?','No. Everything works through WhatsApp, a tool most families already use every day.'],["What if our school doesn't have separate class streams?",'KlassApp works the same way whether your school has one class per grade or several streams. Streams are entirely optional.'],["Is our students' data safe?",'Yes. Access is limited by design. Parents see only their own children, teachers see only their own students.']];
+const prot=[['lock','b','Open Source','MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.'],['plug','v','MCP Compatible','Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.'],['people','a','Community-Driven','Built by educators and engineers. Contributions welcome: connectors, translations, features.']];
+const cols=[['01','Parent on WhatsApp',['Fee reminder','Absentee alert','Protocol path']],['02','Teacher',['Attendance summary','Report generation','Protocol path']],['03','Admin on Dashboard',['Weekly digest','Term planning','Protocol path']]];
+const hitl=b=>`<div class="${b?'b-hitl':'f-hitl'}">${b?ic('check','v'):'<div class="halo">'+ic('check','v')+'</div>'}<div><h3>Human in the loop</h3><p class="p">Before consequential writes, Toshi asks for confirmation. You approve, then it acts. Creation tools stay on an explicit Yes/No gate so a person remains in control.</p></div></div>`;
+const wells=`<div class="wells"><span class="well"><img src="../../assets/brand/whatsapp.svg" alt=""></span><span class="well"><img src="../../assets/brand/google-drive.svg" alt=""></span><span class="well"><img src="../../assets/brand/slack.svg" alt=""></span><span class="well"><svg viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span class="well"><svg viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span></div>`;
+const S=[
+ {t:'Toshi capabilities',n:'B1 · 6 cards · section: white + green glow',s:'s-toshi',b:`<div class="b-grid">${caps.map(c=>`<div class="b-card ns">${ic(c[0],c[1])}<h3>${c[2]}</h3><p class="p">${c[3]}</p></div>`).join('')}</div>`,a:`<div class="f-grid">${caps.map(c=>`<div class="f-item">${ic(c[0],c[1])}<h3>${c[2]}</h3><p class="p">${c[3]}</p></div>`).join('')}</div>`},
+ {t:'Human in the loop',n:'B5 · callout · same section',s:'s-toshi',b:hitl(1),a:hitl(0)},
+ {t:'How it works — tower centrepiece + columns',n:'B4 + B10 + B12 · tower replaces the hub pill, with no container',s:'s-white',b:`<div class="hub"><span>● Toshi · protocol orchestration</span></div><div class="b-grid">${cols.map(c=>`<div class="b-card"><div class="prev"><i></i><i></i><i></i></div><p class="num">${c[0]}</p><h3>${c[1]}</h3><ul class="steps">${c[2].map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>`,a:`<div class="hiw-tower"><div><b>Tower v2</b>Sits on the section. Its mist and dot grid are the backdrop (no card)</div></div><div class="f-grid f">${cols.map(c=>`<div class="f-item"><div class="prev"><i></i><i></i><i></i></div><p class="num">${c[0]}</p><h3>${c[1]}</h3><ul class="steps">${c[2].map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>`},
+ {t:'Protocol Cores',n:'B2 · 4 float, and Provable is the one deliberate box',s:'s-white',b:`<div class="pill5">${pil.map(c=>`<div class="b-card">${ic(c[0],c[1])}<p class="kick">${c[2]}</p><h3>${c[3]}</h3><p class="p">${c[4]}</p></div>`).join('')}<div class="b-card future" style="box-shadow:none">${fut}</div></div>`,a:`<div class="pill5 f">${pil.map(c=>`<div class="f-item">${ic(c[0],c[1])}<p class="kick">${c[2]}</p><h3>${c[3]}</h3><p class="p">${c[4]}</p></div>`).join('')}<div class="future">${fut}</div></div>`},
+ {t:'What we actually address',n:'B3 · the honesty lead stays the section lead',s:'s-light',b:`<p class="lead">Illustrative of real product capability. Not sourced from a named school.</p><div class="b-cmp">${cmp.map(r=>`<div class="b-row"><div><p class="lab">Before</p><p class="cmp-p">${r[0]}</p></div><div><p class="lab k">KlassApp way</p><p class="cmp-p">${r[1]}</p></div></div>`).join('')}</div>`,a:`<p class="lead">Illustrative of real product capability. Not sourced from a named school.</p><div class="f-cmp"><div class="hd"><p class="lab">Before</p></div><div class="hd"><p class="lab k">KlassApp way</p></div>${cmp.map(r=>`<div><p class="cmp-p">${r[0]}</p></div><div><p class="cmp-p">${r[1]}</p></div>`).join('')}</div>`},
+ {t:'FAQ',n:'A6 → divider list · 56px summaries across the full width',s:'s-white',b:`<div class="b-faq">${faq.map((q,i)=>`<details${i?'':' open'}><summary>${q[0]}${chev}</summary><p>${q[1]}</p></details>`).join('')}</div>`,a:`<div class="f-faq">${faq.map((q,i)=>`<details${i?'':' open'}><summary>${q[0]}${chev}</summary><p>${q[1]}</p></details>`).join('')}</div>`},
+ {t:'Not just software. A protocol.',n:'B9 · protocol cards (mesh nodes follow the same rule)',s:'s-white',b:`<div class="b-grid">${prot.map(c=>`<div class="b-card">${ic(c[0],c[1])}<h3>${c[2]}</h3><p class="p">${c[3]}</p></div>`).join('')}</div>`,a:`<div class="f-grid">${prot.map(c=>`<div class="f-item">${ic(c[0],c[1])}<h3>${c[2]}</h3><p class="p">${c[3]}</p></div>`).join('')}</div>`},
+ {t:'Hero · Connected',n:'B7 + B8 · on the paper · the chips in #connectors follow the same rule',s:'s-paper',b:`<div class="cf-stage"><div class="cf b-cf"><h4>Connected</h4>${wells}</div></div>`,a:`<div class="cf-stage"><div class="cf f-cf"><h4>Connected</h4>${wells}</div></div>`},
+ {t:'Trust strip',n:'B11 · spacing replaces the border',s:'s-white',b:`<div class="ts b-ts"><span>MIT · Open Source</span><span>Self-hostable</span><span>MCP-compatible</span><a href="#">KlassApp-Foundation/KlassApp ↗</a></div>`,a:`<div class="ts"><span>MIT · Open Source</span><span>Self-hostable</span><span>MCP-compatible</span><a href="#">KlassApp-Foundation/KlassApp ↗</a></div>`},
+];
+document.getElementById('out').innerHTML=S.map(x=>`<section class="cmp" data-screen-label="${x.t}"><h2>${x.t} <small>${x.n}</small></h2><div class="pair"><div class="pane ${x.s}"><span class="tag">Before</span>${x.b}</div><div class="pane ${x.s} after"><span class="tag after">After</span>${x.a}</div></div></section>`).join('');
+</script>
+</body></html>
