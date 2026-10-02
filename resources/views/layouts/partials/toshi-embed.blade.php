@@ -25,6 +25,9 @@
         @livewire('agent-toshi')
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper">
             <div id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle" title="Open Toshi">▶</div>
+            @toshiAssistant
+            <span class="toshi-early-pill" aria-hidden="true">Early access</span>
+            @endtoshiAssistant
         </div>
         <script>
         (function () {

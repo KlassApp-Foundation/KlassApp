@@ -103,7 +103,8 @@ class DashboardController extends Controller
         // Explicit ?toshi_onboarding=1 still expands for intentional deep-links.
         session()->pull('open_toshi_onboarding', false);
         $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
-        $openToshiOnboarding = $toshiSwitch->onboardingEnabled()
+        $openToshiOnboarding = \App\Support\Toshi::enabled()
+            && $toshiSwitch->onboardingEnabled()
             && $request->boolean('toshi_onboarding');
 
         $pendingApprovals = $school_id
@@ -118,7 +119,10 @@ class DashboardController extends Controller
             ? ['labels' => [], 'values' => []]
             : $this->computeFeeTrend($school_id, $trendPeriod, 6);
 
-        return view( '/admin/dashboard/dashboard', [
+        $dashboardViewName = (config('dashboard.v2_enabled') || request()->boolean('v2'))
+            ? '/admin/dashboard/dashboard_v2'
+            : '/admin/dashboard/dashboard';
+        return view( $dashboardViewName, [
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
             'selected_teacher' => $selected_teacher,
