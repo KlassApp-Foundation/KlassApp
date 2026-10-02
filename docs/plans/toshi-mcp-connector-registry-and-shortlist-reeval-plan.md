@@ -2,7 +2,7 @@
 
 > Status: **ALL PRs COMPLETE as of 2026-09-20** — PR1 (registry core, #672), PR2 (HITL write gate, #672), PR3 (Slack wave-1, #684 merged), and PR4 (Notion) **DROPPED** by product decision (research found no credible grounded use-case). Transport tripwire (#678) also complete. The 4-PR execution order is now closed with no remaining items.
 >
-> **Google Drive status (updated 2026-09-21): WAITING FOR GA** — see D.3. Developer Preview terms contractually block the per-school self-registration model (Program Term iv), and the use case isn't cleared anyway. Not dropped: watch-signals and reopen criteria recorded in D.3.
+> **Google Drive status (updated 2026-10-02):** Pre-GA hosted Drive MCP / broad `drive.readonly` paths remain **rejected / WAITING FOR GA** as recorded in D.3 (Program Term iv + CASA). **Product direction stamp (not build go-ahead):** customer-facing **`drive.file` + Google Picker** connector — see Current Status 2026-10-02 and `docs/architecture/toshi-shape-2026-09.md` §6e. No implementation started; needs a separate scoping pass.
 >
 > **Original go-ahead (2026-09-18):** three resolutions — (1) Google Drive Developer Preview boundary spec → **D.3**; (2) trust model: self-registration is final, no approval step, status = `active`/`disabled` only → **C.1/C.2/C.4**; (3) Notion PR4 gated on concrete use-case research → **D.1 rank-2**. PR1 (registry core) in progress.
 > Builds directly on `docs/plans/toshi-hitl-convergence-and-slack-connector-plan.md` (Part A Slack wave-1, Part B HITL/MCP gate). Where this plan and that one overlap on credential storage, **this plan supersedes** — the Slack-specific `school_slack_mcp_credentials` table generalizes into the registry designed here.

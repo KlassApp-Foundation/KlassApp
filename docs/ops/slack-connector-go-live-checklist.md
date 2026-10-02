@@ -233,7 +233,7 @@ pinned; this is a green verification, not a gap. Proceed with Batch A/B as writt
 if the pilot school wants Slack restricted to the full-school-admin only, that is a
 product choice to revisit, not a defect.)
 
-## 6c. STATUS (2026-09-20 late): staging OAuth connect flow FULLY VERIFIED; E2E tool-use verification DEFERRED on the Toshi LLM gap
+## 6c. STATUS (updated 2026-10-02): connect flow VERIFIED; agent-loop E2E **UNBLOCKED, NOT YET RUN** — **next concrete action**
 
 **What is verified working, end-to-end, against real Slack (not mocks):**
 
@@ -242,23 +242,29 @@ product choice to revisit, not a defect.)
 - The Slack app's MCP configuration (feature toggle, User Token Scopes, internal install).
 - **A real workspace OAuth consent completed** — the callback upserted a real `school_mcp_connectors` row on staging (school_id 2, `status=active`, `auth_mode=oauth_remote`, user-token credentials stored encrypted). The connection mechanism is proven: connect → consent → callback → registry row → token resolvable.
 
-**What is EXPLICITLY DEFERRED — and why (this is NOT Slack-side):**
+**LLM gate (historical — CLOSED as of 2026-10-02):**
 
-- Read tool E2E (`slack_list_channels` / `slack_search` / `slack_get_channel_history` through the MCP client against the real workspace).
-- Write-gate pause: a `slack_post_message` request that must PAUSE for approval via `ApprovableMcpTool`.
-- Approve/reject audit correctness (approval path resumption, audit rows with approver).
-- Real-vs-mock response shape comparison for the skill's parsing.
+- Earlier deferral (2026-09-20) said E2E tool-use was blocked because staging had no working LLM (`OPENAI_COMPATIBLE_URL`/`MODEL` NULL). That framing is **obsolete**.
+- Staging Toshi LLM is **FIXED**: Gemini via `openai-compatible` (`OPENAI_COMPATIBLE_MODEL=gemini-3.8-flash`, host `generativelanguage.googleapis.com`); `toshi:llm-health` **OK** after deploy `depl-a2e1f9d7-…`. Production LLM untouched.
+- §6c was simply **never re-entered** after the LLM fix landed — not still waiting on an LLM gap.
 
-These require a live agent tool-use loop (`SlackSkill` → `UsesToshiLlm` → LLM), and **Toshi has no working LLM connection on staging** — `OPENAI_COMPATIBLE_URL` / `OPENAI_COMPATIBLE_MODEL` are NULL (verified via Cloud Commands tinker 2026-09-20; the earlier `AmbiguousToshiLlmConfigException` / dual-provider env mismatch was flagged as its own pre-existing item). That gap is **separate from and unrelated to Slack**; it must be fixed as its own item — do NOT fix or route around it as part of Slack work.
+**What remains UNRUN (the next concrete action — do this before calling Slack wave-1 done):**
+
+1. **Read tool E2E** — `slack_list_channels` / `slack_search` / `slack_get_channel_history` through a **live Toshi conversation** (Orchestrator → `RouteToSlackSkillTool` → `SlackSkill`), not a direct code bypass of the agent loop.
+2. **Write-gate pause** — a conversational ask that should call `slack_post_message` must **PAUSE** for approval via `ApprovableMcpTool` (`TOSHI_SLACK_MCP_WRITE_MODE=classify`, master switch on — already set on staging).
+3. **Approve path** — approve in the Toshi panel → message lands in the real channel; audit row records the approver.
+4. **Reject path** — reject → no message; audit row records rejection.
+5. **Real-vs-mock shapes** — compare real tool response shapes against `SpikeSlackMockServer` fixtures for the skill's parsing.
+
+**Gemini-specific check (provider is OpenAI-compatible shim, not native OpenAI):** confirm laravel/ai's tool-calling loop correctly recognizes Gemini tool calls — SlackSkill fires, write pauses on Approvable, resume after approval works. Differences vs earlier direct-invocation tests are significant findings, not flakes.
 
 **What this state is and is NOT:**
 
-- It IS: **the connection mechanism is proven** — OAuth, scopes, endpoints, registry, token storage all work against real Slack.
-- It is NOT: **"Slack wave-1 is done."** The tool-use behavior through a live agent loop (reads, gated writes, approvals, audits) is **not yet proven**. That gap **must be closed before any pilot school goes live with real usage** — not merely before broader rollout.
+- It IS: **connection mechanism proven** + **LLM unblocked** — ready to run the five checks above.
+- It is NOT: **"Slack wave-1 is done."** Agent-loop tool-use is still unproven until §6c is run and stamped passing. That gap **must** close before any pilot school goes live with real usage.
+- Classroom PR [#728](https://github.com/KlassApp-Foundation/KlassApp/pull/728) stays **blocked from merge** until this §6c pass succeeds (hard sequencing).
 
-**Connection state decision (2026-09-20): the demo school's connector row is LEFT ACTIVE deliberately (option a).** Rationale: (1) it is dormant-safe — `write_mode=deny` at the row level, and nothing can invoke it while there is no LLM loop to trigger tool calls (the SlackSkill tools are unreachable without the LLM connection); (2) disconnecting would discard a working connection and a validated OAuth round-trip, which is itself evidence; (3) the Disconnect mechanism (`IntegrationsController@disconnect`) flips `status=disabled` only — **no code path exists for Slack-side token revocation** (`oauth.v2.revoke` is not implemented), so "disconnect" would not revoke anything at Slack anyway — no orphaned-state hazard either way. If the row must be disabled later, use the Integrations UI Disconnect (the real path), never a hand-edited DB write.
-
-**Exact re-entry point (for whoever picks this back up):** once Toshi has a working LLM connection on staging (funded `OPENAI_COMPATIBLE_API_KEY` + consistent `OPENAI_COMPATIBLE_URL`/`MODEL`, i.e. the separately-flagged LLM config item is fixed and `toshi:llm-health` passes), run the deferred verification from the 2026-09-20 sessions BEFORE considering Slack wave-1 complete: (1) read E2E — `slack_list_channels` + `slack_search` + `slack_get_channel_history` via the connected school; (2) write-gate pause — `slack_post_message` must PAUSE for approval (`TOSHI_SLACK_MCP_WRITE_MODE=classify`, master switch on — both already set on staging); (3) approve in the panel → message lands in the real channel, audit row records the approver; (4) reject path → no message, audit row records rejection; (5) compare real tool response shapes against the mock fixtures (`SpikeSlackMockServer`) for the skill's parsing. Then, and only then, Batch B (production pilot-dark) per §6.
+**Connection state decision (2026-09-20, still stands):** demo-school connector row LEFT ACTIVE (option a). Disconnect later only via Integrations UI if needed — never a hand-edited DB write. (The old “dormant because no LLM” rationale no longer applies; the row is now live-invocable — treat §6c as urgent.)
 
 ## 7. Rollback plan
 
