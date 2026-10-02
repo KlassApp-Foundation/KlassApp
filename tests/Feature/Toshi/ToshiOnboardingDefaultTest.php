@@ -19,8 +19,8 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * Soft-launch signup default: toshi_mode=onboarding, never auto-maximize,
- * Coming soon after setup done; mid-setup free-form stays on the step.
+ * Configured signup default is preview (TOSHI_DEFAULT_MODE). An explicit
+ * onboarding school still gets the scripted guide. Never auto-maximize.
  */
 class ToshiOnboardingDefaultTest extends TestCase
 {
@@ -58,7 +58,7 @@ class ToshiOnboardingDefaultTest extends TestCase
         Config::set('toshi.api_key', '');
     }
 
-    public function test_bootstrap_creates_school_in_onboarding_mode(): void
+    public function test_bootstrap_creates_school_in_configured_preview_mode(): void
     {
         $admin = app(SchoolSignupBootstrapService::class)->bootstrap([
             'name' => 'Ada Lovelace',
@@ -70,15 +70,15 @@ class ToshiOnboardingDefaultTest extends TestCase
         $school = School::find($admin->school_id);
         $this->assertInstanceOf(School::class, $school);
         $this->assertSame(0, (int) $school->toshi_enabled);
-        $this->assertSame(ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(ToshiMode::Preview, $school->toshi_mode);
 
         $switch = app(ToshiUiSwitch::class);
-        $this->assertTrue($switch->onboardingEnabled($admin->fresh()));
-        $this->assertFalse($switch->previewMode($admin->fresh()));
+        $this->assertFalse($switch->onboardingEnabled($admin->fresh()));
+        $this->assertTrue($switch->previewMode($admin->fresh()));
         $this->assertFalse($switch->assistantEnabled($admin->fresh()));
     }
 
-    public function test_school_create_omitting_toshi_mode_defaults_to_onboarding(): void
+    public function test_school_create_omitting_toshi_mode_uses_configured_default(): void
     {
         $school = School::create([
             'name' => 'Default Mode School '.Str::random(6),
@@ -91,7 +91,18 @@ class ToshiOnboardingDefaultTest extends TestCase
         ]);
 
         $school->refresh();
-        $this->assertSame(ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(ToshiMode::Preview, $school->toshi_mode);
+
+        Config::set('toshi.default_mode', 'onboarding');
+        $onboarding = School::create([
+            'name' => 'Onboarding Config School '.Str::random(6),
+            'email' => Str::random(8).'@test.sch.ug',
+            'phone' => '+256700'.random_int(100000, 999999),
+            'slug' => Str::random(10),
+            'status' => 1,
+            'toshi_enabled' => 0,
+        ]);
+        $this->assertSame(ToshiMode::Onboarding, $onboarding->fresh()->toshi_mode);
     }
 
     public function test_dashboard_shows_setup_ctas_without_auto_maximize(): void

@@ -8,8 +8,8 @@ use App\Models\User;
 /**
  * Three UI modes for Toshi entry points a school user can see.
  *
- * - Onboarding (signup default): scripted setup guide without an AI key.
- * - Preview (per-school fallback): panel visible, Coming soon, no scripted guide, no AI.
+ * - Preview (configured default): panel collapsed, Coming soon, no scripted guide, no AI.
+ * - Onboarding: scripted setup guide without an AI key.
  * - Assistant: free-form + model when an AI key is configured AND mode is assistant.
  *
  * Rasta can flip a school between modes via `schools.toshi_mode` (no code change).

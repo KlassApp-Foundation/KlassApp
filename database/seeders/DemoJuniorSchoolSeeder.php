@@ -121,7 +121,7 @@ class DemoJuniorSchoolSeeder extends Seeder
             'is_demo' => 1,
             'is_test' => 1,
             'toshi_enabled' => 0,
-            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
+            'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
         ])->save();
 
         $this->school = $school->refresh();

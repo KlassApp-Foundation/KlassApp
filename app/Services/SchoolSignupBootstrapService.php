@@ -142,9 +142,9 @@ class SchoolSignupBootstrapService
             'phone' => $phone,
             'slug' => Str::slug($name),
             'status' => '1',
-            // Soft launch: scripted setup guide on, never the AI assistant by default.
+            // AI stays off. Surface mode comes from TOSHI_DEFAULT_MODE (preview).
             'toshi_enabled' => 0,
-            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
+            'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
             'curriculum' => null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

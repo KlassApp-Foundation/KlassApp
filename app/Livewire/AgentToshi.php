@@ -6570,7 +6570,7 @@ class AgentToshi extends Component
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
                     // Soft-launch 1g: AI is opt-in — never enable assistant on create.
                     'toshi_enabled' => 0,
-                    'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
+                    'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
