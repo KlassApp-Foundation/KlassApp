@@ -470,7 +470,7 @@
         <div class="nav-links hidden md:flex">
 
         <a href="/features">Features</a>
-        <a href="/pricing">Pricing</a>
+        <a href="/?source=sales#demo">Talk to sales</a>
         <a href="/schools">Schools</a>
         <a href="/contact">Contact</a>
         <a href="/docs/community/">Docs</a>
@@ -494,7 +494,7 @@
 
     <div id="mobileMenu" class="mobile-menu absolute top-full right-0 w-1/2 bg-white flex-col py-6 px-6 gap-4 border-l border-slate-200 shadow-2xl z-50">
         <a href="/features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
-        <a href="/pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
+        <a href="/?source=sales#demo" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Talk to sales</a>
         <a href="/schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
         <a href="/contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
         <a href="/docs/community/" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Docs</a>
@@ -1178,8 +1178,8 @@
         </div>
 
         <div class="text-center mt-12 reveal">
-            <a href="/pricing" class="text-brand-blue font-semibold hover:underline inline-flex items-center gap-2">
-                See plans &amp; pricing →
+            <a href="/?source=sales#demo" class="text-brand-blue font-semibold hover:underline inline-flex items-center gap-2">
+                Talk to sales →
             </a>
         </div>
     </div>

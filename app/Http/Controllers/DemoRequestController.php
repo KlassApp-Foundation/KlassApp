@@ -12,16 +12,21 @@ use Illuminate\Support\Facades\Mail;
 class DemoRequestController extends Controller
 {
     /**
-     * Capture a demo request from the landing page.
+     * Capture a demo or sales request from the landing page.
      *
      * The request is saved first; the lead alert email is a best-effort
      * notification and never blocks or fails the capture.
      */
     public function store(Request $request): RedirectResponse
     {
+        $salesLead = $request->input('source_page') === 'sales';
+        $successRedirect = $salesLead
+            ? (url('/') . '?source=sales#demo')
+            : (url('/') . '#demo');
+
         // Honeypot: a real visitor never fills this. Silently accept and drop.
         if ($request->filled('website')) {
-            return redirect(url('/') . '#demo')->with('demo_request_success', true);
+            return redirect()->away($successRedirect)->with('demo_request_success', true);
         }
 
         $validated = $request->validate([
@@ -50,6 +55,6 @@ class DemoRequestController extends Controller
             Log::warning('Demo request: LEADS_EMAIL is not configured; request saved without alert.');
         }
 
-        return redirect(url('/') . '#demo')->with('demo_request_success', true);
+        return redirect()->away($successRedirect)->with('demo_request_success', true);
     }
 }

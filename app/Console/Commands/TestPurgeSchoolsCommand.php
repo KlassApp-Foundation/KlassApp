@@ -50,7 +50,7 @@ class TestPurgeSchoolsCommand extends Command
         'fees_categories',
         'student_academics',
         'admissions',
-        'teacherlinks',
+        'class_teacher_links',
         'teacher_invites',
         'whatsapp_users',
         'school_details',

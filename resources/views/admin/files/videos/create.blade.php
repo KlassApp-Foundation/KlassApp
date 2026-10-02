@@ -20,7 +20,7 @@
             @if($videoOverLimit)
                 <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded mx-2 mb-3" role="status" data-testid="videos-overlimit-notice">
                     Your plan allows a maximum of {{ $videoLimit }} videos. Please upgrade to add more.
-                    <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+                    <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}" class="font-semibold underline ml-1">Talk to sales</a>
                 </div>
             @endif
                 <div class="px-3 py-3 mx-2">

@@ -681,7 +681,7 @@
                 </div>
             </div>
 
-            <a href="#pricing" class="ka-nav-link">Pricing</a>
+            <a href="/?source=sales#demo" class="ka-nav-link">Talk to sales</a>
         </div>
 
         <!-- CTA buttons -->
@@ -713,7 +713,7 @@
             </div>
         </div>
 
-        <a href="#pricing" class="ka-mob-link">Pricing</a>
+        <a href="/?source=sales#demo" class="ka-mob-link">Talk to sales</a>
 
         <div class="ka-mob-actions">
             <a class="ka-btn ka-btn-glass" href="{{ route('login') }}">Portal</a>
@@ -1151,7 +1151,7 @@
                 <div class="ka-footer-col-title">Product</div>
                 <div class="ka-footer-links">
                     <a href="#features">Features</a>
-                    <a href="#pricing">Pricing</a>
+                    <a href="/?source=sales#demo">Talk to sales</a>
                     <a href="#how">How it works</a>
                     <a href="#faq">FAQ</a>
                 </div>

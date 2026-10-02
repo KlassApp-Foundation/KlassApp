@@ -49,8 +49,8 @@
             </div>
 
             @if($nearLimit)
-                <a href="{{ url('/admin/subscriptions') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1E6FD9; color: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">
-                    Upgrade
+                <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1E6FD9; color: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">
+                    Talk to sales
                 </a>
             @endif
         </div>

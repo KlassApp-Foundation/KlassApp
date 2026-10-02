@@ -14,7 +14,7 @@
     @if(!empty($planLimitNotice))
         <div class="bg-amber-50 border border-amber-400 text-amber-900 px-4 py-3 rounded relative w-full md:w-1/2 mb-3" role="status" data-testid="student-overlimit-notice">
             <span class="block sm:inline">{{ $planLimitNotice }}</span>
-            <a href="/pricing" class="font-semibold underline ml-1">Upgrade your plan</a>
+            <a href="{{ \App\Helpers\SiteHelper::talkToSalesUrl() }}" class="font-semibold underline ml-1">Talk to sales</a>
         </div>
     @endif
     <form method="POST" action="" enctype="multipart/form-data">

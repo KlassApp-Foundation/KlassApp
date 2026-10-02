@@ -127,7 +127,7 @@ Route::prefix('preview')->name('preview.')->group(function () {
 Route::get('/landing', fn () => redirect('/', 301));
 Route::get('/landing2', fn () => redirect('/', 301));
 Route::get('/features', fn () => redirect('/', 301));
-Route::get('/pricing', fn () => redirect('/', 301));
+Route::get('/pricing', fn () => redirect()->away(rtrim((string) config('app.url'), '/') . '/?source=sales#demo', 301));
 Route::get('/schools', fn () => redirect('/', 301));
 Route::get('/contact', fn () => redirect('/#demo', 301));
 

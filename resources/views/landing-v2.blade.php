@@ -798,12 +798,18 @@
 </section>
 
 
+@php
+  $isSalesLead = request('source') === 'sales';
+  $demoSourcePage = $isSalesLead ? 'sales' : 'landing-v2#demo';
+@endphp
 <section class="demo-section" id="demo">
   <div class="container">
     <div class="demo-layout">
       <div class="demo-header reveal">
-        <h2>Book a demo</h2>
-        <p>See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.</p>
+        <h2>{{ $isSalesLead ? 'Talk to sales' : 'Book a demo' }}</h2>
+        <p>{{ $isSalesLead
+          ? 'Tell us about your school and we will follow up with pricing and next steps. Our team replies within one working day.'
+          : 'See KlassApp in action with a short walkthrough for your school. Our team replies within one working day.' }}</p>
         <ul class="demo-checks">
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 12.5l2.5 2.5 4.5-6"/></svg>
@@ -836,7 +842,7 @@
         @else
         <form class="demo-form" method="POST" action="{{ url('/demo-request') }}" data-testid="demo-form">
           @csrf
-          <input type="hidden" name="source_page" value="landing-v2#demo">
+          <input type="hidden" name="source_page" value="{{ $demoSourcePage }}">
           <div class="demo-hp" aria-hidden="true">
             <label for="demo-website">Website</label>
             <input type="text" id="demo-website" name="website" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other">
