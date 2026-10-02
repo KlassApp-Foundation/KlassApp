@@ -110,7 +110,8 @@ class NoSchoolGetsAiByDefaultTest extends TestCase
 
         $school = School::findOrFail($admin->school_id);
         $this->assertSchoolStartsAiOff($school, $admin);
-        $this->assertSame(ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(ToshiMode::configuredDefault(), $school->toshi_mode);
+        $this->assertSame(ToshiMode::Preview, $school->toshi_mode);
     }
 
     public function test_toshi_create_mode_path_starts_ai_off(): void
@@ -122,7 +123,7 @@ class NoSchoolGetsAiByDefaultTest extends TestCase
             'phone' => '0700000000',
             'curriculum' => 'uneb',
             'toshi_enabled' => 0,
-            'toshi_mode' => ToshiMode::Onboarding,
+            'toshi_mode' => ToshiMode::configuredDefault(),
             'status' => 1,
             'slug' => 'toshi-create-'.Str::random(6),
             'registration_country' => 'Uganda',
@@ -150,6 +151,11 @@ class NoSchoolGetsAiByDefaultTest extends TestCase
             "/School::create\(\[[\s\S]*?'toshi_enabled'\s*=>\s*1/",
             $source,
             'AgentToshi create mode must not enable AI by default'
+        );
+        $this->assertStringContainsString(
+            'ToshiMode::configuredDefault()',
+            $source,
+            'AgentToshi create mode must use the configured default, not a hardcoded mode'
         );
     }
 
@@ -183,7 +189,39 @@ class NoSchoolGetsAiByDefaultTest extends TestCase
         ]);
 
         $this->assertSchoolStartsAiOff($school);
+        $this->assertSame(ToshiMode::configuredDefault(), $school->toshi_mode);
+        $this->assertSame(ToshiMode::Preview, $school->toshi_mode);
+    }
+
+    public function test_configured_default_is_preview_and_rejects_assistant(): void
+    {
+        Config::set('toshi.default_mode', 'preview');
+        $this->assertSame(ToshiMode::Preview, ToshiMode::configuredDefault());
+
+        Config::set('toshi.default_mode', 'onboarding');
+        $this->assertSame(ToshiMode::Onboarding, ToshiMode::configuredDefault());
+
+        Config::set('toshi.default_mode', 'assistant');
+        $this->assertSame(ToshiMode::Preview, ToshiMode::configuredDefault());
+
+        Config::set('toshi.default_mode', 'not-a-mode');
+        $this->assertSame(ToshiMode::Preview, ToshiMode::configuredDefault());
+    }
+
+    public function test_onboarding_config_is_honoured_without_a_code_change(): void
+    {
+        Config::set('toshi.default_mode', 'onboarding');
+
+        $admin = app(SchoolSignupBootstrapService::class)->bootstrap([
+            'name' => 'Onboarding Config',
+            'email' => 'onb-'.Str::random(6).'@test.sch.ug',
+            'phone' => '+256700'.random_int(100000, 999999),
+            'password' => 'secret123',
+        ]);
+
+        $school = School::findOrFail($admin->school_id);
         $this->assertSame(ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(0, (int) $school->toshi_enabled);
     }
 
     public function test_site_admin_create_school_livewire_defaults_toshi_off(): void

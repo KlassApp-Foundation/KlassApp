@@ -33,6 +33,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default mode for newly created schools
+    |--------------------------------------------------------------------------
+    |
+    | TOSHI_DEFAULT_MODE=preview (default) or onboarding. Applied by
+    | ToshiMode::configuredDefault() on sign-up, site-admin create, Toshi
+    | create mode, and demo seeders. "assistant" is ignored and falls back
+    | to preview so AI cannot be turned on by configuration alone.
+    | Change the env value and redeploy the same commit; no code change.
+    |
+    */
+    'default_mode' => env('TOSHI_DEFAULT_MODE', 'preview'),
+
+    /*
+    |--------------------------------------------------------------------------
     | WhatsApp channel (free-form → Toshi; wave-1 task writes allowlisted)
     |--------------------------------------------------------------------------
     |
