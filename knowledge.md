@@ -667,11 +667,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 2, 2026 (latest) — **A1 OPEN [#951](https://github.com/KlassApp-Foundation/KlassApp/pull/951)** (`cursor/toshi-default-mode-preview-f71f`, `1f4c15d1`)
+## Current Status: October 2, 2026 (latest) — **A1 OPEN [#951](https://github.com/KlassApp-Foundation/KlassApp/pull/951)** (`cursor/toshi-default-mode-preview-f71f`, rebased onto `e45e901a`)
 
 - New-school Toshi mode comes from `TOSHI_DEFAULT_MODE` / `config('toshi.default_mode')`, default `preview`. `assistant` is rejected and falls back to preview. Existing school rows are not rewritten (A2).
 - Tests: signup/default/preview set 33 passed; onboarding + filtered Toshi UI 455 passed. Failing-then-passing: 10 failed before `configuredDefault()`, green after.
-- Production not deployed. Staging check waits on CI + merge (staging push-to-deploy is `main`).
+- Rebased onto `origin/main` `cb8e19bf` (#952). Staging verification is post-merge: staging is branch-bound to `main`. Production not deployed.
 
 ## Current Status: October 2, 2026 (latest) — **Slack §6c E2E FAILED on staging (Gemini); wave-1 NOT done; Classroom #728 still blocked**
 
