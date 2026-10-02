@@ -55,12 +55,16 @@ class School extends Model
         'exam_type_preferences',
         'toshi_enabled',
         'toshi_mode',
+        'onboarding_finished_at',
+        'onboarding_skipped_steps',
         'report_template',
     ];
 
     protected $casts = [
         'exam_type_preferences' => 'array',
         'toshi_mode' => \App\Enums\ToshiMode::class,
+        'onboarding_finished_at' => 'datetime',
+        'onboarding_skipped_steps' => 'array',
     ];
 
     /**

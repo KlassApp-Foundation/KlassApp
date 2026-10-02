@@ -121,6 +121,49 @@ class OnboardingStepsService
         'students',
     ];
 
+    public static function isOnboardingFinished(School $school): bool
+    {
+        return $school->onboarding_finished_at !== null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function skippedSteps(School $school): array
+    {
+        $skipped = $school->onboarding_skipped_steps;
+
+        return is_array($skipped) ? array_values(array_filter($skipped, 'is_string')) : [];
+    }
+
+    public static function wasStepSkipped(School $school, string $key): bool
+    {
+        return in_array($key, self::skippedSteps($school), true);
+    }
+
+    public static function markStepSkipped(School $school, string $key): void
+    {
+        if (! in_array($key, self::OPTIONAL_STEPS, true)) {
+            return;
+        }
+
+        $skipped = self::skippedSteps($school);
+        if (! in_array($key, $skipped, true)) {
+            $skipped[] = $key;
+        }
+
+        $school->forceFill(['onboarding_skipped_steps' => $skipped])->save();
+    }
+
+    public static function markOnboardingFinished(School $school): void
+    {
+        if ($school->onboarding_finished_at !== null) {
+            return;
+        }
+
+        $school->forceFill(['onboarding_finished_at' => now()])->save();
+    }
+
     /**
      * Placeholder names created at SaaS signup: "{FirstName}'s School" (+ optional -N).
      */
@@ -224,12 +267,14 @@ class OnboardingStepsService
             'academic_year' => AcademicYear::where('school_id', $sid)->exists(),
             'standards'  => StandardLink::where('school_id', $sid)->exists(),
             'subjects'   => Subject::where('school_id', $sid)->exists(),
-            'teachers'   => Teacherlink::where('school_id', $sid)->exists(),
+            'teachers'   => Teacherlink::where('school_id', $sid)->exists()
+                || self::wasStepSkipped($school, 'teachers'),
             'students'   => User::query()
                 ->where('school_id', $sid)
                 ->where('usergroup_id', 6)
                 ->ByActive()
-                ->exists(),
+                ->exists()
+                || self::wasStepSkipped($school, 'students'),
             'terms'      => AcademicTerm::where('school_id', $sid)->exists(),
             'fees'       => FeesCategories::where('school_id', $sid)->exists(),
             'whatsapp_verify' => $userId && WhatsAppUser::where('user_id', $userId)->exists(),

@@ -252,10 +252,27 @@ class ManualOnboardingWizard extends Component
         $this->teacherEmail = $this->freshTeacherEmail($school);
         $this->prefillDefaultTerms();
 
+        $school = $school->fresh();
+
+        // Persist finish across reloads (A4: "is ready" then remount landed on Teachers).
+        if (OnboardingStepsService::isOnboardingFinished($school)) {
+            $this->completedDuringSession = collect($this->steps)
+                ->where('key', '!=', 'review')
+                ->pluck('key')
+                ->all();
+            $this->setStepIndex($this->reviewStepIndex());
+            $this->buildReviewSummary();
+            $this->finished = true;
+            unset($user);
+
+            return;
+        }
+
         // Land on the first incomplete step (including optional teachers/students).
         // Skipping optional steps on mount jumped users from Teachers → Terms on reload
         // and made Previous appear to "go forward" after a remount mid-flow.
-        $next = OnboardingStepsService::nextIncompleteStep($school->fresh(), Auth::id());
+        // Optional skips are persisted on the school so they survive remount.
+        $next = OnboardingStepsService::nextIncompleteStep($school, Auth::id());
         if ($next === null) {
             // Checklist complete → land on the synthetic review screen (do not auto-finish).
             $this->completedDuringSession = collect($this->steps)
@@ -504,6 +521,7 @@ class ManualOnboardingWizard extends Component
         }
 
         $this->errorMessage = '';
+        OnboardingStepsService::markStepSkipped($this->school()->fresh(), $key);
         if (! in_array($key, $this->completedDuringSession, true)) {
             $this->completedDuringSession[] = $key;
         }
@@ -929,7 +947,8 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         $this->refreshSteps();
 
-        $blocking = OnboardingStepsService::blockingIncompleteSteps($this->school()->fresh(), Auth::id());
+        $school = $this->school()->fresh();
+        $blocking = OnboardingStepsService::blockingIncompleteSteps($school, Auth::id());
         if ($blocking !== []) {
             $labels = collect($blocking)->pluck('label')->filter()->implode(', ');
             $this->errorMessage = $labels !== ''
@@ -939,6 +958,7 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        OnboardingStepsService::markOnboardingFinished($school);
         $this->finished = true;
         $this->returnToStepIndex = null;
         $this->returnToStepKey = null;
