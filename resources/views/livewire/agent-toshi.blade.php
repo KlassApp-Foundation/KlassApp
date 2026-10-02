@@ -92,6 +92,7 @@
                 </p>
                 <p class="toshi-preview-note">Founding schools will be the first to try Toshi.</p>
             </div>
+        </div>
             @else
             @foreach($messages as $msg)
                 @php $isUser = $msg['role'] === 'user'; @endphp
