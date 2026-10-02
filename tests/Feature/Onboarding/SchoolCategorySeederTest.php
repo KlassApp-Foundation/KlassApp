@@ -222,6 +222,77 @@ class SchoolCategorySeederTest extends TestCase
         ]);
     }
 
+    /**
+     * Soft-launch A4 false alarm: journeys logged standards.name (primary / o-level)
+     * as "classes seeded". Classes are sections — never tier-band standard names.
+     *
+     * @test
+     */
+    public function seeded_section_names_match_category_contract_and_never_tier_bands(): void
+    {
+        $cases = [
+            'primary' => [
+                'Primary One', 'Primary Two', 'Primary Three', 'Primary Four',
+                'Primary Five', 'Primary Six', 'Primary Seven',
+            ],
+            'o_level' => ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four'],
+            'o_a_level' => [
+                'Senior One', 'Senior Two', 'Senior Three', 'Senior Four',
+                'Senior Five', 'Senior Six',
+            ],
+            'nursery' => ['Baby Class', 'Middle Class', 'Top Class'],
+            'primary_nursery' => [
+                'Baby Class', 'Middle Class', 'Top Class',
+                'Primary One', 'Primary Two', 'Primary Three', 'Primary Four',
+                'Primary Five', 'Primary Six', 'Primary Seven',
+            ],
+        ];
+
+        foreach ($cases as $category => $expected) {
+            $this->assertSame(
+                $expected,
+                SchoolCategorySeeder::expectedSectionNames($category),
+                "expectedSectionNames({$category})"
+            );
+
+            $school = School::create([
+                'name' => "Contract {$category}",
+                'email' => "contract-{$category}@test.sch.ug",
+                'phone' => '07000000'.substr(md5($category), 0, 2),
+                'slug' => 'contract-'.$category,
+                'status' => 1,
+                'curriculum' => 'uneb',
+                'school_category' => $category,
+            ]);
+            AcademicYear::create([
+                'school_id' => $school->id,
+                'name' => date('Y'),
+                'start_date' => now()->startOfYear(),
+                'end_date' => now()->endOfYear(),
+                'type' => 'Current Academic Year',
+            ]);
+
+            SchoolCategorySeeder::seed($school->fresh());
+
+            $sections = Section::where('school_id', $school->id)->orderBy('id')->pluck('name')->all();
+            $standards = Standard::where('school_id', $school->id)->orderBy('id')->pluck('name')->all();
+
+            $this->assertSame($expected, $sections, "sections for {$category}");
+            $this->assertEmpty(
+                array_intersect($sections, SchoolCategorySeeder::TIER_BAND_STANDARD_NAMES),
+                "sections must never be tier-band names for {$category}"
+            );
+            $this->assertNotEmpty($standards);
+            foreach ($standards as $standardName) {
+                $this->assertContains(
+                    $standardName,
+                    SchoolCategorySeeder::TIER_BAND_STANDARD_NAMES,
+                    "standards stay tier bands for {$category}"
+                );
+            }
+        }
+    }
+
     /** @test */
     public function seed_is_idempotent_and_never_duplicates_rows(): void
     {
