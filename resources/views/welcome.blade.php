@@ -53,7 +53,7 @@
 			<div class="buttons ka-animate">
 				<a class="ka-cta" href="{{ url('/register') }}" onmouseenter="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onmouseleave="this.style.transform='';this.style.background='';this.style.boxShadow='';" onfocus="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onblur="this.style.transform='';this.style.background='';this.style.boxShadow='';">Join</a>
 				<a class="ka-portal" href="{{ route('login') }}" onmouseenter="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onmouseleave="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';" onfocus="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onblur="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';">Portal</a>
-				<a class="ka-ghost" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Book a demo</a>
+				<a class="ka-ghost" href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer">Book a demo</a>
 			</div>
 		</div>
 
@@ -238,7 +238,7 @@
 		<div class="ka-pricing-cta-actions ka-animate">
 			<a class="ka-cta" href="{{ url('/register') }}" onmouseenter="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onmouseleave="this.style.transform='';this.style.background='';this.style.boxShadow='';" onfocus="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onblur="this.style.transform='';this.style.background='';this.style.boxShadow='';">Join</a>
 			<a class="ka-portal" href="{{ route('login') }}" onmouseenter="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onmouseleave="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';" onfocus="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onblur="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';">Portal</a>
-			<a class="ka-ghost" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Book a demo</a>
+			<a class="ka-ghost" href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer">Book a demo</a>
 		</div>
 		<div class="ka-pricing-cta-note ka-animate">Free 30-day trial · No credit card required · Cancel anytime</div>
 	</div>

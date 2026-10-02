@@ -583,7 +583,7 @@
                             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3"/>
                         </svg>
                     </a>
-                    <a href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer"
+                    <a href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 border border-slate-200 font-medium px-6 py-3 rounded-xl hover:bg-slate-200 transition btn-scale">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         Book a demo
@@ -1304,7 +1304,7 @@
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3"/>
                 </svg>
             </a>
-            <a href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer"
+            <a href="mailto:connect@klassapp.xyz" target="_blank" rel="noopener noreferrer"
                class="bg-brand-blue text-white font-semibold px-7 py-3.5 rounded-lg text-base hover:bg-blue-700 transition btn-scale inline-flex items-center gap-2">
                 Book a demo
             </a>

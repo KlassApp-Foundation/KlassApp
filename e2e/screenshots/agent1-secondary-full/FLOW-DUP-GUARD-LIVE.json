@@ -25,8 +25,8 @@
   "pending_count_phone": 1,
   "flow_send": {
     "success": true,
-    "message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSNkNFRkYxRjQ5NDc1QzhBMjEzAA=="
+    "message_id": "wamid.HBgMMjU2NzAwMDAwMDAwFQIAERgSNkNFRkYxRjQ5NDc1QzhBMjEzAA=="
   },
-  "phone": "+256781940358",
+  "phone": "+256700000000",
   "note": "createFromFlowSubmission x2 schools + Approvals-style linkByStudentId approve; not KLS-ID WhatsApp fallback"
 }

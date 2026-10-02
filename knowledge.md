@@ -1797,7 +1797,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407)** → merge `bb94fe8b` — any inbound from a phone with pending `ParentLinkRequest` gets status (not stranger menu); reject/approve WhatsApp notify; duplicate Flow submit while pending suppressed.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
-- **✅ Live verify** `[REDACTED - real phone number]` (pending id=1 Mucunguzi → Mwesigye Ford @ KABALE JUNIOR SCHOOL): outbound `parent_link_pending_status` **sent** `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRUVFNzA3MTAzMTRFNUIxQTU5AA==`.
+- **✅ Live verify** `[REDACTED - real phone number]` (pending id=1 Mucunguzi → Mwesigye Ford @ KABALE JUNIOR SCHOOL): outbound `parent_link_pending_status` **sent** `wamid.HBgMMjU2NzAwMDAwMDAwFQIAERgSRUVFNzA3MTAzMTRFNUIxQTU5AA==`.
 - **Tests**: 13 passed (55 assertions) — Flow + Approval suites.
 - **Prior**: [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405) teacher email invite @ `a35830eb`.
 
@@ -1829,7 +1829,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **✅ [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403)** → merge `60cc6aa4` — required `school_name` on Flow; resolve school by name first; new ack copy; `parent_link_requests.school_name` column.
 - **✅ Deploy** `scripts/deploy-manual.sh` — migration DONE; `[8/8] ✅ SHA match`.
 - **✅ Meta Flow republished** `1732491471303297` status `PUBLISHED`, `validation_errors: []`.
-- **✅ Real-device send** to `[REDACTED - real phone number]` → `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRDM1Q0VFNzA5REE0M0REQjA0AA==` success.
+- **✅ Real-device send** to `[REDACTED - real phone number]` → `wamid.HBgMMjU2NzAwMDAwMDAwFQIAERgSRDM1Q0VFNzA5REE0M0REQjA0AA==` success.
 - **One-child-per-submit**: unchanged — each `createFromFlowSubmission` stores one child + one school; Flow body copy now says submit once per child.
 - **Prior Day 1+2**: [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400)/[#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401)/[#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402) @ `8ce66452`.
 
@@ -3341,7 +3341,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions / evidence**:
   - School **22** Agent's School-3 / `agent1.sec.1788791729953@example.test`
   - After Confirm: 1 Teacherlink, 1 teacher, 2 students, teachers step complete; Toshi created BOT exam; Cloud added EOT (`contributes_to_report_total`) + 4 mark rows
-  - PLR #1 approved → parent linked to student 50; Flow send `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSOTJGRTdBNEYyQjk3NzE2MTAxAA==`
+  - PLR #1 approved → parent linked to student 50; Flow send `wamid.HBgMMjU2NzAwMDAwMDAwFQIAERgSOTJGRTdBNEYyQjk3NzE2MTAxAA==`
   - Report PDF **668959** bytes, head `%PDF-1.7`, sha256 `7454e03e58c44f7f13aa923f697ccc095c7a025909f3ce4a7f82f30840822f02`
   - Cloud blockers cleared: empty `exam_types` table; subject name `GENERAL MATHEMATICS` (not `Mathematics`)
 - **Status**: ✅ Done (Agent 1 evidence). Persist `WHATSAPP_PARENT_LINK_FLOW_ID` on Cloud; investigate school-23 confirm “already exists” false positive if re-running harness.

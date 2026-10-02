@@ -170,10 +170,10 @@ return [
 
         /*
          * WhatsApp alert recipient.
-         * Phone number in E.164 format (e.g. +256781940358).
+         * Phone number in E.164 format (e.g. +2567XXXXXXXX).
          */
         'whatsapp' => [
-            'phone' => env('BACKUP_WHATSAPP_PHONE', '+256781940358'),
+            'phone' => env('BACKUP_WHATSAPP_PHONE', ''),
         ],
     ],
 

@@ -31,23 +31,23 @@ class UsersSiteAdminTableSeeder extends Seeder
             [
                 'name'       => 'superadmin',
                 'email'      => 'superadmin@gmail.com',
-                'mobile_no'  => '+256793844906',
+                'mobile_no'  => env('SUPERADMIN_MOBILE_NO', '+256700000000'),
                 'firstname'  => 'Super',
                 'lastname'   => 'Admin',
             ],
 
             [
                 'name'       => 'elicom',
-                'email'      => 'elicomelijah330@gmail.com',
-                'mobile_no'  => '+256781490899',
+                'email'      => env('TEAM_ADMIN_EMAIL', 'team.admin@klassapp.test'),
+                'mobile_no'  => env('TEAM_ADMIN_MOBILE_NO', '+256700000000'),
                 'firstname'  => 'Mugisha',
                 'lastname'   => 'Elijah',
             ],
 
              [
                 'name'       => 'mucu',
-                'email'      => 'moemucu@gmail.com',
-                'mobile_no'  => '+256781940358',
+                'email'      => env('SITE_OWNER_EMAIL', 'owner@klassapp.test'),
+                'mobile_no'  => env('SITE_OWNER_MOBILE_NO', '+256700000000'),
                 'firstname'  => 'Mucunguzi',
                 'lastname'   => 'Moses',
             ],
