@@ -49,6 +49,7 @@
     <env name="TOSHI_PLATFORM_GATE_ENABLED" value="false" force="true"/>
     <env name="TOSHI_PLATFORM_USER_IDS" value="" force="true"/>
     <env name="TOSHI_DAILY_LLM_LIMIT" value="100" force="true"/>
+    <env name="TOSHI_DEFAULT_MODE" value="preview" force="true"/>
     <server name="APP_ENV" value="testing" force="true"/>
     <server name="APP_KEY" value="base64:ObPJaxQf1eMxrne4YBjtdUZbym1/fsDEQVsYKtnv+NA=" force="true"/>
     <server name="DB_CONNECTION" value="sqlite" force="true"/>
@@ -77,6 +78,7 @@
     <server name="TOSHI_PLATFORM_GATE_ENABLED" value="false" force="true"/>
     <server name="TOSHI_PLATFORM_USER_IDS" value="" force="true"/>
     <server name="TOSHI_DAILY_LLM_LIMIT" value="100" force="true"/>
+    <server name="TOSHI_DEFAULT_MODE" value="preview" force="true"/>
   </php>
   <source>
     <include>

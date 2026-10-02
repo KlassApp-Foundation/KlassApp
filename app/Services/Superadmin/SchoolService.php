@@ -27,7 +27,7 @@ class SchoolService
 
         // Soft-launch 1g: AI is opt-in. Site-admin create must not default assistant on.
         // If the form explicitly enables Toshi, keep mode coherent (Assistant);
-        // otherwise default both flag and mode to off/onboarding.
+        // otherwise use TOSHI_DEFAULT_MODE (preview unless set to onboarding).
         $explicitEnabled = array_key_exists('toshi_enabled', $validated)
             && $validated['toshi_enabled'] !== null
             && (bool) $validated['toshi_enabled'];
@@ -39,7 +39,7 @@ class SchoolService
         if (! array_key_exists('toshi_mode', $validated) || $validated['toshi_mode'] === null) {
             $validated['toshi_mode'] = $explicitEnabled
                 ? \App\Enums\ToshiMode::Assistant
-                : \App\Enums\ToshiMode::Onboarding;
+                : \App\Enums\ToshiMode::configuredDefault();
         }
 
         return School::create($validated);

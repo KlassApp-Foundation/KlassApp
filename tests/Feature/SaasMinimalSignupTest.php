@@ -65,7 +65,7 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertSame("Grace's School", $school->name);
         $this->assertNull($school->curriculum);
         $this->assertSame(0, (int) $school->toshi_enabled);
-        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(\App\Enums\ToshiMode::Preview, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
 
         $this->assertTrue(OnboardingStepsService::isStepComplete('school_name', $school) === false);
@@ -97,8 +97,10 @@ class SaasMinimalSignupTest extends TestCase
         $dashboard = $this->get('/admin/dashboard');
         $dashboard->assertOk();
         $dashboard->assertSee('Set up manually', false);
-        $dashboard->assertSee('Set up with Toshi', false);
-        // Auto-open script only — Set up with Toshi button may still dispatch maximize on click.
+        $dashboard->assertDontSee('Set up with Toshi', false);
+        $dashboard->assertDontSee('data-testid="setup-banner-toshi"', false);
+        $dashboard->assertSee('data-testid="toshi-preview-coming-soon"', false);
+        $dashboard->assertSee('Coming soon', false);
         $dashboard->assertDontSee('Wave 3: open Toshi maximized', false);
     }
 
@@ -183,7 +185,7 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertSame("Okello's School", $school->name);
         $this->assertNull($school->curriculum);
         $this->assertSame(0, (int) $school->toshi_enabled);
-        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(\App\Enums\ToshiMode::Preview, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
         $this->assertSame('+256703333333', $school->phone);
     }
@@ -216,7 +218,7 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertNull($school->phone);
         $this->assertNull($school->curriculum);
         $this->assertSame(0, (int) $school->toshi_enabled);
-        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
+        $this->assertSame(\App\Enums\ToshiMode::Preview, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
 
         $keys = array_column(OnboardingStepsService::incompleteSteps($school, $user->id), 'key');
