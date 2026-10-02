@@ -68,6 +68,8 @@ These apply to every change, in every session, regardless of which tool is runni
 
 32. **Never bypass branch protection or merge with an admin override without Rasta's explicit go-ahead.** Merging with admin privileges, disabling required checks, forcing a merge past failing CI, or using any other override that branch protection exists to prevent is forbidden unless Rasta has explicitly authorised that specific merge in writing for that occasion. A merge that "would have been fine if CI had passed" still needs the normal path: fix the failure, get green CI, then merge. Precedent (2026-09-30): [#900](https://github.com/KlassApp-Foundation/KlassApp/pull/900) (the E2E onboarding suite) was merged via admin bypass; that must not repeat. This rule exists so the bypass is a recorded, owner-approved exception rather than an agent default.
 
+33. **AI features are opt-in per school; nothing may enable them by default.** New schools (sign-up, Toshi create mode, admin/site-admin creation, seeders, demo schools) must start in `toshi_mode=onboarding` or `preview` with `toshi_enabled=0` and assistant off. Do not ship code that turns AI/MCP on unless an explicit human/admin action enables it for that school. The regression test `Tests\Feature\Toshi\NoSchoolGetsAiByDefaultTest` must stay green.
+
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
 Before editing code in these areas, check the fix markers below are still in place. Full root-cause / fix / verification detail lives in `knowledge.md`'s "Known Bug Patterns & Lessons" section — this is a locator, not a replacement for reading it.

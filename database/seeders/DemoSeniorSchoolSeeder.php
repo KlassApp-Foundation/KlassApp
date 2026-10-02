@@ -118,7 +118,8 @@ class DemoSeniorSchoolSeeder extends Seeder
             'status' => 1,
             'is_demo' => 1,
             'is_test' => 1,
-            'toshi_enabled' => 1,
+            'toshi_enabled' => 0,
+            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
         ])->save();
 
         $this->school = $school->refresh();
