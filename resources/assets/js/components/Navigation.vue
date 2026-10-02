@@ -8,7 +8,7 @@
                 name="academic_year"
                 aria-label="Academic year"
                 @change="showYear()">
-            <option v-for="academic in academiclist" v-bind:value="academic.id">{{ academic.name }}</option>
+            <option v-for="academic in academiclist" :key="academic.id" :value="String(academic.id)">{{ academic.name }}</option>
         </select>
         <span v-if="errors.academic"><p class="text-red-500 text-xs font-semibold">{{ errors.academic[0] }}</p></span>
     </div>
@@ -52,7 +52,7 @@
                     // null and dereferencing .id threw a TypeError on every
                     // onboarding screen. Guard the value instead of assuming it.
                     const current = response.data.current_year;
-                    this.academic_year = current ? current.id : '';
+                    this.academic_year = current ? String(current.id) : '';
                 });
             },
         },

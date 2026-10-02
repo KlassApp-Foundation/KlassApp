@@ -222,7 +222,7 @@ class StudentController extends Controller
       $array['blood_groups']      =   SiteHelper::getBloodGroups();
       $array['castelist']         =   SiteHelper::getCasteList();
       $array['transportlist']     =   SiteHelper::getTransportList();
-      $array['date_of_birth']     =   date('Y-m-d',strtotime('-4 years',strtotime(date('Y'))));
+      $array['date_of_birth']     =   '';
       $array['joining_date']      =   date('Y-m-d');
 
       return $array;
