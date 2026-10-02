@@ -6,7 +6,7 @@
     @include('layouts.partials.page-header', [
         'title' => 'Teachers',
         'subtitle' => 'A clear view of your teaching team and staff accounts.',
-        'actions' => '<span class="ds-kpi-card !px-3 !py-2"><span class="ds-kpi-value !text-lg">' . $count . '</span><span class="ds-kpi-label">Total staff</span></span>'
+        'actions' => '<span class="ds-kpi-card !px-3 !py-2 inline-flex items-baseline gap-2"><span class="ds-kpi-value !text-lg !m-0">' . $count . '</span><span class="ds-kpi-label !m-0">Total staff</span></span>'
     ])
 
     @include('partials.message')
@@ -18,7 +18,7 @@
                     <label class="ds-label" for="teachers-search">Search staff</label>
                     <div class="relative">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
-                        <input id="teachers-search" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Name, email or phone" class="ds-form-input pl-10">
+                        <input id="teachers-search" type="search" name="search" value="{{ $search ?? '' }}" placeholder="Name, email or phone" class="ds-form-input ds-form-input--with-icon pl-10">
                     </div>
                 </div>
                 <div class="w-[112px]">
