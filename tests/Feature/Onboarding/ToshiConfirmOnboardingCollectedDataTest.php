@@ -291,6 +291,34 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
     }
 
     /** @test */
+    public function complete_mode_commit_succeeds_when_admin_email_matches_logged_in_user(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class)
+            ->set('mode', 'complete')
+            ->set('schoolId', $this->school->id)
+            ->set('schoolName', $this->school->name)
+            // Real journeys often restore the school admin's email into adminEmail.
+            // That must not block Confirm & Complete Setup.
+            ->set('adminEmail', $this->admin->email)
+            ->set('terms', [
+                ['name' => 'Term I', 'start' => date('Y').'-02-01', 'end' => date('Y').'-04-30', 'status' => 'current'],
+                ['name' => 'Term II', 'start' => date('Y').'-05-01', 'end' => date('Y').'-08-31', 'status' => 'next'],
+                ['name' => 'Term III', 'start' => date('Y').'-09-01', 'end' => date('Y').'-12-31', 'status' => 'next'],
+            ])
+            ->set('reviewData', ['mode' => 'complete']);
+
+        $component->call('confirmOnboarding');
+
+        $component->assertSet('reviewData.committed', true);
+        $this->assertEquals(3, AcademicTerm::where('school_id', $this->school->id)->count());
+        $messages = collect($component->get('messages'))->pluck('text')->implode("\n");
+        $this->assertStringNotContainsString('already in use', $messages);
+        $this->assertStringContainsString('set up', strtolower($messages));
+    }
+
+    /** @test */
     public function create_mode_confirm_onboarding_persists_students_collected_via_save_student_flow(): void
     {
         $superadmin = User::create([

@@ -1,0 +1,138 @@
+<!-- @dsCard group="Component review" viewport="1200x1100" name="Dialogs & notifications — review" subtitle="One dialog + one toast to replace swal v1, SweetAlert2, livewire-alert and toastr" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dialogs &amp; notifications — review</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-canvas);font-family:var(--d-font-body);color:var(--d-text);padding:32px clamp(12px,4vw,48px) 96px}
+a{color:var(--d-blue)}a:hover{color:#1557B0}
+h1{font-family:var(--d-font-display);font-size:1.8rem;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-family:var(--d-font-display);font-size:1.1rem;font-weight:600;margin:40px 0 4px}
+.sub{color:var(--d-text-secondary);font-size:.9rem;margin:0 0 16px;max-width:780px;text-wrap:pretty}
+.panel{background:var(--d-white);border-radius:14px;box-shadow:var(--d-shadow-sm);padding:20px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);font-weight:600;margin:0 0 12px}
+table.m{border-collapse:collapse;width:100%}
+table.m th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);text-align:left;font-weight:600;padding:0 12px 8px 0}
+table.m td{padding:10px 12px 10px 0;border-top:1px solid var(--d-border);font-size:.85rem;line-height:1.5;vertical-align:top}
+table.m td code{font-size:.78rem}
+.flag{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:.85rem;line-height:1.55}
+.flag h3{font-family:var(--d-font-display);font-size:.9rem;margin:0 0 6px;color:#92400E}
+.static-dialog{position:static;display:block;box-shadow:var(--d-shadow-lg);margin:0}
+.old{border:1px solid var(--d-border);border-radius:8px;padding:28px 20px 20px;text-align:center;background:#fff;font-family:Arial,sans-serif;max-width:420px}
+.old .oi{width:64px;height:64px;border:4px solid #C9DAE1;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;color:#C9DAE1;font:700 32px Arial}
+.old p{color:rgba(0,0,0,.64);font-size:16px;margin:0 0 22px}
+.old .ob{display:flex;justify-content:flex-end;gap:8px}.old .ob span{padding:10px 24px;border-radius:5px;font-size:14px;font-weight:600}
+.meas{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--d-text-secondary);margin:10px 0 0}
+</style></head><body>
+
+<h1>Dialogs &amp; notifications</h1>
+<p class="sub">Right now four libraries do this job. The main shell loads <b>SweetAlert v1</b> (<code>swal({...})</code>, used on dozens of admin pages) plus <b>toastr</b>. SiteAdmin loads <b>SweetAlert2 v11</b> + <b>livewire-alert</b>. The calendar pulls in <b>jquery.toastmessage</b>. The proposal is one native <code>&lt;dialog&gt;</code> and one toast stack in <code>styles/feedback-v2.css</code>, with every action a real <code>.ds-btn</code> from the current system (so no "success" button — it's retired).</p>
+
+<h2>Try them</h2>
+<div class="panel"><div class="row">
+<button class="ds-btn ds-btn-danger" data-open="dlg-delete">Delete a magazine</button>
+<button class="ds-btn ds-btn-warning v2" data-open="dlg-promote">Promote Senior 3</button>
+<button class="ds-btn ds-btn-outline" data-open="dlg-edit">Edit class details</button>
+<button class="ds-btn ds-btn-ghost" data-toast="success">Success toast</button>
+<button class="ds-btn ds-btn-ghost" data-toast="error">Error toast</button>
+<button class="ds-btn ds-btn-ghost" data-toast="info">Info toast</button>
+</div><p class="meas">Esc and the backdrop close a dialog (except while it's saving). Focus returns to the button that opened it. On screens ≤640px a dialog becomes a bottom sheet with full-width stacked buttons.</p></div>
+
+<h2>Destructive confirm — today vs proposed</h2>
+<div class="grid2">
+<div class="panel"><p class="lbl">Today · admin/bulletins (swal v1)</p>
+<div class="old"><div class="oi">i</div><p>Do you want to delete this magazine ?</p><div class="ob"><span style="background:#efefef;color:#555">Cancel</span><span style="background:#7cd1f9;color:#fff">OK</span></div></div>
+<p class="meas" style="line-height:1.6">Then a second popup, "Magazine Deleted Successfully" (click OK, page reloads) — or, on Cancel, a third popup that just says "Cancelled".<br>The icon is an <b>info</b> glyph on a destructive action · "OK" doesn't say what it does · the item isn't named · no loading state · SweetAlert's own blue button styling.</p></div>
+<div class="panel"><p class="lbl">Proposed · .ds-dialog</p>
+<div class="ds-dialog static-dialog"><div class="ds-dialog-body"><span class="ds-dialog-icon ds-dialog-icon--danger"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span><p class="ds-dialog-title">Delete “Kisubi Voice 2025”?</p><p class="ds-dialog-text">The magazine and its PDF are removed for everyone. This can't be undone.</p></div><div class="ds-dialog-actions"><button class="ds-btn ds-btn-outline">Keep it</button><button class="ds-btn ds-btn-danger">Delete magazine</button></div></div>
+<p class="meas" style="line-height:1.6">The item is named · the confirm button says the verb · Cancel is the safe default (it gets initial focus) · success is a toast, not another popup · Cancel just closes, with no "Cancelled" popup.</p></div>
+</div>
+
+<h2>Toast vs inline alert vs dialog</h2>
+<div class="panel"><table class="m"><thead><tr><th>Use</th><th>When</th><th>Example</th></tr></thead><tbody>
+<tr><td><b>Toast</b></td><td>Confirms something the user just did. Disappears by itself (5s, 8s if it has an action), and the timer pauses on hover or focus. Announced with <code>role="status"</code> (errors use <code>role="alert"</code> and don't auto-close).</td><td>"Fee reminder sent to 6 parents"</td></tr>
+<tr><td><b>Inline alert</b></td><td>A condition that stays true until it's fixed. Stays on the page and is never a toast.</td><td>"SchoolPay isn't connected — payments won't sync"</td></tr>
+<tr><td><b>Dialog</b></td><td>Blocks until the user decides: destructive or hard-to-reverse actions, or a small focused edit.</td><td>Delete, promote a class, edit class details</td></tr>
+</tbody></table>
+<div style="display:grid;gap:8px;margin-top:16px;max-width:640px">
+<div class="ds-inline-alert ds-inline-alert--warning" role="status"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span><b>SchoolPay isn't connected.</b> Payments made through SchoolPay won't appear here until you connect it in Settings.</span></div>
+<div class="ds-inline-alert ds-inline-alert--error" role="alert"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span><b>3 marks couldn't be saved.</b> Check the highlighted rows and save again.</span></div>
+</div></div>
+
+<h2>Migration map</h2>
+<div class="panel"><table class="m"><thead><tr><th>Today</th><th>Becomes</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>swal({icon, text, buttons:{cancel,confirm}})</code></td><td><code>.ds-dialog</code> confirm</td><td>The icon follows the consequence: danger for delete, warning for hard to reverse, info for neutral.</td></tr>
+<tr><td><code>swal({icon:"success", text:"… Successfully"})</code></td><td><code>.ds-toast--success</code></td><td>Don't block the user to say it worked. Drop "Successfully": "Magazine deleted".</td></tr>
+<tr><td><code>swal("Cancelled")</code></td><td>nothing</td><td>Closing the dialog <i>is</i> the feedback.</td></tr>
+<tr><td><code>toastr[type](msg)</code> via <code>alert</code> / <code>registeralert</code> events</td><td><code>.ds-toast--{type}</code></td><td>Keep both window event names during migration so existing Livewire <code>dispatch('alert')</code> calls keep working.</td></tr>
+<tr><td>SweetAlert2 / livewire-alert (SiteAdmin)</td><td>same dialog + toast</td><td>See decision below.</td></tr>
+<tr><td>Ad-hoc Alpine modals, Filament modals</td><td><code>.ds-dialog--wide</code> with a form</td><td>Filament's own modals inside its panels are left alone; they're themed by Filament.</td></tr>
+</tbody></table>
+<div class="flag"><h3>Decisions — resolved 2026-09-27</h3>
+<b>1 · livewire-alert → replaced (decided).</b> It's used in about 9 SiteAdmin Livewire components (<code>AdminForm</code>, <code>CreateSchool</code>, <code>ChangePassword</code>, <code>SubscriptionForm</code>, <code>CityForm</code>…), always as <code>$this-&gt;alert('success'|'error', $message)</code>. The replacement is a small trait with <b>the same method signature</b>, so migrating each component is a one-line change of <code>use LivewireAlert;</code> → <code>use DispatchesAlerts;</code>:
+<pre style="background:#0F172A;color:#E2E8F0;border-radius:8px;padding:12px;font-size:.78rem;overflow-x:auto;margin:8px 0">trait DispatchesAlerts {
+    protected function alert(string $type, string $message = '', array $options = []): void {
+        $this-&gt;dispatch('alert', type: $type, message: $message, title: $options['title'] ?? null);
+    }
+}</pre>
+That fires the <code>alert</code> window event the main shell already handles (<code>event.detail.type / message / title</code>), so SiteAdmin and the school dashboards end up on one event and one renderer. After that, drop <code>livewire-alert.js</code> and the SweetAlert2 CDN from <code>superadmin-app.blade.php</code>. Toast copy loses "successfully": "School created", "Password changed".<br>
+<b>2 · Undo — soft deletes are widespread, but restore isn't.</b> About 70 models use <code>SoftDeletes</code>, including <code>Bulletin</code> (the magazine in the demo above), so most deletes <i>are</i> recoverable in the database. But only <b>one</b> controller exposes a way back: <code>UgSubjectController</code> has an archive list, <code>restore()</code> and <code>forceDelete()</code>. Everything else soft-deletes with no restore route. So Undo is possible, but each resource needs a restore endpoint first. <b>Recommendation:</b> pilot "Undo" on Subjects, where the endpoint already exists, and add it elsewhere resource by resource as restore routes land. Until then the delete toast stays without Undo, and the "This can't be undone" line in the dialog is <b>true from the user's point of view</b> — keep it until the route exists. <i>Not verified:</i> whether every delete path goes through Eloquent (which soft-deletes) or through <code>DB::table()</code> (which doesn't).<br>
+<b>3 · Toshi's confirm card stays separate.</b> <code>.toshi-confirm-card</code> is an in-chat approval in the clay palette, part of the assistant's own identity. It isn't a dialog and shouldn't be merged into this one.</div></div>
+
+<!-- dialogs -->
+<dialog class="ds-dialog" id="dlg-delete" aria-labelledby="dd-t" aria-describedby="dd-d">
+<div class="ds-dialog-body"><span class="ds-dialog-icon ds-dialog-icon--danger"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span><p class="ds-dialog-title" id="dd-t">Delete “Kisubi Voice 2025”?</p><p class="ds-dialog-text" id="dd-d">The magazine and its PDF are removed for everyone. This can't be undone.</p></div>
+<div class="ds-dialog-actions"><button class="ds-btn ds-btn-outline" data-close autofocus>Keep it</button><button class="ds-btn ds-btn-danger" data-confirm="Magazine deleted|Kisubi Voice 2025 was removed." data-busy="Deleting">Delete magazine</button></div>
+</dialog>
+<dialog class="ds-dialog" id="dlg-promote" aria-labelledby="dp-t">
+<div class="ds-dialog-body"><span class="ds-dialog-icon ds-dialog-icon--warning"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span><p class="ds-dialog-title" id="dp-t">Promote Senior 3 to Senior 4?</p><p class="ds-dialog-text"><b>84 students</b> move to Senior 4 for 2027. Their Senior 3 marks stay on record. Students you've marked to repeat stay behind.</p></div>
+<div class="ds-dialog-actions"><button class="ds-btn ds-btn-outline" data-close autofocus>Not yet</button><button class="ds-btn ds-btn-primary" data-confirm="Senior 3 promoted|84 students are now in Senior 4." data-busy="Promoting">Promote 84 students</button></div>
+</dialog>
+<dialog class="ds-dialog ds-dialog--wide" id="dlg-edit" aria-labelledby="de-t">
+<form method="dialog" id="edit-form">
+<div class="ds-dialog-head"><p class="ds-dialog-title" id="de-t" style="margin:0">Edit Senior 2 East</p><button type="button" class="ds-dialog-close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+<div class="ds-dialog-form">
+<div class="ds-form-group"><label class="ds-form-label ds-form-label-required" for="e1">Class name</label><input id="e1" class="ds-form-input v2" value="Senior 2 East" required></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0 16px">
+<div class="ds-form-group"><label class="ds-form-label" for="e2">Class teacher</label><select id="e2" class="ds-form-select v2"><option>Mr. Okello Daniel</option><option>Ms. Nakato Esther</option></select></div>
+<div class="ds-form-group"><label class="ds-form-label" for="e3">Seats</label><input id="e3" class="ds-form-input v2" type="number" value="48"><p class="ds-form-help v2">46 students enrolled.</p></div>
+</div></div>
+<div class="ds-dialog-actions"><button type="button" class="ds-btn ds-btn-outline" data-close>Cancel</button><button type="submit" class="ds-btn ds-btn-primary" data-confirm="Class updated|Senior 2 East details saved." data-busy="Saving">Save changes</button></div>
+</form>
+</dialog>
+<div class="ds-toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+const I={success:'<path d="M5 13l4 4L19 7"/>',error:'<path d="M6 18L18 6M6 6l12 12"/>',warning:'<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',info:'<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'};
+function toast(type,title,text,action){
+ const t=document.createElement('div');t.className='ds-toast ds-toast--'+type;t.setAttribute('role',type==='error'?'alert':'status');
+ t.innerHTML=`<span class="ds-toast-icon"><svg viewBox="0 0 24 24">${I[type]}</svg></span><div><p class="ds-toast-title">${title}</p>${text?`<p class="ds-toast-text">${text}</p>`:''}${action?`<button class="ds-toast-action">${action}</button>`:''}</div><button class="ds-toast-close" aria-label="Dismiss"><svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+ const close=()=>{t.classList.add('is-leaving');setTimeout(()=>t.remove(),200)};
+ t.querySelector('.ds-toast-close').onclick=close;
+ document.getElementById('toasts').appendChild(t);
+ if(type!=='error'){let ms=action?8000:5000,left=ms,start=Date.now(),h=setTimeout(close,ms);
+  const pause=()=>{clearTimeout(h);left-=Date.now()-start},resume=()=>{start=Date.now();h=setTimeout(close,left)};
+  t.addEventListener('mouseenter',pause);t.addEventListener('mouseleave',resume);t.addEventListener('focusin',pause);t.addEventListener('focusout',resume);}
+}
+const DEMO={success:['Fee reminder sent','6 parents will get it on WhatsApp.'],error:["Couldn't send reminders",'SchoolPay timed out. Nothing was sent — try again in a minute.','Retry'],info:['Import started',"We'll let you know when the 120 students are in."]};
+document.querySelectorAll('[data-toast]').forEach(b=>b.onclick=()=>{const k=b.dataset.toast;toast(k,...DEMO[k])});
+let opener=null;
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{opener=b;document.getElementById(b.dataset.open).showModal()});
+document.querySelectorAll('dialog.ds-dialog').forEach(d=>{
+ d.addEventListener('close',()=>opener&&opener.focus());
+ d.addEventListener('cancel',e=>{if(d.dataset.busy)e.preventDefault()});
+ d.addEventListener('click',e=>{if(e.target===d&&!d.dataset.busy)d.close()});
+ d.querySelectorAll('[data-close]').forEach(c=>c.onclick=()=>{if(!d.dataset.busy)d.close()});
+ d.querySelectorAll('[data-confirm]').forEach(c=>c.onclick=e=>{
+  e.preventDefault();const f=c.form;if(f&&!f.reportValidity())return;
+  const [title,text]=c.dataset.confirm.split('|'),orig=c.innerHTML;
+  d.dataset.busy='1';c.classList.add('is-loading');c.innerHTML=`<span class="ds-btn-spinner"></span><span>${c.dataset.busy}</span>`;
+  d.querySelectorAll('[data-close]').forEach(x=>x.disabled=true);
+  setTimeout(()=>{delete d.dataset.busy;c.classList.remove('is-loading');c.innerHTML=orig;d.querySelectorAll('[data-close]').forEach(x=>x.disabled=false);d.close();toast('success',title,text)},1100);
+ });
+});
+</script>
+</body></html>

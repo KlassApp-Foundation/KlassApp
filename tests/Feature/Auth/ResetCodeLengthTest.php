@@ -69,7 +69,7 @@ class ResetCodeLengthTest extends TestCase
         $this->assertNotNull($captured);
         $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $captured->code, 'The generated reset code must be 6 digits.');
 
-        $html = view('emails.reset_password_code', ['name' => 'Reset Code Teacher', 'code' => '123456'])->render();
+        $html = $captured->render();
         $this->assertStringContainsString('6-digit', $html, 'The reset email must state the 6-digit code length.');
     }
 

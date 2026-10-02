@@ -91,7 +91,7 @@ class WizardWhatsAppOtpTest extends TestCase
         return Livewire::test(ManualOnboardingWizard::class)
             ->set('schoolName', 'OTP Academy')
             ->call('next')
-            ->set('studentSize', 'Under 100 students')
+            ->set('studentSize', 'Up to 500')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

@@ -1,23 +1,16 @@
 <template>
-    <div class="">
-        <div>
-	        <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
-            <div class="">
-                <div class="">
-                    <div class="pb-2">
-                        <div class="">
-                            <label for="academic_year" class="tw-form-label hidden lg:block">Select Academic Year</label>
-                        </div>
-                        <div class="">
-                            <select class="tw-form-control w-full" id="academic_year" v-model="academic_year" name="academic_year" @change="showYear()">
-                                <option  v-for="academic in academiclist" v-bind:value="academic.id" >{{ academic.name }}</option>
-                            </select>
-                            <span v-if="errors.academic"><p class="text-red-500 text-xs font-semibold">{{ errors.academic[0] }}</p></span>
-                        </div>
-                    </div> 
-                </div>
-            </div>
-	   </div>
+    <div class="dashboard-ay" data-testid="academic-year-control">
+        <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
+        <label for="academic_year" class="tw-form-label dashboard-ay-label">Academic year</label>
+        <select class="tw-form-control dashboard-ay-select"
+                id="academic_year"
+                v-model="academic_year"
+                name="academic_year"
+                aria-label="Academic year"
+                @change="showYear()">
+            <option v-for="academic in academiclist" :key="academic.id" :value="String(academic.id)">{{ academic.name }}</option>
+        </select>
+        <span v-if="errors.academic"><p class="text-red-500 text-xs font-semibold">{{ errors.academic[0] }}</p></span>
     </div>
 </template>
 
@@ -59,7 +52,7 @@
                     // null and dereferencing .id threw a TypeError on every
                     // onboarding screen. Guard the value instead of assuming it.
                     const current = response.data.current_year;
-                    this.academic_year = current ? current.id : '';
+                    this.academic_year = current ? String(current.id) : '';
                 });
             },
         },

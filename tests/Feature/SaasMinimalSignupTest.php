@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\EmailVerificationCodeMail;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\User;
@@ -9,6 +10,7 @@ use App\Services\OnboardingStepsService;
 use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Socialite\Contracts\Provider;
 use Laravel\Socialite\Facades\Socialite;
 use Mockery;
@@ -36,8 +38,10 @@ class SaasMinimalSignupTest extends TestCase
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
     }
 
-    public function test_email_password_signup_creates_placeholder_school_and_lands_in_toshi(): void
+    public function test_email_password_signup_creates_placeholder_school_in_toshi_onboarding(): void
     {
+        Mail::fake();
+
         $response = $this->post('/register', [
             'name' => 'Grace Nakato',
             'email' => 'grace@example.com',
@@ -47,20 +51,21 @@ class SaasMinimalSignupTest extends TestCase
             'termsandcondn' => '1',
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
-        $this->assertAuthenticated();
+        $response->assertRedirect(route('register.verify'));
+        $this->assertGuest();
 
         $user = User::where('email', 'grace@example.com')->first();
         $this->assertNotNull($user);
         $this->assertSame(3, (int) $user->usergroup_id);
         $this->assertSame('+256701234567', $user->mobile_no);
-        $this->assertSame(1, (int) $user->email_verified);
+        $this->assertSame(0, (int) $user->email_verified);
 
         $school = School::find($user->school_id);
         $this->assertNotNull($school);
         $this->assertSame("Grace's School", $school->name);
         $this->assertNull($school->curriculum);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
 
         $this->assertTrue(OnboardingStepsService::isStepComplete('school_name', $school) === false);
@@ -77,6 +82,24 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertNotFalse($academicIdx);
         $this->assertNotFalse($standardsIdx);
         $this->assertLessThan($standardsIdx, $academicIdx, 'Academic year must be asked before classes');
+
+        $code = null;
+        Mail::assertQueued(EmailVerificationCodeMail::class, function (EmailVerificationCodeMail $mail) use (&$code) {
+            $code = $mail->code;
+
+            return true;
+        });
+
+        $this->post('/register/verify', ['code' => $code])->assertRedirect('/admin/dashboard');
+        $this->assertAuthenticated();
+        $this->assertSame(1, (int) $user->fresh()->email_verified);
+
+        $dashboard = $this->get('/admin/dashboard');
+        $dashboard->assertOk();
+        $dashboard->assertSee('Set up manually', false);
+        $dashboard->assertSee('Set up with Toshi', false);
+        // Auto-open script only — Set up with Toshi button may still dispatch maximize on click.
+        $dashboard->assertDontSee('Wave 3: open Toshi maximized', false);
     }
 
     public function test_phone_is_required_on_signup_form(): void
@@ -159,7 +182,8 @@ class SaasMinimalSignupTest extends TestCase
         $school = School::find($user->school_id);
         $this->assertSame("Okello's School", $school->name);
         $this->assertNull($school->curriculum);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
         $this->assertSame('+256703333333', $school->phone);
     }
@@ -191,7 +215,8 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertSame("Amina's School", $school->name);
         $this->assertNull($school->phone);
         $this->assertNull($school->curriculum);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
 
         $keys = array_column(OnboardingStepsService::incompleteSteps($school, $user->id), 'key');

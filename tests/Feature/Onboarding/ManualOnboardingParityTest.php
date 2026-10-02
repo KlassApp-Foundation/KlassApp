@@ -266,7 +266,7 @@ class ManualOnboardingParityTest extends TestCase
     {
         // School size comes from the manual wizard's size step — share the same
         // engine write so identity is complete without Toshi.
-        app(\App\Services\OnboardingEngine::class)->saveStudentSize($this->school->fresh(), 'Under 100 students');
+        app(\App\Services\OnboardingEngine::class)->saveStudentSize($this->school->fresh(), 'Up to 500');
 
         $year = AcademicYear::create([
             'school_id' => $this->school->id,

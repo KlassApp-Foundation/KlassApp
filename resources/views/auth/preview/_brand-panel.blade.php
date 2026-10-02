@@ -4,9 +4,11 @@
     <span class="ap-preview-badge">Preview</span>
   @endif
   <div class="ap-brand-row">
-    <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-brand-logo" alt="KlassApp">
+    <a href="{{ url('/') }}" class="ap-brand-logo-link" aria-label="KlassApp home">
+      <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-brand-logo" alt="KlassApp">
+    </a>
     <div class="ap-brand-copy">
-      <p class="ap-brand-tagline">{{ $tagline ?? 'School operations on one protocol' }}</p>
+      <p class="ap-brand-tagline">{{ $tagline ?? 'An open education protocol for humans and agents.' }}</p>
       <p class="ap-brand-support">{{ $support ?? 'Classes, fees, and parent updates from one connected system.' }}</p>
     </div>
   </div>

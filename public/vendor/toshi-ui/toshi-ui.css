@@ -143,14 +143,45 @@
         transition: margin-right 0.25s ease;
     }
 
+    /* Soft-launch 2: when the dock is collapsed, reclaim the full content width.
+       !important beats any leftover open-dock margin / width:auto rules. */
     body.toshi-collapsed main,
-    html.toshi-collapsed main {
-        margin-right: 0;
+    html.toshi-collapsed main,
+    body.toshi-collapsed .dashboard-content-area,
+    html.toshi-collapsed .dashboard-content-area,
+    body.toshi-collapsed .superadmin-content,
+    html.toshi-collapsed .superadmin-content {
+        margin-right: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
     }
 
     body.toshi-resizing main {
         transition: none !important;
+    }
+
+    /*
+     * Soft-launch 1c — toshi-form-reflow
+     * Viewport `lg:` (≥1024) keeps multi-column rows while the dock shrinks
+     * main by --toshi-w. Stack those rows and force lg:w-1/* to full width
+     * so Gender/Country/City/Joining Date are not clipped under the panel.
+     */
+    body:not(.toshi-collapsed) main .flex.lg\:flex-row,
+    html:not(.toshi-collapsed) main .flex.lg\:flex-row {
+        flex-direction: column !important;
+    }
+    body:not(.toshi-collapsed) main [class*="lg:w-1/"],
+    html:not(.toshi-collapsed) main [class*="lg:w-1/"] {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    body:not(.toshi-collapsed) main .bg-white.shadow,
+    html:not(.toshi-collapsed) main .bg-white.shadow,
+    body:not(.toshi-collapsed) main .dashboard-shell,
+    html:not(.toshi-collapsed) main .dashboard-shell {
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     /* ── Resize handle: the draggable boundary between content and Toshi ──
@@ -215,6 +246,7 @@
         flex: 1;
         overflow-y: auto;
         min-height: 0;
+        padding-top: 4px; /* first row never hugs the header seam */
     }
 
     body.toshi-collapsed [data-toshi-root] {
@@ -229,7 +261,9 @@
         width: 0 !important;
     }
 
-    body.toshi-collapsed [data-toshi-root] .toshi-panel {
+    body.toshi-collapsed [data-toshi-root] .toshi-panel,
+    html.toshi-collapsed [data-toshi-root] .toshi-panel {
+        display: none !important;
         transform: none !important;
         border-left: none !important;
         box-shadow: none !important;
@@ -371,20 +405,34 @@
         display: none !important; /* open drawer replaces the pill */
     }
 
-    [data-toshi-root] .toshi-panel {
+    /* When the dock is open, force the panel visible even if Livewire's first
+       paint still has $visible=false (inline display:none). Matches ≥1280. */
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-panel.toshi-panel--open,
+    html:not(.toshi-collapsed) [data-toshi-root] .toshi-panel.toshi-panel--open,
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-panel[style*="display: flex"],
+    html:not(.toshi-collapsed) [data-toshi-root] .toshi-panel[style*="display: flex"] {
+        display: flex !important;
+    }
+
+    /* Soft-launch 1b: hide drawer while collapsed is handled globally above
+       (body/html.toshi-collapsed … display:none !important). Open-state rules: */
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-panel {
         position: fixed !important;
-        top: 0;
+        /* Sit below the app header so the first checklist/preview row is never clipped. */
+        top: var(--toshi-header-offset, 69px) !important;
         right: 0;
         bottom: 0;
         left: auto !important;
         width: min(420px, 92vw) !important;
-        height: 100vh !important;
+        height: auto !important;
         max-height: none !important;
         border-radius: 0 !important;
         border: none;
         border-left: 1px solid #e8e6dc;
         box-shadow: -8px 0 28px rgba(20, 20, 19, 0.18) !important;
         z-index: 9998;
+        display: flex !important;
+        flex-direction: column;
         animation: toshi-drawer-in 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
@@ -432,6 +480,52 @@
     --toshi-border-kit: #e8e6dc;
     --toshi-ink: #141413;
     --toshi-muted: #5e5d59;
+}
+
+/* Soft-launch preview: Coming soon card + disabled composer (all viewports) */
+[data-toshi-root] .toshi-messages-area {
+    padding-top: 4px; /* first row never hugs the header seam */
+}
+[data-toshi-root] .toshi-preview-card {
+    margin: 16px 14px;
+    padding: 20px 18px;
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+}
+[data-toshi-root] .toshi-preview-eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--toshi-clay);
+}
+[data-toshi-root] .toshi-preview-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--toshi-ink);
+    font-family: 'Sora', sans-serif;
+}
+[data-toshi-root] .toshi-preview-body {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--toshi-muted);
+}
+[data-toshi-root] .toshi-preview-note {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--toshi-ink);
+}
+[data-toshi-root] .toshi-composer--preview {
+    opacity: 0.85;
+}
+[data-toshi-root] .toshi-composer--preview .toshi-composer-input:disabled {
+    cursor: not-allowed;
+    background: #f8f7f2;
 }
 
 [data-toshi-root] .toshi-header {
@@ -619,21 +713,19 @@
     color: #87867f;
 }
 
+/* Awaiting confirm: chips are primary, but typing yes/no must still work
+   (send() routes affirmatives/negatives before action handlers). */
 [data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-inner {
-    opacity: 0.55;
+    opacity: 0.85;
 }
 
-[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-input {
-    pointer-events: none;
-}
-
-[data-toshi-root] .toshi-composer--awaiting-confirm button[type="submit"] {
-    pointer-events: none;
-    opacity: 0.4;
-}
-
-[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-attach-btn {
-    pointer-events: none;
+[data-toshi-root] .toshi-composer-reason {
+    margin: 0;
+    padding: 0 12px 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #5e5d59;
+    font-family: 'DM Sans', sans-serif;
 }
 
 /* Modal composer shares the same kit bar */

@@ -63,7 +63,9 @@
 <div class="klass-force-form">
   <div class="klass-login-intro">
     <span class="klass-login-logo-frame">
-      <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-login-logo" alt="KlassApp">
+      <a href="{{ url('/') }}" aria-label="KlassApp home">
+        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-login-logo" alt="KlassApp">
+      </a>
     </span>
     <p class="klass-intro-title">Update your password</p>
     <p class="klass-intro-sub">Your account was created with a temporary password. Please set a new one to continue.</p>

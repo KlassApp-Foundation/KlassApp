@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KlassApp: The school platform for tools educationists already use</title>
-    <meta name="description" content="KlassApp is an open-source agentic school protocol. It operates in the tools educationists already use: WhatsApp, Drive, Slack, email, and more.">
+    <title>KlassApp: An open education protocol for humans and agents.</title>
+    <meta name="description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
+    <meta property="og:title" content="KlassApp: An open education protocol for humans and agents.">
+    <meta property="og:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KlassApp: An open education protocol for humans and agents.">
+    <meta name="twitter:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
     <link rel="canonical" href="{{ url()->current() }}">
     @include('layouts.partials.favicon')
 
@@ -17,14 +22,14 @@
 <body>
 <div class="announce" id="announceBar" role="region" aria-label="Announcement">
   <div class="announce-inner">
-    <p>KlassApp is open source and self-hostable. <strong>MIT licensed</strong>.</p>
+    <p>The source is public on GitHub; supported self-hosting opens after an independent security review.</p>
   </div>
   <button type="button" class="announce-close" id="announceClose" aria-label="Dismiss announcement">&times;</button>
 </div>
 {{-- Live cutover: Open Design klassapp-landing-v3 on /. Legacy /landing-preview redirects here. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <a href="{{ url('/') }}#hero" class="navbar-logo" aria-label="KlassApp">
+    <a href="{{ url('/') }}" class="navbar-logo" aria-label="KlassApp home">
       <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="navbar-logo-img" width="36" height="36" />
     </a>
     <ul class="navbar-links">
@@ -68,9 +73,9 @@
   <div class="container">
     <div class="hero-inner">
       <div class="hero-content reveal">
-        <div class="hero-kicker">Open-source agentic school protocol</div>
+        <div class="hero-kicker">An open education protocol for humans and agents.</div>
         <h1>The school platform that operates in the tools educationists already use.</h1>
-        <p class="hero-sub">Toshi orchestrates WhatsApp, Drive, Slack, and email: one AI agent built for how schools actually work.</p>
+        <p class="hero-sub">KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.</p>
         <div class="hero-actions">
           <a href="{{ url('/register') }}" class="btn btn-primary">Start free <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
           <a href="#protocol" class="btn btn-secondary">Get notified when we open source</a>
@@ -884,8 +889,10 @@
   <div class="container site-footer-inner">
     <div class="site-footer-row">
       <div class="site-footer-brand">
-        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
-        <p class="site-footer-tagline">Educationists' tools connected by intelligence.</p>
+        <a href="{{ url('/') }}" aria-label="KlassApp home">
+          <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
+        </a>
+        <p class="site-footer-tagline">An open education protocol for humans and agents.</p>
       </div>
       <nav class="site-footer-links" aria-label="Footer">
         <a href="{{ url('/terms-of-service') }}">Terms</a>

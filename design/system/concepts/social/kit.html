@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp social media kit — every channel × every content type</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font-family:'DM Sans',sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.top{position:sticky;top:0;z-index:5;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:16px 28px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.top h1{font:700 22px 'Sora',sans-serif;letter-spacing:-.02em;margin:0;margin-right:auto}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px}
+.seg button,.tbtn{min-height:40px;padding:0 14px;border:0;border-radius:7px;background:transparent;font:600 14px 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"],.tbtn[aria-pressed="true"]{background:#0F172A;color:#fff}
+.tbtn{border:1px solid #94A3B8;background:#fff;min-height:46px}
+.intro{padding:20px 28px 0;max-width:1100px;display:flex;flex-direction:column;gap:8px;line-height:1.55;color:#334155}
+.intro p{margin:0}
+#status{font-weight:700}
+.jump{display:flex;flex-wrap:wrap;gap:8px;padding:12px 28px 0}
+.jump a{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;background:#fff;border:1px solid #CFCAC0;text-decoration:none;color:#0F172A;font-weight:600;font-size:14px}
+section.type{padding:28px 28px 8px;display:flex;flex-direction:column;gap:14px}
+section.type>h2{font:600 20px 'Sora',sans-serif;margin:0;display:flex;gap:12px;align-items:baseline}
+section.type>h2 small{font:500 14px 'DM Sans',sans-serif;color:#475569}
+.row{display:flex;gap:28px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.item{display:flex;flex-direction:column;gap:6px;flex:none}
+.item small{font:700 12px 'DM Sans',sans-serif;color:#334155;display:flex;gap:8px;align-items:center}
+.item small .bad{background:#B91C1C;color:#fff;border-radius:6px;padding:1px 6px}
+.item small .ok{color:#14532D}
+.car{display:flex;gap:10px}
+.frame{overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.14);flex:none}
+.art{transform-origin:0 0;position:relative;overflow:hidden}
+.art.light{background:#FAFAF5;color:#0F172A}.art.dark{background:#0C1528;color:#F8FAFC}
+.m{position:absolute;top:var(--st);bottom:var(--sb);left:80px;right:80px;display:flex;flex-direction:column;gap:calc(28px*var(--u))}
+.wide .m{flex-direction:row;gap:64px}
+.wide .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:24px}
+.wide .col.v{flex:0 0 42%}
+.kick{font:700 calc(26px*var(--u)) 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#15803D}
+.dark .kick{color:#4ADE80}
+.hd{font:700 calc(var(--hs)*var(--u))/1.08 'Sora',sans-serif;letter-spacing:-.03em;margin:0;text-wrap:balance}
+.sub{font:500 calc(var(--ss,38px)*var(--u))/1.35 'DM Sans',sans-serif;margin:0;color:#334155;text-wrap:pretty}
+.dark .sub{color:#CBD5E1}
+.grow{flex:1;min-height:0}
+.foot{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.foot img{height:calc(56px*var(--u));display:block}
+.url{font:600 calc(28px*var(--u)) 'DM Sans',sans-serif;color:#334155}.dark .url{color:#CBD5E1}
+.slot{flex:1;min-height:0;border-radius:24px;border:3px solid #0F172A;background:repeating-linear-gradient(135deg,#F1F5F9 0 18px,#E2E8F0 18px 36px);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font:600 calc(26px*var(--u)) 'DM Sans',sans-serif;color:#334155}
+.pill{align-self:flex-start;font:700 calc(26px*var(--u)) 'DM Sans',sans-serif;padding:10px 22px;border-radius:999px;background:#DCFCE7;color:#14532D}
+.dark .pill{background:#14532D;color:#DCFCE7}
+.quote{font:600 calc(var(--qs,58px)*var(--u))/1.25 'Sora',sans-serif;letter-spacing:-.02em;margin:0;text-wrap:pretty}
+.ph{background:#FEF3C7;color:#78350F;border-radius:10px;padding:0 10px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.who{font:500 calc(34px*var(--u))/1.4 'DM Sans',sans-serif;margin:0;color:#334155}.who b{color:#0F172A}
+.dt{display:grid;grid-template-columns:auto 1fr;gap:12px 28px;font:600 calc(34px*var(--u)) 'DM Sans',sans-serif;margin:0}
+.dt dt{color:#94A3B8;font-weight:500}.dt dd{margin:0}
+.big{font:700 calc(180px*var(--u))/1 'Sora',sans-serif;color:#15803D;letter-spacing:-.04em}
+.dark .big{color:#4ADE80}
+.safe{position:absolute;top:var(--st);bottom:var(--sb);left:80px;right:80px;outline:4px dashed rgba(220,38,38,.9);pointer-events:none;display:none}
+.band{position:absolute;left:0;right:0;background:rgba(220,38,38,.2);display:none}
+.showsafe .safe,.showsafe .band{display:block}
+</style>
+</head>
+<body>
+<div class="top"><h1>Social media kit</h1>
+<div class="seg" role="group" aria-label="Zoom"><button data-z="fit" aria-pressed="true">Fit</button><button data-z=".5">50%</button><button data-z="1">100% (real size)</button></div>
+<button class="tbtn" id="sz" aria-pressed="false">Show safe zones</button></div>
+<div class="intro">
+<p><b>6 content types × 8 formats = 48 templates.</b> The LinkedIn carousel shows 3 pages per type, so there are 60 artboards in all. Every artboard is laid out at its real export size in pixels; "100%" shows it 1:1. The build spec is in <a href="../../klassapp-handoff-2026-09-29-docs/CANVA-SPECS.md">CANVA-SPECS.md</a>, and <a href="index.html">index.html</a> is the earlier overview.</p>
+<p>All copy is <b>sample copy</b>. The event date, job title and links are placeholders to replace before posting. The testimonial stays an amber placeholder until a school gives written consent. The screenshot slots need Demo Academy Uganda captures.</p>
+<p id="status">Measuring…</p>
+</div>
+<nav class="jump" aria-label="Content types" id="jump"></nav>
+<main id="kit"></main>
+<script>
+const LOGO={light:'../../assets/brand/klassapp-horizontal-light.svg',dark:'../../assets/brand/klassapp-horizontal-dark.svg'};
+const CH=[
+ {k:'li',n:'LinkedIn post',w:1200,h:1200,st:80,sb:80},
+ {k:'car',n:'LinkedIn carousel',w:1080,h:1350,st:80,sb:80,car:1},
+ {k:'x',n:'X post',w:1600,h:900,st:72,sb:72},
+ {k:'ig',n:'Instagram post',w:1080,h:1350,st:80,sb:80},
+ {k:'igs',n:'Instagram story',w:1080,h:1920,st:250,sb:340},
+ {k:'fb',n:'Facebook post',w:1080,h:1350,st:80,sb:80},
+ {k:'was',n:'WhatsApp Status',w:1080,h:1920,st:220,sb:220},
+ {k:'wac',n:'WhatsApp Channel',w:1080,h:1080,st:80,sb:80}];
+const TY=[
+ {k:'announce',n:'Announcement',dark:0,kick:'Now in KlassApp',hd:'Ugandan admission forms, built in',sub:'LIN, PLE and UCE results, home district and boarding: the details Ugandan schools actually ask for.',url:'klassapp.xyz',vis:'num',num:'LIN',
+  car:[['Now in KlassApp','Ugandan admission forms, built in','Swipe to see what changed'],['01','LIN on every student','Record each learner\u2019s LIN when they enrol.'],['','Available to every school on KlassApp now','klassapp.xyz']]},
+ {k:'spot',n:'Feature spotlight',dark:0,kick:'Feature spotlight',hd:'Parents check fees on WhatsApp',sub:'Send \u201cfees\u201d to the school\u2019s number. The balance comes straight back.',url:'klassapp.xyz',vis:'slot',
+  car:[['Feature spotlight','Parents check fees on WhatsApp','Swipe'],['01','Send \u201cfees\u201d','The balance comes straight back, for their own child only.'],['','No app to install','Ask your school to connect you']]},
+ {k:'quote',n:'Testimonial (placeholder)',dark:0,kick:'From a school',quote:1,url:'klassapp.xyz',vis:'none',
+  car:[['From a school','','[Name], [Role]'],['','','[School], [District]'],['','See how schools use KlassApp','klassapp.xyz']]},
+ {k:'event',n:'Event / webinar',dark:1,kick:'Free webinar',hd:'Set up your school in one afternoon',sub:'',pill:'Register: klassapp.xyz/events',vis:'dt',
+  car:[['Free webinar','Set up your school in one afternoon','Thu 16 Oct 2026 · 3:00 pm EAT'],['01','What we\u2019ll cover','Classes, streams, teachers and fees, live on a demo school.'],['','Save your place','klassapp.xyz/events']]},
+ {k:'hire',n:'Hiring',dark:1,kick:'We\u2019re hiring',hd:'Laravel developer',sub:'Kampala or remote in East Africa. Help build open school infrastructure.',pill:'Apply: klassapp.xyz/jobs',vis:'num',num:'01',
+  car:[['We\u2019re hiring','Laravel developer','Kampala or remote in East Africa'],['01','What you\u2019ll do','Build features schools use every day, in a public codebase.'],['','Apply','klassapp.xyz/jobs']]},
+ {k:'tip',n:'Tip of the week',dark:0,kick:'Tip of the week',hd:'Mark attendance before 9:00',sub:'Parents of absent students get the WhatsApp message the same morning.',url:'klassapp.xyz/help',vis:'num',num:'07',
+  car:[['Tip of the week','Mark attendance before 9:00','Swipe'],['07','Why it matters','Parents hear about an absence the same morning.'],['','More tips in the help','klassapp.xyz/help']]}];
+const QUOTE='\u201c<span class="ph">Quote from a real school, used only with written consent</span>\u201d';
+const WHO='<p class="who"><b>[Name]</b>, [Role]<br>[School name], [District]</p>';
+const DT='<dl class="dt"><dt>Date</dt><dd>Thu 16 Oct 2026</dd><dt>Time</dt><dd>3:00 pm EAT</dd><dt>Where</dt><dd>Google Meet</dd></dl>';
+function foot(t){return `<div class="foot"><img src="${t.dark?LOGO.dark:LOGO.light}" alt="KlassApp"><span class="url">${t.pill?'':t.url||''}</span></div>`}
+function vis(t,wide){if(t.vis==='slot')return `<div class="slot">Screenshot slot · Demo Academy Uganda · parent WhatsApp chat</div>`;if(t.vis==='dt')return DT;if(t.vis==='num')return `<div class="big">${t.num}</div>`;return ''}
+function body(t,c){const wide=c.w/c.h>1.4,sq=Math.abs(c.w-c.h)<10;const hs=t.k==='spot'?(sq?64:76):t.k==='tip'?(sq?64:72):(sq?78:88);
+ const vars=`--hs:${wide?76:hs}px;--ss:${wide||sq?34:38}px;--qs:${sq||wide?50:58}px;`;
+ let inner;
+ if(t.quote){inner=wide?`<div class="col"><div class="kick">${t.kick}</div><p class="quote">${QUOTE}</p><div class="grow"></div>${foot(t)}</div><div class="col v" style="justify-content:flex-end">${WHO}</div>`:`<div class="kick">${t.kick}</div><p class="quote">${QUOTE}</p><div class="grow"></div>${WHO}${foot(t)}`}
+ else if(wide){inner=`<div class="col"><div class="kick">${t.kick}</div><h1 class="hd">${t.hd}</h1>${t.sub?`<p class="sub">${t.sub}</p>`:''}<div class="grow"></div>${t.pill?`<div class="pill">${t.pill}</div>`:''}${foot(t)}</div><div class="col v">${t.vis==='num'?'<div class="grow"></div>':''}${vis(t,1)}</div>`}
+ else{const v=vis(t);const numFirst=t.vis==='num'&&t.k!=='hire';const skipNum=t.vis==='num'&&(sq||t.k==='announce'||t.k==='hire');
+  inner=`<div class="kick">${t.kick}</div>${numFirst&&!sq?v:''}<h1 class="hd">${t.hd}</h1>${t.vis==='dt'?v:''}${t.sub?`<p class="sub">${t.sub}</p>`:''}${t.vis==='slot'?v:'<div class="grow"></div>'}${t.pill?`<div class="pill">${t.pill}</div>`:''}${foot(t)}`;
+  if(skipNum)inner=inner.replace(v,'')}
+ return {vars,inner,wide}}
+function art(c,inner,vars,dark,wide){return `<div class="art ${dark?'dark':'light'} ${wide?'wide':''}" style="width:${c.w}px;height:${c.h}px;--st:${c.st}px;--sb:${c.sb}px;--u:1;${vars}"><div class="m">${inner}</div><div class="safe"></div>${c.st>80?`<div class="band" style="top:0;height:${c.st}px"></div><div class="band" style="bottom:0;height:${c.sb}px"></div>`:''}</div>`}
+function carPages(t,c){return t.car.map((p,i)=>{let inner;
+ if(i===0)inner=t.quote?`<div class="kick">${p[0]}</div><p class="quote">${QUOTE}</p><div class="grow"></div>${WHO}${foot(t)}`:`<div class="kick">${p[0]}</div><h1 class="hd">${p[1]}</h1><p class="sub">${p[2]}</p><div class="grow"></div>${foot(t)}`;
+ else if(i===1)inner=t.quote?`<div class="kick">Why they chose KlassApp</div><p class="quote">\u201c<span class="ph">Second quote, same consent</span>\u201d</p><div class="grow"></div>${foot(t)}`:`<div class="big" style="font-size:140px">${p[0]}</div><h1 class="hd" style="--hs:72px">${p[1]}</h1><p class="sub">${p[2]}</p><div class="grow"></div>${foot(t)}`;
+ else inner=`<div class="grow"></div><h1 class="hd" style="--hs:80px">${p[1]}</h1><div class="pill">${p[2]}</div><div class="grow"></div>${foot(t)}`;
+ return {inner,label:['Cover','Point','Close'][i]}})}
+const kit=document.getElementById('kit');
+kit.innerHTML=TY.map(t=>`<section class="type" id="t-${t.k}"><h2>${t.n}<small>${t.dark?'Navy #0C1528':'Paper #FAFAF5'}</small></h2><div class="row">${CH.map(c=>{
+ if(c.car)return `<div class="item"><small>${c.n} · 3 × ${c.w}×${c.h}<span class="chk"></span></small><div class="car">${carPages(t,c).map(p=>`<div class="frame" data-w="${c.w}" data-h="${c.h}">${art(c,p.inner,'--hs:88px;--ss:38px;--qs:58px;',t.dark,0)}</div>`).join('')}</div></div>`;
+ const b=body(t,c);return `<div class="item"><small>${c.n} · ${c.w}×${c.h}${c.st>80?` · safe ${c.st}/${c.sb}`:''}<span class="chk"></span></small><div class="frame" data-w="${c.w}" data-h="${c.h}">${art(c,b.inner,b.vars,t.dark,b.wide)}</div></div>`}).join('')}</div></section>`).join('');
+document.getElementById('jump').innerHTML=TY.map(t=>`<a href="#t-${t.k}">${t.n}</a>`).join('');
+let Z='fit';
+function zoom(){const s=Z==='fit'?null:+Z;document.querySelectorAll('.frame').forEach(f=>{const w=+f.dataset.w,h=+f.dataset.h;const sc=s??(300/Math.max(w,h*0.8));f.style.width=w*sc+'px';f.style.height=h*sc+'px';f.firstElementChild.style.transform=`scale(${sc})`})}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{Z=b.dataset.z;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));zoom()});
+document.getElementById('sz').onclick=e=>{const on=document.body.classList.toggle('showsafe');e.currentTarget.setAttribute('aria-pressed',on)};
+zoom();
+function measure(){let bad=0,n=0;document.querySelectorAll('.item').forEach(it=>{let over=[];it.querySelectorAll('.m').forEach(m=>{n++;const cont=[...m.querySelectorAll('*')];const mr=m.getBoundingClientRect();const sc=mr.width/m.offsetWidth;const o=cont.some(e=>{const r=e.getBoundingClientRect();return r.bottom>mr.bottom+1*sc||r.right>mr.right+1*sc})||m.scrollHeight>m.clientHeight+1||m.scrollWidth>m.clientWidth+1;if(o)over.push(m)});const chk=it.querySelector('.chk');if(over.length){bad+=over.length;chk.innerHTML='<span class="bad">Overflows safe zone</span>'}else chk.innerHTML='<span class="ok">fits</span>'});
+document.getElementById('status').textContent=bad?`Measured in this browser: ${bad} of ${n} artboards overflow their safe zone (marked red).`:`Measured in this browser: all ${n} artboards fit inside their safe zones.`;window.__kit={bad,n}}
+(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(measure,300));
+</script>
+</body>
+</html>

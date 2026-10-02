@@ -2,12 +2,15 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "vite build && npm run docs:build",
         "test:e2e": "playwright test",
         "test:e2e:headed": "playwright test --headed",
         "test:e2e:prod-uganda": "PLAYWRIGHT_BASE_URL=https://klassapp.xyz playwright test --project=prod e2e/prod-uganda-onboarding.spec.js",
         "build-subscriptioninfo": "cd nova-components/Subscriptioninfo && npm run dev",
-        "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod"
+        "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod",
+        "e2e:onboarding": "node e2e/onboarding/run.mjs",
+        "docs:build": "vitepress build docs-site",
+        "docs:dev": "vitepress dev docs-site"
     },
     "devDependencies": {
         "@playwright/test": "^1.62.1",
@@ -25,6 +28,7 @@
         "sass": "^1.26.10",
         "tailwindcss": "^4.3.3",
         "vite": "^8.1.5",
+        "vitepress": "^1.6.4",
         "vue": "3.5.40"
     },
     "dependencies": {
@@ -81,5 +85,6 @@
         "vuejs-countdown-timer": "^2.1.2",
         "vuejs-datetimepicker": "^1.1.13",
         "vuejs-paginate": "^2.1.0"
-    }
+    },
+    "description": "An open education protocol for humans and agents. KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant."
 }

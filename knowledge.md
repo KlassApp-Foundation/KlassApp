@@ -658,7 +658,69 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Not fixed on GitHub, by decision**: re-opening under Mucunguzi256 needs a fresh session with the reconnected account; the owner judged that not worth the cost now. This note is the record instead.
 - **Scope**: these five PR numbers only. Any *other* PR showing Elijah-ug as author (e.g. #682, #788) is still his real external work and rule #25 applies in full.
 
-## Current Status: September 29, 2026 (latest) — **Test harness made environment-leak-proof; the #891 known-failures experiment fully undone.** Arc: #891 (137→51 list) MERGED `8a095213` then ruled wrong (CI is the source of truth; the 51 pass in CI) and undone by [#893](https://github.com/KlassApp-Foundation/KlassApp/pull/893) MERGED `6942afb9` (list back to #889 empty state; handoff doc removed from the public repo, content to KlassApp-Foundation/internal). **Root cause of the 51 local-only failures proven**: the workspace shell exports real `.env` values and phpunit.xml pinned them without `force="true"`, so locally `TOSHI_LLM_MODEL=gpt-4o-mini` + `TOSHI_LLM_BASE_URL=api.deepseek.com` leaked into the harness, tripping `ToshiLlm::assertConfigConsistent()` (`AmbiguousToshiLlmConfigException` — the dual-provider incident class) in all 51 Toshi Adversarial/Platform tests; `env -i` run fixed 38/51 (remaining 13 = APP_KEY from local `.env` invalid → `Unsupported cipher`). **Fix (harness PR)**: phpunit.xml pins every behaviour-relevant var `force="true"` to CI-effective values (incl. a dedicated committed test APP_KEY — test-only, not a secret); `scripts/test-guard.sh` aborts if any unforced phpunit.xml var is shadowed by the shell, prints suite totals + skipped tests from junit, and honours a gitignored `tests/known-failures.local.txt`; Test Guard workflow also runs on pushes to main and dumps env-var NAMES (no values). **Damage audit (read-only)**: no force pushes/reopens/direct-main-pushes; #892 (object storage, parallel session, merge-commit, CI green, staging auto-deployed) flagged for human review — content is hardening (signed URLs, visibility guard tests), reverts no protected work; production confirmed still `dabfb80c` (#847). #890 (Elijah-ug) reviewed read-only on a scratch branch — see session log for the verdict. Open PRs: 7.
+## Positioning (locked — only wording to use)
+
+> Owner-set 2026-10-01. Every public surface, README, design-system README, landing, footer, and meta description must use **exactly** these two lines. Do not invent variants. Soft-launch replacement pass authorised 2026-10-01 (task 6). Use only the Tagline + Description below.
+
+- **Tagline:** An open education protocol for humans and agents.
+- **Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
+
+**Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
+
+## Current Status: October 1, 2026 (latest) — **#929 MERGED** `85ccef59` (admin merge, Rasta rule-#32 go-ahead)
+
+- **#929 MERGED** `85ccef59` — Toshi onboarding without AI: `onboardingEnabled` / `assistantEnabled` split; `mode=done` when assistant off; complete-mode commit no longer blocks on school admin's own email; e2e driver checklist-aware. Admin-merged with Rasta's go-ahead (author can't self-approve). Staging journeys + soft-launch steps 2–4 in progress.
+- **#922 MERGED** `6a02a691` — Help at `klassapp.xyz/help` → `/docs-preview/help/` (VitePress); live Docsify `/docs` unchanged; JOIN apply path; QR/sidebar → klassapp.xyz/help.
+- **#899 MERGED** `dc30e638` — `ROBOTS_NOINDEX` default **false**; set true on staging only after deploy.
+- **#924 MERGED** earlier this session (logo→home).
+- **#898** personal-data removal — open, awaiting Rasta review (do not merge).
+- **Deferred:** staff create flashes teachers plan-limit notice (teachers bucket vs support-staff usergroups).
+- **Positioning:** replacement pass on `chore/positioning-everywhere` (task 6). Demo schools (task 7) next. Toshi journeys wait on staging vars.
+
+## Current Status: October 1, 2026 (latest) — **Plan-limit non-blocking widened on [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921)** (`fix/staff-plan-limit-nonblocking`). Staff + students + Toshi addStudent/addTeacher/addCoAdmin + bulletins/files/videos create UI: save first, upgrade notice after; `planLimitNotice()` helper. Positioning locked (section above) — copy replacements pending owner approval of removal list. #919 MERGED `ed659fdc`; #920 MERGED `271b38ae`. Google E2E + Toshi journeys wait on Rasta AI-key confirm. Production untouched.
+
+## Current Status: October 1, 2026 — **`design/` is the source of truth for all design work.** Full Claude Design export under `design/system/` (tokens, components, guidelines, concepts, `SKILL.md`, `handoff/`). Sync record `design/system/github.md` last synced **2026-09-28** (`dbe68419`) — drift-check against `main` before each implementation PR. Soft-launch #906–#911 MERGED tip `69524023` staging-verified. Rule-#32 go-ahead: [#913](https://github.com/KlassApp-Foundation/KlassApp/pull/913) MERGED; [#914](https://github.com/KlassApp-Foundation/KlassApp/pull/914) MERGED `aa64c73c`; [#915](https://github.com/KlassApp-Foundation/KlassApp/pull/915) this design export; [#916](https://github.com/KlassApp-Foundation/KlassApp/pull/916) Task 2 emails+D2 next. Production untouched.
+
+## Current Status: October 1, 2026 — **Soft-launch merge batch #906–#911 MERGED + staging-verified.** Tip `69524023`. Staging deploy `depl-a2df6101-…` succeeded. Combined Playwright @375/1280 PASS.
+
+## Current Status: September 30, 2026 evening — **public/uploads/ audit stamped; student-creation audit queued next; PR-state report delivered (#899/#898).**
+
+- **public/uploads/ git audit (full-coverage gate)** — every file ever committed under `public/uploads/` is one of **26 files, all committed by developers, none a real runtime upload, no user data found in git**: 17 top-level + 6 `static/` files in fork import `a6784c39` (2025-07-11); `user/avatar/default-user.jpg` + `user/avatar/default-user-1.jpg` in `ec40cbf8` (2026-01-13 "fixed user image"); `klassapp_assets.png` in `172d202d` (2026-03-17); `icons/plus.svg` in `4860c91e` (2026-07-09). Zero deletions on `main` (an apparent mass-deletion in `34cbf0a1` is on unmerged side branch `feat/toshi-mcp-server-proposal`, not an ancestor of HEAD). All 26 stay tracked despite `.gitignore:23 public/uploads/*`.
+- **`default-user-1.jpg` is orphaned** — only references are our own `tests/Feature/Storage/PublicAssetResolutionTest.php:48,110` (added there by #903); no production code path names it.
+- **`uploads/images.jpg` never existed in the repo** (not on disk, never in any ref) yet **`app/Traits/RegisterUser.php` writes it as avatar in 4 places (~141, ~290, ~644 etc.) and `app/Traits/AdmissionUser.php:129` writes it too**; `Common.php:64` special-cases it to fall back to `default-user.jpg`. Production read-only probe found **7 rows** pointing at it. Fix belongs to the storage-cleanup PR.
+- **Hard-coded dev URL**: `resources/assets/js/components/classwall/post/Show.vue:102` renders `http://school-plus.test/uploads/male.png` (GeGoK12 fork artifact) — must be removed in the storage-cleanup PR.
+- **Backups bucket (approved direction, not built)**: dedicated bucket separate from the school-uploads bucket, own credentials + lifecycle, uploads identity denied `s3:PutObject` there. Backups don't need the public/CDN path; separation protects the recovery path from an uploads-credential compromise.
+- **Names: `userprofiles` has separate `firstname` and `lastname` columns** for staff, students and parents (verified in factory and traits' writes) — so the initials-avatar spec (initials on a colour circle) is buildable on those two columns, with `users.name` (login handle) as fallback. Spec still pending.
+
+### Deferred until after soft launch (owner-set, 2026-09-30)
+
+- Toshi's separate plan step — bypasses the engine completion gate.
+- Toshi panel bugs — panel closes on refresh; duplicate `#toshi-input-panel`; readonly composer on button prompts.
+- A-level subject combinations (S.5–S.6 combos) — not yet designed.
+- Nightly E2E run — scheduled full-journey E2E in CI.
+- Separate GitHub identity for agents — agent pushes use the human admin account today.
+- Rest of the design queue — Task A resync, public pages pass, Task C + Task D docs.
+- Backups in own bucket — proposal above.
+- **Staff plan-limit notice uses the teachers bucket** (2026-10-01): `StaffController` flashes `enforcePlanLimit(..., 'teachers')` (counts `usergroup_id=5`) while support-staff rows use other usergroups (4/8/10–13). Soft-launch notices stay non-blocking; retarget the staff notice to a real staff count (or a dedicated plan column) after launch.
+- **knowledge.md split proposal (owner decision, not done)**: move current-status/decisions/infra into a short current file and monthly session logs under `docs/knowledge/sessions/`, keeping `knowledge.md` as a pointer stub — every session currently loads all 13,277 lines.
+
+### Decisions logged 2026-09-30
+
+- **Design handoffs are in-repo from now on**: a Claude Design export lands as its own small PR first — full export under `design/system/`, each handoff under `design/handoffs/<date>-<name>/` — before any implementation PR starts.
+- **Default avatars become initials avatars** per the design system (initials of first+last name on a colour circle, from existing tokens, contrast 4.5:1, stable per-person colour from id, size ladder per surface, non-gendered); the detailed spec arrives with the design export. Until then the storage-cleanup PR moves the current default images to `public/images/defaults/`.
+
+### PR-state report (owner asked; nothing merged by me)
+
+- **#899** `feat(seo): ROBOTS_NOINDEX-driven noindex for non-production` (Mucunguzi256, opened 2026-09-29 23:51) — staging ships no noindex signal today (verified across /, /login, /register, /password/reset, 404, /contact, /robots.txt); one env switch `ROBOTS_NOINDEX`: global middleware stamps `X-Robots-Tag: noindex, nofollow` on every response type, and the static `public/robots.txt` becomes a route (static file is edge-served by Laravel Cloud, so a route is the only way to change the body). Body complete, awaits owner go-ahead.
+- **#898** `Remove personal contact details from seeders, config, views, tests and e2e artifacts` (Mucunguzi256, opened 2026-09-29 19:50) — repo-public-readiness part 1: seeders read env (`SITE_OWNER_EMAIL` etc.) with placeholders, landing views switch personal booking link to public mailto, e2e captures scrubbed. Awaits owner go-ahead.
+- **Task B ZIP (Claude Design full export incl. Task B handoff) not yet received**; sweeping repo root, parent dir, tmp, Downloads and Desktop found nothing. Task 2 begins only after it is committed under `design/` per the new convention.
+
+### Conflict canvas on main tip `3cf3025b`
+
+- Open PRs: 9 (two external Elijah-ug). **#682** (112 files, external, DO-NOT-MERGE verdict stands) touches `app/Traits/RegisterUser.php`, `.gitignore` and `.github/workflows/klassapp-ci.yml` — i.e. Task 3 (storage cleanup) and Task 4 (rules/protection PR) both overlap it; owner ruled: proceed anyway, they rebase on main when reviewed. #732 overlaps AGENTS.md vs #902 — owner chose "merge mine, rebase #732 later". #899 appends at this file's EOF, so a keep-both resolution may be needed when it lands.
+## Current Status: September 30, 2026 — **Soft-launch batch (4 tasks) all merged, CI-green, staging browser-verified; production untouched.** Arc: AGENTS.md rule #32 banning branch-protection/admin-merge-without-owner-go-ahead [#902](https://github.com/KlassApp-Foundation/KlassApp/pull/902) MERGED `f7d2c218` (staging deploy `depl-a2de8f22-ffca-43b1-b76e-b2fff2e2055e`); default avatars served from public storage instead of object storage [#903](https://github.com/KlassApp-Foundation/KlassApp/pull/903) MERGED `3c119c96` (`Common::fileUrlForStoredFile()` — 51 of 2323 userprofiles were getting a broken bucket URL; +5 tests, 3 red→green; deploy `depl-a2dea287-a3c2-42f6-84b7-0d74c9568150`, Playwright 375/1280 verified, `naturalWidth 225`, no X-Amz); **sign-up email verification** [#904](https://github.com/KlassApp-Foundation/KlassApp/pull/904) MERGED `57cf3fdf` (root cause: `SchoolSignupBootstrapService` hardcoded `email_verified => 1` and `RegisterController` logged straight in, so signup never verified or mailed — now a 6-digit code, bcrypt-hashed at rest, 15-min expiry, lockout after 5 attempts, consumed on use, queued mail; new `authentications.attempts`/`locked_until`; keeps legacy plaintext `register`/`password_reset` OTP flows untouched via its own `type`; Laravel 12 gotcha fixed — `$dates` is no longer honoured so `expires_on` came back as a string and `isPast()` fataled, swapped to `$casts`; +11 tests red→green, suite 1904 green; deploy `depl-a2decd5c-dbfa-4aba-b066-b1dfeb762fe7`; Playwright: signup → `/register/verify` → code → `/admin/dashboard`, DB flipped `verified=0→1`, code row consumed, 0 console errors, 375+1280); **wizard paste no longer defaults to P1** [#905](https://github.com/KlassApp-Foundation/KlassApp/pull/905) MERGED `b80905e0` (`applyStudentPaste()` used `$this->studentClass ?: $this->className` while `className` defaults to `'P1'`; now matches the one-at-a-time `addStudentDraft()` path — the view's `{{ $row['class'] ?: 'No class' }}` proves "No class" was the intended empty label; +1 test red→green (`''` vs `'P1'`), suite 1905 green; deploy `depl-a2ded7cf-6faa-4509-883e-1cd64be8598b`, Playwright showed both pasted rows as "No class", P1 absent, 0 console errors, 375+1280). **Read-only production counts** (no writes): 7 secondary schools, all `o_a_level`, zero pure `o_level`; 0 students in P1 or any primary class across all 7; `PRIMARY_SECTION_ROWS` empty — so the primary-class part of the soft-launch check needs no remediation. Sanity: 2323 userprofiles (2261 null avatar), 2147 student academics. Throwaway staging fixtures from this session were deactivated (`status=inactive`), not deleted. Open PRs: 7 — #682 (Elijah-ug) touches `RegisterRequest`/`SchoolSignupBootstrapService`/`RegisterUser`, which #904 deliberately avoided; #732 overlaps AGENTS.md vs #902 (owner chose merge mine, rebase #732 later).
+
+## Current Status: September 29, 2026 — **Test harness made environment-leak-proof; the #891 known-failures experiment fully undone.** Arc: #891 (137→51 list) MERGED `8a095213` then ruled wrong (CI is the source of truth; the 51 pass in CI) and undone by [#893](https://github.com/KlassApp-Foundation/KlassApp/pull/893) MERGED `6942afb9` (list back to #889 empty state; handoff doc removed from the public repo, content to KlassApp-Foundation/internal). **Root cause of the 51 local-only failures proven**: the workspace shell exports real `.env` values and phpunit.xml pinned them without `force="true"`, so locally `TOSHI_LLM_MODEL=gpt-4o-mini` + `TOSHI_LLM_BASE_URL=api.deepseek.com` leaked into the harness, tripping `ToshiLlm::assertConfigConsistent()` (`AmbiguousToshiLlmConfigException` — the dual-provider incident class) in all 51 Toshi Adversarial/Platform tests; `env -i` run fixed 38/51 (remaining 13 = APP_KEY from local `.env` invalid → `Unsupported cipher`). **Fix (harness PR)**: phpunit.xml pins every behaviour-relevant var `force="true"` to CI-effective values (incl. a dedicated committed test APP_KEY — test-only, not a secret); `scripts/test-guard.sh` aborts if any unforced phpunit.xml var is shadowed by the shell, prints suite totals + skipped tests from junit, and honours a gitignored `tests/known-failures.local.txt`; Test Guard workflow also runs on pushes to main and dumps env-var NAMES (no values). **Damage audit (read-only)**: no force pushes/reopens/direct-main-pushes; #892 (object storage, parallel session, merge-commit, CI green, staging auto-deployed) flagged for human review — content is hardening (signed URLs, visibility guard tests), reverts no protected work; production confirmed still `dabfb80c` (#847). #890 (Elijah-ug) reviewed read-only on a scratch branch — see session log for the verdict. Open PRs: 7.
 
 ## Current Status: September 28, 2026 — **Launch-blockers session shipped three PRs**: legacy route redirects [#865](https://github.com/KlassApp-Foundation/KlassApp/pull/865) MERGED `08cd1ffe` (staging curl battery green — 8×301 with literal `#demo`, POSTs 302, `/demo/list/999999` 404); co-admin invite links [#868](https://github.com/KlassApp-Foundation/KlassApp/pull/868) MERGED `15241274` + staging-verified (Playwright 8/8: form @375/1280 → claim → login → `/admin/dashboard`, claimed/garbage-token pages, teacher-form regression; claim creates usergroup-3 school-scoped account with `is_reset=0` + profile + invite `claimed_at`; synthetic accounts left `status=inactive`/`device_id=NULL`, staging queue drained — staging has NO queue worker, drain manually); legacy flag command [#871](https://github.com/KlassApp-Foundation/KlassApp/pull/871) MERGED `86af41ee` (`gego:flag-never-logged-in` — read-only report by default, `--apply` NOT run anywhere: read-only counts are staging 29 (demo/seed users) and production 35 of 2318 across 3 schools; production `--apply` awaits the owner's go-ahead). **Toshi report-only (nothing enabled)**: production `sdk_v2=false` + no LLM key (safe); staging `sdk_v2=TRUE` with empty key (panel toggles, LLM calls fail fast); `OPENAI_COMPATIBLE_API_KEY` preferred over legacy `TOSHI_LLM_API_KEY`, both empty everywhere; local `.env` `TOSHI_LLM_ENABLED` is read by no config (dead var); `toshi-embed` allow-list omits usergroups 12 and 2. **Production NOT deployed all session** (push-to-deploy off). Full suite after #871: 1797 tests, failure set identical to the 169-entry baseline (0 new). Open PRs: 8 — Elijah-ug #848/#788/#682 (external, rule #25) + #822/#821/#786(draft)/#732/#728 (do-not-touch). Session details + follow-up findings in the Session Log at end of file. Landing design programme Phase 2a/2b stamps also at end of file (#854/#855/#862/#864/#866/#867/#869/#870).
 
@@ -2443,6 +2505,31 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929 MERGED
+- **Work done**: (1a–1c) Onboarding/assistant switch split; `mode=done` when assistant off; e2e stall + decide() checklist false-match fixes; complete-mode commit no longer blocks on school admin's own email. (1d) Journeys pending post-merge staging deploy.
+- **PR**: [#929](https://github.com/KlassApp-Foundation/KlassApp/pull/929) · **MERGED** `85ccef59` (admin-merged with Rasta's go-ahead; author can't self-approve)
+- **Files**: `ToshiUiSwitch`, `AgentToshi`, `AppServiceProvider`, `ToshiActivityController`, blades, PHPUnit, `e2e/onboarding/lib/{toshi,journey-data,outcomes,signup}.js`
+- **Status**: ✅ MERGED to `main`; staging deploy + manual/Toshi journeys in progress
+- **Edge cases / findings**:
+  1. `decide()` matched checklist labels (`Academic terms` → `yes` as school name) — fixed bot-bubble-only matching.
+  2. Complete-mode `commit()` email uniqueness check blocked Confirm forever — fixed before merge.
+  3. Staging cleanup / #928 / #898 / dashboard / account-card follow under the same rule-#32 plan go-ahead.
+
+### 2026-10-01: Positioning locked (tagline + description) — replacements pending owner approval
+- **Work done**: Added canonical **Positioning** section to `knowledge.md` (only wording to use). Proposed same Tagline + Description for `design/system/readme.md` (not applied yet). Full inventory of other positioning lines reported in chat for owner approval before any removal/replacement pass.
+- **Locked copy**:
+  - Tagline: `An open education protocol for humans and agents.`
+  - Description: `KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.`
+- **Status**: Recorded. Removals/replacements **blocked until owner approves** the report list.
+- **Edge cases**: Live `/` is `landing-v2` (no OG/Twitter today). Legacy `landing`/`landing2` still carry "Parent's Pocket" / WhatsApp-first OG. Email footers are copyright-only (no tagline to swap).
+
+### 2026-10-01: Plan-limit non-blocking across data-entry paths + relative `/pricing`
+- **Work done**: Root cause was Subscription blade gates treating `no_of_*=0` as limit 0 (`$count < 0` → always Upgrade). Widened soft-launch rule: teaching/support staff create+import, student create+store, Toshi `addStudent`/`addTeacher`/`addCoAdmin` (notice after save), bulletins Vue (0=unlimited; form always shown), files/videos create blades. Added `ToshiActionService::planLimitNotice()`. Relative `/pricing` on in-app upgrade CTAs. Regression: marks/attendance/fees/timetable/admission/OnboardingEngine have no plan truncate/block; parents create ungated (tested). Student CSV + wizard already notice-only (#909). Full `test-guard` OK (2019 tests, 0 new failures).
+- **Files**: `ToshiActionService`, `TeacherAddController`, `StaffController`, `TeacherImportExportController`, `StudentController`, teacher/staff/member/files/bulletins blades, `bulletin/Create.vue`, `partials/message`, pricing hrefs, `StaffPlanLimitNonBlockingTest`, `PlanLimitNonBlockingPathsTest`, `PlanLimitEnforcementTest`, `ToshiOnboardingTest`, `knowledge.md`.
+- **Key decisions**: `enforcePlanLimit` success=false is advisory only — never a hard gate. Google Classroom connector (#728) dormant — no live write path. Events Vue upgrade UI already commented out.
+- **Status**: PR [#921](https://github.com/KlassApp-Foundation/KlassApp/pull/921). Google E2E + Toshi journeys wait on AI-key confirm. Production untouched.
+- **Edge cases**: Live media upload uses `mediafiles/create1` (no gate). Freemium seeder has finite limits (5/100); unlimited still encoded as `0` in many tests.
 
 ### 2026-09-17: Endor local-secrets triage + Maps key env migration
 - **Work done**: Triaged all 14 Endor `--secrets --local` findings. Moved GeGoK12 hardcoded Google Maps key out of 9 Blade views into `GOOGLE_MAPS_API_KEY` / `config('services.google.maps_api_key')`. Removed commented MSG91 authkey from `MSG91.php`. Redacted retired Evolution API keys in `knowledge.md` (missed by #655). Removed dead Evolution/postgres/n8n stubs from `docker-compose.prod.yml`. Left WhatsApp `TOKEN_ALPHABET` and test `deputy-pass-123` as false positives.
@@ -13234,3 +13321,109 @@ WhatsApp webhook hardening in progress.
 - Demo Academy Uganda extended with S.1-S.4, O-level subjects, 18 secondary learners (84 total) and 3 approved S.1 PLE entry records for secondary demos.
 - phase-4-roster-demo-school renamed "Phase 4 Roster Test Fixture", is_test=1/is_demo=0 — never for captures; capture scripts target demo-academy-uganda.
 - Docs handoff confirmed VitePress (klassapp.xyz/docs/help/ + /docs/community/), not Docsify.
+
+### 2026-09-30: Staging URL + queued docs-domain redirect work
+- **Staging canonical URL**: `https://test.klassapp.xyz` (APP_URL updated; the old `https://klassapp-staging-7mpoqg.laravel.cloud` address still works). Capture and verification scripts should use `test.klassapp.xyz` from now on. Note: DNS for the subdomain is fresh — if `curl` fails with "Could not resolve host" while `dig +short test.klassapp.xyz @8.8.8.8` returns `103.133.1.1`, it's a stale local resolver cache; `curl --resolve test.klassapp.xyz:443:103.133.1.1` works.
+- **QUEUED (blocked on VitePress going live)** — docs domain work, add to the docs work when `klassapp.xyz/docs/` is actually VitePress (as of 2026-09-30 it still serves the Docsify shell, `/docs/help/` 404s, `docs.klassapp.xyz` has no DNS record):
+  1. Add `docs.klassapp.xyz` as a production custom domain.
+  2. Permanent **301** redirect `docs.klassapp.xyz/{path}` → `https://klassapp.xyz/docs/{path}`, path preserved.
+  3. Test first on staging with a staging docs host before doing the production domain.
+- **Staging noindex status (read-only check, 2026-09-30)**: staging currently sends **no** `X-Robots-Tag` header and renders **no** `<meta robots>` tag on `/`, `/login`, `/register`, `/password/reset`, 404, and `/contact` (redirect); `robots.txt` is open (`User-agent: * / Disallow:`) on both staging and production. No noindex mechanism exists in the codebase (only `tests/Feature/LandingAuthErrorCutoverTest.php:20` asserts landing pages do NOT contain `noindex,nofollow`).
+- **PR #899 OPEN** (`feat/robots-noindex`, tip `29955e48`) — noindex switch `ROBOTS_NOINDEX` (default false = production unchanged). Global `AddRobotsNoindexHeader` middleware stamps `X-Robots-Tag: noindex, nofollow` on every response type (page/redirect/404/500/download); static `public/robots.txt` **removed** (edge serves `public/` before Laravel — confirmed via Cloud docs + empirical staging probe: static `etag`/`last-modified`/no session cookie/CF HIT vs Laravel-served 404 with session cookie) and replaced by a `/robots.txt` route (`Disallow: /` when on; byte-identical allow-all when off, with `no-cache, no-store, private` — `robots.txt` was edge-cached at CF HIT/age 1245). Tests: `tests/Feature/RobotsNoindexTest.php` (3 tests / 17 assertions OK); guarded full suite **1884 tests, 0 failures, exit 0**. **Pending ops step with merge: set `ROBOTS_NOINDEX=true` on the staging (and preview) environments** — this session had no Laravel Cloud access; until the var is set the switch is inert on staging. Post-deploy staging verify: `curl -sD- https://test.klassapp.xyz/robots.txt`.
+
+## Session: 2026-09-30 — Soft-launch batch: rule #32, default avatars, sign-up email verification, wizard paste class (4 PRs merged)
+
+**Scope given by Rasta**: four ordered tasks for the Saturday 3 Oct soft launch, one PR at a time, each with a failing-then-passing test, full suite green, CI green, and a real-browser staging check at 375 and 1280. Plus a read-only production count to decide whether the primary-class issue needed work.
+
+**Merged (all four, `merged: true` confirmed via GitHub API — rule #21):**
+
+| PR | Title | Merge SHA | Staging deploy |
+|---|---|---|---|
+| [#902](https://github.com/KlassApp-Foundation/KlassApp/pull/902) | AGENTS.md rule #32 — no branch-protection/admin merge without owner go-ahead | `f7d2c218` | `depl-a2de8f22-ffca-43b1-b76e-b2fff2e2055e` |
+| [#903](https://github.com/KlassApp-Foundation/KlassApp/pull/903) | Serve default avatars from public assets, not object storage | `3c119c96` | `depl-a2dea287-a3c2-42f6-84b7-0d74c9568150` |
+| [#904](https://github.com/KlassApp-Foundation/KlassApp/pull/904) | Require a 6-digit email verification code to complete signup | `57cf3fdf` | `depl-a2decd5c-dbfa-4aba-b066-b1dfeb762fe7` |
+| [#905](https://github.com/KlassApp-Foundation/KlassApp/pull/905) | Stop pasting students into P1 when no class was chosen | `b80905e0` | `depl-a2ded7cf-6faa-4509-883e-1cd64be8598b` |
+
+Admin merges were used on #904 and #905 under Rasta's explicit in-session authorisation, with the authorisation recorded in each PR body so the bypass is a logged owner-approved exception (rule #32, the rule #902 itself introduced).
+
+**Task 1 — read-only production counts (no writes, no credentials in this file):** 7 secondary schools, all `o_a_level`, **zero** pure `o_level`. Students in P1 or in any primary class across all 7: **0**; `PRIMARY_SECTION_ROWS` empty. Per-school (students / primary classes / P1): 6→3/0/0, 19→0/0/0, 20→0/0/0, 21→2/0/0, 22→2/0/0, 23→0/0/0, 24→3/0/0. Conclusion: the primary-class concern needs **no remediation** before launch. Sanity: 52 schools, 2323 userprofiles (2261 null avatar / 62 set), 2147 student-academic rows.
+
+**Files touched this session:**
+- #902 `AGENTS.md` (new standing rule #32).
+- #903 `app/Traits/Common.php` (`Common::fileUrlForStoredFile()`), `tests/Feature/Storage/PublicAssetResolutionTest.php` (new, 5 tests), regression test in `tests/Feature/DesignSystem/ProfilePhotoComponentTest.php`.
+- #904 `app/Http/Controllers/Auth/RegisterController.php`, new `EmailVerificationCodeController` / `EmailVerificationCodeService` / `EmailVerificationCodeMail`, `app/Models/Authentication.php`, `routes/web.php`, `resources/views/emails/registration_otp.blade.php`, new `resources/views/auth/preview/verify-code.blade.php`, new migration adding `attempts`/`locked_until`, new `tests/Feature/Auth/SignupEmailVerificationTest.php` (11 tests); updated `SaasMinimalSignupTest`, `Onboarding/RegistrationFlowTest`, `Auth/RegistrationMinistryCodeTest` for the new redirect.
+- #905 `app/Livewire/ManualOnboardingWizard.php` (line 458), `tests/Feature/Onboarding/ManualWizardBulkTeachersStudentsTest.php`.
+
+**Decisions:**
+- #904 deliberately avoided `SchoolSignupBootstrapService.php` and `RegisterRequest.php` because open PR **#682** (Elijah-ug) touches both — the unverified downgrade happens in `RegisterController` after `bootstrap()` returns instead. Overlap flagged to the owner rather than silently resolved.
+- #905 chosen as a **minimal** fix: make paste match the already-correct one-at-a-time path (`trim($this->studentClass)`), not change save-time behaviour. `OnboardingEngine::saveStudents()` still has its pre-existing `$firstLink` fallback for genuinely empty classes — flagged in the PR, left untouched.
+- Staging throwaway fixtures from the session (the account created to exercise sign-up verification, and its school) were set `status=inactive` rather than deleted, per standing rule #3.
+
+**Edge cases / lessons learned:**
+- **Laravel 12 dropped `$dates`** — nothing in `HasAttributes` honours it anymore, so `Authentication::$dates` silently did nothing and `expires_on` came back as a raw string; any `->isPast()` on it fataled. Replaced with `$casts`. Worth checking elsewhere.
+- The sign-up name validator rejects digits, so a test account named "…E2E…" fails with *"Please enter your full name using letters, spaces, hyphens, and apostrophes only."* — letters only.
+- Staging `MAIL_MAILER=log` does **not** write `storage/logs/laravel.log`: the default `LOG_CHANNEL=stack` fans out to `laravel-cloud-socket` + `nightwatch`, so there is no local mail log to read a code back out of.
+- The "Jump to" `<select data-testid="wizard-jump">` on the manual wizard is the fast route to deep steps in browser tests (Students = option value 11 of 17).
+- `applyStudentPaste()` and `addStudentDraft()` disagreed on class handling — the two paths had drifted; the view's `{{ $row['class'] ?: 'No class' }}` was the tell that empty is a designed state.
+
+**Verification:** guarded harness green on every PR before merge (#904 → 1904 tests, #905 → 1905 tests, both 0 failures, 0 errors, `tests/known-failures.txt` unchanged); CI green on all four; staging HTTP 200 + Playwright at 375 and 1280 with zero console errors on every page touched. Screenshots under `e2e/screenshots/pr903-*`, `pr904-*`, `pr905-paste-class/` (local only, not committed).
+
+**Production**: not deployed, not written to, all reads only.
+
+## Session: 2026-09-30 (evening) — knowledge queue: uploads audit, deferrals, decisions, PR-state report
+
+**Owner answers that set this up:** Task 1 unblocked ("don't wait — open it now, resolve conflicts keep-both-sides"); #682/#890 (external, Elijah-ug) stay untouched with the DO-NOT-MERGE verdict on #682 standing, Tasks 3/4 proceed and rebase later; #899/#898 get a written report (below), nothing merges without the owner's go-ahead; the Task B design ZIP will arrive as a full Claude Design export to be committed under `design/` as its own PR before Task 2 starts.
+
+**Work in this PR:** knowledge.md only — a new Current Status block (top, line 661), a "Deferred until after soft launch" section, a "Decisions logged" section, a PR-state report for #899/#898, a conflict canvas for the 9 open PRs, and this Session Log entry. No code, no tests affected; CI test-guard re-runs on the PR anyway.
+
+**What the audit found (full detail in the Current Status block):** 26 files under `public/uploads/`, all developer-committed (fork import + 3 later commits), zero real runtime uploads, no user data in git history, zero deletions on `main`. `default-user-1.jpg` is orphaned (only our own #903 test names it). `uploads/images.jpg` never existed in the repo but is written by `RegisterUser.php` (4 sites) and `AdmissionUser.php` (1 site) — production has 7 rows pointing at it. `classwall/post/Show.vue:102` hard-codes `http://school-plus.test/uploads/male.png`. `userprofiles` carries separate `firstname`/`lastname` columns for staff, students and parents, so the pending initials-avatar spec is buildable without schema changes.
+
+**Proposals opened (owner to decide, not implemented):** knowledge.md split into a short current-status/decisions/infra file plus monthly session logs under `docs/knowledge/sessions/` (every session currently reads all 13k lines); backups to their own bucket (direction approved, not built); Task B ZIP commit convention `design/system/` + `design/handoffs/<date>-<name>/` as its own PR before Task 2.
+
+**PR-state report (owner-requested, nothing merged by me):** #899 (Mucunguzi256, 2026-09-29 23:51) adds a single `ROBOTS_NOINDEX` switch — global `X-Robots-Tag: noindex, nofollow` middleware plus a routed robots.txt replacing the edge-served static file; staging currently ships no noindex anywhere (verified). #898 (Mucunguzi256, 2026-09-29 19:50) strips personal contact details from seeders/config/views/e2e artifacts in favour of env vars and placeholders. Both complete and CI-wired per their bodies; both await the owner's go-ahead. Merge order note: #899 appends at this file's EOF — when both land, resolve keep-both-sides per the owner's standing instruction.
+
+## Session: 2026-10-01 — design/ source-of-truth (Task B export) + queue correction
+
+**Design export:** Imported `~/Downloads/KlassApp Design System.zip` (646 files; same content as the underscore-named path) into `design/system/`. Handoff guides stay under `design/system/guidelines/` (not duplicated under `design/handoffs/`). `design/system/github.md` last sync **2026-09-28T18:24:20Z** @ `dbe68419` — agents must drift-check against `main` before each handoff PR.
+
+**Task 2 emails (next):** use `design/system/handoff/emails/` (newer); ignore `klassapp-handoff-2026-09-28/B-emails-code/`. Include Part D2 of `guidelines/handoff-2026-09-30-profiles.md` (Confirm email signed link + copy: account exists before confirmation / "no one can use this account until the email is confirmed"). Sign-up link + Google staging verify are separate follow-ups in the same soft-launch queue.
+
+**Merges (rule #32):** #913 MERGED; #914 MERGED `aa64c73c` (landed while #915 had a knowledge conflict). This PR lands design/system.
+
+## Session: 2026-10-01 — Soft-launch merge batch #906–#911 (rule #32 go-ahead) + combined staging pass
+
+**Authorisation**: Rasta explicit in-session go-ahead (rule #32) — merge #906/#907/#908 normally, #909 squash-and-merge, then #910/#911 once CI green.
+
+**Merged (API `merged: true` for each):**
+
+| PR | Method | Merge SHA | Notes |
+|---|---|---|---|
+| [#906](https://github.com/KlassApp-Foundation/KlassApp/pull/906) | merge | `370e7a9d` | knowledge.md uploads audit / post-launch deferrals |
+| [#907](https://github.com/KlassApp-Foundation/KlassApp/pull/907) | merge | `d21ec253` | class-less students never enrolled into first StandardLink; roster "Needs a class" |
+| [#908](https://github.com/KlassApp-Foundation/KlassApp/pull/908) | merge | `5d8683d3` | design/handoffs avatar-initials + Root Clutter Guard allowlist `design/` |
+| [#909](https://github.com/KlassApp-Foundation/KlassApp/pull/909) | **squash** | `aa67ac51` | final school-size buckets; plan over-limit notice never blocks uploads |
+| [#910](https://github.com/KlassApp-Foundation/KlassApp/pull/910) | merge | `5232f2ea` | `ToshiUiSwitch` + `@toshiUi` — hide school UI until AI key ∧ `schools.toshi_enabled` |
+| [#911](https://github.com/KlassApp-Foundation/KlassApp/pull/911) | merge | `69524023` | DashboardGreeting title-case, year selector @mobile, one step source, delete unused reminder |
+
+**Tip**: `69524023055b9593410a0188ebdd9e6dc7f23d0c` (= #911 merge). Staging deploy `depl-a2df6101-…` succeeded at that SHA.
+
+**Combined staging pass** (Playwright Chromium, `phase4.admin@klassapp.xyz` / `STAGING_DEMO_PASSWORD` via Doppler, never printed): VERIFY_PASS at 375 and 1280. Evidence: `e2e/screenshots/softlaunch-batch-906-911/REPORT.json`. Toshi toggle absent on phase4 (expected until school flag on). Production not deployed / not written.
+
+**Task B**: later received as `KlassApp Design System.zip` → `#915` under `design/system/`.
+
+**Queue remaining**: Task 2 emails (#916) → Toshi readiness → dashboard/sidebar/icons → storage → rules.
+
+
+## Session: 2026-10-01 — Task 2 emails (B1 shell) + Part D2 confirm-email link (one PR, branch `feat/task2-emails-confirm-link`)
+
+**Source:** `design/system/handoff/emails/` copied to app paths (not the old `B-emails-code/`). Theme `klassapp` set in `config/mail.php`; `public/images/email/` PNG logos now un-ignored in `.gitignore` (Outlook doesn't render SVG). Deleted password-bearing `teacher-invite` / `co-admin-invite` views and the unused `emails/admin/resetpassword`. Invite expiry was already 72h via `config('invites.expiry_hours')` (#875); views now read the hours from config instead of hard-coding.
+
+**Copy decision for #904:** the account row exists before confirmation, so the verification email footer says "no one can use this account until the email is confirmed", never "no account is created".
+
+**D2 design:** code and link are two `authentications` rows (`email_verification`, `email_verification_link`; link token = sha256 of 64 random chars, tied to `user_id`), same expiry as the code; `URL::temporarySignedRoute('register.verify.link')`. Confirming by either, or resending, marks both used. GET on the link only renders a Confirm button; only the POST confirms (403 bad/missing signature, 410 expired/used/unknown). Same browser (pending signup session matches the token's user) → login + onboarding toast; any other device → "Email confirmed — continue where you signed up", never signed in. `GET /register/verify/status` → `{confirmed}` for the pending session only; the verify page polls every 5s + `visibilitychange`, then POSTs `/register/verify/continue`.
+
+**Gotchas worth keeping:**
+- Laravel `throttle:N,M` shares ONE counter per IP across every route using it. Adding `throttle:60,1` to the status poll would have starved the existing `throttle:3,1` resend limit (429 on resend). Use named limiters (`verify-status`, `verify-link` in `AppServiceProvider`).
+- Markdown mailables auto-render the text part from the same view with *text* components; a custom `<x-mail::code>` therefore needs `resources/views/vendor/mail/text/code.blade.php` or every send without an explicit `->text()` throws "View [code] not found".
+- `view('emails.x')->render()` no longer works for markdown views (no `mail::` hint path); render through the Mailable.
+- `TeacherInviteMail` / `CoAdminInviteMail` no longer accept or render a password; Toshi `addTeacher` no longer retains the plain password (`randomPasswordAttributes`) and the new teacher gets a set-password link to `/password/reset`.

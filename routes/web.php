@@ -15,8 +15,30 @@ Route::get('/docs/{path?}', DocsController::class)
     ->where('path', '.*')
     ->name('docs');
 
+// Soft-launch Help hub. VitePress builds to public/docs-preview (npm run docs:build)
+// so the live Docsify /docs route stays unchanged until cutover.
+Route::redirect('/help', '/docs-preview/help/', 302)->name('help');
+Route::get('/help/{path}', function (string $path) {
+    return redirect('/docs-preview/help/'.ltrim($path, '/'), 302);
+})->where('path', '.*')->name('help.path');
+
 // Locked v3 landing — live cutover on /. Legacy preview URL redirects.
 Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
+
+// Served from a route because public/robots.txt was removed: the edge serves
+// static public/ files before Laravel ever runs, so a static file would shadow
+// this route. Body is driven by ROBOTS_NOINDEX (see config/app.php).
+Route::get('/robots.txt', function () {
+    $body = config('app.robots_noindex')
+        ? "User-agent: *\nDisallow: /\n"
+        : "User-agent: *\nDisallow:\n"; // byte-identical to the old static file
+
+    return response($body, 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        // Config-driven response — keep the edge/CDN from caching it.
+        'Cache-Control' => 'no-cache, no-store, private',
+    ]);
+})->name('robots');
 
 // Auth/error design-review URLs (still serve the same shells for e2e/regression).
 // Live /login, /register, password/*, and errors/{404,419,500} now use these designs.
@@ -146,6 +168,28 @@ Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'cre
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
 
 Auth::routes();
+
+Route::get('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
+    ->name('register.verify');
+Route::post('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'verify'])
+    ->name('register.verify.submit');
+Route::post('/register/verify/resend', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('register.verify.resend');
+// Polled by the sign-up tab: {confirmed: bool} for this browser's pending signup only.
+Route::get('/register/verify/status', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'status'])
+    ->middleware('throttle:verify-status')
+    ->name('register.verify.status');
+// Sign-up tab moves on after the email was confirmed on another device.
+Route::post('/register/verify/continue', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'continueSignup'])
+    ->name('register.verify.continue');
+// Signed "Confirm email" link (Part D2). GET shows a button; only the POST confirms.
+Route::get('/register/verify/link/{token}', [\App\Http\Controllers\Auth\EmailConfirmLinkController::class, 'show'])
+    ->middleware('throttle:verify-link')
+    ->name('register.verify.link');
+Route::post('/register/verify/link/{token}', [\App\Http\Controllers\Auth\EmailConfirmLinkController::class, 'confirm'])
+    ->middleware('throttle:verify-link')
+    ->name('register.verify.link.confirm');
 
 // Teacher invite link — one-time password-set flow (no credentials in email)
 Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])

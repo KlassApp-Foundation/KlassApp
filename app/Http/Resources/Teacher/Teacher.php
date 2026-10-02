@@ -27,9 +27,7 @@ class Teacher extends JsonResource
             'designation'       =>  $details['designation'],
             'designation_name'  =>  $details['designation_name'],
             'sub_designation'   =>  $details['sub_designation'],
-            'date_of_birth'     =>  blank(optional($this->userprofile)->date_of_birth)
-                ? null
-                : date('d M Y', strtotime($this->userprofile->date_of_birth)),
+            'date_of_birth'     =>  \App\Support\DateOfBirth::formatOrNull(optional($this->userprofile)->date_of_birth, 'd M Y'),
         ];
     }
 }

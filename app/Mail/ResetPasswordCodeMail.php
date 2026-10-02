@@ -23,8 +23,8 @@ class ResetPasswordCodeMail extends Mailable
     public function build()
     {
         return $this->from(config('mail.from.address'), config('mail.from.name'))
-            ->subject('Your KlassApp password reset code')
-            ->view('emails.reset_password_code')
+            ->subject('Your KlassApp reset code: '.$this->code)
+            ->markdown('emails.reset_password_code')
             ->with([
                 'name' => $this->user->name,
                 'code' => $this->code,

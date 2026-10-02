@@ -6,6 +6,9 @@
 
 See TOOLING.md for the full stack reference — which tool to use for which kind of task.
 
+
+**Project:** KlassApp — An open education protocol for humans and agents. KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant. The source is public on GitHub; supported self-hosting opens after an independent security review.
+
 ## Environment reality check
 
 Production is **Laravel Cloud** (`klassapp.xyz`, EU-West-1). Staging exists on the same Cloud app with **demo/seed data only**. The DigitalOcean droplet (`root@46.101.111.131` / `sms-app` Docker) is **retired** — do not SSH it, do not plan work that depends on that host, and do not treat droplet SSH as production access.
@@ -62,6 +65,10 @@ These apply to every change, in every session, regardless of which tool is runni
     1. **Full suite under the guarded harness** (`bash scripts/test-guard.sh`, which runs the full suite via phpunit and compares failures against `tests/known-failures.txt`): **zero new failures** vs the current known-failures list. When a fix retires known failures, refresh `tests/known-failures.txt` in the same PR.
     2. **Every page the PR touches loaded on staging as a real user**: HTTP 200, no server-side error-log entries for the visit window, and no browser console errors. PHPUnit `assertSee` alone is not page verification (extends standing rule #22).
     3. **Every bug fix includes a failing-then-passing test**: the test must be shown failing without the fix and passing with it, under the guarded harness. CI runs the same guard on PRs (`.github/workflows/test-guard.yml`); local full-suite claims must back failures up with real outputs, not assertions — the invite-419 incident (2026-09-29) showed "green at merge SHA" claims can silently be shell-environment artifacts.
+
+32. **Never bypass branch protection or merge with an admin override without Rasta's explicit go-ahead.** Merging with admin privileges, disabling required checks, forcing a merge past failing CI, or using any other override that branch protection exists to prevent is forbidden unless Rasta has explicitly authorised that specific merge in writing for that occasion. A merge that "would have been fine if CI had passed" still needs the normal path: fix the failure, get green CI, then merge. Precedent (2026-09-30): [#900](https://github.com/KlassApp-Foundation/KlassApp/pull/900) (the E2E onboarding suite) was merged via admin bypass; that must not repeat. This rule exists so the bypass is a recorded, owner-approved exception rather than an agent default.
+
+33. **AI features are opt-in per school; nothing may enable them by default.** New schools (sign-up, Toshi create mode, admin/site-admin creation, seeders, demo schools) must start in `toshi_mode=onboarding` or `preview` with `toshi_enabled=0` and assistant off. Do not ship code that turns AI/MCP on unless an explicit human/admin action enables it for that school. The regression test `Tests\Feature\Toshi\NoSchoolGetsAiByDefaultTest` must stay green.
 
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 

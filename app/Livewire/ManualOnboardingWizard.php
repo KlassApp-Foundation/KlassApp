@@ -20,6 +20,7 @@ use App\Services\ClassStructureService;
 use App\Services\ClassTeacherInviteService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
+use App\Services\ToshiActionService;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
@@ -52,6 +53,9 @@ class ManualOnboardingWizard extends Component
     public int $stepsGrewBy = 0;
 
     public bool $finished = false;
+
+    /** Non-blocking plan over-limit notice shown after students are saved. */
+    public ?string $overLimitNotice = null;
 
     /** When set, Next on an edited checklist step returns here (wizard review). */
     public ?int $returnToStepIndex = null;
@@ -455,7 +459,7 @@ class ManualOnboardingWizard extends Component
         foreach ($names as $name) {
             $this->studentDrafts[] = [
                 'name' => $name,
-                'class' => $this->studentClass ?: $this->className,
+                'class' => trim($this->studentClass),
                 'stream' => trim($this->studentStream),
                 'parent' => '',
                 'parent_phone' => '',
@@ -1691,6 +1695,11 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['teacherName' => $reason]);
         }
 
+        $teacherOver = ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+        if (! $teacherOver['success']) {
+            $this->overLimitNotice = $teacherOver['message'];
+        }
+
         $this->teacherDrafts = [];
     }
 
@@ -2006,6 +2015,9 @@ class ManualOnboardingWizard extends Component
         }, $this->studentDrafts);
 
         app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
+
+        $overLimit = ToshiActionService::enforcePlanLimit($school->id, 'students');
+        $this->overLimitNotice = $overLimit['success'] ? null : $overLimit['message'];
 
         $this->studentDrafts = [];
     }

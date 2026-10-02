@@ -35,7 +35,7 @@ class ProfileDropdownRoleAwareTest extends TestCase
         $this->assertStringNotContainsString('/admin/editprofile', $html);
         $this->assertStringNotContainsString('/admin/settings', $html);
         $this->assertStringNotContainsString('/admin/changeavatar', $html);
-        $this->assertStringNotContainsString('Edit Profile', $html);
+        $this->assertStringNotContainsString('Edit profile', $html);
         $this->assertStringNotContainsString('>Settings<', $html);
         $this->assertStringNotContainsString('dusk="edit-profile-link"', $html);
         $this->assertStringNotContainsString('dusk="settings-link"', $html);
@@ -48,10 +48,10 @@ class ProfileDropdownRoleAwareTest extends TestCase
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        $this->assertStringNotContainsString('Change Password', $html);
-        $this->assertStringNotContainsString('Edit Profile', $html);
+        $this->assertStringNotContainsString('Change password', $html);
+        $this->assertStringNotContainsString('Edit profile', $html);
         $this->assertStringNotContainsString('/admin/', $html);
-        $this->assertStringContainsString('Logout', $html);
+        $this->assertStringContainsString('Log out', $html);
     }
 
     #[Test]
@@ -64,7 +64,7 @@ class ProfileDropdownRoleAwareTest extends TestCase
         $this->assertStringContainsString('/teacher/changepassword', $html);
         $this->assertStringContainsString('/teacher/changeavatar', $html);
         $this->assertStringNotContainsString('/admin/changepassword', $html);
-        $this->assertStringNotContainsString('Edit Profile', $html);
+        $this->assertStringNotContainsString('Edit profile', $html);
         $this->assertStringNotContainsString('dusk="settings-link"', $html);
     }
 

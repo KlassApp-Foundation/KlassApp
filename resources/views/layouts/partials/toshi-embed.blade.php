@@ -20,6 +20,7 @@
       Set pre-paint in this partial's script so there is no flash on load.
 --}}
 @auth
+    @toshiUi
     @if(in_array(auth()->user()->usergroup_id, [1, 3, 4, 5, 11, 8, 10, 6, 7, 9]))
         @livewire('agent-toshi')
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper">
@@ -58,6 +59,9 @@
                 document.documentElement.classList.toggle('toshi-collapsed', collapsed);
                 syncToggleGlyph();
                 persist();
+                try {
+                    window.dispatchEvent(new CustomEvent('toshi-collapsed-changed', { detail: { collapsed: !!collapsed } }));
+                } catch (e) {}
             }
             window.toshiSetCollapsed = setCollapsed; // inline handlers in the Livewire root call this
 
@@ -146,4 +150,5 @@
         })();
         </script>
     @endif
+    @endtoshiUi
 @endauth

@@ -18,8 +18,8 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('id="protocol"', false);
         $response->assertDontSee('id="community"', false);
         $response->assertDontSee('id="open-source"', false);
-        $response->assertSee('Open-source agentic school protocol', false);
-        $response->assertSee('The school platform that operates in the tools educationists already use.', false);
+        $response->assertSee('An open education protocol for humans and agents.', false);
+        $response->assertSee('KlassApp is an education protocol that runs in the tools educationists already use.', false);
         $response->assertSee('Protocol Cores', false);
         $response->assertSee('Built the way real infrastructure should be', false);
         $response->assertSee('Provable', false);
@@ -56,8 +56,8 @@ class LandingPreviewV3Test extends TestCase
         $response->assertDontSee('mesh-hub-mark', false);
         $response->assertSee('Not just software. A protocol.', false);
         $response->assertSee('Open Source', false);
-        $response->assertSee('MIT licensed. Source and self-hosting will open publicly after an independent security review', false);
-        $response->assertSee("Educationists' tools connected by intelligence.", false);
+        $response->assertSee('The source is public on GitHub; supported self-hosting opens after an independent security review', false);
+        $response->assertSee("An open education protocol for humans and agents.", false);
         $response->assertSee('site-footer', false);
         $response->assertSee('site-footer-wordmark', false);
         $response->assertDontSee('Stay in the loop', false);

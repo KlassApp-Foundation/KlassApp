@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="KlassApp — the all-in-one school management platform for modern schools.">
+    <meta name="description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
     <title>KlassApp — Smarter Schools Start Here</title>
     @include('layouts.partials.favicon')
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -1144,7 +1144,7 @@
             <!-- Brand col -->
             <div>
                 <img src="{{ asset('images/klassapplogo-dark.png') }}" alt="KlassApp">
-                <p class="ka-footer-tagline">Smarter schools start here. One platform for every school stakeholder.</p>
+                <p class="ka-footer-tagline">An open education protocol for humans and agents.</p>
             </div>
             <!-- Product -->
             <div>

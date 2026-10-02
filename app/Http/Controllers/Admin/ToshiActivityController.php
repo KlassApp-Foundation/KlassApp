@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Services\Toshi\ToshiUiSwitch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,6 +12,8 @@ class ToshiActivityController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless(app(ToshiUiSwitch::class)->assistantEnabled(), 404);
+
         $user = Auth::user();
         $schoolId = $user->school_id;
 

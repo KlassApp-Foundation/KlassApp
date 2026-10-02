@@ -176,8 +176,24 @@
                     >
                 </div>
             </div>
+        </div>
 
-        <portal-target name="address"></portal-target>
+        <!-- Soft-launch 1c: Address lives inside the create shell (full width),
+             not as a portal sibling of Gender in an unclosed lg:flex-row. -->
+        <div class="tw-form-group w-full" data-testid="student-create-address">
+            <div class="mb-2">
+                <label for="address" class="tw-form-label">Address</label>
+            </div>
+            <div class="mb-2">
+                <input
+                    type="text"
+                    name="address"
+                    id="address"
+                    class="tw-form-control w-full"
+                    placeholder="Address"
+                />
+            </div>
+        </div>
 
         <div class="tw-form-group">
             <div class="flex flex-col lg:flex-row">
@@ -424,7 +440,6 @@
                 <input type="submit" class="hidden" id="submit-btn" />
             </div>
         </portal>
-        </div>
     </div>
 </template>
 

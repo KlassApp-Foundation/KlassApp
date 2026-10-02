@@ -38,7 +38,7 @@ return [
             'item_class' => 'py-3 px-3 dashboard-menu-item',
             'active_class' => 'active dashboard-active',
             // Bottom-of-sidebar link (was the tail of layouts/admin/menu.blade.php).
-            'footer' => ['label' => 'Help & Docs', 'href' => 'https://docs.klassapp.com', 'external' => true],
+            'footer' => ['label' => 'Help & Docs', 'href' => 'https://klassapp.xyz/help', 'external' => true],
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'admin/dashboard', 'active' => ['dashboard']],
             ],
@@ -46,7 +46,9 @@ return [
                 [
                     'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
                     'items' => [
-                        ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'parents', 'parent', 'teachers', 'teacher', 'staff', 'staffs', 'alumni', 'blocked_students']],
+                        // Soft-launch 1d: only student-area segments — do not steal
+                        // Teachers/Parents/Staff active state via shared aliases.
+                        ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'alumni', 'blocked_students']],
                         ['label' => 'Teachers', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
                         ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
                         ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink']],
@@ -62,6 +64,7 @@ return [
                     'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
                     'items' => [
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
+                        ['label' => 'Admissions', 'icon' => 'students', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
                         ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
@@ -217,17 +220,13 @@ return [
         // ───────────────────────────── Stock Keeper ─────────────────────────────
         // NOTE: the stock module has no routes yet (stock/* is empty), so this menu
         // is currently unreachable — kept data-identical, flagged in the audit.
+        // Soft-launch 1f: stock module has no routes — hide Stock nav everywhere.
         'stock' => [
             'prefix' => 'stock',
             'layout' => 'flat',
             'item_class' => 'py-3 px-3',
             'items' => [
-                ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'stock/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Products', 'icon' => 'reports', 'url' => 'stock/products', 'active' => ['products', 'product']],
-                ['label' => 'Categories', 'icon' => 'subjects', 'url' => 'stock/categories', 'active' => ['categories', 'category']],
-                ['label' => 'Suppliers', 'icon' => 'parents', 'url' => 'stock/suppliers', 'active' => ['suppliers', 'supplier']],
-                ['label' => 'Orders', 'icon' => 'reports', 'url' => 'stock/orders', 'active' => ['orders', 'order']],
-                ['label' => 'Data Exports', 'icon' => 'reports', 'url' => 'stock/reports', 'active' => ['reports', 'report']],
+                // intentionally empty
             ],
         ],
 

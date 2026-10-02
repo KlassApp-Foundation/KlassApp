@@ -5,11 +5,9 @@
         <div class="bg-white shadow py-3">
             <div class="container mx-auto px-3 lg:px-0">
                 <div>
-                    @if(!empty($logo))
-                        <a href="{{ url('/') }}">
-                            <img src="{{ $logo }}" class="inline-block" style="height:55px;">
-                        </a>
-                    @endif
+                    <a href="{{ url('/') }}" aria-label="KlassApp home">
+                        <img src="{{ !empty($logo) ? $logo : asset('images/klassapp-logo-primary.svg') }}" class="inline-block" style="height:55px;" alt="KlassApp">
+                    </a>
                 </div>
             </div>
         </div>

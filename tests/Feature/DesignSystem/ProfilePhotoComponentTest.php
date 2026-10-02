@@ -5,6 +5,7 @@ namespace Tests\Feature\DesignSystem;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -53,6 +54,27 @@ class ProfilePhotoComponentTest extends TestCase
         $this->assertStringContainsString('width="128" height="128"', $html);
     }
 
+    public function test_user_with_a_stored_default_avatar_renders_the_bundled_asset(): void
+    {
+        config([
+            'filesystems.default' => 's3',
+            'filesystems.disks.s3.url' => null,
+            'filesystems.disks.s3.key' => 'test-key',
+            'filesystems.disks.s3.secret' => 'test-secret',
+            'filesystems.disks.s3.region' => 'auto',
+            'filesystems.disks.s3.bucket' => 'test-bucket',
+            'filesystems.disks.s3.endpoint' => 'https://account.eu.r2.cloudflarestorage.com',
+        ]);
+        Storage::forgetDisk('s3');
+
+        $html = $this->render('<x-profile-photo :user="$u" size="lg" />', ['u' => $this->user('uploads/male.png')]);
+
+        $this->assertStringContainsString('uploads/male.png', $html);
+        $this->assertStringNotContainsString('X-Amz', $html);
+        $this->assertStringNotContainsString('r2.cloudflarestorage.com', $html);
+        $this->assertStringNotContainsString('src=""', $html);
+    }
+
     public function test_null_user_renders_default_with_empty_alt(): void
     {
         $html = $this->render('<x-profile-photo :user="null" size="md" />');
@@ -79,8 +101,10 @@ class ProfilePhotoComponentTest extends TestCase
         $this->assertStringContainsString('--d-avatar-ring: rgba(34, 197, 94, 0.3);', file_get_contents(public_path('css/dashboard-refresh.css')));
 
         $dropdown = file_get_contents(resource_path('views/layouts/partials/profile-dropdown.blade.php'));
-        $this->assertStringContainsString('<x-profile-photo :user="Auth::user()" size="xs" shape="circle"', $dropdown);
-        $this->assertSame(2, substr_count($dropdown, '<x-profile-photo :user="Auth::user()" size="sm"'));
+        // Soft-launch Part A: 40px square trigger + menu header (no circle xs).
+        $this->assertStringNotContainsString('size="xs" shape="circle"', $dropdown);
+        // Trigger + if/else header photos (only one header branch renders at runtime).
+        $this->assertSame(3, substr_count($dropdown, '<x-profile-photo :user="Auth::user()" size="sm"'));
         $this->assertStringNotContainsString('rgba(34,197,94,0.3)', $dropdown);
         $this->assertStringNotContainsString('AvatarPath', $dropdown);
 

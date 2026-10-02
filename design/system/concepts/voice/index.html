@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp voice and copy guide</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#FAFAF5;color:#1E293B;font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:32px}
+h1,h2{font-family:'Sora',sans-serif;letter-spacing:-.02em;margin:0;color:#0F172A}h1{font-size:30px}h2{font-size:20px;margin-bottom:10px}
+p{margin:0 0 10px;text-wrap:pretty}.lede{font-size:18px;color:#475569}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #F1F5F9;vertical-align:top}th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#475569;background:#F8FAFC}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.two{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px}
+.card b{font-family:'Sora',sans-serif;display:block;margin-bottom:4px}
+.say{font-weight:600;color:#14532D}.no{color:#991B1B;text-decoration:line-through;text-decoration-thickness:1px}
+.fixed{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px 16px;font-weight:600;color:#14532D}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div><h1>Voice and copy guide</h1><p class="lede">This covers the docs, WhatsApp messages and social posts. The readers are head teachers, bursars, class teachers and parents in Uganda. Many read English as a second or third language, often on a small phone with patchy data.</p></div>
+
+<section><h2>Five rules</h2><ul>
+<li><b>Plain English.</b> Short sentences of about 15 words, one idea each. Use common words: "use", not "utilise"; "start", not "commence".</li>
+<li><b>Say "you".</b> Talk to one person. In the docs, KlassApp doesn't say "we" except in the help and contact lines. In social posts, "we" is the KlassApp team.</li>
+<li><b>Use the school's words.</b> Class, stream, term, report card, fees, class teacher, head teacher, bursar, P.5, S.1, PLE, UCE, LIN, UGX. Write Ugandan and British spelling: "colour", "enrol", "programme", "licence" (noun).</li>
+<li><b>Name things exactly as the app does.</b> Buttons and menu items appear in bold, word for word: <b>Save attendance</b>, not "the save button".</li>
+<li><b>Only say what works today.</b> Describe a feature only if a school can use it right now. Anything planned is labelled "Coming" and says "we're building", never "you can". There are no dates for unshipped work.</li>
+</ul></section>
+
+<section><h2>Words to use and to avoid</h2><table><thead><tr><th>Use</th><th>Avoid</th><th>Why</th></tr></thead><tbody>
+<tr><td class="say">parents</td><td class="no">guardians / end users</td><td>Say "parent or guardian" once on a form, and "parents" after that.</td></tr>
+<tr><td class="say">send, tap, choose</td><td class="no">click, hit, select</td><td>Most readers are on phones.</td></tr>
+<tr><td class="say">the school's KlassApp number</td><td class="no">the bot / the chatbot</td><td>Parents trust the school, not software.</td></tr>
+<tr><td class="say">report card</td><td class="no">transcript / result slip</td><td>Match what the app shows.</td></tr>
+<tr><td class="say">free, Growth, Premium</td><td class="no">freemium tier, SKU</td><td>These are the plan names as shown.</td></tr>
+<tr><td class="say">It didn't save. Check your connection and try again.</td><td class="no">An error occurred.</td><td>Say what happened and what to do next.</td></tr>
+<tr><td class="say">(nothing)</td><td class="no">simply, just, easily, seamless, revolutionary, AI-powered, cutting-edge</td><td>These talk down to the reader or are hype.</td></tr>
+</tbody></table></section>
+
+<section><h2>Toshi</h2><ul>
+<li>Toshi is KlassApp's assistant. Write "Toshi", never "the AI", "Toshi AI" or "the Toshi bot". Use "it", not "he" or "she".</li>
+<li>On first mention in a document: "Toshi, KlassApp's assistant". After that, just "Toshi".</li>
+<li>Toshi <i>helps</i> and <i>suggests</i>; staff <i>approve</i>. Don't write that Toshi decides, knows or thinks.</li>
+<li>Don't name the model vendors behind Toshi in parent-facing copy. On the landing page, the "Runs on" row is fine.</li>
+<li>The visual mark is always the K icon in a circle with a green ring, never an emoji or a robot illustration.</li>
+</ul></section>
+
+<section><h2>Open source: say it exactly like this</h2>
+<p class="fixed">The source is public on GitHub; supported self-hosting opens after an independent security review.</p>
+<p>Use the sentence as written, anywhere open source comes up: docs, social, pitch. Don't shorten it to "fully open source" or "self-host today", and don't say "coming soon" without the security-review condition. "MIT licensed" can follow in technical contexts.</p></section>
+
+<section><h2>By channel</h2><div class="two">
+<div class="card"><b>Docs</b>Titles start with a verb for tasks ("Mark attendance") and a noun for concepts ("Classes and streams"). One task per page. Say who it's for (a role badge) and how long it takes.</div>
+<div class="card"><b>WhatsApp</b>500 characters at most, numbered steps, a link on the last line, and no emoji. <a href="../whatsapp-howto/index.html">Format</a></div>
+<div class="card"><b>Social</b>One idea per post. The headline is 8 words or fewer. Show demo data only, and never a real school, child or phone number without written consent.</div>
+<div class="card"><b>Pitch</b>Numbers must be sourced and dated. Features must be live, or labelled "Coming" exactly as on the landing page.</div>
+</div></section>
+
+<section><h2>Before you publish</h2><ul>
+<li>Is every feature mentioned live today?</li>
+<li>Are button and menu names exactly as the app shows them?</li>
+<li>Does it use real people or schools without consent? Swap in Demo Academy Uganda instead.</li>
+<li>Could a parent who has never used KlassApp follow it on a phone?</li>
+</ul></section>
+</div>
+</body>
+</html>

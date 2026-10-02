@@ -1,0 +1,37 @@
+<!-- @dsCard group="Brand" viewport="700x430" name="Default avatar (initials)" subtitle="No photo → initials on --d-avatar-1…4, picked by id % 4" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;padding:16px;background:var(--d-white);font-family:var(--d-font-body,'DM Sans',sans-serif);color:var(--d-text)}
+a{color:var(--d-blue)}a:hover{color:#1E3A8A}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.sw{display:flex;flex-direction:column;gap:6px;align-items:flex-start;font-size:12px;color:var(--d-text)}
+.sw code{font-size:11.5px}
+.av{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--d-avatar-fg);font-family:var(--d-font-display,'Sora',sans-serif);font-weight:600;letter-spacing:.02em;line-height:1;border-radius:12px;user-select:none}
+.av.circle{border-radius:50%;box-shadow:0 0 0 2px var(--d-avatar-ring)}
+.sizes{display:flex;gap:18px;align-items:flex-end;margin-top:18px;flex-wrap:wrap}
+.sizes .sw{align-items:center}
+.row{display:flex;gap:10px;align-items:center;margin-top:16px;font-size:13px;flex-wrap:wrap}
+.note{font-size:12.5px;line-height:1.5;color:var(--d-text);margin:14px 0 0}
+</style>
+</head>
+<body>
+<div class="grid" id="pal"></div>
+<div class="sizes" id="sizes"></div>
+<div class="row" id="rows"></div>
+<p class="note"><b>Shape follows the frame:</b> square with a 12px radius everywhere, except the 32px nav trigger, which is a circle (same rule as the photo). Contrast is calculated from hex, not measured in a browser.</p>
+<script>
+const P=[['--d-avatar-1','#1E6FD9','4.85'],['--d-avatar-2','#15803D','5.02'],['--d-avatar-3','#B45309','5.02'],['--d-avatar-4','#1E293B','14.63']];
+function initials(name,given,sur){if(given||sur){const g=(given||'').trim().split(/\s+/)[0]||'';return (([...g][0]||'')+([...(sur||'').trim()][0]||'')).toLocaleUpperCase()}const w=(name||'').trim().split(/\s+/).filter(Boolean);if(!w.length)return '';const f=[...w[0]][0],l=w.length>1?[...w[w.length-1]][0]:'';return (f+l).toLocaleUpperCase()}
+function av(id,name,size,circle){const i=initials(name);const bg=i?`var(--d-avatar-${(id%4)+1})`:'var(--d-avatar-none)';
+ return `<span class="av${circle?' circle':''}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.4)}px;${size<=32&&!circle?"border-radius:8px;":""}background:${bg}" ${i?`role="img" aria-label="${name}"`:'aria-hidden="true"'}>${i}</span>`}
+document.getElementById('pal').innerHTML=P.map((p,k)=>`<div class="sw">${av(k,'Nakato Achieng',48)}<code>${p[0]}</code><span>${p[1]} · white ${p[2]}:1 · id % 4 = ${k}</span></div>`).join('');
+const S=[['nav','32 circle',32,1],['table','32',32,0],['list','40 sm',40,0],['feedback','64 md',64,0],['ID card (print)','100',100,0],['profile','128 lg',128,0]];
+document.getElementById('sizes').innerHTML=S.map((s,k)=>`<div class="sw">${av(k+1,'Okello Brian',s[2],s[3])}<span><b>${s[0]}</b> ${s[1]}</span></div>`).join('');
+document.getElementById('rows').innerHTML=[[7,'John','Mugisha','John + Mugisha'],[12,'Mugisha','','Mugisha + ""'],[5,'','','"" + ""'],[9,'Élise','Ouma','Élise + Ouma']].map(r=>{const i=(r[1]||r[2])?initials('',r[1],r[2]):'';return `<span class="av" style="width:32px;height:32px;font-size:13px;border-radius:8px;background:${i?`var(--d-avatar-${(r[0]%4)+1})`:'var(--d-avatar-none)'}" ${i?`role="img" aria-label="${r[3]}"`:'aria-hidden="true"'}>${i}</span><span style="margin-right:12px">${r[3]} → ${i||'blank tile'}</span>`}).join('');
+</script>
+</body>
+</html>

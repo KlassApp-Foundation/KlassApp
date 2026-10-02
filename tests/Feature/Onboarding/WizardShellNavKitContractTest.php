@@ -48,18 +48,16 @@ class WizardShellNavKitContractTest extends TestCase
 
         foreach (OnboardingStepsService::STUDENT_SIZE_OPTIONS as $option) {
             $this->assertContains($option, [
-                'Under 100 students',
-                '100-300 students',
-                '300-500 students',
-                '500+ students',
+                'Up to 500',
+                'Up to 1,000',
+                'More than 1,000',
             ]);
         }
 
         $this->assertSame([
-            'Under 100 students',
-            '100-300 students',
-            '300-500 students',
-            '500+ students',
+            'Up to 500',
+            'Up to 1,000',
+            'More than 1,000',
         ], OnboardingStepsService::STUDENT_SIZE_OPTIONS);
 
         $this->assertStringNotContainsString('1-100', $blade);

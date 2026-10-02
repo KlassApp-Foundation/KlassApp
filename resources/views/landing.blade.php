@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KlassApp — The School in Every Parent's Pocket</title>
-    <meta name="description" content="KlassApp is a WhatsApp-first school management platform. Parents check grades, fees and attendance with a single message. No app. No login. Just WhatsApp." />
+    <meta name="description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant." />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="KlassApp — The School in Every Parent's Pocket" />
-    <meta property="og:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
+    <meta property="og:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant." />
     <meta property="og:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:site_name" content="KlassApp" />
@@ -18,7 +18,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="KlassApp — The School in Every Parent's Pocket" />
-    <meta name="twitter:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
+    <meta name="twitter:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant." />
     <meta name="twitter:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
 
     <link rel="canonical" href="{{ url()->current() }}" />
@@ -1362,7 +1362,7 @@
                      alt="KlassApp"
                      class="h-14 w-auto" />
                 <p class="text-slate-600 text-sm max-w-xs">
-                    Smarter schools start here.
+                    An open education protocol for humans and agents.
                 </p>
             </div>
 

@@ -49,7 +49,7 @@ class SendMessageMail extends Mailable implements ShouldQueue
             $mail_content = str_replace(":attachments","",$mail_content);
         }
         
-        return $this->markdown('emails.mailcontent')
+        return $this->markdown('emails.mailcontent')->text('emails.mailcontent-text')
                     ->subject($subject)
                     ->with([
                         'content' => $mail_content,

@@ -42,7 +42,7 @@ class RegistrationFlowTest extends TestCase
             'password_confirmation' => 'secret123',
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect(route('register.verify'));
 
         $admin = User::where('email', 'admin@testregister.sch.ug')->first();
         $this->assertNotNull($admin, 'Admin user must exist after registration');
@@ -56,7 +56,8 @@ class RegistrationFlowTest extends TestCase
         $this->assertNotNull($school);
         $this->assertSame("John's School", $school->name);
         $this->assertNull($school->curriculum);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(\App\Enums\ToshiMode::Onboarding, $school->toshi_mode);
     }
 
     /** @test */
@@ -72,7 +73,7 @@ class RegistrationFlowTest extends TestCase
         ]);
 
         $response->assertSessionHasNoErrors();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect(route('register.verify'));
         $admin = User::where('email', 'sarah@noplan.sch.ug')->first();
         $this->assertNotNull($admin);
         $this->assertNotNull($admin->name, 'Admin name must not be null');

@@ -23,7 +23,9 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Demo Academy Uganda — the single canonical demo school.
+ * Demo Academy Uganda — legacy demo school.
+ * Soft-launch replacement: use DemoJuniorSchoolSeeder + DemoSeniorSchoolSeeder,
+ * then demo:purge-schools (dry run first) for this school.
  *
  * Run on purpose only:
  *     php artisan db:seed --class=DemoAcademySeeder
@@ -120,7 +122,8 @@ class DemoAcademySeeder extends Seeder
             'status' => 1,
             'is_demo' => 1,
             'is_test' => 1,
-            'toshi_enabled' => 1,
+            'toshi_enabled' => 0,
+            'toshi_mode' => \App\Enums\ToshiMode::Onboarding,
         ])->save();
 
         $this->school = $school->refresh();

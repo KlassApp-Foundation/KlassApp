@@ -69,16 +69,16 @@ class CreateSchoolUnebToshiTest extends TestCase
     }
 
     /** @test */
-    public function toshi_enabled_defaults_to_on(): void
+    public function toshi_enabled_defaults_to_off(): void
     {
         $this->actingAs($this->siteadmin);
 
         Livewire::test(CreateSchool::class, ['id' => ''])
-            ->assertSet('toshi_enabled', true);
+            ->assertSet('toshi_enabled', false);
     }
 
     /** @test */
-    public function creates_school_with_uneb_center_and_toshi_enabled(): void
+    public function creates_school_with_uneb_center_and_toshi_off_by_default(): void
     {
         $this->actingAs($this->siteadmin);
 
@@ -87,24 +87,24 @@ class CreateSchoolUnebToshiTest extends TestCase
 
         $school = School::where('name', 'New Superadmin School')->firstOrFail();
         $this->assertSame('U0777', $school->uneb_center_number);
-        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $school->toshi_enabled);
         $this->assertSame('uneb', $school->curriculum);
         $this->assertSame('4527', $school->ministry_code);
     }
 
     /** @test */
-    public function toshi_can_be_turned_off_explicitly(): void
+    public function toshi_can_be_turned_on_explicitly(): void
     {
         $this->actingAs($this->siteadmin);
 
         $component = Livewire::test(CreateSchool::class, ['id' => '']);
         $this->fillValid($component)
-            ->set('name', 'Toshi Off School')
-            ->set('toshi_enabled', false)
+            ->set('name', 'Toshi On School')
+            ->set('toshi_enabled', true)
             ->call('submitSchool');
 
-        $school = School::where('name', 'Toshi Off School')->firstOrFail();
-        $this->assertSame(0, (int) $school->toshi_enabled);
+        $school = School::where('name', 'Toshi On School')->firstOrFail();
+        $this->assertSame(1, (int) $school->toshi_enabled);
     }
 
     /** @test */

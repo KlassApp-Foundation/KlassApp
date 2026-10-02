@@ -122,7 +122,7 @@
                                                 <td>
                                                     <div style="text-align: center;">
                                                     <div style="padding-top: 4px;padding-bottom: 4px;color: #4a5568;"><b>D.O.B</b></div>
-                                                    <div style="padding-top: 2px;padding-bottom: 2px;"><span >{{ \Carbon\Carbon::parse($student->userprofile->date_of_birth)->format('d-m-Y') }}</span></div>
+                                                    <div style="padding-top: 2px;padding-bottom: 2px;"><span >{{ \App\Support\DateOfBirth::format(optional($student->userprofile)->date_of_birth) }}</span></div>
                                                     </div>
                                                 </td>
                                                 <td>

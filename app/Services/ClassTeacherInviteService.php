@@ -154,9 +154,9 @@ class ClassTeacherInviteService
             Mail::to($teacher->email)->queue(new TeacherInviteMail(
                 $teacher->name,
                 $teacher->email,
-                '',       // no password — existing teacher already has credentials
                 $schoolName,
                 $className,
+                existingAccount: true, // existing teacher already has credentials
             ));
         } catch (\Exception $e) {
             Log::warning('CT invite: reassignment email failed', [

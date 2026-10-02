@@ -1,0 +1,88 @@
+<!-- @dsCard group="Component review" viewport="1200x1100" name="Empty & loading states — review" subtitle="One loading pattern and one empty pattern, reused by tables, charts and cards" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Empty &amp; loading states — review</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-canvas);font-family:var(--d-font-body);color:var(--d-text);padding:32px clamp(12px,4vw,48px) 64px}
+a{color:var(--d-blue)}a:hover{color:#1557B0}
+h1{font-family:var(--d-font-display);font-size:1.8rem;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-family:var(--d-font-display);font-size:1.1rem;font-weight:600;margin:40px 0 4px}
+.sub{color:var(--d-text-secondary);font-size:.9rem;margin:0 0 16px;max-width:780px;text-wrap:pretty}
+.panel{background:var(--d-white);border-radius:14px;box-shadow:var(--d-shadow-sm);padding:20px;min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);font-weight:600;margin:0 0 12px}
+.meas{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--d-text-secondary);margin:10px 0 0}
+table.m{border-collapse:collapse;width:100%}
+table.m th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--d-text-secondary);text-align:left;font-weight:600;padding:0 12px 8px 0}
+table.m td{padding:10px 12px 10px 0;border-top:1px solid var(--d-border);font-size:.85rem;line-height:1.5;vertical-align:top}
+.cr{font-size:.72rem;font-family:ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.fail{background:#FEF2F2;color:#B91C1C}.pass{background:#F0FDF4;color:#166534}
+.flag{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:.85rem;line-height:1.55}
+.flag h3{font-family:var(--d-font-display);font-size:.9rem;margin:0 0 6px;color:#92400E}
+.kpi-l{font-size:.78rem;color:var(--d-text-secondary);margin:0 0 6px}.kpi-v{font:700 1.6rem var(--d-font-display);margin:0}
+.list-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--d-border);font-size:.85rem}
+.list-row:first-child{border-top:0}
+</style></head><body>
+
+<h1>Empty &amp; loading states</h1>
+<p class="sub">These are the general versions of what Tables introduced. <code>.dt-skel</code> and <code>.dt-busy</code> are now aliases of <code>.ds-skel</code> / <code>.ds-busy</code> in <code>styles/feedback-v2.css</code>, and Charts reuse the same pieces below. Everything extends the real <code>.ds-empty-state</code> and <code>.ds-loading-dot</code> rules instead of replacing them.</p>
+
+<h2>Which loading treatment — decided by what's already on screen</h2>
+<div class="panel"><table class="m"><thead><tr><th>Situation</th><th>Use</th><th>Why</th></tr></thead><tbody>
+<tr><td>Nothing shown yet (first load)</td><td><code>.ds-skel</code> placeholders shaped like the content</td><td>The layout appears at once and doesn't jump when data lands. It reads as "almost here", not "broken".</td></tr>
+<tr><td>Content shown, being refreshed</td><td><code>.ds-busy</code> — a 2px blue bar across the top</td><td>Never blank out data the user is reading. The rows stay put, and the bar says an update is on the way.</td></tr>
+<tr><td>User pressed a button</td><td><code>.ds-btn.is-loading</code></td><td>The feedback belongs where they clicked. The label stays, so the width is stable.</td></tr>
+<tr><td>Toshi / chat thinking</td><td><code>.ds-loading-dot</code> (real)</td><td>The only place the bouncing dots belong: a conversational wait.</td></tr>
+</tbody></table>
+<p class="meas">All four stop animating under prefers-reduced-motion (the shimmer becomes a flat #EEF2F6 and the bar a static 40% line).</p></div>
+
+<h2>Skeletons — shaped like the thing they stand in for</h2>
+<div class="grid3">
+<div class="panel"><p class="lbl">KPI card · loading</p><div class="ds-skel-stack"><span class="ds-skel ds-skel--text" style="width:45%"></span><span class="ds-skel ds-skel--kpi"></span><span class="ds-skel ds-skel--text" style="width:65%"></span></div></div>
+<div class="panel"><p class="lbl">KPI card · loaded</p><p class="kpi-l">Fees collected · Term 2</p><p class="kpi-v">UGX 48.2M</p><p class="kpi-l" style="margin:6px 0 0">63% of expected</p></div>
+<div class="panel"><p class="lbl">List card · loading</p><div class="ds-skel-stack">
+<div style="display:flex;justify-content:space-between;gap:12px"><span class="ds-skel" style="width:50%"></span><span class="ds-skel ds-skel--pill"></span></div>
+<div style="display:flex;justify-content:space-between;gap:12px"><span class="ds-skel" style="width:62%"></span><span class="ds-skel ds-skel--pill"></span></div>
+<div style="display:flex;justify-content:space-between;gap:12px"><span class="ds-skel" style="width:40%"></span><span class="ds-skel ds-skel--pill"></span></div></div></div>
+</div>
+
+<h2>Refresh — content stays</h2>
+<div class="panel ds-busy" id="busy-demo" style="max-width:520px">
+<div class="list-row"><span>Senior 2 East</span><span class="dt-badge dt-badge-present">94% present</span></div>
+<div class="list-row"><span>Senior 2 West</span><span class="dt-badge dt-badge-present">89% present</span></div>
+<div class="list-row"><span>Senior 3</span><span class="dt-badge dt-badge-partial">71% present</span></div>
+</div>
+<p class="meas">The same .ds-busy class is used by the table refresh and the chart refresh.</p>
+
+<h2>Empty — current vs proposed</h2>
+<div class="grid2">
+<div class="panel"><p class="lbl">Current .ds-empty-state (verbatim)</p>
+<div class="ds-empty-state"><div class="ds-empty-state-icon">📭</div><p class="ds-empty-state-title">No students yet</p><p class="ds-empty-state-desc">Add your first students to get started.</p></div>
+<p class="meas">Icon: a 2.5rem emoji at opacity .5 · desc --d-muted <span class="cr fail">2.57:1</span> · no actions slot</p></div>
+<div class="panel"><p class="lbl">Proposed .ds-empty-state.v2</p>
+<div class="ds-empty-state v2"><span class="ds-empty-icon ds-empty-icon--blue"><svg viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg></span><p class="ds-empty-state-title">No students enrolled yet</p><p class="ds-empty-state-desc">Add students one by one, or bring in a whole class from a spreadsheet.</p><div class="ds-empty-actions"><button class="ds-btn ds-btn-outline">Import spreadsheet</button><button class="ds-btn ds-btn-primary">Add a student</button></div></div>
+<p class="meas">Icon: Icon.jsx "users" path in a 48px tile · desc --d-text-secondary <span class="cr pass">4.76:1</span> · up to 2 actions, primary on the right</p></div>
+</div>
+
+<h2>Three sizes, one pattern</h2>
+<div class="grid3">
+<div class="panel"><p class="lbl">Page · Admin Health</p><div class="ds-empty-state v2" style="padding:28px 8px"><span class="ds-empty-icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span><p class="ds-empty-state-title">Nothing needs your attention</p><p class="ds-empty-state-desc">Fees, attendance and staff checks are all clear. We'll flag anything new here.</p></div></div>
+<div class="panel"><p class="lbl">Card · Parent · compact</p><div class="ds-empty-state v2 is-compact"><span class="ds-empty-icon"><svg viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span><p class="ds-empty-state-title">Term 2 results aren't out yet</p><p class="ds-empty-state-desc">You'll get a WhatsApp message when Amina's report is published.</p></div></div>
+<div class="panel"><p class="lbl">Inline · Student</p><div class="ds-empty-state v2 is-inline"><span class="ds-empty-icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span><div><p class="ds-empty-state-title" style="margin:0">No homework due this week</p><p class="ds-empty-state-desc" style="margin:2px 0 0">New assignments show up here.</p></div></div></div>
+</div>
+
+<h2>Copy rule, applied</h2>
+<div class="panel"><table class="m"><thead><tr><th>Don't</th><th>Do</th><th>Rule</th></tr></thead><tbody>
+<tr><td>No data available</td><td>No fee records for Term 2 yet</td><td>Name exactly what's missing and for when.</td></tr>
+<tr><td>No records found</td><td>No students match “Nakato” in Senior 3</td><td>For a search with no results, repeat what the user typed, and keep the clear action in reach.</td></tr>
+<tr><td>Nothing here</td><td>Nothing needs your attention</td><td>When empty is good news, say so. Don't show a "try adding…" button.</td></tr>
+<tr><td>Get started!</td><td>Add a student · Import spreadsheet</td><td>Actions are verbs for the next step. One primary at most.</td></tr>
+</tbody></table>
+<div class="flag"><h3>Relationship to empty-state-product-demo</h3>The real <code>partials/empty-state-product-demo</code> is a <b>pre-onboarding marketing loop</b> (three auto-playing scenes: WhatsApp, Toshi, connectors), not a per-component empty state. It stays as it is, for the one place it belongs: a brand-new school with nothing set up. Everything above is for "this list or card has no data yet" inside a working school, so the two don't compete. <b>Worth confirming:</b> the bulletins page still prints a bare "No records found" line — that's the kind of screen the migration should reach first.</div>
+</div>
+
+<script>setInterval(()=>document.getElementById('busy-demo').classList.toggle('ds-busy'),2400)</script>
+</body></html>

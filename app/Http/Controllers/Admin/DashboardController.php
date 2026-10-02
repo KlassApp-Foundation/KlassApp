@@ -98,9 +98,13 @@ class DashboardController extends Controller
         $setupIncomplete = ! empty($dashboard['setupIncomplete'])
             || (Auth::user()->usergroup_id === 3 && ! empty($onboardingMissing));
 
-        $openToshiOnboarding = $request->boolean('toshi_onboarding')
-            || session()->pull('open_toshi_onboarding', false)
-            || $setupIncomplete;
+        // Never auto-open / auto-maximize after signup. Drain the legacy session
+        // flash so it cannot force a fullscreen Toshi overlay (blocks Manual @375).
+        // Explicit ?toshi_onboarding=1 still expands for intentional deep-links.
+        session()->pull('open_toshi_onboarding', false);
+        $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
+        $openToshiOnboarding = $toshiSwitch->onboardingEnabled()
+            && $request->boolean('toshi_onboarding');
 
         $pendingApprovals = $school_id
             ? Approval::where('state', PendingState::class)
@@ -145,25 +149,7 @@ class DashboardController extends Controller
      */
     private function dashboardGreeting(User $user): array
     {
-        $hour = (int) now()->timezone(config('app.timezone'))->format('G');
-        if ($hour < 12) {
-            $phrase = 'Good morning';
-        } elseif ($hour < 17) {
-            $phrase = 'Good afternoon';
-        } else {
-            $phrase = 'Good evening';
-        }
-
-        $profile = $user->userprofile;
-        $name = trim((string) ($profile->firstname ?? ''));
-        if ($name === '') {
-            $name = explode(' ', (string) $user->name)[0] ?: 'Admin';
-        }
-
-        return [
-            'phrase' => $phrase,
-            'name' => $name,
-        ];
+        return \App\Support\DashboardGreeting::for($user, 'Admin');
     }
 
     /**

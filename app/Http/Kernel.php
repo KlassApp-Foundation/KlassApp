@@ -25,6 +25,9 @@ class Kernel extends HttpKernel
 
         \Nckg\Impersonate\Impersonate::class,
 
+        // Stamps X-Robots-Tag on every response type while ROBOTS_NOINDEX is on.
+        \App\Http\Middleware\AddRobotsNoindexHeader::class,
+
     ];
 
     /**
