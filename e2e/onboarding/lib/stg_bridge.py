@@ -46,7 +46,8 @@ for attempt in range(1, create_tries + 1):
         s = kc.call("/commands/" + cid)
         a = (s.get("data") or {}).get("attributes", {})
         st = str(a.get("status"))
-        if st in ("command.running", "command.pending", "command.queued", "None"):
+        # Laravel Cloud briefly reports command.created before queued/running.
+        if st in ("command.running", "command.pending", "command.queued", "command.created", "None"):
             continue
         out = a.get("output") or ""
         sys.stdout.write(out)

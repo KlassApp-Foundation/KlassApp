@@ -2568,6 +2568,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-03 (evening): Part 3d blocked on Cloud GitHub re-auth
+- **Work done**: Set staging Cloud env `TOSHI_ONBOARDING_V2=true` (persists). Confirmed deploy API + push-to-deploy cannot fetch source (`source control authorization has expired or was revoked`). Commands overlay discarded (ephemeral). Fixed local `stg_bridge`/`kc.py` to treat `command.created` as non-terminal.
+- **Files modified**: `e2e/onboarding/lib/stg_bridge.py`, `docs/research/progress-2026-10-03.md`, local `kc.py`
+- **Key decisions**: Do not ship 3e until 3d staging journeys pass; no production deploy
+- **Status**: ⏸️ Blocked on Rasta re-authorizing GitHub in Laravel Cloud application settings, then staging deploy of `main` tip
+- **Edge cases flagged**: Commands API writable FS ≠ durable web image
+
+
 ### 2026-10-03: Soft-launch Parts 1–3c (registry + Toshi v2 + parity)
 - **Work done**: Merged wizard sticky/pageerror/mail OTP (#962–#965), proposal (#966), step registry (#967 `dcd4c29c`), Toshi onboarding_v2 (#968 `53c05251`), parity test (#970). Manual journeys primary+olevel @1280/@375 PASS; oalevel-manual @1280 PASS (0 failed checks, 2 soft findings). Disk ENOSPC unblocked by clearing artifacts/caches.
 - **Files modified**: `app/Onboarding/Steps/**`, `config/toshi.php`, `AgentToshi.php`, E2E OTP logs, progress doc
