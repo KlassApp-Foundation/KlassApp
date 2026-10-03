@@ -171,6 +171,10 @@ class AppServiceProvider extends ServiceProvider {
             return app(ToshiUiSwitch::class)->assistantEnabled();
         });
 
+        Blade::if('toshi', function () {
+            return \App\Support\Toshi::enabled();
+        });
+
         // Add get() helper to the AI Tool Request class for convenience
         AiToolRequest::macro('get', function (string $key, mixed $default = null): mixed {
             return $this->offsetExists($key) ? $this->offsetGet($key) : $default;
