@@ -26,11 +26,16 @@ class StudentsStep extends AbstractOnboardingStep
 
     public function normalize(mixed $raw): mixed
     {
-        if ($raw === 'skip' && in_array('students', OnboardingStepsService::OPTIONAL_STEPS, true)) {
+        if (is_string($raw) && in_array(strtolower(trim($raw)), ['skip', 'later', 'none', 'n/a'], true)
+            && in_array('students', OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return 'skip';
         }
 
-        return is_array($raw) ? $raw : [];
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        return [];
     }
 
     public function validate(School $school, mixed $normalized): void

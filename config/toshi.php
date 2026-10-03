@@ -33,6 +33,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Onboarding step registry path (v2 — parallel implementation)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, school Completing Setup chat uses App\Onboarding\Steps\StepRegistry
+    | (normalize → validate → save per reply). Default false — legacy draft/action
+    | handlers remain until Rasta enables this for test schools.
+    |
+    */
+    'onboarding_v2' => env('TOSHI_ONBOARDING_V2', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default mode for newly created schools
     |--------------------------------------------------------------------------
     |

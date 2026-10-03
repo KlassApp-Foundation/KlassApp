@@ -4,6 +4,7 @@ namespace App\Onboarding\Steps\Steps;
 
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Models\StandardLink;
 use App\Onboarding\Steps\AbstractOnboardingStep;
 use App\Services\OnboardingStepsService;
 
@@ -26,11 +27,21 @@ class StandardsStep extends AbstractOnboardingStep
 
     public function normalize(mixed $raw): mixed
     {
-        if ($raw === 'skip' && in_array('standards', OnboardingStepsService::OPTIONAL_STEPS, true)) {
+        if (is_string($raw) && in_array(strtolower(trim($raw)), ['skip', 'later', 'none', 'n/a'], true)
+            && in_array('standards', OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return 'skip';
         }
 
-        return is_array($raw) ? $raw : [];
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        // Already-seeded structure: "done"/"yes" is a no-op confirm (empty list → engine no-op path rejected; use skip marker).
+        if (is_string($raw) && in_array(strtolower(trim($raw)), ['done', 'yes', 'y', 'confirm', 'ok'], true)) {
+            return 'confirm_seeded';
+        }
+
+        return [];
     }
 
     public function validate(School $school, mixed $normalized): void
@@ -38,6 +49,13 @@ class StandardsStep extends AbstractOnboardingStep
         if ($normalized === 'skip') {
             if (! in_array('standards', OnboardingStepsService::OPTIONAL_STEPS, true)) {
                 $this->reject('This step cannot be skipped.');
+            }
+
+            return;
+        }
+        if ($normalized === 'confirm_seeded') {
+            if (! StandardLink::where('school_id', $school->id)->exists()) {
+                $this->reject('Add or confirm your classes first.');
             }
 
             return;
@@ -54,6 +72,9 @@ class StandardsStep extends AbstractOnboardingStep
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'standards');
 
+            return;
+        }
+        if ($normalized === 'confirm_seeded') {
             return;
         }
         $year = AcademicYear::where('school_id', $school->id)->first();

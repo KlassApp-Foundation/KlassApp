@@ -26,11 +26,26 @@ class TermsStep extends AbstractOnboardingStep
 
     public function normalize(mixed $raw): mixed
     {
-        if ($raw === 'skip' && in_array('terms', OnboardingStepsService::OPTIONAL_STEPS, true)) {
+        if (is_string($raw) && in_array(strtolower(trim($raw)), ['skip', 'later', 'none', 'n/a'], true)
+            && in_array('terms', OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return 'skip';
         }
 
-        return is_array($raw) ? $raw : [];
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        if (is_string($raw) && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true)) {
+            $y = (int) date('Y');
+
+            return [
+                ['name' => 'Term 1', 'start' => "{$y}-02-02", 'end' => "{$y}-05-08", 'status' => 'current'],
+                ['name' => 'Term 2', 'start' => "{$y}-05-26", 'end' => "{$y}-08-28", 'status' => 'next'],
+                ['name' => 'Term 3', 'start' => "{$y}-09-14", 'end' => "{$y}-12-04", 'status' => 'next'],
+            ];
+        }
+
+        return [];
     }
 
     public function validate(School $school, mixed $normalized): void

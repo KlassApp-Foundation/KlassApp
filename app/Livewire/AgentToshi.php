@@ -27,6 +27,7 @@ use App\Services\CoAdminInviteLinkService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
+use App\Onboarding\Steps\ToshiOnboardingV2Driver;
 
 class AgentToshi extends Component
 {
@@ -733,6 +734,19 @@ class AgentToshi extends Component
             return;
         }
 
+        if ($this->isOnboardingV2Enabled()) {
+            $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
+            if ($incomplete === []) {
+                $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
+
+                return;
+            }
+            $this->botSay("I found **" . count($incomplete) . "** thing" . (count($incomplete) > 1 ? 's' : '') . " to set up:");
+            $this->enterOnboardingV2($school);
+
+            return;
+        }
+
         $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
         if ($incomplete === []) {
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
@@ -769,6 +783,15 @@ class AgentToshi extends Component
     {
         $known = collect(\App\Services\OnboardingStepsService::ALL_STEPS)->has($key);
         if (! $known) {
+            return;
+        }
+
+        if ($this->isOnboardingV2Enabled()) {
+            $school = \App\Models\School::find($this->schoolId);
+            if ($school) {
+                $this->enterOnboardingV2($school);
+            }
+
             return;
         }
 
@@ -831,11 +854,24 @@ class AgentToshi extends Component
             $this->messages = [];
             $name = $school->name ?: 'your school';
             $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
-            $this->jumpToIncompleteOnboardingStep($next['key']);
-            if ($next['key'] === 'plan_selection') {
-                $this->promptPlanSelection();
+            if ($this->isOnboardingV2Enabled()) {
+                $this->enterOnboardingV2($school);
             } else {
-                $this->botSay(self::onboardingPromptForStep($next['key']));
+                $this->jumpToIncompleteOnboardingStep($next['key']);
+                if ($next['key'] === 'plan_selection') {
+                    $this->promptPlanSelection();
+                } else {
+                    $this->botSay(self::onboardingPromptForStep($next['key']));
+                }
+            }
+            $this->persistState();
+
+            return;
+        }
+
+        if ($this->isOnboardingV2Enabled()) {
+            if ($this->actionStep !== 'onboarding_v2') {
+                $this->enterOnboardingV2($school);
             }
             $this->persistState();
 
@@ -1047,6 +1083,90 @@ class AgentToshi extends Component
             'plan_selection' => "Let's pick a KlassApp plan for your school.",
             default      => "Let's continue setting up.",
         };
+    }
+
+    private function isOnboardingV2Enabled(): bool
+    {
+        return (bool) config('toshi.onboarding_v2', false);
+    }
+
+    private function enterOnboardingV2(School $school): void
+    {
+        $this->mode = 'complete';
+        $this->actionStep = 'onboarding_v2';
+        $this->actionSubstep = 0;
+        $this->awaitingConfirm = false;
+        $this->pendingToolConfirm = null;
+
+        $result = app(ToshiOnboardingV2Driver::class)->promptNext($school, auth()->id());
+        if ($result['status'] === 'done') {
+            $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
+
+            return;
+        }
+
+        $this->botSay($this->formatOnboardingV2Prompt($result));
+    }
+
+    /**
+     * @param  array{question: ?string, options: list<array{value: string, label: string}>}  $result
+     */
+    private function formatOnboardingV2Prompt(array $result): string
+    {
+        $question = (string) ($result['question'] ?? 'Please continue.');
+        $options = $result['options'] ?? [];
+        if ($options === []) {
+            return $question;
+        }
+
+        $labels = collect($options)->pluck('label')->filter()->values()->all();
+        if ($labels === []) {
+            return $question;
+        }
+
+        return $question.' Reply with one of: **'.implode('**, **', $labels).'**.';
+    }
+
+    private function actionOnboardingV2(string $text): void
+    {
+        $school = School::find($this->schoolId);
+        if (! $school) {
+            $this->botSay("I can't find your school right now.");
+
+            return;
+        }
+
+        $result = app(ToshiOnboardingV2Driver::class)->handleReply($school, $text, auth()->id());
+
+        if ($result['status'] === 'rejected') {
+            if (! empty($result['question'])) {
+                $this->botSay($this->formatOnboardingV2Prompt($result));
+            }
+            $this->botSay((string) ($result['hint'] ?? ToshiOnboardingV2Driver::COMING_SOON_HINT));
+
+            return;
+        }
+
+        if ($result['status'] === 'done') {
+            $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
+
+            return;
+        }
+
+        $this->botSay($this->formatOnboardingV2Prompt($result));
+    }
+
+    /** Chip / button entry for registry options when v2 is active. */
+    public function selectOnboardingV2Option(string $value): void
+    {
+        if (! $this->isOnboardingV2Enabled()) {
+            return;
+        }
+
+        $this->actionStep = 'onboarding_v2';
+        $this->userSay($value);
+        $this->actionOnboardingV2($value);
+        $this->persistState();
     }
 
     public function show() { $this->visible = true; $this->maximized = false; }
@@ -3565,6 +3685,11 @@ class AgentToshi extends Component
      */
     private function handleActionFlow(string $text): void
     {
+        if ($this->actionStep === 'onboarding_v2') {
+            $this->actionOnboardingV2($text);
+
+            return;
+        }
         if ($this->actionStep === 'onboarding_curriculum') {
             $this->actionOnboardingCurriculum($text);
             return;
