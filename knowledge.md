@@ -2568,6 +2568,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-03: Soft-launch Parts 1–3c (registry + Toshi v2 + parity)
+- **Work done**: Merged wizard sticky/pageerror/mail OTP (#962–#965), proposal (#966), step registry (#967 `dcd4c29c`), Toshi onboarding_v2 (#968 `53c05251`), parity test (#970). Manual journeys primary+olevel @1280/@375 PASS; oalevel-manual @1280 PASS (0 failed checks, 2 soft findings). Disk ENOSPC unblocked by clearing artifacts/caches.
+- **Files modified**: `app/Onboarding/Steps/**`, `config/toshi.php`, `AgentToshi.php`, E2E OTP logs, progress doc
+- **Key decisions**: `TOSHI_ONBOARDING_V2` default false; choice steps normalize in `save()`; Nightwatch ingest ≠ Cloud auth (Rasta ops)
+- **Status**: 🚧 3d Toshi journeys (flag on test schools) + 3e wizard-from-registry still pending; staging deploy may lag if Cloud GitHub re-auth blocks
+- **Edge cases flagged**: Playwright ENOSPC on full disk; oalevel soft findings (non-blocking)
+- **PRs**: #967 MERGED `dcd4c29c`; #968 MERGED `53c05251`; #970 MERGED `dc38ae2d6b7f1a5613da7dd8ae207bb476ad0b02`
+
+
 
 ### 2026-10-02: Slack §6c re-run after #955 — FAIL
 - **Work done**: Admin-merged #955 `c1baafed`; staging deploy succeeded; re-ran §6c once; FAIL; stamped knowledge; no further patches.
