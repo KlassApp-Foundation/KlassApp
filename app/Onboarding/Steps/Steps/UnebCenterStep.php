@@ -43,6 +43,7 @@ class UnebCenterStep extends AbstractOnboardingStep
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
+        $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
         $this->engine->saveUnebCenter($school, (string) $normalized);
     }

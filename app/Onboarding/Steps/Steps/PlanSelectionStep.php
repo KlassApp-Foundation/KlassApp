@@ -42,7 +42,24 @@ class PlanSelectionStep extends AbstractOnboardingStep
             return (int) ($raw['plan_id'] ?? $raw['id'] ?? 0);
         }
 
-        return (int) $raw;
+        if (is_numeric($raw)) {
+            return (int) $raw;
+        }
+
+        if (is_string($raw)) {
+            $label = strtolower(trim($raw));
+            $plan = Plan::query()
+                ->where('is_active', 1)
+                ->get()
+                ->first(function (Plan $p) use ($label) {
+                    return strtolower((string) $p->name) === $label
+                        || strtolower((string) ($p->display_name ?: '')) === $label;
+                });
+
+            return $plan ? (int) $plan->id : 0;
+        }
+
+        return 0;
     }
 
     public function validate(School $school, mixed $normalized): void
