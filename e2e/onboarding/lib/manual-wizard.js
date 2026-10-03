@@ -138,9 +138,18 @@ async function runManualWizard(page, data, findings = [], opts = {}) {
         // Synthetic review step (testid wizard-review) → Confirm & finish.
         if (await page.locator('[data-testid="wizard-review"]').isVisible().catch(() => false)) {
             await shot(page, shotDir, 'step-review.png');
+            const pageErrorsBefore = opts.health?.pageErrors?.length ?? 0;
             await page.locator(NEXT).click({ timeout: T });
             await page.waitForSelector('[data-testid="wizard-completion-suggestions"]', { timeout: 60_000 }).catch(() => {});
+            await page.waitForSelector('[data-testid="wizard-phase-done"]', { timeout: 30_000 }).catch(() => {});
             record.finished = true;
+            // A4: finish morph threw TypeError … reading 'before'. Fail hard if it returns.
+            const newPageErrors = (opts.health?.pageErrors || []).slice(pageErrorsBefore);
+            const morphFail = newPageErrors.find((e) => /reading 'before'|Cannot read properties of null/i.test(e));
+            if (morphFail) {
+                findings.push(`wizard finish pageerror: ${morphFail}`);
+                record.wizardErrors.push(morphFail);
+            }
             console.log('[wizard] review confirmed — finished');
             break;
         }
