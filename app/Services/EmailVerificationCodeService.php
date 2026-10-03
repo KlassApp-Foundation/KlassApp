@@ -7,6 +7,7 @@ use App\Models\Authentication;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -74,6 +75,17 @@ class EmailVerificationCodeService
         Mail::to($user->email)->queue(
             new EmailVerificationCodeMail($user, $code, self::MINUTES_VALID, $confirmUrl)
         );
+
+        // Staging/local use MAIL_MAILER=log; Cloud runtime logs are the sandbox.
+        // Nightwatch ingest on staging is currently broken (No authentication details /
+        // quota), so we also emit a structured line that laravel-cloud-socket indexes
+        // for E2E. Never fires when the real SMTP mailer is configured (production).
+        if (config('mail.default') === 'log') {
+            Log::info('klassapp.email_verification_code', [
+                'email' => $user->email,
+                'code' => $code,
+            ]);
+        }
 
         return $code;
     }

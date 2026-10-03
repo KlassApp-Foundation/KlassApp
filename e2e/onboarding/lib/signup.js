@@ -1,6 +1,11 @@
 // Signup driver + validation battery for the public /register form.
 const { expect } = require('@playwright/test');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
 const { runStagingJson } = require('./stg-bridge');
+
+const PY = process.env.E2E_PYTHON || 'python3';
+const STG_LOGS = path.join(__dirname, 'stg_logs.py');
 
 async function open(page) {
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
@@ -70,29 +75,61 @@ async function runValidationBattery(page, data) {
     results.push({ name: 'terms unchecked', ...(await submitExpectErrors(page, data, {
         terms: false,
     }, ['agree to the Terms'])) });
-    // Password rule hints check: the form must surface the min-8 rule.
     return results;
 }
 
 /**
- * Soft-launch #904: register lands on /register/verify. Staging mail is log-only,
- * so re-issue a fresh code via the Cloud bridge and submit it in the browser.
+ * Prefer the real code from Cloud runtime logs (MAIL_MAILER=log sandbox).
+ * Never pre-verifies the account (no email_verified=1 writes).
+ * Fallback: re-issue a fresh code via Commands (still a real issued code).
  */
-async function completeEmailVerification(page, data) {
-    const issued = runStagingJson(`
-        $email = ${JSON.stringify(data.admin.email)};
+function readCodeFromStagingLogs(email) {
+    try {
+        const out = execFileSync(PY, [STG_LOGS, email], {
+            encoding: 'utf8',
+            timeout: 90_000,
+            maxBuffer: 8 * 1024 * 1024,
+            env: process.env,
+        });
+        return JSON.parse(out.trim().split('\n').pop());
+    } catch (e) {
+        return {
+            ok: false,
+            error: String(e.message || e).slice(0, 300),
+            source: 'logs',
+        };
+    }
+}
+
+function reissueCodeViaBridge(email) {
+    return runStagingJson(`
+        $email = ${JSON.stringify(email)};
         $u = \\App\\Models\\User::where('email', $email)->first();
         if (! $u) { echo "<<<E2E-JSON>>>" . json_encode(['ok' => false, 'error' => 'user-not-found']); return; }
+        if ((int) $u->email_verified === 1) {
+            echo "<<<E2E-JSON>>>" . json_encode(['ok' => false, 'error' => 'already-verified']); return;
+        }
         $code = app(\\App\\Services\\EmailVerificationCodeService::class)->issue($u);
-        echo "<<<E2E-JSON>>>" . json_encode(['ok' => true, 'code' => $code]);
+        echo "<<<E2E-JSON>>>" . json_encode(['ok' => true, 'code' => $code, 'source' => 'reissue']);
     `);
-    if (! issued.ok || ! issued.code) {
-        throw new Error('e2e signup: could not issue verification code on staging: ' + JSON.stringify(issued));
+}
+
+async function completeEmailVerification(page, data) {
+    const email = data.admin.email;
+    let resolved = readCodeFromStagingLogs(email);
+    if (! resolved.ok || ! resolved.code) {
+        console.log(`[signup] log sandbox miss (${resolved.error || 'unknown'}); falling back to Commands re-issue`);
+        resolved = reissueCodeViaBridge(email);
+    } else {
+        console.log(`[signup] verification code read from staging log sandbox (source=${resolved.source})`);
+    }
+    if (! resolved.ok || ! resolved.code) {
+        throw new Error('e2e signup: could not obtain verification code (no pre-verify): ' + JSON.stringify(resolved));
     }
 
     const codeInput = page.locator('input[name="code"], #code, input[placeholder="000000"]').first();
     await expect(codeInput).toBeVisible({ timeout: 30_000 });
-    await codeInput.fill(String(issued.code));
+    await codeInput.fill(String(resolved.code));
     await page.getByRole('button', { name: /confirm email/i }).click();
     await page.waitForLoadState('load', { timeout: 90_000 }).catch(() => {});
 }
