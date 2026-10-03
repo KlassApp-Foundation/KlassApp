@@ -2568,12 +2568,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-03 (evening+): Part 3d still blocked — re-verify after #972
+- **Work done**: Confirmed [#972](https://github.com/KlassApp-Foundation/KlassApp/pull/972) MERGED `badfc522` (stg_bridge treats `command.created` as pending). Re-attempted staging deploy → still **422** GitHub re-auth. Staging awake HTTP 200; Commands: no `ToshiOnboardingV2Driver.php` / `StepRegistry.php` on tip; `config('toshi.onboarding_v2')=null` despite Cloud env var already set.
+- **Files modified**: `docs/research/progress-2026-10-03.md` (this note)
+- **Key decisions**: 3d/3e cannot proceed without a real staging deploy; no production deploy; leave #961 alone
+- **Status**: ⏸️ Blocked on Rasta re-authorizing GitHub in Laravel Cloud → staging deploy of `main` (`badfc522`+)
+- **Edge cases flagged**: Cloud env vars listed ≠ runtime until deploy; Commands FS ≠ web fleet
+
 ### 2026-10-03 (evening): Part 3d blocked on Cloud GitHub re-auth
 - **Work done**: Set staging Cloud env `TOSHI_ONBOARDING_V2=true` (persists). Confirmed deploy API + push-to-deploy cannot fetch source (`source control authorization has expired or was revoked`). Commands overlay discarded (ephemeral). Fixed local `stg_bridge`/`kc.py` to treat `command.created` as non-terminal.
 - **Files modified**: `e2e/onboarding/lib/stg_bridge.py`, `docs/research/progress-2026-10-03.md`, local `kc.py`
 - **Key decisions**: Do not ship 3e until 3d staging journeys pass; no production deploy
 - **Status**: ⏸️ Blocked on Rasta re-authorizing GitHub in Laravel Cloud application settings, then staging deploy of `main` tip
 - **Edge cases flagged**: Commands API writable FS ≠ durable web image
+- **PR**: #972 MERGED `badfc522`
 
 
 ### 2026-10-03: Soft-launch Parts 1–3c (registry + Toshi v2 + parity)
