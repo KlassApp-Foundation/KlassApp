@@ -49,6 +49,11 @@ for (const [typeId, tag] of JOURNEYS) {
 
         run = await toshi.runToshiJourney(page, data, findings, { shotDir: artDir });
         await health.checkNoHorizontalScroll(page, 'toshi end', findings);
+        await page.screenshot({ path: `${artDir}/final-panel.png`, fullPage: true }).catch(() => {});
+        // Final state after a fresh load (setup banner / dashboard reflect the saved school).
+        await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(3000);
+        await page.screenshot({ path: `${artDir}/final-dashboard.png`, fullPage: true }).catch(() => {});
 
         outcome = outcomes.fetchOutcome(data.admin.email);
         const verdict = outcomes.evaluate(outcome, data);

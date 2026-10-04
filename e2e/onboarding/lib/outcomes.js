@@ -96,6 +96,8 @@ function fetchOutcome(email) {
             'students' => \\App\\Models\\User::where('school_id', $sid)->where('usergroup_id', 6)->count(),
             'whatsapp' => \\App\\Models\\WhatsAppUser::where('school_id', $sid)->count(),
             'plan' => \\App\\Models\\CurrentPlan::where('school_id', $sid)->count(),
+            // StepRegistry view of setup: null when every step is complete.
+            'registry_next' => $school ? app(\\App\\Onboarding\\Steps\\StepRegistry::class)->nextUnfinished($school, $u?->id)?->key() : 'no-school',
         ];
         echo "<<<E2E-JSON>>>" . json_encode($out);
     `);
@@ -146,6 +148,7 @@ function evaluate(out, data) {
         const streamSection = `${data.type.streamClassExample} ${data.type.streamName}`;
         add('stream added persists', out.sections.includes(streamSection), `looking for section "${streamSection}"`);
     } else {
+        add('setup registry complete', out.registry_next === null, `next_unfinished=${out.registry_next}`);
         findings.push(`Toshi run streams: [${out.streams}] (not scripted in chat; manual runs cover streams)`);
     }
 

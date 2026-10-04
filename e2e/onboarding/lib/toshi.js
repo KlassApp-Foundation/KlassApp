@@ -413,6 +413,15 @@ async function runToshiJourney(page, data, findings = [], opts = {}) {
     await ensurePanel(page);
 
     for (let i = 0; i < 80; i++) {
+        // Setup finished with the AI assistant off: AgentToshi::exitCompletingSetupMode()
+        // -> enterSetupDoneMode() clears the chat and shows the Coming soon card
+        // (soft-launch finished state). Only count it once the scripted chat has run;
+        // fetchOutcome() separately hard-checks that the step registry has nothing left.
+        if (turns > 0 && await page.locator('[data-testid="toshi-preview-coming-soon"]').first().isVisible().catch(() => false)) {
+            console.log(`[toshi] setup-done card (Coming soon) after ${turns} turns`);
+            done = true;
+            break;
+        }
         // The app can refresh the page when Toshi advances a milestone (panel resets to
         // collapsed on reload). Re-open the panel before reading/answering.
         if (!(await page.locator(COMPOSER).first().isVisible().catch(() => false))) {
