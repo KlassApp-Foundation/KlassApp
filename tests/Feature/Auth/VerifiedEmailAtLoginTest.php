@@ -194,6 +194,12 @@ class VerifiedEmailAtLoginTest extends TestCase
 
     public function test_resending_from_the_login_gate_issues_a_fresh_code(): void
     {
+        // The resend endpoint is throttled 3/min and its counters live in the
+        // persisted file cache — earlier suites' hits at 127.0.0.1 can still
+        // be inside their window when this test runs. The throttle is network
+        // policy, not this test's subject, so bypass it for determinism.
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+
         $school = $this->makeSchool();
         $this->makeUser($school, 3, 'resend-admin@example.com');
 
