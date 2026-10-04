@@ -2582,7 +2582,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: No deploy workarounds (standing instruction); no journeys without confirmed v2 code live; production untouched; `TOSHI_ONBOARDING_V2` value never changed by agents.
 - **Status**: ⏸️ Blocked on Rasta — complete the GitHub re-auth on the Laravel Cloud app (Settings → Source Control Provider), then staging deploy of `main` (`60c8c900+`)
 - **Edge cases flagged**: Cloud env var `TOSHI_ONBOARDING_V2=true` confirmed set but dormant until a real deploy; Commands API FS overlay remains ephemeral (no hotspotting); last-success deploy SHA `79c98811` vs main `60c8c900` gap = all of #962–#973.
-- **PR**: docs-only stamp PR (this change) — merge after CI green.
+- **PR**: [#974](https://github.com/KlassApp-Foundation/KlassApp/pull/974) OPEN (docs-only stamp; all checks green 2026-10-04) — awaiting owner review; repo has auto-merge disabled and admin merge needs Rasta's explicit go-ahead (standing rule #32).
 
 ### 2026-10-03 (evening+): Part 3d still blocked — re-verify after #972
 - **Work done**: Confirmed [#972](https://github.com/KlassApp-Foundation/KlassApp/pull/972) MERGED `badfc522` (stg_bridge treats `command.created` as pending). Re-attempted staging deploy → still **422** GitHub re-auth. Staging awake HTTP 200; Commands: no `ToshiOnboardingV2Driver.php` / `StepRegistry.php` on tip; `config('toshi.onboarding_v2')=null` despite Cloud env var already set.
