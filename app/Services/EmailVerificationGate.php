@@ -26,6 +26,11 @@ class EmailVerificationGate
      * in untouched (the rule does a backfill migration's job without touching
      * the database). Everyone who signed up after it confirms their email
      * the first time they sign in.
+     *
+     * The boundary is 2026-10-05 00:00:00 UTC regardless of the app's
+     * timezone: Carbon compares instants, so a Kampala deployment (UTC+3)
+     * exempts, and must not lock out, an account written at 2026-10-04
+     * 22:00 UTC even though its Kampala wall clock already read Oct 5.
      */
     public const CUTOFF = '2026-10-05';
 
@@ -41,7 +46,7 @@ class EmailVerificationGate
         }
 
         if ($user->created_at !== null
-            && $user->created_at->startOfDay()->lessThan(Carbon::parse(self::CUTOFF))) {
+            && $user->created_at->lessThan(Carbon::parse(self::CUTOFF, 'UTC'))) {
             return false;
         }
 

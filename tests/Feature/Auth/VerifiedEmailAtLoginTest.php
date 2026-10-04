@@ -339,6 +339,36 @@ class VerifiedEmailAtLoginTest extends TestCase
         );
     }
 
+    public function test_cutoff_boundary_is_a_utc_instant_not_an_app_timezone_day(): void
+    {
+        // A Kampala deployment (the timezone .env.example ships) wrote this
+        // account at 2026-10-05 01:00 +03 — the same instant as 2026-10-04
+        // 22:00 UTC, before the gate's UTC cutoff. An app-timezone startOfDay
+        // comparison gated it the moment the Kampala calendar ticked over;
+        // the boundary must not depend on which timezone the app runs in.
+        // The lens switch is runtime so this test carries its own timezone
+        // whether the suite boots as UTC (local) or Kampala (CI).
+        $previousTz = date_default_timezone_get();
+        date_default_timezone_set('Africa/Kampala');
+
+        try {
+            $school = $this->makeSchool();
+
+            $preGateByInstant = $this->makeUser(
+                $school, 3, 'tz-boundary@example.com', createdAt: '2026-10-05 01:00:00'
+            );
+            $this->assertFalse(EmailVerificationGate::needsVerification($preGateByInstant->refresh()));
+
+            // A genuinely post-cutoff instant still gets asked, Kampala lens or not.
+            $postGate = $this->makeUser(
+                $school, 3, 'tz-gated@example.com', createdAt: '2026-10-05 13:00:00'
+            );
+            $this->assertTrue(EmailVerificationGate::needsVerification($postGate->refresh()));
+        } finally {
+            date_default_timezone_set($previousTz);
+        }
+    }
+
     public function test_accounts_without_an_email_can_still_sign_in_on_the_mobile_api(): void
     {
         $school = $this->makeSchool();

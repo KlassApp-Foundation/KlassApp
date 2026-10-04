@@ -37,12 +37,17 @@ class TeacherLoginRedirectTest extends TestCase
             'status' => 1,
         ]);
 
+        // A pre-gate account (created before the verified-email gate's UTC
+        // cutoff, 2026-10-05): its unconfirmed email must not change where
+        // signing in redirects, regardless of the wall clock or timezone.
         $teacher = User::create([
+            'created_at' => '2026-09-15 09:00:00',
             'school_id' => $school->id,
             'usergroup_id' => 5,
             'name' => 'Subject Teacher',
             'email' => 'subject.teacher@test.sch.ug',
             'password' => Hash::make('password'),
+            'email_verified' => 0,
             'status' => 'active',
             'is_reset' => 0,
         ]);
