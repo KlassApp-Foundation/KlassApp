@@ -26,8 +26,11 @@ class TestPurgeSchoolsCommandTest extends TestCase
     {
         parent::setUp();
 
-        // MySQL enforces foreign keys; sqlite does not by default. Turn them
-        // on so a wrong delete order fails here instead of on staging.
+        // MySQL enforces foreign keys; sqlite does not by default, and the
+        // FK pragma can only be flipped OUTSIDE a transaction and does not
+        // survive reconnection. The bootstrap transaction RefreshDatabase
+        // opens is therefore ended inside each FK-sensitive test before
+        // turning the pragma on (see the FK ordering test below).
         \DB::statement('PRAGMA foreign_keys = ON');
     }
 
@@ -187,6 +190,66 @@ class TestPurgeSchoolsCommandTest extends TestCase
             ->assertExitCode(1);
 
         $this->assertDatabaseHas('schools', ['id' => $demo->id]);
+    }
+
+    // FK-enforcing regression (2026-10-05): staging purge died on
+    // "authentications" — user_id FK with NO ACTION, 32 live rows — because
+    // the command deleted users without cleaning user-scoped dependent rows
+    // first. sqlite only enforces FKs when the pragma is on AND no
+    // transaction is open, so this test ends RefreshDatabase's boot
+    // transaction, turns the pragma on, and keeps it on across the command's
+    // deletes — the same guarantee staging's MySQL gives.
+    public function test_force_purge_deletes_user_authentication_and_grading_rows_in_fk_safe_order(): void
+    {
+        while (\DB::transactionLevel() > 0) {
+            \DB::commit();
+        }
+        \DB::statement('PRAGMA foreign_keys = ON');
+        $this->assertSame(
+            1,
+            (int) (\DB::select('PRAGMA foreign_keys')[0]->foreign_keys ?? 0),
+            'sqlite foreign-key enforcement must be active for this test to mean anything.'
+        );
+
+        $e2e = $this->makeSchool('E2E Purge FK Ordering 2026-10-05', true);
+
+        // FK enforcement is live here, so every seeded row must satisfy its
+        // own foreign keys: users.usergroup_id -> usergroups first.
+        \DB::table('usergroups')->insertOrIgnore([
+            ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $user = $this->makeUser($e2e);
+
+        $standard = Standard::create(['school_id' => $e2e->id, 'name' => 'fk-order', 'order' => 1, 'status' => 1]);
+        \DB::table('authentications')->insert([
+            'user_id' => $user->id,
+            'type' => 'login',
+            'token' => 'purge-fk-ordering-token',
+            'ip_address' => '127.0.0.1',
+            'expires_on' => now()->addDay(),
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('school_grading_systems')->insert([
+            'school_id' => $e2e->id,
+            'standard_id' => $standard->id,
+            'points' => 6,
+            'grade' => 'D1',
+            'min_score' => 80,
+            'max_score' => 100,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('test:purge-schools', ['--school' => [$e2e->id], '--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('schools', ['id' => $e2e->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('authentications', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('userprofiles', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('school_grading_systems', ['school_id' => $e2e->id]);
     }
 
     public function test_is_idempotent_when_the_school_is_already_gone(): void

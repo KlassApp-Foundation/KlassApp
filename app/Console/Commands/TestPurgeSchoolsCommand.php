@@ -52,6 +52,8 @@ class TestPurgeSchoolsCommand extends Command
         'admissions',
         'class_teacher_links',
         'teacher_invites',
+        'student_parent_links',
+        'co_admin_invites',
         'whatsapp_users',
         'school_details',
         'teacherprofile',
@@ -63,9 +65,21 @@ class TestPurgeSchoolsCommand extends Command
         'academic_years',
     ];
 
-    /** Tables with a user_id column. */
+    /**
+     * Tables with a user_id column whose FK to users makes them break the
+     * users delete when left behind (staging FK audit of 2026-10-05:
+     * authentications.user_id is NO ACTION and failed the purge with 32 live
+     * rows). The user-scoped rows an E2E flow can create: sign-in records,
+     * onboarding sessions, WhatsApp link confirmations, parent profiles and
+     * Toshi personas.
+     */
     private const USER_SCOPED = [
         'userprofiles',
+        'authentications',
+        'onboarding_sessions',
+        'whatsapp_pending_confirmations',
+        'parent_profiles',
+        'toshi_personas',
     ];
 
     public function handle(): int
