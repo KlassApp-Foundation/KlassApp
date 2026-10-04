@@ -276,6 +276,55 @@ function decide(text, data, state) {
     // `text` must be bot-message transcript only (see botTranscript). Checklist
     // labels like "Academic terms" / "Approximate school size" false-match otherwise.
     const tail = text.slice(-900);
+
+    // ── Toshi onboarding_v2 (StepRegistry) prompt set ──
+    // Question wordings are the exact step->question() strings from
+    // app/Onboarding/Steps/Steps/*.php (see ToshiOnboardingV2Driver). Matched
+    // first; the v1 prose rules below remain as fallback while both paths live.
+    const v2rules = [
+        { key: 'v2-name', re: /what is your school's name/i, answer: data.schoolName },
+        { key: 'v2-size', re: /about how many students does your school have/i, answer: 'Up to 500' },
+        { key: 'v2-country', re: /which country is your school in/i, answer: 'Uganda' },
+        { key: 'v2-curriculum', re: /which board or curriculum do you follow/i, answer: 'UNEB' },
+        { key: 'v2-category', re: /what kind of school is this/i, answer: data.type.categoryAnswer },
+        { key: 'v2-emis', re: /what is your emis \/ ministry code/i, answer: data.emisCode },
+        { key: 'v2-uneb', re: /what is your uneb centre number/i, answer: 'skip' },
+        { key: 'v2-ay', re: /what is the current academic year name/i, answer: String(new Date().getFullYear()) },
+        { key: 'v2-standards', re: /confirm your classes and streams/i, answer: 'done' },
+        { key: 'v2-subjects', re: /confirm subjects for your classes/i, answer: 'done' },
+        { key: 'v2-terms', re: /set your academic terms/i, answer: 'defaults' },
+        { key: 'v2-fees', re: /add fee structures/i, answer: 'defaults' },
+        { key: 'v2-teachers', re: /add teachers now, or skip for later/i, answer: 'skip' },
+        { key: 'v2-students', re: /add students now, or skip for later/i, answer: 'skip' },
+        { key: 'v2-wa', re: /verify your whatsapp number/i, answer: data.admin.phoneE164 },
+        { key: 'v2-wa-code', re: /6-digit code|verification code/i, answer: state.code || null, dynamic: true },
+        { key: 'v2-plan', re: /choose a plan to start with/i, answer: 'freemium' },
+        { key: 'v2-done', re: /your school is set up|here'?s what to do next|everything looks set up/i, answer: null, done: true },
+    ];
+    const v2cands = [];
+    for (const r of v2rules) {
+        const re = new RegExp(r.re.source, 'gi');
+        let mm;
+        let last = -1;
+        while ((mm = re.exec(tail)) !== null) last = mm.index;
+        if (last >= 0) v2cands.push({ rule: r, idx: last });
+    }
+    v2cands.sort((a, b) => b.idx - a.idx);
+    if (v2cands.length > 0) {
+        const top = v2cands[0];
+        const key = top.rule.key;
+        if (top.rule.done) return { key, done: true };
+        // Keep the in-flight fingerprint guard so a slow reply is not double-sent.
+        const fingerprint = 'v2:' + tail.slice(-160);
+        if (state.lastKey === key && state.lastFingerprint === fingerprint) {
+            return { wait: true, key, answer: top.rule.answer };
+        }
+        if (top.rule.dynamic && !top.rule.answer) return { wait: true, key };
+        state.lastKey = key;
+        state.lastFingerprint = fingerprint;
+        return { key, answer: top.rule.answer };
+    }
+
     const rules = [
         { key: 'name', re: /real name of your school|what's the (real )?name of your school|type the correct school name/i, answer: data.schoolName },
         { key: 'name-ok', re: /is the name correct\b/i, answer: 'yes', needsConfirm: true },

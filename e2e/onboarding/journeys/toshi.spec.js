@@ -37,6 +37,13 @@ for (const [typeId, tag] of JOURNEYS) {
         expect(flagged.school_id).toBeGreaterThan(0);
         console.log(`[${tag}] signup ok; school=${flagged.school_id}; starting Toshi`);
 
+        // Fresh schools land in §33 preview mode (Coming soon, guide off). The
+        // scripted journeys run on the per-school onboarding mode — flip the
+        // test school (is_test-only) and reload so AgentToshi mounts the guide.
+        const modeFlipped = outcomes.enableOnboardingMode(data.admin.email, data.schoolName);
+        expect(modeFlipped.school_id).toBe(flagged.school_id);
+        await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+
         await toshi.ensurePanel(page);
         await health.checkNoHorizontalScroll(page, 'dashboard (toshi)', findings);
 
