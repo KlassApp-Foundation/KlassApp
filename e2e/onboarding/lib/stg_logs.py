@@ -40,6 +40,17 @@ def fetch_logs(minutes=10, query=None, pages=6):
     return {"ok": True, "rows": rows}
 
 
+def _row_text(row):
+    """Message plus structured payload.
+
+    Cloud returns the Log::info context under data.context (e.g.
+    {"email": ..., "code": ...}), not inside "message", so matching on the
+    message alone never finds the email or the code.
+    """
+    data = row.get("data")
+    return str(row.get("message") or "") + " " + (json.dumps(data) if data else "")
+
+
 def extract_code_for_email(email, minutes=10):
     """Find klassapp.email_verification_code log line for this email."""
     # Prefer structured marker; also accept "Your KlassApp code is NNNNNN".
@@ -48,7 +59,7 @@ def extract_code_for_email(email, minutes=10):
         return {"ok": False, "error": result.get("error"), "source": "logs"}
     code = None
     for row in reversed(result["rows"]):
-        msg = str(row.get("message") or "")
+        msg = _row_text(row)
         if email.lower() not in msg.lower():
             continue
         m = re.search(r"'code'\s*=>\s*'(\d{6})'|\"code\"\s*:\s*\"(\d{6})\"|code[\"']?\s*[:=]\s*[\"']?(\d{6})", msg)
@@ -61,7 +72,7 @@ def extract_code_for_email(email, minutes=10):
         # Fallback subject line pattern.
         result2 = fetch_logs(minutes=minutes, query="Your KlassApp code is")
         for row in reversed(result2.get("rows") or []):
-            msg = str(row.get("message") or "")
+            msg = _row_text(row)
             if email.lower() not in msg.lower() and "KlassApp code" not in msg:
                 continue
             m = re.search(r"Your KlassApp code is (\d{6})", msg)
