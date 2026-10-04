@@ -54,6 +54,14 @@ for (const [typeId, tag] of JOURNEYS) {
         await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(3000);
         await page.screenshot({ path: `${artDir}/final-dashboard.png`, fullPage: true }).catch(() => {});
+        // The v2 Toshi path has no review screen (that is the manual wizard's); show the
+        // school's own class names on the classes page as the visible counterpart.
+        await page.goto('/admin/standardlinks', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(3000);
+        await page.screenshot({ path: `${artDir}/classes.png`, fullPage: true }).catch(() => {});
+        const classesText = await page.locator('body').innerText().catch(() => '');
+        const classesMissing = data.type.sections.filter((c) => !classesText.includes(c));
+        if (classesMissing.length) findings.push(`Classes page does not show: [${classesMissing}]`);
 
         outcome = outcomes.fetchOutcome(data.admin.email);
         const verdict = outcomes.evaluate(outcome, data);
