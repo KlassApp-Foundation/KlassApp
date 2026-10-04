@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\ThrottlesLogins;
 use App\Traits\RedirectsUsers;
+use App\Services\EmailVerificationGate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\User;
@@ -45,8 +47,16 @@ trait AuthenticatesUsers
             return $this->sendLockoutResponse($request);
         }
 
-        if ($this->attemptLogin($request)) {
+        $result = $this->attemptLogin($request);
+
+        if ($result === true) {
             return $this->sendLoginResponse($request);
+        }
+
+        if ($result instanceof RedirectResponse) {
+            // The password matched but the account's email is not verified
+            // yet: attemptLogin parked it on the code-entry screen.
+            return $result;
         }
 
         // If the login attempt was unsuccessful we will increment the number of attempts
@@ -180,8 +190,9 @@ trait AuthenticatesUsers
     /**
      * Attempt to log the user into the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return bool
+     * @return bool|RedirectResponse true (and the session is logged in) on
+     * success, false on bad credentials, or a redirect to the verification
+     * code screen when the password matched an unverified-account email.
      */
     protected function attemptLogin(Request $request)
     {
@@ -193,6 +204,13 @@ trait AuthenticatesUsers
 
         if (!Hash::check((string) $request->input('password'), (string) $user->password)) {
             return false;
+        }
+
+        // Security (2026-10): a password alone must not open an account whose
+        // email was never confirmed. Park the user on the code-entry screen;
+        // confirming the code from there signs them in.
+        if (EmailVerificationGate::needsVerification($user)) {
+            return app(EmailVerificationGate::class)->sendToCodeEntry($request, $user);
         }
 
         $this->guard()->login($user, $request->filled('remember'));
