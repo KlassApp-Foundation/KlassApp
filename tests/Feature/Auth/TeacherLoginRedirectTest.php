@@ -41,7 +41,6 @@ class TeacherLoginRedirectTest extends TestCase
         // cutoff, 2026-10-05): its unconfirmed email must not change where
         // signing in redirects, regardless of the wall clock or timezone.
         $teacher = User::create([
-            'created_at' => '2026-09-15 09:00:00',
             'school_id' => $school->id,
             'usergroup_id' => 5,
             'name' => 'Subject Teacher',
@@ -51,6 +50,7 @@ class TeacherLoginRedirectTest extends TestCase
             'status' => 'active',
             'is_reset' => 0,
         ]);
+        $this->pinCreatedAt($teacher);
 
         $response = $this->post('/login', [
             'email' => $teacher->email,
@@ -81,5 +81,25 @@ class TeacherLoginRedirectTest extends TestCase
         $this->actingAs($teacher);
         $controller = app(\App\Http\Controllers\Auth\LoginController::class);
         $this->assertSame('/teacher/dashboard', $controller->redirectTo());
+    }
+
+    /**
+     * Write a fixed pre-gate creation timestamp for a just-created teacher.
+     *
+     * created_at is not in User's $fillable, so passing it to User::create()
+     * is silently ignored and the row lands on the current clock — which is
+     * past the verified-email gate cutoff since 2026-10-05. The pin must go
+     * through a direct DB update; asserting on the raw database value (not
+     * the model attribute) makes a silently-dropped pin fail immediately in
+     * a timezone-independent way.
+     */
+    private function pinCreatedAt(User $user, string $timestamp = '2026-09-15 09:00:00'): void
+    {
+        \DB::table('users')->where('id', $user->id)->update(['created_at' => $timestamp]);
+        $user->refresh();
+        $this->assertSame(
+            $timestamp,
+            (string) \DB::table('users')->where('id', $user->id)->value('created_at')
+        );
     }
 }
