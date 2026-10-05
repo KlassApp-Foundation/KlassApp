@@ -331,6 +331,46 @@ class OnboardingStepsService
         return null;
     }
 
+    /**
+     * One source for setup progress: totals, done count, next step and a
+     * label map. The dashboard banner, the sidebar chip and the quick-action
+     * prerequisites all read this so the number can never drift.
+     *
+     * @return array{
+     *     total:int,
+     *     done:int,
+     *     percent:int,
+     *     next:?array{key:string,label:string},
+     *     labels:array<string,string>,
+     *     incomplete:list<string>
+     * }
+     */
+    public static function progress(School $school, ?int $userId = null): array
+    {
+        $steps = collect(self::steps($school, $userId))
+            ->reject(fn (array $step) => ($step['key'] ?? '') === 'review');
+
+        $total = $steps->count();
+        $done = $steps->where('is_complete', true)->count();
+        $labels = $steps->mapWithKeys(fn (array $step) => [
+            (string) $step['key'] => (string) ($step['label'] ?? $step['key']),
+        ])->all();
+        $incomplete = $steps->where('is_complete', false)->pluck('key')->map(fn ($k) => (string) $k)->values()->all();
+        $next = null;
+        if ($incomplete !== []) {
+            $next = ['key' => $incomplete[0], 'label' => $labels[$incomplete[0]] ?? $incomplete[0]];
+        }
+
+        return [
+            'total' => $total,
+            'done' => $done,
+            'percent' => $total > 0 ? (int) round($done / $total * 100) : 100,
+            'next' => $next,
+            'labels' => $labels,
+            'incomplete' => $incomplete,
+        ];
+    }
+
     public static function incompleteSteps(School $school, ?int $userId = null): array
     {
         return array_values(array_filter(
