@@ -11,7 +11,8 @@
  *
  * Item keys:
  *   label      menu text (rendered verbatim, entity-decoded)
- *   icon       name for <x-icons.sidebar name="..."/>
+ *   icon       key into the `icons` map below (rendered by <x-icons.sidebar>, which draws
+ *              the Lucide glyph through <x-icon>). Every key used here must exist in `icons`.
  *   route      named route  (route('name'))      } one of the two
  *   url        path         (url('path'))        }
  *   hash       appended anchor, e.g. '#timetable'
@@ -28,6 +29,70 @@
  *   submenu    true → render `children` as the collapsible submenu pattern
  */
 return [
+
+    /*
+     * Sidebar icon map: navigation `icon` key => Lucide icon name
+     * (design/system handoff-2026-10-01-icons, table 1 and table 4).
+     * Each item gets its own key where the old set shared one glyph, so the
+     * same Lucide name may appear twice only when the meaning is the same
+     * (e.g. Students and Children, Classes and Schools).
+     */
+    'icons' => [
+        'dashboard' => 'house',
+        'students' => 'graduation-cap',
+        'teachers' => 'presentation',
+        'parents' => 'users',
+        'classes' => 'school',
+        'subjects' => 'book',
+        'attendance' => 'clipboard-check',
+        'exams' => 'notebook-pen',
+        'grading' => 'chart-no-axes-column',
+        'fees' => 'banknote',
+        'timetable' => 'calendar-clock',
+        'reports' => 'file-text',
+        'messages' => 'message-square',
+        'settings' => 'settings',
+        'library' => 'library',
+        'transport' => 'bus',
+        'health' => 'heart-pulse',
+        'accountant' => 'hand-coins',
+        'calendar' => 'calendar',
+        'tasks' => 'list-checks',
+        'warning' => 'triangle-alert',
+        // Keys split out of shared glyphs (handoff table 4).
+        'admissions' => 'user-plus',
+        'notices' => 'megaphone',
+        'homework' => 'notebook-text',
+        'marks' => 'notebook-pen',
+        'assignments' => 'clipboard-list',
+        'holidays' => 'calendar-heart',
+        'chats' => 'messages-square',
+        'activity' => 'activity',
+        'grades' => 'chart-no-axes-column',
+        'books' => 'book-copy',
+        'library-cards' => 'id-card',
+        'borrowing' => 'arrow-left-right',
+        'exports' => 'file-down',
+        'visitors' => 'door-open',
+        'calls' => 'phone',
+        'postal' => 'mail',
+        'tasks-list' => 'list-todo',
+        'platform-reports' => 'chart-line',
+        'mail-list' => 'mail',
+        'plans' => 'layers',
+    ],
+
+    /*
+     * Group-header icons (handoff table 2). Dashboard v2 drops these and makes
+     * group labels text-only; until that lands they are drawn at 16px.
+     */
+    'group_icons' => [
+        'academics' => 'graduation-cap',
+        'operations' => 'building-2',
+        'finance' => 'wallet',
+        'communication' => 'messages-square',
+        'system' => 'sliders-horizontal',
+    ],
 
     'roles' => [
 
@@ -64,7 +129,7 @@ return [
                     'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
                     'items' => [
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
-                        ['label' => 'Admissions', 'icon' => 'students', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
+                        ['label' => 'Admissions', 'icon' => 'admissions', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
                         ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
@@ -87,7 +152,7 @@ return [
                     'key' => 'system', 'label' => 'System', 'icon' => 'system',
                     'items' => [
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'active' => ['approvals', 'approval']],
-                        ['label' => 'Data Exports', 'icon' => 'reports', 'url' => 'admin/reports', 'active' => ['reports', 'report']],
+                        ['label' => 'Data Exports', 'icon' => 'exports', 'url' => 'admin/reports', 'active' => ['reports', 'report']],
                         ['label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'active' => ['settings']],
                     ],
                 ],
@@ -103,9 +168,9 @@ return [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'route' => 'superadmin.dashboard', 'title' => 'Dashboard', 'paths' => ['superadmin/dashboard*']],
                 ['label' => 'Schools', 'icon' => 'classes', 'url' => 'superadmin/academics/schools', 'title' => 'Schools', 'paths' => ['superadmin/academics*', 'superadmin/*/schools*', 'superadmin/*/school*']],
                 ['label' => 'Subscriptions', 'icon' => 'fees', 'route' => 'superadmin.reports.subscriptionlist', 'title' => 'Subscriptions', 'paths' => ['superadmin/*/subscriptions*', 'superadmin/*/subscription*']],
-                ['label' => 'Plans', 'icon' => 'fees', 'route' => 'superadmin.setting.planlist', 'title' => 'Plans', 'paths' => ['superadmin/*/plans*', 'superadmin/*/plan*']],
-                ['label' => 'Reports', 'icon' => 'reports', 'route' => 'superadmin.reports.index', 'title' => 'Reports', 'paths' => ['superadmin/reports*']],
-                ['label' => 'Mail List', 'icon' => 'messages', 'url' => 'superadmin/mail-list', 'title' => 'Mail List', 'paths' => ['superadmin/*/mail-list*']],
+                ['label' => 'Plans', 'icon' => 'plans', 'route' => 'superadmin.setting.planlist', 'title' => 'Plans', 'paths' => ['superadmin/*/plans*', 'superadmin/*/plan*']],
+                ['label' => 'Reports', 'icon' => 'platform-reports', 'route' => 'superadmin.reports.index', 'title' => 'Reports', 'paths' => ['superadmin/reports*']],
+                ['label' => 'Mail List', 'icon' => 'mail-list', 'url' => 'superadmin/mail-list', 'title' => 'Mail List', 'paths' => ['superadmin/*/mail-list*']],
                 ['label' => 'Settings', 'icon' => 'settings', 'url' => 'superadmin/settings', 'title' => 'Settings', 'paths' => ['superadmin/settings*', 'superadmin/*/co-admins*', 'superadmin/*/cities*', 'superadmin/*/locations*', 'superadmin/*/features*', 'superadmin/*/emis*', 'superadmin/toshi*']],
             ],
         ],
@@ -121,11 +186,11 @@ return [
                 ['label' => 'Timetable', 'icon' => 'timetable', 'route' => 'teacher.timetable.index', 'active' => ['timetable']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'route' => 'teacher.attendance.index', 'active' => ['attendance']],
                 ['label' => 'Exams', 'icon' => 'exams', 'route' => 'teacher.exams.create', 'active' => ['exams', 'exam'], 'condition' => 'class_teacher'],
-                ['label' => 'Homework', 'icon' => 'reports', 'url' => 'teacher/homeworks', 'active' => ['homework', 'homeworks']],
-                ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
+                ['label' => 'Homework', 'icon' => 'homework', 'url' => 'teacher/homeworks', 'active' => ['homework', 'homeworks']],
+                ['label' => 'Marks', 'icon' => 'marks', 'url' => 'teacher/exam/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Report Cards', 'icon' => 'reports', 'route' => 'teacher.reports.cards.index', 'active' => ['reports'], 'condition' => 'class_teacher'],
                 ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
-                ['label' => 'Notices', 'icon' => 'messages', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
+                ['label' => 'Notices', 'icon' => 'notices', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
                 ['label' => 'Library', 'icon' => 'library', 'url' => 'teacher/libraryactivity', 'active' => ['library', 'libraryactivity']],
             ],
@@ -138,16 +203,16 @@ return [
             'item_class' => 'py-3 px-3 dashboard-menu-item',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'student/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Marks', 'icon' => 'subjects', 'url' => 'student/marks', 'active' => ['marks', 'mark']],
+                ['label' => 'Marks', 'icon' => 'marks', 'url' => 'student/marks', 'active' => ['marks', 'mark']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'student/attendance', 'active' => ['attendance']],
-                ['label' => 'Homework', 'icon' => 'reports', 'url' => 'student/homeworks', 'active' => ['homework', 'homeworks']],
-                ['label' => 'Assignments', 'icon' => 'subjects', 'url' => 'student/assignments', 'active' => ['assignments', 'assignment']],
+                ['label' => 'Homework', 'icon' => 'homework', 'url' => 'student/homeworks', 'active' => ['homework', 'homeworks']],
+                ['label' => 'Assignments', 'icon' => 'assignments', 'url' => 'student/assignments', 'active' => ['assignments', 'assignment']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'student/events', 'active' => ['events']],
-                ['label' => 'Notices', 'icon' => 'messages', 'url' => 'student/notices', 'active' => ['notices', 'notice']],
+                ['label' => 'Notices', 'icon' => 'notices', 'url' => 'student/notices', 'active' => ['notices', 'notice']],
                 ['label' => 'Library', 'icon' => 'library', 'url' => 'student/libraryactivity', 'active' => ['libraryactivity', 'library']],
-                ['label' => 'Holidays', 'icon' => 'calendar', 'url' => 'student/holidays', 'active' => ['holidays', 'holiday']],
-                ['label' => 'Chats', 'icon' => 'messages', 'url' => 'student/conversations', 'active' => ['chats', 'chat', 'conversations']],
-                ['label' => 'Activity', 'icon' => 'reports', 'url' => 'student/activity', 'active' => ['activity']],
+                ['label' => 'Holidays', 'icon' => 'holidays', 'url' => 'student/holidays', 'active' => ['holidays', 'holiday']],
+                ['label' => 'Chats', 'icon' => 'chats', 'url' => 'student/conversations', 'active' => ['chats', 'chat', 'conversations']],
+                ['label' => 'Activity', 'icon' => 'activity', 'url' => 'student/activity', 'active' => ['activity']],
             ],
         ],
 
@@ -160,7 +225,7 @@ return [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'route' => 'parent.dashboard', 'active' => ['dashboard']],
                 ['label' => 'Children', 'icon' => 'students', 'route' => 'parent.children', 'active' => ['children']],
                 ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/*/fees']],
-                ['label' => 'Grades', 'icon' => 'reports', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/*/grades']],
+                ['label' => 'Grades', 'icon' => 'grades', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/*/grades']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'resolver' => 'parent_child', 'child_path' => 'attendance', 'paths' => ['parent/*/attendance']],
             ],
         ],
@@ -172,10 +237,10 @@ return [
             'item_class' => 'py-3 px-3 hover:font-semibold',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'library/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Books', 'icon' => 'library', 'url' => 'library/books/index', 'active' => ['books', 'book']],
-                ['label' => 'Cards', 'icon' => 'students', 'route' => 'library.cards', 'active' => ['cards', 'card', 'members', 'member']],
-                ['label' => 'Borrowing', 'icon' => 'reports', 'url' => 'library/booklending/index', 'active' => ['borrowing', 'borrow', 'returns', 'return']],
-                ['label' => 'Data Exports', 'icon' => 'reports', 'url' => 'library/activity', 'active' => ['reports', 'report']],
+                ['label' => 'Books', 'icon' => 'books', 'url' => 'library/books/index', 'active' => ['books', 'book']],
+                ['label' => 'Cards', 'icon' => 'library-cards', 'route' => 'library.cards', 'active' => ['cards', 'card', 'members', 'member']],
+                ['label' => 'Borrowing', 'icon' => 'borrowing', 'url' => 'library/booklending/index', 'active' => ['borrowing', 'borrow', 'returns', 'return']],
+                ['label' => 'Data Exports', 'icon' => 'exports', 'url' => 'library/activity', 'active' => ['reports', 'report']],
             ],
         ],
 
@@ -186,12 +251,12 @@ return [
             'item_class' => 'py-3 px-3 hover:bg-green-100',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'receptionist/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Visitors', 'icon' => 'reports', 'url' => 'receptionist/visitorlog', 'active' => ['visitorlog', 'visitors', 'visitor']],
-                ['label' => 'Call Log', 'icon' => 'messages', 'url' => 'receptionist/calllog', 'active' => ['calllog', 'calls', 'call']],
-                ['label' => 'Postal Record', 'icon' => 'messages', 'url' => 'receptionist/postalrecord', 'active' => ['postalrecord', 'postal']],
-                ['label' => 'Notices', 'icon' => 'messages', 'url' => 'receptionist/notices', 'active' => ['notices', 'notice']],
+                ['label' => 'Visitors', 'icon' => 'visitors', 'url' => 'receptionist/visitorlog', 'active' => ['visitorlog', 'visitors', 'visitor']],
+                ['label' => 'Call Log', 'icon' => 'calls', 'url' => 'receptionist/calllog', 'active' => ['calllog', 'calls', 'call']],
+                ['label' => 'Postal Record', 'icon' => 'postal', 'url' => 'receptionist/postalrecord', 'active' => ['postalrecord', 'postal']],
+                ['label' => 'Notices', 'icon' => 'notices', 'url' => 'receptionist/notices', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'receptionist/events', 'active' => ['events', 'event']],
-                ['label' => 'Tasks', 'icon' => 'reports', 'url' => 'receptionist/tasks', 'active' => ['tasks', 'task']],
+                ['label' => 'Tasks', 'icon' => 'tasks-list', 'url' => 'receptionist/tasks', 'active' => ['tasks', 'task']],
             ],
         ],
 
@@ -203,8 +268,8 @@ return [
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'accountant/dashboard', 'active' => ['dashboard']],
                 ['label' => 'Fees & Payments', 'icon' => 'fees', 'route' => 'accountant.fee-payments', 'active' => ['fees', 'fee', 'payments', 'payment']],
-                ['label' => 'Data Exports', 'icon' => 'reports', 'route' => 'accountant.reports', 'active' => ['reports', 'report']],
-                ['label' => 'Holidays', 'icon' => 'calendar', 'url' => 'accountant/holidays', 'active' => ['holidays', 'holiday']],
+                ['label' => 'Data Exports', 'icon' => 'exports', 'route' => 'accountant.reports', 'active' => ['reports', 'report']],
+                ['label' => 'Holidays', 'icon' => 'holidays', 'url' => 'accountant/holidays', 'active' => ['holidays', 'holiday']],
                 [
                     'label' => 'Payroll', 'icon' => 'accountant', 'submenu' => true, 'active' => ['payroll'],
                     'children' => [

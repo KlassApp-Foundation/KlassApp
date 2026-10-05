@@ -51,6 +51,14 @@ body {
     --d-dark-border: #334155;
     --d-dark-active: var(--d-green);
 
+    /* ── Icon colours (Lucide handoff 2026-10-01). Icons are currentColor; pick one of these. ── */
+    --d-icon: var(--d-text);                  /* #1E293B 14.6:1 */
+    --d-icon-muted: var(--d-text-secondary);  /* #64748B 4.76:1 */
+    --d-icon-active: #14532D;                 /* on #E8EFE7 active nav row, 9.0:1 */
+    --d-icon-danger: #B91C1C;                 /* 6.47:1 */
+    --d-icon-warning: var(--d-warning);       /* #B45309 5.02:1 */
+    --d-icon-on-accent: var(--d-white);       /* on #15803D, 5.02:1 */
+
     /* ── Borders & Rings ── */
     --d-border: #E2E8F0;
     --d-border-strong: #CBD5E1;
@@ -2538,11 +2546,6 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     display: flex;
     align-items: center;
     transition: background-color 0.15s ease, color 0.15s ease;
-    --icon-fill-opacity: 0;
-}
-.dashboard-menu-item.active,
-.dashboard-menu-item.dashboard-active {
-    --icon-fill-opacity: 1;
 }
 @media (hover: hover) and (pointer: fine) {
     .dashboard-menu-item:hover {
@@ -2612,7 +2615,6 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
 .sidebar-group .dashboard-menu-item.dashboard-active {
     background-color: rgba(34, 197, 94, 0.24);
     color: #166534;
-    --icon-fill-opacity: 1;
 }
 
 /* KPI stat links and period tabs */
@@ -4148,3 +4150,26 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
    .bar-bg-* defaults (#417dfc / #ffa601) still serve the superadmin widget. */
 .dashboard-gender-stat.bar-bg-blue:after { background-color: #304ffe; }
 .dashboard-gender-stat.bar-bg-orange:after { background-color: #B45309; }
+
+/* ── Icons: Lucide through <x-ka-icon> ──
+   Colour comes only from the six --d-icon* tokens. #94A3B8 is retired for icons. */
+.ka-icon { flex-shrink: 0; display: inline-block; vertical-align: middle; }
+.ka-icon--default { color: var(--d-icon); }
+.ka-icon--muted { color: var(--d-icon-muted); }
+.ka-icon--active { color: var(--d-icon-active); }
+.ka-icon--danger { color: var(--d-icon-danger); }
+.ka-icon--warning { color: var(--d-icon-warning); }
+.ka-icon--on-accent { color: var(--d-icon-on-accent); }
+/* Sidebar rows: muted at rest, active token on the active row. The admin mobile
+   drawer has a dark inline background, so there the active glyph is on-accent. */
+li.active .ka-nav-icon,
+li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
+#res_sidebar.admin-sidebar li.active .ka-nav-icon,
+#res_sidebar.admin-sidebar li.dashboard-active .ka-nav-icon { color: var(--d-icon-on-accent); }
+/* 44px tap target and a visible keyboard focus ring on sidebar links. */
+.dashboard-themed-sidebar li > a { min-height: 44px; }
+.dashboard-themed-sidebar a:focus-visible {
+    outline: 2px solid var(--d-accent);
+    outline-offset: -2px;
+    border-radius: 6px;
+}
