@@ -40,29 +40,49 @@ def fetch_logs(minutes=10, query=None, pages=6):
     return {"ok": True, "rows": rows}
 
 
+def _row_text(row):
+    """Message plus structured payload.
+
+    Cloud returns the Log::info context under data.context (e.g.
+    {"email": ..., "code": ...}), not inside "message", so matching on the
+    message alone never finds the email or the code.
+    """
+    data = row.get("data")
+    return str(row.get("message") or "") + " " + (json.dumps(data) if data else "")
+
+
 def extract_code_for_email(email, minutes=10):
-    """Find klassapp.email_verification_code log line for this email."""
+    """Find a verification code in staging logs — only ever for this email.
+
+    Hard rule (2026-10-04): a row is a candidate only when it names the
+    account's exact email. A code belonging to another account must never be
+    accepted, so the fallback deliberately has no email-blind match and the
+    bare "first 6 digits in the row" grab is gone: a row that names the email
+    but carries no code-shaped payload yields nothing, it never returns the
+    nearest number.
+    """
     # Prefer structured marker; also accept "Your KlassApp code is NNNNNN".
     result = fetch_logs(minutes=minutes, query="klassapp.email_verification_code")
     if not result.get("ok"):
         return {"ok": False, "error": result.get("error"), "source": "logs"}
     code = None
+    needle = email.lower()
     for row in reversed(result["rows"]):
-        msg = str(row.get("message") or "")
-        if email.lower() not in msg.lower():
+        msg = _row_text(row)
+        if needle not in msg.lower():
             continue
         m = re.search(r"'code'\s*=>\s*'(\d{6})'|\"code\"\s*:\s*\"(\d{6})\"|code[\"']?\s*[:=]\s*[\"']?(\d{6})", msg)
         if not m:
-            m = re.search(r"\b(\d{6})\b", msg)
-        if m:
-            code = next(g for g in m.groups() if g)
-            break
+            continue
+        code = next(g for g in m.groups() if g)
+        break
     if not code:
-        # Fallback subject line pattern.
+        # Fallback subject line pattern — same hard rule: the row must name
+        # the email itself; "KlassApp code" alone is not enough.
         result2 = fetch_logs(minutes=minutes, query="Your KlassApp code is")
         for row in reversed(result2.get("rows") or []):
-            msg = str(row.get("message") or "")
-            if email.lower() not in msg.lower() and "KlassApp code" not in msg:
+            msg = _row_text(row)
+            if needle not in msg.lower():
                 continue
             m = re.search(r"Your KlassApp code is (\d{6})", msg)
             if m:

@@ -37,6 +37,28 @@ function setTestFlag(email) {
     `);
 }
 
+function enableOnboardingMode(email, schoolName) {
+    // §33-safe: flips ONLY an is_test=1 E2E school from the default preview
+    // mode to the scripted onboarding guide (no AI, toshi_enabled stays 0).
+    // Refuses anything not flagged is_test and named "E2E …".
+    wakeStaging();
+    return runStagingJson(`
+        $u = \\App\\Models\\User::where('email', ${phpStr(email)})->first();
+        if (! $u || ! preg_match('/^e2e\\.[a-z]+\\.(manual|toshi)\\.[0-9]+@example\\.com$/', (string) $u->email)) {
+            echo "<<<E2E-JSON>>>" . json_encode(['error' => 'not-an-e2e-user']); return;
+        }
+        $s = \\App\\Models\\School::find($u->school_id);
+        if (! $s || (int) $s->is_test !== 1) {
+            echo "<<<E2E-JSON>>>" . json_encode(['error' => 'not-an-e2e-school', 'school_id' => $s?->id]);
+            return;
+        }
+        $s->forceFill(['toshi_mode' => 'onboarding', 'toshi_enabled' => 0]);
+        if (${phpStr(schoolName)} !== '' ) { $s->name = ${phpStr(schoolName)}; }
+        $s->save();
+        echo "<<<E2E-JSON>>>" . json_encode(['school_id' => $s->id, 'toshi_mode' => 'onboarding', 'name' => $s->name]);
+    `);
+}
+
 function fetchOutcome(email) {
     wakeStaging();
     return runStagingJson(`
@@ -74,6 +96,8 @@ function fetchOutcome(email) {
             'students' => \\App\\Models\\User::where('school_id', $sid)->where('usergroup_id', 6)->count(),
             'whatsapp' => \\App\\Models\\WhatsAppUser::where('school_id', $sid)->count(),
             'plan' => \\App\\Models\\CurrentPlan::where('school_id', $sid)->count(),
+            // StepRegistry view of setup: null when every step is complete.
+            'registry_next' => $school ? app(\\App\\Onboarding\\Steps\\StepRegistry::class)->nextUnfinished($school, $u?->id)?->key() : 'no-school',
         ];
         echo "<<<E2E-JSON>>>" . json_encode($out);
     `);
@@ -124,6 +148,7 @@ function evaluate(out, data) {
         const streamSection = `${data.type.streamClassExample} ${data.type.streamName}`;
         add('stream added persists', out.sections.includes(streamSection), `looking for section "${streamSection}"`);
     } else {
+        add('setup registry complete', out.registry_next === null, `next_unfinished=${out.registry_next}`);
         findings.push(`Toshi run streams: [${out.streams}] (not scripted in chat; manual runs cover streams)`);
     }
 
@@ -137,4 +162,4 @@ function evaluate(out, data) {
     return { checks, findings, failed };
 }
 
-module.exports = { setTestFlag, fetchOutcome, evaluate };
+module.exports = { setTestFlag, enableOnboardingMode, fetchOutcome, evaluate };
