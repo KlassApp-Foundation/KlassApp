@@ -1,0 +1,372 @@
+{
+  "base": "http://127.0.0.1:8973",
+  "when": "2026-10-05T16:03:35.026Z",
+  "cases": [
+    {
+      "school": "junior",
+      "role": "admin",
+      "email": "admin@junior.demo.klassapp.test",
+      "landed": "http://127.0.0.1:8973/admin/dashboard",
+      "who": "admin@junior.demo.klassapp.test",
+      "a1280": {
+        "itemCount": 23,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 10,
+        "groupIcons": 10,
+        "groupIconSvgs": 10,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 23,
+        "iconSigs": {
+          "students": "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83|M22 10v6|M6 12.5V16a6 3 0 0 0 12 0v-3.5",
+          "teachers": "M2 3h20|M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3|m7 21 5-5 5 5",
+          "fees": "M6 12h.01M18 12h.01"
+        },
+        "minTarget": 44,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Students",
+          "Teachers",
+          "Parents",
+          "Classes & Streams",
+          "Subjects",
+          "Timetable",
+          "Attendance",
+          "Exams & Marks",
+          "Grading",
+          "Report Cards",
+          "Library",
+          "Admissions",
+          "Health records",
+          "Transport",
+          "Fees & Payments",
+          "Unmatched Payments",
+          "Messaging",
+          "Calendar",
+          "Approvals",
+          "Data Exports",
+          "Settings",
+          "Help & Docs"
+        ]
+      },
+      "a375": {
+        "itemCount": 23,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 10,
+        "groupIcons": 10,
+        "groupIconSvgs": 10,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 23,
+        "iconSigs": {
+          "students": "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83|M22 10v6|M6 12.5V16a6 3 0 0 0 12 0v-3.5",
+          "teachers": "M2 3h20|M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3|m7 21 5-5 5 5",
+          "fees": "M6 12h.01M18 12h.01"
+        },
+        "minTarget": null,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Students",
+          "Teachers",
+          "Parents",
+          "Classes & Streams",
+          "Subjects",
+          "Timetable",
+          "Attendance",
+          "Exams & Marks",
+          "Grading",
+          "Report Cards",
+          "Library",
+          "Admissions",
+          "Health records",
+          "Transport",
+          "Fees & Payments",
+          "Unmatched Payments",
+          "Messaging",
+          "Calendar",
+          "Approvals",
+          "Data Exports",
+          "Settings",
+          "Help & Docs"
+        ]
+      },
+      "focusInfo": {
+        "label": "Help & Docs",
+        "outlineWidth": "2px",
+        "outlineStyle": "solid",
+        "boxShadow": "none"
+      },
+      "consoleErrors": [
+        "WebSocket connection to 'wss://ws-${pusher_app_cluster}.pusher.com/app/$%7BPUSHER_APP_KEY%7D?protocol=7&client=js&version=6.0.3&flash=false' failed: Error in connection establishment: net::ERR_NAME_NO",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    },
+    {
+      "school": "junior",
+      "role": "teacher",
+      "email": "teacher1@junior.demo.klassapp.test",
+      "landed": "http://127.0.0.1:8973/teacher/dashboard",
+      "who": "teacher1@junior.demo.klassapp.test",
+      "a1280": {
+        "itemCount": 12,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 0,
+        "groupIcons": 0,
+        "groupIconSvgs": 0,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 12,
+        "iconSigs": {
+          "students": null,
+          "teachers": null,
+          "fees": null
+        },
+        "minTarget": 68,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Classes",
+          "Timetable",
+          "Attendance",
+          "Exams",
+          "Homework",
+          "Marks",
+          "Report Cards",
+          "Class Streams",
+          "Notices",
+          "Events",
+          "Library"
+        ]
+      },
+      "a375": {
+        "itemCount": 12,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 0,
+        "groupIcons": 0,
+        "groupIconSvgs": 0,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 12,
+        "iconSigs": {
+          "students": null,
+          "teachers": null,
+          "fees": null
+        },
+        "minTarget": null,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Classes",
+          "Timetable",
+          "Attendance",
+          "Exams",
+          "Homework",
+          "Marks",
+          "Report Cards",
+          "Class Streams",
+          "Notices",
+          "Events",
+          "Library"
+        ]
+      },
+      "focusInfo": null,
+      "consoleErrors": [
+        "WebSocket connection to 'wss://ws-${pusher_app_cluster}.pusher.com/app/$%7BPUSHER_APP_KEY%7D?protocol=7&client=js&version=6.0.3&flash=false' failed: Error in connection establishment: net::ERR_NAME_NO",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    },
+    {
+      "school": "senior",
+      "role": "admin",
+      "email": "admin@senior.demo.klassapp.test",
+      "landed": "http://127.0.0.1:8973/admin/dashboard",
+      "who": "admin@senior.demo.klassapp.test",
+      "a1280": {
+        "itemCount": 23,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 10,
+        "groupIcons": 10,
+        "groupIconSvgs": 10,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 23,
+        "iconSigs": {
+          "students": "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83|M22 10v6|M6 12.5V16a6 3 0 0 0 12 0v-3.5",
+          "teachers": "M2 3h20|M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3|m7 21 5-5 5 5",
+          "fees": "M6 12h.01M18 12h.01"
+        },
+        "minTarget": 44,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Students",
+          "Teachers",
+          "Parents",
+          "Classes & Streams",
+          "Subjects",
+          "Timetable",
+          "Attendance",
+          "Exams & Marks",
+          "Grading",
+          "Report Cards",
+          "Library",
+          "Admissions",
+          "Health records",
+          "Transport",
+          "Fees & Payments",
+          "Unmatched Payments",
+          "Messaging",
+          "Calendar",
+          "Approvals",
+          "Data Exports",
+          "Settings",
+          "Help & Docs"
+        ]
+      },
+      "a375": {
+        "itemCount": 23,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 10,
+        "groupIcons": 10,
+        "groupIconSvgs": 10,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 23,
+        "iconSigs": {
+          "students": "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83|M22 10v6|M6 12.5V16a6 3 0 0 0 12 0v-3.5",
+          "teachers": "M2 3h20|M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3|m7 21 5-5 5 5",
+          "fees": "M6 12h.01M18 12h.01"
+        },
+        "minTarget": null,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Students",
+          "Teachers",
+          "Parents",
+          "Classes & Streams",
+          "Subjects",
+          "Timetable",
+          "Attendance",
+          "Exams & Marks",
+          "Grading",
+          "Report Cards",
+          "Library",
+          "Admissions",
+          "Health records",
+          "Transport",
+          "Fees & Payments",
+          "Unmatched Payments",
+          "Messaging",
+          "Calendar",
+          "Approvals",
+          "Data Exports",
+          "Settings",
+          "Help & Docs"
+        ]
+      },
+      "focusInfo": {
+        "label": "Help & Docs",
+        "outlineWidth": "2px",
+        "outlineStyle": "solid",
+        "boxShadow": "none"
+      },
+      "consoleErrors": [
+        "WebSocket connection to 'wss://ws-${pusher_app_cluster}.pusher.com/app/$%7BPUSHER_APP_KEY%7D?protocol=7&client=js&version=6.0.3&flash=false' failed: Error in connection establishment: net::ERR_NAME_NO",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    },
+    {
+      "school": "senior",
+      "role": "teacher",
+      "email": "teacher1@senior.demo.klassapp.test",
+      "landed": "http://127.0.0.1:8973/teacher/dashboard",
+      "who": "teacher1@senior.demo.klassapp.test",
+      "a1280": {
+        "itemCount": 12,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 0,
+        "groupIcons": 0,
+        "groupIconSvgs": 0,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 12,
+        "iconSigs": {
+          "students": null,
+          "teachers": null,
+          "fees": null
+        },
+        "minTarget": 68,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Classes",
+          "Timetable",
+          "Attendance",
+          "Exams",
+          "Homework",
+          "Marks",
+          "Report Cards",
+          "Class Streams",
+          "Notices",
+          "Events",
+          "Library"
+        ]
+      },
+      "a375": {
+        "itemCount": 12,
+        "itemsWithoutSvg": [],
+        "groupHeaders": 0,
+        "groupIcons": 0,
+        "groupIconSvgs": 0,
+        "activeLinks": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "uniqueLabels": 12,
+        "iconSigs": {
+          "students": null,
+          "teachers": null,
+          "fees": null
+        },
+        "minTarget": null,
+        "targetsUnder44": [],
+        "labels": [
+          "Dashboard",
+          "Classes",
+          "Timetable",
+          "Attendance",
+          "Exams",
+          "Homework",
+          "Marks",
+          "Report Cards",
+          "Class Streams",
+          "Notices",
+          "Events",
+          "Library"
+        ]
+      },
+      "focusInfo": null,
+      "consoleErrors": [
+        "WebSocket connection to 'wss://ws-${pusher_app_cluster}.pusher.com/app/$%7BPUSHER_APP_KEY%7D?protocol=7&client=js&version=6.0.3&flash=false' failed: Error in connection establishment: net::ERR_NAME_NO",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    }
+  ]
+}
