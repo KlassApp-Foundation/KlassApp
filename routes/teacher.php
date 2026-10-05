@@ -433,6 +433,13 @@ Route::prefix('exam')->group(function () {
     // Optional: view entered marks for this exam
     Route::get('/{exam}/marks/view', 'MarksController@viewExamMarks')->name('teacher.exam.marks.view');
 
+    // Import marks from a spreadsheet: page, template, preview (saves nothing), confirm, result
+    Route::get('/{exam}/marks/import', [\App\Http\Controllers\Teacher\MarksImportController::class, 'importPage'])->name('teacher.exam.marks.import.page');
+    Route::get('/{exam}/marks/import/template', [\App\Http\Controllers\Teacher\MarksImportController::class, 'importTemplate'])->name('teacher.exam.marks.import.template');
+    Route::post('/{exam}/marks/import/preview', [\App\Http\Controllers\Teacher\MarksImportController::class, 'importPreview'])->name('teacher.exam.marks.import.preview');
+    Route::post('/{exam}/marks/import/confirm', [\App\Http\Controllers\Teacher\MarksImportController::class, 'importConfirm'])->name('teacher.exam.marks.import.confirm');
+    Route::get('/{exam}/marks/import/result', [\App\Http\Controllers\Teacher\MarksImportController::class, 'importResult'])->name('teacher.exam.marks.import.result');
+
     // Download combined class marksheet
     Route::get('/{exam}/marksheet', 'MarksController@downloadMarksheet')->name('teacher.exam.marksheet');
 
