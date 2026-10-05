@@ -41,7 +41,6 @@ class IsResetEnforcementTest extends TestCase
         // the gate's UTC cutoff (2026-10-05) so the exemption path is what
         // is tested regardless of the test machine clock or app timezone.
         $user = User::create([
-            'created_at' => '2026-09-15 09:00:00',
             'school_id' => $this->school->id,
             'usergroup_id' => 5,
             'name' => 'Normal Teacher',
@@ -51,6 +50,7 @@ class IsResetEnforcementTest extends TestCase
             'is_reset' => 0,
             'status' => 'active',
         ]);
+        $this->pinCreatedAt($user);
         $user->userprofile()->create([
             'school_id' => $this->school->id,
             'usergroup_id' => 5,
@@ -74,7 +74,6 @@ class IsResetEnforcementTest extends TestCase
     public function test_superadmin_with_is_reset_zero_is_not_intercepted(): void
     {
         $user = User::create([
-            'created_at' => '2026-09-15 09:00:00',
             'school_id' => null,
             'usergroup_id' => 1,
             'name' => 'Super Admin',
@@ -84,6 +83,7 @@ class IsResetEnforcementTest extends TestCase
             'is_reset' => 0,
             'status' => 'active',
         ]);
+        $this->pinCreatedAt($user);
 
         $response = $this->post('/login', [
             'email' => 'superadmin-reset@test.sch.ug',
@@ -97,7 +97,6 @@ class IsResetEnforcementTest extends TestCase
     public function test_user_with_is_reset_one_is_redirected_to_force_change(): void
     {
         $user = User::create([
-            'created_at' => '2026-09-15 09:00:00',
             'school_id' => $this->school->id,
             'usergroup_id' => 5,
             'name' => 'Fresh Teacher',
@@ -107,6 +106,7 @@ class IsResetEnforcementTest extends TestCase
             'is_reset' => 1,
             'status' => 'active',
         ]);
+        $this->pinCreatedAt($user);
         $user->userprofile()->create([
             'school_id' => $this->school->id,
             'usergroup_id' => 5,
@@ -234,5 +234,25 @@ class IsResetEnforcementTest extends TestCase
 
         $user->refresh();
         $this->assertSame(1, (int) $user->is_reset);
+    }
+
+    /**
+     * Write a fixed pre-gate creation timestamp for a just-created account.
+     *
+     * created_at is not in User's $fillable, so passing it to User::create()
+     * is silently ignored and the row lands on the current clock — which is
+     * past the verified-email gate cutoff since 2026-10-05. The pin must go
+     * through a direct DB update; asserting on the raw database value (not
+     * the model attribute) makes a silently-dropped pin fail immediately in
+     * a timezone-independent way.
+     */
+    private function pinCreatedAt(User $user, string $timestamp = '2026-09-15 09:00:00'): void
+    {
+        \DB::table('users')->where('id', $user->id)->update(['created_at' => $timestamp]);
+        $user->refresh();
+        $this->assertSame(
+            $timestamp,
+            (string) \DB::table('users')->where('id', $user->id)->value('created_at')
+        );
     }
 }
