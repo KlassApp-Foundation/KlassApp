@@ -31,6 +31,10 @@
         </section>
     @endif
 
+    <div class="mb-6">
+        <a href="{{ $marksViewUrl }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="result-view-marks">View the marks for this exam</a>
+    </div>
+
     <div class="flex flex-wrap gap-3">
         <x-button variant="primary" :href="route($backRoute)">{{ $backLabel }}</x-button>
         <x-button variant="outline" :href="route($routePrefix.'.page', $exam)">Import another file</x-button>

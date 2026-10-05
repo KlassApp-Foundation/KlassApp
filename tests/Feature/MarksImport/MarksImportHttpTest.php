@@ -279,4 +279,30 @@ class MarksImportHttpTest extends TestCase
             $this->assertMatchesRegularExpression('/^'.$this->exam->id.'-[0-9a-f]{10}$/', (string) $info['Template key'], $who);
         }
     }
+
+
+    public function test_teacher_result_page_links_to_the_marks_view(): void
+    {
+        [$token] = $this->preview('teacher.exam.marks.import', $this->owner, ['KLS0000001,,80']);
+        $redirect = $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token]);
+        $redirect->assertRedirect();
+
+        $result = $this->actingAs($this->owner)->get($redirect->headers->get('Location'));
+        $result->assertOk()
+            ->assertSee('data-testid="result-view-marks"', false)
+            ->assertSee(route('teacher.exam.marks.view', $this->exam));
+    }
+
+    public function test_admin_result_page_links_to_the_marks_area(): void
+    {
+        [$token] = $this->preview('admin.exams.marks.import', $this->admin, ['KLS0000002,,70']);
+        $redirect = $this->actingAs($this->admin)->post(route('admin.exams.marks.import.confirm', $this->exam), ['token' => $token]);
+        $redirect->assertRedirect();
+
+        $result = $this->actingAs($this->admin)->get($redirect->headers->get('Location'));
+        $result->assertOk()
+            ->assertSee('data-testid="result-view-marks"', false)
+            ->assertSee(route('admin.marks.filter', ['class' => $this->exam->section_id, 'examType' => $this->exam->exam_type_id, 'term' => $this->exam->academic_term_id]));
+    }
+
 }

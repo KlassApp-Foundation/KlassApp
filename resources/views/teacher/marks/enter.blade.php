@@ -33,6 +33,14 @@
             </div>
         @endunless
     </div>
+
+    @if(($savedMarkCount ?? 0) > 0)
+        <div role="status" class="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-900" data-testid="saved-marks-note">
+            <strong>{{ $savedMarkCount }}</strong> {{ \Illuminate\Support\Str::plural('mark', $savedMarkCount) }} already saved.
+            <a href="{{ route('teacher.exam.marks.view', $exam) }}" class="font-semibold underline">View them</a>
+        </div>
+    @endif
+
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
 

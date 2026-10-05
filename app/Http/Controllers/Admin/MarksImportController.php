@@ -28,6 +28,17 @@ class MarksImportController extends Controller
         ];
     }
 
+    protected function marksViewUrl(Exam $exam): string
+    {
+        // Admins have no per-exam marks page; the marks area filtered to this
+        // class, exam type and term is the equivalent view.
+        return route('admin.marks.filter', [
+            'class' => $exam->section_id,
+            'examType' => $exam->exam_type_id,
+            'term' => $exam->academic_term_id,
+        ]);
+    }
+
     /**
      * Admin template download. Teachers use teacher.exam.marks.template; both serve the
      * same two-sheet shape (Marks + Exam info) from the import service so both import identically.

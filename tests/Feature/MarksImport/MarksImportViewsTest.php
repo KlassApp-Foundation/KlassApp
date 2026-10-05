@@ -103,4 +103,26 @@ class MarksImportViewsTest extends TestCase
             'the Download template link must be a 44px target',
         );
     }
+
+
+    public function test_entry_page_shows_a_saved_marks_note_only_when_marks_exist(): void
+    {
+        $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))
+            ->assertOk()
+            ->assertDontSee('already saved');
+
+        $this->saveMark($this->students[1], 80);
+        $this->saveMark($this->students[2], 65);
+
+        $html = $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-testid="saved-marks-note"', $html);
+        $this->assertStringContainsString('2</strong> marks already saved', $html);
+        $this->assertStringContainsString(route('teacher.exam.marks.view', $this->exam), $html);
+
+        // The form must not prefill saved values (deliberately unchanged behaviour).
+        $this->assertStringNotContainsString('value="80"', $html);
+        $this->assertStringNotContainsString('value="65"', $html);
+    }
+
 }

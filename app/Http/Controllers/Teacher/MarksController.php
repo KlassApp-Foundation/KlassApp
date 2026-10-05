@@ -141,6 +141,15 @@ public function enterExamMarks(Exam $exam)
      $allStudents = $this->examRoster($exam, $schoolId);
      $total = $allStudents->count();
 
+     // How many marks are already saved for this exam: shown as a note with a link
+     // to the marks view. The entry form itself stays blank (no prefill).
+     $savedMarkCount = Marks::query()
+         ->where('exam_id', $exam->id)
+         ->where('subject_id', $exam->subject_id)
+         ->where('school_id', $schoolId)
+         ->whereNotNull('marks')
+         ->count();
+
     $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
 
     // Detect nursery level for conditional rendering
@@ -172,6 +181,7 @@ public function enterExamMarks(Exam $exam)
         'ratings' => $ratings,
         'existingAssessments' => $existingAssessments,
         'correctionReasonRequired' => $this->correctionReasonRequired($exam),
+        'savedMarkCount' => $savedMarkCount,
     ]);
 }
 

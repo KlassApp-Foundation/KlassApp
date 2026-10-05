@@ -20,6 +20,9 @@ trait HandlesMarksImport
     /** @return array{layout:string,routePrefix:string,templateRoute:string,backRoute:string,backLabel:string} */
     abstract protected function marksImportContext(): array;
 
+    /** Where the saved marks for this exam can be viewed in this context (teacher page / admin marks area). */
+    abstract protected function marksViewUrl(Exam $exam): string;
+
     public function importPage(Exam $exam, MarksImportService $service)
     {
         $actor = $this->marksImportActor();
@@ -125,6 +128,6 @@ trait HandlesMarksImport
     {
         $exam->loadMissing('subject', 'section', 'standard', 'examType', 'academicTerm');
 
-        return ['exam' => $exam] + $this->marksImportContext();
+        return ['exam' => $exam, 'marksViewUrl' => $this->marksViewUrl($exam)] + $this->marksImportContext();
     }
 }
