@@ -23,10 +23,14 @@
             </p>
         </div>
         @unless($isNursery)
-            <a href="{{ route('teacher.exam.marks.template', $exam) }}"
-               class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
-                Download template
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('teacher.exam.marks.template', $exam) }}"
+                   class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                   style="min-height:44px;">
+                    Download template
+                </a>
+                <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="marks-import-button">Import from spreadsheet</a>
+            </div>
         @endunless
     </div>
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">

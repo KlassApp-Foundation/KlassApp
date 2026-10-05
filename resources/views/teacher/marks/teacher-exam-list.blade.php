@@ -68,6 +68,9 @@
                                             <a href="{{ route('teacher.exam.marksheet', $exam) }}" class="ds-btn ds-btn-secondary ds-btn-sm">
                                                 Marksheet
                                             </a>
+                                            <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm" data-testid="marks-import-button">
+                                                Import from spreadsheet
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

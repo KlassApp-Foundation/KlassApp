@@ -26,7 +26,7 @@ use Tests\TestCase;
 
 /**
  * Security invariants for the marks-import template route: ExamAuthorization
- * applies identically to downloads, and the roster is keyed by registration_number.
+ * applies identically to downloads, and the roster is keyed by KLS number (registration_number).
  */
 class MarksTemplateDownloadTest extends TestCase
 {
@@ -230,7 +230,7 @@ class MarksTemplateDownloadTest extends TestCase
         $this->fail('Unexpected template download response type: ' . get_class($base));
     }
 
-    private function templateRows(TestResponse $response): array
+    private function templateSpreadsheet(TestResponse $response): \PhpOffice\PhpSpreadsheet\Spreadsheet
     {
         $bytes = $this->downloadedBytes($response);
 
@@ -238,16 +238,18 @@ class MarksTemplateDownloadTest extends TestCase
         file_put_contents($tmp, $bytes);
 
         try {
-            $sheet = IOFactory::load($tmp);
-            $rows = $sheet->getActiveSheet()->toArray(null, true, true, false);
+            return IOFactory::load($tmp);
         } finally {
             @unlink($tmp);
         }
-
-        return $rows;
     }
 
-    public function test_owner_teacher_downloads_template_with_roster_and_registration_column(): void
+    private function templateRows(TestResponse $response): array
+    {
+        return $this->templateSpreadsheet($response)->getSheetByName('Marks')->toArray(null, true, true, false);
+    }
+
+    public function test_owner_teacher_downloads_template_with_roster_and_kls_number_column(): void
     {
         $response = $this->actingAs($this->ownerTeacher)->get(
             route('teacher.exam.marks.template', ['exam' => $this->ownedExam])
@@ -258,11 +260,11 @@ class MarksTemplateDownloadTest extends TestCase
         $rows = $this->templateRows($response);
         $headings = $rows[0];
 
-        $this->assertContains('registration_number', $headings);
+        $this->assertContains('KLS number', $headings);
         $this->assertContains('student_name', $headings);
-        $this->assertContains('mark', $headings);
+        $this->assertContains('Mark (out of 100)', $headings);
 
-        $regIndex = array_search('registration_number', $headings, true);
+        $regIndex = array_search('KLS number', $headings, true);
         $dataRows = array_slice($rows, 1);
 
         $this->assertCount(2, $dataRows);
@@ -270,7 +272,7 @@ class MarksTemplateDownloadTest extends TestCase
         sort($registrationNumbers);
         $this->assertSame(['KLS0000001', 'KLS0000002'], $registrationNumbers);
 
-        $markIndex = array_search('mark', $headings, true);
+        $markIndex = array_search('Mark (out of 100)', $headings, true);
         foreach ($dataRows as $row) {
             $this->assertTrue($row[$markIndex] === null || $row[$markIndex] === '', 'mark cell should be empty');
         }
@@ -285,7 +287,7 @@ class MarksTemplateDownloadTest extends TestCase
         $response->assertOk();
 
         $content = $this->downloadedBytes($response);
-        $this->assertStringContainsString('registration_number', $content);
+        $this->assertStringContainsString('KLS number', $content);
         $this->assertStringContainsString('KLS0000001', $content);
         $this->assertStringContainsString('KLS0000002', $content);
     }
@@ -308,5 +310,28 @@ class MarksTemplateDownloadTest extends TestCase
     {
         $this->get(route('teacher.exam.marks.template', ['exam' => $this->ownedExam]))
             ->assertRedirect();
+    }
+
+    public function test_template_carries_the_exam_info_sheet_with_a_verifiable_key(): void
+    {
+        $response = $this->actingAs($this->ownerTeacher)->get(
+            route('teacher.exam.marks.template', ['exam' => $this->ownedExam])
+        );
+        $response->assertOk();
+
+        $ss = $this->templateSpreadsheet($response);
+        $this->assertSame(['Marks', 'Exam info'], $ss->getSheetNames());
+
+        $info = [];
+        foreach ($ss->getSheetByName('Exam info')->toArray() as $row) {
+            if (($row[0] ?? '') !== '') { $info[$row[0]] = $row[1] ?? null; }
+        }
+
+        $this->assertSame($this->school->name, $info['School']);
+        $this->assertSame('P1', $info['Class and stream']);
+        $this->assertSame('MATHEMATICS', $info['Subject']);
+        $this->assertSame('100', (string) $info['Maximum marks']);
+        $this->assertSame('marks-import-v1', $info['Template version']);
+        $this->assertMatchesRegularExpression('/^'.$this->ownedExam->id.'-[0-9a-f]{10}$/', (string) $info['Template key']);
     }
 }

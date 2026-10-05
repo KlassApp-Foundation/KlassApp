@@ -17,6 +17,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ExamAuthorization;
+use App\Services\MarksImport\MarksImportService;
 use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ use App\Events\GradesPublished;
 use App\Exceptions\MarksLockedException;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Exports\CombinedMarksheetExport;
+use App\Exports\Marks\MarksTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MarksController extends Controller
@@ -198,7 +200,7 @@ private function examRoster(Exam $exam, int $schoolId)
  * registration_number with an empty mark cell per student. Same
  * authorization as the entry page; ?format=csv for a CSV variant.
  */
-public function downloadTemplate(Request $request, Exam $exam)
+public function downloadTemplate(Request $request, Exam $exam, MarksImportService $service)
 {
     /** @var User $teacher */
     $teacher = Auth::user();
@@ -208,19 +210,19 @@ public function downloadTemplate(Request $request, Exam $exam)
     $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to download this template.');
 
     $format = in_array($request->query('format'), ['csv', 'xlsx'], true) ? $request->query('format') : 'xlsx';
+    $fileName = sprintf('marks-template-exam-%d.%s', $exam->id, $format);
 
-    $headings = ['registration_number', 'student_name', 'mark'];
-    $rows = $this->examRoster($exam, $exam->school_id)
-        ->map(fn (User $student): array => [
-            $student->registration_number,
-            $student->displayName ?: $student->name,
-            null,
-        ])
-        ->all();
+    // CSV cannot carry a second sheet: the import preview warns that the exam could not be checked.
+    if ($format === 'csv') {
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\MarksheetExport($service->templateHeadings(), $service->templateRows($exam, $teacher), 'Marks'),
+            $fileName,
+        );
+    }
 
     return \Maatwebsite\Excel\Facades\Excel::download(
-        new \App\Exports\MarksheetExport($headings, $rows, 'Marks Template'),
-        sprintf('marks-template-exam-%d.%s', $exam->id, $format)
+        new MarksTemplateExport($service->templateHeadings(), $service->templateRows($exam, $teacher), $service->templateInfoRows($exam)),
+        $fileName,
     );
 }
 

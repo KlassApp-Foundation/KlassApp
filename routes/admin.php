@@ -860,6 +860,12 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 Route::get('/exams', 'ExamController@index')->name('admin.exams');
 Route::get('/exams/{exam}/marksheet', 'ExamController@marksheet')->name('admin.exams.marksheet');
 Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create');
+// Import marks from a spreadsheet (any exam in the school): page, template, preview, confirm, result
+Route::get('/exams/{exam}/marks/import', [\App\Http\Controllers\Admin\MarksImportController::class, 'importPage'])->name('admin.exams.marks.import.page');
+Route::get('/exams/{exam}/marks/import/template', [\App\Http\Controllers\Admin\MarksImportController::class, 'importTemplate'])->name('admin.exams.marks.import.template');
+Route::post('/exams/{exam}/marks/import/preview', [\App\Http\Controllers\Admin\MarksImportController::class, 'importPreview'])->name('admin.exams.marks.import.preview');
+Route::post('/exams/{exam}/marks/import/confirm', [\App\Http\Controllers\Admin\MarksImportController::class, 'importConfirm'])->name('admin.exams.marks.import.confirm');
+Route::get('/exams/{exam}/marks/import/result', [\App\Http\Controllers\Admin\MarksImportController::class, 'importResult'])->name('admin.exams.marks.import.result');
 // Route::get('/exams/classes/all', 'ExamController@sections')->name('admin.exams.classes.all');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
 Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');

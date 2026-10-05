@@ -1,0 +1,132 @@
+[
+ {
+  "tag": "junior-teacher-375",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 375,
+   "iw": 375,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 375,
+   "iw": 375,
+   "text": "Saved 0, updated 4, unchanged 0, skipped 4. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "junior-teacher-1280",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 1280,
+   "iw": 1280,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 1280,
+   "iw": 1280,
+   "text": "Saved 0, updated 4, unchanged 0, skipped 4. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "senior-teacher-375",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 375,
+   "iw": 375,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 375,
+   "iw": 375,
+   "text": "Saved 0, updated 0, unchanged 0, skipped 12. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "senior-teacher-1280",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 1280,
+   "iw": 1280,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 1280,
+   "iw": 1280,
+   "text": "Saved 0, updated 0, unchanged 0, skipped 12. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "junior-admin-375",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 375,
+   "iw": 375,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 375,
+   "iw": 375,
+   "text": "Saved 0, updated 4, unchanged 0, skipped 4. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "junior-admin-1280",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 1280,
+   "iw": 1280,
+   "small": [
+    ":24",
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 1280,
+   "iw": 1280,
+   "text": "Saved 0, updated 4, unchanged 0, skipped 4. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "senior-admin-375",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 375,
+   "iw": 375,
+   "small": [
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 375,
+   "iw": 375,
+   "text": "Saved 0, updated 0, unchanged 0, skipped 12. This import was recorded in the activity log."
+  }
+ },
+ {
+  "tag": "senior-admin-1280",
+  "buttonHeight": 44,
+  "preview": {
+   "sw": 1280,
+   "iw": 1280,
+   "small": [
+    ":24",
+    "overwrite:24"
+   ]
+  },
+  "result": {
+   "sw": 1280,
+   "iw": 1280,
+   "text": "Saved 0, updated 0, unchanged 0, skipped 12. This import was recorded in the activity log."
+  }
+ }
+]
