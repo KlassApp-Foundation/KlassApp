@@ -15,6 +15,8 @@ class MarksImportController extends Controller
         return [
             'layout' => 'layouts.teacher.layout',
             'routePrefix' => 'teacher.exam.marks.import',
+            // The template download already on main (#986), not a second copy.
+            'templateRoute' => 'teacher.exam.marks.template',
             'backRoute' => 'teacher.exam.marks',
             'backLabel' => 'Back to my exams',
         ];

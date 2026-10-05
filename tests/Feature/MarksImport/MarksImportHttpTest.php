@@ -32,7 +32,7 @@ class MarksImportHttpTest extends TestCase
 
     private function csv(array $lines): UploadedFile
     {
-        return UploadedFile::fake()->createWithContent('marks.csv', implode("\n", array_merge(['Admission No,Student,Marks'], $lines))."\n");
+        return UploadedFile::fake()->createWithContent('marks.csv', implode("\n", array_merge(['registration_number,student_name,mark'], $lines))."\n");
     }
 
     /** @return array{0:string,1:string} the confirm token and the preview html */
@@ -81,7 +81,7 @@ class MarksImportHttpTest extends TestCase
             'KLS0000001,,80', 'KLS0000004,,70', 'KLS0000099,,70', 'KLS0000002,,101', 'KLS0000003,,',
         ]);
 
-        $this->assertStringContainsString('Not an active student in this class', $html);   // other class
+        $this->assertStringContainsString('Not a student in this class', $html);   // other class
         $this->assertStringContainsString('Student not found', $html);                     // unknown
         $this->assertStringContainsString('Mark is outside 0 to 100', $html);              // out of range
         $this->assertStringContainsString('No mark entered', $html);                       // blank
@@ -105,7 +105,7 @@ class MarksImportHttpTest extends TestCase
     public function test_teacher_cannot_import_for_another_teachers_exam(): void
     {
         $this->actingAs($this->stranger)->get(route('teacher.exam.marks.import.page', $this->exam))->assertForbidden();
-        $this->actingAs($this->stranger)->get(route('teacher.exam.marks.import.template', $this->exam))->assertForbidden();
+        $this->actingAs($this->stranger)->get(route('teacher.exam.marks.template', $this->exam))->assertForbidden();
         $this->actingAs($this->stranger)->post(route('teacher.exam.marks.import.preview', $this->exam), ['file' => $this->csv(['KLS0000001,,80'])])->assertForbidden();
         $this->actingAs($this->stranger)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => str_repeat('a', 40)])->assertForbidden();
         $this->assertSame(0, Marks::count());
@@ -184,14 +184,60 @@ class MarksImportHttpTest extends TestCase
         $this->assertSame(0, Marks::count());
     }
 
-    public function test_template_downloads_for_the_chosen_exam(): void
+    /** @return list<list<string>> rows of a CSV template download (headings first) */
+    private function csvRows(\Illuminate\Testing\TestResponse $response): array
     {
-        $xlsx = $this->actingAs($this->owner)->get(route('teacher.exam.marks.import.template', $this->exam));
-        $xlsx->assertOk();
-        $this->assertStringContainsString('.xlsx', $xlsx->headers->get('content-disposition'));
+        $base = $response->baseResponse;
+        $content = $base instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse
+            ? file_get_contents($base->getFile()->getPathname())
+            : $response->getContent();
 
-        $csv = $this->actingAs($this->admin)->get(route('admin.exams.marks.import.template', [$this->exam, 'format' => 'csv']));
-        $csv->assertOk();
-        $this->assertStringContainsString('.csv', $csv->headers->get('content-disposition'));
+        return array_map('str_getcsv', array_values(array_filter(preg_split('/\r\n|\n/', trim($content)))));
+    }
+
+    public function test_the_986_teacher_template_feeds_the_import_unchanged(): void
+    {
+        // Download the template that already exists on main, fill the mark column, upload it.
+        $download = $this->actingAs($this->owner)->get(route('teacher.exam.marks.template', [$this->exam, 'format' => 'csv']));
+        $download->assertOk();
+        $rows = $this->csvRows($download);
+        $this->assertSame(['registration_number', 'student_name', 'mark'], $rows[0]);
+
+        $lines = [];
+        foreach (array_slice($rows, 1) as $i => $r) {
+            $lines[] = $r[0].','.$r[1].','.(60 + $i);
+        }
+        [$token, $html] = $this->preview('teacher.exam.marks.import', $this->owner, $lines);
+        $this->assertStringContainsString('data-testid="count-new">3<', $html);
+
+        $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token])->assertRedirect();
+        $this->assertSame(3, Marks::count());
+    }
+
+    public function test_upload_page_links_to_the_986_template_for_teachers_and_the_admin_template_for_admins(): void
+    {
+        $this->actingAs($this->owner)->get(route('teacher.exam.marks.import.page', $this->exam))
+            ->assertOk()->assertSee(route('teacher.exam.marks.template', $this->exam), false);
+        $this->actingAs($this->admin)->get(route('admin.exams.marks.import.page', $this->exam))
+            ->assertOk()->assertSee(route('admin.exams.marks.import.template', $this->exam), false);
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('teacher.exam.marks.import.template'), 'no second teacher template route');
+    }
+
+    public function test_admin_template_has_the_same_headings_and_roster_as_the_teacher_template(): void
+    {
+        $teacher = $this->csvRows($this->actingAs($this->owner)->get(route('teacher.exam.marks.template', [$this->exam, 'format' => 'csv'])));
+        $adminResponse = $this->actingAs($this->admin)->get(route('admin.exams.marks.import.template', [$this->exam, 'format' => 'csv']));
+        $adminResponse->assertOk();
+        $this->assertStringContainsString('marks-template-exam-'.$this->exam->id.'.csv', $adminResponse->headers->get('content-disposition'));
+
+        $admin = $this->csvRows($adminResponse);
+        $this->assertSame($teacher[0], $admin[0]);
+        $sort = function (array $rows) {
+            $rows = array_slice($rows, 1);
+            usort($rows, fn ($a, $b) => strcmp($a[0], $b[0]));
+
+            return $rows;
+        };
+        $this->assertSame($sort($teacher), $sort($admin), 'one roster rule, whichever template route is used');
     }
 }

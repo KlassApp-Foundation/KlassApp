@@ -31,8 +31,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  *
  * Safety rules (see docs/proposals/2026-10-05-marks-import-ui.md):
  *  - every input row gets exactly one outcome; nothing is dropped silently;
- *  - matching is by admission number, or by an exact name that matches exactly
- *    one enrolled student. No fuzzy matching;
+ *  - matching is by registration (admission) number only, never by name
+ *    (docs/proposals/2026-10-05-marks-import-ui.md, standing rules 4 and 18);
  *  - an existing mark that differs is only changed when overwrite is confirmed;
  *  - the plan is re-validated against the database at commit time.
  */
@@ -59,9 +59,8 @@ class MarksImportService
         'out_of_range' => 'Mark is outside 0 to 100',
         'no_grade_band' => 'No grading band covers this mark',
         'unknown_student' => 'Student not found',
-        'not_in_class' => 'Not an active student in this class',
-        'ambiguous_name' => 'More than one student has this name; use the admission number',
-        'no_identifier' => 'No admission number or name',
+        'not_in_class' => 'Not a student in this class',
+        'no_identifier' => 'No registration number on this row (students are matched by registration number, not by name)',
         'duplicate_in_file' => 'Student appears more than once in the file',
         'duplicate_existing' => 'More than one saved mark exists for this student; fix it in marks entry',
         'overwrite_not_confirmed' => 'A different mark is already saved and overwriting was not confirmed',
@@ -104,28 +103,31 @@ class MarksImportService
 
     // ───────────────────────────── template ─────────────────────────────
 
-    /** @return list<string> */
+    /**
+     * Same headings as the teacher template download (teacher.exam.marks.template, #986):
+     * registration_number, student_name, mark. The admin template route uses these too.
+     *
+     * @return list<string>
+     */
     public function templateHeadings(): array
     {
-        return ['Admission No', 'Student', 'Marks'];
+        return ['registration_number', 'student_name', 'mark'];
     }
 
     /**
-     * One row per active enrolled student, marks column filled with the saved
-     * mark when there is one (so the file can be edited and re-imported).
+     * One row per enrolled student, mark cell empty: the same roster and row shape as
+     * MarksController::downloadTemplate, so a template from either route imports the same way.
      *
-     * @return list<array{0:string,1:string,2:string}>
+     * @return list<array{0:?string,1:string,2:null}>
      */
     public function templateRows(Exam $exam, User $actor): array
     {
         $this->assertCanImport($actor, $exam);
 
-        $saved = $this->existingMarks($exam)->map(fn ($rows) => $rows->first());
-
         return $this->roster($exam)->map(fn (User $s) => [
-            (string) ($s->registration_number ?? ''),
-            (string) $s->name,
-            $saved->has($s->id) ? $this->formatMark((float) $saved[$s->id]->marks) : '',
+            $s->registration_number,
+            (string) ($s->displayName ?: $s->name),
+            null,
         ])->values()->all();
     }
 
@@ -269,14 +271,14 @@ class MarksImportService
                     $map['mark'] = $col;
                 }
             }
-            if ($map['mark'] !== null && ($map['id'] !== null || $map['name'] !== null)) {
+            if ($map['mark'] !== null && $map['id'] !== null) {
                 $header = [$i, $map];
                 break;
             }
         }
 
         if ($header === null) {
-            return [[], ['columns' => 'The file needs a "Marks" column and an "Admission No" or "Student" column. Download the template and use it as the starting point.']];
+            return [[], ['columns' => 'The file needs a "registration_number" column and a "mark" column. Download the template and use it as the starting point.']];
         }
 
         [$headerIndex, $map] = $header;
@@ -329,13 +331,12 @@ class MarksImportService
         $roster = $this->roster($exam);
         $byAdmission = $roster->filter(fn (User $s) => ($s->registration_number ?? '') !== '')
             ->keyBy(fn (User $s) => $this->key($s->registration_number));
-        $byName = $roster->groupBy(fn (User $s) => $this->nameKey($s->name));
         $existing = $this->existingMarks($exam);
 
         // First pass: resolve each row to a student (or a skip reason).
         $resolved = [];
         foreach ($input as $in) {
-            $resolved[] = $this->resolveRow($exam, $in, $byAdmission, $byName, $existing);
+            $resolved[] = $this->resolveRow($exam, $in, $byAdmission, $existing);
         }
 
         // Duplicate students in the file: identical marks keep the first, conflicting marks skip all.
@@ -367,7 +368,7 @@ class MarksImportService
      * @param  array{row:int,identifier:?string,name:?string,mark:?string}  $in
      * @return array<string,mixed>
      */
-    private function resolveRow(Exam $exam, array $in, $byAdmission, $byName, $existing): array
+    private function resolveRow(Exam $exam, array $in, $byAdmission, $existing): array
     {
         $row = [
             'row' => $in['row'], 'identifier' => $in['identifier'], 'name' => $in['name'],
@@ -384,15 +385,6 @@ class MarksImportService
                     ->where('registration_number', $in['identifier'])->exists();
 
                 return $this->skip($row, $inSchool ? 'not_in_class' : 'unknown_student');
-            }
-        } elseif ($in['name'] !== null) {
-            $matches = $byName->get($this->nameKey($in['name'])) ?? collect();
-            if ($matches->count() > 1) {
-                return $this->skip($row, 'ambiguous_name');
-            }
-            $student = $matches->first();
-            if (! $student) {
-                return $this->skip($row, 'unknown_student');
             }
         } else {
             return $this->skip($row, 'no_identifier');
@@ -577,13 +569,12 @@ class MarksImportService
         }
     }
 
-    /** Active students enrolled in the exam's class: the same roster the marksheet and entry screen use. */
+    /** Students enrolled in the exam's class: the same rule as the entry screen and the #986 template (usergroup 6, same school, standard link of this standard and section). */
     private function roster(Exam $exam)
     {
         return User::query()
             ->where('usergroup_id', self::STUDENT_USERGROUP)
             ->where('school_id', $exam->school_id)
-            ->where('status', 'active')
             ->whereHas('studentAcademic', fn ($q) => $q->whereHas('standardLink', fn ($q2) => $q2
                 ->where('standard_id', $exam->standard_id)
                 ->where('section_id', $exam->section_id)))
@@ -600,15 +591,6 @@ class MarksImportService
     private function key(string $value): string
     {
         return strtolower(preg_replace('/\s+/', '', trim($value)));
-    }
-
-    /** Case, spacing and word-order insensitive, but otherwise exact. */
-    private function nameKey(string $name): string
-    {
-        $tokens = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        sort($tokens);
-
-        return implode(' ', $tokens);
     }
 
     private function formatMark(float $mark): string

@@ -63,7 +63,7 @@ class MarksImportViewsTest extends TestCase
 
     public function test_preview_and_result_pages_use_announced_alerts_and_stacking_tables(): void
     {
-        $file = UploadedFile::fake()->createWithContent('m.csv', "Admission No,Student,Marks\nKLS0000001,,80\nKLS0000099,,10\n");
+        $file = UploadedFile::fake()->createWithContent('m.csv', "registration_number,student_name,mark\nKLS0000001,,80\nKLS0000099,,10\n");
         $html = $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.preview', $this->exam), ['file' => $file])->assertOk()->getContent();
 
         $this->assertStringContainsString('role="status"', $html);

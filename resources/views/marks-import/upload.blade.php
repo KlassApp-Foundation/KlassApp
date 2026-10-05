@@ -14,10 +14,10 @@
     @endif
 
     <x-card title="1. Download the template">
-        <p class="text-gray-800 mb-3">The template lists the students in this class with their admission numbers. Fill in the <strong>Marks</strong> column (0 to 100) and leave a mark blank for a student who did not sit the exam.</p>
+        <p class="text-gray-800 mb-3">The template lists the students in this class with their registration numbers. Fill in the <strong>mark</strong> column (0 to 100) and leave a mark blank for a student who did not sit the exam.</p>
         <div class="flex flex-wrap gap-3">
-            <x-button variant="outline" :href="route($routePrefix.'.template', $exam)">Download template (.xlsx)</x-button>
-            <x-button variant="ghost" :href="route($routePrefix.'.template', [$exam, 'format' => 'csv'])">Download as .csv</x-button>
+            <x-button variant="outline" :href="route($templateRoute, $exam)">Download template (.xlsx)</x-button>
+            <x-button variant="ghost" :href="route($templateRoute, [$exam, 'format' => 'csv'])">Download as .csv</x-button>
         </div>
     </x-card>
 
@@ -39,8 +39,8 @@
     <div class="mt-6 text-gray-800">
         <h2 class="text-lg font-semibold text-gray-900">How rows are matched</h2>
         <ul class="list-disc pl-5 mt-2 space-y-1">
-            <li>Students are matched by <strong>admission number</strong>. A name is used only when it matches exactly one student in the class.</li>
-            <li>Rows that cannot be saved (unknown student, not in this class, mark out of range, blank, repeated) are listed with the reason. None are dropped silently.</li>
+            <li>Students are matched by <strong>registration number</strong> only, never by name. Keep the <strong>registration_number</strong> column from the template.</li>
+            <li>Rows that cannot be saved (unknown registration number, not in this class, mark out of range, blank, repeated) are listed with the reason. None are dropped silently.</li>
             <li>A mark that is already saved with a different value is only changed if you tick the overwrite box on the next screen.</li>
             <li>Uploading the same file again changes nothing.</li>
         </ul>

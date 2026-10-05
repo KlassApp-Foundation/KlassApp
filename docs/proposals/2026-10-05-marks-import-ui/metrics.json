@@ -22,18 +22,6 @@
    "sw": 1280,
    "iw": 1280,
    "small": [
-    "Dashboard:36",
-    "Classes:36",
-    "Timetable:36",
-    "Attendance:36",
-    "Exams:36",
-    "Homework:36",
-    "Marks:36",
-    "Report Cards:36",
-    "Class Streams:36",
-    "Notices:36",
-    "Events:36",
-    "Library:36",
     "overwrite:24"
    ]
   },
@@ -66,18 +54,6 @@
    "sw": 1280,
    "iw": 1280,
    "small": [
-    "Dashboard:36",
-    "Classes:36",
-    "Timetable:36",
-    "Attendance:36",
-    "Exams:36",
-    "Homework:36",
-    "Marks:36",
-    "Report Cards:36",
-    "Class Streams:36",
-    "Notices:36",
-    "Events:36",
-    "Library:36",
     "overwrite:24"
    ]
   },

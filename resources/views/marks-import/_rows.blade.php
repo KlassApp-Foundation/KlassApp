@@ -5,7 +5,7 @@
         <thead>
             <tr>
                 <th scope="col">Row</th>
-                <th scope="col">Admission No</th>
+                <th scope="col">Registration No</th>
                 <th scope="col">Student</th>
                 <th scope="col">Marks</th>
                 @if(!empty($showExisting)) <th scope="col">Saved now</th> @endif
@@ -16,7 +16,7 @@
             @foreach($rows as $r)
                 <tr>
                     <td data-label="Row">{{ $r['row'] }}</td>
-                    <td data-label="Admission No">{{ $r['identifier'] ?? '—' }}</td>
+                    <td data-label="Registration No">{{ $r['identifier'] ?? '—' }}</td>
                     <td data-label="Student">{{ $r['student_name'] ?? $r['name'] ?? '—' }}</td>
                     <td data-label="Marks">{{ $r['mark'] ?? ($r['raw_mark'] ?? '—') }}</td>
                     @if(!empty($showExisting)) <td data-label="Saved now">{{ $r['existing'] ?? '—' }}</td> @endif

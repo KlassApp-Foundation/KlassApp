@@ -117,14 +117,14 @@ trait MarksImportFixture
     }
 
     /**
-     * Spreadsheet rows as the service reads them: a header row, then [admission no, name, mark].
+     * Spreadsheet rows as the service reads them: the #986 template headings, then [registration number, name, mark].
      *
      * @param  list<array{0:?string,1:?string,2:mixed}>  $data
      * @return list<list<mixed>>
      */
     protected function sheet(array $data): array
     {
-        return array_merge([['Admission No', 'Student', 'Marks']], $data);
+        return array_merge([['registration_number', 'student_name', 'mark']], $data);
     }
 
     protected function saveMark(User $student, float $mark, ?Exam $exam = null): Marks

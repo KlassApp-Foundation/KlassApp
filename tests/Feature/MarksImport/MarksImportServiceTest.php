@@ -85,19 +85,23 @@ class MarksImportServiceTest extends TestCase
         $this->assertSame(['0', '100', '72.5'], array_column($plan->rows, 'mark'));
     }
 
-    public function test_names_match_only_when_exact_and_unique(): void
+    public function test_students_are_matched_by_registration_number_never_by_name(): void
     {
-        $twin = $this->makeStudent($this->school, 'Brian Okello', 'KLS0000010', \App\Models\StandardLink::first());
-
         $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([
-            [null, 'Amina Nakato', '80'],      // unique exact name: matched
-            [null, 'mwesigwa CHLOE', '81'],     // case and word order do not matter, still exact
-            [null, 'Brian Okello', '60'],      // two students share it: ambiguous, never guessed
-            [null, 'Chloe Mwesigw', '70'],     // near miss: no fuzzy matching
+            [null, 'Amina Nakato', '80'],              // exact name but no registration number: never guessed
+            ['KLS0000002', 'Someone Else Entirely', '60'], // the registration number decides, the name is informational
+            [null, null, '70'],
         ]));
 
-        $this->assertSame(['new', 'new', 'skipped:ambiguous_name', 'skipped:unknown_student'], $this->outcomes($plan));
-        $this->assertNotNull($twin);
+        $this->assertSame(['skipped:no_identifier', 'new', 'skipped:no_identifier'], $this->outcomes($plan));
+        $this->assertSame($this->students[2]->id, $plan->rows[1]['student_id']);
+    }
+
+    public function test_a_file_without_a_registration_number_column_is_blocked(): void
+    {
+        $plan = $this->service->preview($this->exam, $this->owner, [['student_name', 'mark'], ['Amina Nakato', '80']]);
+
+        $this->assertArrayHasKey('columns', $plan->blockers);
     }
 
     public function test_duplicate_rows_identical_keep_first_conflicting_skip_all(): void
@@ -273,15 +277,16 @@ class MarksImportServiceTest extends TestCase
         $this->assertSame(3, $result->saved, 'three students on a one-student plan: still imported in full');
     }
 
-    public function test_template_lists_active_enrolled_students_with_saved_marks(): void
+    public function test_template_matches_the_986_template_shape_and_roster(): void
     {
-        $this->saveMark($this->students[2], 66.5);
-        \App\Models\User::whereKey($this->students[3]->id)->update(['status' => 'inactive']);
-
         $rows = $this->service->templateRows($this->exam, $this->owner);
 
-        $this->assertSame([['KLS0000001', 'Amina Nakato', ''], ['KLS0000002', 'Brian Okello', '66.5']], $rows);
-        $this->assertSame(['Admission No', 'Student', 'Marks'], $this->service->templateHeadings());
+        $this->assertSame(['registration_number', 'student_name', 'mark'], $this->service->templateHeadings());
+        $this->assertSame(
+            [['KLS0000001', 'AMINA NAKATO', null], ['KLS0000002', 'BRIAN OKELLO', null], ['KLS0000003', 'CHLOE MWESIGWA', null]],
+            $rows,
+            'registration number, name, empty mark cell: the same rows as teacher.exam.marks.template',
+        );
     }
 
     public function test_template_round_trips_through_preview(): void

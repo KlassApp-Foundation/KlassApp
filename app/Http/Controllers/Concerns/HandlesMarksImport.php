@@ -2,25 +2,22 @@
 
 namespace App\Http\Controllers\Concerns;
 
-use App\Exports\MarksheetExport;
 use App\Models\Academics\Exam;
 use App\Models\User;
 use App\Services\MarksImport\MarksImportBlocked;
 use App\Services\MarksImport\MarksImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Excel as ExcelType;
-use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * Teacher and admin share one marks-import flow (page, template, preview, confirm, result).
+ * Teacher and admin share one marks-import flow (page, preview, confirm, result). The template
+ * download is not here: teachers use #986's teacher.exam.marks.template, admins have their own route.
  * The using controller supplies the layout and route names through marksImportContext().
  * All logic lives in MarksImportService; this only moves data between HTTP and the service.
  */
 trait HandlesMarksImport
 {
-    /** @return array{layout:string,routePrefix:string,backRoute:string,backLabel:string} */
+    /** @return array{layout:string,routePrefix:string,templateRoute:string,backRoute:string,backLabel:string} */
     abstract protected function marksImportContext(): array;
 
     public function importPage(Exam $exam, MarksImportService $service)
@@ -29,24 +26,6 @@ trait HandlesMarksImport
         $service->assertCanImport($actor, $exam);
 
         return view('marks-import.upload', $this->marksImportView($exam));
-    }
-
-    public function importTemplate(Request $request, Exam $exam, MarksImportService $service)
-    {
-        $actor = $this->marksImportActor();
-        $rows = $service->templateRows($exam, $actor);
-        $exam->loadMissing('subject', 'section', 'examType');
-
-        $csv = $request->query('format') === 'csv';
-        $name = Str::slug(implode(' ', array_filter([
-            'marks', $exam->section?->name, $exam->subject?->name, $exam->examType?->name,
-        ])) ?: 'marks-template').($csv ? '.csv' : '.xlsx');
-
-        return Excel::download(
-            new MarksheetExport($service->templateHeadings(), $rows, 'Marks'),
-            $name,
-            $csv ? ExcelType::CSV : ExcelType::XLSX,
-        );
     }
 
     public function importPreview(Request $request, Exam $exam, MarksImportService $service)
