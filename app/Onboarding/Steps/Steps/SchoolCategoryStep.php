@@ -61,4 +61,14 @@ class SchoolCategoryStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         $this->engine->saveSchoolCategory($school, (string) $normalized);
     }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributePreview($school, $normalized, 'school_category', 'School category');
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributeSaveAndReport($school, $normalized, 'school_category', 'School category');
+    }
 }

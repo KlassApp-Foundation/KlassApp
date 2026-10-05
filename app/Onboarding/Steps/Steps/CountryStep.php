@@ -35,4 +35,14 @@ class CountryStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         $this->engine->saveCountry($school, (string) $normalized);
     }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributePreview($school, $normalized, 'registration_country', 'Country');
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributeSaveAndReport($school, $normalized, 'registration_country', 'Country');
+    }
 }

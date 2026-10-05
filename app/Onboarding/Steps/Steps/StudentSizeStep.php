@@ -59,4 +59,14 @@ class StudentSizeStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         $this->engine->saveStudentSize($school, (string) $normalized);
     }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributePreview($school, $normalized, 'student_size', 'School size');
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributeSaveAndReport($school, $normalized, 'student_size', 'School size');
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Onboarding\Steps\Steps;
 
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Onboarding\Steps\AbstractOnboardingStep;
@@ -76,5 +77,60 @@ class TermsStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
         $this->engine->saveTerms($school, $year, $normalized);
+    }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        $normalized = $this->normalize($normalized);
+        $this->validate($school, $normalized);
+
+        if ($normalized === 'skip') {
+            return ['action' => 'skip', 'summary' => 'The terms step will be marked as skipped.', 'rows' => []];
+        }
+
+        $rows = [];
+        foreach ($normalized as $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            $dates = collect([$term['start'] ?? null, $term['end'] ?? null])->filter()->implode(' → ');
+            $rows[] = [
+                'label' => $name,
+                'status' => AcademicTerm::where('school_id', $school->id)->where('name', $name)->exists()
+                    ? 'already_present'
+                    : 'create',
+                'detail' => $dates !== '' ? $dates : null,
+            ];
+        }
+
+        $createCount = count(array_filter($rows, fn ($r) => $r['status'] === 'create'));
+
+        return [
+            'action' => $createCount > 0 ? 'change' : 'noop',
+            'summary' => $createCount > 0
+                ? "{$createCount} term(s) will be created; existing ones keep their dates."
+                : 'All listed terms already exist — nothing will change.',
+            'rows' => $rows,
+        ];
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        $normalized = $this->normalize($normalized);
+        $this->validate($school, $normalized);
+
+        if ($normalized === 'skip') {
+            OnboardingStepsService::markStepSkipped($school, 'terms');
+
+            return ['created' => [], 'skipped' => [['label' => 'terms', 'reason' => 'skipped']]];
+        }
+
+        $before = AcademicTerm::where('school_id', $school->id)->count();
+        $this->save($school, $normalized, $userId);
+        $after = AcademicTerm::where('school_id', $school->id)->count();
+
+        if ($after === $before) {
+            return ['created' => [], 'skipped' => [['label' => 'terms', 'reason' => 'already present']]];
+        }
+
+        return ['created' => [['term_rows_created' => $after - $before]], 'skipped' => []];
     }
 }

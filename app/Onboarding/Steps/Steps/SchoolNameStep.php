@@ -34,4 +34,30 @@ class SchoolNameStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         $this->engine->saveSchoolName($school, (string) $normalized);
     }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        $normalized = $this->normalize($normalized);
+        $this->validate($school, $normalized);
+        $name = trim((string) $normalized);
+
+        if ((string) $school->name === $name) {
+            return [
+                'action' => 'noop',
+                'summary' => "School name is already '{$name}'.",
+                'rows' => [['label' => 'School name', 'status' => 'already_present', 'detail' => null]],
+            ];
+        }
+
+        return [
+            'action' => 'change',
+            'summary' => "School name will change from '{$school->name}' to '{$name}'.",
+            'rows' => [['label' => 'School name', 'status' => 'update', 'detail' => $name]],
+        ];
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributeSaveAndReport($school, $normalized, 'name', 'School name');
+    }
 }
