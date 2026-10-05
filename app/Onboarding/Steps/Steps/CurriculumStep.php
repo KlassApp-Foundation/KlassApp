@@ -67,4 +67,21 @@ class CurriculumStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         $this->engine->saveCurriculum($school, (string) $normalized);
     }
+
+    public function preview(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        $preview = $this->attributePreview($school, $normalized, 'curriculum', 'Curriculum');
+        $value = (string) $preview['rows'][0]['detail'] ?? $preview['rows'][0]['label'];
+
+        if ($preview['action'] === 'change' && $value === 'uneb' && strtolower(trim((string) ($school->uneb_center_number ?? ''))) === '') {
+            $preview['summary'] .= ' This unlocks the UNEB centre number step.';
+        }
+
+        return $preview;
+    }
+
+    public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
+    {
+        return $this->attributeSaveAndReport($school, $normalized, 'curriculum', 'Curriculum');
+    }
 }

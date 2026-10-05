@@ -37,11 +37,31 @@ for (const [typeId, tag] of JOURNEYS) {
         expect(flagged.school_id).toBeGreaterThan(0);
         console.log(`[${tag}] signup ok; school=${flagged.school_id}; starting Toshi`);
 
+        // Fresh schools land in §33 preview mode (Coming soon, guide off). The
+        // scripted journeys run on the per-school onboarding mode — flip the
+        // test school (is_test-only) and reload so AgentToshi mounts the guide.
+        const modeFlipped = outcomes.enableOnboardingMode(data.admin.email, data.schoolName);
+        expect(modeFlipped.school_id).toBe(flagged.school_id);
+        await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+
         await toshi.ensurePanel(page);
         await health.checkNoHorizontalScroll(page, 'dashboard (toshi)', findings);
 
         run = await toshi.runToshiJourney(page, data, findings, { shotDir: artDir });
         await health.checkNoHorizontalScroll(page, 'toshi end', findings);
+        await page.screenshot({ path: `${artDir}/final-panel.png`, fullPage: true }).catch(() => {});
+        // Final state after a fresh load (setup banner / dashboard reflect the saved school).
+        await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(3000);
+        await page.screenshot({ path: `${artDir}/final-dashboard.png`, fullPage: true }).catch(() => {});
+        // The v2 Toshi path has no review screen (that is the manual wizard's); show the
+        // school's own class names on the classes page as the visible counterpart.
+        await page.goto('/admin/standardlinks', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(3000);
+        await page.screenshot({ path: `${artDir}/classes.png`, fullPage: true }).catch(() => {});
+        const classesText = await page.locator('body').innerText().catch(() => '');
+        const classesMissing = data.type.sections.filter((c) => !classesText.includes(c));
+        if (classesMissing.length) findings.push(`Classes page does not show: [${classesMissing}]`);
 
         outcome = outcomes.fetchOutcome(data.admin.email);
         const verdict = outcomes.evaluate(outcome, data);

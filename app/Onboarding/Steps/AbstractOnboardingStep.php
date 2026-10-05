@@ -47,4 +47,48 @@ abstract class AbstractOnboardingStep implements OnboardingStep
     {
         throw new InvalidArgumentException($message);
     }
+
+    /**
+     * Save-and-report for steps that only set one school attribute. The
+     * underlying save() runs unchanged; the report says whether the watched
+     * attribute actually changed, so a rerun with the same answer reports
+     * "already present" instead of pretending to create something.
+     */
+    protected function attributeSaveAndReport(School $school, mixed $normalized, string $attribute, string $label): array
+    {
+        $before = (string) $school->getAttribute($attribute);
+        $this->save($school, $normalized);
+        $after = (string) $school->fresh()->getAttribute($attribute);
+
+        if ($before === $after) {
+            return ['created' => [], 'skipped' => [['label' => $label, 'reason' => 'already present']]];
+        }
+
+        return ['created' => [[$attribute => $after]], 'skipped' => []];
+    }
+
+    /**
+     * Preview counterpart of attributeSaveAndReport(): describes the change
+     * the attribute setter would make, entirely read-only.
+     */
+    protected function attributePreview(School $school, mixed $normalized, string $attribute, string $label): array
+    {
+        $normalized = $this->normalize($normalized);
+        $this->validate($school, $normalized);
+        $before = (string) $school->getAttribute($attribute);
+
+        if ($before === (string) $normalized) {
+            return [
+                'action' => 'noop',
+                'summary' => "{$label} is already '{$before}'.",
+                'rows' => [['label' => $label, 'status' => 'already_present', 'detail' => null]],
+            ];
+        }
+
+        return [
+            'action' => 'change',
+            'summary' => "{$label} will change from '{$before}' to '{$normalized}'.",
+            'rows' => [['label' => $label, 'status' => 'update', 'detail' => (string) $normalized]],
+        ];
+    }
 }

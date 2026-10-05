@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Services\EmailVerificationGate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -34,6 +35,17 @@ class LoginController extends Controller implements ShouldQueue
             if (Auth::attempt(['mobile_no' => request('email'), 'password' => request('password')]) )
             {
                 $auth_user = Auth::user();
+
+                // Mobile-token sign-ins are gated on verified email too: no
+                // token is issued until the account's email is confirmed.
+                if (EmailVerificationGate::needsVerification($auth_user)) {
+                    Auth::logout();
+
+                    return response()->json([
+                        'status'    => 'error',
+                        'message'   =>  'Your email address is not verified yet. Confirm it, then try signing in again.',
+                    ], 403);
+                }
 
                 $token = $auth_user->createToken("gego")->plainTextToken;
 

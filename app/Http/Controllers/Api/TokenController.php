@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\LoginRequest;
+use App\Services\EmailVerificationGate;
 use Illuminate\Http\Request;
 use App\Models\Userprofile;
 use App\Models\User;
@@ -52,7 +53,18 @@ class TokenController extends Controller
     if(Auth::attempt(['mobile_no' => request('email'), 'password' => request('password'),'usergroup_id'=>7]) )
             {
                 $user = Auth::user();
-            
+
+                // Mobile-token sign-ins are gated on verified email too: no
+                // token is issued until the account's email is confirmed.
+                if (EmailVerificationGate::needsVerification($user)) {
+                    Auth::logout();
+
+                    return response()->json([
+                        'status'    => 'error',
+                        'message'   =>  'Your email address is not verified yet. Confirm it, then try signing in again.',
+                    ], 403);
+                }
+
             $userprofile = Userprofile::where('user_id', $user->id)->first();
                 if($userprofile->status == 'active')
                 {
