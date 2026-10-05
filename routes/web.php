@@ -218,6 +218,17 @@ Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingContr
 
 // Dismiss onboarding reminder (sets session flag to hide the setup banner)
 Route::get('/dismiss-onboarding', function () {
+    $user = auth()->user();
+    if ($user && $user->school_id) {
+        // Dashboard v2: the dismissal is per user and school, in the database,
+        // so the sidebar chip carries the progress across devices.
+        \App\Models\UserPreference::set(
+            $user,
+            \App\Models\UserPreference::setupBannerDismissedKey((int) $user->school_id),
+            now()->toIso8601String(),
+        );
+    }
+    // Legacy v1 banner still reads the session flag.
     session(['onboarding_reminder_dismissed' => true]);
     return redirect()->back();
 })->name('dismiss.onboarding.reminder')->middleware('auth');

@@ -118,7 +118,11 @@ class DashboardController extends Controller
             ? ['labels' => [], 'values' => []]
             : $this->computeFeeTrend($school_id, $trendPeriod, 6);
 
-        return view( '/admin/dashboard/dashboard', [
+        $dashboardView = (config('dashboard.v2_enabled') || $request->boolean('v2'))
+            ? '/admin/dashboard/dashboard_v2'
+            : '/admin/dashboard/dashboard';
+
+        return view( $dashboardView, [
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
             'selected_teacher' => $selected_teacher,

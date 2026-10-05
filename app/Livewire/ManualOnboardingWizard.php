@@ -285,10 +285,22 @@ class ManualOnboardingWizard extends Component
             $this->buildReviewSummary();
             $this->finished = false;
         } else {
-            foreach ($this->steps as $i => $step) {
-                if ($step['key'] === $next['key']) {
-                    $this->setStepIndex($i);
-                    break;
+            // Explicit ?step=<key> deep-link (setup banner, sidebar chip, quick
+            // actions). Only an existing, still-incomplete step is honoured;
+            // anything else falls back to the next incomplete step.
+            $requestedKey = strtolower(trim((string) request()->query('step', '')));
+            $jumpIndex = $requestedKey !== ''
+                ? array_search($requestedKey, array_column($this->steps, 'key'), true)
+                : false;
+
+            if ($jumpIndex !== false && empty($this->steps[$jumpIndex]['is_complete'])) {
+                $this->setStepIndex((int) $jumpIndex);
+            } else {
+                foreach ($this->steps as $i => $step) {
+                    if ($step['key'] === $next['key']) {
+                        $this->setStepIndex($i);
+                        break;
+                    }
                 }
             }
         }

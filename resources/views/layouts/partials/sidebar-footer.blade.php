@@ -31,6 +31,7 @@
             <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
         </div>
     @endif
+    @include('layouts.partials.dashboard-v2-chip')
     @include('layouts.partials.profile-dropdown')
 </div>
 @endif
