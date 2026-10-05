@@ -10,12 +10,15 @@ return new class extends Migration
     {
         Schema::create('user_preferences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // users.id is INT UNSIGNED (legacy increments), so the FK column must
+            // match it exactly: MySQL rejects a BIGINT -> INT foreign key (3780).
+            $table->unsignedInteger('user_id');
             $table->string('key', 191);
             $table->text('value')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'key']);
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
