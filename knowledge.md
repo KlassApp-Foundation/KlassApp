@@ -509,6 +509,15 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 |---|---|---|
 | **Toshi platform-scope for superadmin** | **Phase 0–1 MERGED** — #124 on `main` | Platform gate + tools + HITL. Role agents #125–#129+#137; WhatsApp #133–#136 deployed; MCP audit #140. |
 
+
+#### Deferred backlog (flagged 2026-10-06)
+
+- **Further admission work and form polish** — the approval path itself was repaired (#988: KLS number at creation, fee inserts back on the current schema). Any further admission-flow work and form polish is deferred; nothing is scheduled.
+- **SiteHelper::getStandardLinkList stale-cache poisoning of StandardLinkListHelperTest** — with CACHE_STORE=file in tests, a stale cached entry on a deterministic key can fail that test in a worktree that ran a colliding key before (run php artisan cache:clear; CI is unaffected because its cache is fresh). Test-hygiene fix deferred.
+- **46 legacy git stashes** — accumulated stashes from earlier sessions; they predate the 2026-10-06 housekeeping pass. Review and prune later; treat as a backlog, not an emergency.
+- **Staff plan-limit notice using the teachers bucket** — plan-limit messaging for staff management should use the teachers bucket; deferred until the next plans pass.
+- **Marks entry page prefill** — proposal merged on main (docs/proposals/2026-10-06-marks-entry-prefill.md, risks and suggested shape). Implementation deferred.
+
 ### Future Initiatives (flagged, not yet in progress)
 
 #### Public status page via Instatus — deferred until after the UI design phase

@@ -48,7 +48,7 @@
 ## 2. Migrations production will run (classified)
 
 Re-verified 2026-10-06 (night shift) against the pre-deploy tip of `main` with
-production on `dabfb80c`: **11 new migrations will run; none are destructive** (no
+production on `dabfb80c`: **12 new migrations will run; none are destructive** (no
 drops of tables/columns, no row deletions). The list below is final for this
 deploy — re-run `migrate:status` on production at deploy time and stop if the
 count differs. Two migrations change existing data — flagged below.
@@ -77,6 +77,7 @@ cutoff), so deploying it writes nothing.
 | `2026_10_01_221239_change_schools_toshi_mode_default_to_onboarding` | structure | default change only |
 | `2026_10_02_183000_backfill_existing_schools_toshi_safe_defaults` | **data — the existing-schools Toshi reset** | flips every school currently in `assistant` back to `preview` + `toshi_enabled=0` (AI is opt-in per school, AGENTS rule #33); before flipping it captures school ids plus old `toshi_enabled`/`toshi_mode` only: to `storage/logs/toshi-backfill-restore-<date>.json` (feeds `down()`) **and** to the application log via `Log::info` (Cloud log stream), so the capture survives on a deployed container |
 | `2026_10_03_023019_add_onboarding_finish_and_skipped_steps_to_schools_table` | structure | adds nullable columns |
+| `2026_10_06_000001_create_user_preferences_table` | structure | creates the per-user preference store behind the dashboard v2 setup-banner dismissal (INT UNSIGNED FK to users.id) |
 
 Also on the path: `2026_09_22_010000_add_is_demo_to_schools_and_seed_demo_data`
 was **modified** since production's SHA (demo seeding stripped, schema-only) —
@@ -146,6 +147,10 @@ Run in order; stop at the first failure and assess for rollback (§6):
     password.
 12. **Toshi panel shows Coming soon** — a school admin sees the preview
     (`TOSHI_DEFAULT_MODE=preview`) and no chat UI.
+13. **Admission approval (repaired in #988)** — on a throwaway test school,
+    create one admission and approve it; confirm the student user (and KLS
+    number) exists, then remove the school with the purge command (dry run
+    first).
 
 Clean up any account created for the smoke tests per standing rule #3 (flag
 inactive / purge command — never a raw delete).
