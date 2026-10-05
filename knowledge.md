@@ -667,7 +667,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 2, 2026 (latest) — **A1 OPEN [#951](https://github.com/KlassApp-Foundation/KlassApp/pull/951)** (`cursor/toshi-default-mode-preview-f71f`, rebased onto `e45e901a` after the docs-drift merge)
+## Current Status: October 4, 2026 (latest) — **staging deploy STILL 422 after reported re-auth; 3d/3e blocked** (re-verified on `origin/main` `60c8c900`)
+
+- `origin/main` = `60c8c900` (#962–#968, #970, #971–#973 all merged). Staging's last **successful** deploy is `depl-a2e2ffa8…` @ `79c98811` — step-registry + Toshi onboarding_v2 code is still **not** live on staging.
+- 2026-10-04: empty-body staging deploy POST ×2 → **HTTP 422** `The associated source control provider requires re-authorization.` No workarounds attempted (per instructions).
+- Healthy meanwhile: staging HTTP 200 (awake); Commands API works (`php artisan --version` → Laravel 12.63.0); staging env var `TOSHI_ONBOARDING_V2=true` still set from 2026-10-03, dormant until a real deploy.
+- Doppler CLI on Rasta's Mac is unauthenticated this session (`Invalid Auth token`); Cloud token sourced from `~/.cursor/mcp.json` → `laravel-cloud` → `X-Auth-Token` (documented fallback; value never printed).
+- **Blocker for Rasta:** the GitHub re-auth has not taken effect on the Laravel Cloud app. Verify Settings → Source Control Provider on cloud.laravel.com actually completed the GitHub authorization for KlassApp, then trigger the empty-body staging deploy. 3d (Toshi v2 journeys) and 3e (wizard-from-registry) start immediately after — full checklist in `docs/research/progress-2026-10-03.md`.
+
+## Current Status: October 2, 2026 — **A1 OPEN [#951](https://github.com/KlassApp-Foundation/KlassApp/pull/951)** (`cursor/toshi-default-mode-preview-f71f`, rebased onto `e45e901a` after the docs-drift merge)
 
 - New-school Toshi mode comes from `TOSHI_DEFAULT_MODE` / `config('toshi.default_mode')`, default `preview`. `assistant` is rejected and falls back to preview. Existing school rows are not rewritten (A2).
 - Tests: signup/default/preview set 33 passed; onboarding + filtered Toshi UI 455 passed. Failing-then-passing: 10 failed before `configuredDefault()`, green after.
@@ -2567,6 +2575,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-04: pickup session — deploy 422 re-verified post re-auth; 3d/3e not attempted
+- **Work done**: Synced `origin/main` `60c8c900` (rule #19; worktree `KlassApp-wt-sl-registry` clean on `main`). Open-PR scan (rule #28): 11 open — #961/#937/#936/#935/#822/#821/#786/#732/#728 own drafts, #890/#682 external drafts (Elicom256) — all untouched. Verified tooling: GitHub admin ✓, Cloud token ✓ (mcp.json fallback; Doppler CLI `Invalid Auth token` this session), Commands bridge ✓, staging HTTP 200 ✓, PHP 8.4.19 / Node ✓ local. Step 1: 2× empty-body staging deploy POST → **422** "The associated source control provider requires re-authorization." — re-auth not yet effective. Per instructions, Steps 2/3 not attempted without a real staging deploy.
+- **Files modified**: `docs/research/progress-2026-10-03.md` (3d re-verify section), `knowledge.md` (this entry + Current Status)
+- **Key decisions**: No deploy workarounds (standing instruction); no journeys without confirmed v2 code live; production untouched; `TOSHI_ONBOARDING_V2` value never changed by agents.
+- **Status**: ⏸️ Blocked on Rasta — complete the GitHub re-auth on the Laravel Cloud app (Settings → Source Control Provider), then staging deploy of `main` (`60c8c900+`)
+- **Edge cases flagged**: Cloud env var `TOSHI_ONBOARDING_V2=true` confirmed set but dormant until a real deploy; Commands API FS overlay remains ephemeral (no hotspotting); last-success deploy SHA `79c98811` vs main `60c8c900` gap = all of #962–#973.
+- **PR**: [#974](https://github.com/KlassApp-Foundation/KlassApp/pull/974) OPEN (docs-only stamp; all checks green 2026-10-04) — awaiting owner review; repo has auto-merge disabled and admin merge needs Rasta's explicit go-ahead (standing rule #32).
 
 ### 2026-10-03 (evening+): Part 3d still blocked — re-verify after #972
 - **Work done**: Confirmed [#972](https://github.com/KlassApp-Foundation/KlassApp/pull/972) MERGED `badfc522` (stg_bridge treats `command.created` as pending). Re-attempted staging deploy → still **422** GitHub re-auth. Staging awake HTTP 200; Commands: no `ToshiOnboardingV2Driver.php` / `StepRegistry.php` on tip; `config('toshi.onboarding_v2')=null` despite Cloud env var already set.
