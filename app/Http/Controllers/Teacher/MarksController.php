@@ -136,16 +136,7 @@ public function enterExamMarks(Exam $exam)
 
     $schoolId = $teacher->school_id;
 
-     $allStudents = User::with(["school", "marks", "studentAcademic.standardLink"])
-                    ->where("usergroup_id", 6)
-                    ->where("school_id", $schoolId)
-                    ->whereHas("studentAcademic", function($q) use($exam){
-                        $q->whereHas("standardLink", function($q2) use($exam){
-                            $q2->where("standard_id", $exam->standard_id)
-                               ->where("section_id", $exam->section_id);
-                        });
-                    })
-                  ->get();
+     $allStudents = $this->examRoster($exam, $schoolId);
      $total = $allStudents->count();
 
     $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
@@ -180,6 +171,57 @@ public function enterExamMarks(Exam $exam)
         'existingAssessments' => $existingAssessments,
         'correctionReasonRequired' => $this->correctionReasonRequired($exam),
     ]);
+}
+
+/**
+ * The class roster for an exam: students of this school whose latest
+ * standard-link matches the exam's standard + section (same rule as the
+ * entry page). Shared by enterExamMarks and downloadTemplate so the
+ * template's rows always equal the entry page's rows.
+ */
+private function examRoster(Exam $exam, int $schoolId)
+{
+    return User::with(["school", "marks", "studentAcademic.standardLink"])
+        ->where("usergroup_id", 6)
+        ->where("school_id", $schoolId)
+        ->whereHas("studentAcademic", function ($q) use ($exam) {
+            $q->whereHas("standardLink", function ($q2) use ($exam) {
+                $q2->where("standard_id", $exam->standard_id)
+                    ->where("section_id", $exam->section_id);
+            });
+        })
+        ->get();
+}
+
+/**
+ * Spreadsheet template for bulk marks import (M1): roster rows keyed by
+ * registration_number with an empty mark cell per student. Same
+ * authorization as the entry page; ?format=csv for a CSV variant.
+ */
+public function downloadTemplate(Request $request, Exam $exam)
+{
+    /** @var User $teacher */
+    $teacher = Auth::user();
+    if (! $teacher instanceof User) {
+        abort(403, 'Not Authorized');
+    }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to download this template.');
+
+    $format = in_array($request->query('format'), ['csv', 'xlsx'], true) ? $request->query('format') : 'xlsx';
+
+    $headings = ['registration_number', 'student_name', 'mark'];
+    $rows = $this->examRoster($exam, $exam->school_id)
+        ->map(fn (User $student): array => [
+            $student->registration_number,
+            $student->displayName ?: $student->name,
+            null,
+        ])
+        ->all();
+
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\MarksheetExport($headings, $rows, 'Marks Template'),
+        sprintf('marks-template-exam-%d.%s', $exam->id, $format)
+    );
 }
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)

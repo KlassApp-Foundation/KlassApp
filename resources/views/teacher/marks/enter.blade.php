@@ -8,18 +8,26 @@
     <!-- Page Header -->
 
 
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ $isNursery ? 'Enter Assessments' : 'Enter Marks' }}
-        </h1>
+    <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ $isNursery ? 'Enter Assessments' : 'Enter Marks' }}
+            </h1>
 
-        <p class="mt-1  text-gray-600 dark:text-gray-400">
-            @if($isNursery)
-                {{ $exam->standard->name ?? 'Nursery' }} &bull; {{ $exam->academicTerm->name }}
-            @else
-                {{ $exam->subject->name }} &bull; {{ $exam->academicTerm->name }}
-            @endif
-        </p>
+            <p class="mt-1  text-gray-600 dark:text-gray-400">
+                @if($isNursery)
+                    {{ $exam->standard->name ?? 'Nursery' }} &bull; {{ $exam->academicTerm->name }}
+                @else
+                    {{ $exam->subject->name }} &bull; {{ $exam->academicTerm->name }}
+                @endif
+            </p>
+        </div>
+        @unless($isNursery)
+            <a href="{{ route('teacher.exam.marks.template', $exam) }}"
+               class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                Download template
+            </a>
+        @endunless
     </div>
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
