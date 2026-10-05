@@ -86,6 +86,7 @@ class MarksImportHttpTest extends TestCase
         $this->assertStringContainsString('Mark is outside 0 to 100', $html);              // out of range
         $this->assertStringContainsString('No mark entered', $html);                       // blank
         $this->assertStringContainsString('data-testid="count-skipped">4<', $html);
+        $this->assertStringContainsString('<td data-label="Marks">101</td>', $html, 'a rejected mark is shown as typed so the teacher can fix it');
     }
 
     public function test_overwrite_is_off_by_default_and_must_be_ticked(): void

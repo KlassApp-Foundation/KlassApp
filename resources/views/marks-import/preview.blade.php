@@ -63,12 +63,14 @@
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
 
+            <p class="text-gray-900">This will save <strong>{{ $counts['new'] }}</strong> new mark(s).</p>
+
             @if($counts['update'] > 0)
-                <div class="flex items-start gap-3">
-                    <input id="overwrite" type="checkbox" name="overwrite" value="1" class="mt-1" style="width:24px;height:24px;" @checked(old('overwrite'))>
-                    <label for="overwrite" class="text-gray-900"><strong>Overwrite {{ $counts['update'] }} mark(s) that already have a different value.</strong>
-                        <span class="block text-gray-800">Leave this unticked to keep the saved marks; those rows will be reported as skipped.</span></label>
-                </div>
+                <label for="overwrite" class="flex items-start gap-3 text-gray-900" style="min-height:44px; cursor:pointer;">
+                    <input id="overwrite" type="checkbox" name="overwrite" value="1" class="mt-1" style="width:24px;height:24px;flex-shrink:0;" @checked(old('overwrite'))>
+                    <span><strong>Overwrite {{ $counts['update'] }} mark(s) that already have a different value.</strong>
+                        <span class="block text-gray-800">Leave this unticked to keep the saved marks; those rows will be reported as skipped.</span></span>
+                </label>
             @endif
 
             @if($plan->requiresReason)
@@ -81,7 +83,7 @@
             @endif
 
             <div class="flex flex-wrap gap-3">
-                <x-button type="submit" variant="primary">Save {{ $counts['new'] }} new @if($counts['update'] > 0) (and update ticked) @endif marks</x-button>
+                <x-button type="submit" variant="primary">Save marks</x-button>
                 <x-button variant="ghost" :href="route($routePrefix.'.page', $exam)">Cancel</x-button>
             </div>
         </form>

@@ -371,7 +371,7 @@ class MarksImportService
     {
         $row = [
             'row' => $in['row'], 'identifier' => $in['identifier'], 'name' => $in['name'],
-            'student_id' => null, 'student_name' => null, 'mark' => null, 'existing' => null,
+            'student_id' => null, 'student_name' => null, 'raw_mark' => $in['mark'], 'mark' => null, 'existing' => null,
             'outcome' => 'skipped', 'reason' => null, 'message' => null,
         ];
 

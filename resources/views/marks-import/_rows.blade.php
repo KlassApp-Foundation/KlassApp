@@ -1,6 +1,7 @@
+@once<link rel="stylesheet" href="{{ asset('css/marks-import.css') }}">@endonce
 {{-- Table of import rows. Needs $rows; optional $showExisting (bool), $showStatus (bool). Restacks as cards below 768px via data-label. --}}
 <div class="ds-table-wrap">
-    <table class="ds-table-ledger ds-table-card-mobile">
+    <table class="ds-table-ledger ds-table-card-mobile marks-import-table">
         <thead>
             <tr>
                 <th scope="col">Row</th>
@@ -17,7 +18,7 @@
                     <td data-label="Row">{{ $r['row'] }}</td>
                     <td data-label="Admission No">{{ $r['identifier'] ?? '—' }}</td>
                     <td data-label="Student">{{ $r['student_name'] ?? $r['name'] ?? '—' }}</td>
-                    <td data-label="Marks">{{ $r['mark'] ?? '—' }}</td>
+                    <td data-label="Marks">{{ $r['mark'] ?? ($r['raw_mark'] ?? '—') }}</td>
                     @if(!empty($showExisting)) <td data-label="Saved now">{{ $r['existing'] ?? '—' }}</td> @endif
                     <td data-label="Outcome">
                         @switch($r['outcome'])

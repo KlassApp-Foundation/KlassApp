@@ -1,0 +1,22 @@
+/* Marks import screens. When the table restacks as cards (below 768px) the header row is
+   visually hidden but stays available to screen readers. Clipping a <thead> does not work
+   (overflow does not apply to table row groups), so the row and its cells are positioned out. */
+@media (max-width: 767px) {
+    .marks-import-table thead,
+    .marks-import-table thead tr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+    .marks-import-table thead th {
+        display: block;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+    }
+}

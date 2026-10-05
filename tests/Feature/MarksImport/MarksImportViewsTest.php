@@ -69,6 +69,7 @@ class MarksImportViewsTest extends TestCase
         $this->assertStringContainsString('role="status"', $html);
         $this->assertStringContainsString('data-label="Marks"', $html, 'cells carry data-label so tables restack on phones');
         $this->assertStringContainsString('ds-table-card-mobile', $html);
+        $this->assertStringContainsString('css/marks-import.css', $html, 'the header row of the restacked table is hidden by this stylesheet');
         $this->assertMatchesRegularExpression('/<th scope="col">/', $html);
         $this->assertStringContainsString('data-testid="marks-import-confirm"', $html);
 
