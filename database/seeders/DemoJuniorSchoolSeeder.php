@@ -320,6 +320,7 @@ class DemoJuniorSchoolSeeder extends Seeder
                 $first = $firsts[($n * 7) % count($firsts)];
                 $last = $lasts[($n * 11) % count($lasts)];
                 $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+                $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
 
                 $link = $this->links[$linkKeys[$i % count($linkKeys)]];
 

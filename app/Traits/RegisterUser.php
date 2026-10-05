@@ -7,6 +7,7 @@ namespace App\Traits;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
+use App\Services\StudentIdGeneratorService;
 use App\Models\TeacherProfile;
 use App\Models\ParentProfile;
 use App\Models\Alumniprofile;
@@ -58,7 +59,20 @@ trait RegisterUser
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
-            $user->registration_number      = $data->registration_number;
+
+            // KLS number: keep a valid provided value; otherwise mint one through the
+            // race-safe generator. A non-KLS admission number from an old file is kept
+            // as the school's own student id instead of corrupting the KLS field.
+            $providedRegistration = trim((string) ($data->registration_number ?? ''));
+            if ($providedRegistration !== '' && preg_match('/^KLS\d{7}$/i', $providedRegistration)) {
+                $klsNumber = $providedRegistration;
+            } else {
+                $klsNumber = StudentIdGeneratorService::next((int) $school_id);
+                if ($providedRegistration !== '' && trim((string) ($data->school_student_id ?? '')) === '') {
+                    $data->school_student_id = $providedRegistration;
+                }
+            }
+            $user->registration_number      = $klsNumber;
 
             $user->save();
 
@@ -150,6 +164,7 @@ trait RegisterUser
             $academic->school_id                    = $school_id;
             $academic->academic_year_id             = $academic_year_id;
             $academic->user_id                      = $user->id;
+            $academic->klassapp_student_id          = $klsNumber;
             $academic->standardLink_id              = $data->standard;
             $academic->std_school_pay_number                  = $data->std_school_pay_number;
             $academic->lin = $data->lin;

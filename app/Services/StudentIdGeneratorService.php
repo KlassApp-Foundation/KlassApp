@@ -68,4 +68,19 @@ class StudentIdGeneratorService
 
         return $id;
     }
+
+    /**
+     * The student's KLS number, assigning one only when the student does not
+     * have one yet. Never reassigns: an existing value is returned untouched,
+     * so re-runs and concurrent callers cannot corrupt a student's identity.
+     */
+    public static function ensureForStudent(User $student): string
+    {
+        $existing = trim((string) $student->registration_number);
+        if ($existing !== '') {
+            return $existing;
+        }
+
+        return self::nextForStudent($student);
+    }
 }
