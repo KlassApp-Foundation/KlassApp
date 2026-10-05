@@ -36,6 +36,14 @@
     --d-dark-border: #334155;
     --d-dark-active: var(--d-green);
 
+    /* ── Icon colours (Lucide handoff 2026-10-01). Icons are currentColor; pick one of these. ── */
+    --d-icon: var(--d-text);                  /* #1E293B 14.6:1 */
+    --d-icon-muted: var(--d-text-secondary);  /* #64748B 4.76:1 */
+    --d-icon-active: #14532D;                 /* on #E8EFE7 active nav row, 9.0:1 */
+    --d-icon-danger: #B91C1C;                 /* 6.47:1 */
+    --d-icon-warning: var(--d-warning);       /* #B45309 5.02:1 */
+    --d-icon-on-accent: var(--d-white);       /* on #15803D, 5.02:1 */
+
     /* ── Borders & Rings ── */
     --d-border: #E2E8F0;
     --d-border-strong: #CBD5E1;

@@ -1,0 +1,766 @@
+{
+    "roles": {
+        "admin": {
+            "prefix": "admin",
+            "layout": "grouped",
+            "item_class": "py-3 px-3 dashboard-menu-item",
+            "active_class": "active dashboard-active",
+            "footer": {
+                "label": "Help & Docs",
+                "href": "https://klassapp.xyz/help",
+                "external": true
+            },
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "admin/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                }
+            ],
+            "groups": [
+                {
+                    "key": "academics",
+                    "label": "Academics",
+                    "items": [
+                        {
+                            "label": "Students",
+                            "url": "admin/students",
+                            "active": [
+                                "students",
+                                "student",
+                                "alumni",
+                                "blocked_students"
+                            ]
+                        },
+                        {
+                            "label": "Teachers",
+                            "url": "admin/teachers",
+                            "active": [
+                                "teachers",
+                                "teacher",
+                                "staff",
+                                "staffs"
+                            ]
+                        },
+                        {
+                            "label": "Parents",
+                            "url": "admin/parents",
+                            "active": [
+                                "parents",
+                                "parent"
+                            ]
+                        },
+                        {
+                            "label": "Classes & Streams",
+                            "url": "admin/classes",
+                            "active": [
+                                "classes",
+                                "sections",
+                                "standardlinks",
+                                "standardLink"
+                            ]
+                        },
+                        {
+                            "label": "Subjects",
+                            "url": "admin/subjects",
+                            "active": [
+                                "subjects",
+                                "subject"
+                            ]
+                        },
+                        {
+                            "label": "Timetable",
+                            "url": "admin/timetable",
+                            "active": [
+                                "timetable",
+                                "timetables"
+                            ]
+                        },
+                        {
+                            "label": "Attendance",
+                            "url": "admin/attendance",
+                            "active": [
+                                "attendance"
+                            ]
+                        },
+                        {
+                            "label": "Exams & Marks",
+                            "url": "admin/exams",
+                            "active": [
+                                "exams",
+                                "exam",
+                                "marks",
+                                "mark"
+                            ]
+                        },
+                        {
+                            "label": "Grading",
+                            "url": "admin/grades",
+                            "active": [
+                                "grades",
+                                "grade"
+                            ]
+                        },
+                        {
+                            "label": "Report Cards",
+                            "url": "admin/reports/cards",
+                            "active": [
+                                "reports"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "operations",
+                    "label": "Operations",
+                    "items": [
+                        {
+                            "label": "Library",
+                            "route": "admin.library.books",
+                            "active": [
+                                "library",
+                                "books"
+                            ]
+                        },
+                        {
+                            "label": "Admissions",
+                            "url": "admin/admissions",
+                            "active": [
+                                "admissions",
+                                "admission",
+                                "admissionlist"
+                            ]
+                        },
+                        {
+                            "label": "Health records",
+                            "url": "admin/health",
+                            "active": [
+                                "health",
+                                "medical"
+                            ]
+                        },
+                        {
+                            "label": "Transport",
+                            "url": "admin/transport",
+                            "active": [
+                                "transport"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "finance",
+                    "label": "Finance",
+                    "items": [
+                        {
+                            "label": "Fees & Payments",
+                            "url": "admin/fees/payments",
+                            "active": [
+                                "fees",
+                                "fee",
+                                "payments",
+                                "payment",
+                                "invoices"
+                            ]
+                        },
+                        {
+                            "label": "Unmatched Payments",
+                            "url": "admin/fees/payments/unmatched",
+                            "active": [
+                                "unmatched"
+                            ],
+                            "class": "pl-6 py-2 px-3 dashboard-menu-item",
+                            "small": true
+                        }
+                    ]
+                },
+                {
+                    "key": "communication",
+                    "label": "Communication",
+                    "items": [
+                        {
+                            "label": "Messaging",
+                            "route": "admin.messages",
+                            "active": [
+                                "messages",
+                                "messaging",
+                                "notifications",
+                                "sentmessages"
+                            ]
+                        },
+                        {
+                            "label": "Calendar",
+                            "url": "admin/calendar",
+                            "active": [
+                                "calendar",
+                                "events"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "system",
+                    "label": "System",
+                    "items": [
+                        {
+                            "label": "Approvals",
+                            "url": "admin/approvals",
+                            "active": [
+                                "approvals",
+                                "approval"
+                            ]
+                        },
+                        {
+                            "label": "Data Exports",
+                            "url": "admin/reports",
+                            "active": [
+                                "reports",
+                                "report"
+                            ]
+                        },
+                        {
+                            "label": "Settings",
+                            "url": "admin/settings",
+                            "active": [
+                                "settings"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "superadmin": {
+            "prefix": "superadmin",
+            "layout": "flat",
+            "item_class": "dashboard-menu-item py-3 px-3",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "route": "superadmin.dashboard",
+                    "title": "Dashboard",
+                    "paths": [
+                        "superadmin/dashboard*"
+                    ]
+                },
+                {
+                    "label": "Schools",
+                    "url": "superadmin/academics/schools",
+                    "title": "Schools",
+                    "paths": [
+                        "superadmin/academics*",
+                        "superadmin/*/schools*",
+                        "superadmin/*/school*"
+                    ]
+                },
+                {
+                    "label": "Subscriptions",
+                    "route": "superadmin.reports.subscriptionlist",
+                    "title": "Subscriptions",
+                    "paths": [
+                        "superadmin/*/subscriptions*",
+                        "superadmin/*/subscription*"
+                    ]
+                },
+                {
+                    "label": "Plans",
+                    "route": "superadmin.setting.planlist",
+                    "title": "Plans",
+                    "paths": [
+                        "superadmin/*/plans*",
+                        "superadmin/*/plan*"
+                    ]
+                },
+                {
+                    "label": "Reports",
+                    "route": "superadmin.reports.index",
+                    "title": "Reports",
+                    "paths": [
+                        "superadmin/reports*"
+                    ]
+                },
+                {
+                    "label": "Mail List",
+                    "url": "superadmin/mail-list",
+                    "title": "Mail List",
+                    "paths": [
+                        "superadmin/*/mail-list*"
+                    ]
+                },
+                {
+                    "label": "Settings",
+                    "url": "superadmin/settings",
+                    "title": "Settings",
+                    "paths": [
+                        "superadmin/settings*",
+                        "superadmin/*/co-admins*",
+                        "superadmin/*/cities*",
+                        "superadmin/*/locations*",
+                        "superadmin/*/features*",
+                        "superadmin/*/emis*",
+                        "superadmin/toshi*"
+                    ]
+                }
+            ]
+        },
+        "teacher": {
+            "prefix": "teacher",
+            "layout": "flat",
+            "item_class": "py-3 px-3 dashboard-menu-item",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "teacher/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Classes",
+                    "url": "teacher/classes",
+                    "a_class": "flex items-center whitespace-nowrap",
+                    "active": [
+                        "classes",
+                        "standardLinks",
+                        "standardLink"
+                    ]
+                },
+                {
+                    "label": "Timetable",
+                    "route": "teacher.timetable.index",
+                    "active": [
+                        "timetable"
+                    ]
+                },
+                {
+                    "label": "Attendance",
+                    "route": "teacher.attendance.index",
+                    "active": [
+                        "attendance"
+                    ]
+                },
+                {
+                    "label": "Exams",
+                    "route": "teacher.exams.create",
+                    "active": [
+                        "exams",
+                        "exam"
+                    ],
+                    "condition": "class_teacher"
+                },
+                {
+                    "label": "Homework",
+                    "url": "teacher/homeworks",
+                    "active": [
+                        "homework",
+                        "homeworks"
+                    ]
+                },
+                {
+                    "label": "Marks",
+                    "url": "teacher/exam/marks",
+                    "active": [
+                        "marks",
+                        "mark"
+                    ]
+                },
+                {
+                    "label": "Report Cards",
+                    "route": "teacher.reports.cards.index",
+                    "active": [
+                        "reports"
+                    ],
+                    "condition": "class_teacher"
+                },
+                {
+                    "label": "Class Streams",
+                    "route": "teacher.class-stream.index",
+                    "active": [
+                        "class-streams"
+                    ],
+                    "condition": "class_streams",
+                    "a_class": "flex items-center",
+                    "testid": "ct-streams-nav"
+                },
+                {
+                    "label": "Notices",
+                    "route": "teacher.notices.index",
+                    "active": [
+                        "notices",
+                        "notice"
+                    ]
+                },
+                {
+                    "label": "Events",
+                    "url": "teacher/events",
+                    "active": [
+                        "events"
+                    ]
+                },
+                {
+                    "label": "Library",
+                    "url": "teacher/libraryactivity",
+                    "active": [
+                        "library",
+                        "libraryactivity"
+                    ]
+                }
+            ]
+        },
+        "student": {
+            "prefix": "student",
+            "layout": "flat",
+            "item_class": "py-3 px-3 dashboard-menu-item",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "student/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Marks",
+                    "url": "student/marks",
+                    "active": [
+                        "marks",
+                        "mark"
+                    ]
+                },
+                {
+                    "label": "Attendance",
+                    "url": "student/attendance",
+                    "active": [
+                        "attendance"
+                    ]
+                },
+                {
+                    "label": "Homework",
+                    "url": "student/homeworks",
+                    "active": [
+                        "homework",
+                        "homeworks"
+                    ]
+                },
+                {
+                    "label": "Assignments",
+                    "url": "student/assignments",
+                    "active": [
+                        "assignments",
+                        "assignment"
+                    ]
+                },
+                {
+                    "label": "Events",
+                    "url": "student/events",
+                    "active": [
+                        "events"
+                    ]
+                },
+                {
+                    "label": "Notices",
+                    "url": "student/notices",
+                    "active": [
+                        "notices",
+                        "notice"
+                    ]
+                },
+                {
+                    "label": "Library",
+                    "url": "student/libraryactivity",
+                    "active": [
+                        "libraryactivity",
+                        "library"
+                    ]
+                },
+                {
+                    "label": "Holidays",
+                    "url": "student/holidays",
+                    "active": [
+                        "holidays",
+                        "holiday"
+                    ]
+                },
+                {
+                    "label": "Chats",
+                    "url": "student/conversations",
+                    "active": [
+                        "chats",
+                        "chat",
+                        "conversations"
+                    ]
+                },
+                {
+                    "label": "Activity",
+                    "url": "student/activity",
+                    "active": [
+                        "activity"
+                    ]
+                }
+            ]
+        },
+        "parent": {
+            "prefix": "parent",
+            "layout": "flat",
+            "item_class": "py-3 px-3 dashboard-menu-item",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "route": "parent.dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Children",
+                    "route": "parent.children",
+                    "active": [
+                        "children"
+                    ]
+                },
+                {
+                    "label": "Fees",
+                    "resolver": "parent_child",
+                    "child_path": "fees",
+                    "paths": [
+                        "parent/*/fees"
+                    ]
+                },
+                {
+                    "label": "Grades",
+                    "resolver": "parent_child",
+                    "child_path": "grades",
+                    "paths": [
+                        "parent/*/grades"
+                    ]
+                },
+                {
+                    "label": "Attendance",
+                    "resolver": "parent_child",
+                    "child_path": "attendance",
+                    "paths": [
+                        "parent/*/attendance"
+                    ]
+                }
+            ]
+        },
+        "library": {
+            "prefix": "library",
+            "layout": "flat",
+            "item_class": "py-3 px-3 hover:font-semibold",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "library/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Books",
+                    "url": "library/books/index",
+                    "active": [
+                        "books",
+                        "book"
+                    ]
+                },
+                {
+                    "label": "Cards",
+                    "route": "library.cards",
+                    "active": [
+                        "cards",
+                        "card",
+                        "members",
+                        "member"
+                    ]
+                },
+                {
+                    "label": "Borrowing",
+                    "url": "library/booklending/index",
+                    "active": [
+                        "borrowing",
+                        "borrow",
+                        "returns",
+                        "return"
+                    ]
+                },
+                {
+                    "label": "Data Exports",
+                    "url": "library/activity",
+                    "active": [
+                        "reports",
+                        "report"
+                    ]
+                }
+            ]
+        },
+        "reception": {
+            "prefix": "receptionist",
+            "layout": "flat",
+            "item_class": "py-3 px-3 hover:bg-green-100",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "receptionist/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Visitors",
+                    "url": "receptionist/visitorlog",
+                    "active": [
+                        "visitorlog",
+                        "visitors",
+                        "visitor"
+                    ]
+                },
+                {
+                    "label": "Call Log",
+                    "url": "receptionist/calllog",
+                    "active": [
+                        "calllog",
+                        "calls",
+                        "call"
+                    ]
+                },
+                {
+                    "label": "Postal Record",
+                    "url": "receptionist/postalrecord",
+                    "active": [
+                        "postalrecord",
+                        "postal"
+                    ]
+                },
+                {
+                    "label": "Notices",
+                    "url": "receptionist/notices",
+                    "active": [
+                        "notices",
+                        "notice"
+                    ]
+                },
+                {
+                    "label": "Events",
+                    "url": "receptionist/events",
+                    "active": [
+                        "events",
+                        "event"
+                    ]
+                },
+                {
+                    "label": "Tasks",
+                    "url": "receptionist/tasks",
+                    "active": [
+                        "tasks",
+                        "task"
+                    ]
+                }
+            ]
+        },
+        "accountant": {
+            "prefix": "accountant",
+            "layout": "flat",
+            "item_class": "py-3 px-3 hover:font-semibold",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "accountant/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "Fees & Payments",
+                    "route": "accountant.fee-payments",
+                    "active": [
+                        "fees",
+                        "fee",
+                        "payments",
+                        "payment"
+                    ]
+                },
+                {
+                    "label": "Data Exports",
+                    "route": "accountant.reports",
+                    "active": [
+                        "reports",
+                        "report"
+                    ]
+                },
+                {
+                    "label": "Holidays",
+                    "url": "accountant/holidays",
+                    "active": [
+                        "holidays",
+                        "holiday"
+                    ]
+                },
+                {
+                    "label": "Payroll",
+                    "submenu": true,
+                    "active": [
+                        "payroll"
+                    ],
+                    "children": [
+                        {
+                            "label": "Templates",
+                            "url": "accountant/payroll/template"
+                        },
+                        {
+                            "label": "Salaries",
+                            "url": "accountant/payroll/salary"
+                        },
+                        {
+                            "label": "Payslips",
+                            "url": "accountant/payroll/payslip"
+                        },
+                        {
+                            "label": "Batch Run",
+                            "url": "accountant/payroll/batch",
+                            "active": [
+                                "payroll.batch"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "stock": {
+            "prefix": "stock",
+            "layout": "flat",
+            "item_class": "py-3 px-3",
+            "items": []
+        },
+        "alumni": {
+            "prefix": "alumni",
+            "layout": "flat",
+            "item_class": "py-3 px-3",
+            "items": [
+                {
+                    "label": "Dashboard",
+                    "url": "alumni/dashboard",
+                    "active": [
+                        "dashboard"
+                    ]
+                },
+                {
+                    "label": "My Marks",
+                    "url": "alumni/marks",
+                    "active": [
+                        "marks",
+                        "mark"
+                    ]
+                },
+                {
+                    "label": "Directory",
+                    "url": "alumni/directory",
+                    "active": [
+                        "directory"
+                    ]
+                }
+            ]
+        }
+    }
+}
