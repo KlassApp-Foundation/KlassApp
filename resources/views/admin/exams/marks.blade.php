@@ -44,7 +44,7 @@
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Student</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Adm No.</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">KLS number</th>
                                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Marks <span class="text-red-500">*</span></th>
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Comment (optional)</th>
                                 </tr>

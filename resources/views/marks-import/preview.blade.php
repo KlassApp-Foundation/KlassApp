@@ -14,6 +14,13 @@
         <strong>Nothing has been saved yet.</strong> This is a preview of <span>{{ $plan->fileName }}</span>.
     </div>
 
+    @if(!empty($plan->warnings))
+        <div role="alert" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="marks-import-warnings">
+            <p class="font-semibold">Heads up</p>
+            <ul class="list-disc pl-5">@foreach($plan->warnings as $message) <li>{{ $message }}</li> @endforeach</ul>
+        </div>
+    @endif
+
     @if($errors->any())
         <div role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-900">
             <ul class="list-disc pl-5">@foreach($errors->all() as $message) <li>{{ $message }}</li> @endforeach</ul>
@@ -27,6 +34,7 @@
         </div>
     @endif
 
+    @if(! $plan->isBlocked())
     <dl class="grid gap-3 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));" data-testid="marks-import-counts">
         <div class="ds-card ds-card-padding-sm"><dt class="text-sm text-gray-800">Rows in file</dt><dd class="text-2xl font-bold text-gray-900">{{ $counts['total'] }}</dd></div>
         <div class="ds-card ds-card-padding-sm"><dt class="text-sm text-gray-800">New marks to save</dt><dd class="text-2xl font-bold text-gray-900" data-testid="count-new">{{ $counts['new'] }}</dd></div>
@@ -56,6 +64,8 @@
             <p class="ds-empty-state-title">No rows can be saved</p>
             <p class="ds-empty-state-desc">Check the skipped rows above, fix the file and upload it again.</p>
         </div>
+    @endif
+
     @endif
 
     @if(! $plan->isBlocked() && $toSave > 0)

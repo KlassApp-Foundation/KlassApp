@@ -29,8 +29,8 @@ class MarksImportController extends Controller
     }
 
     /**
-     * Admin template download. Teachers use #986's teacher.exam.marks.template; this serves the
-     * same headings, roster and file naming from the import service so both import identically.
+     * Admin template download. Teachers use teacher.exam.marks.template; both serve the
+     * same two-sheet shape (Marks + Exam info) from the import service so both import identically.
      */
     public function importTemplate(Request $request, Exam $exam, MarksImportService $service)
     {
@@ -39,10 +39,15 @@ class MarksImportController extends Controller
 
         $rows = $service->templateRows($exam, $actor);
         $format = in_array($request->query('format'), ['csv', 'xlsx'], true) ? $request->query('format') : 'xlsx';
+        $fileName = sprintf('marks-template-exam-%d.%s', $exam->id, $format);
+
+        if ($format === 'csv') {
+            return Excel::download(new MarksheetExport($service->templateHeadings(), $rows, 'Marks'), $fileName);
+        }
 
         return Excel::download(
-            new MarksheetExport($service->templateHeadings(), $rows, 'Marks Template'),
-            sprintf('marks-template-exam-%d.%s', $exam->id, $format),
+            new \App\Exports\Marks\MarksTemplateExport($service->templateHeadings(), $rows, $service->templateInfoRows($exam)),
+            $fileName,
         );
     }
 }

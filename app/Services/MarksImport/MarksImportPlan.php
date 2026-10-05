@@ -13,6 +13,7 @@ final class MarksImportPlan
      * @param  list<array{row:int,identifier:?string,name:?string,mark:?string}>  $input  Normalised input rows (what the user uploaded).
      * @param  list<array<string,mixed>>  $rows  One outcome per input row.
      * @param  array<string,string>  $blockers  code => message; non-empty means commit() refuses.
+     * @param  list<string>  $warnings  Non-blocking notes shown with the preview (e.g. missing Exam info sheet).
      */
     public function __construct(
         public readonly int $examId,
@@ -23,6 +24,7 @@ final class MarksImportPlan
         public readonly array $rows,
         public readonly array $blockers,
         public readonly bool $requiresReason,
+        public readonly array $warnings = [],
     ) {
     }
 
@@ -74,6 +76,7 @@ final class MarksImportPlan
             'rows' => $this->rows,
             'blockers' => $this->blockers,
             'requires_reason' => $this->requiresReason,
+            'warnings' => $this->warnings,
         ];
     }
 
@@ -82,7 +85,7 @@ final class MarksImportPlan
     {
         return new self(
             (int) $d['exam_id'], (int) $d['school_id'], (string) $d['file_name'], (string) $d['file_sha256'],
-            $d['input'], $d['rows'], $d['blockers'], (bool) $d['requires_reason'],
+            $d['input'], $d['rows'], $d['blockers'], (bool) $d['requires_reason'], $d['warnings'] ?? [],
         );
     }
 }

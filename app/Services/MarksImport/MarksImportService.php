@@ -44,6 +44,9 @@ class MarksImportService
 
     public const MAX_MARK = 100.0;
 
+    /** Stamped into every template's Exam info sheet; bump when the template shape changes. */
+    public const TEMPLATE_VERSION = 'marks-import-v1';
+
     private const ADMIN_USERGROUPS = [1, 3];
 
     private const TEACHER_USERGROUP = 5;
@@ -60,13 +63,13 @@ class MarksImportService
         'no_grade_band' => 'No grading band covers this mark',
         'unknown_student' => 'Student not found',
         'not_in_class' => 'Not a student in this class',
-        'no_identifier' => 'No registration number on this row (students are matched by registration number, not by name)',
+        'no_identifier' => 'No KLS number on this row (students are matched by KLS number, not by name)',
         'duplicate_in_file' => 'Student appears more than once in the file',
         'duplicate_existing' => 'More than one saved mark exists for this student; fix it in marks entry',
         'overwrite_not_confirmed' => 'A different mark is already saved and overwriting was not confirmed',
     ];
 
-    private const ID_HEADERS = ['admissionno', 'admissionnumber', 'admno', 'admission', 'registrationnumber', 'regno', 'studentid', 'id'];
+    private const ID_HEADERS = ['admissionno', 'admissionnumber', 'admno', 'admission', 'registrationnumber', 'regno', 'klsnumber', 'klsno', 'kls', 'studentid', 'id'];
 
     private const NAME_HEADERS = ['student', 'studentname', 'name', 'learner', 'learnername', 'pupil', 'pupilname'];
 
@@ -104,14 +107,67 @@ class MarksImportService
     // ───────────────────────────── template ─────────────────────────────
 
     /**
-     * Same headings as the teacher template download (teacher.exam.marks.template, #986):
-     * registration_number, student_name, mark. The admin template route uses these too.
+     * Mark-sheet headings for every template download (teacher and admin): the first
+     * column is the student's KLS number; the mark column names its range.
      *
      * @return list<string>
      */
     public function templateHeadings(): array
     {
-        return ['registration_number', 'student_name', 'mark'];
+        return ['KLS number', 'student_name', 'Mark (out of '.(int) self::MAX_MARK.')'];
+    }
+
+    /**
+     * The template key: the exam id plus a checksum over the exam's identity. Written
+     * into the Exam info sheet and re-computed at import time to catch wrong-exam files.
+     */
+    public function templateKey(Exam $exam): string
+    {
+        $payload = implode('|', [
+            self::TEMPLATE_VERSION,
+            'exam='.(int) $exam->id,
+            'school='.(int) $exam->school_id,
+            'section='.(int) $exam->section_id,
+            'subject='.(int) $exam->subject_id,
+            'term='.(int) $exam->academic_term_id,
+        ]);
+
+        return $exam->id.'-'.substr(hash('sha256', $payload), 0, 10);
+    }
+
+    /**
+     * Exam info sheet rows (label, value) that ride along as the template's second sheet.
+     *
+     * @return list<array{0:string,1:string}>
+     */
+    public function templateInfoRows(Exam $exam): array
+    {
+        $exam->loadMissing('school', 'subject', 'section', 'standard', 'examType', 'academicTerm');
+
+        return [
+            ['School', (string) ($exam->school?->name ?? '')],
+            ['Class and stream', $this->examClassLabel($exam)],
+            ['Subject', (string) ($exam->subject?->name ?? '')],
+            ['Exam', (string) ($exam->examType?->name ?? '')],
+            ['Term', (string) ($exam->academicTerm?->name ?? '')],
+            ['Maximum marks', (string) (int) self::MAX_MARK],
+            ['Generated', now()->format('Y-m-d H:i')],
+            ['Template version', self::TEMPLATE_VERSION],
+            ['Template key', $this->templateKey($exam)],
+        ];
+    }
+
+    private function examClassLabel(Exam $exam): string
+    {
+        return (string) ($exam->section?->name ?? $exam->standard?->name ?? '');
+    }
+
+    /** Human label for refusal messages: "Grade 4 Mathematics". */
+    private function examLabel(Exam $exam): string
+    {
+        $label = trim($this->examClassLabel($exam).' '.trim((string) ($exam->subject?->name ?? '')));
+
+        return $label !== '' ? $label : 'this exam';
     }
 
     /**
@@ -134,11 +190,11 @@ class MarksImportService
     // ───────────────────────────── reading ─────────────────────────────
 
     /**
-     * Read the first sheet of an xlsx, xls or csv file into raw rows.
+     * Read every sheet of an xlsx, xls or csv file into raw rows (sheet order kept).
      *
-     * @return list<list<mixed>>
+     * @return list<list<list<mixed>>>
      */
-    public function readRows(string $path, ?string $extension = null): array
+    public function readSheets(string $path, ?string $extension = null): array
     {
         $type = match (strtolower((string) $extension)) {
             'csv', 'txt' => \Maatwebsite\Excel\Excel::CSV,
@@ -149,7 +205,17 @@ class MarksImportService
 
         $sheets = Excel::toArray(new MarksSheetReader, $path, null, $type);
 
-        return array_values($sheets[0] ?? []);
+        return array_values(array_map(fn ($sheet) => array_values((array) $sheet), $sheets));
+    }
+
+    /**
+     * Read the first sheet into raw rows (callers that know they have a single sheet).
+     *
+     * @return list<list<mixed>>
+     */
+    public function readRows(string $path, ?string $extension = null): array
+    {
+        return $this->readSheets($path, $extension)[0] ?? [];
     }
 
     // ───────────────────────────── preview ─────────────────────────────
@@ -163,12 +229,34 @@ class MarksImportService
     {
         $this->assertCanImport($actor, $exam);
 
-        $raw = is_array($source) ? $source : $this->readRows($source, pathinfo($fileName ?? $source, PATHINFO_EXTENSION));
-        $fileSha256 ??= is_string($source) && is_file($source) ? hash_file('sha256', $source) : hash('sha256', json_encode($raw));
+        if (is_array($source)) {
+            return $this->previewSheets($exam, $actor, [$source], $fileName, $fileSha256);
+        }
 
-        [$input, $blockers] = $this->normaliseInput($raw);
+        $sheets = $this->readSheets($source, pathinfo($fileName ?? $source, PATHINFO_EXTENSION));
+        $fileSha256 ??= is_file($source) ? hash_file('sha256', $source) : hash('sha256', $source);
 
-        return $this->plan($exam, $input, $blockers, $fileName ?? 'rows', $fileSha256);
+        return $this->previewSheets($exam, $actor, $sheets, $fileName ?? 'rows', $fileSha256);
+    }
+
+    /**
+     * Validate and describe what would be saved, from raw sheets (marks sheet first,
+     * optional Exam info sheet). Saves nothing.
+     *
+     * @param  list<list<list<mixed>>>  $sheets
+     */
+    public function previewSheets(Exam $exam, User $actor, array $sheets, ?string $fileName = null, ?string $fileSha256 = null): MarksImportPlan
+    {
+        $this->assertCanImport($actor, $exam);
+
+        $marksSheet = $this->findMarksSheet($sheets);
+        [$input, $blockers] = $this->normaliseInput($marksSheet ?? []);
+        [, $verifyBlockers, $warnings] = $this->verifyExamInfoSheet($sheets, $exam);
+
+        return $this->plan(
+            $exam, $input, array_merge($blockers, $verifyBlockers),
+            $fileName ?? 'rows', $fileSha256 ?? hash('sha256', json_encode($sheets)), $warnings,
+        );
     }
 
     // ───────────────────────────── commit ─────────────────────────────
@@ -184,6 +272,11 @@ class MarksImportService
     {
         $exam = Exam::query()->where('school_id', $plan->schoolId)->findOrFail($plan->examId);
         $this->assertCanImport($actor, $exam);
+
+        if ($plan->isBlocked()) {
+            $blockers = $plan->blockers;
+            throw new MarksImportBlocked((string) array_key_first($blockers), (string) reset($blockers));
+        }
 
         $lock = Cache::lock('marks-import:exam:'.$exam->id, 60);
         if (! $lock->get()) {
@@ -253,9 +346,29 @@ class MarksImportService
      * @param  list<list<mixed>>  $raw
      * @return array{0:list<array{row:int,identifier:?string,name:?string,mark:?string}>,1:array<string,string>}
      */
-    private function normaliseInput(array $raw): array
+    /**
+     * First sheet that carries a recognisable header row (KLS-number column + mark column).
+     *
+     * @param  list<list<list<mixed>>>  $sheets
+     * @return ?list<list<mixed>>
+     */
+    private function findMarksSheet(array $sheets): ?array
     {
-        $header = null;
+        foreach ($sheets as $sheet) {
+            if ($this->detectHeader($sheet) !== null) {
+                return $sheet;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  list<list<mixed>>  $raw
+     * @return ?array{0:int,1:array{id:?int,name:?int,mark:?int}}
+     */
+    private function detectHeader(array $raw): ?array
+    {
         foreach (array_slice($raw, 0, 10, true) as $i => $cells) {
             $map = ['id' => null, 'name' => null, 'mark' => null];
             foreach (array_values((array) $cells) as $col => $cell) {
@@ -267,18 +380,24 @@ class MarksImportService
                     $map['id'] = $col;
                 } elseif ($map['name'] === null && in_array($key, self::NAME_HEADERS, true)) {
                     $map['name'] = $col;
-                } elseif ($map['mark'] === null && in_array($key, self::MARK_HEADERS, true)) {
+                } elseif ($map['mark'] === null && (in_array($key, self::MARK_HEADERS, true) || str_starts_with($key, 'mark'))) {
                     $map['mark'] = $col;
                 }
             }
             if ($map['mark'] !== null && $map['id'] !== null) {
-                $header = [$i, $map];
-                break;
+                return [$i, $map];
             }
         }
 
+        return null;
+    }
+
+    private function normaliseInput(array $raw): array
+    {
+        $header = $this->detectHeader($raw);
+
         if ($header === null) {
-            return [[], ['columns' => 'The file needs a "registration_number" column and a "mark" column. Download the template and use it as the starting point.']];
+            return [[], ['columns' => 'The file needs a "KLS number" column and a "Mark" column. Download the template and use it as the starting point.']];
         }
 
         [$headerIndex, $map] = $header;
@@ -310,10 +429,100 @@ class MarksImportService
     }
 
     /**
+     * Check the Exam info sheet (when present): the key and the class/subject/exam
+     * fields must match the exam being imported into. A file without the sheet is
+     * allowed but warned about; a mismatch is refused before any preview is shown.
+     *
+     * @param  list<list<list<mixed>>>  $sheets
+     * @return array{0:?array<string,string>,1:array<string,string>,2:list<string>} [info, blockers, warnings]
+     */
+    private function verifyExamInfoSheet(array $sheets, Exam $exam): array
+    {
+        $info = null;
+        foreach ($sheets as $sheet) {
+            $map = $this->infoMap($sheet);
+            if ($map !== null && array_key_exists('templatekey', $map)) {
+                $info = $map;
+                break;
+            }
+        }
+
+        $exam->loadMissing('subject', 'section', 'standard', 'examType');
+
+        if ($info === null) {
+            return [null, [], ['This file has no Exam info sheet, so the exam could not be checked. Make sure it was made for '.$this->examLabel($exam).'.']];
+        }
+
+        $fileLabel = trim(((string) ($info['classandstream'] ?? '')).' '.((string) ($info['subject'] ?? '')));
+        $fileLabel = $fileLabel !== '' ? $fileLabel : 'a different exam';
+
+        $ok = trim((string) ($info['templatekey'] ?? '')) === $this->templateKey($exam);
+        if ($ok) {
+            $expected = [
+                'classandstream' => $this->examClassLabel($exam),
+                'subject' => (string) ($exam->subject?->name ?? ''),
+                'exam' => (string) ($exam->examType?->name ?? ''),
+            ];
+            foreach ($expected as $label => $value) {
+                $have = trim((string) ($info[$label] ?? ''));
+                if ($have !== '' && ! $this->sameText($have, $value)) {
+                    $ok = false;
+                    break;
+                }
+            }
+        }
+
+        if (! $ok) {
+            $target = $this->examLabel($exam);
+            if ($this->sameText($fileLabel, $target)) {
+                $fileExam = trim((string) ($info['exam'] ?? ''));
+                $targetExam = trim((string) ($exam->examType?->name ?? ''));
+                if ($fileExam !== '' && $targetExam !== '' && ! $this->sameText($fileExam, $targetExam)) {
+                    $fileLabel .= ' ('.$fileExam.')';
+                    $target .= ' ('.$targetExam.')';
+                }
+            }
+
+            return [$info, ['exam_mismatch' => "This file is for {$fileLabel}; you are importing into {$target}."], []];
+        }
+
+        return [$info, [], []];
+    }
+
+    /**
+     * @param  list<mixed>  $sheet
+     * @return ?array<string,string>
+     */
+    private function infoMap(array $sheet): ?array
+    {
+        $map = [];
+        foreach (array_slice($sheet, 0, 30) as $cells) {
+            $cells = array_values((array) $cells);
+            $label = preg_replace('/[^a-z0-9]/', '', strtolower(trim((string) ($cells[0] ?? ''))));
+            if ($label === '') {
+                continue;
+            }
+            if (! array_key_exists($label, $map)) {
+                $map[$label] = trim((string) ($cells[1] ?? ''));
+            }
+        }
+
+        return $map === [] ? null : $map;
+    }
+
+    private function sameText(string $a, string $b): bool
+    {
+        $normalise = fn (string $s) => strtolower((string) preg_replace('/\s+/', ' ', trim($s)));
+
+        return $normalise($a) === $normalise($b);
+    }
+
+    /**
      * @param  list<array{row:int,identifier:?string,name:?string,mark:?string}>  $input
      * @param  array<string,string>  $blockers
+     * @param  list<string>  $warnings
      */
-    private function plan(Exam $exam, array $input, array $blockers, string $fileName, string $fileSha256): MarksImportPlan
+    private function plan(Exam $exam, array $input, array $blockers, string $fileName, string $fileSha256, array $warnings = []): MarksImportPlan
     {
         $exam->loadMissing('standard');
 
@@ -360,7 +569,7 @@ class MarksImportService
 
         return new MarksImportPlan(
             $exam->id, (int) $exam->school_id, $fileName, $fileSha256, $input, $resolved, $blockers,
-            $exam->status === 'submitted',
+            $exam->status === 'submitted', $warnings,
         );
     }
 
