@@ -424,6 +424,9 @@ Route::prefix('exam')->group(function () {
     // Enter / edit marks for a specific exam
     Route::get('/{exam}/marks/enter', 'MarksController@enterExamMarks')->name('teacher.exam.marks.enter');
 
+    // Download the marks-import spreadsheet template for this exam's roster
+    Route::get('/{exam}/marks/template', 'MarksController@downloadTemplate')->name('teacher.exam.marks.template');
+
     // Save marks
     Route::post('/{exam}/marks/save', 'MarksController@saveExamMarks')->name('teacher.exam.marks.save');
 
