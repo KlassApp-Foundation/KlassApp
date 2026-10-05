@@ -55,6 +55,7 @@ class MarksImportViewsTest extends TestCase
         $this->assertStringContainsString('<label for="marks-file"', $html);
         $this->assertStringContainsString('id="marks-file"', $html);
         $this->assertStringContainsString('aria-describedby="marks-file-help"', $html);
+        $this->assertStringContainsString('KLS number', $html);
         $this->assertStringContainsString('Download template (.xlsx)', $html);
         $this->assertStringContainsString('Uploading the same file again changes nothing', $html);
         $this->assertStringContainsStringIgnoringCase('Mathematics', $html);
@@ -63,10 +64,11 @@ class MarksImportViewsTest extends TestCase
 
     public function test_preview_and_result_pages_use_announced_alerts_and_stacking_tables(): void
     {
-        $file = UploadedFile::fake()->createWithContent('m.csv', "registration_number,student_name,mark\nKLS0000001,,80\nKLS0000099,,10\n");
+        $file = UploadedFile::fake()->createWithContent('m.csv', "KLS number,student_name,Mark (out of 100)\nKLS0000001,,80\nKLS0000099,,10\n");
         $html = $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.preview', $this->exam), ['file' => $file])->assertOk()->getContent();
 
         $this->assertStringContainsString('role="status"', $html);
+        $this->assertStringContainsString('data-testid="marks-import-warnings"', $html, 'csv without the Exam info sheet warns instead of blocking');
         $this->assertStringContainsString('data-label="Marks"', $html, 'cells carry data-label so tables restack on phones');
         $this->assertStringContainsString('ds-table-card-mobile', $html);
         $this->assertStringContainsString('css/marks-import.css', $html, 'the header row of the restacked table is hidden by this stylesheet');
@@ -89,5 +91,16 @@ class MarksImportViewsTest extends TestCase
             $this->assertDoesNotMatchRegularExpression('/UNEB|Uganda|UGX|\bP\.\d\b|Primary (One|Seven)|O-level|A-level/i', $text, basename($file).' must use global wording');
             $this->assertStringNotContainsString('#94A3B8', $text, basename($file));
         }
+    }
+
+    public function test_teacher_enter_page_download_template_link_is_44px(): void
+    {
+        $html = $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+min-height:44px[^>]*>[^<]*Download template/s',
+            $html,
+            'the Download template link must be a 44px target',
+        );
     }
 }

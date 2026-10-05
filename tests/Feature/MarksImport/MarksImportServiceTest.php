@@ -3,11 +3,13 @@
 namespace Tests\Feature\MarksImport;
 
 use App\Events\MarksUpdated;
+use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\ActivityLog;
 use App\Models\CurrentPlan;
 use App\Models\Plan;
+use App\Models\Subject;
 use App\Services\MarksImport\MarksImportBlocked;
 use App\Services\MarksImport\MarksImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -281,22 +283,67 @@ class MarksImportServiceTest extends TestCase
     {
         $rows = $this->service->templateRows($this->exam, $this->owner);
 
-        $this->assertSame(['registration_number', 'student_name', 'mark'], $this->service->templateHeadings());
+        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100)'], $this->service->templateHeadings());
         $this->assertSame(
             [['KLS0000001', 'AMINA NAKATO', null], ['KLS0000002', 'BRIAN OKELLO', null], ['KLS0000003', 'CHLOE MWESIGWA', null]],
             $rows,
-            'registration number, name, empty mark cell: the same rows as teacher.exam.marks.template',
+            'KLS number, name, empty mark cell: the same rows as teacher.exam.marks.template',
         );
     }
 
     public function test_template_round_trips_through_preview(): void
     {
-        $rows = $this->service->templateRows($this->exam, $this->owner);
-        foreach ($rows as $i => $r) {
-            $rows[$i][2] = (string) (50 + $i);
-        }
-        $plan = $this->service->preview($this->exam, $this->owner, array_merge([$this->service->templateHeadings()], $rows));
+        $marks = array_merge([$this->service->templateHeadings()], [
+            ['KLS0000001', '', '60'], ['KLS0000002', '', '61'], ['KLS0000003', '', '62'],
+        ]);
+        $plan = $this->service->previewSheets($this->exam, $this->owner, [$marks, $this->service->templateInfoRows($this->exam)]);
 
         $this->assertSame(['new', 'new', 'new'], $this->outcomes($plan));
+        $this->assertSame([], $plan->warnings, 'a full template needs no warning');
+    }
+
+    public function test_a_file_without_the_exam_info_sheet_warns_but_still_previews(): void
+    {
+        $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([['KLS0000001', '', '80']]));
+
+        $this->assertFalse($plan->isBlocked());
+        $this->assertSame(['new'], $this->outcomes($plan));
+        $this->assertNotEmpty($plan->warnings);
+        $this->assertStringContainsString('could not be checked', implode(' ', $plan->warnings));
+    }
+
+    public function test_a_file_for_another_exam_is_refused_naming_both(): void
+    {
+        $science = Subject::create([
+            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id, 'standard_id' => $this->standard->id,
+            'section_id' => $this->section->id, 'name' => 'Science', 'code' => '002', 'type' => 'core', 'status' => 1,
+        ]);
+        $otherExam = Exam::withoutEvents(fn () => Exam::create([
+            'school_id' => $this->school->id, 'standard_id' => $this->standard->id, 'section_id' => $this->section->id,
+            'academic_year_id' => $this->year->id, 'academic_term_id' => $this->exam->academic_term_id,
+            'subject_id' => $science->id, 'teacher_id' => $this->owner->id, 'exam_type_id' => 2, 'status' => 'undone',
+        ]));
+
+        $marks = array_merge([$this->service->templateHeadings()], array_map(
+            fn (array $r) => [$r[0], $r[1], '70'],
+            $this->service->templateRows($otherExam, $this->owner),
+        ));
+        $plan = $this->service->previewSheets($this->exam, $this->owner, [$marks, $this->service->templateInfoRows($otherExam)]);
+
+        $this->assertTrue($plan->isBlocked());
+        $message = (string) ($plan->blockers['exam_mismatch'] ?? '');
+        $this->assertStringContainsString('Grade 4 SCIENCE', $message);
+        $this->assertStringContainsString('Grade 4 MATHEMATICS', $message);
+    }
+
+    public function test_kls_number_aliases_and_the_out_of_n_mark_label_are_accepted(): void
+    {
+        foreach (['KLS number', 'KLS No', 'Reg No', 'registration number'] as $header) {
+            $plan = $this->service->preview($this->exam, $this->owner, [
+                [$header, 'student_name', 'Mark (out of 100)'],
+                ['KLS0000001', 'Amina Nakato', '80'],
+            ]);
+            $this->assertSame(['new'], $this->outcomes($plan), $header.' must be accepted');
+        }
     }
 }

@@ -32,7 +32,7 @@ class MarksImportHttpTest extends TestCase
 
     private function csv(array $lines): UploadedFile
     {
-        return UploadedFile::fake()->createWithContent('marks.csv', implode("\n", array_merge(['registration_number,student_name,mark'], $lines))."\n");
+        return UploadedFile::fake()->createWithContent('marks.csv', implode("\n", array_merge(['KLS number,student_name,Mark (out of 100)'], $lines))."\n");
     }
 
     /** @return array{0:string,1:string} the confirm token and the preview html */
@@ -201,7 +201,7 @@ class MarksImportHttpTest extends TestCase
         $download = $this->actingAs($this->owner)->get(route('teacher.exam.marks.template', [$this->exam, 'format' => 'csv']));
         $download->assertOk();
         $rows = $this->csvRows($download);
-        $this->assertSame(['registration_number', 'student_name', 'mark'], $rows[0]);
+        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100)'], $rows[0]);
 
         $lines = [];
         foreach (array_slice($rows, 1) as $i => $r) {
@@ -209,6 +209,7 @@ class MarksImportHttpTest extends TestCase
         }
         [$token, $html] = $this->preview('teacher.exam.marks.import', $this->owner, $lines);
         $this->assertStringContainsString('data-testid="count-new">3<', $html);
+        $this->assertStringContainsString('data-testid="marks-import-warnings"', $html, 'csv templates cannot carry the Exam info sheet; the preview says so');
 
         $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token])->assertRedirect();
         $this->assertSame(3, Marks::count());
@@ -239,5 +240,43 @@ class MarksImportHttpTest extends TestCase
             return $rows;
         };
         $this->assertSame($sort($teacher), $sort($admin), 'one roster rule, whichever template route is used');
+    }
+
+    private function spreadsheet(\Illuminate\Testing\TestResponse $response): \PhpOffice\PhpSpreadsheet\Spreadsheet
+    {
+        $base = $response->baseResponse;
+        $bytes = $base instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse
+            ? file_get_contents($base->getFile()->getPathname())
+            : $response->streamedContent();
+        $tmp = tempnam(sys_get_temp_dir(), 'marks-template-').'.xlsx';
+        file_put_contents($tmp, $bytes);
+
+        try {
+            return \PhpOffice\PhpSpreadsheet\IOFactory::load($tmp);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    public function test_teacher_and_admin_xlsx_templates_share_the_two_sheet_shape(): void
+    {
+        $teacher = $this->spreadsheet($this->actingAs($this->owner)->get(route('teacher.exam.marks.template', $this->exam)));
+        $admin = $this->spreadsheet($this->actingAs($this->admin)->get(route('admin.exams.marks.import.template', $this->exam)));
+
+        foreach (['teacher' => $teacher, 'admin' => $admin] as $who => $ss) {
+            $this->assertSame(['Marks', 'Exam info'], $ss->getSheetNames(), $who.' template sheet names');
+            $marks = $ss->getSheetByName('Marks')->toArray(null, true, true, false);
+            $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100)'], $marks[0], $who.' headings');
+
+            $info = [];
+            foreach ($ss->getSheetByName('Exam info')->toArray() as $row) {
+                if (($row[0] ?? '') !== '') { $info[$row[0]] = $row[1] ?? null; }
+            }
+            $this->assertSame('Grade 4', $info['Class and stream'], $who);
+            $this->assertSame('MATHEMATICS', $info['Subject'], $who);
+            $this->assertSame('100', (string) $info['Maximum marks'], $who);
+            $this->assertSame('marks-import-v1', $info['Template version'], $who);
+            $this->assertMatchesRegularExpression('/^'.$this->exam->id.'-[0-9a-f]{10}$/', (string) $info['Template key'], $who);
+        }
     }
 }
