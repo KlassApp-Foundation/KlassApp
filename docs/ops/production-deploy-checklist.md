@@ -1,8 +1,9 @@
 # Production Deploy Checklist
 
-> **Status**: ready-to-use runbook, 2026-10-05. Verified against `main` @ `6fb10eeb`
-> (#981). Production runs Laravel Cloud, push-to-deploy **off** — merging to `main`
-> does **not** ship; a deploy is an explicit release you start and watch.
+> **Status**: ready-to-use runbook, re-verified 2026-10-06 (night shift) against the
+> pre-deploy tip of `main`; production still runs `dabfb80c`. Production runs Laravel
+> Cloud, push-to-deploy **off** — merging to `main` does **not** ship; a deploy is an
+> explicit release you start and watch.
 >
 > No secrets in this file. Every credential lives in Doppler (`CLOUD_AGENT_TOOLING`
 > for the Cloud API; backup password held by the owner). Environment-variable names
@@ -46,12 +47,22 @@
 
 ## 2. Migrations production will run (classified)
 
-Last verified against `main` @ `6fb10eeb` with production on `dabfb80c`:
-**11 new migrations will run; none are destructive** (no drops of tables/columns,
-no row deletions). Two change existing data — flagged below. There is **no gate
-backfill migration**: the verified-email sign-in gate does its backfill job in
-code (`EmailVerificationGate` exempts accounts created before the cutoff), so
-deploying it writes nothing.
+Re-verified 2026-10-06 (night shift) against the pre-deploy tip of `main` with
+production on `dabfb80c`: **11 new migrations will run; none are destructive** (no
+drops of tables/columns, no row deletions). The list below is final for this
+deploy — re-run `migrate:status` on production at deploy time and stop if the
+count differs. Two migrations change existing data — flagged below.
+
+**The database snapshot is the rollback for the data migrations.** A code revert
+cannot undo a data migration; the §1.4 snapshot is the pre-deploy state to
+restore for both flagged rows if their effect on production data is ever wrong:
+`map_school_student_size_to_new_buckets` (one-way wording map; `down()` is
+intentionally empty) and `backfill_existing_schools_toshi_safe_defaults` (the
+existing-schools Toshi reset; also reversible via its own capture — see below).
+
+There is **no gate backfill migration**: the verified-email sign-in gate does its
+backfill job in code (`EmailVerificationGate` exempts accounts created before the
+cutoff), so deploying it writes nothing.
 
 | Migration | Kind | Notes |
 |---|---|---|
@@ -64,7 +75,7 @@ deploying it writes nothing.
 | `2026_09_30_150000_map_school_student_size_to_new_buckets` | **data** | rewrites legacy `schools.student_size` labels to the new buckets (one-way; `down()` empty) |
 | `2026_10_01_210214_add_toshi_mode_to_schools_table` | **data** | adds `toshi_mode`; backfills `assistant`/`preview` per existing `toshi_enabled` |
 | `2026_10_01_221239_change_schools_toshi_mode_default_to_onboarding` | structure | default change only |
-| `2026_10_02_183000_backfill_existing_schools_toshi_safe_defaults` | **data — the existing-schools Toshi reset** | flips every school currently in `assistant` back to `preview` + `toshi_enabled=0` (AI is opt-in per school, AGENTS rule #33); writes a restore log (`storage/logs/toshi-backfill-restore-<date>.json`) so `down()` can restore exactly what it flipped |
+| `2026_10_02_183000_backfill_existing_schools_toshi_safe_defaults` | **data — the existing-schools Toshi reset** | flips every school currently in `assistant` back to `preview` + `toshi_enabled=0` (AI is opt-in per school, AGENTS rule #33); before flipping it captures school ids plus old `toshi_enabled`/`toshi_mode` only: to `storage/logs/toshi-backfill-restore-<date>.json` (feeds `down()`) **and** to the application log via `Log::info` (Cloud log stream), so the capture survives on a deployed container |
 | `2026_10_03_023019_add_onboarding_finish_and_skipped_steps_to_schools_table` | structure | adds nullable columns |
 
 Also on the path: `2026_09_22_010000_add_is_demo_to_schools_and_seed_demo_data`
@@ -72,10 +83,10 @@ was **modified** since production's SHA (demo seeding stripped, schema-only) —
 it will **not** re-run (Laravel tracks by filename); the change only affects
 fresh installs. No action needed.
 
-**At deploy time, watch the log line** `[toshi backfill] flipped N school(s):
-assistant=A, flag-only=B` — it is the authoritative record of which schools the
-Toshi reset touched. If N is larger than expected, the restore log allows an
-exact reversal.
+**At deploy time, watch the log stream** for `[toshi backfill] capture before
+reset` (per-school ids and old values) and the summary line `[toshi backfill]
+flipped N school(s): assistant=A, flag-only=B`. If N is larger than expected,
+the captured values (log stream or the restore file) allow an exact reversal.
 
 ## 3. Deploy
 
