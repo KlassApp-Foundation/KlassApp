@@ -22,6 +22,7 @@ use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
 use App\Services\OnboardingStepsService;
+use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 
@@ -1083,7 +1084,29 @@ class ManualOnboardingWizard extends Component
 
     private function refreshSteps(): void
     {
-        $checklist = OnboardingStepsService::steps($this->school()->fresh(), Auth::id());
+        $school = $this->school()->fresh();
+        $serviceRows = collect(OnboardingStepsService::steps($school, Auth::id()))
+            ->keyBy('key');
+
+        // Order and applicability come from the step registry (the same list
+        // the Toshi v2 driver walks, so both paths render the same steps in
+        // the same order); the service remains the source of display
+        // metadata — label/icon/is_complete/route — plus the hard guard that
+        // registry and service cannot silently drift apart.
+        $registryKeys = collect(app(StepRegistry::class)->forSchool($school))
+            ->map(fn ($step) => $step->key());
+        $missing = $registryKeys->diff($serviceRows->keys());
+        if ($missing->isNotEmpty()) {
+            throw new \RuntimeException(
+                'Step registry keys missing from OnboardingStepsService::steps(): '
+                .$missing->implode(', ')
+            );
+        }
+
+        $checklist = $registryKeys
+            ->map(fn (string $key) => $serviceRows[$key])
+            ->values()
+            ->all();
 
         // Wizard-only synthetic review step — not part of OnboardingStepsService /
         // Toshi "Completing Setup" checklist (would never complete otherwise).
