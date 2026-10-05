@@ -192,7 +192,8 @@ class GenerateReportTemplateThumbnails extends Command
         $makeStudent = function (string $fn, string $ln, int $juneTotal, int $eotTotal) use ($school, $year, $stdLink, $subjects, $teacher, $section, $june, $eot, $gradeFor, $suffix) {
             $u = User::create(['school_id' => $school->id, 'usergroup_id' => 6, 'name' => strtolower("$fn $ln"), 'email' => strtolower("$fn.$ln-{$suffix}") . '@example.test', 'password' => Hash::make(Str::random(24)), 'email_verified' => 1]);
             Userprofile::create(['school_id' => $school->id, 'user_id' => $u->id, 'usergroup_id' => 6, 'firstname' => $fn, 'lastname' => $ln, 'gender' => 'female', 'status' => 'active']);
-            StudentAcademic::create(['school_id' => $school->id, 'academic_year_id' => $year->id, 'user_id' => $u->id, 'standardLink_id' => $stdLink->id]);
+            $klsNumber = \App\Services\StudentIdGeneratorService::nextForStudent($u);
+            StudentAcademic::create(['school_id' => $school->id, 'academic_year_id' => $year->id, 'user_id' => $u->id, 'standardLink_id' => $stdLink->id, 'klassapp_student_id' => $klsNumber]);
 
             $names = array_keys($subjects);
             foreach ([[$june, $juneTotal], [$eot, $eotTotal]] as [$exam, $total]) {

@@ -73,6 +73,9 @@
                             ]
                         );
 
+                        // KLS number: assign at creation; re-runs keep the existing one.
+                        $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
+
                         // Student profile (userprofiles.state_id dropped — cities.state_id too)
                         $city = City::where('status', 1)
                                   ->inRandomOrder()
@@ -105,6 +108,7 @@
                             [
                                 'standardLink_id'   => $classRoom->id,
                                 'academic_year_id'  => $academicYear->id,
+                                'klassapp_student_id' => $klsNumber,
                                 // Add roll_no, status, etc. if needed
                             ]
                         );

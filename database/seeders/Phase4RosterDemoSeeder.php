@@ -122,6 +122,7 @@ class Phase4RosterDemoSeeder extends Seeder
             ['email' => 'phase4.student.three@klassapp.xyz', 'name' => 'Phase 4 Student Three'],
         ] as $studentData) {
             $student = $this->user($studentData['email'], $studentData['name'], $school, 6);
+            $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
 
             StudentAcademic::updateOrCreate(
                 [
@@ -131,6 +132,7 @@ class Phase4RosterDemoSeeder extends Seeder
                 ],
                 [
                     'standardLink_id' => $stream->id,
+                    'klassapp_student_id' => $klsNumber,
                     'academic_status' => 'pass',
                 ],
             );

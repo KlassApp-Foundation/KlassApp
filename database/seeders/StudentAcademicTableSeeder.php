@@ -20,6 +20,15 @@ class StudentAcademicTableSeeder extends Seeder
         $createdCount = 0;
 
         foreach ($students as $student) {
+            // An academic row needs a year; without one there is nothing safe to create.
+            $yearId = \App\Models\AcademicYear::where('school_id', $student->school_id)->orderByDesc('id')->value('id');
+            if ($yearId === null) {
+                continue;
+            }
+
+            // KLS number: reuse an existing one, otherwise assign through the generator.
+            $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
+
             // Only create if no record exists for this user
             StudentAcademic::firstOrCreate(
                 [
@@ -27,8 +36,8 @@ class StudentAcademicTableSeeder extends Seeder
                     'school_id' => $student->school_id,
                 ],
                 [
-                    // Add any other default fields if needed
-                    // e.g. 'academic_year_id' => ..., 'status' => 1, etc.
+                    'academic_year_id' => $yearId,
+                    'klassapp_student_id' => $klsNumber,
                 ]
             );
 

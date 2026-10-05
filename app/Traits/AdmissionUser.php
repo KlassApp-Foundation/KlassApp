@@ -45,7 +45,9 @@ trait AdmissionUser
             $user->email                    = null;
             $user->mobile_no                = null;
             $user->email_verification_code  = Str::random(40);
-            $user->registration_number      = date('YmdHis');
+            // KLS number at creation, through the race-safe generator (was a legacy timestamp).
+            $klsNumber = \App\Services\StudentIdGeneratorService::next((int) $data->school_id);
+            $user->registration_number      = $klsNumber;
 
             $user->save();
 
@@ -138,6 +140,7 @@ trait AdmissionUser
             $academic->academic_year_id             = $data->academic_year_id;
             $academic->user_id                      = $user->id;
             $academic->standardLink_id              = $standardLink_id;
+            $academic->klassapp_student_id          = $klsNumber;
             $academic->std_school_pay_number                  = $user->registration_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
@@ -169,14 +172,15 @@ trait AdmissionUser
             {
                 $feepayment = new FeePayment;
 
-                $feepayment->fee_id           = $fee->id;
+                // Current fee_payments schema (the legacy fee_id/paid_amount/created_by
+                // columns were dropped in 2026_07_01): insert what exists today.
+                $feepayment->school_id        = $data->school_id;
+                $feepayment->fee_category_id  = null;
                 $feepayment->user_id          = $user->id;
-                $feepayment->paid_amount      = $fee->amount;
+                $feepayment->amount           = $fee->amount ?? 0;
                 $feepayment->paid_on          = date('Y-m-d');
-                $feepayment->notify_parent    = '1';
-                $feepayment->status           = '1';
-                $feepayment->created_by       = $admin->id;
-                $feepayment->updated_by       = $admin->id;
+                $feepayment->recorded_by      = $admin->id;
+                $feepayment->status           = 'paid';
 
                 $feepayment->save();
             }
@@ -184,9 +188,14 @@ trait AdmissionUser
             {
                 $feepayment = new FeePayment;
 
-                $feepayment->fee_id           = $fee->id;
+                // Same schema update as the paid branch: no legacy columns exist anymore.
+                $feepayment->school_id        = $data->school_id;
+                $feepayment->fee_category_id  = null;
                 $feepayment->user_id          = $user->id;
-                $feepayment->status           = 0;
+                $feepayment->amount           = 0;
+                $feepayment->paid_on          = date('Y-m-d');
+                $feepayment->recorded_by      = $admin->id;
+                $feepayment->status           = 'pending';
 
                 $feepayment->save();
             }

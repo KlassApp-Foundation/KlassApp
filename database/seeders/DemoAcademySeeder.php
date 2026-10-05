@@ -337,6 +337,7 @@ class DemoAcademySeeder extends Seeder
                 $first = $firsts[($n * 7) % count($firsts)];
                 $last = $lasts[($n * 11) % count($lasts)];
                 $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+                $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
 
                 $link = $this->links[$linkKeys[$i % count($linkKeys)]];
 
@@ -348,6 +349,7 @@ class DemoAcademySeeder extends Seeder
                     ],
                     [
                         'standardLink_id' => $link->id,
+                        'klassapp_student_id' => $klsNumber,
                         'academic_status' => 'pass',
                         'lin' => $n % 3 === 0 ? 'UG-DEMO-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
                     ]

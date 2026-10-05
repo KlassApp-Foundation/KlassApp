@@ -139,9 +139,7 @@ class AssignStudentsToStreamTool implements Tool, VerifiableTool
                 // rather than silently skipping — mirrors commitAll()'s
                 // StudentAcademic::create shape.
                 $user = $m['user'];
-                $klassappId = empty($user->registration_number)
-                    ? StudentIdGeneratorService::nextForStudent($user)
-                    : StudentIdGeneratorService::next($schoolId);
+                $klassappId = StudentIdGeneratorService::ensureForStudent($user);
 
                 StudentAcademic::create([
                     'school_id' => $schoolId,
