@@ -22,17 +22,35 @@ use Illuminate\Http\RedirectResponse;
 class EmailVerificationGate
 {
     /**
-     * Accounts created before this date predate the gate: they keep signing
-     * in untouched (the rule does a backfill migration's job without touching
-     * the database). Everyone who signed up after it confirms their email
-     * the first time they sign in.
+     * The built-in boundary, used whenever the EMAIL_VERIFICATION_CUTOFF
+     * environment variable (config('app.email_verification_cutoff')) is
+     * blank: accounts created before it predate the gate. It does a backfill
+     * migration's job without touching the database. Everyone who signed up
+     * after it confirms their email the first time they sign in.
      *
-     * The boundary is 2026-10-05 00:00:00 UTC regardless of the app's
-     * timezone: Carbon compares instants, so a Kampala deployment (UTC+3)
-     * exempts, and must not lock out, an account written at 2026-10-04
-     * 22:00 UTC even though its Kampala wall clock already read Oct 5.
+     * The boundary is an instant, not a calendar day, regardless of the
+     * app's timezone: Carbon compares instants, so a Kampala deployment
+     * (UTC+3) exempts, and must not lock out, an account written at
+     * 2026-10-04 22:00 UTC even though its Kampala wall clock already read
+     * Oct 5. A configured cutoff is parsed the same way — a bare date as
+     * UTC midnight, an ISO-8601 carrying its own offset keeps that offset.
      */
     public const CUTOFF = '2026-10-05';
+
+    /**
+     * The effective cutoff instant: the configured value when one is set,
+     * otherwise the built-in default. Never throws for a blank config.
+     */
+    public static function cutoffInstant(): Carbon
+    {
+        $raw = config('app.email_verification_cutoff', self::CUTOFF);
+
+        if ($raw === null || trim((string) $raw) === '') {
+            $raw = self::CUTOFF;
+        }
+
+        return Carbon::parse((string) $raw, 'UTC');
+    }
 
     public static function needsVerification(?User $user): bool
     {
@@ -46,7 +64,7 @@ class EmailVerificationGate
         }
 
         if ($user->created_at !== null
-            && $user->created_at->lessThan(Carbon::parse(self::CUTOFF, 'UTC'))) {
+            && $user->created_at->lessThan(self::cutoffInstant())) {
             return false;
         }
 

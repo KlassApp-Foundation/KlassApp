@@ -58,6 +58,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email-verification cutoff
+    |--------------------------------------------------------------------------
+    |
+    | The EmailVerificationGate exempts every account created before this
+    | instant from the sign-in "verify your email" requirement — it does the
+    | backfill migration's job without touching the database. Value is an
+    | ISO-8601 UTC instant (a bare date is treated as UTC midnight). Blank or
+    | unset keeps the built-in default, so staging and local tests behave
+    | exactly as before this became configurable. Leave OFF in production
+    | unless Rasta records a changing decision.
+    |
+    */
+
+    'email_verification_cutoff' => env('EMAIL_VERIFICATION_CUTOFF'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |
