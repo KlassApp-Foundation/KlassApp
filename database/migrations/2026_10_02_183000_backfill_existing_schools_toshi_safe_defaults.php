@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
@@ -20,6 +21,36 @@ return new class extends Migration
             return;
         }
 
+        // Capture every school the reset can touch with its OLD values, before
+        // any change: ids and the two flag columns only, nothing else. The JSON
+        // file under storage stays the primary undo record; the same capture
+        // also goes to the application log via Log::info so it reaches the
+        // Cloud log stream (the storage file on a deployed container does not
+        // persist the way the log stream does).
+        $affectedIds = DB::table('schools')
+            ->where(fn ($q) => $q
+                ->where('toshi_enabled', 1)
+                ->orWhere('toshi_mode', 'assistant')
+                ->orWhereNull('toshi_mode'))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        $capture = DB::table('schools')
+            ->whereIn('id', $affectedIds)
+            ->orderBy('id')
+            ->get(['id', 'toshi_enabled', 'toshi_mode'])
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'toshi_enabled' => (int) $row->toshi_enabled,
+                'toshi_mode' => $row->toshi_mode,
+            ])
+            ->all();
+
+        if ($capture !== []) {
+            Log::info('[toshi backfill] capture before reset', ['schools' => $capture]);
+        }
+
         DB::table('schools')
             ->where('toshi_enabled', 1)
             ->whereNot('toshi_mode', 'assistant')
@@ -36,6 +67,7 @@ return new class extends Migration
         file_put_contents($logPath, json_encode([
             'captured_at' => now()->toIso8601String(),
             'restore_ids' => $toFlip->all(),
+            'schools' => $capture,
         ], JSON_PRETTY_PRINT));
 
         $assistant = DB::table('schools')
