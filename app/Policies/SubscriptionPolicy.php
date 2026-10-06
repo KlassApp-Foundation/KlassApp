@@ -31,8 +31,7 @@ class SubscriptionPolicy
      */
     public function view(User $user, Subscription $subscription)
     {
-        //
-        return true;
+        return $this->owns($user, $subscription);
     }
 
     /**
@@ -56,8 +55,7 @@ class SubscriptionPolicy
      */
     public function update(User $user, Subscription $subscription)
     {
-        //
-        return true;
+        return $this->owns($user, $subscription);
     }
 
     /**
@@ -69,7 +67,7 @@ class SubscriptionPolicy
      */
     public function delete(User $user, Subscription $subscription)
     {
-        //
+        return $this->owns($user, $subscription);
     }
 
     /**
@@ -81,7 +79,7 @@ class SubscriptionPolicy
      */
     public function restore(User $user, Subscription $subscription)
     {
-        //
+        return $this->owns($user, $subscription);
     }
 
     /**
@@ -93,6 +91,20 @@ class SubscriptionPolicy
      */
     public function forceDelete(User $user, Subscription $subscription)
     {
-        //
+        return $this->owns($user, $subscription);
+    }
+
+    /**
+     * A subscription belongs to exactly one school; site admins may access
+     * any of them. Records without a school are site-admin-only.
+     */
+    private function owns(User $user, Subscription $subscription): bool
+    {
+        if ((int) $user->usergroup_id === 1) {
+            return true;
+        }
+
+        return $subscription->school_id !== null
+            && (int) $user->school_id === (int) $subscription->school_id;
     }
 }

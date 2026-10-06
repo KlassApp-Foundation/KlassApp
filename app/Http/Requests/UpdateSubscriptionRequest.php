@@ -21,15 +21,13 @@ class UpdateSubscriptionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $user = Auth::user();
-         $plan = Plan::where("id", $this->plan_id)->first();
+        $plan = Plan::where("id", $this->plan_id)->first();
+
         $this->merge([
             'payment_details' => $this->payment_details ? json_encode($this->payment_details) : null,
             'plan_details'    => $this->plan_details ? json_encode($this->plan_details) : null,
-            'school_id'  => $user->school_id,
-            'user_id'  => $user->id,
-            'plan_id' => $plan->id,
-            'amount_paid' => $plan->amount,
+            'plan_id' => $plan?->id,
+            'amount_paid' => $plan?->amount,
         ]);
     }
 
@@ -39,8 +37,6 @@ class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'school_id'         => 'required|integer|exists:schools,id',
-            'user_id'           => 'required|integer|exists:users,id',           // Allow changing user if needed
             'plan_id'           => 'required|integer|exists:plans,id',
             'status'            => 'nullable|in:pending,approved,canceled,expired',
             
@@ -62,8 +58,6 @@ class UpdateSubscriptionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.exists'        => 'Selected user does not exist.',
-            'school_id.exists'      => 'Selected school does not exist.',
             'plan_id.exists'        => 'Selected plan does not exist.',
             'end_date.after_or_equal' => 'End date must be after or equal to start date.',
             'amount_paid.min'       => 'Amount paid cannot be negative.',
