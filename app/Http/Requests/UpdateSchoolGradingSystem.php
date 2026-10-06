@@ -20,16 +20,6 @@ class UpdateSchoolGradingSystem extends FormRequest
     }
 
     /**
-     * Inject school_id from logged-in user
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'school_id' => auth()->user()->school_id,
-        ]);
-    }
-
-    /**
      * Rules
      */
     public function rules(): array
@@ -47,8 +37,10 @@ class UpdateSchoolGradingSystem extends FormRequest
         }
 
         return [
-            'school_id' => 'required|exists:schools,id',
-            'standard_id' => 'required|exists:standards,id',
+            'standard_id' => [
+                'required',
+                Rule::exists('standards', 'id')->where(fn ($q) => $q->where('school_id', auth()->user()->school_id)),
+            ],
 
             'grade' => [
                 'required',
@@ -56,7 +48,7 @@ class UpdateSchoolGradingSystem extends FormRequest
                 'max:2',
                 Rule::unique('school_grading_systems')
                     ->where(fn ($q) => $q
-                        ->where('school_id', $this->school_id)
+                        ->where('school_id', auth()->user()->school_id)
                         ->where('standard_id', $this->standard_id)
                     )
                     ->ignore($grade?->id),
@@ -80,7 +72,7 @@ class UpdateSchoolGradingSystem extends FormRequest
 
             $grade = $this->route('grade');
 
-            $exists = SchoolGradingSystem::where('school_id', $this->school_id)
+            $exists = SchoolGradingSystem::where('school_id', auth()->user()->school_id)
                 ->where('standard_id', $this->standard_id)
                 ->when($grade, function ($q) use ($grade) {
                     $q->where('id', '!=', $grade->id);
