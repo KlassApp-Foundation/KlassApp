@@ -51,7 +51,10 @@ class AdmissionController extends Controller
     public function admissionlist(Request $request)
     {
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        $admissions = Admission::where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id]])->where('application_status','Draft')->orWhere('application_status','Pending')->paginate(10);
+        $admissions = Admission::where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id]])
+            ->where(function ($query) {
+                $query->where('application_status','Draft')->orWhere('application_status','Pending');
+            })->paginate(10);
               
         $admissions = AdmissionResource::collection($admissions);
         
@@ -65,11 +68,12 @@ class AdmissionController extends Controller
      */
     public function show($id)
     {
-        $admission = Admission::where('school_id',Auth::user()->school_id)->where('id',$id)->where('application_status','Draft')->orWhere('application_status','Pending')->first();
+        $admission = Admission::where('school_id',Auth::user()->school_id)->where('id',$id)
+            ->where(function ($query) {
+                $query->where('application_status','Draft')->orWhere('application_status','Pending');
+            })->firstOrFail();
 
         $sections = StandardLink::where('standard_id',$admission->standard_id)->get();
-
-        $fee = FeeGroup::where('school_id',Auth::user()->school_id)->get();
 
         $array=[];
         $array['id']                    =   $admission->id;
@@ -78,7 +82,11 @@ class AdmissionController extends Controller
         $array['application_no']        =   $admission->application_no;
         $array['application_status']    =   $admission->application_status;
         $array['sectionlist']           =   SectionResource::collection($sections);
-        $array['feelist']               =   FeeGroupResource::collection($fee);
+        // Legacy fee groups were removed with the old fees system; degrade to an
+        // empty list instead of failing the page.
+        $array['feelist'] = (class_exists(FeeGroup::class) && class_exists(FeeGroupResource::class))
+            ? FeeGroupResource::collection(FeeGroup::where('school_id', Auth::user()->school_id)->get())
+            : [];
 
         return $array;  
     }
@@ -91,7 +99,9 @@ class AdmissionController extends Controller
      */
     public function edit($id)
     {
-        $admission = Admission::where('id',$id)->first();
+        $admission = Admission::where('id',$id)
+            ->where('school_id',Auth::user()->school_id)
+            ->firstOrFail();
 
         return view('/admin/admission/edit' , ['admission' => $admission]);
     }
@@ -105,10 +115,12 @@ class AdmissionController extends Controller
      */
     public function update(AdmissionFormRequest $request, $id)
     {
+        $admission = Admission::where('id',$id)
+            ->where('school_id',Auth::user()->school_id)
+            ->firstOrFail();
+
         try
         {
-            $admission=Admission::where('id',$id)->first();
-
             $admission->application_status = $request->application_status;
 
             if($request->application_status == 'Approved')
@@ -121,7 +133,10 @@ class AdmissionController extends Controller
 
                 $standardLink_id=StandardLink::where([['school_id',Auth::user()->school_id],['standard_id',$admission->standard_id],['section_id',$admission->section_id]])->first();
 
-                $fee = Fee::where([['school_id',Auth::user()->school_id],['fee_group_id',$request->fee_group_id]])->first();
+                // Legacy fee-group lookup was removed with the old fees system; the
+                // student-creation trait records a zero-amount payment when no fee
+                // data exists (the same contract its tests assert).
+                $fee = null;
 
                 if($request->payment_status == 'paid')
                 {
@@ -201,10 +216,12 @@ class AdmissionController extends Controller
 
     public function destroy($id)
     {
+        $admission = Admission::where('id',$id)
+            ->where('school_id',Auth::user()->school_id)
+            ->firstOrFail();
+
         try
         {
-            $admission = Admission::where('id',$id)->first();
-
             $admission->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Admission']);
