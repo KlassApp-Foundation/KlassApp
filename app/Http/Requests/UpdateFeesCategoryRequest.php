@@ -31,8 +31,6 @@ class UpdateFeesCategoryRequest extends FormRequest
                 ->ignore($feesCategoryId)
                 ->where(fn($query) => $query->where("school_id", auth()->user()->school_id))
             ],
-
-             "school_id" => "sometimes|exists:schools,id",
             "standard_id" => "sometimes|exists:standards,id",
             "section_id" => "sometimes|nullable|exists:sections,id",
             "academic_term_id" => "sometimes|nullable|exists:academic_terms,id",

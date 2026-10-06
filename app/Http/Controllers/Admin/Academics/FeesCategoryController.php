@@ -77,6 +77,11 @@ class FeesCategoryController extends Controller
      */
     public function edit(FeesCategories $fee)
     {
+        abort_unless(
+            (int) $fee->school_id === (int) Auth::user()->school_id,
+            404
+        );
+
         //
         // dd($fee);
         return view("admin.school.fees.create", array_merge(
@@ -91,9 +96,14 @@ class FeesCategoryController extends Controller
      */
     public function update(UpdateFeesCategoryRequest $request, string $fee)
     {
-        //
         $validated = $request->validated();
-        FeesCategories::where("id", $fee)->update($validated);
+
+        $category = FeesCategories::where("school_id", Auth::user()->school_id)
+            ->where("id", $fee)
+            ->firstOrFail();
+
+        $category->update($validated);
+
         return redirect()->route("admin.fees-categories")
                         ->with("successmessage", "Updated Fee Category with Id $fee !");
     }
