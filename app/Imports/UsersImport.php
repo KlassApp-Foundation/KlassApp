@@ -100,15 +100,29 @@ class UsersImport implements ToCollection, WithHeadingRow
                     if (collect($prefixes)->contains(fn($p) => str_starts_with($sectionVal, $p))) {
                         $standard = Standard::where('school_id', $school_id)->where('name', 'nursery')->first();
                     }
-                    $alevel = ['Senior Five', 'Senior Six', 's.5', 's.6', 's5', 's6'];
-                    $olevel =  ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'];
+                    // Keep these lowercase: $sectionVal is lowercased above, so capitalized
+                    // entries would never match and imported students would silently lose
+                    // their class link (secondary wording like "Senior One").
+                    $alevel = ['senior five', 'senior six', 's.5', 's.6', 's5', 's6'];
+                    $olevel =  ['senior one', 'senior two', 'senior three', 'senior four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'];
                     if(in_array($sectionVal, $alevel)){
                     $standard = Standard::where('school_id', $school_id)->where( 'name', 'a-level')->first();
                     }
                    if(in_array($sectionVal, $olevel)){
                     $standard = Standard::where('school_id', $school_id)->where( 'name', 'o-level')->first();
                     }
-                    $section      = Section::where([['school_id', $school_id], ['name', 'LIKE', $sectionVal]])->first();
+                    // Short codes (S.1, s5, …) must resolve to the section's full name before
+                    // the sections table lookup — no section is literally named "S.1".
+                    $sectionNameMap = [
+                        's.1' => 'Senior One', 's1' => 'Senior One',
+                        's.2' => 'Senior Two', 's2' => 'Senior Two',
+                        's.3' => 'Senior Three', 's3' => 'Senior Three',
+                        's.4' => 'Senior Four', 's4' => 'Senior Four',
+                        's.5' => 'Senior Five', 's5' => 'Senior Five',
+                        's.6' => 'Senior Six', 's6' => 'Senior Six',
+                    ];
+                    $sectionName  = $sectionNameMap[$sectionVal] ?? $row["class"];
+                    $section      = Section::where([['school_id', $school_id], ['name', 'LIKE', $sectionName]])->first();
 
                 }
               
