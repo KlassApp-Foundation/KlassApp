@@ -11,7 +11,7 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
-use App\Support\DemoSeedPassword;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -143,28 +143,30 @@ class Phase4RosterDemoSeeder extends Seeder
         $this->command?->line('Admin: phase4.admin@klassapp.xyz');
         $this->command?->line('Teacher: phase4.teacher@klassapp.xyz');
         $this->command?->line('Class teacher: phase4.class-teacher@klassapp.xyz');
-        $this->command?->line('Password: not echoed — pin via STAGING_DEMO_PASSWORD / DEMO_SEED_PASSWORD (Doppler/Cloud), or a random value was generated for this run.');
+        $this->command?->line('Password: unique random per account (set at account creation only, never echoed).');
     }
 
     private function user(string $email, string $name, School $school, int $usergroupId): User
     {
-        $user = User::firstOrNew(['email' => $email]);
+        $existing = User::where('email', $email)->first();
 
         // Build directly instead of User::factory()->make(): production installs
         // with --no-dev, so Faker (and the factory) are unavailable.
-        if (! $user->exists) {
-            $user = new User;
+        if ($existing) {
+            return $existing;
         }
 
-        $user->forceFill([
+        // Password on CREATE only: a rerun never overwrites an existing
+        // account's password, and no shared password is read from the env.
+        $user = User::create([
             'email' => $email,
             'school_id' => $school->id,
             'usergroup_id' => $usergroupId,
             'name' => $name,
-            'password' => Hash::make(DemoSeedPassword::resolve()),
+            'password' => Hash::make(Str::random(32)),
             'status' => 'active',
             'email_verified' => 1,
-        ])->save();
+        ]);
 
         return $user;
     }

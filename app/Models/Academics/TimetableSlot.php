@@ -126,8 +126,13 @@ class TimetableSlot extends Model
      */
     public function syncCalendarEvent(): void
     {
-        // Remove any existing event for this slot
-        Events::where('timetable_slot_id', $this->id)->delete();
+        // Remove any existing event for this slot. Events are soft-deleted,
+        // so a plain delete() would leave the old row and a rebuild would
+        // accumulate one event per sync.
+        Events::withTrashed()
+            ->where('school_id', $this->school_id)
+            ->where('timetable_slot_id', $this->id)
+            ->forceDelete();
 
         if (!$this->term) {
             return;

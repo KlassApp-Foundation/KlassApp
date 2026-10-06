@@ -18,9 +18,10 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
-use App\Support\DemoSeedPassword;
+use Database\Seeders\Concerns\SeedsRichDemoData;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Demo Junior School — the single canonical demo school.
@@ -42,13 +43,13 @@ use Illuminate\Support\Facades\Hash;
  */
 class DemoJuniorSchoolSeeder extends Seeder
 {
-    private const DOMAIN = 'junior.demo.klassapp.test';
+    use SeedsRichDemoData;
+
+    public const DOMAIN = 'junior.demo.klassapp.test';
 
     private School $school;
 
     private AcademicYear $year;
-
-    private string $password;
 
     private ?User $bursar = null;
 
@@ -74,10 +75,18 @@ class DemoJuniorSchoolSeeder extends Seeder
         ['grade' => 'F9', 'points' => 9, 'min_score' => 0, 'max_score' => 39, 'remark' => 'Fail'],
     ];
 
+    /**
+     * Passwords are per-account: a NEW account gets its own unique random
+     * password (never echoed, never read from the environment); an EXISTING
+     * account keeps its password (reruns must never overwrite it).
+     */
+    private function freshPassword(): string
+    {
+        return Str::random(32);
+    }
+
     public function run(): void
     {
-        $this->password = DemoSeedPassword::resolve();
-
         $this->command?->info('Demo Junior School — manual seed (never automatic; is_demo comms guard applies).');
 
         $this->seedSchool();
@@ -87,12 +96,13 @@ class DemoJuniorSchoolSeeder extends Seeder
         $this->seedFees();
         $this->seedAttendance();
         $this->seedExamsAndMarks();
+        $this->seedRichDemoData();
 
         $this->command?->info('Demo Junior School seeded.');
         $this->command?->line('School: ' . $this->school->name . ' (slug ' . $this->school->slug . ', is_demo=1)');
         $this->command?->line('Admin: admin@' . self::DOMAIN . ' | Head teacher: headteacher@' . self::DOMAIN);
         $this->command?->line('Teacher: teacher1@' . self::DOMAIN . ' | Bursar: bursar@' . self::DOMAIN);
-        $this->command?->line('Password: not echoed — pin via STAGING_DEMO_PASSWORD / DEMO_SEED_PASSWORD, or a random value was generated for this run.');
+        $this->command?->line('Passwords: unique random per account (set at account creation only, never echoed).');
     }
 
     // ──────────────────────────────────────────────────────────────── school
@@ -642,26 +652,57 @@ class DemoJuniorSchoolSeeder extends Seeder
         return 'F9';
     }
 
+    /**
+     * Rich-data shape for this school (see SeedsRichDemoData::richConfig).
+     */
+    protected function richConfig(): array
+    {
+        return [
+            'parents' => [
+                ['name' => 'Josephine Balaba'],
+                ['name' => 'Charles Wambi'],
+                ['name' => 'Miriam Ochieng'],
+                ['name' => 'David Lubega'],
+                ['name' => 'Prossy Nakato'],
+                ['name' => 'Emmanuel Tusiime'],
+                ['name' => 'Gertrude Namalele'],
+                ['name' => 'Fredrick Wasswa'],
+                ['name' => 'Angella Kirabo'],
+                ['name' => 'Ronald Ssebunya'],
+                ['name' => 'Beatrice Anyango'],
+                ['name' => 'Julius Kagwa'],
+            ],
+            'admissions' => [
+                ['standard' => 'primary', 'section' => 'P.1', 'name' => 'Shafik Nsubuga', 'age' => 6, 'gender' => 'male', 'district' => 'Wakiso', 'village' => 'Kyanja', 'last_school' => 'Kyanja Community Primary', 'last_class' => 'Top Class', 'father' => 'Musa Nsubuga', 'father_job' => 'Boda rider', 'mother' => 'Zaituni Nsubuga', 'mother_job' => 'Market vendor'],
+                ['standard' => 'primary', 'section' => 'P.4', 'name' => 'Aisha Namatovu', 'age' => 9, 'gender' => 'female', 'district' => 'Mukono', 'village' => 'Namatovu Zone', 'last_school' => 'Bright Stars Primary', 'last_class' => 'P.3', 'father' => 'Yusuf Namatovu', 'father_job' => 'Carpenter', 'mother' => 'Sofia Namatovu', 'mother_job' => 'Tailor'],
+            ],
+            'exam_section_names' => ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+            'skip_second' => ['section' => 'P.6', 'stream' => 'A'],
+            'fallback_open' => ['section' => 'P.7', 'subject' => 'Mathematics'],
+        ];
+    }
+
     // ───────────────────────────────────────────────────────────────── users
 
     private function user(string $localPart, string $name, int $usergroupId): User
     {
         $email = $localPart . '@' . self::DOMAIN;
 
-        $user = User::firstOrNew(['email' => $email]);
-        if (! $user->exists) {
-            $user = new User;
-        }
+        $user = User::where('email', $email)->first();
 
-        $user->forceFill([
-            'email' => $email,
-            'school_id' => $this->school->id,
-            'usergroup_id' => $usergroupId,
-            'name' => $name,
-            'password' => Hash::make($this->password),
-            'status' => 'active',
-            'email_verified' => 1,
-        ])->save();
+        if (! $user) {
+            $user = User::create([
+                'email' => $email,
+                'school_id' => $this->school->id,
+                'usergroup_id' => $usergroupId,
+                'name' => $name,
+                // Password on CREATE only: a rerun never overwrites an existing
+                // account's password (walkthrough logins keep working).
+                'password' => Hash::make($this->freshPassword()),
+                'status' => 'active',
+                'email_verified' => 1,
+            ]);
+        }
 
         $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $user->id]);
         $parts = explode(' ', $name, 2);
