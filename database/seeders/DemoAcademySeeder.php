@@ -18,7 +18,7 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
-use App\Support\DemoSeedPassword;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -50,7 +50,6 @@ class DemoAcademySeeder extends Seeder
 
     private AcademicYear $year;
 
-    private string $password;
 
     private ?User $bursar = null;
 
@@ -76,10 +75,18 @@ class DemoAcademySeeder extends Seeder
         ['grade' => 'F9', 'points' => 9, 'min_score' => 0, 'max_score' => 39, 'remark' => 'Fail'],
     ];
 
+    /**
+     * Passwords are per-account: a NEW account gets its own unique random
+     * password (never echoed, never read from the environment); an EXISTING
+     * account keeps its password (reruns must never overwrite it).
+     */
+    private function freshPassword(): string
+    {
+        return Str::random(32);
+    }
+
     public function run(): void
     {
-        $this->password = DemoSeedPassword::resolve();
-
         $this->command?->info('Demo Academy Uganda — manual seed (never automatic; is_demo comms guard applies).');
 
         $this->seedSchool();
@@ -95,7 +102,7 @@ class DemoAcademySeeder extends Seeder
         $this->command?->line('School: ' . $this->school->name . ' (slug ' . $this->school->slug . ', is_demo=1)');
         $this->command?->line('Admin: admin@' . self::DOMAIN . ' | Head teacher: headteacher@' . self::DOMAIN);
         $this->command?->line('Teacher: teacher1@' . self::DOMAIN . ' | Bursar: bursar@' . self::DOMAIN);
-        $this->command?->line('Password: not echoed — pin via STAGING_DEMO_PASSWORD / DEMO_SEED_PASSWORD, or a random value was generated for this run.');
+        $this->command?->line('Passwords: unique random per account (set at account creation only, never echoed).');
     }
 
     // ──────────────────────────────────────────────────────────────── school
@@ -743,20 +750,21 @@ class DemoAcademySeeder extends Seeder
     {
         $email = $localPart . '@' . self::DOMAIN;
 
-        $user = User::firstOrNew(['email' => $email]);
-        if (! $user->exists) {
-            $user = new User;
-        }
+        $user = User::where('email', $email)->first();
 
-        $user->forceFill([
-            'email' => $email,
-            'school_id' => $this->school->id,
-            'usergroup_id' => $usergroupId,
-            'name' => $name,
-            'password' => Hash::make($this->password),
-            'status' => 'active',
-            'email_verified' => 1,
-        ])->save();
+        if (! $user) {
+            $user = User::create([
+                'email' => $email,
+                'school_id' => $this->school->id,
+                'usergroup_id' => $usergroupId,
+                'name' => $name,
+                // Password on CREATE only: a rerun never overwrites an existing
+                // account's password.
+                'password' => Hash::make($this->freshPassword()),
+                'status' => 'active',
+                'email_verified' => 1,
+            ]);
+        }
 
         $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $user->id]);
         $parts = explode(' ', $name, 2);
