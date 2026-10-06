@@ -24,7 +24,9 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
     {
         $schoolId = Auth::user()->school_id;
         $sectionId = $this->section_id;
-        $standardId = StandardLink::where('section_id', $sectionId)->value('standard_id');
+        $standardId = StandardLink::where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->value('standard_id');
         if (!$standardId) {
         throw ValidationException::withMessages([
             'section_id' => 'Invalid section or missing standard mapping.',
@@ -32,7 +34,6 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
     }
 
         $this->merge([
-            'school_id' => $schoolId,
             "standard_id" => $standardId
         ]);
     }
@@ -45,11 +46,6 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'school_id' => [
-                'required',
-                'exists:schools,id',
-            ],
-
             'standard_id' => [
                 'sometimes',
                 'required',

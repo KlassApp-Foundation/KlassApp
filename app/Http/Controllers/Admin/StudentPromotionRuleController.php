@@ -84,14 +84,14 @@ class StudentPromotionRuleController extends Controller
 
     
     //  * Remove the specified resource from storage.
-    public function destroy(StudentPromotionRules $studentPromotionRules)
+    public function destroy(StudentPromotionRules $rule)
     {
         abort_if(
-            $studentPromotionRules->school_id !== Auth::user()->school_id,
+            $rule->school_id !== Auth::user()->school_id,
             403
         );
 
-        $studentPromotionRules->delete();
+        $rule->delete();
 
         return response()->json([
             'success' => true,
