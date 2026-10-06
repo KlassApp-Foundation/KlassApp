@@ -16,6 +16,7 @@ use App\Models\StudentAcademic;
 use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Support\DemoSeedManifest;
+use Carbon\Carbon;
 use Database\Seeders\DemoJuniorSchoolSeeder;
 use Database\Seeders\DemoSeniorSchoolSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +39,13 @@ class DemoRichDataTest extends TestCase
         parent::setUp();
 
         \DB::statement('PRAGMA foreign_keys = ON');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     private function seedJunior(): School
@@ -133,18 +141,18 @@ class DemoRichDataTest extends TestCase
         foreach ($skipIds as $linkId) {
             $this->assertSame(0, Attendance::where('school_id', $school->id)
                 ->where('standardLink_id', $linkId)
-                ->where('date', now()->toDateString())
+                ->whereDate('date', now()->toDateString())
                 ->count(), 'walkthrough class untaken today');
         }
 
-        $otherLink = DB::table('standards_link')->where('school_id', $school->id)
-            ->whereNotIn('id', $skipIds)
-            ->orderBy('id')->value('id');
+        $otherLink = DB::table('student_academics')->where('school_id', $school->id)
+            ->whereNotIn('standardLink_id', $skipIds)
+            ->orderBy('id')->value('standardLink_id');
 
         $this->assertNotNull($otherLink, 'there is a non-walkthrough class');
         $this->assertGreaterThan(0, Attendance::where('school_id', $school->id)
             ->where('standardLink_id', $otherLink)
-            ->where('date', now()->toDateString())
+            ->whereDate('date', now()->toDateString())
             ->count(), 'other classes have attendance today');
     }
 
@@ -299,6 +307,15 @@ class DemoRichDataTest extends TestCase
         $teacher1 = User::where('school_id', $school->id)->where('email', 'teacher1@junior.demo.klassapp.test')->firstOrFail();
         $teacher1Hash = $teacher1->password;
 
+        // The seeder stamps seeded_at with now(). Rows created in that same
+        // second are invisible to `created_at > seeded_at`, so the session
+        // data is pinned strictly after the manifest time. The clock stays
+        // frozen through the refresh: a command that re-reads seeded_at
+        // after the seeder (which moves it to this frozen now) would hide
+        // these rows again.
+        $seededAt = Carbon::parse($manifest['seeded_at']);
+        Carbon::setTestNow($seededAt->copy()->addSeconds(10));
+
         // Simulate a testing session on the demo school.
         $fake = new User;
         $fake->forceFill([
@@ -355,7 +372,11 @@ class DemoRichDataTest extends TestCase
             'recorded_by' => $admin->id,
         ]);
 
-        $this->artisan('demo:refresh', ['school' => $school->id])->assertExitCode(0);
+        try {
+            $this->artisan('demo:refresh', ['school' => $school->id])->assertExitCode(0);
+        } finally {
+            Carbon::setTestNow();
+        }
 
         $this->assertDatabaseMissing('users', ['id' => $fake->id]);
         $this->assertDatabaseMissing('student_academics', ['user_id' => $fake->id]);
@@ -398,6 +419,52 @@ class DemoRichDataTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $fake->id]);
         $countsAfter = $this->richCounts($school) + ['users' => User::where('school_id', $school->id)->count()];
         $this->assertSame($countsBefore, $countsAfter, 'dry run changed no counts');
+    }
+
+    public function test_refreshing_one_demo_school_leaves_another_school_untouched(): void
+    {
+        $demo = $this->seedJunior();
+        $other = $this->makeIsolatedSchool();
+        $before = $this->tenantSnapshot($other->id);
+
+        $this->addPostSeedStudent($demo);
+        $this->artisan('demo:refresh', ['school' => $demo->id])->assertExitCode(0);
+
+        $this->assertSame($before, $this->tenantSnapshot($other->id), 'a non-demo school is untouched by a demo refresh');
+    }
+
+    public function test_refresh_leaves_admins_and_every_password_hash_unchanged(): void
+    {
+        $school = $this->seedJunior();
+        $before = DB::table('users')->where('school_id', $school->id)->orderBy('id')->get(['id', 'email', 'password', 'usergroup_id']);
+        $admins = $before->where('usergroup_id', 3)->pluck('id')->all();
+        $this->assertNotEmpty($admins, 'the demo school has an admin');
+
+        $this->addPostSeedStudent($school);
+        $this->artisan('demo:refresh', ['school' => $school->id])->assertExitCode(0);
+
+        $after = DB::table('users')->whereIn('id', $before->pluck('id'))->orderBy('id')->get(['id', 'email', 'password', 'usergroup_id']);
+        $this->assertSame($before->map(fn ($row) => (array) $row)->all(), $after->map(fn ($row) => (array) $row)->all(), 'every pre-seed password hash and admin row is unchanged');
+        $this->assertSame($admins, $after->where('usergroup_id', 3)->pluck('id')->all(), 'school admins are the same people');
+    }
+
+    public function test_every_delete_during_refresh_includes_school_id(): void
+    {
+        $school = $this->seedJunior();
+        $this->addPostSeedStudent($school);
+
+        $unscoped = [];
+        DB::listen(function ($query) use (&$unscoped) {
+            $sql = strtolower(trim($query->sql));
+
+            if (str_starts_with($sql, 'delete') && ! str_contains($sql, 'school_id')) {
+                $unscoped[] = $query->sql;
+            }
+        });
+
+        $this->artisan('demo:refresh', ['school' => $school->id])->assertExitCode(0);
+
+        $this->assertSame([], array_values(array_unique($unscoped)), 'a delete ran without a school_id scope: ' . implode(' | ', $unscoped));
     }
 
     public function test_demo_refresh_refuses_a_non_demo_school(): void
@@ -444,6 +511,241 @@ class DemoRichDataTest extends TestCase
             );
             }
         }
+    }
+
+    /**
+     * A second tenant with the same kinds of rows a refresh deletes.
+     */
+    private function makeIsolatedSchool(): School
+    {
+        $school = new School;
+        $school->forceFill([
+            'name' => 'Kept Real School',
+            'email' => 'kept-real@example.com',
+            'slug' => 'kept-real-school',
+            'status' => 1,
+            'is_demo' => 0,
+            'is_test' => 0,
+        ])->save();
+
+        $admin = new User;
+        $admin->forceFill([
+            'email' => 'kept-admin@example.com',
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'name' => 'Kept Admin',
+            'password' => Hash::make('kept-admin'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ])->save();
+
+        $student = new User;
+        $student->forceFill([
+            'email' => 'kept-student@example.com',
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'name' => 'Kept Student',
+            'password' => Hash::make('kept-student'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ])->save();
+
+        $yearId = (int) DB::table('academic_years')->insertGetId([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'description' => 'Kept year',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $sectionId = (int) DB::table('sections')->insertGetId([
+            'school_id' => $school->id,
+            'name' => 'P.1',
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $standardId = (int) DB::table('standards')->insertGetId([
+            'school_id' => $school->id,
+            'name' => 'primary_lower',
+            'order' => 1,
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $linkId = (int) DB::table('standards_link')->insertGetId([
+            'school_id' => $school->id,
+            'academic_year_id' => $yearId,
+            'standard_id' => $standardId,
+            'section_id' => $sectionId,
+            'class_teacher_id' => $admin->id,
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        StudentAcademic::create([
+            'school_id' => $school->id,
+            'user_id' => $student->id,
+            'standardLink_id' => $linkId,
+            'academic_year_id' => $yearId,
+        ]);
+
+        $subjectId = (int) DB::table('subjects')->insertGetId([
+            'school_id' => $school->id,
+            'academic_year_id' => $yearId,
+            'standard_id' => $standardId,
+            'section_id' => $sectionId,
+            'name' => 'Mathematics',
+            'code' => 'MATH',
+            'type' => 'core',
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $termId = (int) DB::table('academic_terms')->insertGetId([
+            'school_id' => $school->id,
+            'academic_year_id' => $yearId,
+            'name' => 'Term 1',
+            'starts_on' => '2026-02-01',
+            'ends_on' => '2026-04-30',
+            'status' => 'current',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $examId = (int) DB::table('exams')->insertGetId([
+            'school_id' => $school->id,
+            'standard_id' => $standardId,
+            'academic_year_id' => $yearId,
+            'academic_term_id' => $termId,
+            'exam_type_id' => ExamType::where('code', 'EOT')->value('id'),
+            'section_id' => $sectionId,
+            'subject_id' => $subjectId,
+            'teacher_id' => $admin->id,
+            'status' => 'undone',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('marks')->insert([
+            'student_id' => $student->id,
+            'teacher_id' => $admin->id,
+            'school_id' => $school->id,
+            'subject_id' => $subjectId,
+            'exam_id' => $examId,
+            'section_id' => $sectionId,
+            'remark_id' => null,
+            'marks' => 70,
+            'grade' => 'C3',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        FeePayment::create([
+            'school_id' => $school->id,
+            'fee_category_id' => null,
+            'user_id' => $student->id,
+            'amount' => 5000,
+            'paid_on' => now()->toDateString(),
+            'recorded_by' => $admin->id,
+            'status' => 'paid',
+        ]);
+
+        Attendance::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $yearId,
+            'standardLink_id' => $linkId,
+            'user_id' => $student->id,
+            'date' => now()->toDateString(),
+            'session' => 'forenoon',
+            'status' => true,
+            'reason_id' => null,
+            'remarks' => '',
+            'recorded_by' => $admin->id,
+        ]);
+
+        return $school;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function tenantSnapshot(int $schoolId): array
+    {
+        $tables = [
+            'users' => 'school_id',
+            'student_academics' => 'school_id',
+            'marks' => 'school_id',
+            'fee_payments' => 'school_id',
+            'attendances' => 'school_id',
+        ];
+
+        $snapshot = [];
+
+        foreach ($tables as $table => $column) {
+            $snapshot[$table] = DB::table($table)->where($column, $schoolId)->orderBy('id')->get()->toJson();
+        }
+
+        return $snapshot;
+    }
+
+    /**
+     * Rows created strictly after the manifest's seeded_at, so the refresh
+     * cutoff (read before the seeder moves seeded_at forward) can see them.
+     */
+    private function addPostSeedStudent(School $school): User
+    {
+        $manifest = DemoSeedManifest::read($school->id);
+        $seededAt = Carbon::parse($manifest['seeded_at'] ?? now());
+        Carbon::setTestNow($seededAt->copy()->addSeconds(10));
+
+        $walk = is_array($manifest['walkthrough'] ?? null) ? $manifest['walkthrough'] : [];
+        $skipId = $walk['skip_link_ids'][0] ?? DB::table('standards_link')->where('school_id', $school->id)->value('id');
+        $openExamId = $walk['open_exam_id'] ?? null;
+        $adminId = User::where('school_id', $school->id)->where('usergroup_id', 3)->orderBy('id')->value('id');
+
+        $fake = new User;
+        $fake->forceFill([
+            'email' => 'test-added-' . uniqid() . '@example.com',
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'name' => 'Test Added Student',
+            'password' => Hash::make('irrelevant'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ])->save();
+
+        StudentAcademic::create([
+            'school_id' => $school->id,
+            'user_id' => $fake->id,
+            'standardLink_id' => $skipId,
+            'academic_year_id' => \App\Models\AcademicYear::where('school_id', $school->id)->orderBy('id')->value('id'),
+        ]);
+
+        if ($openExamId) {
+            DB::table('marks')->insert([
+                'student_id' => $fake->id,
+                'teacher_id' => $adminId,
+                'school_id' => $school->id,
+                'subject_id' => DB::table('subjects')->where('school_id', $school->id)->value('id'),
+                'exam_id' => $openExamId,
+                'section_id' => (int) Exam::find($openExamId)->section_id,
+                'remark_id' => null,
+                'marks' => 90,
+                'grade' => 'D1',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $fake;
     }
 
     public function test_exam_type_seed_does_not_duplicate_contributes_flag(): void

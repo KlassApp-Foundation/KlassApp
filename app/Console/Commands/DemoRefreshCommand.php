@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\School;
 use App\Models\User;
@@ -10,7 +9,6 @@ use App\Support\DemoSeedManifest;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 /**
  * Restores a demo school to the baseline produced by its rich seeder.
@@ -141,6 +139,9 @@ class DemoRefreshCommand extends Command
 
         // 1) Users added after seeding. Admins (usergroup 3) are never touched,
         //    and neither is anyone whose email was in the manifest.
+        // Cutoff is the manifest value captured above, before the seeder
+        // below rewrites seeded_at. Reading it after that rewrite would hide
+        // every row the session just added.
         $addedUsers = User::where('school_id', $school->id)
             ->where('usergroup_id', '<>', 3)
             ->where('created_at', '>', $cutoff)
@@ -152,19 +153,18 @@ class DemoRefreshCommand extends Command
             $counts['users']++;
 
             if (! $dry) {
-                $this->deleteUser($user->id);
+                $this->deleteUser((int) $user->id, (int) $school->id);
             }
         }
 
         // 2) Payments and marks created after seeding (any user, e.g. new
-        //    payments recorded against old students).
-        $payments = FeePayment::where('school_id', $school->id)->where('created_at', '>', $cutoff)->get();
-        $counts['payments'] = $payments->count();
+        //    payments recorded against old students). Mass-delete on the
+        //    builder so the SQL keeps school_id; a per-model delete() does not.
+        $payments = FeePayment::where('school_id', $school->id)->where('created_at', '>', $cutoff);
+        $counts['payments'] = (clone $payments)->count();
 
         if (! $dry) {
-            foreach ($payments as $payment) {
-                $payment->delete();
-            }
+            $payments->delete();
         }
 
         $marksQuery = fn () => DB::table('marks')->where('school_id', $school->id)->where('created_at', '>', $cutoff);
@@ -176,7 +176,9 @@ class DemoRefreshCommand extends Command
 
         // 3) Attendance created after seeding, plus today's rows on the
         //    walkthrough classes which must stay untaken.
-        $attendanceQuery = fn () => Attendance::where('school_id', $school->id)->where('created_at', '>', $cutoff);
+        // Query builder, not the model: Attendance uses soft deletes, and a
+        // soft-deleted row would still be today's attendance.
+        $attendanceQuery = fn () => DB::table('attendances')->where('school_id', $school->id)->where('created_at', '>', $cutoff);
         $counts['attendance'] = $attendanceQuery()->count();
 
         if (! $dry) {
@@ -184,9 +186,9 @@ class DemoRefreshCommand extends Command
         }
 
         if ($skipLinkIds !== []) {
-            $skipQuery = fn () => Attendance::where('school_id', $school->id)
+            $skipQuery = fn () => DB::table('attendances')->where('school_id', $school->id)
                 ->whereIn('standardLink_id', $skipLinkIds)
-                ->where('date', now()->toDateString());
+                ->whereDate('date', now()->toDateString());
             $counts['skip_today'] = $skipQuery()->count();
 
             if (! $dry) {
@@ -199,7 +201,7 @@ class DemoRefreshCommand extends Command
             $openMarks = fn () => DB::table('marks')->where('school_id', $school->id)->where('exam_id', $openExamId);
             $counts['open_marks'] = $openMarks()->count();
 
-            $openSubs = fn () => DB::table('exam_marks_submissions')->where('exam_id', $openExamId);
+            $openSubs = fn () => DB::table('exam_marks_submissions')->where('school_id', $school->id)->where('exam_id', $openExamId);
             $counts['open_submissions'] = $openSubs()->count();
 
             if (! $dry) {
@@ -229,47 +231,70 @@ class DemoRefreshCommand extends Command
      * are handled by the school-wide cutoff sweeps above; remaining
      * references are nulled where the schema allows it.
      */
-    private function deleteUser(int $userId): void
+    private function deleteUser(int $userId, int $schoolId): void
     {
-        try {
-            foreach (self::USER_SCOPED_TABLES as $table) {
-                if (! \Schema::hasTable($table)) {
-                    continue;
-                }
-
-                $columns = \Schema::getColumnListing($table);
-
-                if (in_array('user_id', $columns, true)) {
-                    DB::table($table)->where('user_id', $userId)->delete();
-                    continue;
-                }
-
-                if (in_array('student_id', $columns, true)) {
-                    DB::table($table)->where('student_id', $userId)->delete();
-                }
-            }
-
-            // timetable_slots.teacher_id cascades, but a walkthrough slot could
-            // point at this user — reassign before deleting.
-            if (\Schema::hasTable('timetable_slots')) {
-                DB::table('timetable_slots')->where('teacher_id', $userId)->delete();
-            }
-
-            // standards_link.class_teacher_id has a plain FK (no cascade):
-            // reassign to the school's first admin so the class keeps a teacher.
-            $user = User::find($userId);
-
-            if ($user) {
-                $adminId = User::where('school_id', $user->school_id)->where('usergroup_id', 3)->orderBy('id')->value('id');
-
-                if ($adminId) {
-                    DB::table('standards_link')->where('class_teacher_id', $userId)->update(['class_teacher_id' => $adminId]);
-                }
-            }
-
-            User::where('id', $userId)->delete();
-        } catch (Throwable $e) {
-            $this->warn("Could not fully remove user {$userId}: " . $e->getMessage());
+        foreach (self::USER_SCOPED_TABLES as $table) {
+            $this->deleteUserRows($table, $userId, $schoolId);
         }
+
+        // timetable_slots.teacher_id cascades, but a walkthrough slot could
+        // point at this user — remove that slot before deleting the user.
+        if (\Schema::hasTable('timetable_slots')) {
+            DB::table('timetable_slots')->where('school_id', $schoolId)->where('teacher_id', $userId)->delete();
+        }
+
+        // standards_link.class_teacher_id has a plain FK (no cascade):
+        // reassign to the school's first admin so the class keeps a teacher.
+        $adminId = User::where('school_id', $schoolId)->where('usergroup_id', 3)->orderBy('id')->value('id');
+
+        if ($adminId) {
+            DB::table('standards_link')
+                ->where('school_id', $schoolId)
+                ->where('class_teacher_id', $userId)
+                ->update(['class_teacher_id' => $adminId]);
+        }
+
+        // Hard delete. User uses soft deletes; a soft delete leaves the row,
+        // so the account would survive a refresh.
+        User::withTrashed()->where('school_id', $schoolId)->where('id', $userId)->forceDelete();
+    }
+
+    /**
+     * Delete one user's rows in a table. Every statement is limited to
+     * $schoolId: directly when the table has school_id, otherwise through
+     * the users row (authentications has no school_id column).
+     */
+    private function deleteUserRows(string $table, int $userId, int $schoolId): void
+    {
+        if (! \Schema::hasTable($table)) {
+            return;
+        }
+
+        $columns = \Schema::getColumnListing($table);
+        $keys = array_values(array_filter([
+            in_array('user_id', $columns, true) ? 'user_id' : null,
+            in_array('student_id', $columns, true) ? 'student_id' : null,
+            in_array('parent_id', $columns, true) ? 'parent_id' : null,
+        ]));
+
+        if ($keys === []) {
+            return;
+        }
+
+        $query = DB::table($table)->where(function ($nested) use ($keys, $userId) {
+            foreach ($keys as $column) {
+                $nested->orWhere($column, $userId);
+            }
+        });
+
+        if (in_array('school_id', $columns, true)) {
+            $query->where('school_id', $schoolId);
+        } else {
+            $query->whereIn('user_id', function ($nested) use ($schoolId, $userId) {
+                $nested->select('id')->from('users')->where('school_id', $schoolId)->where('id', $userId);
+            });
+        }
+
+        $query->delete();
     }
 }

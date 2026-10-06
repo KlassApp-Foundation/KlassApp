@@ -426,8 +426,8 @@ trait SeedsRichDemoData
         // today, so it can be taken live on a call.
         $removed = Attendance::where('school_id', $schoolId)
             ->whereIn('standardLink_id', $skipLinkIds)
-            ->where('date', $today)
-            ->delete();
+            ->whereDate('date', $today)
+            ->forceDelete();
 
         $existing = [];
         foreach (Attendance::where('school_id', $schoolId)->get(['user_id', 'date', 'session']) as $row) {
