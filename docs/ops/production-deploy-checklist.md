@@ -60,6 +60,12 @@ restore for both flagged rows if their effect on production data is ever wrong:
 intentionally empty) and `backfill_existing_schools_toshi_safe_defaults` (the
 existing-schools Toshi reset; also reversible via its own capture — see below).
 
+**New migrations with foreign keys are checked on MySQL before deploying.**
+The 2026-10-06 proof: the user_preferences migration was rolled back alone on
+staging, re-applied on the clean create path (MySQL, succeeded), and re-run to a
+no-op. Any future migration that adds a foreign key must get the same check
+before a production deploy (see docs/proposals/2026-10-06-mysql-migration-guard.md).
+
 There is **no gate backfill migration**: the verified-email sign-in gate does its
 backfill job in code (`EmailVerificationGate` exempts accounts created before the
 cutoff), so deploying it writes nothing.
