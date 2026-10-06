@@ -356,26 +356,12 @@ class DashboardController extends Controller
 
     public function feeslist($fee_id)
     {
-        $fees = Fee::where('id',$fee_id)->first();
-
-        $unpaidfees  = FeePayment::where('fee_id',$fees->id)->where('status',0);
-
-        if($fees->standardLink_id != null)
-        {
-            $unpaidfees  = $unpaidfees->whereHas('user',function($query) use($fees)
-            {
-                $query->whereHas('studentAcademicLatest',function($q) use($fees)
-                {
-                    $q->where('standardLink_id',$fees->standardLink_id);
-                });
-            });
-        }
-
-        $unpaidfees = $unpaidfees->get();
-        $array['unpaidCount'] = $unpaidfees->count();
-        $array['unpaidList'] = UnpaidFeesResource::collection($unpaidfees);
-
-        return $array;
+        // Legacy pre-V2 unpaid-fees endpoint. Its data source (the Fee model and
+        // the unpaid rows it listed) was removed with the old fees system and it
+        // has no remaining consumer — today it fails for every caller. Keep it
+        // deterministic and fail closed: it can never resolve a record and must
+        // never expose another school's data.
+        abort(404);
     }
 
     /**
@@ -386,12 +372,13 @@ class DashboardController extends Controller
      */
     public function sendReminder(Request $request,$fee_id)
     {
-        //
+        $feepayment = FeePayment::where('id', $fee_id)
+            ->where('school_id', Auth::user()->school_id)
+            ->firstOrFail();
+
         try
         {
             $user = User::findByExactNameInSchool($request->name, (int) Auth::user()->school_id, 6);
-
-            $feepayment = FeePayment::where('id',$fee_id)->first();
 
             foreach($user->parents as $parent)
             {
