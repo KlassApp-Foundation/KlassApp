@@ -39,6 +39,11 @@ class DemoRichDataTest extends TestCase
         parent::setUp();
 
         \DB::statement('PRAGMA foreign_keys = ON');
+
+        // The guard caches demo school ids for the process. RefreshDatabase
+        // rolls the rows back between tests, so a lookup from an earlier
+        // test would hide these schools.
+        \App\Services\DemoSchoolCommsGuard::flushCache();
     }
 
     protected function tearDown(): void
