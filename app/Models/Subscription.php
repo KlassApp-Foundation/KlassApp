@@ -6,12 +6,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\SchoolScopedRouteBinding;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscription extends Model
 {
     //
     use SoftDeletes;
+    use SchoolScopedRouteBinding;
 
     /**
      * The table associated with the model.

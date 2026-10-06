@@ -6,10 +6,12 @@ use App\Models\School;
 use App\Models\Standard;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\SchoolScopedRouteBinding;
 
 class SchoolGradingSystem extends Model
 {
     use HasFactory;
+    use SchoolScopedRouteBinding;
 
     protected $fillable = [
         'school_id',
