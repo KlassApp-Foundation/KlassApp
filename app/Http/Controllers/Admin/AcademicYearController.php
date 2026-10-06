@@ -225,10 +225,12 @@ class AcademicYearController extends Controller
      */
     public function update(AcademicYearUpdateRequest $request, $id)
     {
-        //
+        $academic = AcademicYear::where('id', $id)
+            ->where('school_id', Auth::user()->school_id)
+            ->firstOrFail();
+
         try
         {
-            $academic = AcademicYear::where('id',$id)->first();
 
             // $academic->name         = $request->name;
             $academic->description  = $request->description;
@@ -281,7 +283,10 @@ class AcademicYearController extends Controller
      */
     public function updateStatus(Request $request)
     {
-        //
+        $new_current_academic_year = AcademicYear::where('id', $request->academic_year_id)
+            ->where('school_id', Auth::user()->school_id)
+            ->firstOrFail();
+
         try
         {
             $prev_current_academic_year = AcademicYear::where([['status',1],['school_id',Auth::user()->school_id]])->first();
@@ -289,9 +294,6 @@ class AcademicYearController extends Controller
             $prev_current_academic_year->status = 0;
 
             $prev_current_academic_year->save();
-
-
-            $new_current_academic_year = AcademicYear::where('id',$request->academic_year_id)->first();
 
             $new_current_academic_year->status = 1;
 
