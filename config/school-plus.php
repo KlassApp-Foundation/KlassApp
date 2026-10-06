@@ -421,6 +421,7 @@ defined('LOGNAME_EDIT_telephonedirectory') or define('LOGNAME_EDIT_telephonedire
 defined('LOGNAME_DELETE_telephonedirectory') or define('LOGNAME_DELETE_telephonedirectory','deletetelephonedirectory');
 
 defined('LOGNAME_UPDATE_ADMISSION_FORM') or define('LOGNAME_UPDATE_ADMISSION_FORM','updateAdmissionform');
+defined('LOGNAME_DELETE_ADMISSION_FORM') or define('LOGNAME_DELETE_ADMISSION_FORM','deleteAdmissionform');
 
 
 
