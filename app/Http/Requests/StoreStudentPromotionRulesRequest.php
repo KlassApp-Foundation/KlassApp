@@ -59,6 +59,8 @@ class StoreStudentPromotionRulesRequest extends FormRequest
                 'nullable',
                 'integer',
                 'exists:sections,id',
+                Rule::unique('student_promotion_rules', 'section_id')
+                    ->where(fn ($query) => $query->where('rule_type', $this->rule_type)),
             ],
             'rule_type' => [
                 'required',
@@ -82,6 +84,16 @@ class StoreStudentPromotionRulesRequest extends FormRequest
                 'min:0',
                 'max:100',
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'section_id.unique' => 'A promotion rule for this class and type already exists.',
         ];
     }
 }
