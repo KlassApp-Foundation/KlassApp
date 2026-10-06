@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\SchoolScopedRouteBinding;
 
 class StudentPromotionRules extends Model
 {
     use HasFactory;
+    use SchoolScopedRouteBinding;
     protected $fillable = ["school_id", "standard_id", "section_id", "rule_type", "min_average", "min_aggregate", "min_points"];
 
     public function school(){
