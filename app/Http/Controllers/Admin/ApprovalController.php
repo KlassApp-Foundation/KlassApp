@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Approval;
+use App\Models\LessonPlan;
 use App\Models\ParentLinkRequest;
+use App\Models\Task;
 use App\Models\TeacherLeaveApplication;
 use App\Models\User;
 use App\Services\ParentLinkService;
@@ -180,13 +182,34 @@ class ApprovalController extends Controller
     {
         $approval->loadMissing('approvable');
 
-        if ($approval->approvable instanceof TeacherLeaveApplication
-            && ! Gate::allows('teacher-leave-manage', $approval->approvable)) {
+        $approvable = $approval->approvable;
+
+        // Deny by default: only the known approvable types can be actioned, and
+        // each known type must belong to the caller's school (site admins
+        // excepted — the moderation gates below already allow them).
+        $knownTypes = [
+            TeacherLeaveApplication::class,
+            ParentLinkRequest::class,
+            LessonPlan::class,
+            Task::class,
+        ];
+
+        if ($approvable === null || ! in_array($approval->approvable_type, $knownTypes, true)) {
             abort(403);
         }
 
-        if ($approval->approvable instanceof ParentLinkRequest
-            && ! Gate::allows('parent-link-request-manage', $approval->approvable)) {
+        if ((int) Auth::user()->usergroup_id !== 1
+            && (int) $approvable->school_id !== (int) Auth::user()->school_id) {
+            abort(403);
+        }
+
+        if ($approvable instanceof TeacherLeaveApplication
+            && ! Gate::allows('teacher-leave-manage', $approvable)) {
+            abort(403);
+        }
+
+        if ($approvable instanceof ParentLinkRequest
+            && ! Gate::allows('parent-link-request-manage', $approvable)) {
             abort(403);
         }
     }
