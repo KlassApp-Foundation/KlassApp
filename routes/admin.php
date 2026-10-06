@@ -372,7 +372,7 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get("/students/promotions/edit/{rule}", "StudentPromotionRuleController@edit")->name("students.promotion.edit");
 	Route::post("/students/promotions/store", "StudentPromotionRuleController@store")->name("students.promotion.store");
 	Route::put("/students/promotions/update/{rule}", "StudentPromotionRuleController@update")->name("students.promotion.update");
-	Route::delete("/students/promotions/remove", "StudentPromotionRuleController@destroy")->name("students.promotion.remove");
+	Route::delete("/students/promotions/remove/{rule}", "StudentPromotionRuleController@destroy")->name("students.promotion.remove");
 //promotion
 Route::get( '/promotion/list', 'PromotionController@index' );
 Route::get( '/promotion/create', 'PromotionController@create' );
