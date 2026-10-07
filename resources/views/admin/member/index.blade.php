@@ -104,7 +104,7 @@
         @else
             <div data-testid="students-ledger">
             <x-table
-                :headers="['#', 'Student name', 'Class', 'Parent', 'WhatsApp', 'Status']"
+                :headers="['#', 'Student name', 'KLS number', 'Class', 'Parent', 'WhatsApp', 'Status']"
                 selectable
                 sortable
             >
@@ -130,6 +130,9 @@
                             <a href="{{ url('/admin/student/edit/' . $student->name) }}" class="dt-name-link">
                                 {{ $student->displayName }}
                             </a>
+                        </td>
+                        <td data-label="KLS number">
+                            <span class="text-xs font-mono text-gray-600" data-testid="student-kls">{{ $student->kls_number ?: '—' }}</span>
                         </td>
                         <td data-label="Class">
                             @if($student->class_name)

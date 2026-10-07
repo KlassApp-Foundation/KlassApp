@@ -160,6 +160,7 @@
                 </div>
                 <div class="leading-relaxed">
                     <p class="text-lg text-gray-700 font-semibold">Admission No: {{ $user->admissionNumber() ?? \App\Support\DateOfBirth::NOT_RECORDED }}</p>
+                    <p class="text-lg text-gray-700 font-semibold" data-testid="student-kls">KLS number: {{ $user->studentAcademicLatest?->klassapp_student_id ?: \App\Support\DateOfBirth::NOT_RECORDED }}</p>
                     <change-credential url="{{('/')}}" name="{{$user->name}}"  ></change-credential>
                 </div>
                 <div class="bg-white shadow my-5">

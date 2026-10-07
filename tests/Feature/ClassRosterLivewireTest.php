@@ -186,6 +186,37 @@ class ClassRosterLivewireTest extends TestCase
             ->assertSee('P.4');
     }
 
+    public function test_full_roster_shows_the_kls_number(): void
+    {
+        $school = $this->school('kls-roster');
+        $year = $this->year($school);
+        $admin = $this->admin($school);
+        $section = $this->section($school, 'P6');
+        $standard = $this->standard($school);
+        $stream = $this->stream($school, $year, $standard, $section, null, 'A');
+        $student = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'name' => 'KLS Roster Student',
+            'status' => 'active',
+        ]);
+        StudentAcademic::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'user_id' => $student->id,
+            'standardLink_id' => $stream->id,
+            'klassapp_student_id' => 'KLS8880021',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Show::class, [
+                'sectionId' => $section->id,
+                'academicYearId' => $year->id,
+            ])
+            ->assertSee('KLS number')
+            ->assertSee('KLS8880021');
+    }
+
     private function school(string $suffix): School
     {
         return School::create([
