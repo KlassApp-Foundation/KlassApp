@@ -15,6 +15,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\ExamAuthorization;
 use App\Services\ExamMarksheetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -119,15 +120,27 @@ public function sections(){
         );
     }
 
-    public function store(CreateExamRequest $request)
+    public function store(CreateExamRequest $request, ExamAuthorization $examAuthorization)
     {
-        // dd($request);
         $validated = $request->validated();
-        // dd($validated);
-        Exam::create($validated);
-    return redirect()->route('admin.exams')
-      ->with('successmessage', 'Exam created successfully!');
 
+        // exams.teacher_id is NOT NULL while the form field is optional. When it
+        // is left empty, fall back to the subject's Teacherlink, else the acting
+        // admin — the same rule the class-teacher create path already uses.
+        if (empty($validated['teacher_id'])) {
+            $validated['teacher_id'] = $examAuthorization->defaultTeacherIdForSubject(
+                (int) $validated['school_id'],
+                (int) $validated['academic_year_id'],
+                (int) $validated['section_id'],
+                (int) $validated['subject_id'],
+                Auth::user(),
+            );
+        }
+
+        Exam::create($validated);
+
+        return redirect()->route('admin.exams')
+            ->with('successmessage', 'Exam created successfully!');
     }
 
     // To add edit/update/destroy later...
