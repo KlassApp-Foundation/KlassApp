@@ -70,6 +70,7 @@
                             <thead>
                                 <tr class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                                     <th class="px-3 py-3">Student</th>
+                                    <th class="px-3 py-3">KLS number</th>
                                     <th class="px-3 py-3">Status</th>
                                     @if($fullStudentDetail)
                                         <th class="px-3 py-3">Academic status</th>
@@ -80,6 +81,7 @@
                                 @foreach($students as $studentAcademic)
                                     <tr wire:key="student-{{ $studentAcademic->id }}" class="text-slate-700">
                                         <td class="px-3 py-3 font-semibold text-slate-900">{{ $studentAcademic->user?->name ?: 'Unnamed student' }}</td>
+                                        <td class="px-3 py-3 font-mono text-xs text-slate-600">{{ $studentAcademic->klassapp_student_id ?: '—' }}</td>
                                         <td class="px-3 py-3"><span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{{ ucfirst($studentAcademic->user?->status ?: 'unknown') }}</span></td>
                                         @if($fullStudentDetail)
                                             <td class="px-3 py-3 text-slate-500">{{ ucfirst($studentAcademic->academic_status ?: 'Not recorded') }}</td>

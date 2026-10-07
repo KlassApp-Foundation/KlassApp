@@ -58,7 +58,7 @@ class StudentController extends Controller
 
         // Subquery: latest student_academics per user
         $latestSa = DB::table('student_academics as sa')
-            ->select('sa.id', 'sa.user_id', 'sa.standardLink_id')
+            ->select('sa.id', 'sa.user_id', 'sa.standardLink_id', 'sa.klassapp_student_id')
             ->whereIn('sa.academic_year_id', function ($q) {
                 $q->select('id')->from('academic_years')->where('status', 1);
             })
@@ -72,7 +72,7 @@ class StudentController extends Controller
             ->addBinding($latestSa->getBindings(), 'join')
             ->leftJoin('standards_link', 'latest_sa.standardLink_id', '=', 'standards_link.id')
             ->leftJoin('sections', 'standards_link.section_id', '=', 'sections.id')
-            ->select('users.*', 'sections.name as class_name');
+            ->select('users.*', 'sections.name as class_name', 'latest_sa.klassapp_student_id as kls_number');
 
         $search = $request->input('search');
         if ($search) {
