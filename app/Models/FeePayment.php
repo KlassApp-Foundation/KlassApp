@@ -44,4 +44,21 @@ class FeePayment extends Model
     {
         return $this->belongsTo(School::class);
     }
+
+    /**
+     * Parent-facing reminder text for this payment record.
+     *
+     * The pre-V2 Fee model (and its dates) was removed with the old fees system,
+     * so the message uses only live data: the fee category name and, when set,
+     * its due date.
+     */
+    public function reminderMessage(): string
+    {
+        $category = $this->feeCategory;
+        $name     = $category->name ?? 'School fees';
+
+        return $category && $category->due_date
+            ? $name.' fee payment is pending. Last date for payment - '.$category->due_date->format('d-m-Y').'.'
+            : $name.' fee payment is pending. Please contact the school office.';
+    }
 }

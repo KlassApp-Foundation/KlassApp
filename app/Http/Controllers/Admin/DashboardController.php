@@ -376,9 +376,14 @@ class DashboardController extends Controller
             ->where('school_id', Auth::user()->school_id)
             ->firstOrFail();
 
+        // Hoist the student lookup above try{} so a missing student is a clean 404,
+        // never an exception swallowed by the catch below.
+        $user = User::findByExactNameInSchool($request->name, (int) Auth::user()->school_id, 6);
+        abort_if($user === null, 404);
+
         try
         {
-            $user = User::findByExactNameInSchool($request->name, (int) Auth::user()->school_id, 6);
+            $reminderMessage = $feepayment->reminderMessage();
 
             foreach($user->parents as $parent)
             {
@@ -386,7 +391,7 @@ class DashboardController extends Controller
 
                 $array['school_id']  = Auth::user()->school_id;
                 $array['user_id']    = $parent->userParent->id;
-                $array['message']    = $feepayment->fee->name.' Fee Payment Is Pending.Last Date For Payment - '.date('d-m-Y',strtotime($feepayment->fee->end_date));
+                $array['message']    = $reminderMessage;
                 $array['type']       = 'private message';
 
                 event(new SinglePushEvent($array));
