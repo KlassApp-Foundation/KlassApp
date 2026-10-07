@@ -1,7 +1,7 @@
 # Production Deploy Checklist
 
-> **Status**: ready-to-use runbook, re-verified 2026-10-06 (night shift) against the
-> pre-deploy tip of `main`; production still runs `dabfb80c`. Production runs Laravel
+> **Status**: ready-to-use runbook, re-verified 2026-10-08 against the pre-deploy
+> tip of `main` (MVP-path batch); production still runs `dabfb80c`. Production runs Laravel
 > Cloud, push-to-deploy **off** — merging to `main` does **not** ship; a deploy is an
 > explicit release you start and watch.
 >
@@ -52,6 +52,11 @@ production on `dabfb80c`: **12 new migrations will run; none are destructive** (
 drops of tables/columns, no row deletions). The list below is final for this
 deploy — re-run `migrate:status` on production at deploy time and stop if the
 count differs. Two migrations change existing data — flagged below.
+
+Re-verified again 2026-10-08 for the MVP-path batch (through the route-scoping
+PRs and the MVP journey work): **no migrations were added or modified since
+`14667e61`** (checked the full `database/migrations` diff) — the 12-migration
+list and its classifications below stand unchanged.
 
 **The database snapshot is the rollback for the data migrations.** A code revert
 cannot undo a data migration; the §1.4 snapshot is the pre-deploy state to
@@ -124,6 +129,10 @@ the captured values (log stream or the restore file) allow an exact reversal.
 | `WHATSAPP_VERIFY_SIGNATURE` | `true` | Reject unverified WhatsApp webhooks. |
 | `FILESYSTEM_DISK` | cloud object storage | Production uploads go to the object bucket, never `local`. **Do not copy the staging value.** |
 
+No new environment variables were introduced since the 2026-10-06 review
+(checked 2026-10-08). If in doubt, deploy with the values above and change
+nothing else.
+
 General rule: **staging's non-listed env values are not production's.** Copy
 individual variables deliberately, one at a time, never a bulk staging→production
 env copy. Never read, print or paste secret values — if a value must change,
@@ -157,6 +166,27 @@ Run in order; stop at the first failure and assess for rollback (§6):
     create one admission and approve it; confirm the student user (and KLS
     number) exists, then remove the school with the purge command (dry run
     first).
+14. **MVP end-to-end path (added 2026-10-08)** — on ONE fresh throwaway
+    `is_test` school, at both 375 and 1280, in order:
+    1. sign up with the emailed code and finish the manual setup wizard;
+    2. invite a class teacher, assign a subject teacher, create a stream, and
+       assign both to the class;
+    3. add 5 students with parent contacts — the KLS number is visible on the
+       student list, the class roster and the student overview page;
+    4. the invited teacher accepts the invite, logs in, and takes attendance;
+    5. marks for one exam entered BOTH by form and by spreadsheet import
+       (template → preview → confirm);
+    6. generate a report card for one student — the PDF downloads and opens,
+       and shows the student name and the marks;
+    7. the bursar records a fee payment, sees the balance (collected this term /
+       outstanding), and sends a fee reminder without error;
+    8. the parent (created through the normal student-add flow) logs in on the
+       web and sees the child's grades and fees.
+    Purge the school with `test:purge-schools` afterwards (dry run first).
+15. **WhatsApp report card (production-only)** — send a real report card to the
+    test WhatsApp number on production and confirm it arrives. Sending cannot be
+    exercised on staging (mail/WhatsApp stay sandboxed there), so this is the
+    one part of the MVP path that only exists as a production smoke item.
 
 Clean up any account created for the smoke tests per standing rule #3 (flag
 inactive / purge command — never a raw delete).
