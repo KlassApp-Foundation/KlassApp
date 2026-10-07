@@ -3,6 +3,7 @@
 Route::get( '/dashboard', 'DashboardController@index' );
 Route::get( '/dashboard/structuralList', 'DashboardController@structuralList' );
 Route::post( '/dashboard/structuralList', 'DashboardController@showStructuralList' );
+Route::post( '/dashboard/send/reminder/{fee_id}', 'DashboardController@sendReminder' );
 
 
 
