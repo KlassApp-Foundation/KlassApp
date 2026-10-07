@@ -19,7 +19,12 @@ class FeePaymentController extends Controller
             ->orderByDesc('created_at')
             ->paginate(50);
 
-        return view('accountant.fees.payments', compact('payments'));
+        // Same fee position the admin kit reports — the bursar records payments,
+        // so the bursar must be able to see the resulting balance.
+        $kpis = app(\App\Services\FeePositionService::class)->forSchool($schoolId);
+        $paymentRecorded = session()->has('successmessage');
+
+        return view('accountant.fees.payments', compact('payments', 'kpis', 'paymentRecorded'));
     }
 
     public function create()
