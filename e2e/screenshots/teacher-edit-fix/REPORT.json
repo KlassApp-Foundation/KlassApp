@@ -1,0 +1,36 @@
+{
+  "375": {
+    "linkCount": 10,
+    "statuses": {
+      "https://test.klassapp.xyz/admin/teacher/edit/Diana Kembabazi": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Esther Nansubuga": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Grace Nabirye": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Isaac Tumwine": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Joan Achen": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Moses Ssentamu": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Paul Musoke": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Peter Okello": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Rita Auma": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Samuel Kigozi": 200
+    },
+    "clickStatus": 200,
+    "clickUrl": "https://test.klassapp.xyz/admin/teacher/edit/Diana%20Kembabazi"
+  },
+  "1280": {
+    "linkCount": 10,
+    "statuses": {
+      "https://test.klassapp.xyz/admin/teacher/edit/Diana Kembabazi": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Esther Nansubuga": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Grace Nabirye": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Isaac Tumwine": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Joan Achen": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Moses Ssentamu": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Paul Musoke": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Peter Okello": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Rita Auma": 200,
+      "https://test.klassapp.xyz/admin/teacher/edit/Samuel Kigozi": 200
+    },
+    "clickStatus": 200,
+    "clickUrl": "https://test.klassapp.xyz/admin/teacher/edit/Diana%20Kembabazi"
+  }
+}
