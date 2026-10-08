@@ -214,7 +214,7 @@ class DashboardV2DataService
             ->first();
         $ready = $exam
             ? Marks::query()->where('school_id', $sid)->where('exam_id', $exam->id)
-                ->whereNull('deleted_at')->distinct()->count('student_id')
+                ->distinct()->count('student_id')
             : 0;
 
         return [
@@ -312,7 +312,6 @@ class DashboardV2DataService
             $rows = Marks::query()
                 ->where('school_id', $sid)
                 ->where('exam_id', $exam->id)
-                ->whereNull('deleted_at')
                 ->select('section_id', DB::raw('AVG(marks) as avg_mark'))
                 ->groupBy('section_id')
                 ->get();
@@ -452,7 +451,6 @@ class DashboardV2DataService
 
         $mark = Marks::query()
             ->where('school_id', $sid)
-            ->whereNull('deleted_at')
             ->orderByDesc('created_at')
             ->first();
         if ($mark) {
