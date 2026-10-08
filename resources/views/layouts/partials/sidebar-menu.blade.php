@@ -105,6 +105,14 @@
     $showItem = function (array $item) use ($ctLinks, $ctSectionIds): bool {
         $condition = $item['condition'] ?? null;
 
+        // 'school_admin' — items only the full SchoolAdmin (ug3) may use.
+        // SchoolSubadmin (ug4) reuses this nav, but the routes themselves exclude
+        // it (Settings: fullschooladmin; the classes roster portal scope service
+        // hard-denies groups outside [3, 5]), so hide the links for them.
+        if ($condition === 'school_admin') {
+            return (int) optional(auth()->user())->usergroup_id === 3;
+        }
+
         // Report Cards keeps the homeroom rule because ReportCardsController::authorizeClassTeacher()
         // checks exactly that, via isClassTeacherOfStandardLink().
         if ($condition === 'class_teacher') {
@@ -120,11 +128,15 @@
 @endphp
 <ul class="list-reset text-sm">
     @if(($nav['layout'] ?? 'flat') === 'grouped')
-        @foreach($nav['items'] as $item)
+        @foreach(array_filter($nav['items'], $showItem) as $item)
             @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
         @endforeach
 
         @foreach($nav['groups'] as $group)
+            @php
+                $visibleGroupItems = array_values(array_filter($group['items'], $showItem));
+            @endphp
+            @if(count($visibleGroupItems) > 0)
             {{-- Group header. All behaviour lives in x-data methods (a multi-statement
                  x-on:click string is re-parsed by Alpine as an expression and throws
                  "Unexpected token ';'"), so the markup only ever calls a method. --}}
@@ -168,11 +180,12 @@
                     </svg>
                 </div>
                 <ul x-show="open || previewOpen" x-collapse.duration.200ms>
-                    @foreach($group['items'] as $item)
+                    @foreach($visibleGroupItems as $item)
                         @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
                     @endforeach
                 </ul>
             </li>
+            @endif
         @endforeach
     @else
         @foreach($nav['items'] as $item)

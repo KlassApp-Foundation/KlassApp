@@ -57,20 +57,22 @@ class SidebarMenuRenderTest extends TestCase
 
             $nav = config('navigation.roles.'.$role);
 
-            $flat = collect($nav['items'] ?? []);
-            $grouped = collect($nav['groups'] ?? [])->flatMap(fn ($g) => $g['items']);
+            // Anonymous render: every item carrying a `condition` is hidden (conditions
+            // need an authenticated actor), including items inside groups, and groups
+            // whose items are all hidden are skipped entirely. Mirror exactly that.
+            $hidden = fn (array $i): bool => ! empty($i['condition']);
 
-            // every configured item, plus its nested submenu children
-            $expected = $flat->merge($grouped)->sum(fn ($i) => 1 + count($i['children'] ?? []));
+            $flat = collect($nav['items'] ?? [])->reject($hidden);
 
-            // each collapsible group wrapper is itself an <li>
-            $expected += count($nav['groups'] ?? []);
+            $groups = collect($nav['groups'] ?? [])
+                ->map(fn ($g) => collect($g['items'])->reject($hidden))
+                ->filter(fn ($items) => $items->isNotEmpty());
 
-            // teacher: conditioned items are hidden without an authenticated actor whose
-            // condition resolves. There is more than one condition now (class_teacher for
-            // Report Cards, class_streams for Class Streams), so count every conditioned
-            // item rather than one condition name.
-            $expected -= $flat->filter(fn ($i) => ! empty($i['condition']))->count();
+            // every visible item, plus its nested submenu children ...
+            $expected = $flat->sum(fn ($i) => 1 + count($i['children'] ?? []));
+            $expected += $groups->sum(fn ($items) => $items->sum(fn ($i) => 1 + count($i['children'] ?? [])));
+            // ... plus each rendered collapsible group wrapper (itself an <li>)
+            $expected += $groups->count();
 
             $this->assertSame($expected, substr_count($html, '<li '), "Sidebar [{$role}] rendered the wrong number of list items.");
         }

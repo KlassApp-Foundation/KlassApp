@@ -21,12 +21,10 @@ Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('
 Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');
 Route::post('/settings/integrations/{type}/disconnect', 'Setting\IntegrationsController@disconnect')->name('admin.settings.integrations.disconnect');
 
-//navigation drop-down
-Route::get('/list/academicyear','NavigationController@list');
-Route::post('/academicyear/index','NavigationController@index');
-
-//navigation notification
-Route::get('/notification/showList', 'NotificationController@showList');
+// Navigation dropdown + notification list are served by routes/admin.php under
+// the schooladmin group. The copies that used to live here registered later and
+// shadowed the admin definitions with fullschooladmin — every SchoolSubadmin
+// nav load got a 404 for the year list and the notification feed.
 
 //dashboard
 //Route::get( '/dashboard', 'DashboardController@index' )->name( 'dashboard' );
