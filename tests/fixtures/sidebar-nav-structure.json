@@ -60,7 +60,8 @@
                                 "sections",
                                 "standardlinks",
                                 "standardLink"
-                            ]
+                            ],
+                            "condition": "school_admin"
                         },
                         {
                             "label": "Subjects",
@@ -225,7 +226,8 @@
                             "url": "admin/settings",
                             "active": [
                                 "settings"
-                            ]
+                            ],
+                            "condition": "school_admin"
                         }
                     ]
                 }
@@ -396,14 +398,6 @@
                     "url": "teacher/events",
                     "active": [
                         "events"
-                    ]
-                },
-                {
-                    "label": "Library",
-                    "url": "teacher/libraryactivity",
-                    "active": [
-                        "library",
-                        "libraryactivity"
                     ]
                 }
             ]

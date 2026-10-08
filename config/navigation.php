@@ -116,7 +116,7 @@ return [
                         ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'alumni', 'blocked_students']],
                         ['label' => 'Teachers', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
                         ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
-                        ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink']],
+                        ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink'], 'condition' => 'school_admin'],
                         ['label' => 'Subjects', 'icon' => 'subjects', 'url' => 'admin/subjects', 'active' => ['subjects', 'subject']],
                         ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'admin/timetable', 'active' => ['timetable', 'timetables']],
                         ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'admin/attendance', 'active' => ['attendance']],
@@ -153,7 +153,7 @@ return [
                     'items' => [
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'active' => ['approvals', 'approval']],
                         ['label' => 'Data Exports', 'icon' => 'exports', 'url' => 'admin/reports', 'active' => ['reports', 'report']],
-                        ['label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'active' => ['settings']],
+                        ['label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'active' => ['settings'], 'condition' => 'school_admin'],
                     ],
                 ],
             ],
@@ -192,7 +192,6 @@ return [
                 ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
                 ['label' => 'Notices', 'icon' => 'notices', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
-                ['label' => 'Library', 'icon' => 'library', 'url' => 'teacher/libraryactivity', 'active' => ['library', 'libraryactivity']],
             ],
         ],
 
