@@ -189,7 +189,7 @@
                         <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}</p>
                     @else
                         <span class="dv2-kpi-value">–</span>
-                        <p class="dv2-kpi-sub warn">Set up {{ $setup['labels']['fees'] ?? 'fees' }} first · <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}">Set up fees</a></p>
+                        <p class="dv2-kpi-sub warn">Set up fees first · <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}" style="min-height:44px;display:inline-flex;align-items:center">Set up fees</a></p>
                     @endif
                 </div>
                 <div class="dv2-kpi">
