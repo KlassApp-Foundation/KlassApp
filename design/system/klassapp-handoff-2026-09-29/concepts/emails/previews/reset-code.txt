@@ -1,0 +1,16 @@
+Subject: Your KlassApp reset code: 7391
+Preheader: It expires in 5 minutes.
+
+Reset your password
+
+Hi Jane Doe,
+
+Enter this code on the reset page to choose a new password:
+
+7391
+
+It expires in 5 minutes.
+
+Didn't ask to reset your password? Ignore this email. Your password stays the same.
+
+© 2026 KlassApp. All rights reserved.

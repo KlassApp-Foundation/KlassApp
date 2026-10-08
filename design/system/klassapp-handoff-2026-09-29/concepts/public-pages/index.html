@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp public pages — review</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#FAFAF5;color:#1E293B;font-family:'DM Sans',sans-serif}
+a{color:#15803D}a:hover{color:#166534}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 20px 64px}
+h1{font-family:'Sora',sans-serif;font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+.lede{color:#475569;margin:0 0 8px;max-width:78ch;line-height:1.55;text-wrap:pretty}
+section{border-top:1px solid rgba(120,95,60,.14);padding:28px 0}
+h2{font-family:'Sora',sans-serif;font-size:18px;margin:0 0 4px}
+.why{margin:0 0 16px;color:#475569;font-size:14px;line-height:1.55;max-width:90ch}
+.row{display:flex;gap:20px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}
+.col{display:flex;flex-direction:column;gap:6px;flex:none}
+.col small{font-size:12px;font-weight:600;color:#475569}
+.d{width:640px;height:450px;overflow:hidden;border:1px solid #E2E8F0;border-radius:8px;background:#fff}
+.d iframe{width:1280px;height:900px;border:0;transform:scale(.5);transform-origin:0 0}
+.m{width:282px;height:610px;overflow:hidden;border:1px solid #E2E8F0;border-radius:8px;background:#fff}
+.m iframe{width:375px;height:812px;border:0;transform:scale(.752);transform-origin:0 0}
+.now{width:282px;height:610px;border:1px solid #E2E8F0;border-radius:8px;object-fit:cover;object-position:top;background:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Public pages</h1>
+<p class="lede">Each page moves onto the existing auth design: vintage paper, Sora and DM Sans, and a 44px minimum on every control. Values are copied from <code>resources/css/auth-preview.css</code> at <code>dbe68419</code>. Only two colours change: <code>--ap-muted</code> goes from #64748B to #475569, and links go from #1E6FD9 to #1D4ED8, because both failed 4.5:1 on the paper. "Now" is the staging screenshot you sent.</p>
+<div id="list"></div>
+</div>
+<script>
+const S=[
+{id:'invite-set-password',t:'Invite · set your password',w:'The live view uses auth-card, form-input and btn classes that auth-preview.css doesn\'t define, so the page is unstyled. It\'s rebuilt on the ap-* classes. The expiry now says 72 hours.',src:'screens/invite-set-password.html',now:'now/invite-set-password-375.png'},
+{id:'invite-link',t:'Invite · expired / already used / invalid',w:'Same missing-class bug. The three reasons already exist in the Blade file. Each one now names what happened and what to do next.',src:'screens/invite-link.html#expired',extra:['screens/invite-link.html#claimed','screens/invite-link.html#invalid'],now:'now/invite-invalid-375.png'},
+{id:'report',t:'Report-file link · expired',w:'Parents who tap an old WhatsApp link see a 403 "Invalid signature." page. The fix is a dedicated page that explains the link has expired and offers a way forward.',src:'screens/report-link-expired.html',now:'now/report-file-link-375.png'},
+{id:'e403',t:'Errors · 401 / 403 / 429 / 503 move to the vintage shell',w:'These still use illustrated-layout: #22C55E button at 2.28:1, a numeral at 1.18:1, and a second visual language. 404, 419 and 500 already use the vintage shell.',src:'screens/error-403.html',now:'now/error-404-375.png'},
+{id:'legal',t:'Privacy & Terms · shared legal layout',w:'Replaces the red bg-red-600 band, the Helvetica body and the 30px outline buttons. Adds a contents list on desktop and a 68ch reading measure. The legal text is unchanged; see the flags in the handoff.',src:'screens/legal.html',now:'now/terms-375.png'},
+{id:'adm',t:'Public admission form · Ugandan field set (5 steps)',w:'Designed from the field list you sent, not the repo, because the follow-up PR may not be on main yet. Boarding shows only if the school offers it. Previous school is optional for nursery and P.1. PLE fields appear only for S.1, UCE fields only for S.5. Religion is never required. Health sits alone in step 5 with the care notice. Tribe, community, parents\' ID and income are not collected. The states from #874 are shown alongside: sent, submission failed (no raw exception), and admissions closed. An unknown school slug uses the existing 404.',src:'screens/admission.html#step1',extra:['screens/admission.html#step2','screens/admission.html#step3','screens/admission.html#step4','screens/admission.html#step5','screens/admission.html#done','screens/admission.html#error','screens/admission.html#closed'],now:'now/admission-form-375.png'}];
+const L=document.getElementById('list');
+S.forEach(s=>{const e=document.createElement('section');e.id=s.id;
+e.innerHTML=`<h2>${s.t}</h2><p class="why">${s.w}</p><div class="row"><div class="col"><small>Proposed · 1280</small><div class="d"><iframe src="${s.src}" title="${s.t} desktop"></iframe></div></div><div class="col"><small>Proposed · 375</small><div class="m"><iframe src="${s.src}" title="${s.t} mobile"></iframe></div></div>${(s.extra||[]).map((x,i)=>`<div class="col"><small>375 · ${x.split('#')[1]}</small><div class="m"><iframe src="${x}" title="${s.t} ${x.split('#')[1]}"></iframe></div></div>`).join('')}<div class="col"><small>Now · 375 (staging)</small><img class="now" src="${s.now}" alt="Current ${s.t} on staging"></div></div>`;
+L.appendChild(e);});
+</script>
+</body>
+</html>

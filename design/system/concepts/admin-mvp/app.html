@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp admin · MVP concept</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="app.css">
+
+</head>
+<body>
+<div id="app"></div>
+<script>
+const Q=new URLSearchParams(location.search);
+window.ST={s:Q.get('s')||'dashboard',mode:Q.get('mode')||'add',wl:Q.get('wl'),open:Q.get('open'),hideSetup:Q.get('hide')==='1',state:Q.get('state')||'data',tab:Q.get('tab'),invite:Q.get('invite'),wa:Q.get('wa'),acct:Q.get('acct')==='1',menu:null,drawer:false,dlg:null,sel:new Set((Q.get('sel')||'').split(',').filter(Boolean)),mob:matchMedia('(max-width:760px)').matches};
+</script>
+<script src="data.js"></script>
+<script src="screens-a.js"></script>
+<script src="screens-b.js"></script>
+<script src="screens-c.js"></script>
+<script src="screens-d.js"></script>
+<script>
+const TITLES={subjects:'Subjects',subject:'Mathematics',attendance:'Attendance',exams:'Exams and marks','form-student':'Student','form-teacher':'Teacher','form-parent':'Parent','form-staff':'Staff member',dashboard:'Dashboard',students:'Students',teachers:'Teachers',parents:'Parents',student:'Student',teacher:'Teacher',parent:'Parent',classes:'Classes',class:'Primary 5'};
+const NAVK={student:'students',teacher:'teachers',parent:'parents',class:'classes',subject:'subjects','form-student':'students','form-teacher':'teachers','form-parent':'parents','form-staff':'teachers'};
+const DLG={deact:{t:'Deactivate Amara Okafor?',p:'She won’t appear in registers, marks or fee reminders. Her records are kept, and you can reactivate her at any time.',b:'Deactivate student'},deactT:{t:'Deactivate Sarah Nakato?',p:'She will no longer be able to log in. Her classes keep their marks and attendance history.',b:'Deactivate account'},deactP:{t:'Deactivate Grace Okafor?',p:'She will stop receiving messages and can no longer log in. Her children’s records are not affected.',b:'Deactivate account'}};
+let lastFocus=null;
+function render(){
+ const s=ST.s;let body;
+ if(s==='dashboard')body=scrDashboard();else if(['students','teachers','parents'].includes(s))body=scrList(s);else if(s==='student')body=scrStudent();else if(s==='teacher')body=scrTeacher();else if(s==='parent')body=scrParent();else if(s==='classes')body=scrClasses();else if(s==='class')body=scrClass();else if(s==='subjects')body=scrSubjects();else if(s==='subject')body=scrSubject();else if(s==='attendance')body=scrAttendance();else if(s==='exams')body=scrExams();else if(s.startsWith('form-'))body=scrForm(s.slice(5));else body=scrDashboard();
+ document.getElementById('app').innerHTML=shell(NAVK[s]||s,TITLES[s]||'KlassApp',body);
+ window.lucide&&lucide.createIcons({attrs:{'stroke-width':2}});
+ if(ST.acct){const f=document.querySelector('#acct-pop .mi');f&&f.focus({preventScroll:true})}
+ if(ST.dlg){const b=document.querySelector('.dlg .btn');b&&b.focus()}
+ if(ST.menu){const f=document.querySelector('.rmenu .mi');f&&f.focus({preventScroll:true})}
+}
+document.addEventListener('click',e=>{
+ const go=e.target.closest('[data-go]'),a=e.target.closest('[data-act]');
+ if(e.target.closest('a[href="#"]'))e.preventDefault();
+ if(a&&a.dataset.act==='dlg-x'&&e.target.closest('[data-stop]')&&!e.target.closest('button'))return;
+ if(a){const k=a.dataset.act;
+  if(k==='acct'){ST.acct=!ST.acct;ST.menu=null;lastFocus=a;render();if(!ST.acct)document.querySelector('[data-act="acct"]')?.focus();return}
+  if(k==='drawer'){ST.drawer=!ST.drawer;render();return}
+  if(k==='rmenu'){ST.menu=ST.menu==a.dataset.id?null:a.dataset.id;ST.acct=false;render();return}
+  if(k==='ck'){const id=a.dataset.id;ST.sel.has(id)?ST.sel.delete(id):ST.sel.add(id);render();return}
+  if(k==='ckall'){const ids=[...document.querySelectorAll('[data-act="ck"]')].map(x=>x.dataset.id);const all=ids.every(i=>ST.sel.has(i));ids.forEach(i=>all?ST.sel.delete(i):ST.sel.add(i));render();return}
+  if(k==='clr'){ST.sel.clear();render();return}
+  if(k==='tab'){ST.tab=a.dataset.tab;render();return}
+  if(k==='dlg'){ST.dlg=DLG[a.dataset.k];ST.menu=null;render();return}
+  if(k==='dlg-x'){ST.dlg=null;render();return}
+  if(k==='hideSetup'){ST.hideSetup=true;render();return}
+  if(k==='tog'){ST.open=ST.open===a.dataset.id?'-':a.dataset.id;ST.menu=null;render();document.querySelector(`[data-act="tog"][data-id="${a.dataset.id}"]`)?.focus();return}
+ }
+ if(go){ST.s=go.dataset.go==='me'?'teacher':go.dataset.go;ST.tab=null;ST.menu=null;ST.acct=false;ST.drawer=false;ST.sel.clear();render();scrollTo(0,0);return}
+ if((ST.acct&&!e.target.closest('.acct'))||(ST.menu&&!e.target.closest('.rmenu'))){ST.acct=false;ST.menu=null;render()}
+ if(ST.drawer&&!e.target.closest('#side')&&!e.target.closest('[data-act="drawer"]')){ST.drawer=false;render()}
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&(ST.acct||ST.menu||ST.dlg||ST.drawer)){const wasAcct=ST.acct;ST.acct=false;ST.menu=null;ST.dlg=null;ST.drawer=false;render();if(wasAcct)document.querySelector('[data-act="acct"]')?.focus();return}
+ const m=document.querySelector('#acct-pop,.rmenu');
+ if(m&&(e.key==='ArrowDown'||e.key==='ArrowUp')){const it=[...m.querySelectorAll('.mi')];const i=it.indexOf(document.activeElement);it[(i+(e.key==='ArrowDown'?1:-1)+it.length)%it.length].focus();e.preventDefault()}
+ if(e.key==='Tab'&&ST.dlg){const f=[...document.querySelectorAll('.dlg .btn')];if(e.shiftKey&&document.activeElement===f[0]){f[f.length-1].focus();e.preventDefault()}else if(!e.shiftKey&&document.activeElement===f[f.length-1]){f[0].focus();e.preventDefault()}}
+ if((e.key==='Enter'||e.key===' ')&&e.target.matches('.pl tbody tr')){e.target.querySelector('.who a')?.click()}
+});
+render();
+addEventListener('load',()=>setTimeout(function(){const s=document.createElement('script');s.src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js';s.async=true;s.onload=()=>lucide.createIcons({attrs:{'stroke-width':2}});document.body.appendChild(s)},0));
+</script>
+</body>
+</html>

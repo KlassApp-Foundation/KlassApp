@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data processing agreement: click-to-accept</title>
+<link rel="stylesheet" href="../design-system/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E5DF;color:#1E293B;font-family:var(--d-font-body,'DM Sans',system-ui,sans-serif)}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+button,input{font:inherit}
+.top{position:sticky;top:0;z-index:20;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top h1{font:700 20px var(--d-font-display,'Sora',sans-serif);margin:0 auto 0 0;letter-spacing:-.02em}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px;flex-wrap:wrap}
+.seg button{min-height:38px;padding:0 12px;border:0;border-radius:7px;background:transparent;font-weight:600;font-size:13.5px;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:16px 24px 0;max-width:1180px;font-size:14.5px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+.frames{display:flex;gap:32px;padding:16px 24px 40px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr>small{font-size:12px;font-weight:700;color:#334155}
+.scr{background:#FAFAF5;border:1px solid #CFCAC0;border-radius:6px;overflow:hidden}
+.w1280{width:1280px}.w375{width:375px}
+.ico{width:20px;height:20px;flex:none}
+.bar{height:56px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid #E2E8F0;background:#FAFAF5}
+.bar img{height:26px}.bar .crumb{font-size:14px;color:#475569;margin-left:16px}.bar .crumb b{color:#0F172A}
+.back{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;text-decoration:none}
+.pg{padding:28px 40px 48px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:32px;align-items:start}
+.w375 .bar{padding:0 8px}.w375 .bar .crumb{display:none}
+.w375 .pg{padding:16px 16px 32px;grid-template-columns:1fr;gap:20px}
+.hd{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.eb{font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#15803D;margin:0}
+.hd h1{font:600 28px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;margin:0;color:#0F172A}
+.w375 .hd h1{font-size:22px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:#334155}
+.meta b{color:#0F172A}
+.doc{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:28px 32px;font-size:15.5px;line-height:1.65;color:#1E293B}
+.w375 .doc{padding:18px 16px;font-size:15px}
+.doc h2{font:600 18px/1.3 var(--d-font-display,'Sora',sans-serif);margin:24px 0 6px;color:#0F172A}.doc h2:first-of-type{margin-top:0}
+.doc h2 span{color:#15803D}
+.doc p{margin:0 0 10px}.doc ul{margin:0 0 10px;padding-left:22px}
+.doc table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 10px}
+.doc th,.doc td{text-align:left;padding:8px;border-bottom:1px solid #E2E8F0}.doc th{background:#F1F5F9;border-top:2px solid #0F172A;font-weight:700;color:#0F172A}
+.dl{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border-radius:10px;border:1px solid #CBD5E1;background:#fff;color:#0F172A;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:#15803D;border-color:#15803D;color:#fff}
+.btn.full{width:100%;min-height:48px}
+.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
+.w375 .side{position:static}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.w375 .card{padding:18px 16px}
+.card h3{font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A}
+.card p{margin:0;font-size:14.5px;line-height:1.5}
+.chk{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:start;min-height:44px;padding:10px 12px;border:1.5px solid #CBD5E1;border-radius:10px;cursor:pointer;font-size:15px;line-height:1.45}
+.chk input{width:22px;height:22px;margin:1px 0 0;accent-color:#15803D}
+.chk.err{border-color:#B91C1C;background:#FEF2F2}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:14px;font-weight:700;color:#0F172A}
+.fld input{min-height:48px;border:1.5px solid #CBD5E1;border-radius:10px;padding:0 14px;font-size:15px;background:#fff;color:#1E293B}
+.fld input:focus,.chk:focus-within{outline:3px solid rgba(21,128,61,.3);outline-offset:1px}
+.fld small{font-size:13px;color:#475569;line-height:1.4}
+.fld.err input{border-color:#B91C1C}
+.em{display:flex;gap:6px;align-items:flex-start;font-size:13.5px;font-weight:600;color:#B91C1C}
+.sum{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #FECACA;background:#FEF2F2;border-radius:10px;color:#7F1D1D;font-size:14px;font-weight:600}
+.fine{font-size:13px!important;color:#475569;line-height:1.5}
+.ok{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.badge{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#DCFCE7;color:#14532D}
+.rec{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;font-size:14px;width:100%}
+.rec dt{color:#475569}.rec dd{margin:0;color:#0F172A;overflow-wrap:anywhere}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;font-size:14.5px;line-height:1.5}
+.note.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E3A8A}
+.note.warn{background:#FFFBEB;border:1px solid #FDE68A;color:#78350F}
+.jump{display:none}
+.w375 .jump{display:flex}
+.notes{max-width:1180px;margin:0 24px 48px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:18px 22px;font-size:14px;line-height:1.55}
+.notes h3{font:600 16px var(--d-font-display,'Sora',sans-serif);margin:0 0 8px}.notes ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.notes code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="top"><h1>Data processing agreement · click-to-accept</h1>
+<div class="ctl">State<div class="seg" id="c-st"><button data-v="read" aria-pressed="true">1 · Read and accept</button><button data-v="err">Errors</button><button data-v="done">2 · Accepted</button><button data-v="view">Not the main admin</button><button data-v="update">New version</button></div></div></div>
+<div class="intro"><p>Inside KlassApp, under <b>Settings → Agreements</b>, and as a setup step. Only the school's <b>main admin</b> can accept. The full agreement is on the page, not in a small scroll box. The accept form sits beside it at 1280, and below it at 375 with a "Go to acceptance" link at the top. Once accepted, the signed PDF is generated from the formal document template (<code>signed</code> state). Demo data only; contrast is calculated from hex, not browser-measured.</p></div>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="d"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="m"></div></div></div>
+<section class="notes"><h3>Behaviour</h3><ol>
+<li><b>What's recorded (immutable):</b> school, agreement version and its SHA-256, the user's account, the typed name and title, the accepted time (UTC, with the school's time zone shown), the IP address, the user agent, the method ("click-to-accept") and an acceptance ID.</li>
+<li><b>No reading gate:</b> accepting doesn't require scrolling to the end. Scroll gates fail with screen readers and zoom. The tick wording makes the confirmation explicit instead.</li>
+<li><b>Errors:</b> errors appear only after <b>Accept agreement</b> is pressed, with a summary at the top of the form and focus moved to it. The button is never disabled.</li>
+<li><b>Signed PDF:</b> generated once, server-side, from the accepted version. It's stored with its own hash, emailed to the person who accepted, and downloadable from Settings → Agreements. It's never regenerated with different content.</li>
+</ol></section>
+<script>
+const LG=n=>`<i data-lucide="${n}" class="ico" aria-hidden="true"></i>`;
+let S={st:'read'};
+const DOC=`<article class="doc" aria-label="Agreement text"><h2><span>1.</span> Purpose and scope</h2><p>This agreement applies whenever the School uses KlassApp to record, store or share personal data about students, parents, guardians and staff. It forms part of the KlassApp Terms of Service.</p><h2><span>2.</span> What KlassApp processes</h2><ul><li>Identity and contact details entered by the School.</li><li>Academic records: classes, attendance, marks and report cards.</li><li>Fee records and payment references.</li><li>Health and support notes, only where the School chooses to record them.</li></ul><h2><span>3.</span> Sub-processors</h2><table><thead><tr><th>Sub-processor</th><th>Purpose</th></tr></thead><tbody><tr><td>[Hosting provider]</td><td>Hosting and database</td></tr><tr><td>Meta Platforms (WhatsApp Cloud API)</td><td>Messages to parents and staff</td></tr><tr><td>[Email provider]</td><td>Account and notification emails</td></tr></tbody></table><h2><span>4.</span> Security and breaches</h2><p>KlassApp keeps each school's data separate, encrypts it in transit and at rest, and tells the School within 72 hours of becoming aware of a breach.</p><h2><span>5.</span> Term and deletion</h2><p>When the School stops using KlassApp, its data is returned on request and deleted within 90 days, unless the law requires longer.</p></article>`;
+function head(mob){const st=S.st;return `<div class="hd"><p class="eb">Agreement · Version ${st==='update'?'1.3':'1.2'}</p><h1>Data processing agreement</h1><div class="meta"><span>Reference <b>KA-DPA-2026-014</b></span><span>Effective <b>1 November 2026</b></span><span>About a 6-minute read</span></div><div class="dl" style="margin-top:8px"><a class="btn" href="#">${LG('download')}Download PDF</a>${mob&&st!=='done'&&st!=='view'?`<a class="btn jump" href="#acc-m">${LG('arrow-down')}Go to acceptance</a>`:''}</div>${st==='update'?`<div class="note warn" style="margin-top:8px">${LG('triangle-alert')}<span><b>Version 1.3 replaces 1.2.</b> Changes: a new email sub-processor (section 3) and a shorter deletion period (section 5). Version 1.2 stays in force until you accept 1.3 or until 1 December 2026.</span></div>`:''}</div>`}
+function form(mob){const e=S.st==='err';const id=mob?'m':'d';
+ return `<form class="card" id="acc-${id}" onsubmit="return false" novalidate><h3>Accept for Demo Junior School</h3>${e?`<div class="sum" role="alert" tabindex="-1">${LG('circle-alert')}<span>2 things to fix before you can accept.</span></div>`:''}
+<label class="chk ${e?'err':''}"><input type="checkbox" ${e?'aria-invalid="true" aria-describedby="e1'+id+'"':''}><span>I have read this agreement and accept it on behalf of <b>Demo Junior School</b>.</span></label>${e?`<span class="em" id="e1${id}">${LG('circle-alert')}Tick the box to confirm you accept.</span>`:''}
+<div class="fld ${e?'err':''}"><label for="n${id}">Your full name</label><input id="n${id}" autocomplete="name" ${e?'aria-invalid="true" aria-describedby="e2'+id+' h2'+id+'"':'aria-describedby="h2'+id+'"'}><small id="h2${id}">Type it as it should appear on the agreement. This is your electronic signature.</small>${e?`<span class="em" id="e2${id}">${LG('circle-alert')}Type your full name.</span>`:''}</div>
+<div class="fld"><label for="t${id}">Your title</label><input id="t${id}" autocomplete="organization-title" value="${e?'Head teacher':''}"><small>Your role at the school, for example Head teacher or Director.</small></div>
+<button class="btn pri full" type="submit">Accept agreement</button>
+<p class="fine">We record your name, your title, the date and time, and your account with this acceptance. You'll get the signed PDF by email.</p></form>`}
+function done(){return `<div class="card ok" role="status"><span class="badge">${LG('circle-check')}</span><h3>Agreement accepted</h3><p>Thank you. Demo Junior School has accepted version 1.2.</p><dl class="rec"><dt>Name</dt><dd>Mucunguzi Tumusiime</dd><dt>Title</dt><dd>Head teacher</dd><dt>School</dt><dd>Demo Junior School</dd><dt>Version</dt><dd>1.2</dd><dt>Date and time</dt><dd>1 October 2026, 14:32 (UTC+03:00)</dd><dt>Reference</dt><dd>KA-DPA-2026-014</dd><dt>Acceptance ID</dt><dd class="mono">ACC-7F3K-92QD</dd></dl><a class="btn pri full" href="#">${LG('file-down')}Download signed PDF</a><a class="btn full" href="#">Back to setup</a><p class="fine">A copy was emailed to m.tumusiime@demojuniorschool.ac.ug.</p></div>`}
+function view(){return `<div class="card"><h3>Waiting for your main admin</h3><div class="note info">${LG('info')}<span>Only the school's main admin, <b>Mucunguzi Tumusiime</b>, can accept agreements for Demo Junior School.</span></div><p>You can read the agreement and download it. We've let them know it's waiting.</p><a class="btn full" href="#">${LG('download')}Download PDF</a></div>`}
+function screen(mob){const st=S.st;const right=st==='done'?done():st==='view'?view():form(mob);
+ return `<div class="bar"><a class="back" href="#" aria-label="Back to Settings">${LG('chevron-left')}</a><img src="../template/assets/klassapp-horizontal-light.svg" alt="KlassApp"><span class="crumb">Settings / Agreements / <b>Data processing agreement</b></span></div><div class="pg">${head(mob)}${DOC}<aside class="side">${right}</aside></div>`}
+function draw(){document.getElementById('d').innerHTML=screen(0);document.getElementById('m').innerHTML=screen(1);document.querySelectorAll('#c-st button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.st));if(window.lucide)lucide.createIcons({attrs:{'stroke-width':2,width:20,height:20}})}
+document.getElementById('c-st').onclick=e=>{const b=e.target.closest('button');if(b){S.st=b.dataset.v;draw()}};
+document.addEventListener('click',e=>{if(e.target.closest('a[href="#"]'))e.preventDefault()});
+draw();
+</script>
+</body>
+</html>

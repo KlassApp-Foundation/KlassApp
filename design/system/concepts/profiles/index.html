@@ -105,7 +105,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="ctl">Data<div class="seg" id="c-data"><button data-v="full" aria-pressed="true">Filled</button><button data-v="empty">Empty tabs</button><button data-v="noclass" id="nc">No class</button></div></div>
 </div>
 <div class="intro">
-<p>Designed from <code>main @ 3cf3025bf5b0</code>. Demo data is Demo Academy Uganda only. Every avatar is the default-avatar spec (initials from <code>userprofiles.firstname</code>/<code>lastname</code>, colour by <code>id % 4</code>, square 12px frame) because no demo photos exist. Swap in <code>&lt;x-profile-photo&gt;</code> with a real photo and the frame stays identical.</p>
+<p>Designed from <code>main @ 3cf3025bf5b0</code>. Demo data is Demo Junior School and Demo Senior School only. Every avatar is the default-avatar spec (initials from <code>userprofiles.firstname</code>/<code>lastname</code>, colour by <code>id % 4</code>, square 12px frame) because no demo photos exist. Swap in <code>&lt;x-profile-photo&gt;</code> with a real photo and the frame stays identical.</p>
 <p>Tabs, their order and the default come from the Task C matrix. A tab or field a viewer never sees is <b>absent</b>, not disabled. The server must not send it (see handoff P1). Contrast is calculated from hex, not browser-measured.</p>
 </div>
 <div class="frames"><div class="fr"><small>Desktop · 1280</small><div class="scr w1280" id="d"></div></div><div class="fr"><small>Mobile · 375</small><div class="scr w375" id="m"></div></div></div>
@@ -121,8 +121,8 @@ const VIEW={
  ct:{l:'Class teacher',tabs:['Attendance','Marks','Overview','Discipline','Health'],scope:'You are the class teacher of P.5 Blue. Fee balance isn\u2019t shown to class teachers.',acts:['msg']},
  bursar:{l:'Bursar',tabs:['Fees','Overview'],scope:'Bursar view: attendance, marks, health and date of birth are not sent.',acts:['remind']}};
 const STAFF={
- teacher:{id:3302,fn:'Sarah',ln:'Nakato',role:'Teacher',status:'active',ph:'0759 003 118',em:'s.nakato@demoacademy.ug',wa:1,cls:[['P.5 Blue','Class teacher'],['Mathematics','P.5 Blue · P.6 Red'],['Science','P.5 Blue']],tabs:['Overview','Classes','Attendance','Leave','Documents']},
- admin:{id:3300,fn:'Isaac',ln:'Ssemanda',role:'School admin',status:'active',ph:'0782 660 471',em:'admin@demoacademy.ug',wa:1,cls:[],tabs:['Overview','Classes','Attendance','Leave','Documents']}};
+ teacher:{id:3302,fn:'Sarah',ln:'Nakato',role:'Teacher',status:'active',ph:'0759 003 118',em:'s.nakato@demojuniorschool.ug',wa:1,cls:[['P.5 Blue','Class teacher'],['Mathematics','P.5 Blue · P.6 Red'],['Science','P.5 Blue']],tabs:['Overview','Classes','Attendance','Leave','Documents']},
+ admin:{id:3300,fn:'Isaac',ln:'Ssemanda',role:'School admin',status:'active',ph:'0782 660 471',em:'admin@demojuniorschool.ug',wa:1,cls:[],tabs:['Overview','Classes','Attendance','Leave','Documents']}};
 const PAR={id:2210,fn:'Grace',ln:'Achieng',status:'active',ph:'0772 418 205',wa:1,em:'',dist:'Wakiso',kids:[{id:1087,fn:'Brian',ln:'Okello',cls:'P.5 Blue',bal:180000,rep:'Term 2 report'},{id:1090,fn:'Joy',ln:'Okello',cls:'P.2 Green',bal:0,rep:'Term 2 report'}],tabs:['Children','Overview','Messages']};
 let S={type:'student',viewer:'admin',data:'full',tab:null};
 const EMPTY={
@@ -164,7 +164,7 @@ function staffView(k,mob){const p=STAFF[k],E=S.data==='empty'||k==='admin';const
 function parentView(mob){const p=PAR,E=S.data==='empty';const t=S.tab&&p.tabs.includes(S.tab)?S.tab:p.tabs[0];S.tab=t;
  const hd=`<div class="hd">${av(p,mob?64:128)}<div><h1 class="name">${p.fn} ${p.ln}</h1><div class="meta"><span><span class="badge b-role">Parent</span></span><span><a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}</a>${p.wa?' · on WhatsApp':''}</span><span><span class="badge b-active">Active</span></span></div></div><div class="acts"><button class="btn">Edit</button><button class="btn more" aria-label="More actions">\u22EF</button></div></div>`;
  let body;
- if(t==='Children')body=E?empty('Children','admin'):`<div class="card"><h3>Children at Demo Academy Uganda</h3>${p.kids.map(k=>`<div class="kid">${av(k,40)}<div><div class="nm">${k.fn} ${k.ln}</div><div class="sub">${k.cls} · ${k.bal?`<span class="owed">${ugx(k.bal)} due</span>`:'Fees cleared'}</div></div><div class="ql"><a class="btn" href="#">Report card</a><a class="btn" href="#">Fees</a></div></div>`).join('')}</div>`;
+ if(t==='Children')body=E?empty('Children','admin'):`<div class="card"><h3>Children at Demo Junior School</h3>${p.kids.map(k=>`<div class="kid">${av(k,40)}<div><div class="nm">${k.fn} ${k.ln}</div><div class="sub">${k.cls} · ${k.bal?`<span class="owed">${ugx(k.bal)} due</span>`:'Fees cleared'}</div></div><div class="ql"><a class="btn" href="#">Report card</a><a class="btn" href="#">Fees</a></div></div>`).join('')}</div>`;
  else if(t==='Overview')body=`<div class="card"><h3>Contact</h3><dl class="kv"><dt>Phone</dt><dd><a href="tel:${p.ph.replace(/\s/g,'')}">${p.ph}</a> · on WhatsApp</dd><dt>Email</dt><dd>${p.em||'<span style="color:var(--d-text-secondary)">Not given</span>'}</dd><dt>District</dt><dd>${p.dist}</dd></dl></div>`;
  else body=E?empty('Messages','admin'):`<div class="card"><h3>Recent WhatsApp messages</h3><table><thead><tr><th>Date</th><th>Message</th></tr></thead><tbody><tr><td>29 Sep</td><td>Brian was absent today.</td></tr><tr><td>20 Sep</td><td>Fee reminder: UGX 180,000 due for Brian.</td></tr></tbody></table></div>`;
  return hd+tabs(p.tabs,t)+body}

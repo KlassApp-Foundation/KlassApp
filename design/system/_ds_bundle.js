@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":4,"namespace":"KlassAppDesignSystem_df5836","components":[{"name":"Button","sourcePath":"components/actions/Button.jsx"},{"name":"GoogleDriveMark","sourcePath":"components/brand/GoogleDriveMark.jsx"},{"name":"SlackMark","sourcePath":"components/brand/SlackMark.jsx"},{"name":"WhatsAppMark","sourcePath":"components/brand/WhatsAppMark.jsx"},{"name":"ICONS","sourcePath":"components/core/Icon.jsx"},{"name":"Icon","sourcePath":"components/core/Icon.jsx"},{"name":"KpiCard","sourcePath":"components/data-display/KpiCard.jsx"},{"name":"Table","sourcePath":"components/data-display/Table.jsx"},{"name":"Checkbox","sourcePath":"components/forms/Checkbox.jsx"},{"name":"FormGroup","sourcePath":"components/forms/FormGroup.jsx"},{"name":"Badge","sourcePath":"components/surfaces/Badge.jsx"},{"name":"Card","sourcePath":"components/surfaces/Card.jsx"}],"sourceHashes":{"components/actions/Button.jsx":"1f711d38fc8c","components/brand/GoogleDriveMark.jsx":"3e572ab24ef1","components/brand/SlackMark.jsx":"22e2c222b3c3","components/brand/WhatsAppMark.jsx":"d4dd34ab2dbf","components/core/Icon.jsx":"cadc7fa3ceb6","components/data-display/KpiCard.jsx":"b260c440c5be","components/data-display/Table.jsx":"2925884a8caa","components/forms/Checkbox.jsx":"b71c969210d6","components/forms/FormGroup.jsx":"57e88e2f0aa1","components/surfaces/Badge.jsx":"a76dfb7cec49","components/surfaces/Card.jsx":"1ab75301fdfd","concepts/quickstart/doc-page.js":"f52ae9c02fca","klassapp-handoff-2026-09-29-docs/design-system/concepts/quickstart/doc-page.js":"f52ae9c02fca","klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/deck-stage.js":"f3d3d0a662c0","klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/ds-base.js":"2c57557645f7","ui_kits/onboarding-wizard/WizardApp.jsx":"d8c38074461f","ui_kits/onboarding-wizard/WizardSteps.jsx":"56c713039862","ui_kits/school-dashboard/App.jsx":"431b72105531","ui_kits/school-dashboard/DashboardHome.jsx":"f9a515595fc4","ui_kits/school-dashboard/ExamsScreen.jsx":"168e298afe6c","ui_kits/school-dashboard/FeesScreen.jsx":"14efc1873b61","ui_kits/school-dashboard/Sidebar.jsx":"d5e3ba9349fa","ui_kits/school-dashboard/StudentsScreen.jsx":"dedb96ace81c","ui_kits/toshi-assistant/ToshiApp.jsx":"9b70c3f6b06d","ui_kits/toshi-assistant/ToshiPanel.jsx":"a46aa72e95b5"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"KlassAppDesignSystem_df5836","components":[{"name":"Button","sourcePath":"components/actions/Button.jsx"},{"name":"GoogleDriveMark","sourcePath":"components/brand/GoogleDriveMark.jsx"},{"name":"SlackMark","sourcePath":"components/brand/SlackMark.jsx"},{"name":"WhatsAppMark","sourcePath":"components/brand/WhatsAppMark.jsx"},{"name":"ICONS","sourcePath":"components/core/Icon.jsx"},{"name":"Icon","sourcePath":"components/core/Icon.jsx"},{"name":"KpiCard","sourcePath":"components/data-display/KpiCard.jsx"},{"name":"Table","sourcePath":"components/data-display/Table.jsx"},{"name":"Checkbox","sourcePath":"components/forms/Checkbox.jsx"},{"name":"FormGroup","sourcePath":"components/forms/FormGroup.jsx"},{"name":"Badge","sourcePath":"components/surfaces/Badge.jsx"},{"name":"Card","sourcePath":"components/surfaces/Card.jsx"}],"sourceHashes":{"components/actions/Button.jsx":"1f711d38fc8c","components/brand/GoogleDriveMark.jsx":"3e572ab24ef1","components/brand/SlackMark.jsx":"22e2c222b3c3","components/brand/WhatsAppMark.jsx":"d4dd34ab2dbf","components/core/Icon.jsx":"cadc7fa3ceb6","components/data-display/KpiCard.jsx":"b260c440c5be","components/data-display/Table.jsx":"2925884a8caa","components/forms/Checkbox.jsx":"b71c969210d6","components/forms/FormGroup.jsx":"57e88e2f0aa1","components/surfaces/Badge.jsx":"a76dfb7cec49","components/surfaces/Card.jsx":"1ab75301fdfd","concepts/admin-mvp/data.js":"b10615874675","concepts/admin-mvp/screens-a.js":"8d35ec220219","concepts/admin-mvp/screens-b.js":"49fddadf8c33","concepts/admin-mvp/screens-c.js":"c968c8b51c53","concepts/admin-mvp/screens-d.js":"70c008690bef","concepts/quickstart/doc-page.js":"f52ae9c02fca","klassapp-handoff-2026-09-29-docs/design-system/concepts/quickstart/doc-page.js":"f52ae9c02fca","klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/deck-stage.js":"f3d3d0a662c0","klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/ds-base.js":"2c57557645f7","klassapp-handoff-2026-10-01-documents/template/doc-page.js":"f52ae9c02fca","klassapp-handoff-2026-10-01-documents/template/ds-base.js":"7464c543d081","klassapp-handoff-2026-10-08-admin-mvp/concept/data.js":"b10615874675","klassapp-handoff-2026-10-08-admin-mvp/concept/screens-a.js":"6ec0a918ef3e","klassapp-handoff-2026-10-08-admin-mvp/concept/screens-b.js":"49fddadf8c33","klassapp-handoff-2026-10-08-admin-mvp/concept/screens-c.js":"c968c8b51c53","klassapp-handoff-2026-10-08-admin-mvp/concept/screens-d.js":"70c008690bef","ui_kits/onboarding-wizard/WizardApp.jsx":"d8c38074461f","ui_kits/onboarding-wizard/WizardSteps.jsx":"56c713039862","ui_kits/school-dashboard/App.jsx":"431b72105531","ui_kits/school-dashboard/DashboardHome.jsx":"f9a515595fc4","ui_kits/school-dashboard/ExamsScreen.jsx":"168e298afe6c","ui_kits/school-dashboard/FeesScreen.jsx":"14efc1873b61","ui_kits/school-dashboard/Sidebar.jsx":"d5e3ba9349fa","ui_kits/school-dashboard/StudentsScreen.jsx":"dedb96ace81c","ui_kits/toshi-assistant/ToshiApp.jsx":"9b70c3f6b06d","ui_kits/toshi-assistant/ToshiPanel.jsx":"a46aa72e95b5"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
@@ -520,6 +520,1078 @@ function Card({
 }
 Object.assign(__ds_scope, { Card });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/surfaces/Card.jsx", error: String((e && e.message) || e) }); }
+
+// concepts/admin-mvp/data.js
+try { (() => {
+// Demo data — Demo Junior School (nursery and primary). Demo only; no real people.
+window.KD = (() => {
+  const PAL = ['#1E6FD9', '#15803D', '#B45309', '#1E293B'];
+  const SCHOOL = {
+    name: 'Demo Junior School',
+    no: '007',
+    currency: 'UGX',
+    year: '2026',
+    term: 'Term 3'
+  }; // currency comes from school settings
+  const FIRST = ['Amara', 'Liam', 'Sofia', 'Noah', 'Aisha', 'Mateo', 'Grace', 'Yusuf', 'Priya', 'Ethan', 'Zara', 'Kofi', 'Mei', 'Omar', 'Lucía', 'Daniel', 'Nia', 'Arjun', 'Hana', 'Samuel', 'Leila', 'Tomás', 'Imani', 'Ravi', 'Elena', 'Musa', 'Chloe', 'Ibrahim', 'Ana', 'Joseph', 'Fatima', 'Lucas'];
+  const LAST = ['Okafor', 'Chen', 'Haddad', 'Mensah', 'Rahman', 'García', 'Wanjiru', 'Demir', 'Nair', 'Brooks', 'Ali', 'Asante', 'Tanaka', 'Farouk', 'Morales', 'Kim', 'Ndlovu', 'Patel', 'Sato', 'Okello', 'Karimi', 'Silva', 'Mwangi', 'Iyer', 'Petrova', 'Bello', 'Martin', 'Hassan', 'Costa', 'Achieng', 'Yilmaz', 'Rossi'];
+  const CLASSES = [{
+    id: 'n1',
+    name: 'Nursery',
+    streams: ['Sunflower'],
+    n: 22,
+    ct: 't7',
+    avg: null,
+    att: 95
+  }, {
+    id: 'rc',
+    name: 'Reception',
+    streams: ['Sunflower'],
+    n: 24,
+    ct: 't8',
+    avg: null,
+    att: 94
+  }, {
+    id: 'p1',
+    name: 'Primary 1',
+    streams: ['Blue', 'Red'],
+    n: 31,
+    ct: 't2',
+    avg: 74,
+    att: 96
+  }, {
+    id: 'p2',
+    name: 'Primary 2',
+    streams: ['Blue', 'Red'],
+    n: 29,
+    ct: 't3',
+    avg: 71,
+    att: 93
+  }, {
+    id: 'p3',
+    name: 'Primary 3',
+    streams: ['Blue'],
+    n: 28,
+    ct: 't4',
+    avg: 69,
+    att: 92
+  }, {
+    id: 'p4',
+    name: 'Primary 4',
+    streams: ['Blue'],
+    n: 30,
+    ct: 't5',
+    avg: 66,
+    att: 91
+  }, {
+    id: 'p5',
+    name: 'Primary 5',
+    streams: ['Blue', 'Red'],
+    n: 32,
+    ct: 't1',
+    avg: 68,
+    att: 94
+  }, {
+    id: 'p6',
+    name: 'Primary 6',
+    streams: ['Blue'],
+    n: 27,
+    ct: 't6',
+    avg: 63,
+    att: 90
+  }];
+  const T = [{
+    id: 't1',
+    fn: 'Sarah',
+    ln: 'Nakato',
+    email: 's.nakato@demojunior.school',
+    ph: '+000 700 100 101',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 5 · Blue', 'Mathematics, Science'], ['Primary 6 · Blue', 'Mathematics']],
+    ctOf: 'Primary 5 · Blue',
+    lessons: 24,
+    pendAtt: 0,
+    pendMarks: ['Science · Primary 5 Blue'],
+    last: '2 hours ago'
+  }, {
+    id: 't2',
+    fn: 'Daniel',
+    ln: 'Mensah',
+    email: 'd.mensah@demojunior.school',
+    ph: '+000 700 100 102',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 1 · Blue', 'English, Literacy']],
+    ctOf: 'Primary 1 · Blue',
+    lessons: 20,
+    pendAtt: 1,
+    pendMarks: [],
+    last: 'Yesterday'
+  }, {
+    id: 't3',
+    fn: 'Mei',
+    ln: 'Tanaka',
+    email: 'm.tanaka@demojunior.school',
+    ph: '+000 700 100 103',
+    role: 'Teacher',
+    invite: 'invited',
+    cls: [['Primary 2 · Blue', 'English']],
+    ctOf: 'Primary 2 · Blue',
+    lessons: 18,
+    pendAtt: 0,
+    pendMarks: ['English · Primary 2 Blue'],
+    last: ''
+  }, {
+    id: 't4',
+    fn: 'Omar',
+    ln: 'Farouk',
+    email: '',
+    ph: '+000 700 100 104',
+    role: 'Teacher',
+    invite: 'none',
+    cls: [['Primary 3 · Blue', 'Social Studies']],
+    ctOf: 'Primary 3 · Blue',
+    lessons: 16,
+    pendAtt: 1,
+    pendMarks: [],
+    last: ''
+  }, {
+    id: 't5',
+    fn: 'Elena',
+    ln: 'Petrova',
+    email: 'e.petrova@demojunior.school',
+    ph: '+000 700 100 105',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 4 · Blue', 'Mathematics']],
+    ctOf: 'Primary 4 · Blue',
+    lessons: 22,
+    pendAtt: 0,
+    pendMarks: [],
+    last: '3 days ago'
+  }, {
+    id: 't6',
+    fn: 'Samuel',
+    ln: 'Asante',
+    email: 's.asante@demojunior.school',
+    ph: '+000 700 100 106',
+    role: 'Head teacher',
+    invite: 'accepted',
+    cls: [['Primary 6 · Blue', 'English']],
+    ctOf: 'Primary 6 · Blue',
+    lessons: 10,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }, {
+    id: 't7',
+    fn: 'Hana',
+    ln: 'Sato',
+    email: 'h.sato@demojunior.school',
+    ph: '+000 700 100 107',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Nursery · Sunflower', 'All areas']],
+    ctOf: 'Nursery · Sunflower',
+    lessons: 25,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }, {
+    id: 't8',
+    fn: 'Ravi',
+    ln: 'Iyer',
+    email: 'r.iyer@demojunior.school',
+    ph: '+000 700 100 108',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Reception · Sunflower', 'All areas']],
+    ctOf: 'Reception · Sunflower',
+    lessons: 25,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }].map((t, i) => ({
+    ...t,
+    n: i + 11,
+    status: 'active'
+  }));
+  const S = Array.from({
+    length: 32
+  }, (_, i) => {
+    const fn = FIRST[i],
+      ln = LAST[i * 7 % 32],
+      g = i % 2 ? 'Male' : 'Female';
+    const bal = [0, 180000, 0, 95000, 0, 0, 240000, 0][i % 8];
+    return {
+      id: 1040 + i,
+      fn,
+      ln,
+      sex: i === 9 ? '' : g,
+      kls: 'KLS007' + String(1 + i).padStart(4, '0'),
+      cls: i === 5 ? '' : 'Primary 5 · ' + (i % 3 ? 'Blue' : 'Red'),
+      status: i === 12 ? 'inactive' : 'active',
+      parent: i === 7 ? null : {
+        fn: ['Grace', 'Peter', 'Ana', 'Musa'][i % 4],
+        ln,
+        ph: '+000 772 418 2' + String(10 + i).padStart(2, '0')
+      },
+      att: 88 + i * 3 % 12,
+      avg: 58 + i * 11 % 34,
+      bal,
+      dob: '14 Mar 2015'
+    };
+  });
+  S[0] = {
+    ...S[0],
+    fn: 'Amara',
+    ln: 'Okafor',
+    avg: 74,
+    att: 91,
+    bal: 180000,
+    pos: 6
+  };
+  const P = [{
+    id: 2210,
+    fn: 'Grace',
+    ln: 'Okafor',
+    ph: '+000 772 418 205',
+    email: 'grace.okafor@example.com',
+    wa: 'in',
+    waDate: '12 Sep 2026',
+    last: 'Today, 07:42',
+    kids: [S[0], {
+      id: 1090,
+      fn: 'Tobi',
+      ln: 'Okafor',
+      kls: 'KLS0070033',
+      cls: 'Primary 2 · Blue',
+      bal: 0,
+      att: 97,
+      avg: 81
+    }]
+  }, {
+    id: 2211,
+    fn: 'Peter',
+    ln: 'Chen',
+    ph: '+000 701 552 930',
+    email: '',
+    wa: 'none',
+    last: 'Never',
+    kids: [S[1]]
+  }, {
+    id: 2212,
+    fn: 'Ana',
+    ln: 'Haddad',
+    ph: '+000 755 003 118',
+    email: 'ana.h@example.com',
+    wa: 'in',
+    waDate: '2 Oct 2026',
+    last: '3 days ago',
+    kids: [S[2]]
+  }, {
+    id: 2213,
+    fn: 'Musa',
+    ln: 'Mensah',
+    ph: '+000 782 660 471',
+    email: '',
+    wa: 'pending',
+    last: 'Never',
+    kids: [S[3], S[11]]
+  }];
+  const ini = (f, l) => {
+    f = (f || '').trim().split(/\s+/)[0] || '';
+    l = (l || '').trim();
+    return (([...f][0] || '') + ([...l][0] || '')).toLocaleUpperCase();
+  };
+  const av = (p, s = 40) => {
+    const i = ini(p.fn, p.ln);
+    const r = s <= 32 ? 8 : 12;
+    return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s * .4)}px;border-radius:${r}px;background:${i ? PAL[p.id ? (typeof p.id === 'number' ? p.id : p.n || 0) % 4 : 0] : '#64748B'}" aria-hidden="true">${i}</span>`;
+  };
+  const money = v => SCHOOL.currency + ' ' + Number(v).toLocaleString('en');
+  const grade = a => a >= 80 ? 'A' : a >= 70 ? 'B' : a >= 60 ? 'C' : a >= 50 ? 'D' : 'E';
+  const ic = (n, c = 'ic') => `<i data-lucide="${n}" class="${c}" aria-hidden="true"></i>`;
+  return {
+    SCHOOL,
+    CLASSES,
+    T,
+    S,
+    P,
+    av,
+    ini,
+    money,
+    grade,
+    ic,
+    PAL
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "concepts/admin-mvp/data.js", error: String((e && e.message) || e) }); }
+
+// concepts/admin-mvp/screens-a.js
+try { (() => {
+// Shell, dashboard, people list, classes — admin MVP concept
+(() => {
+  const {
+    SCHOOL,
+    CLASSES,
+    T,
+    S,
+    P,
+    av,
+    money,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  // Groups follow dashboard v2 (handoff-2026-09-30-profiles Part B)
+  const NAV = [['', [['dashboard', 'layout-dashboard', 'Dashboard']]], ['People', [['students', 'graduation-cap', 'Students'], ['teachers', 'presentation', 'Teachers and staff'], ['parents', 'users', 'Parents']]], ['Academics', [['classes', 'school', 'Classes and streams'], ['subjects', 'book-open', 'Subjects'], ['attendance', 'calendar-check', 'Attendance'], ['exams', 'clipboard-list', 'Exams and marks'], ['reports', 'file-text', 'Report cards']]], ['Money', [['fees', 'wallet', 'Fees']]], ['Messages', [['messages', 'message-circle', 'WhatsApp']]], ['School', [['settings', 'settings', 'Settings'], ['help', 'life-buoy', 'Help']]]];
+  const ME = {
+    id: 3300,
+    fn: 'Mucunguzi',
+    ln: 'Moses',
+    email: 'mucunguzi.moses.admin@demojunior.school'
+  };
+  function acctPop(mob) {
+    return `<div class="pop" role="menu" aria-label="Account" id="acct-pop">
+  <div class="who">${av(ME, 40)}<span style="min-width:0"><b class="trunc">${ME.fn} ${ME.ln}</b><small class="trunc">${ME.email}</small></span></div>
+  <a class="mi" role="menuitem" href="#" data-go="me">${ic('user-round')}Edit profile</a>
+  <a class="mi" role="menuitem" href="#">${ic('key-round')}Change password</a>
+  <a class="mi" role="menuitem" href="#">${ic('settings')}Settings</a>
+  <div class="sep" role="separator"></div>
+  <button class="mi" role="menuitem" type="button">${ic('log-out')}Log out</button></div>`;
+  }
+  window.shell = (active, title, body) => {
+    const nav = NAV.map(([g, items]) => `${g ? `<div class="grp">${g}</div>` : ''}<ul class="nav">${items.map(([k, i, l]) => `<li><a href="#" data-go="${k}" ${k === active ? 'aria-current="page"' : ''}>${ic(i)}${l}</a></li>`).join('')}</ul>`).join('');
+    return `<div class="shell">
+  <aside class="side ${ST.drawer ? 'open' : ''}" aria-label="Main menu" id="side">
+    <div class="brand"><img src="../../assets/brand/klassapp-horizontal-light.svg" alt="KlassApp"></div>
+    <nav aria-label="Main">${nav}</nav>
+    <div class="grow"></div>
+    ${ST.hideSetup && ST.state !== 'data' ? `<a class="schip" href="#" aria-label="Finish setup, ${ST.state === 'new' ? 1 : 4} of 7 steps done"><span><b>Finish setup</b><span class="pill">${ST.state === 'new' ? 1 : 4}/7</span></span><small>Next: ${ST.state === 'new' ? 'Add your students' : 'Set up fees for Term 3'}</small><span class="bar"><i style="width:${(ST.state === 'new' ? 1 : 4) / 7 * 100}%"></i></span></a>` : ''}
+    <div class="soon"><img src="../../assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant · coming soon</div>
+    <div class="acct">${ST.acct && !ST.mob ? acctPop() : ''}
+      <button class="acct-btn" type="button" data-act="acct" aria-haspopup="menu" aria-expanded="${ST.acct && !ST.mob}" aria-controls="acct-pop">${av(ME, 40)}<span style="min-width:0"><b class="trunc">${ME.fn} ${ME.ln}</b><small class="trunc">${ME.email}</small></span>${ic('chevrons-up-down', 'ic ic-sm')}</button></div>
+  </aside>
+  <div class="mainw">
+    <header class="topbar"><button class="btn icon ghost" type="button" data-act="drawer" aria-label="Open menu" aria-expanded="${ST.drawer}" aria-controls="side">${ic('menu')}</button><span class="t">${title}</span>
+      <div class="acct"><button class="btn icon ghost" type="button" data-act="acct" aria-label="Account" aria-haspopup="menu" aria-expanded="${ST.acct && ST.mob}">${av(ME, 32)}</button>${ST.acct && ST.mob ? acctPop(1) : ''}</div></header>
+    <div class="panel"><main class="page" id="main">${body}</main></div>
+  </div></div>${ST.dlg ? dialog(ST.dlg) : ''}`;
+  };
+  function dialog(d) {
+    return `<div class="dlg-bg" data-act="dlg-x"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-d" data-stop>
+  <h2 id="dlg-t">${d.t}</h2><p id="dlg-d">${d.p}</p><div class="row-acts"><button class="btn" type="button" data-act="dlg-x">Cancel</button><button class="btn danger" type="button" data-act="dlg-x">${d.b}</button></div></div></div>`;
+  }
+  const ayPick = () => `<label class="ay">Academic year <select class="sel" aria-label="Academic year"><option selected>2026</option><option>2025</option></select></label>`;
+  /* ---------- 1. Dashboard ---------- */
+  const bars = (rows, max = 100) => `<div class="hbars">${rows.map(r => `<div class="hb"><span>${r[0]}</span><span class="t" role="img" aria-label="${r[0]}: ${r[1]}%"><i style="width:${r[1] / max * 100}%;${r[2] ? 'background:' + r[2] : ''}"></i></span><b>${r[1]}%</b></div>`).join('')}</div>`;
+  function line(pts, w = 520, h = 160) {
+    const mn = 80,
+      mx = 100,
+      x = i => 36 + i * (w - 48) / (pts.length - 1),
+      y = v => 12 + (mx - v) / (mx - mn) * (h - 40);
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="Attendance trend: ${pts.map(p => p[0] + ' ' + p[1] + '%').join(', ')}">
+  ${[80, 90, 100].map(v => `<line x1="36" x2="${w - 12}" y1="${y(v)}" y2="${y(v)}" stroke="#E2E8F0"/><text x="30" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#475569">${v}%</text>`).join('')}
+  <path d="${d}" fill="none" stroke="#15803D" stroke-width="2.5"/>${pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[1])}" r="3.5" fill="#15803D"/><text x="${x(i)}" y="${h - 8}" text-anchor="middle" font-size="11" fill="#475569">${p[0]}</text>`).join('')}</svg>`;
+  }
+  function cols(vals, exp, w = 520, h = 170) {
+    const mx = Math.max(...exp),
+      bw = (w - 60) / vals.length,
+      y = v => h - 34 - v / mx * (h - 50);
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="Fees collected by month: ${vals.map(v => v[0] + ' ' + money(v[1])).join(', ')}">
+  ${vals.map((v, i) => {
+      const x = 40 + i * bw;
+      return `<rect x="${x + 8}" y="${y(exp[i])}" width="${bw - 16}" height="${h - 34 - y(exp[i])}" fill="none" stroke="#94A3B8" stroke-dasharray="4 3" rx="4"/><rect x="${x + 8}" y="${y(v[1])}" width="${bw - 16}" height="${h - 34 - y(v[1])}" fill="#15803D" rx="4"/><text x="${x + bw / 2}" y="${h - 14}" text-anchor="middle" font-size="11" fill="#475569">${v[0]}</text><text x="${x + bw / 2}" y="${y(v[1]) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#0F172A">${Math.round(v[1] / 1e6 * 10) / 10}M</text>`;
+    }).join('')}</svg>`;
+  }
+  function kpi(icon, l, v, s, cls = '', meter) {
+    return `<div class="kpi"><span class="l">${ic(icon, 'ic ic-sm')}${l}</span><span class="v">${v}</span>${meter != null ? `<span class="meter" role="img" aria-label="${meter}%"><i style="width:${meter}%"></i></span>` : ''}<span class="s ${cls}">${s}</span></div>`;
+  }
+  const gender = (g, b, u) => `<div class="stack" role="img" aria-label="Girls ${g}%, boys ${b}%, not specified ${u}%"><i style="width:${g}%;background:#B45309"></i><i style="width:${b}%;background:#1E6FD9"></i><i style="width:${u}%;background:#64748B"></i></div><div class="legend"><span><i style="background:#B45309"></i>Girls ${g}%</span><span><i style="background:#1E6FD9"></i>Boys ${b}%</span><span><i style="background:#64748B"></i>Not specified ${u}%</span></div>`;
+  window.scrDashboard = () => {
+    const st = ST.state;
+    const steps = st === 'new' ? 1 : st === 'mid' ? 4 : 7;
+    const next = st === 'new' ? 'Add your students' : 'Set up fees for Term 3';
+    const setup = steps < 7 && !ST.hideSetup ? `<div class="setup" role="region" aria-label="School setup">${ic('list-checks')}<b>Setup ${steps} of 7 done</b><span class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="7" aria-valuenow="${steps}" aria-label="Setup progress"><i style="width:${steps / 7 * 100}%"></i></span><span class="nx">Next: ${next}</span><a class="btn pri" href="#">Continue setup</a><button class="btn icon ghost" type="button" data-act="hideSetup" aria-label="Hide setup bar. Progress stays in the sidebar.">${ic('x')}</button></div>` : '';
+    const QA = [['user-plus', 'Add students', 'One by one or from a spreadsheet', ''], ['clipboard-list', 'Enter marks', st === 'new' ? 'Needs students and an exam' : 'Mid-term exams are open', st === 'new'], ['file-text', 'Generate report cards', st === 'data' ? '140 ready to generate' : 'Needs marks for an exam', st !== 'data'], ['message-circle', 'Send report cards on WhatsApp', st === 'data' ? '142 sent last term' : 'Needs report cards', st !== 'data'], ['wallet', 'Fees', st === 'data' ? 'Record payments and send reminders' : 'Set up Term 3 fees first', st !== 'data']];
+    const qaRow = `<nav class="qa" aria-label="Quick actions">${QA.map(q => `<a class="btn" href="#">${ic(q[0])}${q[1]}</a>`).join('')}</nav>`;
+    const qaTiles = `<section aria-label="Quick actions"><h2 class="sh">Quick actions</h2><div class="qat">${QA.map(q => `<a class="qt" href="#"><span class="ib">${ic(q[0])}</span><span><b>${q[1]}</b><span class="${q[3] ? 'pre' : ''}">${q[2]}</span></span></a>`).join('')}</div></section>`;
+    const head = `<div class="ph"><div><h1>${greet()}, ${ME.fn}</h1><p>${SCHOOL.name} · ${SCHOOL.term}, ${SCHOOL.year}</p></div><div class="row-acts">${ayPick()}</div></div>`;
+    if (st === 'new') return head + setup + qaTiles + `<div class="kpis">${kpi('graduation-cap', 'Students', '0', 'None added yet')}${kpi('presentation', 'Staff', '1', 'Just you')}${kpi('calendar-check', 'Attendance this week', '–', 'Starts after students are added')}${kpi('wallet', 'Fees collected', '–', 'No fee structure yet')}${kpi('file-text', 'Report cards ready', '–', 'After the first exam')}</div>
+  <div class="empty"><b>Add your students to get started</b><p>Your dashboard fills in as you add students, take attendance and enter marks. You can add students one by one or import a spreadsheet.</p><div class="row-acts"><a class="btn pri" href="#">${ic('user-plus')}Add student</a><a class="btn" href="#">${ic('upload')}Import a list</a></div></div>
+  <p class="toshi-soon"><img src="../../assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant, is coming soon.</p>`;
+    const mid = st === 'mid';
+    return head + setup + (mid ? '' : qaRow) + `<div class="kpis">
+  ${kpi('graduation-cap', 'Students', '248', '+12 this term', 'up')}${kpi('presentation', 'Staff', '18', '16 teachers · 2 admin')}
+  ${kpi('calendar-check', 'Attendance this week', '93.4%', '▲ 1.2 pts on last week', 'up')}
+  ${mid ? kpi('wallet', 'Fees collected', '–', 'Set up Term 3 fees first', 'warn') : kpi('wallet', 'Fees collected', '62%', money(46500000) + ' of ' + money(75000000), '', 62)}
+  ${kpi('file-text', 'Report cards ready', mid ? '0' : '140', mid ? 'No exam closed yet' : 'of 248 · Mid-term exams', mid ? '' : '', mid ? null : 56)}</div>
+  ${mid ? qaTiles : ''}<div class="grid2">
+   <div class="card"><div class="hd"><h2>Performance by class</h2><small>${mid ? 'No exam yet' : 'Mid-term exams · average mark'}</small></div>${mid ? `<div class="empty in"><b>No marks entered yet</b><p>Averages appear when teachers enter marks for an exam.</p><a class="btn" href="#">Go to exams</a></div>` : bars(CLASSES.filter(c => c.avg).map(c => [c.name, c.avg]))}</div>
+   <div class="card"><div class="hd"><h2>Attendance trend</h2><small>Last 8 weeks · whole school</small></div>${line([['W1', 91], ['W2', 92], ['W3', 90], ['W4', 93], ['W5', 94], ['W6', 92], ['W7', 92.2], ['W8', 93.4]])}</div>
+   <div class="card"><div class="hd"><h2>Students by gender</h2><small>248 students</small></div>${gender(51, 48, 1)}</div>
+   <div class="card"><div class="hd"><h2>Fees collection</h2><small>Collected against expected, by month</small></div>${mid ? `<div class="empty in"><b>No fee structure for Term 3</b><p>Set the term's fees to start recording payments.</p><a class="btn pri" href="#">Set up fees</a></div>` : cols([['Sep', 24100000], ['Oct', 14900000], ['Nov', 7500000]], [30000000, 25000000, 20000000]) + `<div class="legend"><span><i style="background:#15803D"></i>Collected</span><span><i style="border:1px dashed #94A3B8"></i>Expected</span></div>`}</div>
+  </div>
+  <div class="card"><div class="hd"><h2>Recent activity</h2><a href="#">See all</a></div><ul class="act">
+   <li><span class="ib">${ic('calendar-check', 'ic ic-sm')}</span><span>Sarah Nakato took attendance for <b>Primary 5 · Blue</b> (30 of 32 present)</span><time>08:12</time></li>
+   <li><span class="ib">${ic('wallet', 'ic ic-sm')}</span><span>Payment of ${money(270000)} recorded for <b>Amara Okafor</b></span><time>Yesterday</time></li>
+   <li><span class="ib">${ic('clipboard-list', 'ic ic-sm')}</span><span>Mathematics marks entered for <b>Primary 6 · Blue</b></span><time>Yesterday</time></li>
+   <li><span class="ib">${ic('message-circle', 'ic ic-sm')}</span><span>142 report cards sent to parents on WhatsApp</span><time>Mon</time></li>
+   <li><span class="ib">${ic('user-plus', 'ic ic-sm')}</span><span>3 students added to <b>Reception · Sunflower</b></span><time>Mon</time></li></ul></div>
+  <p class="toshi-soon"><img src="../../assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant, is coming soon.</p>`;
+  };
+  function greet() {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  }
+  /* ---------- 2. People list (students / teachers / parents) ---------- */
+  const CFG = {
+    students: {
+      t: 'Students',
+      one: 'student',
+      add: 'Add student',
+      rows: () => S.slice(0, 10),
+      chips: [['all', 'All', 248], ['cls', 'Class: All', null, 'chevron-down'], ['active', 'Active', 241], ['inactive', 'Inactive', 7], ['nocls', 'No class', 3], ['nopar', 'No parent', 5]],
+      cols: ['Student', 'KLS number', 'Class', 'Parent or guardian', 'Status'],
+      cell: s => [`<span class="who">${av(s, 36)}<span style="min-width:0"><a href="#" data-go="student">${s.fn} ${s.ln}</a></span></span>`, `<span class="mono">${s.kls}</span>`, s.cls || '<span class="badge b-warn">No class</span>', s.parent ? `${s.parent.fn} ${s.parent.ln}` : '<span class="badge b-warn">No parent</span>', st(s.status)],
+      card: s => [`${s.fn} ${s.ln}`, `<span class="mono">${s.kls}</span><span>${s.cls || '<span class="badge b-warn">No class</span>'}</span>${s.status !== 'active' ? st(s.status) : ''}`],
+      menu: ['View profile', 'Edit', 'Move to class', 'Message parent'],
+      bulk: ['Message parents', 'Move to class', 'Export'],
+      go: 'student'
+    },
+    teachers: {
+      t: 'Teachers',
+      one: 'teacher',
+      add: 'Add teacher',
+      rows: () => T,
+      chips: [['all', 'All', 18], ['active', 'Active', 17], ['inv', 'Not yet invited', 1], ['pend', 'Invite pending', 1], ['ct', 'Class teachers', 8]],
+      cols: ['Teacher', 'Teaches', 'Class teacher of', 'Invite', 'Status'],
+      cell: t => [`<span class="who">${av(t, 36)}<span style="min-width:0"><a href="#" data-go="teacher">${t.fn} ${t.ln}</a><span class="sub trunc">${t.role}</span></span></span>`, t.cls.map(c => c[1]).join(', '), t.ctOf || '–', inv(t.invite), st(t.status)],
+      card: t => [`${t.fn} ${t.ln}`, `<span>${t.ctOf ? 'Class teacher · ' + t.ctOf : t.role}</span>${t.invite !== 'accepted' ? inv(t.invite) : ''}`],
+      menu: ['View profile', 'Edit', 'Send invite', 'Assign classes'],
+      bulk: ['Send invites', 'Export'],
+      go: 'teacher'
+    },
+    parents: {
+      t: 'Parents',
+      one: 'parent',
+      add: 'Add parent',
+      rows: () => P.concat(P.map(p => ({
+        ...p,
+        id: p.id + 10,
+        fn: p.fn === 'Grace' ? 'Joy' : p.fn === 'Peter' ? 'Ruth' : p.fn === 'Ana' ? 'Ade' : 'Lina'
+      }))),
+      chips: [['all', 'All', 211], ['wa', 'On WhatsApp', 188], ['nowa', 'Not opted in', 23], ['never', 'Never logged in', 41]],
+      cols: ['Parent or guardian', 'Children', 'Phone', 'WhatsApp', 'Last login'],
+      cell: p => [`<span class="who">${av(p, 36)}<span style="min-width:0"><a href="#" data-go="parent">${p.fn} ${p.ln}</a></span></span>`, p.kids.map(k => k.fn).join(', '), `<span class="mono">${p.ph}</span>`, wa(p.wa), p.last],
+      card: p => [`${p.fn} ${p.ln}`, `<span>${p.kids.map(k => k.fn).join(', ')}</span>${wa(p.wa)}`],
+      menu: ['View profile', 'Edit', 'Link a child', 'Send WhatsApp opt-in'],
+      bulk: ['Send WhatsApp opt-in', 'Export'],
+      go: 'parent'
+    }
+  };
+  const st = s => s === 'active' ? '<span class="badge b-ok">Active</span>' : '<span class="badge b-off">Inactive</span>';
+  const inv = s => s === 'accepted' ? '<span class="badge b-ok">Joined</span>' : s === 'invited' ? '<span class="badge b-info">Invited</span>' : '<span class="badge b-warn">Not invited</span>';
+  const wa = s => s === 'in' ? '<span class="badge b-ok">Opted in</span>' : s === 'pending' ? '<span class="badge b-info">Asked</span>' : '<span class="badge b-off">Not opted in</span>';
+  window.peopleList = (kind, opts = {}) => {
+    const c = CFG[kind],
+      rows = opts.rows || c.rows(),
+      state = opts.state || ST.state;
+    const chipList = opts.chips || c.chips.filter(x => !(opts.inClass && x[0] === 'cls'));
+    const tools = `<div class="lt"><label class="search"><span class="sr">Search ${c.t.toLowerCase()}</span>${ic('search')}<input type="search" placeholder="Search by name${kind === 'students' ? ', KLS number' : kind === 'parents' ? ', phone' : ', email'}"></label>
+   <div class="chips" role="group" aria-label="Filters">${chipList.map((x, i) => `<button class="chip" type="button" aria-pressed="${i === 0}">${x[1]}${x[2] != null ? ` <span class="n">${x[2]}</span>` : ''}${x[3] ? ic(x[3], 'ic ic-sm') : ''}</button>`).join('')}</div></div>`;
+    const sel = ST.sel.size;
+    const bulk = sel ? `<div class="bulk" role="region" aria-label="Bulk actions"><b>${sel} selected</b>${c.bulk.map(b => `<button class="btn" type="button">${b}</button>`).join('')}<button class="btn" type="button" data-act="clr">Clear</button></div>` : '';
+    if (state === 'empty') return tools + `<div class="empty"><b>No ${c.t.toLowerCase()} yet</b><p>${kind === 'students' ? 'Add students one by one, or import a spreadsheet with names and classes.' : kind === 'teachers' ? 'Add your teaching staff, then send each one an invite to join.' : 'Parents are added with their children, or you can add them here and link them.'}</p><div class="row-acts"><a class="btn pri" href="#">${ic('user-plus')}${c.add}</a><a class="btn" href="#">${ic('upload')}Import a list</a></div></div>`;
+    if (state === 'nomatch') return tools + `<div class="empty"><b>No ${c.t.toLowerCase()} match “Zed”</b><p>Check the spelling or clear the filters to search all ${c.t.toLowerCase()}.</p><button class="btn" type="button">Clear filters</button></div>`;
+    const loading = state === 'loading';
+    const menu = r => `<button class="btn icon ghost" type="button" data-act="rmenu" data-id="${r.id}" aria-haspopup="menu" aria-expanded="${ST.menu == r.id}" aria-label="Actions for ${r.fn} ${r.ln}">${ic('ellipsis-vertical')}</button>${ST.menu == r.id ? `<div class="rmenu" role="menu">${c.menu.map((m, i) => `<a class="mi" role="menuitem" href="#" ${i === 0 ? `data-go="${c.go}"` : ''}>${m}</a>`).join('')}</div>` : ''}`;
+    const ck = r => `<label class="ckb"><input type="checkbox" data-act="ck" data-id="${r.id}" ${ST.sel.has(String(r.id)) ? 'checked' : ''} aria-label="Select ${r.fn} ${r.ln}"></label>`;
+    const head = `<thead><tr><th class="ck"><label class="ckb"><input type="checkbox" data-act="ckall" ${sel === rows.length ? 'checked' : ''} aria-label="Select all on this page"></label></th>${c.cols.map(h => `<th scope="col">${h}</th>`).join('')}<th class="menu"><span class="sr">Actions</span></th></tr></thead>`;
+    const sk = '<span class="skel" style="width:70%"></span>';
+    const body = loading ? Array.from({
+      length: 6
+    }, () => `<tr aria-hidden="true"><td class="ck"></td>${c.cols.map((_, i) => `<td>${i ? sk : '<span class="who"><span class="skel" style="width:36px;height:36px;border-radius:12px"></span><span class="skel" style="width:140px"></span></span>'}</td>`).join('')}<td></td></tr>`).join('') : rows.map(r => `<tr class="${ST.sel.has(String(r.id)) ? 'sel' : ''}"><td class="ck">${ck(r)}</td>${c.cell(r).map(x => `<td>${x}</td>`).join('')}<td class="menu">${menu(r)}</td></tr>`).join('');
+    const cards = loading ? Array.from({
+      length: 5
+    }, () => `<div class="pc" aria-hidden="true"><span></span><span class="skel" style="width:40px;height:40px;border-radius:12px"></span><span><span class="skel" style="width:60%"></span><span class="skel" style="width:40%;margin-top:6px"></span></span><span></span></div>`).join('') : rows.map(r => {
+      const [n, l2] = c.card(r);
+      return `<div class="pc ${ST.sel.has(String(r.id)) ? 'sel' : ''}">${ck(r)}${av(r, 40)}<div style="min-width:0"><a class="nm trunc" href="#" data-go="${c.go}">${n}</a><div class="ln2">${l2}</div></div><div style="position:relative">${menu(r)}</div></div>`;
+    }).join('');
+    return tools + bulk + `<div class="tbl" ${loading ? 'aria-busy="true"' : ''}>${loading ? '<span class="sr" role="status">Loading ' + c.t.toLowerCase() + '…</span>' : ''}<table class="pl">${head}<tbody>${body}</tbody></table><div class="cards">${cards}</div>
+  <div class="pager"><span>${loading ? '&nbsp;' : `Showing 1–${rows.length} of ${opts.total || c.chips[0][2]}`}</span><span class="row-acts"><button class="btn icon" type="button" aria-label="Previous page" disabled>${ic('chevron-left')}</button><button class="btn icon" type="button" aria-label="Next page">${ic('chevron-right')}</button></span></div></div>`;
+  };
+  window.scrList = kind => {
+    const c = CFG[kind];
+    return `<div class="ph"><div><h1>${c.t}</h1><p>${c.chips[0][2]} ${c.t.toLowerCase()} at ${SCHOOL.name}</p></div><div class="row-acts"><a class="btn" href="#">${ic('upload')}Import</a><a class="btn pri" href="#">${ic('user-plus')}${c.add}</a></div></div>` + peopleList(kind);
+  };
+  /* ---------- 6. Classes (class teacher per stream, class-level default) ---------- */
+  const streamTeacher = (c, i) => i === 0 || c.streams.length === 1 ? {
+    t: T.find(x => x.id === c.ct),
+    own: true
+  } : {
+    t: T.find(x => x.id === c.ct),
+    own: false
+  };
+  const lvl = c => c.id === 'n1' || c.id === 'rc' ? 'Nursery' : 'Primary';
+  window.scrClasses = () => {
+    if (ST.state === 'empty') return `<div class="ph"><div><h1>Classes and streams</h1></div></div><div class="empty"><b>No classes yet</b><p>Add the classes your school teaches, from nursery to the final year. Add streams if a class is split into groups.</p><div class="row-acts"><a class="btn pri" href="#">${ic('plus')}Add class</a></div></div>`;
+    return `<div class="ph"><div><h1>Classes and streams</h1><p>${CLASSES.length} classes · ${CLASSES.reduce((a, c) => a + c.streams.length, 0)} streams · Mid-term exams</p></div><div class="row-acts"><a class="btn" href="#">${ic('plus')}Add stream</a><a class="btn pri" href="#">${ic('plus')}Add class</a></div></div>
+  <div class="lt"><label class="search"><span class="sr">Find a class</span>${ic('search')}<input type="search" placeholder="Find a class"></label><div class="chips" role="group" aria-label="Level"><button class="chip" type="button" aria-pressed="true">All <span class="n">8</span></button><button class="chip" type="button" aria-pressed="false">Nursery <span class="n">2</span></button><button class="chip" type="button" aria-pressed="false">Primary <span class="n">6</span></button></div></div>
+  <div class="ccards">${CLASSES.map(c => `<article class="cc"><span class="kick">${lvl(c)}</span><a class="t" href="#" data-go="class">${c.name}</a>
+    <ul class="strl">${c.streams.map((s, i) => {
+      const x = streamTeacher(c, i);
+      return `<li><span>${s}</span><span class="tch">${av(x.t, 24)}<span class="trunc">${x.t.fn} ${x.t.ln}</span>${x.own ? '' : '<span class="badge b-off">Class default</span>'}</span></li>`;
+    }).join('')}</ul>
+    <div class="st"><span>${c.n} students</span><span>Attendance ${c.att}%</span></div>
+    <div class="hint">${c.avg ? `<span>Average <b>${c.avg}%</b> · ${grade(c.avg)}</span><span>${c.id === 'p6' ? '▼ 2 since last exam' : '▲ 3 since last exam'}</span>` : '<span>No exams for this class</span>'}</div></article>`).join('')}</div>`;
+  };
+  window.scrClass = () => {
+    const c = CLASSES.find(x => x.id === 'p5'),
+      t = T[0];
+    const subj = [['Mathematics', T[0]], ['English', T[2]], ['Science', T[0]], ['Social Studies', T[3]], ['Religious Education', null], ['Creative Arts', T[6]]];
+    const dist = [['A', 6, '#15803D'], ['B', 9, '#1E6FD9'], ['C', 10, '#B45309'], ['D', 5, '#1E293B'], ['E', 2, '#B91C1C']];
+    const ST2 = [{
+      s: 'Blue',
+      n: 16,
+      avg: 70,
+      att: 95,
+      own: true
+    }, {
+      s: 'Red',
+      n: 16,
+      avg: 66,
+      att: 93,
+      own: false
+    }];
+    const blue = S.filter(s => s.cls.endsWith('Blue')).slice(0, 8);
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="classes">Classes</a> <span aria-hidden="true">›</span> Primary 5</nav>
+  <div class="ph"><div><h1>Primary 5</h1><p>2 streams · ${SCHOOL.term}, ${SCHOOL.year}</p></div><div class="row-acts"><a class="btn" href="#">${ic('calendar-check')}Take attendance</a><a class="btn" href="#">${ic('clipboard-list')}Enter marks</a><button class="btn icon" type="button" aria-label="More actions">${ic('ellipsis')}</button></div></div>
+  <div class="kpis k4">
+   <div class="kpi"><span class="l">${ic('user-round-check', 'ic ic-sm')}Class teacher (default)</span><span style="display:flex;align-items:center;gap:10px;min-width:0">${av(t, 32)}<a href="#" data-go="teacher" class="trunc" style="font-weight:700">${t.fn} ${t.ln}</a></span><span class="s">For any stream without its own</span></div>
+   ${kpi('graduation-cap', 'Students', '32', '17 girls · 15 boys')}${kpi('chart-column', 'Average · Mid-term', '68% · C', '▲ 3 pts since last exam', 'up')}${kpi('calendar-check', 'Attendance this week', '94%', '30 of 32 present today')}</div>
+  <div class="card"><div class="hd"><h2>Streams</h2><a href="#">${ic('plus', 'ic ic-sm')} Add stream</a></div><div class="sgrid">${ST2.map(x => `<div class="scard"><b>Primary 5 · ${x.s}</b>
+   <div class="tch">${av(t, 32)}<span style="min-width:0"><a href="#" data-go="teacher" class="trunc" style="font-weight:700">${t.fn} ${t.ln}</a><span class="sub">${x.own ? 'Class teacher of this stream' : 'Class default · no teacher assigned to this stream'}</span></span></div>
+   ${x.own ? '' : '<a class="btn" href="#">Assign a class teacher</a>'}
+   <div class="st"><span>${x.n} students</span><span>Average ${x.avg}%</span><span>Attendance ${x.att}%</span></div></div>`).join('')}</div></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Grade distribution</h2><small>Mid-term exams · 32 students</small></div>
+   <div class="stack" role="img" aria-label="${dist.map(d => d[0] + ': ' + d[1]).join(', ')}">${dist.map(d => `<i style="width:${d[1] / 32 * 100}%;background:${d[2]}"></i>`).join('')}</div><div class="legend">${dist.map(d => `<span><i style="background:${d[2]}"></i>${d[0]} · ${d[1]}</span>`).join('')}</div>
+   <div class="hd" style="margin-top:6px"><h3>Students by gender</h3></div>${gender(53, 47, 0)}</div>
+   <div class="card"><div class="hd"><h2>Subjects</h2><small>6</small></div><ul class="subj">${subj.map(([s, tt]) => `<li><span>${s}</span><span class="tch">${tt ? av(tt, 28) + `<span class="trunc">${tt.fn} ${tt.ln}</span>` : '<span class="badge b-warn">No teacher</span>'}</span></li>`).join('')}</ul></div></div>
+  <h2 class="sh">Students</h2>` + peopleList('students', {
+      inClass: 1,
+      rows: blue,
+      total: 32,
+      chips: [['all', 'All streams', 32], ['b', 'Blue', 16], ['r', 'Red', 16], ['active', 'Active', 31], ['nopar', 'No parent', 2]]
+    });
+  };
+  window.KC = {
+    bars,
+    line,
+    cols,
+    kpi,
+    gender,
+    ayPick
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "concepts/admin-mvp/screens-a.js", error: String((e && e.message) || e) }); }
+
+// concepts/admin-mvp/screens-b.js
+try { (() => {
+// Profiles: student, teacher, parent — admin viewer
+(() => {
+  const {
+    SCHOOL,
+    T,
+    S,
+    P,
+    av,
+    money,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const tabs = (list, cur) => `<div class="tabs" role="tablist">${list.map(x => `<button role="tab" type="button" data-act="tab" data-tab="${x}" aria-selected="${x === cur}">${x}</button>`).join('')}</div>`;
+  const more = (id, items) => `<span style="position:relative"><button class="btn icon" type="button" data-act="rmenu" data-id="${id}" aria-haspopup="menu" aria-expanded="${ST.menu == id}" aria-label="More actions">${ic('ellipsis')}</button>${ST.menu == id ? `<div class="rmenu" role="menu" style="top:calc(100% + 6px);right:0;width:240px">${items}</div>` : ''}</span>`;
+  const empty = (t, p, b) => `<div class="empty"><b>${t}</b><p>${p}</p>${b ? `<a class="btn" href="#">${b}</a>` : ''}</div>`;
+  const E = () => ST.state === 'empty';
+  /* ---------- 3. Student ---------- */
+  window.scrStudent = () => {
+    const s = S[0],
+      tl = ['Overview', 'Academics', 'Attendance', 'Fees', 'Parents and guardians', 'Health and support', 'Documents', 'Notes'],
+      tab = tl.includes(ST.tab) ? ST.tab : 'Overview';
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a><a class="mi" role="menuitem" href="#">${ic('arrow-right-left')}Move to class</a><div class="sep" role="separator"></div>
+   <button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deact">${ic('user-x')}Deactivate student</button>`;
+    const hd = `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="students">Students</a> <span aria-hidden="true">›</span> ${s.fn} ${s.ln}</nav>
+  <div class="phd">${av(s, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${s.fn} ${s.ln}</h1><div class="meta"><a href="#" data-go="class" style="font-weight:700">${s.cls}</a><span><span class="k">KLS</span> <span style="font-variant-numeric:tabular-nums">${s.kls}</span></span><span class="badge b-ok">Active</span></div></div>
+  <div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit</a><a class="btn" href="#">${ic('message-circle')}Message parent</a>${more('stu', menu)}</div></div>`;
+    const k = E() ? `<div class="kpis k3"><div class="kpi"><span class="l">${ic('calendar-check', 'ic ic-sm')}Attendance this term</span><span class="v">–</span><span class="s">No register taken yet</span></div><div class="kpi"><span class="l">${ic('chart-column', 'ic ic-sm')}Latest exam</span><span class="v">–</span><span class="s">No marks yet</span></div><div class="kpi"><span class="l">${ic('wallet', 'ic ic-sm')}Fees</span><span class="v">–</span><span class="s">No fee structure</span></div></div>` : `<div class="kpis k3"><div class="kpi"><span class="l">${ic('calendar-check', 'ic ic-sm')}Attendance this term</span><span class="v">91%</span><span class="meter" role="img" aria-label="91%"><i style="width:91%"></i></span><span class="s">5 days absent · 2 late</span></div>
+     <div class="kpi"><span class="l">${ic('chart-column', 'ic ic-sm')}Latest exam · Mid-term</span><span class="v">74% · B</span><span class="s">6th of 32 in Primary 5 · Blue</span></div>
+     <div class="kpi"><span class="l">${ic('wallet', 'ic ic-sm')}Fees · ${SCHOOL.term}</span><span class="kl">Balance</span><span class="v owed">${money(180000)}</span><span class="s"><span class="badge b-warn">Partly paid</span> ${money(270000)} of ${money(450000)}</span></div></div>`;
+    let b;
+    if (tab === 'Overview') b = `<div class="grid2"><div class="card"><h2>Student</h2><dl class="kv"><dt>Full name</dt><dd>${s.fn} ${s.ln}</dd><dt>KLS number</dt><dd>${s.kls}</dd><dt>Class</dt><dd>${s.cls}</dd><dt>Gender</dt><dd>Female</dd><dt>Date of birth</dt><dd>${E() ? '<span style="color:var(--d-text-secondary)">Not given</span>' : s.dob}</dd><dt>Joined</dt><dd>${E() ? 'This term' : 'Term 1, 2024'}</dd></dl></div>
+   <div class="card"><h2>Parents and guardians</h2>${E() ? `<p style="margin:0">No parent linked yet.</p><a class="btn" href="#" style="align-self:flex-start">${ic('link')}Link a parent</a>` : `<div class="kidc">${av(P[0], 40)}<div><a href="#" data-go="parent" style="font-weight:700">${P[0].fn} ${P[0].ln}</a><div class="pc-sub" style="font-size:13.5px;color:var(--d-text-secondary)">Mother · <a href="tel:+000772418205">${P[0].ph}</a> · on WhatsApp</div></div></div>`}</div></div>`;else if (E()) b = {
+      Academics: empty('No marks yet', 'Marks appear here once teachers enter them for an exam.'),
+      Attendance: empty('No attendance taken yet this term', 'It appears after the class teacher takes the first register.'),
+      Fees: empty('No fee structure for Primary 5 this term', 'Set up the term’s fees before recording payments.', 'Set up fees'),
+      'Parents and guardians': empty('No parent linked yet', 'Link a parent so they receive report cards and fee messages on WhatsApp.', 'Link a parent'),
+      'Health and support': empty('No health or support notes', 'Parents can add allergies, medical conditions and support needs on the admission form, or you can add them here.', 'Add notes'),
+      Documents: empty('No documents yet', 'Birth certificates and photos sent with the admission form appear here.', 'Upload document'),
+      Notes: empty('No notes', 'Notes are visible to admins only, and each view is logged.', 'Add a note')
+    }[tab];else if (tab === 'Academics') {
+      const sub = [['English', 70, 72, 76], ['Mathematics', 66, 71, 73], ['Science', 74, 75, 79], ['Social Studies', 62, 66, 68], ['Religious Education', 81, 80, 84], ['Creative Arts', 77, 79, 0]];
+      b = `<div class="card"><div class="hd"><h2>Marks by subject</h2><small>${SCHOOL.year} · % per exam</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Subject</th><th class="n" scope="col">Term 1</th><th class="n" scope="col">Term 2</th><th class="n" scope="col">Term 3 mid-term</th><th scope="col">Grade</th></tr></thead><tbody>${sub.map(r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="n">${r[3] || '<span style="color:var(--d-text-secondary)">Pending</span>'}</td><td>${r[3] ? grade(r[3]) : '–'}</td></tr>`).join('')}<tr><th scope="row">Average</th><td class="n"><b>72</b></td><td class="n"><b>74</b></td><td class="n"><b>74</b></td><td><b>B</b></td></tr></tbody></table></div></div>
+    <div class="card"><div class="hd"><h2>This term against the class</h2><small>Amara · class average</small></div><div class="hbars">${sub.filter(r => r[3]).map((r, i) => `<div class="hb"><span>${r[0].split(' ')[0]}</span><span class="t" role="img" aria-label="${r[0]}: ${r[3]}%, class average ${r[3] - 5 + i}%"><i style="width:${r[3]}%"></i></span><b>${r[3]}%</b></div><div class="hb" style="margin-top:-6px"><span></span><span class="t" style="height:6px" aria-hidden="true"><i style="width:${r[3] - 5 + i}%;background:#94A3B8"></i></span><span style="font-size:12px;text-align:right;color:var(--d-text-secondary)">${r[3] - 5 + i}%</span></div>`).join('')}</div><div class="legend"><span><i style="background:#1E6FD9"></i>Amara</span><span><i style="background:#94A3B8"></i>Class average</span></div></div>`;
+    } else if (tab === 'Attendance') b = `<div class="card"><div class="hd"><h2>${SCHOOL.term}</h2><small>Marked by Sarah Nakato</small></div><div class="kpis k3"><div class="kpi"><span class="l">Present</span><span class="v">91%</span></div><div class="kpi"><span class="l">Absent</span><span class="v">5 days</span></div><div class="kpi"><span class="l">Late</span><span class="v">2 days</span></div></div><table class="dt"><thead><tr><th scope="col">Date</th><th scope="col">Status</th></tr></thead><tbody><tr><td>Mon 5 Oct</td><td><span class="badge b-bad">Absent</span></td></tr><tr><td>Fri 2 Oct</td><td><span class="badge b-ok">Present</span></td></tr><tr><td>Thu 1 Oct</td><td><span class="badge b-warn">Late</span></td></tr></tbody></table></div>`;else if (tab === 'Fees') b = `<div class="card"><div class="hd"><h2>${SCHOOL.term}, ${SCHOOL.year}</h2><span class="badge b-warn">Partly paid</span></div><dl class="kv"><dt>Expected</dt><dd>${money(450000)}</dd><dt>Paid</dt><dd>${money(270000)}</dd><dt>Balance</dt><dd class="owed"><b>${money(180000)}</b></dd></dl><table class="dt"><thead><tr><th scope="col">Date</th><th scope="col">Method</th><th class="n" scope="col">Amount</th></tr></thead><tbody><tr><td>2 Sep</td><td>Bank transfer</td><td class="n">${money(270000)}</td></tr></tbody></table><div class="row-acts"><a class="btn pri" href="#">Record payment</a><a class="btn" href="#">Send reminder on WhatsApp</a></div></div>`;else if (tab === 'Parents and guardians') b = `<div class="card"><div class="hd"><h2>Parents and guardians</h2><a class="btn" href="#">${ic('link')}Link another</a></div><div class="kidc">${av(P[0], 48)}<div><a href="#" data-go="parent" style="font-weight:700">${P[0].fn} ${P[0].ln}</a><div style="font-size:13.5px;color:var(--d-text-secondary)">Mother · primary contact</div><a class="ctline" href="tel:+000772418205">${ic('phone')}${P[0].ph}</a><span class="badge b-ok">Opted in to WhatsApp</span></div></div></div>`;else if (tab === 'Documents') b = `<div class="card"><div class="hd"><h2>Documents</h2><a class="btn" href="#">${ic('upload')}Upload</a></div><table class="dt"><thead><tr><th scope="col">Document</th><th scope="col">From</th><th scope="col">Added</th></tr></thead><tbody><tr><td>${ic('file-text', 'ic ic-sm')} Birth certificate.pdf</td><td>Admission form</td><td>12 Jan 2024</td></tr><tr><td>${ic('image', 'ic ic-sm')} Passport photo.jpg</td><td>Admission form</td><td>12 Jan 2024</td></tr></tbody></table></div>`;else if (tab === 'Health and support') b = `<div class="card"><div class="hd"><h2>Health and support</h2><span class="badge b-info">${ic('lock-keyhole', 'ic ic-sm')}Admins and head teacher only</span></div><p class="note">${ic('history', 'ic ic-sm')}Opening this tab is logged. Last opened by Mucunguzi Moses today at 09:14.</p><dl class="kv"><dt>Allergies</dt><dd>Peanuts (severe). Carries an adrenaline pen in her school bag.</dd><dt>Medical conditions</dt><dd>Mild asthma. Inhaler kept at the school office.</dd><dt>Support needs</dt><dd>Sits near the front of the class for hearing.</dd><dt>Emergency contact</dt><dd>Grace Okafor (mother) · <a href="tel:+000772418205">${P[0].ph}</a></dd><dt>Last updated</dt><dd>12 Jan 2024 · admission form</dd></dl><div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit notes</a></div></div>`;else b = `<div class="card"><div class="reqrow"><span>Notes are visible to admins only. Opening them is logged.</span><button class="btn" type="button">${ic('lock-keyhole-open')}Show notes</button></div></div>`;
+    return hd + k + `<div class="tabw">${tabs(tl, tab)}</div>` + b;
+  };
+  /* ---------- 4. Teacher ---------- */
+  window.scrTeacher = () => {
+    const inv = ST.invite || 'accepted',
+      t = {
+        ...T[0],
+        invite: inv
+      };
+    const badge = inv === 'accepted' ? '<span class="badge b-ok">Joined 3 Sep 2026</span>' : inv === 'invited' ? '<span class="badge b-info">Invited 5 Oct · not accepted yet</span>' : '<span class="badge b-warn">Not invited</span>';
+    const invBtn = inv === 'accepted' ? '' : inv === 'invited' ? `<a class="btn" href="#">${ic('send')}Resend invite</a>` : `<a class="btn pri" href="#">${ic('send')}Send invite</a>`;
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('book-open')}Assign classes and subjects</a>${inv === 'accepted' ? `<a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a>` : ''}<div class="sep" role="separator"></div><button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deactT">${ic('user-x')}Deactivate account</button>`;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="teachers">Teachers</a> <span aria-hidden="true">›</span> ${t.fn} ${t.ln}</nav>
+  <div class="phd">${av(t, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${t.fn} ${t.ln}</h1><div class="meta"><span class="badge b-info">${t.role}</span><span>Class teacher of <a href="#" data-go="class" style="font-weight:700">${t.ctOf}</a></span>${badge}</div></div>
+  <div class="row-acts">${invBtn}<a class="btn" href="#">${ic('pencil')}Edit</a>${more('tch', menu)}</div></div>
+  <div class="kpis k4">
+   <div class="kpi"><span class="l">${ic('school', 'ic ic-sm')}Classes</span><span class="v">2</span><span class="s">Primary 5 · Blue, Primary 6 · Blue</span></div>
+   <div class="kpi"><span class="l">${ic('book-open', 'ic ic-sm')}Subjects</span><span class="v">2</span><span class="s">Mathematics, Science</span></div>
+   ${ST.wl === 'as' ? `<div class="kpi"><span class="l">${ic('clock', 'ic ic-sm')}Workload</span><span class="v">3</span><span class="s">class–subject assignments</span><span class="badge b-off" style="align-self:flex-start">No timetable yet</span></div>` : `<div class="kpi"><span class="l">${ic('clock', 'ic ic-sm')}Workload</span><span class="v">${t.lessons}</span><span class="s">lessons a week</span><span class="badge b-ok" style="align-self:flex-start">From the timetable</span></div>`}
+   <div class="kpi"><span class="l">${ic('circle-alert', 'ic ic-sm')}Still pending</span><span class="v">1</span><span class="s warn">Science marks · Primary 5 Blue</span></div></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Teaches</h2><small>${SCHOOL.term}</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th class="n" scope="col">Students</th><th scope="col">Mid-term marks</th></tr></thead><tbody>
+   <tr><td><a href="#" data-go="class">Primary 5 · Blue</a> <span class="badge b-ok">Class teacher</span></td><td>Mathematics</td><td class="n">32</td><td><span class="badge b-ok">Entered</span></td></tr>
+   <tr><td><a href="#" data-go="class">Primary 5 · Blue</a></td><td>Science</td><td class="n">32</td><td><span class="badge b-warn">Pending</span></td></tr>
+   <tr><td>Primary 6 · Blue</td><td>Mathematics</td><td class="n">27</td><td><span class="badge b-ok">Entered</span></td></tr></tbody></table></div>
+   <div class="reqrow"><span>Today's attendance for Primary 5 · Blue</span><span class="badge b-ok">Taken at 08:12</span></div></div>
+   <div class="card"><h2>Contact</h2><a class="ctline" href="tel:+000700100101">${ic('phone')}${t.ph}</a><a class="ctline trunc" href="mailto:${t.email}">${ic('mail')}<span class="trunc">${t.email}</span></a><dl class="kv" style="margin-top:4px"><dt>Last login</dt><dd>${inv === 'accepted' ? t.last : 'Never'}</dd><dt>Account</dt><dd>${inv === 'accepted' ? 'Active' : inv === 'invited' ? 'Invite sent, link valid 72 hours' : 'No login yet'}</dd></dl></div></div>`;
+  };
+  /* ---------- 5. Parent ---------- */
+  window.scrParent = () => {
+    const p = P[0],
+      waSt = ST.wa || 'in';
+    const waRow = waSt === 'in' ? `<span class="badge b-ok">Opted in on ${p.waDate}</span>` : waSt === 'pending' ? `<span class="badge b-info">Opt-in request sent, waiting for reply</span>` : `<span class="badge b-off">Not opted in</span><a class="btn" href="#">${ic('message-circle')}Send opt-in request</a>`;
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('link')}Link a child</a><a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a><div class="sep" role="separator"></div><button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deactP">${ic('user-x')}Deactivate account</button>`;
+    const kids = E() ? empty('No children linked yet', 'Link this parent to their children so they receive report cards and fee messages on WhatsApp.', 'Link a child') : `<div class="grid2">${p.kids.map(k => `<article class="card"><div class="kidc">${av(k, 48)}<div style="min-width:0"><a href="#" data-go="student" style="font:600 16px var(--d-font-display,'Sora',sans-serif);color:#0F172A">${k.fn} ${k.ln}</a><div style="font-size:13.5px;color:var(--d-text-secondary)">${k.cls} · <span style="font-variant-numeric:tabular-nums">${k.kls}</span></div><div class="meta" style="margin-top:6px;font-size:13.5px"><span>Attendance ${k.att}%</span>${k.bal ? `<span class="owed">${money(k.bal)} due</span>` : '<span class="badge b-ok">Fees cleared</span>'}</div></div>
+     <div class="ql"><a class="btn" href="#">${ic('file-text')}Report card</a><a class="btn" href="#">${ic('wallet')}Fees</a></div></div></article>`).join('')}</div>`;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="parents">Parents</a> <span aria-hidden="true">›</span> ${p.fn} ${p.ln}</nav>
+  <div class="phd">${av(p, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${p.fn} ${p.ln}</h1><div class="meta"><span class="badge b-info">Parent</span><span>${E() ? 'No children linked' : p.kids.length + ' children at ' + SCHOOL.name}</span></div></div>
+  <div class="row-acts"><a class="btn" href="#">${ic('message-circle')}Message on WhatsApp</a><a class="btn" href="#">${ic('pencil')}Edit</a>${more('par', menu)}</div></div>
+  <h2 style="font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A">Children</h2>${kids}
+  <div class="grid2"><div class="card"><h2>Contact</h2><a class="ctline" href="tel:+000772418205">${ic('phone')}${p.ph}</a><a class="ctline" href="mailto:${p.email}">${ic('mail')}<span class="trunc">${p.email}</span></a></div>
+  <div class="card"><h2>WhatsApp and access</h2><div class="reqrow">${waRow}</div><dl class="kv"><dt>Last login</dt><dd>${p.last}</dd><dt>Messages this term</dt><dd>12 sent · 2 replies</dd></dl></div></div>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "concepts/admin-mvp/screens-b.js", error: String((e && e.message) || e) }); }
+
+// concepts/admin-mvp/screens-c.js
+try { (() => {
+// Batch two: Subjects, Subject page, Attendance overview, Exams (subject-first)
+(() => {
+  const {
+    SCHOOL,
+    T,
+    av,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const {
+    bars,
+    line,
+    kpi
+  } = window.KC;
+  const tt = id => T.find(t => t.id === id);
+  const STREAMS = [['Primary 1', 'Blue', 't2', 16], ['Primary 1', 'Red', 't2', 15], ['Primary 2', 'Blue', 't3', 15], ['Primary 2', 'Red', 't3', 14], ['Primary 3', 'Blue', 't4', 28], ['Primary 4', 'Blue', 't5', 30], ['Primary 5', 'Blue', 't1', 16], ['Primary 5', 'Red', 't1', 16], ['Primary 6', 'Blue', 't6', 27]];
+  const SUB = [{
+    id: 'eng',
+    n: 'English',
+    code: 'ENG',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t2', 't3', 't6'],
+    avg: 71,
+    d: 2,
+    ent: 9
+  }, {
+    id: 'mth',
+    n: 'Mathematics',
+    code: 'MTH',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t1', 't5'],
+    avg: 66,
+    d: -1,
+    ent: 6
+  }, {
+    id: 'sci',
+    n: 'Science',
+    code: 'SCI',
+    type: 'Core',
+    lv: 'Primary 3–6',
+    from: 4,
+    tch: ['t1', 't4'],
+    avg: 72,
+    d: 3,
+    ent: 3
+  }, {
+    id: 'sst',
+    n: 'Social Studies',
+    code: 'SST',
+    type: 'Core',
+    lv: 'Primary 3–6',
+    from: 4,
+    tch: ['t4'],
+    avg: 63,
+    d: 0,
+    ent: 5
+  }, {
+    id: 're',
+    n: 'Religious Education',
+    code: 'RE',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t6'],
+    avg: 79,
+    d: 1,
+    ent: 2,
+    gap: 1
+  }, {
+    id: 'ca',
+    n: 'Creative Arts',
+    code: 'CA',
+    type: 'Optional',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t7'],
+    avg: null,
+    d: 0,
+    ent: 0
+  }, {
+    id: 'lan',
+    n: 'Language',
+    code: 'LAN',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }, {
+    id: 'num',
+    n: 'Numbers',
+    code: 'NUM',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }, {
+    id: 'rdg',
+    n: 'Reading',
+    code: 'RDG',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }];
+  const rowsOf = s => s.nur ? [] : STREAMS.slice(s.from);
+  const stu = s => s.nur ? 46 : rowsOf(s).reduce((a, r) => a + r[3], 0);
+  const avs = ids => `<span class="avs">${ids.slice(0, 3).map(i => av(tt(i), 28)).join('')}${ids.length > 3 ? `<span class="sub">+${ids.length - 3}</span>` : ''}</span>`;
+  const prog = (a, b) => `<span class="prw"><span class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${b}" aria-valuenow="${a}" aria-label="${a} of ${b} classes"><i style="width:${b ? a / b * 100 : 0}%"></i></span><span class="sub">${a} of ${b}</span></span>`;
+  const stat = (a, b) => b === 0 ? '<span class="badge b-off">No exam</span>' : a === b ? '<span class="badge b-ok">Complete</span>' : a === 0 ? '<span class="badge b-off">Not started</span>' : '<span class="badge b-warn">In progress</span>';
+  const menu = (id, items) => `<span style="position:relative;display:inline-flex"><button class="btn icon ghost" type="button" data-act="rmenu" data-id="${id}" aria-haspopup="menu" aria-expanded="${ST.menu == id}" aria-label="More actions">${ic('ellipsis-vertical')}</button>${ST.menu == id ? `<div class="rmenu" role="menu" style="top:calc(100% + 4px);right:0">${items.map(m => m === '-' ? '<div class="sep" role="separator"></div>' : `<a class="mi${m.startsWith('!') ? ' danger' : ''}" role="menuitem" href="#" ${m === 'View subject' ? 'data-go="subject"' : ''}>${m.replace('!', '')}</a>`).join('')}</div>` : ''}</span>`;
+  const avgCell = s => s.nur ? '<span class="sub">Not examined</span>' : s.avg ? `<b>${s.avg}%</b> · ${grade(s.avg)} <span class="sub" style="display:inline">${s.d > 0 ? '▲ ' + s.d : s.d < 0 ? '▼ ' + -s.d : '–'}</span>` : '<span class="sub">No marks yet</span>';
+  /* ---------- Subjects index ---------- */
+  window.scrSubjects = () => {
+    const head = `<div class="ph"><div><h1>Subjects</h1><p>${SUB.length} subjects · each listed once, across all its classes</p></div><div class="row-acts"><a class="btn pri" href="#" data-go="form-subject">${ic('plus')}Add subject</a></div></div>
+  <div class="lt"><label class="search"><span class="sr">Search subjects</span>${ic('search')}<input type="search" placeholder="Search by subject or code"></label><div class="chips" role="group" aria-label="Filters"><button class="chip" type="button" aria-pressed="true">All <span class="n">9</span></button><button class="chip" type="button" aria-pressed="false">Core <span class="n">8</span></button><button class="chip" type="button" aria-pressed="false">Optional <span class="n">1</span></button><button class="chip" type="button" aria-pressed="false">Nursery <span class="n">3</span></button><button class="chip" type="button" aria-pressed="false">Primary <span class="n">6</span></button><button class="chip" type="button" aria-pressed="false">Missing a teacher <span class="n">1</span></button></div></div>`;
+    if (ST.state === 'empty') return head + `<div class="empty"><b>No subjects yet</b><p>Add each subject once, then choose the classes that take it and who teaches it in each class.</p><a class="btn pri" href="#">${ic('plus')}Add subject</a></div>`;
+    const M = ['View subject', 'Edit', 'Assign teachers', '-', '!Archive subject'];
+    return head + `<div class="tbl"><table class="pl"><thead><tr><th scope="col">Subject</th><th scope="col">Type</th><th scope="col">Classes</th><th scope="col">Teachers</th><th scope="col">Average · Mid-term</th><th scope="col">Mid-term marks</th><th class="menu"><span class="sr">Actions</span></th></tr></thead><tbody>
+  ${SUB.map(s => `<tr><td><span class="who"><span class="sic" aria-hidden="true">${s.code}</span><span style="min-width:0"><a href="#" data-go="subject">${s.n}</a><span class="sub">${s.code}</span></span></span></td><td>${s.type}</td><td>${s.nur ? 2 : rowsOf(s).length} <span class="sub" style="display:inline">· ${s.lv}</span>${s.gap ? ' <span class="badge b-warn">1 without a teacher</span>' : ''}</td><td>${avs(s.tch)}</td><td>${avgCell(s)}</td><td>${s.nur ? '<span class="badge b-off">No exam</span>' : prog(s.ent, rowsOf(s).length)}</td><td class="menu">${menu('s' + s.id, M)}</td></tr>`).join('')}</tbody></table>
+  <div class="cards">${SUB.map(s => `<div class="pc nock"><span class="sic" aria-hidden="true">${s.code}</span><div style="min-width:0"><a class="nm trunc" href="#" data-go="subject">${s.n}</a><div class="ln2"><span>${s.lv}</span>${s.nur ? '' : stat(s.ent, rowsOf(s).length)}${s.gap ? '<span class="badge b-warn">1 without a teacher</span>' : ''}</div></div><div style="position:relative">${menu('m' + s.id, M)}</div></div>`).join('')}</div>
+  <div class="pager"><span>Showing all 9</span></div></div>`;
+  };
+  /* ---------- Subject page ---------- */
+  window.scrSubject = () => {
+    const s = SUB[1],
+      rows = rowsOf(s);
+    const st = (i, n) => i < 6 ? [n, n] : i === 6 ? [18, n] : [0, n];
+    const EX = [['Beginning of term', '7 Sep', 9, 9, 64, 'Complete'], ['Mid-term', '5–9 Oct', 6, 9, 66, 'In progress'], ['End of term', 'From 24 Nov', 0, 9, null, 'Scheduled']];
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="subjects">Subjects</a> <span aria-hidden="true">›</span> ${s.n}</nav>
+  <div class="ph"><div><h1>${s.n}</h1><div class="meta"><span class="badge b-info">${s.type}</span><span><span class="k">Code</span> ${s.code}</span><span>${s.lv}</span></div></div><div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit</a><a class="btn" href="#">${ic('user-round-plus')}Assign teachers</a>${menu('subj', ['Download all marksheets', '-', '!Archive subject'])}</div></div>
+  <div class="kpis k4">${kpi('school', 'Classes', String(rows.length), s.lv)}<div class="kpi"><span class="l">${ic('presentation', 'ic ic-sm')}Teachers</span><span class="v">2</span><span class="s">${s.tch.map(i => tt(i).fn + ' ' + tt(i).ln).join(', ')}</span></div>${kpi('graduation-cap', 'Students', String(stu(s)), 'taking ' + s.n)}${kpi('chart-column', 'Average · Mid-term', '66% · C', '▼ 1 pt on Beginning of term', 'warn')}</div>
+  <div class="card"><div class="hd"><h2>Exams this term</h2><small>${SCHOOL.term}, ${SCHOOL.year}</small></div>
+  <ul class="exl">${EX.map((e, i) => `<li><span><b>${e[0]}</b><span class="sub">${e[1]}</span></span><span class="hm">${e[4] ? `Average <b>${e[4]}%</b>` : '<span class="sub">No marks yet</span>'}</span>${prog(e[2], e[3])}<span class="hm">${e[5] === 'Complete' ? '<span class="badge b-ok">Complete</span>' : e[5] === 'In progress' ? '<span class="badge b-warn">In progress</span>' : '<span class="badge b-off">Scheduled</span>'}</span><span class="row-acts">${i === 1 ? '<a class="btn pri" href="#">Enter marks</a>' : i === 0 ? '<a class="btn" href="#">View marks</a>' : ''}${menu('ex' + i, ['Import from spreadsheet', 'Download marksheet', 'Remind teachers'])}</span></li>`).join('')}</ul></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Classes</h2><small>Mid-term marks and report cards</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Class</th><th scope="col" class="hm">Teacher</th><th class="n hm" scope="col">Average</th><th scope="col">Marks</th><th scope="col" class="hm">Report card</th></tr></thead><tbody>
+  ${rows.map((r, i) => {
+      const [a, n] = st(i, r[3]);
+      const t = tt(i > 5 ? 't1' : i < 4 ? 't5' : 't1');
+      return `<tr><td><a href="#" data-go="class">${r[0]} · ${r[1]}</a></td><td class="hm"><span class="tch" style="display:flex;gap:8px;align-items:center">${av(t, 24)}<span class="trunc">${t.fn} ${t.ln}</span></span></td><td class="n hm">${a === n ? 60 + i * 5 % 14 + '%' : '–'}</td><td>${a === n ? `<span class="badge b-ok">Entered ${a}/${n}</span>` : a ? `<span class="badge b-warn">${a} of ${n}</span>` : `<span class="badge b-off">Not started</span>`}</td><td class="hm">${a === n ? '<span class="badge b-ok">Ready</span>' : '<span class="sub">Waiting for marks</span>'}</td></tr>`;
+    }).join('')}</tbody></table></div></div>
+  <div class="card"><div class="hd"><h2>Average by class</h2><small>Mid-term · entered so far</small></div>${bars(rows.slice(0, 6).map((r, i) => [r[0].replace('Primary ', 'P.') + ' ' + r[1], 60 + i * 5 % 14]))}<p class="sub" style="margin:0">3 classes have no Mid-term marks yet.</p></div></div>`;
+  };
+  /* ---------- Attendance overview ---------- */
+  const vbars = (pts, lo = 80) => {
+    const w = 360,
+      h = 170,
+      bw = (w - 40) / pts.length,
+      y = v => 14 + (100 - v) / (100 - lo) * (h - 50);
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="${pts.map(p => p[0] + ' ' + p[1] + '%').join(', ')}">${[80, 90, 100].map(v => `<line x1="30" x2="${w - 6}" y1="${y(v)}" y2="${y(v)}" stroke="#E2E8F0"/><text x="26" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#475569">${v}%</text>`).join('')}${pts.map((p, i) => {
+      const x = 34 + i * bw;
+      return `<rect x="${x + 6}" y="${y(p[1])}" width="${bw - 12}" height="${h - 36 - y(p[1])}" rx="4" fill="${p[2] || '#15803D'}"/><text x="${x + bw / 2}" y="${y(p[1]) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#0F172A">${p[1]}%</text><text x="${x + bw / 2}" y="${h - 18}" text-anchor="middle" font-size="11" fill="#475569">${p[0]}</text>`;
+    }).join('')}</svg>`;
+  };
+  window.scrAttendance = () => {
+    const head = `<div class="ph"><div><h1>Attendance</h1><p>Today · Thursday 8 October 2026</p></div><div class="row-acts"><label class="ay">Period <select class="sel" aria-label="Period"><option selected>This week</option><option>This term</option><option>Last 8 weeks</option></select></label><a class="btn" href="#">${ic('download')}Export</a></div></div>`;
+    if (ST.state === 'empty') return head + `<div class="empty"><b>No attendance taken yet this term</b><p>Class teachers take the register each morning. Patterns by class and by day appear after the first week.</p><a class="btn pri" href="#">${ic('bell')}Remind class teachers</a></div>`;
+    const REG = STREAMS.map((r, i) => ({
+      c: r[0] + ' · ' + r[1],
+      t: tt(r[2]),
+      n: r[3],
+      ok: i !== 3 && i !== 5,
+      at: ['07:52', '08:05', '08:20', '', '08:12', '', '08:12', '08:31', '07:58'][i]
+    })).concat([{
+      c: 'Nursery · Sunflower',
+      t: tt('t7'),
+      n: 22,
+      ok: true,
+      at: '08:02'
+    }, {
+      c: 'Reception · Sunflower',
+      t: tt('t8'),
+      n: 24,
+      ok: true,
+      at: '08:09'
+    }]);
+    REG.sort((a, b) => a.ok - b.ok);
+    return head + `<div class="kpis k4">${kpi('user-round-check', 'Present today', '93.1%', '231 of 248 · 17 absent', '', 93.1)}<div class="kpi"><span class="l">${ic('clipboard-check', 'ic ic-sm')}Registers taken today</span><span class="v">9 of 11</span><span class="meter" role="img" aria-label="9 of 11"><i style="width:82%"></i></span><span class="s warn">2 not taken yet</span></div>${kpi('calendar-check', 'This week', '93.4%', '▲ 1.2 pts on last week', 'up')}${kpi('calendar-range', 'This term', '92.6%', 'Since 7 September')}</div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Who has taken today</h2><small>Not taken first</small></div><ul class="reg">${REG.map(r => `<li><span style="min-width:0"><b class="trunc">${r.c}</b><span class="tch">${av(r.t, 24)}<span class="trunc sub" style="display:inline">${r.t.fn} ${r.t.ln}</span></span></span>${r.ok ? `<span class="badge b-ok">Taken ${r.at}</span>` : `<span class="row-acts"><span class="badge b-warn">Not yet</span><a class="btn" href="#">${ic('bell')}Remind</a></span>`}</li>`).join('')}</ul></div>
+  <div class="card"><div class="hd"><h2>By day of the week</h2><small>This term</small></div>${vbars([['Mon', 94], ['Tue', 95], ['Wed', 94], ['Thu', 93], ['Fri', 89, '#B45309']])}<p class="note">${ic('info', 'ic ic-sm')}Fridays average 5 points below the rest of the week.</p></div></div>
+  <div class="grid2"><div class="card"><div class="hd"><h2>By class</h2><small>This week</small></div>${bars(STREAMS.map((r, i) => [r[0].replace('Primary ', 'P.') + ' ' + r[1], [96, 95, 93, 92, 92, 91, 95, 93, 90][i]]))}</div>
+  <div class="card"><div class="hd"><h2>Trend</h2><small>Last 8 weeks · whole school</small></div>${line([['W1', 91], ['W2', 92], ['W3', 90], ['W4', 93], ['W5', 94], ['W6', 92], ['W7', 92.2], ['W8', 93.4]])}</div></div>`;
+  };
+  /* ---------- Exams, subject first ---------- */
+  window.scrExams = () => {
+    const ex = SUB.filter(s => !s.nur);
+    const tot = ex.reduce((a, s) => a + rowsOf(s).length, 0),
+      done = ex.reduce((a, s) => a + s.ent, 0);
+    const open = ST.open || 'mth';
+    const head = `<div class="ph"><div><h1>Exams and marks</h1><p>${SCHOOL.term}, ${SCHOOL.year} · by subject</p></div><div class="row-acts"><label class="ay">Term <select class="sel" aria-label="Term"><option selected>Term 3, 2026</option><option>Term 2, 2026</option></select></label><a class="btn pri" href="#">${ic('plus')}Add exam</a></div></div>
+  <div class="chips" role="group" aria-label="Exam"><button class="chip" type="button" aria-pressed="false">Beginning of term <span class="n">· Complete</span></button><button class="chip" type="button" aria-pressed="true">Mid-term <span class="n">· In progress</span></button><button class="chip" type="button" aria-pressed="false">End of term <span class="n">· From 24 Nov</span></button></div>`;
+    if (ST.state === 'empty') return head.replace(/<div class="chips"[\s\S]*$/, '') + `<div class="empty"><b>No exams this term</b><p>Add an exam, such as a mid-term or end-of-term exam, then choose its subjects and classes. Teachers enter marks per subject.</p><a class="btn pri" href="#">${ic('plus')}Add exam</a></div>`;
+    return head + `<div class="card exsum"><div style="min-width:0;flex:1 1 280px"><h2>Mid-term exams · 5–9 October</h2><p style="margin:4px 0 8px">Marks entered for <b>${done} of ${tot}</b> subject classes</p><span class="prog" style="height:8px" role="progressbar" aria-valuemin="0" aria-valuemax="${tot}" aria-valuenow="${done}" aria-label="Marks entered"><i style="width:${done / tot * 100}%"></i></span></div>
+   <div class="exrc"><span><b>Report cards</b><span class="sub">4 of 11 classes have every mark</span></span><span class="row-acts"><a class="btn" href="#">${ic('bell')}Remind teachers</a><a class="btn pri" href="#">${ic('file-text')}Generate for 4 classes</a></span></div></div>
+  <div class="lt"><label class="search"><span class="sr">Search subjects</span>${ic('search')}<input type="search" placeholder="Search subjects"></label><div class="chips" role="group" aria-label="Status"><button class="chip" type="button" aria-pressed="true">All <span class="n">6</span></button><button class="chip" type="button" aria-pressed="false">Not started <span class="n">1</span></button><button class="chip" type="button" aria-pressed="false">In progress <span class="n">3</span></button><button class="chip" type="button" aria-pressed="false">Complete <span class="n">2</span></button></div></div>
+  <ul class="xl">${ex.map(s => {
+      const rows = rowsOf(s),
+        n = rows.length,
+        o = open === s.id;
+      return `<li class="${o ? 'open' : ''}"><div class="xh"><button class="btn icon ghost" type="button" data-act="tog" data-id="${s.id}" aria-expanded="${o}" aria-controls="x-${s.id}" aria-label="${o ? 'Hide' : 'Show'} classes for ${s.n}">${ic(o ? 'chevron-down' : 'chevron-right')}</button>
+   <span class="xn"><a href="#" data-go="subject"><b>${s.n}</b></a><span class="tch">${avs(s.tch)}<span class="sub" style="display:inline">${n} classes</span></span></span>${prog(s.ent, n)}<span class="hm">${stat(s.ent, n)}</span><span class="hm xa">${s.avg && s.ent ? `Avg <b>${s.avg}%</b>` : '<span class="sub">–</span>'}</span>${menu('x' + s.id, ['Download all marksheets', 'Import from spreadsheet', 'Remind teachers'])}</div>
+   ${o ? `<ul class="xc" id="x-${s.id}">${rows.map((r, i) => {
+        const a = i < s.ent ? r[3] : i === s.ent ? Math.round(r[3] / 2) : 0;
+        const t = tt(s.tch[i % s.tch.length]);
+        return `<li><span style="min-width:0"><b class="trunc">${r[0]} · ${r[1]}</b><span class="tch">${av(t, 24)}<span class="sub trunc" style="display:inline">${t.fn} ${t.ln}</span></span></span>${a === r[3] ? `<span class="badge b-ok">Entered ${a}/${r[3]}</span>` : a ? `<span class="badge b-warn">${a} of ${r[3]}</span>` : '<span class="badge b-off">Not started</span>'}<span class="row-acts"><a class="btn${a === r[3] ? '' : ' pri'}" href="#">${a === r[3] ? 'View' : 'Enter marks'}</a>${menu('c' + s.id + i, ['Import from spreadsheet', 'Download marksheet', 'Remind teacher'])}</span></li>`;
+      }).join('')}</ul>` : ''}</li>`;
+    }).join('')}</ul>
+  <p class="sub" style="margin:0">Language, Numbers and Reading (Nursery and Reception) have no Mid-term exam.</p>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "concepts/admin-mvp/screens-c.js", error: String((e && e.message) || e) }); }
+
+// concepts/admin-mvp/screens-d.js
+try { (() => {
+// Batch two: shared add / edit person form (student, teacher, parent, staff)
+(() => {
+  const {
+    SCHOOL,
+    T,
+    S,
+    P,
+    av,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const f = (id, label, o = {}) => {
+    const err = ST.state === 'error' && o.err;
+    const v = ST.mode === 'edit' && o.v != null ? o.v : '';
+    const ctl = o.type === 'select' ? `<select class="inp sel" id="${id}" ${err ? `aria-invalid="true" aria-describedby="${id}-e"` : ''}>${(o.opts || []).map((x, i) => `<option ${ST.mode === 'edit' && x === o.v || !i && o.ph ? 'selected' : ''}>${x}</option>`).join('')}</select>` : o.type === 'textarea' ? `<textarea class="inp" id="${id}" rows="3" ${o.hint ? `aria-describedby="${id}-h"` : ''}>${v}</textarea>` : `<input class="inp" id="${id}" type="${o.type || 'text'}" value="${err ? '' : v}" ${o.ac ? `autocomplete="${o.ac}"` : ''} ${o.ph2 ? `placeholder="${o.ph2}"` : ''} ${err ? `aria-invalid="true" aria-describedby="${id}-e"` : o.hint ? `aria-describedby="${id}-h"` : ''}>`;
+    return `<div class="f${o.full ? ' full' : ''}${err ? ' err' : ''}"><label for="${id}">${label}${o.opt ? '<span class="opt">Optional</span>' : ''}</label>${ctl}${err ? `<span class="emsg" id="${id}-e">${ic('circle-alert', 'ic ic-sm')}${o.err}</span>` : o.hint ? `<span class="hint" id="${id}-h">${o.hint}</span>` : ''}</div>`;
+  };
+  const radios = (name, label, opts, o = {}) => `<fieldset class="f${o.full ? ' full' : ''}"><legend>${label}${o.opt ? '<span class="opt">Optional</span>' : ''}</legend><div class="radios">${opts.map((x, i) => `<label class="rc"><input type="radio" name="${name}" ${o.sel != null && i === o.sel ? 'checked' : ''}>${x}</label>`).join('')}</div>${o.hint ? `<span class="hint">${o.hint}</span>` : ''}</fieldset>`;
+  const check = (label, on, hint) => `<label class="rc ck full"><input type="checkbox" ${on ? 'checked' : ''}><span>${label}${hint ? `<span class="hint" style="display:block">${hint}</span>` : ''}</span></label>`;
+  const sec = (t, p, body) => `<section class="fsec"><h2>${t}</h2>${p ? `<p class="hint" style="margin:-8px 0 0">${p}</p>` : ''}<div class="fg">${body}</div></section>`;
+  const nameRow = (p, err) => f('fn', 'First name', {
+    ac: 'given-name',
+    v: p && p.fn
+  }) + f('ln', 'Last name', {
+    ac: 'family-name',
+    v: p && p.ln,
+    err: err ? 'Enter a last name' : null
+  });
+  const photo = p => `<div class="f full"><span class="lab">Photo<span class="opt">Optional</span></span><div class="phrow">${p ? av(p, 64) : '<span class="av" style="width:64px;height:64px;background:#F1F5F9;color:#475569;border:1px dashed #94A3B8" aria-hidden="true">' + ic('camera') + '</span>'}<span style="display:flex;flex-direction:column;gap:4px"><a class="btn" href="#">${ic('upload')}${p ? 'Change photo' : 'Upload photo'}</a><span class="hint">Until there's a photo, KlassApp shows initials.</span></span></div></div>`;
+  function invite(kind, edit) {
+    if (edit) {
+      const st = kind === 'parent' ? 'Opted in to WhatsApp on 12 Sep 2026' : 'Joined on 3 Sep 2026';
+      return sec(kind === 'parent' ? 'WhatsApp and login' : 'Login', '', `<div class="f full"><div class="reqrow"><span class="badge b-ok">${st}</span>${kind === 'parent' ? '<a class="btn" href="#">Send a login invite by email</a>' : '<a class="btn" href="#">Reset password</a>'}</div></div>`);
+    }
+    if (kind === 'parent') return sec('Invite', 'Parents get report cards, fee balances and attendance on WhatsApp once they reply to the opt-in message.', check('Send a WhatsApp opt-in message after saving', true, 'Sent to the phone number above. They reply YES to start receiving messages.') + check('Also send a login invite by email', false, 'For parents who also want to use the web app. Needs an email address.'));
+    return sec('Invite', 'They choose their own password. The invite link works for 72 hours.', radios('inv', 'Send an invite', ['By email', 'By WhatsApp', 'Not yet'], {
+      sel: 0,
+      full: 1,
+      hint: 'You can send or resend it later from their profile.'
+    }));
+  }
+  const SPEC = {
+    student: {
+      t: 'student',
+      p: () => S[0],
+      body: (p, e) => [sec('Student', '', nameRow(p, e) + radios('gender', 'Gender', ['Female', 'Male', 'Not specified'], {
+        sel: ST.mode === 'edit' ? 0 : 2
+      }) + f('dob', 'Date of birth', {
+        type: 'date',
+        opt: 1,
+        v: '2015-03-14'
+      }) + photo(ST.mode === 'edit' ? p : null)), sec('Class', '', f('cls', 'Class', {
+        type: 'select',
+        opts: ['Choose a class', 'Nursery', 'Reception', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6'],
+        ph: 1,
+        v: 'Primary 5'
+      }) + f('str', 'Stream', {
+        type: 'select',
+        opts: ['Choose a stream', 'Blue', 'Red'],
+        ph: 1,
+        v: 'Blue',
+        hint: 'Shown only for classes with streams.'
+      }) + f('jd', 'Joining date', {
+        type: 'date',
+        v: '2024-01-12',
+        hint: ST.mode === 'edit' ? '' : 'Defaults to today.'
+      }) + `<div class="f"><span class="lab">KLS number</span><span class="ro">${ST.mode === 'edit' ? p.kls : 'Created when you save'}</span><span class="hint">KLS + your school's number (${SCHOOL.no}) + a 4-digit sequence. It never changes.</span></div>`), ST.mode === 'edit' ? sec('Parents and guardians', '', `<div class="f full"><div class="reqrow"><span class="tch" style="display:flex;gap:10px;align-items:center">${av(P[0], 40)}<span><b>${P[0].fn} ${P[0].ln}</b><span class="sub">Mother · ${P[0].ph}</span></span></span><a class="btn" href="#">${ic('link')}Link another</a></div></div>`) : sec('Parent or guardian', 'Link an existing parent, or add a new one. Parents receive updates on WhatsApp.', `<div class="f full"><label for="ps">Find a parent already in KlassApp<span class="opt">Optional</span></label><span class="search" style="flex:none">${ic('search')}<input class="inp" id="ps" type="search" placeholder="Search by name or phone" style="padding-left:40px"></span></div><p class="or full">Or add a new parent</p>` + f('pfn', 'First name') + f('pln', 'Last name') + f('rel', 'Relationship to the student', {
+        type: 'select',
+        opts: ['Choose', 'Mother', 'Father', 'Guardian', 'Other'],
+        ph: 1
+      }) + f('pph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        err: e ? 'Enter a phone number so the parent can get WhatsApp updates' : null,
+        hint: 'Include the country code.'
+      }) + check('This number is on WhatsApp', true) + check('Send a WhatsApp opt-in message after saving', true)), sec('Health and support', 'Only admins and the head teacher can see this. Each view is logged.', f('al', 'Allergies or medical conditions', {
+        type: 'textarea',
+        opt: 1,
+        full: 1,
+        v: 'Peanuts (severe). Mild asthma.'
+      }) + f('sn', 'Support needs', {
+        type: 'textarea',
+        opt: 1,
+        full: 1,
+        v: 'Sits near the front for hearing.'
+      }))]
+    },
+    teacher: {
+      t: 'teacher',
+      p: () => T[0],
+      body: (p, e) => [sec('Teacher', '', nameRow(p, e) + f('role', 'Role', {
+        type: 'select',
+        opts: ['Teacher', 'Head teacher', 'Deputy head teacher'],
+        v: 'Teacher'
+      }) + f('sno', 'Staff number', {
+        opt: 1,
+        hint: 'If your school uses one.'
+      }) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph,
+        hint: 'Include the country code.'
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        v: p.email,
+        err: e ? 'Enter an email or a phone number to send the invite' : null
+      }) + photo(ST.mode === 'edit' ? p : null)), sec('Teaching', 'You can also do this later from the class or subject page.', `<div class="f full"><span class="lab">Classes and subjects<span class="opt">Optional</span></span><ul class="assign">${(ST.mode === 'edit' ? [['Primary 5 · Blue', 'Mathematics'], ['Primary 5 · Blue', 'Science'], ['Primary 6 · Blue', 'Mathematics']] : [['Primary 5 · Blue', 'Mathematics']]).map((r, i) => `<li><select class="inp sel" aria-label="Class ${i + 1}"><option>${r[0]}</option></select><select class="inp sel" aria-label="Subject ${i + 1}"><option>${r[1]}</option></select><button class="btn icon" type="button" aria-label="Remove ${r[1]}, ${r[0]}">${ic('x')}</button></li>`).join('')}</ul><a class="btn" href="#" style="align-self:flex-start">${ic('plus')}Add a class and subject</a></div>` + f('ct', 'Class teacher of', {
+        type: 'select',
+        opt: 1,
+        opts: ['None', 'Primary 5 · Blue', 'Primary 5 · Red', 'Primary 6 · Blue'],
+        v: 'Primary 5 · Blue'
+      })), invite('teacher', ST.mode === 'edit')]
+    },
+    parent: {
+      t: 'parent',
+      p: () => P[0],
+      body: (p, e) => [sec('Parent or guardian', '', nameRow(p, e) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph,
+        hint: 'Include the country code.'
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        opt: 1,
+        v: p.email
+      }) + check('This number is on WhatsApp', true) + photo(ST.mode === 'edit' ? p : null)), sec('Children', '', `<div class="f full"><label for="ks">Link a child</label><span class="search" style="flex:none">${ic('search')}<input class="inp" id="ks" type="search" placeholder="Search by name or KLS number" style="padding-left:40px"></span>${ST.state === 'error' ? `<span class="emsg">${ic('circle-alert', 'ic ic-sm')}Link at least one child</span>` : ''}<ul class="kids">${(ST.mode === 'edit' || ST.state !== 'error' ? p.kids : []).map(k => `<li>${av(k, 32)}<span style="min-width:0"><b>${k.fn} ${k.ln}</b><span class="sub">${k.cls} · ${k.kls}</span></span><select class="inp sel" aria-label="Relationship to ${k.fn}"><option>Mother</option><option>Father</option><option>Guardian</option><option>Other</option></select><button class="btn icon" type="button" aria-label="Unlink ${k.fn}">${ic('x')}</button></li>`).join('')}</ul></div>`), invite('parent', ST.mode === 'edit')]
+    },
+    staff: {
+      t: 'staff member',
+      p: () => ({
+        id: 3310,
+        fn: 'Ruth',
+        ln: 'Kim',
+        ph: '+000 700 100 120',
+        email: 'r.kim@demojunior.school'
+      }),
+      body: (p, e) => [sec('Staff member', 'For non-teaching staff, such as the bursar or librarian. Their role decides what they can see.', nameRow(p, e) + f('role', 'Role', {
+        type: 'select',
+        opts: ['Choose a role', 'Bursar', 'Librarian', 'School admin', 'Office staff'],
+        ph: 1,
+        v: 'Bursar'
+      }) + f('sno', 'Staff number', {
+        opt: 1
+      }) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        v: p.email
+      }) + photo(ST.mode === 'edit' ? p : null))]
+    }
+  };
+  window.scrForm = kind => {
+    const k = SPEC[kind],
+      p = k.p(),
+      edit = ST.mode === 'edit',
+      e = ST.state === 'error';
+    const back = {
+      student: 'students',
+      teacher: 'teachers',
+      parent: 'parents',
+      staff: 'teachers'
+    }[kind];
+    const title = edit ? `Edit ${p.fn} ${p.ln}` : `Add ${k.t}`;
+    const errs = e ? {
+      student: ['Last name', 'Parent phone'],
+      teacher: ['Last name', 'Email'],
+      parent: ['Last name', 'Children'],
+      staff: ['Last name']
+    }[kind] : null;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="${back}">${back === 'teachers' ? 'Teachers and staff' : back[0].toUpperCase() + back.slice(1)}</a> <span aria-hidden="true">›</span> ${edit ? p.fn + ' ' + p.ln : 'Add'}</nav>
+  <div class="ph"><div><h1>${title}</h1><p>${edit ? 'Changes save when you press Save.' : 'Fields are required unless marked Optional.'}</p></div></div>
+  <form class="form" novalidate onsubmit="return false">${errs ? `<div class="errsum" role="alert" tabindex="-1"><b>${errs.length} things need fixing</b><ul>${errs.map(x => `<li><a href="#">${x}</a></li>`).join('')}</ul></div>` : ''}
+  ${k.body(p, e).join('')}
+  <div class="fbar"><a class="btn" href="#" data-go="${back}">Cancel</a>${edit ? '' : '<button class="btn" type="button">Save and add another</button>'}<button class="btn pri" type="submit">${edit ? 'Save changes' : kind === 'student' ? 'Add student' : `Save${kind === 'parent' ? ' and send opt-in' : kind === 'teacher' ? ' and send invite' : ''}`}</button></div></form>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "concepts/admin-mvp/screens-d.js", error: String((e && e.message) || e) }); }
 
 // concepts/quickstart/doc-page.js
 try { (() => {
@@ -5055,6 +6127,1841 @@ try { (() => {
   document.head.appendChild(s);
 })();
 })(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-09-29-docs/design-system/templates/pitch-deck/ds-base.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-01-documents/template/doc-page.js
+try { (() => {
+// @ds-adherence-ignore -- omelette starter scaffold (raw elements/hex/px by design)
+// Copied omelette starter. Re-running copy_starter_component with this kind overwrites this file with the latest version (page content is unaffected).
+/* BEGIN USAGE */
+/**
+ * <doc-page> — paged-document shell for printable HTML.
+ *
+ * FIRST, decide how the document paginates — up front, before building:
+ *
+ * - FLOWING document (the default): write the whole document as one
+ *   normal HTML flow inside <doc-page>; the browser's print engine
+ *   splits it onto pages at export. Use for long-form documents with a
+ *   single text flow: reports, memos, letters, essays.
+ * - EXPLICIT pagination: a fixed set of pre-paginated pages, one
+ *   <section class="page"> child per page. Use when the user asks for a
+ *   specific page count, or the design implies one: a one-page resume, a
+ *   two-sided flier, a poster, a certificate, a brochure — any richly
+ *   laid-out document without a single text flow.
+ * - If in doubt, ask the user as part of the build.
+ *
+ * PAGE SIZING — paper differs by country (letter vs A4), so the printed
+ * sheet is not one fixed truth:
+ * - FLOWING documents pin NO paper size: the print engine paginates
+ *   onto the user's real paper, and the content reflows to it.
+ * - EXPLICITLY PAGINATED documents print each page at a FIXED page box
+ *   with overflow hidden — letter by default, size="a4" for a clearly
+ *   metric user, the user's chosen paper when they export. Design each
+ *   page to FILL that box, fitting letter and A4 alike without overlap.
+ * - width/height pin an explicit fixed size, ONLY when the user gives
+ *   one.
+ * Never write your own @page rule or hard-code paper dimensions in the
+ * content.
+ *
+ * Sizing modes (attributes):
+ *   (none)                      — portrait: flowing docs use the user's
+ *           paper; explicitly paginated pages use the named size box
+ *           (letter unless size="a4")
+ *   orientation="landscape"     — the same, landscape
+ *   width / height              — explicit fixed size, ONLY when the user
+ *           gives one (e.g. width="22in" height="30in" for a 22×30
+ *           poster): the page IS the design's size, printed at true
+ *           dimensions (or scaled onto the user's paper at print time).
+ *           Any absolute CSS length: px/in/mm/cm/pt/pc.
+ * The component announces the chosen mode to the host app at runtime (a
+ * meta tag it injects), so the print path can inject the user's true
+ * paper size.
+ *
+ * On screen the document renders on a desk background: a flowing
+ * document as one tall scrolling sheet (Google Docs' pageless view);
+ * explicitly paginated documents as one card per page.
+ *
+ * EXPLICIT pagination usage:
+ *   <style>doc-page:not(:defined){visibility:hidden}</style>
+ *   <doc-page>
+ *     <section class="page" id="p1">…one page's design…</section>
+ *     <section class="page" id="p2">…</section>
+ *   </doc-page>
+ *   <script src="doc-page.js"></script>
+ * How the page box works, concretely: each .page prints as ONE full-bleed
+ * sheet at a FIXED physical size — letter by default (set size="a4" for
+ * a clearly metric user), the user's chosen paper when they export —
+ * with overflow hidden. Nothing scrolls and nothing reflows onto a next
+ * sheet: content that misses the box is CLIPPED. Design each page to
+ * FILL that page box, and to fit it — letter and A4 alike — without
+ * overlap. Each page is a size container; don't size anything in
+ * viewport units (they track the window, not the page), and never set
+ * width or height on the .page section itself (the component sizes the
+ * page box; an authored height like 100% is meaningless at print and is
+ * overridden). The component owns the page box, the screen card chrome,
+ * and the page breaks (never add your own break-before/after). Don't mix
+ * .page sections with flowing content or header/footer slots in the same
+ * document.
+ *
+ * FLOWING usage:
+ *   <style>doc-page:not(:defined){visibility:hidden}</style>
+ *   <doc-page margin="0.75in">
+ *     <h1>Title</h1>
+ *     <p>…body…</p>
+ *   </doc-page>
+ *   <script src="doc-page.js"></script>
+ * There is no manual page-splitting — the browser's print engine
+ * paginates at export. Standard break-hygiene rules (`break-inside:
+ * avoid` on figures, code blocks, images and table rows; `orphans/
+ * widows: 3`) are applied so paragraphs and groups split cleanly. On
+ * screen and at print, headings default to `text-wrap: balance` and
+ * body text to `text-wrap: pretty`; the defaults have zero specificity,
+ * so any text-wrap you declare wins.
+ *
+ * Other attributes:
+ *   size    — letter | a4 | legal (default letter). Flowing documents:
+ *           preview proportion only — it does NOT pin their printed
+ *           paper (the print dialog's paper governs); leave it alone
+ *           there. Explicitly paginated documents: it sets the page box
+ *           the cards and the pinned @page share (the export dialog's
+ *           choice overrides both at print) — set size="a4" for a
+ *           clearly metric user. Scaled-fit: names the sheet the fit is
+ *           computed against, same a4-for-metric-users advice.
+ *   content-width / content-height — the design's own fixed dimensions
+ *           (CSS lengths), for scaling a fixed-size design ONTO the
+ *           named sheet: content lays out at exactly this size, and the
+ *           component scales it to fit that sheet's printable area
+ *           (centered horizontally, top-aligned; the export dialog
+ *           re-fits to the user's actual paper choice where available).
+ *           Both must be set; they do not change the page box. For pages
+ *           WITHOUT running header/footer slots.
+ *   margin  — printable inset on every page of a FLOWING document
+ *           (default 0.75in); margin="0" makes pages full-bleed.
+ *           Explicitly paginated pages are always full-bleed.
+ *
+ * Running header/footer (flowing documents only): give an element
+ * `slot="header"` or `slot="footer"` and it repeats on every printed
+ * page via `position: fixed`. To keep body text from sliding under it,
+ * the component prints inside a single-cell table whose <thead>/<tfoot>
+ * are spacers sized to the header/footer height — browsers repeat
+ * thead/tfoot on every page, so each sheet's content starts below the
+ * header and ends above the footer. On screen the header/footer render
+ * once at the top/bottom of the sheet.
+ *
+ * At print the component injects `@page { margin: 0 }` (which leaves
+ * Chrome no margin box to draw its date/URL/page-count header in) and
+ * moves the visual margin onto the sheet's own padding. It also marks
+ * the document as owning its print CSS (a
+ * `meta[name="omelette-owns-print"]` it injects at runtime), so the
+ * PDF export never injects page-geometry CSS of its own on top.
+ *
+ * Print best practices for the content you author:
+ * - Multi-column text: use CSS columns (`column-count` +
+ *   `column-gap`), never side-by-side flex/grid columns — only real
+ *   CSS columns flow and break across pages. `column-span: all` lets
+ *   a heading span the columns; `hyphens: auto` (needs `lang` on
+ *   the html element) keeps narrow columns readable.
+ * - Page breaks in flowing documents: `break-before: page` on an
+ *   element that must start a new page (a chapter, an appendix). Add
+ *   your own kept-together blocks (callouts, stat tiles, cards) to a
+ *   `break-inside: avoid` rule, and keep each one shorter than a page.
+ * - Extend `orphans: 3; widows: 3` to any custom text blocks you add
+ *   (p and li are covered by default).
+ * - Give long tables a <thead> — browsers repeat it on every printed
+ *   page.
+ * - No `position: fixed`/`sticky` and no viewport units in content:
+ *   fixed elements stamp every printed page (running headers/footers go
+ *   in the component's slots) and `100vh` mis-sizes at print.
+ *
+ * Author content as static HTML so the user can click-to-edit any text
+ * directly. Do not set width/padding/background on the document body —
+ * the component owns the sheet box.
+ */
+/* END USAGE */
+
+(() => {
+  const PAPER = {
+    letter: ['8.5in', '11in'],
+    a4: ['210mm', '297mm'],
+    legal: ['8.5in', '14in']
+  };
+  const CSS_LENGTH = /^\d+(\.\d+)?(px|in|mm|cm|pt|pc)$/;
+  // Unitless "0" is a valid CSS length and the natural way to write
+  // margin="0"; normalise it to 0px so max()/calc() (which reject a bare
+  // number) keep working.
+  const safeLen = (v, fb) => {
+    v = (v || '').trim();
+    return v === '0' ? '0px' : CSS_LENGTH.test(v) ? v : fb;
+  };
+  // WebKit (Safari and every iOS browser shell) never repeats a table's
+  // thead/tfoot on printed pages (WebKit bug 17205), so the spacer-borne
+  // vertical margins of a FLOWING document reach only the first page
+  // there. Engine check, not browser check: vendor is 'Apple Computer,
+  // Inc.' exactly for WebKit and 'Google Inc.' for Blink.
+  const WK_PRINT = /apple/i.test(navigator.vendor || '');
+  // CSS length → px number (CSS absolute units are exact: 1in = 96px).
+  // Returns NaN for anything safeLen would reject — callers gate on it.
+  const PX_PER = {
+    px: 1,
+    in: 96,
+    mm: 96 / 25.4,
+    cm: 96 / 2.54,
+    pt: 96 / 72,
+    pc: 16
+  };
+  const toPx = v => {
+    const m = /^(\d+(?:\.\d+)?)(px|in|mm|cm|pt|pc)$/.exec((v || '').trim());
+    return m ? parseFloat(m[1]) * PX_PER[m[2]] : NaN;
+  };
+  const stylesheet = `
+    :host {
+      position: relative;
+      display: block;
+      /* When the viewport is narrower than the page, grow to wrap the
+       * sheet (plus this padding) instead of staying viewport-width, so
+       * the desk background and right margin reach the sheet's far edge
+       * in the horizontal scroll. */
+      min-width: max-content;
+      min-height: 100vh;
+      background: #f5f5f4;
+      padding: 48px 24px;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      --doc-page-w: 8.5in;
+      --doc-page-h: 11in;
+      --doc-page-margin: 0.75in;
+      --doc-hdr-h: 0px;
+      --doc-ftr-h: 0px;
+      --doc-hdr-pad: 0px;
+      --doc-ftr-pad: 0px;
+    }
+    .sheet {
+      width: var(--doc-page-w);
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(20, 20, 19, 0.12);
+      border-radius: 7px;
+      box-sizing: border-box;
+      padding: var(--doc-page-margin);
+    }
+    .frame { width: 100%; border-collapse: collapse; }
+    /* Scaled-fit mode (content-width/content-height): the inner .fit box
+     * lays the content out at its authored fixed size and scales it onto
+     * the printable area; .fit-box reserves the scaled footprint in flow
+     * (transforms don't affect layout) and centers it. Without the mode,
+     * both divs are unstyled block pass-throughs. */
+    /* Explicit pagination: direct .page children are the pages. The sheet
+     * becomes a transparent stack and each page carries the card look on
+     * screen; at print each page is exactly one full-bleed sheet. The
+     * ::slotted defaults are deliberately weak (document CSS wins), so
+     * authored page styling can override any of this. */
+    .sheet.paginated {
+      background: transparent;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0;
+    }
+    .paginated ::slotted(.page) {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: var(--doc-page-ar);
+      container-type: size;
+      overflow: hidden;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 7px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      break-inside: avoid;
+    }
+    .paginated ::slotted(.page:not(:first-child)) { margin-top: 1rem; }
+    @media print {
+      .sheet.paginated { padding: 0; }
+      /* The flowing-document vertical inset lives on the repeating
+       * thead/tfoot spacers, not the sheet padding — they must go too,
+       * or each full-sheet .page is pushed ~margin down and spills onto
+       * a second sheet. Paginated pages are full-bleed by definition
+       * (content owns its insets). */
+      .sheet.paginated .hdr-space,
+      .sheet.paginated .ftr-space { height: 0; }
+      .paginated ::slotted(.page) {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        /* Physical page-box sizing, no viewport units: Safari resolves
+         * 100vh against the window, not the page box, so a vh-sized card
+         * paginates wrong there. --doc-page-w/h are the named size by
+         * default and are overridden to the user's chosen paper by the
+         * export path, so every card is exactly one sheet either way.
+         * Width + height (same source values as @page size) rather than
+         * width + aspect-ratio: the ratio is a 6-decimal rounding of the
+         * same division, and a few millionths of overflow would spill a
+         * blank sheet after every page. The screen-only aspect-ratio
+         * (preview proportions) must not leak into print. cqh typography
+         * tracks the same box.
+         *
+         * Every declaration is !important: per CSS Scoping, unimportant
+         * shadow ::slotted rules LOSE to the document context, so a page
+         * section's authored inline style would silently beat this print
+         * geometry. A model-authored height:100% did exactly that — the
+         * percentage resolves as auto in the all-auto print ancestry, the
+         * base rule's size containment turns auto into ZERO, and
+         * overflow:hidden then paints nothing: a blank PDF with perfect
+         * page boxes. At print the component's geometry is the design's
+         * whole contract, so it must win over any authored sizing. */
+        aspect-ratio: auto !important;
+        width: var(--doc-page-w) !important;
+        height: var(--doc-page-h) !important;
+        overflow: hidden !important;
+      }
+      .paginated ::slotted(.page:not(:first-child)) {
+        break-before: page !important;
+        margin-top: 0 !important;
+      }
+    }
+    .fit-mode .fit-box {
+      width: calc(var(--doc-fit-w) * var(--doc-fit-scale));
+      height: calc(var(--doc-fit-h) * var(--doc-fit-scale));
+      margin: 0 auto;
+      break-inside: avoid;
+    }
+    /* Monolithic at print: Blink slices a transform-scaled child at
+     * fragmentainer boundaries mapped in UNSCALED layout coordinates
+     * (transforms are paint-time), so the .fit box (authored size, e.g.
+     * 1400x990) gets cut at the page's free block space and spills onto
+     * a second sheet even though its SCALED footprint fits the page by
+     * construction. overflow:hidden makes .fit-box a scroll container —
+     * monolithic under fragmentation (css-break-3) — so the scaled
+     * content prints atomically on one sheet. No clipping for content
+     * within the authored box: .fit-box is calc-sized to exactly the
+     * scaled footprint. (Content that bleeds past content-width/height
+     * is clipped at the footprint — fit mode's contract; it previously
+     * painted beyond it at print.) Print-only, so the screen rendering
+     * keeps visible overflow for editor affordances.
+     * The export path injects the same rule into frozen copies
+     * (print-eval.ts om-print-fit-contain). The .fit-mode scope is
+     * load-bearing: .fit-box wraps slotted content in EVERY mode, and an
+     * unscoped overflow:hidden would make whole flowing documents
+     * monolithic (one truncated sheet). overflow:hidden, never clip —
+     * clip is not a scroll container, so not monolithic. */
+    @media print {
+      .fit-mode .fit-box { overflow: hidden; }
+    }
+    .fit-mode .fit {
+      width: var(--doc-fit-w);
+      height: var(--doc-fit-h);
+      transform: scale(var(--doc-fit-scale));
+      transform-origin: top left;
+    }
+    .frame td, .frame th { padding: 0; text-align: left; font-weight: inherit; }
+    .hdr-space { height: var(--doc-hdr-h); }
+    .ftr-space { height: var(--doc-ftr-h); }
+    ::slotted([slot="header"]),
+    ::slotted([slot="footer"]) { display: block; box-sizing: border-box; }
+    @media print {
+      :host { background: none; padding: 0; min-width: 0; min-height: 0; }
+      .sheet {
+        width: auto; margin: 0; box-shadow: none; border-radius: 0;
+        padding: 0 var(--doc-page-margin);
+      }
+      /* The thead/tfoot spacers repeat on every page, so they carry the
+       * vertical page margin (which the sheet's own padding cannot, since
+       * that padding is consumed once on the first/last page). The running
+       * header/footer are fixed inside that band. */
+      /* The 0.35in is breathing room between a running header/footer and
+       * the body; without one the spacer is exactly the page margin, so a
+       * margin="0" full-bleed document gets truly full-bleed pages. */
+      .hdr-space { height: max(var(--doc-page-margin), calc(var(--doc-hdr-h) + var(--doc-hdr-pad))); }
+      .ftr-space { height: max(var(--doc-page-margin), calc(var(--doc-ftr-h) + var(--doc-ftr-pad))); }
+      /* WebKit flowing documents: @page carries the vertical margin (see
+       * _syncPrintPageRule), so the spacers keep only whatever a running
+       * header/footer needs BEYOND it — page 1 would otherwise double its
+       * top inset. Paginated sheets already zero their spacers above. */
+      .sheet.wk-print:not(.paginated) .hdr-space { height: max(0px, calc(max(var(--doc-page-margin), calc(var(--doc-hdr-h) + var(--doc-hdr-pad))) - var(--doc-page-margin))); }
+      .sheet.wk-print:not(.paginated) .ftr-space { height: max(0px, calc(max(var(--doc-page-margin), calc(var(--doc-ftr-h) + var(--doc-ftr-pad))) - var(--doc-page-margin))); }
+      ::slotted([slot="header"]) {
+        position: fixed; top: 0; left: 0; right: 0; margin: 0;
+        padding: calc(var(--doc-page-margin) * 0.45) var(--doc-page-margin) 0;
+      }
+      ::slotted([slot="footer"]) {
+        position: fixed; bottom: 0; left: 0; right: 0; margin: 0;
+        padding: 0 var(--doc-page-margin) calc(var(--doc-page-margin) * 0.45);
+      }
+    }
+  `;
+  class DocPage extends HTMLElement {
+    static get observedAttributes() {
+      return ['size', 'width', 'height', 'margin', 'orientation', 'content-width', 'content-height'];
+    }
+    constructor() {
+      super();
+      this._root = this.attachShadow({
+        mode: 'open'
+      });
+      this._mo = typeof MutationObserver === 'function' ? new MutationObserver(() => this._scheduleMeasure()) : null;
+    }
+
+    /** The named paper's [w, h], swapped when orientation="landscape".
+     *  Only the named size swaps — explicit width/height are exact values
+     *  the author already oriented. */
+    _paperSize() {
+      const named = PAPER[(this.getAttribute('size') || '').toLowerCase()] || PAPER.letter;
+      const landscape = (this.getAttribute('orientation') || '').trim().toLowerCase() === 'landscape';
+      return landscape ? [named[1], named[0]] : named;
+    }
+    get pageWidth() {
+      return safeLen(this.getAttribute('width'), this._paperSize()[0]);
+    }
+    get pageHeight() {
+      return safeLen(this.getAttribute('height'), this._paperSize()[1]);
+    }
+    get pageMargin() {
+      return safeLen(this.getAttribute('margin'), '0.75in');
+    }
+
+    /** Scaled-fit mode's content box [w, h] as CSS lengths, or null when
+     *  the mode is off (either attribute missing/invalid/zero — a partial
+     *  declaration falls back to normal flow rather than guessing). */
+    _contentFit() {
+      const w = safeLen(this.getAttribute('content-width'), null);
+      const h = safeLen(this.getAttribute('content-height'), null);
+      if (!w || !h) return null;
+      const wPx = toPx(w),
+        hPx = toPx(h);
+      return wPx > 0 && hPx > 0 ? [w, h, wPx, hPx] : null;
+    }
+    connectedCallback() {
+      if (!this._sheet) this._render();
+      this._syncSize();
+      this._syncPrintPageRule();
+      this._ensureTextWrapDefaults();
+      this._ensureOwnsPrintMeta();
+      this._syncFixedSizeMeta();
+      this._syncPrintSizingMeta();
+      if (this._mo) this._mo.observe(this, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true
+      });
+      this._onResize = () => this._scheduleMeasure();
+      window.addEventListener('resize', this._onResize);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => this._scheduleMeasure());
+      }
+      this._scheduleMeasure();
+    }
+    disconnectedCallback() {
+      window.removeEventListener('resize', this._onResize);
+      if (this._mo) this._mo.disconnect();
+      if (this._raf) {
+        cancelAnimationFrame(this._raf);
+        this._raf = null;
+      }
+      // Drop the head rules when the last doc-page leaves, so a deleted
+      // document's @page geometry and text-wrap defaults can't apply to
+      // whatever replaces it.
+      const survivor = document.querySelector('doc-page');
+      if (!survivor) {
+        ['doc-page-print', 'doc-page-text-wrap', 'doc-page-owns-print', 'doc-page-fixed-size', 'doc-page-print-sizing'].forEach(id => {
+          const tag = document.getElementById(id);
+          if (tag) tag.remove();
+        });
+        // A live deck-stage deferred its own print-sizing meta to ours —
+        // hand the page-global meta over so the deck isn't left unmarked.
+        const deck = document.querySelector('deck-stage');
+        if (deck && typeof deck._ensurePrintSizingMeta === 'function') {
+          deck._ensurePrintSizingMeta();
+        }
+      } else {
+        // A departed owner hands each page-global meta to whatever
+        // doc-page remains (or it's removed).
+        if (typeof survivor._syncFixedSizeMeta === 'function') {
+          survivor._syncFixedSizeMeta();
+        }
+        if (typeof survivor._syncPrintSizingMeta === 'function') {
+          survivor._syncPrintSizingMeta();
+        }
+      }
+    }
+    attributeChangedCallback() {
+      if (!this._sheet) return;
+      this._syncSize();
+      this._syncPrintPageRule();
+      this._syncFixedSizeMeta();
+      this._syncPrintSizingMeta();
+      this._scheduleMeasure();
+    }
+    _render() {
+      this._root.innerHTML = `
+        <style>${stylesheet}</style>
+        <style id="vars"></style>
+        <div class="sheet" data-screen-label="Document">
+          <table class="frame" role="presentation">
+            <thead><tr><th><div class="hdr-space"><slot name="header"></slot></div></th></tr></thead>
+            <tbody><tr><td class="body"><div class="fit-box"><div class="fit"><slot></slot></div></div></td></tr></tbody>
+            <tfoot><tr><td><div class="ftr-space"><slot name="footer"></slot></div></td></tr></tfoot>
+          </table>
+        </div>`;
+      this._sheet = this._root.querySelector('.sheet');
+      this._vars = this._root.getElementById('vars');
+    }
+
+    /** Runtime sizing lives in a shadow <style> :host rule, never on the
+     *  light-DOM host element, so serialize-persist can't write it back. */
+    _syncSize(hdrH, ftrH) {
+      // Scaled-fit mode: content at its authored size, scaled onto the
+      // printable area (page minus margins on both axes). The factor is a
+      // plain number var so calc(length * number) stays valid; 4 decimals
+      // keeps the shadow style stable across re-measures. Upscaling is
+      // allowed — print transforms are vector, so text and CSS stay crisp
+      // (raster images soften, which the catalog bullet warns about).
+      const fit = this._contentFit();
+      let fitVars = '';
+      if (fit) {
+        const marginPx = toPx(this.pageMargin) || 0;
+        const availW = toPx(this.pageWidth) - 2 * marginPx;
+        const availH = toPx(this.pageHeight) - 2 * marginPx;
+        const scale = Math.min(availW / fit[2], availH / fit[3]);
+        if (scale > 0 && Number.isFinite(scale)) {
+          fitVars = '--doc-fit-w:' + fit[0] + ';' + '--doc-fit-h:' + fit[1] + ';' + '--doc-fit-scale:' + scale.toFixed(4) + ';';
+        }
+      }
+      this._sheet.classList.toggle('fit-mode', !!fitVars);
+      // Numeric w/h ratio for the paginated page cards' aspect-ratio —
+      // aspect-ratio takes a number, not a length ratio, so compute it
+      // here (CSS length division isn't portable). 6 decimals keeps the
+      // shadow style stable across re-syncs.
+      const arW = toPx(this.pageWidth);
+      const arH = toPx(this.pageHeight);
+      const ar = arW > 0 && arH > 0 ? (arW / arH).toFixed(6) : '0.772727';
+      this._vars.textContent = ':host{' + fitVars + '--doc-page-ar:' + ar + ';' + '--doc-page-w:' + this.pageWidth + ';' + '--doc-page-h:' + this.pageHeight + ';' + '--doc-page-margin:' + this.pageMargin + ';' + '--doc-hdr-h:' + (hdrH || 0) + 'px;' + '--doc-ftr-h:' + (ftrH || 0) + 'px;' + '--doc-hdr-pad:' + (hdrH ? '0.35in' : '0px') + ';' + '--doc-ftr-pad:' + (ftrH ? '0.35in' : '0px') + '}';
+    }
+
+    /** @page is a no-op inside shadow DOM, so the rule lives in <head>.
+     *  Re-appended on every sync so it stays last in source order — the
+     *  @page cascade is source-order per descriptor, so this rule wins
+     *  over any other @page rule in the document.
+     *
+     *  The @page SIZE is pinned where the page box IS part of the design:
+     *  explicit-fixed-size mode (width + height authored), scaled-fit
+     *  mode (the named sheet the fit targets), and explicit pagination
+     *  (the named size the cards share — so card and sheet agree on
+     *  every print path, and the export path's chosen paper overrides
+     *  BOTH with one later rule). For FLOWING documents no paper size is
+     *  emitted at all — the true size comes from the user's preference,
+     *  injected by the export path or chosen in the print dialog — so a
+     *  flowing document never fights the paper it lands on.
+     *  margin: 0 is emitted in every mode: it leaves Chrome no margin box
+     *  to draw its date/URL/page-count header in, and the visual margin
+     *  lives on the sheet's own padding. */
+    _syncPrintPageRule() {
+      const id = 'doc-page-print';
+      let tag = document.getElementById(id);
+      if (!tag) {
+        tag = document.createElement('style');
+        tag.id = id;
+      }
+      document.head.appendChild(tag);
+      // Three print-geometry regimes:
+      // - true-size: the page IS the design — pin its exact size.
+      // - scaled-fit (content-width/height): the fit factor is computed
+      //   against the NAMED paper's printable area, so that paper must
+      //   stay pinned or the scaled content overflows a smaller sheet
+      //   (the export path re-fits and re-pins at print time on top).
+      // - default modes: no paper size — but landscape still needs the
+      //   paper-agnostic 'size: landscape' keyword, because the size
+      //   descriptor is what carries orientation; without it a landscape
+      //   document prints portrait whenever nothing injects a size.
+      const landscape = (this.getAttribute('orientation') || '').trim().toLowerCase() === 'landscape';
+      // Explicit pagination pins the page box to the SAME values that
+      // size the cards (the named size by default, the export path's
+      // chosen paper when its later rule overrides both) — card and
+      // sheet agree on every print path, and a mismatched real paper
+      // shrinks-to-fit in the dialog instead of clipping a Letter card
+      // on A4. Declared before the paginated read below so both derive
+      // from one check.
+      const paginatedNow = this.querySelector(':scope > .page') !== null;
+      const sizeDescriptor = this._trueSizePx() ? 'size: ' + this.pageWidth + ' ' + this.pageHeight + '; ' : this._contentFit() ? 'size: ' + this.pageWidth + ' ' + this.pageHeight + '; ' : paginatedNow ? 'size: ' + this.pageWidth + ' ' + this.pageHeight + '; ' : landscape ? 'size: landscape; ' : '';
+      // WebKit never repeats the thead/tfoot spacers that carry a flowing
+      // document's vertical page margins (see WK_PRINT above), so pages
+      // after the first print edge-to-edge there. Carry the VERTICAL
+      // margins on @page for WebKit instead, and the shadow print CSS
+      // trims the first-page spacers by the same amount (.sheet.wk-print
+      // rules). Horizontal inset stays on the sheet's own padding in
+      // every engine. Blink keeps margin: 0 (a nonzero margin there
+      // re-opens the box Chrome draws its header furniture in). One cost,
+      // learned in testing: Safari's own date/URL headers are a USER
+      // dialog setting ("Print headers and footers") that renders in the
+      // margin area when room exists — margin: 0 only suppressed it by
+      // leaving no room, and no CSS controls it. The export dialog's
+      // Safari guide teaches turning the setting off for flowing
+      // documents. Explicitly paginated and fixed-size documents keep
+      // margin: 0 everywhere: their pages ARE the sheet.
+      const wkFlowing = WK_PRINT && !paginatedNow && !this._trueSizePx() && !this._contentFit();
+      const marginDescriptor = wkFlowing ? 'margin: ' + this.pageMargin + ' 0; ' : 'margin: 0; ';
+      // Shadow-internal marker (never serialized), kept in lockstep with
+      // the @page decision above: the print CSS trims the first-page
+      // spacers ONLY while @page actually carries the margins — a
+      // true-size or scaled-fit sheet keeps margin: 0 and must keep its
+      // spacers too. Re-synced here so attribute changes and pagination
+      // flips move both together.
+      if (this._sheet) this._sheet.classList.toggle('wk-print', wkFlowing);
+      tag.textContent = '@page { ' + sizeDescriptor + marginDescriptor + '} ' + '@media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; height: auto !important; overflow: visible !important; } ' + 'h1,h2,h3,h4,h5,h6 { break-after: avoid; } ' + 'figure,pre,blockquote,img,svg,tr { break-inside: avoid; } ' + 'p,li { orphans: 3; widows: 3; } ' + '* { -webkit-print-color-adjust: exact; print-color-adjust: exact; ' + 'backdrop-filter: none !important; -webkit-backdrop-filter: none !important; } ' + '*, *::before, *::after { animation-delay: -99s !important; animation-duration: .001s !important; ' + 'animation-iteration-count: 1 !important; animation-fill-mode: both !important; ' + 'animation-play-state: running !important; transition-duration: 0s !important; } }';
+    }
+
+    /** Typographic defaults for document text: balance headings, avoid
+     *  widowed/orphaned words in body copy (browsers without text-wrap
+     *  support drop the declarations). Zero-specificity via :where() so
+     *  any text-wrap authored on those elements wins; document-level so the
+     *  rules reach the slotted (light DOM) content — shadow styles can't.
+     *  data-omelette-injected marks the tag for the host editor to strip
+     *  at serialize, so it is never written back as authored source. */
+    _ensureTextWrapDefaults() {
+      if (document.getElementById('doc-page-text-wrap')) return;
+      const tag = document.createElement('style');
+      tag.id = 'doc-page-text-wrap';
+      tag.setAttribute('data-omelette-injected', '');
+      tag.textContent = ':where(h1,h2,h3,h4,h5,h6){text-wrap:balance}' + ':where(p,li,blockquote,figcaption){text-wrap:pretty}';
+      document.head.appendChild(tag);
+    }
+
+    /** Declares that this document owns its print CSS. The instant-PDF
+     *  export checks for the meta by NAME PRESENCE alone (content is
+     *  ignored) and skips its automatic print-CSS injections, so the
+     *  component's @page geometry is never overridden by a heuristic.
+     *  data-omelette-injected keeps it out of serialized source. */
+    _ensureOwnsPrintMeta() {
+      if (document.getElementById('doc-page-owns-print')) return;
+      const tag = document.createElement('meta');
+      tag.id = 'doc-page-owns-print';
+      tag.name = 'omelette-owns-print';
+      tag.content = 'true';
+      tag.setAttribute('data-omelette-injected', '');
+      document.head.appendChild(tag);
+    }
+
+    /** This page's valid true-size page box (explicit width AND height)
+     *  as [w, h] px ints, or null when the mode is off. */
+    _trueSizePx() {
+      if (!safeLen(this.getAttribute('width'), null) || !safeLen(this.getAttribute('height'), null)) return null;
+      const w = Math.round(toPx(this.pageWidth));
+      const h = Math.round(toPx(this.pageHeight));
+      return w > 0 && h > 0 ? [w, h] : null;
+    }
+
+    /** True-size pages (explicit width AND height) also declare the page
+     *  box as the preview size: the in-app preview reads
+     *  meta[name="omelette-fixed-size"] (content "W,H" in px ints) and
+     *  scales the sheet into view — without it an 18in poster previews at
+     *  true size with scrollbars. Never overrides an author-set meta
+     *  (only the component's own id is managed). The meta is page-global
+     *  while doc-page instances are not, so every sync recomputes the
+     *  page-wide owner — the first connected true-size doc-page — and a
+     *  non-true-size sibling's sync can never delete the owner's meta.
+     *  Removed when no true-size page remains (the owner's disconnect
+     *  re-syncs via any survivor) or when an author-set meta exists. */
+    _syncFixedSizeMeta() {
+      const id = 'doc-page-fixed-size';
+      const own = document.getElementById(id);
+      const authored = document.querySelector('meta[name="omelette-fixed-size"]:not([data-omelette-injected])');
+      // The page-wide owner, not this instance: an upgraded true-size page
+      // anywhere in the document keeps the meta alive and sized.
+      let box = null;
+      for (const el of document.querySelectorAll('doc-page')) {
+        box = typeof el._trueSizePx === 'function' ? el._trueSizePx() : null;
+        if (box) break;
+      }
+      if (!box || authored) {
+        if (own) own.remove();
+        return;
+      }
+      const tag = own || document.createElement('meta');
+      tag.id = id;
+      tag.name = 'omelette-fixed-size';
+      tag.content = box[0] + ',' + box[1];
+      tag.setAttribute('data-omelette-injected', '');
+      if (!own) document.head.appendChild(tag);
+    }
+
+    /** This page's print-sizing mode: 'fixed' when an explicit width AND
+     *  height are authored (the page is the design's own size), else the
+     *  default paper in the authored orientation. */
+    _printSizingMode() {
+      if (this._trueSizePx()) return 'fixed';
+      const landscape = (this.getAttribute('orientation') || '').trim().toLowerCase() === 'landscape';
+      return landscape ? 'default-landscape' : 'default-portrait';
+    }
+
+    /** Announces the print-sizing mode to the host app:
+     *  meta[name="omelette-print-sizing"] with content 'default-portrait',
+     *  'default-landscape', or 'fixed' (fixed pages also carry the
+     *  omelette-fixed-size meta with the page box in px). The export path
+     *  probes it to decide what true paper size to inject at print time —
+     *  in the default modes the component emits no paper size of its own.
+     *  Same page-global ownership rules as the fixed-size meta above:
+     *  first connected doc-page owns it, an authored meta is never
+     *  overridden, removed when no doc-page remains. */
+    _syncPrintSizingMeta() {
+      const id = 'doc-page-print-sizing';
+      const own = document.getElementById(id);
+      const authored = document.querySelector('meta[name="omelette-print-sizing"]:not([data-omelette-injected])');
+      // A fixed page wins outright (mirroring the fixed-size loop above,
+      // so the two metas can never contradict each other in a mixed
+      // multi-page document); otherwise the first page's mode holds.
+      let mode = null;
+      for (const el of document.querySelectorAll('doc-page')) {
+        if (typeof el._printSizingMode !== 'function') continue;
+        const m = el._printSizingMode();
+        if (m === 'fixed') {
+          mode = m;
+          break;
+        }
+        if (mode === null) mode = m;
+      }
+      if (!mode || authored) {
+        if (own) own.remove();
+        return;
+      }
+      // A deck-stage that connected first injected its own meta and
+      // defers to any existing one — take it over, or the document ends
+      // up with two conflicting injected metas (a doc-page page is the
+      // document; the deck re-ensures its meta if every doc-page leaves).
+      const deckMeta = document.getElementById('deck-stage-print-sizing');
+      if (deckMeta) deckMeta.remove();
+      const tag = own || document.createElement('meta');
+      tag.id = id;
+      tag.name = 'omelette-print-sizing';
+      tag.content = mode;
+      tag.setAttribute('data-omelette-injected', '');
+      if (!own) document.head.appendChild(tag);
+    }
+    _scheduleMeasure() {
+      if (this._raf) return;
+      this._raf = requestAnimationFrame(() => {
+        this._raf = null;
+        this._measure();
+      });
+    }
+
+    /** Slot heights feed the print spacers (--doc-hdr-h / --doc-ftr-h), so
+     *  they re-measure on content mutation, resize, and font load. The
+     *  same pass detects explicit pagination (direct .page children) and
+     *  toggles the sheet between the flowing-document card and the
+     *  page-per-card stack — content edits can add or remove pages at any
+     *  time, so this tracks the same mutations the measurement does. */
+    _measure() {
+      const hdr = this.querySelector(':scope > [slot="header"]');
+      const ftr = this.querySelector(':scope > [slot="footer"]');
+      const wasPaginated = this._sheet.classList.contains('paginated');
+      this._sheet.classList.toggle('paginated', this.querySelector(':scope > .page') !== null);
+      // The WebKit @page margin is flowing-only, so a pagination flip
+      // must re-emit the rule (content edits can add or remove .page
+      // sections at any time).
+      if (this._sheet.classList.contains('paginated') !== wasPaginated) {
+        this._syncPrintPageRule();
+      }
+      this._syncSize(hdr ? hdr.offsetHeight : 0, ftr ? ftr.offsetHeight : 0);
+    }
+  }
+  if (!customElements.get('doc-page')) {
+    customElements.define('doc-page', DocPage);
+  }
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-01-documents/template/doc-page.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-01-documents/template/ds-base.js
+try { (() => {
+// Loads this design system into the template. In a consuming project, point
+// base at the bound DS folder relative to this file (e.g. '_ds/<folder>' at
+// the project root, '../_ds/<folder>' one level down) — one line to edit.
+(() => {
+  const base = '../design-system';
+  for (const p of ["tokens/fonts.css", "tokens/colors.css", "tokens/typography.css", "tokens/spacing.css", "tokens/radii-shadows.css", "styles/base.css", "styles/classes.css", "styles/controls-v2.css", "styles/tables-v2.css", "styles/feedback-v2.css", "styles.css"]) {
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = base + '/' + p;
+    document.head.appendChild(l);
+  }
+  const s = document.createElement('script');
+  s.src = base + '/_ds_bundle.js';
+  s.onerror = () => console.error('ds-base.js: failed to load ' + s.src + ' — if this is a consuming project, point the base line in ds-base.js at the bound _ds/<folder> tree relative to this page (e.g. _ds/<folder> at the project root, ../_ds/<folder> one level down); in a fresh design system this can just mean the bundle is not compiled yet');
+  document.head.appendChild(s);
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-01-documents/template/ds-base.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-08-admin-mvp/concept/data.js
+try { (() => {
+// Demo data — Demo Junior School (nursery and primary). Demo only; no real people.
+window.KD = (() => {
+  const PAL = ['#1E6FD9', '#15803D', '#B45309', '#1E293B'];
+  const SCHOOL = {
+    name: 'Demo Junior School',
+    no: '007',
+    currency: 'UGX',
+    year: '2026',
+    term: 'Term 3'
+  }; // currency comes from school settings
+  const FIRST = ['Amara', 'Liam', 'Sofia', 'Noah', 'Aisha', 'Mateo', 'Grace', 'Yusuf', 'Priya', 'Ethan', 'Zara', 'Kofi', 'Mei', 'Omar', 'Lucía', 'Daniel', 'Nia', 'Arjun', 'Hana', 'Samuel', 'Leila', 'Tomás', 'Imani', 'Ravi', 'Elena', 'Musa', 'Chloe', 'Ibrahim', 'Ana', 'Joseph', 'Fatima', 'Lucas'];
+  const LAST = ['Okafor', 'Chen', 'Haddad', 'Mensah', 'Rahman', 'García', 'Wanjiru', 'Demir', 'Nair', 'Brooks', 'Ali', 'Asante', 'Tanaka', 'Farouk', 'Morales', 'Kim', 'Ndlovu', 'Patel', 'Sato', 'Okello', 'Karimi', 'Silva', 'Mwangi', 'Iyer', 'Petrova', 'Bello', 'Martin', 'Hassan', 'Costa', 'Achieng', 'Yilmaz', 'Rossi'];
+  const CLASSES = [{
+    id: 'n1',
+    name: 'Nursery',
+    streams: ['Sunflower'],
+    n: 22,
+    ct: 't7',
+    avg: null,
+    att: 95
+  }, {
+    id: 'rc',
+    name: 'Reception',
+    streams: ['Sunflower'],
+    n: 24,
+    ct: 't8',
+    avg: null,
+    att: 94
+  }, {
+    id: 'p1',
+    name: 'Primary 1',
+    streams: ['Blue', 'Red'],
+    n: 31,
+    ct: 't2',
+    avg: 74,
+    att: 96
+  }, {
+    id: 'p2',
+    name: 'Primary 2',
+    streams: ['Blue', 'Red'],
+    n: 29,
+    ct: 't3',
+    avg: 71,
+    att: 93
+  }, {
+    id: 'p3',
+    name: 'Primary 3',
+    streams: ['Blue'],
+    n: 28,
+    ct: 't4',
+    avg: 69,
+    att: 92
+  }, {
+    id: 'p4',
+    name: 'Primary 4',
+    streams: ['Blue'],
+    n: 30,
+    ct: 't5',
+    avg: 66,
+    att: 91
+  }, {
+    id: 'p5',
+    name: 'Primary 5',
+    streams: ['Blue', 'Red'],
+    n: 32,
+    ct: 't1',
+    avg: 68,
+    att: 94
+  }, {
+    id: 'p6',
+    name: 'Primary 6',
+    streams: ['Blue'],
+    n: 27,
+    ct: 't6',
+    avg: 63,
+    att: 90
+  }];
+  const T = [{
+    id: 't1',
+    fn: 'Sarah',
+    ln: 'Nakato',
+    email: 's.nakato@demojunior.school',
+    ph: '+000 700 100 101',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 5 · Blue', 'Mathematics, Science'], ['Primary 6 · Blue', 'Mathematics']],
+    ctOf: 'Primary 5 · Blue',
+    lessons: 24,
+    pendAtt: 0,
+    pendMarks: ['Science · Primary 5 Blue'],
+    last: '2 hours ago'
+  }, {
+    id: 't2',
+    fn: 'Daniel',
+    ln: 'Mensah',
+    email: 'd.mensah@demojunior.school',
+    ph: '+000 700 100 102',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 1 · Blue', 'English, Literacy']],
+    ctOf: 'Primary 1 · Blue',
+    lessons: 20,
+    pendAtt: 1,
+    pendMarks: [],
+    last: 'Yesterday'
+  }, {
+    id: 't3',
+    fn: 'Mei',
+    ln: 'Tanaka',
+    email: 'm.tanaka@demojunior.school',
+    ph: '+000 700 100 103',
+    role: 'Teacher',
+    invite: 'invited',
+    cls: [['Primary 2 · Blue', 'English']],
+    ctOf: 'Primary 2 · Blue',
+    lessons: 18,
+    pendAtt: 0,
+    pendMarks: ['English · Primary 2 Blue'],
+    last: ''
+  }, {
+    id: 't4',
+    fn: 'Omar',
+    ln: 'Farouk',
+    email: '',
+    ph: '+000 700 100 104',
+    role: 'Teacher',
+    invite: 'none',
+    cls: [['Primary 3 · Blue', 'Social Studies']],
+    ctOf: 'Primary 3 · Blue',
+    lessons: 16,
+    pendAtt: 1,
+    pendMarks: [],
+    last: ''
+  }, {
+    id: 't5',
+    fn: 'Elena',
+    ln: 'Petrova',
+    email: 'e.petrova@demojunior.school',
+    ph: '+000 700 100 105',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Primary 4 · Blue', 'Mathematics']],
+    ctOf: 'Primary 4 · Blue',
+    lessons: 22,
+    pendAtt: 0,
+    pendMarks: [],
+    last: '3 days ago'
+  }, {
+    id: 't6',
+    fn: 'Samuel',
+    ln: 'Asante',
+    email: 's.asante@demojunior.school',
+    ph: '+000 700 100 106',
+    role: 'Head teacher',
+    invite: 'accepted',
+    cls: [['Primary 6 · Blue', 'English']],
+    ctOf: 'Primary 6 · Blue',
+    lessons: 10,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }, {
+    id: 't7',
+    fn: 'Hana',
+    ln: 'Sato',
+    email: 'h.sato@demojunior.school',
+    ph: '+000 700 100 107',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Nursery · Sunflower', 'All areas']],
+    ctOf: 'Nursery · Sunflower',
+    lessons: 25,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }, {
+    id: 't8',
+    fn: 'Ravi',
+    ln: 'Iyer',
+    email: 'r.iyer@demojunior.school',
+    ph: '+000 700 100 108',
+    role: 'Teacher',
+    invite: 'accepted',
+    cls: [['Reception · Sunflower', 'All areas']],
+    ctOf: 'Reception · Sunflower',
+    lessons: 25,
+    pendAtt: 0,
+    pendMarks: [],
+    last: 'Today'
+  }].map((t, i) => ({
+    ...t,
+    n: i + 11,
+    status: 'active'
+  }));
+  const S = Array.from({
+    length: 32
+  }, (_, i) => {
+    const fn = FIRST[i],
+      ln = LAST[i * 7 % 32],
+      g = i % 2 ? 'Male' : 'Female';
+    const bal = [0, 180000, 0, 95000, 0, 0, 240000, 0][i % 8];
+    return {
+      id: 1040 + i,
+      fn,
+      ln,
+      sex: i === 9 ? '' : g,
+      kls: 'KLS007' + String(1 + i).padStart(4, '0'),
+      cls: i === 5 ? '' : 'Primary 5 · ' + (i % 3 ? 'Blue' : 'Red'),
+      status: i === 12 ? 'inactive' : 'active',
+      parent: i === 7 ? null : {
+        fn: ['Grace', 'Peter', 'Ana', 'Musa'][i % 4],
+        ln,
+        ph: '+000 772 418 2' + String(10 + i).padStart(2, '0')
+      },
+      att: 88 + i * 3 % 12,
+      avg: 58 + i * 11 % 34,
+      bal,
+      dob: '14 Mar 2015'
+    };
+  });
+  S[0] = {
+    ...S[0],
+    fn: 'Amara',
+    ln: 'Okafor',
+    avg: 74,
+    att: 91,
+    bal: 180000,
+    pos: 6
+  };
+  const P = [{
+    id: 2210,
+    fn: 'Grace',
+    ln: 'Okafor',
+    ph: '+000 772 418 205',
+    email: 'grace.okafor@example.com',
+    wa: 'in',
+    waDate: '12 Sep 2026',
+    last: 'Today, 07:42',
+    kids: [S[0], {
+      id: 1090,
+      fn: 'Tobi',
+      ln: 'Okafor',
+      kls: 'KLS0070033',
+      cls: 'Primary 2 · Blue',
+      bal: 0,
+      att: 97,
+      avg: 81
+    }]
+  }, {
+    id: 2211,
+    fn: 'Peter',
+    ln: 'Chen',
+    ph: '+000 701 552 930',
+    email: '',
+    wa: 'none',
+    last: 'Never',
+    kids: [S[1]]
+  }, {
+    id: 2212,
+    fn: 'Ana',
+    ln: 'Haddad',
+    ph: '+000 755 003 118',
+    email: 'ana.h@example.com',
+    wa: 'in',
+    waDate: '2 Oct 2026',
+    last: '3 days ago',
+    kids: [S[2]]
+  }, {
+    id: 2213,
+    fn: 'Musa',
+    ln: 'Mensah',
+    ph: '+000 782 660 471',
+    email: '',
+    wa: 'pending',
+    last: 'Never',
+    kids: [S[3], S[11]]
+  }];
+  const ini = (f, l) => {
+    f = (f || '').trim().split(/\s+/)[0] || '';
+    l = (l || '').trim();
+    return (([...f][0] || '') + ([...l][0] || '')).toLocaleUpperCase();
+  };
+  const av = (p, s = 40) => {
+    const i = ini(p.fn, p.ln);
+    const r = s <= 32 ? 8 : 12;
+    return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s * .4)}px;border-radius:${r}px;background:${i ? PAL[p.id ? (typeof p.id === 'number' ? p.id : p.n || 0) % 4 : 0] : '#64748B'}" aria-hidden="true">${i}</span>`;
+  };
+  const money = v => SCHOOL.currency + ' ' + Number(v).toLocaleString('en');
+  const grade = a => a >= 80 ? 'A' : a >= 70 ? 'B' : a >= 60 ? 'C' : a >= 50 ? 'D' : 'E';
+  const ic = (n, c = 'ic') => `<i data-lucide="${n}" class="${c}" aria-hidden="true"></i>`;
+  return {
+    SCHOOL,
+    CLASSES,
+    T,
+    S,
+    P,
+    av,
+    ini,
+    money,
+    grade,
+    ic,
+    PAL
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-08-admin-mvp/concept/data.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-08-admin-mvp/concept/screens-a.js
+try { (() => {
+// Shell, dashboard, people list, classes — admin MVP concept
+(() => {
+  const {
+    SCHOOL,
+    CLASSES,
+    T,
+    S,
+    P,
+    av,
+    money,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  // Groups follow dashboard v2 (handoff-2026-09-30-profiles Part B)
+  const NAV = [['', [['dashboard', 'layout-dashboard', 'Dashboard']]], ['People', [['students', 'graduation-cap', 'Students'], ['teachers', 'presentation', 'Teachers and staff'], ['parents', 'users', 'Parents']]], ['Academics', [['classes', 'school', 'Classes and streams'], ['subjects', 'book-open', 'Subjects'], ['attendance', 'calendar-check', 'Attendance'], ['exams', 'clipboard-list', 'Exams and marks'], ['reports', 'file-text', 'Report cards']]], ['Money', [['fees', 'wallet', 'Fees']]], ['Messages', [['messages', 'message-circle', 'WhatsApp']]], ['School', [['settings', 'settings', 'Settings'], ['help', 'life-buoy', 'Help']]]];
+  const ME = {
+    id: 3300,
+    fn: 'Mucunguzi',
+    ln: 'Moses',
+    email: 'mucunguzi.moses.admin@demojunior.school'
+  };
+  function acctPop(mob) {
+    return `<div class="pop" role="menu" aria-label="Account" id="acct-pop">
+  <div class="who">${av(ME, 40)}<span style="min-width:0"><b class="trunc">${ME.fn} ${ME.ln}</b><small class="trunc">${ME.email}</small></span></div>
+  <a class="mi" role="menuitem" href="#" data-go="me">${ic('user-round')}Edit profile</a>
+  <a class="mi" role="menuitem" href="#">${ic('key-round')}Change password</a>
+  <a class="mi" role="menuitem" href="#">${ic('settings')}Settings</a>
+  <div class="sep" role="separator"></div>
+  <button class="mi" role="menuitem" type="button">${ic('log-out')}Log out</button></div>`;
+  }
+  window.shell = (active, title, body) => {
+    const nav = NAV.map(([g, items]) => `${g ? `<div class="grp">${g}</div>` : ''}<ul class="nav">${items.map(([k, i, l]) => `<li><a href="#" data-go="${k}" ${k === active ? 'aria-current="page"' : ''}>${ic(i)}${l}</a></li>`).join('')}</ul>`).join('');
+    return `<div class="shell">
+  <aside class="side ${ST.drawer ? 'open' : ''}" aria-label="Main menu" id="side">
+    <div class="brand"><img src="../design-system/assets/brand/klassapp-horizontal-light.svg" alt="KlassApp"></div>
+    <nav aria-label="Main">${nav}</nav>
+    <div class="grow"></div>
+    ${ST.hideSetup && ST.state !== 'data' ? `<a class="schip" href="#" aria-label="Finish setup, ${ST.state === 'new' ? 1 : 4} of 7 steps done"><span><b>Finish setup</b><span class="pill">${ST.state === 'new' ? 1 : 4}/7</span></span><small>Next: ${ST.state === 'new' ? 'Add your students' : 'Set up fees for Term 3'}</small><span class="bar"><i style="width:${(ST.state === 'new' ? 1 : 4) / 7 * 100}%"></i></span></a>` : ''}
+    <div class="soon"><img src="../design-system/assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant · coming soon</div>
+    <div class="acct">${ST.acct && !ST.mob ? acctPop() : ''}
+      <button class="acct-btn" type="button" data-act="acct" aria-haspopup="menu" aria-expanded="${ST.acct && !ST.mob}" aria-controls="acct-pop">${av(ME, 40)}<span style="min-width:0"><b class="trunc">${ME.fn} ${ME.ln}</b><small class="trunc">${ME.email}</small></span>${ic('chevrons-up-down', 'ic ic-sm')}</button></div>
+  </aside>
+  <div class="mainw">
+    <header class="topbar"><button class="btn icon ghost" type="button" data-act="drawer" aria-label="Open menu" aria-expanded="${ST.drawer}" aria-controls="side">${ic('menu')}</button><span class="t">${title}</span>
+      <div class="acct"><button class="btn icon ghost" type="button" data-act="acct" aria-label="Account" aria-haspopup="menu" aria-expanded="${ST.acct && ST.mob}">${av(ME, 32)}</button>${ST.acct && ST.mob ? acctPop(1) : ''}</div></header>
+    <div class="panel"><main class="page" id="main">${body}</main></div>
+  </div></div>${ST.dlg ? dialog(ST.dlg) : ''}`;
+  };
+  function dialog(d) {
+    return `<div class="dlg-bg" data-act="dlg-x"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-d" data-stop>
+  <h2 id="dlg-t">${d.t}</h2><p id="dlg-d">${d.p}</p><div class="row-acts"><button class="btn" type="button" data-act="dlg-x">Cancel</button><button class="btn danger" type="button" data-act="dlg-x">${d.b}</button></div></div></div>`;
+  }
+  const ayPick = () => `<label class="ay">Academic year <select class="sel" aria-label="Academic year"><option selected>2026</option><option>2025</option></select></label>`;
+  /* ---------- 1. Dashboard ---------- */
+  const bars = (rows, max = 100) => `<div class="hbars">${rows.map(r => `<div class="hb"><span>${r[0]}</span><span class="t" role="img" aria-label="${r[0]}: ${r[1]}%"><i style="width:${r[1] / max * 100}%;${r[2] ? 'background:' + r[2] : ''}"></i></span><b>${r[1]}%</b></div>`).join('')}</div>`;
+  function line(pts, w = 520, h = 160) {
+    const mn = 80,
+      mx = 100,
+      x = i => 36 + i * (w - 48) / (pts.length - 1),
+      y = v => 12 + (mx - v) / (mx - mn) * (h - 40);
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="Attendance trend: ${pts.map(p => p[0] + ' ' + p[1] + '%').join(', ')}">
+  ${[80, 90, 100].map(v => `<line x1="36" x2="${w - 12}" y1="${y(v)}" y2="${y(v)}" stroke="#E2E8F0"/><text x="30" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#475569">${v}%</text>`).join('')}
+  <path d="${d}" fill="none" stroke="#15803D" stroke-width="2.5"/>${pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[1])}" r="3.5" fill="#15803D"/><text x="${x(i)}" y="${h - 8}" text-anchor="middle" font-size="11" fill="#475569">${p[0]}</text>`).join('')}</svg>`;
+  }
+  function cols(vals, exp, w = 520, h = 170) {
+    const mx = Math.max(...exp),
+      bw = (w - 60) / vals.length,
+      y = v => h - 34 - v / mx * (h - 50);
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="Fees collected by month: ${vals.map(v => v[0] + ' ' + money(v[1])).join(', ')}">
+  ${vals.map((v, i) => {
+      const x = 40 + i * bw;
+      return `<rect x="${x + 8}" y="${y(exp[i])}" width="${bw - 16}" height="${h - 34 - y(exp[i])}" fill="none" stroke="#94A3B8" stroke-dasharray="4 3" rx="4"/><rect x="${x + 8}" y="${y(v[1])}" width="${bw - 16}" height="${h - 34 - y(v[1])}" fill="#15803D" rx="4"/><text x="${x + bw / 2}" y="${h - 14}" text-anchor="middle" font-size="11" fill="#475569">${v[0]}</text><text x="${x + bw / 2}" y="${y(v[1]) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#0F172A">${Math.round(v[1] / 1e6 * 10) / 10}M</text>`;
+    }).join('')}</svg>`;
+  }
+  function kpi(icon, l, v, s, cls = '', meter) {
+    return `<div class="kpi"><span class="l">${ic(icon, 'ic ic-sm')}${l}</span><span class="v">${v}</span>${meter != null ? `<span class="meter" role="img" aria-label="${meter}%"><i style="width:${meter}%"></i></span>` : ''}<span class="s ${cls}">${s}</span></div>`;
+  }
+  const gender = (g, b, u) => `<div class="stack" role="img" aria-label="Girls ${g}%, boys ${b}%, not specified ${u}%"><i style="width:${g}%;background:#B45309"></i><i style="width:${b}%;background:#1E6FD9"></i><i style="width:${u}%;background:#64748B"></i></div><div class="legend"><span><i style="background:#B45309"></i>Girls ${g}%</span><span><i style="background:#1E6FD9"></i>Boys ${b}%</span><span><i style="background:#64748B"></i>Not specified ${u}%</span></div>`;
+  window.scrDashboard = () => {
+    const st = ST.state;
+    const steps = st === 'new' ? 1 : st === 'mid' ? 4 : 7;
+    const next = st === 'new' ? 'Add your students' : 'Set up fees for Term 3';
+    const setup = steps < 7 && !ST.hideSetup ? `<div class="setup" role="region" aria-label="School setup">${ic('list-checks')}<b>Setup ${steps} of 7 done</b><span class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="7" aria-valuenow="${steps}" aria-label="Setup progress"><i style="width:${steps / 7 * 100}%"></i></span><span class="nx">Next: ${next}</span><a class="btn pri" href="#">Continue setup</a><button class="btn icon ghost" type="button" data-act="hideSetup" aria-label="Hide setup bar. Progress stays in the sidebar.">${ic('x')}</button></div>` : '';
+    const QA = [['user-plus', 'Add students', 'One by one or from a spreadsheet', ''], ['clipboard-list', 'Enter marks', st === 'new' ? 'Needs students and an exam' : 'Mid-term exams are open', st === 'new'], ['file-text', 'Generate report cards', st === 'data' ? '140 ready to generate' : 'Needs marks for an exam', st !== 'data'], ['message-circle', 'Send report cards on WhatsApp', st === 'data' ? '142 sent last term' : 'Needs report cards', st !== 'data'], ['wallet', 'Fees', st === 'data' ? 'Record payments and send reminders' : 'Set up Term 3 fees first', st !== 'data']];
+    const qaRow = `<nav class="qa" aria-label="Quick actions">${QA.map(q => `<a class="btn" href="#">${ic(q[0])}${q[1]}</a>`).join('')}</nav>`;
+    const qaTiles = `<section aria-label="Quick actions"><h2 class="sh">Quick actions</h2><div class="qat">${QA.map(q => `<a class="qt" href="#"><span class="ib">${ic(q[0])}</span><span><b>${q[1]}</b><span class="${q[3] ? 'pre' : ''}">${q[2]}</span></span></a>`).join('')}</div></section>`;
+    const head = `<div class="ph"><div><h1>${greet()}, ${ME.fn}</h1><p>${SCHOOL.name} · ${SCHOOL.term}, ${SCHOOL.year}</p></div><div class="row-acts">${ayPick()}</div></div>`;
+    if (st === 'new') return head + setup + qaTiles + `<div class="kpis">${kpi('graduation-cap', 'Students', '0', 'None added yet')}${kpi('presentation', 'Staff', '1', 'Just you')}${kpi('calendar-check', 'Attendance this week', '–', 'Starts after students are added')}${kpi('wallet', 'Fees collected', '–', 'No fee structure yet')}${kpi('file-text', 'Report cards ready', '–', 'After the first exam')}</div>
+  <div class="empty"><b>Add your students to get started</b><p>Your dashboard fills in as you add students, take attendance and enter marks. You can add students one by one or import a spreadsheet.</p><div class="row-acts"><a class="btn pri" href="#">${ic('user-plus')}Add student</a><a class="btn" href="#">${ic('upload')}Import a list</a></div></div>
+  <p class="toshi-soon"><img src="../design-system/assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant, is coming soon.</p>`;
+    const mid = st === 'mid';
+    return head + setup + (mid ? '' : qaRow) + `<div class="kpis">
+  ${kpi('graduation-cap', 'Students', '248', '+12 this term', 'up')}${kpi('presentation', 'Staff', '18', '16 teachers · 2 admin')}
+  ${kpi('calendar-check', 'Attendance this week', '93.4%', '▲ 1.2 pts on last week', 'up')}
+  ${mid ? kpi('wallet', 'Fees collected', '–', 'Set up Term 3 fees first', 'warn') : kpi('wallet', 'Fees collected', '62%', money(46500000) + ' of ' + money(75000000), '', 62)}
+  ${kpi('file-text', 'Report cards ready', mid ? '0' : '140', mid ? 'No exam closed yet' : 'of 248 · Mid-term exams', mid ? '' : '', mid ? null : 56)}</div>
+  ${mid ? qaTiles : ''}<div class="grid2">
+   <div class="card"><div class="hd"><h2>Performance by class</h2><small>${mid ? 'No exam yet' : 'Mid-term exams · average mark'}</small></div>${mid ? `<div class="empty in"><b>No marks entered yet</b><p>Averages appear when teachers enter marks for an exam.</p><a class="btn" href="#">Go to exams</a></div>` : bars(CLASSES.filter(c => c.avg).map(c => [c.name, c.avg]))}</div>
+   <div class="card"><div class="hd"><h2>Attendance trend</h2><small>Last 8 weeks · whole school</small></div>${line([['W1', 91], ['W2', 92], ['W3', 90], ['W4', 93], ['W5', 94], ['W6', 92], ['W7', 92.2], ['W8', 93.4]])}</div>
+   <div class="card"><div class="hd"><h2>Students by gender</h2><small>248 students</small></div>${gender(51, 48, 1)}</div>
+   <div class="card"><div class="hd"><h2>Fees collection</h2><small>Collected against expected, by month</small></div>${mid ? `<div class="empty in"><b>No fee structure for Term 3</b><p>Set the term's fees to start recording payments.</p><a class="btn pri" href="#">Set up fees</a></div>` : cols([['Sep', 24100000], ['Oct', 14900000], ['Nov', 7500000]], [30000000, 25000000, 20000000]) + `<div class="legend"><span><i style="background:#15803D"></i>Collected</span><span><i style="border:1px dashed #94A3B8"></i>Expected</span></div>`}</div>
+  </div>
+  <div class="card"><div class="hd"><h2>Recent activity</h2><a href="#">See all</a></div><ul class="act">
+   <li><span class="ib">${ic('calendar-check', 'ic ic-sm')}</span><span>Sarah Nakato took attendance for <b>Primary 5 · Blue</b> (30 of 32 present)</span><time>08:12</time></li>
+   <li><span class="ib">${ic('wallet', 'ic ic-sm')}</span><span>Payment of ${money(270000)} recorded for <b>Amara Okafor</b></span><time>Yesterday</time></li>
+   <li><span class="ib">${ic('clipboard-list', 'ic ic-sm')}</span><span>Mathematics marks entered for <b>Primary 6 · Blue</b></span><time>Yesterday</time></li>
+   <li><span class="ib">${ic('message-circle', 'ic ic-sm')}</span><span>142 report cards sent to parents on WhatsApp</span><time>Mon</time></li>
+   <li><span class="ib">${ic('user-plus', 'ic ic-sm')}</span><span>3 students added to <b>Reception · Sunflower</b></span><time>Mon</time></li></ul></div>
+  <p class="toshi-soon"><img src="../design-system/assets/brand/klassapp-icon.svg" alt="">Toshi, your school's AI assistant, is coming soon.</p>`;
+  };
+  function greet() {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  }
+  /* ---------- 2. People list (students / teachers / parents) ---------- */
+  const CFG = {
+    students: {
+      t: 'Students',
+      one: 'student',
+      add: 'Add student',
+      rows: () => S.slice(0, 10),
+      chips: [['all', 'All', 248], ['cls', 'Class: All', null, 'chevron-down'], ['active', 'Active', 241], ['inactive', 'Inactive', 7], ['nocls', 'No class', 3], ['nopar', 'No parent', 5]],
+      cols: ['Student', 'KLS number', 'Class', 'Parent or guardian', 'Status'],
+      cell: s => [`<span class="who">${av(s, 36)}<span style="min-width:0"><a href="#" data-go="student">${s.fn} ${s.ln}</a></span></span>`, `<span class="mono">${s.kls}</span>`, s.cls || '<span class="badge b-warn">No class</span>', s.parent ? `${s.parent.fn} ${s.parent.ln}` : '<span class="badge b-warn">No parent</span>', st(s.status)],
+      card: s => [`${s.fn} ${s.ln}`, `<span class="mono">${s.kls}</span><span>${s.cls || '<span class="badge b-warn">No class</span>'}</span>${s.status !== 'active' ? st(s.status) : ''}`],
+      menu: ['View profile', 'Edit', 'Move to class', 'Message parent'],
+      bulk: ['Message parents', 'Move to class', 'Export'],
+      go: 'student'
+    },
+    teachers: {
+      t: 'Teachers',
+      one: 'teacher',
+      add: 'Add teacher',
+      rows: () => T,
+      chips: [['all', 'All', 18], ['active', 'Active', 17], ['inv', 'Not yet invited', 1], ['pend', 'Invite pending', 1], ['ct', 'Class teachers', 8]],
+      cols: ['Teacher', 'Teaches', 'Class teacher of', 'Invite', 'Status'],
+      cell: t => [`<span class="who">${av(t, 36)}<span style="min-width:0"><a href="#" data-go="teacher">${t.fn} ${t.ln}</a><span class="sub trunc">${t.role}</span></span></span>`, t.cls.map(c => c[1]).join(', '), t.ctOf || '–', inv(t.invite), st(t.status)],
+      card: t => [`${t.fn} ${t.ln}`, `<span>${t.ctOf ? 'Class teacher · ' + t.ctOf : t.role}</span>${t.invite !== 'accepted' ? inv(t.invite) : ''}`],
+      menu: ['View profile', 'Edit', 'Send invite', 'Assign classes'],
+      bulk: ['Send invites', 'Export'],
+      go: 'teacher'
+    },
+    parents: {
+      t: 'Parents',
+      one: 'parent',
+      add: 'Add parent',
+      rows: () => P.concat(P.map(p => ({
+        ...p,
+        id: p.id + 10,
+        fn: p.fn === 'Grace' ? 'Joy' : p.fn === 'Peter' ? 'Ruth' : p.fn === 'Ana' ? 'Ade' : 'Lina'
+      }))),
+      chips: [['all', 'All', 211], ['wa', 'On WhatsApp', 188], ['nowa', 'Not opted in', 23], ['never', 'Never logged in', 41]],
+      cols: ['Parent or guardian', 'Children', 'Phone', 'WhatsApp', 'Last login'],
+      cell: p => [`<span class="who">${av(p, 36)}<span style="min-width:0"><a href="#" data-go="parent">${p.fn} ${p.ln}</a></span></span>`, p.kids.map(k => k.fn).join(', '), `<span class="mono">${p.ph}</span>`, wa(p.wa), p.last],
+      card: p => [`${p.fn} ${p.ln}`, `<span>${p.kids.map(k => k.fn).join(', ')}</span>${wa(p.wa)}`],
+      menu: ['View profile', 'Edit', 'Link a child', 'Send WhatsApp opt-in'],
+      bulk: ['Send WhatsApp opt-in', 'Export'],
+      go: 'parent'
+    }
+  };
+  const st = s => s === 'active' ? '<span class="badge b-ok">Active</span>' : '<span class="badge b-off">Inactive</span>';
+  const inv = s => s === 'accepted' ? '<span class="badge b-ok">Joined</span>' : s === 'invited' ? '<span class="badge b-info">Invited</span>' : '<span class="badge b-warn">Not invited</span>';
+  const wa = s => s === 'in' ? '<span class="badge b-ok">Opted in</span>' : s === 'pending' ? '<span class="badge b-info">Asked</span>' : '<span class="badge b-off">Not opted in</span>';
+  window.peopleList = (kind, opts = {}) => {
+    const c = CFG[kind],
+      rows = opts.rows || c.rows(),
+      state = opts.state || ST.state;
+    const chipList = opts.chips || c.chips.filter(x => !(opts.inClass && x[0] === 'cls'));
+    const tools = `<div class="lt"><label class="search"><span class="sr">Search ${c.t.toLowerCase()}</span>${ic('search')}<input type="search" placeholder="Search by name${kind === 'students' ? ', KLS number' : kind === 'parents' ? ', phone' : ', email'}"></label>
+   <div class="chips" role="group" aria-label="Filters">${chipList.map((x, i) => `<button class="chip" type="button" aria-pressed="${i === 0}">${x[1]}${x[2] != null ? ` <span class="n">${x[2]}</span>` : ''}${x[3] ? ic(x[3], 'ic ic-sm') : ''}</button>`).join('')}</div></div>`;
+    const sel = ST.sel.size;
+    const bulk = sel ? `<div class="bulk" role="region" aria-label="Bulk actions"><b>${sel} selected</b>${c.bulk.map(b => `<button class="btn" type="button">${b}</button>`).join('')}<button class="btn" type="button" data-act="clr">Clear</button></div>` : '';
+    if (state === 'empty') return tools + `<div class="empty"><b>No ${c.t.toLowerCase()} yet</b><p>${kind === 'students' ? 'Add students one by one, or import a spreadsheet with names and classes.' : kind === 'teachers' ? 'Add your teaching staff, then send each one an invite to join.' : 'Parents are added with their children, or you can add them here and link them.'}</p><div class="row-acts"><a class="btn pri" href="#">${ic('user-plus')}${c.add}</a><a class="btn" href="#">${ic('upload')}Import a list</a></div></div>`;
+    if (state === 'nomatch') return tools + `<div class="empty"><b>No ${c.t.toLowerCase()} match “Zed”</b><p>Check the spelling or clear the filters to search all ${c.t.toLowerCase()}.</p><button class="btn" type="button">Clear filters</button></div>`;
+    const loading = state === 'loading';
+    const menu = r => `<button class="btn icon ghost" type="button" data-act="rmenu" data-id="${r.id}" aria-haspopup="menu" aria-expanded="${ST.menu == r.id}" aria-label="Actions for ${r.fn} ${r.ln}">${ic('ellipsis-vertical')}</button>${ST.menu == r.id ? `<div class="rmenu" role="menu">${c.menu.map((m, i) => `<a class="mi" role="menuitem" href="#" ${i === 0 ? `data-go="${c.go}"` : ''}>${m}</a>`).join('')}</div>` : ''}`;
+    const ck = r => `<label class="ckb"><input type="checkbox" data-act="ck" data-id="${r.id}" ${ST.sel.has(String(r.id)) ? 'checked' : ''} aria-label="Select ${r.fn} ${r.ln}"></label>`;
+    const head = `<thead><tr><th class="ck"><label class="ckb"><input type="checkbox" data-act="ckall" ${sel === rows.length ? 'checked' : ''} aria-label="Select all on this page"></label></th>${c.cols.map(h => `<th scope="col">${h}</th>`).join('')}<th class="menu"><span class="sr">Actions</span></th></tr></thead>`;
+    const sk = '<span class="skel" style="width:70%"></span>';
+    const body = loading ? Array.from({
+      length: 6
+    }, () => `<tr aria-hidden="true"><td class="ck"></td>${c.cols.map((_, i) => `<td>${i ? sk : '<span class="who"><span class="skel" style="width:36px;height:36px;border-radius:12px"></span><span class="skel" style="width:140px"></span></span>'}</td>`).join('')}<td></td></tr>`).join('') : rows.map(r => `<tr class="${ST.sel.has(String(r.id)) ? 'sel' : ''}"><td class="ck">${ck(r)}</td>${c.cell(r).map(x => `<td>${x}</td>`).join('')}<td class="menu">${menu(r)}</td></tr>`).join('');
+    const cards = loading ? Array.from({
+      length: 5
+    }, () => `<div class="pc" aria-hidden="true"><span></span><span class="skel" style="width:40px;height:40px;border-radius:12px"></span><span><span class="skel" style="width:60%"></span><span class="skel" style="width:40%;margin-top:6px"></span></span><span></span></div>`).join('') : rows.map(r => {
+      const [n, l2] = c.card(r);
+      return `<div class="pc ${ST.sel.has(String(r.id)) ? 'sel' : ''}">${ck(r)}${av(r, 40)}<div style="min-width:0"><a class="nm trunc" href="#" data-go="${c.go}">${n}</a><div class="ln2">${l2}</div></div><div style="position:relative">${menu(r)}</div></div>`;
+    }).join('');
+    return tools + bulk + `<div class="tbl" ${loading ? 'aria-busy="true"' : ''}>${loading ? '<span class="sr" role="status">Loading ' + c.t.toLowerCase() + '…</span>' : ''}<table class="pl">${head}<tbody>${body}</tbody></table><div class="cards">${cards}</div>
+  <div class="pager"><span>${loading ? '&nbsp;' : `Showing 1–${rows.length} of ${opts.total || c.chips[0][2]}`}</span><span class="row-acts"><button class="btn icon" type="button" aria-label="Previous page" disabled>${ic('chevron-left')}</button><button class="btn icon" type="button" aria-label="Next page">${ic('chevron-right')}</button></span></div></div>`;
+  };
+  window.scrList = kind => {
+    const c = CFG[kind];
+    return `<div class="ph"><div><h1>${c.t}</h1><p>${c.chips[0][2]} ${c.t.toLowerCase()} at ${SCHOOL.name}</p></div><div class="row-acts"><a class="btn" href="#">${ic('upload')}Import</a><a class="btn pri" href="#">${ic('user-plus')}${c.add}</a></div></div>` + peopleList(kind);
+  };
+  /* ---------- 6. Classes (class teacher per stream, class-level default) ---------- */
+  const streamTeacher = (c, i) => i === 0 || c.streams.length === 1 ? {
+    t: T.find(x => x.id === c.ct),
+    own: true
+  } : {
+    t: T.find(x => x.id === c.ct),
+    own: false
+  };
+  const lvl = c => c.id === 'n1' || c.id === 'rc' ? 'Nursery' : 'Primary';
+  window.scrClasses = () => {
+    if (ST.state === 'empty') return `<div class="ph"><div><h1>Classes and streams</h1></div></div><div class="empty"><b>No classes yet</b><p>Add the classes your school teaches, from nursery to the final year. Add streams if a class is split into groups.</p><div class="row-acts"><a class="btn pri" href="#">${ic('plus')}Add class</a></div></div>`;
+    return `<div class="ph"><div><h1>Classes and streams</h1><p>${CLASSES.length} classes · ${CLASSES.reduce((a, c) => a + c.streams.length, 0)} streams · Mid-term exams</p></div><div class="row-acts"><a class="btn" href="#">${ic('plus')}Add stream</a><a class="btn pri" href="#">${ic('plus')}Add class</a></div></div>
+  <div class="lt"><label class="search"><span class="sr">Find a class</span>${ic('search')}<input type="search" placeholder="Find a class"></label><div class="chips" role="group" aria-label="Level"><button class="chip" type="button" aria-pressed="true">All <span class="n">8</span></button><button class="chip" type="button" aria-pressed="false">Nursery <span class="n">2</span></button><button class="chip" type="button" aria-pressed="false">Primary <span class="n">6</span></button></div></div>
+  <div class="ccards">${CLASSES.map(c => `<article class="cc"><span class="kick">${lvl(c)}</span><a class="t" href="#" data-go="class">${c.name}</a>
+    <ul class="strl">${c.streams.map((s, i) => {
+      const x = streamTeacher(c, i);
+      return `<li><span>${s}</span><span class="tch">${av(x.t, 24)}<span class="trunc">${x.t.fn} ${x.t.ln}</span>${x.own ? '' : '<span class="badge b-off">Class default</span>'}</span></li>`;
+    }).join('')}</ul>
+    <div class="st"><span>${c.n} students</span><span>Attendance ${c.att}%</span></div>
+    <div class="hint">${c.avg ? `<span>Average <b>${c.avg}%</b> · ${grade(c.avg)}</span><span>${c.id === 'p6' ? '▼ 2 since last exam' : '▲ 3 since last exam'}</span>` : '<span>No exams for this class</span>'}</div></article>`).join('')}</div>`;
+  };
+  window.scrClass = () => {
+    const c = CLASSES.find(x => x.id === 'p5'),
+      t = T[0];
+    const subj = [['Mathematics', T[0]], ['English', T[2]], ['Science', T[0]], ['Social Studies', T[3]], ['Religious Education', null], ['Creative Arts', T[6]]];
+    const dist = [['A', 6, '#15803D'], ['B', 9, '#1E6FD9'], ['C', 10, '#B45309'], ['D', 5, '#1E293B'], ['E', 2, '#B91C1C']];
+    const ST2 = [{
+      s: 'Blue',
+      n: 16,
+      avg: 70,
+      att: 95,
+      own: true
+    }, {
+      s: 'Red',
+      n: 16,
+      avg: 66,
+      att: 93,
+      own: false
+    }];
+    const blue = S.filter(s => s.cls.endsWith('Blue')).slice(0, 8);
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="classes">Classes</a> <span aria-hidden="true">›</span> Primary 5</nav>
+  <div class="ph"><div><h1>Primary 5</h1><p>2 streams · ${SCHOOL.term}, ${SCHOOL.year}</p></div><div class="row-acts"><a class="btn" href="#">${ic('calendar-check')}Take attendance</a><a class="btn" href="#">${ic('clipboard-list')}Enter marks</a><button class="btn icon" type="button" aria-label="More actions">${ic('ellipsis')}</button></div></div>
+  <div class="kpis k4">
+   <div class="kpi"><span class="l">${ic('user-round-check', 'ic ic-sm')}Class teacher (default)</span><span style="display:flex;align-items:center;gap:10px;min-width:0">${av(t, 32)}<a href="#" data-go="teacher" class="trunc" style="font-weight:700">${t.fn} ${t.ln}</a></span><span class="s">For any stream without its own</span></div>
+   ${kpi('graduation-cap', 'Students', '32', '17 girls · 15 boys')}${kpi('chart-column', 'Average · Mid-term', '68% · C', '▲ 3 pts since last exam', 'up')}${kpi('calendar-check', 'Attendance this week', '94%', '30 of 32 present today')}</div>
+  <div class="card"><div class="hd"><h2>Streams</h2><a href="#">${ic('plus', 'ic ic-sm')} Add stream</a></div><div class="sgrid">${ST2.map(x => `<div class="scard"><b>Primary 5 · ${x.s}</b>
+   <div class="tch">${av(t, 32)}<span style="min-width:0"><a href="#" data-go="teacher" class="trunc" style="font-weight:700">${t.fn} ${t.ln}</a><span class="sub">${x.own ? 'Class teacher of this stream' : 'Class default · no teacher assigned to this stream'}</span></span></div>
+   ${x.own ? '' : '<a class="btn" href="#">Assign a class teacher</a>'}
+   <div class="st"><span>${x.n} students</span><span>Average ${x.avg}%</span><span>Attendance ${x.att}%</span></div></div>`).join('')}</div></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Grade distribution</h2><small>Mid-term exams · 32 students</small></div>
+   <div class="stack" role="img" aria-label="${dist.map(d => d[0] + ': ' + d[1]).join(', ')}">${dist.map(d => `<i style="width:${d[1] / 32 * 100}%;background:${d[2]}"></i>`).join('')}</div><div class="legend">${dist.map(d => `<span><i style="background:${d[2]}"></i>${d[0]} · ${d[1]}</span>`).join('')}</div>
+   <div class="hd" style="margin-top:6px"><h3>Students by gender</h3></div>${gender(53, 47, 0)}</div>
+   <div class="card"><div class="hd"><h2>Subjects</h2><small>6</small></div><ul class="subj">${subj.map(([s, tt]) => `<li><span>${s}</span><span class="tch">${tt ? av(tt, 28) + `<span class="trunc">${tt.fn} ${tt.ln}</span>` : '<span class="badge b-warn">No teacher</span>'}</span></li>`).join('')}</ul></div></div>
+  <h2 class="sh">Students</h2>` + peopleList('students', {
+      inClass: 1,
+      rows: blue,
+      total: 32,
+      chips: [['all', 'All streams', 32], ['b', 'Blue', 16], ['r', 'Red', 16], ['active', 'Active', 31], ['nopar', 'No parent', 2]]
+    });
+  };
+  window.KC = {
+    bars,
+    line,
+    cols,
+    kpi,
+    gender,
+    ayPick
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-08-admin-mvp/concept/screens-a.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-08-admin-mvp/concept/screens-b.js
+try { (() => {
+// Profiles: student, teacher, parent — admin viewer
+(() => {
+  const {
+    SCHOOL,
+    T,
+    S,
+    P,
+    av,
+    money,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const tabs = (list, cur) => `<div class="tabs" role="tablist">${list.map(x => `<button role="tab" type="button" data-act="tab" data-tab="${x}" aria-selected="${x === cur}">${x}</button>`).join('')}</div>`;
+  const more = (id, items) => `<span style="position:relative"><button class="btn icon" type="button" data-act="rmenu" data-id="${id}" aria-haspopup="menu" aria-expanded="${ST.menu == id}" aria-label="More actions">${ic('ellipsis')}</button>${ST.menu == id ? `<div class="rmenu" role="menu" style="top:calc(100% + 6px);right:0;width:240px">${items}</div>` : ''}</span>`;
+  const empty = (t, p, b) => `<div class="empty"><b>${t}</b><p>${p}</p>${b ? `<a class="btn" href="#">${b}</a>` : ''}</div>`;
+  const E = () => ST.state === 'empty';
+  /* ---------- 3. Student ---------- */
+  window.scrStudent = () => {
+    const s = S[0],
+      tl = ['Overview', 'Academics', 'Attendance', 'Fees', 'Parents and guardians', 'Health and support', 'Documents', 'Notes'],
+      tab = tl.includes(ST.tab) ? ST.tab : 'Overview';
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a><a class="mi" role="menuitem" href="#">${ic('arrow-right-left')}Move to class</a><div class="sep" role="separator"></div>
+   <button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deact">${ic('user-x')}Deactivate student</button>`;
+    const hd = `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="students">Students</a> <span aria-hidden="true">›</span> ${s.fn} ${s.ln}</nav>
+  <div class="phd">${av(s, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${s.fn} ${s.ln}</h1><div class="meta"><a href="#" data-go="class" style="font-weight:700">${s.cls}</a><span><span class="k">KLS</span> <span style="font-variant-numeric:tabular-nums">${s.kls}</span></span><span class="badge b-ok">Active</span></div></div>
+  <div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit</a><a class="btn" href="#">${ic('message-circle')}Message parent</a>${more('stu', menu)}</div></div>`;
+    const k = E() ? `<div class="kpis k3"><div class="kpi"><span class="l">${ic('calendar-check', 'ic ic-sm')}Attendance this term</span><span class="v">–</span><span class="s">No register taken yet</span></div><div class="kpi"><span class="l">${ic('chart-column', 'ic ic-sm')}Latest exam</span><span class="v">–</span><span class="s">No marks yet</span></div><div class="kpi"><span class="l">${ic('wallet', 'ic ic-sm')}Fees</span><span class="v">–</span><span class="s">No fee structure</span></div></div>` : `<div class="kpis k3"><div class="kpi"><span class="l">${ic('calendar-check', 'ic ic-sm')}Attendance this term</span><span class="v">91%</span><span class="meter" role="img" aria-label="91%"><i style="width:91%"></i></span><span class="s">5 days absent · 2 late</span></div>
+     <div class="kpi"><span class="l">${ic('chart-column', 'ic ic-sm')}Latest exam · Mid-term</span><span class="v">74% · B</span><span class="s">6th of 32 in Primary 5 · Blue</span></div>
+     <div class="kpi"><span class="l">${ic('wallet', 'ic ic-sm')}Fees · ${SCHOOL.term}</span><span class="kl">Balance</span><span class="v owed">${money(180000)}</span><span class="s"><span class="badge b-warn">Partly paid</span> ${money(270000)} of ${money(450000)}</span></div></div>`;
+    let b;
+    if (tab === 'Overview') b = `<div class="grid2"><div class="card"><h2>Student</h2><dl class="kv"><dt>Full name</dt><dd>${s.fn} ${s.ln}</dd><dt>KLS number</dt><dd>${s.kls}</dd><dt>Class</dt><dd>${s.cls}</dd><dt>Gender</dt><dd>Female</dd><dt>Date of birth</dt><dd>${E() ? '<span style="color:var(--d-text-secondary)">Not given</span>' : s.dob}</dd><dt>Joined</dt><dd>${E() ? 'This term' : 'Term 1, 2024'}</dd></dl></div>
+   <div class="card"><h2>Parents and guardians</h2>${E() ? `<p style="margin:0">No parent linked yet.</p><a class="btn" href="#" style="align-self:flex-start">${ic('link')}Link a parent</a>` : `<div class="kidc">${av(P[0], 40)}<div><a href="#" data-go="parent" style="font-weight:700">${P[0].fn} ${P[0].ln}</a><div class="pc-sub" style="font-size:13.5px;color:var(--d-text-secondary)">Mother · <a href="tel:+000772418205">${P[0].ph}</a> · on WhatsApp</div></div></div>`}</div></div>`;else if (E()) b = {
+      Academics: empty('No marks yet', 'Marks appear here once teachers enter them for an exam.'),
+      Attendance: empty('No attendance taken yet this term', 'It appears after the class teacher takes the first register.'),
+      Fees: empty('No fee structure for Primary 5 this term', 'Set up the term’s fees before recording payments.', 'Set up fees'),
+      'Parents and guardians': empty('No parent linked yet', 'Link a parent so they receive report cards and fee messages on WhatsApp.', 'Link a parent'),
+      'Health and support': empty('No health or support notes', 'Parents can add allergies, medical conditions and support needs on the admission form, or you can add them here.', 'Add notes'),
+      Documents: empty('No documents yet', 'Birth certificates and photos sent with the admission form appear here.', 'Upload document'),
+      Notes: empty('No notes', 'Notes are visible to admins only, and each view is logged.', 'Add a note')
+    }[tab];else if (tab === 'Academics') {
+      const sub = [['English', 70, 72, 76], ['Mathematics', 66, 71, 73], ['Science', 74, 75, 79], ['Social Studies', 62, 66, 68], ['Religious Education', 81, 80, 84], ['Creative Arts', 77, 79, 0]];
+      b = `<div class="card"><div class="hd"><h2>Marks by subject</h2><small>${SCHOOL.year} · % per exam</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Subject</th><th class="n" scope="col">Term 1</th><th class="n" scope="col">Term 2</th><th class="n" scope="col">Term 3 mid-term</th><th scope="col">Grade</th></tr></thead><tbody>${sub.map(r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="n">${r[3] || '<span style="color:var(--d-text-secondary)">Pending</span>'}</td><td>${r[3] ? grade(r[3]) : '–'}</td></tr>`).join('')}<tr><th scope="row">Average</th><td class="n"><b>72</b></td><td class="n"><b>74</b></td><td class="n"><b>74</b></td><td><b>B</b></td></tr></tbody></table></div></div>
+    <div class="card"><div class="hd"><h2>This term against the class</h2><small>Amara · class average</small></div><div class="hbars">${sub.filter(r => r[3]).map((r, i) => `<div class="hb"><span>${r[0].split(' ')[0]}</span><span class="t" role="img" aria-label="${r[0]}: ${r[3]}%, class average ${r[3] - 5 + i}%"><i style="width:${r[3]}%"></i></span><b>${r[3]}%</b></div><div class="hb" style="margin-top:-6px"><span></span><span class="t" style="height:6px" aria-hidden="true"><i style="width:${r[3] - 5 + i}%;background:#94A3B8"></i></span><span style="font-size:12px;text-align:right;color:var(--d-text-secondary)">${r[3] - 5 + i}%</span></div>`).join('')}</div><div class="legend"><span><i style="background:#1E6FD9"></i>Amara</span><span><i style="background:#94A3B8"></i>Class average</span></div></div>`;
+    } else if (tab === 'Attendance') b = `<div class="card"><div class="hd"><h2>${SCHOOL.term}</h2><small>Marked by Sarah Nakato</small></div><div class="kpis k3"><div class="kpi"><span class="l">Present</span><span class="v">91%</span></div><div class="kpi"><span class="l">Absent</span><span class="v">5 days</span></div><div class="kpi"><span class="l">Late</span><span class="v">2 days</span></div></div><table class="dt"><thead><tr><th scope="col">Date</th><th scope="col">Status</th></tr></thead><tbody><tr><td>Mon 5 Oct</td><td><span class="badge b-bad">Absent</span></td></tr><tr><td>Fri 2 Oct</td><td><span class="badge b-ok">Present</span></td></tr><tr><td>Thu 1 Oct</td><td><span class="badge b-warn">Late</span></td></tr></tbody></table></div>`;else if (tab === 'Fees') b = `<div class="card"><div class="hd"><h2>${SCHOOL.term}, ${SCHOOL.year}</h2><span class="badge b-warn">Partly paid</span></div><dl class="kv"><dt>Expected</dt><dd>${money(450000)}</dd><dt>Paid</dt><dd>${money(270000)}</dd><dt>Balance</dt><dd class="owed"><b>${money(180000)}</b></dd></dl><table class="dt"><thead><tr><th scope="col">Date</th><th scope="col">Method</th><th class="n" scope="col">Amount</th></tr></thead><tbody><tr><td>2 Sep</td><td>Bank transfer</td><td class="n">${money(270000)}</td></tr></tbody></table><div class="row-acts"><a class="btn pri" href="#">Record payment</a><a class="btn" href="#">Send reminder on WhatsApp</a></div></div>`;else if (tab === 'Parents and guardians') b = `<div class="card"><div class="hd"><h2>Parents and guardians</h2><a class="btn" href="#">${ic('link')}Link another</a></div><div class="kidc">${av(P[0], 48)}<div><a href="#" data-go="parent" style="font-weight:700">${P[0].fn} ${P[0].ln}</a><div style="font-size:13.5px;color:var(--d-text-secondary)">Mother · primary contact</div><a class="ctline" href="tel:+000772418205">${ic('phone')}${P[0].ph}</a><span class="badge b-ok">Opted in to WhatsApp</span></div></div></div>`;else if (tab === 'Documents') b = `<div class="card"><div class="hd"><h2>Documents</h2><a class="btn" href="#">${ic('upload')}Upload</a></div><table class="dt"><thead><tr><th scope="col">Document</th><th scope="col">From</th><th scope="col">Added</th></tr></thead><tbody><tr><td>${ic('file-text', 'ic ic-sm')} Birth certificate.pdf</td><td>Admission form</td><td>12 Jan 2024</td></tr><tr><td>${ic('image', 'ic ic-sm')} Passport photo.jpg</td><td>Admission form</td><td>12 Jan 2024</td></tr></tbody></table></div>`;else if (tab === 'Health and support') b = `<div class="card"><div class="hd"><h2>Health and support</h2><span class="badge b-info">${ic('lock-keyhole', 'ic ic-sm')}Admins and head teacher only</span></div><p class="note">${ic('history', 'ic ic-sm')}Opening this tab is logged. Last opened by Mucunguzi Moses today at 09:14.</p><dl class="kv"><dt>Allergies</dt><dd>Peanuts (severe). Carries an adrenaline pen in her school bag.</dd><dt>Medical conditions</dt><dd>Mild asthma. Inhaler kept at the school office.</dd><dt>Support needs</dt><dd>Sits near the front of the class for hearing.</dd><dt>Emergency contact</dt><dd>Grace Okafor (mother) · <a href="tel:+000772418205">${P[0].ph}</a></dd><dt>Last updated</dt><dd>12 Jan 2024 · admission form</dd></dl><div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit notes</a></div></div>`;else b = `<div class="card"><div class="reqrow"><span>Notes are visible to admins only. Opening them is logged.</span><button class="btn" type="button">${ic('lock-keyhole-open')}Show notes</button></div></div>`;
+    return hd + k + `<div class="tabw">${tabs(tl, tab)}</div>` + b;
+  };
+  /* ---------- 4. Teacher ---------- */
+  window.scrTeacher = () => {
+    const inv = ST.invite || 'accepted',
+      t = {
+        ...T[0],
+        invite: inv
+      };
+    const badge = inv === 'accepted' ? '<span class="badge b-ok">Joined 3 Sep 2026</span>' : inv === 'invited' ? '<span class="badge b-info">Invited 5 Oct · not accepted yet</span>' : '<span class="badge b-warn">Not invited</span>';
+    const invBtn = inv === 'accepted' ? '' : inv === 'invited' ? `<a class="btn" href="#">${ic('send')}Resend invite</a>` : `<a class="btn pri" href="#">${ic('send')}Send invite</a>`;
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('book-open')}Assign classes and subjects</a>${inv === 'accepted' ? `<a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a>` : ''}<div class="sep" role="separator"></div><button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deactT">${ic('user-x')}Deactivate account</button>`;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="teachers">Teachers</a> <span aria-hidden="true">›</span> ${t.fn} ${t.ln}</nav>
+  <div class="phd">${av(t, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${t.fn} ${t.ln}</h1><div class="meta"><span class="badge b-info">${t.role}</span><span>Class teacher of <a href="#" data-go="class" style="font-weight:700">${t.ctOf}</a></span>${badge}</div></div>
+  <div class="row-acts">${invBtn}<a class="btn" href="#">${ic('pencil')}Edit</a>${more('tch', menu)}</div></div>
+  <div class="kpis k4">
+   <div class="kpi"><span class="l">${ic('school', 'ic ic-sm')}Classes</span><span class="v">2</span><span class="s">Primary 5 · Blue, Primary 6 · Blue</span></div>
+   <div class="kpi"><span class="l">${ic('book-open', 'ic ic-sm')}Subjects</span><span class="v">2</span><span class="s">Mathematics, Science</span></div>
+   ${ST.wl === 'as' ? `<div class="kpi"><span class="l">${ic('clock', 'ic ic-sm')}Workload</span><span class="v">3</span><span class="s">class–subject assignments</span><span class="badge b-off" style="align-self:flex-start">No timetable yet</span></div>` : `<div class="kpi"><span class="l">${ic('clock', 'ic ic-sm')}Workload</span><span class="v">${t.lessons}</span><span class="s">lessons a week</span><span class="badge b-ok" style="align-self:flex-start">From the timetable</span></div>`}
+   <div class="kpi"><span class="l">${ic('circle-alert', 'ic ic-sm')}Still pending</span><span class="v">1</span><span class="s warn">Science marks · Primary 5 Blue</span></div></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Teaches</h2><small>${SCHOOL.term}</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th class="n" scope="col">Students</th><th scope="col">Mid-term marks</th></tr></thead><tbody>
+   <tr><td><a href="#" data-go="class">Primary 5 · Blue</a> <span class="badge b-ok">Class teacher</span></td><td>Mathematics</td><td class="n">32</td><td><span class="badge b-ok">Entered</span></td></tr>
+   <tr><td><a href="#" data-go="class">Primary 5 · Blue</a></td><td>Science</td><td class="n">32</td><td><span class="badge b-warn">Pending</span></td></tr>
+   <tr><td>Primary 6 · Blue</td><td>Mathematics</td><td class="n">27</td><td><span class="badge b-ok">Entered</span></td></tr></tbody></table></div>
+   <div class="reqrow"><span>Today's attendance for Primary 5 · Blue</span><span class="badge b-ok">Taken at 08:12</span></div></div>
+   <div class="card"><h2>Contact</h2><a class="ctline" href="tel:+000700100101">${ic('phone')}${t.ph}</a><a class="ctline trunc" href="mailto:${t.email}">${ic('mail')}<span class="trunc">${t.email}</span></a><dl class="kv" style="margin-top:4px"><dt>Last login</dt><dd>${inv === 'accepted' ? t.last : 'Never'}</dd><dt>Account</dt><dd>${inv === 'accepted' ? 'Active' : inv === 'invited' ? 'Invite sent, link valid 72 hours' : 'No login yet'}</dd></dl></div></div>`;
+  };
+  /* ---------- 5. Parent ---------- */
+  window.scrParent = () => {
+    const p = P[0],
+      waSt = ST.wa || 'in';
+    const waRow = waSt === 'in' ? `<span class="badge b-ok">Opted in on ${p.waDate}</span>` : waSt === 'pending' ? `<span class="badge b-info">Opt-in request sent, waiting for reply</span>` : `<span class="badge b-off">Not opted in</span><a class="btn" href="#">${ic('message-circle')}Send opt-in request</a>`;
+    const menu = `<a class="mi" role="menuitem" href="#">${ic('pencil')}Edit details</a><a class="mi" role="menuitem" href="#">${ic('link')}Link a child</a><a class="mi" role="menuitem" href="#">${ic('key-round')}Reset password</a><div class="sep" role="separator"></div><button class="mi danger" role="menuitem" type="button" data-act="dlg" data-k="deactP">${ic('user-x')}Deactivate account</button>`;
+    const kids = E() ? empty('No children linked yet', 'Link this parent to their children so they receive report cards and fee messages on WhatsApp.', 'Link a child') : `<div class="grid2">${p.kids.map(k => `<article class="card"><div class="kidc">${av(k, 48)}<div style="min-width:0"><a href="#" data-go="student" style="font:600 16px var(--d-font-display,'Sora',sans-serif);color:#0F172A">${k.fn} ${k.ln}</a><div style="font-size:13.5px;color:var(--d-text-secondary)">${k.cls} · <span style="font-variant-numeric:tabular-nums">${k.kls}</span></div><div class="meta" style="margin-top:6px;font-size:13.5px"><span>Attendance ${k.att}%</span>${k.bal ? `<span class="owed">${money(k.bal)} due</span>` : '<span class="badge b-ok">Fees cleared</span>'}</div></div>
+     <div class="ql"><a class="btn" href="#">${ic('file-text')}Report card</a><a class="btn" href="#">${ic('wallet')}Fees</a></div></div></article>`).join('')}</div>`;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="parents">Parents</a> <span aria-hidden="true">›</span> ${p.fn} ${p.ln}</nav>
+  <div class="phd">${av(p, ST.mob ? 64 : 112)}<div style="min-width:0"><h1>${p.fn} ${p.ln}</h1><div class="meta"><span class="badge b-info">Parent</span><span>${E() ? 'No children linked' : p.kids.length + ' children at ' + SCHOOL.name}</span></div></div>
+  <div class="row-acts"><a class="btn" href="#">${ic('message-circle')}Message on WhatsApp</a><a class="btn" href="#">${ic('pencil')}Edit</a>${more('par', menu)}</div></div>
+  <h2 style="font:600 18px var(--d-font-display,'Sora',sans-serif);margin:0;color:#0F172A">Children</h2>${kids}
+  <div class="grid2"><div class="card"><h2>Contact</h2><a class="ctline" href="tel:+000772418205">${ic('phone')}${p.ph}</a><a class="ctline" href="mailto:${p.email}">${ic('mail')}<span class="trunc">${p.email}</span></a></div>
+  <div class="card"><h2>WhatsApp and access</h2><div class="reqrow">${waRow}</div><dl class="kv"><dt>Last login</dt><dd>${p.last}</dd><dt>Messages this term</dt><dd>12 sent · 2 replies</dd></dl></div></div>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-08-admin-mvp/concept/screens-b.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-08-admin-mvp/concept/screens-c.js
+try { (() => {
+// Batch two: Subjects, Subject page, Attendance overview, Exams (subject-first)
+(() => {
+  const {
+    SCHOOL,
+    T,
+    av,
+    grade,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const {
+    bars,
+    line,
+    kpi
+  } = window.KC;
+  const tt = id => T.find(t => t.id === id);
+  const STREAMS = [['Primary 1', 'Blue', 't2', 16], ['Primary 1', 'Red', 't2', 15], ['Primary 2', 'Blue', 't3', 15], ['Primary 2', 'Red', 't3', 14], ['Primary 3', 'Blue', 't4', 28], ['Primary 4', 'Blue', 't5', 30], ['Primary 5', 'Blue', 't1', 16], ['Primary 5', 'Red', 't1', 16], ['Primary 6', 'Blue', 't6', 27]];
+  const SUB = [{
+    id: 'eng',
+    n: 'English',
+    code: 'ENG',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t2', 't3', 't6'],
+    avg: 71,
+    d: 2,
+    ent: 9
+  }, {
+    id: 'mth',
+    n: 'Mathematics',
+    code: 'MTH',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t1', 't5'],
+    avg: 66,
+    d: -1,
+    ent: 6
+  }, {
+    id: 'sci',
+    n: 'Science',
+    code: 'SCI',
+    type: 'Core',
+    lv: 'Primary 3–6',
+    from: 4,
+    tch: ['t1', 't4'],
+    avg: 72,
+    d: 3,
+    ent: 3
+  }, {
+    id: 'sst',
+    n: 'Social Studies',
+    code: 'SST',
+    type: 'Core',
+    lv: 'Primary 3–6',
+    from: 4,
+    tch: ['t4'],
+    avg: 63,
+    d: 0,
+    ent: 5
+  }, {
+    id: 're',
+    n: 'Religious Education',
+    code: 'RE',
+    type: 'Core',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t6'],
+    avg: 79,
+    d: 1,
+    ent: 2,
+    gap: 1
+  }, {
+    id: 'ca',
+    n: 'Creative Arts',
+    code: 'CA',
+    type: 'Optional',
+    lv: 'Primary 1–6',
+    from: 0,
+    tch: ['t7'],
+    avg: null,
+    d: 0,
+    ent: 0
+  }, {
+    id: 'lan',
+    n: 'Language',
+    code: 'LAN',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }, {
+    id: 'num',
+    n: 'Numbers',
+    code: 'NUM',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }, {
+    id: 'rdg',
+    n: 'Reading',
+    code: 'RDG',
+    type: 'Core',
+    lv: 'Nursery, Reception',
+    nur: 1,
+    tch: ['t7', 't8']
+  }];
+  const rowsOf = s => s.nur ? [] : STREAMS.slice(s.from);
+  const stu = s => s.nur ? 46 : rowsOf(s).reduce((a, r) => a + r[3], 0);
+  const avs = ids => `<span class="avs">${ids.slice(0, 3).map(i => av(tt(i), 28)).join('')}${ids.length > 3 ? `<span class="sub">+${ids.length - 3}</span>` : ''}</span>`;
+  const prog = (a, b) => `<span class="prw"><span class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${b}" aria-valuenow="${a}" aria-label="${a} of ${b} classes"><i style="width:${b ? a / b * 100 : 0}%"></i></span><span class="sub">${a} of ${b}</span></span>`;
+  const stat = (a, b) => b === 0 ? '<span class="badge b-off">No exam</span>' : a === b ? '<span class="badge b-ok">Complete</span>' : a === 0 ? '<span class="badge b-off">Not started</span>' : '<span class="badge b-warn">In progress</span>';
+  const menu = (id, items) => `<span style="position:relative;display:inline-flex"><button class="btn icon ghost" type="button" data-act="rmenu" data-id="${id}" aria-haspopup="menu" aria-expanded="${ST.menu == id}" aria-label="More actions">${ic('ellipsis-vertical')}</button>${ST.menu == id ? `<div class="rmenu" role="menu" style="top:calc(100% + 4px);right:0">${items.map(m => m === '-' ? '<div class="sep" role="separator"></div>' : `<a class="mi${m.startsWith('!') ? ' danger' : ''}" role="menuitem" href="#" ${m === 'View subject' ? 'data-go="subject"' : ''}>${m.replace('!', '')}</a>`).join('')}</div>` : ''}</span>`;
+  const avgCell = s => s.nur ? '<span class="sub">Not examined</span>' : s.avg ? `<b>${s.avg}%</b> · ${grade(s.avg)} <span class="sub" style="display:inline">${s.d > 0 ? '▲ ' + s.d : s.d < 0 ? '▼ ' + -s.d : '–'}</span>` : '<span class="sub">No marks yet</span>';
+  /* ---------- Subjects index ---------- */
+  window.scrSubjects = () => {
+    const head = `<div class="ph"><div><h1>Subjects</h1><p>${SUB.length} subjects · each listed once, across all its classes</p></div><div class="row-acts"><a class="btn pri" href="#" data-go="form-subject">${ic('plus')}Add subject</a></div></div>
+  <div class="lt"><label class="search"><span class="sr">Search subjects</span>${ic('search')}<input type="search" placeholder="Search by subject or code"></label><div class="chips" role="group" aria-label="Filters"><button class="chip" type="button" aria-pressed="true">All <span class="n">9</span></button><button class="chip" type="button" aria-pressed="false">Core <span class="n">8</span></button><button class="chip" type="button" aria-pressed="false">Optional <span class="n">1</span></button><button class="chip" type="button" aria-pressed="false">Nursery <span class="n">3</span></button><button class="chip" type="button" aria-pressed="false">Primary <span class="n">6</span></button><button class="chip" type="button" aria-pressed="false">Missing a teacher <span class="n">1</span></button></div></div>`;
+    if (ST.state === 'empty') return head + `<div class="empty"><b>No subjects yet</b><p>Add each subject once, then choose the classes that take it and who teaches it in each class.</p><a class="btn pri" href="#">${ic('plus')}Add subject</a></div>`;
+    const M = ['View subject', 'Edit', 'Assign teachers', '-', '!Archive subject'];
+    return head + `<div class="tbl"><table class="pl"><thead><tr><th scope="col">Subject</th><th scope="col">Type</th><th scope="col">Classes</th><th scope="col">Teachers</th><th scope="col">Average · Mid-term</th><th scope="col">Mid-term marks</th><th class="menu"><span class="sr">Actions</span></th></tr></thead><tbody>
+  ${SUB.map(s => `<tr><td><span class="who"><span class="sic" aria-hidden="true">${s.code}</span><span style="min-width:0"><a href="#" data-go="subject">${s.n}</a><span class="sub">${s.code}</span></span></span></td><td>${s.type}</td><td>${s.nur ? 2 : rowsOf(s).length} <span class="sub" style="display:inline">· ${s.lv}</span>${s.gap ? ' <span class="badge b-warn">1 without a teacher</span>' : ''}</td><td>${avs(s.tch)}</td><td>${avgCell(s)}</td><td>${s.nur ? '<span class="badge b-off">No exam</span>' : prog(s.ent, rowsOf(s).length)}</td><td class="menu">${menu('s' + s.id, M)}</td></tr>`).join('')}</tbody></table>
+  <div class="cards">${SUB.map(s => `<div class="pc nock"><span class="sic" aria-hidden="true">${s.code}</span><div style="min-width:0"><a class="nm trunc" href="#" data-go="subject">${s.n}</a><div class="ln2"><span>${s.lv}</span>${s.nur ? '' : stat(s.ent, rowsOf(s).length)}${s.gap ? '<span class="badge b-warn">1 without a teacher</span>' : ''}</div></div><div style="position:relative">${menu('m' + s.id, M)}</div></div>`).join('')}</div>
+  <div class="pager"><span>Showing all 9</span></div></div>`;
+  };
+  /* ---------- Subject page ---------- */
+  window.scrSubject = () => {
+    const s = SUB[1],
+      rows = rowsOf(s);
+    const st = (i, n) => i < 6 ? [n, n] : i === 6 ? [18, n] : [0, n];
+    const EX = [['Beginning of term', '7 Sep', 9, 9, 64, 'Complete'], ['Mid-term', '5–9 Oct', 6, 9, 66, 'In progress'], ['End of term', 'From 24 Nov', 0, 9, null, 'Scheduled']];
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="subjects">Subjects</a> <span aria-hidden="true">›</span> ${s.n}</nav>
+  <div class="ph"><div><h1>${s.n}</h1><div class="meta"><span class="badge b-info">${s.type}</span><span><span class="k">Code</span> ${s.code}</span><span>${s.lv}</span></div></div><div class="row-acts"><a class="btn" href="#">${ic('pencil')}Edit</a><a class="btn" href="#">${ic('user-round-plus')}Assign teachers</a>${menu('subj', ['Download all marksheets', '-', '!Archive subject'])}</div></div>
+  <div class="kpis k4">${kpi('school', 'Classes', String(rows.length), s.lv)}<div class="kpi"><span class="l">${ic('presentation', 'ic ic-sm')}Teachers</span><span class="v">2</span><span class="s">${s.tch.map(i => tt(i).fn + ' ' + tt(i).ln).join(', ')}</span></div>${kpi('graduation-cap', 'Students', String(stu(s)), 'taking ' + s.n)}${kpi('chart-column', 'Average · Mid-term', '66% · C', '▼ 1 pt on Beginning of term', 'warn')}</div>
+  <div class="card"><div class="hd"><h2>Exams this term</h2><small>${SCHOOL.term}, ${SCHOOL.year}</small></div>
+  <ul class="exl">${EX.map((e, i) => `<li><span><b>${e[0]}</b><span class="sub">${e[1]}</span></span><span class="hm">${e[4] ? `Average <b>${e[4]}%</b>` : '<span class="sub">No marks yet</span>'}</span>${prog(e[2], e[3])}<span class="hm">${e[5] === 'Complete' ? '<span class="badge b-ok">Complete</span>' : e[5] === 'In progress' ? '<span class="badge b-warn">In progress</span>' : '<span class="badge b-off">Scheduled</span>'}</span><span class="row-acts">${i === 1 ? '<a class="btn pri" href="#">Enter marks</a>' : i === 0 ? '<a class="btn" href="#">View marks</a>' : ''}${menu('ex' + i, ['Import from spreadsheet', 'Download marksheet', 'Remind teachers'])}</span></li>`).join('')}</ul></div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Classes</h2><small>Mid-term marks and report cards</small></div><div class="scroll-x"><table class="dt"><thead><tr><th scope="col">Class</th><th scope="col" class="hm">Teacher</th><th class="n hm" scope="col">Average</th><th scope="col">Marks</th><th scope="col" class="hm">Report card</th></tr></thead><tbody>
+  ${rows.map((r, i) => {
+      const [a, n] = st(i, r[3]);
+      const t = tt(i > 5 ? 't1' : i < 4 ? 't5' : 't1');
+      return `<tr><td><a href="#" data-go="class">${r[0]} · ${r[1]}</a></td><td class="hm"><span class="tch" style="display:flex;gap:8px;align-items:center">${av(t, 24)}<span class="trunc">${t.fn} ${t.ln}</span></span></td><td class="n hm">${a === n ? 60 + i * 5 % 14 + '%' : '–'}</td><td>${a === n ? `<span class="badge b-ok">Entered ${a}/${n}</span>` : a ? `<span class="badge b-warn">${a} of ${n}</span>` : `<span class="badge b-off">Not started</span>`}</td><td class="hm">${a === n ? '<span class="badge b-ok">Ready</span>' : '<span class="sub">Waiting for marks</span>'}</td></tr>`;
+    }).join('')}</tbody></table></div></div>
+  <div class="card"><div class="hd"><h2>Average by class</h2><small>Mid-term · entered so far</small></div>${bars(rows.slice(0, 6).map((r, i) => [r[0].replace('Primary ', 'P.') + ' ' + r[1], 60 + i * 5 % 14]))}<p class="sub" style="margin:0">3 classes have no Mid-term marks yet.</p></div></div>`;
+  };
+  /* ---------- Attendance overview ---------- */
+  const vbars = (pts, lo = 80) => {
+    const w = 360,
+      h = 170,
+      bw = (w - 40) / pts.length,
+      y = v => 14 + (100 - v) / (100 - lo) * (h - 50);
+    return `<svg class="ch" viewBox="0 0 ${w} ${h}" role="img" aria-label="${pts.map(p => p[0] + ' ' + p[1] + '%').join(', ')}">${[80, 90, 100].map(v => `<line x1="30" x2="${w - 6}" y1="${y(v)}" y2="${y(v)}" stroke="#E2E8F0"/><text x="26" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#475569">${v}%</text>`).join('')}${pts.map((p, i) => {
+      const x = 34 + i * bw;
+      return `<rect x="${x + 6}" y="${y(p[1])}" width="${bw - 12}" height="${h - 36 - y(p[1])}" rx="4" fill="${p[2] || '#15803D'}"/><text x="${x + bw / 2}" y="${y(p[1]) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#0F172A">${p[1]}%</text><text x="${x + bw / 2}" y="${h - 18}" text-anchor="middle" font-size="11" fill="#475569">${p[0]}</text>`;
+    }).join('')}</svg>`;
+  };
+  window.scrAttendance = () => {
+    const head = `<div class="ph"><div><h1>Attendance</h1><p>Today · Thursday 8 October 2026</p></div><div class="row-acts"><label class="ay">Period <select class="sel" aria-label="Period"><option selected>This week</option><option>This term</option><option>Last 8 weeks</option></select></label><a class="btn" href="#">${ic('download')}Export</a></div></div>`;
+    if (ST.state === 'empty') return head + `<div class="empty"><b>No attendance taken yet this term</b><p>Class teachers take the register each morning. Patterns by class and by day appear after the first week.</p><a class="btn pri" href="#">${ic('bell')}Remind class teachers</a></div>`;
+    const REG = STREAMS.map((r, i) => ({
+      c: r[0] + ' · ' + r[1],
+      t: tt(r[2]),
+      n: r[3],
+      ok: i !== 3 && i !== 5,
+      at: ['07:52', '08:05', '08:20', '', '08:12', '', '08:12', '08:31', '07:58'][i]
+    })).concat([{
+      c: 'Nursery · Sunflower',
+      t: tt('t7'),
+      n: 22,
+      ok: true,
+      at: '08:02'
+    }, {
+      c: 'Reception · Sunflower',
+      t: tt('t8'),
+      n: 24,
+      ok: true,
+      at: '08:09'
+    }]);
+    REG.sort((a, b) => a.ok - b.ok);
+    return head + `<div class="kpis k4">${kpi('user-round-check', 'Present today', '93.1%', '231 of 248 · 17 absent', '', 93.1)}<div class="kpi"><span class="l">${ic('clipboard-check', 'ic ic-sm')}Registers taken today</span><span class="v">9 of 11</span><span class="meter" role="img" aria-label="9 of 11"><i style="width:82%"></i></span><span class="s warn">2 not taken yet</span></div>${kpi('calendar-check', 'This week', '93.4%', '▲ 1.2 pts on last week', 'up')}${kpi('calendar-range', 'This term', '92.6%', 'Since 7 September')}</div>
+  <div class="grid3"><div class="card"><div class="hd"><h2>Who has taken today</h2><small>Not taken first</small></div><ul class="reg">${REG.map(r => `<li><span style="min-width:0"><b class="trunc">${r.c}</b><span class="tch">${av(r.t, 24)}<span class="trunc sub" style="display:inline">${r.t.fn} ${r.t.ln}</span></span></span>${r.ok ? `<span class="badge b-ok">Taken ${r.at}</span>` : `<span class="row-acts"><span class="badge b-warn">Not yet</span><a class="btn" href="#">${ic('bell')}Remind</a></span>`}</li>`).join('')}</ul></div>
+  <div class="card"><div class="hd"><h2>By day of the week</h2><small>This term</small></div>${vbars([['Mon', 94], ['Tue', 95], ['Wed', 94], ['Thu', 93], ['Fri', 89, '#B45309']])}<p class="note">${ic('info', 'ic ic-sm')}Fridays average 5 points below the rest of the week.</p></div></div>
+  <div class="grid2"><div class="card"><div class="hd"><h2>By class</h2><small>This week</small></div>${bars(STREAMS.map((r, i) => [r[0].replace('Primary ', 'P.') + ' ' + r[1], [96, 95, 93, 92, 92, 91, 95, 93, 90][i]]))}</div>
+  <div class="card"><div class="hd"><h2>Trend</h2><small>Last 8 weeks · whole school</small></div>${line([['W1', 91], ['W2', 92], ['W3', 90], ['W4', 93], ['W5', 94], ['W6', 92], ['W7', 92.2], ['W8', 93.4]])}</div></div>`;
+  };
+  /* ---------- Exams, subject first ---------- */
+  window.scrExams = () => {
+    const ex = SUB.filter(s => !s.nur);
+    const tot = ex.reduce((a, s) => a + rowsOf(s).length, 0),
+      done = ex.reduce((a, s) => a + s.ent, 0);
+    const open = ST.open || 'mth';
+    const head = `<div class="ph"><div><h1>Exams and marks</h1><p>${SCHOOL.term}, ${SCHOOL.year} · by subject</p></div><div class="row-acts"><label class="ay">Term <select class="sel" aria-label="Term"><option selected>Term 3, 2026</option><option>Term 2, 2026</option></select></label><a class="btn pri" href="#">${ic('plus')}Add exam</a></div></div>
+  <div class="chips" role="group" aria-label="Exam"><button class="chip" type="button" aria-pressed="false">Beginning of term <span class="n">· Complete</span></button><button class="chip" type="button" aria-pressed="true">Mid-term <span class="n">· In progress</span></button><button class="chip" type="button" aria-pressed="false">End of term <span class="n">· From 24 Nov</span></button></div>`;
+    if (ST.state === 'empty') return head.replace(/<div class="chips"[\s\S]*$/, '') + `<div class="empty"><b>No exams this term</b><p>Add an exam, such as a mid-term or end-of-term exam, then choose its subjects and classes. Teachers enter marks per subject.</p><a class="btn pri" href="#">${ic('plus')}Add exam</a></div>`;
+    return head + `<div class="card exsum"><div style="min-width:0;flex:1 1 280px"><h2>Mid-term exams · 5–9 October</h2><p style="margin:4px 0 8px">Marks entered for <b>${done} of ${tot}</b> subject classes</p><span class="prog" style="height:8px" role="progressbar" aria-valuemin="0" aria-valuemax="${tot}" aria-valuenow="${done}" aria-label="Marks entered"><i style="width:${done / tot * 100}%"></i></span></div>
+   <div class="exrc"><span><b>Report cards</b><span class="sub">4 of 11 classes have every mark</span></span><span class="row-acts"><a class="btn" href="#">${ic('bell')}Remind teachers</a><a class="btn pri" href="#">${ic('file-text')}Generate for 4 classes</a></span></div></div>
+  <div class="lt"><label class="search"><span class="sr">Search subjects</span>${ic('search')}<input type="search" placeholder="Search subjects"></label><div class="chips" role="group" aria-label="Status"><button class="chip" type="button" aria-pressed="true">All <span class="n">6</span></button><button class="chip" type="button" aria-pressed="false">Not started <span class="n">1</span></button><button class="chip" type="button" aria-pressed="false">In progress <span class="n">3</span></button><button class="chip" type="button" aria-pressed="false">Complete <span class="n">2</span></button></div></div>
+  <ul class="xl">${ex.map(s => {
+      const rows = rowsOf(s),
+        n = rows.length,
+        o = open === s.id;
+      return `<li class="${o ? 'open' : ''}"><div class="xh"><button class="btn icon ghost" type="button" data-act="tog" data-id="${s.id}" aria-expanded="${o}" aria-controls="x-${s.id}" aria-label="${o ? 'Hide' : 'Show'} classes for ${s.n}">${ic(o ? 'chevron-down' : 'chevron-right')}</button>
+   <span class="xn"><a href="#" data-go="subject"><b>${s.n}</b></a><span class="tch">${avs(s.tch)}<span class="sub" style="display:inline">${n} classes</span></span></span>${prog(s.ent, n)}<span class="hm">${stat(s.ent, n)}</span><span class="hm xa">${s.avg && s.ent ? `Avg <b>${s.avg}%</b>` : '<span class="sub">–</span>'}</span>${menu('x' + s.id, ['Download all marksheets', 'Import from spreadsheet', 'Remind teachers'])}</div>
+   ${o ? `<ul class="xc" id="x-${s.id}">${rows.map((r, i) => {
+        const a = i < s.ent ? r[3] : i === s.ent ? Math.round(r[3] / 2) : 0;
+        const t = tt(s.tch[i % s.tch.length]);
+        return `<li><span style="min-width:0"><b class="trunc">${r[0]} · ${r[1]}</b><span class="tch">${av(t, 24)}<span class="sub trunc" style="display:inline">${t.fn} ${t.ln}</span></span></span>${a === r[3] ? `<span class="badge b-ok">Entered ${a}/${r[3]}</span>` : a ? `<span class="badge b-warn">${a} of ${r[3]}</span>` : '<span class="badge b-off">Not started</span>'}<span class="row-acts"><a class="btn${a === r[3] ? '' : ' pri'}" href="#">${a === r[3] ? 'View' : 'Enter marks'}</a>${menu('c' + s.id + i, ['Import from spreadsheet', 'Download marksheet', 'Remind teacher'])}</span></li>`;
+      }).join('')}</ul>` : ''}</li>`;
+    }).join('')}</ul>
+  <p class="sub" style="margin:0">Language, Numbers and Reading (Nursery and Reception) have no Mid-term exam.</p>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-08-admin-mvp/concept/screens-c.js", error: String((e && e.message) || e) }); }
+
+// klassapp-handoff-2026-10-08-admin-mvp/concept/screens-d.js
+try { (() => {
+// Batch two: shared add / edit person form (student, teacher, parent, staff)
+(() => {
+  const {
+    SCHOOL,
+    T,
+    S,
+    P,
+    av,
+    ic
+  } = KD;
+  const ST = window.ST;
+  const f = (id, label, o = {}) => {
+    const err = ST.state === 'error' && o.err;
+    const v = ST.mode === 'edit' && o.v != null ? o.v : '';
+    const ctl = o.type === 'select' ? `<select class="inp sel" id="${id}" ${err ? `aria-invalid="true" aria-describedby="${id}-e"` : ''}>${(o.opts || []).map((x, i) => `<option ${ST.mode === 'edit' && x === o.v || !i && o.ph ? 'selected' : ''}>${x}</option>`).join('')}</select>` : o.type === 'textarea' ? `<textarea class="inp" id="${id}" rows="3" ${o.hint ? `aria-describedby="${id}-h"` : ''}>${v}</textarea>` : `<input class="inp" id="${id}" type="${o.type || 'text'}" value="${err ? '' : v}" ${o.ac ? `autocomplete="${o.ac}"` : ''} ${o.ph2 ? `placeholder="${o.ph2}"` : ''} ${err ? `aria-invalid="true" aria-describedby="${id}-e"` : o.hint ? `aria-describedby="${id}-h"` : ''}>`;
+    return `<div class="f${o.full ? ' full' : ''}${err ? ' err' : ''}"><label for="${id}">${label}${o.opt ? '<span class="opt">Optional</span>' : ''}</label>${ctl}${err ? `<span class="emsg" id="${id}-e">${ic('circle-alert', 'ic ic-sm')}${o.err}</span>` : o.hint ? `<span class="hint" id="${id}-h">${o.hint}</span>` : ''}</div>`;
+  };
+  const radios = (name, label, opts, o = {}) => `<fieldset class="f${o.full ? ' full' : ''}"><legend>${label}${o.opt ? '<span class="opt">Optional</span>' : ''}</legend><div class="radios">${opts.map((x, i) => `<label class="rc"><input type="radio" name="${name}" ${o.sel != null && i === o.sel ? 'checked' : ''}>${x}</label>`).join('')}</div>${o.hint ? `<span class="hint">${o.hint}</span>` : ''}</fieldset>`;
+  const check = (label, on, hint) => `<label class="rc ck full"><input type="checkbox" ${on ? 'checked' : ''}><span>${label}${hint ? `<span class="hint" style="display:block">${hint}</span>` : ''}</span></label>`;
+  const sec = (t, p, body) => `<section class="fsec"><h2>${t}</h2>${p ? `<p class="hint" style="margin:-8px 0 0">${p}</p>` : ''}<div class="fg">${body}</div></section>`;
+  const nameRow = (p, err) => f('fn', 'First name', {
+    ac: 'given-name',
+    v: p && p.fn
+  }) + f('ln', 'Last name', {
+    ac: 'family-name',
+    v: p && p.ln,
+    err: err ? 'Enter a last name' : null
+  });
+  const photo = p => `<div class="f full"><span class="lab">Photo<span class="opt">Optional</span></span><div class="phrow">${p ? av(p, 64) : '<span class="av" style="width:64px;height:64px;background:#F1F5F9;color:#475569;border:1px dashed #94A3B8" aria-hidden="true">' + ic('camera') + '</span>'}<span style="display:flex;flex-direction:column;gap:4px"><a class="btn" href="#">${ic('upload')}${p ? 'Change photo' : 'Upload photo'}</a><span class="hint">Until there's a photo, KlassApp shows initials.</span></span></div></div>`;
+  function invite(kind, edit) {
+    if (edit) {
+      const st = kind === 'parent' ? 'Opted in to WhatsApp on 12 Sep 2026' : 'Joined on 3 Sep 2026';
+      return sec(kind === 'parent' ? 'WhatsApp and login' : 'Login', '', `<div class="f full"><div class="reqrow"><span class="badge b-ok">${st}</span>${kind === 'parent' ? '<a class="btn" href="#">Send a login invite by email</a>' : '<a class="btn" href="#">Reset password</a>'}</div></div>`);
+    }
+    if (kind === 'parent') return sec('Invite', 'Parents get report cards, fee balances and attendance on WhatsApp once they reply to the opt-in message.', check('Send a WhatsApp opt-in message after saving', true, 'Sent to the phone number above. They reply YES to start receiving messages.') + check('Also send a login invite by email', false, 'For parents who also want to use the web app. Needs an email address.'));
+    return sec('Invite', 'They choose their own password. The invite link works for 72 hours.', radios('inv', 'Send an invite', ['By email', 'By WhatsApp', 'Not yet'], {
+      sel: 0,
+      full: 1,
+      hint: 'You can send or resend it later from their profile.'
+    }));
+  }
+  const SPEC = {
+    student: {
+      t: 'student',
+      p: () => S[0],
+      body: (p, e) => [sec('Student', '', nameRow(p, e) + radios('gender', 'Gender', ['Female', 'Male', 'Not specified'], {
+        sel: ST.mode === 'edit' ? 0 : 2
+      }) + f('dob', 'Date of birth', {
+        type: 'date',
+        opt: 1,
+        v: '2015-03-14'
+      }) + photo(ST.mode === 'edit' ? p : null)), sec('Class', '', f('cls', 'Class', {
+        type: 'select',
+        opts: ['Choose a class', 'Nursery', 'Reception', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6'],
+        ph: 1,
+        v: 'Primary 5'
+      }) + f('str', 'Stream', {
+        type: 'select',
+        opts: ['Choose a stream', 'Blue', 'Red'],
+        ph: 1,
+        v: 'Blue',
+        hint: 'Shown only for classes with streams.'
+      }) + f('jd', 'Joining date', {
+        type: 'date',
+        v: '2024-01-12',
+        hint: ST.mode === 'edit' ? '' : 'Defaults to today.'
+      }) + `<div class="f"><span class="lab">KLS number</span><span class="ro">${ST.mode === 'edit' ? p.kls : 'Created when you save'}</span><span class="hint">KLS + your school's number (${SCHOOL.no}) + a 4-digit sequence. It never changes.</span></div>`), ST.mode === 'edit' ? sec('Parents and guardians', '', `<div class="f full"><div class="reqrow"><span class="tch" style="display:flex;gap:10px;align-items:center">${av(P[0], 40)}<span><b>${P[0].fn} ${P[0].ln}</b><span class="sub">Mother · ${P[0].ph}</span></span></span><a class="btn" href="#">${ic('link')}Link another</a></div></div>`) : sec('Parent or guardian', 'Link an existing parent, or add a new one. Parents receive updates on WhatsApp.', `<div class="f full"><label for="ps">Find a parent already in KlassApp<span class="opt">Optional</span></label><span class="search" style="flex:none">${ic('search')}<input class="inp" id="ps" type="search" placeholder="Search by name or phone" style="padding-left:40px"></span></div><p class="or full">Or add a new parent</p>` + f('pfn', 'First name') + f('pln', 'Last name') + f('rel', 'Relationship to the student', {
+        type: 'select',
+        opts: ['Choose', 'Mother', 'Father', 'Guardian', 'Other'],
+        ph: 1
+      }) + f('pph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        err: e ? 'Enter a phone number so the parent can get WhatsApp updates' : null,
+        hint: 'Include the country code.'
+      }) + check('This number is on WhatsApp', true) + check('Send a WhatsApp opt-in message after saving', true)), sec('Health and support', 'Only admins and the head teacher can see this. Each view is logged.', f('al', 'Allergies or medical conditions', {
+        type: 'textarea',
+        opt: 1,
+        full: 1,
+        v: 'Peanuts (severe). Mild asthma.'
+      }) + f('sn', 'Support needs', {
+        type: 'textarea',
+        opt: 1,
+        full: 1,
+        v: 'Sits near the front for hearing.'
+      }))]
+    },
+    teacher: {
+      t: 'teacher',
+      p: () => T[0],
+      body: (p, e) => [sec('Teacher', '', nameRow(p, e) + f('role', 'Role', {
+        type: 'select',
+        opts: ['Teacher', 'Head teacher', 'Deputy head teacher'],
+        v: 'Teacher'
+      }) + f('sno', 'Staff number', {
+        opt: 1,
+        hint: 'If your school uses one.'
+      }) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph,
+        hint: 'Include the country code.'
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        v: p.email,
+        err: e ? 'Enter an email or a phone number to send the invite' : null
+      }) + photo(ST.mode === 'edit' ? p : null)), sec('Teaching', 'You can also do this later from the class or subject page.', `<div class="f full"><span class="lab">Classes and subjects<span class="opt">Optional</span></span><ul class="assign">${(ST.mode === 'edit' ? [['Primary 5 · Blue', 'Mathematics'], ['Primary 5 · Blue', 'Science'], ['Primary 6 · Blue', 'Mathematics']] : [['Primary 5 · Blue', 'Mathematics']]).map((r, i) => `<li><select class="inp sel" aria-label="Class ${i + 1}"><option>${r[0]}</option></select><select class="inp sel" aria-label="Subject ${i + 1}"><option>${r[1]}</option></select><button class="btn icon" type="button" aria-label="Remove ${r[1]}, ${r[0]}">${ic('x')}</button></li>`).join('')}</ul><a class="btn" href="#" style="align-self:flex-start">${ic('plus')}Add a class and subject</a></div>` + f('ct', 'Class teacher of', {
+        type: 'select',
+        opt: 1,
+        opts: ['None', 'Primary 5 · Blue', 'Primary 5 · Red', 'Primary 6 · Blue'],
+        v: 'Primary 5 · Blue'
+      })), invite('teacher', ST.mode === 'edit')]
+    },
+    parent: {
+      t: 'parent',
+      p: () => P[0],
+      body: (p, e) => [sec('Parent or guardian', '', nameRow(p, e) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph,
+        hint: 'Include the country code.'
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        opt: 1,
+        v: p.email
+      }) + check('This number is on WhatsApp', true) + photo(ST.mode === 'edit' ? p : null)), sec('Children', '', `<div class="f full"><label for="ks">Link a child</label><span class="search" style="flex:none">${ic('search')}<input class="inp" id="ks" type="search" placeholder="Search by name or KLS number" style="padding-left:40px"></span>${ST.state === 'error' ? `<span class="emsg">${ic('circle-alert', 'ic ic-sm')}Link at least one child</span>` : ''}<ul class="kids">${(ST.mode === 'edit' || ST.state !== 'error' ? p.kids : []).map(k => `<li>${av(k, 32)}<span style="min-width:0"><b>${k.fn} ${k.ln}</b><span class="sub">${k.cls} · ${k.kls}</span></span><select class="inp sel" aria-label="Relationship to ${k.fn}"><option>Mother</option><option>Father</option><option>Guardian</option><option>Other</option></select><button class="btn icon" type="button" aria-label="Unlink ${k.fn}">${ic('x')}</button></li>`).join('')}</ul></div>`), invite('parent', ST.mode === 'edit')]
+    },
+    staff: {
+      t: 'staff member',
+      p: () => ({
+        id: 3310,
+        fn: 'Ruth',
+        ln: 'Kim',
+        ph: '+000 700 100 120',
+        email: 'r.kim@demojunior.school'
+      }),
+      body: (p, e) => [sec('Staff member', 'For non-teaching staff, such as the bursar or librarian. Their role decides what they can see.', nameRow(p, e) + f('role', 'Role', {
+        type: 'select',
+        opts: ['Choose a role', 'Bursar', 'Librarian', 'School admin', 'Office staff'],
+        ph: 1,
+        v: 'Bursar'
+      }) + f('sno', 'Staff number', {
+        opt: 1
+      }) + f('ph', 'Phone', {
+        type: 'tel',
+        ac: 'tel',
+        v: p.ph
+      }) + f('em', 'Email', {
+        type: 'email',
+        ac: 'email',
+        v: p.email
+      }) + photo(ST.mode === 'edit' ? p : null))]
+    }
+  };
+  window.scrForm = kind => {
+    const k = SPEC[kind],
+      p = k.p(),
+      edit = ST.mode === 'edit',
+      e = ST.state === 'error';
+    const back = {
+      student: 'students',
+      teacher: 'teachers',
+      parent: 'parents',
+      staff: 'teachers'
+    }[kind];
+    const title = edit ? `Edit ${p.fn} ${p.ln}` : `Add ${k.t}`;
+    const errs = e ? {
+      student: ['Last name', 'Parent phone'],
+      teacher: ['Last name', 'Email'],
+      parent: ['Last name', 'Children'],
+      staff: ['Last name']
+    }[kind] : null;
+    return `<nav aria-label="Breadcrumb" style="font-size:14px"><a href="#" data-go="${back}">${back === 'teachers' ? 'Teachers and staff' : back[0].toUpperCase() + back.slice(1)}</a> <span aria-hidden="true">›</span> ${edit ? p.fn + ' ' + p.ln : 'Add'}</nav>
+  <div class="ph"><div><h1>${title}</h1><p>${edit ? 'Changes save when you press Save.' : 'Fields are required unless marked Optional.'}</p></div></div>
+  <form class="form" novalidate onsubmit="return false">${errs ? `<div class="errsum" role="alert" tabindex="-1"><b>${errs.length} things need fixing</b><ul>${errs.map(x => `<li><a href="#">${x}</a></li>`).join('')}</ul></div>` : ''}
+  ${k.body(p, e).join('')}
+  <div class="fbar"><a class="btn" href="#" data-go="${back}">Cancel</a>${edit ? '' : '<button class="btn" type="button">Save and add another</button>'}<button class="btn pri" type="submit">${edit ? 'Save changes' : kind === 'student' ? 'Add student' : `Save${kind === 'parent' ? ' and send opt-in' : kind === 'teacher' ? ' and send invite' : ''}`}</button></div></form>`;
+  };
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "klassapp-handoff-2026-10-08-admin-mvp/concept/screens-d.js", error: String((e && e.message) || e) }); }
 
 // ui_kits/onboarding-wizard/WizardApp.jsx
 try { (() => {

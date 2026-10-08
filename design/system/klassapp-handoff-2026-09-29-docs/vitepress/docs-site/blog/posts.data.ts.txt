@@ -1,0 +1,11 @@
+import { createContentLoader } from 'vitepress'
+export interface Post { url: string; title: string; description: string; date: string; tag: string; author: string; authorInitials: string; minutes: number; cover?: string; coverAlt?: string; status?: string }
+declare const data: Post[]
+export { data }
+export default createContentLoader('blog/*.md', {
+  transform(raw): Post[] {
+    return raw.filter(p => !p.url.endsWith('/blog/') && !p.frontmatter.hidden)
+      .map(p => ({ url: p.url, ...(p.frontmatter as any) }))
+      .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+  },
+})

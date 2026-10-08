@@ -1,8 +1,14 @@
 # KlassApp Design System
 
+## Positioning (agreed 2026-10-02)
+
 **Tagline:** An open education protocol for humans and agents.
 
 **Description:** KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.
+
+Use these two lines word for word wherever KlassApp is introduced: landing page, docs home, blog, social bios, pitch title slide, app store and manifest text. **Retired, don't use:** "The school platform that operates in the tools educationists already use", "Open-source agentic school protocol", "Smarter schools start here", "School operations on one protocol", and any line that names a country or region ("East African schools") or a single school level.
+
+**What the product is, for designers:** student rosters, classes, fee ledgers, exam marks and report cards for schools from nursery to secondary. Its distinguishing move is that it doesn't demand a new habit: parents are reached on **WhatsApp**, documents land in **Google Drive**, staff work stays in **Slack**, and **Toshi** does the multi-step office work on request.
 
 The product surfaces this system covers:
 
@@ -280,6 +286,37 @@ is a product decision, so nothing was invented here.
 - **Sign-up page:** value points on the left, Google and email on the right.
 
 **Dashboard v1 with Toshi off (superseded by v2):** nothing on the page mentions Toshi. In its place is a setup card ("{done} of {total} steps done", from one source), a "No students yet" empty state, and five quick actions. The greeting uses the first name in normal case, and the academic-year selector has a label and shows on mobile too.
+
+**Brand rule (2026-10-01): KlassApp is a global product.**
+- No country-only or level-only framing in marketing, blog, social or docs. KlassApp is for schools from nursery to secondary.
+- Sample data uses the seeded demo schools: "Demo Junior School" (nursery and primary) and "Demo Senior School" (O and A level), and currency comes from settings.
+- The founding-schools offer has no stated limit.
+- Product features specific to one curriculum, such as LIN, PLE or UCE fields, can be described in that school's own settings and docs. They're never the headline.
+
+**Logo on docs and files (2026-10-01):** use the **stacked light** lockup (`klassapp-stacked-light.svg`) on documents, quick starts and the docs site, not the horizontal one. Sizes: formal documents 19 mm, quick starts 16 mm, docs header 44 px, docs footer 48 px. Social posts use stacked too (96 px at 1080 wide), except the wide X post (1600 × 900), which keeps the horizontal lockup. App screens and emails keep the horizontal lockup.
+
+**Formal document template (2026-10-01).** `templates/formal-document/FormalDocument.dc.html` covers policies, terms, DPAs, letters and invoices on A4 or US Letter.
+- **First page:** a header with the stacked logo and a metadata block.
+- **Later pages:** a running header (icon, title, version), and a footer on every page ("Page X of Y").
+- **Styles:** Sora and DM Sans heading and body styles, the `KA Table` style, and signature blocks.
+- **Draft:** a "Draft for review" band, tag and watermark.
+- **Signed:** a `signed` state shows the acceptance block (name, title, school, version, date and time with UTC offset, reference, acceptance ID) in place of handwritten signature lines. The in-app click-to-accept page is `concepts/contracts/dpa-accept.html`.
+- **Word:** a `.dotx` spec with exact fonts, fallbacks, sizes and hex colours is in `guidelines/handoff-2026-10-01-formal-documents.md`.
+
+**Blog and Events (2026-10-02).** The VitePress docs site gains `/docs/blog/` and `/docs/events/`, on the same theme as Help. Shared pieces in `styles/docs.css`: `.kd-preview` (the "Draft · Preview release" label, set per page with `status: preview`), post feature card, byline, call-to-action card, event list with date tile, and an event time card. Event times are stored in UTC and shown in the viewer's time zone with the offset, plus the host time. Concept: `concepts/docs/blog/index.html`.
+
+**Admin MVP pack (2026-10-07, demo 17 Oct).** Concept `concepts/admin-mvp/index.html`; spec `guidelines/handoff-2026-10-07-admin-mvp.md`.
+- **Pages:** dashboard with data (5 KPI tiles, 4 charts, recent activity, a slim setup bar only while setup is incomplete, Toshi as one quiet "coming soon" line); student, teacher and parent profiles; classes index and class page.
+- **People list:** one list pattern for students, teachers and parents (one-line search plus filter chips; the whole row opens the profile; a row menu without Delete; a bulk bar only on selection; card rows on mobile; empty, no-match and loading states).
+- **Account menu:** a compact popover anchored to the account card; the sidebar never moves.
+- **Draft banner:** `.kd-preview` now matches the repo's `DraftBanner.vue` (#922) exactly, and the Help concept shows it.
+
+**Admin batch two (2026-10-08).** Concept `concepts/admin-mvp/batch2.html`; spec `guidelines/handoff-2026-10-08-admin-mvp-combined.md`, which combines batch one and two. The Design System tab has an **Admin MVP** group with 8 cards: dashboard, people list, student profile, class page, subjects, exams, attendance and person form.
+- **Subjects:** each subject listed once, with teachers, classes and average. The subject page brings together its exams, marks and report status for all its classes.
+- **Attendance overview:** registers taken today, then patterns by day, by class and over time.
+- **Exams:** a subject-first page, with disclosure rows per class.
+- **Person form:** one shared add and edit form for students, teachers, parents and staff, with invites for teachers and parents and no legacy fields.
+- **Also from 2026-10-08:** KLS format `KLS` + 3-digit school number + 4-digit sequence; Health and support is its own tab (admin and head teacher only, every open logged); class teacher is per stream with a class default.
 
 ---
 

@@ -1,0 +1,22 @@
+/* KlassApp spacing tokens — intentional addition. The app CSS uses px literals;
+   these are the values that actually recur, named so consumers stop guessing. */
+:root {
+    --d-space-1: 4px;
+    --d-space-2: 6px;
+    --d-space-3: 8px;
+    --d-space-4: 10px;
+    --d-space-5: 12px;
+    --d-space-6: 14px;
+    --d-space-7: 16px;   /* grid gap between cards / KPI tiles */
+    --d-space-8: 20px;   /* card padding (default), topfold padding */
+    --d-space-9: 24px;   /* shell padding, KPI card x-padding */
+    --d-space-10: 28px;  /* .ds-card-padding-lg */
+    --d-space-12: 48px;  /* empty-state vertical padding */
+
+    /* Recurring composites */
+    --d-gutter: 16px;            /* default grid gap */
+    --d-shell-padding: 24px;
+    --d-card-padding: 20px;
+    --d-table-cell-x: 20px;      /* ledger td/th horizontal padding */
+    --d-table-cell-y: 18px;      /* .dt-comfortable td vertical padding */
+}

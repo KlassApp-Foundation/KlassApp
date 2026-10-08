@@ -1,3 +1,4 @@
+<!-- @dsCard group="Social" viewport="1280x900" name="Social media kit" subtitle="6 content types × 8 formats, real size, with safe zones" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -43,7 +44,9 @@ section.type>h2 small{font:500 14px 'DM Sans',sans-serif;color:#475569}
 .dark .sub{color:#CBD5E1}
 .grow{flex:1;min-height:0}
 .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
-.foot img{height:calc(56px*var(--u));display:block}
+.foot img{height:calc(96px*var(--u));width:auto;display:block}
+.foot img.lg-h{height:calc(56px*var(--u))}
+.art:not(.wide) .lg-h,.wide .lg-s{display:none}
 .url{font:600 calc(28px*var(--u)) 'DM Sans',sans-serif;color:#334155}.dark .url{color:#CBD5E1}
 .slot{flex:1;min-height:0;border-radius:24px;border:3px solid #0F172A;background:repeating-linear-gradient(135deg,#F1F5F9 0 18px,#E2E8F0 18px 36px);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font:600 calc(26px*var(--u)) 'DM Sans',sans-serif;color:#334155}
 .pill{align-self:flex-start;font:700 calc(26px*var(--u)) 'DM Sans',sans-serif;padding:10px 22px;border-radius:999px;background:#DCFCE7;color:#14532D}
@@ -55,6 +58,7 @@ section.type>h2 small{font:500 14px 'DM Sans',sans-serif;color:#475569}
 .dt dt{color:#94A3B8;font-weight:500}.dt dd{margin:0}
 .big{font:700 calc(180px*var(--u))/1 'Sora',sans-serif;color:#15803D;letter-spacing:-.04em}
 .dark .big{color:#4ADE80}
+.wide .col.v .big{font-size:calc(150px*var(--u));line-height:1.35}
 .safe{position:absolute;top:var(--st);bottom:var(--sb);left:80px;right:80px;outline:4px dashed rgba(220,38,38,.9);pointer-events:none;display:none}
 .band{position:absolute;left:0;right:0;background:rgba(220,38,38,.2);display:none}
 .showsafe .safe,.showsafe .band{display:block}
@@ -66,13 +70,13 @@ section.type>h2 small{font:500 14px 'DM Sans',sans-serif;color:#475569}
 <button class="tbtn" id="sz" aria-pressed="false">Show safe zones</button></div>
 <div class="intro">
 <p><b>6 content types × 8 formats = 48 templates.</b> The LinkedIn carousel shows 3 pages per type, so there are 60 artboards in all. Every artboard is laid out at its real export size in pixels; "100%" shows it 1:1. The build spec is in <a href="../../klassapp-handoff-2026-09-29-docs/CANVA-SPECS.md">CANVA-SPECS.md</a>, and <a href="index.html">index.html</a> is the earlier overview.</p>
-<p>All copy is <b>sample copy</b>. The event date, job title and links are placeholders to replace before posting. The testimonial stays an amber placeholder until a school gives written consent. The screenshot slots need Demo Academy Uganda captures.</p>
+<p>All copy is <b>sample copy</b>. The event date, job title and links are placeholders to replace before posting. The testimonial stays an amber placeholder until a school gives written consent. The screenshot slots need Demo Junior School captures.</p>
 <p id="status">Measuring…</p>
 </div>
 <nav class="jump" aria-label="Content types" id="jump"></nav>
 <main id="kit"></main>
 <script>
-const LOGO={light:'../../assets/brand/klassapp-horizontal-light.svg',dark:'../../assets/brand/klassapp-horizontal-dark.svg'};
+const LOGO={light:'../../assets/brand/klassapp-stacked-light.svg',dark:'../../assets/brand/klassapp-stacked-dark.svg'},LOGO_H={light:'../../assets/brand/klassapp-horizontal-light.svg',dark:'../../assets/brand/klassapp-horizontal-dark.svg'};
 const CH=[
  {k:'li',n:'LinkedIn post',w:1200,h:1200,st:80,sb:80},
  {k:'car',n:'LinkedIn carousel',w:1080,h:1350,st:80,sb:80,car:1},
@@ -83,23 +87,23 @@ const CH=[
  {k:'was',n:'WhatsApp Status',w:1080,h:1920,st:220,sb:220},
  {k:'wac',n:'WhatsApp Channel',w:1080,h:1080,st:80,sb:80}];
 const TY=[
- {k:'announce',n:'Announcement',dark:0,kick:'Now in KlassApp',hd:'Ugandan admission forms, built in',sub:'LIN, PLE and UCE results, home district and boarding: the details Ugandan schools actually ask for.',url:'klassapp.xyz',vis:'num',num:'LIN',
-  car:[['Now in KlassApp','Ugandan admission forms, built in','Swipe to see what changed'],['01','LIN on every student','Record each learner\u2019s LIN when they enrol.'],['','Available to every school on KlassApp now','klassapp.xyz']]},
+ {k:'announce',n:'Announcement',dark:0,kick:'Now in KlassApp',hd:'Admission forms your school can shape',sub:'Choose the fields, make them required or optional, and set rules per class, from nursery to secondary.',url:'klassapp.xyz',vis:'num',num:'01',
+  car:[['Now in KlassApp','Admission forms your school can shape','Swipe to see what changed'],['01','Your fields, your rules','Required, optional or hidden, per class.'],['','Available to every school on KlassApp now','klassapp.xyz']]},
  {k:'spot',n:'Feature spotlight',dark:0,kick:'Feature spotlight',hd:'Parents check fees on WhatsApp',sub:'Send \u201cfees\u201d to the school\u2019s number. The balance comes straight back.',url:'klassapp.xyz',vis:'slot',
   car:[['Feature spotlight','Parents check fees on WhatsApp','Swipe'],['01','Send \u201cfees\u201d','The balance comes straight back, for their own child only.'],['','No app to install','Ask your school to connect you']]},
  {k:'quote',n:'Testimonial (placeholder)',dark:0,kick:'From a school',quote:1,url:'klassapp.xyz',vis:'none',
   car:[['From a school','','[Name], [Role]'],['','','[School], [District]'],['','See how schools use KlassApp','klassapp.xyz']]},
  {k:'event',n:'Event / webinar',dark:1,kick:'Free webinar',hd:'Set up your school in one afternoon',sub:'',pill:'Register: klassapp.xyz/events',vis:'dt',
-  car:[['Free webinar','Set up your school in one afternoon','Thu 16 Oct 2026 · 3:00 pm EAT'],['01','What we\u2019ll cover','Classes, streams, teachers and fees, live on a demo school.'],['','Save your place','klassapp.xyz/events']]},
- {k:'hire',n:'Hiring',dark:1,kick:'We\u2019re hiring',hd:'Laravel developer',sub:'Kampala or remote in East Africa. Help build open school infrastructure.',pill:'Apply: klassapp.xyz/jobs',vis:'num',num:'01',
-  car:[['We\u2019re hiring','Laravel developer','Kampala or remote in East Africa'],['01','What you\u2019ll do','Build features schools use every day, in a public codebase.'],['','Apply','klassapp.xyz/jobs']]},
+  car:[['Free webinar','Set up your school in one afternoon','Thu 16 Oct 2026 · 3:00 pm, your time zone'],['01','What we\u2019ll cover','Classes, streams, teachers and fees, live on a demo school.'],['','Save your place','klassapp.xyz/events']]},
+ {k:'hire',n:'Hiring',dark:1,kick:'We\u2019re hiring',hd:'Laravel developer',sub:'Remote. Help build an open education protocol.',pill:'Apply: klassapp.xyz/jobs',vis:'num',num:'01',
+  car:[['We\u2019re hiring','Laravel developer','Remote, worldwide'],['01','What you\u2019ll do','Build features schools use every day, in a public codebase.'],['','Apply','klassapp.xyz/jobs']]},
  {k:'tip',n:'Tip of the week',dark:0,kick:'Tip of the week',hd:'Mark attendance before 9:00',sub:'Parents of absent students get the WhatsApp message the same morning.',url:'klassapp.xyz/help',vis:'num',num:'07',
   car:[['Tip of the week','Mark attendance before 9:00','Swipe'],['07','Why it matters','Parents hear about an absence the same morning.'],['','More tips in the help','klassapp.xyz/help']]}];
 const QUOTE='\u201c<span class="ph">Quote from a real school, used only with written consent</span>\u201d';
 const WHO='<p class="who"><b>[Name]</b>, [Role]<br>[School name], [District]</p>';
-const DT='<dl class="dt"><dt>Date</dt><dd>Thu 16 Oct 2026</dd><dt>Time</dt><dd>3:00 pm EAT</dd><dt>Where</dt><dd>Google Meet</dd></dl>';
-function foot(t){return `<div class="foot"><img src="${t.dark?LOGO.dark:LOGO.light}" alt="KlassApp"><span class="url">${t.pill?'':t.url||''}</span></div>`}
-function vis(t,wide){if(t.vis==='slot')return `<div class="slot">Screenshot slot · Demo Academy Uganda · parent WhatsApp chat</div>`;if(t.vis==='dt')return DT;if(t.vis==='num')return `<div class="big">${t.num}</div>`;return ''}
+const DT='<dl class="dt"><dt>Date</dt><dd>Thu 16 Oct 2026</dd><dt>Time</dt><dd>3:00 pm, your time zone</dd><dt>Where</dt><dd>Google Meet</dd></dl>';
+function foot(t){return `<div class="foot"><img class="lg-s" src="${t.dark?LOGO.dark:LOGO.light}" alt="KlassApp"><img class="lg-h" src="${t.dark?LOGO_H.dark:LOGO_H.light}" alt=""><span class="url">${t.pill?'':t.url||''}</span></div>`}
+function vis(t,wide){if(t.vis==='slot')return `<div class="slot">Screenshot slot · Demo Junior School · parent WhatsApp chat</div>`;if(t.vis==='dt')return DT;if(t.vis==='num')return `<div class="big">${t.num}</div>`;return ''}
 function body(t,c){const wide=c.w/c.h>1.4,sq=Math.abs(c.w-c.h)<10;const hs=t.k==='spot'?(sq?64:76):t.k==='tip'?(sq?64:72):(sq?78:88);
  const vars=`--hs:${wide?76:hs}px;--ss:${wide||sq?34:38}px;--qs:${sq||wide?50:58}px;`;
  let inner;

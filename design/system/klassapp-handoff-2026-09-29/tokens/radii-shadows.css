@@ -1,0 +1,31 @@
+/* KlassApp radii, shadows and motion — intentional addition.
+   Every value below appears verbatim in the app CSS. */
+:root {
+    /* ── Radii ── */
+    --d-radius-sm: 6px;    /* chips, small toggles */
+    --d-radius-md: 8px;    /* buttons, inputs, status tiles */
+    --d-radius-lg: 10px;   /* banners, mobile table cards */
+    --d-radius-xl: 12px;   /* table wrapper, icon chips, toshi cards */
+    --d-radius-2xl: 14px;  /* .ds-card, KPI card, setup banner */
+    --d-radius-3xl: 16px;  /* toshi panel, review card */
+    --d-radius-4xl: 18px;  /* .dashboard-topfold */
+    --d-radius-5xl: 20px;  /* .dashboard-shell */
+    --d-radius-pill: 999px;
+
+    /* ── Shadows ──
+       The house style is a hairline *ring*, not a drop shadow. Elevation is
+       added only on hover, and stays under 4% black. */
+    --d-shadow-sm: 0 0 0 1px var(--d-border);
+    --d-shadow-md: 0 0 0 1px var(--d-border-strong), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --d-shadow-lg: 0 0 0 1px var(--d-border-strong), 0 8px 24px rgba(0, 0, 0, 0.06);
+    --d-shadow-hover: 0 0 0 1px var(--d-border-strong), 0 4px 12px rgba(0, 0, 0, 0.04);
+    --d-shadow-float: 0 8px 40px rgba(0, 0, 0, 0.12);   /* toshi panel */
+    --d-shadow-pill: 0 4px 24px rgba(0, 0, 0, 0.12);    /* toshi pill */
+
+    /* ── Motion ── */
+    --d-transition-fast: 0.15s ease; /* @kind other */    /* buttons, links, rows */
+    --d-transition-normal: 200ms ease; /* @kind other */  /* app CSS references it with a fallback */
+    --d-transition-slow: 0.3s ease; /* @kind other */     /* entrance animations */
+    --d-lift: translateY(-1px); /* @kind other */         /* the only hover transform in the system */
+    --d-press: scale(0.97); /* @kind other */             /* the only press transform in the system */
+}
