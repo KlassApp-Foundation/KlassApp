@@ -15,10 +15,15 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\CurrentPlan;
+use App\Models\Plan;
 use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Models\WhatsAppUser;
+use App\Services\FreeTierPlanService;
+use App\Services\OnboardingStepsService;
 use App\Support\DemoSeedManifest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +70,7 @@ trait SeedsRichDemoData
         $this->richSeedAdmissions();
         $this->richEnsureAttendance();
         $this->richSeedExamRounds();
+        $this->richCompleteOnboarding();
         $this->richWriteManifest();
     }
 
@@ -89,6 +95,7 @@ trait SeedsRichDemoData
 
         $made = 0;
         $linked = 0;
+        $parentIds = [];
 
         foreach (array_values($people) as $i => $person) {
             $local = 'parent' . ($i + 1);
@@ -102,29 +109,101 @@ trait SeedsRichDemoData
                 $parent->forceFill(['mobile_no' => $phone])->save();
             }
 
-            // Each parent is linked to two children (round-robin over students).
-            $pair = array_unique([
-                (int) $studentIds[$i % $studentIds->count()],
-                (int) $studentIds[($i + 1) % $studentIds->count()],
-            ]);
+            $parentIds[] = (int) $parent->id;
+        }
 
-            foreach ($pair as $studentId) {
-                $link = StudentParentLink::withTrashed()->firstOrCreate(
-                    [
-                        'school_id' => $this->school->id,
-                        'parent_id' => $parent->id,
-                        'student_id' => $studentId,
-                    ],
-                    ['status' => 1]
-                );
+        // Every student gets exactly one parent, round-robin over the pool, so
+        // no child is left unlinked and each parent ends with one to two
+        // children (the walkthrough expects one to three). Extra links added
+        // by hand are left in place; soft-deleted ones are restored.
+        $pool = count($parentIds);
 
-                if ($link->wasRecentlyCreated) {
-                    $linked++;
-                }
+        foreach ($studentIds as $idx => $studentId) {
+            $parentId = $parentIds[$idx % $pool];
+
+            $link = StudentParentLink::withTrashed()->firstOrCreate(
+                [
+                    'school_id' => $this->school->id,
+                    'parent_id' => $parentId,
+                    'student_id' => $studentId,
+                ],
+                ['status' => 1]
+            );
+
+            if ($link->trashed()) {
+                $link->restore();
+                $linked++;
+            } elseif ($link->wasRecentlyCreated) {
+                $linked++;
             }
         }
 
         $this->command?->info("Rich parents: {$made} accounts, {$linked} new child links.");
+    }
+
+    // ────────────────────────────────────────────────── onboarding steps
+
+    /**
+     * A1: complete the setup steps for a school that already has data, so the
+     * "Finish school setup" banner never shows on the demos. Everything goes
+     * through the same records the steps service reads — no flags are faked.
+     */
+    protected function richCompleteOnboarding(): void
+    {
+        $school = $this->school->fresh();
+        $admin = $this->richAdmin();
+
+        // School profile fields the steps read. Values are clearly fictional.
+        $school->forceFill([
+            'student_size' => $school->student_size ?: 'Up to 500',
+            'ministry_code' => $school->ministry_code ?: 'DEMO-EMIS-' . $school->id,
+            'uneb_center_number' => $school->uneb_center_number ?: 'DEMO-UNEB-' . $school->id,
+        ])->save();
+
+        // 'whatsapp_verify' reads the admin's WhatsAppUser row.
+        WhatsAppUser::updateOrCreate(
+            ['user_id' => $admin->id],
+            [
+                'phone' => $this->richFictionalPhone('wa-admin@' . $this->richDomain() . $school->id),
+                'school_id' => $school->id,
+                'verified_at' => now(),
+                'opted_in' => true,
+            ]
+        );
+
+        // 'plan_selection' reads CurrentPlan.
+        if (! CurrentPlan::where('school_id', $school->id)->exists()) {
+            $assigned = app(FreeTierPlanService::class)->assignIfEligible($school, $admin->id);
+
+            if (! $assigned) {
+                if (! Plan::query()->where('is_active', 1)->exists()) {
+                    \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                        '--class' => \Database\Seeders\PlansTableSeeder::class,
+                        '--force' => true,
+                    ]);
+                }
+
+                $plan = Plan::query()
+                    ->where('is_active', 1)
+                    ->where(function ($q) {
+                        $q->whereRaw('LOWER(name) = ?', ['freemium'])
+                            ->orWhereRaw('LOWER(display_name) = ?', ['freemium']);
+                    })
+                    ->orderBy('order')
+                    ->first()
+                    ?? Plan::query()->where('is_active', 1)->orderBy('order')->first();
+
+                if ($plan) {
+                    CurrentPlan::create([
+                        'school_id' => $school->id,
+                        'plan_id' => $plan->id,
+                        'status' => 'running',
+                    ]);
+                }
+            }
+        }
+
+        OnboardingStepsService::markOnboardingFinished($school);
     }
 
     // ─────────────────────────────────────────────────────────── timetable

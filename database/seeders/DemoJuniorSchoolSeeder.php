@@ -47,6 +47,13 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     public const DOMAIN = 'junior.demo.klassapp.test';
 
+    /** A1: ages by class for seeded dates of birth. */
+    public const AGE_BY_CLASS = [
+        'Baby Class' => 3, 'Middle Class' => 4, 'Top Class' => 5,
+        'P.1' => 6, 'P.2' => 7, 'P.3' => 8, 'P.4' => 9,
+        'P.5' => 10, 'P.6' => 11, 'P.7' => 12,
+    ];
+
     private School $school;
 
     private AcademicYear $year;
@@ -174,7 +181,11 @@ class DemoJuniorSchoolSeeder extends Seeder
             'Diana Kembabazi', 'Paul Musoke',
         ];
         foreach ($teachers as $i => $name) {
-            $this->staff['teacher' . ($i + 1)] = $this->user('teacher' . ($i + 1), $name, 5);
+            $teacher = $this->user('teacher' . ($i + 1), $name, 5);
+            $teacher->forceFill([
+                'mobile_no' => $this->richFictionalPhone('teacher' . ($i + 1) . '@' . self::DOMAIN),
+            ])->save();
+            $this->staff['teacher' . ($i + 1)] = $teacher;
         }
 
         // Best effort: the head teacher also carries the principal designation.
@@ -330,6 +341,14 @@ class DemoJuniorSchoolSeeder extends Seeder
                 $first = $firsts[($n * 7) % count($firsts)];
                 $last = $lasts[($n * 11) % count($lasts)];
                 $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+
+                // A1: every student carries a date of birth and a gender.
+                $age = self::AGE_BY_CLASS[$className] ?? 10;
+                \App\Models\Userprofile::where('user_id', $student->id)->update([
+                    'date_of_birth' => \Illuminate\Support\Carbon::create(2026 - $age, (($n * 5) % 12) + 1, (($n * 7) % 27) + 1)->toDateString(),
+                    'gender' => $n % 2 === 0 ? 'female' : 'male',
+                ]);
+
                 $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
 
                 $link = $this->links[$linkKeys[$i % count($linkKeys)]];
@@ -671,6 +690,34 @@ class DemoJuniorSchoolSeeder extends Seeder
                 ['name' => 'Ronald Ssebunya'],
                 ['name' => 'Beatrice Anyango'],
                 ['name' => 'Julius Kagwa'],
+                ['name' => 'Peninah Nabukenya'],
+                ['name' => 'George William Ssempala'],
+                ['name' => 'Sarah Nalwoga'],
+                ['name' => 'Tom Kyaligonza'],
+                ['name' => 'Rose Nakimuli'],
+                ['name' => 'Duncan Mwesigwa'],
+                ['name' => 'Jane Frances Akello'],
+                ['name' => 'Vincent Ocen'],
+                ['name' => 'Grace Namutebi'],
+                ['name' => 'Herbert Byamukama'],
+                ['name' => 'Priscilla Ayo'],
+                ['name' => 'Martin Ssemakula'],
+                ['name' => 'Betty Anyeko'],
+                ['name' => 'Lawrence Kigundu'],
+                ['name' => 'Ruth Nakanjako'],
+                ['name' => 'Simon Peter Opio'],
+                ['name' => 'Esther Kyomuhendo'],
+                ['name' => 'Andrew Lukyamuzi'],
+                ['name' => 'Milly Nassiwa'],
+                ['name' => 'Robert Wamala'],
+                ['name' => 'Agnes Nabwire'],
+                ['name' => 'Charles Lwanga Muwanga'],
+                ['name' => 'Doreen Amuge'],
+                ['name' => 'Fredrick Ssebaggala'],
+                ['name' => 'Margaret Atim'],
+                ['name' => 'Joseph Kizito'],
+                ['name' => 'Susan Nambooze'],
+                ['name' => 'Elias Katumba'],
             ],
             'admissions' => [
                 ['standard' => 'primary', 'section' => 'P.1', 'name' => 'Shafik Nsubuga', 'age' => 6, 'gender' => 'male', 'district' => 'Wakiso', 'village' => 'Kyanja', 'last_school' => 'Kyanja Community Primary', 'last_class' => 'Top Class', 'father' => 'Musa Nsubuga', 'father_job' => 'Boda rider', 'mother' => 'Zaituni Nsubuga', 'mother_job' => 'Market vendor'],

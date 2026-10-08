@@ -45,6 +45,11 @@ class DemoSeniorSchoolSeeder extends Seeder
 
     public const DOMAIN = 'senior.demo.klassapp.test';
 
+    /** A1: ages by class for seeded dates of birth. */
+    public const AGE_BY_CLASS = [
+        'S.1' => 13, 'S.2' => 14, 'S.3' => 15, 'S.4' => 16, 'S.5' => 17, 'S.6' => 18,
+    ];
+
     private School $school;
 
     private AcademicYear $year;
@@ -172,7 +177,11 @@ class DemoSeniorSchoolSeeder extends Seeder
             'Diana Kembabazi', 'Paul Musoke',
         ];
         foreach ($teachers as $i => $name) {
-            $this->staff['teacher' . ($i + 1)] = $this->user('teacher' . ($i + 1), $name, 5);
+            $teacher = $this->user('teacher' . ($i + 1), $name, 5);
+            $teacher->forceFill([
+                'mobile_no' => $this->richFictionalPhone('teacher' . ($i + 1) . '@' . self::DOMAIN),
+            ])->save();
+            $this->staff['teacher' . ($i + 1)] = $teacher;
         }
 
         // Best effort: the head teacher also carries the principal designation.
@@ -333,6 +342,14 @@ class DemoSeniorSchoolSeeder extends Seeder
                 $first = $firsts[($n * 7) % count($firsts)];
                 $last = $lasts[($n * 11) % count($lasts)];
                 $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+
+                // A1: every student carries a date of birth and a gender.
+                $age = self::AGE_BY_CLASS[$className] ?? 15;
+                \App\Models\Userprofile::where('user_id', $student->id)->update([
+                    'date_of_birth' => \Illuminate\Support\Carbon::create(2026 - $age, (($n * 5) % 12) + 1, (($n * 7) % 27) + 1)->toDateString(),
+                    'gender' => $n % 2 === 0 ? 'female' : 'male',
+                ]);
+
                 $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
 
                 $link = $this->links[$linkKeys[$i % count($linkKeys)]];
@@ -674,6 +691,34 @@ class DemoSeniorSchoolSeeder extends Seeder
                 ['name' => 'Patrick Omara'],
                 ['name' => 'Florence Nabwire'],
                 ['name' => 'Ambrose Kigongo'],
+                ['name' => 'Janet Akumu'],
+                ['name' => 'Paul Wafula'],
+                ['name' => 'Rebecca Nabbosa'],
+                ['name' => 'Stephen Ochieng'],
+                ['name' => 'Justine Nabatanzi'],
+                ['name' => 'Anthony Ekwaro'],
+                ['name' => 'Monica Aciro'],
+                ['name' => 'Benard Ssekitoleko'],
+                ['name' => 'Carol Namusoke'],
+                ['name' => 'Wilberforce Ogwang'],
+                ['name' => 'Lydia Nakanwagi'],
+                ['name' => 'Geoffrey Tumwine'],
+                ['name' => 'Sylvia Ijang'],
+                ['name' => 'Alfred Kaggwa'],
+                ['name' => 'Harriet Auma'],
+                ['name' => 'Boniface Woniala'],
+                ['name' => 'Faith Nabirye'],
+                ['name' => 'Simon Oyat'],
+                ['name' => 'Justine Amono'],
+                ['name' => 'Gerald Ssenyonga'],
+                ['name' => 'Beatrice Adong'],
+                ['name' => 'Milton Obbo'],
+                ['name' => 'Sarah Atuhaire'],
+                ['name' => 'Edward Kamya'],
+                ['name' => 'Peace Adero'],
+                ['name' => 'Noah Bisaso'],
+                ['name' => 'Diana Aketo'],
+                ['name' => 'Ismail Waiswa'],
             ],
             'admissions' => [
                 ['standard' => 'o-level', 'section' => 'S.1', 'name' => 'Brenda Akello', 'age' => 13, 'gender' => 'female', 'district' => 'Gulu', 'village' => 'Pece', 'last_school' => 'Pece Hill Primary', 'last_class' => 'P.7', 'father' => 'Okello Akello', 'father_job' => 'Teacher', 'mother' => 'Akello Grace', 'mother_job' => 'Trader'],

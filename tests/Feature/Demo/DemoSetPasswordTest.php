@@ -247,7 +247,7 @@ class DemoSetPasswordTest extends TestCase
         $output = Artisan::output();
         $this->assertStringContainsString('SchoolAdmin: 1', $output);
         $this->assertStringContainsString('Teacher: 10', $output);
-        $this->assertStringContainsString('Parent: 12', $output);
+        $this->assertStringContainsString('Parent: 40', $output);
         $this->assertStringContainsString('Librarian: 1', $output);
         $this->assertStringContainsString('Accountant: 1', $output);
         $this->assertStringContainsString('Receptionist: 1', $output);
