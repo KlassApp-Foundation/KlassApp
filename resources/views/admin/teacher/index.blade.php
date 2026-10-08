@@ -96,7 +96,7 @@
                                             @endif
                                         </div>
                                         <div class="min-w-0">
-                                            <a href="{{ url('/admin/teacher/edit/' . $teacher->id) }}" class="font-semibold text-slate-900 hover:text-blue-700">{{ $teacherName }}</a>
+                                            <a href="{{ url('/admin/teacher/edit/' . $teacher->name) }}" class="font-semibold text-slate-900 hover:text-blue-700">{{ $teacherName }}</a>
                                             <p class="truncate text-xs text-slate-500">{{ optional($profile)->designation ?: 'Teaching staff' }}</p>
                                         </div>
                                     </div>
@@ -115,7 +115,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ url('/admin/teacher/edit/' . $teacher->id) }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Manage</a>
+                                    <a href="{{ url('/admin/teacher/edit/' . $teacher->name) }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Manage</a>
                                 </td>
                             </tr>
                         @endforeach
