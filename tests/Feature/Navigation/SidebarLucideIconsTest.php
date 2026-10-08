@@ -4,7 +4,9 @@
  *
  * Icons PR 1 (sidebar only): every sidebar item resolves to a Lucide icon, the
  * <x-ka-icon> wrapper renders the expected SVG, and the sidebar's labels, routes,
- * URLs and grouping are exactly what they were on main before the icon swap.
+ * URLs and grouping match the committed structure fixture. The fixture is
+ * updated deliberately when the navigation is regrouped (PR1: the confirmed
+ * People / Academics / Money / Messages / School groups).
  */
 namespace Tests\Feature\Navigation;
 

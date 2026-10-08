@@ -122,7 +122,17 @@ class DashboardController extends Controller
             ? '/admin/dashboard/dashboard_v2'
             : '/admin/dashboard/dashboard';
 
+        // PR1 first screen data — only built when the v2 flag is on.
+        $v2Data = null;
+        if ($dashboardView === '/admin/dashboard/dashboard_v2' && $school_id) {
+            $v2Data = app(\App\Services\DashboardV2DataService::class)->build(
+                Auth::user()->school,
+                Auth::user(),
+            );
+        }
+
         return view( $dashboardView, [
+            'v2Data' => $v2Data,
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
             'selected_teacher' => $selected_teacher,

@@ -213,6 +213,44 @@ class OnboardingStepsService
     }
 
     /**
+     * Neutral step names for dashboard surfaces (setup bar, sidebar chip). The
+     * country/curriculum jargon ("EMIS / Ministry code", "UNEB centre number")
+     * never appears there; a curriculum may override a name via
+     * curriculumStepLabels(), which is empty until one actually defines names.
+     */
+    public const NEUTRAL_LABELS = [
+        'emis' => 'Registration code',
+        'uneb_center' => 'Exam centre number',
+    ];
+
+    /**
+     * Curriculum-defined step names. Empty today: no curriculum has asked for
+     * specific wording, so the neutral set above is what dashboards show.
+     *
+     * @return array<string, string>
+     */
+    public static function curriculumStepLabels(?string $curriculum): array
+    {
+        return [];
+    }
+
+    /**
+     * Step label for dashboard surfaces: neutral by default, curriculum-defined
+     * when the school's curriculum provides a name.
+     *
+     * @param  array{label?: string}  $step
+     */
+    public static function displayLabel(string $key, array $step, ?School $school = null, string $context = 'dashboard'): string
+    {
+        $specific = self::curriculumStepLabels($school?->curriculum)[$key] ?? null;
+        if (is_string($specific) && $specific !== '') {
+            return $specific;
+        }
+
+        return self::NEUTRAL_LABELS[$key] ?? self::labelForContext($key, (string) ($step['label'] ?? ''), $context);
+    }
+
+    /**
      * Display label for a step in a given UI context.
      * Wizard keeps stream/CT wording; Toshi chat uses shorter class-focused labels.
      */

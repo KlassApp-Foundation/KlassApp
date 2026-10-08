@@ -22,6 +22,14 @@
             \App\Models\UserPreference::setupBannerDismissedKey((int) $dv2ChipSchool->id),
         ) !== null;
         $dv2ChipProgress = \App\Services\OnboardingStepsService::progress($dv2ChipSchool, $dv2ChipUser->id);
+        // K25: neutral step names on the chip, from the one service.
+        $dv2ChipNextLabel = $dv2ChipProgress['next']
+            ? \App\Services\OnboardingStepsService::displayLabel(
+                $dv2ChipProgress['next']['key'],
+                ['label' => $dv2ChipProgress['next']['label']],
+                $dv2ChipSchool,
+            )
+            : null;
     @endphp
     @if($dv2ChipDismissed && $dv2ChipProgress['done'] < $dv2ChipProgress['total'])
         <style>
@@ -42,8 +50,8 @@
                 <b>Finish setup</b>
                 <span class="dv2-chip-pill">{{ $dv2ChipProgress['done'] }}/{{ $dv2ChipProgress['total'] }}</span>
             </span>
-            @if($dv2ChipProgress['next'])
-                <small class="dv2-chip-next">Next: {{ $dv2ChipProgress['next']['label'] }}</small>
+            @if($dv2ChipNextLabel !== null)
+                <small class="dv2-chip-next">Next: {{ $dv2ChipNextLabel }}</small>
             @endif
             <span class="dv2-chip-bar" aria-hidden="true"><i style="width:{{ $dv2ChipProgress['percent'] }}%"></i></span>
         </a>

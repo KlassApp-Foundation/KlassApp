@@ -52,6 +52,7 @@ return [
         'reports' => 'file-text',
         'messages' => 'message-square',
         'settings' => 'settings',
+        'help' => 'life-buoy',
         'library' => 'library',
         'transport' => 'bus',
         'health' => 'heart-pulse',
@@ -88,72 +89,77 @@ return [
      */
     'group_icons' => [
         'academics' => 'graduation-cap',
-        'operations' => 'building-2',
-        'finance' => 'wallet',
-        'communication' => 'messages-square',
-        'system' => 'sliders-horizontal',
+        'people' => 'users',
+        'money' => 'wallet',
+        'messages' => 'messages-square',
+        'school' => 'school',
     ],
 
     'roles' => [
 
         // ───────────────────────────── SchoolAdmin ─────────────────────────────
+        // Groups per the confirmed 2026-10-08 list (handoff §Sidebar groups):
+        // Dashboard; People; Academics; Money; Messages; School. Items the list
+        // does not name stay reachable inside the closest group (Timetable,
+        // Grading, Library, Admissions, Health records, Transport, Approvals,
+        // Data Exports, Unmatched Payments, Calendar) — every pre-PR1 item is
+        // still in this sidebar.
         'admin' => [
             'prefix' => 'admin',
             'layout' => 'grouped',
             'item_class' => 'py-3 px-3 dashboard-menu-item',
             'active_class' => 'active dashboard-active',
-            // Bottom-of-sidebar link (was the tail of layouts/admin/menu.blade.php).
-            'footer' => ['label' => 'Help & Docs', 'href' => 'https://klassapp.xyz/help', 'external' => true],
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'admin/dashboard', 'active' => ['dashboard']],
             ],
             'groups' => [
                 [
-                    'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
+                    'key' => 'people', 'label' => 'People', 'icon' => 'people',
                     'items' => [
                         // Soft-launch 1d: only student-area segments — do not steal
                         // Teachers/Parents/Staff active state via shared aliases.
                         ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'alumni', 'blocked_students']],
-                        ['label' => 'Teachers', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
+                        ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
                         ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
-                        ['label' => 'Classes & Streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink'], 'condition' => 'school_admin'],
+                        ['label' => 'Admissions', 'icon' => 'admissions', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
+                    ],
+                ],
+                [
+                    'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
+                    'items' => [
+                        ['label' => 'Classes and streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink'], 'condition' => 'school_admin'],
                         ['label' => 'Subjects', 'icon' => 'subjects', 'url' => 'admin/subjects', 'active' => ['subjects', 'subject']],
                         ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'admin/timetable', 'active' => ['timetable', 'timetables']],
                         ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'admin/attendance', 'active' => ['attendance']],
-                        ['label' => 'Exams & Marks', 'icon' => 'exams', 'url' => 'admin/exams', 'active' => ['exams', 'exam', 'marks', 'mark']],
+                        ['label' => 'Exams and marks', 'icon' => 'exams', 'url' => 'admin/exams', 'active' => ['exams', 'exam', 'marks', 'mark']],
                         ['label' => 'Grading', 'icon' => 'grading', 'url' => 'admin/grades', 'active' => ['grades', 'grade']],
-                        ['label' => 'Report Cards', 'icon' => 'reports', 'url' => 'admin/reports/cards', 'active' => ['reports']],
-                    ],
-                ],
-                [
-                    'key' => 'operations', 'label' => 'Operations', 'icon' => 'operations',
-                    'items' => [
+                        ['label' => 'Report cards', 'icon' => 'reports', 'url' => 'admin/reports/cards', 'active' => ['reports']],
                         ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
-                        ['label' => 'Admissions', 'icon' => 'admissions', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
-                        ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
-                        ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                     ],
                 ],
                 [
-                    'key' => 'finance', 'label' => 'Finance', 'icon' => 'finance',
+                    'key' => 'money', 'label' => 'Money', 'icon' => 'money',
                     'items' => [
-                        ['label' => 'Fees & Payments', 'icon' => 'fees', 'url' => 'admin/fees/payments', 'active' => ['fees', 'fee', 'payments', 'payment', 'invoices']],
+                        ['label' => 'Fees', 'icon' => 'fees', 'url' => 'admin/fees/payments', 'active' => ['fees', 'fee', 'payments', 'payment', 'invoices']],
                         ['label' => 'Unmatched Payments', 'icon' => 'warning', 'url' => 'admin/fees/payments/unmatched', 'active' => ['unmatched'], 'class' => 'pl-6 py-2 px-3 dashboard-menu-item', 'small' => true],
                     ],
                 ],
                 [
-                    'key' => 'communication', 'label' => 'Communication', 'icon' => 'communication',
+                    'key' => 'messages', 'label' => 'Messages', 'icon' => 'messages',
                     'items' => [
-                        ['label' => 'Messaging', 'icon' => 'messages', 'route' => 'admin.messages', 'active' => ['messages', 'messaging', 'notifications', 'sentmessages']],
+                        ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'active' => ['whatsapp']],
                         ['label' => 'Calendar', 'icon' => 'calendar', 'url' => 'admin/calendar', 'active' => ['calendar', 'events']],
                     ],
                 ],
                 [
-                    'key' => 'system', 'label' => 'System', 'icon' => 'system',
+                    'key' => 'school', 'label' => 'School', 'icon' => 'school',
                     'items' => [
+                        ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
+                        ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'active' => ['approvals', 'approval']],
                         ['label' => 'Data Exports', 'icon' => 'exports', 'url' => 'admin/reports', 'active' => ['reports', 'report']],
                         ['label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'active' => ['settings'], 'condition' => 'school_admin'],
+                        ['label' => 'Help', 'icon' => 'help', 'external' => 'https://klassapp.xyz/help'],
                     ],
                 ],
             ],

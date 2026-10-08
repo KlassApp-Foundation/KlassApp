@@ -40,8 +40,8 @@ class StudentsNavAliasesContractTest extends TestCase
         return [
             'students list' => ['admin/students', 'Students'],
             'student add' => ['admin/student/add', 'Students'],
-            'teachers list' => ['admin/teachers', 'Teachers'],
-            'teacher add' => ['admin/teacher/add', 'Teachers'],
+            'teachers list' => ['admin/teachers', 'Teachers and staff'],
+            'teacher add' => ['admin/teacher/add', 'Teachers and staff'],
             'parents list' => ['admin/parents', 'Parents'],
             'parent add' => ['admin/parent/add', 'Parents'],
         ];
@@ -71,12 +71,12 @@ class StudentsNavAliasesContractTest extends TestCase
 
         $byLabel = [];
         foreach ($matches as $match) {
-            if (preg_match('/>(Students|Teachers|Parents)</', $match[0], $labelMatch)) {
+            if (preg_match('/>(Students|Teachers and staff|Parents)</', $match[0], $labelMatch)) {
                 $byLabel[$labelMatch[1]] = $match[1];
             }
         }
 
-        foreach (['Students', 'Teachers', 'Parents'] as $label) {
+        foreach (['Students', 'Teachers and staff', 'Parents'] as $label) {
             $this->assertArrayHasKey($label, $byLabel, "Sidebar item [{$label}] missing on {$path}");
             $classes = $byLabel[$label];
             $isActive = str_contains($classes, 'dashboard-active')

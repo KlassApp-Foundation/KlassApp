@@ -5,11 +5,6 @@
             "layout": "grouped",
             "item_class": "py-3 px-3 dashboard-menu-item",
             "active_class": "active dashboard-active",
-            "footer": {
-                "label": "Help & Docs",
-                "href": "https://klassapp.xyz/help",
-                "external": true
-            },
             "items": [
                 {
                     "label": "Dashboard",
@@ -21,8 +16,8 @@
             ],
             "groups": [
                 {
-                    "key": "academics",
-                    "label": "Academics",
+                    "key": "people",
+                    "label": "People",
                     "items": [
                         {
                             "label": "Students",
@@ -35,7 +30,7 @@
                             ]
                         },
                         {
-                            "label": "Teachers",
+                            "label": "Teachers and staff",
                             "url": "admin/teachers",
                             "active": [
                                 "teachers",
@@ -53,7 +48,22 @@
                             ]
                         },
                         {
-                            "label": "Classes & Streams",
+                            "label": "Admissions",
+                            "url": "admin/admissions",
+                            "active": [
+                                "admissions",
+                                "admission",
+                                "admissionlist"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "academics",
+                    "label": "Academics",
+                    "items": [
+                        {
+                            "label": "Classes and streams",
                             "url": "admin/classes",
                             "active": [
                                 "classes",
@@ -87,7 +97,7 @@
                             ]
                         },
                         {
-                            "label": "Exams & Marks",
+                            "label": "Exams and marks",
                             "url": "admin/exams",
                             "active": [
                                 "exams",
@@ -105,18 +115,12 @@
                             ]
                         },
                         {
-                            "label": "Report Cards",
+                            "label": "Report cards",
                             "url": "admin/reports/cards",
                             "active": [
                                 "reports"
                             ]
-                        }
-                    ]
-                },
-                {
-                    "key": "operations",
-                    "label": "Operations",
-                    "items": [
+                        },
                         {
                             "label": "Library",
                             "route": "admin.library.books",
@@ -124,39 +128,15 @@
                                 "library",
                                 "books"
                             ]
-                        },
-                        {
-                            "label": "Admissions",
-                            "url": "admin/admissions",
-                            "active": [
-                                "admissions",
-                                "admission",
-                                "admissionlist"
-                            ]
-                        },
-                        {
-                            "label": "Health records",
-                            "url": "admin/health",
-                            "active": [
-                                "health",
-                                "medical"
-                            ]
-                        },
-                        {
-                            "label": "Transport",
-                            "url": "admin/transport",
-                            "active": [
-                                "transport"
-                            ]
                         }
                     ]
                 },
                 {
-                    "key": "finance",
-                    "label": "Finance",
+                    "key": "money",
+                    "label": "Money",
                     "items": [
                         {
-                            "label": "Fees & Payments",
+                            "label": "Fees",
                             "url": "admin/fees/payments",
                             "active": [
                                 "fees",
@@ -178,17 +158,14 @@
                     ]
                 },
                 {
-                    "key": "communication",
-                    "label": "Communication",
+                    "key": "messages",
+                    "label": "Messages",
                     "items": [
                         {
-                            "label": "Messaging",
-                            "route": "admin.messages",
+                            "label": "WhatsApp",
+                            "url": "admin/whatsapp/dashboard",
                             "active": [
-                                "messages",
-                                "messaging",
-                                "notifications",
-                                "sentmessages"
+                                "whatsapp"
                             ]
                         },
                         {
@@ -202,9 +179,24 @@
                     ]
                 },
                 {
-                    "key": "system",
-                    "label": "System",
+                    "key": "school",
+                    "label": "School",
                     "items": [
+                        {
+                            "label": "Health records",
+                            "url": "admin/health",
+                            "active": [
+                                "health",
+                                "medical"
+                            ]
+                        },
+                        {
+                            "label": "Transport",
+                            "url": "admin/transport",
+                            "active": [
+                                "transport"
+                            ]
+                        },
                         {
                             "label": "Approvals",
                             "url": "admin/approvals",
@@ -228,6 +220,10 @@
                                 "settings"
                             ],
                             "condition": "school_admin"
+                        },
+                        {
+                            "label": "Help",
+                            "external": "https://klassapp.xyz/help"
                         }
                     ]
                 }

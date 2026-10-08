@@ -142,6 +142,12 @@ class FeePositionService
 
         return [
             'context' => $termLabel ?: 'All classes',
+            // Raw numbers for the dashboard first screen (PR1); the labels below
+            // stay for the payments surfaces.
+            'collected_raw' => $collected,
+            'expected_raw' => $expected,
+            'outstanding_raw' => $outstanding,
+            'rate' => $rate,
             'collected_label' => 'UGX '.$this->compactMoney($collected),
             'collected_spark' => $collectedSpark,
             'outstanding_label' => 'UGX '.$this->compactMoney($outstanding),

@@ -39,6 +39,9 @@
     }
 
     $navHref = function (array $item) use ($parentChildren): string {
+        if (! empty($item['external'])) {
+            return $item['external'];
+        }
         if (($item['resolver'] ?? null) === 'parent_child') {
             if (count($parentChildren) === 1) {
                 return route('parent.children.'.($item['child_path'] ?? 'fees'), $parentChildren[0]['student_id']);
