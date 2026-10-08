@@ -345,15 +345,17 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     const marksSubmit = tp2.locator('form').filter({ has: tp2.locator('input[name^="marks["]') }).first().locator('button[type="submit"]').first();
     await quietToshi(tp2);
     await marksSubmit.scrollIntoViewIfNeeded().catch(() => {});
-    const marksNav = tp2.waitForLoadState('domcontentloaded').catch(() => {});
-    try {
-        await marksSubmit.click({ timeout: 15000 });
-    } catch {
-        await marksSubmit.click({ force: true, timeout: 15000 }).catch(() => {});
+    let marksSaved = [];
+    for (let attempt = 0; attempt < 2 && marksSaved.length === 0; attempt++) {
+        // DOM click: bypasses overlay hit-testing (the Toshi dock can sit over the
+        // footer button on mobile and re-open after navigation).
+        await marksSubmit.evaluate((el) => el.click()).catch(() => {});
+        for (let i = 0; i < 10 && marksSaved.length === 0; i++) {
+            await tp2.waitForTimeout(1500);
+            marksSaved = ((await tp2.textContent('body')) || '').match(/success|saved|updated/gi) || [];
+        }
+        if (marksSaved.length === 0) await quietToshi(tp2);
     }
-    await marksNav;
-    await tp2.waitForTimeout(2500);
-    const marksSaved = ((await tp2.textContent('body')) || '').match(/success|saved|updated/gi) || [];
     expect(marksSaved.length, 'form marks must save').toBeGreaterThan(0);
     await tp2.screenshot({ path: path.join(MVP_DIR, `step5-marks-saved-${width}.png`) }).catch(() => {});
 
