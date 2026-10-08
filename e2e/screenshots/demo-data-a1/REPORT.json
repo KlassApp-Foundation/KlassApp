@@ -1,0 +1,15 @@
+{
+  "junior-1280": {
+    "setupBannerVisible": false,
+    "studentProfileUrl": "https://test.klassapp.xyz/admin/student/edit/Aaron%20Mbabazi",
+    "imageFailures": []
+  },
+  "junior-375": {
+    "setupBannerVisible": false,
+    "studentProfileUrl": "https://test.klassapp.xyz/admin/student/edit/Aaron%20Mbabazi",
+    "imageFailures": []
+  },
+  "senior-1280": {
+    "setupBannerVisible": false
+  }
+}
