@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use App\Enums\ToshiMode;
 use App\Services\Toshi\ToshiUiSwitch;
 use App\Observers\TeacherProfileObserver;
 use App\Observers\AcademicYearObserver;
@@ -169,6 +170,12 @@ class AppServiceProvider extends ServiceProvider {
 
         Blade::if('toshiAssistant', function () {
             return app(ToshiUiSwitch::class)->assistantEnabled();
+        });
+
+        // Toshi promo surfaces (the floating pill, the dashboard demo slide)
+        // show only when the school is actually in assistant mode.
+        Blade::if('toshiAssistantMode', function () {
+            return app(ToshiUiSwitch::class)->mode() === ToshiMode::Assistant;
         });
 
         // Add get() helper to the AI Tool Request class for convenience

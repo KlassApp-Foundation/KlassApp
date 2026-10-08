@@ -25,6 +25,11 @@
      x-on:toshi-maximize.window="if ($wire.mode !== 'preview') $wire.maximize()"
      data-toshi-root
      class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}{{ $mode === 'preview' ? ' toshi-root--preview' : '' }}">
+    {{-- The floating "Toshi Agent · Talk" pill is a promo surface: it shows only
+         when the school is in assistant mode. Everywhere else the dock stays
+         reachable through the edge toggle, and the panel itself switches to its
+         preview / onboarding treatment. --}}
+    @toshiAssistantMode
     <div id="toshi-pill"
          wire:click="show"
          onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);"
@@ -38,6 +43,7 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
+    @endtoshiAssistantMode
 
     <div id="toshi-resize-handle"
          data-toshi-resize-handle
