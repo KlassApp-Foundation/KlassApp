@@ -101,8 +101,8 @@ class DashboardV2Test extends TestCase
         );
 
         $this->render($admin)->assertOk()
-            ->assertSee("{$progress['done']} of {$progress['total']} steps done.", false)
-            ->assertSee('data-testid="dashboard-v2-banner"', false);
+            ->assertSee("Setup {$progress['done']} of {$progress['total']} done", false)
+            ->assertSee('data-testid="dashboard-v2-setup-bar"', false);
 
         // Advance a few steps and confirm the number follows the service.
         $school->forceFill([
@@ -113,7 +113,7 @@ class DashboardV2Test extends TestCase
 
         // Fresh user instance so the school relation is not stale from the first render.
         $this->render(User::findOrFail($admin->id))->assertOk()
-            ->assertSee("{$progress2['done']} of {$progress2['total']} steps done.", false);
+            ->assertSee("Setup {$progress2['done']} of {$progress2['total']} done", false);
     }
 
     public function test_greeting_first_name_is_title_cased(): void
@@ -121,8 +121,12 @@ class DashboardV2Test extends TestCase
         $school = $this->makeSchool(['name' => 'Greeting School']);
         $admin = $this->makeAdmin($school, 'MUCUNGUZI');
 
-        $this->render($admin)->assertOk()
-            ->assertSee('Welcome back, Mucunguzi', false);
+        $response = $this->render($admin)->assertOk();
+        // PR1: "Good morning/afternoon/evening, {FirstName}" in normal case.
+        $this->assertMatchesRegularExpression(
+            '/data-testid="dashboard-v2-greeting">Good (morning|afternoon|evening), Mucunguzi</',
+            $response->getContent()
+        );
     }
 
     public function test_dismissal_is_saved_per_user_and_chip_carries_the_same_count(): void
@@ -131,9 +135,9 @@ class DashboardV2Test extends TestCase
         $adminA = $this->makeAdmin($school, 'Alpha');
         $adminB = $this->makeAdmin($school, 'Bravo');
 
-        // Before dismissal: banner, no chip.
+        // Before dismissal: setup bar, no chip.
         $this->render($adminA)->assertOk()
-            ->assertSee('data-testid="dashboard-v2-banner"', false)
+            ->assertSee('data-testid="dashboard-v2-setup-bar"', false)
             ->assertDontSee('data-testid="dashboard-v2-chip"', false);
 
         // Dismiss (GET route as the banner link does).
@@ -142,16 +146,16 @@ class DashboardV2Test extends TestCase
 
         $progress = OnboardingStepsService::progress($school, $adminA->id);
 
-        // After dismissal: chip shows the same count, banner is gone.
+        // After dismissal: chip shows the same count, the bar is gone.
         $this->render($adminA)->assertOk()
-            ->assertDontSee('data-testid="dashboard-v2-banner"', false)
+            ->assertDontSee('data-testid="dashboard-v2-setup-bar"', false)
             ->assertSee('data-testid="dashboard-v2-chip"', false)
             ->assertSee('Finish setup, '.$progress['done'].' of '.$progress['total'].' steps done', false)
             ->assertSee($progress['done'].'/'.$progress['total'], false);
 
-        // The other admin of the same school still sees the banner.
+        // The other admin of the same school still sees the setup bar.
         $this->render($adminB)->assertOk()
-            ->assertSee('data-testid="dashboard-v2-banner"', false)
+            ->assertSee('data-testid="dashboard-v2-setup-bar"', false)
             ->assertDontSee('data-testid="dashboard-v2-chip"', false);
     }
 
@@ -168,7 +172,7 @@ class DashboardV2Test extends TestCase
 
         $this->render($admin)->assertOk()
             ->assertDontSee('data-testid="dashboard-v2-chip"', false)
-            ->assertDontSee('data-testid="dashboard-v2-banner"', false);
+            ->assertDontSee('data-testid="dashboard-v2-setup-bar"', false);
     }
 
     public function test_quick_action_names_missing_prerequisite_and_links_to_the_step(): void
@@ -178,7 +182,7 @@ class DashboardV2Test extends TestCase
 
         // Nothing set up: classes are missing, so 'Add students' is gated.
         $html = $this->render($admin)->assertOk()->getContent();
-        $this->assertStringContainsString('dv2-tile-help--missing', $html);
+        $this->assertStringContainsString('class="help missing"', $html);
         $this->assertStringContainsString('Structure &amp; Class Teachers', $html);
         $this->assertStringContainsString('in setup first.', $html);
         $this->assertStringContainsString('/admin/standard/create', $html);
@@ -191,8 +195,9 @@ class DashboardV2Test extends TestCase
 
         $this->render($admin)->assertOk()
             ->assertSee('data-testid="dashboard-v2-empty-students"', false)
-            ->assertSee('No students yet. Add them to see this snapshot.', false)
-            ->assertSee('/admin/student/add', false);
+            ->assertSee('Add your students to get started', false)
+            ->assertSee('/admin/student/add', false)
+            ->assertSee('/admin/student/import', false);
     }
 
     public function test_toshi_states_onboarding_preview_assistant(): void
@@ -229,6 +234,59 @@ class DashboardV2Test extends TestCase
         $html = $this->render($admin)->assertOk()->getContent();
         $this->assertStringContainsString('ka-icon', $html, 'sidebar lucide icons (#980) must stay');
         $this->assertStringContainsString('data-account-card', $html, 'account card (Part A) must stay');
+    }
+
+    public function test_setup_bar_uses_neutral_step_names_from_the_one_source(): void
+    {
+        $school = $this->makeSchool([
+            'name' => 'Neutral Names School', 'student_size' => 'Up to 500',
+            'registration_country' => 'Uganda', 'curriculum' => 'UNEB', 'school_category' => 'primary_nursery',
+        ]);
+        $admin = $this->makeAdmin($school);
+
+        // Next incomplete step is emis -> neutral name, never the country jargon.
+        $this->render($admin)->assertOk()
+            ->assertSee('Next: Registration code', false)
+            ->assertDontSee('EMIS / Ministry code', false);
+
+        $school->forceFill(['ministry_code' => 'EMIS-9'])->save();
+
+        // Then uneb_center -> neutral "Exam centre number", not the UNEB jargon.
+        $this->render(User::findOrFail($admin->id))->assertOk()
+            ->assertSee('Next: Exam centre number', false)
+            ->assertDontSee('UNEB centre number', false);
+    }
+
+    public function test_first_screen_has_no_carousel_connected_tools_or_toshi_promo(): void
+    {
+        $school = $this->makeSchool(['name' => 'No Promo School']);
+        $admin = $this->makeAdmin($school);
+
+        $this->render($admin)->assertOk()
+            ->assertDontSee('Connected tools', false)
+            ->assertDontSee('es-demo-scene-toshi', false)
+            ->assertDontSee('data-testid="toshi-pill"', false);
+    }
+
+    public function test_kpis_match_the_database_for_a_school_with_data(): void
+    {
+        $school = $this->makeSchool(['name' => 'KPI School']);
+        $admin = $this->makeAdmin($school);
+
+        foreach ([['female', 'Amina'], ['male', 'Brian'], [null, 'Chris']] as $i => [$gender, $first]) {
+            $student = User::factory()->create([
+                'school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active',
+            ]);
+            Userprofile::create([
+                'user_id' => $student->id, 'school_id' => $school->id, 'usergroup_id' => 6,
+                'firstname' => $first, 'lastname' => 'Pupil', 'gender' => $gender,
+            ]);
+        }
+
+        $this->render($admin)->assertOk()
+            ->assertSee('data-testid="dashboard-v2-kpi-students">3<', false)
+            ->assertSee('Girls', false)
+            ->assertSee('Not specified', false);
     }
 
     private function completeAllSteps(School $school, User $admin): void
