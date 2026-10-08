@@ -1,0 +1,72 @@
+{
+  "admin1280": {
+    "pill": false,
+    "toggle": true,
+    "collapsed": true,
+    "demoSceneToshi": false,
+    "comingSoonCard": true,
+    "panelOpen": {
+      "collapsed": false,
+      "comingSoonVisible": true,
+      "pillStill": false
+    }
+  },
+  "admin375": {
+    "pill": false,
+    "toggle": true,
+    "collapsed": true,
+    "hScroll": false
+  },
+  "teacher-dashboard375": {
+    "vh": 720,
+    "vw": 375,
+    "bottomActions": 0,
+    "overlapped": [],
+    "dockRect": {
+      "x": 351,
+      "y": 696,
+      "width": 0,
+      "height": 0,
+      "top": 696,
+      "right": 351,
+      "bottom": 696,
+      "left": 351
+    },
+    "toggleRect": {
+      "x": 0,
+      "y": 703.40625,
+      "width": 0,
+      "height": 16.09375,
+      "top": 703.40625,
+      "right": 0,
+      "bottom": 719.5,
+      "left": 0
+    }
+  },
+  "teacher-attendance375": {
+    "vh": 720,
+    "vw": 375,
+    "bottomActions": 0,
+    "overlapped": [],
+    "dockRect": {
+      "x": 351,
+      "y": 696,
+      "width": 0,
+      "height": 0,
+      "top": 696,
+      "right": 351,
+      "bottom": 696,
+      "left": 351
+    },
+    "toggleRect": {
+      "x": 0,
+      "y": 702.5,
+      "width": 0,
+      "height": 16.09375,
+      "top": 702.5,
+      "right": 0,
+      "bottom": 718.59375,
+      "left": 0
+    }
+  }
+}
