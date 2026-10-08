@@ -305,7 +305,7 @@ is a product decision, so nothing was invented here.
 
 **Blog and Events (2026-10-02).** The VitePress docs site gains `/docs/blog/` and `/docs/events/`, on the same theme as Help. Shared pieces in `styles/docs.css`: `.kd-preview` (the "Draft · Preview release" label, set per page with `status: preview`), post feature card, byline, call-to-action card, event list with date tile, and an event time card. Event times are stored in UTC and shown in the viewer's time zone with the offset, plus the host time. Concept: `concepts/docs/blog/index.html`.
 
-**Admin MVP pack (2026-10-07, demo 17 Oct).** Concept `concepts/admin-mvp/index.html`; spec `guidelines/handoff-2026-10-07-admin-mvp.md`.
+**Admin MVP pack (combined 2026-10-08, demo 17 Oct).** Concept `concepts/admin-mvp/index.html` (+ `batch2.html`); spec `guidelines/handoff-2026-10-08-admin-mvp-combined.md` (mirrored at `klassapp-handoff-2026-10-08-admin-mvp/HANDOFF.md`).
 - **Pages:** dashboard with data (5 KPI tiles, 4 charts, recent activity, a slim setup bar only while setup is incomplete, Toshi as one quiet "coming soon" line); student, teacher and parent profiles; classes index and class page.
 - **People list:** one list pattern for students, teachers and parents (one-line search plus filter chips; the whole row opens the profile; a row menu without Delete; a bulk bar only on selection; card rows on mobile; empty, no-match and loading states).
 - **Account menu:** a compact popover anchored to the account card; the sidebar never moves.
