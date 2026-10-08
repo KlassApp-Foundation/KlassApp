@@ -237,10 +237,14 @@ class DashboardV2DataService
                 'direction' => $delta === null ? null : ($delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat')),
             ],
             'fees' => [
+                // The tile shows the SAME basis as the rate: amounts received to
+                // date against the term's expected total (expected − outstanding).
+                // Using the term-window "collected" here made "4.8M of 54M" appear
+                // next to a 56% rate.
                 'percent' => $hasStructure ? (int) $feePosition['rate'] : null,
-                'collected' => $feePosition['collected_raw'],
+                'collected' => max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw']),
                 'expected' => $feePosition['expected_raw'],
-                'collected_label' => $currency.' '.$this->compactMoney($feePosition['collected_raw']),
+                'collected_label' => $currency.' '.$this->compactMoney(max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw'])),
                 'expected_label' => $currency.' '.$this->compactMoney($feePosition['expected_raw']),
                 'state' => $hasStructure ? 'ok' : 'no_structure',
             ],
