@@ -47,7 +47,9 @@ for (const [typeId, tag] of JOURNEYS) {
         // 4) Manual wizard via the dashboard banner.
         // On mobile, a maximized Toshi overlay used to intercept the banner click
         // forever (actionability). Prefer a short click timeout, then navigate.
-        const banner = page.locator('[data-testid="setup-banner-manual"]');
+        // PR1: with DASHBOARD_V2_ENABLED the slim setup bar replaces the banner;
+        // its Continue setup button leads to the same wizard.
+        const banner = page.locator('[data-testid="setup-banner-manual"], [data-testid="dashboard-v2-setup-continue"]');
         let openedViaBanner = false;
         if (await banner.isVisible({ timeout: 15_000 }).catch(() => false)) {
             try {

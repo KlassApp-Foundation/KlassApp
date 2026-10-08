@@ -37,7 +37,8 @@ async function ensurePanel(page) {
 
     if (!(await page.locator(COMPOSER).first().isVisible().catch(() => false))) {
         console.log('[toshi] ensurePanel: trying setup banner');
-        const banner = page.locator('[data-testid="setup-banner-toshi"]');
+        // PR1: the v2 setup bar carries the same action when the flag is on.
+        const banner = page.locator('[data-testid="setup-banner-toshi"], [data-testid="dashboard-v2-toshi-setup"]');
         if (await banner.isVisible().catch(() => false)) {
             await banner.click({ timeout: 8000 }).catch(() => {});
             await page.waitForTimeout(1000);
