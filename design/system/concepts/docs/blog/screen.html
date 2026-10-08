@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp Docs · Blog and Events</title>
+<link rel="stylesheet" href="../../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0}
+.kd-body.post{grid-template-columns:minmax(0,1fr) var(--kd-toc-w)}
+@media (max-width:1100px){.kd-body.post{grid-template-columns:minmax(0,1fr)}}
+.subnav{display:none}
+@media (max-width:760px){.subnav{display:flex;gap:4px;overflow-x:auto;padding:0 8px;border-top:1px solid var(--d-border);background:var(--d-white)}.subnav a{min-height:44px;display:inline-flex;align-items:center;padding:0 12px;font-weight:600;font-size:14.5px;color:var(--d-text);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent}.subnav a[aria-current="page"]{border-bottom-color:var(--d-accent);color:var(--d-dark)}}
+.kd-header-links a[aria-current="page"]{background:#DCFCE7;color:#14532D}
+.post-hero{margin:8px 0 24px;border:1px solid var(--d-border);border-radius:16px;overflow:hidden}.post-hero .kd-cover{min-height:260px}
+@media (max-width:760px){.post-hero .kd-cover{min-height:160px}}
+.ev-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+@media (max-width:900px){.ev-grid{grid-template-columns:1fr;gap:20px}.ev-grid aside{order:-1}}
+.agenda{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.agenda li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--d-border)}
+.agenda li span{font-weight:700;color:var(--d-dark);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body class="kd">
+<div class="kd-shell">
+<header class="kd-header"><div class="kd-header-in">
+<button class="kd-menu-btn" type="button" aria-expanded="false">Menu</button>
+<a class="kd-brand" href="#"><img src="../../../assets/brand/klassapp-stacked-light.svg" alt="KlassApp"><span>Docs</span></a>
+<nav class="kd-switch" aria-label="Docs section"><a href="#">Help<span>&nbsp;for schools</span></a><a href="#">Community<span>&nbsp;for contributors</span></a></nav>
+<button class="kd-search-btn" type="button" aria-label="Search the docs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>Search</span><kbd class="kd-kbd">Ctrl K</kbd></button>
+<nav class="kd-header-links" aria-label="Site"><a href="#" id="hl-blog">Blog</a><a href="#" id="hl-events">Events</a><a href="https://github.com/KlassApp-Foundation/KlassApp">GitHub</a></nav>
+</div>
+<nav class="subnav" aria-label="Site"><a href="#">Help</a><a href="#">Community</a><a href="#" id="sn-blog">Blog</a><a href="#" id="sn-events">Events</a></nav>
+</header>
+<div id="view"></div>
+<footer class="kd-footer"><div class="kd-footer-in"><img src="../../../assets/brand/klassapp-stacked-light.svg" alt="KlassApp"><span>The source is public on GitHub; supported self-hosting opens after an independent security review.</span><nav aria-label="Footer"><a href="#">Help</a><a href="#">Community</a><a href="#">Blog</a><a href="#">Events</a><a href="#">Privacy</a></nav></div></footer>
+</div>
+<script>
+const Q=new URLSearchParams(location.search),V=Q.get('view')||'blog',TZ=Q.get('tz')||Intl.DateTimeFormat().resolvedOptions().timeZone;
+const K='../../../assets/brand/klassapp-icon.svg';
+const PREV='<div class="kd-preview" role="note">Draft · Preview release (0.x) — first stable release planned for Q1 2027</div>';
+const POST={title:'KlassApp opens to founding schools',date:'2026-10-02',read:4,author:'The KlassApp team',ini:'KA',tag:'Announcement',
+ lede:'An open education protocol for humans and agents. Today, we start working with our first founding schools.'};
+const EV=[
+ {id:'setup',title:'Set up your school in one afternoon',type:'Webinar',start:'2026-10-16T12:00:00Z',mins:60,host:'Africa/Kampala',sum:'A live walk-through of setup on a demo school: classes, streams, teachers and fees.'},
+ {id:'qa',title:'Founding schools: open Q&A',type:'Live Q&A',start:'2026-10-23T15:00:00Z',mins:45,host:'Africa/Kampala',sum:'Ask the team anything about joining as a founding school.'},
+ {id:'contrib',title:'Contributor call: connectors and MCP',type:'Community call',start:'2026-10-30T14:00:00Z',mins:60,host:'Africa/Kampala',sum:'How Toshi connects to the tools schools use, and how to build a connector.'}];
+const fmt=(d,o,tz=TZ)=>new Intl.DateTimeFormat('en-GB',{timeZone:tz,...o}).format(d);
+function off(d,tz=TZ){const p=new Intl.DateTimeFormat('en-GB',{timeZone:tz,timeZoneName:'longOffset'}).formatToParts(d).find(x=>x.type==='timeZoneName');return p?p.value.replace('GMT','UTC')||'UTC':'UTC'}
+function when(e,tz=TZ){const s=new Date(e.start),t=new Date(s.getTime()+e.mins*60000);return {day:fmt(s,{weekday:'long',day:'numeric',month:'long',year:'numeric'},tz),wd:fmt(s,{weekday:'short'},tz),mon:fmt(s,{month:'short'},tz),dd:fmt(s,{day:'numeric'},tz),range:fmt(s,{hour:'2-digit',minute:'2-digit',hour12:false},tz)+'–'+fmt(t,{hour:'2-digit',minute:'2-digit',hour12:false},tz),off:off(s,tz)}}
+const tzLine=(tz=TZ)=>`<span class="tz">Your time zone: ${tz.replace(/_/g,' ')} (${off(new Date('2026-10-16T12:00:00Z'),tz)})</span>`;
+function cover(cap){return `<div class="kd-cover"><img src="${K}" alt=""><small>${cap}</small></div>`}
+function blog(){return `<main class="kd-wide" id="main"><div class="kd-pagehead">${PREV}<h1>Blog</h1><p class="kd-lede" style="margin:0">News from the KlassApp team: product releases, the protocol, and how schools use it.</p></div>
+<ul class="kd-chips" aria-label="Filter posts"><li><a href="#" aria-current="page">All</a></li><li><a href="#">Announcements</a></li><li><a href="#">Product</a></li><li><a href="#">Protocol</a></li><li><a href="#">Community</a></li></ul>
+<a class="kd-feature" href="?view=post"><span class="kd-cover" style="min-height:320px">${cover('Cover image slot · 1600 × 900').replace('<div class="kd-cover">','').replace(/<\/div>$/,'')}</span><span class="kd-feature-in"><span class="kd-kicker">${POST.tag}</span><h2>${POST.title}</h2><p>${POST.lede}</p><span class="kd-byline"><span class="kd-av" aria-hidden="true">${POST.ini}</span><b>${POST.author}</b><span>${fmt(new Date(POST.date+'T09:00:00Z'),{day:'numeric',month:'long',year:'numeric'})}</span><span>· ${POST.read} min read</span></span></span></a>
+<p style="margin:24px 0 0;color:var(--kd-text-2)">This is the first post. New posts appear here, newest first, 10 to a page.</p></main>`}
+function post(){return `<div class="kd-body post"><main class="kd-main" id="main"><article class="kd-article">
+<ol class="kd-crumbs" aria-label="Breadcrumb"><li><a href="#">Docs</a></li><li><a href="?view=blog">Blog</a></li><li aria-current="page">${POST.tag}</li></ol>
+<div style="margin:14px 0 0">${PREV}</div>
+<h1>${POST.title}</h1>
+<div class="kd-byline" style="margin-bottom:16px"><span class="kd-av" aria-hidden="true">${POST.ini}</span><b>${POST.author}</b><span>${fmt(new Date(POST.date+'T09:00:00Z'),{day:'numeric',month:'long',year:'numeric'})}</span><span>· ${POST.read} min read</span></div>
+<div class="post-hero">${cover('Cover image slot · 1600 × 900, alt text required')}</div>
+<p class="kd-lede">${POST.lede}</p>
+<h2 id="what">What KlassApp is</h2>
+<p>KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.</p>
+<p>Under the chat sits a full school system: students, classes and streams, attendance, marks, report cards and fees. It works for schools from nursery to secondary, with each school's own classes, terms and currency.</p>
+<h2 id="founding">What founding schools get</h2>
+<ul><li>[Founding offer: what's included, as agreed]</li><li>Setup help from the KlassApp team, one step at a time.</li><li>A direct line to the people building KlassApp, and a say in what comes next.</li></ul>
+<div class="kd-callout kd-callout--note" role="note"><div class="kd-callout-title">Note</div><p>[Founding offer terms: price, how long it lasts, what happens after. Fill in before publishing.]</p></div>
+<h2 id="who">Who can join</h2>
+<p>Any school, from nursery to secondary, wherever it is. You need a school admin who can set things up, and parents who use WhatsApp.</p>
+<h2 id="how">How to join</h2>
+<ol><li>Create your school account at <a href="#">klassapp.xyz</a>.</li><li>Accept the data processing agreement.</li><li>Follow the setup steps, or book a session with the team.</li></ol>
+<h2 id="open">Open by design</h2>
+<p>The source is public on GitHub; supported self-hosting opens after an independent security review.</p>
+<div class="kd-cta"><div><b>Become a founding school</b><p>Set up takes an afternoon. We'll help.</p></div><a class="kd-btn kd-btn--pri" href="#">Create your school account</a></div>
+<nav class="kd-pager" aria-label="More posts"><a href="?view=blog"><small>Back to</small><b>All posts</b></a><a href="?view=events"><small>Next</small><b>Upcoming events</b></a></nav>
+</article></main>
+<aside class="kd-toc" aria-label="On this page"><h4>On this page</h4><a href="#what" aria-current="true">What KlassApp is</a><a href="#founding">What founding schools get</a><a href="#who">Who can join</a><a href="#how">How to join</a><a href="#open">Open by design</a></aside></div>`}
+function events(){return `<main class="kd-wide" id="main"><div class="kd-pagehead">${PREV}<h1>Events</h1><p class="kd-lede" style="margin:0">Webinars, Q&amp;As and community calls. All online and free.</p><p style="margin:0">${tzLine()}</p></div>
+<ul class="kd-chips" aria-label="Events"><li><a href="#" aria-current="page">Upcoming</a></li><li><a href="?view=past">Past</a></li></ul>
+<ul class="kd-events">${EV.map(e=>{const w=when(e);return `<li class="kd-event"><span class="kd-date" aria-hidden="true"><small>${w.mon}</small><b>${w.dd}</b><span>${w.wd}</span></span><div><span class="kd-kicker">${e.type}</span><h3><a href="?view=event&id=${e.id}">${e.title}</a></h3><div class="kd-when"><span>${w.day}</span><span>${w.range} <span class="tz">(${w.off})</span></span><span>Online</span></div></div><a class="kd-btn" href="?view=event&id=${e.id}">Details and registration</a></li>`}).join('')}</ul></main>`}
+function past(){return `<main class="kd-wide" id="main"><div class="kd-pagehead">${PREV}<h1>Events</h1></div><ul class="kd-chips" aria-label="Events"><li><a href="?view=events">Upcoming</a></li><li><a href="#" aria-current="page">Past</a></li></ul><div class="kd-empty"><b style="font:600 18px Sora,sans-serif;color:var(--d-dark)">No past events yet</b><p>Recordings and notes appear here after each event.</p><a class="kd-btn" href="?view=events">See upcoming events</a></div></main>`}
+function event(){const e=EV.find(x=>x.id===(Q.get('id')||'setup'))||EV[0];const w=when(e),h=when(e,e.host);
+ return `<main class="kd-wide" id="main"><ol class="kd-crumbs" aria-label="Breadcrumb"><li><a href="#">Docs</a></li><li><a href="?view=events">Events</a></li><li aria-current="page">${e.type}</li></ol>
+<div class="ev-grid" style="margin-top:14px"><article class="kd-article" style="max-width:none">${PREV}<span class="kd-kicker" style="display:block;margin-top:14px">${e.type} · Online · Free</span><h1>${e.title}</h1><p class="kd-lede">${e.sum}</p>
+<h2>What we'll cover</h2><ol class="agenda"><li><span>0:00</span><div>Welcome, and what KlassApp is</div></li><li><span>0:10</span><div>Setting up classes, streams and terms on Demo Junior School</div></li><li><span>0:30</span><div>Adding teachers and fees</div></li><li><span>0:45</span><div>Your questions</div></li></ol>
+<h2>Who it's for</h2><p>School admins and head teachers at schools from nursery to secondary. No preparation needed.</p>
+<h2>How to join</h2><p>Register, and we'll email you the meeting link and a calendar invite. The recording is shared afterwards with everyone who registered.</p></article>
+<aside><div class="kd-timecard"><span class="d">${w.day}</span><span class="t">${w.range}</span><span class="tz">Shown in your time zone: ${TZ.replace(/_/g,' ')} (${w.off}).<br>Host time: ${h.range}, ${e.host.replace(/_/g,' ')} (${h.off}).</span><div class="acts"><a class="kd-btn kd-btn--pri" href="#">Register</a><a class="kd-btn" href="#">Add to calendar (.ics)</a></div><span class="tz">${e.mins} minutes · Online (link sent after you register)</span></div></aside></div></main>`}
+const R={blog,post,events,past,event};document.getElementById('view').innerHTML=(R[V]||blog)();
+const cur=V==='blog'||V==='post'?'blog':'events';
+['hl','sn'].forEach(p=>document.getElementById(p+'-'+cur).setAttribute('aria-current','page'));
+document.addEventListener('click',e=>{const a=e.target.closest('a[href="#"]');if(a)e.preventDefault()});
+</script>
+</body>
+</html>

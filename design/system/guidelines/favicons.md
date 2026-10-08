@@ -45,7 +45,7 @@ build is exactly where this broke before.
 {
   "name": "KlassApp",
   "short_name": "KlassApp",
-  "description": "The school platform that operates in the tools educationists already use.",
+  "description": "An open education protocol for humans and agents.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

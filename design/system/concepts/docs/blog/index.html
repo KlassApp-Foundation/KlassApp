@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Docs site · Blog and Events review</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font-family:'DM Sans',system-ui,sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.top{position:sticky;top:0;z-index:5;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top h1{font:700 20px Sora,sans-serif;margin:0 auto 0 0;letter-spacing:-.02em}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px;flex-wrap:wrap}
+.seg button{min-height:38px;padding:0 12px;border:0;border-radius:7px;background:transparent;font:600 13.5px 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:16px 24px 0;max-width:1180px;font-size:14.5px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+.frames{display:flex;gap:28px;padding:16px 24px 40px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr small{font-size:12px;font-weight:700;color:#334155}
+iframe{border:1px solid #CFCAC0;border-radius:6px;background:#FAFAF5;display:block}
+code{font-size:12.5px;background:#fff;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="top"><h1>Blog and Events</h1>
+<div class="ctl">Page<div class="seg" id="c-v"><button data-v="blog" aria-pressed="true">Blog index</button><button data-v="post">Post</button><button data-v="events">Events list</button><button data-v="past">Past (empty)</button><button data-v="event">Event page</button></div></div>
+<div class="ctl">Viewer time zone<div class="seg" id="c-tz"><button data-v="" aria-pressed="true">Yours</button><button data-v="Africa/Kampala">Kampala</button><button data-v="Europe/London">London</button><button data-v="America/New_York">New York</button><button data-v="Asia/Kolkata">Kolkata</button></div></div>
+</div>
+<div class="intro"><p>Same shell and theme as the Help pages (<code>styles/docs.css</code>, the stacked logo). <b>Draft · Preview release</b> is a new shared label (<code>.kd-preview</code>, <code>&lt;PreviewLabel&gt;</code>), set per page with <code>status: preview</code>; it isn't used on the Help pages yet. Event times are stored in UTC and shown in the viewer's time zone, with the host time underneath. The time-zone switch above simulates other viewers. Demo data only; the founding-offer details are placeholders. Contrast is calculated from hex, not browser-measured.</p></div>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><iframe id="fd" width="1280" height="1500" title="Desktop preview"></iframe></div><div class="fr"><small>Mobile · 375</small><iframe id="fm" width="375" height="1500" title="Mobile preview"></iframe></div></div>
+<script>
+let S={v:'blog',tz:''};
+function go(){const q=`screen.html?view=${S.v}${S.tz?'&tz='+encodeURIComponent(S.tz):''}`;fd.src=q;fm.src=q;
+[['c-v','v'],['c-tz','tz']].forEach(([id,k])=>document.querySelectorAll('#'+id+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S[k])))}
+[['c-v','v'],['c-tz','tz']].forEach(([id,k])=>document.getElementById(id).onclick=e=>{const b=e.target.closest('button');if(b){S[k]=b.dataset.v;go()}});
+go();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+import { createContentLoader } from 'vitepress'
+export interface Ev { url: string; title: string; type: string; start: string; minutes: number; host: string; where: string; summary: string; register?: string; recording?: string }
+declare const data: Ev[]
+export { data }
+export default createContentLoader('events/*.md', {
+  transform(raw): Ev[] {
+    return raw.filter(p => !p.url.endsWith('/events/')).map(p => ({ url: p.url, ...(p.frontmatter as any) }))
+      .sort((a, b) => +new Date(a.start) - +new Date(b.start))
+  },
+})

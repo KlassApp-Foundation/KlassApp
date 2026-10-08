@@ -1,0 +1,222 @@
+<!-- @dsCard group="Concepts" viewport="1280x900" name="Toshi tower v2 — replaces #toshi hub" subtitle="Core + Toshi layers, 6 channels in, 3 roles out, landing-page tokens and glow language" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>KlassApp — Toshi tower v2 (landing #toshi)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+<style>
+/* Verbatim subset of landing-preview.css :root — the only tokens this visual may use. No --d-* / --toshi-* on purpose. */
+:root{--brand-blue:#1E6FD9;--brand-green:#22C55E;--brand-dark:#0F172A;--brand-light:#F8FAFC;--brand-white:#FFFFFF;--text-primary:#1E293B;--text-secondary:#64748B;--text-muted:#94A3B8;--border:#E2E8F0;--violet-accent:#8B5CF6;--brand-amber:#D97706;--font-display:'Sora',system-ui,sans-serif;--font-body:'DM Sans',system-ui,sans-serif;--paper-base:#FAFAF5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--brand-white);font-family:var(--font-body);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-blue)}a:hover{color:var(--brand-dark)}
+.wrap{max-width:1180px;margin:0 auto;padding:48px 24px 64px}
+.toshi-header{text-align:center;margin-bottom:32px}
+.toshi-badge{display:inline-flex;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--violet-accent);background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);padding:5px 12px;border-radius:100px;margin-bottom:14px}
+h2{font-family:var(--font-display);font-weight:700;font-size:2.25rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 12px;color:var(--text-primary)}
+.toshi-name{color:var(--brand-green)}
+.toshi-header p{font-size:1.0625rem;color:var(--text-secondary);max-width:60ch;margin:0 auto;line-height:1.6}
+/* container: same surface as .toshi-visual */
+.toshi-visual{padding:28px 20px;background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(255,255,255,.78));border:1px solid rgba(226,232,240,.95);border-radius:24px;position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 24px 60px -28px rgba(30,111,217,.35),0 10px 28px -12px rgba(15,23,42,.12)}
+.toshi-visual::before{content:'';position:absolute;inset:-22% -12% auto -12%;height:72%;background:radial-gradient(ellipse 55% 60% at 50% 0%,rgba(30,111,217,.28),transparent 70%),radial-gradient(ellipse 40% 50% at 20% 30%,rgba(139,92,246,.16),transparent 65%),radial-gradient(ellipse 40% 50% at 80% 25%,rgba(34,197,94,.14),transparent 65%);filter:blur(2px);pointer-events:none}
+.toshi-visual::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(15,23,42,.05) 1px,transparent 1px);background-size:18px 18px;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 85%);mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 85%);opacity:.55;pointer-events:none}
+.fit{position:relative;z-index:1}
+.stage{position:absolute;left:0;top:0;width:1120px;height:600px;transform-origin:0 0}
+.stage svg{position:absolute;inset:0;width:1120px;height:600px;overflow:visible}
+/* satellites — .toshi-node + .toshi-visual-channel, verbatim values */
+.toshi-node{--node-color:var(--brand-blue);--node-tint:rgba(30,111,217,.07);--node-border:rgba(30,111,217,.20);--node-glow:rgba(30,111,217,.22);background:linear-gradient(165deg,var(--brand-white) 0%,var(--node-tint) 100%);border:1px solid var(--node-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(15,23,42,.05),0 6px 16px rgba(15,23,42,.06);transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s ease,border-color .3s ease}
+.toshi-node:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 2px 4px rgba(15,23,42,.05),0 14px 30px rgba(15,23,42,.1),0 0 22px var(--node-glow)}
+.n-green{--node-color:var(--brand-green);--node-tint:rgba(34,197,94,.07);--node-border:rgba(34,197,94,.20);--node-glow:rgba(34,197,94,.22)}
+.n-violet{--node-color:var(--violet-accent);--node-tint:rgba(139,92,246,.07);--node-border:rgba(139,92,246,.20);--node-glow:rgba(139,92,246,.22)}
+.n-amber{--node-color:var(--brand-amber);--node-tint:rgba(217,119,6,.07);--node-border:rgba(217,119,6,.20);--node-glow:rgba(217,119,6,.20)}
+.ch{position:absolute;width:168px;height:46px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:14px}
+.ch::after{content:'';position:absolute;top:0;left:14px;right:14px;height:2px;border-radius:0 0 2px 2px;background:linear-gradient(90deg,transparent,var(--node-color),transparent);opacity:.55;transition:opacity .3s}
+.ch:hover{transform:translateY(-4px)}.ch:hover::after{opacity:1}
+.ico{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:#fff;flex-shrink:0;box-shadow:0 6px 12px -8px rgba(15,23,42,.5)}
+.ico svg{width:15px;height:15px}
+.n-green .ico{background:linear-gradient(145deg,#25D366,#128C7E)}
+.ch:not(.n-green):not(.n-violet):not(.n-amber) .ico{background:linear-gradient(145deg,#3B82F6,#1E6FD9)}
+.ico.brand-well{background:#fff!important;border:1px solid rgba(15,23,42,.1);box-shadow:0 4px 10px -6px rgba(15,23,42,.25)}
+.ico.brand-well img{width:16px;height:16px;display:block}
+.ch span:not(.ico){font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-primary)}
+.role{position:absolute;height:40px;display:flex;align-items:center;gap:9px;padding:0 18px;border-radius:100px;font-size:.75rem;font-weight:600;color:var(--text-primary)}
+.role:hover{transform:translateY(-3px)}
+.role-dot{width:9px;height:9px;border-radius:50%;background:var(--node-color);box-shadow:0 0 0 3px var(--node-tint),0 0 9px var(--node-glow)}
+.role small{font-size:.6875rem;font-weight:500;color:var(--text-secondary)}
+/* hub labels — .toshi-visual-label / .hub-sub */
+.lbl{position:absolute;font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#15803D;padding:4px 12px;border-radius:100px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.18);box-shadow:0 1px 2px rgba(15,23,42,.04);transform:translateX(-50%);white-space:nowrap}
+.sub{position:absolute;font-size:.625rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);transform:translateX(-50%);white-space:nowrap}
+/* K tile */
+.ktile{position:absolute;left:528px;top:160px;width:64px;height:64px}
+.ktile .plate{position:absolute;inset:0;border-radius:14px;background:var(--brand-white);border:1px solid rgba(34,197,94,.38);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),0 0 0 5px rgba(34,197,94,.07),0 12px 28px rgba(34,197,94,.28),0 4px 12px rgba(15,23,42,.08)}
+.ktile img{position:absolute;left:10px;top:10px;width:44px;height:44px;display:block}
+/* model tiles on Toshi faces */
+.mt{position:absolute;width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid rgba(15,23,42,.1);box-shadow:0 4px 10px -6px rgba(15,23,42,.35);display:grid;place-items:center;opacity:0;transition:opacity .6s ease}
+.mt.on{opacity:1}
+.mt img{width:22px;height:22px;display:block;object-fit:contain}
+/* lines */
+.ln{fill:none;stroke-width:2.5;stroke-linecap:round;opacity:.9}
+.fl{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:10 14;opacity:.75}
+.stop-green{stop-color:var(--brand-green)}.stop-blue{stop-color:var(--brand-blue)}.stop-violet{stop-color:var(--violet-accent)}.stop-amber{stop-color:var(--brand-amber)}
+.bloom{transform-box:fill-box;transform-origin:center}
+.kb{position:absolute;inset:0;pointer-events:none}
+.coin{position:absolute;left:528px;top:128px;width:64px;height:64px;perspective:400px}
+.spin{position:absolute;inset:0;transform-style:preserve-3d}
+.spin img{position:absolute;inset:0;width:64px;height:64px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.spin img.b{transform:rotateY(180deg)}
+.kshadow{position:absolute;left:532px;top:236px;width:56px;height:14px;border-radius:50%;background:radial-gradient(ellipse,rgba(15,23,42,.28),transparent 70%)}
+.toshi-node.hit{animation:hit .7s ease-out}
+@keyframes hit{0%{box-shadow:0 0 0 0 var(--node-glow),0 6px 16px rgba(15,23,42,.06)}40%{box-shadow:0 0 0 6px var(--node-glow),0 0 26px var(--node-glow)}100%{box-shadow:0 0 0 12px transparent,0 6px 16px rgba(15,23,42,.06)}}
+.scr{transition:opacity .25s ease}.scr.off{opacity:0}
+.fl.rev{animation-direction:reverse!important}
+.ln{opacity:.55}
+@media (prefers-reduced-motion:no-preference){
+ .fl.in{animation:flowIn 1.6s linear infinite}.fl.out{animation:flowIn 1.6s linear infinite}
+ .bloom{animation:hubBloom 4.2s ease-in-out infinite}
+ .bounce{animation:tBounce 3s cubic-bezier(.45,0,.55,1) infinite}
+ @keyframes tBounce{0%{transform:translateY(0)}10%{transform:translateY(2px)}50%{transform:translateY(-24px)}90%{transform:translateY(0)}100%{transform:translateY(0)}}
+ .bloom.land{animation:land 3s ease-out infinite}
+ @keyframes land{0%,86%{opacity:.5}92%{opacity:1}100%{opacity:.5}}
+ .spin{animation:coin 10s linear infinite}
+ @keyframes coin{to{transform:rotateY(360deg)}}
+}
+@media (prefers-reduced-motion:reduce){.fl{display:none}.toshi-node.hit{animation:none}.scr{transition:none}.mt,.toshi-node,.ch::after{transition:none}.ch:hover,.role:hover{transform:none}}
+@keyframes flowIn{to{stroke-dashoffset:-48}}
+@keyframes hubBloom{0%,100%{transform:scale(.92);opacity:.78}50%{transform:scale(1.08);opacity:1}}
+@keyframes hubBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes orbitSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.models{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 18px;margin:18px 0 0;position:relative;z-index:1;font-size:.75rem;color:var(--text-secondary)}
+.models span{display:inline-flex;align-items:center;gap:6px}.models img{width:16px;height:16px}
+.models b{font-weight:600;color:var(--text-primary);text-transform:uppercase;letter-spacing:.06em;font-size:.6875rem}
+/* notes */
+.notes{margin-top:48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.card{background:var(--brand-white);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card h3{font-family:var(--font-display);font-size:.95rem;font-weight:600;margin:0 0 10px;color:var(--text-primary)}
+.card p,.card li{font-size:.84rem;line-height:1.6;color:var(--text-secondary);margin:0 0 7px}
+.card ul{margin:0;padding-left:18px}
+.card b{color:var(--text-primary)}
+code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.76rem;background:var(--brand-light);border:1px solid var(--border);padding:1px 5px;border-radius:4px;color:var(--text-primary)}
+.flag{background:#FFFBEB;border-color:#FDE68A}.flag h3,.flag p,.flag li,.flag b{color:#78350F}
+.nh{font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin:48px 0 0}
+</style></head><body><div class="wrap">
+
+<section class="toshi" id="toshi" data-screen-label="Toshi tower v2">
+<div class="toshi-header"><div class="toshi-badge">AI Agent</div>
+<h2>Meet <span class="toshi-name">Toshi</span>. Your school's AI agent.</h2>
+<p>Not a chatbot. An action-taking agent that understands education workflows and orchestrates across every connected tool.</p></div>
+
+<div class="toshi-visual"><div class="fit" id="fit"><div class="stage" id="stage">
+<svg viewBox="0 0 1120 600" role="img" aria-labelledby="tt td"><title id="tt">Toshi on top of KlassApp</title><desc id="td">WhatsApp, Email, Slack, SMS, Drive and Calendar feed the KlassApp core. Toshi sits above it and acts for parents, teachers and admins.</desc>
+<defs>
+<linearGradient id="gIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-green" stop-opacity=".18"/><stop offset=".55" class="stop-green" stop-opacity=".42"/><stop offset="1" class="stop-green" stop-opacity=".72"/></linearGradient>
+<linearGradient id="bIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-blue" stop-opacity=".16"/><stop offset=".55" class="stop-blue" stop-opacity=".38"/><stop offset="1" class="stop-blue" stop-opacity=".66"/></linearGradient>
+<linearGradient id="vIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-violet" stop-opacity=".16"/><stop offset=".55" class="stop-violet" stop-opacity=".38"/><stop offset="1" class="stop-violet" stop-opacity=".66"/></linearGradient>
+<linearGradient id="aIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-amber" stop-opacity=".16"/><stop offset=".55" class="stop-amber" stop-opacity=".38"/><stop offset="1" class="stop-amber" stop-opacity=".66"/></linearGradient>
+<linearGradient id="gOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-green" stop-opacity=".70"/><stop offset=".5" class="stop-green" stop-opacity=".42"/><stop offset="1" class="stop-green" stop-opacity=".36"/></linearGradient>
+<linearGradient id="bOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-blue" stop-opacity=".66"/><stop offset=".5" class="stop-blue" stop-opacity=".40"/><stop offset="1" class="stop-blue" stop-opacity=".34"/></linearGradient>
+<linearGradient id="aOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="stop-amber" stop-opacity=".66"/><stop offset=".5" class="stop-amber" stop-opacity=".38"/><stop offset="1" class="stop-amber" stop-opacity=".32"/></linearGradient>
+<linearGradient id="coreTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+<linearGradient id="coreL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E293B"/><stop offset="1" stop-color="#0F172A"/></linearGradient>
+<linearGradient id="tTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2DD46A"/><stop offset=".42" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+<linearGradient id="tL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+<radialGradient id="bloomG"><stop offset="0" stop-color="#22C55E" stop-opacity=".28"/><stop offset=".32" stop-color="#22C55E" stop-opacity=".12"/><stop offset=".55" stop-color="#8B5CF6" stop-opacity=".06"/><stop offset=".72" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+<radialGradient id="pool"><stop offset="0" stop-color="#22C55E" stop-opacity=".55"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></radialGradient>
+<linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E" stop-opacity=".7"/><stop offset="1" stop-color="#22C55E" stop-opacity="0"/></linearGradient>
+<filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="8"/></filter>
+</defs>
+<ellipse cx="560" cy="548" rx="210" ry="26" fill="#0F172A" opacity=".10" filter="url(#soft)"/>
+<!-- KlassApp core block -->
+<path d="M410 390 L560 465 L560 535 L410 460 Z" fill="url(#coreL)"/>
+<path d="M560 465 L710 390 L710 460 L560 535 Z" fill="#0F172A"/>
+<path d="M410 390 L560 315 L710 390 L560 465 Z" fill="url(#coreTop)"/>
+<path d="M410 390 L560 315 L710 390 L560 465 Z" fill="none" stroke="#22C55E" stroke-opacity=".45" stroke-width="1"/>
+<path d="M560 465 L560 535" stroke="#22C55E" stroke-opacity=".3" stroke-width="1"/>
+<!-- Toshi's light on the core -->
+<ellipse class="bloom land" cx="560" cy="390" rx="92" ry="46" fill="url(#pool)"/>
+<rect x="554" y="330" width="12" height="60" fill="url(#beam)" opacity=".6"/>
+<!-- bloom behind Toshi -->
+<circle class="bloom" cx="560" cy="262" r="150" fill="url(#bloomG)"/>
+<!-- Toshi block: bounces on the core; its two side faces are screens -->
+<g class="bounce">
+<path d="M460 250 L560 300 L560 356 L460 306 Z" fill="url(#tL)"/>
+<path d="M560 300 L660 250 L660 306 L560 356 Z" fill="#16A34A"/>
+<path d="M460 250 L560 200 L660 250 L560 300 Z" fill="url(#tTop)"/>
+<path d="M460 250 L560 200 L660 250" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>
+<ellipse cx="560" cy="248" rx="30" ry="15" fill="#0F172A" opacity=".18"/>
+<g transform="matrix(1 .5 0 1 460 250)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="scr" id="scrL" href="../../assets/brand/models/anthropic-mark.svg" x="37" y="15" width="26" height="26"/></g>
+<g transform="matrix(1 -.5 0 1 560 300)"><rect x="10" y="9" width="80" height="38" rx="4" fill="#fff" fill-opacity=".94"/><rect x="10" y="9" width="80" height="38" rx="4" fill="none" stroke="#0F172A" stroke-opacity=".12"/><image class="scr" id="scrR" href="../../assets/brand/models/openai-mark.svg" x="37" y="15" width="26" height="26"/></g>
+</g>
+<ellipse id="shock" cx="560" cy="390" rx="92" ry="46" fill="none" stroke="#22C55E" stroke-width="2" opacity="0"/>
+<g id="sig" aria-hidden="true"></g>
+</svg></svg>
+
+<div class="bounce kb"><div class="coin"><div class="spin"><img class="f" src="../../assets/brand/klassapp-icon.svg" alt="KlassApp"><img class="b" src="../../assets/brand/klassapp-icon.svg" alt=""></div></div><div class="kshadow"></div></div>
+
+<div class="ch toshi-node n-green" data-n="WhatsApp" style="left:60px;top:70px"><span class="ico brand-well"><img src="../../assets/brand/whatsapp.svg" alt=""></span><span>WhatsApp</span></div>
+<div class="ch toshi-node" data-n="Email" style="left:30px;top:232px"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
+<div class="ch toshi-node n-violet" data-n="Slack" style="left:110px;top:382px"><span class="ico brand-well"><img src="../../assets/brand/slack.svg" alt=""></span><span>Slack</span></div>
+<div class="ch toshi-node n-green" data-n="SMS" style="left:236px;top:510px"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
+<div class="ch toshi-node n-amber" data-n="Drive" style="left:770px;top:64px"><span class="ico brand-well"><img src="../../assets/brand/google-drive.svg" alt=""></span><span>Drive</span></div>
+<div class="ch toshi-node" data-n="Calendar" style="left:880px;top:474px"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Calendar</span></div>
+
+<div class="role toshi-node n-green" data-n="Parent" style="left:262px;top:124px"><span class="role-dot"></span>Parent</div>
+<div class="role toshi-node" data-n="Teacher" style="left:872px;top:262px"><span class="role-dot"></span>Teacher</div>
+<div class="role toshi-node n-amber" data-n="Admin" style="left:716px;top:540px"><span class="role-dot"></span>Admin</div>
+</div></div>
+<div class="models" aria-label="Models Toshi runs on"><b>Runs on</b>
+<span><img src="../../assets/brand/models/anthropic-mark.svg" alt="">Anthropic</span><span><img src="../../assets/brand/models/openai-mark.svg" alt="">OpenAI</span><span><img src="../../assets/brand/models/google-gemini-mark.svg" alt="">Gemini</span><span><img src="../../assets/brand/models/xai-grok-mark.svg" alt="">Grok</span><span><img src="../../assets/brand/models/moonshot-kimi-mark.svg" alt="">Kimi</span><span><img src="../../assets/brand/models/zhipu-zai-mark.svg" alt="">GLM</span></div>
+</div>
+</section>
+
+<p class="nh">Review notes — not yet handed off</p>
+<div class="notes">
+<div class="card"><h3>What changed from v1</h3><ul>
+<li><b>Protocol layer removed.</b> <code>#protocol</code> tells that story; the tower is now two blocks, KlassApp core and Toshi.</li>
+<li><b>Six channels in, three roles out</b>, matching the landing's own copy and connector set. Everything connects as a mesh around the core, rather than a one-way pipeline.</li>
+<li><b>Glow language, not flat.</b> The container, mist and dot grid, node cards, connector gradients, dashed flow streaks, bloom and breathing all reuse the values in <code>landing-preview.css</code> as they are.</li>
+<li><b>Toshi is green</b>: the <code>.hub-mark</code> gradient <code>#2DD46A → #22C55E → #16A34A</code>. There is no clay anywhere.</li></ul></div>
+<div class="card"><h3>Tokens — landing names only</h3>
+<p>The only custom properties used are <code>--brand-*</code>, <code>--text-*</code>, <code>--border</code>, <code>--violet-accent</code> and <code>--font-*</code>, copied from <code>landing-preview.css :root</code>. <b>There is no <code>--d-*</code> or <code>--toshi-*</code> anywhere in this file.</b></p>
+<p>Literals are used only where the landing CSS itself uses literals: <code>#2DD46A</code> and <code>#16A34A</code> (from <code>.hub-mark</code>), the channel-well gradients, and the <code>rgba()</code> glows.</p>
+<p>The label text is <code>#15803D</code>, not <code>--brand-green</code>, because green on its 8% tint is 2.1:1. <code>#15803D</code> gives 4.6:1. The live <code>.toshi-visual-label</code> has the same failure.</p></div>
+<div class="card"><h3>Motion — all under <code>prefers-reduced-motion: no-preference</code></h3><ul>
+<li><b>Flow streaks:</b> <code>stroke-dasharray 10 14</code>, 1.6s linear, staggered.</li>
+<li><b>Signals, not static lines:</b> the 9 nodes (6 connectors and 3 users) are scattered around the tower with no fixed wiring. <b>On every landing the cube throws signals</b>: a shockwave ring on the core, then 4 packets arc out <b>from that flash on the core</b> to random nodes, and each node glows as a packet arrives. Halfway through the bounce, 2 random nodes send packets back into the flash point. It's traffic in both directions, never the same route twice. Packets are moved with transforms only (Web Animations API), and each node's glow is a 0.7s <code>box-shadow</code> pulse. Measured over two bounces: at most 4 packets in flight, and 16 node hits.</li><li><b>Bounce:</b> the Toshi cube and its K tile share one 3s keyframe: a 2px squash on landing, a rise of 24px, then settling back down. Measured in sync at 0 / 1.3 / −24 / 0px. The core's footprint glow flares at each landing.</li><li><b>Toshi = the logo only.</b> There's no tile and no "Toshi" word. The K spins like a coin above the cube, one turn every 10s (<code>rotateY</code>, <code>preserve-3d</code>). <b>The back face is a second K turned 180°</b>, so the mark reads the right way round from both sides and is never mirrored. There are brief edge-on moments, as with any coin. A soft shadow on the cube's top face grounds it, and it bounces with the cube.</li>
+<li><b>Screens:</b> each of the cube's two side faces carries an inset white screen, mapped onto the face plane (<code>matrix(1 ±.5 0 1 …)</code>). <b>On every landing both screens change together</b> with a 0.25s dip, working through the 6 models as 3 pairs (Anthropic + OpenAI, Gemini + Grok, Kimi + Z.ai). The swap is driven by <code>animationiteration</code>, so it can't drift from the bounce. Model logos are skewed onto the face as screen content; the K stays upright.</li>
+<li><b>With reduced motion:</b> there's no bounce, no signals and no spin: the K faces forward. Anthropic and OpenAI show statically, and the "Runs on" row always names all six.</li></ul></div>
+<div class="card"><h3>Build notes</h3><ul>
+<li>A fixed 1120×600 stage is scaled to fit its container. Satellites are real HTML <code>.toshi-node</code> elements, so hover states and Blade components (<code>&lt;x-brand.whatsapp /&gt;</code>) carry over directly.</li>
+<li><b>Below 760px:</b> use the landing's existing <code>t-wrapped</code> fallback. Hide the lines, and stack the channels, the tower and the roles vertically. At phone width the scaled stage's labels would be too small to read.</li>
+<li>Keep <code>role="img"</code> with its <code>&lt;title&gt;</code>/<code>&lt;desc&gt;</code>. The streak paths are <code>aria-hidden</code>.</li></ul></div>
+<div class="card flag"><h3>Needs your call</h3><ul>
+<li><b>The notes fix conflicts with decision 3.</b> You asked me to keep the flat, no-gradient choice and only correct its stated reason, but also to move to the landing's gradient language. I fixed the reason in <b>v1's</b> notes: the app's surfaces use flat tints and the outline ring. That reasoning doesn't apply to v2, which is now gradient by design.</li>
+<li><b>The core is now navy, not green.</b> With Toshi green, a green core would merge the two blocks. <code>--brand-dark</code> with <code>--text-primary</code> faces and a green edge keeps them apart. This is a judgment call; the alternative is a lighter mint core.</li>
+<li><b>Calendar is added.</b> The live <code>#toshi</code> visual lists 5 channels; Calendar appears only in <code>#connectors</code>. It's included here as you asked.</li>
+<li><b>Hover colour and token-name fixes</b> apply only to v1, since v2 has no clay and no <code>--d-*</code>. v1's notes now give <code>#b55738</code>, <code>--d-accent #15803D</code> and <code>--d-accent-dk #166534</code>, and flag that its core greens <code>#4ADE80</code> and <code>#16A34A</code> are literals.</li></ul></div>
+</div>
+</div>
+<script>
+(function(){
+ const fit=document.getElementById('fit'),st=document.getElementById('stage');
+ function size(){const w=fit.clientWidth;if(w<=0){requestAnimationFrame(size);return;}const s=Math.max(0,w/1120);st.style.transform='scale('+s+')';fit.style.height=(600*s)+'px';}
+ new ResizeObserver(size).observe(fit);addEventListener('load',size);addEventListener('resize',size);size();
+ const M=['anthropic','openai','google-gemini','xai-grok','moonshot-kimi','zhipu-zai'].map(n=>'../../assets/brand/models/'+n+'-mark.svg');
+ const L=document.getElementById('scrL'),R=document.getElementById('scrR'),B=document.querySelector('svg .bounce');let k=0;
+ const rm=matchMedia('(prefers-reduced-motion: reduce)');
+ function swap(){k=(k+1)%3;[L,R].forEach(e=>e.classList.add('off'));setTimeout(()=>{L.setAttribute('href',M[2*k]);R.setAttribute('href',M[2*k+1]);[L,R].forEach(e=>e.classList.remove('off'));},250);}
+ const G=document.getElementById('sig'),SH=document.getElementById('shock'),NS='http://www.w3.org/2000/svg';
+ const nodes=[...document.querySelectorAll('.toshi-node')];
+ const col=n=>getComputedStyle(n).getPropertyValue('--node-color').trim()||'#1E6FD9';
+ const ctr=n=>[n.offsetLeft+n.offsetWidth/2,n.offsetTop+n.offsetHeight/2];
+ function shot(from,to,color,done){const g=document.createElementNS(NS,'g');g.innerHTML='<circle r="9" fill="'+color+'" opacity=".22"/><circle r="4" fill="'+color+'"/>';G.appendChild(g);
+  const mx=(from[0]+to[0])/2,my=Math.min(from[1],to[1])-40;
+  g.animate([{transform:'translate('+from[0]+'px,'+from[1]+'px)',opacity:0},{transform:'translate('+mx+'px,'+my+'px)',opacity:1,offset:.45},{transform:'translate('+to[0]+'px,'+to[1]+'px)',opacity:1,offset:.92},{transform:'translate('+to[0]+'px,'+to[1]+'px)',opacity:0}],{duration:950,easing:'cubic-bezier(.3,.6,.4,1)'}).onfinish=()=>{g.remove();done&&done();};}
+ const pick=(n)=>nodes.slice().sort(()=>Math.random()-.5).slice(0,n);
+ function land(){if(rm.matches)return;swap();
+  SH.animate([{transform:'scale(.6)',opacity:.7},{transform:'scale(1.5)',opacity:0}],{duration:700,easing:'ease-out'});
+  pick(4).forEach((n,i)=>setTimeout(()=>shot([560,390],ctr(n),col(n),()=>{n.classList.remove('hit');void n.offsetWidth;n.classList.add('hit');}),i*90));
+  setTimeout(()=>pick(2).forEach((n,i)=>setTimeout(()=>shot(ctr(n),[560,390],col(n)),i*140)),1400);}
+ SH.style.transformBox='fill-box';SH.style.transformOrigin='center';
+ B.addEventListener('animationiteration',land);
+})();
+</script>
+</body></html>

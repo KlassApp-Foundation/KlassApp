@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KlassApp email shell — review</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--d-canvas,#FAFAF5);color:var(--d-text,#1E293B);font-family:var(--d-font-body,'DM Sans',sans-serif)}
+a{color:#15803D}a:hover{color:#166534}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 20px 64px}
+h1{font-family:var(--d-font-display,'Sora',sans-serif);font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+.lede{color:#475569;margin:0 0 20px;max-width:72ch;line-height:1.55;text-wrap:pretty}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 28px}
+.bar button{min-height:44px;padding:8px 18px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;font:600 .85rem/1.4 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.bar button[aria-pressed="true"]{background:#15803D;border-color:#15803D;color:#fff}
+.bar span{color:#475569;font-size:14px}
+.mail{border-top:1px solid rgba(120,95,60,.14);padding:28px 0}
+.meta{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;margin-bottom:14px}
+.meta b{font-family:'Sora',sans-serif;font-size:16px}
+.inbox{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px 14px;max-width:600px}
+.inbox .from{font-weight:700;font-size:14px}.inbox .subj{font-size:14px;color:#1E293B}.inbox .pre{font-size:13px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src{font-size:13px;color:#475569;margin:6px 0 0}
+.frames{display:flex;gap:20px;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
+.f{display:flex;flex-direction:column;gap:6px;flex:none}
+.f small{font-size:12px;color:#475569;font-weight:600}
+iframe{border:1px solid #E2E8F0;border-radius:8px;background:#F3F0E8;display:block}
+.w600{width:600px}.w375{width:375px}
+details{margin-top:10px}summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;font-size:14px}
+pre{white-space:pre-wrap;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:14px;font-size:13px;line-height:1.5;max-width:600px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Email shell</h1>
+<p class="lede">One shell for every KlassApp email: a 600px table layout, system fonts, a PNG logo with alt text, 48px buttons in #15803D, and hex-only colours. Each email is shown at 600px and 375px, with its plain-text version below. The four <code>mailcontent</code> emails use production rows exactly as they appear in the database. Each one is flagged where a copy correction applies.</p>
+<div class="bar">
+<button type="button" id="dark" aria-pressed="false">Simulate dark mode</button>
+<button type="button" id="noimg" aria-pressed="false">Images off</button>
+<span>Dark mode applies the shell's own <code>prefers-color-scheme</code> rules. Clients that force-invert everything (the Gmail app) can't be previewed here.</span>
+</div>
+<div id="list"></div>
+</div>
+<script>
+fetch('emails.json').then(r=>r.json()).then(list=>{
+const root=document.getElementById('list');
+list.forEach(e=>{
+const s=document.createElement('section');s.className='mail';s.id=e.id;
+s.innerHTML=`<div class="meta"><b>${e.name}</b><div class="inbox"><span class="from">KlassApp</span><span class="subj">${e.subject}</span><span class="pre">${e.pre}</span></div><p class="src">${e.src}</p></div>
+<div class="frames"><div class="f"><small>600px</small><iframe class="w600" src="previews/${e.id}.html" title="${e.name} at 600px"></iframe></div><div class="f"><small>375px</small><iframe class="w375" src="previews/${e.id}.html" title="${e.name} at 375px"></iframe></div></div>
+<details><summary>Plain-text version</summary><pre data-txt="previews/${e.id}.txt">Loading…</pre></details>`;
+root.appendChild(s);
+});
+document.querySelectorAll('pre[data-txt]').forEach(p=>fetch(p.dataset.txt).then(r=>r.text()).then(t=>p.textContent=t));
+const fit=f=>{try{const d=f.contentDocument;f.style.height=(d.documentElement.scrollHeight)+'px'}catch(e){}};
+document.querySelectorAll('iframe').forEach(f=>{f.addEventListener('load',()=>{fit(f);apply(f)})});
+window.addEventListener('resize',()=>document.querySelectorAll('iframe').forEach(fit));
+});
+let dark=false,noimg=false;
+function apply(f){try{const d=f.contentDocument;d.documentElement.classList.toggle('kdark',dark);d.querySelectorAll('img').forEach(i=>{if(!i.dataset.src)i.dataset.src=i.getAttribute('src');if(noimg)i.removeAttribute('src');else i.setAttribute('src',i.dataset.src)});setTimeout(()=>{f.style.height=d.documentElement.scrollHeight+'px'},50)}catch(e){}}
+function toggle(btn,key){btn.addEventListener('click',()=>{if(key==='d')dark=!dark;else noimg=!noimg;btn.setAttribute('aria-pressed',String(key==='d'?dark:noimg));document.querySelectorAll('iframe').forEach(apply)})}
+toggle(document.getElementById('dark'),'d');toggle(document.getElementById('noimg'),'i');
+</script>
+</body>
+</html>

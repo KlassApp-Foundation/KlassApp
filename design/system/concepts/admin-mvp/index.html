@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin MVP pack · demo 17 Oct</title>
+<style>
+[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font-family:'DM Sans',system-ui,sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.top{position:sticky;top:0;z-index:5;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-direction:column;gap:10px}
+.top h1{font:700 20px Sora,sans-serif;margin:0;letter-spacing:-.02em}
+.r{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px;flex-wrap:wrap}
+.seg button{min-height:38px;padding:0 11px;border:0;border-radius:7px;background:transparent;font:600 13px 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.seg button .ph{font-size:11px;font-weight:700;opacity:.75;margin-left:4px}
+.intro{padding:14px 24px 0;max-width:1240px;font-size:14px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+.frames{display:flex;gap:28px;padding:16px 24px 32px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr small{font-size:12px;font-weight:700;color:#334155}
+iframe{border:1px solid #CFCAC0;border-radius:6px;background:#FAFAF5;display:block}
+code{font-size:12.5px;background:#fff;padding:1px 5px;border-radius:4px}
+#meas{font-weight:700}
+.wrong{max-width:1240px;margin:0 24px 40px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:18px 24px}
+.wrong h2{font:600 18px Sora,sans-serif;margin:0 0 8px}.wrong h3{font:600 15px Sora,sans-serif;margin:14px 0 6px}
+.wrong ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="top"><h1>Admin MVP pack · demo 17 October</h1>
+<div class="r"><div class="ctl">Screen<div class="seg" id="c-s">
+<button data-v="dashboard">1 Dashboard<span class="ph">P1</span></button><button data-v="students">2 Students<span class="ph">P1</span></button><button data-v="teachers">2 Teachers<span class="ph">P1</span></button><button data-v="parents">2 Parents<span class="ph">P1</span></button><button data-v="student">3 Student<span class="ph">P1</span></button><button data-v="classes">6 Classes<span class="ph">P1</span></button><button data-v="class">6 Class page<span class="ph">P1</span></button><button data-v="teacher">4 Teacher<span class="ph">P2</span></button><button data-v="parent">5 Parent<span class="ph">P2</span></button><button data-v="acct">7 Account menu<span class="ph">P2</span></button></div></div></div>
+<div class="r"><div class="ctl">Batch two<div class="seg" id="c-s2"><button data-v="subjects">Subjects</button><button data-v="subject">Subject page</button><button data-v="attendance">Attendance</button><button data-v="exams">Exams</button><button data-v="form-student">Student form</button><button data-v="form-teacher">Teacher form</button><button data-v="form-parent">Parent form</button><button data-v="form-staff">Staff form</button></div></div></div>
+<div class="r"><div class="ctl">State<div class="seg" id="c-st"></div></div><div class="ctl" id="w-x" hidden><span id="x-l"></span><div class="seg" id="c-x"></div></div></div>
+</div>
+<div class="intro"><p>Click-through concept for the admin role: rows open profiles, menus, tabs, selection, the account menu and confirm dialogs all work. Demo data only (Demo Junior School, nursery and primary). Currency comes from school settings. Icons are Lucide. Avatars follow the default-avatar spec (square, initials from <code>userprofiles.firstname</code>/<code>lastname</code>). Contrast is calculated from hex, not browser-measured.</p><p id="meas">Measuring…</p></div>
+<div class="frames"><div class="fr"><small>Desktop · 1280</small><iframe id="fd" width="1280" height="1180" title="Desktop"></iframe></div><div class="fr"><small>Mobile · 375</small><iframe id="fm" width="375" height="1180" title="Mobile"></iframe></div></div>
+<section class="wrong" id="wrong"></section>
+<script>
+const STATES={dashboard:[['data','School with data'],['mid','Mid-setup'],['new','Brand new'],['midh','Mid-setup, bar hidden']],subjects:[['data','Subjects'],['empty','No subjects']],subject:[['data','Mathematics']],attendance:[['data','Today'],['empty','Nothing taken yet']],exams:[['data','Mid-term'],['empty','No exams']],'form-student':[['data','Add'],['error','Add, with errors'],['edit','Edit']],'form-teacher':[['data','Add'],['error','Add, with errors'],['edit','Edit']],'form-parent':[['data','Add'],['error','Add, with errors'],['edit','Edit']],'form-staff':[['data','Add'],['edit','Edit']],students:[['data','Rows'],['sel','Rows selected'],['loading','Loading'],['empty','Empty'],['nomatch','No match']],teachers:[['data','Rows'],['sel','Rows selected'],['loading','Loading'],['empty','Empty']],parents:[['data','Rows'],['loading','Loading'],['empty','Empty']],
+ student:[['data','Filled'],['empty','New student']],classes:[['data','Classes'],['empty','No classes']],class:[['data','Filled']],teacher:[['data','Workload from timetable'],['as','No timetable (fallback)']],parent:[['data','Filled'],['empty','No children linked']],acct:[['data','Menu open']]};
+const X={student:['Tab',['Overview','Academics','Attendance','Fees','Parents and guardians','Documents','Notes'],'tab'],teacher:['Invite',[['accepted','Accepted'],['invited','Invited'],['none','Not invited']],'invite'],exams:['Expanded',[['mth','Mathematics'],['re','Religious Education'],['-','None']],'open'],parent:['WhatsApp',[['in','Opted in'],['pending','Asked'],['none','Not opted in']],'wa']};
+const Q0=new URLSearchParams(location.search);let S={s:'dashboard',st:'data',x:''};
+const ready=()=>[fd,fm].every(f=>{try{const d=f.contentDocument;return d&&d.readyState==='complete'&&d.location.href!=='about:blank'&&d.getElementById('app')&&d.getElementById('app').children.length}catch(e){return false}});
+const onLoad=()=>{if(ready())measure()};fd.addEventListener('load',onLoad);fm.addEventListener('load',onLoad);
+function go(){const s=S.s==='acct'?'dashboard':S.s;const st=S.st==='sel'||S.st==='edit'||S.st==='as'?'data':S.st==='midh'?'mid':S.st;if(S.st==='as')S._wl=1;let q=`app.html?s=${s}&state=${st}`;if(S.st==='edit')q+='&mode=edit';if(S.st==='as')q+='&wl=as';if(S.st==='midh')q+='&hide=1';if(S.st==='sel')q+='&sel=1040,1041,1043';if(S.s==='acct')q+='&acct=1';const x=X[S.s];if(x&&S.x)q+=`&${x[2]}=${encodeURIComponent(S.x)}`;fd.src=q;fm.src=q;
+ c_s();document.getElementById('meas').textContent='Measuring…';}
+function seg(id,list,cur,k){document.getElementById(id).innerHTML=list.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return `<button data-v="${v}" aria-pressed="${v===cur}">${l}</button>`}).join('');document.getElementById(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;S[k]=b.dataset.v;if(k==='s'){S.st='data';S.x=''}go()}}
+function c_s(){document.querySelectorAll('#c-s button,#c-s2 button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.s));seg('c-st',STATES[S.s],S.st,'st');const x=X[S.s];document.getElementById('w-x').hidden=!x;if(x){document.getElementById('x-l').textContent=x[0];const l=x[1];if(!S.x)S.x=Array.isArray(l[0])?l[0][0]:l[0];seg('c-x',l,S.x,'x')}}
+['c-s','c-s2'].forEach(id=>document.getElementById(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;S.s=b.dataset.v;S.st='data';S.x='';go()});
+if(Q0.get('b')==='2'){S.s='subjects'}
+function measure(){const r=[];for(const f of [fd,fm]){const d=f.contentDocument;if(!d||!d.body){r.push('not loaded');continue}const w=d.documentElement.clientWidth,over=d.documentElement.scrollWidth-w;
+ const small=[...d.querySelectorAll('button,a.btn,.mi,.chip,.nav a,.tabs button,select,input[type=search],.ckb')].filter(e=>{const b=e.getBoundingClientRect();return e.offsetParent!==null&&b.width>0&&b.height<43.5&&!e.closest('[aria-hidden="true"]')});
+ r.push(`${w}px: ${over>0?over+'px sideways scroll':'no sideways scroll'}, ${small.length?small.length+' targets under 44px ('+small.slice(0,3).map(e=>(e.textContent.trim()||e.getAttribute('aria-label')||e.tagName).slice(0,16)).join(', ')+')':'all targets ≥ 44px'}`)}
+ document.getElementById('meas').textContent='Measured in this browser · '+r.join(' · ')}
+go();
+const W={'Across every page (screenshots, test.klassapp.xyz, 7 Oct)':[
+ 'Toshi is everywhere while it is “coming soon”: a floating “Toshi Agent · Talk” pill bottom right covers the last table column and the Manage links, an orange tab is pinned to the right edge of every page, and on the dashboard a full Toshi side panel is open by default with a disabled message box.',
+ 'Names print in capitals from stored data: AARON MBABAZI, DANIEL MUKASA, JOSEPHINE BALABA, subject and teacher names on Exams.',
+ 'URLs carry the person’s name: <code>/admin/student/show/Aaron%20Mbabazi</code>, <code>/admin/student/edit/…</code>, <code>/admin/parent/show/Josephine%20Balaba</code>. Two people with the same name collide, and names leak into logs and shared links.',
+ 'Grey silhouette placeholders instead of initials (student profile, add teacher, account card); the edit-student avatar is a broken image.',
+ 'Sidebar items are tall icon-above-label tiles, about 96px each, so only six fit on a laptop screen. The bottom account card truncates to “DA… ad…”.',
+ 'The header search shows “⌘K”, which means nothing on Windows or Android.'],
+'Dashboard (screenshot; checked against the dashboard v2 handoff, 30 Sep)':[
+ 'A three-slide Toshi carousel (“Ask once — watch the admin work finish”) fills the first screen. No school numbers are visible until you scroll past it and the setup card.',
+ 'The setup card lists country-specific steps: “EMIS / Ministry code” and “UNEB centre number”, plus “Approximate school size” and “Plan selection”. It says “5 steps remaining” but shows no progress out of a total.',
+ '“Set up manually” and “Dismiss”; dismissing has nowhere to keep the progress (v2 moves it to a sidebar chip).',
+ 'The account menu opens as a tall panel of stacked tiles (icon above each label, about 80px each), shows the name in capitals, and pushes the sidebar off the left edge of the screen: “oard”, “EMICS”, “ICE” are cut off.'],
+'Students list (screenshot)':[
+ 'Search, Class, Stream and Status are four full-width rows plus a Filter button: about 440px of filters before the first student.',
+ 'Two rows are ticked and nothing happens: there is no bulk action bar.',
+ 'No KLS number column, although every student has one (KLS0380050 on the profile). A “#” column shows row numbers instead.',
+ 'Every column header carries a sort arrow, including “#”.',
+ '“No parent linked” is light grey text that is easy to miss; it is the most actionable thing in the row.'],
+'Student profile (screenshot)':[
+ 'Twelve tabs in two rows: Profile, Timeline, Parents / Guardians, Siblings, Disciplines, Notes, Library Activities, Documents, Attendances, Medical History, Leave History, Bank Details. Medical History is an ordinary tab for everyone; Bank Details on a child makes no sense.',
+ 'Delete sits next to Edit under the photo, in red, with nothing grouping or confirming it. A separate green “Credentials” button floats on the right.',
+ 'Country-specific fields: “LIN Number”, “Student School Pay Number”. Plus legacy fields: Library Card Number, Transport, “School Student ID” next to the Admission Number.',
+ 'Most fields are empty labels with nothing after them (Age :, Gender :, Joining Date :). There is no attendance, mark or fee figure anywhere on the page.'],
+'Edit student (screenshot)':[
+ 'Country (required), District (required) and Pincode: country-specific, and required for a global product.',
+ '“Siblings” is a required select; Mode Of Transport is shown to every school.',
+ 'Gender is required and offers only Male and Female.'],
+'Teachers list (screenshot)':[
+ 'Search card with “Starts with: Any letter”, “Status” and a Filter button, the same heavy pattern as students.',
+ '“Manage” is the only action, as plain text; the floating Toshi pill covers it on the last rows.',
+ 'One-letter grey initials (D, E, G…) for everyone. Every row says “Teaching staff” and “No phone number”, and there is no invite status.',
+ '“10 Total staff” is a KPI squeezed into the page header.'],
+'Add teacher (screenshot) and edit teacher':[
+ 'Opening Edit for a teacher (<code>/admin/teacher/edit/260</code>) shows “Page Not Found”. Admins cannot edit any teacher. <b>Bug, fix before the demo.</b>',
+ 'Date of birth is pre-filled with 07/10/2001. Employee ID is required and pre-filled “EMP001”. Designation, Mobile, Email, Gender and Joining date are all required.',
+ 'Four tabs (Profile, Educational Qualification, Notes, Address) for what should be a short form, and no way to invite the teacher.'],
+'Parent profile (screenshot)':[
+ 'Profile tab is Relation, Profession, Designation, Organization Name, Official Address, Annual Income, Qualification, all empty. Income and profession fields have no place here.',
+ 'Five header buttons in four colours: Edit, Delete, Deactivate, Reset Password, Credentials. Delete and Deactivate sit side by side, both red.',
+ 'The children are behind a “My Children” tab, with no link to their report cards or fees.'],
+'Classes and streams (screenshots)':[
+ 'The academic year is chosen in three places at once on the classes pages: the header, a page-level select and the filter card.',
+ 'Cards say “Assigned streams 1/1” and “Open roster”, but no student count, attendance or performance. There is no Add class or Add stream on the page.',
+ 'The class page shows “Class-level assignment · Fallback teacher” and “Effective teacher” per stream: the right model (per-stream teacher with a class default), but in internal wording. The student roster is read-only: names are not links, and “Academic status: Pass” is shown for every student mid-term.'],
+'Subjects (screenshot)':[
+ 'One row per subject per class: LANGUAGE appears once for Baby Class and again for Middle Class. A school with 9 subjects across 11 classes has dozens of rows and no single place for a subject.',
+ 'A red Delete button on every row, next to a plain “Edit” link.',
+ 'No teachers, no averages, no link to the subject’s exams or marks. “Subject Details” is the page title; type shows as lowercase “core”.'],
+'Exams (screenshot)':[
+ 'One row per exam × class × subject (Mathematics MID, Mathematics EOT, Science MID…), so finding “how far is Mid-term?” means reading the whole table.',
+ 'Codes instead of words: MID, EOT, BOT, “Undone”, level “primary” in lowercase; “Term III” wraps onto two lines.',
+ 'Each row carries a blue Marksheet button, an “Import from spreadsheet” button, an edit icon and a red delete icon: four actions, two styles, and Delete one click away.']};
+document.getElementById('wrong').innerHTML='<h2>What the current pages get wrong</h2>'+Object.entries(W).map(([h,l])=>`<h3>${h}</h3><ol>${l.map(x=>`<li>${x}</li>`).join('')}</ol>`).join('');
+</script>
+</body>
+</html>

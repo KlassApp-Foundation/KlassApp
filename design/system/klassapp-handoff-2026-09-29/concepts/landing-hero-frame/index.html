@@ -1,0 +1,72 @@
+<!-- @dsCard group="Concepts" viewport="1280x760" name="Landing hero — device framing by viewport" subtitle="Desktop window at ≥901px, phone at ≤900px, both built from the landing's own frame values" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Hero device framing — desktop vs mobile</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--brand-blue:#1E6FD9;--brand-green:#22C55E;--brand-accent:#15803D;--brand-dark:#0F172A;--brand-light:#F8FAFC;--brand-white:#FFFFFF;--text-primary:#1E293B;--text-secondary:#64748B;--border:#E2E8F0;--radius-md:12px;--radius-lg:16px;--shadow-lg:0 12px 32px rgba(15,23,42,.1),0 4px 8px rgba(15,23,42,.04);--font-display:'Sora',system-ui,sans-serif;--font-body:'DM Sans',system-ui,sans-serif;--paper-base:#FAFAF5;--paper-mid:#F3F0E8;--paper-deep:#EBE6DA}
+*{box-sizing:border-box}body{margin:0;font-family:var(--font-body);color:var(--text-primary);background:radial-gradient(ellipse 90% 80% at 50% 30%,var(--paper-base) 0%,var(--paper-mid) 55%,var(--paper-deep) 100%)}
+a{color:var(--brand-blue)}a:hover{color:var(--brand-dark)}
+.wrap{max-width:1200px;margin:0 auto;padding:40px 24px 56px}
+.row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:900px){.row{grid-template-columns:1fr}}
+.cap{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 14px}
+.cap b{color:var(--brand-accent)}
+/* screen placeholder — the real #heroRoleStage goes here unchanged */
+.slot{display:grid;place-items:center;text-align:center;padding:16px;color:#CBD5E1;font-size:.8rem;line-height:1.5;background:#0B1220;border:1px dashed rgba(203,213,225,.35)}
+.slot strong{display:block;color:#fff;font-family:var(--font-display);font-size:.9rem;margin-bottom:4px}
+/* DESKTOP — real window: existing frame + chrome, url pill replaces the italic caption */
+.win{position:relative;max-width:520px}
+.win-frame{position:relative;padding:16px;border-radius:22px;background:linear-gradient(160deg,#1E293B 0%,#0F172A 100%);box-shadow:0 34px 60px -34px rgba(15,23,42,.6),0 0 0 1px rgba(255,255,255,.07) inset}
+.win-chrome{display:flex;align-items:center;gap:6px;padding:0 4px 12px}
+.win-chrome i{width:10px;height:10px;border-radius:50%}
+.win-chrome i:nth-child(1){background:rgba(248,113,113,.8)}.win-chrome i:nth-child(2){background:rgba(251,191,36,.8)}.win-chrome i:nth-child(3){background:rgba(74,222,128,.8)}
+.win-url{margin-left:14px;flex:1;min-width:0;height:24px;border-radius:999px;background:rgba(255,255,255,.07);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:.72rem;color:#CBD5E1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win-url svg{width:11px;height:11px;flex-shrink:0}
+.win-screen{border-radius:14px;overflow:hidden}
+.win .slot{height:330px}
+.win-base{height:14px;margin:0 16%;background:linear-gradient(#1E293B,#334155);border-radius:0 0 14px 14px;box-shadow:0 18px 30px -18px rgba(15,23,42,.6)}
+/* MOBILE — phone: the landing's own phone values (280×560, radius 40, padding 12, --brand-dark, 120×28 notch) */
+.phone{position:relative;width:280px;height:560px;background:var(--brand-dark);border-radius:40px;padding:12px;box-shadow:0 30px 60px -24px rgba(15,23,42,.55),0 0 0 1px rgba(255,255,255,.06) inset;margin:0 auto}
+.phone::before{content:'';position:absolute;left:50%;top:12px;transform:translateX(-50%);width:120px;height:28px;background:var(--brand-dark);border-radius:0 0 18px 18px;z-index:2}
+.phone-screen{height:100%;border-radius:30px;overflow:hidden;background:#0B1220;display:flex;flex-direction:column}
+.phone-status{height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:.72rem;font-weight:600;color:#fff}
+.phone-status span:last-child{display:flex;gap:4px;align-items:center}
+.phone-status i{display:block;width:16px;height:8px;border:1.5px solid #fff;border-radius:2px}
+.phone .slot{flex:1;border-radius:0 0 30px 30px}
+.phone-bar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:96px;height:4px;border-radius:999px;background:rgba(255,255,255,.55)}
+.notes{margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.card{background:var(--brand-white);border:1px solid var(--border);border-radius:var(--radius-md);padding:18px 20px}
+.card h3{font-family:var(--font-display);font-size:.95rem;margin:0 0 8px}
+.card p,.card li{font-size:.84rem;line-height:1.6;color:var(--text-secondary);margin:0 0 6px}.card ul{margin:0;padding-left:18px}.card b{color:var(--text-primary)}
+code{font-family:ui-monospace,monospace;font-size:.76rem;background:var(--brand-light);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-primary)}
+</style></head><body><div class="wrap">
+<div class="row">
+<div data-screen-label="Desktop ≥901px"><p class="cap">Desktop · <b>≥ 901px</b> · frame and base are the live values (L3905–3925)</p>
+<div class="win"><div class="win-frame">
+<div class="win-chrome" aria-hidden="true"><i></i><i></i><i></i><span class="win-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span id="u">web.whatsapp.com</span></span></div>
+<div class="win-screen"><div class="slot"><div><strong>#heroRoleStage — unchanged</strong>The existing three role cards, flip and dots</div></div></div>
+</div><div class="win-base" aria-hidden="true"></div></div></div>
+<div data-screen-label="Mobile ≤900px"><p class="cap">Mobile · <b>≤ 900px</b></p>
+<div class="phone"><div class="phone-screen"><div class="phone-status" aria-hidden="true"><span>8:14</span><span><i></i></span></div><div class="slot"><div><strong>#heroRoleStage — unchanged</strong>Same cards, same rotation</div></div></div><div class="phone-bar" aria-hidden="true"></div></div></div>
+</div>
+
+<div class="notes">
+<div class="card"><h3>One markup, two frames</h3>
+<p>This is CSS only. <code>.hero-device</code> gets a modifier class that switches at the landing's existing <b>900px</b> breakpoint, the one where <code>.hero-inner</code> already collapses to one column. The <code>#heroRoleStage</code> markup and the flip JS don't change.</p>
+<p><b>The phone reuses values the landing already ships</b>: its existing phone mockup at 280×560, radius 40, padding 12, <code>--brand-dark</code>, with a 120×28 notch at radius 0 0 18 18. There's nothing new to learn.</p></div>
+<div class="card"><h3>Desktop: a real window, not a caption</h3>
+<p><b>Grounding:</b> the frame, chrome, screen and base are copied from <code>landing-preview.css</code> L3905–3925 as they are. <b>The only new element is the address-bar pill</b>, which replaces the <code>&lt;em&gt;</code>.</p>
+<ul><li>The italic <code>&lt;em&gt;Toshi · live preview&lt;/em&gt;</code> becomes an address-bar pill showing the tool the card is in: <code>web.whatsapp.com</code>, <code>drive.google.com</code>, <code>app.slack.com</code>. It's updated by the same JS that flips cards. That's what makes it read as a real device rather than a styled box.</li>
+<li>Pill text is <code>#CBD5E1</code> on about <code>#1B2536</code>, <b>10.9:1</b>. The current <code>rgba(226,232,240,.6)</code> caption is about 5.8:1, which passes, but only just at .75rem.</li>
+<li>The laptop base stays. <b>Today, at ≤700px</b> (L3953), the live CSS already drops the chrome and base and compacts the frame to padding 10 / radius 18. The phone frame replaces that compact frame, and the switch moves up to the 900px column breakpoint.</li></ul></div>
+<div class="card"><h3>Mobile: the phone replaces the window</h3>
+<ul><li>The status bar time (<code>8:14</code>) matches the Parent card's existing <code>.hero-meta</code> timestamp.</li>
+<li>Width is <b>fixed at 280px</b>, with no <code>max-width:100%</code> scaling. At 320px wide that leaves 20px of gutter on each side. The current <code>.hero-preview{max-width:320px}</code> at ≤900 already fits.</li>
+<li><b>Needs checking in the app:</b> the cards' rendered height inside a 536px-tall screen. The Admin card is the tallest. If it overflows, the screen scrolls internally. It must not grow the phone.</li></ul></div>
+</div>
+</div>
+<script>
+const u=document.getElementById('u'),hosts=['web.whatsapp.com','drive.google.com','app.slack.com'];let i=0;
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(()=>{i=(i+1)%3;u.textContent=hosts[i];},3200);
+</script>
+</body></html>
