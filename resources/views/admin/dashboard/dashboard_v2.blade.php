@@ -31,6 +31,8 @@
     $wizardUrl = url('/admin/onboarding/wizard');
     $dismissUrl = url('/dismiss-onboarding');
     $setupShown = ! $setup['dismissed'] && $setup['total'] > 0 && $setup['done'] < $setup['total'];
+    // Mid-setup presentation (concept): any chart without data = quick-action tiles.
+    $midSetup = count($charts['per_class'] ?? []) === 0 || count($charts['fees_months'] ?? []) === 0;
     $nextHref = $setup['next']
         ? (($setup['routes'][$setup['next']['key']] ?? null) ?: $wizardUrl.'?step='.$setup['next']['key'])
         : $wizardUrl;
@@ -216,8 +218,8 @@
                 </span>
             </div>
         @else
-            {{-- 3 · Quick actions: compact row in the data state --}}
-            @if($state === 'data')
+            {{-- 3 · Quick actions: compact row only when every chart has data --}}
+            @if($state === 'data' && ! $midSetup)
                 <nav class="dv2-qa" aria-label="Quick actions" data-testid="dashboard-v2-actions">
                     @foreach($quickActions as $action)
                         <a class="dv2-btn dv2-btn--soft" href="{{ $action['href'] }}">{{ $action['title'] }}</a>
