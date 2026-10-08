@@ -32,6 +32,7 @@ function setTestFlag(email) {
         $u = \\App\\Models\\User::where('email', ${phpStr(email)})->first();
         if (! $u) { echo "<<<E2E-JSON>>>" . json_encode(['error' => 'user-not-found', 'active_plans' => $plans]); return; }
         $s = \\App\\Models\\School::find($u->school_id);
+        if ((int) ($s->is_demo ?? 0) === 1) { echo "<<<E2E-JSON>>>" . json_encode(['error' => 'refusing-demo-school', 'school_id' => $s->id]); return; }
         $s->forceFill(['is_test' => 1])->save();
         echo "<<<E2E-JSON>>>" . json_encode(['school_id' => $s->id, 'school_name' => $s->name, 'active_plans' => $plans]);
     `);
@@ -52,6 +53,7 @@ function enableOnboardingMode(email, schoolName) {
             echo "<<<E2E-JSON>>>" . json_encode(['error' => 'not-an-e2e-school', 'school_id' => $s?->id]);
             return;
         }
+        if ((int) ($s->is_demo ?? 0) === 1) { echo "<<<E2E-JSON>>>" . json_encode(['error' => 'refusing-demo-school', 'school_id' => $s->id]); return; }
         $s->forceFill(['toshi_mode' => 'onboarding', 'toshi_enabled' => 0]);
         if (${phpStr(schoolName)} !== '' ) { $s->name = ${phpStr(schoolName)}; }
         $s->save();
