@@ -1,0 +1,154 @@
+{
+  "demo38-1280": {
+    "bar": null,
+    "count": null,
+    "next": null,
+    "kpis": {
+      "students": "66",
+      "staff": "12",
+      "attendance": "96.9%",
+      "fees": "56%",
+      "reports": "0"
+    },
+    "toshiBtn": false,
+    "hScroll": false,
+    "small": [],
+    "styled": "16px"
+  },
+  "demo38-375": {
+    "bar": null,
+    "count": null,
+    "next": null,
+    "kpis": {
+      "students": "66",
+      "staff": "12",
+      "attendance": "96.9%",
+      "fees": "56%",
+      "reports": "0"
+    },
+    "toshiBtn": false,
+    "hScroll": false,
+    "small": [],
+    "styled": "0px"
+  },
+  "mid266-1280": {
+    "bar": "Setup 6 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 6 of 13 done",
+    "next": "Next: Approximate school size",
+    "kpis": {
+      "students": "4",
+      "staff": "1",
+      "attendance": "100.0%",
+      "fees": null,
+      "reports": "0"
+    },
+    "toshiBtn": true,
+    "hScroll": false,
+    "small": [],
+    "styled": "16px"
+  },
+  "mid266-1280-panel": {
+    "clicked": true,
+    "collapsed": false,
+    "panelRect": {
+      "w": 380,
+      "h": 831
+    },
+    "composerRect": {
+      "w": 849,
+      "h": 39
+    },
+    "modalOpen": true
+  },
+  "mid266-375": {
+    "bar": "Setup 6 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 6 of 13 done",
+    "next": "Next: Approximate school size",
+    "kpis": {
+      "students": "4",
+      "staff": "1",
+      "attendance": "100.0%",
+      "fees": null,
+      "reports": "0"
+    },
+    "toshiBtn": true,
+    "hScroll": false,
+    "small": [],
+    "styled": "0px"
+  },
+  "mid266-375-panel": {
+    "clicked": true,
+    "collapsed": false,
+    "panelRect": {
+      "w": 345,
+      "h": 743
+    },
+    "composerRect": {
+      "w": 0,
+      "h": 39
+    },
+    "modalOpen": true
+  },
+  "fresh267-1280": {
+    "bar": "Setup 3 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 3 of 13 done",
+    "next": "Next: Approximate school size",
+    "kpis": {
+      "students": "0",
+      "staff": null,
+      "attendance": null,
+      "fees": null,
+      "reports": null
+    },
+    "toshiBtn": true,
+    "hScroll": false,
+    "small": [],
+    "styled": "16px"
+  },
+  "fresh267-1280-panel": {
+    "clicked": true,
+    "collapsed": false,
+    "panelRect": {
+      "w": 380,
+      "h": 831
+    },
+    "composerRect": {
+      "w": 849,
+      "h": 39
+    },
+    "modalOpen": true
+  },
+  "fresh267-375": {
+    "bar": "Setup 3 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 3 of 13 done",
+    "next": "Next: Approximate school size",
+    "kpis": {
+      "students": "0",
+      "staff": null,
+      "attendance": null,
+      "fees": null,
+      "reports": null
+    },
+    "toshiBtn": true,
+    "hScroll": false,
+    "small": [],
+    "styled": "0px"
+  },
+  "fresh267-375-panel": {
+    "clicked": true,
+    "collapsed": false,
+    "panelRect": {
+      "w": 345,
+      "h": 743
+    },
+    "composerRect": {
+      "w": 0,
+      "h": 39
+    },
+    "modalOpen": true
+  },
+  "flagoff-1280": {
+    "v2shell": false,
+    "v1marker": true
+  }
+}

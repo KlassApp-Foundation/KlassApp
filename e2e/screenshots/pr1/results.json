@@ -1,0 +1,303 @@
+{
+  "flagoff-1280": {
+    "v2shell": false,
+    "v1kpi": false
+  },
+  "demo38-1280": {
+    "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://test.klassapp.xyz/admin/dashboard?v2=1\", waiting until \"domcontentloaded\"\n"
+  },
+  "demo38-375": {
+    "bar": null,
+    "count": null,
+    "next": null,
+    "chip": null,
+    "kpis": {
+      "students": "66",
+      "staff": "12",
+      "attendance": "96.9%",
+      "fees": "56%",
+      "reports": "0"
+    },
+    "toshiSetupBtn": false,
+    "toshiComing": true,
+    "connectedTools": false,
+    "sceneToshi": false,
+    "pill": false,
+    "hScroll": false,
+    "smallTargets": [
+      {
+        "text": "See all",
+        "h": 15
+      }
+    ],
+    "newEmpty": false,
+    "emptyCharts": {
+      "perf": true,
+      "fees": false
+    },
+    "groups": [
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school",
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school"
+    ]
+  },
+  "mid266-1280": {
+    "bar": "Setup 6 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 6 of 13 done",
+    "next": "Next: Approximate school size",
+    "chip": null,
+    "kpis": {
+      "students": "4",
+      "staff": "1",
+      "attendance": "100.0%",
+      "fees": null,
+      "reports": "0"
+    },
+    "toshiSetupBtn": true,
+    "toshiComing": true,
+    "connectedTools": false,
+    "sceneToshi": false,
+    "pill": false,
+    "hScroll": false,
+    "smallTargets": [
+      {
+        "text": "See all",
+        "h": 15
+      }
+    ],
+    "newEmpty": false,
+    "emptyCharts": {
+      "perf": true,
+      "fees": true
+    },
+    "groups": [
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school",
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school"
+    ]
+  },
+  "mid266-1280-panel": {
+    "progress": null,
+    "stepCount": "6/13",
+    "checklistCount": 13,
+    "checklistSample": [
+      "toshi-setup-row-school_name",
+      "toshi-setup-row-student_size",
+      "toshi-setup-row-country",
+      "toshi-setup-row-curriculum",
+      "toshi-setup-row-academic_year",
+      "toshi-setup-row-standards",
+      "toshi-setup-row-subjects",
+      "toshi-setup-row-teachers"
+    ],
+    "legacy": "ONBOARDING SESSION",
+    "composerReadonly": null,
+    "composerDisabledAttrs": null,
+    "panelVisible": true,
+    "viaButton": true
+  },
+  "mid266-1280-chip": {
+    "bar": false,
+    "chip": "Finish setup 6/13 Next: Approximate school size"
+  },
+  "mid266-375": {
+    "bar": null,
+    "count": null,
+    "next": null,
+    "chip": "Finish setup 6/13 Next: Approximate school size ",
+    "kpis": {
+      "students": "4",
+      "staff": "1",
+      "attendance": "100.0%",
+      "fees": null,
+      "reports": "0"
+    },
+    "toshiSetupBtn": false,
+    "toshiComing": true,
+    "connectedTools": false,
+    "sceneToshi": false,
+    "pill": false,
+    "hScroll": false,
+    "smallTargets": [
+      {
+        "text": "See all",
+        "h": 15
+      }
+    ],
+    "newEmpty": false,
+    "emptyCharts": {
+      "perf": true,
+      "fees": true
+    },
+    "groups": [
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school",
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school"
+    ]
+  },
+  "mid266-375-panel": {
+    "progress": null,
+    "stepCount": "6/13",
+    "checklistCount": 13,
+    "checklistSample": [
+      "toshi-setup-row-school_name",
+      "toshi-setup-row-student_size",
+      "toshi-setup-row-country",
+      "toshi-setup-row-curriculum",
+      "toshi-setup-row-academic_year",
+      "toshi-setup-row-standards",
+      "toshi-setup-row-subjects",
+      "toshi-setup-row-teachers"
+    ],
+    "legacy": null,
+    "composerReadonly": false,
+    "composerDisabledAttrs": {
+      "aria": null,
+      "ph": "Message Toshi…"
+    },
+    "panelVisible": false,
+    "viaButton": false
+  },
+  "fresh267-1280": {
+    "bar": "Setup 3 of 13 done\nNext: Approximate school size\nContinue setup\nSet up with Toshi\n✕",
+    "count": "Setup 3 of 13 done",
+    "next": "Next: Approximate school size",
+    "chip": null,
+    "kpis": {
+      "students": "0",
+      "staff": null,
+      "attendance": null,
+      "fees": null,
+      "reports": null
+    },
+    "toshiSetupBtn": true,
+    "toshiComing": true,
+    "connectedTools": false,
+    "sceneToshi": false,
+    "pill": false,
+    "hScroll": false,
+    "smallTargets": [],
+    "newEmpty": true,
+    "emptyCharts": {
+      "perf": false,
+      "fees": true
+    },
+    "groups": [
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school",
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school"
+    ]
+  },
+  "fresh267-1280-panel": {
+    "progress": null,
+    "stepCount": "3/13",
+    "checklistCount": 13,
+    "checklistSample": [
+      "toshi-setup-row-school_name",
+      "toshi-setup-row-student_size",
+      "toshi-setup-row-country",
+      "toshi-setup-row-curriculum",
+      "toshi-setup-row-academic_year",
+      "toshi-setup-row-standards",
+      "toshi-setup-row-subjects",
+      "toshi-setup-row-teachers"
+    ],
+    "legacy": "ONBOARDING SESSION",
+    "composerReadonly": null,
+    "composerDisabledAttrs": null,
+    "panelVisible": true,
+    "viaButton": true
+  },
+  "fresh267-1280-chip": {
+    "bar": false,
+    "chip": "Finish setup 3/13 Next: Approximate school size"
+  },
+  "fresh267-375": {
+    "bar": null,
+    "count": null,
+    "next": null,
+    "chip": "Finish setup 3/13 Next: Approximate school size ",
+    "kpis": {
+      "students": "0",
+      "staff": null,
+      "attendance": null,
+      "fees": null,
+      "reports": null
+    },
+    "toshiSetupBtn": false,
+    "toshiComing": true,
+    "connectedTools": false,
+    "sceneToshi": false,
+    "pill": false,
+    "hScroll": false,
+    "smallTargets": [],
+    "newEmpty": true,
+    "emptyCharts": {
+      "perf": false,
+      "fees": true
+    },
+    "groups": [
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school",
+      "people",
+      "academics",
+      "money",
+      "messages",
+      "school"
+    ]
+  },
+  "fresh267-375-panel": {
+    "progress": null,
+    "stepCount": "3/13",
+    "checklistCount": 13,
+    "checklistSample": [
+      "toshi-setup-row-school_name",
+      "toshi-setup-row-student_size",
+      "toshi-setup-row-country",
+      "toshi-setup-row-curriculum",
+      "toshi-setup-row-academic_year",
+      "toshi-setup-row-standards",
+      "toshi-setup-row-subjects",
+      "toshi-setup-row-teachers"
+    ],
+    "legacy": null,
+    "composerReadonly": false,
+    "composerDisabledAttrs": {
+      "aria": null,
+      "ph": "Message Toshi…"
+    },
+    "panelVisible": false,
+    "viaButton": false
+  }
+}
