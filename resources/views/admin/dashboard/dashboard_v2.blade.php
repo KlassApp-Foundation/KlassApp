@@ -20,7 +20,7 @@
     $kpis = $v2['kpis'] ?? [];
     $charts = $v2['charts'] ?? ['per_class' => [], 'attendance_weeks' => [], 'gender' => ['girls' => 0, 'boys' => 0, 'not_specified' => 0, 'total' => 0], 'fees_months' => [], 'exam' => null];
     $activity = $v2['activity'] ?? [];
-    $currency = $v2['currency'] ?? 'UGX';
+    $currency = $v2['currency'] ?? null;
     $state = $v2['state'] ?? 'data';
 
     $years = $school
@@ -186,7 +186,7 @@
                     @if(($kpis['fees']['state'] ?? 'ok') === 'ok')
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-fees">{{ $kpis['fees']['percent'] }}%</span>
                         <span class="dv2-meter" role="img" aria-label="{{ $kpis['fees']['percent'] }}% collected"><i style="width:{{ $kpis['fees']['percent'] }}%"></i></span>
-                        <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}</p>
+                        <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}@if($currency === null) · <a class="dv2-currency-hint" data-testid="dashboard-v2-currency-hint" href="{{ url('/admin/settings') }}">Set your currency</a>@endif</p>
                     @else
                         <span class="dv2-kpi-value">–</span>
                         <p class="dv2-kpi-sub warn">Set up fees first · <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}" style="min-height:44px;display:inline-flex;align-items:center">Set up fees</a></p>
@@ -274,7 +274,7 @@
                     @if(count($charts['fees_months'] ?? []) > 0)
                         @php
                             $fm = $charts['fees_months'];
-                            $fmAria = implode(', ', array_map(fn ($m) => $m['label'].' collected '.$currency.' '.number_format($m['collected']), $fm));
+                            $fmAria = implode(', ', array_map(fn ($m) => $m['label'].' collected '.($currency ? $currency.' ' : '').number_format($m['collected']), $fm));
                         @endphp
                         <x-chart type="bar" :height="190"
                                  :labels="array_map(fn ($m) => $m['label'], $fm)"

@@ -77,3 +77,5 @@
     .dv2-year{width:100%}
     .hb{grid-template-columns:84px 1fr 44px}
 }
+
+.dv2-currency-hint{font-size:12px;color:#94A3B8;text-decoration:underline;min-height:44px;display:inline-flex;align-items:center;font-weight:500}

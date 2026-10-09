@@ -87,16 +87,30 @@ class DashboardV2DataService
             ->count();
     }
 
-    public function currencyFor(int $sid): string
+    /**
+     * The school's currency code from its settings, or null when unset. No
+     * hidden default: callers render amounts without a symbol and show a quiet
+     * "Set your currency" hint instead.
+     */
+    public function currencyFor(int $sid): ?string
     {
         $meta = DB::table('school_details')
             ->where('school_id', $sid)
             ->where('meta_key', 'currency')
             ->value('meta_value');
 
-        $code = is_string($meta) && trim($meta) !== '' && trim($meta) !== '-' ? trim($meta) : 'UGX';
+        if (! is_string($meta)) {
+            return null;
+        }
 
-        return $code;
+        $meta = trim($meta);
+
+        return ($meta === '' || $meta === '-') ? null : $meta;
+    }
+
+    private function moneyLabel(?string $currency, float|int|null $amount): string
+    {
+        return ($currency !== null && $currency !== '' ? $currency.' ' : '').$this->compactMoney($amount);
     }
 
     public function compactMoney(float|int|null $amount): string
@@ -244,8 +258,9 @@ class DashboardV2DataService
                 'percent' => $hasStructure ? (int) $feePosition['rate'] : null,
                 'collected' => max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw']),
                 'expected' => $feePosition['expected_raw'],
-                'collected_label' => $currency.' '.$this->compactMoney(max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw'])),
-                'expected_label' => $currency.' '.$this->compactMoney($feePosition['expected_raw']),
+                'collected_label' => $this->moneyLabel($currency, max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw'])),
+                'expected_label' => $this->moneyLabel($currency, $feePosition['expected_raw']),
+                'currency' => $currency,
                 'state' => $hasStructure ? 'ok' : 'no_structure',
             ],
             'report_cards' => [
