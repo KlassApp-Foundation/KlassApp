@@ -102,6 +102,14 @@ the captured values (log stream or the restore file) allow an exact reversal.
 
 ## 3. Deploy
 
+**Build-command parity (preflight):** confirm production's build command installs
+dev dependencies the same way as staging before deploying. Staging runs
+(`composer install --no-dev && npm ci --include=dev --no-audit --no-fund && npm run build`);
+the `npm ci --include=dev` step is required — without it, any platform
+dependency-cache miss fails the build with `vite: not found`
+(seen on staging 2026-10-09; it previously read just
+`composer install --no-dev && npm run build`).
+
 1. Deploy from the dedicated main worktree at the reviewed SHA (rule #15).
 2. Trigger the release with the empty-body deploy POST to the production
    environment (token: Doppler `CLOUD_AGENT_TOOLING`; pattern in

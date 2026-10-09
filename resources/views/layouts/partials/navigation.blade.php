@@ -169,6 +169,15 @@
                     </ul>
                 </div>
             @endif
+            @auth
+                @if($chromeInSidebar)
+                    {{-- PR7: below 768px the sidebar is a drawer, so the account menu
+                         hangs from a top-bar avatar (right-aligned popover). --}}
+                    <div class="ml-auto md:hidden flex items-center">
+                        @include('layouts.partials.profile-dropdown', ['variant' => 'topbar'])
+                    </div>
+                @endif
+            @endauth
         </div>
     </div>
 </nav>

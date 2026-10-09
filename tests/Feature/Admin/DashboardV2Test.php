@@ -257,6 +257,28 @@ class DashboardV2Test extends TestCase
             ->assertDontSee('UNEB centre number', false);
     }
 
+    public function test_currency_without_a_setting_shows_no_symbol_and_a_quiet_hint(): void
+    {
+        $school = $this->makeSchool(['name' => 'Currency School']);
+        $admin = $this->makeAdmin($school);
+        $this->completeAllSteps($school, $admin);
+
+        // No currency set: amounts carry no symbol and the hint appears.
+        $this->render(User::findOrFail($admin->id))->assertOk()
+            ->assertSee('data-testid="dashboard-v2-currency-hint"', false)
+            ->assertSee('Set your currency', false);
+
+        // Setting the school currency: symbols appear, the hint goes away.
+        \Illuminate\Support\Facades\DB::table('school_details')->insert([
+            'school_id' => $school->id, 'meta_key' => 'currency', 'meta_value' => 'UGX',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $response = $this->render(User::findOrFail($admin->id))->assertOk();
+        $response->assertDontSee('data-testid="dashboard-v2-currency-hint"', false);
+        $this->assertMatchesRegularExpression('/UGX\s[0-9]/', $response->getContent());
+    }
+
     public function test_first_screen_has_no_carousel_connected_tools_or_toshi_promo(): void
     {
         $school = $this->makeSchool(['name' => 'No Promo School']);

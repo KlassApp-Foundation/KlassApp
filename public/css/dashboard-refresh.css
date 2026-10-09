@@ -833,10 +833,11 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 .account-card__menu.user-dtl {
     display: none;
     position: absolute;
-    left: 8px;
-    right: 8px;
-    bottom: calc(100% + 6px);
+    left: 12px;
+    right: 12px;
+    bottom: calc(100% + 8px);
     top: auto;
+    max-width: calc(100vw - 16px);
     width: auto;
     margin: 0;
     padding: 6px;
@@ -891,8 +892,8 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 .account-card__item .dtl-icon {
     display: inline-flex;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     color: inherit;
 }
@@ -4172,4 +4173,54 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
     outline: 2px solid var(--d-accent);
     outline-offset: -2px;
     border-radius: 6px;
+}
+
+/* ── PR7: fixed sidebar (248px) + top-bar account popover ─────────────────── */
+@media (min-width: 1024px) {
+    /* The sidebar is fixed in place: sticky wrap, full height. Opening anything
+       (menus, popovers, drawers) never moves it. */
+    #app-sidebar-wrap {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        align-self: flex-start;
+    }
+    #admin-sidebar.admin-sidebar {
+        width: 248px;
+    }
+    /* Popover = sidebar width minus the 12px insets = 224px, 8px above the card. */
+}
+
+/* Top-bar avatar variant (admin chrome, below 768px only). */
+.account-card--topbar {
+    display: none;
+}
+@media (max-width: 767px) {
+    .account-card--topbar {
+        display: flex;
+        flex: 0 0 auto;
+    }
+    #admin-sidebar .account-card,
+    #res_sidebar .account-card {
+        display: none;
+    }
+    .account-card--topbar .account-card__trigger {
+        width: 44px;
+        min-height: 44px;
+        padding: 4px;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        border-radius: 999px;
+    }
+    .account-card--topbar .account-card__identity,
+    .account-card--topbar .account-card__chevron {
+        display: none;
+    }
+    .account-card--topbar .account-card__menu.user-dtl {
+        left: auto;
+        right: 8px;
+        width: min(224px, calc(100vw - 16px));
+        max-width: calc(100vw - 16px);
+        bottom: calc(100% + 8px);
+    }
 }
