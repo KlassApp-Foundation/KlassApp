@@ -43,7 +43,8 @@ class DemoAcademySeederTest extends TestCase
         $this->assertSame(15, User::where('school_id', $school->id)->whereNotIn('usergroup_id', [6])->count());
 
         $this->assertSame(105, FeePayment::where('school_id', $school->id)->count());
-        $this->assertSame(1680, Attendance::where('school_id', $school->id)->count());
+        // 84 students × 40 school days (8 weeks) × 2 sessions = 6720 attendance rows.
+        $this->assertSame(6720, Attendance::where('school_id', $school->id)->count());
         $this->assertSame(56, Exam::where('school_id', $school->id)->count());
         $this->assertSame(342, DB::table('marks')->where('school_id', $school->id)->count());
         $this->assertSame(18, SchoolGradingSystem::where('school_id', $school->id)->count(), 'grading scales for primary and o-level');
@@ -68,7 +69,7 @@ class DemoAcademySeederTest extends TestCase
 
         $this->assertSame(84, StudentAcademic::where('school_id', $school->id)->count());
         $this->assertSame(105, FeePayment::where('school_id', $school->id)->count());
-        $this->assertSame(1680, Attendance::where('school_id', $school->id)->count());
+        $this->assertSame(6720, Attendance::where('school_id', $school->id)->count());
         $this->assertSame(56, Exam::where('school_id', $school->id)->count());
         $this->assertSame(342, DB::table('marks')->where('school_id', $school->id)->count());
     }
