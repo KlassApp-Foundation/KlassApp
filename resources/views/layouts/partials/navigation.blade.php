@@ -131,7 +131,7 @@
                         })()">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                     <span class="hidden sm:inline">Search</span>
-                    <kbd class="hidden sm:inline" id="command-palette-kbd" style="font-family: 'DM Sans', sans-serif; font-size: 0.68rem; padding: 1px 5px; border: 1px solid var(--d-border); border-radius: 4px; color: var(--d-muted);">⌘K</kbd>
+                    <kbd class="hidden sm:inline" id="command-palette-kbd" style="font-family: 'DM Sans', sans-serif; font-size: 0.68rem; padding: 1px 5px; border: 1px solid var(--d-border); border-radius: 4px; color: #64748B;">⌘K</kbd>
                 </button>
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {

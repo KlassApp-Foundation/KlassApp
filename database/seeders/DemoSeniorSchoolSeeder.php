@@ -513,7 +513,7 @@ class DemoSeniorSchoolSeeder extends Seeder
 
         $days = [];
         $cursor = now()->copy();
-        while (count($days) < 10) {
+        while (count($days) < 40) { // 8 school weeks — the dashboard attendance trend charts the last 8 weeks
             if (! $cursor->isWeekend()) {
                 $days[] = $cursor->toDateString();
             }

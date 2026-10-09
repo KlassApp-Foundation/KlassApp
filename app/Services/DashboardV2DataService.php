@@ -220,9 +220,11 @@ class DashboardV2DataService
         $hasStructure = FeesCategories::query()->where('school_id', $sid)->exists();
         $currency = $this->currencyFor($sid);
 
-        // Report cards: students with marks for the latest exam.
+        // Report cards: students with marks for the latest exam that HAS marks
+        // (an empty just-created exam must not blank the tile).
         $exam = ExamModel::query()
             ->where('school_id', $sid)
+            ->whereHas('marks', fn ($q) => $q->where('school_id', $sid))
             ->orderByDesc('scheduled_at')
             ->orderByDesc('id')
             ->first();
@@ -319,9 +321,10 @@ class DashboardV2DataService
 
     private function charts(int $sid, int $students, ?AcademicTerm $term): array
     {
-        // Performance by class: latest exam, average mark per section.
+        // Performance by class: latest exam WITH marks, average mark per section.
         $exam = ExamModel::query()
             ->where('school_id', $sid)
+            ->whereHas('marks', fn ($q) => $q->where('school_id', $sid))
             ->orderByDesc('scheduled_at')
             ->orderByDesc('id')
             ->first();
@@ -387,6 +390,7 @@ class DashboardV2DataService
                     'label' => $cursor->format('M'),
                     'collected' => $collected,
                     'expected' => round($share, 2),
+                    'future' => $cursor->isFuture(),
                 ];
                 $cursor->addMonth();
             }

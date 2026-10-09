@@ -283,8 +283,12 @@ async function newContext(browserType, vp) {
           return !menu || menu.hasAttribute('hidden') || menu.getBoundingClientRect().height === 0;
         });
         check(b.name, vp.name, 'phone-popover-esc-closes', closed);
-      } else {
-        // ── Laptop / tablet sidebar + popover (items 2, 4) ─────────────────
+      } else if (vp.width >= 1024) {
+        // ── Laptop sidebar + popover (items 2, 4) ──────────────────────────
+        // Gated to ≥1024: WebKit's classic scrollbars shrink a 768px window's
+        // CSS viewport to ~753px, so 768 legitimately renders the phone shell
+        // there while Chromium shows the desktop shell. Both are correct at
+        // the md (768) breakpoint; the laptop shell is exercised at 1024+.
         const sidebar = await page.evaluate(() => {
           const el = document.querySelector('#admin-sidebar');
           if (!el) return null;

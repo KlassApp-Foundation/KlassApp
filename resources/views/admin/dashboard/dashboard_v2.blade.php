@@ -228,7 +228,7 @@
 
                 <div class="dv2-card" data-testid="dashboard-v2-chart-attendance">
                     <h2>Attendance trend</h2>
-                    <small>Last 8 weeks · whole school</small>
+                    <small>Last {{ max(1, count($charts['attendance_weeks'] ?? [])) }} weeks · whole school</small>
                     @php
                         $aw = $charts['attendance_weeks'] ?? [];
                         $awHas = count(array_filter($aw, fn ($w) => $w['value'] !== null)) > 0;
@@ -275,12 +275,14 @@
                         @php
                             $fm = $charts['fees_months'];
                             $fmAria = implode(', ', array_map(fn ($m) => $m['label'].' collected '.($currency ? $currency.' ' : '').number_format($m['collected']), $fm));
+                            $fmCollectedBg = array_map(fn ($m) => ! empty($m['future']) ? 'rgba(21,128,61,0.25)' : '#15803D', $fm);
+                            $fmExpectedBg = array_map(fn ($m) => ! empty($m['future']) ? 'rgba(148,163,184,0.06)' : 'rgba(148,163,184,0.10)', $fm);
                         @endphp
                         <x-chart type="bar" :height="190"
                                  :labels="array_map(fn ($m) => $m['label'], $fm)"
                                  :datasets="[
-                                     ['label' => 'Collected', 'data' => array_map(fn ($m) => $m['collected'], $fm), 'backgroundColor' => '#15803D', 'borderRadius' => 4],
-                                     ['label' => 'Expected', 'data' => array_map(fn ($m) => $m['expected'], $fm), 'backgroundColor' => 'rgba(148,163,184,0.10)', 'borderColor' => '#94A3B8', 'borderDash' => [4, 3], 'borderWidth' => 1.5, 'borderRadius' => 4],
+                                     ['label' => 'Collected', 'data' => array_map(fn ($m) => $m['collected'], $fm), 'backgroundColor' => $fmCollectedBg, 'borderRadius' => 4],
+                                     ['label' => 'Expected', 'data' => array_map(fn ($m) => $m['expected'], $fm), 'backgroundColor' => $fmExpectedBg, 'borderColor' => '#94A3B8', 'borderDash' => [4, 3], 'borderWidth' => 1.5, 'borderRadius' => 4],
                                  ]"
                                  :options="['plugins' => ['dsValueLabels' => ['display' => true]], 'layout' => ['padding' => ['top' => 14]]]"
                                  aria-label="Fees collected by month: {{ $fmAria }}"
@@ -306,10 +308,20 @@
                     <a href="{{ url('/admin/activity') }}">See all</a>
                 </div>
                 @if(count($activity) > 0)
+                    @php
+                        // Per-event icons keyed off DashboardV2DataService::activity() 'icon'.
+                        $actIcons = [
+                            'wallet' => ['stroke' => '#B45309', 'path' => '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>'],
+                            'calendar-check' => ['stroke' => '#15803D', 'path' => '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18m-9 4 2 2 4-4"/>'],
+                            'clipboard-list' => ['stroke' => '#1E6FD9', 'path' => '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>'],
+                            'user-plus' => ['stroke' => '#64748B', 'path' => '<circle cx="10" cy="8" r="4"/><path d="M3 21v-1a7 7 0 0 1 14 0v1M19 8v6M16 11h6"/>'],
+                        ];
+                    @endphp
                     <ul class="act">
                         @foreach($activity as $row)
+                            @php $ico = $actIcons[$row['icon'] ?? ''] ?? ['stroke' => '#475569', 'path' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>']; @endphp
                             <li>
-                                <span class="ib" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                                <span class="ib" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ $ico['stroke'] }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $ico['path'] !!}</svg></span>
                                 <span>
                                     @foreach($row['segments'] as $segment)
                                         @if(is_array($segment))<b>{{ $segment['bold'] }}</b>@else{{ $segment }}@endif

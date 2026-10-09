@@ -154,6 +154,11 @@
 
                 // Bar value labels (opt-in via options.plugins.dsValueLabels.display).
                 // Inline so chartjs-plugin-datalabels never becomes a dependency.
+                function formatCompact(n) {
+                    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+                    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+                    return Number.isInteger(n) ? String(n) : n.toFixed(1);
+                }
                 window.Chart.register({
                     id: 'dsValueLabels',
                     afterDatasetsDraw(chart, args, opts) {
@@ -171,7 +176,7 @@
                                 const v = ds.data[i];
                                 if (v === null || v === undefined || v === '' || isNaN(v)) return;
                                 const n = Number(v);
-                                ctx.fillText(Number.isInteger(n) ? String(n) : n.toFixed(1), bar.x, bar.y - 4);
+                                ctx.fillText(formatCompact(n), bar.x, bar.y - 4);
                             });
                         });
                         ctx.restore();

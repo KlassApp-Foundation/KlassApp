@@ -2589,7 +2589,7 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #94A3B8;
+    color: #64748B;
     transition: color 0.15s ease;
 }
 .sidebar-group-header--open .sidebar-group-label {
@@ -3707,7 +3707,16 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
         box-shadow: 8px 0 32px rgba(15, 23, 42, 0.18);
         animation: res-drawer-in 0.18s ease;
     }
-    #res_sidebar.admin-sidebar li > a { min-height: 48px; }
+    #res_sidebar.admin-sidebar li > a {
+        min-height: 48px;
+        color: #334155;
+    }
+    #res_sidebar.admin-sidebar li.active > a,
+    #res_sidebar.admin-sidebar li.dashboard-active > a {
+        color: #14532D;
+        background: rgba(34, 197, 94, 0.14);
+        font-weight: 600;
+    }
     #res_sidebar.admin-sidebar .dashboard-sidebar-footer {
         border-top-color: var(--d-border, #E2E8F0);
     }
@@ -3718,6 +3727,12 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
 }
 @media (prefers-reduced-motion: reduce) {
     #res_sidebar.admin-sidebar { animation: none; }
+}
+
+/* Item 12: in preview mode the Toshi edge triangle stays off screens below
+   1280 (the panel needs the room); ≥1280 and assistant/onboarding unchanged. */
+@media (max-width: 1279px) {
+    #toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none; }
 }
 
 /* Phone top bar (concept .topbar, 56px): burger, ellipsised title, search
@@ -3834,15 +3849,16 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
 
 /* Sidebar polish (contemporary look, same IA) */
 #admin-sidebar { box-shadow: inset -1px 0 0 var(--d-border, #E2E8F0); }
+#admin-sidebar .dashboard-menu-item { min-height: 40px; }
 #admin-sidebar .dashboard-menu-item > a,
 #admin-sidebar .sidebar-group-header {
-  border-radius: 10px; padding: 0.5rem 0.625rem;
+  border-radius: 10px; padding: 0.3rem 0.625rem;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 #admin-sidebar .dashboard-menu-item > a:hover,
 #admin-sidebar .sidebar-group-header:hover { background: rgba(34,197,94,0.10); }
 #admin-sidebar .dashboard-menu-item.active > a,
-#admin-sidebar .dashboard-menu-item.dashboard-active > a { background: rgba(34,197,94,0.14); color: #166534; font-weight: 600; }
+#admin-sidebar .dashboard-menu-item.dashboard-active > a { background: rgba(34,197,94,0.14); color: #14532D; font-weight: 600; }
 #admin-sidebar .sidebar-group-label {
   font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--d-text-secondary, #64748B);
