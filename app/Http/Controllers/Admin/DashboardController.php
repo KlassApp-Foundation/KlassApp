@@ -133,6 +133,8 @@ class DashboardController extends Controller
 
         return view( $dashboardView, [
             'v2Data' => $v2Data,
+            // Dashboard v2 renders its own year control; the top-bar picker would duplicate it.
+            'navShowAcademicYear' => $dashboardView !== '/admin/dashboard/dashboard_v2',
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
             'selected_teacher' => $selected_teacher,

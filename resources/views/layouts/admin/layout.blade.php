@@ -3,7 +3,7 @@
 
 
 @section('base-navigation')
-  @include('layouts.partials.navigation', ['chromeInSidebar' => true])
+  @include('layouts.partials.navigation', ['chromeInSidebar' => true, 'showAcademicYear' => $navShowAcademicYear ?? true])
 @endsection
 
 

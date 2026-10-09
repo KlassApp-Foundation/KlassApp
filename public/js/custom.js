@@ -135,6 +135,26 @@ $(document).ready(function(){
     this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   });
 
+  function closeMobileDrawer() {
+    var resSidebar = document.getElementById('res_sidebar');
+    if (!resSidebar || resSidebar.classList.contains('hidden')) return;
+    resSidebar.classList.remove('block');
+    resSidebar.classList.add('hidden');
+    var trigger = document.getElementById('mobile-menu-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  // Drawer closes on tap-outside (concept: document click outside #side) and Esc.
+  $(document).on('click', function(e) {
+    var resSidebar = document.getElementById('res_sidebar');
+    if (!resSidebar || resSidebar.classList.contains('hidden')) return;
+    if (e.target.closest('#res_sidebar') || e.target.closest('#mobile-menu-trigger')) return;
+    closeMobileDrawer();
+  });
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape') closeMobileDrawer();
+  });
+
   // Sidebar accordion toggle (moved from superadmin/menu.blade.php — Vue strips inline scripts)
   $(document).ready(function() {
     var parents = document.querySelectorAll('.sidebar-menu-parent');

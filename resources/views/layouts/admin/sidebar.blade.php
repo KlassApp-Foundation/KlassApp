@@ -6,8 +6,9 @@
   </div>
   @include('layouts.partials.sidebar-footer', ['notifyMode' => 'admin'])
 </div>
-{{-- Mobile sidebar — toggleable via hamburger. Reuses the same footer at the bottom of the menu. --}}
-<div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" style="background-color: #141413; position: absolute; z-index: 50; width: 100%;">
+{{-- Mobile sidebar — toggleable via hamburger. Reuses the same footer at the bottom of the menu.
+     Light slide-in panel (concept .side, 288px); geometry/animation live in dashboard-refresh.css. --}}
+<div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" style="background-color: #FFFCF5;">
   <div class="min-h-full header-wrapper-b flex flex-col">
     @include('layouts.partials.sidebar-menu', ['role' => 'admin'])
     @include('layouts.partials.sidebar-footer', ['notifyMode' => 'admin'])
