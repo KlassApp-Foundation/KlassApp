@@ -22,7 +22,7 @@ class GenerateClassReportsJob implements ShouldQueue
     public int $timeout = 900;
     public int $tries = 1;
 
-    public function __construct(public int $generationId)
+    public function __construct(public int $generationId, public ?int $examId = null)
     {
     }
 
@@ -44,7 +44,12 @@ class GenerateClassReportsJob implements ShouldQueue
                 throw new \RuntimeException('Class link not found.');
             }
 
-            $exam = Exam::where('school_id', $schoolId)
+            // An explicit exam pin (seeding a past term) wins over the default
+            // "latest EOT exam" lookup, which has no term filter and would
+            // otherwise pick up a newer, still-open term's exam.
+            $exam = $this->examId
+                ? Exam::where('school_id', $schoolId)->whereKey($this->examId)->first()
+                : Exam::where('school_id', $schoolId)
                 ->where('section_id', $stdLink->section_id)
                 ->where('standard_id', $stdLink->standard_id)
                 ->whereHas('examType', fn($q) => $q->where('contributes_to_report_total', 1))

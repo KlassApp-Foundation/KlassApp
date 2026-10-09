@@ -6,6 +6,7 @@ use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
 use App\Models\Academics\TimetableSlot;
 use App\Models\Admission;
 use App\Models\Attendance;
@@ -20,8 +21,10 @@ use App\Models\Plan;
 use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
+use App\Models\ReportGeneration;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Jobs\GenerateClassReportsJob;
 use App\Services\FreeTierPlanService;
 use App\Services\OnboardingStepsService;
 use App\Support\DemoSeedManifest;
@@ -71,6 +74,7 @@ trait SeedsRichDemoData
         $this->richEnsureAttendance();
         $this->richSeedExamRounds();
         $this->richCompleteOnboarding();
+        $this->richSeedDemoReportCards();
         $this->richWriteManifest();
     }
 
@@ -578,7 +582,24 @@ trait SeedsRichDemoData
 
         $terms = AcademicTerm::where('school_id', $schoolId)->orderByDesc('ends_on')->get();
         $current = $terms->firstWhere('status', 'current') ?? $terms->first();
-        $previous = $terms->first(fn ($term) => $current && Carbon::parse($term->ends_on)->lt(Carbon::parse($current->starts_on)));
+
+        // Previous term = the LATEST term before current that actually has EOT
+        // exams with marks. A generic "first term ending before current" would
+        // resolve to Term I (an empty historical term with no students/exams)
+        // and seed the whole exam round against the wrong term — leaving the
+        // real previous term (Term II) and the current term without the marks
+        // the live "Generate report cards" flow needs. Observed live: senior
+        // and Academy got zero current-term EOT exams this way.
+        $previous = $terms
+            ->filter(fn ($term) => $current && $term->id !== $current->id
+                && Carbon::parse($term->ends_on)->lt(Carbon::parse($current->starts_on))
+                && Exam::where('school_id', $schoolId)
+                    ->where('academic_term_id', $term->id)
+                    ->where('exam_type_id', $eot->id)
+                    ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId))
+                    ->exists())
+            ->sortByDesc(fn ($term) => Carbon::parse($term->ends_on)->getTimestamp())
+            ->first();
 
         if (! $current || ! $previous) {
             $this->command?->warn('Rich exams skipped: could not resolve current/previous terms.');
@@ -649,6 +670,17 @@ trait SeedsRichDemoData
                 // 4) Current term: one upcoming (EOT at the end of term).
                 $eotNow = $this->richMakeExam($schoolId, $section, $subject, $eot, $current, $teacherId, 'undone', Carbon::parse($current->ends_on)->subDays(7)->setTime(9, 0), Carbon::parse($current->ends_on)->setTime(17, 0));
                 $newExams += (int) $eotNow->wasRecentlyCreated;
+
+                // Marks exist for every student who has a mark in the previous
+                // term's EOT exam for this same section (nursery sections, whose
+                // reporting is narrative, have none and stay mark-less). This is
+                // what makes the CURRENT term's "Generate report cards" work
+                // live: index() binds a class to its current-term eotExam, and
+                // with no marks the generate button would have nothing to
+                // render. The current term is still left UNGENERATED (no
+                // report_generations rows), so it stays a live demo.
+                $prevStudentIds = Marks::where('exam_id', $eotPrev->id)->distinct()->pluck('student_id');
+                $newMarks += $this->richEnsureMarks($eotNow, $prevStudentIds);
             }
         }
 
@@ -739,6 +771,114 @@ trait SeedsRichDemoData
                 'rejection_reason' => null,
             ]
         );
+    }
+
+    /**
+     * Seed the previous term's report cards (merged, openable PDFs) through the
+     * app's own GenerateClassReportsJob pipeline, so "Recent generations" is not
+     * empty on a fresh demo school.
+     *
+     * The current term is deliberately left UNGENERATED so "Generate report
+     * cards" works live for whoever is demoing. Both terms' EOT exams already
+     * carry marks (seeded by seedExamsAndMarks / richSeedExamRounds), so the
+     * current term is ready to generate on demand.
+     */
+    protected function richSeedDemoReportCards(): void
+    {
+        $schoolId = (int) $this->school->id;
+
+        // Currency lives in school_details.meta_key='currency' (read by
+        // DashboardV2DataService::currencyFor). Setting it here clears the
+        // "Set your currency" dashboard hint without hard-coding a symbol.
+        DB::table('school_details')->updateOrInsert(
+            ['school_id' => $schoolId, 'meta_key' => 'currency'],
+            ['meta_value' => 'UGX', 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        $terms = AcademicTerm::where('school_id', $schoolId)->orderByDesc('ends_on')->get();
+        $current = $terms->firstWhere('status', 'current') ?? $terms->first();
+
+        // Previous term = the LATEST term before current that actually has EOT
+        // exams. A generic "first term ending before current" would resolve to
+        // Term I (an empty historical term with no exams) and leave the real
+        // previous term (Term II, which carries the marks) unseeded — observed
+        // live: junior generated against Term III instead of Term II.
+        $eot = ExamType::firstOrCreate(['code' => 'EOT'], ['name' => 'End of Term Examination', 'contributes_to_report_total' => true]);
+        $previous = $terms
+            ->filter(fn ($t) => $current && $t->id !== $current->id
+                && Carbon::parse($t->ends_on)->lt(Carbon::parse($current->starts_on))
+                && Exam::where('school_id', $schoolId)
+                    ->where('academic_term_id', $t->id)
+                    ->where('exam_type_id', $eot->id)
+                    ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId))
+                    ->exists())
+            ->sortByDesc(fn ($t) => Carbon::parse($t->ends_on)->getTimestamp())
+            ->first();
+
+        if (! $previous) {
+            $this->command?->warn('Demo report cards skipped: no previous term with EOT exams.');
+
+            return;
+        }
+
+        $links = StandardLink::where('school_id', $schoolId)->with('section')->get();
+
+        $generated = 0;
+
+        foreach ($links as $link) {
+            // Pin the PREVIOUS term's EOT exam explicitly. resolveExam/the job's
+            // default lookup has no term filter and would otherwise pick the
+            // current term's newer exam (staging: Term III EOTs have higher ids).
+            $exam = Exam::where('school_id', $schoolId)
+                ->where('section_id', $link->section_id)
+                ->where('standard_id', $link->standard_id)
+                ->where('academic_term_id', $previous->id)
+                ->where('exam_type_id', $eot->id)
+                ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId))
+                ->latest()
+                ->first();
+
+            if (! $exam) {
+                continue;
+            }
+
+            $generation = ReportGeneration::firstOrCreate(
+                [
+                    'school_id' => $schoolId,
+                    'standard_link_id' => $link->id,
+                    'mode' => 'merged',
+                ],
+                [
+                    'class_name' => $link->section->name ?? 'class',
+                    'status' => 'pending',
+                    'requested_by' => null,
+                ]
+            );
+
+            // (Re)run through the real pipeline when pending/failed, or when the
+            // row claims completed but the PDF file is gone (Laravel Cloud wipes
+            // storage/app/reports on redeploy, leaving a stale "completed" row).
+            $fileMissing = $generation->status === 'completed'
+                && (! $generation->file_path || ! file_exists(storage_path('app/' . $generation->file_path)));
+
+            if ($generation->status !== 'completed' || $fileMissing) {
+                $generation->update(['status' => 'pending', 'error' => null]);
+
+                // dispatchSync runs the job inline (no worker needed) and we pin
+                // the exam so re-runs stay deterministic once the current term's
+                // exams are newer than the previous term's.
+                GenerateClassReportsJob::dispatchSync($generation->id, $exam->id);
+                $generation->refresh();
+            }
+
+            if ($generation->status === 'completed') {
+                $generated++;
+            } else {
+                $this->command?->warn("Demo report cards: {$link->section->name} generation {$generation->status} ({$generation->error}).");
+            }
+        }
+
+        $this->command?->info("Demo report cards: {$generated}/".count($links)." previous-term ({$previous->name}) class PDFs ready; current term left ungenerated.");
     }
 
     // ───────────────────────────────────────────────────────────── manifest
