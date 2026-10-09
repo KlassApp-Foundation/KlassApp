@@ -1,0 +1,156 @@
+[
+  {
+    "item": "item4",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item4.png"
+  },
+  {
+    "item": "item5",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item5.png"
+  },
+  {
+    "item": "item6",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item6.png"
+  },
+  {
+    "item": "item7",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item7.png"
+  },
+  {
+    "item": "item8",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item8.png"
+  },
+  {
+    "item": "item9",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item9.png"
+  },
+  {
+    "item": "item10",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item10.png"
+  },
+  {
+    "item": "item11",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item11.png"
+  },
+  {
+    "item": "item12",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "engine": "webkit",
+    "liveFrame": "webkit/375/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item12.png"
+  },
+  {
+    "item": "item12b",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item12b.png"
+  },
+  {
+    "item": "item2",
+    "conceptQuery": "?s=dashboard&acct=1",
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "engine": "webkit",
+    "liveFrame": "webkit/375/phone-popover-open.png",
+    "pair": "evidence/shell-polish/pairs/item2.png"
+  },
+  {
+    "item": "item2b",
+    "conceptQuery": "?s=dashboard&acct=1",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "engine": "chromium",
+    "liveFrame": "chromium/1280/laptop-popover-open.png",
+    "pair": "evidence/shell-polish/pairs/item2b.png"
+  },
+  {
+    "item": "item1",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "engine": "webkit",
+    "liveFrame": "webkit/375/drawer-open.png",
+    "pair": "evidence/shell-polish/pairs/item1.png"
+  },
+  {
+    "item": "item3",
+    "conceptQuery": "?s=dashboard",
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "engine": "webkit",
+    "liveFrame": "webkit/375/dashboard.png",
+    "pair": "evidence/shell-polish/pairs/item3.png"
+  }
+]
