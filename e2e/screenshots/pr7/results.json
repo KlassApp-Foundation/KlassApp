@@ -1,0 +1,38 @@
+{
+  "sidebarWidth": 248,
+  "open": {
+    "visible": true,
+    "menu": {
+      "left": 62,
+      "right": 286,
+      "bottom": 835,
+      "top": 553,
+      "w": 224
+    },
+    "cardTop": 844,
+    "gap": 9,
+    "inViewport": true,
+    "focus": "Edit profile"
+  },
+  "sidebarLeftBefore": 0,
+  "sidebarLeftAfter": 0,
+  "esc": {
+    "hidden": true,
+    "focusTag": "account-card__trigger"
+  },
+  "mobile": {
+    "avatarCount": 1,
+    "avatarVisible": true,
+    "menu": {
+      "left": 125,
+      "right": 353,
+      "w": 228,
+      "inViewport": true,
+      "vw": 375
+    }
+  },
+  "currency": {
+    "feesText": "Fees collected | 56% |  | 30.5M of 54M · Set your currency",
+    "hint": true
+  }
+}
