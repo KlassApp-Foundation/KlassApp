@@ -80,6 +80,72 @@ class SoftlaunchAccountCardContractTest extends TestCase
         $this->assertStringContainsString('only-handle', $html);
     }
 
+    public function test_menu_order_icons_and_popover_geometry(): void
+    {
+        $user = User::factory()->create([
+            'usergroup_id' => 3,
+            'name' => 'geom.admin',
+            'email' => 'geom@test.sch.ug',
+            'status' => 'active',
+        ]);
+        Userprofile::create([
+            'user_id' => $user->id,
+            'school_id' => $user->school_id,
+            'usergroup_id' => 3,
+            'firstname' => 'Geometry',
+            'lastname' => 'Admin',
+        ]);
+        Auth::guard('web')->setUser($user->fresh(['userprofile']));
+
+        $html = view('layouts.partials.profile-dropdown')->render();
+
+        // PR7 content order: identity row, Edit profile, Change password, Settings, separator, Log out.
+        $edit = strpos($html, 'Edit profile');
+        $pw = strpos($html, 'Change password');
+        $settings = strpos($html, 'Settings');
+        $logout = strpos($html, 'Log out');
+        $this->assertNotFalse($edit);
+        $this->assertNotFalse($pw);
+        $this->assertNotFalse($settings);
+        $this->assertNotFalse($logout);
+        $this->assertTrue($edit < $pw && $pw < $settings && $settings < $logout, 'menu order must be Edit profile, Change password, Settings, Log out');
+
+        // 18px icons on the menu rows.
+        $this->assertGreaterThanOrEqual(3, substr_count($html, 'width="18" height="18"'));
+
+        $css = file_get_contents(public_path('css/dashboard-refresh.css'));
+        // Popover: 8px above the card, 224px wide via 248px sidebar minus 12px insets.
+        $this->assertStringContainsString('bottom: calc(100% + 8px)', $css);
+        $this->assertStringContainsString('width: 248px', $css);
+        $this->assertStringContainsString('#app-sidebar-wrap', $css);
+        $this->assertStringContainsString('account-card--topbar', $css);
+        $this->assertStringContainsString('width: 18px', $css);
+    }
+
+    public function test_topbar_variant_for_mobile_hangs_from_the_top_bar(): void
+    {
+        $user = User::factory()->create([
+            'usergroup_id' => 3,
+            'name' => 'topbar.admin',
+            'email' => 'topbar@test.sch.ug',
+            'status' => 'active',
+        ]);
+        Userprofile::create([
+            'user_id' => $user->id,
+            'school_id' => $user->school_id,
+            'usergroup_id' => 3,
+            'firstname' => 'Topbar',
+            'lastname' => 'Admin',
+        ]);
+        Auth::guard('web')->setUser($user->fresh(['userprofile']));
+
+        $html = view('layouts.partials.profile-dropdown', ['variant' => 'topbar'])->render();
+
+        $this->assertStringContainsString('account-card--topbar', $html);
+        $this->assertStringContainsString('account-card__menu', $html);
+        $this->assertStringContainsString('aria-haspopup="menu"', $html);
+    }
+
     public function test_js_wires_keyboard_and_aria_for_account_card(): void
     {
         $js = file_get_contents(public_path('js/custom.js'));
