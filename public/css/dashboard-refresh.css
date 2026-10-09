@@ -3961,7 +3961,11 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
     justify-content: center;
     gap: 8px;
     height: 100%;
-    color: var(--d-muted);
+    /* AA fix (2026-10-09): empty-state text inherits --d-muted (#94A3B8 = 2.45:1
+       on the #FAFAF5 card), failing WCAG AA at 0.8rem. Override to the established
+       AA muted (#64748B = 4.55:1) scoped to this component only, so the global
+       --d-muted token is untouched. */
+    color: #64748B;
     font-family: "DM Sans", sans-serif;
     font-size: 0.8rem;
 }
