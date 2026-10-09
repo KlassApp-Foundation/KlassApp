@@ -3690,18 +3690,72 @@ body.toshi-manual-wizard [data-toshi-root] {
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { justify-content: center; padding-left: 0.25rem; padding-right: 0.25rem; }
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sidebar-footer-bell .relative.flex { padding: 4px !important; }
 
-/* Mobile menu drawer — account card stays light; chrome tint for the footer edge */
-#res_sidebar .dashboard-sidebar-footer { border-top-color: rgba(255,255,255,0.15); }
-#res_sidebar .dashboard-sidebar-footer-bell svg { color: #E2E8F0; }
-#res_sidebar .account-card__trigger:hover,
-#res_sidebar .profile-click.open .account-card__trigger { background: rgba(255,255,255,0.08); }
-#res_sidebar .account-card__name { color: #F8FAFC; }
-#res_sidebar .account-card__email { color: #94A3B8; }
-#res_sidebar .account-card__chevron { color: #94A3B8; }
-#res_sidebar .account-card__menu.user-dtl {
-    left: 8px;
-    right: 8px;
-    width: auto;
+/* Mobile menu drawer — light slide-in panel (concept .side: 288px, cream canvas,
+   scrim via click-outside). Rows ~48px; account card hidden (topbar owns chrome). */
+@media (max-width: 767px) {
+    #res_sidebar.admin-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 288px;
+        max-width: calc(100vw - 48px);
+        z-index: 50;
+        background: #FFFCF5;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        box-shadow: 8px 0 32px rgba(15, 23, 42, 0.18);
+        animation: res-drawer-in 0.18s ease;
+    }
+    #res_sidebar.admin-sidebar li > a { min-height: 48px; }
+    #res_sidebar.admin-sidebar .dashboard-sidebar-footer {
+        border-top-color: var(--d-border, #E2E8F0);
+    }
+}
+@keyframes res-drawer-in {
+    from { transform: translateX(-12px); opacity: 0.7; }
+    to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #res_sidebar.admin-sidebar { animation: none; }
+}
+
+/* Phone top bar (concept .topbar, 56px): burger, ellipsised title, search
+   icon, avatar. Logo mark hidden; the dashboard header owns the year picker. */
+@media (max-width: 767px) {
+    .dashboard-themed-header {
+        flex-wrap: nowrap;
+        height: 56px;
+        min-height: 56px;
+        padding: 0 6px;
+        gap: 6px;
+    }
+    .dashboard-themed-header .nav-brand {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .dashboard-themed-header .nav-brand > a.h-10 { display: none; }
+    .dashboard-themed-header .nav-brand a {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
+    .dashboard-themed-header .nav-brand strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0F172A;
+    }
+    .dashboard-themed-header .flex.flex-row.flex-wrap.items-center.gap-2 {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+        gap: 4px;
+    }
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────────────
@@ -4165,8 +4219,6 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
    drawer has a dark inline background, so there the active glyph is on-accent. */
 li.active .ka-nav-icon,
 li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
-#res_sidebar.admin-sidebar li.active .ka-nav-icon,
-#res_sidebar.admin-sidebar li.dashboard-active .ka-nav-icon { color: var(--d-icon-on-accent); }
 /* 44px tap target and a visible keyboard focus ring on sidebar links. */
 .dashboard-themed-sidebar li > a { min-height: 44px; }
 .dashboard-themed-sidebar a:focus-visible {
@@ -4219,8 +4271,9 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
     .account-card--topbar .account-card__menu.user-dtl {
         left: auto;
         right: 8px;
-        width: min(224px, calc(100vw - 16px));
+        top: calc(100% + 8px);
+        bottom: auto;
+        width: min(280px, calc(100vw - 16px));
         max-width: calc(100vw - 16px);
-        bottom: calc(100% + 8px);
     }
 }
