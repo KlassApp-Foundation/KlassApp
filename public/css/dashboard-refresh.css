@@ -4426,21 +4426,67 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    gap: 4px;
+    padding: 6px 8px 8px;
+    box-sizing: border-box;
+    max-height: 96px;
+    overflow: hidden;
 }
 .sidebar-toshi-soon {
-    margin: 0 0 6px;
+    margin: 0;
     font-size: 11px;
-    line-height: 1.35;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: #64748B;
+}
+.sidebar-account-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+    min-width: 0;
+}
+.sidebar-account-row .dashboard-sidebar-footer-bell {
+    flex: 0 0 auto;
+}
+.sidebar-account-row .account-card {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 #admin-sidebar .account-card,
 #res_sidebar .account-card {
     width: 100%;
 }
 .drawer-year { display: none; }
+.sidebar-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(15, 23, 42, 0.4);
+}
+.sidebar-scrim.is-open { display: block; }
+body.ka-drawer-open .dashboard-content-area select {
+    visibility: hidden;
+}
 @media (max-width: 767px) {
     .navbar .dashboard-ay-selector { display: none !important; }
-    .drawer-year { display: block; margin: 0 8px 8px; }
+    #res_sidebar .dashboard-sidebar-footer { max-height: none; }
+    .drawer-year {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 0;
+    }
+    .drawer-year .dashboard-ay-select {
+        width: 100%;
+        color: #1E293B;
+        background: #fff;
+        min-height: 36px;
+    }
     #res_sidebar.admin-sidebar.block:not(.hidden) {
         display: flex;
         flex-direction: column;
@@ -4449,6 +4495,7 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
         overflow: hidden;
         padding-top: max(12px, env(safe-area-inset-top));
         box-sizing: border-box;
+        z-index: 80;
     }
     #res_sidebar .drawer-nav {
         flex: 1 1 auto;

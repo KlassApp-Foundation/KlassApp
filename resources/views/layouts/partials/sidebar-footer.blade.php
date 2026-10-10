@@ -26,18 +26,34 @@
          profile dropdown requires an authenticated user (PortalProfileLinks). --}}
 @else
 <div class="dashboard-sidebar-footer" data-testid="dashboard-sidebar-footer">
-    <p class="sidebar-toshi-soon" data-testid="sidebar-toshi-soon">Toshi, your school’s AI assistant, is coming soon.</p>
+    <p class="sidebar-toshi-soon" data-testid="sidebar-toshi-soon">Toshi · coming soon</p>
     @if(!empty($showYear))
+        @php
+            $drawerSchoolId = auth()->user()->school_id;
+            $drawerYears = \App\Models\AcademicYear::query()
+                ->where('school_id', $drawerSchoolId)
+                ->orderBy('name')
+                ->get(['id', 'name', 'status']);
+            $drawerCurrent = \App\Helpers\SiteHelper::getAcademicYear($drawerSchoolId);
+            $drawerCurrentId = $drawerCurrent?->id;
+        @endphp
         <div class="drawer-year" data-testid="drawer-academic-year">
-            <nav-bar field-id="academic_year_drawer"></nav-bar>
+            <label for="academic_year_drawer" class="dashboard-ay-label">Academic year</label>
+            <select id="academic_year_drawer" class="dashboard-ay-select" data-testid="drawer-academic-year-select" aria-label="Academic year">
+                @foreach($drawerYears as $year)
+                    <option value="{{ $year->id }}" @selected((int) $year->id === (int) $drawerCurrentId)>{{ $year->name }}@if((int) $year->status === 1 && ! str_contains((string) $year->name, 'current')) (current)@endif</option>
+                @endforeach
+            </select>
         </div>
     @endif
-    @if($notifyMode)
-        <div class="dashboard-sidebar-footer-bell">
-            <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
-        </div>
-    @endif
-    @include('layouts.partials.dashboard-v2-chip')
-    @include('layouts.partials.profile-dropdown')
+    <div class="sidebar-account-row">
+        @if($notifyMode)
+            <div class="dashboard-sidebar-footer-bell">
+                <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
+            </div>
+        @endif
+        @include('layouts.partials.dashboard-v2-chip')
+        @include('layouts.partials.profile-dropdown')
+    </div>
 </div>
 @endif

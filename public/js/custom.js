@@ -173,6 +173,20 @@ $(document).ready(function(){
   // former inline onclick="showsidebar('res_sidebar')", which double-bound and made the
   // menu unopenable: the inline handler removed `hidden`, this listener re-added it.
   // Delegation also survives Livewire morphing of the navbar.)
+  function setDrawerChrome(open) {
+    var scrim = document.getElementById('sidebar-scrim');
+    var content = document.querySelector('.dashboard-content-area');
+    if (scrim) {
+      scrim.hidden = !open;
+      scrim.classList.toggle('is-open', open);
+    }
+    document.body.classList.toggle('ka-drawer-open', open);
+    if (content) {
+      if (open) content.setAttribute('inert', '');
+      else content.removeAttribute('inert');
+    }
+  }
+
   $(document).on('click', '#mobile-menu-trigger', function() {
     var resSidebar = document.getElementById('res_sidebar');
     if (!resSidebar) return;
@@ -180,6 +194,18 @@ $(document).ready(function(){
     resSidebar.classList.toggle('hidden', !willOpen);
     resSidebar.classList.toggle('block', willOpen);
     this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    setDrawerChrome(willOpen);
+  });
+
+  $(document).on('change', '#academic_year_drawer', function() {
+    var token = document.querySelector('meta[name="csrf-token"]');
+    var body = new FormData();
+    body.append('academic_year_id', this.value);
+    fetch('/admin/academicyear/index', {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': token ? token.getAttribute('content') : '', 'Accept': 'application/json' },
+      body: body
+    }).finally(function() { window.location.reload(); });
   });
 
   function closeMobileDrawer() {
@@ -189,6 +215,7 @@ $(document).ready(function(){
     resSidebar.classList.add('hidden');
     var trigger = document.getElementById('mobile-menu-trigger');
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    setDrawerChrome(false);
   }
 
   // Drawer closes on tap-outside (concept: document click outside #side) and Esc.
@@ -196,6 +223,9 @@ $(document).ready(function(){
     var resSidebar = document.getElementById('res_sidebar');
     if (!resSidebar || resSidebar.classList.contains('hidden')) return;
     if (e.target.closest('#res_sidebar') || e.target.closest('#mobile-menu-trigger')) return;
+    closeMobileDrawer();
+  });
+  $(document).on('click', '#sidebar-scrim', function() {
     closeMobileDrawer();
   });
   $(document).on('keydown', function(e) {

@@ -279,10 +279,11 @@
                         <x-chart type="bar" :height="190"
                                  :labels="array_map(fn ($m) => $m['label'], $fm)"
                                  :datasets="[
-                                     ['label' => 'Collected', 'data' => array_map(fn ($m) => $m['collected'], $fm), 'backgroundColor' => $fmCollectedBg, 'borderRadius' => 4],
+                                     ['label' => 'Collected', 'data' => array_map(fn ($m) => $m['collected'], $fm), 'kaFuture' => array_map(fn ($m) => ! empty($m['future']), $fm), 'backgroundColor' => $fmCollectedBg, 'borderRadius' => 4],
                                      ['label' => 'Expected', 'data' => array_map(fn ($m) => $m['expected'], $fm), 'backgroundColor' => $fmExpectedBg, 'borderColor' => '#94A3B8', 'borderDash' => [4, 3], 'borderWidth' => 1.5, 'borderRadius' => 4],
                                  ]"
-                                 :options="['plugins' => ['dsValueLabels' => ['display' => true]], 'layout' => ['padding' => ['top' => 14]]]"
+                                 :options="['plugins' => ['dsValueLabels' => ['display' => true]], 'layout' => ['padding' => ['top' => 14, 'left' => 4, 'right' => 8]]]"
+                                 options-js='{ scales: { y: { ticks: { maxTicksLimit: 6, callback: function (v) { var n = Number(v); if (!isFinite(n)) return ""; if (Math.abs(n) >= 1000000) return Math.round(n / 1000000) + "M"; if (Math.abs(n) >= 1000) return Math.round(n / 1000) + "K"; return String(n); } }, afterFit: function (scale) { scale.width = Math.max(scale.width, 44); } } } }'
                                  aria-label="Fees collected by month: {{ $fmAria }}"
                                  empty-message="No fee collections recorded yet." />
                         <div class="legend">

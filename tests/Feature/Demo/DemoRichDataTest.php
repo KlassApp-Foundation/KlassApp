@@ -114,6 +114,13 @@ class DemoRichDataTest extends TestCase
                 0.01,
                 $school->name
             );
+            $expected = (float) $data['kpis']['fees']['expected'];
+            $this->assertGreaterThan(0, $expected, $school->name);
+            $this->assertSame(
+                (int) round(((float) $data['kpis']['fees']['collected']) / $expected * 100),
+                (int) $data['kpis']['fees']['percent'],
+                $school->name.' fee percent'
+            );
         }
     }
 

@@ -452,11 +452,14 @@ class DashboardV2DataService
                 $current = $month;
             }
         }
-        $collected = $current['collected'] ?? 0;
+        $collected = (float) ($current['collected'] ?? 0);
         $expected = $feeMonths === [] ? (float) $feePosition['expected_raw'] : (float) $feeMonths[array_key_last($feeMonths)]['expected'];
+        $percent = ($hasStructure && $expected > 0)
+            ? (int) round($collected / $expected * 100)
+            : null;
 
         return [
-            'percent' => $hasStructure ? (int) $feePosition['rate'] : null,
+            'percent' => $percent,
             'collected' => $collected,
             'expected' => $expected,
             'collected_label' => $this->moneyLabel($currency, $collected),
