@@ -30,6 +30,7 @@ use App\Services\OnboardingStepsService;
 use App\Support\DemoSeedManifest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Rich demo data shared by the Junior and Senior demo seeders.
@@ -1122,23 +1123,33 @@ trait SeedsRichDemoData
         }
         $cityId = DB::table('cities')->where('country_id', $countryId)->where('name', 'Kampala')->value('id');
         if (! $cityId) {
-            $cityId = DB::table('cities')->insertGetId([
+            $city = [
                 'country_id' => $countryId,
-                'state_id' => $stateId,
                 'name' => 'Kampala',
                 'status' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+            if (Schema::hasColumn('cities', 'state_id')) {
+                $city['state_id'] = $stateId;
+            }
+            $cityId = DB::table('cities')->insertGetId($city);
         }
 
-        $this->school->forceFill([
-            'country_id' => $this->school->country_id ?: $countryId,
-            'state_id' => $this->school->state_id ?: $stateId,
-            'city_id' => $this->school->city_id ?: $cityId,
+        $profile = [
             'address' => $this->school->address ?: 'Plot 12, Sample Road',
             'motto' => $this->school->motto ?: 'Learning together',
-        ])->save();
+        ];
+        if (Schema::hasColumn('schools', 'country_id')) {
+            $profile['country_id'] = $this->school->country_id ?: $countryId;
+        }
+        if (Schema::hasColumn('schools', 'state_id')) {
+            $profile['state_id'] = $this->school->state_id ?: $stateId;
+        }
+        if (Schema::hasColumn('schools', 'city_id')) {
+            $profile['city_id'] = $this->school->city_id ?: $cityId;
+        }
+        $this->school->forceFill($profile)->save();
 
         foreach ([
             'website' => 'https://demo.klassapp.test',
