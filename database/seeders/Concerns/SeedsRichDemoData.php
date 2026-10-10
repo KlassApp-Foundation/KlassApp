@@ -74,6 +74,8 @@ trait SeedsRichDemoData
         $this->richEnsureAttendance();
         $this->richSeedExamRounds();
         $this->richCompleteOnboarding();
+        $this->richTeacherProfiles();
+        $this->richSchoolProfile();
         $this->richSeedDemoReportCards();
         $this->richWriteManifest();
     }
@@ -162,6 +164,8 @@ trait SeedsRichDemoData
             'student_size' => $school->student_size ?: 'Up to 500',
             'ministry_code' => $school->ministry_code ?: 'DEMO-EMIS-' . $school->id,
             'uneb_center_number' => $school->uneb_center_number ?: 'DEMO-UNEB-' . $school->id,
+            'address' => $school->address ?: 'Plot 12, Sample Road',
+            'motto' => $school->motto ?: 'Learning together',
         ])->save();
 
         // 'whatsapp_verify' reads the admin's WhatsAppUser row.
@@ -847,6 +851,7 @@ trait SeedsRichDemoData
                     'school_id' => $schoolId,
                     'standard_link_id' => $link->id,
                     'mode' => 'merged',
+                    'academic_term_id' => $previous->id,
                 ],
                 [
                     'class_name' => $link->section->name ?? 'class',
@@ -1047,6 +1052,104 @@ trait SeedsRichDemoData
     protected function richFictionalPhone(string $seed): string
     {
         return '070' . str_pad((string) (crc32($seed) % 10000000), 7, '0', STR_PAD_LEFT);
+    }
+
+    protected function richTeacherProfiles(): void
+    {
+        $female = ['Grace', 'Rita', 'Joan', 'Esther', 'Diana', 'Sarah', 'Alice'];
+        $teachers = User::query()
+            ->where('school_id', $this->school->id)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($teachers as $index => $teacher) {
+            $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $teacher->id]);
+            $first = (string) ($profile->firstname ?: 'Teacher');
+            $profile->forceFill([
+                'user_id' => $teacher->id,
+                'school_id' => $this->school->id,
+                'usergroup_id' => 5,
+                'date_of_birth' => $profile->date_of_birth ?: Carbon::create(1988, ($index % 12) + 1, ($index % 27) + 1)->toDateString(),
+                'gender' => $profile->gender ?: (in_array($first, $female, true) ? 'female' : 'male'),
+                'joining_date' => $profile->joining_date ?: '2022-02-07',
+            ])->save();
+
+            $row = DB::table('teacherprofile')->where('user_id', $teacher->id)->whereNull('deleted_at')->first();
+            $values = [
+                'school_id' => $this->school->id,
+                'academic_year_id' => $this->year->id,
+                'designation' => $row->designation ?? 'teacher',
+                'employee_id' => $row->employee_id ?? sprintf('EMP-%d-%04d', $this->school->id, $index + 1),
+                'job_type' => $row->job_type ?? 'full_time',
+                'status' => 1,
+                'updated_at' => now(),
+            ];
+            if ($row) {
+                DB::table('teacherprofile')->where('id', $row->id)->update($values);
+            } else {
+                DB::table('teacherprofile')->insert($values + [
+                    'user_id' => $teacher->id,
+                    'created_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    protected function richSchoolProfile(): void
+    {
+        $countryId = DB::table('countries')->where('name', 'Uganda')->value('id');
+        if (! $countryId) {
+            $countryId = DB::table('countries')->insertGetId([
+                'name' => 'Uganda',
+                'short_name' => 'UG',
+                'iso_code' => 'UG',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        $stateId = DB::table('states')->where('country_id', $countryId)->where('name', 'Central')->value('id');
+        if (! $stateId) {
+            $stateId = DB::table('states')->insertGetId([
+                'country_id' => $countryId,
+                'name' => 'Central',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        $cityId = DB::table('cities')->where('country_id', $countryId)->where('name', 'Kampala')->value('id');
+        if (! $cityId) {
+            $cityId = DB::table('cities')->insertGetId([
+                'country_id' => $countryId,
+                'state_id' => $stateId,
+                'name' => 'Kampala',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->school->forceFill([
+            'country_id' => $this->school->country_id ?: $countryId,
+            'state_id' => $this->school->state_id ?: $stateId,
+            'city_id' => $this->school->city_id ?: $cityId,
+            'address' => $this->school->address ?: 'Plot 12, Sample Road',
+            'motto' => $this->school->motto ?: 'Learning together',
+        ])->save();
+
+        foreach ([
+            'website' => 'https://demo.klassapp.test',
+            'affiliated_by' => 'Sample examinations board',
+            'landline_no' => '0414000100',
+        ] as $key => $value) {
+            DB::table('school_details')->updateOrInsert(
+                ['school_id' => $this->school->id, 'meta_key' => $key],
+                ['meta_value' => $value, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
     }
 
     protected function richAdmin(): User

@@ -21,13 +21,20 @@
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">School Name</p>
                         <p class="font-bold text-xl text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->name }}</p>
                     </li>
+                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 w-full lg:w-1/4">Motto</p>
+                        <p class="font-medium text-sm text-black flex items-center w-full lg:w-1/2">{{ $school->mottoText() ?: 'Not set' }}</p>
+                    </li>
                     @foreach($details as $key => $value)
+                        @if(in_array($key, ['landline_no', 'demo_manifest', 'moto', 'center_no', 'center_number', 'centre_no', 'centre_number'], true))
+                            @continue
+                        @endif
                         <li class="flex pb-2 flex-col lg:flex-row py-3">
                             @if($key == 'admission_open')
                                 {{-- Commented out: Admission related --}}
                                 {{-- <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Admission Open Status</p> --}}
                             @else
-                                <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">{{ str_replace('_' , ' ' , ucwords($key)) }}</p>
+                                <p class="font-bold text-base text-gray-800 w-full lg:w-1/4">{{ $key === 'moto' ? 'Motto' : str_replace('_' , ' ' , ucwords($key)) }}</p>
                             @endif
                             <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                                 @if($key == 'admission_open')
@@ -68,18 +75,17 @@
                     
                     --}}
 
-                     <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Center Number</p>
-                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->center_no ?: 'Not set' }}</p>
-                    </li>
-                    @if($school->landline_no != null)
+                    @php $landline = $school->landline_no ?? ($details['landline_no']->meta_value ?? null); @endphp
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Phone No</p>
-                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->landline_no }}</p>
-                    </li>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
+                            @if($landline)
+                                {{ $landline }}
                             @else
                                 <span style="color: var(--d-text-secondary, #64748B);">Not set</span>
                             @endif
+                        </p>
+                    </li>
                     
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Address</p>

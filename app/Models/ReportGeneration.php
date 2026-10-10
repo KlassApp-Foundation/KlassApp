@@ -9,6 +9,7 @@ class ReportGeneration extends Model
     protected $fillable = [
         'school_id',
         'standard_link_id',
+        'academic_term_id',
         'class_name',
         'mode',
         'status',

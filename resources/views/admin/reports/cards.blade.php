@@ -96,7 +96,8 @@
     @forelse ($stdLinks as $link)
         <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-semibold text-gray-800">{{ $link->section->name }}</h3>
+                @php $streamLabel = trim((string) ($link->stream ?? '')); @endphp
+                <h3 class="text-lg font-semibold text-gray-800">{{ $link->section->name }}{{ $streamLabel !== '' ? ' · '.$streamLabel : '' }}</h3>
                 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ $link->standard->name }}</span>
             </div>
 
@@ -109,21 +110,21 @@
 
             <div class="flex gap-2 mb-3">
                 <a href="{{ route('admin.reports.cards.merged', $link) }}"
-                   class="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 rounded-lg transition">
+                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
                     Print All (Merged PDF)
                 </a>
                 <a href="{{ route('admin.reports.cards.download', $link) }}"
-                   class="flex-1 text-center bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 rounded-lg transition">
+                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
                     Generate
                 </a>
                 @if (!empty($link->readyPdf))
                 <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}"
-                   class="flex-1 text-center bg-white hover:bg-gray-50 text-gray-800 text-sm font-medium py-2 rounded-lg border border-gray-300 transition">
+                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
                     Download PDF
                 </a>
                 @endif
                 <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}"
-                   class="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 rounded-lg transition">
+                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
                     View Marks
                 </a>
             </div>

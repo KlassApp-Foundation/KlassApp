@@ -71,6 +71,7 @@ class ReportCardsController extends Controller
         $readyByLink = \App\Models\ReportGeneration::where('school_id', $schoolId)
             ->where('status', 'completed')
             ->where('mode', 'merged')
+            ->where('academic_term_id', $selectedTerm)
             ->whereNotNull('file_path')
             ->orderByDesc('id')
             ->get()
@@ -170,6 +171,7 @@ class ReportCardsController extends Controller
         $generation = \App\Models\ReportGeneration::create([
             'school_id' => $schoolId,
             'standard_link_id' => $stdLink->id,
+            'academic_term_id' => $exam->academic_term_id,
             'class_name' => $className,
             'mode' => $mode,
             'status' => 'pending',

@@ -153,6 +153,51 @@ class TeacherEditLinkTest extends TestCase
         );
     }
 
+    public function test_edit_shows_profile_fields_and_keeps_a_changed_designation(): void
+    {
+        $teacher = $this->teachersA[0];
+        Userprofile::where('user_id', $teacher->id)->update([
+            'date_of_birth' => '1991-04-04',
+            'gender' => 'female',
+            'joining_date' => '2022-02-07',
+        ]);
+        TeacherProfile::create([
+            'school_id' => $this->schoolA->id,
+            'user_id' => $teacher->id,
+            'academic_year_id' => AcademicYear::where('school_id', $this->schoolA->id)->value('id'),
+            'designation' => 'teacher',
+            'employee_id' => 'EMP100',
+            'job_type' => 'full_time',
+            'status' => 1,
+        ]);
+
+        $shown = $this->actingAs($this->adminA)->getJson('/admin/teacher/editTeacher/'.$teacher->name);
+        $shown->assertOk();
+        $shown->assertJsonPath('date_of_birth', '1991-04-04');
+        $shown->assertJsonPath('employee_id', 'EMP100');
+        $shown->assertJsonPath('designation', 'teacher');
+        $shown->assertJsonPath('gender', 'female');
+        $shown->assertJsonPath('joining_date', '2022-02-07');
+        $shown->assertJsonPath('job_type', 'full_time');
+        $this->assertStringStartsWith('data:image/svg+xml', (string) $shown->json('avatar'));
+
+        $this->actingAs($this->adminA)->postJson('/admin/teacher/edit/validationProfile/'.$teacher->name, [
+            'teacher_name' => $teacher->name,
+            'firstname' => $teacher->userprofile->firstname,
+            'lastname' => $teacher->userprofile->lastname,
+            'date_of_birth' => '1991-04-04',
+            'gender' => 'female',
+            'joining_date' => '2022-02-07',
+            'employee_id' => 'EMP100',
+            'designation' => 'principal',
+            'job_type' => 'full_time',
+        ])->assertOk();
+
+        $this->actingAs($this->adminA)
+            ->getJson('/admin/teacher/editTeacher/'.$teacher->name)
+            ->assertJsonPath('designation', 'principal');
+    }
+
     public function test_teachers_list_links_edit_by_name_not_id(): void
     {
         $response = $this->actingAs($this->adminA)->get('/admin/teachers');
