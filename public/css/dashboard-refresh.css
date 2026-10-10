@@ -4379,7 +4379,7 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
 
 /* Sidebar sits under the top bar. Height is the viewport minus that bar (dvh),
    the nav list scrolls, and the coming-soon line plus account card stay pinned. */
-:root { --ka-topbar-h: 44px; }
+:root { --ka-topbar-h: 64px; }
 .navbar.dashboard-themed-header {
     position: sticky;
     top: 0;
@@ -4401,8 +4401,8 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
         position: sticky;
         top: var(--ka-topbar-h);
         align-self: flex-start;
-        height: calc(100dvh - var(--ka-topbar-h));
-        max-height: calc(100dvh - var(--ka-topbar-h));
+        height: calc(100dvh - var(--ka-topbar-h)) !important;
+        max-height: calc(100dvh - var(--ka-topbar-h)) !important;
         overflow: hidden;
     }
     #admin-sidebar.admin-sidebar {
@@ -4421,11 +4421,21 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
         flex: 0 0 auto;
     }
 }
+#admin-sidebar .dashboard-sidebar-footer,
+#res_sidebar .dashboard-sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
 .sidebar-toshi-soon {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     font-size: 11px;
     line-height: 1.35;
     color: #64748B;
+}
+#admin-sidebar .account-card,
+#res_sidebar .account-card {
+    width: 100%;
 }
 .drawer-year { display: none; }
 @media (max-width: 767px) {
