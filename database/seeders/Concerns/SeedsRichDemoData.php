@@ -493,6 +493,13 @@ trait SeedsRichDemoData
         $schoolId = $this->school->id;
         $days = $this->richSchoolDays(20);
         $today = now()->toDateString();
+        // The demo day itself is always present — even when it falls on a
+        // weekend. The walkthrough asserts "other classes have attendance
+        // today", and demo days are real calendar days; richSchoolDays()
+        // keeps its weekday meaning for the seeded stretch.
+        if (! in_array($today, $days, true)) {
+            $days[] = $today;
+        }
 
         $links = StandardLink::where('school_id', $schoolId)->get();
         $studentsByLink = StudentAcademic::where('school_id', $schoolId)
