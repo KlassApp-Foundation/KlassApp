@@ -22,6 +22,16 @@
                     }
                 }
                 $open = $rowActive || $childActive;
+                // A parent that shares its URL with a child the current user cannot
+                // see (Classes → Classes and streams, school admin only) opens the
+                // first child they can see instead of a page that would 403.
+                $hrefItem = $row;
+                foreach (($row['children'] ?? []) as $gated) {
+                    if (($gated['url'] ?? null) === ($row['url'] ?? null) && ! $showItem($gated) && count($children) > 0) {
+                        $hrefItem = $children[0];
+                        break;
+                    }
+                }
             @endphp
             <li class="sidebar-v3-item" data-sidebar-row
                 @if(count($children) > 0)
@@ -29,7 +39,7 @@
                     x-init="try { localStorage.setItem('ka:sidebar:v3', '1'); } catch (e) {}"
                 @endif>
                 <div class="sidebar-v3-row">
-                    <a href="{{ $navHref($row) }}"
+                    <a href="{{ $navHref($hrefItem) }}"
                        class="sidebar-v3-link {{ $itemClass }} {{ ($rowActive && ! $childActive) ? $activeClass : '' }}"
                        @if($rowActive && ! $childActive) aria-current="page" @endif>
                         @if(!empty($row['icon']))

@@ -12,34 +12,56 @@ use Tests\TestCase;
  */
 class StudentsNavAliasesContractTest extends TestCase
 {
+    /** @return list<array<string, mixed>> */
+    private function adminRows(): array
+    {
+        $rows = [];
+        foreach (config('navigation.roles.admin.sections') as $section) {
+            foreach ($section['rows'] as $row) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
     public function test_students_active_aliases_exclude_people_roster_segments(): void
     {
-        $students = collect(config('navigation.roles.admin.groups'))
-            ->flatMap(fn (array $group) => $group['items'] ?? [])
-            ->firstWhere('label', 'Students');
-
+        $students = collect($this->adminRows())->firstWhere('label', 'Students');
         $this->assertIsArray($students);
-        $active = $students['active'] ?? [];
+        $roster = collect($students['children'] ?? [])->firstWhere('label', 'All students');
+        $this->assertIsArray($roster);
+        $paths = $roster['paths'] ?? [];
 
-        $this->assertContains('students', $active);
-        $this->assertContains('student', $active);
-        $this->assertContains('alumni', $active);
-        $this->assertContains('blocked_students', $active);
+        foreach (['admin/students*', 'admin/student*', 'admin/alumni*', 'admin/blocked_students*'] as $needed) {
+            $this->assertContains($needed, $paths);
+        }
 
-        foreach (['parents', 'parent', 'teachers', 'teacher', 'staff', 'staffs'] as $stolen) {
-            $this->assertNotContains(
+        $joined = implode(' ', $paths);
+        foreach (['parent', 'teacher', 'staff'] as $stolen) {
+            $this->assertStringNotContainsString(
                 $stolen,
-                $active,
-                "Students must not use active alias [{$stolen}] (belongs to another sidebar item)",
+                $joined,
+                "All students must not use a path that belongs to another sidebar item [{$stolen}]",
             );
+        }
+
+        $teachers = collect($this->adminRows())->firstWhere('label', 'Teachers and staff');
+        $parents = collect($this->adminRows())->firstWhere('label', 'Parents');
+        $this->assertIsArray($teachers);
+        $this->assertIsArray($parents);
+        foreach ([$teachers, $parents] as $other) {
+            $otherPaths = implode(' ', $other['paths'] ?? []);
+            $this->assertStringNotContainsString('student', $otherPaths);
+            $this->assertStringNotContainsString('alumni', $otherPaths);
         }
     }
 
     public static function exclusiveActivePages(): array
     {
         return [
-            'students list' => ['admin/students', 'Students'],
-            'student add' => ['admin/student/add', 'Students'],
+            'students list' => ['admin/students', 'All students'],
+            'student add' => ['admin/student/add', 'All students'],
             'teachers list' => ['admin/teachers', 'Teachers and staff'],
             'teacher add' => ['admin/teacher/add', 'Teachers and staff'],
             'parents list' => ['admin/parents', 'Parents'],
@@ -61,23 +83,23 @@ class StudentsNavAliasesContractTest extends TestCase
 
         $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
 
-        preg_match_all(
-            '/<li[^>]*class="([^"]*dashboard-menu-item[^"]*)"[^>]*>.*?<\/li>/s',
-            $html,
-            $matches,
-            PREG_SET_ORDER
-        );
-        $this->assertNotEmpty($matches, "No dashboard-menu-item rows rendered for {$path}");
+        preg_match_all('/<a\s([^>]*)>(.*?)<\/a>/s', $html, $matches, PREG_SET_ORDER);
+        $this->assertNotEmpty($matches, "No sidebar links rendered for {$path}");
 
         $byLabel = [];
         foreach ($matches as $match) {
-            if (preg_match('/>(Students|Teachers and staff|Parents)</', $match[0], $labelMatch)) {
-                $byLabel[$labelMatch[1]] = $match[1];
+            $text = trim(html_entity_decode(strip_tags($match[2])));
+            if (preg_match('/class="([^"]*)"/', $match[1], $classMatch)) {
+                $byLabel[$text] = $classMatch[1];
             }
         }
 
-        foreach (['Students', 'Teachers and staff', 'Parents'] as $label) {
+        $watched = ['Students', 'All students', 'Teachers and staff', 'Parents'];
+        foreach ($watched as $label) {
             $this->assertArrayHasKey($label, $byLabel, "Sidebar item [{$label}] missing on {$path}");
+        }
+
+        foreach ($watched as $label) {
             $classes = $byLabel[$label];
             $isActive = str_contains($classes, 'dashboard-active')
                 || preg_match('/(?:^|\s)active(?:\s|$)/', $classes) === 1;
