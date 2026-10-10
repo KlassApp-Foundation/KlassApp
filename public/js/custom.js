@@ -1,14 +1,50 @@
 
 $(document).ready(function(){
+  function accountMenu($root) {
+    var id = $root.find('[data-account-trigger]').attr('aria-controls');
+    return id ? $(document.getElementById(id)) : $root.find('[data-account-menu]');
+  }
+
   function accountItems($root) {
-    return $root.find('[role="menuitem"]:visible');
+    return accountMenu($root).find('[role="menuitem"]:visible');
+  }
+
+  function placeAccountMenu($root) {
+    var $menu = accountMenu($root);
+    var trigger = $root.find('[data-account-trigger]')[0];
+    if (!$menu.length || !trigger) return;
+    document.body.appendChild($menu[0]);
+    $menu.addClass('is-portaled').removeAttr('hidden');
+    var box = trigger.getBoundingClientRect();
+    var phone = window.innerWidth < 768;
+    var width = phone ? Math.min(280, window.innerWidth - 16) : 224;
+    var style = {
+      position: 'fixed',
+      display: 'block',
+      width: width + 'px',
+      maxWidth: (window.innerWidth - 16) + 'px',
+      zIndex: 80,
+      margin: 0
+    };
+    if (phone) {
+      style.top = Math.round(box.bottom + 8) + 'px';
+      style.bottom = 'auto';
+      style.right = '8px';
+      style.left = 'auto';
+    } else {
+      style.left = Math.round(box.left) + 'px';
+      style.right = 'auto';
+      style.top = 'auto';
+      style.bottom = Math.round(window.innerHeight - box.top + 8) + 'px';
+    }
+    $menu.css(style);
   }
 
   function closeAccountCard($root) {
     if (!$root || !$root.length) return;
     $root.removeClass('open');
     $root.find('[data-account-trigger]').attr('aria-expanded', 'false');
-    $root.find('[data-account-menu]').attr('hidden', true);
+    accountMenu($root).attr('hidden', true).css('display', 'none');
   }
 
   function openAccountCard($root) {
@@ -18,7 +54,7 @@ $(document).ready(function(){
     $('.profile-click').not($root).removeClass('open');
     $root.addClass('open');
     $root.find('[data-account-trigger]').attr('aria-expanded', 'true');
-    $root.find('[data-account-menu]').removeAttr('hidden');
+    placeAccountMenu($root);
     var $first = accountItems($root).first();
     if ($first.length) {
       $first.trigger('focus');
@@ -52,7 +88,7 @@ $(document).ready(function(){
 
   // Close on outside pointerdown (handoff: pointerdown outside card+trigger)
   $(document).on('pointerdown', function(e) {
-    if (!$(e.target).closest('.profile-click.open').length) {
+    if (!$(e.target).closest('.profile-click.open, [data-account-menu]').length) {
       $('.profile-click.account-card.open').each(function () {
         closeAccountCard($(this));
       });

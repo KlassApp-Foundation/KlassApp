@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\SiteHelper;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam as ExamModel;
+use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 use App\Models\Attendance;
 use App\Models\FeePayment;
@@ -321,42 +322,60 @@ class DashboardV2DataService
 
     private function charts(int $sid, int $students, ?AcademicTerm $term): array
     {
-        // Performance by class: latest exam WITH marks, average mark per section.
-        $exam = ExamModel::query()
-            ->where('school_id', $sid)
-            ->whereHas('marks', fn ($q) => $q->where('school_id', $sid))
-            ->orderByDesc('scheduled_at')
-            ->orderByDesc('id')
-            ->first();
-
+        // One bar per class: that class's latest end-of-term exam that has marks.
+        $eotTypeId = ExamType::query()->where('code', 'EOT')->value('id');
+        $sections = Section::query()->where('school_id', $sid)->orderBy('name')->get(['id', 'name']);
         $perClass = [];
-        if ($exam) {
-            $rows = Marks::query()
+        $examLabel = null;
+        foreach ($sections as $section) {
+            $latest = ExamModel::query()
                 ->where('school_id', $sid)
-                ->where('exam_id', $exam->id)
-                ->select('section_id', DB::raw('AVG(marks) as avg_mark'))
-                ->groupBy('section_id')
-                ->get();
-            $names = Section::query()->whereIn('id', $rows->pluck('section_id'))->pluck('name', 'id');
-            foreach ($rows as $row) {
-                $perClass[] = [
-                    'label' => (string) ($names[$row->section_id] ?? 'Class'),
-                    'value' => round((float) $row->avg_mark, 1),
-                ];
+                ->where('section_id', $section->id)
+                ->when($eotTypeId, fn ($q) => $q->where('exam_type_id', $eotTypeId))
+                ->whereHas('marks', fn ($q) => $q->where('school_id', $sid)->where('section_id', $section->id))
+                ->orderByDesc('scheduled_at')
+                ->orderByDesc('id')
+                ->first();
+            if ($latest === null) {
+                continue;
             }
-            usort($perClass, fn ($a, $b) => $b['value'] <=> $a['value']);
+            $avg = Marks::query()
+                ->where('school_id', $sid)
+                ->where('section_id', $section->id)
+                ->where('exam_id', $latest->id)
+                ->avg('marks');
+            if ($avg === null) {
+                continue;
+            }
+            $perClass[] = [
+                'label' => (string) $section->name,
+                'value' => round((float) $avg, 1),
+            ];
+            $examLabel ??= (string) ($latest->name ?: 'End of term');
         }
 
-        // Attendance trend: last 8 weeks.
+        // Attendance trend: weeks since the current term started, not a fixed 8.
         $weeks = [];
-        for ($i = 7; $i >= 0; $i--) {
-            $start = now()->subWeeks($i)->startOfWeek();
-            $end = $i === 0 ? now() : now()->subWeeks($i)->endOfWeek();
-            $rate = $this->attendanceRate($sid, $start, $end);
-            $weeks[] = [
-                'label' => 'W'.(8 - $i),
-                'value' => $rate,
-            ];
+        $termStart = $term?->starts_on
+            ? \Carbon\Carbon::parse($term->starts_on)->startOfDay()
+            : now()->subWeeks(7)->startOfDay();
+        $cursor = $termStart->copy()->startOfWeek();
+        $today = now()->endOfDay();
+        $n = 1;
+        while ($cursor->lte($today) && $n <= 20) {
+            $start = $cursor->copy()->lt($termStart) ? $termStart->copy() : $cursor->copy();
+            $end = $cursor->copy()->endOfWeek();
+            if ($end->gt($today)) {
+                $end = $today->copy();
+            }
+            if ($start->lte($end)) {
+                $weeks[] = [
+                    'label' => 'W'.$n,
+                    'value' => $this->attendanceRate($sid, $start, $end),
+                ];
+                $n++;
+            }
+            $cursor->addWeek();
         }
 
         // Gender split (missing gender counts as Not specified).
@@ -399,7 +418,7 @@ class DashboardV2DataService
 
         return [
             'per_class' => $perClass,
-            'exam' => $this->examLabel($exam),
+            'exam' => $examLabel,
             'attendance_weeks' => $weeks,
             'gender' => [
                 'girls' => (int) ($genderRow->girls ?? 0),

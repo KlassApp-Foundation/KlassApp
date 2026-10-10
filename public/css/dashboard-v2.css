@@ -68,7 +68,13 @@
 .dv2-new-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;border:1px dashed var(--d-border,#E2E8F0);border-radius:14px;padding:32px 16px;margin-top:18px}
 .dv2-new-empty b{font-size:16px;color:#0F172A}
 .dv2-new-empty p{margin:0;color:#475569;font-size:13.5px;max-width:520px}
-@media (max-width:1023px){.dv2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dv2-qa{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1023px){
+    .dv2-kpis,.dv2-qa,.dv2-qat{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+    .dv2-kpis .dv2-kpi{height:100%;min-height:112px}
+    .dv2-kpis .dv2-kpi:nth-child(5),.dv2-qa .dv2-btn:nth-child(5),.dv2-qat .dv2-qt:nth-child(5){grid-column:1 / -1}
+}
+.dv2-qa .dv2-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.dv2-kpi-label .ka-icon{flex:none}
 @media (max-width:767px){
     .dv2-shell{padding:0}
     .dv2-panel{border-radius:0;border-left:0;border-right:0;padding:16px}
