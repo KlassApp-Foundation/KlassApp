@@ -4559,8 +4559,10 @@ body.ka-drawer-open .dashboard-content-area select {
 .sidebar-v3-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-v3-link .ka-nav-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
-.sidebar-v3-link.active,
-.sidebar-v3-child.active {
+#admin-sidebar.admin-sidebar .sidebar-v3-link.active,
+#admin-sidebar.admin-sidebar .sidebar-v3-child.active,
+#res_sidebar.admin-sidebar .sidebar-v3-link.active,
+#res_sidebar.admin-sidebar .sidebar-v3-child.active {
     background: rgba(34, 197, 94, 0.16);
     color: #14532D;
     font-weight: 600;
@@ -4592,15 +4594,19 @@ body.ka-drawer-open .dashboard-content-area select {
     padding: 0 0 0 14px;
     border-left: 1px solid #E2E8F0;
 }
-.sidebar-v3-child {
+#admin-sidebar.admin-sidebar .sidebar-v3-child,
+#res_sidebar.admin-sidebar .sidebar-v3-child {
     display: flex;
     align-items: center;
     min-height: 30px;
     height: 30px;
+    margin: 0;
     padding: 0 8px;
     border-radius: 8px;
+    box-sizing: border-box;
     color: #1E293B;
     font-size: 14px;
+    line-height: 20px;
     text-decoration: none;
     white-space: nowrap;
 }
