@@ -112,7 +112,8 @@ class PeopleAddButtonsContractTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/parents');
 
         $response->assertOk();
-        $response->assertSee('parent-list', false);
+        $response->assertSee('data-people-list="parents"', false);
+        $response->assertSee('Add parent', false);
     }
 
     public function test_teacher_and_parent_add_routes_are_reachable(): void
