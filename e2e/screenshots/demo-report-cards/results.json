@@ -1,0 +1,30 @@
+{
+  "38": {
+    "generations": {
+      "completed": 0,
+      "merged": 21,
+      "hasPdfLinks": 104
+    },
+    "tiles": {
+      "reports": "10",
+      "reportsCard": "Report cards ready | 10 |  | of 66 · End of Term Examination",
+      "feesCard": "Fees collected | 56% |  | UGX 30.5M of UGX 54M",
+      "currencyHint": false,
+      "perfClasses": 1
+    }
+  },
+  "39": {
+    "generations": {
+      "completed": 0,
+      "merged": 17,
+      "hasPdfLinks": 100
+    },
+    "tiles": {
+      "reports": "8",
+      "reportsCard": "Report cards ready | 8 |  | of 60 · End of Term Examination",
+      "feesCard": "Fees collected | 64% |  | UGX 35.9M of UGX 56.2M",
+      "currencyHint": false,
+      "perfClasses": 1
+    }
+  }
+}
