@@ -1073,7 +1073,7 @@ trait SeedsRichDemoData
                 'school_id' => $this->school->id,
                 'usergroup_id' => 5,
                 'date_of_birth' => $profile->date_of_birth ?: Carbon::create(1988, ($index % 12) + 1, ($index % 27) + 1)->toDateString(),
-                'gender' => $profile->gender ?: (in_array($first, $female, true) ? 'female' : 'male'),
+                'gender' => in_array($first, $female, true) ? 'female' : 'male',
                 'joining_date' => $profile->joining_date ?: '2022-02-07',
             ])->save();
 
