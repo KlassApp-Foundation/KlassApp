@@ -3,6 +3,10 @@
 @section('content')
 
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+<style>
+.report-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.report-card-actions .ds-btn { white-space: nowrap; padding: 8px 12px; background: #fff; }
+</style>
 
 @include('layouts.partials.page-header', [
     'title' => 'Report Cards',
@@ -108,32 +112,14 @@
                 @endif
             </div>
 
-            <div class="flex gap-2 mb-3">
-                <a href="{{ route('admin.reports.cards.merged', $link) }}"
-                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
-                    Print All (Merged PDF)
-                </a>
-                <a href="{{ route('admin.reports.cards.download', $link) }}"
-                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
-                    Generate
-                </a>
+            <div class="report-card-actions">
+                <a href="{{ route('admin.reports.cards.merged', $link) }}" class="ds-btn ds-btn-outline">Print all</a>
+                <a href="{{ route('admin.reports.cards.download', $link) }}" class="ds-btn ds-btn-outline">Generate</a>
                 @if (!empty($link->readyPdf))
-                <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}"
-                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
-                    Download PDF
-                </a>
+                <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}" class="ds-btn ds-btn-outline">Download PDF</a>
                 @endif
-                <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}"
-                   class="flex-1 text-center bg-white text-slate-800 text-sm font-medium py-2 rounded-lg border border-slate-300">
-                    View Marks
-                </a>
-            </div>
-
-            <div class="mb-3">
-                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}"
-                   class="block w-full text-center bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Combined Marksheet (Excel)
-                </a>
+                <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">View marks</a>
+                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}" class="ds-btn ds-btn-outline">Marksheet (Excel)</a>
             </div>
 
             @if (!empty($link->students) && count($link->students) > 0)
