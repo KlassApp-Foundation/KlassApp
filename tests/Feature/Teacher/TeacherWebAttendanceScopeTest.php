@@ -219,6 +219,30 @@ class TeacherWebAttendanceScopeTest extends TestCase
         ]);
     }
 
+    public function test_class_teacher_can_take_attendance_on_a_saturday(): void
+    {
+        $saturday = now()->startOfDay();
+        if ($saturday->dayOfWeek !== \Carbon\Carbon::SATURDAY) {
+            $saturday = $saturday->previous(\Carbon\Carbon::SATURDAY);
+        }
+
+        $response = $this->actingAs($this->classTeacher)->postJson('/teacher/attendance/add', [
+            'standardLink_id' => $this->ownStream->id,
+            'date' => $saturday->toDateString(),
+            'session' => 'forenoon',
+            'absentCount' => 0,
+            'presentCount' => 1,
+            'present_id0' => $this->ownStudent->id,
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('attendances', [
+            'school_id' => $this->school->id,
+            'standardLink_id' => $this->ownStream->id,
+            'user_id' => $this->ownStudent->id,
+        ]);
+    }
+
     public function test_class_teacher_can_store_attendance_for_own_class(): void
     {
         $ay = \App\Helpers\SiteHelper::getAcademicYear($this->school->id);

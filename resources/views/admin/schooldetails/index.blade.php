@@ -124,14 +124,14 @@
                         </p>
                     </li>
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">EMIS / Ministry Code</p>
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Registration code</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                             {{ $school->ministry_code ?: 'Not set' }}
                         </p>
                     </li>
                     @if(\App\Services\OnboardingStepsService::isUnebCurriculum($school->curriculum))
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">UNEB Centre Number</p>
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Exam centre number</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                             @if($school->uneb_center_number !== null && $school->uneb_center_number !== '')
                                 {{ $school->uneb_center_number }}

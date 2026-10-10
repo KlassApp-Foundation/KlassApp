@@ -6,6 +6,7 @@ use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Models\TeacherProfile;
 use App\Models\Standard;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -116,6 +117,40 @@ class TeacherEditLinkTest extends TestCase
             'firstname' => 'Zula',
             'lastname' => 'Ssenyonga',
         ]);
+    }
+
+    public function test_profile_validation_route_persists_a_changed_designation(): void
+    {
+        $teacher = $this->teachersA[0];
+        TeacherProfile::create([
+            'school_id' => $this->schoolA->id,
+            'user_id' => $teacher->id,
+            'academic_year_id' => AcademicYear::where('school_id', $this->schoolA->id)->value('id'),
+            'employee_id' => 'EMP100',
+            'designation' => 'teacher',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($this->adminA)->postJson('/admin/teacher/edit/validationProfile/'.$teacher->name, [
+            'teacher_name' => $teacher->name,
+            'firstname' => 'Grace',
+            'lastname' => 'Nabirye',
+            'gender' => 'female',
+            'date_of_birth' => '1990-04-12',
+            'joining_date' => '2020-01-15',
+            'employee_id' => 'EMP100',
+            'designation' => 'principal',
+            'job_type' => 'full_time',
+        ])->assertOk();
+
+        $this->assertTrue(
+            TeacherProfile::query()
+                ->where('school_id', $this->schoolA->id)
+                ->where('user_id', $teacher->id)
+                ->where('designation', 'principal')
+                ->where('employee_id', 'EMP100')
+                ->exists()
+        );
     }
 
     public function test_teachers_list_links_edit_by_name_not_id(): void

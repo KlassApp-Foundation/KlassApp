@@ -68,6 +68,18 @@ class ReportCardsController extends Controller
             ->take(10)
             ->get();
 
+        $readyByLink = \App\Models\ReportGeneration::where('school_id', $schoolId)
+            ->where('status', 'completed')
+            ->where('mode', 'merged')
+            ->whereNotNull('file_path')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('standard_link_id')
+            ->keyBy('standard_link_id');
+        foreach ($stdLinks as $link) {
+            $link->readyPdf = $readyByLink->get($link->id);
+        }
+
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
 

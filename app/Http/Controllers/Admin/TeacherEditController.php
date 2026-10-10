@@ -113,9 +113,15 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationProfile(TeacherUpdateRequest $request,$name)
+    public function editValidationProfile(TeacherUpdateRequest $request, $name)
     {
-      //
+        $response = $this->update($request, $name);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return $response;
     }
 
     /**

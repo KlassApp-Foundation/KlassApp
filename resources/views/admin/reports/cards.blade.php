@@ -22,7 +22,7 @@
             </select>
         </form>
         <a href="{{ route('admin.reports.cards.missing') }}"
-           class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+           class="bg-white hover:bg-gray-50 text-gray-800 text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition">
             Missing Marks Report
         </a>
     </div>
@@ -114,8 +114,14 @@
                 </a>
                 <a href="{{ route('admin.reports.cards.download', $link) }}"
                    class="flex-1 text-center bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Download All (Zip)
+                    Generate
                 </a>
+                @if (!empty($link->readyPdf))
+                <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}"
+                   class="flex-1 text-center bg-white hover:bg-gray-50 text-gray-800 text-sm font-medium py-2 rounded-lg border border-gray-300 transition">
+                    Download PDF
+                </a>
+                @endif
                 <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}"
                    class="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 rounded-lg transition">
                     View Marks
