@@ -8,6 +8,7 @@ name: Root Clutter Guard
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   check:
