@@ -5,7 +5,7 @@
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 <style>
 .report-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.report-card-actions .ds-btn { white-space: nowrap; padding: 8px 12px; background: #fff; }
+.report-card-actions .ds-btn { white-space: nowrap; padding: 8px 12px; background: #fff; } /* labels stay on one line */
 </style>
 
 @include('layouts.partials.page-header', [
