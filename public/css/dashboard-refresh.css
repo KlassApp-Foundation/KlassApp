@@ -4636,10 +4636,10 @@ body.ka-drawer-open .dashboard-content-area select {
 body.sidebar-collapsed #admin-sidebar.admin-sidebar { width: 56px; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-list { align-items: center; gap: 4px; padding: 4px 0; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-section {
-    height: 1px; margin: 8px 10px; padding: 0; overflow: hidden;
-    font-size: 0; line-height: 0; border-top: 1px solid #E2E8F0; color: transparent;
+    display: block; width: 36px; min-width: 36px; flex: 0 0 auto; align-self: center;
+    height: 0; margin: 8px 0; padding: 0; overflow: hidden;
+    font-size: 0; line-height: 0; border: 0; border-top: 1px solid #E2E8F0; color: transparent;
 }
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link span,
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-chevron,
 body.sidebar-collapsed #admin-sidebar .sidebar-toshi-soon,
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer-bell,
@@ -4649,21 +4649,29 @@ body.sidebar-collapsed #admin-sidebar .account-card__chevron { display: none !im
 body.sidebar-collapsed #admin-sidebar.admin-sidebar .sidebar-v3-link {
     width: 36px; height: 36px; min-height: 36px; margin: 0; padding: 0;
     justify-content: center; border: 0; background: transparent; position: relative;
+    overflow: hidden;
+}
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link span {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link .ka-nav-icon { width: 18px; height: 18px; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active { background: rgba(34, 197, 94, 0.16); color: #14532D; }
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link[data-tip]:hover::after,
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link[data-tip]:focus-visible::after {
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-item { position: relative; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:hover::after,
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:focus-within::after {
     content: attr(data-tip);
     position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
     background: #0F172A; color: #fff; font-size: 12px; line-height: 16px; font-weight: 500;
     padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 60;
-    transition: opacity 150ms ease 300ms;
+    opacity: 0; pointer-events: none;
+    animation: ka-rail-tip 150ms ease 300ms forwards;
 }
+@keyframes ka-rail-tip { to { opacity: 1; } }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-children { display: none; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.is-flyout .sidebar-v3-children {
-    display: block; position: fixed; left: 64px; width: 200px; margin: 0; padding: 6px;
+    display: block; position: fixed; left: 64px; top: var(--fly-top, 8px); width: 200px; margin: 0; padding: 6px;
     background: #fff; border: 1px solid #E2E8F0; border-radius: 10px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); z-index: 60;
 }
@@ -4674,10 +4682,16 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-child { height: 32px; min-heig
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { max-height: none; padding: 8px 0; align-items: center; }
 body.sidebar-collapsed #admin-sidebar .account-card__trigger {
     width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; box-shadow: none;
+    overflow: hidden;
 }
 body.sidebar-collapsed #admin-sidebar .account-card__avatar,
 body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 36px; height: 36px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) {
     #admin-sidebar.admin-sidebar,
-    body.sidebar-collapsed #admin-sidebar .sidebar-v3-link[data-tip]::after { transition: none; }
+    body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:hover::after,
+    body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:focus-within::after {
+        transition: none;
+        animation: none;
+        opacity: 1;
+    }
 }
