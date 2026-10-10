@@ -74,7 +74,27 @@ class SidebarMenuRenderTest extends TestCase
             // ... plus each rendered collapsible group wrapper (itself an <li>)
             $expected += $groups->count();
 
-            $this->assertSame($expected, substr_count($html, '<li '), "Sidebar [{$role}] rendered the wrong number of list items.");
+            if (($nav['layout'] ?? '') === 'v3') {
+                foreach ($nav['sections'] ?? [] as $section) {
+                    $rows = collect($section['rows'] ?? [])->reject($hidden)->values();
+                    if ($rows->isEmpty()) {
+                        continue;
+                    }
+                    if (! empty($section['label'])) {
+                        $expected++;
+                    }
+                    foreach ($rows as $row) {
+                        $expected++;
+                        $expected += collect($row['children'] ?? [])->reject($hidden)->count();
+                    }
+                }
+            }
+
+            $actual = substr_count($html, '<li ');
+            if (($nav['layout'] ?? '') === 'v3') {
+                $actual += substr_count($html, '<li>');
+            }
+            $this->assertSame($expected, $actual, "Sidebar [{$role}] rendered the wrong number of list items.");
         }
     }
 }

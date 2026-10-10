@@ -21,14 +21,36 @@ class ShellSidebarLayoutFixTest extends TestCase
         $this->assertStringContainsString('.admin-sidebar li a', $legacy);
     }
 
-    public function test_sidebar_groups_default_to_open_so_items_are_visible(): void
+    public function test_sidebar_v3_does_not_restore_old_group_state(): void
     {
-        $blade = file_get_contents(resource_path('views/layouts/partials/sidebar-menu.blade.php'));
+        $blade = file_get_contents(resource_path('views/layouts/partials/sidebar-menu-v3.blade.php'));
+        $nav = config('navigation.roles.admin');
 
-        // Default-open unless the user stored a collapsed state on the versioned key.
-        $this->assertStringContainsString("stored === null ? true : stored === 'true'", $blade);
-        $this->assertStringContainsString("sidebar-groups-v2-", $blade);
-        $this->assertStringNotContainsString("_key: 'sidebar-group-{{ \$group['key'] }}'", $blade);
-        $this->assertStringContainsString('open: true,', $blade);
+        $this->assertSame('v3', $nav['layout']);
+        $this->assertStringContainsString("localStorage.setItem('ka:sidebar:v3', '1')", $blade);
+        $this->assertStringNotContainsString('sidebar-groups-v2', $blade);
+        $this->assertStringNotContainsString('sidebar-group-', $blade);
+
+        $rows = [];
+        foreach ($nav['sections'] as $section) {
+            foreach ($section['rows'] as $row) {
+                $rows[] = $row['label'];
+            }
+        }
+        $this->assertCount(12, $rows);
+        $this->assertSame([
+            'Dashboard',
+            'Students',
+            'Teachers and staff',
+            'Parents',
+            'Classes and subjects',
+            'Attendance',
+            'Exams and reports',
+            'Library',
+            'Fees',
+            'Messages',
+            'Approvals',
+            'Settings',
+        ], $rows);
     }
 }

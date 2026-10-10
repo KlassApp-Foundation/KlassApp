@@ -20,16 +20,23 @@ class HelpSoftLaunchRoutesTest extends TestCase
 
     public function test_admin_sidebar_help_footer_points_at_klassapp_help(): void
     {
-        // PR1: Help moved from the sidebar footer into the School group — the
-        // destination contract (klassapp.xyz/help, not the docs host) is unchanged.
-        $school = collect(config('navigation.roles.admin.groups'))
-            ->firstWhere('key', 'school');
-        $this->assertIsArray($school);
-        $help = collect($school['items'])->firstWhere('label', 'Help');
+        // Sidebar v3: Help lives in the account menu, not a sidebar row.
+        // Destination stays klassapp.xyz/help, not the docs host.
+        $dropdown = file_get_contents(resource_path('views/layouts/partials/profile-dropdown.blade.php'));
+        $this->assertIsString($dropdown);
+        $this->assertStringContainsString('https://klassapp.xyz/help', $dropdown);
+        $this->assertStringNotContainsString('docs.klassapp.com', $dropdown);
 
-        $this->assertIsArray($help);
-        $this->assertSame('https://klassapp.xyz/help', $help['external']);
-        $this->assertStringNotContainsString('docs.klassapp.com', $help['external']);
+        $labels = [];
+        foreach (config('navigation.roles.admin.sections') as $section) {
+            foreach ($section['rows'] as $row) {
+                $labels[] = $row['label'];
+                foreach ($row['children'] ?? [] as $child) {
+                    $labels[] = $child['label'];
+                }
+            }
+        }
+        $this->assertNotContains('Help', $labels);
     }
 
     public function test_live_docs_route_still_uses_docsify_controller(): void

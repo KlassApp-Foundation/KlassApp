@@ -100,6 +100,17 @@
             </li>
             @endif
 
+            @if((int) Auth::user()->usergroup_id === 3)
+            <li role="none">
+                <a role="menuitem" href="https://klassapp.xyz/help" target="_blank" rel="noopener noreferrer" class="account-card__item">
+                    <span class="dtl-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </span>
+                    Help
+                </a>
+            </li>
+            @endif
+
             <li class="account-card__sep" role="separator"></li>
 
             <li role="none" class="user-dtl-logout">
