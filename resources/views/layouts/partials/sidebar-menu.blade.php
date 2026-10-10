@@ -152,7 +152,14 @@
                     _key: 'sidebar-group-{{ $group['key'] }}',
                     init() {
                         this._ch = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-                        this.open = localStorage.getItem(this._key) === 'true' || this.$el.querySelector('.active, .dashboard-active') !== null;
+                        // K55/K63: group labels show their items by default (the concept
+                        // is fully expanded); a user who collapses a group keeps that
+                        // choice via localStorage.
+                        const stored = localStorage.getItem(this._key);
+                        this.open = stored === null ? true : stored === 'true';
+                        if (this.$el.querySelector('.active, .dashboard-active') !== null) {
+                            this.open = true;
+                        }
                     },
                     hoverOn() {
                         if (this._ch && !this.open) { clearTimeout(this._lt); this._ht = setTimeout(() => { this.previewOpen = true; }, 200); }
