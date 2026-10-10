@@ -120,7 +120,7 @@ class ClasslessStudentHandlingTest extends TestCase
         $response->assertSee('Mirembe Classless');
         $response->assertSee('Zawadi Enrolled');
         $response->assertSee('No class', false);
-        $response->assertSee('Needs a class', false);
+        $response->assertSee('data-chip="noclass"', false);
     }
 
     public function test_needs_a_class_filter_shows_only_classless_students(): void
