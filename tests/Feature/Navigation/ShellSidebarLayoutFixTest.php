@@ -27,7 +27,7 @@ class ShellSidebarLayoutFixTest extends TestCase
         $nav = config('navigation.roles.admin');
 
         $this->assertSame('v3', $nav['layout']);
-        $this->assertStringContainsString("localStorage.setItem('ka:sidebar:v3', '1')", $blade);
+        $this->assertStringNotContainsString("localStorage.setItem('ka:sidebar:v3', '1')", $blade);
         $this->assertStringNotContainsString('sidebar-groups-v2', $blade);
         $this->assertStringNotContainsString('sidebar-group-', $blade);
 
