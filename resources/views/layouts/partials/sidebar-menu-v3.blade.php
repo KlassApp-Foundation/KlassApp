@@ -25,12 +25,23 @@
             @endphp
             <li class="sidebar-v3-item" data-sidebar-row
                 @if(count($children) > 0)
-                    x-data="{ open: {{ $open ? 'true' : 'false' }} }"
-                    x-init="try { localStorage.setItem('ka:sidebar:v3', '1'); } catch (e) {}"
+                    x-data="{ open: {{ $open ? 'true' : 'false' }}, flyout: false, hold: null }"
+                    x-on:mouseenter="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
+                    x-on:mouseleave="flyout = false"
+                    x-on:focusin="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
+                    x-on:focusout="if (!$el.contains($event.relatedTarget)) flyout = false"
+                    x-on:pointerdown="if (document.body.classList.contains('sidebar-collapsed')) hold = setTimeout(() => flyout = true, 500)"
+                    x-on:pointerup="clearTimeout(hold)"
+                    x-on:pointercancel="clearTimeout(hold)"
+                    x-on:keydown.escape.window="flyout = false"
+                    x-bind:class="flyout ? 'is-flyout' : ''"
                 @endif>
                 <div class="sidebar-v3-row">
                     <a href="{{ $navHref($row) }}"
                        class="sidebar-v3-link {{ $itemClass }} {{ ($rowActive && ! $childActive) ? $activeClass : '' }}"
+                       aria-label="{{ $row['label'] }}"
+                       data-tip="{{ $row['label'] }}"
+                       @if(count($children) > 0) aria-haspopup="menu" x-bind:aria-expanded="(document.body.classList.contains('sidebar-collapsed') ? flyout : open) ? 'true' : 'false'" @endif
                        @if($rowActive && ! $childActive) aria-current="page" @endif>
                         @if(!empty($row['icon']))
                             <x-icons.sidebar name="{{ $row['icon'] }}"/>
@@ -46,12 +57,14 @@
                     @endif
                 </div>
                 @if(count($children) > 0)
-                    <ul class="sidebar-v3-children" x-show="open" x-cloak>
+                    <ul class="sidebar-v3-children" x-show="flyout || (open && !document.body.classList.contains('sidebar-collapsed'))" x-cloak role="menu" aria-label="{{ $row['label'] }}">
+                        <li class="sidebar-v3-flyout-title" role="presentation">{{ $row['label'] }}</li>
                         @foreach($children as $child)
                             @php $isChild = $navActive($child); @endphp
                             <li>
                                 <a href="{{ $navHref($child) }}"
                                    class="sidebar-v3-child {{ $isChild ? $activeClass : '' }}"
+                                   aria-label="{{ $child['label'] }}"
                                    @if($isChild) aria-current="page" @endif>{{ $child['label'] }}</a>
                             </li>
                         @endforeach
