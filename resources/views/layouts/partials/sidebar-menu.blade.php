@@ -144,7 +144,7 @@
                  x-on:click string is re-parsed by Alpine as an expression and throws
                  "Unexpected token ';'"), so the markup only ever calls a method. --}}
             <li x-data="{
-                    open: false,
+                    open: true,
                     previewOpen: false,
                     _ht: null,
                     _lt: null,

@@ -4310,3 +4310,23 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
 .toshi-setup-list--modal .toshi-setup-row {
     padding: 8px 10px;
 }
+
+/* ── Shell fix (K55/K63, 2026-10-10) ──────────────────────────────────────────
+   Legacy admin.css styles .admin-sidebar li a as flex-direction: column, so the
+   compact shell's rows rendered icon-ABOVE-label. The concept (and K55/K63)
+   want icon LEFT of the label, ~40-44px rows, labels read at a glance. Scope to
+   the admin containers only; the collapsed rail keeps its centered glyphs. */
+#admin-sidebar.admin-sidebar li a,
+#admin-sidebar.admin-sidebar a.dashboard-menu-item,
+#res_sidebar.admin-sidebar li a,
+#res_sidebar.admin-sidebar a.dashboard-menu-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+#admin-sidebar.admin-sidebar li a > span,
+#admin-sidebar.admin-sidebar a.dashboard-menu-item > span,
+#res_sidebar.admin-sidebar li a > span {
+    margin-left: 0.625rem;
+    margin-right: 0;
+}
