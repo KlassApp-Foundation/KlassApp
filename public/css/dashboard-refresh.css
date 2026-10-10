@@ -4441,7 +4441,7 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
 @media (max-width: 767px) {
     .navbar .dashboard-ay-selector { display: none !important; }
     .drawer-year { display: block; margin: 0 8px 8px; }
-    #res_sidebar.admin-sidebar {
+    #res_sidebar.admin-sidebar.block:not(.hidden) {
         display: flex;
         flex-direction: column;
         height: 100dvh;
