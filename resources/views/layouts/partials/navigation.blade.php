@@ -54,7 +54,7 @@
         @if($navUser)
             @if($showToggle)
                 <button type="button" id="sidebar-collapse-toggle"
-                        class="mr-3 hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:bg-black/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        class="mr-3 hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:bg-black/5 sidebar-fold-toggle"
                         aria-label="Collapse sidebar" aria-expanded="true" aria-controls="admin-sidebar" title="Collapse sidebar">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 9l-3 3 3 3"/></svg>
                 </button>
@@ -185,9 +185,18 @@
     @push('scripts')
     <script>
     (function () {
-        var KEY = 'admin_sidebar_collapsed';
+        var KEY = 'ka:sidebar:v3';
         function btn() { return document.getElementById('sidebar-collapse-toggle'); }
+        function preferred() {
+            try {
+                var v = localStorage.getItem(KEY);
+                if (v === '1' || v === '0') return v === '1';
+            } catch (e) {}
+            var w = window.innerWidth;
+            return w >= 761 && w < 1024;
+        }
         function apply(collapsed) {
+            if (window.innerWidth < 761) collapsed = false;
             document.body.classList.toggle('sidebar-collapsed', collapsed);
             var el = btn();
             if (el) {
@@ -196,7 +205,7 @@
                 el.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
             }
         }
-        try { apply(localStorage.getItem(KEY) === '1'); } catch (e) {}
+        try { apply(preferred()); } catch (e) {}
         // Delegate: the button lives inside the Vue-mounted #app, so a direct
         // listener is lost whenever Vue re-renders that subtree.
         document.addEventListener('click', function (e) {
