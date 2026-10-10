@@ -68,6 +68,19 @@ class ReportCardsController extends Controller
             ->take(10)
             ->get();
 
+        $readyByLink = \App\Models\ReportGeneration::where('school_id', $schoolId)
+            ->where('status', 'completed')
+            ->where('mode', 'merged')
+            ->where('academic_term_id', $selectedTerm)
+            ->whereNotNull('file_path')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('standard_link_id')
+            ->keyBy('standard_link_id');
+        foreach ($stdLinks as $link) {
+            $link->readyPdf = $readyByLink->get($link->id);
+        }
+
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
 
@@ -158,6 +171,7 @@ class ReportCardsController extends Controller
         $generation = \App\Models\ReportGeneration::create([
             'school_id' => $schoolId,
             'standard_link_id' => $stdLink->id,
+            'academic_term_id' => $exam->academic_term_id,
             'class_name' => $className,
             'mode' => $mode,
             'status' => 'pending',

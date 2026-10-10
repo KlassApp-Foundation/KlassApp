@@ -55,7 +55,7 @@ Log out after each role.
 
 ## Pre-arranged walkthrough state
 
-- Today's attendance is **untaken** for the walkthrough class teacher's class
+- Today's attendance is **untaken** for the walkthrough class teacher's class and one other class, including when today is a Saturday. The walkthrough teacher can still record that Saturday. Other classes have attendance for today.
   (and one other class) in each school.
 - One exam is **open and unmarked** for the walkthrough teacher's subject —
   Junior: Mathematics in P.7; Senior: Biology in S.6.

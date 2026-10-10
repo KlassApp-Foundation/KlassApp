@@ -107,6 +107,38 @@ class DemoDataCompletenessTest extends TestCase
     }
 
     /** @dataProvider schoolProvider */
+    public function test_every_demo_teacher_and_school_profile_is_filled(string $email, string $seeder): void
+    {
+        $school = $this->seedSchool($seeder);
+        $teachers = User::where('school_id', $school->id)->where('usergroup_id', 5)->where('status', 'active')->get();
+        $this->assertGreaterThan(0, $teachers->count());
+        foreach ($teachers as $teacher) {
+            $profile = Userprofile::where('user_id', $teacher->id)->first();
+            $this->assertNotNull($profile->date_of_birth);
+            $this->assertContains($profile->gender, ['female', 'male']);
+            $this->assertNotNull($profile->joining_date);
+            $row = DB::table('teacherprofile')->where('user_id', $teacher->id)->first();
+            $this->assertNotNull($row);
+            $this->assertNotSame('', (string) $row->employee_id);
+            $this->assertNotSame('', (string) $row->designation);
+            $this->assertNotSame('', (string) $row->job_type);
+        }
+
+        $admin = User::where('school_id', $school->id)->where('usergroup_id', 3)->firstOrFail();
+        $page = $this->actingAs($admin)->get('/admin/schooldetails');
+        $page->assertOk();
+        $page->assertSee('Learning together');
+        $page->assertSee('Plot 12, Sample Road');
+        $page->assertSee('Kampala');
+        $page->assertSee('Central');
+        $page->assertSee('0414000100');
+        $page->assertDontSee('demo_manifest', false);
+        $page->assertDontSee('skip_link_ids', false);
+        $page->assertDontSee('>Moto<', false);
+        $page->assertDontSee('Center No', false);
+    }
+
+    /** @dataProvider schoolProvider */
     public function test_no_incomplete_setup_steps_and_no_setup_banner_on_the_dashboard(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);

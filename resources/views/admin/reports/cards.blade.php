@@ -3,6 +3,10 @@
 @section('content')
 
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+<style>
+.report-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.report-card-actions .ds-btn { white-space: nowrap; padding: 8px 12px; background: #fff; } /* labels stay on one line */
+</style>
 
 @include('layouts.partials.page-header', [
     'title' => 'Report Cards',
@@ -22,7 +26,7 @@
             </select>
         </form>
         <a href="{{ route('admin.reports.cards.missing') }}"
-           class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+           class="bg-white hover:bg-gray-50 text-gray-800 text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition">
             Missing Marks Report
         </a>
     </div>
@@ -96,7 +100,8 @@
     @forelse ($stdLinks as $link)
         <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-semibold text-gray-800">{{ $link->section->name }}</h3>
+                @php $streamLabel = trim((string) ($link->stream ?? '')); @endphp
+                <h3 class="text-lg font-semibold text-gray-800">{{ $link->section->name }}{{ $streamLabel !== '' ? ' · '.$streamLabel : '' }}</h3>
                 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ $link->standard->name }}</span>
             </div>
 
@@ -107,26 +112,14 @@
                 @endif
             </div>
 
-            <div class="flex gap-2 mb-3">
-                <a href="{{ route('admin.reports.cards.merged', $link) }}"
-                   class="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Print All (Merged PDF)
-                </a>
-                <a href="{{ route('admin.reports.cards.download', $link) }}"
-                   class="flex-1 text-center bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Download All (Zip)
-                </a>
-                <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}"
-                   class="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    View Marks
-                </a>
-            </div>
-
-            <div class="mb-3">
-                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}"
-                   class="block w-full text-center bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Combined Marksheet (Excel)
-                </a>
+            <div class="report-card-actions">
+                <a href="{{ route('admin.reports.cards.merged', $link) }}" class="ds-btn ds-btn-outline">Print all</a>
+                <a href="{{ route('admin.reports.cards.download', $link) }}" class="ds-btn ds-btn-outline">Generate</a>
+                @if (!empty($link->readyPdf))
+                <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}" class="ds-btn ds-btn-outline">Download PDF</a>
+                @endif
+                <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">View marks</a>
+                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}" class="ds-btn ds-btn-outline">Marksheet (Excel)</a>
             </div>
 
             @if (!empty($link->students) && count($link->students) > 0)

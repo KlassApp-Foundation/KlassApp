@@ -109,6 +109,11 @@ class School extends Model
       return $this->belongsTo('App\Models\City','city_id');
     }
 
+    public function state()
+    {
+      return $this->belongsTo('App\Models\State', 'state_id');
+    }
+
     public function schoolDetail()
     {
         return $this->hasMany('App\Models\SchoolDetail','school_id','id');

@@ -36,7 +36,10 @@ class SchoolDetailsController extends Controller
         // they live in the settings hub, which is the one place that both reads and writes
         // them. This page must not be a second, read-only surface for the same toggles.
         $details = SchoolDetail::where('school_id', Auth::user()->school_id)
-            ->whereNotIn('meta_key', ['maintenance', 'login_status'])
+            ->whereNotIn('meta_key', [
+                'maintenance', 'login_status', 'demo_manifest',
+                'moto', 'center_no', 'center_number', 'centre_no', 'centre_number',
+            ])
             ->get()->keyby('meta_key');
 
         $school = School::where('id', Auth::user()->school_id)->first();
@@ -173,7 +176,8 @@ class SchoolDetailsController extends Controller
 
         $school = School::where('id', $school_id)->first();
         $details = SchoolDetail::select('meta_key', 'meta_value')->where('school_id', $school_id)->get();
-        $plucked = $details->pluck('meta_value', 'meta_key');
+        $plucked = $details->pluck('meta_value', 'meta_key')
+            ->except(['demo_manifest', 'moto', 'center_no', 'center_number', 'centre_no', 'centre_number']);
 
         $array['details'] = $plucked;
         $logo = $plucked['school_logo'] ?? null;
