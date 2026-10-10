@@ -7,6 +7,11 @@ namespace Tests\Feature\Admin;
 
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
+use App\Services\DashboardV2DataService;
+use App\Support\DashboardGreeting;
 use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\Plan;
@@ -127,6 +132,81 @@ class DashboardV2Test extends TestCase
             '/data-testid="dashboard-v2-greeting">Good (morning|afternoon|evening), Mucunguzi</',
             $response->getContent()
         );
+        $response->assertSee('Greeting School', false);
+        $response->assertSee('data-testid="dashboard-v2-title"', false);
+        $response->assertSee('data-icon="user-plus"', false);
+        $response->assertSee('data-icon="graduation-cap"', false);
+    }
+
+    public function test_greeting_uses_the_school_country_timezone(): void
+    {
+        $countryId = DB::table('countries')->insertGetId([
+            'name' => 'Uganda', 'short_name' => 'UG', 'iso_code' => 'UG',
+            'tel_prefix' => '+256', 'status' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $school = $this->makeSchool(['country_id' => $countryId]);
+        $admin = $this->makeAdmin($school);
+
+        $this->assertSame('Africa/Kampala', DashboardGreeting::timezoneFor($admin->fresh()));
+    }
+
+    public function test_chart_is_one_bar_per_class_and_weeks_start_with_the_term(): void
+    {
+        $school = $this->makeSchool();
+        $admin = $this->makeAdmin($school);
+        $year = AcademicYear::create([
+            'school_id' => $school->id, 'name' => '2026', 'description' => 'y',
+            'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'status' => 1,
+        ]);
+        $term = AcademicTerm::create([
+            'school_id' => $school->id, 'academic_year_id' => $year->id, 'name' => 'Term III',
+            'status' => 'current', 'starts_on' => now()->subWeeks(2)->toDateString(),
+            'ends_on' => now()->addMonths(2)->toDateString(),
+        ]);
+        $standard = Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 1, 'status' => 1]);
+        $teacher = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 5, 'status' => 'active']);
+        $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
+        $eot = ExamType::create(['name' => 'End of term', 'code' => 'EOT', 'contributes_to_report_total' => true]);
+        $mid = ExamType::create(['name' => 'Mid term', 'code' => 'MID', 'contributes_to_report_total' => false]);
+
+        foreach (['P.1' => 61, 'P.2' => 72] as $class => $score) {
+            $section = Section::create(['school_id' => $school->id, 'name' => $class, 'status' => 1]);
+            $subject = Subject::create([
+                'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $section->id,
+                'academic_year_id' => $year->id, 'name' => 'Math', 'type' => 'core', 'status' => 1,
+            ]);
+            $exam = Exam::create([
+                'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $section->id,
+                'academic_year_id' => $year->id, 'academic_term_id' => $term->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id,
+                'exam_type_id' => $eot->id, 'status' => 'done', 'scheduled_at' => now()->subWeek(),
+            ]);
+            Marks::create([
+                'student_id' => $student->id, 'subject_id' => $subject->id, 'section_id' => $section->id,
+                'exam_id' => $exam->id, 'teacher_id' => $teacher->id, 'school_id' => $school->id,
+                'marks' => $score, 'grade' => 'C',
+            ]);
+        }
+
+        $only = Section::query()->where('school_id', $school->id)->where('name', 'P.1')->first();
+        $subject = Subject::query()->where('section_id', $only->id)->first();
+        $newerMid = Exam::create([
+            'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $only->id,
+            'academic_year_id' => $year->id, 'academic_term_id' => $term->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id,
+            'exam_type_id' => $mid->id, 'status' => 'done', 'scheduled_at' => now(),
+        ]);
+        Marks::create([
+            'student_id' => $student->id, 'subject_id' => $subject->id, 'section_id' => $only->id,
+            'exam_id' => $newerMid->id, 'teacher_id' => $teacher->id, 'school_id' => $school->id,
+            'marks' => 10, 'grade' => 'F',
+        ]);
+
+        $charts = app(DashboardV2DataService::class)->build($school->fresh(), $admin->fresh())['charts'];
+        $this->assertSame(['P.1', 'P.2'], array_column($charts['per_class'], 'label'));
+        $this->assertSame(61.0, (float) $charts['per_class'][0]['value']);
+        $this->assertLessThan(8, count($charts['attendance_weeks']));
+        $this->assertSame('W1', $charts['attendance_weeks'][0]['label']);
+
+        $this->render($admin->fresh())->assertOk()->assertSee('This term,', false);
     }
 
     public function test_dismissal_is_saved_per_user_and_chip_carries_the_same_count(): void

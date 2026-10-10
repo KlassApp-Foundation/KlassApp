@@ -1,14 +1,61 @@
 
 $(document).ready(function(){
+  function accountMenu($root) {
+    var id = $root.find('[data-account-trigger]').attr('aria-controls');
+    return id ? $(document.getElementById(id)) : $root.find('[data-account-menu]');
+  }
+
   function accountItems($root) {
-    return $root.find('[role="menuitem"]:visible');
+    return accountMenu($root).find('[role="menuitem"]:visible');
+  }
+
+  function placeAccountMenu($root) {
+    var $menu = accountMenu($root);
+    var trigger = $root.find('[data-account-trigger]')[0];
+    if (!$menu.length || !trigger) return;
+    document.body.appendChild($menu[0]);
+    $menu.addClass('is-portaled').removeAttr('hidden');
+    var box = trigger.getBoundingClientRect();
+    var phone = window.innerWidth < 768;
+    var width = phone ? Math.min(280, window.innerWidth - 16) : 224;
+    var style = {
+      position: 'fixed',
+      display: 'block',
+      width: width + 'px',
+      maxWidth: (window.innerWidth - 16) + 'px',
+      zIndex: 80,
+      margin: 0
+    };
+    if (phone) {
+      style.top = Math.round(box.bottom + 8) + 'px';
+      style.bottom = 'auto';
+      style.right = '8px';
+      style.left = 'auto';
+    } else {
+      style.left = Math.round(box.left) + 'px';
+      style.right = 'auto';
+      style.top = 'auto';
+      style.bottom = Math.round(window.innerHeight - box.top + 8) + 'px';
+    }
+    $menu.css(style);
+    if (!phone) {
+      var placed = $menu[0].getBoundingClientRect();
+      if (placed.top < 8) {
+        $menu.css({
+          top: '8px',
+          bottom: 'auto',
+          maxHeight: Math.max(120, Math.round(box.top - 16)) + 'px',
+          overflowY: 'auto'
+        });
+      }
+    }
   }
 
   function closeAccountCard($root) {
     if (!$root || !$root.length) return;
     $root.removeClass('open');
     $root.find('[data-account-trigger]').attr('aria-expanded', 'false');
-    $root.find('[data-account-menu]').attr('hidden', true);
+    accountMenu($root).attr('hidden', true).css('display', 'none');
   }
 
   function openAccountCard($root) {
@@ -18,7 +65,7 @@ $(document).ready(function(){
     $('.profile-click').not($root).removeClass('open');
     $root.addClass('open');
     $root.find('[data-account-trigger]').attr('aria-expanded', 'true');
-    $root.find('[data-account-menu]').removeAttr('hidden');
+    placeAccountMenu($root);
     var $first = accountItems($root).first();
     if ($first.length) {
       $first.trigger('focus');
@@ -52,7 +99,7 @@ $(document).ready(function(){
 
   // Close on outside pointerdown (handoff: pointerdown outside card+trigger)
   $(document).on('pointerdown', function(e) {
-    if (!$(e.target).closest('.profile-click.open').length) {
+    if (!$(e.target).closest('.profile-click.open, [data-account-menu]').length) {
       $('.profile-click.account-card.open').each(function () {
         closeAccountCard($(this));
       });
@@ -126,6 +173,20 @@ $(document).ready(function(){
   // former inline onclick="showsidebar('res_sidebar')", which double-bound and made the
   // menu unopenable: the inline handler removed `hidden`, this listener re-added it.
   // Delegation also survives Livewire morphing of the navbar.)
+  function setDrawerChrome(open) {
+    var scrim = document.getElementById('sidebar-scrim');
+    var content = document.querySelector('.dashboard-content-area');
+    if (scrim) {
+      scrim.hidden = !open;
+      scrim.classList.toggle('is-open', open);
+    }
+    document.body.classList.toggle('ka-drawer-open', open);
+    if (content) {
+      if (open) content.setAttribute('inert', '');
+      else content.removeAttribute('inert');
+    }
+  }
+
   $(document).on('click', '#mobile-menu-trigger', function() {
     var resSidebar = document.getElementById('res_sidebar');
     if (!resSidebar) return;
@@ -133,6 +194,18 @@ $(document).ready(function(){
     resSidebar.classList.toggle('hidden', !willOpen);
     resSidebar.classList.toggle('block', willOpen);
     this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    setDrawerChrome(willOpen);
+  });
+
+  $(document).on('change', '#academic_year_drawer', function() {
+    var token = document.querySelector('meta[name="csrf-token"]');
+    var body = new FormData();
+    body.append('academic_year_id', this.value);
+    fetch('/admin/academicyear/index', {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': token ? token.getAttribute('content') : '', 'Accept': 'application/json' },
+      body: body
+    }).finally(function() { window.location.reload(); });
   });
 
   function closeMobileDrawer() {
@@ -142,6 +215,7 @@ $(document).ready(function(){
     resSidebar.classList.add('hidden');
     var trigger = document.getElementById('mobile-menu-trigger');
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    setDrawerChrome(false);
   }
 
   // Drawer closes on tap-outside (concept: document click outside #side) and Esc.
@@ -149,6 +223,9 @@ $(document).ready(function(){
     var resSidebar = document.getElementById('res_sidebar');
     if (!resSidebar || resSidebar.classList.contains('hidden')) return;
     if (e.target.closest('#res_sidebar') || e.target.closest('#mobile-menu-trigger')) return;
+    closeMobileDrawer();
+  });
+  $(document).on('click', '#sidebar-scrim', function() {
     closeMobileDrawer();
   });
   $(document).on('keydown', function(e) {

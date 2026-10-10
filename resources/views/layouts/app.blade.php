@@ -58,6 +58,7 @@
     @endphp
     </head>
     <body class="font-primary antialiased min-h-screen overflow-x-hidden{{ $manualWizardActive ? ' toshi-manual-wizard-active' : '' }}">
+        <div id="sidebar-scrim" class="sidebar-scrim" hidden data-testid="sidebar-scrim"></div>
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full min-h-screen relative">

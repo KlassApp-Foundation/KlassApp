@@ -176,6 +176,7 @@
                                 const v = ds.data[i];
                                 if (v === null || v === undefined || v === '' || isNaN(v)) return;
                                 const n = Number(v);
+                                if (n === 0 && ds.kaFuture && ds.kaFuture[i]) return;
                                 ctx.fillText(formatCompact(n), bar.x, bar.y - 4);
                             });
                         });

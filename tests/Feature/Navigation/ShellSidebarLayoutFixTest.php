@@ -25,8 +25,10 @@ class ShellSidebarLayoutFixTest extends TestCase
     {
         $blade = file_get_contents(resource_path('views/layouts/partials/sidebar-menu.blade.php'));
 
-        // Default-open unless the user stored a collapsed state.
+        // Default-open unless the user stored a collapsed state on the versioned key.
         $this->assertStringContainsString("stored === null ? true : stored === 'true'", $blade);
+        $this->assertStringContainsString("sidebar-groups-v2-", $blade);
+        $this->assertStringNotContainsString("_key: 'sidebar-group-{{ \$group['key'] }}'", $blade);
         $this->assertStringContainsString('open: true,', $blade);
     }
 }

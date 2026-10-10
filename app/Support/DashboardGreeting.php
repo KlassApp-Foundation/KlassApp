@@ -18,7 +18,7 @@ final class DashboardGreeting
      */
     public static function for(User $user, string $fallback = 'Admin'): array
     {
-        $hour = (int) now()->timezone(config('app.timezone'))->format('G');
+        $hour = (int) now()->timezone(self::timezoneFor($user))->format('G');
         if ($hour < 12) {
             $phrase = 'Good morning';
         } elseif ($hour < 17) {
@@ -48,5 +48,24 @@ final class DashboardGreeting
         }
 
         return Str::title(mb_strtolower($raw));
+    }
+
+    /**
+     * School country zone when PHP knows one. A country with several zones
+     * uses the first identifier PHP lists. Otherwise the app timezone.
+     */
+    public static function timezoneFor(User $user): string
+    {
+        $iso = strtoupper((string) ($user->school?->country?->iso_code ?? ''));
+        if (preg_match('/^[A-Z]{2}$/', $iso) === 1) {
+            $zones = \DateTimeZone::listIdentifiers(\DateTimeZone::PER_COUNTRY, $iso);
+            if ($zones !== []) {
+                return $zones[0];
+            }
+        }
+
+        $fallback = (string) config('app.timezone');
+
+        return $fallback !== '' ? $fallback : 'UTC';
     }
 }

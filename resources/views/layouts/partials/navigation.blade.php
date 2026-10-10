@@ -46,8 +46,8 @@
         ? 'navbar dashboard-themed-header w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center'
         : 'navbar bg-white w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center';
     $nameClass = $variant === 'dashboard'
-        ? 'text-lg lg:text-3xl font-semibold'
-        : 'text-lg lg:text-3xl font-exo font-medium text-gray-700 px-4';
+        ? 'nav-school-name'
+        : 'nav-school-name font-exo text-gray-700 px-4';
 @endphp
 <nav class="{{ $navClass }}" @if($variant === 'dashboard') style="background:#FAFAF5;border-bottom:1px solid #E2E8F0;" @endif>
     <div class="nav-brand flex items-center">

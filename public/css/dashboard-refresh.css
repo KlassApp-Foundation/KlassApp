@@ -830,6 +830,10 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     flex-shrink: 0;
     color: var(--d-text-secondary, #64748B);
 }
+.account-card__menu.user-dtl.is-portaled {
+    position: fixed;
+    display: block;
+}
 .account-card__menu.user-dtl {
     display: none;
     position: absolute;
@@ -4284,9 +4288,12 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
         justify-items: center;
         border-radius: 999px;
     }
-    .account-card--topbar .account-card__identity,
-    .account-card--topbar .account-card__chevron {
+    .account-card--topbar .account-card__trigger .account-card__identity,
+    .account-card--topbar .account-card__trigger .account-card__chevron {
         display: none;
+    }
+    .account-card__menu .account-card__identity {
+        display: flex;
     }
     .account-card--topbar .account-card__menu.user-dtl {
         left: auto;
@@ -4329,4 +4336,178 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
 #res_sidebar.admin-sidebar li a > span {
     margin-left: 0.625rem;
     margin-right: 0;
+}
+
+/* Row pitch is 48px: a 44px target plus a 4px gap. Group headers use the same pitch. */
+#admin-sidebar .sidebar-group > ul,
+#res_sidebar .sidebar-group > ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#admin-sidebar .dashboard-menu-item,
+#res_sidebar .dashboard-menu-item {
+    margin: 0;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    box-sizing: border-box;
+}
+#admin-sidebar.admin-sidebar li a,
+#res_sidebar.admin-sidebar li a {
+    min-height: 44px;
+    height: 44px;
+    margin: 0 8px;
+    box-sizing: border-box;
+}
+#admin-sidebar .sidebar-group-header,
+#res_sidebar .sidebar-group-header {
+    min-height: 44px;
+    height: 44px;
+    margin: 4px 8px 0;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1279px) {
+    body [data-toshi-root] .toshi-toggle {
+        display: none !important;
+    }
+}
+
+/* Sidebar sits under the top bar. Height is the viewport minus that bar (dvh),
+   the nav list scrolls, and the coming-soon line plus account card stay pinned. */
+:root { --ka-topbar-h: 64px; }
+.navbar.dashboard-themed-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: var(--ka-topbar-h);
+    height: var(--ka-topbar-h);
+    box-sizing: border-box;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+.navbar.dashboard-themed-header .nav-school-name,
+.navbar.dashboard-themed-header .nav-school-name strong {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+@media (min-width: 768px) {
+    #app-sidebar-wrap {
+        position: sticky;
+        top: var(--ka-topbar-h);
+        align-self: flex-start;
+        height: calc(100dvh - var(--ka-topbar-h)) !important;
+        max-height: calc(100dvh - var(--ka-topbar-h)) !important;
+        overflow: hidden;
+    }
+    #admin-sidebar.admin-sidebar {
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    #admin-sidebar .header-wrapper-b {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    #admin-sidebar .dashboard-sidebar-footer {
+        flex: 0 0 auto;
+    }
+}
+#admin-sidebar .dashboard-sidebar-footer,
+#res_sidebar .dashboard-sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 8px 8px;
+    box-sizing: border-box;
+    max-height: 96px;
+    overflow: hidden;
+}
+.sidebar-toshi-soon {
+    margin: 0;
+    font-size: 11px;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #64748B;
+}
+.sidebar-account-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+    min-width: 0;
+}
+.sidebar-account-row .dashboard-sidebar-footer-bell {
+    flex: 0 0 auto;
+}
+.sidebar-account-row .account-card {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+#admin-sidebar .account-card,
+#res_sidebar .account-card {
+    width: 100%;
+}
+.drawer-year { display: none; }
+.sidebar-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(15, 23, 42, 0.4);
+}
+.sidebar-scrim.is-open { display: block; }
+body.ka-drawer-open .dashboard-content-area select {
+    visibility: hidden;
+}
+@media (max-width: 767px) {
+    .navbar .dashboard-ay-selector { display: none !important; }
+    #res_sidebar .dashboard-sidebar-footer { max-height: none; }
+    .drawer-year {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 0;
+    }
+    .drawer-year .dashboard-ay-select {
+        width: 100%;
+        color: #1E293B;
+        background: #fff;
+        min-height: 36px;
+    }
+    #res_sidebar.admin-sidebar.block:not(.hidden) {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+        padding-top: max(12px, env(safe-area-inset-top));
+        box-sizing: border-box;
+        z-index: 80;
+    }
+    #res_sidebar .drawer-nav {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 8px;
+    }
+    #res_sidebar .dashboard-sidebar-footer {
+        flex: 0 0 auto;
+        margin-top: auto;
+    }
+    #res_sidebar .account-card {
+        display: flex;
+    }
 }

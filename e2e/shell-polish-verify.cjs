@@ -254,12 +254,17 @@ async function newContext(browserType, vp) {
         await page.waitForTimeout(300);
         const pop = await page.evaluate(() => {
           const trigger = document.querySelector('.account-card--topbar .account-card__trigger');
-          const menu = document.querySelector('.account-card--topbar [data-account-menu]');
+          const menu = trigger ? document.getElementById(trigger.getAttribute('aria-controls')) : null;
           if (!trigger || !menu) return null;
           const tr = trigger.getBoundingClientRect();
           const mr = menu.getBoundingClientRect();
-          const items = menu.querySelectorAll('[role="menuitem"], a, button');
-          const first = items[0] ? items[0].getBoundingClientRect() : null;
+          const name = menu.querySelector('.account-card__name');
+          const email = menu.querySelector('.account-card__email');
+          const pts = [[mr.left + 2, mr.top + 2], [mr.right - 2, mr.top + 2], [mr.left + 2, mr.bottom - 2], [mr.right - 2, mr.bottom - 2]];
+          const corners = pts.every(([x, y]) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit && (hit === menu || menu.contains(hit));
+          });
           return {
             visible: mr.width > 0 && mr.height > 0 && getComputedStyle(menu).display !== 'none',
             opensDown: mr.top >= tr.bottom - 2,
@@ -267,19 +272,24 @@ async function newContext(browserType, vp) {
             insideViewport: mr.left >= 0 && mr.right <= window.innerWidth + 1 && mr.top >= 0 && mr.bottom <= window.innerHeight + 1,
             width: Math.round(mr.width),
             maxWidthOk: mr.width <= window.innerWidth - 16 + 1,
-            firstRowHeight: first ? Math.round(first.height) : null,
+            onBody: menu.parentElement === document.body,
+            showsName: !!(name && name.textContent.trim() && getComputedStyle(name).display !== 'none'),
+            showsEmail: !!(email && email.textContent.trim() && getComputedStyle(email).display !== 'none'),
+            corners,
           };
         });
         check(b.name, vp.name, 'phone-popover-visible', pop && pop.visible, JSON.stringify(pop));
         check(b.name, vp.name, 'phone-popover-opens-downward', pop && pop.opensDown);
         check(b.name, vp.name, 'phone-popover-inside-viewport', pop && pop.insideViewport && pop.rightAligned && pop.maxWidthOk, JSON.stringify(pop && { w: pop.width }));
+        check(b.name, vp.name, 'phone-popover-corners', pop && pop.corners && pop.onBody && pop.showsName && pop.showsEmail, JSON.stringify(pop && { corners: pop.corners, name: pop.showsName }));
         await shot(page, b.name, vp.name, 'phone-popover-open');
 
         // Keyboard: Esc closes and returns focus to the trigger.
         await page.keyboard.press('Escape');
         await page.waitForTimeout(250);
         const closed = await page.evaluate(() => {
-          const menu = document.querySelector('.account-card--topbar [data-account-menu]');
+          const trigger = document.querySelector('.account-card--topbar [data-account-trigger]');
+          const menu = trigger ? document.getElementById(trigger.getAttribute('aria-controls')) : null;
           return !menu || menu.hasAttribute('hidden') || menu.getBoundingClientRect().height === 0;
         });
         check(b.name, vp.name, 'phone-popover-esc-closes', closed);
@@ -293,44 +303,54 @@ async function newContext(browserType, vp) {
           const el = document.querySelector('#admin-sidebar');
           if (!el) return null;
           const r = el.getBoundingClientRect();
-          const firstLink = el.querySelector('li > a');
-          const lr = firstLink ? firstLink.getBoundingClientRect() : null;
+          const links = [...el.querySelectorAll('.sidebar-group ul a')];
+          const lr = links[0] ? links[0].getBoundingClientRect() : null;
+          const pitch = links.length > 1 ? Math.round(links[1].getBoundingClientRect().top - links[0].getBoundingClientRect().top) : null;
           const card = el.querySelector('.account-card__trigger');
           return {
             left: Math.round(r.left),
             width: Math.round(r.width),
             rowHeight: lr ? Math.round(lr.height) : null,
+            pitch,
             hasCard: !!card,
           };
         });
         check(b.name, vp.name, 'sidebar-present', !!sidebar, JSON.stringify(sidebar));
         check(b.name, vp.name, 'sidebar-row-40-to-48', sidebar && sidebar.rowHeight >= 40 && sidebar.rowHeight <= 48, `rowHeight=${sidebar && sidebar.rowHeight}`);
+        check(b.name, vp.name, 'sidebar-pitch-48', sidebar && sidebar.pitch >= 46 && sidebar.pitch <= 52, `pitch=${sidebar && sidebar.pitch}`);
 
         if (sidebar && sidebar.hasCard) {
           await page.click('#admin-sidebar .account-card__trigger');
           await page.waitForTimeout(300);
           const pop = await page.evaluate(() => {
             const trigger = document.querySelector('#admin-sidebar .account-card__trigger');
-            const menu = document.querySelector('#admin-sidebar [data-account-menu]');
+            const menu = trigger ? document.getElementById(trigger.getAttribute('aria-controls')) : null;
             const side = document.querySelector('#admin-sidebar');
             if (!trigger || !menu) return null;
             const tr = trigger.getBoundingClientRect();
             const mr = menu.getBoundingClientRect();
             const sideBefore = side.getBoundingClientRect().left;
-            const items = menu.querySelectorAll('[role="menuitem"], a, button');
-            const first = items[0] ? items[0].getBoundingClientRect() : null;
+            const pts = [[mr.left + 2, mr.top + 2], [mr.right - 2, mr.top + 2], [mr.left + 2, mr.bottom - 2], [mr.right - 2, mr.bottom - 2]];
+            const corners = pts.every(([x, y]) => {
+              const hit = document.elementFromPoint(x, y);
+              return hit && (hit === menu || menu.contains(hit));
+            });
             return {
               sideLeft: sideBefore,
               visible: mr.width > 0 && mr.height > 0 && getComputedStyle(menu).display !== 'none',
               opensUp: mr.bottom <= tr.top + 2,
               width: Math.round(mr.width),
+              left: Math.round(mr.left),
               insideViewport: mr.left >= -1 && mr.right <= window.innerWidth + 1 && mr.top >= -1 && mr.bottom <= window.innerHeight + 1,
-              firstRowHeight: first ? Math.round(first.height) : null,
+              onBody: menu.parentElement === document.body,
+              alignedToCard: Math.abs(mr.left - tr.left) <= 2,
+              corners,
             };
           });
           check(b.name, vp.name, 'laptop-popover-visible', pop && pop.visible, JSON.stringify(pop));
           check(b.name, vp.name, 'sidebar-never-moves', pop && Math.abs(pop.sideLeft) < 1, `left=${pop && pop.sideLeft}`);
-          check(b.name, vp.name, 'laptop-popover-inside-viewport', pop && pop.insideViewport, JSON.stringify(pop && { w: pop.width, up: pop.opensUp }));
+          check(b.name, vp.name, 'laptop-popover-inside-viewport', pop && pop.insideViewport && pop.onBody && pop.alignedToCard && pop.width === 224, JSON.stringify(pop && { w: pop.width, left: pop.left }));
+          check(b.name, vp.name, 'laptop-popover-corners', pop && pop.corners, JSON.stringify(pop && { corners: pop.corners }));
           await shot(page, b.name, vp.name, 'laptop-popover-open');
           await page.keyboard.press('Escape').catch(() => null);
           await page.mouse.click(600, 300).catch(() => null);
