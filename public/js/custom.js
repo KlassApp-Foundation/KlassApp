@@ -38,6 +38,17 @@ $(document).ready(function(){
       style.bottom = Math.round(window.innerHeight - box.top + 8) + 'px';
     }
     $menu.css(style);
+    if (!phone) {
+      var placed = $menu[0].getBoundingClientRect();
+      if (placed.top < 8) {
+        $menu.css({
+          top: '8px',
+          bottom: 'auto',
+          maxHeight: Math.max(120, Math.round(box.top - 16)) + 'px',
+          overflowY: 'auto'
+        });
+      }
+    }
   }
 
   function closeAccountCard($root) {

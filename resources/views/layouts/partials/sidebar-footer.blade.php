@@ -26,6 +26,12 @@
          profile dropdown requires an authenticated user (PortalProfileLinks). --}}
 @else
 <div class="dashboard-sidebar-footer" data-testid="dashboard-sidebar-footer">
+    <p class="sidebar-toshi-soon" data-testid="sidebar-toshi-soon">Toshi, your school’s AI assistant, is coming soon.</p>
+    @if(!empty($showYear))
+        <div class="drawer-year" data-testid="drawer-academic-year">
+            <nav-bar field-id="academic_year_drawer"></nav-bar>
+        </div>
+    @endif
     @if($notifyMode)
         <div class="dashboard-sidebar-footer-bell">
             <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>

@@ -149,12 +149,11 @@
                     _ht: null,
                     _lt: null,
                     _ch: false,
-                    _key: 'sidebar-group-{{ $group['key'] }}',
+                    _key: 'sidebar-groups-v2-{{ $group['key'] }}',
                     init() {
                         this._ch = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-                        // K55/K63: group labels show their items by default (the concept
-                        // is fully expanded); a user who collapses a group keeps that
-                        // choice via localStorage.
+                        // Versioned key so a collapsed state saved by older builds
+                        // (sidebar-group-*) is ignored. Missing value means open.
                         const stored = localStorage.getItem(this._key);
                         this.open = stored === null ? true : stored === 'true';
                         if (this.$el.querySelector('.active, .dashboard-active') !== null) {

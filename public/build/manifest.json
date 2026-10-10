@@ -1,6 +1,6 @@
 {
   "../KlassApp/node_modules/quill/quill.js": {
-    "file": "assets/quill-B8ZKSVU3.js",
+    "file": "assets/quill-BLGxCSq5.js",
     "name": "quill",
     "src": "../KlassApp/node_modules/quill/quill.js",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/assets/js/app.js": {
-    "file": "assets/app-CP7lmf3k.js",
+    "file": "assets/app-DBDI4QH-.js",
     "name": "app",
     "src": "resources/assets/js/app.js",
     "isEntry": true,
@@ -17,7 +17,7 @@
       "../KlassApp/node_modules/quill/quill.js"
     ],
     "css": [
-      "assets/app-CQRUJBKl.css"
+      "assets/app-DnWpBtpp.css"
     ]
   },
   "resources/assets/sass/app.scss": {
@@ -57,7 +57,7 @@
     "isEntry": true
   },
   "resources/css/tailwind.css": {
-    "file": "assets/tailwind-CJL1bmlj.css",
+    "file": "assets/tailwind-B8iS6q24.css",
     "name": "tailwind",
     "names": [
       "tailwind.css"

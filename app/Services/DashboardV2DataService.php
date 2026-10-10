@@ -39,14 +39,15 @@ class DashboardV2DataService
         $term = $this->currentTerm($sid, $year?->id);
 
         $students = $this->studentsCount($sid);
+        $feeMonths = $this->feeMonths($sid, $term);
 
         return [
             'schoolName' => (string) $school->name,
             'termLabel' => $this->termLabel($term, $year),
             'state' => $students === 0 ? 'new' : 'data',
             'setup' => $this->setup($school, $user),
-            'kpis' => $this->kpis($sid, $students, $term),
-            'charts' => $this->charts($sid, $students, $term),
+            'kpis' => $this->kpis($sid, $students, $term, $feeMonths),
+            'charts' => $this->charts($sid, $students, $term, $feeMonths),
             'activity' => $this->activity($sid),
             'currency' => $this->currencyFor($sid),
         ];
@@ -177,7 +178,7 @@ class DashboardV2DataService
 
     // ─────────────────────────────── KPIs ──────────────────────────────────
 
-    private function kpis(int $sid, int $students, ?AcademicTerm $term): array
+    private function kpis(int $sid, int $students, ?AcademicTerm $term, array $feeMonths = []): array
     {
         // Staff
         $teachers = User::query()
@@ -253,19 +254,7 @@ class DashboardV2DataService
                     : $this->deltaLabel($delta),
                 'direction' => $delta === null ? null : ($delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat')),
             ],
-            'fees' => [
-                // The tile shows the SAME basis as the rate: amounts received to
-                // date against the term's expected total (expected − outstanding).
-                // Using the term-window "collected" here made "4.8M of 54M" appear
-                // next to a 56% rate.
-                'percent' => $hasStructure ? (int) $feePosition['rate'] : null,
-                'collected' => max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw']),
-                'expected' => $feePosition['expected_raw'],
-                'collected_label' => $this->moneyLabel($currency, max(0, $feePosition['expected_raw'] - $feePosition['outstanding_raw'])),
-                'expected_label' => $this->moneyLabel($currency, $feePosition['expected_raw']),
-                'currency' => $currency,
-                'state' => $hasStructure ? 'ok' : 'no_structure',
-            ],
+            'fees' => $this->feeTile($feePosition, $feeMonths, $currency, $hasStructure),
             'report_cards' => [
                 'ready' => $ready,
                 'students' => $students,
@@ -320,7 +309,7 @@ class DashboardV2DataService
 
     // ────────────────────────────── charts ─────────────────────────────────
 
-    private function charts(int $sid, int $students, ?AcademicTerm $term): array
+    private function charts(int $sid, int $students, ?AcademicTerm $term, array $feeMonths = []): array
     {
         // One bar per class: that class's latest end-of-term exam that has marks.
         $eotTypeId = ExamType::query()->where('code', 'EOT')->value('id');
@@ -390,32 +379,6 @@ class DashboardV2DataService
             ->selectRaw("SUM(CASE WHEN userprofiles.gender NOT IN ('female', 'male') OR userprofiles.gender IS NULL THEN 1 ELSE 0 END) as not_specified")
             ->first();
 
-        // Fees by month: collected vs an equal monthly share of the term's expected.
-        $feePosition = app(FeePositionService::class)->forSchool($sid);
-        $months = [];
-        if ($term?->starts_on && $term?->ends_on && $feePosition['expected_raw'] > 0) {
-            $cursor = $term->starts_on->copy()->startOfMonth();
-            $last = $term->ends_on->copy()->startOfMonth();
-            $monthCount = max(1, $cursor->diffInMonths($last) + 1);
-            $share = $feePosition['expected_raw'] / $monthCount;
-            $all = [];
-            while ($cursor <= $last) {
-                $collected = (float) FeePayment::query()
-                    ->where('school_id', $sid)
-                    ->whereDate('paid_on', '>=', $cursor->copy()->startOfMonth()->toDateString())
-                    ->whereDate('paid_on', '<=', $cursor->copy()->endOfMonth()->toDateString())
-                    ->sum('amount');
-                $all[] = [
-                    'label' => $cursor->format('M'),
-                    'collected' => $collected,
-                    'expected' => round($share, 2),
-                    'future' => $cursor->isFuture(),
-                ];
-                $cursor->addMonth();
-            }
-            $months = array_slice($all, -4);
-        }
-
         return [
             'per_class' => $perClass,
             'exam' => $examLabel,
@@ -426,7 +389,80 @@ class DashboardV2DataService
                 'not_specified' => (int) ($genderRow->not_specified ?? 0),
                 'total' => $students,
             ],
-            'fees_months' => $months,
+            'fees_months' => $feeMonths,
+        ];
+    }
+
+    /**
+     * Current-term fees, one point per month. Expected is cumulative
+     * (equal monthly share × months elapsed). Collected is cumulative
+     * payments from the term start, never above that month's expected.
+     * Future months stay on the chart, muted, with no collected amount.
+     *
+     * @return list<array{label: string, collected: float, expected: float, future: bool}>
+     */
+    private function feeMonths(int $sid, ?AcademicTerm $term): array
+    {
+        $feePosition = app(FeePositionService::class)->forSchool($sid);
+        if (! $term?->starts_on || ! $term?->ends_on || $feePosition['expected_raw'] <= 0) {
+            return [];
+        }
+
+        $cursor = $term->starts_on->copy()->startOfMonth();
+        $last = $term->ends_on->copy()->startOfMonth();
+        $monthCount = max(1, (int) $cursor->diffInMonths($last) + 1);
+        $share = $feePosition['expected_raw'] / $monthCount;
+        $running = 0.0;
+        $months = [];
+        $index = 0;
+        $today = Carbon::now()->startOfMonth();
+
+        while ($cursor <= $last) {
+            $index++;
+            $paid = (float) FeePayment::query()
+                ->where('school_id', $sid)
+                ->whereDate('paid_on', '>=', $cursor->copy()->startOfMonth()->toDateString())
+                ->whereDate('paid_on', '<=', $cursor->copy()->endOfMonth()->toDateString())
+                ->sum('amount');
+            $running += $paid;
+            $expected = round($share * $index, 2);
+            $future = $cursor->copy()->startOfMonth()->gt($today);
+            $months[] = [
+                'label' => $cursor->format('M'),
+                'collected' => $future ? 0.0 : min(round($running, 2), $expected),
+                'expected' => $expected,
+                'future' => $future,
+            ];
+            $cursor->addMonth();
+        }
+
+        return $months;
+    }
+
+    /**
+     * @param  array{expected_raw: float|int, rate: float|int}  $feePosition
+     * @param  list<array{collected: float, expected: float, future: bool}>  $feeMonths
+     * @return array<string, mixed>
+     */
+    private function feeTile(array $feePosition, array $feeMonths, ?string $currency, bool $hasStructure): array
+    {
+        $current = null;
+        foreach ($feeMonths as $month) {
+            if (empty($month['future'])) {
+                $current = $month;
+            }
+        }
+        $collected = $current['collected'] ?? 0;
+        $expected = $feeMonths === [] ? (float) $feePosition['expected_raw'] : (float) $feeMonths[array_key_last($feeMonths)]['expected'];
+
+        return [
+            'percent' => $hasStructure ? (int) $feePosition['rate'] : null,
+            'collected' => $collected,
+            'expected' => $expected,
+            'collected_label' => $this->moneyLabel($currency, $collected),
+            'expected_label' => $this->moneyLabel($currency, $expected),
+            'currency' => $currency,
+            'state' => $hasStructure ? 'ok' : 'no_structure',
         ];
     }
 

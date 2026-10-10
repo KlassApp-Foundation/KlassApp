@@ -1,9 +1,9 @@
 <template>
     <div class="dashboard-ay" data-testid="academic-year-control">
         <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
-        <label for="academic_year" class="tw-form-label dashboard-ay-label">Academic year</label>
+        <label :for="fieldId" class="tw-form-label dashboard-ay-label">Academic year</label>
         <select class="tw-form-control dashboard-ay-select"
-                id="academic_year"
+                :id="fieldId"
                 v-model="academic_year"
                 name="academic_year"
                 aria-label="Academic year"
@@ -16,7 +16,9 @@
 
 <script>
 	export default {
-        props:[],
+        props: {
+            fieldId: { type: String, default: 'academic_year' },
+        },
         data(){
             return{
                 academic_year:'',

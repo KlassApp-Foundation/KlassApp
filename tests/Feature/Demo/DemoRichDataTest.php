@@ -10,6 +10,7 @@ use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\NoticeBoard;
 use App\Models\School;
+use App\Services\DashboardV2DataService;
 use App\Models\SchoolDetail;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
@@ -87,6 +88,34 @@ class DemoRichDataTest extends TestCase
     }
 
     // ────────────────────────────────────────────── rich data, both schools
+
+    public function test_fee_tile_matches_the_current_term_chart_for_both_demo_schools(): void
+    {
+        foreach ([$this->seedJunior(), $this->seedSenior()] as $school) {
+            $admin = User::query()->where('school_id', $school->id)->where('email', 'like', 'admin@%')->firstOrFail();
+            $data = app(DashboardV2DataService::class)->build($school, $admin);
+            $months = $data['charts']['fees_months'];
+
+            $this->assertNotEmpty($months, $school->name);
+            $current = null;
+            foreach ($months as $month) {
+                $this->assertLessThanOrEqual($month['expected'] + 0.01, $month['collected'], $school->name.' '.$month['label']);
+                if (empty($month['future'])) {
+                    $current = $month;
+                } else {
+                    $this->assertSame(0.0, (float) $month['collected']);
+                }
+            }
+
+            $this->assertNotNull($current);
+            $this->assertEqualsWithDelta(
+                (float) $current['collected'],
+                (float) $data['kpis']['fees']['collected'],
+                0.01,
+                $school->name
+            );
+        }
+    }
 
     public function test_junior_school_gets_rich_demo_data(): void
     {

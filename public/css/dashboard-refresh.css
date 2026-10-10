@@ -4376,3 +4376,81 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
         display: none !important;
     }
 }
+
+/* Sidebar sits under the top bar. Height is the viewport minus that bar (dvh),
+   the nav list scrolls, and the coming-soon line plus account card stay pinned. */
+:root { --ka-topbar-h: 44px; }
+.navbar.dashboard-themed-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: var(--ka-topbar-h);
+    height: var(--ka-topbar-h);
+    box-sizing: border-box;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+.navbar.dashboard-themed-header .nav-school-name,
+.navbar.dashboard-themed-header .nav-school-name strong {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+@media (min-width: 768px) {
+    #app-sidebar-wrap {
+        position: sticky;
+        top: var(--ka-topbar-h);
+        align-self: flex-start;
+        height: calc(100dvh - var(--ka-topbar-h));
+        max-height: calc(100dvh - var(--ka-topbar-h));
+        overflow: hidden;
+    }
+    #admin-sidebar.admin-sidebar {
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    #admin-sidebar .header-wrapper-b {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    #admin-sidebar .dashboard-sidebar-footer {
+        flex: 0 0 auto;
+    }
+}
+.sidebar-toshi-soon {
+    margin: 0 0 8px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #64748B;
+}
+.drawer-year { display: none; }
+@media (max-width: 767px) {
+    .navbar .dashboard-ay-selector { display: none !important; }
+    .drawer-year { display: block; margin: 0 8px 8px; }
+    #res_sidebar.admin-sidebar {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+        padding-top: max(12px, env(safe-area-inset-top));
+        box-sizing: border-box;
+    }
+    #res_sidebar .drawer-nav {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 8px;
+    }
+    #res_sidebar .dashboard-sidebar-footer {
+        flex: 0 0 auto;
+        margin-top: auto;
+    }
+    #res_sidebar .account-card {
+        display: flex;
+    }
+}
