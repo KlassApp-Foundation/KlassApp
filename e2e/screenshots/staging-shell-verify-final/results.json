@@ -1,0 +1,115 @@
+[
+  {
+    "eng": "chromium",
+    "width": 1280,
+    "groupUls": 5,
+    "openUls": 5,
+    "rowCount": 23,
+    "heights": [
+      44,
+      44,
+      44,
+      44,
+      44,
+      44
+    ],
+    "iconLeft": {
+      "svgX": 26,
+      "labelX": 60,
+      "dx": 34,
+      "sameLine": true
+    },
+    "popover": {
+      "l": 62,
+      "r": 286,
+      "t": 559,
+      "b": 835,
+      "inViewport": true
+    }
+  },
+  {
+    "eng": "chromium",
+    "width": 1440,
+    "groupUls": 5,
+    "openUls": 5,
+    "rowCount": 23,
+    "heights": [
+      44,
+      44,
+      44,
+      44,
+      44,
+      44
+    ],
+    "iconLeft": {
+      "svgX": 26,
+      "labelX": 60,
+      "dx": 34,
+      "sameLine": true
+    }
+  },
+  {
+    "eng": "webkit",
+    "width": 1280,
+    "groupUls": 5,
+    "openUls": 5,
+    "rowCount": 23,
+    "heights": [
+      44,
+      44,
+      44,
+      44,
+      44,
+      44
+    ],
+    "iconLeft": {
+      "svgX": 26,
+      "labelX": 60,
+      "dx": 34,
+      "sameLine": true
+    },
+    "popover": {
+      "l": 62,
+      "r": 286,
+      "t": 552,
+      "b": 828,
+      "inViewport": true
+    }
+  },
+  {
+    "eng": "webkit",
+    "width": 1440,
+    "groupUls": 5,
+    "openUls": 5,
+    "rowCount": 23,
+    "heights": [
+      44,
+      44,
+      44,
+      44,
+      44,
+      44
+    ],
+    "iconLeft": {
+      "svgX": 26,
+      "labelX": 60,
+      "dx": 34,
+      "sameLine": true
+    }
+  },
+  {
+    "eng": "webkit",
+    "width": 375,
+    "drawer": {
+      "visible": true,
+      "rowCount": 23,
+      "heights": [
+        48,
+        48,
+        48,
+        48,
+        48
+      ]
+    }
+  }
+]
