@@ -30,7 +30,7 @@ class TeacherProfile extends Model
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'academic_year_id' , 'user_id' , 'qualification_id' , 'ug_degree' , 'pg_degree' , 'sub_qualification', 'specialization' , 'designation' , 'sub_designation' , 'employee_id' , 'reporting_to' , 'status'
+        'school_id' , 'academic_year_id' , 'user_id' , 'qualification_id' , 'ug_degree' , 'pg_degree' , 'sub_qualification', 'specialization' , 'designation' , 'sub_designation' , 'employee_id' , 'job_type' , 'reporting_to' , 'status'
     ];
 
     /**

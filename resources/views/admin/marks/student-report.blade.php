@@ -149,7 +149,7 @@
             <td class="header-info">
                 <div class="header-school">{{ $learner->school->name }}</div>
                 <div class="header-meta">(Nursery And Primary, Day And Boarding)</div>
-                <div class="header-meta">P.O Box 283 - Kabale - UGA</div>
+                <div class="header-meta">P.O. Box 100, Sample City</div>
                 <div class="header-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
             </td>
             <td class="header-badge-cell">

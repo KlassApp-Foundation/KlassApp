@@ -34,7 +34,7 @@
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Select Board</option>
                     <option value="uneb" {{ old('board') == 'uneb' ? 'selected' : '' }}>
-                        UNEB (Uganda National Examinations Board)
+                        National examinations board
                     </option>
                     <option value="cambridge" {{ old('board') == 'cambridge' ? 'selected' : '' }}>
                         Cambridge International (CIE)

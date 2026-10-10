@@ -59,7 +59,7 @@ class TeacherEditController extends Controller
       $array['country_id']        = $userprofile->country_id;
       $array['city_id']           = $userprofile->city_id;
       $array['pincode']           = $userprofile->pincode==NULL ? '':$userprofile->pincode;
-      $array['avatar']            = $userprofile->AvatarPath;
+      $array['avatar']            = $this->avatarOrInitials($userprofile);
       $array['marital_status']    = $userprofile->marital_status;
       $array['notes']             = $userprofile->notes;
       $array['employee_id']       = $teacherprofile['employee_id'];
@@ -91,6 +91,18 @@ class TeacherEditController extends Controller
       return $array;
     }
 
+    private function avatarOrInitials(?\App\Models\Userprofile $profile): string
+    {
+        $path = (string) ($profile?->AvatarPath ?? '');
+        if ($path !== '') {
+            return $path;
+        }
+        $initials = strtoupper(mb_substr((string) ($profile->firstname ?? 'T'), 0, 1).mb_substr((string) ($profile->lastname ?? ''), 0, 1));
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" rx="48" fill="#14532D"/><text x="48" y="58" text-anchor="middle" font-family="sans-serif" font-size="36" fill="#ffffff">'.$initials.'</text></svg>';
+
+        return 'data:image/svg+xml;utf8,'.rawurlencode($svg);
+    }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -113,9 +125,15 @@ class TeacherEditController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function editValidationProfile(TeacherUpdateRequest $request,$name)
+    public function editValidationProfile(TeacherUpdateRequest $request, $name)
     {
-      //
+        $response = $this->update($request, $name);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return $response;
     }
 
     /**

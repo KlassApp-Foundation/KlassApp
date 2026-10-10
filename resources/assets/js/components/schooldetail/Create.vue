@@ -38,7 +38,7 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="moto" class="tw-form-label"
-                            >School Moto<span class="text-red-500"
+                            >Motto<span class="text-red-500"
                                 >*</span
                             ></label
                         >
@@ -50,7 +50,7 @@
                             v-model="moto"
                             id="moto"
                             class="tw-form-control w-full"
-                            placeholder="Enter School Moto"
+                            placeholder="Enter motto"
                         />
                     </div>
                     <span
@@ -123,7 +123,7 @@
             <div class="lg:mr-8 md:mr-8">
                 <div class="mb-2">
                     <label for="center_no" class="tw-form-label"
-                        >Center No.<span class="text-red-500">*</span></label
+                        >Centre number<span class="text-red-500">*</span></label
                     >
                 </div>
                 <div class="w-full lg:w-3/4 my-2">
@@ -133,7 +133,7 @@
                         v-model="center_no"
                         id="center_no"
                         class="tw-form-control w-full"
-                        placeholder="Center No"
+                        placeholder="Centre number"
                     />
                 </div>
                 <span

@@ -273,6 +273,6 @@ class SchoolDetailsCountryEmisUnebTest extends TestCase
         $response->assertSee('Uganda');
         $response->assertSee('EMIS-SHOW');
         $response->assertSee('U2222');
-        $response->assertSee('UNEB Centre Number');
+        $response->assertSee('Exam centre number');
     }
 }

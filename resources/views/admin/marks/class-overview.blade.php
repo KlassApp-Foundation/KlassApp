@@ -19,7 +19,7 @@ $filteredMarks = $learner->marks->filter(
         </div>
         <div>
             <h2 class="ds-section-title">{{ $learner->school->name }}</h2>
-            <p class="ds-section-subtitle">P.O.Box 58, Kabale, Uganda</p>
+            <p class="ds-section-subtitle">P.O. Box 100, Sample City</p>
             <p class="ds-section-subtitle">+256XXXXXXXXX</p>
         </div>
 

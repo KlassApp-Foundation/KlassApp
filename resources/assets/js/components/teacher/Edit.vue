@@ -162,7 +162,6 @@
                                 name="designation"
                             >
                                 <option
-                                    value=""
                                     v-for="designation in designationlist"
                                     v-bind:value="designation.id"
                                 >

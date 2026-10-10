@@ -6,7 +6,7 @@
 
 | Layer | Version | Source |
 |---|---|---|
-| **PHP** | 8.4.23 | `ssh root@46.101.111.131 docker exec sms-app php -v` |
+| **PHP** | 8.4.23 | `ssh root@the retired droplet docker exec sms-app php -v` |
 | **Laravel** | 12.63.0 | `php artisan --version` on production |
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
@@ -14,7 +14,7 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
+| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`the retired droplet`) is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — verify via Cloud Commands, not SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
@@ -1739,7 +1739,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **✅ #437** six Toshi complete-mode defects + Teacherlink A-lite — merge `1a030cde`; Cloud deploy `depl-a2b08852-…` **succeeded**.
 - **✅ Agent 1 full pass (Cloud, not droplet SSH)**: fresh secondary school **22** “Agent's School-3” via web signup + in-app Toshi complete mode (admin WhatsApp skipped) → Review/Confirm → Teacherlink + exam → marks → Flow PLR + approve → **%PDF-1.7** report (668 959 bytes). Evidence: `e2e/screenshots/agent1-secondary-full/REPORT.json` + `SCHOOL22-FINAL.json`.
-- **Ops**: production is **Laravel Cloud** (`klassapp.xyz`). Do **not** SSH `46.101.111.131` for prod commands — use Cloud Commands API / dashboard (same pattern as Redis/seeder fixes).
+- **Ops**: production is **Laravel Cloud** (`klassapp.xyz`). Do **not** SSH `the retired droplet` for prod commands — use Cloud Commands API / dashboard (same pattern as Redis/seeder fixes).
 - **✅ `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297`** persisted on Cloud via `POST …/variables` (`method: set` + local JSON patch file); redeploy `depl-a2b0c2c1-…` **succeeded**. Live verify **without override**: `config`/`env` = Flow ID; Flow send `success` + wamid `…D3929B574844F3AE6D`. Evidence: `e2e/screenshots/agent1-secondary-full/FLOW-ID-PERSIST.json`.
 - **Future (docs)**: optional “invite class teacher to set up their own class” logged under Future Initiatives — admin-driven setup remains default; teacher invite is nullable/optional.
 
@@ -1747,7 +1747,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **In progress**: [#437](https://github.com/KlassApp-Foundation/KlassApp/pull/437) — all six defects coded. **#3 A-lite**: form `teacherClasses` × `teacherSubjects` → `$teacherLinks` → shared `persistTeacherLinksFromCollectedData` in create+complete `commitAll`; Teachers completion stays `Teacherlink::exists()`; no class-teacher Toshi prompt.
 - **Evidence**: `ToshiFormTeacherlinkCommitTest` 3 passed (hydrate + Teacherlink rows + `OnboardingStepsService::isStepComplete('teachers')` + S.4↔Senior Four alias).
-- **Blocked for Agent 1 re-run**: droplet SSH `root@46.101.111.131` **timed out** this session — full secondary Toshi journey from a fresh school still needs Cloud/register or restored SSH after merge/deploy.
+- **Blocked for Agent 1 re-run**: droplet SSH `root@the retired droplet` **timed out** this session — full secondary Toshi journey from a fresh school still needs Cloud/register or restored SSH after merge/deploy.
 - **Prior tip on main**: `11e62e6c` (#435 four findings). Docs stamp branch `docs/stamp-435-four-findings` / `68d41d5b`.
 
 ## Previous: September 7, 2026 (`origin/main` tip `11e62e6c` — **#435 MERGED + Cloud-deployed**; Toshi complete-mode four findings **FIXED**) — superseded above
@@ -2410,8 +2410,8 @@ The Toshi panel on `/admin/reports` (and all `app.blade.php` pages) was fixed ac
 
 | Component | Server | URL |
 |---|---|---|
-| KlassApp App | 46.101.111.131 | https://klassapp.xyz |
-| KlassApp (WABA) | 46.101.111.131 | https://klassapp.xyz |
+| KlassApp App | the retired droplet | https://klassapp.xyz |
+| KlassApp (WABA) | the retired droplet | https://klassapp.xyz |
 | ~~Evolution API~~ | ~~decommissioned~~ | ~~Replaced by Meta WABA~~ |
 | Deploy key | `~/.ssh/id_ed25519_do` | |
 
@@ -2784,7 +2784,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Edge cases flagged**: Admin importer still uses old CSV column heuristics for placement — xlsx acceptance alone does not make wizard-format sheets place correctly (#635).
 
 ### 2026-09-16: AGENTS.md Cloud alignment + pull-from-main rule — **docs PR #623** (rebased)
-- **Work done**: Rebased [#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) onto `main` after [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) merge (`87ad6bd0`). Kept intent: rewrite `AGENTS.md` Environment reality check away from retired DigitalOcean droplet SSH (`root@46.101.111.131` / `sms-app`); production = Laravel Cloud; standing rule #19 sync from `origin/main` before any task; session workflow sync → read knowledge → confirm Cloud access; `.cursor/rules/project-context.mdc` pointer no longer claims DigitalOcean. Dropped stale knowledge stamp from pre-rebase tip; restamped here.
+- **Work done**: Rebased [#623](https://github.com/KlassApp-Foundation/KlassApp/pull/623) onto `main` after [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) merge (`87ad6bd0`). Kept intent: rewrite `AGENTS.md` Environment reality check away from retired DigitalOcean droplet SSH (`root@the retired droplet` / `sms-app`); production = Laravel Cloud; standing rule #19 sync from `origin/main` before any task; session workflow sync → read knowledge → confirm Cloud access; `.cursor/rules/project-context.mdc` pointer no longer claims DigitalOcean. Dropped stale knowledge stamp from pre-rebase tip; restamped here.
 - **Also this pass**: Merged [#547](https://github.com/KlassApp-Foundation/KlassApp/pull/547) (design-sync durable inputs) — API `merged: true` @ `87ad6bd0`.
 - **Files**: `AGENTS.md`, `.cursor/rules/project-context.mdc`, `knowledge.md` (this stamp).
 - **Key decisions**: `knowledge.md` remains hosting/ops source of truth; no secrets in `AGENTS.md`; no deploy (docs/rules only). Standing #17/#18 numbering preserved.
@@ -3341,7 +3341,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 ### 2026-09-09: Credential rotation closeout (SSH / Laravel Cloud / WhatsApp) — **BLOCKED (all three)**
 - **Work done**: Attempted rotation of the three credentials previously flagged as exposed. Confirmed storage hygiene: `.secrets.local` added to `.gitignore` (was **not** covered by `.env.*`). No secrets written to chat, knowledge, or commits.
 - **Per credential**:
-  1. **SSH key (`~/.ssh/id_ed25519_do`)** — **BLOCKED**. Local keypair still present; `ssh -i … root@46.101.111.131` times out (port 22). No DigitalOcean API token in this environment to install a replacement key or revoke the old one on droplet 578598104. Production app traffic is on **Laravel Cloud** (`klassapp.xyz`); droplet SSH rotation needs DO console or network access that this session lacks.
+  1. **SSH key (`~/.ssh/id_ed25519_do`)** — **BLOCKED**. Local keypair still present; `ssh -i … root@the retired droplet` times out (port 22). No DigitalOcean API token in this environment to install a replacement key or revoke the old one on droplet 578598104. Production app traffic is on **Laravel Cloud** (`klassapp.xyz`); droplet SSH rotation needs DO console or network access that this session lacks.
   2. **Laravel Cloud API token** — **BLOCKED**. Current `LC_TOKEN` still authenticates env/deploy/command APIs (HTTP 200). Creating a **new** token and revoking the old one requires the Cloud dashboard (Settings → API tokens). Token management endpoints (`/api/user`, `/api/tokens`, …) return **401** with this token — cannot self-rotate via API.
   3. **WhatsApp Business API token** — **BLOCKED**. Local `.env` `WHATSAPP_BUSINESS_API_TOKEN` is empty; Cloud env has the key present (value not read into logs). Rotation requires Meta Business Manager admin to issue a new permanent token, then update Cloud environment variables and revoke the old Meta token. No Meta admin access in this session.
 - **Files modified**: `.gitignore` (`.secrets.local`), `knowledge.md`
@@ -3525,7 +3525,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ### 2026-09-05: Laravel Cloud API migration setup — **PARTIAL** (no DNS/deploy)
 - **Work done**: Via Cloud REST API (`https://cloud.laravel.com/api`) with org token: created application from `KlassApp-Foundation/KlassApp` (token org had **0** apps — GitHub connect alone had not created one), production env configured PHP 8.4 + build/deploy cmds, provisioned/attached MySQL 8.4 + Valkey (Redis-protocol) in `eu-west-1`, added worker background process, set structural env vars + fresh APP_KEY, disabled push-to-deploy.
-- **Blocked**: Production droplet `46.101.111.131` SSH/ping timeout from this network — cannot pull live `.env` for WhatsApp Business / Groq / Claude / mail / etc. Local `.env` copies are not production.
+- **Blocked**: Production droplet `the retired droplet` SSH/ping timeout from this network — cannot pull live `.env` for WhatsApp Business / Groq / Claude / mail / etc. Local `.env` copies are not production.
 - **Not done (intentional)**: custom domain `klassapp.xyz`, any deploy, Meta webhook cutover.
 - **Status**: 🚧 Infra configured; secrets + DNS/deploy remain separate steps.
 - **Edge**: Rotate the Cloud API token that was pasted in chat.
@@ -4443,7 +4443,7 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
 - **Edge cases flagged**: complete-mode WhatsApp skip does not mark checklist complete; plan cards may need Livewire `selectPlan` fallback; Predis deprecation noise in tinker stdout requires JSON extraction
 
 ### 2026-08-05: Merge + deploy #177 + #178 (country/EMIS/plan + plain dashboard redirect)
-- **Work done**: Pre-merge: both PRs MERGEABLE/CLEAN, conflict-marker CI green, **no file overlap**. Confirmed #177 migration `2026_08_05_100600_add_uneb_center_number_to_schools_table`. Squash-merged **#177 first** then **#178** (no rebase needed). Deployed to prod (`root@46.101.111.131` / `sms-app`) from worktree `KlassApp-deploy-177-178` @ tip `6fb4756` — pull + composer + toshi-ui publish + `migrate --force` + optimize:clear (local Vite skipped; PHP-only). Post-deploy Playwright signup on `https://klassapp.xyz`: redirect plain `/admin/dashboard`, continue-setup + Toshi live (checklist shows Country; plan last). Cleaned test user/school 53.
+- **Work done**: Pre-merge: both PRs MERGEABLE/CLEAN, conflict-marker CI green, **no file overlap**. Confirmed #177 migration `2026_08_05_100600_add_uneb_center_number_to_schools_table`. Squash-merged **#177 first** then **#178** (no rebase needed). Deployed to prod (`root@the retired droplet` / `sms-app`) from worktree `KlassApp-deploy-177-178` @ tip `6fb4756` — pull + composer + toshi-ui publish + `migrate --force` + optimize:clear (local Vite skipped; PHP-only). Post-deploy Playwright signup on `https://klassapp.xyz`: redirect plain `/admin/dashboard`, continue-setup + Toshi live (checklist shows Country; plan last). Cleaned test user/school 53.
 - **Merge SHAs**: #177 `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`; #178 `6fb47564b23cee348186f7a8e290bcc082c1f8a0`
 - **Migration**: `2026_08_05_100600_add_uneb_center_number_to_schools_table` batch **11** (already Ran on pull; column present). No pending migrations.
 - **Deploy**: prod HEAD `6fb47564b23cee348186f7a8e290bcc082c1f8a0` @ **2026-08-05 22:06:27 UTC**
@@ -4706,7 +4706,7 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
 - **Edge cases flagged**: Prod SSH still publickey-denied from agent env; do not print full URL (may embed creds)
 
 ### 2026-08-02: Verify production Toshi model vs adversarial-live
-- **Work done**: Confirmed production Toshi chat model is **DeepSeek `deepseek-chat`** via `openai-compatible` (`api.deepseek.com`). Evidence: `config/toshi.model` + `config/ai.php` defaults; local `.env` `OPENAI_COMPATIBLE_*` / `TOSHI_LLM_MODEL` (prod-shaped); runtime `ToshiLlm` / agents resolve `deepseek-chat`. Prod SSH `root@46.101.111.131` unreachable from this environment (publickey denied) — no contradiction in repo/config. Prior live run already used DeepSeek → **no re-run**. Fixed drift risk: `ToshiLlm` + `UsesToshiLlm` shared by agents + `toshi:adversarial-live`; `config/toshi.php` `model` now reads `OPENAI_COMPATIBLE_MODEL` / `TOSHI_LLM_MODEL`; tests assert config resolution. Pushed to PR #142 (not merged).
+- **Work done**: Confirmed production Toshi chat model is **DeepSeek `deepseek-chat`** via `openai-compatible` (`api.deepseek.com`). Evidence: `config/toshi.model` + `config/ai.php` defaults; local `.env` `OPENAI_COMPATIBLE_*` / `TOSHI_LLM_MODEL` (prod-shaped); runtime `ToshiLlm` / agents resolve `deepseek-chat`. Prod SSH `root@the retired droplet` unreachable from this environment (publickey denied) — no contradiction in repo/config. Prior live run already used DeepSeek → **no re-run**. Fixed drift risk: `ToshiLlm` + `UsesToshiLlm` shared by agents + `toshi:adversarial-live`; `config/toshi.php` `model` now reads `OPENAI_COMPATIBLE_MODEL` / `TOSHI_LLM_MODEL`; tests assert config resolution. Pushed to PR #142 (not merged).
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `Concerns/UsesToshiLlm.php`, OperationsAgents + Orchestrator + WA agents, `ToshiAdversarialLiveCommand.php`, `config/toshi.php`, live/command tests, `knowledge.md`
 - **Key decisions**: DeepSeek matches production — skip live re-run; unify model resolution so monthly job cannot hardcode a substitute
 - **Status**: ✅ Done — later merged via #142 (`50f0102`)
@@ -5394,7 +5394,7 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
   1. Diagnosed Toshi not responding to clicks — root cause was duplicate Alpine.js (CDN `cdn.jsdelivr.net/npm/alpinejs@3.14.8` loaded in `<head>` of `layouts/app.blade.php` alongside Livewire v3's bundled Alpine), causing `$wire is not defined` errors
   2. Fixed by removing the CDN Alpine.js script tag from `layouts/app.blade.php` and running `php artisan livewire:publish --assets`
   3. Built Fee Collection Trends chart — `computeFeeTrend()` in `app/Traits/Dashboard.php` aggregates FeePayment amounts by day/week/month; `DashboardController.php` reads `?period=` query param (validates day|week|month); view adds a Chart.js line chart below Students Per Class
-  4. Deployed all changes to production (`46.101.111.131`) via SCP, cleared cache, verified 0 console errors
+  4. Deployed all changes to production (`the retired droplet`) via SCP, cleared cache, verified 0 console errors
   5. Committed and pushed to main (`f1c73d0`)
 - **Files modified**:
   - `app/Traits/Dashboard.php` — Added `use App\Models\FeePayment`, added `computeFeeTrend()` method
@@ -5801,7 +5801,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Edge cases flagged**: WhatsApp webhook 302 was caused by Sanctum's `EnsureFrontendRequestsAreStateful` in API middleware group. Evolution API image name is `evoapicloud/evolution-api` not `evolutionapi/evolution-api`.
 
 ### 2026-06-26: Full WABA migration + WhatsApp UI upgrades + Facebook ban
-- **Work done**: Greeting handler (Hello, Hi, Hey → menu buttons), wa.me link texts simplified to "Hello KlassApp", production IP updated (165.245.250.16 → 46.101.111.131), fully migrated from Evolution API to Meta Cloud API (removed WhatsAppService.php, all isConfigured() fallbacks, handleEvolutionInbound, buildMenuSections, processCodeVerificationForEvolution, Evolution config), added native sendList + sendTextSafe + sendToUser to WhatsAppBusinessService, switched all consumers (NotifyAdminMarksUpdated, AgentToshi, SchoolPayWebhookController, OutboundWhatsAppService) to Business API only. UI upgrades: fee balance with visual separators, attendance tonal warnings (⚠️ < 80%, ✅ > 90%), grades celebration with class rank for avg > 80%, distinct message type patterns. Recovered 9 compose methods dropped during migration. Facebook Business Account banned — need new Meta account + new WhatsApp number.
+- **Work done**: Greeting handler (Hello, Hi, Hey → menu buttons), wa.me link texts simplified to "Hello KlassApp", production IP updated (165.245.250.16 → the retired droplet), fully migrated from Evolution API to Meta Cloud API (removed WhatsAppService.php, all isConfigured() fallbacks, handleEvolutionInbound, buildMenuSections, processCodeVerificationForEvolution, Evolution config), added native sendList + sendTextSafe + sendToUser to WhatsAppBusinessService, switched all consumers (NotifyAdminMarksUpdated, AgentToshi, SchoolPayWebhookController, OutboundWhatsAppService) to Business API only. UI upgrades: fee balance with visual separators, attendance tonal warnings (⚠️ < 80%, ✅ > 90%), grades celebration with class rank for avg > 80%, distinct message type patterns. Recovered 9 compose methods dropped during migration. Facebook Business Account banned — need new Meta account + new WhatsApp number.
 - **Files modified**: `app/Services/WhatsAppBusinessService.php`, `app/Services/OutboundWhatsAppService.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Listeners/NotifyAdminMarksUpdated.php`, `app/Livewire/AgentToshi.php`, `app/Http/Controllers/Api/SchoolPayWebhookController.php`, `config/services.php`, `resources/views/landing.blade.php`, `resources/views/landing2.blade.php`, `AGENTS.md`, `scripts/deploy-manual.sh`, `scripts/provision-klassapp.sh`, `scripts/provision-evolution.sh`
 - **Deleted**: `app/Services/WhatsAppService.php` (Evolution API, 395 lines)
 - **Key decisions**: Stripped Evolution entirely instead of leaving fallback code. No intermediate transition — Meta is the only transport now. sendList upgraded to native Meta interactive lists instead of text fallback. Class rank calculated by comparing SUM(marks) across same exam in DB.
@@ -5816,7 +5816,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Edge cases flagged**: `navLogo` variable absent from v1 after main restructure — used `.site-header` scrolled class toggle only. Playwright artifacts (.playwright-mcp/) inadvertently committed then removed.
 
 ### 2026-06-20: Droplet rebuild, WABA migration, full audit
-- **Work done**: Rebuilt destroyed droplet (new IP 46.101.111.131), full LEMP + Laravel provision, migrated from Evolution API to Meta WABA (direct), fixed Docker iptables DROP blocking external traffic, fixed Google OAuth (malformed .env line), fixed mobile hamburger menus on both landings + admin, fixed Str::plural for PHP 8.4 compat, added google_id migration locally, created full audit at `audit.md`
+- **Work done**: Rebuilt destroyed droplet (new IP the retired droplet), full LEMP + Laravel provision, migrated from Evolution API to Meta WABA (direct), fixed Docker iptables DROP blocking external traffic, fixed Google OAuth (malformed .env line), fixed mobile hamburger menus on both landings + admin, fixed Str::plural for PHP 8.4 compat, added google_id migration locally, created full audit at `audit.md`
 - **Key discoveries**: Production .env had concatenated line (`WHATSAPP_BUSINESS_API_VERSION=v21.0GOOGLE_CLIENT_ID=...`), Docker left iptables FORWARD DROP rules after removal, landing2 was missing mobileMenu div entirely, admin res_sidebar toggle JS ran before DOM ready
 - **Verdict**: ⚠️ NOT READY for school onboarding — 6 critical blockers (35 dd() calls, APP_DEBUG=true, no HMAC webhook verification, 0 swap, no backups, 3 incomplete dashboards)
 - **Next**: Fix critical items 1-6, deploy docs to production, add WhatsApp linking UI, wire real chart data
@@ -6857,7 +6857,7 @@ Three major work streams completed: (1) students list page redesigned from Vue t
 Deploy pending commits, fix grading points conditional validation, click-test, install LSP/scan codebase, then audit all report endpoints on production — re-verify previously-failing 500s, remove silent `catch(Exception)` blocks, add Data Exports rename comments, and update knowledge base.
 
 ### Production Environment
-- **Host**: `46.101.111.131` (root@klassapp.xyz) — Docker (`sms-app` container, PHP 8.3-fpm)
+- **Host**: `the retired droplet` (root@klassapp.xyz) — Docker (`sms-app` container, PHP 8.3-fpm)
 - **Volume mount NOT active** on running container — `docker cp` required for file updates
 - **Current commit deployed**: `69e3bcb` (grading fix + cleanup)
 - **Domains**: `https://klassapp.xyz` (production), `ugasch.com` (alias)
@@ -10141,7 +10141,7 @@ Onboarding suite: **8 failed (above), 123 passed** — 0 new failures. Toshi sui
 
 ### 2026-08-12: Kabale Junior School (104) production verification — read-only
 
-Read-only verification of the Kabale reference school on production (`ssh root@46.101.111.131 docker exec sms-app`, DB `klassapp`):
+Read-only verification of the Kabale reference school on production (`ssh root@the retired droplet docker exec sms-app`, DB `klassapp`):
 
 - **Grading**: `school_grading_systems` = 0 rows for school 104. Two standards exist: id=43 "primary" (order 1), id=44 "nursery" (order 2). No grading rows were seeded — the Kabale import bypassed the wizard/seeder paths (raw `Excel::import` via SSH/tinker per the Aug 11 incident).
 - **Teachers**: 27 `teacherprofile` rows, all P1-P7 only, zero nursery teachers. The 3 nursery `standards_link` rows (sections 52-54) all have `class_teacher_id` = NULL. The 6 nursery teachers from `3_Teachers_List.xlsx` were never imported.
@@ -10281,7 +10281,7 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 - **Files**: `app/Exports/CombinedMarksheetExport.php` (new), `ReportCardsController.php`, `MarksController.php`, `Subject.php`, `routes/admin.php`, `routes/teacher.php`, `cards.blade.php`, `teacher-exam-list.blade.php`, migration `2026_08_12_173702_flag_junk_student_records.php` (SQLite guard), `tests/Feature/Exports/CombinedMarksheetExportTest.php` (new).
 - **Migration guard**: `2026_08_12_173702_flag_junk_student_records.php` used MySQL-only `regexp`, crashing SQLite and breaking every `RefreshDatabase` test — added `DB::getDriverName() === 'sqlite'` early-return (matches existing convention).
 - **Tests**: `CombinedMarksheetExportTest` (4 tests, 41 assertions); affected files 15 passing / 79 assertions.
-- **Status**: ✅ MERGED + DEPLOYED — PR #286, merge commit `5b7180448aa88e6b6cae236c913a959ebd43cad3`, branch `feat/combined-marksheet` → `main`. Deployed to production (46.101.111.131, `sms-app`), PHP 8.4.23 / Laravel 12.63.0.
+- **Status**: ✅ MERGED + DEPLOYED — PR #286, merge commit `5b7180448aa88e6b6cae236c913a959ebd43cad3`, branch `feat/combined-marksheet` → `main`. Deployed to production (the retired droplet, `sms-app`), PHP 8.4.23 / Laravel 12.63.0.
 - **URL**: https://github.com/KlassApp-Foundation/KlassApp/pull/286
 - **Real-data verification (Kabale P.2)**: Generated `combined_kabale_p2.xlsx` on production for P.2 (stdlink 79, standard 54 `primary_lower`, 113 active students, Term 2 id=89). Confirmed: subject column order matches report card (`Subject::sortByReportOrder`, both now share the same function); June/July/EOT values match DB cell-for-cell (AARON YESUTAHINDUKA, ABIGAIL AINAMANI, ALI ALUKA verified); blank cells correct for missing-marks students (ADON ZANE NDUWAYESU, ALBERT ATWINE — no marks) and for no-mark subjects (SCIENCE, SST, RUNYANKORE RUKIGA); inactive/junk student EMMANUEL NAMANYA correctly excluded (113 active + 1 inactive). Stale stdlink 53 (standard 43) has no EOT exam → filtered out of report-cards page, so no empty-sheet button.
 - **Flagged**: PR #260's ordering has a latent quirk — `'READING AND RESPONSE'` normalizes to `'READING RESPONSE'` (the `' AND '` → `' '` replace), so it never matches its own array key and sorts to the end (after SST). Both report card and marksheet share this (bug-for-bug consistent). Full roster (113) vs report-card "48 with marks" is intentional per spec. **→ FIXED in PR #288 (below).**
@@ -10361,7 +10361,7 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 - Per-school template switcher on `/admin/reports/cards` (POST `admin.reports.cards.template`); `ReportCardsController::generatePdf()` picks the Blade view via a single `TEMPLATES` map (all 4 call sites route through it — unified in #238).
 - **Logo resolution moved off the old hardcoded `public_path('images/KJSLogo.jpg')`** (`student-report.blade.php`) → `resolveLogoPath()` reads `SchoolDetail(meta_key='school_logo')` (latest row, skipping the `'-'` sentinel), `Storage::disk('public')->path()` + `file_exists`, graceful omission if none uploaded.
 
-**Deploy**: `scripts/deploy-manual.sh` (Hetzner `sms-app`, root@46.101.111.131) — migration ran cleanly on prod, caches cleared, FPM restarted, PHP 8.4.24 serving. **No raw production edits** — everything through the standing flow.
+**Deploy**: `scripts/deploy-manual.sh` (Hetzner `sms-app`, root@the retired droplet) — migration ran cleanly on prod, caches cleared, FPM restarted, PHP 8.4.24 serving. **No raw production edits** — everything through the standing flow.
 
 **Kabale crest upload** (final open item from the design work):
 - Real crest = `KJSLogo.jpg` (490×525, md5 `a5b0f55c6f525348ccb29079ec97f8fc`; downloaded to `~/Downloads` Aug 12 16:03, copied to repo `public/images/` 16:09; **untracked in git** — never committed; a copy already existed on prod at `public/images/KJSLogo.jpg` from the old hardcoded path).
@@ -11310,7 +11310,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 ### 2026-09-10: Security — remove embedded DO deploy key + hardcoded LLM API key
 
-- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`[REDACTED - personal email]` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `46.101.111.131` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
+- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`[REDACTED - personal email]` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `the retired droplet` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
 - **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
 - **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
 - **Status**: ✅ Security PR open — [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) (`security/remove-embedded-secrets`).
@@ -13607,7 +13607,7 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Fix — PR [#1045](https://github.com/KlassApp-Foundation/KlassApp/pull/1045) (branch `fix/chart-empty-aa-contrast`):** scoped override on `.ds-chart-empty` only, `#94A3B8` → `#64748B` (the codebase's existing AA-muted, `--d-text-secondary`), leaving the global `--d-muted` token untouched (it's relied on across many surfaces). Committed `e2356b9c`. Browser-verified via Playwright (Chromium, local render) — computed color `rgb(100,116,139)`, contrast **4.55:1** on `#FAFAF5` and **4.76:1** on white, both pass AA. `public/css/dashboard-refresh.css` is the only tracked source for this rule (no SCSS equivalent to keep in sync). **All 3 CI checks green** (`check`/`scan`/`test-guard` success, test-guard completed after ~8.5min). PR is `MERGEABLE` but **not yet merged** — awaiting Rasta's go-ahead, not self-merged without one.
 
-**Journey rerun (rule #31 / "rerun journeys after 2nd merge"):** still BLOCKED, not skipped. The real journey set (corrected this pass — an earlier draft of this note misnamed it `mvp-endtoend`/`primary manual`) is the onboarding trio `selfserve` / `toshi` / `parity` (`e2e/manual-selfserve-onboarding.spec.js`, `e2e/toshi-onboarding.spec.js`, `e2e/onboarding-parity.spec.js`; run via `--project=selfserve|toshi|parity`). They are hardwired to seed and clean up over SSH to a retired droplet host (`root@46.101.111.131`, `docker exec sms-app php artisan tinker` — lines 69/85/262 of the selfserve spec) — forbidden per project standing rules and the droplet is retired. Cannot run the real journeys against staging without either removing that SSH dependency or getting a working Cloud Commands token (same blocker as the reseed). The staging `shell-polish-verify` run above is the substitute evidence that the merged shell works on a live environment; it is not the same as the full end-to-end journey.
+**Journey rerun (rule #31 / "rerun journeys after 2nd merge"):** still BLOCKED, not skipped. The real journey set (corrected this pass — an earlier draft of this note misnamed it `mvp-endtoend`/`primary manual`) is the onboarding trio `selfserve` / `toshi` / `parity` (`e2e/manual-selfserve-onboarding.spec.js`, `e2e/toshi-onboarding.spec.js`, `e2e/onboarding-parity.spec.js`; run via `--project=selfserve|toshi|parity`). They are hardwired to seed and clean up over SSH to a retired droplet host (`root@the retired droplet`, `docker exec sms-app php artisan tinker` — lines 69/85/262 of the selfserve spec) — forbidden per project standing rules and the droplet is retired. Cannot run the real journeys against staging without either removing that SSH dependency or getting a working Cloud Commands token (same blocker as the reseed). The staging `shell-polish-verify` run above is the substitute evidence that the merged shell works on a live environment; it is not the same as the full end-to-end journey.
 
 **Evidence zip:** `~/Desktop/shell-polish-pairs.zip` confirmed present and complete — 14 side-by-side concept|live pairs + README + manifest from `evidence/shell-polish`. Matches the branch content; no deviations.
 

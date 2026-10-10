@@ -8,6 +8,7 @@ name: Root Clutter Guard
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   check:
@@ -17,7 +18,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch the base branch
+        run: git fetch origin "${{ github.base_ref || 'main' }}"
+
       - name: Check for new disallowed root clutter
         env:
-          BASE_REF: origin/${{ github.base_ref }}
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
         run: bash scripts/check-root-clutter.sh
