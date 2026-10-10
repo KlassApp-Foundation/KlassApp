@@ -1,0 +1,54 @@
+{
+  "mid266-1280": {
+    "bar": {
+      "count": "Setup 6 of 13 done",
+      "next": "Next: Approximate school size"
+    },
+    "dock": {
+      "modalVisible": true,
+      "dockVisible": true,
+      "rowsVisible": 26,
+      "modalRowsVisible": 13,
+      "text": "Toshi\n●\nCompleting Setup ✅\n↻ Restart\nToshi\nHello! Let's finish setting up E2E PR1 MID 1009011145 on KlassApp.\nToshi\nI found 7 things to set up:\nToshi\nAbout how many students does your school have? Reply with one of: Up to 500, Up to 1,000, More than 1,000.\n6/13\nRequired\nSchool name\nReview →\nApproxim"
+    }
+  },
+  "mid266-375": {
+    "bar": {
+      "count": "Setup 6 of 13 done",
+      "next": "Next: Approximate school size"
+    },
+    "dock": {
+      "modalVisible": true,
+      "dockVisible": true,
+      "rowsVisible": 26,
+      "modalRowsVisible": 13,
+      "text": "Toshi\n●\nCompleting Setup ✅\n↻ Restart\nToshi\nHello! Let's finish setting up E2E PR1 MID 1009011145 on KlassApp.\nToshi\nI found 7 things to set up:\nToshi\nAbout how many students does your school have? Reply with one of: Up to 500, Up to 1,000, More than 1,000.\n6/13\nRequired\nSchool name\nReview →\nApproxim"
+    }
+  },
+  "fresh267-1280": {
+    "bar": {
+      "count": "Setup 3 of 13 done",
+      "next": "Next: Approximate school size"
+    },
+    "dock": {
+      "modalVisible": true,
+      "dockVisible": true,
+      "rowsVisible": 26,
+      "modalRowsVisible": 13,
+      "text": "Toshi\n●\nCompleting Setup ✅\n↻ Restart\nToshi\nHello! Let's finish setting up E2E PR1 NEW 1009011259 on KlassApp.\nToshi\nI found 10 things to set up:\nToshi\nAbout how many students does your school have? Reply with one of: Up to 500, Up to 1,000, More than 1,000.\n3/13\nRequired\nSchool name\nReview →\nApproxi"
+    }
+  },
+  "fresh267-375": {
+    "bar": {
+      "count": "Setup 3 of 13 done",
+      "next": "Next: Approximate school size"
+    },
+    "dock": {
+      "modalVisible": true,
+      "dockVisible": true,
+      "rowsVisible": 26,
+      "modalRowsVisible": 13,
+      "text": "Toshi\n●\nCompleting Setup ✅\n↻ Restart\nToshi\nHello! Let's finish setting up E2E PR1 NEW 1009011259 on KlassApp.\nToshi\nI found 10 things to set up:\nToshi\nAbout how many students does your school have? Reply with one of: Up to 500, Up to 1,000, More than 1,000.\n3/13\nRequired\nSchool name\nReview →\nApproxi"
+    }
+  }
+}
