@@ -13,14 +13,10 @@ use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
- * Regression: the /admin/students listing default-filtered
- * `users.status != 'exit'`, which (on the enum
- * ['active','inactive','exit']) silently included `inactive` junk
- * records flagged by the 2026_08_12 cleanup migration. This mirrors
- * the dashboard count leak (bug-pattern #6). The default branch now
- * positively filters `users.status = 'active'`; the explicit
- * `?status=inactive` audit path is preserved so admins can still
- * inspect the flagged junk rows.
+ * The students list All chip shows active and inactive people and
+ * still excludes exit. Exit stays out through whereIn(['active','inactive']),
+ * never a negative status filter. The Active chip and ?status=inactive
+ * stay positive-equality filters.
  */
 class StudentListingExcludesInactiveTest extends TestCase
 {
@@ -105,7 +101,7 @@ class StudentListingExcludesInactiveTest extends TestCase
         return $user;
     }
 
-    public function test_default_student_listing_excludes_inactive_and_exit_junk(): void
+    public function test_default_all_chip_includes_inactive_and_excludes_exit(): void
     {
         $activeA = $this->makeStudent('active', 'ActiveAlpha');
         $activeB = $this->makeStudent('active', 'ActiveBeta');
@@ -117,6 +113,20 @@ class StudentListingExcludesInactiveTest extends TestCase
         $response->assertOk();
         $response->assertSee($activeA->userprofile->firstname, false);
         $response->assertSee($activeB->userprofile->firstname, false);
+        $response->assertSee($inactive->userprofile->firstname, false);
+        $response->assertDontSee($exit->userprofile->firstname, false);
+    }
+
+    public function test_active_chip_excludes_inactive_and_exit(): void
+    {
+        $active = $this->makeStudent('active', 'ActiveOnly');
+        $inactive = $this->makeStudent('inactive', 'InactiveHidden');
+        $exit = $this->makeStudent('exit', 'ExitedHidden');
+
+        $response = $this->actingAs($this->admin)->get('/admin/students?chip=active');
+
+        $response->assertOk();
+        $response->assertSee($active->userprofile->firstname, false);
         $response->assertDontSee($inactive->userprofile->firstname, false);
         $response->assertDontSee($exit->userprofile->firstname, false);
     }

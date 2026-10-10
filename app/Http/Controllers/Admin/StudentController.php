@@ -18,6 +18,7 @@ use App\Models\StudentAcademic;
 use App\Models\StandardLink;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
+use App\Services\People\PeopleListQuery;
 use App\Traits\LogActivity;
 use App\Models\ActivityLog;
 use App\Models\Userprofile;
@@ -51,98 +52,12 @@ class StudentController extends Controller
         return $this->MemberFilter($request, Auth::user()->school_id, 6, 'active');
     }
 
-    public function index(Request $request)
+    public function index(Request $request, PeopleListQuery $people)
     {
-        $school_id = Auth::user()->school_id;
-        $standardLinks = SiteHelper::getStandardLinkList($school_id);
-
-        // Subquery: latest student_academics per user
-        $latestSa = DB::table('student_academics as sa')
-            ->select('sa.id', 'sa.user_id', 'sa.standardLink_id', 'sa.klassapp_student_id')
-            ->whereIn('sa.academic_year_id', function ($q) {
-                $q->select('id')->from('academic_years')->where('status', 1);
-            })
-            ->whereNull('sa.deleted_at')
-            ->orderByDesc('sa.id');
-
-        $query = User::where('users.school_id', $school_id)
-            ->where('users.usergroup_id', 6)
-            ->whereNull('users.deleted_at')
-            ->leftJoin(DB::raw("({$latestSa->toSql()}) as latest_sa"), 'users.id', '=', 'latest_sa.user_id')
-            ->addBinding($latestSa->getBindings(), 'join')
-            ->leftJoin('standards_link', 'latest_sa.standardLink_id', '=', 'standards_link.id')
-            ->leftJoin('sections', 'standards_link.section_id', '=', 'sections.id')
-            ->select('users.*', 'sections.name as class_name', 'latest_sa.klassapp_student_id as kls_number');
-
-        $search = $request->input('search');
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('userprofile', function ($uq) use ($search) {
-                    $uq->where('firstname', 'like', "%{$search}%")
-                       ->orWhere('lastname', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        $standardFilter = $request->input('standard');
-        if ($standardFilter === 'none') {
-            // "Needs a class": latest academic row has no StandardLink (or none exists).
-            $query->whereNull('latest_sa.standardLink_id');
-        } elseif ($standardFilter) {
-            // School-scoped: a crafted foreign StandardLink id must not leak
-            // another school's class-link data into this filter (IDOR).
-            // Fail-safe: ignored when the id does not belong to this school.
-            $selectedLink = StandardLink::where('school_id', $school_id)->find($standardFilter);
-            if ($selectedLink) {
-                // A class can have multiple stream links (e.g. East/West) —
-                // filter by standard + section so every stream is included.
-                $query->where('standards_link.standard_id', $selectedLink->standard_id)
-                      ->where('standards_link.section_id', $selectedLink->section_id);
-            }
-        }
-
-        $streamFilter = $request->input('stream');
-        if ($streamFilter) {
-            $query->where('standards_link.stream', $streamFilter);
-        }
-
-        $statusFilter = $request->input('status');
-        if ($statusFilter) {
-            if ($statusFilter === 'active') {
-                $query->where('users.status', 'active');
-            } elseif ($statusFilter === 'inactive') {
-                // Positive equality — `!= 'active'` would also pull `exit`.
-                $query->where('users.status', 'inactive');
-            }
-        } else {
-            // Default view: only currently-active students. The broad
-            // `!= 'exit'` filter previously included `status='inactive'`
-            // junk records (flagged by the 2026_08_12 cleanup migration).
-            // Use a positive `= 'active'` filter so inactive/exit are
-            // excluded by default; admins can still explicitly request
-            // `?status=inactive` above to audit the flagged junk rows.
-            $query->where('users.status', 'active');
-        }
-
-        $students = $query->with([
-            'parents.userParent.userprofile',
-            'userprofile',
-        ])->orderBy(Userprofile::select('firstname')
-            ->whereColumn('user_id', 'users.id')
-            ->limit(1)
-        )->paginate(25)->withQueryString();
-
-        $count = $students->total();
+        $list = $people->students(Auth::user(), $request);
 
         return view('/admin/member/index', [
-            'students' => $students,
-            'count' => $count,
-            'standardLinks' => $standardLinks,
-            'search' => $search,
-            'standardFilter' => $standardFilter,
-            'streamFilter' => $streamFilter,
-            'statusFilter' => $statusFilter,
-            'rosterSubtitle' => $this->studentsRosterSubtitle($school_id, $students),
+            'list' => $list,
         ]);
     }
 
