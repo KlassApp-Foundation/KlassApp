@@ -32,6 +32,9 @@ class SidebarLucideIconsTest extends TestCase
             foreach ($nav['groups'] ?? [] as $group) {
                 $walk($role, $group['items'] ?? []);
             }
+            foreach ($nav['sections'] ?? [] as $section) {
+                $walk($role, $section['rows'] ?? []);
+            }
         }
 
         return $out;
@@ -58,12 +61,17 @@ class SidebarLucideIconsTest extends TestCase
 
     public function test_every_group_header_has_an_icon(): void
     {
+        $groups = 0;
         foreach (config('navigation.roles') as $role => $nav) {
             foreach ($nav['groups'] ?? [] as $group) {
+                $groups++;
                 $key = $group['icon'] ?? $group['key'];
                 $this->assertNotNull(config('navigation.group_icons.'.$key), "{$role} group [{$group['label']}] has no group icon");
             }
         }
+
+        // Sidebar v3 replaced collapsible group headers with plain section labels.
+        $this->assertSame(0, $groups);
     }
 
     public function test_students_and_teachers_do_not_share_an_icon_and_fees_is_a_banknote(): void

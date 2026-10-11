@@ -15,12 +15,12 @@ class SoftlaunchNavAdmissionsStockAlumniContractTest extends TestCase
 {
     public function test_admin_sidebar_includes_admissions(): void
     {
-        // PR1 regrouped the sidebar; Admissions now sits in People. The contract
-        // (Admissions reachable from the admin sidebar) is unchanged.
-        $items = collect(config('navigation.roles.admin.groups'))
-            ->flatMap(fn (array $group) => $group['items'] ?? [])
-            ->values();
-        $admissions = $items->firstWhere('label', 'Admissions');
+        // Sidebar v3: Admissions is a child of Students. It stays reachable.
+        $students = collect(config('navigation.roles.admin.sections'))
+            ->flatMap(fn (array $section) => $section['rows'] ?? [])
+            ->firstWhere('label', 'Students');
+        $this->assertIsArray($students);
+        $admissions = collect($students['children'] ?? [])->firstWhere('label', 'Admissions');
         $this->assertIsArray($admissions);
         $this->assertSame('admin/admissions', $admissions['url']);
     }

@@ -129,8 +129,10 @@
         return true;
     };
 @endphp
-<ul class="list-reset text-sm">
-    @if(($nav['layout'] ?? 'flat') === 'grouped')
+<ul class="list-reset text-sm{{ ($nav['layout'] ?? '') === 'v3' ? ' sidebar-v3-list' : '' }}" @if(($nav['layout'] ?? '') === 'v3') data-sidebar-v3 @endif>
+    @if(($nav['layout'] ?? 'flat') === 'v3')
+        @include('layouts.partials.sidebar-menu-v3', compact('nav', 'itemClass', 'activeClass', 'navHref', 'navActive', 'showItem'))
+    @elseif(($nav['layout'] ?? 'flat') === 'grouped')
         @foreach(array_filter($nav['items'], $showItem) as $item)
             @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
         @endforeach

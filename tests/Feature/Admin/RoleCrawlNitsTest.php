@@ -115,7 +115,10 @@ class RoleCrawlNitsTest extends TestCase
         $response = $this->actingAs($this->head)->get('/subadmin/dashboard');
         $response->assertOk();
         $response->assertDontSee(url('/admin/settings'));
+        // Classes and streams is school-admin only. The parent row stays, and
+        // for a subadmin it opens Subjects rather than /admin/classes.
         $response->assertDontSee(url('/admin/classes'));
+        $response->assertDontSee('Classes and streams', false);
     }
 
     public function test_admin_dashboard_still_shows_settings_and_classes_links(): void

@@ -106,60 +106,87 @@ return [
         // still in this sidebar.
         'admin' => [
             'prefix' => 'admin',
-            'layout' => 'grouped',
-            'item_class' => 'py-3 px-3 dashboard-menu-item',
+            'layout' => 'v3',
+            'item_class' => 'dashboard-menu-item',
             'active_class' => 'active dashboard-active',
-            'items' => [
-                ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'admin/dashboard', 'active' => ['dashboard']],
-            ],
-            'groups' => [
+            'items' => [],
+            'sections' => [
                 [
-                    'key' => 'people', 'label' => 'People', 'icon' => 'people',
-                    'items' => [
-                        // Soft-launch 1d: only student-area segments — do not steal
-                        // Teachers/Parents/Staff active state via shared aliases.
-                        ['label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'active' => ['students', 'student', 'alumni', 'blocked_students']],
-                        ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'active' => ['teachers', 'teacher', 'staff', 'staffs']],
-                        ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'active' => ['parents', 'parent']],
-                        ['label' => 'Admissions', 'icon' => 'admissions', 'url' => 'admin/admissions', 'active' => ['admissions', 'admission', 'admissionlist']],
+                    'label' => null,
+                    'rows' => [
+                        ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'admin/dashboard', 'paths' => ['admin/dashboard*']],
                     ],
                 ],
                 [
-                    'key' => 'academics', 'label' => 'Academics', 'icon' => 'academics',
-                    'items' => [
-                        ['label' => 'Classes and streams', 'icon' => 'classes', 'url' => 'admin/classes', 'active' => ['classes', 'sections', 'standardlinks', 'standardLink'], 'condition' => 'school_admin'],
-                        ['label' => 'Subjects', 'icon' => 'subjects', 'url' => 'admin/subjects', 'active' => ['subjects', 'subject']],
-                        ['label' => 'Timetable', 'icon' => 'timetable', 'url' => 'admin/timetable', 'active' => ['timetable', 'timetables']],
-                        ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'admin/attendance', 'active' => ['attendance']],
-                        ['label' => 'Exams and marks', 'icon' => 'exams', 'url' => 'admin/exams', 'active' => ['exams', 'exam', 'marks', 'mark']],
-                        ['label' => 'Grading', 'icon' => 'grading', 'url' => 'admin/grades', 'active' => ['grades', 'grade']],
-                        ['label' => 'Report cards', 'icon' => 'reports', 'url' => 'admin/reports/cards', 'active' => ['reports']],
-                        ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'active' => ['library', 'books']],
+                    'label' => 'People',
+                    'rows' => [
+                        [
+                            'label' => 'Students', 'icon' => 'students', 'url' => 'admin/students',
+                            'children' => [
+                                ['label' => 'All students', 'url' => 'admin/students', 'paths' => ['admin/students*', 'admin/student*', 'admin/alumni*', 'admin/blocked_students*']],
+                                ['label' => 'Admissions', 'url' => 'admin/admissions', 'paths' => ['admin/admissions*', 'admin/admission*', 'admin/admissionlist*']],
+                                ['label' => 'Health records', 'url' => 'admin/health', 'paths' => ['admin/health*', 'admin/medical*']],
+                                ['label' => 'Transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
+                            ],
+                        ],
+                        ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'paths' => ['admin/teachers*', 'admin/teacher*', 'admin/staff*', 'admin/staffs*']],
+                        ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'paths' => ['admin/parents*', 'admin/parent*']],
                     ],
                 ],
                 [
-                    'key' => 'money', 'label' => 'Money', 'icon' => 'money',
-                    'items' => [
-                        ['label' => 'Fees', 'icon' => 'fees', 'url' => 'admin/fees/payments', 'active' => ['fees', 'fee', 'payments', 'payment', 'invoices']],
-                        ['label' => 'Unmatched Payments', 'icon' => 'warning', 'url' => 'admin/fees/payments/unmatched', 'active' => ['unmatched'], 'class' => 'pl-6 py-2 px-3 dashboard-menu-item', 'small' => true],
+                    'label' => 'Academics',
+                    'rows' => [
+                        [
+                            'label' => 'Classes and subjects', 'icon' => 'classes', 'url' => 'admin/classes',
+                            'children' => [
+                                ['label' => 'Classes and streams', 'url' => 'admin/classes', 'paths' => ['admin/classes*', 'admin/sections*', 'admin/standardlinks*', 'admin/standardLink*'], 'condition' => 'school_admin'],
+                                ['label' => 'Subjects', 'url' => 'admin/subjects', 'paths' => ['admin/subjects*', 'admin/subject*']],
+                                ['label' => 'Timetable', 'url' => 'admin/timetable', 'paths' => ['admin/timetable*', 'admin/timetables*']],
+                            ],
+                        ],
+                        ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'admin/attendance', 'paths' => ['admin/attendance*']],
+                        [
+                            'label' => 'Exams and reports', 'icon' => 'exams', 'url' => 'admin/exams',
+                            'children' => [
+                                ['label' => 'Exams and marks', 'url' => 'admin/exams', 'paths' => ['admin/exams*', 'admin/exam*', 'admin/marks*', 'admin/mark*']],
+                                ['label' => 'Grading', 'url' => 'admin/grades', 'paths' => ['admin/grades*', 'admin/grade*']],
+                                ['label' => 'Report cards', 'url' => 'admin/reports/cards', 'paths' => ['admin/reports/cards*']],
+                            ],
+                        ],
+                        ['label' => 'Library', 'icon' => 'library', 'route' => 'admin.library.books', 'paths' => ['admin/library*', 'admin/books*']],
                     ],
                 ],
                 [
-                    'key' => 'messages', 'label' => 'Messages', 'icon' => 'messages',
-                    'items' => [
-                        ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'active' => ['whatsapp']],
-                        ['label' => 'Calendar', 'icon' => 'calendar', 'url' => 'admin/calendar', 'active' => ['calendar', 'events']],
+                    'label' => 'Money',
+                    'rows' => [
+                        [
+                            'label' => 'Fees', 'icon' => 'fees', 'url' => 'admin/fees/payments',
+                            'children' => [
+                                ['label' => 'Overview', 'url' => 'admin/fees/payments', 'paths' => ['admin/fees/payments', 'admin/fees', 'admin/fee/*', 'admin/payment/*', 'admin/invoices*']],
+                                ['label' => 'Unmatched payments', 'url' => 'admin/fees/payments/unmatched', 'paths' => ['admin/fees/payments/unmatched*']],
+                            ],
+                        ],
                     ],
                 ],
                 [
-                    'key' => 'school', 'label' => 'School', 'icon' => 'school',
-                    'items' => [
-                        ['label' => 'Health records', 'icon' => 'health', 'url' => 'admin/health', 'active' => ['health', 'medical']],
-                        ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'active' => ['transport']],
-                        ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'active' => ['approvals', 'approval']],
-                        ['label' => 'Data Exports', 'icon' => 'exports', 'url' => 'admin/reports', 'active' => ['reports', 'report']],
-                        ['label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'active' => ['settings'], 'condition' => 'school_admin'],
-                        ['label' => 'Help', 'icon' => 'help', 'external' => 'https://klassapp.xyz/help'],
+                    'label' => 'School',
+                    'rows' => [
+                        [
+                            'label' => 'Messages', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard',
+                            'children' => [
+                                ['label' => 'WhatsApp', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*']],
+                                ['label' => 'Calendar', 'url' => 'admin/calendar', 'paths' => ['admin/calendar*', 'admin/events*']],
+                            ],
+                        ],
+                        ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*']],
+                        [
+                            'label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'condition' => 'school_admin',
+                            'children' => [
+                                ['label' => 'School details', 'url' => 'admin/schooldetails', 'paths' => ['admin/schooldetails*']],
+                                ['label' => 'Academic years and terms', 'url' => 'admin/academics', 'paths' => ['admin/academics*', 'admin/academic-term*', 'admin/academic/*']],
+                                ['label' => 'Data exports', 'url' => 'admin/reports', 'paths' => ['admin/reports']],
+                            ],
+                        ],
                     ],
                 ],
             ],

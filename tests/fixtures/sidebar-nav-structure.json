@@ -2,228 +2,260 @@
     "roles": {
         "admin": {
             "prefix": "admin",
-            "layout": "grouped",
-            "item_class": "py-3 px-3 dashboard-menu-item",
+            "layout": "v3",
+            "item_class": "dashboard-menu-item",
             "active_class": "active dashboard-active",
-            "items": [
+            "items": [],
+            "sections": [
                 {
-                    "label": "Dashboard",
-                    "url": "admin/dashboard",
-                    "active": [
-                        "dashboard"
+                    "label": null,
+                    "rows": [
+                        {
+                            "label": "Dashboard",
+                            "url": "admin/dashboard",
+                            "paths": [
+                                "admin/dashboard*"
+                            ]
+                        }
                     ]
-                }
-            ],
-            "groups": [
+                },
                 {
-                    "key": "people",
                     "label": "People",
-                    "items": [
+                    "rows": [
                         {
                             "label": "Students",
                             "url": "admin/students",
-                            "active": [
-                                "students",
-                                "student",
-                                "alumni",
-                                "blocked_students"
+                            "children": [
+                                {
+                                    "label": "All students",
+                                    "url": "admin/students",
+                                    "paths": [
+                                        "admin/students*",
+                                        "admin/student*",
+                                        "admin/alumni*",
+                                        "admin/blocked_students*"
+                                    ]
+                                },
+                                {
+                                    "label": "Admissions",
+                                    "url": "admin/admissions",
+                                    "paths": [
+                                        "admin/admissions*",
+                                        "admin/admission*",
+                                        "admin/admissionlist*"
+                                    ]
+                                },
+                                {
+                                    "label": "Health records",
+                                    "url": "admin/health",
+                                    "paths": [
+                                        "admin/health*",
+                                        "admin/medical*"
+                                    ]
+                                },
+                                {
+                                    "label": "Transport",
+                                    "url": "admin/transport",
+                                    "paths": [
+                                        "admin/transport*"
+                                    ]
+                                }
                             ]
                         },
                         {
                             "label": "Teachers and staff",
                             "url": "admin/teachers",
-                            "active": [
-                                "teachers",
-                                "teacher",
-                                "staff",
-                                "staffs"
+                            "paths": [
+                                "admin/teachers*",
+                                "admin/teacher*",
+                                "admin/staff*",
+                                "admin/staffs*"
                             ]
                         },
                         {
                             "label": "Parents",
                             "url": "admin/parents",
-                            "active": [
-                                "parents",
-                                "parent"
-                            ]
-                        },
-                        {
-                            "label": "Admissions",
-                            "url": "admin/admissions",
-                            "active": [
-                                "admissions",
-                                "admission",
-                                "admissionlist"
+                            "paths": [
+                                "admin/parents*",
+                                "admin/parent*"
                             ]
                         }
                     ]
                 },
                 {
-                    "key": "academics",
                     "label": "Academics",
-                    "items": [
+                    "rows": [
                         {
-                            "label": "Classes and streams",
+                            "label": "Classes and subjects",
                             "url": "admin/classes",
-                            "active": [
-                                "classes",
-                                "sections",
-                                "standardlinks",
-                                "standardLink"
-                            ],
-                            "condition": "school_admin"
-                        },
-                        {
-                            "label": "Subjects",
-                            "url": "admin/subjects",
-                            "active": [
-                                "subjects",
-                                "subject"
-                            ]
-                        },
-                        {
-                            "label": "Timetable",
-                            "url": "admin/timetable",
-                            "active": [
-                                "timetable",
-                                "timetables"
+                            "children": [
+                                {
+                                    "label": "Classes and streams",
+                                    "url": "admin/classes",
+                                    "paths": [
+                                        "admin/classes*",
+                                        "admin/sections*",
+                                        "admin/standardlinks*",
+                                        "admin/standardLink*"
+                                    ],
+                                    "condition": "school_admin"
+                                },
+                                {
+                                    "label": "Subjects",
+                                    "url": "admin/subjects",
+                                    "paths": [
+                                        "admin/subjects*",
+                                        "admin/subject*"
+                                    ]
+                                },
+                                {
+                                    "label": "Timetable",
+                                    "url": "admin/timetable",
+                                    "paths": [
+                                        "admin/timetable*",
+                                        "admin/timetables*"
+                                    ]
+                                }
                             ]
                         },
                         {
                             "label": "Attendance",
                             "url": "admin/attendance",
-                            "active": [
-                                "attendance"
+                            "paths": [
+                                "admin/attendance*"
                             ]
                         },
                         {
-                            "label": "Exams and marks",
+                            "label": "Exams and reports",
                             "url": "admin/exams",
-                            "active": [
-                                "exams",
-                                "exam",
-                                "marks",
-                                "mark"
-                            ]
-                        },
-                        {
-                            "label": "Grading",
-                            "url": "admin/grades",
-                            "active": [
-                                "grades",
-                                "grade"
-                            ]
-                        },
-                        {
-                            "label": "Report cards",
-                            "url": "admin/reports/cards",
-                            "active": [
-                                "reports"
+                            "children": [
+                                {
+                                    "label": "Exams and marks",
+                                    "url": "admin/exams",
+                                    "paths": [
+                                        "admin/exams*",
+                                        "admin/exam*",
+                                        "admin/marks*",
+                                        "admin/mark*"
+                                    ]
+                                },
+                                {
+                                    "label": "Grading",
+                                    "url": "admin/grades",
+                                    "paths": [
+                                        "admin/grades*",
+                                        "admin/grade*"
+                                    ]
+                                },
+                                {
+                                    "label": "Report cards",
+                                    "url": "admin/reports/cards",
+                                    "paths": [
+                                        "admin/reports/cards*"
+                                    ]
+                                }
                             ]
                         },
                         {
                             "label": "Library",
                             "route": "admin.library.books",
-                            "active": [
-                                "library",
-                                "books"
+                            "paths": [
+                                "admin/library*",
+                                "admin/books*"
                             ]
                         }
                     ]
                 },
                 {
-                    "key": "money",
                     "label": "Money",
-                    "items": [
+                    "rows": [
                         {
                             "label": "Fees",
                             "url": "admin/fees/payments",
-                            "active": [
-                                "fees",
-                                "fee",
-                                "payments",
-                                "payment",
-                                "invoices"
-                            ]
-                        },
-                        {
-                            "label": "Unmatched Payments",
-                            "url": "admin/fees/payments/unmatched",
-                            "active": [
-                                "unmatched"
-                            ],
-                            "class": "pl-6 py-2 px-3 dashboard-menu-item",
-                            "small": true
-                        }
-                    ]
-                },
-                {
-                    "key": "messages",
-                    "label": "Messages",
-                    "items": [
-                        {
-                            "label": "WhatsApp",
-                            "url": "admin/whatsapp/dashboard",
-                            "active": [
-                                "whatsapp"
-                            ]
-                        },
-                        {
-                            "label": "Calendar",
-                            "url": "admin/calendar",
-                            "active": [
-                                "calendar",
-                                "events"
+                            "children": [
+                                {
+                                    "label": "Overview",
+                                    "url": "admin/fees/payments",
+                                    "paths": [
+                                        "admin/fees/payments",
+                                        "admin/fees",
+                                        "admin/fee/*",
+                                        "admin/payment/*",
+                                        "admin/invoices*"
+                                    ]
+                                },
+                                {
+                                    "label": "Unmatched payments",
+                                    "url": "admin/fees/payments/unmatched",
+                                    "paths": [
+                                        "admin/fees/payments/unmatched*"
+                                    ]
+                                }
                             ]
                         }
                     ]
                 },
                 {
-                    "key": "school",
                     "label": "School",
-                    "items": [
+                    "rows": [
                         {
-                            "label": "Health records",
-                            "url": "admin/health",
-                            "active": [
-                                "health",
-                                "medical"
-                            ]
-                        },
-                        {
-                            "label": "Transport",
-                            "url": "admin/transport",
-                            "active": [
-                                "transport"
+                            "label": "Messages",
+                            "url": "admin/whatsapp/dashboard",
+                            "children": [
+                                {
+                                    "label": "WhatsApp",
+                                    "url": "admin/whatsapp/dashboard",
+                                    "paths": [
+                                        "admin/whatsapp*"
+                                    ]
+                                },
+                                {
+                                    "label": "Calendar",
+                                    "url": "admin/calendar",
+                                    "paths": [
+                                        "admin/calendar*",
+                                        "admin/events*"
+                                    ]
+                                }
                             ]
                         },
                         {
                             "label": "Approvals",
                             "url": "admin/approvals",
-                            "active": [
-                                "approvals",
-                                "approval"
-                            ]
-                        },
-                        {
-                            "label": "Data Exports",
-                            "url": "admin/reports",
-                            "active": [
-                                "reports",
-                                "report"
+                            "paths": [
+                                "admin/approvals*",
+                                "admin/approval*"
                             ]
                         },
                         {
                             "label": "Settings",
                             "url": "admin/settings",
-                            "active": [
-                                "settings"
-                            ],
-                            "condition": "school_admin"
-                        },
-                        {
-                            "label": "Help",
-                            "external": "https://klassapp.xyz/help"
+                            "condition": "school_admin",
+                            "children": [
+                                {
+                                    "label": "School details",
+                                    "url": "admin/schooldetails",
+                                    "paths": [
+                                        "admin/schooldetails*"
+                                    ]
+                                },
+                                {
+                                    "label": "Academic years and terms",
+                                    "url": "admin/academics",
+                                    "paths": [
+                                        "admin/academics*",
+                                        "admin/academic-term*",
+                                        "admin/academic/*"
+                                    ]
+                                },
+                                {
+                                    "label": "Data exports",
+                                    "url": "admin/reports",
+                                    "paths": [
+                                        "admin/reports"
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 }
