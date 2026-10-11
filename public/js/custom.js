@@ -26,11 +26,22 @@ $(document).ready(function(){
       zIndex: 80,
       margin: 0
     };
+    var collapsed = document.body.classList.contains('sidebar-collapsed');
     if (phone) {
       style.top = Math.round(box.bottom + 8) + 'px';
       style.bottom = 'auto';
       style.right = '8px';
       style.left = 'auto';
+    } else if (collapsed) {
+      var rail = document.getElementById('admin-sidebar');
+      var railRight = rail ? rail.getBoundingClientRect().right : box.right;
+      style.left = Math.round(railRight + 8) + 'px';
+      style.right = 'auto';
+      style.top = 'auto';
+      style.bottom = Math.round(window.innerHeight - box.bottom) + 'px';
+      style.width = '224px';
+      style.maxWidth = '224px';
+      style.boxSizing = 'border-box';
     } else {
       style.left = Math.round(box.left) + 'px';
       style.right = 'auto';
