@@ -85,7 +85,11 @@ class SidebarMenuRenderTest extends TestCase
                     }
                     foreach ($rows as $row) {
                         $expected++;
-                        $expected += collect($row['children'] ?? [])->reject($hidden)->count();
+                        $children = collect($row['children'] ?? [])->reject($hidden);
+                        $expected += $children->count();
+                        if ($children->isNotEmpty()) {
+                            $expected++; // folded-rail flyout title
+                        }
                     }
                 }
             }
