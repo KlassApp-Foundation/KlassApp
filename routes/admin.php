@@ -241,6 +241,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	//index
 	Route::get( '/students/find', 'StudentController@find' );
 	Route::get( '/students', 'StudentController@index' );
+	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
+	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
 	Route::get( '/students/blockedstudents', 'StudentController@blockedstudents' );
 	//add
 	Route::get( '/student/add', 'StudentController@create' );
