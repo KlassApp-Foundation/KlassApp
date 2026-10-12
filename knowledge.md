@@ -13631,4 +13631,8 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Review:** local `php artisan serve` on port 8003, Vite `public/build` present, no `public/hot`. Browser at 375 / 768 / 1280: page overflow 0, search and checkbox hits 44px, bulk bar “1 selected”, parent search `?search=Agnes` left one row. Evidence: `~/Desktop/klassapp-evidence/PR2/`. Demo Junior School has no `klassapp_student_id` values, so the KLS column shows an em dash; the feature test plants one and asserts it.
 
-**Status:** #1057 OPEN. Staging pairs wait until #1054 and #1056 merge and this PR merges. Not deployed.
+**Status:** #1057 OPEN. Not deployed. Staging pairs wait until this PR merges.
+
+### Continuation — 2026-10-12 selection and avatar switches
+
+Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list` merged `origin/main` before this change. Checkbox column and initials tiles are unchanged visually. `<x-people-list>` now takes `showSelection` (default true) and `avatarSize` (default `['table' => 'xs', 'card' => 'sm']`; a single size applies to both). The design follow-up flips those two props. `PeopleListTest` 8 passed. No further polish until the spec arrives.

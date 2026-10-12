@@ -1,5 +1,16 @@
 {{-- SPDX-License-Identifier: MIT --}}
-@props(['list'])
+{{-- showSelection and avatarSize are the follow-up switches. Defaults keep today's checkbox column and xs/sm initials. avatarSize may be one profile-photo size for both, or ['table' => 'xs', 'card' => 'sm']. --}}
+@props([
+    'list',
+    'showSelection' => true,
+    'avatarSize' => ['table' => 'xs', 'card' => 'sm'],
+])
+
+@php
+    $peopleAvatar = is_array($avatarSize) ? $avatarSize : ['table' => $avatarSize, 'card' => $avatarSize];
+    $tableAvatar = $peopleAvatar['table'] ?? 'xs';
+    $cardAvatar = $peopleAvatar['card'] ?? $tableAvatar;
+@endphp
 
 <link rel="stylesheet" href="/css/people-list.css?v={{ filemtime(public_path('css/people-list.css')) }}">
 
@@ -44,6 +55,7 @@
         </div>
     </form>
 
+    @if($showSelection)
     <div class="people-bulk" data-people-bulk hidden>
         <b><span data-people-count>0</span> selected</b>
         @foreach($list['bulk'] as $action)
@@ -51,6 +63,7 @@
         @endforeach
         <button class="people-bulk-btn" type="button" data-people-clear>Clear</button>
     </div>
+    @endif
 
     <div class="people-loading" data-people-loading hidden aria-busy="true">
         <p class="people-sr" role="status">Loading {{ strtolower($list['title']) }}…</p>
@@ -79,11 +92,13 @@
             <table class="people-table">
                 <thead>
                     <tr>
+                        @if($showSelection)
                         <th class="people-check">
                             <label class="people-check-hit">
                                 <input type="checkbox" data-people-all aria-label="Select all on this page">
                             </label>
                         </th>
+                        @endif
                         <th scope="col">{{ $list['kind'] === 'parents' ? 'Parent or guardian' : rtrim($list['title'], 's') }}</th>
                         @foreach($list['columns'] as $index => $column)
                             <th scope="col" @if($index === 2) class="people-col-4" @endif>{{ $column }}</th>
@@ -94,14 +109,16 @@
                 <tbody>
                     @foreach($list['rows'] as $row)
                         <tr class="people-row">
+                            @if($showSelection)
                             <td class="people-check">
                                 <label class="people-check-hit">
                                     <input type="checkbox" value="{{ $row['id'] }}" data-people-check aria-label="Select {{ $row['name'] }}">
                                 </label>
                             </td>
+                            @endif
                             <td>
                                 <span class="people-who">
-                                    <x-profile-photo :user="$row['user']" size="xs" />
+                                    <x-profile-photo :user="$row['user']" :size="$tableAvatar" />
                                     <span class="people-who-text">
                                         <a class="people-name" href="{{ $row['profile_url'] }}">{{ $row['name'] }}</a>
                                         @if(!empty($row['role']))
@@ -139,10 +156,12 @@
             <div class="people-cards">
                 @foreach($list['rows'] as $row)
                     <article class="people-card">
+                        @if($showSelection)
                         <label class="people-check-hit">
                             <input type="checkbox" value="{{ $row['id'] }}" data-people-check aria-label="Select {{ $row['name'] }}">
                         </label>
-                        <x-profile-photo :user="$row['user']" size="sm" />
+                        @endif
+                        <x-profile-photo :user="$row['user']" :size="$cardAvatar" />
                         <div class="people-card-main">
                             <a class="people-name" href="{{ $row['profile_url'] }}">{{ $row['name'] }}</a>
                             <p class="people-card-line">

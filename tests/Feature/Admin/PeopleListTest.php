@@ -6,6 +6,7 @@ use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\MustBeSchoolAdmin;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicYear;
+use App\Services\People\PeopleListQuery;
 use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\Section;
@@ -20,6 +21,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -337,6 +339,33 @@ class PeopleListTest extends TestCase
         $response->assertSee('Classless Child', false);
         $response->assertDontSee('Enrolled Child', false);
         $response->assertSee('No class', false);
+    }
+
+    public function test_selection_column_and_avatar_size_are_switches(): void
+    {
+        $this->person($this->schoolA, 6, 'Amina Pupil', 'amina.switch@people-a.test');
+        $this->actingAs($this->adminA);
+
+        $list = app(PeopleListQuery::class)->students($this->adminA, request());
+
+        $on = Blade::render('<x-people-list :list="$list" />', ['list' => $list]);
+        $this->assertStringContainsString('data-people-check', $on);
+        $this->assertStringContainsString('data-people-all', $on);
+        $this->assertStringContainsString('data-people-bulk', $on);
+        $this->assertStringContainsString('width="32"', $on);
+        $this->assertStringContainsString('width="40"', $on);
+
+        $off = Blade::render(
+            '<x-people-list :list="$list" :show-selection="false" avatar-size="md" />',
+            ['list' => $list]
+        );
+        $this->assertStringNotContainsString('data-people-check', $off);
+        $this->assertStringNotContainsString('data-people-all', $off);
+        $this->assertStringNotContainsString('data-people-bulk', $off);
+        $this->assertStringContainsString('Amina Pupil', $off);
+        $this->assertStringContainsString('width="64"', $off);
+        $this->assertStringNotContainsString('width="32"', $off);
+        $this->assertStringNotContainsString('width="40"', $off);
     }
 
     private function school(string $name): School
