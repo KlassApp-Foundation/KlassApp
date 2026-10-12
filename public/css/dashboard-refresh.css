@@ -832,7 +832,12 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 .account-card__menu.user-dtl.is-portaled {
     position: fixed;
+}
+.account-card__menu.user-dtl.is-portaled:not([hidden]) {
     display: block;
+}
+.account-card__menu.user-dtl[hidden] {
+    display: none !important;
 }
 .account-card__menu.user-dtl {
     display: none;
@@ -4716,8 +4721,10 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.has-count .sidebar-v3-lin
     border-radius: 999px; background: #F59E0B;
 }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-children { display: none; }
+.sidebar-v3-bridge { position: fixed; z-index: 59; background: transparent; }
+.sidebar-v3-bridge[hidden] { display: none !important; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.is-flyout .sidebar-v3-children {
-    display: block; position: fixed; left: 64px; top: var(--fly-top, 8px); width: 200px; margin: 0; padding: 6px;
+    display: block !important; position: fixed; left: 64px; top: var(--fly-top, 8px); width: 200px; margin: 0; padding: 6px;
     background: #fff; border: 1px solid #E2E8F0; border-radius: 10px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); z-index: 60;
 }

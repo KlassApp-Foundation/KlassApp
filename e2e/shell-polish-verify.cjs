@@ -99,6 +99,15 @@ async function newContext(browserType, vp) {
 }
 
 (async () => {
+  if (!process.argv.includes('--skip-pointer')) {
+    const pointer = await require('./shell-rail-pointer-verify.cjs').run();
+    pointer.failures.forEach((line) => failures.push(line));
+    if (process.argv.includes('--pointer-only')) {
+      console.log(pointer.failures.length === 0 ? 'ALL POINTER CHECKS PASSED' : `${pointer.failures.length} FAILURES`);
+      process.exit(pointer.failures.length === 0 ? 0 : 1);
+    }
+  }
+
   const bootBrowser = await chromium.launch({ headless: true });
   const bootPage = await (await bootBrowser.newContext()).newPage();
   await login(bootPage);

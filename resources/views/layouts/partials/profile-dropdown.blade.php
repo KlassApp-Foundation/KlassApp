@@ -22,7 +22,7 @@
         };
     }
     $accountTip = $displayName.' · '.$roleLabel;
-    $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar');
+    $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar').'-'.substr(md5(uniqid('', true)), 0, 8);
     $cardVariant = $variant ?? 'sidebar';
 @endphp
 <div class="profile-click account-card{{ $cardVariant === 'topbar' ? ' account-card--topbar' : '' }}" dusk="profile-menu" data-account-card>

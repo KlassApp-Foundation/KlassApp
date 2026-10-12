@@ -42,17 +42,8 @@
             @endphp
             <li class="sidebar-v3-item{{ $hasChildCount ? ' has-count' : '' }}" data-sidebar-row data-tip="{{ $row['label'] }}"
                 @if(count($children) > 0)
-                    x-data="{ open: {{ $open ? 'true' : 'false' }}, flyout: false, hold: null }"
-                    x-on:mouseenter="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
-                    x-on:mouseleave="flyout = false"
-                    x-on:focusin="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
-                    x-on:focusout="if (!$el.contains($event.relatedTarget)) flyout = false"
-                    x-on:pointerdown="if (document.body.classList.contains('sidebar-collapsed')) hold = setTimeout(() => flyout = true, 500)"
-                    x-on:pointerup="clearTimeout(hold)"
-                    x-on:pointercancel="clearTimeout(hold)"
-                    x-on:keydown.escape.window="flyout = false"
+                    x-data="{ open: {{ $open ? 'true' : 'false' }}, flyout: false }"
                     x-bind:class="flyout ? 'is-flyout' : ''"
-                    x-bind:style="flyout ? ('--fly-top:' + Math.max(8, Math.min(Math.round($el.getBoundingClientRect().top), window.innerHeight - 8 - ($el.querySelector('.sidebar-v3-children')?.scrollHeight || 160))) + 'px') : ''"
                 @endif>
                 <div class="sidebar-v3-row">
                     <a href="{{ $navHref($hrefItem) }}"
@@ -79,6 +70,7 @@
                     @endif
                 </div>
                 @if(count($children) > 0)
+                    <div class="sidebar-v3-bridge" hidden aria-hidden="true"></div>
                     <ul class="sidebar-v3-children" x-show="flyout || (open && !document.body.classList.contains('sidebar-collapsed'))" x-cloak role="group" aria-label="{{ $row['label'] }}">
                         <li class="sidebar-v3-flyout-title" role="presentation">{{ $row['label'] }}</li>
                         @foreach($children as $index => $child)
