@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const { buildJourneyData } = require('../lib/journey-data');
 const health = require('../lib/health');
 const signup = require('../lib/signup');
+const shell = require('../lib/shell');
 const wizard = require('../lib/manual-wizard');
 const outcomes = require('../lib/outcomes');
 const artifacts = require('../lib/artifacts');
@@ -42,9 +43,14 @@ for (const [typeId, tag] of JOURNEYS) {
         expect(flagged.school_id).toBeGreaterThan(0);
         console.log(`[${tag}] signup ok; school=${flagged.school_id}; starting wizard`);
 
+        await shell.settleShell(page);
+        const school = shell.schoolLine(page);
+        if (!(await school.isVisible().catch(() => false))) {
+            findings.push('school line not visible on the dashboard header');
+        }
         await health.checkNoHorizontalScroll(page, 'dashboard', findings);
 
-        // 4) Manual wizard via the dashboard banner.
+        // 4) Manual wizard via the dashboard setup control.
         // On mobile, a maximized Toshi overlay used to intercept the banner click
         // forever (actionability). Prefer a short click timeout, then navigate.
         // PR1: with DASHBOARD_V2_ENABLED the slim setup bar replaces the banner;
