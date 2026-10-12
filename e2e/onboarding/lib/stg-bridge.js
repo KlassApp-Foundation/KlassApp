@@ -55,6 +55,20 @@ function runStagingJson(php, opts) {
     return JSON.parse(out.slice(idx + marker.length).trim());
 }
 
+/**
+ * Read a sign-up verification code from the staging Cloud log stream.
+ * Staging guard lives in stg_bridge.py. Returns {ok, code?, error?, source}.
+ */
+function readVerificationCode(email) {
+    const out = execFileSync(PY, [BRIDGE, '--logs', email], {
+        encoding: 'utf8',
+        timeout: 90_000,
+        maxBuffer: 8 * 1024 * 1024,
+        env: process.env,
+    });
+    return JSON.parse(out.trim().split('\n').pop());
+}
+
 /** Cheap wake ping so the first real bridge call is less likely to time out. */
 function wakeStaging() {
     try {
@@ -66,4 +80,4 @@ function wakeStaging() {
     }
 }
 
-module.exports = { runStagingPhp, runStagingJson, wakeStaging };
+module.exports = { runStagingPhp, runStagingJson, wakeStaging, readVerificationCode };

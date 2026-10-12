@@ -19,6 +19,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { buildJourneyData } = require('../lib/journey-data');
 const signup = require('../lib/signup');
+const shell = require('../lib/shell');
 const wizard = require('../lib/manual-wizard');
 const outcomes = require('../lib/outcomes');
 
@@ -62,6 +63,8 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     // ── STEP 1: signup + wizard ─────────────────────────────────────────────
     const reg = await signup.signupValid(page, data);
     expect(reg.landedOnDashboard, 'signup must land on the dashboard').toBeTruthy();
+    await shell.settleShell(page);
+    await expect(shell.schoolLine(page)).toBeVisible({ timeout: 20_000 });
     await snap('step1-dashboard');
 
     const flagged = outcomes.setTestFlag(data.admin.email);
@@ -96,11 +99,13 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     // 2a. create a stream on the section
     const streamName = `Mvp${ts}`;
     await page.goto(`/admin/class-stream/${ctx0.section.id}/create`, { waitUntil: 'domcontentloaded' });
-    await page.fill('input[name="stream"]', streamName);
+    await shell.settleShell(page);
+    const streamForm = page.locator('[data-testid="admin-add-stream-form"]');
+    await streamForm.locator('[data-testid="admin-stream-name"]').fill(streamName);
     await snap('step2-stream-form');
     await Promise.all([
         page.waitForLoadState('domcontentloaded').catch(() => {}),
-        page.locator('form').filter({ has: page.locator('input[name="stream"]') }).locator('button[type="submit"]').first().click(),
+        streamForm.locator('[data-testid="admin-stream-submit"]').click(),
     ]);
     await page.waitForTimeout(1500);
     const streamFlash = ((await page.textContent('body')) || '').match(/stream .* added|already existed/gi) || [];
@@ -236,7 +241,10 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     // KLS visible on the student overview page
     await page.goto(`/admin/student/show/${encodeURIComponent(first.name)}`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
-    const overviewText = (await page.textContent('body')) || '';
+    const klsNode = page.locator('[data-testid="student-kls"]');
+    const overviewText = (await klsNode.count())
+        ? ((await klsNode.first().innerText()) || '')
+        : ((await page.textContent('body')) || '');
     expect(overviewText.includes(first.kls), 'student overview must show the KLS number').toBeTruthy();
     await snap('step3-kls-overview');
 
@@ -252,19 +260,17 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     const TEACHER_PW = data.password;
     await tpage.goto(invite.url, { waitUntil: 'domcontentloaded' });
     await tpage.waitForTimeout(1500);
-    await tpage.fill('#password', TEACHER_PW);
-    await tpage.fill('#password_confirmation', TEACHER_PW);
+    const acceptForm = tpage.locator('[data-testid="invite-password-form-el"]');
+    await acceptForm.locator('[data-testid="invite-password-input"]').fill(TEACHER_PW);
+    await acceptForm.locator('[data-testid="invite-password-confirm-input"]').fill(TEACHER_PW);
     await tsnap('step4-invite-accept');
     await Promise.all([
         tpage.waitForLoadState('domcontentloaded').catch(() => {}),
-        tpage.locator('form').filter({ has: tpage.locator('#password') }).locator('button[type="submit"]').first().click(),
+        acceptForm.locator('[data-testid="invite-submit-btn"]').click(),
     ]);
     await tpage.waitForTimeout(2000);
 
-    await tpage.goto('/login', { waitUntil: 'domcontentloaded' });
-    await tpage.fill('#email', ctEmail);
-    await tpage.fill('#password', TEACHER_PW);
-    await Promise.all([tpage.waitForLoadState('domcontentloaded').catch(() => {}), tpage.click('button[type="submit"]')]);
+    await shell.signIn(tpage, ctEmail, TEACHER_PW);
     await tpage.waitForTimeout(2500);
     expect(/teacher\/dashboard/.test(tpage.url()), 'teacher must land on their dashboard').toBeTruthy();
     await quietToshi(tpage);
@@ -328,10 +334,7 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
     // 5b. teacher enters marks by form for the first three students
     const tctx2 = await browser.newContext({ viewport: { width, height: width === 375 ? 812 : 900 } });
     const tp2 = await tctx2.newPage();
-    await tp2.goto('/login', { waitUntil: 'domcontentloaded' });
-    await tp2.fill('#email', ctEmail);
-    await tp2.fill('#password', TEACHER_PW);
-    await Promise.all([tp2.waitForLoadState('domcontentloaded').catch(() => {}), tp2.click('button[type="submit"]')]);
+    await shell.signIn(tp2, ctEmail, TEACHER_PW);
     await tp2.waitForTimeout(2000);
     await quietToshi(tp2);
     await tp2.goto(`/teacher/exam/${exam.id}/marks/enter`, { waitUntil: 'domcontentloaded' });
@@ -443,10 +446,7 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
 
     const bctx = await browser.newContext({ viewport: { width, height: width === 375 ? 812 : 900 } });
     const bpage = await bctx.newPage();
-    await bpage.goto('/login', { waitUntil: 'domcontentloaded' });
-    await bpage.fill('#email', bursarEmail);
-    await bpage.fill('#password', data.password);
-    await Promise.all([bpage.waitForLoadState('domcontentloaded').catch(() => {}), bpage.click('button[type="submit"]')]);
+    await shell.signIn(bpage, bursarEmail, data.password);
     await bpage.waitForTimeout(2500);
     expect(/accountant\/dashboard|fees/.test(bpage.url() + ' fees'), 'bursar must log in').toBeTruthy();
     await quietToshi(bpage);
@@ -510,10 +510,7 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
 
     const pctx = await browser.newContext({ viewport: { width, height: width === 375 ? 812 : 900 } });
     const ppage = await pctx.newPage();
-    await ppage.goto('/login', { waitUntil: 'domcontentloaded' });
-    await ppage.fill('#email', parentEmail);
-    await ppage.fill('#password', data.password);
-    await Promise.all([ppage.waitForLoadState('domcontentloaded').catch(() => {}), ppage.click('button[type="submit"]')]);
+    await shell.signIn(ppage, parentEmail, data.password);
     await ppage.waitForTimeout(2500);
     expect(/parent\/dashboard/.test(ppage.url()), 'parent must land on the parent dashboard').toBeTruthy();
     await quietToshi(ppage);

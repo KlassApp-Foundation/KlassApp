@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const { buildJourneyData } = require('../lib/journey-data');
 const health = require('../lib/health');
 const signup = require('../lib/signup');
+const shell = require('../lib/shell');
 const toshi = require('../lib/toshi');
 const outcomes = require('../lib/outcomes');
 const artifacts = require('../lib/artifacts');
@@ -43,6 +44,7 @@ for (const [typeId, tag] of JOURNEYS) {
         const modeFlipped = outcomes.enableOnboardingMode(data.admin.email, data.schoolName);
         expect(modeFlipped.school_id).toBe(flagged.school_id);
         await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+        await shell.settleShell(page);
 
         await toshi.ensurePanel(page);
         await health.checkNoHorizontalScroll(page, 'dashboard (toshi)', findings);

@@ -1,11 +1,6 @@
 // Signup driver + validation battery for the public /register form.
 const { expect } = require('@playwright/test');
-const { execFileSync } = require('node:child_process');
-const path = require('node:path');
-const { runStagingJson } = require('./stg-bridge');
-
-const PY = process.env.E2E_PYTHON || 'python3';
-const STG_LOGS = path.join(__dirname, 'stg_logs.py');
+const { readVerificationCode, runStagingJson } = require('./stg-bridge');
 
 async function open(page) {
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
@@ -34,15 +29,17 @@ async function fill(page, data, overrides = {}) {
 }
 
 async function submit(page, { bypassClientValidation = false } = {}) {
+    const form = page.locator('[data-testid="preview-register-form"], #saas-register-form');
     if (bypassClientValidation) {
-        await page.locator('#saas-register-form').evaluate((f) => f.setAttribute('novalidate', 'novalidate'));
+        await form.evaluate((f) => f.setAttribute('novalidate', 'novalidate'));
     }
-    await page.getByRole('button', { name: 'Create account with password' }).click();
+    await form.locator('[data-testid="ap-primary-submit"]').click();
     await page.waitForLoadState('load', { timeout: 90_000 }).catch(() => {});
 }
 
 async function readErrors(page) {
-    return (await page.locator('.ap-error').allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    const nodes = page.locator('.ap-error, [data-testid="auth-flash-error"]');
+    return (await nodes.allInnerTexts()).map((t) => t.trim()).filter(Boolean);
 }
 
 async function submitExpectErrors(page, data, overrides, expectedFragments) {
@@ -85,13 +82,7 @@ async function runValidationBattery(page, data) {
  */
 function readCodeFromStagingLogs(email) {
     try {
-        const out = execFileSync(PY, [STG_LOGS, email], {
-            encoding: 'utf8',
-            timeout: 90_000,
-            maxBuffer: 8 * 1024 * 1024,
-            env: process.env,
-        });
-        return JSON.parse(out.trim().split('\n').pop());
+        return readVerificationCode(email);
     } catch (e) {
         return {
             ok: false,
@@ -127,10 +118,16 @@ async function completeEmailVerification(page, data) {
         throw new Error('e2e signup: could not obtain verification code (no pre-verify): ' + JSON.stringify(resolved));
     }
 
-    const codeInput = page.locator('input[name="code"], #code, input[placeholder="000000"]').first();
+    const codeInput = page.locator('[data-testid="verify-code-input"], input[name="code"], #code').first();
     await expect(codeInput).toBeVisible({ timeout: 30_000 });
     await codeInput.fill(String(resolved.code));
-    await page.getByRole('button', { name: /confirm email/i }).click();
+    const verifyForm = page.locator('[data-testid="verify-code-form"]');
+    const confirm = verifyForm.locator('[data-testid="ap-primary-submit"]');
+    if (await confirm.count()) {
+        await confirm.click();
+    } else {
+        await page.getByRole('button', { name: /confirm email/i }).click();
+    }
     await page.waitForLoadState('load', { timeout: 90_000 }).catch(() => {});
 }
 

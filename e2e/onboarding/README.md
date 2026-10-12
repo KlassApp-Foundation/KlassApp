@@ -52,10 +52,10 @@ config). Artifacts (per journey): `e2e/onboarding/artifacts/<journey>-<stamp>/` 
   staging `LOG_STACK` if those errors should stop.
 - **Test data is marked.** Every school is named `E2E <type> <mode> <date>` and flagged
   `is_test`; the suite can purge its own schools (see below).
-- The only direct DB access is a small staging bridge (`lib/stg_bridge.py`) that runs
-  tinker snippets against the **staging** environment via the Laravel Cloud API with a
-  staging env-id guard. It needs `~/.openclaw-autoclaw/workspace/.openclaw/tmp/kc.py`
-  (or set `E2E_KC_PATH`).
+- The only direct DB access is a small staging bridge (`lib/stg_bridge.py`, Node
+  wrapper `lib/stg-bridge.js`). It runs tinker snippets and reads the Cloud log
+  stream against the **staging** environment, and refuses any other environment id.
+  The token comes from `CLOUD_AGENT_TOOLING` or Doppler. There is no SSH path.
 
 ## Cleaning up E2E schools
 
