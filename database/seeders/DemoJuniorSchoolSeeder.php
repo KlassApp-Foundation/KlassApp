@@ -156,9 +156,13 @@ class DemoJuniorSchoolSeeder extends Seeder
         foreach ([
             ['name' => 'Term I', 'starts_on' => '2026-02-02', 'ends_on' => '2026-04-30', 'status' => 'last'],
             ['name' => 'Term II', 'starts_on' => '2026-05-18', 'ends_on' => '2026-08-21', 'status' => 'last'],
-            ['name' => 'Term III', 'starts_on' => '2026-09-14', 'ends_on' => '2026-12-04', 'status' => 'current'],
+            // Term III opens in late August so that by the October demo the
+            // term is three months of four along. The fee tile caps collected
+            // at the months elapsed; a September–December term cannot show
+            // more than half collected in October.
+            ['name' => 'Term III', 'starts_on' => '2026-08-24', 'ends_on' => '2026-11-28', 'status' => 'current'],
         ] as $term) {
-            AcademicTerm::firstOrCreate(
+            AcademicTerm::updateOrCreate(
                 ['school_id' => $this->school->id, 'academic_year_id' => $this->year->id, 'name' => $term['name']],
                 ['starts_on' => $term['starts_on'], 'ends_on' => $term['ends_on'], 'status' => $term['status']]
             );
@@ -415,25 +419,21 @@ class DemoJuniorSchoolSeeder extends Seeder
             )->refresh();
         }
 
+        // Rebuild this school's payments on every seed and on demo:refresh.
+        // Skipping learners who already had a row left staging on the dates
+        // from the first seed, most of them before Term III opened.
+        FeePayment::where('school_id', $this->school->id)->delete();
+
         $students = StudentAcademic::where('school_id', $this->school->id)
             ->with('user')
             ->get();
 
         $index = 0;
-        $seededPayments = 0;
         foreach ($students as $academic) {
             if (! $academic->user) {
                 continue;
             }
             $index++;
-
-            // Per-learner idempotency: new learners (e.g. a freshly added
-            // secondary section) get their payments while existing rows stay.
-            // Index advances for every learner so the payment mix stays stable
-            // across re-runs.
-            if (FeePayment::where('school_id', $this->school->id)->where('user_id', $academic->user_id)->exists()) {
-                continue;
-            }
 
             $link = $this->links[array_search($academic->standardLink_id, array_map(fn ($l) => $l->id, $this->links), true)] ?? null;
             $standardName = null;
@@ -444,37 +444,59 @@ class DemoJuniorSchoolSeeder extends Seeder
                 continue;
             }
             $standardId = $link->standard_id;
-            $tuition = $categories['Tuition:' . $standardId] ?? null;
-            $lunch = $categories['Lunch:' . $standardId] ?? null;
-            if (! $tuition) {
+            $billed = array_values(array_filter(
+                $categories,
+                fn (FeesCategories $category) => (int) $category->standard_id === (int) $standardId
+            ));
+            if ($billed === []) {
                 continue;
             }
 
-            $roll = $index % 12;
-            $paidOn = fn (int $dayOffset) => now()->subDays($dayOffset)->toDateString();
+            // 6 of 10 pay every fee in full, 2 of 10 pay half (a balance remains),
+            // 2 of 10 have paid nothing. About 70% of the term bill, inside the
+            // current term window so the dashboard tile and the fee chart agree.
+            $roll = $index % 10;
+            $paidOn = $this->paidOnInsideCurrentTerm();
 
             if ($roll <= 5) {
-                // Paid in full, some recent.
-                $this->payment($academic->user_id, $tuition, $tuition->amount, $paidOn(30 + $roll), 'mobile_money');
-                if ($lunch && $roll % 2 === 0) {
-                    $this->payment($academic->user_id, $lunch, $lunch->amount, $paidOn(20 + $roll), 'cash');
+                foreach ($billed as $offset => $category) {
+                    $this->payment($academic->user_id, $category, $category->amount, $paidOn($offset), 'mobile_money');
                 }
             } elseif ($roll <= 7) {
-                // Two instalments.
-                $half = (int) round($tuition->amount / 2);
-                $this->payment($academic->user_id, $tuition, $half, $paidOn(45), 'bank_transfer', 'INST-' . $index . '-1');
-                $this->payment($academic->user_id, $tuition, $half, $paidOn(9), 'mobile_money', 'INST-' . $index . '-2');
-            } elseif ($roll === 8) {
-                // Partial — shows a balance.
-                $this->payment($academic->user_id, $tuition, 200000, $paidOn(14), 'cash');
-            } elseif ($roll === 9 && $lunch) {
-                // Lunch only so far.
-                $this->payment($academic->user_id, $lunch, $lunch->amount, $paidOn(7), 'cash');
+                foreach ($billed as $offset => $category) {
+                    $half = (int) round(((float) $category->amount) / 2);
+                    $this->payment($academic->user_id, $category, $half, $paidOn($offset + 2), 'cash', 'PART-'.$index.'-'.$offset);
+                }
             }
-            // rolls 10-11: nothing paid yet (owing).
         }
 
         $this->command?->info('Fees seeded: ' . FeePayment::where('school_id', $this->school->id)->count() . ' payments total.');
+    }
+
+    /**
+     * @return callable(int): string
+     */
+    private function paidOnInsideCurrentTerm(): callable
+    {
+        $term = AcademicTerm::where('school_id', $this->school->id)->where('status', 'current')->first();
+        $start = $term ? \Carbon\Carbon::parse($term->starts_on)->startOfDay() : now()->subDays(20)->startOfDay();
+        $latest = now()->startOfDay();
+        if ($term && $term->ends_on) {
+            $end = \Carbon\Carbon::parse($term->ends_on)->startOfDay();
+            if ($end->lt($latest)) {
+                $latest = $end;
+            }
+        }
+        if ($latest->lt($start)) {
+            $latest = $start->copy();
+        }
+        $span = max(1, $start->diffInDays($latest));
+
+        return function (int $slot) use ($start, $span): string {
+            $day = (int) round((($slot % 5) / 4) * $span);
+
+            return $start->copy()->addDays(min($day, $span))->toDateString();
+        };
     }
 
     private function payment(int $studentId, FeesCategories $category, float|int $amount, string $paidOn, string $method, ?string $reference = null): void

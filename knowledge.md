@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 12, 2026 — **onboarding journeys read staging logs; demo fee mix in [#1062](https://github.com/KlassApp-Foundation/KlassApp/pull/1062)**
+
+- [#1061](https://github.com/KlassApp-Foundation/KlassApp/pull/1061) MERGED `d8ddabe2` (API `merged: true`). Primary manual, Toshi (primary / O-level / O+A-level), and MVP journeys passed on staging at 375 and 1280. Verification codes came from the staging log stream. Throwaway E2E schools were dry-run then purged.
+- [#1062](https://github.com/KlassApp-Foundation/KlassApp/pull/1062) OPEN on `tooling/demo-fee-term`. Local seed at 2026-10-12: Demo Junior fee tile 72% (UGX 38.74M of UGX 54M); Demo Senior 70% (UGX 39.2M of UGX 56.24M). October chart bar matches the tile. Staging refresh waits until this merges and the staging deploy finishes. Demo Academy was not in scope.
+- Open PRs at scan: #1060 student profile, #1059 shell polish, #1057 people lists, #937 draft, #936, #890 and #682 (Elicom256, external — do not merge), #822, #821, #786 draft, #732, #728.
+
 ## Current Status: October 4, 2026 (latest) — **staging deploy STILL 422 after reported re-auth; 3d/3e blocked** (re-verified on `origin/main` `60c8c900`)
 
 - `origin/main` = `60c8c900` (#962–#968, #970, #971–#973 all merged). Staging's last **successful** deploy is `depl-a2e2ffa8…` @ `79c98811` — step-registry + Toshi onboarding_v2 code is still **not** live on staging.
@@ -2584,6 +2590,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-12: staging journeys on the Cloud log stream; demo fee collection mix
+- **Work done**: Onboarding and MVP journeys no longer read sign-up codes over SSH. The guarded staging bridge reads `klassapp.email_verification_code` from the Laravel Cloud log stream and refuses any environment id outside the staging prefix. Selectors follow the current shell (account menu, sidebar scrim, school line, existing `data-testid` hooks). Staging runs, all passed: primary manual 1280 and 375; Toshi primary, O-level, and O+A-level at both widths; MVP at both widths. Dry-run then purge of the throwaway E2E schools. Demo junior and senior seeders rebuild fee payments on every `demo:refresh` (full / half / unpaid, about 70%, dates inside Term III). Term III for those two schools is 24 Aug–28 Nov 2026 so October is month 3 of 4; the fee tile's month cap can then show 60–75%. Local numbers at 2026-10-12: Junior 72% (38.74M / 54M), Senior 70% (39.2M / 56.24M). Staging before refresh: Junior 18% (9.5M / 54M), Senior 21% (11.6M / 56.2M).
+- **Files modified**: `e2e/onboarding/lib/stg_bridge.py`, `stg-bridge.js`, `stg_logs.py`, `signup.js`, `shell.js`, `toshi.js`, journeys `manual.spec.js` / `toshi.spec.js` / `mvp.spec.js`, `e2e/onboarding/README.md`, `database/seeders/DemoJuniorSchoolSeeder.php`, `database/seeders/DemoSeniorSchoolSeeder.php`, `tests/Feature/Demo/DemoRichDataTest.php`, `knowledge.md`.
+- **Key decisions**: Dashboard, navigation, lists, and profile files were not edited. The tile and chart already share one formula; moving the term dates is what lets a ~70% collection appear in October. Local and staging differed because refresh skipped any learner who already had a payment, so staging kept the first seed's dates, mostly before Term III. A fresh local database dated payments from "now".
+- **Status**: #1061 merged. #1062 open; staging `demo:refresh` not run yet.
+- **Edge cases flagged**: Two failed MVP signups were renamed to `E2E Failed Signup` and flagged `is_test` so the purge command would accept them. Demo Academy was left unchanged. Toshi journeys record non-failing findings when the scripted chat skips students.
+- **PR**: [#1061](https://github.com/KlassApp-Foundation/KlassApp/pull/1061) MERGED `d8ddabe2`. [#1062](https://github.com/KlassApp-Foundation/KlassApp/pull/1062) OPEN.
 
 ### 2026-10-04: pickup session — deploy 422 re-verified post re-auth; 3d/3e not attempted
 - **Work done**: Synced `origin/main` `60c8c900` (rule #19; worktree `KlassApp-wt-sl-registry` clean on `main`). Open-PR scan (rule #28): 11 open — #961/#937/#936/#935/#822/#821/#786/#732/#728 own drafts, #890/#682 external drafts (Elicom256) — all untouched. Verified tooling: GitHub admin ✓, Cloud token ✓ (mcp.json fallback; Doppler CLI `Invalid Auth token` this session), Commands bridge ✓, staging HTTP 200 ✓, PHP 8.4.19 / Node ✓ local. Step 1: 2× empty-body staging deploy POST → **422** "The associated source control provider requires re-authorization." — re-auth not yet effective. Per instructions, Steps 2/3 not attempted without a real staging deploy.
