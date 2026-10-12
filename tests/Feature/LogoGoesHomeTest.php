@@ -103,8 +103,8 @@ class LogoGoesHomeTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/dashboard');
 
         $response->assertOk();
-        $this->assertStringContainsString('aria-label="KlassApp home"', $response->getContent());
-        $this->assertStringContainsString('href="'.route('dashboard').'"', $response->getContent());
+        $response->assertSee('href="'.route('dashboard').'"', false);
+        $response->assertSee('nav-school-line', false);
     }
 
     public function test_teacher_dashboard_logo_links_teacher_dashboard(): void
@@ -115,11 +115,8 @@ class LogoGoesHomeTest extends TestCase
         $response = $this->actingAs($teacher)->get('/teacher/dashboard');
 
         $response->assertOk();
-        $this->assertStringContainsString('aria-label="KlassApp home"', $response->getContent());
-        $this->assertStringContainsString(
-            'href="'.route('teacher.dashboard').'"',
-            $response->getContent()
-        );
+        $response->assertSee('href="'.route('teacher.dashboard').'"', false);
+        $response->assertSee('nav-school-line', false);
     }
 
     private function seedSchool(): int

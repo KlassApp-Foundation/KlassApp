@@ -30,6 +30,13 @@ class ShellSidebarLayoutFixTest extends TestCase
         $this->assertStringNotContainsString("localStorage.setItem('ka:sidebar:v3', '1')", $blade);
         $this->assertStringNotContainsString('sidebar-groups-v2', $blade);
         $this->assertStringNotContainsString('sidebar-group-', $blade);
+        $this->assertStringContainsString('<li class="sidebar-v3-section">{{ $section[\'label\'] }}</li>', $blade);
+        $this->assertStringNotContainsString('sidebar-v3-section" role=', $blade);
+        $css = file_get_contents(public_path('css/dashboard-refresh.css'));
+        $this->assertStringContainsString('.sidebar-v3-section:hover', $css);
+        $this->assertStringContainsString('cursor: default;', $css);
+        $this->assertStringContainsString('.sidebar-fold-toggle:focus { outline: none; }', $css);
+        $this->assertStringContainsString('.sidebar-fold-toggle:focus-visible { outline: 2px solid #15803D; outline-offset: 2px; }', $css);
 
         $rows = [];
         foreach ($nav['sections'] as $section) {

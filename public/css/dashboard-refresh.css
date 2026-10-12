@@ -4565,6 +4565,16 @@ body.ka-drawer-open .dashboard-content-area select {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #475569;
+    cursor: default;
+    background: transparent;
+}
+.sidebar-v3-section:hover,
+.sidebar-v3-section:focus,
+.sidebar-v3-section:active {
+    background: transparent;
+    color: #475569;
+    outline: none;
+    cursor: default;
 }
 .sidebar-v3-item { list-style: none; margin: 0; padding: 0; }
 .sidebar-v3-row { display: flex; align-items: center; gap: 0; min-width: 0; }
@@ -4680,7 +4690,8 @@ body.ka-drawer-open .dashboard-content-area select {
 
 /* Folded rail. Idle icons have no tile. Phone drawer is untouched. */
 #admin-sidebar.admin-sidebar { transition: width 150ms ease; }
-.sidebar-fold-toggle:focus-visible { outline: 1px solid #15803D; outline-offset: 2px; }
+.sidebar-fold-toggle:focus { outline: none; }
+.sidebar-fold-toggle:focus-visible { outline: 2px solid #15803D; outline-offset: 2px; }
 .sidebar-v3-flyout-title { display: none; }
 body.sidebar-collapsed #admin-sidebar.admin-sidebar { width: 56px; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-list { align-items: center; gap: 4px; padding: 4px 0; }

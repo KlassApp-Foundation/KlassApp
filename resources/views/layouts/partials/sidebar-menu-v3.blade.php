@@ -9,7 +9,7 @@
     @endphp
     @if(count($rows) > 0)
         @if(!empty($section['label']))
-            <li class="sidebar-v3-section" role="presentation">{{ $section['label'] }}</li>
+            <li class="sidebar-v3-section">{{ $section['label'] }}</li>
         @endif
         @foreach($rows as $row)
             @php
