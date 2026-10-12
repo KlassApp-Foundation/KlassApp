@@ -3,6 +3,7 @@
 @import "./tokens/typography.css";
 @import "./tokens/spacing.css";
 @import "./tokens/radii-shadows.css";
+@import "./tokens/surfaces.css";
 @import "./styles/base.css";
 @import "./styles/classes.css";
 @import "./styles/controls-v2.css";

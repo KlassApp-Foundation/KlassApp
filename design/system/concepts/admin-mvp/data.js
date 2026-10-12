@@ -37,7 +37,7 @@ window.KD = (() => {
     { id: 2212, fn: 'Ana', ln: 'Haddad', ph: '+000 755 003 118', email: 'ana.h@example.com', wa: 'in', waDate: '2 Oct 2026', last: '3 days ago', kids: [S[2]] },
     { id: 2213, fn: 'Musa', ln: 'Mensah', ph: '+000 782 660 471', email: '', wa: 'pending', last: 'Never', kids: [S[3], S[11]] }];
   const ini = (f, l) => { f = (f || '').trim().split(/\s+/)[0] || ''; l = (l || '').trim(); return (([...f][0] || '') + ([...l][0] || '')).toLocaleUpperCase(); };
-  const av = (p, s = 40) => { const i = ini(p.fn, p.ln); const r = s <= 32 ? 8 : 12; return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s * .4)}px;border-radius:${r}px;background:${i ? PAL[p.id ? (typeof p.id === 'number' ? p.id : p.n || 0) % 4 : 0] : '#64748B'}" aria-hidden="true">${i}</span>`; };
+  const av = (p, s = 40, round) => { const i = ini(p.fn, p.ln); const r = round ? '50%' : (s <= 32 ? 8 : 12) + 'px'; return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s * .4)}px;border-radius:${r};background:${i ? PAL[p.id ? (typeof p.id === 'number' ? p.id : p.n || 0) % 4 : 0] : '#64748B'}" aria-hidden="true">${i}</span>`; };
   const money = v => SCHOOL.currency + ' ' + Number(v).toLocaleString('en');
   const grade = a => a >= 80 ? 'A' : a >= 70 ? 'B' : a >= 60 ? 'C' : a >= 50 ? 'D' : 'E';
   const ic = (n, c = 'ic') => `<i data-lucide="${n}" class="${c}" aria-hidden="true"></i>`;

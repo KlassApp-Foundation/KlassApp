@@ -12,7 +12,7 @@
 <div id="app"></div>
 <script>
 const Q=new URLSearchParams(location.search);
-window.ST={s:Q.get('s')||'dashboard',mode:Q.get('mode')||'add',wl:Q.get('wl'),open:Q.get('open'),hideSetup:Q.get('hide')==='1',state:Q.get('state')||'data',tab:Q.get('tab'),invite:Q.get('invite'),wa:Q.get('wa'),acct:Q.get('acct')==='1',menu:null,drawer:false,dlg:null,sel:new Set((Q.get('sel')||'').split(',').filter(Boolean)),mob:matchMedia('(max-width:760px)').matches};
+window.ST={selMode:!!Q.get('sel'),s:Q.get('s')||'dashboard',mode:Q.get('mode')||'add',wl:Q.get('wl'),open:Q.get('open'),hideSetup:Q.get('hide')==='1',state:Q.get('state')||'data',tab:Q.get('tab'),invite:Q.get('invite'),wa:Q.get('wa'),acct:Q.get('acct')==='1',menu:null,drawer:false,dlg:null,sel:new Set((Q.get('sel')||'').split(',').filter(Boolean)),mob:matchMedia('(max-width:760px)').matches};
 </script>
 <script src="data.js"></script>
 <script src="screens-a.js"></script>
@@ -44,6 +44,8 @@ document.addEventListener('click',e=>{
   if(k==='ck'){const id=a.dataset.id;ST.sel.has(id)?ST.sel.delete(id):ST.sel.add(id);render();return}
   if(k==='ckall'){const ids=[...document.querySelectorAll('[data-act="ck"]')].map(x=>x.dataset.id);const all=ids.every(i=>ST.sel.has(i));ids.forEach(i=>all?ST.sel.delete(i):ST.sel.add(i));render();return}
   if(k==='clr'){ST.sel.clear();render();return}
+  if(k==='selm'){ST.selMode=!ST.selMode;ST.sel.clear();render();document.querySelector('[data-act="selm"]')?.focus();return}
+  if(k==='selx'){ST.selMode=false;ST.sel.clear();render();document.querySelector('[data-act="selm"]')?.focus();return}
   if(k==='tab'){ST.tab=a.dataset.tab;render();return}
   if(k==='dlg'){ST.dlg=DLG[a.dataset.k];ST.menu=null;render();return}
   if(k==='dlg-x'){ST.dlg=null;render();return}
@@ -55,6 +57,7 @@ document.addEventListener('click',e=>{
  if(ST.drawer&&!e.target.closest('#side')&&!e.target.closest('[data-act="drawer"]')){ST.drawer=false;render()}
 });
 document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&ST.selMode&&!(ST.acct||ST.menu||ST.dlg||ST.drawer)){ST.selMode=false;ST.sel.clear();render();document.querySelector('[data-act="selm"]')?.focus();return}
  if(e.key==='Escape'&&(ST.acct||ST.menu||ST.dlg||ST.drawer)){const wasAcct=ST.acct;ST.acct=false;ST.menu=null;ST.dlg=null;ST.drawer=false;render();if(wasAcct)document.querySelector('[data-act="acct"]')?.focus();return}
  const m=document.querySelector('#acct-pop,.rmenu');
  if(m&&(e.key==='ArrowDown'||e.key==='ArrowUp')){const it=[...m.querySelectorAll('.mi')];const i=it.indexOf(document.activeElement);it[(i+(e.key==='ArrowDown'?1:-1)+it.length)%it.length].focus();e.preventDefault()}

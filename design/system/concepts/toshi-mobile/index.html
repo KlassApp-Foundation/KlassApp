@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toshi on phones · concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font:400 15px/1.55 'DM Sans',system-ui,sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+header.h{padding:24px 28px 8px;max-width:1200px}
+h1{font:700 26px Sora,sans-serif;letter-spacing:-.02em;margin:0 0 6px}
+h2{font:600 20px Sora,sans-serif;margin:0 0 6px}
+h3{font:600 15px Sora,sans-serif;margin:0 0 4px}
+p{margin:0 0 8px;max-width:880px}
+code{font-size:13px;background:#fff;padding:1px 5px;border-radius:4px}
+nav.j{display:flex;flex-wrap:wrap;gap:8px;padding:8px 28px 0}
+nav.j a{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;background:#fff;border:1px solid #CFCAC0;text-decoration:none;color:#0F172A;font-weight:600;font-size:14px}
+section{padding:28px 28px 8px;border-top:1px solid #CFCAC0;margin-top:20px}
+.row{display:flex;gap:24px;overflow-x:auto;padding:12px 0 16px;align-items:flex-start}
+.fr{flex:none;display:flex;flex-direction:column;gap:6px;width:min-content}
+.fr small{font:700 12px 'DM Sans',sans-serif;color:#334155}
+.fr .cap{font-size:13.5px;color:#334155;max-width:var(--w);line-height:1.45}
+iframe{border:1px solid #9C978C;border-radius:22px;background:#FAFAF5;display:block}
+iframe.tab{border-radius:16px}
+.rec{display:inline-block;font:700 11.5px 'DM Sans',sans-serif;background:#14532D;color:#fff;border-radius:999px;padding:2px 8px;margin-left:6px}
+.tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1200px}
+.tr div{background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:14px 16px;font-size:14px}
+.tr ul{margin:4px 0 0;padding-left:18px}
+.box{background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:16px 20px;max-width:1200px}
+.box ol,.box ul{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+table.t{border-collapse:collapse;font-size:14px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;overflow:hidden;max-width:1200px;width:100%}
+.t th,.t td{text-align:left;padding:10px 12px;border-bottom:1px solid #E7E5DF;vertical-align:top}.t th{background:#F8FAFC;font-size:13px}
+#meas{font-weight:700}
+@media (max-width:900px){.tr{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="h"><h1>Toshi on phones</h1>
+<p>Admin role first, as a pattern every role reuses. Frames are real widths (375, 414, 768) running <a href="toshi.html">toshi.html</a>, a click-through concept: open, close (✕, Esc, Back, swipe down on the handle), switch views, open the mode menu. Desktop (1280 and up) is unchanged: the right-hand dock with logo, "Toshi", mode menu, restart, maximise and close.</p>
+<p>Demo data only (Demo Junior School). Currency comes from school settings. Contrast is calculated from hex, not browser-measured. <span id="meas">Measuring…</span></p></header>
+<nav class="j" aria-label="Sections"><a href="#launcher">1 Launcher</a><a href="#sheet">2 Sheet</a><a href="#preview">3a Preview</a><a href="#setup">3b Setup guide</a><a href="#assistant">3c Assistant</a><a href="#states">4 States</a><a href="#tablet">5 Tablet</a><a href="measure.html">Self-check</a><a href="#entry">6 Entry points</a><a href="#wrong">What’s wrong today</a></nav>
+
+<section id="launcher"><h2>1 · Launcher</h2>
+<p>The <b>bottom safe zone</b> is the token <code>--d-bottom-zone</code>. It is <code>--d-safe-bottom</code> (<code>max(16px, env(safe-area-inset-bottom))</code>) on ordinary pages. On any page with a sticky action bar or footer, the layout sets <code>&lt;body data-sticky-bar&gt;</code> and the zone grows by <code>--d-sticky-bar-h</code> (68px). Nothing floating may sit inside it. It is drawn in red hatching below.</p>
+<div class="row" id="r-la"></div>
+<div class="tr">
+<div><h3>A · Labelled button in the top bar <span class="rec">Recommended</span></h3><ul><li>Can’t overlap anything: it lives in the 56px top bar, outside the bottom zone entirely.</li><li>Labelled “Toshi”, so it explains itself; one tap from every page.</li><li>Quiet in preview: outline only, no badge, no motion.</li><li>Cost: the top bar holds 4 items at 375 (menu, title, Toshi, account); the title truncates first.</li></ul></div>
+<div><h3>B · Bottom bar item</h3><ul><li>Easy thumb reach.</li><li>But KlassApp has no bottom navigation today, so this adds a whole new nav pattern. It also takes 56px from every page, and sticky form bars have to stack above it.</li><li>Worth it only if a bottom nav is introduced for other reasons.</li></ul></div>
+<div><h3>C · Edge tab that hides on scroll</h3><ul><li>Small, and it sits above the bottom zone (here 12px above the form bar).</li><li>But it’s an icon with no label, so it doesn’t explain itself. It covers the right edge of content (table columns, menus), and it moves.</li><li>It’s the closest thing to the old pill and the zero-width toggle, both of which failed.</li></ul></div></div></section>
+
+<section id="sheet"><h2>2 · The sheet on a phone</h2>
+<p>A <b>full-height sheet</b> (<code>100dvh</code> minus <code>--d-sheet-top-gap</code>) with a drag handle and a 44px close button. Not a full-screen takeover: the 8px gap and the scrim show that the page is still there underneath.</p>
+<p><b>Closing:</b> swipe down on the handle or header (over 120px closes; less springs back), ✕, Esc, or the browser Back button (opening pushes one history entry).</p>
+<p><b>While open:</b> <code>role="dialog"</code> <code>aria-modal</code>, focus moves to Close and is trapped, the page behind can’t scroll (<code>body{overflow:hidden}</code>), and scrolling inside the sheet doesn’t pass to the page (<code>overscroll-behavior:contain</code>). On close, focus returns to whatever opened the sheet.</p>
+<p><b>Motion:</b> a 240ms slide up with <code>cubic-bezier(.2,.8,.2,1)</code>. Under reduced motion it appears without the slide.</p>
+<div class="row" id="r-sh"></div></section>
+
+<section id="preview"><h2>3a · Preview mode</h2><p>For every school until Toshi ships. A “Coming soon” card with the agreed description, word for word, and a disabled composer with its reason. No chips, no pitch, no feature list.</p><p>The mode menu shows Setup guide and Assistant as not available, so the modes are discoverable without being promised.</p><div class="row" id="r-pv"></div></section>
+<section id="setup"><h2>3b · Setup guide (onboarding)</h2><p>Two views of the same session, switched with a segmented control under the header: <b>Checklist</b> (the 7 setup steps with progress, shared with “Continue setup”) and <b>Conversation</b>. Tapping a step opens it in the conversation.</p><p>The conversation includes Yes/No confirm chips, plan cards (radio cards), a review card (nothing is saved until “Save fees”), a name-list upload card, and quick-reply chips above the composer.</p><div class="row" id="r-su"></div></section>
+<section id="assistant"><h2>3c · Assistant (early access, later)</h2><p>“Early access” appears only in this mode: in the header pill and on the launcher. The screen has free chat, tool results as cards with their source, a typing indicator, and an <b>approval card</b> for anything that changes records or sends messages. The card lists what will change, with <b>Reject</b> and <b>Approve and send</b>.</p><div class="row" id="r-as"></div></section>
+<section id="states"><h2>4 · States</h2>
+<p><b>Keyboard open:</b> the sheet’s bottom follows <code>visualViewport</code>, so the composer sits on top of the keyboard and the messages scroll above it. This is shown with a 291px keyboard.</p>
+<p><b>Long messages:</b> they wrap with <code>overflow-wrap:anywhere</code> and never widen the sheet.</p>
+<div class="row" id="r-st"></div></section>
+<section id="tablet"><h2>5 · 768 tablet</h2>
+<p><b>A side sheet, not the desktop dock.</b> It is 400px wide (<code>--d-toshi-sheet-w</code>), full height, slides in from the right over a scrim, and has no drag handle (close with ✕, Esc or Back). The page keeps its width behind it.</p>
+<p><b>Breakpoints:</b> the bottom sheet up to 760px, the side sheet from 761 to 1279px, and the desktop dock from 1280px (the existing <code>toshi-ui.css</code> rule, unchanged). 760px is the admin shell’s own breakpoint, where the sidebar becomes a drawer, so the two change together.</p><p><b>Launcher at 761–1279:</b> the app shows the sidebar here and has no top bar, so the launcher is a 44px “Toshi” row in the sidebar, above the account card. This concept draws a top bar at 768 only to keep the frame simple.</p>
+<div class="row" id="r-tb"></div></section>
+
+<section id="entry"><h2>6 · Entry points on phones</h2>
+<table class="t"><thead><tr><th scope="col">Entry point</th><th scope="col">When it shows</th><th scope="col">What it opens</th></tr></thead><tbody>
+<tr><td><b>Top-bar launcher</b> “Toshi”</td><td>Whenever Toshi is switched on for the school (<code>Toshi::enabled()</code>), on every page</td><td>The sheet, in the school’s current mode (preview, setup guide or assistant), at the last view</td></tr>
+<tr><td><b>Dashboard setup card</b> “Set up with Toshi”</td><td>Only in setup-guide mode, while setup is incomplete. Never in preview.</td><td>The sheet in setup guide, on the <b>Checklist</b> view</td></tr>
+<tr><td><b>Sidebar setup chip</b> (in the drawer)</td><td>After the setup card is hidden and setup is incomplete</td><td>The <b>manual</b> setup flow (Continue setup), not Toshi. It is the same progress, and Toshi’s checklist reads the same steps, but the chip never opens the sheet. That way setup always works without Toshi.</td></tr>
+</tbody></table>
+<div class="box" style="margin-top:14px"><h3>Rules</h3><ul><li><b>Toshi never opens by itself:</b> no auto-open on first login, after setup, on errors or on any page load.</li><li><b>Toshi off:</b> no launcher, no setup-card button, no sheet markup and no <code>toshi-ui.css</code> (profiles handoff Part C).</li><li><b>Copy:</b> the description is used only on the preview card, word for word. “Early access” appears only in assistant mode. Nothing describes features that aren’t live.</li></ul></div></section>
+
+<section id="wrong"><h2>What the current phone experience gets wrong</h2><div class="box"><ol>
+<li><b>No way in:</b> below 1280px the edge toggle is a zero-width sliver, so on a phone the only way to open Toshi is the setup card’s “Set up with Toshi” button. Once that card is hidden or setup is done, Toshi is unreachable.</li>
+<li><b>The old pill covered things:</b> the floating “Toshi Agent · Talk” pill covered footer actions on teacher pages, which is why it was removed. Nothing reserved space for sticky bars, and there was no bottom safe-zone token.</li>
+<li><b>Undefined panel below 1280:</b> it falls back to the old floating widget from the main stylesheet, and goes full-screen only at 640px and below. There is no defined tablet layout.</li>
+<li><b>No phone behaviour:</b> no swipe to close, the Back button leaves the page instead of closing Toshi, the page behind still scrolls, and focus isn’t trapped.</li>
+<li><b>Promotion in preview:</b> while Toshi is in preview, it is still promoted on the dashboard (the Toshi carousel and the open side panel with a disabled message box) instead of a quiet, single entry point.</li></ol></div></section>
+
+<script>
+const F=(q,w,h,l,cap)=>`<div class="fr" style="--w:${w}px"><small>${l}</small><iframe loading="lazy" src="toshi.html?${q}" width="${w}" height="${h}" title="${l}" class="${w>=768?'tab':''}"></iframe>${cap?`<span class="cap">${cap}</span>`:''}</div>`;
+const H=760;
+const set=(id,a)=>document.getElementById(id).innerHTML=a.map(x=>F(...x)).join('');
+set('r-la',[['la=A&zone=1',375,H,'A · Dashboard · 375','The launcher sits in the top bar; the bottom zone stays clear.'],['la=A&page=form&zone=1',375,H,'A · Form with sticky bar · 375','The zone grows to 68px plus the inset. Nothing floats over Save.'],['la=B&page=form&zone=1',375,H,'B · Bottom bar · 375','The bottom bar pushes the form bar up.'],['la=C&page=form&zone=1',375,H,'C · Edge tab · 375','It sits 12px above the zone and hides while scrolling down.']]);
+set('r-sh',[['sheet=closed',375,H,'Closed','The launcher in preview: outline only.'],['sheet=opening',375,H,'Opening (mid-slide)','Scrim fading in, sheet at about 60%.'],['sheet=open',375,H,'Open','Focus on Close; page locked.']]);
+set('r-pv',[['sheet=open&mode=preview',375,H,'Preview · 375'],['sheet=open&mode=preview',414,H,'Preview · 414']]);
+set('r-su',[['sheet=open&mode=setup&view=checklist',375,H,'Checklist · 375'],['sheet=open&mode=setup&view=chat',375,H,'Conversation · 375','Confirm chips, plan cards, review, upload.'],['sheet=open&mode=setup&view=chat&state=empty',375,H,'Conversation, first message'],['sheet=open&mode=setup&view=chat',414,H,'Conversation · 414']]);
+set('r-as',[['sheet=open&mode=assistant',375,H,'Assistant · 375','Tool result, approval card, typing.'],['sheet=open&mode=assistant&state=empty',375,H,'Empty conversation'],['sheet=closed&mode=assistant',375,H,'Launcher in early access']]);
+set('r-st',[['sheet=open&mode=assistant&state=loading',375,H,'Loading'],['sheet=open&mode=assistant&state=offline',375,H,'Offline / error with Retry'],['sheet=open&mode=assistant&state=long',375,H,'Long messages'],['sheet=open&mode=setup&view=chat&state=keyboard',375,H,'Keyboard open']]);
+set('r-tb',[['sheet=open&mode=preview',768,900,'768 · Preview'],['sheet=open&mode=setup&view=chat',768,900,'768 · Setup guide']]);
+function measure(){const r={over:0,small:0,frames:0,zone:0};for(const f of document.querySelectorAll('iframe')){const d=f.contentDocument;if(!d||!d.body||!d.getElementById('app'))continue;r.frames++;const vw=d.documentElement.clientWidth;if(d.documentElement.scrollWidth>vw+1)r.over++;
+ r.small+=[...d.querySelectorAll('button,a.btn,.chip,.la,.mi,textarea,input.inp,.plan')].filter(e=>{const b=e.getBoundingClientRect();return e.offsetParent!==null&&b.width>0&&b.height<43.5&&!e.closest('.seg')&&!e.closest('[aria-hidden="true"]')}).length;
+ const z=d.querySelector('.zone');if(z&&d.body.classList.contains('showzone')){const zt=z.getBoundingClientRect().top;r.zone+=[...d.querySelectorAll('.la,.etab')].filter(e=>e.getBoundingClientRect().bottom>zt+1).length}}
+ document.getElementById('meas').textContent=`Measured in this browser (${r.frames} frames loaded): ${r.over?r.over+' scroll sideways':'no sideways scroll'}; ${r.small?r.small+' targets under 44px':'every target at least 44px'}; ${r.zone?r.zone+' launchers inside the bottom zone':'no launcher inside the bottom zone'}.`;window.__m=r}
+addEventListener('load',()=>setTimeout(measure,1500));setTimeout(measure,6000);
+</script>
+</body>
+</html>

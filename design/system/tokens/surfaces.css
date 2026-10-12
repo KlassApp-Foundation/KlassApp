@@ -1,0 +1,24 @@
+/* Card surface v2 (2026-10-10). Decorative only: text sits above both layers and keeps its own contrast.
+   Dots: faint print in the top of the card, faded out with a mask. Hover: brand-green tint from the
+   top-right corner plus a slightly stronger border, 150ms; no transition under reduced motion. */
+:root{
+  --d-card-surface-bg:#FFFFFF;
+  --d-card-surface-border:#E2E8F0;
+  --d-card-surface-border-hover:#B6D9C2;      /* 1.6:1 on white, a visible but quiet edge */
+  --d-card-surface-radius:14px;
+  --d-card-dot-color:rgba(15,23,42,.11);
+  --d-card-dot-size:1px;                       /* dot radius */
+  --d-card-dot-gap:14px;                       /* grid pitch */
+  --d-card-dot-fade:62%;                       /* dots are gone by this height */
+  --d-card-hover-tint:rgba(34,197,94,.10);     /* --d-green at 10% */
+  --d-card-hover-tint-reach:70%;
+  --d-card-transition:150ms ease-out; /* @kind other */
+}
+.ds-surface{position:relative;isolation:isolate;background:var(--d-card-surface-bg);border:1px solid var(--d-card-surface-border);border-radius:var(--d-card-surface-radius);transition:border-color var(--d-card-transition)}
+.ds-surface::before,.ds-surface::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1}
+.ds-surface::before{background-image:radial-gradient(circle,var(--d-card-dot-color) var(--d-card-dot-size),transparent calc(var(--d-card-dot-size) + .3px));background-size:var(--d-card-dot-gap) var(--d-card-dot-gap);background-position:6px 6px;-webkit-mask-image:linear-gradient(to bottom,#000,transparent var(--d-card-dot-fade));mask-image:linear-gradient(to bottom,#000,transparent var(--d-card-dot-fade))}
+.ds-surface::after{background:radial-gradient(120% 100% at 100% 0%,var(--d-card-hover-tint),transparent var(--d-card-hover-tint-reach));opacity:0;transition:opacity var(--d-card-transition)}
+.ds-surface:is(:hover,:focus-within,.is-hover){border-color:var(--d-card-surface-border-hover)}
+.ds-surface:is(:hover,:focus-within,.is-hover)::after{opacity:1}
+.ds-surface.ds-surface--static::after{display:none}
+@media (prefers-reduced-motion:reduce){.ds-surface,.ds-surface::after{transition:none}}

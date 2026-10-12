@@ -301,7 +301,7 @@ Read at `3cf3025bf5b0`. **I did not re-read `admin/staff/show` in this pass.**
 **On, as "Early access" (decided 2026-10-01):** Toshi is on for selected schools only, labelled **Early access** wherever it appears.
 - **Banner:** a secondary **Set up with Toshi** button containing an "Early access" pill.
 - **Dock (1280):** the collapsed 44px dock on the panel's right edge holds the K button and, under it, a vertical "Early access" pill.
-- **Dock (375):** a floating 44px button at the bottom right, showing the K and an "Early access" pill.
+- **Dock (375):** ~~a floating 44px button at the bottom right~~ **Superseded 2026-10-08** by `handoff-2026-10-08-toshi-mobile.md`: a labelled "Toshi" button in the top bar, with the "Early access" pill in assistant mode only.
 - **Pill:** #FEF3C7 background, #78350F text, 11.5px/700 (9.4:1, calculated from hex).
 - **Screen readers:** the button's `aria-label` is "Open Toshi, early access".
 - **The Toshi panel header** (not drawn here) shows the same pill next to the name.
