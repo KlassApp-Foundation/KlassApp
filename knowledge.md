@@ -13631,7 +13631,7 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Review:** local `php artisan serve` on port 8003, Vite `public/build` present, no `public/hot`. Browser at 375 / 768 / 1280: page overflow 0, search and checkbox hits 44px, bulk bar “1 selected”, parent search `?search=Agnes` left one row. Evidence: `~/Desktop/klassapp-evidence/PR2/`. Demo Junior School has no `klassapp_student_id` values, so the KLS column shows an em dash; the feature test plants one and asserts it.
 
-**Status:** #1057 OPEN. Not deployed. Staging pairs wait until this PR merges.
+**Status:** #1057 OPEN. Not deployed. Staging pairs wait until this PR merges. Student Export on the list is `GET /admin/student/export?list=1` and carries the current search, chip, standard, and status. The file is school-scoped, excludes exit, and a foreign `standard` id does not pull in another school's students. The class filter also matches the selected stream. Profile links stay `/admin/student/show/{name}`. PR2b (select mode, 28px avatars, 48px rows, sticky header, card removal, row hover) waits until Rasta says merge #1057.
 
 ### Continuation — 2026-10-12 selection and avatar switches
 

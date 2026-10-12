@@ -32,9 +32,7 @@ class PeopleListQuery
         $chip = $this->studentChip($request);
         $standardId = $this->sameSchoolStandardId($schoolId, $request->input('standard'));
 
-        $query = $this->studentQuery($schoolId);
-        $this->applyStudentSearch($query, $search);
-        $this->applyStudentChip($query, $chip, $standardId, $schoolId, $request);
+        $query = $this->filteredStudents($admin, $request);
 
         $paginator = $query->with(['parents.userParent.userprofile', 'userprofile'])
             ->orderBy(
@@ -92,7 +90,7 @@ class PeopleListQuery
             'bulk' => [
                 ['label' => 'Message parents', 'href' => url('/admin/whatsapp/parents')],
                 ['label' => 'Move to class', 'href' => url('/admin/students')],
-                ['label' => 'Export', 'href' => url('/admin/import')],
+                ['label' => 'Export', 'href' => $this->studentExportHref($request)],
             ],
             'chips' => [
                 $this->chip('all', 'All', $counts['all'], $chip, $request, '/admin/students'),
@@ -325,6 +323,72 @@ class PeopleListQuery
         ]);
     }
 
+    /**
+     * @return list<array{0: string, 1: string, 2: string, 3: string, 4: string}>
+     */
+    public function studentExportRows(User $admin, Request $request): array
+    {
+        $students = $this->filteredStudents($admin, $request)
+            ->with('userprofile')
+            ->orderBy(
+                \App\Models\Userprofile::query()->select('firstname')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1)
+            )
+            ->get();
+
+        $rows = [];
+        foreach ($students as $student) {
+            $section = $this->classLabel($student->class_name ?? null, null);
+            $stream = trim((string) ($student->class_stream ?? ''));
+            $rows[] = [
+                $this->personName($student),
+                trim((string) ($student->kls_number ?? '')),
+                $section ?? '',
+                $stream === '' ? '' : $this->titleLabel($stream),
+                $student->status === 'active' ? 'Active' : 'Inactive',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function filteredStudents(User $admin, Request $request): Builder
+    {
+        $schoolId = (int) $admin->school_id;
+        $search = trim((string) $request->input('search', ''));
+        $chip = $this->studentChip($request);
+        $standardId = $this->sameSchoolStandardId($schoolId, $request->input('standard'));
+        $query = $this->studentQuery($schoolId);
+        $this->applyStudentSearch($query, $search);
+        $this->applyStudentChip($query, $chip, $standardId, $schoolId, $request);
+
+        return $query;
+    }
+
+    private function studentExportHref(Request $request): string
+    {
+        $params = ['list' => '1'];
+        foreach (['search', 'chip', 'standard', 'status'] as $key) {
+            $value = trim((string) $request->input($key, ''));
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return url('/admin/student/export').'?'.http_build_query($params);
+    }
+
+    private function applyClassAndStream(Builder $query, StandardLink $link): void
+    {
+        $query->where('standards_link.standard_id', $link->standard_id)
+            ->where('standards_link.section_id', $link->section_id);
+        $stream = trim((string) $link->stream);
+        if ($stream !== '') {
+            $query->where('standards_link.stream', $stream);
+        }
+    }
+
     private function studentQuery(int $schoolId): Builder
     {
         $latestIds = DB::table('student_academics as sa')
@@ -448,14 +512,12 @@ class PeopleListQuery
         } elseif ($chip === 'class' && $standardId) {
             $link = StandardLink::query()->where('school_id', $schoolId)->find($standardId);
             if ($link) {
-                $query->where('standards_link.standard_id', $link->standard_id)
-                    ->where('standards_link.section_id', $link->section_id);
+                $this->applyClassAndStream($query, $link);
             }
         } elseif ($standardId && $request->filled('standard') && $request->input('standard') !== 'none') {
             $link = StandardLink::query()->where('school_id', $schoolId)->find($standardId);
             if ($link) {
-                $query->where('standards_link.standard_id', $link->standard_id)
-                    ->where('standards_link.section_id', $link->section_id);
+                $this->applyClassAndStream($query, $link);
             }
         }
 

@@ -368,6 +368,72 @@ class PeopleListTest extends TestCase
         $this->assertStringNotContainsString('width="40"', $off);
     }
 
+    public function test_student_export_follows_the_list_filters_and_stays_in_school(): void
+    {
+        $streamA = $this->stream($this->schoolA, $this->yearA, 'Primary 5', 'Blue', 'primary');
+        $otherClass = $this->stream($this->schoolA, $this->yearA, 'Primary 6', 'Red', 'upper');
+        $yearB = AcademicYear::query()->where('school_id', $this->schoolB->id)->first();
+        $streamB = $this->stream($this->schoolB, $yearB, 'Primary 5', 'Blue');
+
+        $amina = $this->person($this->schoolA, 6, 'Amina Pupil', 'amina.export@people-a.test');
+        $inactive = $this->person($this->schoolA, 6, 'Idle Pupil', 'idle.export@people-a.test', ['status' => 'inactive']);
+        $otherClassStudent = $this->person($this->schoolA, 6, 'Other Class Pupil', 'other.class@people-a.test');
+        $exited = $this->person($this->schoolA, 6, 'Exited Pupil', 'exited.export@people-a.test', ['status' => 'exit']);
+        $foreign = $this->person($this->schoolB, 6, 'Foreign Pupil', 'foreign.export@people-b.test');
+
+        foreach ([[$amina, $streamA, 'KLS0000001'], [$inactive, $streamA, 'KLS0000002'], [$otherClassStudent, $otherClass, 'KLS0000003'], [$foreign, $streamB, 'KLS0000004']] as [$student, $stream, $kls]) {
+            StudentAcademic::create([
+                'school_id' => $student->school_id,
+                'academic_year_id' => $stream->academic_year_id,
+                'user_id' => $student->id,
+                'standardLink_id' => $stream->id,
+                'klassapp_student_id' => $kls,
+            ]);
+        }
+
+        $page = $this->actingAs($this->adminA)->get('/admin/students?search=Amina&chip=active&standard='.$streamA->id);
+        $page->assertOk();
+        $page->assertSee('/admin/student/export?list=1', false);
+        $page->assertSee('search=Amina', false);
+        $page->assertSee('chip=active', false);
+        $page->assertSee('standard='.$streamA->id, false);
+        $page->assertDontSee('/admin/import" class="people-bulk-btn">Export', false);
+
+        $all = $this->actingAs($this->adminA)->get('/admin/student/export?list=1');
+        $all->assertOk();
+        $body = $all->getContent();
+        $this->assertStringContainsString('Amina Pupil', $body);
+        $this->assertStringContainsString('KLS0000001', $body);
+        $this->assertStringContainsString('Blue', $body);
+        $this->assertStringContainsString('Idle Pupil', $body);
+        $this->assertStringNotContainsString('Foreign Pupil', $body);
+        $this->assertStringNotContainsString('KLS0000004', $body);
+        $this->assertStringNotContainsString('Exited Pupil', $body);
+
+        $searched = $this->actingAs($this->adminA)->get('/admin/student/export?list=1&search=Amina');
+        $searched->assertOk();
+        $this->assertStringContainsString('Amina Pupil', $searched->getContent());
+        $this->assertStringNotContainsString('Idle Pupil', $searched->getContent());
+        $this->assertStringNotContainsString('Foreign Pupil', $searched->getContent());
+
+        $class = $this->actingAs($this->adminA)->get('/admin/student/export?list=1&chip=class&standard='.$streamA->id);
+        $class->assertOk();
+        $this->assertStringContainsString('Amina Pupil', $class->getContent());
+        $this->assertStringNotContainsString('Other Class Pupil', $class->getContent());
+        $this->assertStringNotContainsString('Foreign Pupil', $class->getContent());
+
+        $foreignStandard = $this->actingAs($this->adminA)->get('/admin/student/export?list=1&chip=class&standard='.$streamB->id);
+        $foreignStandard->assertOk();
+        $this->assertStringContainsString('Amina Pupil', $foreignStandard->getContent());
+        $this->assertStringNotContainsString('Foreign Pupil', $foreignStandard->getContent());
+
+        $onlyInactive = $this->actingAs($this->adminA)->get('/admin/student/export?list=1&chip=inactive');
+        $onlyInactive->assertOk();
+        $this->assertStringContainsString('Idle Pupil', $onlyInactive->getContent());
+        $this->assertStringNotContainsString('Amina Pupil', $onlyInactive->getContent());
+        $this->assertStringNotContainsString('Foreign Pupil', $onlyInactive->getContent());
+    }
+
     private function school(string $name): School
     {
         return School::create([
@@ -422,11 +488,11 @@ class PeopleListTest extends TestCase
         return $user->fresh(['userprofile']);
     }
 
-    private function stream(School $school, AcademicYear $year, string $sectionName, string $stream): StandardLink
+    private function stream(School $school, AcademicYear $year, string $sectionName, string $stream, string $standardName = 'primary'): StandardLink
     {
         $standard = Standard::create([
             'school_id' => $school->id,
-            'name' => 'primary',
+            'name' => $standardName,
             'order' => 1,
             'status' => 1,
         ]);
