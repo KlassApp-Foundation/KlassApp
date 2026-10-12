@@ -86,8 +86,8 @@
 
 .dv2-currency-hint{font-size:12px;color:#64748B;text-decoration:underline;min-height:44px;display:inline-flex;align-items:center;font-weight:500}
 
-/* Card surface v2. Tokens for later pages. Dots are a ::before layer, so they
-   are not in the accessibility tree. Text colour is unchanged. */
+/* Card surface v2 stays on the dashboard KPI tiles and quick actions only.
+   Dots are a ::before layer, so they are not in the accessibility tree. */
 :root {
     --ka-surface-dot: radial-gradient(circle, rgba(15, 23, 42, 0.22) 0.7px, transparent 0.85px);
     --ka-surface-dot-size: 14px 14px;

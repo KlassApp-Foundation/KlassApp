@@ -84,15 +84,18 @@
                     <strong>KlassApp</strong>
                 </a>
             @else
-                <a class="h-10 object-contain" href="{{ route($brandRoute) }}"
-                   aria-label="KlassApp home">
-                    <img src="{{ $schoolLogo ?: asset('images/klassapp-logo-primary.svg') }}"
-                         class="h-10 w-auto object-contain mr-3"
-                         alt="{{ $schoolLogo ? ucwords($navSchool->name).' logo' : 'KlassApp' }}"
-                         onerror="this.onerror=null;this.src='{{ asset('images/klassapp-logo-primary.svg') }}';">
-                </a>
-                <a class="{{ $nameClass }}" href="{{ route($brandRoute) }}">
-                    <strong>{{ ucwords($navSchool->name) }}</strong>
+                @php
+                    $schoolTerm = \App\Support\SchoolHeaderLine::term($navSchool?->id);
+                    $schoolTitle = ucwords((string) ($navSchool->name ?? ''));
+                @endphp
+                <a class="nav-school-line" href="{{ route($brandRoute) }}">
+                    @if($schoolLogo)
+                        <img src="{{ $schoolLogo }}" class="nav-school-logo" alt="{{ $schoolTitle }}">
+                    @endif
+                    <span class="{{ $nameClass }}"><strong>{{ $schoolTitle }}</strong></span>
+                    @if($schoolTerm !== '')
+                        <span class="nav-school-term">{{ $schoolTerm }}</span>
+                    @endif
                 </a>
             @endif
         @else
@@ -215,6 +218,74 @@
             var collapsed = !document.body.classList.contains('sidebar-collapsed');
             apply(collapsed);
             try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e2) {}
+        });
+    })();
+    (function () {
+        var tip = document.createElement('div');
+        tip.id = 'ka-rail-tip';
+        tip.setAttribute('role', 'tooltip');
+        tip.hidden = true;
+        document.body.appendChild(tip);
+        var timer = null;
+        var current = null;
+        var armed = null;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        function hide() {
+            clearTimeout(timer);
+            timer = null;
+            armed = null;
+            tip.hidden = true;
+            if (current) current.removeAttribute('aria-describedby');
+            current = null;
+        }
+        function host(node) {
+            return node && node.closest ? node.closest('#admin-sidebar [data-tip]') : null;
+        }
+        function show(el) {
+            if (!document.body.classList.contains('sidebar-collapsed')) return;
+            var row = el.closest('.sidebar-v3-item');
+            if (row && row.classList.contains('is-flyout')) return;
+            var text = el.getAttribute('data-tip');
+            if (!text) return;
+            var box = el.getBoundingClientRect();
+            tip.textContent = text;
+            tip.hidden = false;
+            var left = box.right + 8;
+            tip.style.left = left + 'px';
+            tip.style.top = (box.top + box.height / 2) + 'px';
+            if (left + tip.offsetWidth > window.innerWidth - 8) {
+                tip.style.left = Math.max(8, window.innerWidth - 8 - tip.offsetWidth) + 'px';
+            }
+            el.setAttribute('aria-describedby', 'ka-rail-tip');
+            current = el;
+        }
+        function arm(el) {
+            if (!document.body.classList.contains('sidebar-collapsed') || armed === el) return;
+            clearTimeout(timer);
+            if (current && current !== el) {
+                tip.hidden = true;
+                current.removeAttribute('aria-describedby');
+                current = null;
+            }
+            armed = el;
+            timer = setTimeout(function () { show(el); }, reduce ? 0 : 300);
+        }
+        document.addEventListener('mouseover', function (e) {
+            var el = host(e.target);
+            if (el) arm(el);
+        });
+        document.addEventListener('mouseout', function (e) {
+            var el = host(e.target);
+            if (!el || el.contains(e.relatedTarget) || document.activeElement === el) return;
+            hide();
+        });
+        document.addEventListener('focusin', function (e) {
+            var el = host(e.target);
+            if (el) arm(el);
+        });
+        document.addEventListener('focusout', function () { hide(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hide();
         });
     })();
     </script>

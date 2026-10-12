@@ -4390,11 +4390,38 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
     padding-top: 0;
     padding-bottom: 0;
 }
+.navbar.dashboard-themed-header .nav-school-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+.navbar.dashboard-themed-header .nav-school-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+    flex: 0 0 28px;
+}
 .navbar.dashboard-themed-header .nav-school-name,
 .navbar.dashboard-themed-header .nav-school-name strong {
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.2;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0F172A;
+    white-space: normal;
+}
+.navbar.dashboard-themed-header .nav-school-term {
+    margin-left: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #475569;
+    white-space: normal;
 }
 @media (min-width: 768px) {
     #app-sidebar-wrap {
@@ -4518,9 +4545,9 @@ body.ka-drawer-open .dashboard-content-area select {
     }
 }
 
-/* Sidebar v3 — 232px, 34px pitch from 1024px, section labels always visible. */
+/* Sidebar v3 — 248px so long labels fit beside a chevron or a count chip. */
 #admin-sidebar.admin-sidebar {
-    width: 232px;
+    width: 248px;
 }
 .sidebar-v3-list { margin: 0; padding: 4px 0 8px; }
 .sidebar-v3-section {
@@ -4542,7 +4569,7 @@ body.ka-drawer-open .dashboard-content-area select {
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    gap: 8px;
+    gap: 10px;
     flex: 1 1 auto;
     min-width: 0;
     min-height: 32px;
@@ -4556,7 +4583,7 @@ body.ka-drawer-open .dashboard-content-area select {
     text-decoration: none;
     box-sizing: border-box;
 }
-.sidebar-v3-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-v3-link > span:not(.sidebar-v3-count) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-v3-link .ka-nav-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
 #admin-sidebar.admin-sidebar .sidebar-v3-link.active,
@@ -4598,6 +4625,7 @@ body.ka-drawer-open .dashboard-content-area select {
 #res_sidebar.admin-sidebar .sidebar-v3-child {
     display: flex;
     align-items: center;
+    gap: 8px;
     min-height: 30px;
     height: 30px;
     margin: 0;
@@ -4611,6 +4639,22 @@ body.ka-drawer-open .dashboard-content-area select {
     white-space: nowrap;
 }
 .sidebar-v3-child:hover { background: rgba(15, 23, 42, 0.04); }
+.sidebar-v3-child > span:first-child,
+.sidebar-v3-link > span:first-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-v3-count {
+    flex: 0 0 auto;
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #FEF3C7;
+    color: #78350F;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
 @media (min-width: 1024px) {
     #admin-sidebar .sidebar-v3-list { display: flex; flex-direction: column; gap: 2px; }
     #admin-sidebar .sidebar-v3-section { margin-top: 6px; margin-bottom: 0; }
@@ -4641,6 +4685,7 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-section {
     font-size: 0; line-height: 0; border: 0; border-top: 1px solid #E2E8F0; color: transparent;
 }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-chevron,
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link > .sidebar-v3-count,
 body.sidebar-collapsed #admin-sidebar .sidebar-toshi-soon,
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer-bell,
 body.sidebar-collapsed #admin-sidebar .dv2-chip,
@@ -4659,16 +4704,17 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-link .ka-nav-icon { width: 18p
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active { background: rgba(34, 197, 94, 0.16); color: #14532D; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item { position: relative; }
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:hover::after,
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:focus-within::after {
-    content: attr(data-tip);
-    position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+#ka-rail-tip {
+    position: fixed; z-index: 80; transform: translateY(-50%);
     background: #0F172A; color: #fff; font-size: 12px; line-height: 16px; font-weight: 500;
-    padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 60;
-    opacity: 0; pointer-events: none;
-    animation: ka-rail-tip 150ms ease 300ms forwards;
+    padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none;
 }
-@keyframes ka-rail-tip { to { opacity: 1; } }
+#ka-rail-tip[hidden] { display: none !important; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.has-count .sidebar-v3-link { position: relative; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.has-count .sidebar-v3-link::before {
+    content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px;
+    border-radius: 999px; background: #F59E0B;
+}
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-children { display: none; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item.is-flyout .sidebar-v3-children {
     display: block; position: fixed; left: 64px; top: var(--fly-top, 8px); width: 200px; margin: 0; padding: 6px;
@@ -4687,11 +4733,5 @@ body.sidebar-collapsed #admin-sidebar .account-card__trigger {
 body.sidebar-collapsed #admin-sidebar .account-card__avatar,
 body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 36px; height: 36px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) {
-    #admin-sidebar.admin-sidebar,
-    body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:hover::after,
-    body.sidebar-collapsed #admin-sidebar .sidebar-v3-item[data-tip]:focus-within::after {
-        transition: none;
-        animation: none;
-        opacity: 1;
-    }
+    #admin-sidebar.admin-sidebar { transition: none; }
 }

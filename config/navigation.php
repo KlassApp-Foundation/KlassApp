@@ -98,12 +98,14 @@ return [
     'roles' => [
 
         // ───────────────────────────── SchoolAdmin ─────────────────────────────
-        // Groups per the confirmed 2026-10-08 list (handoff §Sidebar groups):
-        // Dashboard; People; Academics; Money; Messages; School. Items the list
-        // does not name stay reachable inside the closest group (Timetable,
-        // Grading, Library, Admissions, Health records, Transport, Approvals,
-        // Data Exports, Unmatched Payments, Calendar) — every pre-PR1 item is
-        // still in this sidebar.
+        // 12 October polish: Calendar is the fourth child of Classes and subjects.
+        // WhatsApp is a plain row. Transport is its own row under School.
+        // Fees and Unmatched payments are both top-level Money rows.
+        // Academic years and terms → /admin/academics (terms editor
+        // /admin/academic-term/create stays on the same row).
+        // Data exports → /admin/reports.
+        // count keys are resolved by SidebarCounts; a parent never shows both
+        // a chevron and a chip.
         'admin' => [
             'prefix' => 'admin',
             'layout' => 'v3',
@@ -124,9 +126,8 @@ return [
                             'label' => 'Students', 'icon' => 'students', 'url' => 'admin/students',
                             'children' => [
                                 ['label' => 'All students', 'url' => 'admin/students', 'paths' => ['admin/students*', 'admin/student*', 'admin/alumni*', 'admin/blocked_students*']],
-                                ['label' => 'Admissions', 'url' => 'admin/admissions', 'paths' => ['admin/admissions*', 'admin/admission*', 'admin/admissionlist*']],
+                                ['label' => 'Admissions', 'url' => 'admin/admissions', 'paths' => ['admin/admissions*', 'admin/admission*', 'admin/admissionlist*'], 'count' => 'admissions'],
                                 ['label' => 'Health records', 'url' => 'admin/health', 'paths' => ['admin/health*', 'admin/medical*']],
-                                ['label' => 'Transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                             ],
                         ],
                         ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'paths' => ['admin/teachers*', 'admin/teacher*', 'admin/staff*', 'admin/staffs*']],
@@ -142,6 +143,7 @@ return [
                                 ['label' => 'Classes and streams', 'url' => 'admin/classes', 'paths' => ['admin/classes*', 'admin/sections*', 'admin/standardlinks*', 'admin/standardLink*'], 'condition' => 'school_admin'],
                                 ['label' => 'Subjects', 'url' => 'admin/subjects', 'paths' => ['admin/subjects*', 'admin/subject*']],
                                 ['label' => 'Timetable', 'url' => 'admin/timetable', 'paths' => ['admin/timetable*', 'admin/timetables*']],
+                                ['label' => 'Calendar', 'url' => 'admin/calendar', 'paths' => ['admin/calendar*', 'admin/events*']],
                             ],
                         ],
                         ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'admin/attendance', 'paths' => ['admin/attendance*']],
@@ -159,26 +161,16 @@ return [
                 [
                     'label' => 'Money',
                     'rows' => [
-                        [
-                            'label' => 'Fees', 'icon' => 'fees', 'url' => 'admin/fees/payments',
-                            'children' => [
-                                ['label' => 'Overview', 'url' => 'admin/fees/payments', 'paths' => ['admin/fees/payments', 'admin/fees', 'admin/fee/*', 'admin/payment/*', 'admin/invoices*']],
-                                ['label' => 'Unmatched payments', 'url' => 'admin/fees/payments/unmatched', 'paths' => ['admin/fees/payments/unmatched*']],
-                            ],
-                        ],
+                        ['label' => 'Fees', 'icon' => 'fees', 'url' => 'admin/fees/payments', 'paths' => ['admin/fees/payments', 'admin/fees', 'admin/fee/*', 'admin/payment/*', 'admin/invoices*']],
+                        ['label' => 'Unmatched payments', 'icon' => 'warning', 'url' => 'admin/fees/payments/unmatched', 'paths' => ['admin/fees/payments/unmatched*'], 'count' => 'unmatched'],
                     ],
                 ],
                 [
                     'label' => 'School',
                     'rows' => [
-                        [
-                            'label' => 'Messages', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard',
-                            'children' => [
-                                ['label' => 'WhatsApp', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*']],
-                                ['label' => 'Calendar', 'url' => 'admin/calendar', 'paths' => ['admin/calendar*', 'admin/events*']],
-                            ],
-                        ],
-                        ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*']],
+                        ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*']],
+                        ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
+                        ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [
                             'label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'condition' => 'school_admin',
                             'children' => [
