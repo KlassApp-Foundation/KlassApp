@@ -124,6 +124,53 @@ class DemoRichDataTest extends TestCase
         }
     }
 
+    public function test_current_term_collection_is_a_believable_mix_for_both_demo_schools(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-12 09:00:00'));
+
+        foreach ([$this->seedJunior(), $this->seedSenior()] as $school) {
+            $admin = User::query()->where('school_id', $school->id)->where('email', 'like', 'admin@%')->firstOrFail();
+            $data = app(DashboardV2DataService::class)->build($school, $admin);
+            $percent = (int) $data['kpis']['fees']['percent'];
+
+            $this->assertGreaterThanOrEqual(60, $percent, $school->name.' fee percent '.$percent);
+            $this->assertLessThanOrEqual(75, $percent, $school->name.' fee percent '.$percent);
+
+            $dueByStandard = DB::table('fees_categories')
+                ->where('school_id', $school->id)
+                ->groupBy('standard_id')
+                ->select('standard_id', DB::raw('SUM(amount) as due'))
+                ->pluck('due', 'standard_id');
+
+            $rows = DB::table('student_academics')
+                ->join('standards_link', 'student_academics.standardLink_id', '=', 'standards_link.id')
+                ->where('student_academics.school_id', $school->id)
+                ->whereNull('student_academics.deleted_at')
+                ->get(['student_academics.user_id', 'standards_link.standard_id']);
+
+            $paid = FeePayment::query()
+                ->where('school_id', $school->id)
+                ->groupBy('user_id')
+                ->select('user_id', DB::raw('SUM(amount) as paid'))
+                ->pluck('paid', 'user_id');
+
+            $partial = 0;
+            $unpaid = 0;
+            foreach ($rows->unique('user_id') as $row) {
+                $due = (float) ($dueByStandard[$row->standard_id] ?? 0);
+                $got = (float) ($paid[$row->user_id] ?? 0);
+                if ($got <= 0) {
+                    $unpaid++;
+                } elseif ($due > 0 && $got + 1 < $due) {
+                    $partial++;
+                }
+            }
+
+            $this->assertGreaterThan(0, $partial, $school->name.' partial payers');
+            $this->assertGreaterThan(0, $unpaid, $school->name.' unpaid learners');
+        }
+    }
+
     public function test_junior_school_gets_rich_demo_data(): void
     {
         $school = $this->seedJunior();
