@@ -327,13 +327,11 @@ class DemoSeniorSchoolSeeder extends Seeder
 
     private function seedStudents(): void
     {
-        $firsts = ['Aisha', 'Brian', 'Carol', 'Daphine', 'Eric', 'Faith', 'Godfrey', 'Hawa', 'Ivan', 'Joan', 'Kevin', 'Lillian', 'Moses', 'Naomi', 'Oscar', 'Patience', 'Ronald', 'Sylvia', 'Timothy', 'Winnie', 'Aaron', 'Betty', 'Chris', 'Doreen', 'Elias', 'Fiona', 'Gerald', 'Harriet', 'Isaac', 'Jesca', 'Kato', 'Lydia', 'Martin', 'Norah', 'Patrick', 'Queen', 'Reagan', 'Stella', 'Tonny', 'Ursula', 'Vincent', 'Winnie', 'Yasin', 'Zainah', 'Arnold', 'Brenda', 'Cyrus', 'Denis', 'Esther', 'Fred', 'Grace', 'Henry', 'Irene', 'Joel', 'Kevin', 'Lorna', 'Michael', 'Nancy', 'Owen', 'Proscovia', 'Rashid', 'Sonia', 'Trevor', 'Vivian', 'Wilson', 'Yvonne'];
-        $lasts = ['Nabukenya', 'Okello', 'Auma', 'Kigozi', 'Achen', 'Ssentamu', 'Nansubuga', 'Tumwine', 'Wandera', 'Achieng', 'Kirabo', 'Tumusiime', 'Namuli', 'Ssekandi', 'Mukasa', 'Nakato', 'Otieno', 'Amooti', 'Byaruhanga', 'Kyeyune', 'Nsubuga', 'Babirye', 'Kizza', 'Ndagire', 'Wasswa', 'Nalubega', 'Kato', 'Nabirye', 'Odongo', 'Amongin', 'Mbabazi', 'Lubega', 'Namugga', 'Ochieng', 'Turyasingha', 'Kembabazi', 'Mugisha', 'Nassiwa', 'Balewa', 'Kawooya'];
-
         $plan = [
             'S.1' => 12, 'S.2' => 12, 'S.3' => 10, 'S.4' => 10,
             'S.5' => 8, 'S.6' => 8,
         ];
+        $names = \App\Support\DemoRosterNames::names(array_sum($plan));
 
         $n = 0;
         foreach ($plan as $className => $count) {
@@ -341,9 +339,7 @@ class DemoSeniorSchoolSeeder extends Seeder
 
             for ($i = 0; $i < $count; $i++) {
                 $n++;
-                $first = $firsts[($n * 7) % count($firsts)];
-                $last = $lasts[($n * 11) % count($lasts)];
-                $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+                $student = $this->user('student' . $n, $names[$n - 1], 6);
 
                 // A1: every student carries a date of birth and a gender.
                 $age = self::AGE_BY_CLASS[$className] ?? 15;

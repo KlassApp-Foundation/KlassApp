@@ -327,14 +327,12 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function seedStudents(): void
     {
-        $firsts = ['Aisha', 'Brian', 'Carol', 'Daphine', 'Eric', 'Faith', 'Godfrey', 'Hawa', 'Ivan', 'Joan', 'Kevin', 'Lillian', 'Moses', 'Naomi', 'Oscar', 'Patience', 'Ronald', 'Sylvia', 'Timothy', 'Winnie', 'Aaron', 'Betty', 'Chris', 'Doreen', 'Elias', 'Fiona', 'Gerald', 'Harriet', 'Isaac', 'Jesca', 'Kato', 'Lydia', 'Martin', 'Norah', 'Patrick', 'Queen', 'Reagan', 'Stella', 'Tonny', 'Ursula', 'Vincent', 'Winnie', 'Yasin', 'Zainah', 'Arnold', 'Brenda', 'Cyrus', 'Denis', 'Esther', 'Fred', 'Grace', 'Henry', 'Irene', 'Joel', 'Kevin', 'Lorna', 'Michael', 'Nancy', 'Owen', 'Proscovia', 'Rashid', 'Sonia', 'Trevor', 'Vivian', 'Wilson', 'Yvonne'];
-        $lasts = ['Nabukenya', 'Okello', 'Auma', 'Kigozi', 'Achen', 'Ssentamu', 'Nansubuga', 'Tumwine', 'Wandera', 'Achieng', 'Kirabo', 'Tumusiime', 'Namuli', 'Ssekandi', 'Mukasa', 'Nakato', 'Otieno', 'Amooti', 'Byaruhanga', 'Kyeyune', 'Nsubuga', 'Babirye', 'Kizza', 'Ndagire', 'Wasswa', 'Nalubega', 'Kato', 'Nabirye', 'Odongo', 'Amongin', 'Mbabazi', 'Lubega', 'Namugga', 'Ochieng', 'Turyasingha', 'Kembabazi', 'Mugisha', 'Nassiwa', 'Balewa', 'Kawooya'];
-
         $plan = [
             'Baby Class' => 4, 'Middle Class' => 4, 'Top Class' => 4,
             'P.1' => 6, 'P.2' => 6, 'P.3' => 6, 'P.4' => 6,
             'P.5' => 10, 'P.6' => 10, 'P.7' => 10,
         ];
+        $names = \App\Support\DemoRosterNames::names(array_sum($plan));
 
         $n = 0;
         foreach ($plan as $className => $count) {
@@ -342,9 +340,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
             for ($i = 0; $i < $count; $i++) {
                 $n++;
-                $first = $firsts[($n * 7) % count($firsts)];
-                $last = $lasts[($n * 11) % count($lasts)];
-                $student = $this->user('student' . $n, $first . ' ' . $last, 6);
+                $student = $this->user('student' . $n, $names[$n - 1], 6);
 
                 // A1: every student carries a date of birth and a gender.
                 $age = self::AGE_BY_CLASS[$className] ?? 10;

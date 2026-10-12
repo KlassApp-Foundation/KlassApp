@@ -356,6 +356,33 @@ class StudentDetailsController extends Controller
     }
 
     /**
+     * Old admin bookmarks use the student name. Send them to the id profile
+     * when that name belongs to exactly one student in this school.
+     */
+    public function redirectToIdProfile(string $name)
+    {
+        $actor = Auth::user();
+        if ($actor === null) {
+            abort(403);
+        }
+
+        $matches = User::query()
+            ->exactNameInSchool($name, (int) $actor->school_id, 6)
+            ->get();
+
+        if ($matches->count() !== 1) {
+            abort(404);
+        }
+
+        $user = $matches->first();
+        if (! Gate::allows('member', $user)) {
+            abort(403);
+        }
+
+        return redirect('/admin/students/'.$user->id, 302);
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response

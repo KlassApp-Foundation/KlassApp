@@ -80,8 +80,14 @@ class ParentController extends Controller
         $ref_name = Request('ref_name')?Request('ref_name'):'';
         $count    = User::where('school_id',Auth::user()->school_id)->where(function ($q) { $q->where('usergroup_id',6)->orWhere('usergroup_id',7); })->count();
         $subscription = Subscription::where('school_id',Auth::user()->school_id)->first();
+        $matches = $ref_name === ''
+            ? collect()
+            : User::query()->exactNameInSchool($ref_name, (int) Auth::user()->school_id, 6)->get();
+        $studentProfileUrl = $matches->count() === 1
+            ? url('/admin/students/'.$matches->first()->id)
+            : url('/admin/students');
 
-        return view('admin/parent/create' , [ 'ref_name' => $ref_name , 'count' => $count , 'subscription' => $subscription ]);
+        return view('admin/parent/create' , [ 'ref_name' => $ref_name , 'count' => $count , 'subscription' => $subscription, 'studentProfileUrl' => $studentProfileUrl ]);
     }
 
     public function addList(Request $request)

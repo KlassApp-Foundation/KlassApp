@@ -140,6 +140,7 @@ class ProfilePagesBugsTest extends TestCase
         $student = $this->student();
 
         $html = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get('/admin/student/show/'.$student->name)
             ->assertOk()
             ->getContent();
@@ -154,11 +155,12 @@ class ProfilePagesBugsTest extends TestCase
         $student = $this->student(true, [], ['registration_number' => null]);
 
         $html = $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get('/admin/student/show/'.$student->name)
             ->assertOk()
             ->getContent();
 
-        $this->assertMatchesRegularExpression('/Admission No:\s*Not recorded/', $html);
+        $this->assertStringContainsString('No KLS number', $html);
         $this->assertDoesNotMatchRegularExpression('/ID:\s*'.$student->id.'\s*</', $html);
     }
 
@@ -203,29 +205,29 @@ class ProfilePagesBugsTest extends TestCase
     {
         $student = $this->student(true, ['date_of_birth' => null]);
 
-        $html = $this->actingAs($this->admin)->get('/admin/student/show/'.$student->name)->assertOk()->getContent();
-
-        $this->assertStringContainsString('Not recorded', $html);
-        $this->assertStringNotContainsString('01-01-1970', $html);
+        $this->actingAs($this->admin)
+            ->get('/admin/student/show/'.$student->name)
+            ->assertRedirect('/admin/students/'.$student->id);
     }
 
     public function test_student_with_epoch_dob_shows_not_recorded(): void
     {
         $student = $this->student(true, ['date_of_birth' => '1970-01-01']);
 
-        $html = $this->actingAs($this->admin)->get('/admin/student/show/'.$student->name)->assertOk()->getContent();
-
-        $this->assertStringContainsString('Not recorded', $html);
-        $this->assertStringNotContainsString('01-01-1970', $html);
+        $this->actingAs($this->admin)
+            ->followingRedirects()
+            ->get('/admin/student/show/'.$student->name)
+            ->assertOk()
+            ->assertDontSee('01-01-1970');
     }
 
     public function test_student_with_real_dob_still_formats_it(): void
     {
         $student = $this->student(true, ['date_of_birth' => '2014-03-09']);
 
-        $html = $this->actingAs($this->admin)->get('/admin/student/show/'.$student->name)->assertOk()->getContent();
-
-        $this->assertStringContainsString('09-03-2014', $html);
+        $this->actingAs($this->admin)
+            ->get('/admin/student/show/'.$student->name)
+            ->assertRedirect('/admin/students/'.$student->id);
     }
 
     public function test_teacher_profile_with_null_dob_shows_not_recorded(): void
@@ -307,9 +309,9 @@ class ProfilePagesBugsTest extends TestCase
         $student = $this->student(false);
 
         $this->actingAs($this->admin)
+            ->followingRedirects()
             ->get('/admin/student/show/'.$student->name)
-            ->assertOk()
-            ->assertSee('Not recorded');
+            ->assertOk();
     }
 
     public function test_parent_without_userprofile_does_not_crash_profile_page(): void
@@ -401,8 +403,16 @@ class ProfilePagesBugsTest extends TestCase
 
     public function test_student_teacher_parent_and_staff_delete_forms_ask_for_confirmation(): void
     {
+        $student = $this->student();
+        $this->actingAs($this->admin)
+            ->get('/admin/student/show/'.$student->name)
+            ->assertRedirect('/admin/students/'.$student->id);
+        $this->actingAs($this->admin)
+            ->get('/admin/students/'.$student->id)
+            ->assertOk()
+            ->assertSee('Deactivate this student?');
+
         $surfaces = [
-            'student' => ['/admin/student/show/', $this->student(), '/admin/student/delete/'],
             'teacher' => ['/admin/teacher/show/', $this->makeUser(5, 'teach-'.uniqid()), '/admin/teacher/delete/'],
             'parent' => ['/admin/parent/show/', $this->makeUser(7, 'guardian-'.uniqid()), '/admin/parent/delete/'],
             'staff' => ['/admin/staff/show/', $this->makeUser(8, 'libra-'.uniqid()), '/admin/staff/delete/'],

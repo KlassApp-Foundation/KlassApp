@@ -90,6 +90,29 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertSee('No fees on record');
     }
 
+    public function test_old_name_address_redirects_only_for_one_student_in_this_school(): void
+    {
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('admin.student.show'));
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/student/show/'.$this->studentA->name)
+            ->assertRedirect('/admin/students/'.$this->studentA->id);
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/student/show/'.$this->studentB->name)
+            ->assertNotFound();
+
+        User::factory()->create([
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 6,
+            'name' => $this->studentA->name,
+        ]);
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/student/show/'.$this->studentA->name)
+            ->assertNotFound();
+    }
+
     public function test_another_schools_student_is_not_visible_or_deactivated(): void
     {
         $this->actingAs($this->adminA)
