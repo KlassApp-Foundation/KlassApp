@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Toshi on phones · concept</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="toshi.css">
+</head>
+<body>
+<div id="app"></div>
+<script>
+const Q=new URLSearchParams(location.search);
+const ST={la:Q.get('la')||'A',sheet:Q.get('sheet')||'closed',mode:Q.get('mode')||'preview',view:Q.get('view')||'chat',state:Q.get('state')||'normal',page:Q.get('page')||'dashboard',zone:Q.get('zone')==='1',menu:false,hid:false};
+const K='../../assets/brand/klassapp-icon.svg';
+const DESC='KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children\u2019s school updates on WhatsApp, all by chatting in natural language with Toshi, your school\u2019s AI assistant.';
+const ic=(n,c='ic')=>`<i data-lucide="${n}" class="${c}" aria-hidden="true"></i>`;
+const MODE={preview:['Preview','m-prev'],setup:['Setup guide','m-setup'],assistant:['Early access','m-ea']};
+function launcher(){
+  if(ST.la!=='A')return '';
+  const on=ST.mode!=='preview';
+  return `<button class="la${on?' on':''}" type="button" data-act="open" aria-haspopup="dialog" aria-expanded="${ST.sheet!=='closed'}" aria-controls="toshi" aria-label="Open Toshi${ST.mode==='preview'?', in preview':ST.mode==='assistant'?', early access':''}"><img src="${K}" alt="">Toshi${ST.mode==='assistant'?'<span class="pill">Early access</span>':''}</button>`;
+}
+function page(){
+  const top=`<header class="top"><button class="btn icon ghost" type="button" aria-label="Open menu">${ic('menu')}</button><span class="t">${ST.page==='form'?'Add teacher':'Dashboard'}</span>${launcher()}<button class="btn icon ghost" type="button" aria-label="Account"><span class="av" style="width:32px;height:32px">MM</span></button></header>`;
+  let main;
+  if(ST.page==='form')main=`<main class="page"><h1>Add teacher</h1><p>Fields are required unless marked Optional.</p>
+   <div class="card"><div class="f"><label for="a">First name</label><input class="inp" id="a"></div><div class="f"><label for="b">Last name</label><input class="inp" id="b"></div><div class="f"><label for="c">Phone</label><input class="inp" id="c" type="tel"></div><div class="f"><label for="d">Email</label><input class="inp" id="d" type="email"></div></div>
+   <div class="card"><h2>Invite</h2><p>They choose their own password. The invite link works for 72 hours.</p></div></main>
+   <div class="fbar" data-sticky-footer><a class="btn" href="#">Cancel</a><button class="btn" type="button">Save and add another</button><button class="btn pri" type="button">Save and send invite</button></div>`;
+  else main=`<main class="page"><h1>Good evening, Mucunguzi</h1><p>Demo Junior School · Term 3, 2026</p>
+   <div class="card setup"><h2>Finish setting up Demo Junior School</h2><p><b>4 of 7 steps done.</b> Next: set up fees for Term 3.</p><span class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="7" aria-valuenow="4" aria-label="Setup progress"><i style="width:57%"></i></span>
+   <div class="acts"><a class="btn pri" href="#">Continue setup</a>${ST.mode==='setup'?`<button class="btn" type="button" data-act="open" data-view="checklist" aria-haspopup="dialog" aria-controls="toshi"><img src="${K}" alt="" style="width:20px;height:20px">Set up with Toshi</button>`:''}</div></div>
+   <div class="kpis"><div class="kpi"><span>Students</span><b>248</b></div><div class="kpi"><span>Staff</span><b>18</b></div><div class="kpi"><span>Attendance this week</span><b>93.4%</b></div><div class="kpi"><span>Fees collected</span><b>62%</b></div></div>
+   <div class="card"><h2>Recent activity</h2><p>Sarah Nakato took attendance for Primary 5 · Blue.</p><p>142 report cards sent to parents on WhatsApp.</p></div></main>`;
+  const b=ST.la==='B'?`<nav class="bnav" aria-label="Main"><a href="#" aria-current="page">${ic('layout-dashboard')}Home</a><a href="#">${ic('graduation-cap')}Students</a><a href="#">${ic('message-circle')}Messages</a><a href="#" data-act="open" aria-haspopup="dialog" aria-controls="toshi"><img src="${K}" alt="">Toshi</a></nav>`:'';
+  const c=ST.la==='C'?`<button class="etab${ST.hid?' hide':''}" type="button" data-act="open" aria-haspopup="dialog" aria-controls="toshi" aria-label="Open Toshi"><img src="${K}" alt=""></button>`:'';
+  return top+main+b+c+`<div class="zone" aria-hidden="true"><span>--d-bottom-zone</span></div>`;
+}
+function head(){
+  const [l,c]=MODE[ST.mode];
+  const menu=ST.menu?`<div class="mmenu" role="menu" aria-label="Toshi mode">
+   <button class="mi" role="menuitemradio" aria-checked="${ST.mode==='setup'}" ${ST.mode==='preview'?'aria-disabled="true"':''} type="button" data-act="mode" data-m="setup">${ic('list-checks')}Setup guide${ST.mode==='preview'?'<small>In preview</small>':''}</button>
+   <button class="mi" role="menuitemradio" aria-checked="${ST.mode==='assistant'}" ${ST.mode!=='assistant'?'aria-disabled="true"':''} type="button" data-act="mode" data-m="assistant">${ic('message-square')}Assistant<small>${ST.mode==='assistant'?'Early access':'Not available yet'}</small></button></div>`:'';
+  return `<div class="handle" data-drag aria-hidden="true"><i></i></div>
+  <div class="sh" data-drag style="position:relative"><span class="tav"><img src="${K}" alt=""></span><span class="nm"><b id="toshi-t">Toshi</b><span class="mode ${c}">${l}</span></span>
+   <button class="btn icon ghost" type="button" data-act="menu" aria-haspopup="menu" aria-expanded="${ST.menu}" aria-label="Toshi mode">${ic('chevrons-up-down')}</button>
+   ${ST.mode==='preview'?'':`<button class="btn icon ghost" type="button" aria-label="New conversation">${ic('message-square-plus')}</button>`}
+   <button class="btn icon ghost" type="button" data-act="close" aria-label="Close Toshi">${ic('x')}</button>${menu}</div>`;
+}
+const bot=(h,who=true)=>`<div class="msg bot">${who?'<div class="who">Toshi</div>':''}${h}</div>`;
+const me=h=>`<div class="msg me">${h}</div>`;
+function comp(o={}){
+  const dis=o.dis,id='cm';
+  return `<div class="comp"><label class="sr" for="${id}">Message Toshi</label><div class="row"><textarea id="${id}" rows="1" ${dis?`disabled aria-describedby="${id}-n"`:''} placeholder="${dis?'':o.ph||'Message Toshi'}"></textarea><button class="send" type="button" ${dis?'disabled':''} aria-label="Send">${ic('arrow-up')}</button></div>${o.note?`<p class="note" id="${id}-n">${ic(o.ni||'pause','ic ic-sm')}${o.note}</p>`:''}</div>`;
+}
+function bodyPreview(){
+  return `<div class="body" tabindex="-1"><section class="soon" aria-labelledby="soon-h"><span class="mode m-prev" style="align-self:flex-start">Coming soon</span><h2 id="soon-h">Toshi is in preview</h2><p>${DESC}</p><p>Everything in KlassApp works without Toshi. To finish setting up your school, use <a href="#">Continue setup</a> on the dashboard.</p></section></div>`+comp({dis:1,note:'Messaging is paused while Toshi is in preview.'});
+}
+const STEPS=[['School details','Name, logo, currency',1],['Academic year and terms','2026 · 3 terms',1],['Classes and streams','8 classes, 11 streams',1],['Subjects','9 subjects',1],['Fees for Term 3','Not started',0,1],['Students','Upload a name list or add one by one',0],['Invite teachers','Send invites by email or WhatsApp',0]];
+function checklist(){
+  return `<div class="body" tabindex="-1"><div class="prog"><b style="font:600 16px var(--d-font-display,'Sora',sans-serif)">4 of 7 steps done</b><span class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="7" aria-valuenow="4" aria-label="Setup progress"><i style="width:57%"></i></span><span style="font-size:13.5px;color:#5C5646">The same steps as Continue setup on the dashboard. Progress is shared.</span></div>
+  <ol class="ck" aria-label="Setup steps">${STEPS.map(s=>`<li class="${s[2]?'done':s[3]?'cur':''}"><button type="button" data-act="view" data-v="chat"><span class="st">${s[2]?ic('check','ic ic-sm'):s[3]?'<b style="font-size:12px">5</b>':''}</span><span><b>${s[0]}</b><small>${s[2]?'Done · ':s[3]?'Next · ':''}${s[1]}</small></span>${ic('chevron-right','ic ic-sm')}</button><span class="sr">${s[2]?'Done':s[3]?'Current step':'To do'}</span></li>`).join('')}</ol>
+  <button class="btn clay" type="button" data-act="view" data-v="chat">Continue with step 5 in the conversation</button></div>`;
+}
+function setupChat(){
+  const s=ST.state;
+  if(s==='empty')return `<div class="body" tabindex="-1">${bot('<p>I can walk you through the 3 setup steps that are left, one question at a time. You can stop at any point and pick up later.</p>')}<div class="chips" role="group" aria-label="Start"><button class="chip" type="button">Start with fees</button><button class="chip" type="button">Add students</button><button class="chip" type="button" data-act="view" data-v="checklist">See all steps</button></div></div>`+comp({ph:'Type a reply'});
+  return `<div class="body" tabindex="-1" aria-live="polite">
+  ${bot('<p>Step 5 of 7: fees for Term 3. Does every class pay the same tuition this term?</p>')}
+  <div class="chips" role="group" aria-label="Your answer"><button class="chip yes" type="button">Yes</button><button class="chip" type="button">No, it differs by class</button></div>
+  ${me('No, it differs by class')}
+  ${bot('<p>Here are two ways to set it up. Pick one and I\u2019ll fill in the fee structure for you to check.</p>')}
+  <fieldset class="tc" style="margin:0"><legend class="sr">Fee plan</legend><h3>${ic('wallet','ic ic-sm')}Choose a fee plan</h3><div class="plans">
+   <label class="plan"><input type="radio" name="pl" checked><span><b>One amount per level</b><span>Nursery, lower primary and upper primary each have one tuition amount.</span></span></label>
+   <label class="plan"><input type="radio" name="pl"><span><b>One amount per class</b><span>Set tuition for each class separately (8 amounts).</span></span></label></div><button class="btn clay" type="button">Use this plan</button></fieldset>
+  ${me('One amount per level')}
+  <section class="tc" aria-labelledby="rv"><h3 id="rv">${ic('clipboard-check','ic ic-sm')}Check before I save</h3><p class="sub">Term 3, 2026 · currency from your school settings (UGX)</p>
+   <table><thead><tr><th scope="col">Level</th><th scope="col">Classes</th><th class="n" scope="col">Tuition</th></tr></thead><tbody><tr><td>Nursery</td><td>Nursery, Reception</td><td class="n">UGX 350,000</td></tr><tr><td>Lower primary</td><td>Primary 1–3</td><td class="n">UGX 420,000</td></tr><tr><td>Upper primary</td><td>Primary 4–6</td><td class="n">UGX 450,000</td></tr></tbody></table>
+   <div class="acts"><button class="btn" type="button">Change amounts</button><button class="btn clay" type="button">Save fees</button></div></section>
+  ${bot('<p>Saved. Step 6 of 7: students. Upload your name list and I\u2019ll match each student to a class.</p>')}
+  <section class="tc" aria-labelledby="up"><h3 id="up">${ic('file-spreadsheet','ic ic-sm')}Upload a name list</h3><div class="drop"><span>A spreadsheet (.xlsx or .csv) with first name, last name and class. Gender and date of birth are optional.</span><div class="acts" style="width:100%"><button class="btn clay" type="button">${ic('upload','ic ic-sm')}Choose file</button><a class="btn" href="#">Download a template</a></div></div><p class="sub">Students aren\u2019t added until you confirm the review.</p></section>
+  ${s==='long'?bot('<p>I found 248 rows. 241 match a class. 7 need a look: row 14 has the class \u201cP.5 Blu\u201d, rows 31 and 32 have no last name, row 77 has a date of birth in the future (14/03/2031), and rows 120, 188 and 201 repeat a student already in the list. Here is the file name you uploaded, in full: Demo_Junior_School_student_list_Term3_2026_FINAL_v4_updated_by_office.xlsx</p><p>You can fix these in the review, or skip them and add them later from Students.</p>'):''}
+  </div>
+  <div class="qr" role="group" aria-label="Quick replies"><button class="chip" type="button">Skip this step</button><button class="chip" type="button">I\u2019ll add students one by one</button><button class="chip" type="button" data-act="view" data-v="checklist">Show all steps</button></div>`+comp({ph:'Type a reply'});
+}
+function assistant(){
+  const s=ST.state;
+  if(s==='empty')return `<div class="body" tabindex="-1" style="justify-content:flex-end"><section class="tc" aria-labelledby="em"><h3 id="em"><span class="tav" style="width:32px;height:32px"><img src="${K}" alt="" style="width:20px;height:20px"></span>Ask about your school</h3><p class="sub">Toshi is in early access. It can look things up and prepare changes; anything that changes records waits for your approval.</p><div class="chips"><button class="chip" type="button">Who was absent today?</button><button class="chip" type="button">Which classes are missing marks?</button><button class="chip" type="button">Fees owed in Primary 5</button></div></section></div>`+comp({});
+  return `<div class="body" tabindex="-1" aria-live="polite">
+  ${me('Which Primary 5 students still owe fees this term?')}
+  <section class="tc" aria-labelledby="tr"><h3 id="tr">${ic('table','ic ic-sm')}Fees owed · Primary 5 · Term 3</h3><p class="sub">From Fees, just now · 3 of 32 students</p><table><thead><tr><th scope="col">Student</th><th scope="col">Stream</th><th class="n" scope="col">Balance</th></tr></thead><tbody><tr><td>Amara Okafor</td><td>Blue</td><td class="n">UGX 180,000</td></tr><tr><td>Noah Mensah</td><td>Red</td><td class="n">UGX 95,000</td></tr><tr><td>Grace Wanjiru</td><td>Blue</td><td class="n">UGX 240,000</td></tr></tbody></table><a href="#" style="font-size:14px;font-weight:600">Open in Fees</a></section>
+  ${bot('<p>3 students in Primary 5 have a balance, UGX 515,000 in total. Do you want me to send their parents a fee reminder on WhatsApp?</p>')}
+  ${me('Yes, send reminders')}
+  <section class="tc" aria-labelledby="ap" style="border-color:#A84D32"><h3 id="ap">${ic('shield-check','ic ic-sm')}Approve before Toshi does this</h3><p class="sub">This sends messages. Nothing happens until you approve.</p><ul><li><b>Send</b> a WhatsApp fee reminder to 3 parents (Grace Okafor, Musa Mensah, Ana Wanjiru)</li><li><b>Message:</b> \u201cHello, a balance of {amount} is due for {child} for Term 3. Thank you, Demo Junior School.\u201d</li><li><b>Record</b> the reminder on each student\u2019s Fees tab</li></ul><div class="acts"><button class="btn" type="button">Reject</button><button class="btn clay" type="button">Approve and send</button></div></section>
+  ${s==='long'?bot('<p>Before you approve: one of these parents, Ana Wanjiru, has not opted in to WhatsApp yet, so her reminder would be sent as an opt-in request first and the balance only after she replies YES. The other two have opted in. If you would rather send Ana\u2019s reminder by email, reject this and ask me to use email for her: ana.wanjiru.parent.contact.address@example-school-family-mail.com</p>'):''}
+  <div class="typing" role="status" aria-label="Toshi is typing"><i></i><i></i><i></i></div>
+  </div>`+comp({});
+}
+function sheetBody(){
+  const s=ST.state;
+  if(s==='loading')return `<div class="body" aria-busy="true"><span class="sr" role="status">Loading Toshi\u2026</span><span class="skel" style="height:64px;width:78%"></span><span class="skel" style="height:44px;width:52%;align-self:flex-end"></span><span class="skel" style="height:96px;width:86%"></span></div>`+comp({dis:1,note:'Loading\u2026',ni:'loader'});
+  if(s==='offline')return `<div class="body"><section class="err" role="alert"><b>Toshi can\u2019t connect</b><p style="margin:0">You seem to be offline, or Toshi didn\u2019t respond. Check your connection and try again.</p><button class="btn" type="button" style="align-self:flex-start">${ic('refresh-cw','ic ic-sm')}Retry</button></section></div>`+comp({dis:1,note:'Messaging resumes when you\u2019re back online.',ni:'wifi-off'});
+  if(ST.mode==='preview')return bodyPreview();
+  if(ST.mode==='setup')return `<div class="seg" role="tablist" aria-label="Setup guide view"><button role="tab" type="button" data-act="view" data-v="checklist" aria-selected="${ST.view==='checklist'}">Checklist</button><button role="tab" type="button" data-act="view" data-v="chat" aria-selected="${ST.view==='chat'}">Conversation</button></div>`+(ST.view==='checklist'?checklist():setupChat());
+  return assistant();
+}
+function sheet(){
+  if(ST.sheet==='closed')return '';
+  const op=ST.sheet==='opening';
+  return `<div class="scrim${op?' opening':''}" data-act="close" aria-hidden="true"></div><section class="sheet${op?' opening':''}" id="toshi" role="dialog" aria-modal="true" aria-labelledby="toshi-t" ${ST.state==='keyboard'?'style="--kb:291px;bottom:291px"':''}><div class="tr" data-toshi-root>${head()}${sheetBody()}</div></section>${ST.state==='keyboard'?'<div class="kb" style="--kb:291px;position:fixed" aria-hidden="true">Keyboard (291px)</div>':''}`;
+}
+let opener=null;
+function render(){
+  document.body.className=(ST.zone?'showzone ':'')+(ST.la==='B'?'has-bnav ':'')+(ST.sheet!=='closed'?'lock':'');
+  document.body.toggleAttribute('data-sticky-bar',ST.page==='form');
+  document.getElementById('app').innerHTML=page()+sheet();
+  window.lucide&&lucide.createIcons({attrs:{'stroke-width':2}});
+  if(ST.sheet==='open'&&!document.querySelector('#toshi').contains(document.activeElement)){const f=document.querySelector('#toshi [data-act="close"]');f&&f.focus({preventScroll:true})}
+}
+function open(v){opener=document.activeElement;ST.sheet='open';if(v)ST.view=v;history.pushState({toshi:1},'');render()}
+function close(fromPop){ST.sheet='closed';ST.menu=false;render();if(!fromPop&&history.state&&history.state.toshi)history.back();(opener&&document.contains(opener)?opener:document.querySelector('[data-act="open"]'))?.focus()}
+addEventListener('popstate',()=>{if(ST.sheet!=='closed')close(1)});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(e.target.closest('a[href="#"]'))e.preventDefault();if(!a){if(ST.menu&&!e.target.closest('.mmenu')){ST.menu=false;render()}return}
+ const k=a.dataset.act;
+ if(k==='open'){e.preventDefault();open(a.dataset.view);return}
+ if(k==='close'){close();return}
+ if(k==='menu'){ST.menu=!ST.menu;render();document.querySelector('.mmenu .mi')?.focus();return}
+ if(k==='mode'){if(a.getAttribute('aria-disabled')==='true')return;ST.mode=a.dataset.m;ST.menu=false;render();return}
+ if(k==='view'){ST.view=a.dataset.v;render();document.querySelector('#toshi .body')?.focus({preventScroll:true});return}});
+document.addEventListener('keydown',e=>{if(ST.sheet==='closed')return;
+ if(e.key==='Escape'){if(ST.menu){ST.menu=false;render();document.querySelector('[data-act="menu"]').focus();return}close();return}
+ if(e.key==='Tab'){const f=[...document.querySelectorAll('#toshi button:not([disabled]),#toshi a[href],#toshi textarea:not([disabled]),#toshi input,#toshi [tabindex="-1"]')].filter(x=>x.offsetParent!==null&&x.tabIndex>=0);if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){z.focus();e.preventDefault()}else if(!e.shiftKey&&document.activeElement===z){a.focus();e.preventDefault()}}});
+// swipe down to close (phones): drag the handle or header
+let y0=null;document.addEventListener('pointerdown',e=>{if(e.target.closest('[data-drag]')&&!e.target.closest('button')&&innerWidth<761){y0=e.clientY;e.target.setPointerCapture?.(e.pointerId)}});
+document.addEventListener('pointermove',e=>{if(y0==null)return;const d=Math.max(0,e.clientY-y0),s=document.querySelector('.sheet');if(s){s.style.transition='none';s.style.transform=`translateY(${d}px)`}});
+document.addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;const s=document.querySelector('.sheet');if(!s)return;s.style.transition='';if(d>120)close();else s.style.transform=''});
+// edge tab hides while scrolling down, returns on scroll up
+let ly=0;addEventListener('scroll',()=>{if(ST.la!=='C')return;const y=scrollY,h=y>ly&&y>40;if(h!==ST.hid){ST.hid=h;document.querySelector('.etab')?.classList.toggle('hide',h)}ly=y},{passive:true});
+if(ST.sheet==='open')history.pushState({toshi:1},'');
+render();
+addEventListener('load',()=>setTimeout(()=>{const s=document.createElement('script');s.src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js';s.async=true;s.onload=()=>lucide.createIcons({attrs:{'stroke-width':2}});document.body.appendChild(s)},0));
+</script>
+</body>
+</html>

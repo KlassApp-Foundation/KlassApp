@@ -1,5 +1,15 @@
 # KlassApp Design System
 
+
+## Source of truth for admin pages
+
+- **Build admin pages from:** `concepts/admin-mvp` (the concept) plus `guidelines/handoff-2026-10-08-admin-mvp-combined.md` (the spec).
+- **Where files disagree, the combined handoff wins.**
+- **Don't build from these:**
+  - **Legacy:** `ui_kits/school-dashboard` and `templates/school-dashboard` recreate today's app dashboard. They're not the target.
+  - **Earlier:** `concepts/profiles/account-dashboard.html` and `concepts/profiles/dashboard-v2.html` were extended by the Admin MVP pack. Their profile pages and account card parts stay valid only where the combined handoff says so.
+- **Design System tab:** "01 · Build these (Admin MVP)" is listed first, and "13 · Reference, legacy or earlier" last.
+
 ## Positioning (agreed 2026-10-02)
 
 **Tagline:** An open education protocol for humans and agents.
@@ -305,7 +315,7 @@ is a product decision, so nothing was invented here.
 
 **Blog and Events (2026-10-02).** The VitePress docs site gains `/docs/blog/` and `/docs/events/`, on the same theme as Help. Shared pieces in `styles/docs.css`: `.kd-preview` (the "Draft · Preview release" label, set per page with `status: preview`), post feature card, byline, call-to-action card, event list with date tile, and an event time card. Event times are stored in UTC and shown in the viewer's time zone with the offset, plus the host time. Concept: `concepts/docs/blog/index.html`.
 
-**Admin MVP pack (combined 2026-10-08, demo 17 Oct).** Concept `concepts/admin-mvp/index.html` (+ `batch2.html`); spec `guidelines/handoff-2026-10-08-admin-mvp-combined.md` (mirrored at `klassapp-handoff-2026-10-08-admin-mvp/HANDOFF.md`).
+**Admin MVP pack (2026-10-07, demo 17 Oct).** Concept `concepts/admin-mvp/index.html`; spec `guidelines/handoff-2026-10-08-admin-mvp-combined.md` (the combined batch one and two handoff, which replaced the separate 2026-10-07 file).
 - **Pages:** dashboard with data (5 KPI tiles, 4 charts, recent activity, a slim setup bar only while setup is incomplete, Toshi as one quiet "coming soon" line); student, teacher and parent profiles; classes index and class page.
 - **People list:** one list pattern for students, teachers and parents (one-line search plus filter chips; the whole row opens the profile; a row menu without Delete; a bulk bar only on selection; card rows on mobile; empty, no-match and loading states).
 - **Account menu:** a compact popover anchored to the account card; the sidebar never moves.
@@ -317,6 +327,24 @@ is a product decision, so nothing was invented here.
 - **Exams:** a subject-first page, with disclosure rows per class.
 - **Person form:** one shared add and edit form for students, teachers, parents and staff, with invites for teachers and parents and no legacy fields.
 - **Also from 2026-10-08:** KLS format `KLS` + 3-digit school number + 4-digit sequence; Health and support is its own tab (admin and head teacher only, every open logged); class teacher is per stream with a class default.
+
+**Toshi on phones (2026-10-08).** Concept `concepts/toshi-mobile/index.html`; spec `guidelines/handoff-2026-10-08-toshi-mobile.md`; Design System group "08 · Toshi".
+- **Launcher:** a labelled "Toshi" button in the mobile top bar. At 761–1279 it's a sidebar row instead.
+- **Bottom safe zone:** `--d-bottom-zone`, which grows by `--d-sticky-bar-h` when `<body data-sticky-bar>` is set. Nothing floats inside it.
+- **Sheet:** a full-height bottom sheet up to 760px, a 400px side sheet from 761 to 1279, and the unchanged dock from 1280.
+- **Modes:** preview, setup guide and assistant. Toshi never opens by itself.
+
+**Sidebar v3 (2026-10-10).** Concept `concepts/admin-mvp/sidebar-v3.html`; spec `guidelines/handoff-2026-10-10-sidebar-v3.md`. It replaces the combined admin handoff's sidebar and PR7.
+- **Layout:** 14 top-level rows under 4 always-visible section labels, with children only where needed. The nav list scrolls; the footer is pinned.
+- **Saved state:** only `ka:sidebar:v3`, holding `{rail}`.
+- **Card surface v2:** `tokens/surfaces.css` and the `.ds-surface` class.
+
+**Sidebar v3 polish (2026-10-12).** `guidelines/handoff-2026-10-12-sidebar-v3-polish.md`.
+- **Sidebar:** 248px wide, and a row shows a chevron or a count, never both.
+- **Rail:** tooltips after 300ms, including the avatar (name and role).
+- **School name:** 15px/600 with the school logo; the top bar stays until after 17 Oct.
+- **People lists:** Select mode, 28px circle avatars in lists, 48px rows, sticky header.
+- **Card surface v2:** KPI tiles and quick actions only.
 
 ---
 

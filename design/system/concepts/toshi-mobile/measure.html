@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Toshi mobile · measure</title></head>
+<body style="margin:0;font:14px sans-serif">
+<p id="out">Running…</p>
+<iframe id="a" width="375" height="760" title="375"></iframe><iframe id="b" width="414" height="760" title="414"></iframe><iframe id="c" width="768" height="900" title="768"></iframe>
+<script>
+const P=['la=A&zone=1','la=A&page=form&zone=1','la=B&page=form&zone=1','la=C&page=form&zone=1','sheet=opening','sheet=open&mode=preview','sheet=open&mode=setup&view=checklist','sheet=open&mode=setup&view=chat','sheet=open&mode=setup&view=chat&state=empty','sheet=open&mode=setup&view=chat&state=long','sheet=open&mode=setup&view=chat&state=keyboard','sheet=open&mode=assistant','sheet=open&mode=assistant&state=empty','sheet=open&mode=assistant&state=loading','sheet=open&mode=assistant&state=offline','sheet=open&mode=assistant&state=long','sheet=closed&mode=assistant'];
+const R=[];
+function load(f,q){return new Promise(r=>{f.onload=()=>setTimeout(r,250);f.src='toshi.html?'+q})}
+function m(f,q){const d=f.contentDocument,vw=d.documentElement.clientWidth,over=d.documentElement.scrollWidth-vw;
+ const small=[...d.querySelectorAll('button,a.btn,.chip,.la,.mi,textarea,input.inp,.plan,.bnav a')].filter(e=>{const b=e.getBoundingClientRect();return e.offsetParent!==null&&b.width>0&&b.height<43.5&&!e.closest('[aria-hidden="true"]')});
+ const s=d.querySelector('.sheet'),sb=s&&s.getBoundingClientRect();const body=d.querySelector('#toshi .body');
+ const wide=s?[...s.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>sb.right+1&&!e.closest('.qr')&&!e.closest('.mmenu')).length:0;
+ const z=d.querySelector('.zone'),zt=z&&d.body.classList.contains('showzone')?z.getBoundingClientRect().top:null;
+ const inz=zt==null?0:[...d.querySelectorAll('.la,.etab')].filter(e=>e.getBoundingClientRect().bottom>zt+1).length;
+ const fb=d.querySelector('.fbar'),cover=fb?[...d.querySelectorAll('.etab,.bnav')].filter(e=>{const a=e.getBoundingClientRect(),b=fb.getBoundingClientRect();return a.top<b.bottom&&a.bottom>b.top&&a.left<b.right&&a.right>b.left}).length:0;
+ let kb='';if(q.includes('keyboard')){const c=d.querySelector('.comp').getBoundingClientRect(),k=d.querySelector('.kb').getBoundingClientRect();kb=' composerAboveKb '+(c.bottom<=k.top+1)}
+ const bad=over>0||small.length||wide||inz||cover;
+ return (bad?'✗ ':'✓ ')+vw+' '+q+(over>0?' over '+over:'')+(small.length?' small '+small.length+' ['+small.slice(0,3).map(e=>(e.textContent.trim()||e.getAttribute('aria-label')||e.className).slice(0,16)).join('|')+']':'')+(wide?' wide '+wide:'')+(inz?' inZone '+inz:'')+(cover?' coversBar '+cover:'')+(s?' sheet '+Math.round(sb.width)+'x'+Math.round(sb.height):'')+kb}
+(async()=>{for(const q of P){for(const f of [a,b,c]){if(f===c&&q.startsWith('la='))continue;await load(f,q);R.push(m(f,q))}}
+ // interaction: open via launcher, Esc closes and focus returns; back closes
+ await load(a,'la=A');const d=a.contentDocument,w=a.contentWindow;d.querySelector('.la').click();await new Promise(r=>setTimeout(r,200));
+ const op=!!d.querySelector('.sheet'),foc=d.activeElement&&d.activeElement.getAttribute('aria-label'),lock=getComputedStyle(d.body).overflow;
+ d.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await new Promise(r=>setTimeout(r,200));
+ const closed=!d.querySelector('.sheet'),back=d.activeElement&&d.activeElement.classList.contains('la');
+ d.querySelector('.la').click();await new Promise(r=>setTimeout(r,150));w.history.back();await new Promise(r=>setTimeout(r,400));
+ R.push(`interaction: opened ${op}, focus on "${foc}", body overflow ${lock}, Esc closed ${closed}, focus back on launcher ${back}, Back button closed ${!d.querySelector('.sheet')}`);
+ document.getElementById('out').innerHTML=R.join('<br>');window.__R=R;window.__done=1})();
+</script></body></html>

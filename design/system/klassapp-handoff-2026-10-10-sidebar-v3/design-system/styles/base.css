@@ -1,0 +1,8 @@
+/* KlassApp base — verbatim from the app stylesheet. */
+body {
+    font-family: "DM Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+a { color: var(--d-blue); text-decoration: none; }
+a:hover { color: #1557B0; text-decoration: underline; text-underline-offset: 2px; }

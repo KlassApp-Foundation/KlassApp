@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sidebar v3 · admin shell</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font-family:'DM Sans',system-ui,sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.top{position:sticky;top:0;z-index:5;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-direction:column;gap:10px}
+.top h1{font:700 20px Sora,sans-serif;margin:0;letter-spacing:-.02em}
+.r{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px;flex-wrap:wrap}
+.seg button{min-height:36px;padding:0 11px;border:0;border-radius:7px;background:transparent;font:600 13px 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.wrap{padding:16px 24px 24px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.fr{display:flex;flex-direction:column;gap:8px}.fr small{font-size:12px;font-weight:700;color:#334155}
+.box{overflow:hidden;border:1px solid #9C978C;border-radius:8px;background:#FAFAF5}
+iframe{border:0;display:block;transform-origin:0 0}
+.meas{flex:1 1 320px;max-width:520px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:14px 18px;font-size:13.5px;line-height:1.5}
+.meas h2{font:600 15px Sora,sans-serif;margin:0 0 6px}
+.meas dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}.meas dt{color:#475569}.meas dd{margin:0;font-weight:600}
+.meas .ok{color:#14532D}.meas .bad{color:#B91C1C}
+.notes{max-width:1180px;margin:0 24px 32px;background:#fff;border:1px solid #CFCAC0;border-radius:12px;padding:16px 22px;font-size:14px;line-height:1.55}
+.notes h2{font:600 17px Sora,sans-serif;margin:0 0 6px}.notes h3{font:600 14.5px Sora,sans-serif;margin:12px 0 4px}.notes ul{margin:0;padding-left:20px}
+code{font-size:12.5px;background:#F1F5F9;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="top"><h1>Sidebar v3 · admin shell</h1>
+<div class="r"><div class="ctl">Screen<div class="seg" id="c-w">
+<button data-v="1209x690">1209 × 690</button><button data-v="1280x680">1280 × 680 (short)</button><button data-v="1280x720">1280 × 720</button><button data-v="1440x900">1440 × 900</button><button data-v="900x700">900 × 700 (tablet)</button><button data-v="375x812">375 × 812 (phone)</button></div></div></div>
+<div class="r"><div class="ctl">State<div class="seg" id="c-s">
+<button data-v="default">Default (Dashboard)</button><button data-v="hover">Hover</button><button data-v="focus">Keyboard focus</button><button data-v="open">Nested open (Report cards)</button><button data-v="collapsed">Nested collapsed</button><button data-v="popover">Account menu open</button><button data-v="rail">Rail with tooltip</button><button data-v="railav">Rail, avatar tooltip</button><button data-v="flyout">Rail flyout</button><button data-v="drawer">Phone drawer</button><button data-v="surface">Card surface v2 (hover)</button><button data-v="logo">School name with logo</button></div></div></div></div>
+<div class="wrap"><div class="fr"><small id="lab"></small><div class="box" id="box"><iframe id="f" title="Sidebar v3"></iframe></div></div>
+<section class="meas" aria-live="polite"><h2>Measured in this browser</h2><div id="m">Loading…</div></section></div>
+<section class="notes">
+<h2>What this shows</h2>
+<ul>
+<li><b>Structure:</b> logo and collapse button at the top; four section labels (People, Academics, Money, School) that are always visible and never collapse; the nav list scrolls on its own; the footer (the quiet Toshi line and the account card) is pinned.</li>
+<li><b>Top level:</b> 14 rows. Children only where an item has them: Students, Classes and subjects, Exams and reports, Messages, Settings. The group holding the current page opens by itself; the others stay closed. Nothing is remembered between pages.</li>
+<li><b>Search:</b> a 36px search button in the page header, next to the Academic year choice; Ctrl K, or ⌘K on a Mac, opens the command palette. On a phone it's the search icon in the top bar.</li>
+<li><b>School name:</b> in the page header, above the title. On a phone it's at the top of the drawer, with the Academic year choice.</li>
+<li><b>Card surface v2:</b> faint dots in the top of each card that fade out, and a soft green tint from the top-right corner on hover with a slightly stronger border. Shown here on the KPI tiles, quick actions, the list header card and an empty state.</li>
+<li><b>Not attached:</b> the TinyFish DevTools measurements and the new screenshot of the current build weren't in the upload. The TinyFish numbers in the handoff are read off its two screenshots (2×).</li>
+</ul>
+</section>
+<script>
+const S={w:'1280x680',s:'default'};
+const MAP={default:'state=default&page=dashboard',hover:'state=hover&page=dashboard',focus:'state=focus&page=dashboard',open:'state=open&page=report-cards',collapsed:'state=collapsed&page=attendance',popover:'state=popover&page=dashboard',rail:'state=rail&page=dashboard',railav:'state=railav&page=dashboard',logo:'state=default&page=dashboard&logo=1',flyout:'state=flyout&page=report-cards',drawer:'state=drawer&page=report-cards',surface:'state=surface&page=dashboard'};
+const f=document.getElementById('f'),box=document.getElementById('box');
+function go(){const [w,h]=S.w.split('x').map(Number);let st=S.s;if(st==='drawer'&&w>760)S.w='375x812';if(w<=760&&!['drawer','default','surface','open'].includes(st))st='drawer';
+ const [W,H]=S.w.split('x').map(Number);const sc=Math.min(1,(innerWidth-48-24-340)/W,1);const s=Math.max(.45,Math.min(1,(innerWidth-420)/W));
+ f.width=W;f.height=H;f.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';
+ document.getElementById('lab').textContent=`${W} × ${H} · shown at ${Math.round(s*100)}%`;
+ f.src='sidebar-v3-frame.html?'+MAP[st]+(W<=760&&st!=='drawer'?'':'');
+ document.querySelectorAll('#c-w button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.w));document.querySelectorAll('#c-s button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st));
+ document.getElementById('m').textContent='Measuring…'}
+f.onload=()=>setTimeout(()=>{try{const m=f.contentWindow.__m();const yn=v=>`<span class="${v?'ok':'bad'}">${v?'yes':'no'}</span>`;
+ document.getElementById('m').innerHTML=`<dl><dt>Viewport</dt><dd>${m.vw} × ${m.vh} · ${m.mode}</dd><dt>Top-level rows</dt><dd>${m.topLevel}</dd><dt>Fully visible without scrolling</dt><dd>${m.visibleTopLevel} of ${m.topLevel}</dd><dt>Row height / pitch</dt><dd>${m.rowH}px / ${m.pitch}px</dd><dt>Child row height / pitch</dt><dd>${m.childH??'–'}${m.childH?'px / '+m.childPitch+'px':''}</dd><dt>Account card inside viewport</dt><dd>${yn(m.account.inViewport)} (top ${m.account.top}, bottom ${m.account.bottom})</dd><dt>Footer inside viewport</dt><dd>${yn(m.footerInViewport)}</dd><dt>Sidebar width</dt><dd>${m.railW}px</dd>${m.fly?`<dt>Flyout</dt><dd>${m.fly.w}px · inside viewport ${yn(m.fly.inViewport)} · on top ${yn(m.fly.visible)}</dd>`:''}${m.tip?`<dt>Tooltip inside viewport</dt><dd>${yn(m.tip.inViewport)}</dd>`:''}${m.popover?`<dt>Account menu</dt><dd>${m.popover.w}px wide, top ${m.popover.top} · inside viewport ${yn(m.popover.inViewport)}</dd>`:''}<dt>Nav list scrolls</dt><dd>${m.listScrollable?'yes, inside itself':'no, everything fits'}</dd><dt>Page scrolls</dt><dd>${m.pageScroll?'<span class="bad">yes</span>':'no'}</dd><dt>Targets under 24px</dt><dd>${m.under24?'<span class="bad">'+m.under24+'</span>':'none'}</dd></dl>`}catch(e){document.getElementById('m').textContent='Could not measure: '+e.message}},500);
+document.getElementById('c-w').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.w=b.dataset.v;if(S.w==='375x812'&&!['drawer','surface','open','default'].includes(S.s))S.s='drawer';if(S.w!=='375x812'&&S.s==='drawer')S.s='default';go()};
+document.getElementById('c-s').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.s=b.dataset.v;if(S.s==='drawer')S.w='375x812';else if(S.w==='375x812'&&!['surface','open','default'].includes(S.s))S.w='1280x680';go()};
+addEventListener('resize',go);go();
+</script>
+</body>
+</html>

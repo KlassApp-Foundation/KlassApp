@@ -19,4 +19,16 @@
     --d-card-padding: 20px;
     --d-table-cell-x: 20px;      /* ledger td/th horizontal padding */
     --d-table-cell-y: 18px;      /* .dt-comfortable td vertical padding */
+
+    /* Bottom safe zone (Toshi on phones, 2026-10-08). Nothing floating may sit inside it. */
+    --d-sticky-bar-h: 68px;      /* sticky form action bar / page footer: 44px button + 12px top + 12px bottom */
+    --d-safe-bottom: max(16px, env(safe-area-inset-bottom, 0px));   /* device inset, never less than 16px */
+    --d-bottom-zone: var(--d-safe-bottom);                          /* pages with no sticky bar */
+    --d-sheet-top-gap: max(8px, env(safe-area-inset-top, 0px));     /* gap above a full-height phone sheet */
+    --d-toshi-sheet-w: 400px;    /* side sheet at 768–1279 */
+}
+/* Pages with a sticky action bar or footer set data-sticky-bar on <body> (the layout does this
+   when it renders .fbar or a sticky footer), which reserves the bar's height too. */
+[data-sticky-bar] {
+    --d-bottom-zone: calc(var(--d-sticky-bar-h) + var(--d-safe-bottom));
 }

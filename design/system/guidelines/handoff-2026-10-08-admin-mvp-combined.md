@@ -27,7 +27,7 @@ This file replaces the separate batch-one (2026-10-07) and batch-two (2026-10-08
 - **Class teacher (decided):** set per stream, with a class-level default. Each stream on the class page shows its own teacher. A stream without one shows the class default with the label "Class default · no teacher assigned to this stream" and an **Assign a class teacher** button. The class page is now per class (Primary 5), with a Streams card. Index cards are per class too, listing each stream's teacher, with a "Class default" badge where it's inherited.
 - **Reconciled with dashboard v2** (`handoff-2026-09-30-profiles.md` Part B):
   - **Kept from v2:** the shell (canvas sidebar with no border, content in a white panel inset 12px with a 16px radius; full-bleed on mobile), the sidebar groups, the **quick actions**, the **setup chip** in the sidebar after the setup bar is hidden, and one step count from `OnboardingStepsService`.
-  - **Sidebar groups:** Dashboard; People: Students, Teachers and staff, Parents; Academics: Classes and streams, Subjects, Attendance, Exams and marks, Report cards; Money: Fees; Messages: WhatsApp; School: Settings, Help.
+  - **Sidebar groups** (superseded by sidebar v3): Dashboard; People: Students, Teachers and staff, Parents; Academics: Classes and streams, Subjects, Attendance, Exams and marks, Report cards; Money: Fees; Messages: WhatsApp; School: Settings, Help.
   - **Quick actions** (Add students, Enter marks, Generate report cards, Send report cards on WhatsApp, Fees):
     - **School with data:** one row of compact buttons above the KPI tiles.
     - **Mid-setup and brand new:** v2's tiles, with the missing prerequisite named in #78350F.
@@ -46,7 +46,9 @@ This file replaces the separate batch-one (2026-10-07) and batch-two (2026-10-08
 - **Accept:** a feature test where the admin of Demo Junior School opens Edit for each seeded teacher and gets 200. A teacher from another school still gets 404.
 
 ## Shared rules (every screen)
-- **Shell:**
+> **Sidebar superseded (2026-10-10):** the sidebar, account card and phone drawer below are replaced by **`handoff-2026-10-10-sidebar-v3.md`** (concept `concepts/admin-mvp/sidebar-v3.html`). Build the sidebar from that file. The page rules here are unchanged, except that the search box and school name now sit in the page header.
+
+- **Shell** (sidebar parts superseded, see above):
   - **Desktop:** the sidebar is 248px and **fixed in place** (sticky, full height). Opening anything never moves it.
   - **Below 760px:** the sidebar becomes a drawer opened by a 44px menu button in a 56px top bar. The account menu moves to an avatar button at the top right.
   - **Nav groups (text-only labels):**
@@ -275,7 +277,9 @@ Empty: "No children linked yet", with **Link a child**.
 
 **No income, profession or occupation fields.**
 
-## PR7 · `fix(layout): account menu popover + fixed sidebar` (item 7)
+## PR7 · `fix(layout): account menu popover + fixed sidebar` (item 7): **superseded by sidebar v3 (S1–S4)**
+> Don't build this PR. Its account card and popover rules are carried into `handoff-2026-10-10-sidebar-v3.md` S1, with Help added to the popover and Settings removed from it (Settings is in the nav).
+
 **Account card** (sidebar footer):
 - avatar 40, full name in normal case and email, both truncated with an ellipsis on the right;
 - a `chevrons-up-down` icon;

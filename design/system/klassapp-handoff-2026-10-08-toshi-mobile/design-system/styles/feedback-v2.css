@@ -1,0 +1,139 @@
+/* ════════════════════════════════════════════════════════════════════
+   feedback-v2.css — PROPOSED empty, loading, chart-state, dialog and toast layer
+   STATUS: PENDING REVIEW (2026-09-27). Extends real rules — .ds-empty-state*,
+   .ds-loading-dot, .ds-chart-shell / .ds-chart-empty — without changing them.
+   Review pages: guidelines/component-review-{states,charts,dialogs}.html
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ───────────── 1. LOADING — one pattern for every component ─────────────
+   Three tools, picked by what the user already has on screen:
+     nothing yet      → .ds-skel placeholders shaped like the content
+     content, stale   → .ds-busy 2px bar along the top; content stays put
+     an action        → .ds-btn.is-loading (controls-v2.css)
+   .ds-loading-dot (real) stays for inline "Toshi is typing"-style waits only. */
+.ds-skel, .dt-skel {
+    display: block; height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+    background-size: 200% 100%; animation: ds-shimmer 1.2s linear infinite;
+}
+.ds-skel--title { height: 16px; width: 55%; }
+.ds-skel--text { height: 10px; }
+.ds-skel--kpi { height: 28px; width: 40%; border-radius: 8px; }
+.ds-skel--pill { height: 24px; width: 64px; border-radius: 999px; }
+.ds-skel--block { height: 100%; min-height: 120px; border-radius: 12px; }
+.ds-skel-stack { display: flex; flex-direction: column; gap: 10px; }
+@keyframes ds-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.ds-busy, .dt-busy { position: relative; }
+.ds-busy::after, .dt-busy::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 3;
+    background: linear-gradient(90deg, transparent, var(--d-blue), transparent);
+    background-size: 50% 100%; background-repeat: no-repeat; animation: ds-bar 1s linear infinite;
+}
+@keyframes ds-bar { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .ds-skel, .dt-skel { animation: none; background: #EEF2F6; }
+    .ds-busy::after, .dt-busy::after { animation: none; background: var(--d-blue); opacity: .4; }
+}
+
+/* ───────────── 2. EMPTY — .ds-empty-state (real) + .v2 ─────────────
+   Real rule: icon is a 2.5rem emoji/glyph at opacity .5; desc is --d-muted (2.57:1, fail).
+   v2: an Icon.jsx stroke glyph in a 48px tinted tile, AA desc colour, an actions row,
+   and three sizes so the same pattern fits a page, a card and a chart. */
+.ds-empty-state.v2 { padding: 48px 24px; gap: 0; }
+.ds-empty-state.v2 .ds-empty-state-desc { color: var(--d-text-secondary); max-width: 360px; line-height: 1.5; text-wrap: pretty; }
+.ds-empty-icon {
+    width: 48px; height: 48px; border-radius: 12px; margin-bottom: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--d-disabled-bg); color: var(--d-text-secondary);
+}
+.ds-empty-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-empty-icon--blue { background: #EFF6FF; color: var(--d-blue); }
+.ds-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+.ds-empty-state.v2.is-compact { padding: 28px 16px; }
+.ds-empty-state.v2.is-compact .ds-empty-icon { width: 40px; height: 40px; margin-bottom: 10px; }
+.ds-empty-state.v2.is-compact .ds-empty-state-title { font-size: 0.9rem; }
+.ds-empty-state.v2.is-inline { flex-direction: row; text-align: left; align-items: center; padding: 14px 16px; gap: 14px; }
+.ds-empty-state.v2.is-inline .ds-empty-icon { margin: 0; flex-shrink: 0; width: 40px; height: 40px; }
+.ds-empty-state.v2.is-inline .ds-empty-actions { margin: 0 0 0 auto; }
+
+/* ───────────── 3. CHART STATES — around the real .ds-chart-shell ─────────────
+   <x-chart> already swaps the canvas for .ds-chart-empty when every dataset is 0/null.
+   v2 adds a loading skeleton sized to the shell, and an accessible series palette. */
+.ds-chart-card { background: var(--d-white); border-radius: 14px; box-shadow: var(--d-shadow-sm); padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ds-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ds-chart-title { font-family: var(--d-font-display); font-size: 1rem; font-weight: 600; margin: 0; color: var(--d-text); }
+.ds-chart-sub { font-size: 0.78rem; color: var(--d-text-secondary); margin: 2px 0 0; }
+.ds-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.78rem; color: var(--d-text-secondary); list-style: none; margin: 0; padding: 0; }
+.ds-chart-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ds-chart-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.ds-chart-skel { display: flex; align-items: flex-end; gap: 10px; height: 100%; padding: 8px 4px 0; }
+.ds-chart-skel .ds-skel { flex: 1; border-radius: 6px 6px 0 0; }
+.ds-chart-skel--ring { align-items: center; justify-content: center; }
+.ds-chart-skel--ring .ds-skel { flex: none; width: 160px; height: 160px; border-radius: 999px; -webkit-mask: radial-gradient(circle, transparent 52px, #000 53px); mask: radial-gradient(circle, transparent 52px, #000 53px); }
+
+/* ───────────── 4. DIALOG — replaces swal v1, SweetAlert2 and ad-hoc Alpine modals ─────────────
+   Native <dialog> (focus trap, Esc, ::backdrop for free). Actions are real .ds-btn. */
+.ds-dialog { border: 0; padding: 0; border-radius: 16px; background: var(--d-white); color: var(--d-text); width: min(440px, calc(100vw - 32px)); box-shadow: var(--d-shadow-float); font-family: var(--d-font-body); }
+.ds-dialog--wide { width: min(560px, calc(100vw - 32px)); }
+.ds-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+.ds-dialog[open] { animation: ds-dialog-in 0.2s ease; }
+@keyframes ds-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ds-dialog[open] { animation: none; } }
+.ds-dialog-body { padding: 24px 24px 8px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
+.ds-dialog-body--plain { grid-template-columns: 1fr; }
+.ds-dialog-icon { grid-row: span 2; width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.ds-dialog-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-dialog-icon--danger { background: #FEF2F2; color: var(--d-red); }
+.ds-dialog-icon--warning { background: #FFFBEB; color: var(--d-warning); }
+.ds-dialog-icon--info { background: #EFF6FF; color: var(--d-blue); }
+.ds-dialog-title { font-family: var(--d-font-display); font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin: 6px 0 0; }
+.ds-dialog-text { font-size: 0.85rem; line-height: 1.55; color: var(--d-text-secondary); margin: 0; text-wrap: pretty; }
+.ds-dialog-text b { color: var(--d-text); font-weight: 600; }
+.ds-dialog-form { padding: 8px 24px 4px; }
+.ds-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 16px 24px 20px; }
+.ds-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 16px 4px 24px; }
+.ds-dialog-close { width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--d-text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.ds-dialog-close:hover { background: var(--d-disabled-bg); color: var(--d-text); }
+.ds-dialog-close:focus-visible { outline: 2px solid var(--d-blue); outline-offset: 2px; }
+.ds-dialog-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (max-width: 640px) {
+    .ds-dialog, .ds-dialog--wide { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+    .ds-dialog-actions { flex-direction: column-reverse; }
+    .ds-dialog-actions .ds-btn { width: 100%; }
+}
+
+/* ───────────── 5. TOAST — replaces toastr + jquery.toastmessage + swal success popups ───────────── */
+.ds-toasts { position: fixed; right: 24px; bottom: 24px; z-index: 10001; display: flex; flex-direction: column; gap: 8px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.ds-toast {
+    pointer-events: auto; display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 10px;
+    padding: 12px 4px 12px 14px; border-radius: 12px; background: var(--d-dark); color: #F8FAFC;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18); font-family: var(--d-font-body); font-size: 0.85rem; line-height: 1.45;
+    animation: ds-toast-in 0.2s ease;
+}
+.ds-toast-icon { width: 20px; height: 20px; margin-top: 1px; }
+.ds-toast-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-toast--success .ds-toast-icon { color: #4ADE80; }
+.ds-toast--error .ds-toast-icon { color: #F87171; }
+.ds-toast--warning .ds-toast-icon { color: #FBBF24; }
+.ds-toast--info .ds-toast-icon { color: #60A5FA; }
+.ds-toast-title { font-weight: 600; margin: 0; }
+.ds-toast-text { margin: 2px 0 0; color: var(--d-dark-fg); }
+.ds-toast-action { display: inline-flex; align-items: center; background: none; border: 0; padding: 0; margin-top: 2px; color: #93C5FD; font: 600 0.85rem var(--d-font-body); cursor: pointer; min-height: var(--d-touch-target-min); }
+.ds-toast-action:hover { text-decoration: underline; }
+.ds-toast-close { width: 44px; height: 44px; border: 0; background: transparent; color: var(--d-muted); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: -10px 0 -10px 0; }
+.ds-toast-close:hover { color: #FFFFFF; background: var(--d-dark-surface); }
+.ds-toast-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ds-toast.is-leaving { opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .2s ease; }
+@keyframes ds-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ds-toast { animation: none; } .ds-toast.is-leaving { transition: none; } }
+@media (max-width: 640px) { .ds-toasts { left: 16px; right: 16px; bottom: 16px; width: auto; } }
+
+/* Inline alert — for messages that must stay on the page (never a toast) */
+.ds-inline-alert { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; border: 1px solid; }
+.ds-inline-alert svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-inline-alert b { font-weight: 600; }
+.ds-inline-alert--warning { background: #FFFBEB; border-color: #FDE68A; color: var(--d-warning-dk); }
+.ds-inline-alert--error { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.ds-inline-alert--success { background: #F0FDF4; border-color: #BBF7D0; color: var(--d-success-dk); }
+.ds-inline-alert--info { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
