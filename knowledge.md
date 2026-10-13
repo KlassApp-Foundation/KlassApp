@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 13, 2026 — **manual journeys fail unless the school is actually set up**
+
+- The 14-run primary manual journey at 1280 printed PASS while it was still on Academic year (terms, WhatsApp, plan, and the stream missing). The spec only required `/admin/` in the URL.
+- Hand check on a throwaway school: the Continue button is the element under its own centre at 1280×800, 1440×900, and 375 in Chrome, and at 1280×800 in Brave and WebKit. Nothing covers it. A click at 1280×800 and at 1280×900 moves to Structure. Staging answered those Livewire updates in under a second.
+- [#1075](https://github.com/KlassApp-Foundation/KlassApp/pull/1075) on `fix/manual-journey-outcomes`. Manual, Toshi, and MVP fail the run when terms, WhatsApp, the plan, or the school's class names are missing. Manual and MVP also require the stream. Primary manual was rerun on staging after that change: 1280 and 375 both finished the wizard, including Academic year, with 0 failed outcome checks. Signup field battery was not part of that rerun. [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071), [#890](https://github.com/KlassApp-Foundation/KlassApp/pull/890), and [#682](https://github.com/KlassApp-Foundation/KlassApp/pull/682) were not touched.
+
 ## Current Status: October 13, 2026 — **Demo Junior admin login is its own account**
 
 - Branch `tooling/demo-admin-login`. `demo:set-admin-login` changes only the active school admin on Demo Junior School. It refuses a non-demo school and any other school, and it never renames a school. The password is an argument or a hidden prompt and is not printed. The durable address is `demojunior@klassapp.xyz`.
