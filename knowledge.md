@@ -676,20 +676,26 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 13, 2026 — **people-list select mode is on `feat/people-list-2c`**
+## Current Status: October 13, 2026 — **manual journeys fail unless the school is actually set up**
+
+- The 14-run primary manual journey at 1280 printed PASS while it was still on Academic year (terms, WhatsApp, plan, and the stream missing). The spec only required `/admin/` in the URL.
+- Hand check on a throwaway school: the Continue button is the element under its own centre at 1280×800, 1440×900, and 375 in Chrome, and at 1280×800 in Brave and WebKit. Nothing covers it. A click at 1280×800 and at 1280×900 moves to Structure. Staging answered those Livewire updates in under a second.
+- [#1075](https://github.com/KlassApp-Foundation/KlassApp/pull/1075) on `fix/manual-journey-outcomes`. Manual, Toshi, and MVP fail the run when terms, WhatsApp, the plan, or the school's class names are missing. Manual and MVP also require the stream. Primary manual was rerun on staging after that change: 1280 and 375 both finished the wizard, including Academic year, with 0 failed outcome checks. Signup field battery was not part of that rerun. [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071), [#890](https://github.com/KlassApp-Foundation/KlassApp/pull/890), and [#682](https://github.com/KlassApp-Foundation/KlassApp/pull/682) were not touched.
+
+## Current Status: October 13, 2026 — **people-list select mode is on `main`**
 
 - [#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057) MERGED `025800320a46a42ce6a1e8beb99000424b9b296d` (API `merged: true`, 2026-10-13T12:13:54Z). Staging deploy `depl-a2f8c660-31ea-4b3f-9fce-4ee96284562d` succeeded. Pairs 27/27.
 - [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) MERGED `2d342d2d7a4a825de1d7b7877427c591b44f5a50` (API `merged: true`, 2026-10-13T12:46:23Z). Staging deploy `depl-a2f8d1fe-1666-4684-93ac-0abca2f2d270` succeeded. Whole-row pointer clicks verified. Pairs 27/27.
 - [#1060](https://github.com/KlassApp-Foundation/KlassApp/pull/1060) MERGED `7f64096d9f2f3ca4867b667bc18ea25c3286f171` (API `merged: true`, 2026-10-13T13:19:58Z). Staging deploy `depl-a2f8de00-daf7-41d7-b8c3-28ac21eb235e` succeeded. Student rows open `/admin/students/{id}`. Pairs 36/36.
 - [#1065](https://github.com/KlassApp-Foundation/KlassApp/pull/1065) MERGED `1369fbdaa53acc7addaa4959c09491d9f95c4bbc` (API `merged: true`, 2026-10-13T13:30:50Z). Staging deploy `depl-a2f8e1e3-a67a-491e-bb32-9c9e3dfe6be5` succeeded. Dashboard KPI tile opens the students list. Pairs 45/45.
-- Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states are in [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) on `feat/people-list-2c`. A row click in Select mode toggles the row. Outside Select mode the row opens the profile. Not merged. Not deployed.
+- [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) MERGED `95888896e95dd64944a2d4f068bdb929cd834c13` (API `merged: true`, 2026-10-13T21:22:31Z). Staging deploy `depl-a2f98a94-8504-41ad-8479-b840531f7bb4` succeeded. Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states. A row click in Select mode toggles the row. Outside Select mode the row opens the profile.
 
 ## Session: 2026-10-13 — visual merge chain and people-list select mode
 
 - **Work done**: Admin-merged #1057, #1064, #1060, and #1065 in that order after green checks and an idle staging deploy. Verified each deploy on staging. Built the remaining people-list spec on `feat/people-list-2c`.
 - **Files modified**: `resources/views/components/people-list.blade.php`, `public/css/people-list.css`, `public/js/people-list.js`, `app/Services/People/PeopleListQuery.php`, `tests/Feature/Admin/PeopleListTest.php`, `e2e/people-list-row-click.cjs`.
 - **Key decisions**: Bulk bar shows Export only. No existing send path accepts the selected ids, so Message stays off the bar. Checkboxes stay hidden until Select. In Select mode a row click toggles the checkbox and does not navigate. Avatar size is a people-list wrapper (28px table, 32px phone card) so the shared profile photo component is unchanged.
-- **Status**: Chain merged and staging-verified. Select-mode follow-up is [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) on `feat/people-list-2c`. Not merged. Not deployed.
+- **Status**: Chain merged and staging-verified. [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) MERGED `95888896e95dd64944a2d4f068bdb929cd834c13`.
 - **Edge cases flagged**: Profile addresses for teachers and parents are still name-based. Student rows use `/admin/students/{id}`.
 
 ## Current Status: October 13, 2026 — **Demo Junior admin login is its own account**
