@@ -25,6 +25,12 @@ npm run e2e:onboarding -- --ui
 # Full run: all 6 journeys × both widths (1280 desktop + 375 mobile):
 npm run e2e:onboarding
 
+# Final gate: those six plus the MVP journey, both widths (14 runs), from a
+# worktree pinned to a commit. Purges this run's throwaway schools afterwards
+# (dry run first). --dry-run prints the 14 runs and does not open a browser.
+node e2e/onboarding/final-gate.mjs --pin "$(git rev-parse --short=12 HEAD)" --dry-run
+node e2e/onboarding/final-gate.mjs --pin "$(git rev-parse --short=12 HEAD)"
+
 # One journey, one width:
 npm run e2e:onboarding -- --journey=oalevel-toshi --project=desktop-1280
 
