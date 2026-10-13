@@ -13676,4 +13676,4 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 
 **Review:** port 8003, Demo Junior. A pointer click in the middle of a desktop row opened Betty Ochieng. A pointer click past the row menu opened Aaron Mbabazi. The same two clicks on a 375px card opened Aisha Nansubuga and Aaron Mbabazi. The checkbox checked without leaving the list. The row menu opened in place. Enter on the focused name opened Aaron Mbabazi. Profile route stays `/admin/student/show/{name}`.
 
-**Status:** PR2b open against `feat/people-list`. Not merged. Not deployed.
+**Status:** [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) open against `feat/people-list` (`c16c51c5`). Not merged. Not deployed.
