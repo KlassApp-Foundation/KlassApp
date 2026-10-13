@@ -346,6 +346,11 @@ is a product decision, so nothing was invented here.
 - **People lists:** Select mode, 28px circle avatars in lists, 48px rows, sticky header.
 - **Card surface v2:** KPI tiles and quick actions only.
 
+**Header, profile and dashboard v2.1 (2026-10-13).** Concept `concepts/v21/index.html`; spec `guidelines/handoff-2026-10-13-header-profile-dashboard.md`.
+- **Header, Plan B:** no top bar at 761px and up. The KlassApp logo sits at the top of the sidebar. The dashboard heading is the school name (28px/700, logo first); other pages get a quiet 15px/600 school line above a 26px/600 title. Plan A, keeping the top bar, is the fallback.
+- **Dashboard v2.1:** KPI tiles are whole-tile links with one secondary action each, and the quick actions are gone.
+- **Shared person profile:** one profile layout for every role.
+
 ---
 
 ## Index
