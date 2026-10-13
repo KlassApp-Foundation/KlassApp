@@ -51,7 +51,10 @@ class DashboardV21TilesTest extends TestCase
         $this->assertStringContainsString('Record payment', $html);
         $this->assertStringContainsString('Send on WhatsApp', $html);
         $this->assertStringContainsString('Enter marks', $html);
-        $this->assertStringContainsString('min-height:280px', file_get_contents(public_path('css/dashboard-v2.css')));
+        $css = file_get_contents(public_path('css/dashboard-v2.css'));
+        $this->assertStringContainsString('min-height:280px', $css);
+        $this->assertStringContainsString('max-height:150px', $css);
+        $this->assertStringNotContainsString('Tiles ·', $html);
     }
 
     public function test_attendance_tile_uses_last_week_when_this_week_is_empty(): void

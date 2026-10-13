@@ -67,7 +67,7 @@
         <div class="dv2-hread" data-testid="dashboard-v2-head">
             <div>
                 <h1 class="dv2-h1" data-testid="dashboard-v2-greeting">{{ $greeting['phrase'] ?? 'Welcome' }}{{ !empty($greeting['name']) ? ', '.$greeting['name'] : '' }}</h1>
-                <p class="dv2-hsub" data-testid="dashboard-v2-title">{{ $schoolLabel }}@if(!empty($v2['termLabel'])) · {{ $v2['termLabel'] }}@endif</p>
+                <p class="dv2-hsub" data-testid="dashboard-v2-title">{{ $v2['termLabel'] ?? '' }}</p>
             </div>
             <div class="dv2-year" data-testid="dashboard-v2-year">
                 @if($years->isNotEmpty())
