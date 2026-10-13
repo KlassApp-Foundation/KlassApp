@@ -108,11 +108,14 @@ class ProfilePhotoComponentTest extends TestCase
         $this->assertStringNotContainsString('rgba(34,197,94,0.3)', $dropdown);
         $this->assertStringNotContainsString('AvatarPath', $dropdown);
 
-        foreach (['admin/member/show', 'admin/teacher/show', 'admin/staff/show', 'teacher/student/show'] as $view) {
+        foreach (['admin/member/show', 'admin/staff/show', 'teacher/student/show'] as $view) {
             $src = file_get_contents(resource_path('views/'.$view.'.blade.php'));
             $this->assertStringContainsString('<x-profile-photo :user="$user" size="xl"', $src, $view);
             $this->assertStringNotContainsString('AvatarPath', $src, $view);
         }
+        $teacherShow = file_get_contents(resource_path('views/admin/teacher/show.blade.php'));
+        $this->assertStringContainsString('<x-person-profile', $teacherShow);
+        $this->assertStringNotContainsString('AvatarPath', $teacherShow);
         $this->assertStringContainsString('<x-profile-photo :user="$feedback->parent" size="md" />', file_get_contents(resource_path('views/admin/feedbacks/view.blade.php')));
 
         // Print templates keep fixed px (PDF renderer), radius only -> 12px.
