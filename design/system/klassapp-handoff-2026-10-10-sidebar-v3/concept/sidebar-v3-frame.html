@@ -88,9 +88,9 @@ i[data-lucide],svg.lucide{width:18px;height:18px;flex:none;display:inline-block;
 .ph .sch{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
 .ph .sch .slogo{width:28px;height:28px;border-radius:6px;object-fit:contain;flex:none;background:#fff;border:1px solid #E2E8F0}
 .ph .sch .slogo.ph-slot{display:inline-flex;align-items:center;justify-content:center;border-style:dashed;border-color:#94A3B8;font-size:9px;font-weight:700;color:#475569;letter-spacing:.04em}
-.ph .sch b{font-size:15px;font-weight:600;line-height:1.3;color:#0F172A}
+.ph .sch b{font:700 17px/1.25 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.01em;color:#0F172A}
 .ph .sch span{font-size:13px;font-weight:500;color:#475569}
-.ph h1{margin:2px 0 0;font:600 24px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;color:#0F172A}
+.ph h1{margin:8px 0 0;font:600 26px/1.2 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.02em;color:#0F172A}
 .tools{display:flex;gap:8px;align-items:center}
 .search{height:36px;display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;width:260px;border:1px solid #CBD5E1;border-radius:10px;background:#fff;color:#64748B;font-size:13.5px;cursor:pointer}
 .search kbd{margin-left:auto;font:600 11.5px var(--d-font-body,'DM Sans',sans-serif);color:#475569;border:1px solid #CBD5E1;border-bottom-width:2px;border-radius:5px;padding:0 5px;line-height:18px}
@@ -120,7 +120,8 @@ i[data-lucide],svg.lucide{width:18px;height:18px;flex:none;display:inline-block;
  .shell{display:block}
  .mainw{padding:0;height:calc(100vh - 56px)}.panel{border:0;border-radius:0}
  .topbar{display:flex;align-items:center;gap:4px;height:56px;padding:0 6px;background:#fff;border-bottom:1px solid #E2E8F0}
- .topbar .t{flex:1;min-width:0;font:600 16px var(--d-font-display,'Sora',sans-serif);color:#0F172A;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding-left:4px}
+ .topbar .t{flex:1;min-width:0;font:700 16px/1.25 var(--d-font-display,'Sora',sans-serif);letter-spacing:-.01em;color:#0F172A;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding-left:4px}
+ .topbar .tav .av{width:32px;height:32px;border-radius:50%;font-size:13px}
  .topbar .ib{width:44px;height:44px}
  .ph{padding:16px 16px 0}.ph .tools{display:none}.body{padding:16px}
  .kpis,.qa{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -178,7 +179,7 @@ const ACCT_LABEL=()=>`${ME.fn} ${ME.ln} · ${ME.role}`;
 function sidebar(){return `<aside class="sb" id="sb" aria-label="Main menu" ${isPhone()&&!ST.drawer?'inert':''}>
  <div class="sb-top"><img class="logo" src="../design-system/assets/brand/klassapp-horizontal-light.svg" alt="KlassApp"><img class="k" src="../design-system/assets/brand/klassapp-icon.svg" alt="KlassApp">
   ${isPhone()?`<button class="ib" type="button" data-act="drawer" aria-label="Close menu">${ic('x')}</button>`:`<button class="ib" type="button" data-act="rail" aria-label="${ST.rail?'Expand sidebar':'Collapse sidebar'}" aria-pressed="${ST.rail}">${ic(ST.rail?'panel-left-open':'panel-left-close')}</button>`}</div>
- <div class="sb-sch"><b>Demo Junior School</b><label for="ay">Academic year</label><select id="ay"><option selected>2026</option><option>2025</option></select></div>
+ <div class="sb-sch"><label for="ay">Academic year</label><select id="ay"><option selected>2026</option><option>2025</option></select></div>
  <nav class="sb-list" id="list" aria-label="Main">${nav()}</nav>
  <div class="sb-foot" id="foot"><p class="soon" style="margin:0"><img src="../design-system/assets/brand/klassapp-icon.svg" alt=""><span>Toshi, your school's AI assistant, is coming soon</span></p>
   <div class="acct">${ST.pop?`<div class="pop" id="pop" role="menu" aria-label="Account"><div class="who"><span class="av" aria-hidden="true">MM</span><span style="min-width:0"><b>${ME.fn} ${ME.ln}</b><small>${ME.email}</small></span></div>
@@ -188,14 +189,14 @@ function sidebar(){return `<aside class="sb" id="sb" aria-label="Main menu" ${is
 function page(){const t=TITLE(ST.page),sv=ST.state==='surface';
  const k=(i,l,v,s,h)=>`<div class="kpi ds-surface${h?' is-hover':''}"><span class="l">${ic(i)}${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
  const q=(i,l,s,h)=>`<a class="qt ds-surface${h?' is-hover':''}" href="#"><span class="ic">${ic(i)}</span><span><b>${l}</b><span>${s}</span></span></a>`;
- return `<header class="ph"><div><div class="sch">${ST.logo?'<span class="slogo ph-slot" role="img" aria-label="School logo">LOGO</span>':''}<b>Demo Junior School</b><span>Term 3, 2026</span></div><h1>${t==='Dashboard'?'Good evening, Mucunguzi':t}</h1></div>
+ return `<header class="ph"><div><div class="sch">${ST.logo?'<span class="slogo ph-slot" aria-hidden="true">LOGO</span>':''}<b>Demo Junior School</b><span>Term 3, 2026</span></div><h1>${t==='Dashboard'?'Good evening, Mucunguzi':t}</h1></div>
   <div class="tools"><button class="search" type="button" aria-keyshortcuts="Control+K Meta+K">${ic('search')}<span>Search students, classes, pages</span><kbd>${/Mac/.test(navigator.platform)?'⌘K':'Ctrl K'}</kbd></button><label class="yr">Academic year <select aria-label="Academic year"><option selected>2026</option><option>2025</option></select></label></div></header>
   <div class="body"><div class="kpis">${k('graduation-cap','Students','248','+12 this term',sv)}${k('calendar-check','Attendance this week','93.4%','▲ 1.2 pts on last week')}${k('wallet','Fees collected','62%','UGX 46,500,000 of 75,000,000')}${k('file-text','Report cards ready','140','of 248 · Mid-term')}</div>
   <div class="qa">${q('user-plus','Add students','One by one or from a spreadsheet')}${q('clipboard-list','Enter marks','Mid-term exams are open',sv)}${q('file-text','Generate report cards','140 ready')}${q('message-circle','Send on WhatsApp','To parents who opted in')}</div>
   <div class="lh"><b>Students</b><span class="pill on">All 248</span><span class="pill">No class 3</span><span class="pill">No parent 5</span></div>
   <div class="empty"><b>No attendance taken yet today</b><p>Class teachers take the register each morning. Rows appear here as registers come in.</p><a class="btn" href="#">${ic('bell')}Remind class teachers</a></div></div>`}
 function render(){document.body.className=[ST.rail&&!isPhone()?'rail':'',ST.drawer?'drawer':''].join(' ');
- document.getElementById('app').innerHTML=`<div class="shell">${sidebar()}<div class="mainw">${isPhone()?`<header class="topbar"><button class="ib" type="button" data-act="drawer" aria-label="Open menu" aria-expanded="${ST.drawer}" aria-controls="sb">${ic('menu')}</button><span class="t">${TITLE(ST.page)}</span><button class="ib" type="button" aria-label="Search">${ic('search')}</button></header>`:''}<main class="panel" ${isPhone()&&ST.drawer?'inert':''}>${page()}</main></div></div>`;
+ document.getElementById('app').innerHTML=`<div class="shell">${sidebar()}<div class="mainw">${isPhone()?`<header class="topbar"><button class="ib" type="button" data-act="drawer" aria-label="Open menu" aria-expanded="${ST.drawer}" aria-controls="sb">${ic('menu')}</button><span class="t" title="Demo Junior School">Demo Junior School</span><button class="ib" type="button" aria-label="Search" aria-keyshortcuts="Control+K Meta+K">${ic('search')}</button><button class="ib tav" type="button" data-act="drawer" aria-label="${ACCT_LABEL()}"><span class="av" aria-hidden="true">MM</span></button></header>`:''}<main class="panel" ${isPhone()&&ST.drawer?'inert':''}>${page()}</main></div></div>`;
  overlays();
  window.lucide&&lucide.createIcons({attrs:{'stroke-width':2}});
  const cur=document.querySelector('.sb-list [aria-current="page"]'),L=document.getElementById('list');if(cur&&L){const r=cur.getBoundingClientRect(),lr=L.getBoundingClientRect();if(r.bottom>lr.bottom)L.scrollTop+=r.bottom-lr.bottom+40}}

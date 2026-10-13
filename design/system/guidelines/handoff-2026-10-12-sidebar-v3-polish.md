@@ -16,30 +16,38 @@
 ## The list
 | # | Page and state | What differs from the spec | Exact fix | Est. | Pri |
 |---|---|---|---|---|---|
-| A1 | Every admin page, top bar | **School name** at 20px/600 competes with the page title (26px h1) and has no logo | See "School name" below: 15px/600 #0F172A, 28px logo first if uploaded, term after it in 13px/500 #475569. **The top bar stays until after 17 October**, so this lands in the top bar. | 15 min | A |
+| A1 | Every admin page, top bar | **School name** at 20px/600, no logo, no term | See "School name" below: **17px/700** #0F172A, 28px logo first if uploaded, term in grey after it. Checked against the 26px/600 page title. | 20 min | A |
 | A2 | Sidebar, expanded, 1280 | At 232px, "Classes and subjects" and "Unmatched payments" ellipsize | Width 232 → **248px**, plus **a row shows a chevron or a count chip, never both**. Numbers in "Label truncation" below. | 20 min | A |
 | A3 | Sidebar, Academics and School | Calendar sits under Messages | **Calendar** becomes the 4th child of **Classes and subjects**, after Timetable. **Messages** becomes a plain **WhatsApp** row, with no chevron and no children. Still 14 top-level rows under 4 labels. | 10 min | A |
 | A4 | Sidebar, Settings | Children point at placeholder URLs | **Academic years and terms** and **Data exports** link to the **existing Settings pages**. If terms have no page of their own, the row is "Academic years" and terms stay inside it. | 10 min | A |
 | A5 | Folded rail, 761–1279 | Spec addition | **Every icon shows its name** in a tooltip on hover **and** keyboard focus after **300ms**. Parents keep their flyout. **New:** the avatar shows "{name} · {role}" (e.g. "Mucunguzi Moses · School admin") in the same tooltip, and the avatar button's `aria-label` is the same text. Esc hides any tooltip. | 30 min | A |
 | A6 | Students, Teachers and staff, Parents lists | Checkbox column always shown; large square initials tile | See "People lists" below: **Select mode** reveals the checkboxes and bulk bar; **28px circle** avatar; **48px** rows; **sticky header**. | 60 min | A |
 | A7 | Lists and empty states | Card surface v2 on more than the dashboard | **Dotted print and hover tint only on the dashboard KPI tiles and quick actions for now.** Remove `ds-surface` from the people-list header card and every empty state. | 10 min | A |
-| A8 | Screens I couldn't see | Unknown (pack missing) | Check each against the spec values in "A8 checklist" below and fix any difference. | 30 min | A |
-| B1 | Top bar | Kept for the demo | After 17 Oct: remove the top bar. The school line moves above the page title (same 15px/600 treatment). **Search** (Cmd K) moves to the sidebar header as a 34px row "Search" with a ⌘K/Ctrl K hint. | 45 min | B |
+| A8 | Staging screenshots (`261fad07`) | 20 real differences | See "A8 · Differences seen on staging" below: 11 are A, 7 are B, plus 2 to check. | about 2 h 20 min (A items: about 1 h 45 min) | A |
+| B1 | Top bar | Kept for the demo | After 17 Oct: remove the top bar. The school line moves above the page title (same 17px/700 treatment). **Search** (Cmd K) moves to the sidebar header as a 34px row "Search" with a ⌘K/Ctrl K hint. | 45 min | B |
 | B2 | Sidebar | Truncation fallback | Any label that still ellipsizes gets a `title` with the full label, and the rail tooltip shows it in full. **No wrapping:** wrapping would break the 34px row and the 12-row minimum. | 10 min | B |
 | B3 | People lists, mobile | 28px circle on cards | Check on a real phone that the 56px card rows still read well with the 28px circle. If not, use a **32px** circle on cards only. | 10 min | B |
 
 **Total for A:** about 3 hours (3h 05m by the estimates above).
 
-## A1 · School name: final treatment
-- **Until 17 October** it stays in the top bar. That's your preference, and it means no layout change before the demo.
-- **Line:** `[logo 28 × 28] Demo Junior School · Term 3, 2026`.
-  - **Logo:** only when the school has uploaded one. 28 × 28px, `object-fit:contain`, 6px radius, 1px #E2E8F0 border, `alt` = the school name. **No logo, no placeholder.**
-  - **Name:** **15px, weight 600**, #0F172A, line-height 1.3.
-  - **Term:** 13px/500, #475569 (7.58:1 on white), 10px after the name.
-- **Why 15, not 20:** the school feels present through the logo and the weight, not the size. At 20px it rivals the 26px page title, the line people actually need to read.
-- **The page title stays the h1.** The school line isn't a heading.
-- **Narrow widths:** the line wraps and never truncates the name.
-- **After 17 October (B1):** the same line moves above the page title when the top bar goes.
+## A1 · School name: final treatment (revised 2026-10-12)
+- **Until 17 October** it stays in the top bar, so there's no layout change before the demo.
+- **Line:** `[logo 28 × 28] Demo Junior School  Term 3, 2026`, vertically centred in the 56px bar.
+  - **Logo:** only when the school has uploaded one. 28 × 28px, `object-fit:contain`, 6px radius, 1px #E2E8F0 border, 10px before the name, `alt=""` (the name next to it already says it). **No logo, no placeholder.**
+  - **Name:** **17px, weight 700**, Sora, #0F172A, line-height 1.25, letter-spacing −0.01em. Contrast 17.85:1 on white.
+  - **Term:** 13px/500, DM Sans, #475569, 10px after the name, on the same baseline. Contrast 7.58:1 on white.
+- **Against the 26px page title:**
+  - **Size and weight:** the title is 26px/600 Sora, about 1.5× the name's size. The name is now the second-largest text on the page, but still clearly below the title.
+  - **Height:** at 17px the name's cap height is about 12px, against about 19px for the title.
+  - **Bolder but smaller:** the name is bolder (700 against 600) but much smaller, so the eye still lands on the title first. The logo makes the school line feel like an identity, not a second heading.
+  - **What would break it:** going above 18px, or matching the title's size at a heavier weight, would make the two compete. **Don't go above 18px.**
+- **The page title stays the only h1.** The school line is a `<p>` (or a `<div>` with the name in a `<span>`), not a heading.
+- **Phones (below 760), revised 2026-10-13: the school name is never hidden.** On a phone it's the only place the school's identity shows.
+  - **Phone top bar, 56px, exactly these four:** **menu** (44px) · **school name** (16px, weight 700, Sora, #0F172A, one line, ellipsis, `title` with the full name, no logo, no term) · **Search** (44px icon, `aria-keyshortcuts`) · **avatar** (44px button, 32px circle initials, `aria-label` "{name} · {role}", opens the drawer at the account card).
+  - **Page title:** stays in the page body as the `h1`, not in the bar.
+  - **Drawer:** no second school name (the bar already shows it); the drawer keeps the Academic year select.
+  - **Toshi:** when the Toshi mobile launcher (T1 in the Toshi handoff) ships, it goes between Search and the avatar as a **44px icon-only K button** (`aria-label` "Open Toshi"). That leaves the name about 160px at 375. **The Toshi handoff's labelled "Toshi" pill doesn't fit with this bar and needs updating before T1 is built.** Between 761 and 1279 the line wraps the term under the name and never truncates the name.
+- **After 17 October (B1):** the same line, at the same 17px/700, moves above the page title when the top bar goes. The 8px gap to the title keeps the two reading as a pair.
 
 ## A2 · Label truncation, with the numbers
 Row space at **248px**:
@@ -110,8 +118,33 @@ Row space at **248px**:
   - the green corner tint and stronger border on hover, over 150ms, off under reduced motion.
 - **Not on:** the people-list header card and empty states, which go back to plain white cards with a 1px #E2E8F0 border. Revisit after the demo.
 
-## A8 checklist (screens in the missing pack)
-| Screen | Spec value to check |
+## A8 · Differences seen on staging (Chrome, `main @ 261fad07`, 2026-10-12)
+**Decided 2026-10-13:** the B items stay after the demo; A8.14 is superseded by the header handoff; A8.20 is dropped; A8.1 as revised in the table.
+**Received:** three screenshots: the expanded sidebar with the account menu open, the folded rail with the Students flyout, and the expanded sidebar at rest. All are at a 1210px-wide window.
+- **Not received:** the phone drawer, the KPI hover state and the expanded sidebar with Students open. Those stay on the checklist further down.
+- **Sizes are estimated from the images:** the scale is 1.67 image pixels per CSS pixel, taken from the 232px sidebar. Treat them as about ±2px, and confirm with `getBoundingClientRect` before fixing.
+
+| # | Page and state | What differs from the spec | Exact fix | Est. | Pri |
+|---|---|---|---|---|---|
+| A8.1 | Every page, right edge | **The orange Toshi edge tab is still showing** with Toshi in preview. | **Decided 2026-10-13:** no edge tab in **preview** mode at any width; hidden **below 1280 in every mode**; it stays only at 1280+ in **onboarding** and **assistant** modes (`toshi-ui.css`, `dashboard-refresh.css`). | 15 min | **A** |
+| A8.2 | Sidebar footer, account card | **Name in capitals** ("DANIEL M…"), and a **grey silhouette** avatar. | Name from `userprofiles.firstname` + `lastname`, in normal case. **No `text-transform`;** if the stored value is in capitals, apply `Str::title()` at display time. Avatar: the initials tile (`<x-profile-photo>` fallback, colour from `id % 4`). | 15 min | **A** |
+| A8.3 | Account menu, open | **Same capitals and silhouette** in the menu's identity row ("DANIEL MUKASA"). The menu is about **253px wide** and hangs **about 70px past the sidebar** over the chart. | Same name and avatar fix as A8.2. `width:100%` of the account card's container (224px at a 232px sidebar), `left:0; right:0`, never wider than the sidebar. | 10 min | **A** |
+| A8.4 | Account card, menu open | A **2px blue ring stays on the card** while the menu is open, even after a mouse click. | Use the ring for `:focus-visible` only. While the menu is open, show `aria-expanded="true"` as a #F1F5F9 background, not a ring. | 5 min | B |
+| A8.5 | Account menu items | **Help** is in the account menu. The spec has it as a row in the sidebar's School group. | **Keep Help in the account menu**, because the build has already removed it from the sidebar, which saves a row at 680px. Only update the spec. | 0 | (spec) |
+| A8.6 | Sidebar footer | A **bell with sound waves** (`bell-ring`) left of the account card, with no count. | Use Lucide `bell`. Add a 16px count chip (#B91C1C, white 11px/700) only when there are unread items, and `aria-label="Notifications, {n} unread"`. The button is 44px. | 10 min | B |
+| A8.7 | Sidebar, School group | **Messages has a chevron** (children). | Decision 2: **Messages becomes a plain "WhatsApp" row** (`message-circle`, no chevron). Calendar moves to the 4th child of Classes and subjects (A3). | 10 min | **A** |
+| A8.8 | Sidebar, Money group | **Fees has a chevron**, and Unmatched payments isn't a row of its own. | The spec has the MONEY label with **two rows: Fees and Unmatched payments**, the second with its count chip. If the build nests Unmatched payments under Fees, lift it out. | 10 min | **A** |
+| A8.9 | Sidebar, rows | The row pitch is **about 34px**, so the rows touch. The spec is 34px rows on a **36px pitch**. | Add `margin-block:1px` to each row (or `gap:2px` on the list). **Re-measure: at least 12 of 14 top-level rows visible at 1280 × 680.** | 5 min | B |
+| A8.10 | Folded rail | **Hover looks the same as active.** The hovered Students tile has the same green background as the active Dashboard tile. | Hover: #F1F5F9. Active: #DCFCE7 with #14532D icon. Focus-visible: 2px #1E6FD9 ring. **Never use green for hover.** | 5 min | **A** |
+| A8.11 | Folded rail | The rail is **about 56px wide**, against the spec's 64px. | `width:64px` (icons stay 20px, tiles 40px centred). | 5 min | B |
+| A8.12 | Rail flyout (Students) | The flyout is **about 200px** wide (spec 220), and its item pitch is about 32px (spec 34 / 36). The heading "Students" is in the same weight as the items. | `width:220px`; items 34px on a 36px pitch; the heading is 11px/700 uppercase #475569 (matching the section labels) and not a link. | 10 min | B |
+| A8.13 | Rail, avatar | **No tooltip or label could be checked** from the screenshot. The avatar is the grey silhouette. | Decision 4: `aria-label` and a hover or focus tooltip "Mucunguzi Moses · School admin" (name · role) after 300ms. Avatar as in A8.2. | 10 min | **A** |
+| A8.14 | Top bar | **The school name is about 22px/600**, and the greeting line below repeats it ("Demo Junior School · Term III, 2026"). | A1: the top bar shows the name at **17px/700**, the logo first if one exists, and the term in grey after it. **Remove the school name from the greeting line**; the greeting keeps only "Good evening, {first name}". | **Superseded 2026-10-13** by the header decision in `handoff-2026-10-13-header-profile-dashboard.md` (H1 Plan B, or H0 Plan A as the fallback). | **A** | **(see H0/H1)** | A8.15 | Top bar | About **65px tall** (spec 56); Search shows **⌘K** on every platform. | `height:56px`. The key hint is `⌘K` on macOS and iPadOS, otherwise `Ctrl K` (`navigator.userAgentData?.platform`, falling back to `navigator.platform`). | 10 min | B |
+| A8.16 | Dashboard header | The **Academic year** select is about **42px** tall. | `min-height:44px`. | 2 min | **A** |
+| A8.17 | Quick actions | "Send report cards on WhatsApp" **wraps to two lines** at 1210, and its icon sits apart from the centred text. | Shorten the label to **"Send reports on WhatsApp"**, with `white-space:nowrap` and `text-overflow:ellipsis` plus a `title`. Left-align icon and text in every quick action, so wrapping never separates them. | 10 min | B |
+| A8.18 | KPI "Report cards ready" | The subline wraps ("of 66 · End of Term / Examination"), so this tile's text sits lower than its neighbours'. | One line, with ellipsis and a `title`. Use the exam's short name if one exists ("End of term"). | 5 min | B |
+| A8.19 | KPI tiles and quick actions | **The dotted surface shows** on both, as specified, and only there (A7). | No change. Check the hover tint on a real pointer (not in the screenshots). | n/a | (check) |
+| A8.20 | Fees collection chart | **No green "collected" bars are visible.** Only the dashed expected outlines show, even though the Fees tile says 18% collected (UGX 9.5M). | Check the collected series is bound and drawn in #15803D *inside* the outlines. If it's zero for the months shown, that's correct; otherwise it's a bug. | **Moot (2026-10-13):** the demo fee data changed on staging. | **A** | (dropped) | Screen | Spec value to check |
 |---|---|
 | Expanded, Students open | Parent row 34px tall with a 36px pitch. Children 30px tall with a 32px pitch, 14px/400 #334155. The guide line is 1px #E2E8F0, 19px from the row's left edge, and children are indented 9px past it. The current child has #DCFCE7 / #14532D. |
 | Folded rail with a flyout | Rail 64px, icons centred in 40px buttons, section labels become 1px dividers. Flyout 220px wide, 8px right of the rail, top aligned to the parent row, kept inside the viewport, `role="menu"`, Esc closes it and returns focus to the parent. |

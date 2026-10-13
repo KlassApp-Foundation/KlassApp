@@ -64,26 +64,26 @@ T1 and T2 together give every phone and tablet one quiet way into Toshi, in **pr
   - **Page padding:** content gets `padding-bottom: calc(var(--d-bottom-zone) + 16px)`.
 - **Viewport:** add `viewport-fit=cover` to the layout's viewport meta so `env(safe-area-inset-*)` resolves.
 
-**Launcher, recommended: a labelled button in the header (option A).**
+**Launcher, recommended: a K-only button in the phone top bar (option A, revised 2026-10-13).**
 
 | Width | Where | Why |
 |---|---|---|
-| ≤ 760 | in the 56px mobile top bar, between the page title and the account avatar | the top bar is outside the bottom zone, so it can never cover a sticky bar, a footer or table actions |
+| ≤ 760 | in the 56px phone top bar, **between Search and the avatar**. The bar is exactly: menu · school name · Search · Toshi · avatar | the top bar is outside the bottom zone, so it can never cover a sticky bar, a footer or table actions |
 | 761–1279 | a 44px **"Toshi" row in the sidebar**, directly above the account card (where the setup chip and quiet line sit) | the shell shows the sidebar here and has no top bar |
 | ≥ 1280 | none; the desktop dock is unchanged | |
 
-- **Look** (≤760): a 44px pill with a 24px K mark (`alt=""`) and the text "Toshi".
+- **Look** (≤760): a **44 × 44px icon-only button** with a 24px K mark (`alt=""`), **no text**. The school name keeps about 160px at 375 (375 − 12 padding − 4 × 44 buttons − 3 × 4 gaps − 16 name padding). The name is 16px/700 and ellipsized, with a `title`.
 
   | Mode | Treatment |
   |---|---|
-  | Preview | white, 1px #CBD5E1 border, #0F172A text: quiet, no badge, no motion |
-  | Setup guide | #f5f4ed background, 1px #e8e6dc border, #141413 text |
-  | Assistant | as setup guide, plus an "Early access" pill (11px/700, #9A4A2E on white, 1px #e8e6dc border) |
+  | Preview | transparent, no border: the same as Search, so it reads as a quiet tool, not a promotion |
+  | Setup guide | #f5f4ed circle behind the K (36px), no border |
+  | Assistant | as setup guide, plus an 8px #A84D32 dot at the top right of the button. "Early access" is in the `aria-label` and the sheet header, not in the bar (it doesn't fit at 375) |
 
-- **The title truncates first:** the top bar holds menu, title, Toshi and account. At 375 the title gets about 140px.
+- **The school name truncates first** (never the buttons). It's the only place the school shows on a phone, so it's never replaced by the page title (see the sidebar v3 polish handoff, A1).
 - **Semantics:** a `<button>` with `aria-haspopup="dialog"`, `aria-controls="toshi-sheet"`, `aria-expanded`, and `aria-label` "Open Toshi", "Open Toshi, in preview" or "Open Toshi, early access".
 - **Remove:**
-  - the zero-width edge toggle below 1280 (hide `#toshi-toggle` under `@media (max-width:1279px)`);
+  - **the edge tab (`#toshi-toggle`), revised 2026-10-13:** don't render it in **preview** mode at any width; hide it **below 1280px in every mode** (`@media (max-width:1279px){#toshi-toggle{display:none!important}}`). It stays only at 1280 and up, in **setup guide (onboarding)** and **assistant** modes;
   - any remaining floating pill CSS or JS;
   - **the legacy floating-widget rule, before the sheet ships.** It must be deleted or scoped before the sheet ships. It pins **every** element carrying `data-toshi-root`. Moving the attribute to an inner element doesn't avoid it: the concept tried that and the wrapper was pinned instead.
     - **What it does:** pins the element `position:fixed`, 24px from the right and bottom. On the sheet that leaves a 24px gap at the right and bottom, takes the content out of the sheet's flow (so the header scrolls off screen in long conversations), and puts the composer under the keyboard.
