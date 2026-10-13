@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
+
+- Branch `feat/teacher-profile-lite`. `/admin/teacher/show/{name}` renders the shared person profile (header, three tiles, Overview, Teaches). The people-list URL is unchanged. JSON teacher-show endpoints are unchanged.
+- Deactivate sets status to inactive. No hard delete on this page. Rebased onto `main` after [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) and [#1078](https://github.com/KlassApp-Foundation/KlassApp/pull/1078). Not merged. Production untouched.
+- Parent profile is a handoff, not a pull request from this chat.
+
 ## Current Status: October 14, 2026 — **Demo Junior admin display name stays Demo Admin**
 
 - The staging greeting showed TARITWEBWA ERIC because the profile first and last name were saved that way. `users.name` was still Daniel Mukasa (`updated_at` 2026-10-13 17:19:02). The profile row was updated at 2026-10-13 17:55:24. Activity log entries at that minute are `edituserprofile` / "Changed Profile", caused by the same signed-in admin (`UserProfileController::update` writes `firstname` and `lastname` at lines 181–182). `google_id` and `google_avatar` were empty. The `authentications` table had no rows for that user.
