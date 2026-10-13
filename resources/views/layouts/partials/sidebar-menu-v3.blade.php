@@ -2,13 +2,14 @@
 {{-- Admin sidebar v3. Section labels stay visible. A parent row opens its page;
      the chevron only toggles children. Open state is not stored (ka:sidebar:v3
      is a version marker). The group that contains the current page opens itself. --}}
+@php $navCounts = $navCounts ?? []; @endphp
 @foreach($nav['sections'] as $section)
     @php
         $rows = array_values(array_filter($section['rows'], $showItem));
     @endphp
     @if(count($rows) > 0)
         @if(!empty($section['label']))
-            <li class="sidebar-v3-section" role="presentation">{{ $section['label'] }}</li>
+            <li class="sidebar-v3-section">{{ $section['label'] }}</li>
         @endif
         @foreach($rows as $row)
             @php
@@ -22,6 +23,12 @@
                     }
                 }
                 $open = $rowActive || $childActive;
+                $rowCount = count($children) === 0 ? (int) ($navCounts[$row['count'] ?? ''] ?? 0) : 0;
+                $childCounts = [];
+                foreach ($children as $child) {
+                    $childCounts[] = (int) ($navCounts[$child['count'] ?? ''] ?? 0);
+                }
+                $hasChildCount = array_sum($childCounts) > 0;
                 // A parent that shares its URL with a child the current user cannot
                 // see (Classes → Classes and streams, school admin only) opens the
                 // first child they can see instead of a page that would 403.
@@ -33,19 +40,10 @@
                     }
                 }
             @endphp
-            <li class="sidebar-v3-item" data-sidebar-row data-tip="{{ $row['label'] }}"
+            <li class="sidebar-v3-item{{ $hasChildCount ? ' has-count' : '' }}" data-sidebar-row data-tip="{{ $row['label'] }}"
                 @if(count($children) > 0)
-                    x-data="{ open: {{ $open ? 'true' : 'false' }}, flyout: false, hold: null }"
-                    x-on:mouseenter="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
-                    x-on:mouseleave="flyout = false"
-                    x-on:focusin="if (document.body.classList.contains('sidebar-collapsed')) flyout = true"
-                    x-on:focusout="if (!$el.contains($event.relatedTarget)) flyout = false"
-                    x-on:pointerdown="if (document.body.classList.contains('sidebar-collapsed')) hold = setTimeout(() => flyout = true, 500)"
-                    x-on:pointerup="clearTimeout(hold)"
-                    x-on:pointercancel="clearTimeout(hold)"
-                    x-on:keydown.escape.window="flyout = false"
+                    x-data="{ open: {{ $open ? 'true' : 'false' }}, flyout: false }"
                     x-bind:class="flyout ? 'is-flyout' : ''"
-                    x-bind:style="flyout ? ('--fly-top:' + Math.max(8, Math.min(Math.round($el.getBoundingClientRect().top), window.innerHeight - 8 - ($el.querySelector('.sidebar-v3-children')?.scrollHeight || 160))) + 'px') : ''"
                 @endif>
                 <div class="sidebar-v3-row">
                     <a href="{{ $navHref($hrefItem) }}"
@@ -59,6 +57,9 @@
                             <x-icons.sidebar name="{{ $row['icon'] }}"/>
                         @endif
                         <span>{{ $row['label'] }}</span>
+                        @if($rowCount > 0)
+                            <span class="sidebar-v3-count">{{ $rowCount }}</span>
+                        @endif
                     </a>
                     @if(count($children) > 0)
                         <button type="button" class="sidebar-v3-chevron" x-on:click="open = !open" x-bind:aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ $row['label'] }} items">
@@ -69,16 +70,25 @@
                     @endif
                 </div>
                 @if(count($children) > 0)
+                    <div class="sidebar-v3-bridge" hidden aria-hidden="true"></div>
                     <ul class="sidebar-v3-children" x-show="flyout || (open && !document.body.classList.contains('sidebar-collapsed'))" x-cloak role="group" aria-label="{{ $row['label'] }}">
                         <li class="sidebar-v3-flyout-title" role="presentation">{{ $row['label'] }}</li>
-                        @foreach($children as $child)
-                            @php $isChild = $navActive($child); @endphp
+                        @foreach($children as $index => $child)
+                            @php
+                                $isChild = $navActive($child);
+                                $childCount = $childCounts[$index] ?? 0;
+                            @endphp
                             <li>
                                 <a href="{{ $navHref($child) }}"
                                    class="sidebar-v3-child {{ $isChild ? $activeClass : '' }}"
                                    aria-label="{{ $child['label'] }}"
                                    tabindex="0"
-                                   @if($isChild) aria-current="page" @endif>{{ $child['label'] }}</a>
+                                   @if($isChild) aria-current="page" @endif>
+                                    <span>{{ $child['label'] }}</span>
+                                    @if($childCount > 0)
+                                        <span class="sidebar-v3-count">{{ $childCount }}</span>
+                                    @endif
+                                </a>
                             </li>
                         @endforeach
                     </ul>

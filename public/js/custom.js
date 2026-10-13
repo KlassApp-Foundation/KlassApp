@@ -69,7 +69,15 @@ $(document).ready(function(){
     accountMenu($root).attr('hidden', true).css('display', 'none');
   }
 
+  function closeEveryAccount() {
+    $('.profile-click.account-card.open').each(function () {
+      closeAccountCard($(this));
+    });
+  }
+
   function openAccountCard($root) {
+    if (window.kaCloseFlyouts) window.kaCloseFlyouts();
+    if (window.kaHideTip) window.kaHideTip();
     $('.profile-click.account-card').each(function () {
       if (this !== $root[0]) closeAccountCard($(this));
     });
@@ -117,6 +125,32 @@ $(document).ready(function(){
       $('.profile-click').removeClass('open');
     }
   });
+
+  $(document).on('click', '[data-account-menu] [role="menuitem"], [data-account-menu] a', function () {
+    closeEveryAccount();
+  });
+
+  $(window).on('blur resize', function () {
+    closeEveryAccount();
+  });
+
+  document.addEventListener('wheel', function (e) {
+    if (e.target.closest && e.target.closest('#admin-sidebar, #res_sidebar')) closeEveryAccount();
+  }, { passive: true });
+
+  document.addEventListener('scroll', function (e) {
+    if (e.target.closest && e.target.closest('#admin-sidebar, #res_sidebar')) closeEveryAccount();
+  }, true);
+
+  window.addEventListener('pagehide', closeEveryAccount);
+  document.addEventListener('livewire:navigating', closeEveryAccount);
+  document.addEventListener('ka-sidebar-changed', closeEveryAccount);
+
+  $(document).on('click', '#sidebar-collapse-toggle, #mobile-menu-trigger', function () {
+    closeEveryAccount();
+  });
+
+  window.kaCloseAccount = closeEveryAccount;
 
   // Keyboard: Esc, arrows, Tab out
   $(document).on('keydown', function(e) {

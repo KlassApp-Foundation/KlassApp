@@ -43,7 +43,8 @@
                                         "admin/admissions*",
                                         "admin/admission*",
                                         "admin/admissionlist*"
-                                    ]
+                                    ],
+                                    "count": "admissions"
                                 },
                                 {
                                     "label": "Health records",
@@ -51,13 +52,6 @@
                                     "paths": [
                                         "admin/health*",
                                         "admin/medical*"
-                                    ]
-                                },
-                                {
-                                    "label": "Transport",
-                                    "url": "admin/transport",
-                                    "paths": [
-                                        "admin/transport*"
                                     ]
                                 }
                             ]
@@ -114,6 +108,14 @@
                                     "paths": [
                                         "admin/timetable*",
                                         "admin/timetables*"
+                                    ]
+                                },
+                                {
+                                    "label": "Calendar",
+                                    "url": "admin/calendar",
+                                    "paths": [
+                                        "admin/calendar*",
+                                        "admin/events*"
                                     ]
                                 }
                             ]
@@ -172,26 +174,21 @@
                         {
                             "label": "Fees",
                             "url": "admin/fees/payments",
-                            "children": [
-                                {
-                                    "label": "Overview",
-                                    "url": "admin/fees/payments",
-                                    "paths": [
-                                        "admin/fees/payments",
-                                        "admin/fees",
-                                        "admin/fee/*",
-                                        "admin/payment/*",
-                                        "admin/invoices*"
-                                    ]
-                                },
-                                {
-                                    "label": "Unmatched payments",
-                                    "url": "admin/fees/payments/unmatched",
-                                    "paths": [
-                                        "admin/fees/payments/unmatched*"
-                                    ]
-                                }
+                            "paths": [
+                                "admin/fees/payments",
+                                "admin/fees",
+                                "admin/fee/*",
+                                "admin/payment/*",
+                                "admin/invoices*"
                             ]
+                        },
+                        {
+                            "label": "Unmatched payments",
+                            "url": "admin/fees/payments/unmatched",
+                            "paths": [
+                                "admin/fees/payments/unmatched*"
+                            ],
+                            "count": "unmatched"
                         }
                     ]
                 },
@@ -199,24 +196,10 @@
                     "label": "School",
                     "rows": [
                         {
-                            "label": "Messages",
+                            "label": "WhatsApp",
                             "url": "admin/whatsapp/dashboard",
-                            "children": [
-                                {
-                                    "label": "WhatsApp",
-                                    "url": "admin/whatsapp/dashboard",
-                                    "paths": [
-                                        "admin/whatsapp*"
-                                    ]
-                                },
-                                {
-                                    "label": "Calendar",
-                                    "url": "admin/calendar",
-                                    "paths": [
-                                        "admin/calendar*",
-                                        "admin/events*"
-                                    ]
-                                }
+                            "paths": [
+                                "admin/whatsapp*"
                             ]
                         },
                         {
@@ -225,6 +208,14 @@
                             "paths": [
                                 "admin/approvals*",
                                 "admin/approval*"
+                            ],
+                            "count": "approvals"
+                        },
+                        {
+                            "label": "Transport",
+                            "url": "admin/transport",
+                            "paths": [
+                                "admin/transport*"
                             ]
                         },
                         {

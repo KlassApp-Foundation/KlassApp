@@ -84,15 +84,18 @@
                     <strong>KlassApp</strong>
                 </a>
             @else
-                <a class="h-10 object-contain" href="{{ route($brandRoute) }}"
-                   aria-label="KlassApp home">
-                    <img src="{{ $schoolLogo ?: asset('images/klassapp-logo-primary.svg') }}"
-                         class="h-10 w-auto object-contain mr-3"
-                         alt="{{ $schoolLogo ? ucwords($navSchool->name).' logo' : 'KlassApp' }}"
-                         onerror="this.onerror=null;this.src='{{ asset('images/klassapp-logo-primary.svg') }}';">
-                </a>
-                <a class="{{ $nameClass }}" href="{{ route($brandRoute) }}">
-                    <strong>{{ ucwords($navSchool->name) }}</strong>
+                @php
+                    $schoolTerm = \App\Support\SchoolHeaderLine::term($navSchool?->id);
+                    $schoolTitle = ucwords((string) ($navSchool->name ?? ''));
+                @endphp
+                <a class="nav-school-line" href="{{ route($brandRoute) }}">
+                    @if($schoolLogo)
+                        <img src="{{ $schoolLogo }}" class="nav-school-logo" alt="{{ $schoolTitle }}">
+                    @endif
+                    <span class="{{ $nameClass }}"><strong>{{ $schoolTitle }}</strong></span>
+                    @if($schoolTerm !== '')
+                        <span class="nav-school-term">{{ $schoolTerm }}</span>
+                    @endif
                 </a>
             @endif
         @else
@@ -215,7 +218,271 @@
             var collapsed = !document.body.classList.contains('sidebar-collapsed');
             apply(collapsed);
             try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e2) {}
+            document.dispatchEvent(new CustomEvent('ka-sidebar-changed'));
         });
+        document.addEventListener('ka-sidebar-changed', function () {
+            if (window.kaCloseAccount) window.kaCloseAccount();
+            if (window.kaCloseFlyouts) window.kaCloseFlyouts();
+            if (window.kaHideTip) window.kaHideTip();
+        });
+    })();
+    (function () {
+        var tip = document.createElement('div');
+        tip.id = 'ka-rail-tip';
+        tip.setAttribute('role', 'tooltip');
+        tip.hidden = true;
+        document.body.appendChild(tip);
+        var timer = null;
+        var current = null;
+        var armed = null;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        function hide() {
+            clearTimeout(timer);
+            timer = null;
+            armed = null;
+            tip.hidden = true;
+            if (current) current.removeAttribute('aria-describedby');
+            current = null;
+        }
+        function host(node) {
+            return node && node.closest ? node.closest('#admin-sidebar [data-tip]') : null;
+        }
+        function show(el) {
+            if (!document.body.classList.contains('sidebar-collapsed')) return;
+            if (document.querySelector('#admin-sidebar .is-flyout, [data-account-trigger][aria-expanded="true"]')) return;
+            var row = el.closest('.sidebar-v3-item');
+            if (row && row.classList.contains('is-flyout')) return;
+            var text = el.getAttribute('data-tip');
+            if (!text) return;
+            var box = el.getBoundingClientRect();
+            tip.textContent = text;
+            tip.hidden = false;
+            var left = box.right + 8;
+            tip.style.left = left + 'px';
+            tip.style.top = (box.top + box.height / 2) + 'px';
+            if (left + tip.offsetWidth > window.innerWidth - 8) {
+                tip.style.left = Math.max(8, window.innerWidth - 8 - tip.offsetWidth) + 'px';
+            }
+            el.setAttribute('aria-describedby', 'ka-rail-tip');
+            current = el;
+        }
+        function arm(el) {
+            if (!document.body.classList.contains('sidebar-collapsed') || armed === el) return;
+            clearTimeout(timer);
+            if (current && current !== el) {
+                tip.hidden = true;
+                current.removeAttribute('aria-describedby');
+                current = null;
+            }
+            armed = el;
+            timer = setTimeout(function () { show(el); }, reduce ? 0 : 300);
+        }
+        document.addEventListener('mouseover', function (e) {
+            var el = host(e.target);
+            if (el) arm(el);
+        });
+        document.addEventListener('mouseout', function (e) {
+            var el = host(e.target);
+            if (!el || el.contains(e.relatedTarget) || document.activeElement === el) return;
+            hide();
+        });
+        document.addEventListener('focusin', function (e) {
+            var el = host(e.target);
+            if (el) arm(el);
+        });
+        document.addEventListener('focusout', function () { hide(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hide();
+        });
+        window.kaHideTip = hide;
+    })();
+    (function () {
+        var OPEN_MS = 80;
+        var CLOSE_MS = 200;
+        var armed = null;
+        var openTimer = null;
+        var closeTimer = null;
+        var lastPointer = 'mouse';
+
+        function collapsed() { return document.body.classList.contains('sidebar-collapsed'); }
+        function parents() {
+            return Array.prototype.filter.call(document.querySelectorAll('#admin-sidebar .sidebar-v3-item'), function (item) {
+                return item.querySelector('.sidebar-v3-children');
+            });
+        }
+        function alpine(item) {
+            if (!window.Alpine) return null;
+            try { return window.Alpine.$data(item); } catch (e) { return null; }
+        }
+        function predict(item) {
+            var trigger = item.querySelector('.sidebar-v3-link').getBoundingClientRect();
+            var panel = item.querySelector('.sidebar-v3-children');
+            var rows = panel.querySelectorAll('.sidebar-v3-child').length;
+            var height = Math.max(panel.scrollHeight || 0, 28 + rows * 32);
+            var top = trigger.top;
+            if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - height);
+            return { left: 64, top: top, width: 200, height: height, trigger: trigger };
+        }
+        function placeBridge(item) {
+            var bridge = item.querySelector('.sidebar-v3-bridge');
+            if (!bridge) return;
+            var pred = predict(item);
+            var top = Math.min(pred.trigger.top, pred.top);
+            var bottom = Math.max(pred.trigger.bottom, pred.top + pred.height);
+            bridge.hidden = false;
+            bridge.style.left = pred.trigger.right + 'px';
+            bridge.style.width = Math.max(12, pred.left - pred.trigger.right) + 'px';
+            bridge.style.top = top + 'px';
+            bridge.style.height = Math.max(pred.trigger.height, bottom - top) + 'px';
+        }
+        function hideBridge(item) {
+            var bridge = item.querySelector('.sidebar-v3-bridge');
+            if (bridge) bridge.hidden = true;
+        }
+        function setFlyout(item, value) {
+            var data = alpine(item);
+            if (data) data.flyout = value;
+            item.classList.toggle('is-flyout', value);
+            var link = item.querySelector('.sidebar-v3-link');
+            if (link && collapsed()) link.setAttribute('aria-expanded', value ? 'true' : 'false');
+            if (value) placeBridge(item);
+            else hideBridge(item);
+        }
+        function closeFlyout(item) {
+            if (!item) return;
+            setFlyout(item, false);
+            if (armed === item) armed = null;
+        }
+        function closeAll(except) {
+            parents().forEach(function (item) { if (item !== except) closeFlyout(item); });
+        }
+        function openFlyout(item) {
+            closeAll(item);
+            if (window.kaCloseAccount) window.kaCloseAccount();
+            if (window.kaHideTip) window.kaHideTip();
+            var pred = predict(item);
+            item.style.setProperty('--fly-top', pred.top + 'px');
+            setFlyout(item, true);
+            var panel = item.querySelector('.sidebar-v3-children');
+            var shown = panel.getBoundingClientRect();
+            if (shown.height > 0 && shown.bottom > window.innerHeight - 8) {
+                item.style.setProperty('--fly-top', Math.max(8, window.innerHeight - 8 - shown.height) + 'px');
+            }
+            armed = item;
+        }
+        function cancelClose() { clearTimeout(closeTimer); closeTimer = null; }
+        function scheduleClose(item) {
+            clearTimeout(closeTimer);
+            closeTimer = setTimeout(function () { closeFlyout(item); }, CLOSE_MS);
+        }
+        function boxHas(box, x, y, pad) {
+            pad = pad || 0;
+            return box && x >= box.left - pad && x <= box.right + pad && y >= box.top - pad && y <= box.bottom + pad && box.width > 0 && box.height > 0;
+        }
+        function onTrigger(item, x, y) {
+            return boxHas(item.querySelector('.sidebar-v3-link').getBoundingClientRect(), x, y);
+        }
+        function inPanel(item, x, y) {
+            var bridge = item.querySelector('.sidebar-v3-bridge');
+            if (bridge && !bridge.hidden && boxHas(bridge.getBoundingClientRect(), x, y, 8)) return true;
+            var pred = predict(item);
+            if (x >= pred.left - 8 && x <= pred.left + pred.width + 8 && y >= pred.top - 8 && y <= pred.top + pred.height + 8) return true;
+            var panel = item.querySelector('.sidebar-v3-children');
+            return !!(item.classList.contains('is-flyout') && panel && boxHas(panel.getBoundingClientRect(), x, y, 8));
+        }
+        function arm(e) {
+            if (!collapsed() || !e.target.closest) return;
+            var link = e.target.closest('#admin-sidebar .sidebar-v3-link');
+            if (!link) return;
+            var item = link.closest('.sidebar-v3-item');
+            if (!item || !item.querySelector('.sidebar-v3-children')) return;
+            if (armed && armed !== item) {
+                clearTimeout(openTimer);
+                cancelClose();
+                closeFlyout(armed);
+            }
+            if (item.classList.contains('is-flyout')) { cancelClose(); armed = item; return; }
+            clearTimeout(openTimer);
+            cancelClose();
+            placeBridge(item);
+            armed = item;
+            openTimer = setTimeout(function () { if (armed === item) openFlyout(item); }, OPEN_MS);
+        }
+        function track(e) {
+            if (!collapsed() || !armed) return;
+            if (onTrigger(armed, e.clientX, e.clientY)) { cancelClose(); return; }
+            if (inPanel(armed, e.clientX, e.clientY)) {
+                cancelClose();
+                if (!armed.classList.contains('is-flyout')) { clearTimeout(openTimer); openFlyout(armed); }
+                return;
+            }
+            clearTimeout(openTimer);
+            if (armed.classList.contains('is-flyout')) {
+                if (!closeTimer) scheduleClose(armed);
+            } else armed = null;
+        }
+        document.addEventListener('pointerover', arm);
+        document.addEventListener('mouseover', arm);
+        document.addEventListener('pointermove', track);
+        document.addEventListener('mousemove', track);
+        document.addEventListener('pointerdown', function (e) {
+            lastPointer = e.pointerType || 'mouse';
+            if (!collapsed()) return;
+            parents().forEach(function (item) {
+                if (!item.classList.contains('is-flyout')) return;
+                if (!onTrigger(item, e.clientX, e.clientY) && !inPanel(item, e.clientX, e.clientY)) closeFlyout(item);
+            });
+        });
+        document.addEventListener('click', function (e) {
+            if (!collapsed() || lastPointer !== 'touch' || !e.target.closest) return;
+            var link = e.target.closest('#admin-sidebar .sidebar-v3-link');
+            if (!link) return;
+            var item = link.closest('.sidebar-v3-item');
+            if (!item || !item.querySelector('.sidebar-v3-children')) return;
+            if (!item.classList.contains('is-flyout')) {
+                e.preventDefault();
+                e.stopPropagation();
+                openFlyout(item);
+            }
+        }, true);
+        document.addEventListener('keydown', function (e) {
+            if (!collapsed()) return;
+            var current = document.activeElement;
+            if (!current || !current.closest) return;
+            var item = current.closest('#admin-sidebar .sidebar-v3-item');
+            if (!item || !item.querySelector('.sidebar-v3-children')) return;
+            var trigger = item.querySelector('.sidebar-v3-link');
+            var links = Array.prototype.slice.call(item.querySelectorAll('.sidebar-v3-child'));
+            if (current === trigger && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight')) {
+                e.preventDefault();
+                openFlyout(item);
+                return;
+            }
+            if (!item.classList.contains('is-flyout')) return;
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                var idx = links.indexOf(current);
+                var next = e.key === 'ArrowDown'
+                    ? (idx < 0 ? 0 : Math.min(links.length - 1, idx + 1))
+                    : (idx < 0 ? links.length - 1 : Math.max(0, idx - 1));
+                if (links[next]) links[next].focus();
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeFlyout(item);
+                trigger.focus();
+            }
+        });
+        document.addEventListener('focusout', function (e) {
+            var item = e.target.closest && e.target.closest('#admin-sidebar .sidebar-v3-item.is-flyout');
+            if (!item) return;
+            if (e.relatedTarget && item.contains(e.relatedTarget)) return;
+            closeFlyout(item);
+        });
+        document.addEventListener('ka-sidebar-changed', function () { closeAll(null); });
+        window.kaCloseFlyouts = function () { closeAll(null); };
     })();
     </script>
     @endpush

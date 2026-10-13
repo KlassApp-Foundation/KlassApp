@@ -10,7 +10,19 @@
         $displayName = (string) Auth::user()->name;
     }
     $email = (string) Auth::user()->email;
-    $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar');
+    $roleLabel = trim((string) ($profile?->designation ?? ''));
+    if ($roleLabel === '') {
+        $roleLabel = match ((int) Auth::user()->usergroup_id) {
+            3, 4 => 'School admin',
+            5 => 'Teacher',
+            8 => 'Librarian',
+            11 => 'Bursar',
+            10 => 'Receptionist',
+            default => 'Staff',
+        };
+    }
+    $accountTip = $displayName.' · '.$roleLabel;
+    $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar').'-'.substr(md5(uniqid('', true)), 0, 8);
     $cardVariant = $variant ?? 'sidebar';
 @endphp
 <div class="profile-click account-card{{ $cardVariant === 'topbar' ? ' account-card--topbar' : '' }}" dusk="profile-menu" data-account-card>
@@ -20,6 +32,8 @@
         aria-haspopup="menu"
         aria-expanded="false"
         aria-controls="{{ $menuId }}"
+        aria-label="{{ $accountTip }}"
+        data-tip="{{ $accountTip }}"
         data-account-trigger
     >
         <x-profile-photo :user="Auth::user()" size="sm" class="account-card__avatar" />
