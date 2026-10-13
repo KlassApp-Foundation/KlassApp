@@ -12,7 +12,7 @@
     'backUrl' => null,
     'backLabel' => 'Back',
 ])
-<div {{ $attributes->merge(['style' => 'background:#F8FAFC;color:#0F172A;']) }}>
+<div {{ $attributes->merge(['class' => 'ka-bare-page', 'style' => 'background:transparent;color:#0F172A;border:0;border-radius:0;padding:0;']) }}>
     @if($backUrl)
         <p class="text-sm" style="margin:0 0 12px;">
             <a href="{{ $backUrl }}" style="color:#1D4ED8;">{{ $backLabel }}</a>

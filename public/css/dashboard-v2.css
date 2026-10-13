@@ -2,8 +2,8 @@
 /* Admin dashboard v2 (PR1 first screen) — extracted from the Blade partial because
    inline <style> blocks mid-document are not reliably applied in this app's
    staging environment; external assets are the app-wide pattern. */
-.dv2-shell{background:var(--d-canvas,#FAFAF5);min-height:60vh;padding:12px}
-.dv2-panel{background:#fff;border:1px solid var(--d-border,#E2E8F0);border-radius:16px;padding:24px;max-width:1180px;margin:0 auto}
+.dv2-shell{background:transparent;min-height:0;padding:0}
+.dv2-panel{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;max-width:1600px;margin:0 auto}
 .dv2-hread{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
 .dv2-hello{font-size:15px;color:#64748B;margin:0}
 .dv2-h1{font-family:Sora,var(--d-font-display,sans-serif);font-weight:600;font-size:30px;letter-spacing:-0.02em;color:#0F172A;margin:2px 0 0;line-height:1.25}
@@ -21,11 +21,11 @@
 .dv2-btn--ghost{background:#fff;color:#14532D;border:1px solid #BBF7D0}
 .dv2-btn--soft{background:#fff;color:#0F172A;border:1px solid var(--d-border,#E2E8F0);font-weight:600}
 .dv2-x{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:10px;font-size:16px;color:#334155;cursor:pointer;text-decoration:none}
-.dv2-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:14px}
-.dv2-kpi{border:1px solid var(--d-border,#E2E8F0);border-radius:14px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-height:0}
+.dv2-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:14px;container-type:inline-size;container-name:kpis}
+.dv2-kpi{border:1px solid var(--d-border,#E2E8F0);border-radius:14px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-height:0;height:auto;max-height:none;container-type:inline-size;container-name:kpi}
 .dv2-kpi-label{font-size:12.5px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px}
 .dv2-kpi-value{font-family:Sora,sans-serif;font-weight:600;font-size:24px;color:#0F172A;line-height:1.15}
-.dv2-kpi-sub{font-size:12px;color:#64748B;margin:0;margin-top:auto}
+.dv2-kpi-sub{font-size:12px;color:#64748B;margin:0}
 .dv2-kpi-sub.up{color:#15803D}
 .dv2-kpi-sub.down{color:#B91C1C}
 .dv2-kpi-sub.warn{color:#78350F}
@@ -49,6 +49,8 @@
 .dv2-empty-in p{margin:0 0 10px;font-size:13.5px;color:#475569}
 .hbars{display:flex;flex-direction:column;gap:8px}
 .hb{display:grid;grid-template-columns:110px 1fr 52px;align-items:center;gap:10px;font-size:13px;color:#334155}
+[data-testid="dashboard-v2-chart-gender"] .hb{grid-template-columns:88px minmax(0,1fr) auto;margin-top:8px}
+[data-testid="dashboard-v2-chart-gender"] .hb .n{font-size:12px;color:#334155;white-space:nowrap;text-align:right}
 .hb .t{background:#F1F5F9;border-radius:999px;height:10px;position:relative;overflow:hidden}
 .hb .t i{position:absolute;inset:0 auto 0 0;background:#1E6FD9;border-radius:999px}
 .hb b{text-align:right;color:#0F172A}
@@ -83,16 +85,19 @@
 .dv2-kpi:has(.dv2-kpi-link:focus-visible){box-shadow:inset 0 0 0 2px #15803D}
 .dv2-kpi > .dv2-kpi-actions,.dv2-kpi-actions,.dv2-kpi-actions a{position:relative;z-index:2}
 .dv2-kpi-label{white-space:normal}
-.dv2-kpi-actions{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-top:2px}
-.dv2-kpi-actions a{min-height:0;display:inline;padding:0;border:0;background:transparent;color:#0F766E;font-size:12.5px;font-weight:600;text-decoration:underline}
+.dv2-kpi-link{flex:0 0 auto;min-width:0}
+.dv2-kpi-actions{display:flex;flex-wrap:wrap;align-items:baseline;align-content:flex-start;gap:4px 10px;margin-top:0;width:100%;flex:0 0 auto}
+.dv2-kpi-actions a{min-height:0;display:inline;padding:0;border:0;background:transparent;color:#0F766E;font-size:12.5px;font-weight:600;text-decoration:underline;white-space:normal}
 .dv2-kpi-actions a:focus-visible{outline:2px solid #15803D;outline-offset:2px}
+/* 150px only at 1280+ with the panel closed. Open or narrower viewports grow. */
 @media (min-width:1280px){
-    .dv2-kpi{max-height:150px}
+    html.toshi-collapsed .dv2-kpi,
+    body.toshi-collapsed .dv2-kpi{max-height:150px}
 }
 @media (max-width:767px){
     .dv2-grid2{grid-template-columns:1fr}
     .dv2-shell{padding:0}
-    .dv2-panel{border-radius:0;border-left:0;border-right:0;padding:16px}
+    .dv2-panel{border:0;border-radius:0;padding:0;background:transparent;max-width:1600px}
     .dv2-h1{font-size:24px}
     .dv2-grid2{grid-template-columns:1fr}
     .dv2-year{width:100%}

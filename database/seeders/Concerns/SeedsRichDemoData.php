@@ -1183,4 +1183,17 @@ trait SeedsRichDemoData
     {
         return $this->staff['teacher1'] ?? User::where('school_id', $this->school->id)->where('usergroup_id', 5)->orderBy('id')->firstOrFail();
     }
+
+    /**
+     * Gender mix varies by class. Neighbouring classes use complementary
+     * fractions so a full school stays near half girls and half boys.
+     * demo:refresh re-runs the school seeder, which calls this again.
+     */
+    protected function demoStudentGender(int $classIndex, int $indexInClass, int $classSize): string
+    {
+        $fractions = [0.75, 0.25, 0.70, 0.30, 0.65, 0.35, 0.60, 0.40, 0.55, 0.45];
+        $girls = (int) round($classSize * $fractions[$classIndex % count($fractions)]);
+
+        return $indexInClass < $girls ? 'female' : 'male';
+    }
 }

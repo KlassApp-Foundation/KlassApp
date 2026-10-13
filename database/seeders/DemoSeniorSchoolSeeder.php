@@ -334,6 +334,7 @@ class DemoSeniorSchoolSeeder extends Seeder
         $names = \App\Support\DemoRosterNames::names(array_sum($plan));
 
         $n = 0;
+        $classIndex = 0;
         foreach ($plan as $className => $count) {
             $linkKeys = array_values(array_filter(array_keys($this->links), fn ($k) => $k === $className || str_starts_with($k, $className . ' ')));
 
@@ -342,10 +343,11 @@ class DemoSeniorSchoolSeeder extends Seeder
                 $student = $this->user('student' . $n, $names[$n - 1], 6);
 
                 // A1: every student carries a date of birth and a gender.
+                // The mix changes by class; paired fractions keep the school near 50/50.
                 $age = self::AGE_BY_CLASS[$className] ?? 15;
                 \App\Models\Userprofile::where('user_id', $student->id)->update([
                     'date_of_birth' => \Illuminate\Support\Carbon::create(2026 - $age, (($n * 5) % 12) + 1, (($n * 7) % 27) + 1)->toDateString(),
-                    'gender' => $n % 2 === 0 ? 'female' : 'male',
+                    'gender' => $this->demoStudentGender($classIndex, $i, $count),
                 ]);
 
                 $klsNumber = \App\Services\StudentIdGeneratorService::ensureForStudent($student);
@@ -366,6 +368,7 @@ class DemoSeniorSchoolSeeder extends Seeder
                 );
                 unset($academic);
             }
+            $classIndex++;
         }
 
         // Keep no_of_students in step for any link a capture script may show.

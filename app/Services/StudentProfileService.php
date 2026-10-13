@@ -9,6 +9,7 @@ use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
+use App\Models\ParentProfile;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppUser;
@@ -231,7 +232,7 @@ class StudentProfileService
     }
 
     /**
-     * @return list<array{name: string, phone: string, whatsapp: string}>
+     * @return list<array{name: string, initials: string, relation: ?string, phone: ?string, phone_href: ?string, whatsapp: string}>
      */
     private function parents(int $schoolId, User $student): array
     {
@@ -241,29 +242,74 @@ class StudentProfileService
             ->with('userParent.userprofile')
             ->get();
 
-        $rows = [];
+        $parents = [];
         foreach ($links as $link) {
             $parent = $link->userParent;
             if (! $parent || (int) $parent->school_id !== $schoolId) {
                 continue;
             }
-            $profile = $parent->userprofile;
-            $name = $this->readableName(trim(($profile->firstname ?? '').' '.($profile->lastname ?? '')));
-            $optedIn = WhatsAppUser::query()
+            $parents[] = $parent;
+        }
+
+        $parentIds = array_map(fn (User $parent) => $parent->id, $parents);
+        $optedIn = $parentIds === []
+            ? []
+            : WhatsAppUser::query()
                 ->where('school_id', $schoolId)
-                ->where('user_id', $parent->id)
+                ->whereIn('user_id', $parentIds)
                 ->where('opted_in', true)
-                ->exists();
-            $relation = trim((string) ($parent->parentprofile()->where('school_id', $schoolId)->value('relation') ?? ''));
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        $relations = $parentIds === []
+            ? collect()
+            : ParentProfile::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('user_id', $parentIds)
+                ->pluck('relation', 'user_id');
+
+        $rows = [];
+        foreach ($parents as $parent) {
+            $profile = $parent->userprofile;
+            $first = trim((string) ($profile->firstname ?? ''));
+            $last = trim((string) ($profile->lastname ?? ''));
+            $name = $this->readableName(trim($first.' '.$last));
+            $relation = trim((string) ($relations[$parent->id] ?? ''));
+            $phone = $this->phoneLink($parent->mobile_no ? (string) $parent->mobile_no : null);
             $rows[] = [
                 'name' => $name !== '' ? $name : 'Parent',
-                'relation' => $relation !== '' ? ucfirst($relation) : 'Not given',
-                'phone' => $parent->mobile_no ? (string) $parent->mobile_no : '—',
-                'whatsapp' => $optedIn ? 'Opted in' : 'Not opted in',
+                'initials' => $this->initials($first, $last, $name !== '' ? $name : 'Parent'),
+                'relation' => $relation !== '' ? ucfirst($relation) : null,
+                'phone' => $phone['label'] ?? null,
+                'phone_href' => $phone['href'] ?? null,
+                'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'On WhatsApp' : 'Not on WhatsApp',
             ];
         }
 
         return $rows;
+    }
+
+    /**
+     * @return array{label: string, href: string}|null
+     */
+    private function phoneLink(?string $raw): ?array
+    {
+        $label = trim((string) $raw);
+        if ($label === '' || $label === '—') {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $label) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+        if (str_starts_with($digits, '0')) {
+            $digits = '256'.substr($digits, 1);
+        } elseif (strlen($digits) === 9) {
+            $digits = '256'.$digits;
+        }
+
+        return ['label' => $label, 'href' => 'tel:+'.$digits];
     }
 
     /**

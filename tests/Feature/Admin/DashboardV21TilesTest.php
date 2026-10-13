@@ -54,6 +54,20 @@ class DashboardV21TilesTest extends TestCase
         $css = file_get_contents(public_path('css/dashboard-v2.css'));
         $this->assertStringContainsString('min-height:280px', $css);
         $this->assertStringContainsString('max-height:150px', $css);
+        $this->assertStringContainsString('html.toshi-collapsed .dv2-kpi', $css);
+        $this->assertStringContainsString('container-type:inline-size', $css);
+        $this->assertStringContainsString('1 girl, 0 boys', $html);
+        $this->assertStringContainsString('max-width:1600px', $css);
+        $shell = file_get_contents(public_path('css/dashboard-refresh.css'));
+        $this->assertStringContainsString('.sidebar-v3-link.is-ancestor', $shell);
+        $this->assertStringContainsString('border-radius: 999px', $shell);
+        $this->assertStringContainsString('td form:has(input[name="_method"][value="DELETE"]) .ds-btn-danger', $shell);
+        $this->assertStringContainsString('max-width: 1600px', $shell);
+        $js = file_get_contents(public_path('js/custom.js'));
+        $this->assertStringContainsString("method.toUpperCase() !== 'DELETE'", $js);
+        $toshi = file_get_contents(public_path('vendor/toshi-ui/toshi-ui.css'));
+        $this->assertStringContainsString('top: var(--ka-topbar-h, 64px)', $toshi);
+        $this->assertStringNotContainsString('height: 3px', $toshi);
         $this->assertStringNotContainsString('Tiles ·', $html);
     }
 

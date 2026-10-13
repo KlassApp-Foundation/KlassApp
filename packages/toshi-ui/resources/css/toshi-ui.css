@@ -104,7 +104,7 @@
            (2026-09-22) failed exactly there. margin/height/align-self are
            explicitly zeroed to retire the #791 flex-envelope rules. */
         position: fixed !important;
-        top: var(--toshi-header-offset, 69px) !important;
+        top: var(--ka-topbar-h, 64px) !important;
         right: 0 !important;
         bottom: 0 !important;
         left: auto !important;
@@ -341,14 +341,9 @@
     }
 
     [data-toshi-root] .toshi-panel::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: #c96442;
-        z-index: 1;
+        content: none;
+        height: 0;
+        background: transparent;
     }
 }
 
@@ -419,7 +414,7 @@
     body:not(.toshi-collapsed) [data-toshi-root] .toshi-panel {
         position: fixed !important;
         /* Sit below the app header so the first checklist/preview row is never clipped. */
-        top: var(--toshi-header-offset, 69px) !important;
+        top: var(--ka-topbar-h, 64px) !important;
         right: 0;
         bottom: 0;
         left: auto !important;
@@ -437,14 +432,9 @@
     }
 
     [data-toshi-root] .toshi-panel::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: #c96442;
-        z-index: 2;
+        content: none;
+        height: 0;
+        background: transparent;
     }
 
     [data-toshi-root] .toshi-panel .toshi-composer {
