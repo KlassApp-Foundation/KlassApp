@@ -245,6 +245,23 @@ class StudentProfileSchoolScopeTest extends TestCase
             'lastname' => 'Nakato',
             'status' => 'active',
         ]);
+        \App\Models\ParentProfile::create([
+            'school_id' => $this->schoolA->id,
+            'user_id' => $parent->id,
+            'relation' => 'mother',
+        ]);
+        Userprofile::query()->where('user_id', $this->studentA->id)->update([
+            'gender' => 'female',
+            'date_of_birth' => '2014-03-09',
+            'joining_date' => '2024-02-01',
+        ]);
+        DB::table('school_details')->insert([
+            'school_id' => $this->schoolB->id,
+            'meta_key' => 'currency',
+            'meta_value' => 'UGX',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         StudentParentLink::create([
             'school_id' => $this->schoolA->id,
             'parent_id' => $parent->id,
@@ -269,6 +286,16 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertSee('82')
             ->assertSee('D1')
             ->assertSee('60,000')
+            ->assertSee('Paid 40,000 of 100,000', false)
+            ->assertSee('Balance', false)
+            ->assertSee('Full name', false)
+            ->assertSee('Female')
+            ->assertSee('9 Mar 2014')
+            ->assertSee('1 Feb 2024')
+            ->assertSee('Mother')
+            ->assertSee('Set your currency', false)
+            ->assertDontSee('UGX')
+            ->assertDontSee('· paid ')
             ->assertSee('Partly paid')
             ->assertDontSee('999,999')
             ->assertSee('Deactivate');

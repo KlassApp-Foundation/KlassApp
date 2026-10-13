@@ -6,27 +6,30 @@
     $student = $page['student'];
     $editUrl = url('/admin/student/edit/'.$student->name);
 @endphp
-<div class="px-4 md:px-6 py-4" data-testid="student-profile" style="background:#F8FAFC;color:#0F172A;">
-    <p class="text-sm" style="margin:0 0 12px;">
-        <a href="{{ url('/admin/students') }}" style="color:#1D4ED8;">Students</a>
-    </p>
+@php
+    $feeMoney = function (?string $amount) use ($page): string {
+        if ($amount === null || $amount === '') {
+            return '—';
+        }
 
-    <header style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between;background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
-        <div style="display:flex;gap:12px;align-items:flex-start;min-width:0;">
-            <div aria-hidden="true" data-testid="student-initials" style="width:48px;height:48px;border-radius:999px;background:#DCFCE7;color:#166534;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 auto;">{{ $page['initials'] }}</div>
-            <div style="min-width:0;">
-                <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:#0F172A;">{{ $page['name'] }}</h1>
-                <p style="margin:4px 0 0;font-size:14px;color:#475569;">
-                    {{ $page['class_name'] ?: 'No class' }}
-                    <span aria-hidden="true"> · </span>
-                    <span data-testid="student-kls">{{ $page['kls'] ?: '—' }}</span>
-                </p>
-                <p style="margin:8px 0 0;">
-                    <span data-testid="student-status" style="display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600;background:{{ $page['status'] === 'active' ? '#DCFCE7' : '#F1F5F9' }};color:{{ $page['status'] === 'active' ? '#166534' : '#475569' }};">{{ $page['status_label'] }}</span>
-                </p>
-            </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        return ($page['currency'] ? $page['currency'].' ' : '').$amount;
+    };
+@endphp
+<div class="px-4 md:px-6 py-4" data-testid="student-profile">
+    <x-person-profile
+        :name="$page['name']"
+        :initials="$page['initials']"
+        :class-name="$page['class_name']"
+        :kls="$page['kls'] ?: 'No KLS number'"
+        :status="$page['status']"
+        :status-label="$page['status_label']"
+        :tabs="$tabs"
+        :active="$tab"
+        :base-url="url('/admin/students/'.$student->id)"
+        :back-url="url('/admin/students')"
+        back-label="Students"
+    >
+        <x-slot:actions>
             <a href="{{ $editUrl }}" class="ds-btn ds-btn-ghost text-sm" style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;color:#0F172A;background:#fff;">Edit</a>
             <div style="position:relative;">
                 <button type="button" id="student-more" aria-haspopup="menu" aria-expanded="false" aria-controls="student-more-menu" style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;background:#fff;color:#0F172A;">More</button>
@@ -34,22 +37,9 @@
                     <button type="button" role="menuitem" id="open-deactivate" style="display:block;width:100%;text-align:left;background:transparent;border:0;padding:8px 10px;color:#B91C1C;">Deactivate</button>
                 </div>
             </div>
-        </div>
-    </header>
+        </x-slot:actions>
 
-    <dialog id="deactivate-student" style="border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;">
-        <form method="POST" action="{{ url('/admin/students/'.$student->id.'/deactivate') }}">
-            @csrf
-            <h2 style="margin:0 0 8px;font-size:16px;">Deactivate this student?</h2>
-            <p style="margin:0 0 16px;color:#475569;font-size:14px;">They stay on record. Their status becomes inactive.</p>
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button type="button" id="deactivate-cancel" autofocus style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;background:#fff;">Cancel</button>
-                <button type="submit" style="border:0;border-radius:8px;padding:8px 12px;background:#B91C1C;color:#fff;">Deactivate</button>
-            </div>
-        </form>
-    </dialog>
-
-    <section aria-label="This term" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px;">
+        <x-slot:tiles>
         <article data-testid="kpi-attendance" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
             <p style="margin:0;font-size:13px;color:#475569;">Attendance this term</p>
             @if($page['attendance']['empty'])
@@ -68,26 +58,65 @@
             @endif
         </article>
         <article data-testid="kpi-fees" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
-            <p style="margin:0;font-size:13px;color:#475569;">Fees balance</p>
+            <p style="margin:0;font-size:13px;color:#475569;">Balance</p>
             @if($page['fees']['empty'])
                 <p style="margin:8px 0 0;font-size:16px;font-weight:600;">No fees on record</p>
             @else
-                <p style="margin:8px 0 0;font-size:22px;font-weight:700;">{{ $page['fees']['balance'] ?? '—' }}</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#475569;">{{ $page['fees']['status'] }}@if($page['fees']['paid']) · paid {{ $page['fees']['paid'] }}@endif</p>
+                <p style="margin:8px 0 0;font-size:22px;font-weight:700;" data-testid="fee-balance">{{ $feeMoney($page['fees']['balance']) }}</p>
+                @if($page['currency'] === null)
+                    <p style="margin:4px 0 0;font-size:13px;"><a data-testid="fee-currency-hint" href="{{ url('/admin/settings') }}" style="color:#475569;">Set your currency</a></p>
+                @endif
+                <p style="margin:4px 0 0;font-size:13px;color:#475569;">
+                    @if($page['fees']['paid'] && $page['fees']['expected'])
+                        <span data-testid="fee-paid-of">Paid {{ $feeMoney($page['fees']['paid']) }} of {{ $feeMoney($page['fees']['expected']) }}</span>
+                    @endif
+                    <span data-testid="fee-status" style="display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600;background:#F1F5F9;">{{ $page['fees']['status'] }}</span>
+                </p>
             @endif
         </article>
-    </section>
+        </x-slot:tiles>
 
-    <nav data-testid="student-profile-tabs" aria-label="Student profile" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
-        @foreach($tabs as $key => $label)
-            <a href="{{ url('/admin/students/'.$student->id.'?tab='.$key) }}" data-tab="{{ $key }}" aria-current="{{ $tab === $key ? 'page' : 'false' }}" style="padding:8px 12px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;background:{{ $tab === $key ? '#0F172A' : '#fff' }};color:{{ $tab === $key ? '#fff' : '#0F172A' }};border:1px solid #E2E8F0;">{{ $label }}</a>
-        @endforeach
-    </nav>
+    <dialog id="deactivate-student" style="border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;">
+        <form method="POST" action="{{ url('/admin/students/'.$student->id.'/deactivate') }}">
+            @csrf
+            <h2 style="margin:0 0 8px;font-size:16px;">Deactivate this student?</h2>
+            <p style="margin:0 0 16px;color:#475569;font-size:14px;">They stay on record. Their status becomes inactive.</p>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" id="deactivate-cancel" autofocus style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;background:#fff;">Cancel</button>
+                <button type="submit" style="border:0;border-radius:8px;padding:8px 12px;background:#B91C1C;color:#fff;">Deactivate</button>
+            </div>
+        </form>
+    </dialog>
 
-    <section style="margin-top:16px;background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
         @if($tab === 'overview')
-            <h2 style="margin:0 0 8px;font-size:16px;">Overview</h2>
-            <p style="margin:0;color:#475569;">{{ $page['class_name'] ?: 'No class' }} · {{ $page['kls'] ?: 'No KLS number' }} · {{ $page['status_label'] }}</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;" data-testid="student-overview">
+                <section style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
+                    <h2 style="margin:0 0 12px;font-size:16px;">Student</h2>
+                    <dl style="margin:0;display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:14px;">
+                        <dt style="color:#475569;">Full name</dt><dd style="margin:0;">{{ $page['name'] }}</dd>
+                        <dt style="color:#475569;">KLS number</dt><dd style="margin:0;" data-testid="student-kls">{{ $page['kls'] ?: 'No KLS number' }}</dd>
+                        <dt style="color:#475569;">Class</dt><dd style="margin:0;">{{ $page['class_name'] ?: 'No class' }}</dd>
+                        <dt style="color:#475569;">Gender</dt><dd style="margin:0;">{{ $page['gender'] }}</dd>
+                        <dt style="color:#475569;">Date of birth</dt><dd style="margin:0;">{{ $page['date_of_birth'] }}</dd>
+                        <dt style="color:#475569;">Joined</dt><dd style="margin:0;">{{ $page['joined'] }}</dd>
+                    </dl>
+                </section>
+                <section style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
+                    <h2 style="margin:0 0 12px;font-size:16px;">Parents and guardians</h2>
+                    @if($page['parents'] === [])
+                        <p style="margin:0;color:#475569;">No parent linked.</p>
+                    @else
+                        <ul style="margin:0;padding:0;list-style:none;">
+                            @foreach($page['parents'] as $parent)
+                                <li style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
+                                    <b>{{ $parent['name'] }}</b>
+                                    <div style="font-size:13.5px;color:#475569;">{{ $parent['relation'] }} · {{ $parent['phone'] }} · WhatsApp {{ $parent['whatsapp'] }}</div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </section>
+            </div>
         @elseif($tab === 'academics')
             <h2 style="margin:0 0 8px;font-size:16px;">Marks this term</h2>
             @if($page['marks'] === [])
@@ -147,7 +176,7 @@
                 </ul>
             @endif
         @endif
-    </section>
+    </x-person-profile>
 </div>
 <script>
 (function () {

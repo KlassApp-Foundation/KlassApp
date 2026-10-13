@@ -81,11 +81,15 @@ class StudentProfileService
             'initials' => $initials,
             'class_name' => $link?->section?->name,
             'kls' => $academic?->klassapp_student_id ?: $student->registration_number,
+            'gender' => $this->genderLabel($profile?->gender),
+            'date_of_birth' => $this->dateLabel($profile?->date_of_birth),
+            'joined' => $this->dateLabel($profile?->joining_date),
             'status' => (string) $student->status,
             'status_label' => $this->statusLabel((string) $student->status),
             'attendance' => $this->attendance($schoolId, $student->id, $term),
             'exam' => $this->exam($schoolId, $student->id, $sectionId, $standardId, $term?->id),
             'fees' => $this->fees($schoolId, $student->id, $standardId),
+            'currency' => app(DashboardV2DataService::class)->currencyFor($schoolId),
             'parents' => $this->parents($schoolId, $student),
             'marks' => $this->marks($schoolId, $student->id, $sectionId, $term?->id),
             'payments' => $this->payments($schoolId, $student->id),
@@ -222,7 +226,7 @@ class StudentProfileService
             'balance' => number_format($balance),
             'status' => $status,
             'expected' => $expected > 0 ? number_format($expected) : null,
-            'paid' => number_format($paid),
+            'paid' => $expected > 0 ? number_format($paid) : null,
         ];
     }
 
@@ -250,8 +254,10 @@ class StudentProfileService
                 ->where('user_id', $parent->id)
                 ->where('opted_in', true)
                 ->exists();
+            $relation = trim((string) ($parent->parentprofile()->where('school_id', $schoolId)->value('relation') ?? ''));
             $rows[] = [
                 'name' => $name !== '' ? $name : 'Parent',
+                'relation' => $relation !== '' ? ucfirst($relation) : 'Not given',
                 'phone' => $parent->mobile_no ? (string) $parent->mobile_no : '—',
                 'whatsapp' => $optedIn ? 'Opted in' : 'Not opted in',
             ];
@@ -348,6 +354,28 @@ class StudentProfileService
             'inactive' => 'Left school',
             default => ucfirst($status),
         };
+    }
+
+    private function genderLabel(?string $gender): string
+    {
+        return match (strtolower(trim((string) $gender))) {
+            'female', 'f', 'girl' => 'Female',
+            'male', 'm', 'boy' => 'Male',
+            default => 'Not specified',
+        };
+    }
+
+    private function dateLabel(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return 'Not recorded';
+        }
+        $date = $value instanceof Carbon ? $value : Carbon::parse((string) $value);
+        if ($date->year <= 1970) {
+            return 'Not recorded';
+        }
+
+        return $date->format('j M Y');
     }
 
     private function markLabel(float $marks): string
