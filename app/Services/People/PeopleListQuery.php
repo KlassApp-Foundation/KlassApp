@@ -88,8 +88,6 @@ class PeopleListQuery
             'empty_copy' => 'Add students one by one, or import a spreadsheet with names and classes.',
             'columns' => ['KLS number', 'Class', 'Parent or guardian', 'Status'],
             'bulk' => [
-                ['label' => 'Message parents', 'href' => url('/admin/whatsapp/parents')],
-                ['label' => 'Move to class', 'href' => url('/admin/students')],
                 ['label' => 'Export', 'href' => $this->studentExportHref($request)],
             ],
             'chips' => [
@@ -183,7 +181,6 @@ class PeopleListQuery
             'empty_copy' => 'Add your teaching staff, then send each one an invite to join.',
             'columns' => ['Teaches', 'Class teacher of', 'Invite', 'Status'],
             'bulk' => [
-                ['label' => 'Send invites', 'href' => url('/admin/teachers')],
                 ['label' => 'Export', 'href' => url('/admin/teacher/export')],
             ],
             'chips' => [
@@ -273,7 +270,6 @@ class PeopleListQuery
             'empty_copy' => 'Parents are added with their children, or you can add them here and link them.',
             'columns' => ['Children', 'Phone', 'WhatsApp', 'Last login'],
             'bulk' => [
-                ['label' => 'Send WhatsApp opt-in', 'href' => url('/admin/whatsapp/parents')],
                 ['label' => 'Export', 'href' => url('/admin/report/parents')],
             ],
             'chips' => [

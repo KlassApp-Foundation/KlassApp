@@ -105,8 +105,12 @@ class PeopleListTest extends TestCase
         $teachers->assertSee('Class teacher of', false);
         $parents->assertSee('Last login', false);
 
-        $students->assertSee('Message parents', false);
-        $teachers->assertSee('Send invites', false);
+        $students->assertSee('data-people-select', false);
+        $students->assertSee('aria-pressed="false"', false);
+        $students->assertSee('data-people-check-col', false);
+        $students->assertSee('>Export<', false);
+        $students->assertDontSee('>Message parents<', false);
+        $teachers->assertDontSee('>Send invites<', false);
         $parents->assertSee('Send WhatsApp opt-in', false);
 
         $students->assertSee('Loading students', false);
@@ -352,6 +356,9 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('data-people-check', $on);
         $this->assertStringContainsString('data-people-all', $on);
         $this->assertStringContainsString('data-people-bulk', $on);
+        $this->assertStringContainsString('data-people-select', $on);
+        $this->assertStringContainsString('people-avatar-28', $on);
+        $this->assertStringContainsString('people-avatar-32', $on);
         $this->assertStringContainsString('width="32"', $on);
         $this->assertStringContainsString('width="40"', $on);
 
@@ -364,6 +371,8 @@ class PeopleListTest extends TestCase
         $this->assertStringNotContainsString('data-people-bulk', $off);
         $this->assertStringContainsString('Amina Pupil', $off);
         $this->assertStringContainsString('width="64"', $off);
+        $this->assertStringNotContainsString('people-avatar-28', $off);
+        $this->assertStringNotContainsString('people-avatar-32', $off);
         $this->assertStringNotContainsString('width="32"', $off);
         $this->assertStringNotContainsString('width="40"', $off);
     }
@@ -432,6 +441,17 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('Idle Pupil', $onlyInactive->getContent());
         $this->assertStringNotContainsString('Amina Pupil', $onlyInactive->getContent());
         $this->assertStringNotContainsString('Foreign Pupil', $onlyInactive->getContent());
+    }
+
+    public function test_select_mode_row_click_toggles_instead_of_navigating(): void
+    {
+        $js = file_get_contents(public_path('js/people-list.js'));
+        $css = file_get_contents(public_path('css/people-list.css'));
+
+        $this->assertStringContainsString('function toggleRow', $js);
+        $this->assertStringContainsString("root.classList.toggle('is-selecting'", $js);
+        $this->assertStringContainsString('.people-list.is-selecting .people-name::after', $css);
+        $this->assertStringContainsString('pointer-events: none', $css);
     }
 
     private function school(string $name): School
