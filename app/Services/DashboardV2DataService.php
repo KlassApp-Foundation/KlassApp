@@ -217,6 +217,29 @@ class DashboardV2DataService
             ? round($thisWeek - $lastWeek, 1)
             : null;
 
+        $attendanceValue = '–';
+        $attendanceDetail = 'No register taken yet';
+        $attendanceDirection = null;
+        if ($thisWeek !== null) {
+            $attendanceValue = number_format($thisWeek, 1).'%';
+            $attendanceDetail = $delta === null ? '—' : $this->deltaLabel($delta);
+            $attendanceDirection = $delta === null ? null : ($delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat'));
+        } else {
+            for ($weeksAgo = 1; $weeksAgo <= 8; $weeksAgo++) {
+                $rate = $this->attendanceRate(
+                    $sid,
+                    now()->subWeeks($weeksAgo)->startOfWeek(),
+                    now()->subWeeks($weeksAgo)->endOfWeek()
+                );
+                if ($rate === null) {
+                    continue;
+                }
+                $attendanceValue = number_format($rate, 1).'%';
+                $attendanceDetail = $weeksAgo === 1 ? 'Last week' : 'Earlier this term';
+                break;
+            }
+        }
+
         // Fees — same numbers as the payments surfaces (FeePositionService).
         $feePosition = app(FeePositionService::class)->forSchool($sid);
         $hasStructure = FeesCategories::query()->where('school_id', $sid)->exists();
@@ -248,11 +271,9 @@ class DashboardV2DataService
                 'detail' => $teachers.' teachers · '.$admins.' admin',
             ],
             'attendance' => [
-                'value' => $thisWeek !== null ? number_format($thisWeek, 1).'%' : '–',
-                'detail' => $delta === null
-                    ? ($thisWeek === null ? 'No register taken yet' : '—')
-                    : $this->deltaLabel($delta),
-                'direction' => $delta === null ? null : ($delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat')),
+                'value' => $attendanceValue,
+                'detail' => $attendanceDetail,
+                'direction' => $attendanceDirection,
             ],
             'fees' => $this->feeTile($feePosition, $feeMonths, $currency, $hasStructure),
             'report_cards' => [
@@ -338,6 +359,7 @@ class DashboardV2DataService
             }
             $perClass[] = [
                 'label' => (string) $section->name,
+                'section_id' => (int) $section->id,
                 'value' => round((float) $avg, 1),
             ];
             $examLabel ??= (string) ($latest->name ?: 'End of term');
@@ -379,10 +401,45 @@ class DashboardV2DataService
             ->selectRaw("SUM(CASE WHEN userprofiles.gender NOT IN ('female', 'male') OR userprofiles.gender IS NULL THEN 1 ELSE 0 END) as not_specified")
             ->first();
 
+        $yearId = $term?->academic_year_id ?: SiteHelper::getAcademicYear($sid)?->id;
+        $genderCounts = collect();
+        if ($yearId) {
+            $genderCounts = DB::table('student_academics')
+                ->join('users', 'users.id', '=', 'student_academics.user_id')
+                ->join('userprofiles', 'userprofiles.user_id', '=', 'users.id')
+                ->join('standards_link', 'standards_link.id', '=', 'student_academics.standardLink_id')
+                ->where('student_academics.school_id', $sid)
+                ->where('users.school_id', $sid)
+                ->where('standards_link.school_id', $sid)
+                ->where('student_academics.academic_year_id', $yearId)
+                ->where('users.usergroup_id', 6)
+                ->where('users.status', 'active')
+                ->whereNull('users.deleted_at')
+                ->whereNull('student_academics.deleted_at')
+                ->groupBy('standards_link.section_id')
+                ->select('standards_link.section_id')
+                ->selectRaw("SUM(CASE WHEN userprofiles.gender = 'female' THEN 1 ELSE 0 END) as girls")
+                ->selectRaw("SUM(CASE WHEN userprofiles.gender = 'male' THEN 1 ELSE 0 END) as boys")
+                ->selectRaw("SUM(CASE WHEN userprofiles.gender NOT IN ('female', 'male') OR userprofiles.gender IS NULL THEN 1 ELSE 0 END) as not_specified")
+                ->get()
+                ->keyBy('section_id');
+        }
+        $genderClasses = [];
+        foreach ($perClass as $row) {
+            $counts = $genderCounts->get($row['section_id']);
+            $genderClasses[] = [
+                'label' => $row['label'],
+                'girls' => (int) ($counts->girls ?? 0),
+                'boys' => (int) ($counts->boys ?? 0),
+                'not_specified' => (int) ($counts->not_specified ?? 0),
+            ];
+        }
+
         return [
             'per_class' => $perClass,
             'exam' => $examLabel,
             'attendance_weeks' => $weeks,
+            'gender_classes' => $genderClasses,
             'gender' => [
                 'girls' => (int) ($genderRow->girls ?? 0),
                 'boys' => (int) ($genderRow->boys ?? 0),

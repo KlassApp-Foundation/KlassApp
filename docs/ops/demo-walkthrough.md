@@ -86,5 +86,10 @@ php artisan demo:refresh        # all demo schools
 php artisan demo:refresh 38 --dry-run
 ```
 
+On 16 October, run `php artisan demo:refresh` for the demo schools so the
+current week has attendance registers. The dashboard attendance tile shows
+this week's rate, and last week's rate labelled "Last week" only when this
+week has no register yet.
+
 This removes post-seed test data and re-runs the school's seeder; accounts and
 passwords that existed at seed time are never touched.

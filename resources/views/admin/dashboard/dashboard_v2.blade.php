@@ -124,11 +124,11 @@
             </div>
 
             <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
-                <div class="dv2-kpi"><span class="dv2-kpi-label" data-icon="graduation-cap"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">0</span><p class="dv2-kpi-sub">None added yet</p></div>
-                <div class="dv2-kpi"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></div>
-                <div class="dv2-kpi"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></div>
-                <div class="dv2-kpi"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></div>
-                <div class="dv2-kpi"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list"><span class="dv2-kpi-label" data-icon="graduation-cap"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">0</span><p class="dv2-kpi-sub">None added yet</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/student/add') }}">+ Add students</a></span></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></a></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/attendance/list') }}">View registers</a></span></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/fees/payments/create') }}">Record payment</a></span></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/reports/cards') }}">Generate</a><a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a></span></div>
             </div>
 
             <div class="dv2-new-empty" data-testid="dashboard-v2-empty-students">
@@ -140,70 +140,75 @@
                 </span>
             </div>
         @else
-            {{-- 3 · Quick actions: compact row only when every chart has data --}}
-            @if($state === 'data' && ! $midSetup)
-                <nav class="dv2-qa" aria-label="Quick actions" data-testid="dashboard-v2-actions">
-                    @foreach($quickActions as $action)
-                        <a class="dv2-btn dv2-btn--soft" href="{{ $action['href'] }}" data-icon="{{ $action['icon'] }}"><x-ka-icon :name="$action['icon']" :size="16" tone="default" />{{ $action['title'] }}</a>
-                    @endforeach
-                </nav>
-            @else
-                <div class="dv2-qat" data-testid="dashboard-v2-actions">
-                    @foreach($quickActions as $i => $action)
-                        @php $missing = $missingFor($action); @endphp
-                        <a class="dv2-qt" href="{{ $missing ? ($setup['routes'][$action['prereqs'][0]] ?? $wizardUrl) : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
-                            <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
-                            <span>
-                                <b>{{ $action['title'] }}</b>
-                                <span class="help {{ $missing ? 'missing' : '' }}">{{ $missing ? 'Finish “'.$missing.'” in setup first.' : $action['helper'] }}</span>
-                            </span>
-                        </a>
-                    @endforeach
-                </div>
-            @endif
-
-            {{-- 4 · KPI tiles --}}
+            {{-- 4 · KPI tiles. The old quick-action row is gone; each tile links to its list. --}}
             <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
                 <div class="dv2-kpi">
-                    <span class="dv2-kpi-label"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span>
-                    <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">{{ $kpis['students']['value'] ?? 0 }}</span>
-                    <p class="dv2-kpi-sub {{ ($kpis['students']['direction'] ?? null) === 'up' ? 'up' : '' }}">{{ $kpis['students']['detail'] ?? '—' }}</p>
+                    <a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list">
+                        <span class="dv2-kpi-label"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">{{ $kpis['students']['value'] ?? 0 }}</span>
+                        <p class="dv2-kpi-sub {{ ($kpis['students']['direction'] ?? null) === 'up' ? 'up' : '' }}">{{ $kpis['students']['detail'] ?? '—' }}</p>
+                    </a>
+                    <span class="dv2-kpi-actions"><a href="{{ url('/admin/student/add') }}">+ Add students</a></span>
                 </div>
                 <div class="dv2-kpi">
-                    <span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span>
-                    <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-staff">{{ $kpis['staff']['value'] ?? 0 }}</span>
-                    <p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? '—' }}</p>
+                    <a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff">
+                        <span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-staff">{{ $kpis['staff']['value'] ?? 0 }}</span>
+                        <p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? '—' }}</p>
+                    </a>
                 </div>
                 <div class="dv2-kpi">
-                    <span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span>
-                    <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-attendance">{{ $kpis['attendance']['value'] ?? '–' }}</span>
-                    <p class="dv2-kpi-sub {{ ($kpis['attendance']['direction'] ?? null) === 'up' ? 'up' : (($kpis['attendance']['direction'] ?? null) === 'down' ? 'down' : '') }}">{{ $kpis['attendance']['detail'] ?? '—' }}</p>
+                    <a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers">
+                        <span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />{{ ($kpis['attendance']['detail'] ?? '') === 'Last week' ? 'Last week' : 'Attendance this week' }}</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-attendance">{{ $kpis['attendance']['value'] ?? '–' }}</span>
+                        <p class="dv2-kpi-sub {{ ($kpis['attendance']['direction'] ?? null) === 'up' ? 'up' : (($kpis['attendance']['direction'] ?? null) === 'down' ? 'down' : '') }}">{{ $kpis['attendance']['detail'] ?? '—' }}</p>
+                    </a>
+                    <span class="dv2-kpi-actions"><a href="{{ url('/admin/attendance/list') }}">View registers</a></span>
                 </div>
                 <div class="dv2-kpi">
+                    <a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees">
                     <span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span>
                     @if(($kpis['fees']['state'] ?? 'ok') === 'ok')
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-fees">{{ $kpis['fees']['percent'] }}%</span>
                         <span class="dv2-meter" role="img" aria-label="{{ $kpis['fees']['percent'] }}% collected"><i style="width:{{ $kpis['fees']['percent'] }}%"></i></span>
-                        <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}@if($currency === null) · <a class="dv2-currency-hint" data-testid="dashboard-v2-currency-hint" href="{{ url('/admin/settings') }}">Set your currency</a>@endif</p>
+                        <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}</p>
                     @else
                         <span class="dv2-kpi-value">–</span>
-                        <p class="dv2-kpi-sub warn">Set up fees first · <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}" style="min-height:44px;display:inline-flex;align-items:center">Set up fees</a></p>
+                        <p class="dv2-kpi-sub warn">Set up fees first</p>
                     @endif
+                    </a>
+                    <span class="dv2-kpi-actions">
+                        <a href="{{ url('/admin/fees/payments/create') }}">Record payment</a>
+                        @if(($kpis['fees']['state'] ?? 'ok') !== 'ok')
+                            <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}">Set up fees</a>
+                        @elseif($currency === null)
+                            <a class="dv2-currency-hint" data-testid="dashboard-v2-currency-hint" href="{{ url('/admin/settings') }}">Set your currency</a>
+                        @endif
+                    </span>
                 </div>
                 <div class="dv2-kpi">
-                    <span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span>
-                    <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-reports">{{ $kpis['report_cards']['ready'] ?? 0 }}</span>
-                    @if(($kpis['report_cards']['percent'] ?? null) !== null)
-                        <span class="dv2-meter" role="img" aria-label="{{ $kpis['report_cards']['percent'] }}% of students"><i style="width:{{ $kpis['report_cards']['percent'] }}%"></i></span>
-                    @endif
-                    <p class="dv2-kpi-sub">of {{ $kpis['report_cards']['students'] ?? 0 }}@if(!empty($kpis['report_cards']['exam'])) · {{ $kpis['report_cards']['exam'] }}@elseif(($kpis['report_cards']['state'] ?? '') === 'no_exam') · No exam closed yet @endif</p>
+                    <a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards">
+                        <span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-reports">{{ $kpis['report_cards']['ready'] ?? 0 }}</span>
+                        @if(($kpis['report_cards']['percent'] ?? null) !== null)
+                            <span class="dv2-meter" role="img" aria-label="{{ $kpis['report_cards']['percent'] }}% of students"><i style="width:{{ $kpis['report_cards']['percent'] }}%"></i></span>
+                        @endif
+                        <p class="dv2-kpi-sub">of {{ $kpis['report_cards']['students'] ?? 0 }}@if(!empty($kpis['report_cards']['exam'])) · {{ $kpis['report_cards']['exam'] }}@elseif(($kpis['report_cards']['state'] ?? '') === 'no_exam') · No exam closed yet @endif</p>
+                    </a>
+                    <span class="dv2-kpi-actions">
+                        <a href="{{ url('/admin/reports/cards') }}">Generate</a>
+                        <a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a>
+                    </span>
                 </div>
             </div>
 
             {{-- 5 · Charts --}}
             <div class="dv2-grid2">
                 <div class="dv2-card" data-testid="dashboard-v2-chart-performance">
-                    <h2>Performance by class</h2>
+                    <div class="act-head">
+                        <h2>Performance by class</h2>
+                        <a href="{{ url('/admin/exams') }}">Enter marks</a>
+                    </div>
                     <small>{{ $charts['exam'] ? $charts['exam'].' · average mark' : 'Latest exam · average mark' }}</small>
                     @if(count($charts['per_class'] ?? []) > 0)
                         @php
@@ -253,9 +258,24 @@
                     @endphp
                     <small>{{ $g['total'] }} students</small>
                     @if($g['total'] > 0)
-                        <div class="stack" role="img" aria-label="Girls {{ $gp($g['girls']) }}%, boys {{ $gp($g['boys']) }}%, not specified {{ $gp($g['not_specified']) }}%">
-                            <i style="width:{{ $gp($g['girls']) }}%;background:#B45309"></i><i style="width:{{ $gp($g['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $gp($g['not_specified']) }}%;background:#64748B"></i>
+                        <div class="hb" data-testid="dashboard-v2-gender-total">
+                            <span>School</span>
+                            <span class="stack" role="img" aria-label="School total: girls {{ $g['girls'] }}, boys {{ $g['boys'] }}, not specified {{ $g['not_specified'] }}">
+                                <i style="width:{{ $gp($g['girls']) }}%;background:#B45309"></i><i style="width:{{ $gp($g['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $gp($g['not_specified']) }}%;background:#64748B"></i>
+                            </span>
                         </div>
+                        @foreach($charts['gender_classes'] ?? [] as $row)
+                            @php
+                                $rt = max(1, (int) $row['girls'] + (int) $row['boys'] + (int) $row['not_specified']);
+                                $rw = fn ($n) => (int) round($n / $rt * 100);
+                            @endphp
+                            <div class="hb" data-testid="dashboard-v2-gender-class">
+                                <span>{{ $row['label'] }}</span>
+                                <span class="stack" role="img" aria-label="{{ $row['label'] }}: girls {{ $row['girls'] }}, boys {{ $row['boys'] }}, not specified {{ $row['not_specified'] }}">
+                                    <i style="width:{{ $rw($row['girls']) }}%;background:#B45309"></i><i style="width:{{ $rw($row['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $rw($row['not_specified']) }}%;background:#64748B"></i>
+                                </span>
+                            </div>
+                        @endforeach
                         <div class="legend">
                             <span><i style="background:#B45309"></i>Girls {{ $gp($g['girls']) }}%</span>
                             <span><i style="background:#1E6FD9"></i>Boys {{ $gp($g['boys']) }}%</span>
