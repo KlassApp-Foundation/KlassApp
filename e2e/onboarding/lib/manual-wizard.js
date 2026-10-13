@@ -55,9 +55,15 @@ async function readWizardError(page) {
  */
 async function clickNext(page, shotDir, tag) {
     const before = (await title(page)).toLowerCase();
+    // Node-side wait: a frozen page must not hold this open the way page.waitForTimeout can.
+    const pending = page.waitForResponse(
+        (res) => res.url().includes('/livewire/update') && res.request().method() === 'POST',
+        { timeout: 20_000 },
+    ).catch(() => null);
     await page.locator(NEXT).click({ timeout: T });
+    await pending;
 
-    const deadline = Date.now() + 30_000;
+    const deadline = Date.now() + 20_000;
     let err = '';
     while (Date.now() < deadline) {
         await waitIdle(page, 400);
@@ -79,8 +85,9 @@ async function clickNext(page, shotDir, tag) {
         }
     }
 
-    console.log(`[wizard] ${tag}: title still "${before}" after next (no advance within 30s)`);
-    return await readWizardError(page);
+    const still = `title still "${before}" after next`;
+    console.log(`[wizard] ${tag}: ${still}`);
+    return (await readWizardError(page)) || still;
 }
 
 async function selectByLabelOrValue(page, selector, label) {
