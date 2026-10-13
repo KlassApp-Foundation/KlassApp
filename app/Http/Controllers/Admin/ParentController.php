@@ -30,6 +30,7 @@ use App\Models\Feedback;
 use App\Models\ParentProfile;
 use App\Traits\Common;
 use App\Models\User;
+use App\Services\People\PeopleListQuery;
 use Exception;
 use Log;
 
@@ -61,12 +62,11 @@ class ParentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, PeopleListQuery $people)
     {
-        //
-        $query = \Request::getQueryString();
-
-        return view('/admin/parent/index',[ 'query' => $query ]);
+        return view('/admin/parent/index', [
+            'list' => $people->parents(Auth::user(), $request),
+        ]);
     }
     
     /**

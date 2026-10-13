@@ -120,8 +120,7 @@ class SoftlaunchFormPolishContractTest extends TestCase
     {
         $html = $this->actingAs($this->admin)->get('/admin/teachers')->assertOk()->getContent();
 
-        $this->assertStringContainsString('inline-flex items-baseline gap-2', $html);
-        $this->assertStringContainsString('Total staff', $html);
+        $this->assertStringContainsString('data-people-list="teachers"', $html);
         $this->assertStringContainsString('ds-form-input--with-icon', $html);
         $this->assertStringContainsString('id="teachers-search"', $html);
     }

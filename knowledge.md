@@ -13647,3 +13647,21 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 ### Continuation — Toshi checklist unified on the shared steps source (branch `fix/toshi-checklist-shared-source`)
 
 **Change:** the maximized Toshi sidebar's private "Progress — x/19" list (the `$steps`/`$step` pair) now renders through the shared `livewire/partials/toshi-setup-checklist.blade.php` used by the dock: one `OnboardingStepsService` source, neutral K25 labels (`displayLabel`), same count as the dashboard setup bar + sidebar chip, rows open the same step via `jumpToChecklistStep`. Private `AgentToshi::$steps` stays as the legacy flow navigator only (flow form conditionals, `jumpToStep`, plan flows) — before: modal claimed an independent 19-step taxonomy; after: dock = modal = bar = chip. Preview composer already carries `disabled` + `aria-disabled="true"` (verified by test). **Tests:** `ToshiChecklistSharedSourceTest` 3P/27; Toshi suite 459P/1967.
+
+## Session: 2026-10-11 — PR2 people lists OPEN ([#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057), branch `feat/people-list`)
+
+**Scope:** students, teachers, and parents only. Shell, dashboard, PR3, and PR4 were left untouched. Not merged: shell PRs #1054 (`feat/sidebar-v3`) and #1056 (`feat/sidebar-rail`) were still open.
+
+**Shipped:** `<x-people-list>` plus `App\Services\People\PeopleListQuery`. All three index pages render that component. Search, counted chips, stretched profile links, row menus, and a bulk bar that shows only when a row is selected. Listed statuses are `active` and `inactive` (`whereIn`, never `!= 'exit'`). All includes inactive; the Active chip is active only. Class filter uses the school's own `standards_link` rows; a foreign id is ignored. KLS comes from `student_academics.klassapp_student_id`.
+
+**Files:** `app/Services/People/PeopleListQuery.php`, `resources/views/components/people-list.blade.php`, `public/css/people-list.css`, `public/js/people-list.js`, the three admin index blades, `StudentController`, `TeacherListController`, `ParentController`, `tests/Feature/Admin/PeopleListTest.php`, and the roster contract tests that pinned the old HTML.
+
+**Tests:** related suites 56 passed, 1 skipped (PeopleList, add buttons, classless, inactive listing, cross-school standard filter, teacher edit link, roster kit, softlaunch polish, nav aliases, fresh admin dashboard, KLS visibility).
+
+**Review:** local `php artisan serve` on port 8003, Vite `public/build` present, no `public/hot`. Browser at 375 / 768 / 1280: page overflow 0, search and checkbox hits 44px, bulk bar “1 selected”, parent search `?search=Agnes` left one row. Evidence: `~/Desktop/klassapp-evidence/PR2/`. Demo Junior School has no `klassapp_student_id` values, so the KLS column shows an em dash; the feature test plants one and asserts it.
+
+**Status:** #1057 OPEN. Not deployed. Staging pairs wait until this PR merges. Student Export on the list is `GET /admin/student/export?list=1` and carries the current search, chip, standard, and status. The file is school-scoped, excludes exit, and a foreign `standard` id does not pull in another school's students. The class filter also matches the selected stream. Profile links stay `/admin/student/show/{name}`. PR2b (select mode, 28px avatars, 48px rows, sticky header, card removal, row hover) waits until Rasta says merge #1057.
+
+### Continuation — 2026-10-12 selection and avatar switches
+
+Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list` merged `origin/main` before this change. Checkbox column and initials tiles are unchanged visually. `<x-people-list>` now takes `showSelection` (default true) and `avatarSize` (default `['table' => 'xs', 'card' => 'sm']`; a single size applies to both). The design follow-up flips those two props. `PeopleListTest` 8 passed. No further polish until the spec arrives.

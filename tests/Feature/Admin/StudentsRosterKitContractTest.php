@@ -9,20 +9,16 @@ class StudentsRosterKitContractTest extends TestCase
     public function test_students_roster_blade_matches_kit_composition(): void
     {
         $blade = file_get_contents(resource_path('views/admin/member/index.blade.php'));
+        $component = file_get_contents(resource_path('views/components/people-list.blade.php'));
 
-        $this->assertStringContainsString('ds-page-head', $blade);
-        $this->assertStringContainsString('ds-page-head-title', $blade);
+        $this->assertStringContainsString('ds-page-head', file_get_contents(resource_path('views/layouts/partials/page-header.blade.php')));
         $this->assertStringContainsString('Import list', $blade);
         $this->assertStringContainsString('Add student', $blade);
-        $this->assertStringContainsString('dt-name-link', $blade);
-        $this->assertStringContainsString('WhatsApp', $blade);
-        $this->assertStringContainsString('selectable', $blade);
-        $this->assertStringContainsString('sortable', $blade);
-        $this->assertStringContainsString('dt-pagination', $blade);
-        $this->assertStringContainsString('dt-checkbox', $blade);
         $this->assertStringContainsString('students-roster', $blade);
-        $this->assertStringContainsString('No students match', $blade);
-        $this->assertStringContainsString("url('/admin/student/edit/' . \$student->name)", $blade);
+        $this->assertStringContainsString('x-people-list', $blade);
+        $this->assertStringContainsString('}} match', $component);
+        $this->assertStringContainsString('data-people-check', $component);
+        $this->assertStringContainsString('/admin/student/edit/', file_get_contents(app_path('Services/People/PeopleListQuery.php')));
     }
 
     public function test_x_table_still_emits_ds_table_ledger_for_pulse(): void

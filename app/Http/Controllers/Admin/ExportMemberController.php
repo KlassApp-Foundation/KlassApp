@@ -104,6 +104,20 @@ class ExportMemberController extends Controller
    }
    public function studentexports(Request $request)
    {
+    if ($request->query('list') === '1') {
+        $rows = app(\App\Services\People\PeopleListQuery::class)->studentExportRows(Auth::user(), $request);
+        $csv = Writer::createFromFileObject(new \SplTempFileObject());
+        $csv->insertOne(['Student', 'KLS number', 'Class', 'Stream', 'Status']);
+        foreach ($rows as $row) {
+            $csv->insertOne($row);
+        }
+
+        return response($csv->toString(), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="students.csv"',
+        ]);
+    }
+
     $headings=\Session::get('headings');
     $heads=array_values($headings);
     //dd($heads);
