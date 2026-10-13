@@ -22,11 +22,14 @@
 .people-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .people-table th { text-align: left; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #64748b; padding: 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
 .people-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-.people-row { position: relative; }
-.people-who { display: flex; align-items: center; gap: 10px; min-width: 0; position: relative; z-index: 1; }
+.people-row, .people-card { position: relative; cursor: pointer; }
+.people-row:hover td, .people-card:hover { background: #F8FAFC; }
+.people-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .people-who-text { min-width: 0; display: flex; flex-direction: column; }
 .people-name { color: #0f172a; font-weight: 700; text-decoration: none; }
-.people-name::after { content: ""; position: absolute; inset: 0; }
+.people-name:focus { outline: none; }
+.people-name::after { content: ""; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.people-name:focus-visible::after { outline: 2px solid #1E6FD9; outline-offset: -2px; }
 .people-role { color: #64748b; font-size: 12px; font-weight: 500; }
 .people-kls { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .people-check, .people-menu { width: 52px; }
