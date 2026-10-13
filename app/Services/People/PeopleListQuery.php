@@ -51,7 +51,7 @@ class PeopleListQuery
             $rows[] = [
                 'id' => $student->id,
                 'name' => $this->personName($student),
-                'profile_url' => url('/admin/student/show/'.$student->name),
+                'profile_url' => url('/admin/students/'.$student->id),
                 'user' => $student,
                 'card' => array_values(array_filter([
                     $kls !== '' ? $kls : null,
