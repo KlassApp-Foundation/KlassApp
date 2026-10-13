@@ -53,6 +53,12 @@
                 @endif
             @endforeach
         </div>
+        @if($showSelection)
+            <button type="button" class="people-select" data-people-select aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+                Select
+            </button>
+        @endif
     </form>
 
     @if($showSelection)
@@ -62,6 +68,7 @@
             <a class="people-bulk-btn" href="{{ $action['href'] }}">{{ $action['label'] }}</a>
         @endforeach
         <button class="people-bulk-btn" type="button" data-people-clear>Clear</button>
+        <button class="people-bulk-btn" type="button" data-people-done>Done</button>
     </div>
     @endif
 
@@ -93,7 +100,7 @@
                 <thead>
                     <tr>
                         @if($showSelection)
-                        <th class="people-check">
+                        <th class="people-check" data-people-check-col hidden>
                             <label class="people-check-hit">
                                 <input type="checkbox" data-people-all aria-label="Select all on this page">
                             </label>
@@ -110,7 +117,7 @@
                     @foreach($list['rows'] as $row)
                         <tr class="people-row">
                             @if($showSelection)
-                            <td class="people-check">
+                            <td class="people-check" data-people-check-col hidden>
                                 <label class="people-check-hit">
                                     <input type="checkbox" value="{{ $row['id'] }}" data-people-check aria-label="Select {{ $row['name'] }}">
                                 </label>
@@ -118,7 +125,9 @@
                             @endif
                             <td>
                                 <span class="people-who">
-                                    <x-profile-photo :user="$row['user']" :size="$tableAvatar" />
+                                    <span class="people-avatar {{ $tableAvatar === 'xs' ? 'people-avatar-28' : '' }}">
+                                        <x-profile-photo :user="$row['user']" :size="$tableAvatar" />
+                                    </span>
                                     <span class="people-who-text">
                                         <a class="people-name" href="{{ $row['profile_url'] }}">{{ $row['name'] }}</a>
                                         @if(!empty($row['role']))
@@ -157,11 +166,13 @@
                 @foreach($list['rows'] as $row)
                     <article class="people-card">
                         @if($showSelection)
-                        <label class="people-check-hit">
+                        <label class="people-check-hit" data-people-check-col hidden>
                             <input type="checkbox" value="{{ $row['id'] }}" data-people-check aria-label="Select {{ $row['name'] }}">
                         </label>
                         @endif
-                        <x-profile-photo :user="$row['user']" :size="$cardAvatar" />
+                        <span class="people-avatar {{ $cardAvatar === 'sm' ? 'people-avatar-32' : '' }}">
+                            <x-profile-photo :user="$row['user']" :size="$cardAvatar" />
+                        </span>
                         <div class="people-card-main">
                             <a class="people-name" href="{{ $row['profile_url'] }}">{{ $row['name'] }}</a>
                             <p class="people-card-line">

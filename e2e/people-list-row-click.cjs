@@ -64,17 +64,45 @@ async function login(page) {
 
   await page.goto(`${BASE}/admin/students`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   const check = page.locator('tr.people-row [data-people-check]').first();
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  const selectCell = page.locator('tr.people-row').first().locator('td').nth(2);
+  const selectBox = await selectCell.boundingBox();
+  if (!selectBox) {
+    fail('select mode row has no measurable cell');
+  } else {
+    await page.mouse.click(selectBox.x + selectBox.width / 2, selectBox.y + Math.min(selectBox.height / 2, 20));
+    await page.waitForTimeout(400);
+    if (!page.url().includes('/admin/students') || page.url().includes('/admin/students/')) {
+      fail(`select-mode row click navigated to ${page.url()}`);
+    } else if (!(await check.isChecked())) {
+      fail('select-mode row click did not toggle the checkbox');
+    } else {
+      console.log('PASS select-mode row toggles');
+    }
+  }
+
   const checkBox = await check.boundingBox();
   if (checkBox) {
     await page.mouse.click(checkBox.x + checkBox.width / 2, checkBox.y + checkBox.height / 2);
     await page.waitForTimeout(400);
-    if (!page.url().includes('/admin/students')) {
+    if (!page.url().includes('/admin/students') || page.url().includes('/admin/students/')) {
       fail(`checkbox navigated to ${page.url()}`);
-    } else if (!(await check.isChecked())) {
-      fail('checkbox click did not toggle');
+    } else if (await check.isChecked()) {
+      fail('checkbox click did not toggle off');
     } else {
       console.log('PASS checkbox stays on the list');
     }
+  }
+
+  const menu = page.locator('tr.people-row [data-people-menu]').first();
+  await menu.click();
+  await page.waitForTimeout(300);
+  if (!page.url().includes('/admin/students') || page.url().includes('/admin/students/')) {
+    fail(`row menu navigated to ${page.url()}`);
+  } else if (await menu.getAttribute('aria-expanded') !== 'true') {
+    fail('row menu did not open');
+  } else {
+    console.log('PASS row menu stays on the list');
   }
 
   await browser.close();
