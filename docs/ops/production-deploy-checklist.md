@@ -1,7 +1,7 @@
 # Production Deploy Checklist
 
-> **Status**: ready-to-use runbook, re-verified 2026-10-08 against the pre-deploy
-> tip of `main` (MVP-path batch); production still runs `dabfb80c`. Production runs Laravel
+> **Status**: ready-to-use runbook, re-checked 2026-10-13 against `main`
+> (`e85c2fc4`). Production runs Laravel
 > Cloud, push-to-deploy **off** — merging to `main` does **not** ship; a deploy is an
 > explicit release you start and watch.
 >
@@ -53,10 +53,9 @@ drops of tables/columns, no row deletions). The list below is final for this
 deploy — re-run `migrate:status` on production at deploy time and stop if the
 count differs. Two migrations change existing data — flagged below.
 
-Re-verified again 2026-10-08 for the MVP-path batch (through the route-scoping
-PRs and the MVP journey work): **no migrations were added or modified since
-`14667e61`** (checked the full `database/migrations` diff) — the 12-migration
-list and its classifications below stand unchanged.
+Re-checked 2026-10-13 (`14667e61..e85c2fc4`): the 12-migration list below is
+unchanged, and **two structure migrations were added after `14667e61`**. Neither
+drops a table or column and neither deletes rows.
 
 **The database snapshot is the rollback for the data migrations.** A code revert
 cannot undo a data migration; the §1.4 snapshot is the pre-deploy state to
@@ -89,6 +88,8 @@ cutoff), so deploying it writes nothing.
 | `2026_10_02_183000_backfill_existing_schools_toshi_safe_defaults` | **data — the existing-schools Toshi reset** | flips every school currently in `assistant` back to `preview` + `toshi_enabled=0` (AI is opt-in per school, AGENTS rule #33); before flipping it captures school ids plus old `toshi_enabled`/`toshi_mode` only: to `storage/logs/toshi-backfill-restore-<date>.json` (feeds `down()`) **and** to the application log via `Log::info` (Cloud log stream), so the capture survives on a deployed container |
 | `2026_10_03_023019_add_onboarding_finish_and_skipped_steps_to_schools_table` | structure | adds nullable columns |
 | `2026_10_06_000001_create_user_preferences_table` | structure | creates the per-user preference store behind the dashboard v2 setup-banner dismissal (INT UNSIGNED FK to users.id) |
+| `2026_10_10_190000_add_academic_term_to_report_generations` | structure | adds nullable `report_generations.academic_term_id` when the column is missing. `down()` drops that column only |
+| `2026_10_10_191500_ensure_schools_state_id` | structure | adds nullable `schools.state_id` when the column is missing. `down()` does not drop it (the original schools table owns the column) |
 
 Also on the path: `2026_09_22_010000_add_is_demo_to_schools_and_seed_demo_data`
 was **modified** since production's SHA (demo seeding stripped, schema-only) —
@@ -102,13 +103,22 @@ the captured values (log stream or the restore file) allow an exact reversal.
 
 ## 3. Deploy
 
-**Build-command parity (preflight):** confirm production's build command installs
-dev dependencies the same way as staging before deploying. Staging runs
-(`composer install --no-dev && npm ci --include=dev --no-audit --no-fund && npm run build`);
-the `npm ci --include=dev` step is required — without it, any platform
-dependency-cache miss fails the build with `vite: not found`
-(seen on staging 2026-10-09; it previously read just
-`composer install --no-dev && npm run build`).
+**Build-command parity (preflight):** staging's build command, read from the
+latest succeeded staging deployment, is:
+
+`composer install --no-dev && npm ci --include=dev --no-audit --no-fund && npm run build`
+
+The `npm ci --include=dev` step is required. Without it, a platform
+dependency-cache miss fails the build with `vite: not found` (seen on staging
+2026-10-09, when the command was `composer install --no-dev && npm run build`).
+
+Production's build command, read 2026-10-13, is still the old one:
+
+`composer install --no-dev && npm run build`
+
+Do not change it from an agent session. Before the production deploy, set
+production's build command to the staging command above. Until that value
+matches, do not start the production deploy.
 
 1. Deploy from the dedicated main worktree at the reviewed SHA (rule #15).
 2. Trigger the release with the empty-body deploy POST to the production
@@ -128,7 +138,8 @@ dependency-cache miss fails the build with `vite: not found`
 
 | Variable | Production value | Why |
 |---|---|---|
-| `TOSHI_DEFAULT_MODE` | `preview` | New schools start with the Coming-soon panel; `assistant`/`onboarding` are never defaults (AGENTS rule #33). Regression test: `NoSchoolGetsAiByDefaultTest`. |
+| `DASHBOARD_V2_ENABLED` | unset today (code default `false`). Set to `true` when shipping the v2 dashboard | Staging is `true` (checked 2026-10-13: `config('dashboard.v2_enabled')` is true). Unset production keeps the old dashboard. |
+| `TOSHI_DEFAULT_MODE` | unset today, which is the code default `preview`. Leave it `preview` | New schools start with the Coming-soon panel. `assistant` is not a valid default and falls back to `preview` (AGENTS rule #33). Staging is also unset and resolves to `preview`. Regression test: `NoSchoolGetsAiByDefaultTest`. |
 | `TOSHI_ONBOARDING_V2` | unset / `false` | Toshi v2 onboarding chat is a staging-only feature until soft-launch sign-off. |
 | `ROBOTS_NOINDEX` | unset / `false` | Only staging should noindex. `true` in production would de-index the live site. |
 | `EMAIL_VERIFICATION_CUTOFF` | **unset (blank)** | Blank keeps the built-in default (2026-10-05 00:00 UTC) — behaviour identical to the merged gate. Set it **only** if Rasta explicitly decides to move the boundary; value would be an ISO-8601 UTC instant. Must NOT be copied from staging (staging leaves it unset too — blank everywhere today). |
@@ -137,9 +148,14 @@ dependency-cache miss fails the build with `vite: not found`
 | `WHATSAPP_VERIFY_SIGNATURE` | `true` | Reject unverified WhatsApp webhooks. |
 | `FILESYSTEM_DISK` | cloud object storage | Production uploads go to the object bucket, never `local`. **Do not copy the staging value.** |
 
-No new environment variables were introduced since the 2026-10-06 review
-(checked 2026-10-08). If in doubt, deploy with the values above and change
-nothing else.
+`demo:refresh` is a staging-only command for the two walkthrough schools
+(Demo Junior and Demo Senior). Dry-run first (`php artisan demo:refresh 38 --dry-run`
+and the same for 39), then run it without `--dry-run` when the demo data should
+return to the seeded fee mix and walkthrough state. It refuses a school that is
+not `is_demo`. **Never run `demo:refresh` or `demo:set-password` on production.**
+
+No other new environment variables were introduced between the 2026-10-08 review
+and `e85c2fc4`. If in doubt, deploy with the values above and change nothing else.
 
 General rule: **staging's non-listed env values are not production's.** Copy
 individual variables deliberately, one at a time, never a bulk staging→production

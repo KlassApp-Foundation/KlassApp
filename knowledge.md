@@ -676,6 +676,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 13, 2026 — **final gate 14/14 green; role crawl clean except notice-list 404s**
+
+- [#1068](https://github.com/KlassApp-Foundation/KlassApp/pull/1068) MERGED `93aaebab` (API `merged: true`). Final-gate runner on pin `e85c2fc4`: 14 passed (44.5m) on staging. Schools 293–306 dry-run then purged; none remained.
+- [#1069](https://github.com/KlassApp-Foundation/KlassApp/pull/1069) MERGED `9ceb7850` (API `merged: true`). Demo Junior sidebar crawl at 1280: no document 4xx/5xx and no dead sidebar links. Class teacher, subject teacher, and receptionist each request a missing notice list (`/teacher/notice/list` or `/receptionist/notice/list`).
+- Production build command is still `composer install --no-dev && npm run build`. Staging is `composer install --no-dev && npm ci --include=dev --no-audit --no-fund && npm run build`. Production `DASHBOARD_V2_ENABLED` is unset (dashboard v2 off). Staging is `true`. `TOSHI_DEFAULT_MODE` is unset on both, which resolves to `preview`. Cloud settings were not changed.
+- AGENTS rules 34–43 are rebased for Rasta's review and must not be merged by an agent.
+
 ## Current Status: October 12, 2026 — **journeys and demo fee mix shipped; staging tiles match the local seed**
 
 - [#1061](https://github.com/KlassApp-Foundation/KlassApp/pull/1061) MERGED `d8ddabe2` (API `merged: true`). Primary manual, Toshi (primary / O-level / O+A-level), and MVP journeys passed on staging at 375 and 1280. Verification codes came from the staging log stream. Throwaway E2E schools were dry-run then purged.
@@ -2590,6 +2597,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-13: final gate, Demo Junior role crawl, production checklist
+- **Work done**: Final-gate runner for the 14 staging journeys (3 manual, 3 Toshi, MVP, each at 375 and 1280). Dry-run printed the plan; the real run passed 14/14 in 44.5m and purged schools 293–306 after a dry run. Role crawl of eight Demo Junior roles at 1280, GET only, skipping mutating link words. Production checklist updated for the two migrations after `14667e61`, `DASHBOARD_V2_ENABLED`, `TOSHI_DEFAULT_MODE`, the staging versus production build command, and `demo:refresh`. AGENTS rules 34–43 rebased onto current main for review.
+- **Files modified**: `e2e/onboarding/final-gate.mjs`, `e2e/onboarding/README.md`, `e2e/role-crawl.mjs`, `docs/ops/production-deploy-checklist.md`, `AGENTS.md`, `knowledge.md`.
+- **Key decisions**: No UI files. Production Cloud settings were not changed; the checklist records the current build command and the two flags. The AGENTS rules PR is left for Rasta.
+- **Status**: #1068 and #1069 merged. Checklist and the rules PR follow. Role-crawl notice-list 404s are layout requests, not sidebar documents.
+- **Edge cases flagged**: o-level + A-level journeys still record non-failing findings (manual 2, Toshi 4) at both widths. Admin Help leaves the staging host and was not followed. Parent sidebar exposed 2 links.
+- **PR**: [#1068](https://github.com/KlassApp-Foundation/KlassApp/pull/1068) MERGED `93aaebab`. [#1069](https://github.com/KlassApp-Foundation/KlassApp/pull/1069) MERGED `9ceb7850`.
 
 ### 2026-10-12: staging journeys on the Cloud log stream; demo fee collection mix
 - **Work done**: Onboarding and MVP journeys no longer read sign-up codes over SSH. The guarded staging bridge reads `klassapp.email_verification_code` from the Laravel Cloud log stream and refuses any environment id outside the staging prefix. Selectors follow the current shell (account menu, sidebar scrim, school line, existing `data-testid` hooks). Staging runs, all passed: primary manual 1280 and 375; Toshi primary, O-level, and O+A-level at both widths; MVP at both widths. Dry-run then purge of the throwaway E2E schools. Demo junior and senior seeders rebuild fee payments on every `demo:refresh` (full / half / unpaid, about 70%, dates inside Term III). Term III for those two schools is 24 Aug–28 Nov 2026 so October is month 3 of 4; the fee tile's month cap can then show 60–75%. Local numbers at 2026-10-12: Junior 72% (38.74M / 54M), Senior 70% (39.2M / 56.24M). Staging before refresh: Junior 18% (9.5M / 54M), Senior 21% (11.6M / 56.2M).
