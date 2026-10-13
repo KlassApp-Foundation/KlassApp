@@ -676,6 +676,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 13, 2026 — **Demo Junior admin login is its own account**
+
+- Branch `tooling/demo-admin-login`. `demo:set-admin-login` changes only the active school admin on Demo Junior School. It refuses a non-demo school and any other school, and it never renames a school. The password is an argument or a hidden prompt and is not printed. The durable address is `demojunior@klassapp.xyz`.
+- `demo:refresh` and the junior seeder keep that one admin, drop the legacy `admin@junior.demo.klassapp.test` address, and do not change the password hash on a second refresh. Demo Senior is unchanged.
+- Journeys read `E2E_ACCOUNT_PASSWORD`. The role crawl reads `DEMO_JUNIOR_ADMIN_EMAIL`, `DEMO_JUNIOR_ADMIN_PASSWORD`, `DEMO_JUNIOR_EMAIL_DOMAIN`, and `ROLE_CRAWL_PASSWORD`.
+- Tests with foreign keys on: `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest` (32 tests, the refusal case re-run green). Staging login is verified after this branch deploys. Production is not touched.
+- [#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057) is on `main` at `02580032`. AGENTS rules PR [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071) stays open for review.
+
 ## Current Status: October 13, 2026 — **final gate 14/14 green; role crawl clean except notice-list 404s**
 
 - [#1068](https://github.com/KlassApp-Foundation/KlassApp/pull/1068) MERGED `93aaebab` (API `merged: true`). Final-gate runner on pin `e85c2fc4`: 14 passed (44.5m) on staging. Schools 293–306 dry-run then purged; none remained.
@@ -13665,3 +13673,13 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 ### Continuation — 2026-10-12 selection and avatar switches
 
 Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list` merged `origin/main` before this change. Checkbox column and initials tiles are unchanged visually. `<x-people-list>` now takes `showSelection` (default true) and `avatarSize` (default `['table' => 'xs', 'card' => 'sm']`; a single size applies to both). The design follow-up flips those two props. `PeopleListTest` 8 passed. No further polish until the spec arrives.
+
+## Session: 2026-10-13 — Demo Junior school admin login
+
+**Work:** Demo Junior's one active school admin is recognised by role and school. `demo:set-admin-login` sets the durable address `demojunior@klassapp.xyz` and a password given only as an argument or a hidden prompt. It refuses a non-demo school and any school other than Demo Junior, prints a count only, and sends no mail. A refresh renames the legacy demo-domain admin address, does not create a second admin, and does not change the password hash. The manifest stores `admin_email` and no password. Journeys and the role crawl read demo credentials from environment variables.
+
+**Files:** `DemoSetAdminLoginCommand`, `DemoJuniorSchoolSeeder`, `SeedsRichDemoData`, `DemoSeedManifest`, `docs/ops/demo-walkthrough.md`, `e2e/role-crawl.mjs`, `e2e/onboarding/lib/journey-data.js`, `e2e/onboarding/lib/signup.js`, the demo feature tests.
+
+**Tests:** foreign keys on. `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest`: 32 tests, one error (a fixture school reused the unique name Demo Junior School), then the refusal test passed on its own.
+
+**Status:** staging command and browser login follow the deploy of this branch. Production is not touched. Demo Senior is not touched. No password is written in this file.

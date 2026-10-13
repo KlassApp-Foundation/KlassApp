@@ -92,7 +92,7 @@ class DemoRichDataTest extends TestCase
     public function test_fee_tile_matches_the_current_term_chart_for_both_demo_schools(): void
     {
         foreach ([$this->seedJunior(), $this->seedSenior()] as $school) {
-            $admin = User::query()->where('school_id', $school->id)->where('email', 'like', 'admin@%')->firstOrFail();
+            $admin = User::query()->where('school_id', $school->id)->where('usergroup_id', 3)->where('status', 'active')->orderBy('id')->firstOrFail();
             $data = app(DashboardV2DataService::class)->build($school, $admin);
             $months = $data['charts']['fees_months'];
 
@@ -129,7 +129,7 @@ class DemoRichDataTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-10-12 09:00:00'));
 
         foreach ([$this->seedJunior(), $this->seedSenior()] as $school) {
-            $admin = User::query()->where('school_id', $school->id)->where('email', 'like', 'admin@%')->firstOrFail();
+            $admin = User::query()->where('school_id', $school->id)->where('usergroup_id', 3)->where('status', 'active')->orderBy('id')->firstOrFail();
             $data = app(DashboardV2DataService::class)->build($school, $admin);
             $percent = (int) $data['kpis']['fees']['percent'];
 
@@ -346,7 +346,7 @@ class DemoRichDataTest extends TestCase
     public function test_existing_account_passwords_survive_a_seeder_rerun(): void
     {
         $school = $this->seedJunior();
-        $admin = User::where('school_id', $school->id)->where('email', 'admin@junior.demo.klassapp.test')->firstOrFail();
+        $admin = User::where('school_id', $school->id)->where('email', 'demojunior@klassapp.xyz')->firstOrFail();
         $hashBefore = $admin->password;
 
         // This must NOT be overwritten by a rerun (password-on-create policy).
@@ -390,7 +390,7 @@ class DemoRichDataTest extends TestCase
         $skipId = $walk['skip_link_ids'][0];
         $openExamId = $walk['open_exam_id'];
 
-        $admin = User::where('school_id', $school->id)->where('email', 'admin@junior.demo.klassapp.test')->firstOrFail();
+        $admin = User::where('school_id', $school->id)->where('email', 'demojunior@klassapp.xyz')->firstOrFail();
         $adminHash = $admin->password;
         $teacher1 = User::where('school_id', $school->id)->where('email', 'teacher1@junior.demo.klassapp.test')->firstOrFail();
         $teacher1Hash = $teacher1->password;

@@ -44,6 +44,10 @@ config). Artifacts (per journey): `e2e/onboarding/artifacts/<journey>-<stamp>/` 
 
 ## Safety rules baked in
 
+- **Passwords come from the environment.** Set `E2E_ACCOUNT_PASSWORD` before a
+  journey run. Demo Junior logins are not hard-coded in this suite. The role
+  crawl reads `DEMO_JUNIOR_ADMIN_EMAIL`, `DEMO_JUNIOR_ADMIN_PASSWORD`,
+  `DEMO_JUNIOR_EMAIL_DOMAIN`, and `ROLE_CRAWL_PASSWORD`.
 - **Staging only.** The config hard-guards the base URL (`test.klassapp.xyz` or the staging
   Laravel Cloud domain); anything else aborts before a single test runs.
 - **No real people contacted.** Test accounts use `example.com` emails and non-real

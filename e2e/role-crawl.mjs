@@ -4,9 +4,10 @@
  *
  * Eight roles. GET only. Never follows a link whose URL or label contains
  * delete, remove, destroy, approve, reject, send, reset, or logout.
- * Password comes from ROLE_CRAWL_PASSWORD and is never printed.
- *
- *   ROLE_CRAWL_PASSWORD=… node e2e/role-crawl.mjs
+ * Credentials come from the environment and are never printed:
+ *   DEMO_JUNIOR_ADMIN_EMAIL, DEMO_JUNIOR_ADMIN_PASSWORD,
+ *   DEMO_JUNIOR_EMAIL_DOMAIN, ROLE_CRAWL_PASSWORD (shared password
+ *   for every role except the school admin).
  */
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
@@ -14,24 +15,31 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const BASE = 'https://test.klassapp.xyz';
-const DOMAIN = 'junior.demo.klassapp.test';
 const BLOCK = /delete|remove|destroy|approve|reject|send|reset|logout/i;
-const ROLES = [
-    ['admin', `admin@${DOMAIN}`],
-    ['head teacher', `headteacher@${DOMAIN}`],
-    ['class teacher', `teacher1@${DOMAIN}`],
-    ['subject teacher', `teacher2@${DOMAIN}`],
-    ['bursar', `bursar@${DOMAIN}`],
-    ['librarian', `library@${DOMAIN}`],
-    ['receptionist', `reception@${DOMAIN}`],
-    ['parent', `parent1@${DOMAIN}`],
-];
 
-const password = process.env.ROLE_CRAWL_PASSWORD || '';
-if (!password) {
-    console.error('role-crawl: set ROLE_CRAWL_PASSWORD');
-    process.exit(1);
+function requiredEnv(name) {
+    const value = process.env[name] || '';
+    if (!value) {
+        console.error(`role-crawl: set ${name}`);
+        process.exit(1);
+    }
+    return value;
 }
+
+const adminEmail = requiredEnv('DEMO_JUNIOR_ADMIN_EMAIL');
+const adminPassword = requiredEnv('DEMO_JUNIOR_ADMIN_PASSWORD');
+const sharedPassword = requiredEnv('ROLE_CRAWL_PASSWORD');
+const domain = requiredEnv('DEMO_JUNIOR_EMAIL_DOMAIN');
+const ROLES = [
+    ['admin', adminEmail, adminPassword],
+    ['head teacher', `headteacher@${domain}`, sharedPassword],
+    ['class teacher', `teacher1@${domain}`, sharedPassword],
+    ['subject teacher', `teacher2@${domain}`, sharedPassword],
+    ['bursar', `bursar@${domain}`, sharedPassword],
+    ['librarian', `library@${domain}`, sharedPassword],
+    ['receptionist', `reception@${domain}`, sharedPassword],
+    ['parent', `parent1@${domain}`, sharedPassword],
+];
 
 function sameHost(href) {
     try {
@@ -42,7 +50,7 @@ function sameHost(href) {
     }
 }
 
-async function signIn(page, email) {
+async function signIn(page, email, password) {
     await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
     const form = page.locator('[data-testid="preview-login-form"]');
     await form.waitFor({ state: 'visible', timeout: 30_000 });
@@ -79,7 +87,7 @@ async function sidebarLinks(page) {
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const report = [];
 
-for (const [role, email] of ROLES) {
+for (const [role, email, password] of ROLES) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
     const consoleErrors = [];
@@ -107,7 +115,7 @@ for (const [role, email] of ROLES) {
         assetFailures: [],
     };
     try {
-        row.login = await signIn(page, email);
+        row.login = await signIn(page, email, password);
         if (!row.login) {
             report.push(row);
             console.log(`${role}: login failed`);

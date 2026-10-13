@@ -12,7 +12,9 @@ use Throwable;
  * The manifest lives in the school_details table (meta_key = 'demo_manifest',
  * meta_value = JSON) — NOT in local storage, which Laravel Cloud wipes on
  * redeploy. It never contains credentials: only user emails, ids and a few
- * walkthrough hints used by the refresh command.
+ * walkthrough hints used by the refresh command. `admin_email` is the
+ * active school admin's address, recognised by role and school. No password
+ * is ever written here.
  */
 final class DemoSeedManifest
 {

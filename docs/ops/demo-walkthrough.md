@@ -11,20 +11,25 @@ restores it.
 | Demo Junior School | 38 | https://test.klassapp.xyz |
 | Demo Senior School | 39 | https://test.klassapp.xyz |
 
-**Password:** ask Rasta for the shared demo password (it is deliberately known
-for the demo accounts and is never written into the repo or these docs). The
-same password is set on every walkthrough account of both schools by
-`php artisan demo:set-password 38 39`. Every account below is active and
-verified — no code screen, no forced password change.
+**Passwords:** ask Rasta. They are never written into the repo or these docs.
+The Demo Junior school admin has its own password. Every other walkthrough
+account on both demo schools uses the shared demo password. Every account
+below is active and verified — no code screen, no forced password change.
 
-## Logins (demo-domain emails)
+## Logins
 
-All addresses use the school's demo domain: `junior.demo.klassapp.test` or
-`senior.demo.klassapp.test`.
+The Demo Junior school admin is `demojunior@klassapp.xyz`. That address is
+not on the demo domain. The seeders recognise this account by its school-admin
+role on Demo Junior School, so a refresh does not recreate
+`admin@junior.demo.klassapp.test` and does not create a second admin.
+
+Every other address uses the school's demo domain: `junior.demo.klassapp.test`
+or `senior.demo.klassapp.test`.
 
 | Role | Email | Notes |
 |---|---|---|
-| School admin | `admin@…` | full admin dashboard |
+| School admin (Junior) | `demojunior@klassapp.xyz` | own password; full admin dashboard |
+| School admin (Senior) | `admin@senior.demo.klassapp.test` | shared password |
 | Head teacher | `headteacher@…` | |
 | Class teachers | `teacher1@…` … `teacher10@…` | `teacher1` is the walkthrough class teacher |
 | Bursar | `bursar@…` | fee payments |
@@ -69,14 +74,16 @@ payment) are fine — `demo:refresh` resets the data afterwards.
 From the staging environment's **Commands** tab, re-run:
 
 ```bash
-php artisan demo:set-password 38 39 --password=<new password>
+php artisan demo:set-password 38 39 --password=<shared password>
+php artisan demo:set-admin-login 38
 ```
 
-It only touches `is_demo` schools and prints per-role counts — never the
-password. Alternatively, deactivate individual accounts.
-
-> `demo:set-password` must **never** be run on production. It refuses
-> non-demo schools by design.
+`demo:set-password` only touches `is_demo` schools and prints per-role counts.
+`demo:set-admin-login` accepts only Demo Junior School. It refuses a non-demo
+school and any other school, and it prints a count — never the password. The
+password is an argument or a hidden prompt. Run `demo:set-admin-login` again
+after a shared-password reset so the junior admin keeps its own password.
+Neither command may be run on production.
 
 ## Restoring a demo school
 
