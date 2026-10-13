@@ -49,6 +49,14 @@ function today() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function accountPassword() {
+    const password = process.env.E2E_ACCOUNT_PASSWORD || '';
+    if (!password) {
+        throw new Error('Set E2E_ACCOUNT_PASSWORD. Journey passwords are not hard-coded.');
+    }
+    return password;
+}
+
 function buildJourneyData({ typeId, mode }) {
     const type = TYPES[typeId];
     if (!type) throw new Error(`unknown school type: ${typeId}`);
@@ -75,7 +83,7 @@ function buildJourneyData({ typeId, mode }) {
             phoneLocal,
             phoneE164,
         },
-        password: 'Password123!',
+        password: accountPassword(),
         emisCode: `EMIS-E2E-${suffix}`,
         teachers: [`Suite Teacher One ${nameTag}`, `Suite Teacher Two ${nameTag}`],
         students: [`Suite Pupil One ${nameTag}`, `Suite Pupil Two ${nameTag}`, `Suite Pupil Three ${nameTag}`],

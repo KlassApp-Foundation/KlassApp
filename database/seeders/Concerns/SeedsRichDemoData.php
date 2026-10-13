@@ -892,12 +892,18 @@ trait SeedsRichDemoData
     protected function richWriteManifest(): void
     {
         $emails = User::where('school_id', $this->school->id)->pluck('email')->all();
+        $adminEmail = User::where('school_id', $this->school->id)
+            ->where('usergroup_id', 3)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->value('email');
 
         DemoSeedManifest::write($this->school->id, [
             'school_id' => $this->school->id,
             'school_name' => $this->school->name,
             'seeder' => static::class,
             'seeded_at' => now()->toDateTimeString(),
+            'admin_email' => $adminEmail,
             'user_emails' => array_values(array_filter($emails)),
             'walkthrough' => $this->richWalkthrough,
         ]);

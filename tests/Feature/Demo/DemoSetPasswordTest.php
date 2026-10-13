@@ -76,7 +76,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_refuses_a_non_demo_school_and_changes_nothing(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
         $before = $admin->password;
 
         $otherSchool = School::create([
@@ -112,7 +112,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_refuses_a_missing_school(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
         $before = $admin->password;
 
         $exit = $this->runCommand([$demo->id, 999999]);
@@ -125,7 +125,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_requires_the_password_option(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
         $before = $admin->password;
 
         $exit = $this->runCommand([$demo->id], null);
@@ -138,7 +138,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_refuses_a_weak_password(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
         $before = $admin->password;
 
         $exit = $this->runCommand([$demo->id], 'short');
@@ -154,7 +154,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_accepts_a_password_of_exactly_eight_characters(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
 
         $exit = $this->runCommand([$demo->id], '12345678');
 
@@ -167,7 +167,7 @@ class DemoSetPasswordTest extends TestCase
         $demo = $this->seedJunior();
 
         // Give the admin a dirty state to prove the clean-login fixes land.
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
         $admin->forceFill(['is_reset' => 1, 'email_verified' => 0, 'email_verified_at' => null])->save();
         DB::table('userprofiles')->where('user_id', $admin->id)->update(['status' => 'inactive']);
         DB::table('authentications')->insert([
@@ -257,7 +257,7 @@ class DemoSetPasswordTest extends TestCase
     public function test_password_is_stored_hashed(): void
     {
         $demo = $this->seedJunior();
-        $admin = $this->account($demo, 'admin@junior.demo.klassapp.test');
+        $admin = $this->account($demo, 'demojunior@klassapp.xyz');
 
         $exit = $this->runCommand([$demo->id]);
         $this->assertSame(0, $exit);
@@ -321,7 +321,7 @@ class DemoSetPasswordTest extends TestCase
         $exit = $this->runCommand([$junior->id, $senior->id]);
         $this->assertSame(0, $exit);
 
-        $juniorAdmin = $this->account($junior, 'admin@junior.demo.klassapp.test');
+        $juniorAdmin = $this->account($junior, 'demojunior@klassapp.xyz');
         $seniorAdmin = $this->account($senior, 'admin@senior.demo.klassapp.test');
 
         $this->assertTrue(Hash::check(self::NEW_PASSWORD, $juniorAdmin->fresh()->password));
