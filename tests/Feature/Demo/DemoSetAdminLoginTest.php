@@ -69,6 +69,51 @@ class DemoSetAdminLoginTest extends TestCase
         $this->assertSame(0, User::where('school_id', $school->id)->where('usergroup_id', 3)->count() - 1);
     }
 
+    public function test_display_only_restores_the_name_without_changing_the_password(): void
+    {
+        $school = $this->seedJunior();
+        $admin = User::where('school_id', $school->id)->where('usergroup_id', 3)->where('status', 'active')->firstOrFail();
+        $hash = $admin->password;
+        $teacher = User::where('school_id', $school->id)->where('email', 'teacher1@junior.demo.klassapp.test')->firstOrFail();
+        $teacherName = $teacher->name;
+        $admin->forceFill(['name' => 'Taritwebwa Eric'])->save();
+        $admin->userprofile->forceFill(['firstname' => 'Taritwebwa', 'lastname' => 'Eric'])->save();
+
+        $this->assertSame(0, Artisan::call('demo:set-admin-login', [
+            'school' => $school->id,
+            '--display-only' => true,
+        ]));
+
+        $admin->refresh()->load('userprofile');
+        $this->assertSame($hash, $admin->password);
+        $this->assertSame(DemoJuniorSchoolSeeder::ADMIN_NAME, $admin->name);
+        $this->assertSame('Demo', $admin->userprofile->getRawOriginal('firstname'));
+        $this->assertSame('Admin', $admin->userprofile->getRawOriginal('lastname'));
+        $this->assertSame($teacherName, $teacher->fresh()->name);
+    }
+
+    public function test_refresh_restores_the_demo_admin_display_name(): void
+    {
+        $school = $this->seedJunior();
+        $admin = User::where('school_id', $school->id)->where('usergroup_id', 3)->where('status', 'active')->firstOrFail();
+        $admin->forceFill(['name' => 'Taritwebwa Eric'])->save();
+        $admin->userprofile->forceFill(['firstname' => 'Taritwebwa', 'lastname' => 'Eric'])->save();
+
+        $this->assertSame(0, Artisan::call('demo:refresh', ['school' => $school->id]));
+
+        $admin->refresh()->load('userprofile');
+        $this->assertSame(DemoJuniorSchoolSeeder::ADMIN_NAME, $admin->name);
+        $this->assertSame('Demo', $admin->userprofile->getRawOriginal('firstname'));
+        $this->assertSame('Admin', $admin->userprofile->getRawOriginal('lastname'));
+        $this->assertSame('DEMO ADMIN', $admin->displayName);
+
+        $this->assertSame(0, Artisan::call('demo:refresh', ['school' => $school->id]));
+        $admin->refresh()->load('userprofile');
+        $this->assertSame(DemoJuniorSchoolSeeder::ADMIN_NAME, $admin->name);
+        $this->assertSame('Demo', $admin->userprofile->getRawOriginal('firstname'));
+        $this->assertSame('Admin', $admin->userprofile->getRawOriginal('lastname'));
+    }
+
     public function test_a_legacy_admin_email_is_renamed_without_a_new_password_or_a_second_admin(): void
     {
         $school = $this->seedJunior();
