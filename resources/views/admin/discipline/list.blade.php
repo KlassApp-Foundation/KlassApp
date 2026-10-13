@@ -5,7 +5,7 @@
       @forelse($disciplines as $discipline)
          <tr>
             <td data-label="Student Name">
-               <a href="{{ url('/admin/student/show/'.$discipline->user->name) }}" class="font-medium text-gray-900 hover:text-blue-600 transition-colors">{{ ucfirst($discipline->user->FullName) }}</a>
+               <a href="{{ url('/admin/students/'.$discipline->user->id) }}" class="font-medium text-gray-900 hover:text-blue-600 transition-colors">{{ ucfirst($discipline->user->FullName) }}</a>
             </td>
             <td data-label="Teacher Name">
                <a href="{{ url('/admin/teacher/show/'.$discipline->teacher->name) }}" class="text-sm text-gray-700 hover:text-blue-600 transition-colors">{{ ucfirst($discipline->teacher->FullName) }}</a>

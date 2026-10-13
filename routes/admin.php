@@ -241,6 +241,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	//index
 	Route::get( '/students/find', 'StudentController@find' );
 	Route::get( '/students', 'StudentController@index' );
+	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
+	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
 	Route::get( '/students/blockedstudents', 'StudentController@blockedstudents' );
 	//add
 	Route::get( '/student/add', 'StudentController@create' );
@@ -255,7 +257,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/student/show/discipline/{name}', 'StudentDetailsController@showDisciplines' );
 	Route::get( '/student/show/attendance/{name}', 'StudentDetailsController@showAttendance' );
 	Route::get( '/student/show/libraryactivity/{name}', 'StudentDetailsController@showBookLent' );
-	Route::get( '/student/show/{name}', 'StudentDetailsController@show' );
+	Route::get( '/student/show/{name}', 'StudentDetailsController@redirectToIdProfile' )->name('admin.student.show');
 	Route::get( '/student/showmark/{name}', 'StudentDetailsController@showmark' );
 	Route::get( '/student/showallmark/{name}', 'StudentDetailsController@showAllMark' );
 	//Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMarks' );
