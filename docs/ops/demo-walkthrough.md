@@ -28,7 +28,7 @@ or `senior.demo.klassapp.test`.
 
 | Role | Email | Notes |
 |---|---|---|
-| School admin (Junior) | `demojunior@klassapp.xyz` | own password; full admin dashboard |
+| School admin (Junior) | `demojunior@klassapp.xyz` | own password; display name Demo Admin |
 | School admin (Senior) | `admin@senior.demo.klassapp.test` | shared password |
 | Head teacher | `headteacher@…` | |
 | Class teachers | `teacher1@…` … `teacher10@…` | `teacher1` is the walkthrough class teacher |

@@ -183,7 +183,14 @@ class GoogleAuthController extends Controller
     private function updateGoogleData(User $user, $googleUser): void
     {
         $user->google_id = $googleUser->getId();
-        $user->google_avatar = $googleUser->getAvatar();
+
+        // Demo schools keep the name and avatar the seeder set. This method
+        // never writes users.name. Avatar is the field a returning Google
+        // login would otherwise replace (line below).
+        $demoSchool = (int) ($user->school?->is_demo ?? 0) === 1;
+        if (! $demoSchool) {
+            $user->google_avatar = $googleUser->getAvatar();
+        }
 
         if ((int) $user->email_verified === 0) {
             $user->email_verified = 1;

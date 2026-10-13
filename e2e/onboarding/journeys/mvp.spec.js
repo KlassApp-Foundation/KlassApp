@@ -537,6 +537,23 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
         examId: exam.id, shots, findings,
     };
     fs.writeFileSync(path.join(MVP_DIR, `summary-${width}-${ts}.json`), JSON.stringify(summary, null, 2));
-    const verdict = outcomes.fetchOutcome(data.admin.email);
+    const outcome = outcomes.fetchOutcome(data.admin.email);
+    const verdict = outcomes.evaluate(outcome, data);
+    const required = [
+        'three terms',
+        'stream added persists',
+        'whatsapp linked',
+        'plan selected',
+        'classes/sections for type',
+    ];
+    const unmet = required.filter((name) => !verdict.checks.some((check) => check.name === name && check.ok));
+    expect(
+        unmet,
+        `School is not fully set up: ${verdict.failed.map((f) => `${f.name} (${f.detail})`).join('; ')}`,
+    ).toEqual([]);
+    expect(
+        verdict.failed,
+        `Hard outcome checks failed: ${verdict.failed.map((f) => `${f.name} — ${f.detail}`).join('; ')}`,
+    ).toEqual([]);
     console.log(`[mvp:${width}] done; findings=${findings.length}`);
 });

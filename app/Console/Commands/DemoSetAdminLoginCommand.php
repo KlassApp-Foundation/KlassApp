@@ -28,7 +28,8 @@ class DemoSetAdminLoginCommand extends Command
 {
     protected $signature = 'demo:set-admin-login
         {school : Demo Junior School id}
-        {--password= : New password (no default; hidden prompt when omitted in a terminal)}';
+        {--password= : New password (no default; hidden prompt when omitted in a terminal)}
+        {--display-only : Restore the Demo Admin name only. Does not change the password.}';
 
     protected $description = 'Set the Demo Junior school admin email and password (counts only; nothing logged or sent)';
 
@@ -55,28 +56,31 @@ class DemoSetAdminLoginCommand extends Command
             return self::FAILURE;
         }
 
+        $displayOnly = (bool) $this->option('display-only');
         $password = (string) ($this->option('password') ?? '');
 
-        if ($password === '' && $this->input->isInteractive() && ! app()->runningUnitTests()) {
+        if (! $displayOnly && $password === '' && $this->input->isInteractive() && ! app()->runningUnitTests()) {
             $password = (string) $this->secret('Password');
         }
 
-        if ($password === '') {
+        if (! $displayOnly && $password === '') {
             $this->error('Pass --password. There is no default and none is read from the environment.');
 
             return self::FAILURE;
         }
 
-        $validator = Validator::make(
-            ['password' => $password],
-            ['password' => 'required|string|min:8'],
-            ['password.min' => __('userprofile.newpassword_min')],
-        );
+        if (! $displayOnly) {
+            $validator = Validator::make(
+                ['password' => $password],
+                ['password' => 'required|string|min:8'],
+                ['password.min' => __('userprofile.newpassword_min')],
+            );
 
-        if ($validator->fails()) {
-            $this->error($validator->errors()->first('password'));
+            if ($validator->fails()) {
+                $this->error($validator->errors()->first('password'));
 
-            return self::FAILURE;
+                return self::FAILURE;
+            }
         }
 
         $admins = User::where('school_id', $school->id)
@@ -104,19 +108,26 @@ class DemoSetAdminLoginCommand extends Command
         $schoolId = (int) $admin->school_id;
         $roleId = (int) $admin->usergroup_id;
 
-        DB::transaction(function () use ($admin, $email, $password, $schoolId, $roleId) {
-            $admin->forceFill([
+        $displayName = DemoJuniorSchoolSeeder::ADMIN_NAME;
+        DB::transaction(function () use ($admin, $email, $password, $schoolId, $roleId, $displayOnly, $displayName) {
+            $fill = [
                 'email' => $email,
-                'password' => Hash::make($password),
+                'name' => $displayName,
                 'status' => 'active',
                 'email_verified' => 1,
                 'email_verified_at' => now(),
                 'is_reset' => 0,
                 'school_id' => $schoolId,
                 'usergroup_id' => $roleId,
-            ])->save();
+            ];
+            if (! $displayOnly) {
+                $fill['password'] = Hash::make($password);
+            }
+            $admin->forceFill($fill)->save();
 
             DB::table('userprofiles')->where('user_id', $admin->id)->update([
+                'firstname' => 'Demo',
+                'lastname' => 'Admin',
                 'status' => 'active',
                 'updated_at' => now(),
             ]);

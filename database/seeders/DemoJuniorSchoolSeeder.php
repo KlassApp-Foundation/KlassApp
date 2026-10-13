@@ -53,6 +53,12 @@ class DemoJuniorSchoolSeeder extends Seeder
      */
     public const ADMIN_EMAIL = 'demojunior@klassapp.xyz';
 
+    /**
+     * Neutral label for the one school admin. Refresh writes this back so a
+     * later sign-in cannot leave another person's name on the account.
+     */
+    public const ADMIN_NAME = 'Demo Admin';
+
     /** A1: ages by class for seeded dates of birth. */
     public const AGE_BY_CLASS = [
         'Baby Class' => 3, 'Middle Class' => 4, 'Top Class' => 5,
@@ -179,7 +185,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function seedStaff(): void
     {
-        $this->staff['admin'] = $this->schoolAdmin('Daniel Mukasa');
+        $this->staff['admin'] = $this->schoolAdmin(self::ADMIN_NAME);
         $this->staff['head'] = $this->user('headteacher', 'Sarah Nabukenya', 4);
         $this->bursar = $this->user('bursar', 'Robert Ssekandi', 11);
         $this->staff['librarian'] = $this->user('library', 'Alice Kirabo', 8);
@@ -787,8 +793,12 @@ class DemoJuniorSchoolSeeder extends Seeder
                 'status' => 'active',
                 'email_verified' => 1,
             ]);
-        } elseif ($user->email !== $email && ! User::where('email', $email)->where('id', '!=', $user->id)->exists()) {
-            $user->forceFill(['email' => $email])->save();
+        } else {
+            $fill = ['name' => $name];
+            if ($user->email !== $email && ! User::where('email', $email)->where('id', '!=', $user->id)->exists()) {
+                $fill['email'] = $email;
+            }
+            $user->forceFill($fill)->save();
         }
 
         $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $user->id]);
