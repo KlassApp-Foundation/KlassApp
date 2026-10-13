@@ -1117,10 +1117,40 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     .toshi-early-pill { top: auto; bottom: -52px; writing-mode: horizontal-tb; transform: none; }
 }
 
-/* Edge tab: hidden in preview at every width, and below 1280 in every mode.
-   Onboarding and assistant keep it from 1280 up. */
-#toshi-toggle-wrapper[data-toshi-mode="preview"],
-.toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none !important; width: 0 !important; }
+/* TOSHI HANDLE — collapsed edge tab from 1280 up, in every mode.
+   40×96 white card, slate border, brand K. No orange. Hidden below 1280. */
+@media (min-width: 1280px) {
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
+        display: flex !important;
+        position: fixed !important;
+        right: 0 !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 40px !important;
+        height: 96px !important;
+        margin: 0;
+        padding: 0;
+        background: #fff !important;
+        color: #15803D !important;
+        border: 1px solid #E2E8F0 !important;
+        border-right: 0 !important;
+        border-radius: 8px 0 0 8px !important;
+        box-shadow: none !important;
+        font: 700 18px/1 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+        z-index: 10000 !important;
+    }
+    body.toshi-collapsed #toshi-toggle.toshi-toggle:hover {
+        width: 40px !important;
+        background: #F8FAFC !important;
+        color: #15803D !important;
+        box-shadow: none !important;
+    }
+    body.toshi-collapsed #toshi-toggle.toshi-toggle:focus-visible {
+        outline: 2px solid #15803D;
+        outline-offset: 2px;
+    }
+}
 @media (max-width: 1279px) {
     #toshi-toggle-wrapper,
     .toshi-toggle-wrapper { display: none !important; width: 0 !important; }

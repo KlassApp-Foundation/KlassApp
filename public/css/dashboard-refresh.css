@@ -3739,9 +3739,27 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
     #res_sidebar.admin-sidebar { animation: none; }
 }
 
-/* Edge tab: off in preview at every width, and off below 1280 in every mode.
-   Onboarding and assistant keep it at 1280 and up. The setup button is separate. */
-#toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none !important; width: 0 !important; }
+/* TOSHI HANDLE — same collapsed tab as toshi-ui.css, so the dashboard sheet
+   cannot put the orange clay tab back. Hidden below 1280. */
+@media (min-width: 1280px) {
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
+        width: 40px !important;
+        height: 96px !important;
+        right: 0 !important;
+        background: #fff !important;
+        color: #15803D !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 8px 0 0 8px !important;
+        box-shadow: none !important;
+    }
+    body.toshi-collapsed #toshi-toggle.toshi-toggle:hover {
+        background: #F8FAFC !important;
+    }
+    body.toshi-collapsed #toshi-toggle.toshi-toggle:focus-visible {
+        outline: 2px solid #15803D;
+        outline-offset: 2px;
+    }
+}
 @media (max-width: 1279px) {
     #toshi-toggle-wrapper { display: none !important; width: 0 !important; }
 }
