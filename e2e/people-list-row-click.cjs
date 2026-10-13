@@ -31,7 +31,7 @@ async function login(page) {
     return;
   }
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await login(page);
   await page.goto(`${BASE}/admin/students`, { waitUntil: 'domcontentloaded', timeout: 90000 });
