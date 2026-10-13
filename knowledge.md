@@ -676,11 +676,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
+## Current Status: October 14, 2026 — **teacher profile lite MERGED [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
-- Branch `feat/teacher-profile-lite`. `/admin/teacher/show/{name}` renders the shared person profile (header, three tiles, Overview, Teaches). The people-list URL is unchanged. JSON teacher-show endpoints are unchanged.
-- Deactivate sets status to inactive. No hard delete on this page. Rebased onto `main` after [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) and [#1078](https://github.com/KlassApp-Foundation/KlassApp/pull/1078). Not merged. Production untouched.
-- Parent profile is a handoff, not a pull request from this chat.
+- API `merged: true` at 2026-10-13T23:13:40Z. Merge commit `abbe6af3d221f76d1e789159cef83f745783abcb` is on `main`. Staging deploy `depl-a2f9b253-1877-47f5-b6a3-a66657e947fa` succeeded at 2026-10-13T23:16:03Z.
+- `/admin/teacher/show/{name}` renders the shared person profile. Staging pairs for Diana Kembabazi: Chrome, Brave, and WebKit at 375, 1280, and 1440. More → Deactivate showed the confirmation; Cancel was pressed. The teacher stayed Active. No hard delete on the page. Production untouched.
+- Parent profile was not started. It is a handoff for the main agent.
 
 ## Current Status: October 14, 2026 — **Demo Junior admin display name stays Demo Admin**
 
