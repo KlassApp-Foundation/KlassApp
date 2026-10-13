@@ -6,6 +6,8 @@
     'kls' => null,
     'status' => 'active',
     'statusLabel' => 'Active',
+    'role' => null,
+    'joined' => null,
     'tabs' => [],
     'active' => 'overview',
     'baseUrl',
@@ -24,11 +26,20 @@
             <div aria-hidden="true" data-testid="person-initials" style="width:48px;height:48px;border-radius:999px;background:#DCFCE7;color:#166534;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 auto;">{{ $initials }}</div>
             <div style="min-width:0;">
                 <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:#0F172A;">{{ $name }}</h1>
-                <p style="margin:4px 0 0;font-size:14px;color:#475569;">
-                    {{ $className ?: 'No class' }}
-                    <span aria-hidden="true"> · </span>
-                    <span data-testid="person-kls">{{ $kls ?: '—' }}</span>
-                </p>
+                @if(filled($role))
+                    <p style="margin:4px 0 0;font-size:14px;color:#475569;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                        <span data-testid="person-role" style="display:inline-flex;align-items:center;min-height:24px;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600;background:#DBEAFE;color:#1E40AF;">{{ $role }}</span>
+                        @if(filled($joined))
+                            <span data-testid="person-joined">{{ $joined }}</span>
+                        @endif
+                    </p>
+                @else
+                    <p style="margin:4px 0 0;font-size:14px;color:#475569;">
+                        {{ $className ?: 'No class' }}
+                        <span aria-hidden="true"> · </span>
+                        <span data-testid="person-kls">{{ $kls ?: '—' }}</span>
+                    </p>
+                @endif
                 <p style="margin:8px 0 0;">
                     <span data-testid="person-status" style="display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600;background:{{ $status === 'active' ? '#DCFCE7' : '#F1F5F9' }};color:{{ $status === 'active' ? '#166534' : '#475569' }};">{{ $statusLabel }}</span>
                 </p>
@@ -48,7 +59,7 @@
     @if($tabs !== [])
         <nav data-testid="person-profile-tabs" aria-label="Profile" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
             @foreach($tabs as $key => $label)
-                <a href="{{ $baseUrl.'?tab='.$key }}" data-tab="{{ $key }}" aria-current="{{ $active === $key ? 'page' : 'false' }}" style="padding:8px 12px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;background:{{ $active === $key ? '#0F172A' : '#fff' }};color:{{ $active === $key ? '#fff' : '#0F172A' }};border:1px solid #E2E8F0;">{{ $label }}</a>
+                <a href="{{ $baseUrl.'?tab='.$key }}" data-tab="{{ $key }}" aria-current="{{ $active === $key ? 'page' : 'false' }}" style="min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;padding:8px 12px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;background:{{ $active === $key ? '#0F172A' : '#fff' }};color:{{ $active === $key ? '#fff' : '#0F172A' }};border:1px solid #E2E8F0;">{{ $label }}</a>
             @endforeach
         </nav>
     @endif

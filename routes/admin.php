@@ -352,7 +352,8 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get( '/teacher/show/leave/{name}', 'TeacherShowController@showLeaveHistory' );
 	Route::get( '/teacher/show/activity/{name}', 'TeacherShowController@showActivity' );
 	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
-	Route::get( '/teacher/show/{name}', 'TeacherShowController@show' );
+	Route::post( '/teacher/show/{name}/deactivate', 'TeacherProfileController@deactivate' );
+	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' );
 	//edit
 	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );
 	Route::get( '/teacher/edit/{name}', 'TeacherEditController@edit' );
