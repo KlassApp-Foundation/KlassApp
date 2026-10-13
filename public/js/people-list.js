@@ -32,14 +32,57 @@
             return box.offsetParent !== null;
         });
     }
+    var selectButton = root.querySelector('[data-people-select]');
+    function selecting() {
+        return !!(selectButton && selectButton.getAttribute('aria-pressed') === 'true');
+    }
+    function setSelecting(on) {
+        if (!selectButton) {
+            return;
+        }
+        selectButton.setAttribute('aria-pressed', on ? 'true' : 'false');
+        root.classList.toggle('is-selecting', on);
+        root.querySelectorAll('[data-people-check-col]').forEach(function (col) {
+            col.hidden = !on;
+        });
+        if (!on) {
+            root.querySelectorAll('[data-people-check], [data-people-all]').forEach(function (box) {
+                box.checked = false;
+            });
+        }
+        paint();
+    }
     function paint() {
         var boxes = visibleBoxes().filter(function (box) { return box.checked; });
         if (count) {
             count.textContent = String(boxes.length);
         }
         if (bulk) {
-            bulk.hidden = boxes.length === 0;
+            bulk.hidden = !selecting();
         }
+        root.querySelectorAll('.people-row, .people-card').forEach(function (row) {
+            var box = row.querySelector('[data-people-check]');
+            row.classList.toggle('is-selected', !!(box && box.checked && selecting()));
+        });
+    }
+    function toggleRow(row) {
+        var box = row && row.querySelector('[data-people-check]');
+        if (!box) {
+            return;
+        }
+        box.checked = !box.checked;
+        paint();
+    }
+    if (selectButton) {
+        selectButton.addEventListener('click', function () {
+            setSelecting(!selecting());
+        });
+    }
+    var done = root.querySelector('[data-people-done]');
+    if (done) {
+        done.addEventListener('click', function () {
+            setSelecting(false);
+        });
     }
     root.addEventListener('change', function (event) {
         var target = event.target;
@@ -70,6 +113,14 @@
         });
     }
     root.addEventListener('click', function (event) {
+        if (selecting() && !event.target.closest('.people-menu-wrap, .people-check-hit, .people-bulk, [data-people-select]')) {
+            var row = event.target.closest('.people-row, .people-card');
+            if (row) {
+                event.preventDefault();
+                toggleRow(row);
+                return;
+            }
+        }
         var button = event.target.closest('[data-people-menu]');
         if (!button) {
             if (!event.target.closest('[role="menu"]')) {
@@ -92,9 +143,21 @@
     root.addEventListener('keydown', function (event) {
         var pop = event.target.closest('[role="menu"]');
         if (!pop) {
+            if (event.key === 'Escape' && selecting()) {
+                event.preventDefault();
+                setSelecting(false);
+                if (selectButton) {
+                    selectButton.focus();
+                }
+                return;
+            }
             var name = event.target.closest('a.people-name');
             if (name && event.key === 'Enter') {
                 event.preventDefault();
+                if (selecting()) {
+                    toggleRow(name.closest('.people-row, .people-card'));
+                    return;
+                }
                 window.location.assign(name.href);
                 return;
             }
