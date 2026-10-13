@@ -682,14 +682,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) MERGED `2d342d2d7a4a825de1d7b7877427c591b44f5a50` (API `merged: true`, 2026-10-13T12:46:23Z). Staging deploy `depl-a2f8d1fe-1666-4684-93ac-0abca2f2d270` succeeded. Whole-row pointer clicks verified. Pairs 27/27.
 - [#1060](https://github.com/KlassApp-Foundation/KlassApp/pull/1060) MERGED `7f64096d9f2f3ca4867b667bc18ea25c3286f171` (API `merged: true`, 2026-10-13T13:19:58Z). Staging deploy `depl-a2f8de00-daf7-41d7-b8c3-28ac21eb235e` succeeded. Student rows open `/admin/students/{id}`. Pairs 36/36.
 - [#1065](https://github.com/KlassApp-Foundation/KlassApp/pull/1065) MERGED `1369fbdaa53acc7addaa4959c09491d9f95c4bbc` (API `merged: true`, 2026-10-13T13:30:50Z). Staging deploy `depl-a2f8e1e3-a67a-491e-bb32-9c9e3dfe6be5` succeeded. Dashboard KPI tile opens the students list. Pairs 45/45.
-- Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states are committed on `feat/people-list-2c`. A row click in Select mode toggles the row. Outside Select mode the row opens the profile.
+- Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states are in [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) on `feat/people-list-2c`. A row click in Select mode toggles the row. Outside Select mode the row opens the profile. Not merged. Not deployed.
 
 ## Session: 2026-10-13 — visual merge chain and people-list select mode
 
 - **Work done**: Admin-merged #1057, #1064, #1060, and #1065 in that order after green checks and an idle staging deploy. Verified each deploy on staging. Built the remaining people-list spec on `feat/people-list-2c`.
 - **Files modified**: `resources/views/components/people-list.blade.php`, `public/css/people-list.css`, `public/js/people-list.js`, `app/Services/People/PeopleListQuery.php`, `tests/Feature/Admin/PeopleListTest.php`, `e2e/people-list-row-click.cjs`.
 - **Key decisions**: Bulk bar shows Export only. No existing send path accepts the selected ids, so Message stays off the bar. Checkboxes stay hidden until Select. In Select mode a row click toggles the checkbox and does not navigate. Avatar size is a people-list wrapper (28px table, 32px phone card) so the shared profile photo component is unchanged.
-- **Status**: Chain merged and staging-verified. Select-mode follow-up is committed on `feat/people-list-2c`.
+- **Status**: Chain merged and staging-verified. Select-mode follow-up is [#1073](https://github.com/KlassApp-Foundation/KlassApp/pull/1073) on `feat/people-list-2c`. Not merged. Not deployed.
 - **Edge cases flagged**: Profile addresses for teachers and parents are still name-based. Student rows use `/admin/students/{id}`.
 
 ## Current Status: October 13, 2026 — **Demo Junior admin login is its own account**
