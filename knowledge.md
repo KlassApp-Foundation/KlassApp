@@ -676,21 +676,29 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 13, 2026 — **people-list chain #1057, #1064, #1060, #1065 merged and staging-verified; select-mode follow-up is local only**
+## Current Status: October 13, 2026 — **people-list select mode is on `feat/people-list-2c`**
 
 - [#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057) MERGED `025800320a46a42ce6a1e8beb99000424b9b296d` (API `merged: true`, 2026-10-13T12:13:54Z). Staging deploy `depl-a2f8c660-31ea-4b3f-9fce-4ee96284562d` succeeded. Pairs 27/27.
 - [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) MERGED `2d342d2d7a4a825de1d7b7877427c591b44f5a50` (API `merged: true`, 2026-10-13T12:46:23Z). Staging deploy `depl-a2f8d1fe-1666-4684-93ac-0abca2f2d270` succeeded. Whole-row pointer clicks verified. Pairs 27/27.
 - [#1060](https://github.com/KlassApp-Foundation/KlassApp/pull/1060) MERGED `7f64096d9f2f3ca4867b667bc18ea25c3286f171` (API `merged: true`, 2026-10-13T13:19:58Z). Staging deploy `depl-a2f8de00-daf7-41d7-b8c3-28ac21eb235e` succeeded. Student rows open `/admin/students/{id}`. Pairs 36/36.
 - [#1065](https://github.com/KlassApp-Foundation/KlassApp/pull/1065) MERGED `1369fbdaa53acc7addaa4959c09491d9f95c4bbc` (API `merged: true`, 2026-10-13T13:30:50Z). Staging deploy `depl-a2f8e1e3-a67a-491e-bb32-9c9e3dfe6be5` succeeded. Dashboard KPI tile opens the students list. Pairs 45/45.
-- Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states are on local branch `feat/people-list-2c`. Not pushed. Not a pull request.
+- Select mode, 28px/32px circle avatars, 48px rows, sticky header, and plain empty states are committed on `feat/people-list-2c`. A row click in Select mode toggles the row. Outside Select mode the row opens the profile.
 
 ## Session: 2026-10-13 — visual merge chain and people-list select mode
 
-- **Work done**: Admin-merged #1057, #1064, #1060, and #1065 in that order after green checks and an idle staging deploy. Verified each deploy on staging. Started the remaining people-list spec on `feat/people-list-2c`.
-- **Files modified**: `resources/views/components/people-list.blade.php`, `public/css/people-list.css`, `public/js/people-list.js`, `app/Services/People/PeopleListQuery.php`, `tests/Feature/Admin/PeopleListTest.php`.
-- **Key decisions**: Bulk bar shows Export only. No existing send path accepts the selected ids, so Message stays off the bar. Checkboxes stay hidden until Select. Avatar size is a people-list wrapper (28px table, 32px phone card) so the shared profile photo component is unchanged.
-- **Status**: Chain merged and staging-verified. Select-mode follow-up is local, not pushed.
+- **Work done**: Admin-merged #1057, #1064, #1060, and #1065 in that order after green checks and an idle staging deploy. Verified each deploy on staging. Built the remaining people-list spec on `feat/people-list-2c`.
+- **Files modified**: `resources/views/components/people-list.blade.php`, `public/css/people-list.css`, `public/js/people-list.js`, `app/Services/People/PeopleListQuery.php`, `tests/Feature/Admin/PeopleListTest.php`, `e2e/people-list-row-click.cjs`.
+- **Key decisions**: Bulk bar shows Export only. No existing send path accepts the selected ids, so Message stays off the bar. Checkboxes stay hidden until Select. In Select mode a row click toggles the checkbox and does not navigate. Avatar size is a people-list wrapper (28px table, 32px phone card) so the shared profile photo component is unchanged.
+- **Status**: Chain merged and staging-verified. Select-mode follow-up is committed on `feat/people-list-2c`.
 - **Edge cases flagged**: Profile addresses for teachers and parents are still name-based. Student rows use `/admin/students/{id}`.
+
+## Current Status: October 13, 2026 — **Demo Junior admin login is its own account**
+
+- `demo:set-admin-login` changes only the active school admin on Demo Junior School. It refuses a non-demo school and any other school, and it never renames a school. The password is an argument or a hidden prompt and is not printed. The durable address is `demojunior@klassapp.xyz`.
+- `demo:refresh` and the junior seeder keep that one admin, drop the legacy `admin@junior.demo.klassapp.test` address, and do not change the password hash on a second refresh. Demo Senior is unchanged.
+- Journeys read `E2E_ACCOUNT_PASSWORD`. The role crawl reads `DEMO_JUNIOR_ADMIN_EMAIL`, `DEMO_JUNIOR_ADMIN_PASSWORD`, `DEMO_JUNIOR_EMAIL_DOMAIN`, and `ROLE_CRAWL_PASSWORD`.
+- Tests with foreign keys on: `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest`. Production is not touched.
+- [#1072](https://github.com/KlassApp-Foundation/KlassApp/pull/1072) is on `main` at `ec9839b2`. [#1066](https://github.com/KlassApp-Foundation/KlassApp/pull/1066) is on `main` at `81fda996`. AGENTS rules PR [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071) stays open for review.
 
 ## Current Status: October 13, 2026 — **final gate 14/14 green; role crawl clean except notice-list 404s**
 
@@ -13693,3 +13701,13 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Review:** port 8003, Demo Junior. A pointer click in the middle of a desktop row opened Betty Ochieng. A pointer click past the row menu opened Aaron Mbabazi. The same two clicks on a 375px card opened Aisha Nansubuga and Aaron Mbabazi. The checkbox checked without leaving the list. The row menu opened in place. Enter on the focused name opened Aaron Mbabazi. Profile route stays `/admin/student/show/{name}`.
 
 **Status:** [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) open against `feat/people-list` (`c16c51c5`). Not merged. Not deployed.
+
+## Session: 2026-10-13 — Demo Junior school admin login
+
+**Work:** Demo Junior's one active school admin is recognised by role and school. `demo:set-admin-login` sets the durable address `demojunior@klassapp.xyz` and a password given only as an argument or a hidden prompt. It refuses a non-demo school and any school other than Demo Junior, prints a count only, and sends no mail. A refresh renames the legacy demo-domain admin address, does not create a second admin, and does not change the password hash. The manifest stores `admin_email` and no password. Journeys and the role crawl read demo credentials from environment variables.
+
+**Files:** `DemoSetAdminLoginCommand`, `DemoJuniorSchoolSeeder`, `SeedsRichDemoData`, `DemoSeedManifest`, `docs/ops/demo-walkthrough.md`, `e2e/role-crawl.mjs`, `e2e/onboarding/lib/journey-data.js`, `e2e/onboarding/lib/signup.js`, the demo feature tests.
+
+**Tests:** foreign keys on. `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest`: 32 tests, one error (a fixture school reused the unique name Demo Junior School), then the refusal test passed on its own.
+
+**Status:** [#1072](https://github.com/KlassApp-Foundation/KlassApp/pull/1072) is open. Staging command and browser login follow the deploy. Production is not touched. Demo Senior is not touched. No password is written in this file.

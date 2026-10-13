@@ -67,7 +67,7 @@ async function runValidationBattery(page, data) {
         password: 'abc', confirm: 'abc',
     }, ['at least 8 characters'])) });
     results.push({ name: 'password mismatch', ...(await submitExpectErrors(page, data, {
-        password: 'Password123!', confirm: 'Password124!',
+        password: data.password, confirm: `${data.password}x`,
     }, ['confirmation does not match'])) });
     results.push({ name: 'terms unchecked', ...(await submitExpectErrors(page, data, {
         terms: false,

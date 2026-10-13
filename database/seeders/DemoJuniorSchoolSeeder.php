@@ -47,6 +47,12 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     public const DOMAIN = 'junior.demo.klassapp.test';
 
+    /**
+     * The one school-admin login. Recognised by role and school, not by the
+     * old demo-domain address. The password is never stored in this class.
+     */
+    public const ADMIN_EMAIL = 'demojunior@klassapp.xyz';
+
     /** A1: ages by class for seeded dates of birth. */
     public const AGE_BY_CLASS = [
         'Baby Class' => 3, 'Middle Class' => 4, 'Top Class' => 5,
@@ -107,7 +113,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
         $this->command?->info('Demo Junior School seeded.');
         $this->command?->line('School: ' . $this->school->name . ' (slug ' . $this->school->slug . ', is_demo=1)');
-        $this->command?->line('Admin: admin@' . self::DOMAIN . ' | Head teacher: headteacher@' . self::DOMAIN);
+        $this->command?->line('Admin: ' . self::ADMIN_EMAIL . ' | Head teacher: headteacher@' . self::DOMAIN);
         $this->command?->line('Teacher: teacher1@' . self::DOMAIN . ' | Bursar: bursar@' . self::DOMAIN);
         $this->command?->line('Passwords: unique random per account (set at account creation only, never echoed).');
     }
@@ -173,7 +179,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function seedStaff(): void
     {
-        $this->staff['admin'] = $this->user('admin', 'Daniel Mukasa', 3);
+        $this->staff['admin'] = $this->schoolAdmin('Daniel Mukasa');
         $this->staff['head'] = $this->user('headteacher', 'Sarah Nabukenya', 4);
         $this->bursar = $this->user('bursar', 'Robert Ssekandi', 11);
         $this->staff['librarian'] = $this->user('library', 'Alice Kirabo', 8);
@@ -748,6 +754,56 @@ class DemoJuniorSchoolSeeder extends Seeder
     }
 
     // ───────────────────────────────────────────────────────────────── users
+
+    /**
+     * The school admin is one row per school: the active usergroup-3 account,
+     * or the legacy demo-domain admin if that is the only one. A rerun renames
+     * the legacy address and never creates a second admin or a new password.
+     */
+    private function schoolAdmin(string $name): User
+    {
+        $email = self::ADMIN_EMAIL;
+        $legacy = 'admin@' . self::DOMAIN;
+
+        $onSchool = User::where('school_id', $this->school->id)
+            ->where('usergroup_id', 3)
+            ->orderBy('id')
+            ->get();
+
+        $active = $onSchool->where('status', 'active')->values();
+        $user = $active->firstWhere('email', $email)
+            ?? $active->firstWhere('email', $legacy)
+            ?? $active->first()
+            ?? $onSchool->firstWhere('email', $legacy)
+            ?? $onSchool->firstWhere('email', $email);
+
+        if (! $user) {
+            $user = User::create([
+                'email' => $email,
+                'school_id' => $this->school->id,
+                'usergroup_id' => 3,
+                'name' => $name,
+                'password' => Hash::make($this->freshPassword()),
+                'status' => 'active',
+                'email_verified' => 1,
+            ]);
+        } elseif ($user->email !== $email && ! User::where('email', $email)->where('id', '!=', $user->id)->exists()) {
+            $user->forceFill(['email' => $email])->save();
+        }
+
+        $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $user->id]);
+        $parts = explode(' ', $name, 2);
+        $profile->forceFill([
+            'user_id' => $user->id,
+            'school_id' => $this->school->id,
+            'usergroup_id' => 3,
+            'firstname' => $parts[0],
+            'lastname' => $parts[1] ?? '',
+            'status' => 'active',
+        ])->save();
+
+        return $user;
+    }
 
     private function user(string $localPart, string $name, int $usergroupId): User
     {
