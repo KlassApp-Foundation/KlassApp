@@ -10,6 +10,7 @@ use App\Models\FeesCategories;
 use App\Models\SchoolPayTransaction;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Models\School;
 use App\Services\FeePositionService;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
@@ -43,6 +44,7 @@ class FeePaymentController extends Controller
             ->get();
 
         $kpis = app(FeePositionService::class)->forSchool($schoolId);
+        $balances = app(FeePositionService::class)->studentsWithBalance($schoolId);
         $showRecordForm = $request->boolean('record') || $request->session()->has('errors');
         $paymentRecorded = $request->session()->has('successmessage');
 
@@ -51,6 +53,7 @@ class FeePaymentController extends Controller
             'students',
             'feeCategories',
             'kpis',
+            'balances',
             'showRecordForm',
             'paymentRecorded'
         ));
@@ -146,5 +149,70 @@ class FeePaymentController extends Controller
         ]);
 
         return back()->with('successmessage', 'Payment matched to fee category.');
+    }
+
+    public function sendReminders(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $school = School::query()->findOrFail($schoolId);
+        $requested = array_values(array_unique(array_map('intval', (array) $request->input('student_ids', []))));
+        $rows = collect(app(FeePositionService::class)->studentsWithBalance($schoolId))->keyBy('id');
+
+        $chosen = [];
+        $skipped = [];
+        foreach ($requested as $id) {
+            $row = $rows->get($id);
+            if (! $row) {
+                $skipped[] = 'That student is not one with a balance at this school';
+                continue;
+            }
+            $chosen[] = $row;
+        }
+
+        $parents = array_sum(array_column($chosen, 'parents'));
+        if (! $request->boolean('confirmed')) {
+            $noun = $parents === 1 ? '1 parent' : $parents.' parents';
+
+            return back()->with('reminder_result', 'Confirm the reminder first. It would message '.$noun.'.');
+        }
+
+        $blocked = (bool) $school->is_demo || (bool) $school->is_test;
+        $sent = 0;
+        foreach ($chosen as $row) {
+            if ($blocked) {
+                $skipped[] = $row['name'].': Demo and test schools do not send messages';
+                continue;
+            }
+            if ($row['parents'] < 1) {
+                $skipped[] = $row['name'].': No parent linked';
+                continue;
+            }
+            if (! $row['payment_id']) {
+                $skipped[] = $row['name'].': No fee payment on file';
+                continue;
+            }
+            try {
+                $inner = Request::create(
+                    '/admin/dashboard/send/reminder/'.$row['payment_id'],
+                    'POST',
+                    ['name' => $row['lookup_name']]
+                );
+                $result = app(DashboardController::class)->sendReminder($inner, $row['payment_id']);
+                if (is_array($result) && isset($result['success'])) {
+                    $sent++;
+                } else {
+                    $skipped[] = $row['name'].': The reminder did not send';
+                }
+            } catch (\Throwable $e) {
+                $skipped[] = $row['name'].': The reminder did not send';
+            }
+        }
+
+        $message = 'Sent '.$sent.'.';
+        if ($skipped !== []) {
+            $message .= ' Skipped '.count($skipped).' ('.implode('; ', $skipped).').';
+        }
+
+        return back()->with('reminder_result', $message);
     }
 }

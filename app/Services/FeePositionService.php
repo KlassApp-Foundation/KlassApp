@@ -7,6 +7,7 @@ use App\Models\AcademicTerm;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
 use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\User;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
@@ -198,6 +199,101 @@ class FeePositionService
         }
 
         return [$year->name ? $year->name.' · all classes' : null, null, null];
+    }
+
+    /**
+     * Active students in this school whose fee category is not fully paid.
+     *
+     * @return list<array{id: int, name: string, lookup_name: string, balance: float, parents: int, payment_id: ?int}>
+     */
+    public function studentsWithBalance(int $schoolId): array
+    {
+        $categoriesByStandard = FeesCategories::query()
+            ->where('school_id', $schoolId)
+            ->get()
+            ->groupBy('standard_id')
+            ->map(fn ($rows) => (float) $rows->sum('amount'));
+
+        $activeStudents = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->get()
+            ->keyBy('id');
+
+        $latestAcademics = StudentAcademic::query()
+            ->select('student_academics.user_id', 'standards_link.standard_id')
+            ->join('standards_link', 'student_academics.standardLink_id', '=', 'standards_link.id')
+            ->where('student_academics.school_id', $schoolId)
+            ->where('standards_link.school_id', $schoolId)
+            ->whereNull('student_academics.deleted_at')
+            ->whereIn('student_academics.user_id', $activeStudents->keys())
+            ->whereIn('student_academics.academic_year_id', function ($q) use ($schoolId) {
+                $q->select('id')->from('academic_years')
+                    ->where('school_id', $schoolId)
+                    ->where('status', 1);
+            })
+            ->orderByDesc('student_academics.id')
+            ->get()
+            ->unique('user_id');
+
+        $owing = [];
+        foreach ($latestAcademics as $row) {
+            $due = (float) ($categoriesByStandard[$row->standard_id] ?? 0);
+            if ($due <= 0) {
+                continue;
+            }
+            $owing[(int) $row->user_id] = $due;
+        }
+        if ($owing === []) {
+            return [];
+        }
+
+        $paidByStudent = FeePayment::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('user_id', array_keys($owing))
+            ->groupBy('user_id')
+            ->select('user_id', DB::raw('SUM(amount) as total_paid'))
+            ->pluck('total_paid', 'user_id');
+
+        $latestPayment = FeePayment::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('user_id', array_keys($owing))
+            ->orderByDesc('id')
+            ->get()
+            ->unique('user_id')
+            ->keyBy('user_id');
+
+        $parentCounts = StudentParentLink::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 1)
+            ->whereIn('student_id', array_keys($owing))
+            ->select('student_id', DB::raw('COUNT(*) as parents'))
+            ->groupBy('student_id')
+            ->pluck('parents', 'student_id');
+
+        $rows = [];
+        foreach ($owing as $userId => $due) {
+            $balance = max(0, $due - (float) ($paidByStudent[$userId] ?? 0));
+            if ($balance <= 0) {
+                continue;
+            }
+            $user = $activeStudents->get($userId);
+            if (! $user) {
+                continue;
+            }
+            $rows[] = [
+                'id' => $userId,
+                'name' => $user->displayName ?: $user->name,
+                'lookup_name' => (string) $user->name,
+                'balance' => $balance,
+                'parents' => (int) ($parentCounts[$userId] ?? 0),
+                'payment_id' => $latestPayment->get($userId)?->id,
+            ];
+        }
+
+        return $rows;
     }
 
     private function compactMoney(float $amount): string
