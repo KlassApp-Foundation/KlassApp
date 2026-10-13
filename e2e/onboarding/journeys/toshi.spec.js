@@ -81,11 +81,21 @@ for (const [typeId, tag] of JOURNEYS) {
         const dir = artifacts.save({ journeyId: tag, stamp: data.stamp, summary, conversation: run.conversation, health: health.summarize(h), outcome: verdict });
         console.log(`\n[${tag}] summary: ${dir}/summary.json — turns=${run.turns}, failed checks=${verdict.failed.length}, findings=${findings.length}`);
 
-        expect(page.url()).toContain('/admin/');
         expect(run.done, `Toshi journey must reach a completion signal (turns=${run.turns})`).toBeTruthy();
+        const required = [
+            'three terms',
+            'whatsapp linked',
+            'plan selected',
+            'classes/sections for type',
+        ];
+        const unmet = required.filter((name) => !verdict.checks.some((check) => check.name === name && check.ok));
+        expect(
+            unmet,
+            `School is not fully set up: ${verdict.failed.map((f) => `${f.name} (${f.detail})`).join('; ')}`,
+        ).toEqual([]);
         expect(
             verdict.failed,
-            `Hard outcome checks failed: ${verdict.failed.map((f) => f.name + ' — ' + f.detail).join('; ')}`,
+            `Hard outcome checks failed: ${verdict.failed.map((f) => `${f.name} — ${f.detail}`).join('; ')}`,
         ).toEqual([]);
     });
 }
