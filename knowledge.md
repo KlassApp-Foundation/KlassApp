@@ -682,7 +682,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - `demo:refresh` and the junior seeder keep that one admin, drop the legacy `admin@junior.demo.klassapp.test` address, and do not change the password hash on a second refresh. Demo Senior is unchanged.
 - Journeys read `E2E_ACCOUNT_PASSWORD`. The role crawl reads `DEMO_JUNIOR_ADMIN_EMAIL`, `DEMO_JUNIOR_ADMIN_PASSWORD`, `DEMO_JUNIOR_EMAIL_DOMAIN`, and `ROLE_CRAWL_PASSWORD`.
 - Tests with foreign keys on: `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest` (32 tests, the refusal case re-run green). Staging login is verified after this branch deploys. Production is not touched.
-- [#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057) is on `main` at `02580032`. AGENTS rules PR [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071) stays open for review.
+- [#1072](https://github.com/KlassApp-Foundation/KlassApp/pull/1072) is open on `tooling/demo-admin-login`. [#1057](https://github.com/KlassApp-Foundation/KlassApp/pull/1057) is on `main` at `02580032`. [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) is on `main` at `2d342d2d`. [#1066](https://github.com/KlassApp-Foundation/KlassApp/pull/1066) is on `main` at `81fda996`. AGENTS rules PR [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071) stays open for review.
 
 ## Current Status: October 13, 2026 — **final gate 14/14 green; role crawl clean except notice-list 404s**
 
@@ -13674,6 +13674,18 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list` merged `origin/main` before this change. Checkbox column and initials tiles are unchanged visually. `<x-people-list>` now takes `showSelection` (default true) and `avatarSize` (default `['table' => 'xs', 'card' => 'sm']`; a single size applies to both). The design follow-up flips those two props. `PeopleListTest` 8 passed. No further polish until the spec arrives.
 
+## Session: 2026-10-13 — PR2b whole-row click (branch `feat/people-list-2b`)
+
+**Scope:** the click target on the students, teachers, and parents lists. Select mode, avatar size, 48px rows, the sticky column header, and removing the card surface stay for after #1057 merges. This branch is stacked on `feat/people-list` (`da0ebb48`). #1057 is still open.
+
+**Change:** the name link's stretch covers the row and the phone card. `.people-who` no longer creates a containing block, so the overlay is the row. Hover tint is `#F8FAFC`. Keyboard focus draws a 2px `#1E6FD9` ring on that overlay. Enter follows the profile URL. The checkbox, row menu, and menu links stay outside the name link and above the overlay.
+
+**Files:** `public/css/people-list.css`, `public/js/people-list.js`.
+
+**Review:** port 8003, Demo Junior. A pointer click in the middle of a desktop row opened Betty Ochieng. A pointer click past the row menu opened Aaron Mbabazi. The same two clicks on a 375px card opened Aisha Nansubuga and Aaron Mbabazi. The checkbox checked without leaving the list. The row menu opened in place. Enter on the focused name opened Aaron Mbabazi. Profile route stays `/admin/student/show/{name}`.
+
+**Status:** [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) open against `feat/people-list` (`c16c51c5`). Not merged. Not deployed.
+
 ## Session: 2026-10-13 — Demo Junior school admin login
 
 **Work:** Demo Junior's one active school admin is recognised by role and school. `demo:set-admin-login` sets the durable address `demojunior@klassapp.xyz` and a password given only as an argument or a hidden prompt. It refuses a non-demo school and any school other than Demo Junior, prints a count only, and sends no mail. A refresh renames the legacy demo-domain admin address, does not create a second admin, and does not change the password hash. The manifest stores `admin_email` and no password. Journeys and the role crawl read demo credentials from environment variables.
@@ -13682,4 +13694,4 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 
 **Tests:** foreign keys on. `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest`: 32 tests, one error (a fixture school reused the unique name Demo Junior School), then the refusal test passed on its own.
 
-**Status:** staging command and browser login follow the deploy of this branch. Production is not touched. Demo Senior is not touched. No password is written in this file.
+**Status:** [#1072](https://github.com/KlassApp-Foundation/KlassApp/pull/1072) is open. Staging command and browser login follow the deploy. Production is not touched. Demo Senior is not touched. No password is written in this file.

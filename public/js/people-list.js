@@ -92,6 +92,12 @@
     root.addEventListener('keydown', function (event) {
         var pop = event.target.closest('[role="menu"]');
         if (!pop) {
+            var name = event.target.closest('a.people-name');
+            if (name && event.key === 'Enter') {
+                event.preventDefault();
+                window.location.assign(name.href);
+                return;
+            }
             var button = event.target.closest('[data-people-menu]');
             if (button && (event.key === 'Enter' || event.key === ' ')) {
                 event.preventDefault();
