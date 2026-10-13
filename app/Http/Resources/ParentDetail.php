@@ -16,7 +16,7 @@ class ParentDetail extends JsonResource
     {
       foreach ($this->children as $children) 
       {
-        $child['name'] = url('/admin/student/show/'.$children->userStudent->name);
+        $child['name'] = url('/admin/students/'.$children->userStudent->id);
         $child['fullname'] = $children->userStudent->FullName;
       }
         return 

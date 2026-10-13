@@ -148,7 +148,7 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('KLS0070042', $html);
         $this->assertStringContainsString('Primary 5', $html);
         $this->assertStringContainsString('Grace Parent', $html);
-        $this->assertStringContainsString('/admin/student/show/'.$student->name, $html);
+        $this->assertStringContainsString('/admin/students/'.$student->id, $html);
         $this->assertStringContainsString('View profile', $html);
         $this->assertStringContainsString('Move to class', $html);
         $this->assertStringContainsString('Message parent', $html);

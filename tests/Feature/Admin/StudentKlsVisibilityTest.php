@@ -123,7 +123,7 @@ class StudentKlsVisibilityTest extends TestCase
 
     public function test_student_overview_shows_the_kls_number(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/student/show/' . $this->student->name);
+        $response = $this->actingAs($this->admin)->followingRedirects()->get('/admin/student/show/' . $this->student->name);
 
         $response->assertOk();
         $response->assertSee('KLS7770042');

@@ -2,7 +2,7 @@
 <table class="w-full">
    <tr class="border-t-2 border-b-2">
       <td class="py-3 px-2">Student Name   : </td>
-      <td class="py-3 px-2"><a href="{{ url('/admin/student/show/'.$discipline->user->name) }}"> {{ $discipline->user->userprofile->firstname }} {{ $discipline->user->userprofile->lastname }}</a></td>
+      <td class="py-3 px-2"><a href="{{ url('/admin/students/'.$discipline->user->id) }}"> {{ $discipline->user->userprofile->firstname }} {{ $discipline->user->userprofile->lastname }}</a></td>
    </tr>
    <tr class="border-t-2 border-b-2">
       <td class="py-3 px-2">Teacher Name  :  </td>
