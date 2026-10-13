@@ -842,11 +842,11 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 .account-card__menu.user-dtl {
     display: none;
     position: absolute;
-    left: 12px;
-    right: 12px;
+    left: 0;
+    right: 0;
     bottom: calc(100% + 8px);
     top: auto;
-    max-width: calc(100vw - 16px);
+    max-width: 248px;
     width: auto;
     margin: 0;
     padding: 6px;
@@ -935,7 +935,8 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     left: calc(100% + 8px);
     right: auto;
     bottom: 0;
-    width: 280px;
+    width: 248px;
+    max-width: 248px;
 }
 
 /* ── Layout Override ──
@@ -3738,10 +3739,11 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
     #res_sidebar.admin-sidebar { animation: none; }
 }
 
-/* Item 12: in preview mode the Toshi edge triangle stays off screens below
-   1280 (the panel needs the room); ≥1280 and assistant/onboarding unchanged. */
+/* Edge tab: off in preview at every width, and off below 1280 in every mode.
+   Onboarding and assistant keep it at 1280 and up. The setup button is separate. */
+#toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none !important; width: 0 !important; }
 @media (max-width: 1279px) {
-    #toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none; }
+    #toshi-toggle-wrapper { display: none !important; width: 0 !important; }
 }
 
 /* Phone top bar (concept .topbar, 56px): burger, ellipsised title, search
@@ -4224,7 +4226,7 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
     margin: 0;
 }
 .dashboard-ay-select {
-    min-height: 36px;
+    min-height: 44px;
     font-size: 0.85rem;
     padding: 0.35rem 0.5rem;
 }
@@ -4517,7 +4519,7 @@ body.ka-drawer-open .dashboard-content-area select {
         width: 100%;
         color: #1E293B;
         background: #fff;
-        min-height: 36px;
+        min-height: 44px;
     }
     #res_sidebar.admin-sidebar.block:not(.hidden) {
         display: flex;
@@ -4717,8 +4719,9 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-link span {
     clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link .ka-nav-icon { width: 18px; height: 18px; }
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active { background: rgba(34, 197, 94, 0.16); color: #14532D; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: #F1F5F9; color: #334155; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active,
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active:hover { background: #DCFCE7; color: #14532D; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item { position: relative; }
 #ka-rail-tip {
     position: fixed; z-index: 80; transform: translateY(-50%);

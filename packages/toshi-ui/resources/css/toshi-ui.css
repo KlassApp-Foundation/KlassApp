@@ -1116,3 +1116,12 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
 @media (max-width: 1279px) {
     .toshi-early-pill { top: auto; bottom: -52px; writing-mode: horizontal-tb; transform: none; }
 }
+
+/* Edge tab: hidden in preview at every width, and below 1280 in every mode.
+   Onboarding and assistant keep it from 1280 up. */
+#toshi-toggle-wrapper[data-toshi-mode="preview"],
+.toshi-toggle-wrapper[data-toshi-mode="preview"] { display: none !important; width: 0 !important; }
+@media (max-width: 1279px) {
+    #toshi-toggle-wrapper,
+    .toshi-toggle-wrapper { display: none !important; width: 0 !important; }
+}
