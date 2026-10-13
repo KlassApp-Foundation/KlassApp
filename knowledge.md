@@ -676,11 +676,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 14, 2026 — **Demo Junior admin display name stays Demo Admin**
+
+- The staging greeting showed TARITWEBWA ERIC because the profile first and last name were saved that way. `users.name` was still Daniel Mukasa (`updated_at` 2026-10-13 17:19:02). The profile row was updated at 2026-10-13 17:55:24. Activity log entries at that minute are `edituserprofile` / "Changed Profile", caused by the same signed-in admin (`UserProfileController::update` writes `firstname` and `lastname` at lines 181–182). `google_id` and `google_avatar` were empty. The `authentications` table had no rows for that user.
+- `GoogleAuthController::callback` calls `updateGoogleData` at lines 90 and 99. That method sets `google_id`. It does not write `users.name`. It now skips `google_avatar` when the account's school has `is_demo = 1`. A new Google signup can still use the Google name at creation (line 111).
+- `DemoJuniorSchoolSeeder::ADMIN_NAME` is `Demo Admin`. `demo:refresh` writes it back onto the existing admin and the profile, and does not change the password. `demo:set-admin-login --display-only` does the same for that one school and refuses every other school. The profile accessors uppercase the greeting, so the screen shows DEMO ADMIN. [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071), [#890](https://github.com/KlassApp-Foundation/KlassApp/pull/890), and [#682](https://github.com/KlassApp-Foundation/KlassApp/pull/682) were not touched.
+
 ## Current Status: October 13, 2026 — **manual journeys fail unless the school is actually set up**
 
 - The 14-run primary manual journey at 1280 printed PASS while it was still on Academic year (terms, WhatsApp, plan, and the stream missing). The spec only required `/admin/` in the URL.
 - Hand check on a throwaway school: the Continue button is the element under its own centre at 1280×800, 1440×900, and 375 in Chrome, and at 1280×800 in Brave and WebKit. Nothing covers it. A click at 1280×800 and at 1280×900 moves to Structure. Staging answered those Livewire updates in under a second.
-- [#1075](https://github.com/KlassApp-Foundation/KlassApp/pull/1075) on `fix/manual-journey-outcomes`. Manual, Toshi, and MVP fail the run when terms, WhatsApp, the plan, or the school's class names are missing. Manual and MVP also require the stream. Primary manual was rerun on staging after that change: 1280 and 375 both finished the wizard, including Academic year, with 0 failed outcome checks. Signup field battery was not part of that rerun. [#1071](https://github.com/KlassApp-Foundation/KlassApp/pull/1071), [#890](https://github.com/KlassApp-Foundation/KlassApp/pull/890), and [#682](https://github.com/KlassApp-Foundation/KlassApp/pull/682) were not touched.
+- [#1075](https://github.com/KlassApp-Foundation/KlassApp/pull/1075) MERGED `424d847ea4dfe2e9d34e037377b7c67052a6ff90` (API `merged: true`, 2026-10-13T22:01:25Z). Manual, Toshi, and MVP fail the run when terms, WhatsApp, the plan, or the school's class names are missing. Manual and MVP also require the stream. Primary manual was rerun on staging before the merge: 1280 and 375 both finished the wizard, including Academic year, with 0 failed outcome checks. Signup field battery was not part of that rerun.
 
 ## Current Status: October 13, 2026 — **people-list select mode is on `main`**
 
