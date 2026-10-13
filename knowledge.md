@@ -13665,3 +13665,15 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 ### Continuation — 2026-10-12 selection and avatar switches
 
 Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list` merged `origin/main` before this change. Checkbox column and initials tiles are unchanged visually. `<x-people-list>` now takes `showSelection` (default true) and `avatarSize` (default `['table' => 'xs', 'card' => 'sm']`; a single size applies to both). The design follow-up flips those two props. `PeopleListTest` 8 passed. No further polish until the spec arrives.
+
+## Session: 2026-10-13 — PR2b whole-row click (branch `feat/people-list-2b`)
+
+**Scope:** the click target on the students, teachers, and parents lists. Select mode, avatar size, 48px rows, the sticky column header, and removing the card surface stay for after #1057 merges. This branch is stacked on `feat/people-list` (`da0ebb48`). #1057 is still open.
+
+**Change:** the name link's stretch covers the row and the phone card. `.people-who` no longer creates a containing block, so the overlay is the row. Hover tint is `#F8FAFC`. Keyboard focus draws a 2px `#1E6FD9` ring on that overlay. Enter follows the profile URL. The checkbox, row menu, and menu links stay outside the name link and above the overlay.
+
+**Files:** `public/css/people-list.css`, `public/js/people-list.js`.
+
+**Review:** port 8003, Demo Junior. A pointer click in the middle of a desktop row opened Betty Ochieng. A pointer click past the row menu opened Aaron Mbabazi. The same two clicks on a 375px card opened Aisha Nansubuga and Aaron Mbabazi. The checkbox checked without leaving the list. The row menu opened in place. Enter on the focused name opened Aaron Mbabazi. Profile route stays `/admin/student/show/{name}`.
+
+**Status:** [#1064](https://github.com/KlassApp-Foundation/KlassApp/pull/1064) open against `feat/people-list` (`c16c51c5`). Not merged. Not deployed.
