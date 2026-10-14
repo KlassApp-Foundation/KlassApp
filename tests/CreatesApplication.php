@@ -25,6 +25,18 @@ trait CreatesApplication
 
         $app = require __DIR__ . '/../bootstrap/app.php';
 
+        // Paratest: every worker is its own PHP process with its own sqlite
+        // :memory: database, but the file cache store lives on disk. Point each
+        // worker at its own cache directory as soon as config is loaded (before
+        // any provider resolves a cache store or the rate limiter), so one
+        // worker's Cache::flush() cannot wipe another worker's entries.
+        $token = getenv('TEST_TOKEN') ?: ($_SERVER['TEST_TOKEN'] ?? null);
+        if ($token) {
+            $app->afterBootstrapping(\Illuminate\Foundation\Bootstrap\LoadConfiguration::class, function ($app) use ($token) {
+                $app['config']->set('cache.stores.file.path', $app->storagePath('framework/cache/data/paratest-'.$token));
+            });
+        }
+
         $app->make(Kernel::class)->bootstrap();
 
         $detectedEnv = app()->environment();
@@ -50,16 +62,6 @@ trait CreatesApplication
         // Re-apply SQLite config after boot (env may have been overridden by .env)
         config(['database.default' => 'sqlite']);
         config(['database.connections.sqlite.database' => ':memory:']);
-
-        // Paratest: every worker is its own PHP process with its own sqlite
-        // :memory: database, but the file cache store lives on disk. Give each
-        // worker its own cache directory, and drop any store resolved during
-        // boot, so one worker's Cache::flush() cannot wipe another's entries.
-        $token = getenv('TEST_TOKEN') ?: ($_SERVER['TEST_TOKEN'] ?? null);
-        if ($token) {
-            config(['cache.stores.file.path' => storage_path('framework/cache/data/paratest-'.$token)]);
-            $app['cache']->forgetDriver('file');
-        }
 
         return $app;
     }
