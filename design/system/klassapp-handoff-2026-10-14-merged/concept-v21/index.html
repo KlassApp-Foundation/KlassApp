@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Header, profile and dashboard v2.1 · review</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E5DF;color:#1E293B;font-family:'DM Sans',system-ui,sans-serif}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.top{position:sticky;top:0;z-index:5;background:#E7E5DF;border-bottom:1px solid #CFCAC0;padding:12px 24px;display:flex;flex-direction:column;gap:8px}
+.top h1{font:700 20px Sora,sans-serif;margin:0}
+.r{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}[hidden]{display:none!important}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#334155}
+.seg{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid #94A3B8;border-radius:10px;flex-wrap:wrap}
+.seg button{min-height:38px;padding:0 11px;border:0;border-radius:7px;background:transparent;font:600 13px 'DM Sans',sans-serif;color:#1E293B;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#0F172A;color:#fff}
+.intro{padding:12px 24px 0;max-width:1260px;font-size:14px;line-height:1.55;color:#334155}.intro p{margin:0 0 6px}
+#m{font-weight:700}
+.frames{display:flex;gap:28px;padding:14px 24px 32px;align-items:flex-start;overflow-x:auto}
+.fr{flex:none;display:flex;flex-direction:column;gap:8px}.fr small{font-size:12px;font-weight:700;color:#334155}
+iframe{border:1px solid #CFCAC0;border-radius:6px;background:#FAFAF5;display:block}
+code{font-size:12.5px;background:#fff;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="top"><h1>Header (Plan B / Plan A), shared person profile, dashboard v2.1</h1>
+<div class="r"><div class="ctl">Page<div class="seg" data-k="page"><button data-v="dashboard">Dashboard</button><button data-v="students">Other page</button><button data-v="profile">Profile</button></div></div>
+<div class="ctl">Header<div class="seg" data-k="plan"><button data-v="B">Plan B · no top bar</button><button data-v="A">Plan A · top bar stays</button></div></div>
+<div class="ctl">School logo<div class="seg" data-k="logo"><button data-v="0">None</button><button data-v="1">Uploaded</button></div></div></div>
+<div class="r" id="r-dash"><div class="ctl">Attendance<div class="seg" data-k="att"><button data-v="week">Taken this week</button><button data-v="last">None yet this week</button></div></div><div class="ctl">Report cards<div class="seg" data-k="rc"><button data-v="gen">Some ready</button><button data-v="send">All ready</button></div></div><div class="ctl">Tile<div class="seg" data-k="hover"><button data-v="">At rest</button><button data-v="fees">Fees hovered</button></div></div></div>
+<div class="r" id="r-prof"><div class="ctl">Role<div class="seg" data-k="role"><button data-v="student">Student</button><button data-v="teacher">Teacher</button><button data-v="parent">Parent</button><button data-v="staff">Staff (bursar)</button></div></div><div class="ctl">Tab<div class="seg" id="tabs" data-k="tab"></div></div><div class="ctl">Data<div class="seg" data-k="state"><button data-v="filled">Filled</button><button data-v="empty">Empty</button></div></div><div class="ctl">Overlay<div class="seg" data-k="ov"><button data-v="">None</button><button data-v="menu">More menu</button><button data-v="dlg">Deactivate confirm</button></div></div></div>
+</div>
+<div class="intro"><p>Spec: <code>guidelines/handoff-2026-10-13-header-profile-dashboard.md</code>. Demo data only. Currency comes from school settings (UGX here); phone numbers are examples. Contrast is calculated from hex.</p><p id="m">Measuring…</p></div>
+<div class="frames"><div class="fr"><small>Laptop · 1280</small><iframe id="fd" width="1280" height="900" title="Laptop"></iframe></div><div class="fr"><small>Phone · 375</small><iframe id="fm" width="375" height="900" title="Phone"></iframe></div></div>
+<script>
+const TABS={student:['Overview','Academics','Attendance','Fees','Parents and guardians','Health and support','Documents','Notes'],teacher:['Overview','Teaching','Attendance','Documents'],parent:['Overview','Children','Fees','Messages'],staff:['Overview','Attendance','Documents']};
+const S={page:'dashboard',plan:'B',logo:'0',att:'week',rc:'gen',hover:'',role:'student',tab:'Overview',state:'filled',ov:''};
+const Q0=new URLSearchParams(location.search);for(const k in S)if(Q0.has(k))S[k]=Q0.get(k);
+function sync(){document.querySelectorAll('.seg[data-k]').forEach(g=>{if(g.id==='tabs')g.innerHTML=TABS[S.role].map(t=>`<button data-v="${t}">${t}</button>`).join('');g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S[g.dataset.k]))});document.getElementById('r-dash').hidden=S.page!=='dashboard';document.getElementById('r-prof').hidden=S.page!=='profile'}
+function go(){if(!TABS[S.role].includes(S.tab))S.tab=TABS[S.role][0];sync();const q=`app.html?page=${S.page}&plan=${S.plan}&logo=${S.logo}&att=${S.att}&rc=${S.rc}&hover=${S.hover}&role=${S.role}&tab=${encodeURIComponent(S.tab)}&state=${S.state}${S.ov==='menu'?'&menu=1':''}${S.ov==='dlg'?'&dlg=1':''}`;
+ document.getElementById('m').textContent='Measuring…';let n=0;const done=()=>{if(++n===2)setTimeout(measure,500)};fd.onload=done;fm.onload=done;fd.src=q;fm.src=q}
+document.querySelectorAll('.seg[data-k]').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S[g.dataset.k]=b.dataset.v;if(g.dataset.k==='role')S.tab=TABS[S.role][0];go()}));
+function measure(){const out=[];for(const f of [fd,fm]){try{const m=f.contentWindow.__m();out.push(`${m.vw}px: ${m.over>0?m.over+'px sideways scroll':'no sideways scroll'}, ${m.small?m.small+' targets under 44px ('+m.smallList.join(', ')+')':'all targets ≥ 44px'}${m.secondary36?', '+m.secondary36+' compact buttons under 36px':''}; h1 ${m.h1}${m.quiet?'; school line '+m.quiet:''}; bar ${m.topbar.join(' ')||'none'}${m.pairDiff.length?'; card pair height diff '+m.pairDiff.join('/')+'px':''}`)}catch(e){out.push('not loaded')}}document.getElementById('m').textContent='Measured in this browser · '+out.join(' · ')}
+go();
+</script>
+</body>
+</html>
