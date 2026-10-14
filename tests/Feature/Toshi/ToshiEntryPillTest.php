@@ -128,6 +128,9 @@ class ToshiEntryPillTest extends TestCase
         $this->assertStringContainsString('toshi_opened_', $js);
         $this->assertStringContainsString('tabIndex', $js);
         $this->assertStringContainsString('toshi-pill-on', $js);
+        $this->assertStringContainsString("addEventListener('load', sync)", $js);
+        $embed = file_get_contents(resource_path('views/layouts/partials/toshi-embed.blade.php'));
+        $this->assertStringContainsString('window.toshiSyncLauncher', $embed);
         $spacing = file_get_contents(base_path('resources/assets/design-system/tokens/spacing.css'));
         $this->assertStringContainsString('--d-toshi-pill-zone: 76px', $spacing);
     }
