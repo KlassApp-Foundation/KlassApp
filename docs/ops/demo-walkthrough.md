@@ -39,12 +39,51 @@ or `senior.demo.klassapp.test`.
 
 ## What to try, per role
 
-**School admin** — log in and open the dashboard, then:
-- Students, Teachers, Classes and streams, Exams, Fees and the class roster
-  should all show real data.
-- Dashboard v2: add `?v2=1` to the dashboard address to see the new layout.
+**School admin**: log in and you land on the dashboard (`/admin/dashboard`,
+greeting "Good morning, …", with the term under it and the school name in the
+top bar). The sidebar has four sections:
+- **People**:
+  - **Students**, with All students (`/admin/students`), Admissions (with a
+    pending count) and Health records.
+  - **Teachers and staff** (`/admin/teachers`).
+  - **Parents** (`/admin/parents`).
+- **Academics**:
+  - **Classes and subjects**, with Classes and streams (`/admin/classes`),
+    Subjects, Timetable and Calendar (these three from sidebar fixture, not
+    seen expanded on staging).
+  - **Attendance**.
+  - **Exams and reports**, with Exams and marks, Grading and Report cards.
+  - **Library**.
+- **Money**: **Fees** (`/admin/fees/payments`) and **Unmatched payments**.
+- **School**: **WhatsApp**, **Approvals**, **Transport** and **Settings**
+  (School details, Academic years and terms, Data exports; from sidebar
+  fixture, not seen expanded on staging).
 
-**Class teacher** (`teacher1@…`):
+The account card is in the sidebar footer. Its menu has Edit profile, Change
+password, Settings and Help, and also Log out (don't use Log out mid-demo).
+The sidebar folds to an icon rail with the button at the top left. On a phone,
+the menu button opens the same sections as a drawer.
+
+Then check:
+- Students, Teachers and staff, Parents, Classes and streams, Exams and marks,
+  Fees and the class roster should all show real data.
+- The Students, Teachers and staff and Parents lists have a **Select** button
+  that turns on Select mode, with a checkbox on each row.
+- Clicking a student row opens the student profile by id (`/admin/students/{id}`).
+  It has the tabs Overview, Academics, Attendance, Fees and Parents and guardians.
+- Clicking a teacher row opens the teacher profile
+  (`/admin/teacher/show/{name}`).
+- Clicking a parent row opens the parent profile (`/admin/parent/show/{name}`,
+  older page).
+- The dashboard now shows the new layout by default, so `?v2=1` is no longer
+  needed.
+- Toshi: the orange handle on the right edge (1280px and wider) opens the Toshi
+  panel. Toshi is in preview, so it shows "Coming soon" and messaging is
+  disabled. The sidebar footer reads "Toshi · coming soon".
+
+**Class teacher** (`teacher1@…`): lands on `/teacher/dashboard`. The sidebar
+has Attendance, Classes, Timetable, Exams, Homework, Marks, Report Cards,
+Class Streams, Notices and Events.
 - Attendance for their class — **today's attendance is untaken on purpose**,
   so it can be taken live on a call.
 - Marks entry, the class roster, and the marks template download.
@@ -52,9 +91,12 @@ or `senior.demo.klassapp.test`.
 **Subject teacher** — marks entry only for their own subject; a different
 class is refused.
 
-**Bursar** — the fees area, including recording a fee payment.
+**Bursar**: lands on the Accountant dashboard (`/accountant/dashboard`). It covers the fees area
+(**Fees & Payments**, `/accountant/fees/payments`), including recording a fee payment.
+The sidebar also has Data Exports, Holidays and Payroll.
 
-**Parent** (`parent1@…`) — sees only their own child's information.
+**Parent** (`parent1@…`): lands on the Parent Portal (`/parent/dashboard`), which has a
+child switcher and Children and Grades in the menu. They see only their own child's information.
 
 Log out after each role.
 
