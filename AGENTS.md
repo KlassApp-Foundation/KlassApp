@@ -74,11 +74,11 @@ These apply to every change, in every session, regardless of which tool is runni
 
 35. **Check MySQL for schema changes.** SQLite does not enforce foreign keys or column type matches. A migration that adds a foreign key, or any code that deletes rows, must be tested with foreign keys enforced (`PRAGMA foreign_keys = ON` in tests), and a new migration with a foreign key is run on MySQL (staging) before any production deploy. Migrations are written to be safe to run twice.
 
-36. **Never merge during a staging deploy.** Before merging, check the latest staging deployment. Merging while one is in progress makes checks fail and hides real failures. After merging, wait for the deploy to succeed before testing against staging. If a merge breaks staging, open a revert pull request first and investigate after.
+36. **Merge only on finished green, and never during a staging deploy.** Merge only when every required check (check, scan, test-guard) has finished green on the final commit: a pending check is not a pass (a merge made while test-guard was pending went red). Before merging, check the latest staging deployment; merging while one is in progress makes checks fail and hides real failures. After merging, wait for the deploy to succeed before testing against staging. If a merge breaks staging, open a revert pull request first and investigate after.
 
 37. **Public repository hygiene — fixes and tests stay generic.** Security fixes use generic titles (e.g. "Scope route bindings to the school") and test names that say what is checked, never how to attack. Audit tables, route lists of weaknesses and findings never enter this repository — record them in `KlassApp-Foundation/internal`, the same discipline as standing rule #29. Personal contact details are never committed here.
 
-38. **Secrets and credentials.** Never read, print, log or save a secret. Cloud access comes only from the `CLOUD_AGENT_TOOLING` environment variable, through a wrapper that refuses any environment other than staging. No agent uses a production helper without Rasta's explicit approval for that task. The only password an agent may handle is the shared demo password, passed as an argument to `demo:set-password`, never written to a file, log or pull request.
+38. **Secrets, credentials and cloud settings.** Never read, print, log or save a secret. Cloud access comes only from the `CLOUD_AGENT_TOOLING` environment variable, through a wrapper that refuses any environment other than staging. No agent uses a production helper without Rasta's explicit approval for that task. Laravel Cloud settings and environment variables belong to Rasta: agents report the exact name and value and never change them. Demo logins and the throwaway test password come from environment variables or from Rasta's message, are used only against staging for browser checks or test schools, and are never written to a file, log, screenshot, pull request or comment.
 
 39. **Local storage does not persist.** Laravel Cloud wipes the local filesystem on every deploy and replicas do not share it. State, manifests, uploads and logs go to the database, object storage or the log stream, never to a local file.
 
@@ -88,7 +88,15 @@ These apply to every change, in every session, regardless of which tool is runni
 
 42. **Time rules use fixed instants.** Cutoffs, expiries and schedules compare fixed UTC instants, and tests run under a non-UTC application timezone, because CI runs on Kampala time and a date comparison failed only there.
 
-43. **Delete rules for tests and tools.** Models with soft deletes leave their rows: tests assert on `deleted_at`. Every delete in a seeder, refresh or purge command is scoped by `school_id`. Test data is removed only with the purge command (dry run first), and flagged inactive otherwise.
+43. **Delete and demo-data rules for tests and tools.** Models with soft deletes leave their rows: tests assert on `deleted_at`. Every delete in a seeder, refresh or purge command is scoped by `school_id`. Test data is removed only with the purge command (dry run first), and flagged inactive otherwise. Demo helpers refuse schools that are not `is_demo` and never rename or bulk-flag schools, and `demo:refresh` keeps existing users' password hashes.
+
+44. **Verify like a user.** A passing test or a measurement is not verification. For any visible change, put the concept or the previous state beside the real page and look at it. Test with real pointer paths, a short window (1209x690 and 1280x680) and a browser that already holds old localStorage, in Chrome, Brave and WebKit. Measure what matters (item-to-item pitch, not element height; clipping at the corners with elementFromPoint, not "inside the viewport"). Never report "verified" without a pair image.
+
+45. **Stacked pull requests.** Retarget a stacked pull request to main before merging it, and after the merge confirm that the merge commit is on main. A pull request merged into its base branch is not on main (this happened once).
+
+46. **Design source of truth.** Build admin pages from `design/system/concepts/admin-mvp`, the combined handoff and the newest merged handoff (`design/system/SOURCE-OF-TRUTH.md` names it, when it exists). Legacy files (`ui_kits/school-dashboard`, `templates/school-dashboard`, `concepts/profiles/dashboard-v2.html`, `account-dashboard.html`) are not targets. When mirroring a design pack, copy only new and changed files, never `uploads/` or `scraps/`; its CHECKSUMS file can be stale, so verify with the ZIP hash and the pack checksum.
+
+47. **Review builds.** Serve the pull request branch with production-like assets (`npm run build`) and data equal to staging's. Local numbers can differ from staging, and local ports stop when a terminal closes: staging is the proof, so review on staging after merge.
 
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
