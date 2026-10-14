@@ -387,8 +387,8 @@ class DashboardV2Test extends TestCase
 
         $this->render($admin)->assertOk()
             ->assertSee('data-testid="dashboard-v2-kpi-students">3<', false)
-            ->assertSee('Girls', false)
-            ->assertSee('Not specified', false);
+            ->assertSee('1 girl', false)
+            ->assertSee('1 not specified', false);
     }
 
     private function completeAllSteps(School $school, User $admin): void
