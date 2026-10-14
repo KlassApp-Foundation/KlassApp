@@ -63,6 +63,15 @@ trait CreatesApplication
         config(['database.default' => 'sqlite']);
         config(['database.connections.sqlite.database' => ':memory:']);
 
+        // Under paratest each test starts with its worker's file cache empty.
+        // Every test gets a fresh :memory: database whose ids restart at 1, so
+        // a cache entry keyed by an id (e.g. standardLinkList{school}_{year})
+        // left by an earlier test on the same worker would otherwise be served
+        // to a later one. Only this worker's own directory is flushed.
+        if ($token) {
+            $app['cache']->store('file')->flush();
+        }
+
         return $app;
     }
 }
