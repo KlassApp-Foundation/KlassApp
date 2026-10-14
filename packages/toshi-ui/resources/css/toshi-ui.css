@@ -380,6 +380,7 @@
    (641–1279px had no rules at all) and the ≤640px full-screen takeover, so the
    panel keeps one behaviour at every width. */
 @media (max-width: 1279px) {
+    [data-toshi-resize-handle] { display: none !important; }
     /* Collapsed pill on mobile (audit fix 2026-09-27): the collapsed-pill
        positioning rule previously lived ONLY in the ≥1280 block, so sub-1280
        the pill was static inside the 0-width collapsed root — squeezed to a
@@ -1155,7 +1156,7 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
    Hidden below 1280, while the panel is open, and when it has nothing to say. */
 #toshi-entry-pill.toshi-entry-pill {
     position: fixed;
-    right: calc(36px + 16px + env(safe-area-inset-right));
+    right: calc(24px + env(safe-area-inset-right));
     bottom: calc(24px + env(safe-area-inset-bottom));
     z-index: 40;
     display: inline-flex;
@@ -1173,6 +1174,16 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     font-weight: 700;
     line-height: 1;
     cursor: pointer;
+}
+#toshi-entry-pill.is-compact {
+    width: 44px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+}
+#toshi-entry-pill.is-compact .toshi-entry-label,
+#toshi-entry-pill.is-compact .toshi-entry-chip {
+    display: none;
 }
 #toshi-entry-pill .toshi-entry-ring {
     width: 28px;

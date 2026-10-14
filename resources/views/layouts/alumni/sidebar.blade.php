@@ -4,7 +4,7 @@
         @include('layouts.partials.sidebar-menu', ['role' => 'alumni'])
     </div>
 </div>
-<div id="res_sidebar" class="w-full lg:w-48 md:w-48  hidden lg:hidden md:hidden res_sidebar">
+<div id="res_sidebar" role="dialog" aria-modal="true" aria-label="Main menu" class="w-full lg:w-48 md:w-48  hidden lg:hidden md:hidden res_sidebar">
     <div class="min-h-full header-wrapper-b lg:hidden md:hidden bg-red-800 text-white">
         @include('layouts.partials.sidebar-menu', ['role' => 'alumni'])
     </div>

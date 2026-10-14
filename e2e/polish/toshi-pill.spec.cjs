@@ -33,7 +33,7 @@ function pageHtml(mode, label, chip) {
         })();
       </script>
       <div class="dashboard-content-area" style="min-height:400px">
-        <a id="corner-action" href="#go" style="position:fixed;right:80px;bottom:8px;display:inline-block;height:44px;padding:0 12px;background:#fff">Record payment</a>
+        <a id="corner-action" href="#go" style="position:fixed;left:16px;bottom:8px;display:inline-block;height:44px;padding:0 12px;background:#fff">Record payment</a>
       </div>
       <div data-sticky-bar id="select-bar" style="position:fixed;left:16px;right:16px;top:80px;height:48px;background:#0f172a">Select</div>
       <div data-sticky-bar id="form-bar" hidden style="position:fixed;left:0;right:0;bottom:0;height:56px;background:#fff;z-index:15">

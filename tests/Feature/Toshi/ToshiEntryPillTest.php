@@ -134,4 +134,17 @@ class ToshiEntryPillTest extends TestCase
         $spacing = file_get_contents(base_path('resources/assets/design-system/tokens/spacing.css'));
         $this->assertStringContainsString('--d-toshi-pill-zone: 76px', $spacing);
     }
+
+    public function test_toshi_pill_does_not_dodge_rows_and_collapses_after_scroll(): void
+    {
+        $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
+        $this->assertStringNotContainsString("querySelectorAll('a, button, [data-sticky-bar]')", $js);
+        $this->assertStringContainsString('is-compact', $js);
+        $this->assertStringContainsString('scrollY > 80', $js);
+        $css = file_get_contents(base_path('packages/toshi-ui/resources/css/toshi-ui.css'));
+        $section = explode('TOSHI ENTRY PILL', $css, 2)[1] ?? '';
+        $this->assertStringContainsString('right: calc(24px + env(safe-area-inset-right))', $section);
+        $this->assertStringContainsString('#toshi-entry-pill.is-compact .toshi-entry-label', $section);
+        $this->assertStringContainsString('width: 44px', $section);
+    }
 }

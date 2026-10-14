@@ -7,10 +7,6 @@
     return r.width >= 2 && r.height >= 2;
   }
 
-  function intersects(a, b) {
-    return !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
-  }
-
   function wrapper() {
     return document.getElementById('toshi-toggle-wrapper');
   }
@@ -51,6 +47,7 @@
       handle.tabIndex = (wanted || !collapsed || window.innerWidth < 1280) ? -1 : 0;
     }
     place();
+    compact();
   }
 
   window.toshiSyncLauncher = sync;
@@ -66,24 +63,14 @@
       if (bar.bottom < window.innerHeight - 4) continue;
       bottom = Math.max(bottom, Math.ceil(window.innerHeight - bar.top) + 16);
     }
-    for (var n = 0; n < 6; n++) {
-      pill.style.bottom = 'calc(' + bottom + 'px + env(safe-area-inset-bottom))';
-      var box = pill.getBoundingClientRect();
-      if (box.width < 2) return;
-      var bump = 0;
-      var nodes = document.querySelectorAll('a, button, [data-sticky-bar]');
-      for (var i = 0; i < nodes.length; i++) {
-        var el = nodes[i];
-        if (el === pill || pill.contains(el) || el.id === 'toshi-toggle') continue;
-        if (el.closest('#toshi-toggle-wrapper, [data-toshi-root]')) continue;
-        if (!shown(el)) continue;
-        var r = el.getBoundingClientRect();
-        if (!intersects(box, r)) continue;
-        bump = Math.max(bump, Math.ceil(box.bottom - r.top));
-      }
-      if (bump <= 0) return;
-      bottom += bump + 8;
-    }
+    pill.style.right = 'calc(24px + env(safe-area-inset-right))';
+    pill.style.bottom = 'calc(' + bottom + 'px + env(safe-area-inset-bottom))';
+  }
+
+  function compact() {
+    var pill = document.getElementById('toshi-entry-pill');
+    if (!pill) return;
+    pill.classList.toggle('is-compact', window.scrollY > 80 || document.documentElement.scrollTop > 80);
   }
 
   window.toshiPlaceEntryPill = place;
@@ -91,6 +78,7 @@
   function boot() {
     sync();
     window.addEventListener('resize', sync);
+    window.addEventListener('scroll', compact, { passive: true });
     document.addEventListener('toshi-collapsed-changed', sync);
     var bars = document.querySelectorAll('[data-sticky-bar]');
     if (window.MutationObserver) {

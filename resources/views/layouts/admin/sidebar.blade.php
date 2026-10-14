@@ -8,7 +8,7 @@
 </div>
 {{-- Mobile sidebar — toggleable via hamburger. Reuses the same footer at the bottom of the menu.
      Light slide-in panel (concept .side, 288px); geometry/animation live in dashboard-refresh.css. --}}
-<div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" style="background-color: #FFFCF5;">
+<div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" role="dialog" aria-modal="true" aria-label="Main menu" style="background-color: #FFFCF5;">
   <div class="ka-drawer-head">
     <img class="ka-drawer-logo" src="{{ asset('images/klassapp-horizontal-dark.svg') }}" alt="" height="24">
     <button type="button" id="drawer-close" class="ka-drawer-close" aria-label="Close menu"><span aria-hidden="true">✕</span></button>

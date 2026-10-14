@@ -4,7 +4,7 @@
     @include('layouts.partials.sidebar-menu', ['role' => 'parent'])
   </div>
 </div>
-<div id="res_sidebar" class="w-full lg:w-48 md:w-48 parent-sidebar dashboard-themed-sidebar hidden lg:hidden md:hidden res_sidebar">
+<div id="res_sidebar" role="dialog" aria-modal="true" aria-label="Main menu" class="w-full lg:w-48 md:w-48 parent-sidebar dashboard-themed-sidebar hidden lg:hidden md:hidden res_sidebar">
   <div class="min-h-full header-wrapper-b lg:hidden md:hidden">
     @include('layouts.partials.sidebar-menu', ['role' => 'parent'])
   </div>
