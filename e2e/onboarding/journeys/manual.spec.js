@@ -93,6 +93,27 @@ for (const [typeId, tag] of JOURNEYS) {
         const dir = artifacts.save({ journeyId: tag, stamp: data.stamp, summary, health: health.summarize(h), outcome: verdict });
         console.log(`\n[${tag}] summary: ${dir}/summary.json — ${verdict.failed.length} failed check(s), ${findings.length} finding(s)`);
 
-        expect(page.url()).toContain('/admin/');
+        // A dashboard URL is not a finished school. These are the outcomes a
+        // laptop run was printing as PASS while still sitting on Academic year.
+        expect(
+            wizardRecord.steps.some((step) => step.includes('structure')),
+            `Academic year did not advance (steps: ${wizardRecord.steps.join(' → ')})`,
+        ).toBeTruthy();
+        const required = [
+            'three terms',
+            'stream added persists',
+            'whatsapp linked',
+            'plan selected',
+            'classes/sections for type',
+        ];
+        const unmet = required.filter((name) => !verdict.checks.some((check) => check.name === name && check.ok));
+        expect(
+            unmet,
+            `School is not fully set up: ${verdict.failed.map((f) => `${f.name} (${f.detail})`).join('; ')}`,
+        ).toEqual([]);
+        expect(
+            verdict.failed,
+            `Hard outcome checks failed: ${verdict.failed.map((f) => `${f.name} — ${f.detail}`).join('; ')}`,
+        ).toEqual([]);
     });
 }
