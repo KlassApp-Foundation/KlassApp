@@ -1111,15 +1111,16 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
 }
 
 /* TOSHI HANDLE — collapsed edge tab from 1280 up, in every mode.
-   40×96 white card, slate border, brand K. No orange. Hidden below 1280. */
+   36×96 white card, slate border, brand K. Centred in the space below
+   the sticky header. No orange. Hidden below 1280. */
 @media (min-width: 1280px) {
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
         display: flex !important;
         position: fixed !important;
         right: 0 !important;
-        top: 50% !important;
+        top: calc(50% + var(--ka-topbar-h, 64px) / 2) !important;
         transform: translateY(-50%) !important;
-        width: 40px !important;
+        width: 36px !important;
         height: 96px !important;
         margin: 0;
         padding: 0;
@@ -1131,10 +1132,10 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
         box-shadow: none !important;
         font: 700 18px/1 ui-sans-serif, system-ui, sans-serif;
         cursor: pointer;
-        z-index: 10000 !important;
+        z-index: 40 !important;
     }
     body.toshi-collapsed #toshi-toggle.toshi-toggle:hover {
-        width: 40px !important;
+        width: 36px !important;
         background: #F8FAFC !important;
         color: #15803D !important;
         box-shadow: none !important;
@@ -1149,12 +1150,12 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     .toshi-toggle-wrapper { display: none !important; width: 0 !important; }
 }
 
-/* TOSHI ENTRY PILL — second way into the same panel. The edge handle above
-   stays as it is. White, brand green K, no orange. Hidden below 1280 and
-   while the panel is open. Sits above page content and under the phone drawer. */
+/* TOSHI ENTRY PILL — the second shape of the same launcher. White, just
+   left of the 36px gutter. Green K in a ring. 14px/700 label. No orange.
+   Hidden below 1280, while the panel is open, and when it has nothing to say. */
 #toshi-entry-pill.toshi-entry-pill {
     position: fixed;
-    right: calc(24px + env(safe-area-inset-right));
+    right: calc(36px + 16px + env(safe-area-inset-right));
     bottom: calc(24px + env(safe-area-inset-bottom));
     z-index: 40;
     display: inline-flex;
@@ -1162,19 +1163,28 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     gap: 8px;
     height: 44px;
     margin: 0;
-    padding: 0 14px 0 12px;
+    padding: 0 14px 0 8px;
     border-radius: 999px;
     background: #fff;
     border: 1px solid #E2E8F0;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
     color: #0F172A;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1;
     cursor: pointer;
 }
+#toshi-entry-pill .toshi-entry-ring {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1.5px solid #15803D;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 #toshi-entry-pill .toshi-entry-mark {
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 700;
     color: #15803D;
     line-height: 1;
@@ -1182,13 +1192,29 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
 #toshi-entry-pill .toshi-entry-label {
     color: #0F172A;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
+}
+#toshi-entry-pill .toshi-entry-chip {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0F172A;
+    background: #F1F5F9;
+    border-radius: 999px;
+    padding: 2px 6px;
+}
+body.toshi-pill-on .dashboard-content-area {
+    padding-bottom: 100px;
+}
+body.toshi-pill-on [data-toast],
+body.toshi-pill-on .toast-container {
+    bottom: calc(var(--d-toshi-pill-zone, 76px) + 12px);
 }
 #toshi-entry-pill.toshi-entry-pill:focus-visible {
     outline: 2px solid #15803D;
     outline-offset: 2px;
 }
-body:not(.toshi-collapsed) #toshi-entry-pill {
+body:not(.toshi-collapsed) #toshi-entry-pill,
+#toshi-entry-pill[hidden] {
     display: none !important;
 }
 @media (max-width: 1279px) {

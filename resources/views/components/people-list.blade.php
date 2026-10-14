@@ -62,7 +62,7 @@
     </form>
 
     @if($showSelection)
-    <div class="people-bulk" data-people-bulk hidden>
+    <div class="people-bulk" data-people-bulk data-sticky-bar hidden>
         <b><span data-people-count>0</span> selected</b>
         @foreach($list['bulk'] as $action)
             <a class="people-bulk-btn" href="{{ $action['href'] }}">{{ $action['label'] }}</a>

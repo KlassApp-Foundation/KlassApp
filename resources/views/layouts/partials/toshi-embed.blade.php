@@ -30,9 +30,18 @@
                 'assistant' => 'Talk',
                 default => 'Setup guide',
             };
+            $toshiSetupDone = 0;
+            $toshiSetupTotal = 0;
+            $toshiSchool = auth()->user()->school;
+            if ($toshiSchool) {
+                $toshiSetup = \App\Services\OnboardingStepsService::progress($toshiSchool, (int) auth()->id());
+                $toshiSetupDone = (int) $toshiSetup['done'];
+                $toshiSetupTotal = (int) $toshiSetup['total'];
+            }
         @endphp
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
-             data-toshi-mode="{{ $toshiMode }}">
+             data-toshi-mode="{{ $toshiMode }}" data-toshi-user="{{ auth()->id() }}"
+             data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}">
             <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
                 aria-label="Open Toshi"
                 title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
@@ -40,8 +49,11 @@
             </button>
             <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" data-testid="toshi-entry-pill"
                 aria-label="Open Toshi">
-                <span class="toshi-entry-mark" aria-hidden="true">K</span>
+                <span class="toshi-entry-ring" aria-hidden="true"><span class="toshi-entry-mark">K</span></span>
                 <span class="toshi-entry-label">{{ $toshiPillLabel }}</span>
+                @if($toshiMode === 'onboarding' && $toshiSetupTotal > $toshiSetupDone)
+                    <span class="toshi-entry-chip" data-testid="toshi-entry-chip">{{ $toshiSetupDone }}/{{ $toshiSetupTotal }}</span>
+                @endif
             </button>
             @toshiAssistant
             <span class="toshi-early-pill" aria-hidden="true">Early access</span>
@@ -77,9 +89,18 @@
                 document.documentElement.classList.toggle('toshi-collapsed', collapsed);
                 syncToggleGlyph();
                 persist();
+                if (window.toshiSyncLauncher) window.toshiSyncLauncher();
                 try {
                     window.dispatchEvent(new CustomEvent('toshi-collapsed-changed', { detail: { collapsed: !!collapsed } }));
                 } catch (e) {}
+                if (collapsed) {
+                    var which = window.toshiLauncherReturn === 'pill' ? 'toshi-entry-pill' : 'toshi-toggle';
+                    var back = document.getElementById(which);
+                    if (!back || back.tabIndex < 0 || getComputedStyle(back).display === 'none') {
+                        back = document.getElementById('toshi-toggle');
+                    }
+                    if (back && getComputedStyle(back).display !== 'none') back.focus();
+                }
             }
             window.toshiSetCollapsed = setCollapsed; // inline handlers in the Livewire root call this
 
@@ -97,13 +118,27 @@
                 if (toggle && !toggle.dataset.splitBound) {
                     toggle.dataset.splitBound = '1';
                     toggle.addEventListener('click', function () {
-                        setCollapsed(!document.body.classList.contains('toshi-collapsed'));
+                        if (document.body.classList.contains('toshi-collapsed')) {
+                            window.toshiLauncherReturn = 'handle';
+                            if (window.toshiMarkPreviewSeen) window.toshiMarkPreviewSeen();
+                            setCollapsed(false);
+                        } else {
+                            setCollapsed(true);
+                        }
                     });
                 }
                 var entryPill = document.getElementById('toshi-entry-pill');
                 if (entryPill && !entryPill.dataset.splitBound) {
                     entryPill.dataset.splitBound = '1';
                     entryPill.addEventListener('click', function () {
+                        window.toshiLauncherReturn = 'pill';
+                        if (window.toshiMarkPreviewSeen) window.toshiMarkPreviewSeen();
+                        setCollapsed(false);
+                    });
+                    entryPill.addEventListener('keydown', function (e) {
+                        if (e.key !== 'Enter') return;
+                        window.toshiLauncherReturn = 'pill';
+                        if (window.toshiMarkPreviewSeen) window.toshiMarkPreviewSeen();
                         setCollapsed(false);
                     });
                 }
