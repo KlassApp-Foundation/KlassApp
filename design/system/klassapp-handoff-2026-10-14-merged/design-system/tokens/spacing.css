@@ -1,0 +1,47 @@
+/* KlassApp spacing tokens — intentional addition. The app CSS uses px literals;
+   these are the values that actually recur, named so consumers stop guessing. */
+:root {
+    --d-space-1: 4px;
+    --d-space-2: 6px;
+    --d-space-3: 8px;
+    --d-space-4: 10px;
+    --d-space-5: 12px;
+    --d-space-6: 14px;
+    --d-space-7: 16px;   /* grid gap between cards / KPI tiles */
+    --d-space-8: 20px;   /* card padding (default), topfold padding */
+    --d-space-9: 24px;   /* shell padding, KPI card x-padding */
+    --d-space-10: 28px;  /* .ds-card-padding-lg */
+    --d-space-12: 48px;  /* empty-state vertical padding */
+
+    /* Recurring composites */
+    --d-gutter: 16px;            /* default grid gap */
+    --d-shell-padding: 24px;
+    --d-card-padding: 20px;
+    --d-table-cell-x: 20px;      /* ledger td/th horizontal padding */
+    --d-table-cell-y: 18px;      /* .dt-comfortable td vertical padding */
+
+    /* Bottom safe zone (Toshi on phones, 2026-10-08). Nothing floating may sit inside it. */
+    --d-sticky-bar-h: 68px;      /* sticky form action bar / page footer: 44px button + 12px top + 12px bottom */
+    --d-safe-bottom: max(16px, env(safe-area-inset-bottom, 0px));   /* device inset, never less than 16px */
+    --d-bottom-zone: var(--d-safe-bottom);                          /* pages with no sticky bar */
+    --d-sheet-top-gap: max(8px, env(safe-area-inset-top, 0px));     /* gap above a full-height phone sheet */
+    --d-toshi-sheet-w: 400px;    /* side sheet at 768–1279 */
+}
+/* Pages with a sticky action bar or footer set data-sticky-bar on <body> (the layout does this
+   when it renders .fbar or a sticky footer), which reserves the bar's height too. */
+[data-sticky-bar] {
+    --d-bottom-zone: calc(var(--d-sticky-bar-h) + var(--d-safe-bottom));
+}
+
+/* Page surface and layout (2026-10-14, handoff-2026-10-14-surface-toshi-profiles.md S1) */
+:root {
+    --d-page-surface: #FAFAF5;      /* = --d-canvas; cards sit directly on it, no page panel */
+    --d-content-max: 1600px;        /* content column cap, centred on wide screens */
+    --d-page-pad: 24px;             /* 24 below 1440, 32 from 1440, 40 from 1920 (content width ≥ 1640) */
+    --d-page-gap: 24px;             /* between page sections */
+    --d-grid-gap: 16px;             /* between cards; 20px when the content is 1180px or wider */
+    --d-toshi-gutter: 40px;         /* right padding kept free for the Toshi handle at 1280 and up */
+    --d-toshi-panel-w: 400px;       /* default; draggable 320–560 */
+    --d-kpi-min: 176px;             /* smallest KPI tile */
+    --d-kpi-inline: 260px;          /* at or above: meta and action share one line, height 150px */
+}
