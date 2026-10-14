@@ -2,241 +2,182 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="px-4 md:px-6 py-4">
-        @include('partials.message')
-        <div class="ds-page-head">
-            <div class="flex items-center gap-3">
-                <x-button href="{{ url('/admin/parents') }}" variant="ghost" size="sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                </x-button>
-                <h1 class="ds-page-head-title">Parent Profile</h1>
-            </div>
-        </div>
-        <div class="flex lg:items-center lg:justify-between flex-col lg:flex-row mx-5">
-            <h3 class="font-semibold text-3xl text-gray-700">{{ ucwords($user->FullName) }}</h3>
-            <div class="flex items-center gap-2"> 
-                <x-button href="{{ url('/admin/parent/edit/'.$user->name) }}" variant="primary" size="sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit
-                </x-button>
-
-                <form id="parent_delete" action="{{ url('/admin/parent/delete', ['name'=>$user->name]) }}" method="POST" class="text-white text-xs inline-flex items-center bg-red-600 rounded px-2 py-1 mr-2" data-confirm-delete="Delete {{ filled($user->displayName) ? $user->displayName : 'this parent' }}? This cannot be undone.">
-                    @csrf
-                    @method('delete')
-                                   
-                    <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve" class="w-3 h-3 fill-current text-white"><g><g><g><polygon points="353.574,176.526 313.496,175.056 304.807,412.34 344.885,413.804"></polygon><rect x="235.948" y="175.791" width="40.104" height="237.285"></rect><polygon points="207.186,412.334 198.497,175.049 158.419,176.52 167.109,413.804"></polygon> <path d="M17.379,76.867v40.104h41.789L92.32,493.706C93.229,504.059,101.899,512,112.292,512h286.74 c10.394,0,19.07-7.947,19.972-18.301l33.153-376.728h42.464V76.867H17.379z M380.665,471.896H130.654L99.426,116.971h312.474 L380.665,471.896z"></path></g></g></g> <g><g><path d="M321.504,0H190.496c-18.428,0-33.42,14.992-33.42,33.42v63.499h40.104V40.104h117.64v56.815h40.104V33.42 C354.924,14.992,339.932,0,321.504,0z"></path></g></g></svg>
-                    <button type="submit" class="mx-1">Delete</button>
-                </form>
-
-                @if(optional($user)->status == "inactive")
-                    <a href="#" rel="{{ url('/admin/user/updateStatus/'.$user->name) }} " class="capitalize text-white custom-green rounded px-2 py-1 mr-2 font-medium activate my-1 lg:my-0 md:my-0 mr-2" value="active" id="status">Activate</a>
-                @else
-
-                    <a href="#" rel="{{ url('/admin/user/updateStatus/'.$user->name) }}" class="capitalize text-white bg-red-600 rounded px-2 py-1 mr-2 font-medium activate my-1 lg:my-0 md:my-0 mr-2" value="inactive" id="status">Deactivate</a>
-                @endif
-                    
-                @if($user->email != null)
-                    <a href="#" rel="{{ url('/admin/user/resetPassword/'.$user->id) }}" class="capitalize text-white blue-bg rounded px-2 py-1 mr-2 font-medium reset my-1 lg:my-0 md:my-0">reset Password</a>
-
-                    @if($user->email_verified != 1)
-                        <a href="#" rel="{{ url('/admin/user/'.$user->id.'/verificationcode') }}" class="capitalize text-white blue-bg rounded px-2 py-1 mr-2 font-medium verify" id="verify_mail">verify email</a>
-                    @endif
-                @endif
-
-
-            </div>
-        </div>
-        <div class="leading-relaxed mx-5 flex justify-end">
-            <change-credential url="{{('/')}}" name="{{$user->name}}"  ></change-credential>
-        </div>
-        <div class="flex flex-col lg:flex-row md:flex-row mx-5">
-            <div class="w-full lg:w-1/5 md:w-1/5 py-1">
-                <!-- start -->
-                <div class="bg-white rounded leading-relaxed">
-                    <div class="my-4 px-2">
-                        <p class="capitalize text-gray-800 text-sm">contact information :</p>
-                        <ul class="list-reset text-xs leading-loose my-2">
-                            <li class="flex py-1 items-center">
-                                <svg class="fill-current w-3 h-3 text-gray-800" height="512" viewBox="0 0 58 58" width="512" xmlns="http://www.w3.org/2000/svg"><g id="Page-1" fill="none" fill-rule="evenodd"><g id="003---Call" fill="rgb(0,0,0)" fill-rule="nonzero" transform="translate(-1)"><path id="Shape" d="m25.017 33.983c-5.536-5.536-6.786-11.072-7.068-13.29-.0787994-.6132828.1322481-1.2283144.571-1.664l4.48-4.478c.6590136-.6586066.7759629-1.685024.282-2.475l-7.133-11.076c-.5464837-.87475134-1.6685624-1.19045777-2.591-.729l-11.451 5.393c-.74594117.367308-1.18469338 1.15985405-1.1 1.987.6 5.7 3.085 19.712 16.855 33.483s27.78 16.255 33.483 16.855c.827146.0846934 1.619692-.3540588 1.987-1.1l5.393-11.451c.4597307-.9204474.146114-2.0395184-.725-2.587l-11.076-7.131c-.7895259-.4944789-1.8158967-.3783642-2.475.28l-4.478 4.48c-.4356856.4387519-1.0507172.6497994-1.664.571-2.218-.282-7.754-1.532-13.29-7.068z"/><path id="Shape" d="m47 31c-1.1045695 0-2-.8954305-2-2-.0093685-8.2803876-6.7196124-14.9906315-15-15-1.1045695 0-2-.8954305-2-2s.8954305-2 2-2c10.4886126.0115735 18.9884265 8.5113874 19 19 0 1.1045695-.8954305 2-2 2z"/><path id="Shape" d="m57 31c-1.1045695 0-2-.8954305-2-2-.0154309-13.800722-11.199278-24.9845691-25-25-1.1045695 0-2-.8954305-2-2s.8954305-2 2-2c16.008947.01763587 28.9823641 12.991053 29 29 0 .530433-.2107137 1.0391408-.5857864 1.4142136-.3750728.3750727-.8837806.5857864-1.4142136.5857864z"/></g></g></svg>
-                                <div class="w-full mx-2">
-                                    <a href="#" class="blue-text">
-                                        @if($user->mobile_no != null)
-                                            {{ $user->mobile_no }}
-                                        @else
-                                            --
-                                        @endif
-                                    </a>
-                                </div>
-                            </li>
-                            @if(optional($user->userprofile)->alternate_no != null)
-                                <li class="flex py-1 items-center">
-                                    <svg class="fill-current w-3 h-3 text-gray-800" height="512" viewBox="0 0 58 58" width="512" xmlns="http://www.w3.org/2000/svg"><g id="Page-1" fill="none" fill-rule="evenodd"><g id="003---Call" fill="rgb(0,0,0)" fill-rule="nonzero" transform="translate(-1)"><path id="Shape" d="m25.017 33.983c-5.536-5.536-6.786-11.072-7.068-13.29-.0787994-.6132828.1322481-1.2283144.571-1.664l4.48-4.478c.6590136-.6586066.7759629-1.685024.282-2.475l-7.133-11.076c-.5464837-.87475134-1.6685624-1.19045777-2.591-.729l-11.451 5.393c-.74594117.367308-1.18469338 1.15985405-1.1 1.987.6 5.7 3.085 19.712 16.855 33.483s27.78 16.255 33.483 16.855c.827146.0846934 1.619692-.3540588 1.987-1.1l5.393-11.451c.4597307-.9204474.146114-2.0395184-.725-2.587l-11.076-7.131c-.7895259-.4944789-1.8158967-.3783642-2.475.28l-4.478 4.48c-.4356856.4387519-1.0507172.6497994-1.664.571-2.218-.282-7.754-1.532-13.29-7.068z"/><path id="Shape" d="m47 31c-1.1045695 0-2-.8954305-2-2-.0093685-8.2803876-6.7196124-14.9906315-15-15-1.1045695 0-2-.8954305-2-2s.8954305-2 2-2c10.4886126.0115735 18.9884265 8.5113874 19 19 0 1.1045695-.8954305 2-2 2z"/><path id="Shape" d="m57 31c-1.1045695 0-2-.8954305-2-2-.0154309-13.800722-11.199278-24.9845691-25-25-1.1045695 0-2-.8954305-2-2s.8954305-2 2-2c16.008947.01763587 28.9823641 12.991053 29 29 0 .530433-.2107137 1.0391408-.5857864 1.4142136-.3750728.3750727-.8837806.5857864-1.4142136.5857864z"/></g></g></svg>
-                                    <div class="w-full mx-2">
-                                        <a href="#" class="blue-text">{{ optional($user->userprofile)->alternate_no }}</a>
-                                    </div>
-                                </li>
-                            @endif
-                            <li class="flex py-1 items-center">
-                                <svg class="w-3 h-3 fill-current text-gray-800" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><g><g><polygon points="339.392,258.624 512,367.744 512,144.896"/></g></g><g><g><polygon points="0,144.896 0,367.744 172.608,258.624"/></g></g><g><g><path d="M480,80H32C16.032,80,3.36,91.904,0.96,107.232L256,275.264l255.04-168.032C508.64,91.904,495.968,80,480,80z"/></g></g><g><g><path d="M310.08,277.952l-45.28,29.824c-2.688,1.76-5.728,2.624-8.8,2.624c-3.072,0-6.112-0.864-8.8-2.624l-45.28-29.856 L1.024,404.992C3.488,420.192,16.096,432,32,432h448c15.904,0,28.512-11.808,30.976-27.008L310.08,277.952z"/></g></g></svg>
-                                <div class="w-full mx-2">
-                                    @if($user->email == '')
-                                        --
-                                    @else
-                                        <a href="#" class="blue-text">{{ $user->email }}</a>
-                                    @endif
-                                </div>
-                            </li>
-                        </ul>
+@php
+    $parent = $page['parent'];
+    $editKey = filled($parent->name) ? $parent->name : $parent->id;
+    $editUrl = url('/admin/parent/edit/'.$editKey);
+    $btn = 'min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;background:#fff;color:#0F172A;font-size:14px;font-weight:600;text-decoration:none;';
+@endphp
+<div class="px-4 md:px-6 py-4" data-testid="parent-profile">
+    <x-person-profile
+        :user="$parent"
+        :name="$page['name']"
+        :initials="$page['initials']"
+        :role="$page['role']"
+        :status="$page['status']"
+        :status-label="$page['status_label']"
+        :tabs="$tabs"
+        :active="$tab"
+        :base-url="$showUrl"
+        :back-url="url('/admin/parents')"
+        back-label="Parents"
+    >
+        <x-slot:actions>
+            <a href="{{ $editUrl }}" style="{{ $btn }}">Edit</a>
+            <div style="position:relative;">
+                <button type="button" id="parent-more" aria-haspopup="menu" aria-expanded="false" aria-controls="parent-more-menu" style="{{ $btn }}">More</button>
+                <div id="parent-more-menu" role="menu" hidden style="position:absolute;right:0;top:48px;min-width:240px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:8px;z-index:30;">
+                    <button type="button" role="menuitem" id="open-deactivate" style="{{ $btn }}width:100%;border:0;text-align:left;color:#B91C1C;">Deactivate</button>
+                    <button type="button" role="menuitem" id="open-reset" style="{{ $btn }}width:100%;border:0;text-align:left;">Reset password</button>
+                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #E2E8F0;">
+                        <p style="margin:0 0 8px;font-size:13px;font-weight:600;">Change login details</p>
+                        <form method="POST" action="{{ url('/admin/credentials/add/'.$editKey) }}">
+                            @csrf
+                            <input type="hidden" name="user_group" value="7">
+                            <label style="display:block;font-size:13px;color:#475569;">Email
+                                <input name="email" type="email" value="{{ $parent->email }}" style="{{ $btn }}width:100%;margin-top:4px;">
+                            </label>
+                            <label style="display:block;font-size:13px;color:#475569;margin-top:8px;">Mobile
+                                <input name="mobile_no" type="text" value="{{ $parent->mobile_no }}" style="{{ $btn }}width:100%;margin-top:4px;">
+                            </label>
+                            <button type="submit" style="{{ $btn }}margin-top:8px;">Save login details</button>
+                        </form>
                     </div>
                 </div>
-                <!-- end -->
             </div>
-            <div class="w-full lg:w-4/5 md:w-4/5 lg:mx-8 md:mx-8">
-                <div class="bg-white shadow my-5">
-                    <profile-tab-parent url="{{ url('/') }}" entity_id="{{ $user->id }}" school_id="{{ $user->school_id }}" name="{{ $user->name }}"></profile-tab-parent>
-                   
-                    <portal-target name="parent-profile"></portal-target>
+        </x-slot:actions>
+
+        <x-slot:tiles>
+            <article data-testid="kpi-children" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
+                <p style="margin:0;font-size:13px;color:#475569;">Children</p>
+                @if($page['children_count'] === 0)
+                    <p style="margin:8px 0 0;font-size:16px;font-weight:600;">No children yet</p>
+                @else
+                    <p style="margin:8px 0 0;font-size:22px;font-weight:700;">{{ $page['children_count'] }}</p>
+                @endif
+            </article>
+            <article data-testid="kpi-fees" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
+                <p style="margin:0;font-size:13px;color:#475569;">Fees balance</p>
+                <p style="margin:8px 0 0;font-size:16px;font-weight:600;">{{ $page['fees']['text'] }}</p>
+            </article>
+            <article data-testid="kpi-whatsapp" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
+                <p style="margin:0;font-size:13px;color:#475569;">WhatsApp</p>
+                <p style="margin:8px 0 0;font-size:16px;font-weight:600;">{{ $page['whatsapp'] }}</p>
+            </article>
+        </x-slot:tiles>
+
+        <dialog id="deactivate-parent" style="margin:auto;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;max-width:420px;">
+            <form method="POST" action="{{ url('/admin/parent/show/'.$editKey.'/deactivate') }}">
+                @csrf
+                <h2 style="margin:0 0 8px;font-size:16px;">Deactivate this parent?</h2>
+                <p style="margin:0 0 16px;color:#475569;font-size:14px;">They stay on record. Their status becomes inactive.</p>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" id="deactivate-cancel" autofocus style="{{ $btn }}">Cancel</button>
+                    <button type="submit" style="{{ $btn }}border:0;background:#B91C1C;color:#fff;">Deactivate</button>
                 </div>
-            </div>
-        </div>
-    </div>
+            </form>
+        </dialog>
 
-@include('partials.confirm-delete-script')
+        <dialog id="reset-parent" style="margin:auto;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;max-width:420px;">
+            <form method="POST" action="{{ url('/admin/parent/show/'.$editKey.'/reset-password') }}">
+                @csrf
+                <h2 style="margin:0 0 8px;font-size:16px;">Reset this password?</h2>
+                <p style="margin:0 0 16px;color:#475569;font-size:14px;">This sends a reset. It does not happen until you confirm.</p>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" id="reset-cancel" style="{{ $btn }}">Cancel</button>
+                    <button type="submit" style="{{ $btn }}">Reset password</button>
+                </div>
+            </form>
+        </dialog>
 
+        @if($tab === 'children')
+            <section data-testid="parent-children" style="display:grid;gap:12px;">
+                @if($page['children'] === [])
+                    <p style="margin:0;color:#475569;">No children yet</p>
+                @else
+                    @foreach($page['children'] as $child)
+                        <article data-testid="child-card" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
+                            <h2 style="margin:0 0 8px;font-size:16px;">{{ $child['name'] }}</h2>
+                            <p style="margin:0;font-size:14px;">{{ $child['class_name'] }}</p>
+                            <p style="margin:4px 0 0;font-size:14px;">{{ $child['kls'] }}</p>
+                            <p style="margin:4px 0 12px;font-size:14px;">{{ $child['fees'] }}</p>
+                            <a href="{{ $child['profile_url'] }}" style="{{ $btn }}">View student</a>
+                            @if($child['report_url'])
+                                <a href="{{ $child['report_url'] }}" style="{{ $btn }}margin-left:8px;">Report card</a>
+                            @endif
+                        </article>
+                    @endforeach
+                @endif
+            </section>
+        @else
+            <section data-testid="parent-overview" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
+                <h2 style="margin:0 0 12px;font-size:16px;">Contact</h2>
+                <dl style="margin:0;display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:14px;">
+                    <dt style="color:#475569;">Phone</dt><dd style="margin:0;">{{ $page['phone'] }}</dd>
+                    <dt style="color:#475569;">Email</dt><dd style="margin:0;">{{ $page['email'] }}</dd>
+                    <dt style="color:#475569;">Last login</dt><dd style="margin:0;">{{ $page['last_login'] }}</dd>
+                    <dt style="color:#475569;">WhatsApp</dt><dd style="margin:0;">{{ $page['whatsapp'] }}</dd>
+                </dl>
+            </section>
+        @endif
+    </x-person-profile>
+</div>
 @endsection
 
 @push('scripts')
-
-<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function(){
-        $('.activate').on('click', function(){
-            var link = $(this).attr('rel');
-            var status = $(this).attr('value');
-            //alert(status);
-            swal({
-                icon: "info",
-                text: "Do you want to change the status ?",
-                buttons: {
-                    cancel: true,
-                    confirm: true,
-                },
-                allowOutsideClick: false,
-            }).then((willChange) => {
-                if (willChange) 
-                {
-                    $.ajax({
-                        url: link,
-                        data: { status: status },
-                        type: "POST",
-                        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-                        success:function(data)
-                        {
-                            //alert(ans);
-                            swal({
-                                icon: "success",
-                                text: "Parent Status Updated Successfully",
-                            }).then(function(){
-                                window.location.reload();
-                            });
-                        }
-                    })
-                } 
-                else 
-                {
-                    swal("Cancelled");
-                } 
-            });
+<style>
+#deactivate-parent::backdrop, #reset-parent::backdrop { background: rgba(15, 23, 42, 0.45); }
+</style>
+<script>
+(function () {
+    function bindParentMore() {
+        var button = document.getElementById('parent-more');
+        var menu = document.getElementById('parent-more-menu');
+        var dialog = document.getElementById('deactivate-parent');
+        var reset = document.getElementById('reset-parent');
+        var cancel = document.getElementById('deactivate-cancel');
+        var resetCancel = document.getElementById('reset-cancel');
+        if (!button || !menu || !dialog || !reset || button.dataset.bound === '1') {
+            return;
+        }
+        button.dataset.bound = '1';
+        function closeMenu() {
+            menu.hidden = true;
+            button.setAttribute('aria-expanded', 'false');
+        }
+        button.addEventListener('click', function () {
+            var open = menu.hidden;
+            menu.hidden = !open;
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
-    });
-
-
-    $(document).ready(function(){
-        $('.reset').on('click', function(){
-            var link = $(this).attr('rel');
-            //alert(link);
-            swal({
-                icon: "info",
-                text: "Do you want to reset password for this parent ?",
-                buttons: {
-                    cancel: true,
-                    confirm: true,
-                },
-                allowOutsideClick: false,
-            }).then((willChange) => {
-                if (willChange) 
-                {
-                    $.ajax({
-                        url: link,
-                        type: "GET",
-                        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-                        success:function(data)
-                        {
-                            //alert(ans);
-                            swal({
-                                icon: "success",
-                                text: "Check your email to reset the password",
-                                showConfirmButton: true,
-                                confirmButtonColor: '#3085d6',
-                                cancelButtonColor: '#d33',
-                            }).then(function(){
-                                window.location.reload();
-                            });
-                        }
-                    })
-                }
-                else 
-                {
-                    swal("Cancelled");
-                } 
-            });
+        document.addEventListener('click', function (event) {
+            if (!button.contains(event.target) && !menu.contains(event.target)) {
+                closeMenu();
+            }
         });
-    });
-
-    $(document).ready(function(){
-        $('.verify').on('click', function(){
-            var link = $(this).attr('rel');
-            //alert(link);
-            swal({
-                icon: "info",
-                text: "Do you want to verify email for this parent ?",
-                buttons: {
-                    cancel: true,
-                    confirm: true,
-                },
-                allowOutsideClick: false,
-            }).then((willChange) => {
-                if (willChange) 
-                {
-                    $.ajax({
-                        url: link,
-                        type: "GET",
-                        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-                        success:function(data)
-                        {
-                            //alert(ans);
-                            swal({
-                                icon: "success",
-                                text: "Verification code sent Successfully",
-                                showConfirmButton: true,
-                                confirmButtonColor: '#3085d6',
-                                cancelButtonColor: '#d33',
-                            }).then(function(){
-                                window.location.reload();
-                            });
-                        }
-                    })
-                }
-                else 
-                {
-                    swal("Cancelled");
-                } 
-            });
+        document.getElementById('open-deactivate').addEventListener('click', function () {
+            closeMenu();
+            dialog.showModal();
+            cancel.focus();
         });
-    });
-
-
-
+        cancel.addEventListener('click', function () {
+            dialog.close();
+            button.focus();
+        });
+        document.getElementById('open-reset').addEventListener('click', function () {
+            closeMenu();
+            reset.showModal();
+        });
+        resetCancel.addEventListener('click', function () {
+            reset.close();
+            button.focus();
+        });
+    }
+    if (document.readyState === 'complete') {
+        bindParentMore();
+    } else {
+        window.addEventListener('load', bindParentMore);
+    }
+})();
 </script>
-
 @endpush

@@ -174,13 +174,11 @@ class ParentController extends Controller
      */
     public function show($name)
     {
-        //
-        $schoolId = Auth::user()->school_id;
-        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
-        $userprofile = Userprofile::where('user_id',$user->id)->first();
-        $parentprofile = $user->getParentDetails();
-
-        return view('/admin/parent/show',[ 'user' => $user , 'userprofile' => $userprofile , 'parentprofile' => $parentprofile ]);
+        return app(ParentProfileController::class)->show(
+            request(),
+            (string) $name,
+            app(\App\Services\ParentProfileService::class),
+        );
     }
 
     /**
