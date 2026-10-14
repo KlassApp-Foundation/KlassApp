@@ -61,6 +61,8 @@ return [
         'demo_parent_user_id' => env('WHATSAPP_DEMO_PARENT_USER_ID', 104),
         // Public privacy notice linked from the demo chat welcome. Empty until set.
         'privacy_notice_url' => env('PRIVACY_NOTICE_URL'),
+        // Kill switch: false stops ALL outbound WhatsApp, replies included.
+        'replies_enabled' => (bool) env('WHATSAPP_REPLIES_ENABLED', true),
     ],
 
     'google' => [
