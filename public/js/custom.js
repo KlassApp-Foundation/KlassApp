@@ -304,3 +304,24 @@ $(document).ready(function(){
       }
     }
   });
+
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!form || !form.querySelector) return;
+    if (form.getAttribute('data-confirmed') === '1') {
+      form.removeAttribute('data-confirmed');
+      return;
+    }
+    var methodInput = form.querySelector('input[name="_method"]');
+    var method = methodInput ? String(methodInput.value) : '';
+    if (method.toUpperCase() !== 'DELETE') return;
+    var button = event.submitter || form.querySelector('.ds-btn-danger, .btn-danger');
+    if (!button || !button.closest || !button.closest('td')) return;
+    event.preventDefault();
+    var label = (button.textContent || 'Delete').replace(/\s+/g, ' ').trim();
+    if (window.confirm(label + '?')) {
+      form.setAttribute('data-confirmed', '1');
+      if (typeof form.requestSubmit === 'function') form.requestSubmit(button);
+      else form.submit();
+    }
+  }, true);

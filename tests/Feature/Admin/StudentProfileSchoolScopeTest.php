@@ -274,6 +274,44 @@ class StudentProfileSchoolScopeTest extends TestCase
             'school_id' => $this->schoolA->id,
             'opted_in' => true,
         ]);
+        $unspecified = User::factory()->create([
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 7,
+            'mobile_no' => '700333444',
+        ]);
+        Userprofile::create([
+            'user_id' => $unspecified->id,
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 7,
+            'firstname' => 'Rita',
+            'lastname' => 'Nakato',
+            'status' => 'active',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->schoolA->id,
+            'parent_id' => $unspecified->id,
+            'student_id' => $this->studentA->id,
+            'status' => 1,
+        ]);
+        $foreign = User::factory()->create([
+            'school_id' => $this->schoolB->id,
+            'usergroup_id' => 7,
+            'mobile_no' => '700999888',
+        ]);
+        Userprofile::create([
+            'user_id' => $foreign->id,
+            'school_id' => $this->schoolB->id,
+            'usergroup_id' => 7,
+            'firstname' => 'Other',
+            'lastname' => 'Guardian',
+            'status' => 'active',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->schoolA->id,
+            'parent_id' => $foreign->id,
+            'student_id' => $this->studentA->id,
+            'status' => 1,
+        ]);
 
         $this->actingAs($this->adminA)
             ->get('/admin/students/'.$this->studentA->id)
@@ -293,6 +331,13 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertSee('9 Mar 2014')
             ->assertSee('1 Feb 2024')
             ->assertSee('Mother')
+            ->assertSee('GN', false)
+            ->assertSee('href="tel:+256700111222"', false)
+            ->assertSee('On WhatsApp')
+            ->assertSee('Rita Nakato')
+            ->assertSee('Not on WhatsApp')
+            ->assertDontSee('Not given')
+            ->assertDontSee('Other Guardian')
             ->assertSee('Set your currency', false)
             ->assertDontSee('UGX')
             ->assertDontSee('· paid ')
@@ -310,7 +355,9 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->get('/admin/students/'.$this->studentA->id.'?tab=parents')
             ->assertOk()
             ->assertSee('Grace Nakato')
-            ->assertSee('Opted in');
+            ->assertSee('On WhatsApp')
+            ->assertDontSee('Not given')
+            ->assertDontSee('Other Guardian');
 
         $this->actingAs($this->adminA)
             ->get('/admin/students')

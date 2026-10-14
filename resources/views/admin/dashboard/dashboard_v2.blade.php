@@ -258,11 +258,25 @@
                     @endphp
                     <small>{{ $g['total'] }} students</small>
                     @if($g['total'] > 0)
+                        @php
+                            $genderCount = function (array $row): string {
+                                $parts = [
+                                    (int) $row['girls'].' '.((int) $row['girls'] === 1 ? 'girl' : 'girls'),
+                                    (int) $row['boys'].' '.((int) $row['boys'] === 1 ? 'boy' : 'boys'),
+                                ];
+                                if ((int) ($row['not_specified'] ?? 0) > 0) {
+                                    $parts[] = (int) $row['not_specified'].' not specified';
+                                }
+
+                                return implode(', ', $parts);
+                            };
+                        @endphp
                         <div class="hb" data-testid="dashboard-v2-gender-total">
                             <span>School</span>
                             <span class="stack" role="img" aria-label="School total: girls {{ $g['girls'] }}, boys {{ $g['boys'] }}, not specified {{ $g['not_specified'] }}">
                                 <i style="width:{{ $gp($g['girls']) }}%;background:#B45309"></i><i style="width:{{ $gp($g['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $gp($g['not_specified']) }}%;background:#64748B"></i>
                             </span>
+                            <span class="n">{{ $genderCount($g) }}</span>
                         </div>
                         @foreach($charts['gender_classes'] ?? [] as $row)
                             @php
@@ -274,6 +288,7 @@
                                 <span class="stack" role="img" aria-label="{{ $row['label'] }}: girls {{ $row['girls'] }}, boys {{ $row['boys'] }}, not specified {{ $row['not_specified'] }}">
                                     <i style="width:{{ $rw($row['girls']) }}%;background:#B45309"></i><i style="width:{{ $rw($row['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $rw($row['not_specified']) }}%;background:#64748B"></i>
                                 </span>
+                                <span class="n">{{ $genderCount($row) }}</span>
                             </div>
                         @endforeach
                         <div class="legend">

@@ -55,6 +55,7 @@ class DemoSeniorSchoolSeederTest extends TestCase
         $this->assertGreaterThan(0, Attendance::where('school_id', $school->id)->count());
         $this->assertGreaterThan(0, Exam::where('school_id', $school->id)->count());
         $this->assertGreaterThan(0, DB::table('marks')->where('school_id', $school->id)->count());
+        $this->assertDemoGenderMix($school->id);
     }
 
     public function test_demo_senior_seeder_is_idempotent(): void
@@ -69,5 +70,37 @@ class DemoSeniorSchoolSeederTest extends TestCase
         $this->assertSame($students, StudentAcademic::where('school_id', $school->id)->count());
         $this->assertSame($fees, FeePayment::where('school_id', $school->id)->count());
         $this->assertSame($marks, DB::table('marks')->where('school_id', $school->id)->count());
+    }
+
+    private function assertDemoGenderMix(int $schoolId): void
+    {
+        $rows = DB::table('student_academics as sa')
+            ->join('standards_link as sl', 'sl.id', '=', 'sa.standardLink_id')
+            ->join('sections as sec', 'sec.id', '=', 'sl.section_id')
+            ->join('userprofiles as up', 'up.user_id', '=', 'sa.user_id')
+            ->where('sa.school_id', $schoolId)
+            ->get(['sec.name as class_name', 'up.gender']);
+
+        $byClass = [];
+        $girls = 0;
+        $total = 0;
+        foreach ($rows as $row) {
+            $byClass[$row->class_name][$row->gender] = ($byClass[$row->class_name][$row->gender] ?? 0) + 1;
+            $total++;
+            if ($row->gender === 'female') {
+                $girls++;
+            }
+        }
+
+        $this->assertGreaterThan(0, $total);
+        $this->assertGreaterThan(0.45, $girls / $total);
+        $this->assertLessThan(0.55, $girls / $total);
+
+        $ratios = [];
+        foreach ($byClass as $counts) {
+            $classTotal = array_sum($counts);
+            $ratios[] = ($counts['female'] ?? 0) / max(1, $classTotal);
+        }
+        $this->assertGreaterThanOrEqual(0.2, max($ratios) - min($ratios));
     }
 }

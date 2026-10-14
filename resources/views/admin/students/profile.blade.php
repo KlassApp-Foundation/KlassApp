@@ -15,7 +15,7 @@
         return ($page['currency'] ? $page['currency'].' ' : '').$amount;
     };
 @endphp
-<div class="px-4 md:px-6 py-4" data-testid="student-profile">
+<div class="ka-bare-page" data-testid="student-profile">
     <x-person-profile
         :name="$page['name']"
         :initials="$page['initials']"
@@ -103,18 +103,7 @@
                 </section>
                 <section style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
                     <h2 style="margin:0 0 12px;font-size:16px;">Parents and guardians</h2>
-                    @if($page['parents'] === [])
-                        <p style="margin:0;color:#475569;">No parent linked.</p>
-                    @else
-                        <ul style="margin:0;padding:0;list-style:none;">
-                            @foreach($page['parents'] as $parent)
-                                <li style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
-                                    <b>{{ $parent['name'] }}</b>
-                                    <div style="font-size:13.5px;color:#475569;">{{ $parent['relation'] }} · {{ $parent['phone'] }} · WhatsApp {{ $parent['whatsapp'] }}</div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
+                    @include('admin.students._guardians', ['parents' => $page['parents']])
                 </section>
             </div>
         @elseif($tab === 'academics')
@@ -166,15 +155,7 @@
             @endif
         @else
             <h2 style="margin:0 0 8px;font-size:16px;">Parents and guardians</h2>
-            @if($page['parents'] === [])
-                <p style="margin:0;color:#475569;">No parent linked.</p>
-            @else
-                <ul style="margin:0;padding-left:18px;">
-                    @foreach($page['parents'] as $parent)
-                        <li>{{ $parent['name'] }} · {{ $parent['phone'] }} · WhatsApp {{ $parent['whatsapp'] }}</li>
-                    @endforeach
-                </ul>
-            @endif
+            @include('admin.students._guardians', ['parents' => $page['parents']])
         @endif
     </x-person-profile>
 </div>

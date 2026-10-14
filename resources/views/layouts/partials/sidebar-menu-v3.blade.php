@@ -23,6 +23,9 @@
                     }
                 }
                 $open = $rowActive || $childActive;
+                $isGroup = count($children) > 0;
+                $ancestor = $isGroup && ($rowActive || $childActive);
+                $selfActive = $rowActive && ! $childActive && ! $isGroup;
                 $rowCount = count($children) === 0 ? (int) ($navCounts[$row['count'] ?? ''] ?? 0) : 0;
                 $childCounts = [];
                 foreach ($children as $child) {
@@ -47,12 +50,12 @@
                 @endif>
                 <div class="sidebar-v3-row">
                     <a href="{{ $navHref($hrefItem) }}"
-                       class="sidebar-v3-link {{ $itemClass }} {{ ($rowActive && ! $childActive) ? $activeClass : '' }}"
+                       class="sidebar-v3-link {{ $itemClass }} {{ $ancestor ? 'is-ancestor' : '' }} {{ $selfActive ? $activeClass : '' }}"
                        aria-label="{{ $row['label'] }}"
                        tabindex="0"
                        data-tip="{{ $row['label'] }}"
                        @if(count($children) > 0) aria-haspopup="true" x-bind:aria-expanded="(document.body.classList.contains('sidebar-collapsed') ? flyout : open) ? 'true' : 'false'" @endif
-                       @if($rowActive && ! $childActive) aria-current="page" @endif>
+                       @if($selfActive) aria-current="page" @endif>
                         @if(!empty($row['icon']))
                             <x-icons.sidebar name="{{ $row['icon'] }}"/>
                         @endif

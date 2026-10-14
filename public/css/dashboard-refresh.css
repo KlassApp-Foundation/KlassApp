@@ -4621,13 +4621,33 @@ body.ka-drawer-open .dashboard-content-area select {
 .sidebar-v3-link > span:not(.sidebar-v3-count) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-v3-link .ka-nav-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 .sidebar-v3-link:hover { background: rgba(15, 23, 42, 0.04); }
+/* A group that contains the current page stays bare: bolder label and icon
+   colour only. The active child (or a top-level row with no children) is the
+   only green, and it is an inset pill rather than a full-width band. */
+.sidebar-v3-link.is-ancestor,
+.sidebar-v3-link.is-ancestor:hover {
+    background: transparent;
+    color: #14532D;
+    font-weight: 700;
+}
+.sidebar-v3-link.is-ancestor .ka-nav-icon { color: #15803D; }
 #admin-sidebar.admin-sidebar .sidebar-v3-link.active,
-#admin-sidebar.admin-sidebar .sidebar-v3-child.active,
-#res_sidebar.admin-sidebar .sidebar-v3-link.active,
-#res_sidebar.admin-sidebar .sidebar-v3-child.active {
-    background: rgba(34, 197, 94, 0.16);
+#res_sidebar.admin-sidebar .sidebar-v3-link.active {
+    background: #E7F6EC;
     color: #14532D;
     font-weight: 600;
+    margin-left: 10px;
+    margin-right: 10px;
+    border-radius: 999px;
+}
+#admin-sidebar.admin-sidebar .sidebar-v3-child.active,
+#res_sidebar.admin-sidebar .sidebar-v3-child.active {
+    background: #E7F6EC;
+    color: #14532D;
+    font-weight: 600;
+    margin: 2px 8px;
+    border-radius: 999px;
+    width: auto;
 }
 .sidebar-v3-chevron {
     flex: 0 0 24px;
@@ -4740,6 +4760,8 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-link .ka-nav-icon { width: 18p
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: #F1F5F9; color: #334155; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active,
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active:hover { background: #DCFCE7; color: #14532D; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.is-ancestor,
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.is-ancestor:hover { background: transparent; color: #14532D; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item { position: relative; }
 #ka-rail-tip {
     position: fixed; z-index: 80; transform: translateY(-50%);
@@ -4773,4 +4795,47 @@ body.sidebar-collapsed #admin-sidebar .account-card__avatar,
 body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 36px; height: 36px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) {
     #admin-sidebar.admin-sidebar { transition: none; }
+}
+
+/* Dashboard and student profile sit on the page surface. Lists keep their cards. */
+.ka-bare-page {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+}
+.student-guardians { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.student-guardian { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.student-guardian__avatar {
+    width: 36px; height: 36px; border-radius: 999px; background: #DCFCE7; color: #166534;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: 0 0 auto;
+}
+.student-guardian__body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.student-guardian__name { font-weight: 700; color: #0F172A; }
+.student-guardian__chip {
+    display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 8px;
+    background: #F1F5F9; color: #334155; font-size: 12px; font-weight: 600;
+}
+.student-guardian__phone { color: #0F766E; font-size: 13.5px; font-weight: 600; }
+
+/* Legacy table-row deletes: neutral ghost, red text. Routes stay on the form. */
+td form:has(input[name="_method"][value="DELETE"]) .ds-btn-danger,
+td form:has(input[name="_method"][value="DELETE"]) .btn-danger,
+td a.ds-btn-danger,
+td a.btn-danger {
+    background: transparent !important;
+    color: #B91C1C !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: none !important;
+}
+td form:has(input[name="_method"][value="DELETE"]) .ds-btn-danger:hover,
+td form:has(input[name="_method"][value="DELETE"]) .btn-danger:hover,
+td a.ds-btn-danger:hover,
+td a.btn-danger:hover {
+    background: #F8FAFC !important;
+    color: #991B1B !important;
 }
