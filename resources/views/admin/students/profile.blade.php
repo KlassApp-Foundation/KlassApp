@@ -31,6 +31,7 @@
         back-label="Students"
     >
         <x-slot:actions>
+            <a data-testid="profile-message" href="{{ $page['parents'][0]['profile_url'] ?? url('/admin/parents') }}" class="ds-btn ds-btn-ghost text-sm" style="min-height:44px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #E2E8F0;border-radius:8px;background:transparent;color:#0F172A;text-decoration:none;">Message</a>
             <a href="{{ $editUrl }}" class="ds-btn ds-btn-ghost text-sm" style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;color:#0F172A;background:#fff;">Edit</a>
             <div style="position:relative;">
                 <button type="button" id="student-more" aria-haspopup="menu" aria-expanded="false" aria-controls="student-more-menu" style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;background:#fff;color:#0F172A;">More</button>
@@ -55,7 +56,8 @@
             @if($page['exam']['empty'])
                 <p style="margin:8px 0 0;font-size:16px;font-weight:600;">No exam this term</p>
             @else
-                <p style="margin:8px 0 0;font-size:22px;font-weight:700;">{{ $page['exam']['average'] }}@if($page['exam']['grade']) <span style="font-size:16px;">{{ $page['exam']['grade'] }}</span>@endif</p>
+                <p data-testid="exam-score" style="margin:8px 0 0;font-size:22px;font-weight:700;">{{ $page['exam']['average'] }}% · {{ $page['exam']['grade'] ?: '—' }}</p>
+                <p data-testid="exam-name" style="margin:4px 0 0;font-size:13px;color:#475569;">{{ $page['exam']['name'] ?? '' }}</p>
             @endif
         </article>
         <article data-testid="kpi-fees" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
