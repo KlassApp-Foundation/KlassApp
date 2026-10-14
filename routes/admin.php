@@ -307,6 +307,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::post( '/parent/add', 'ParentController@store' );
 	//show
 	Route::get( '/parent/show/{name}', 'ParentController@show' );
+	Route::post( '/parent/show/{name}/deactivate', 'ParentProfileController@deactivate' );
+	Route::post( '/parent/show/{name}/reset-password', 'ParentProfileController@resetPassword' );
 	Route::get( '/parent/show/children/{name}', 'ParentController@showChildren' );
 	Route::get( '/parent/show/activity/{name}', 'ParentController@showActivityLog' );
 	Route::get( '/parent/show/feedback/{name}', 'ParentController@showFeedbacks' );

@@ -417,8 +417,12 @@ class ProfilePagesBugsTest extends TestCase
         $this->assertStringContainsString('Deactivate this teacher?', $teacherHtml);
         $this->assertStringNotContainsString('/admin/teacher/delete/', $teacherHtml);
 
+        $parent = $this->makeUser(7, 'guardian-'.uniqid());
+        $parentHtml = $this->actingAs($this->admin)->get('/admin/parent/show/'.$parent->name)->assertOk()->getContent();
+        $this->assertStringContainsString('Deactivate this parent?', $parentHtml);
+        $this->assertStringNotContainsString('/admin/parent/delete/', $parentHtml);
+
         $surfaces = [
-            'parent' => ['/admin/parent/show/', $this->makeUser(7, 'guardian-'.uniqid()), '/admin/parent/delete/'],
             'staff' => ['/admin/staff/show/', $this->makeUser(8, 'libra-'.uniqid()), '/admin/staff/delete/'],
         ];
 
