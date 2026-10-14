@@ -1148,3 +1148,52 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     #toshi-toggle-wrapper,
     .toshi-toggle-wrapper { display: none !important; width: 0 !important; }
 }
+
+/* TOSHI ENTRY PILL — second way into the same panel. The edge handle above
+   stays as it is. White, brand green K, no orange. Hidden below 1280 and
+   while the panel is open. Sits above page content and under the phone drawer. */
+#toshi-entry-pill.toshi-entry-pill {
+    position: fixed;
+    right: calc(24px + env(safe-area-inset-right));
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    margin: 0;
+    padding: 0 14px 0 12px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    color: #0F172A;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+}
+#toshi-entry-pill .toshi-entry-mark {
+    font-size: 20px;
+    font-weight: 700;
+    color: #15803D;
+    line-height: 1;
+}
+#toshi-entry-pill .toshi-entry-label {
+    color: #0F172A;
+    font-size: 14px;
+    font-weight: 600;
+}
+#toshi-entry-pill.toshi-entry-pill:focus-visible {
+    outline: 2px solid #15803D;
+    outline-offset: 2px;
+}
+body:not(.toshi-collapsed) #toshi-entry-pill {
+    display: none !important;
+}
+@media (max-width: 1279px) {
+    #toshi-entry-pill { display: none !important; }
+}
+[data-toshi-root] .toshi-pill {
+    display: none !important;
+}

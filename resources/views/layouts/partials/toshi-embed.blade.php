@@ -23,17 +23,31 @@
     @toshiUi
     @if(in_array(auth()->user()->usergroup_id, [1, 3, 4, 5, 11, 8, 10, 6, 7, 9]))
         @livewire('agent-toshi')
+        @php
+            $toshiMode = app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value;
+            $toshiPillLabel = match ($toshiMode) {
+                'preview' => 'Meet Toshi',
+                'assistant' => 'Talk',
+                default => 'Setup guide',
+            };
+        @endphp
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
-             data-toshi-mode="{{ app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value }}">
+             data-toshi-mode="{{ $toshiMode }}">
             <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
                 aria-label="Open Toshi"
-                title="{{ app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
+                title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
                 <span class="toshi-handle-mark" aria-hidden="true">K</span>
+            </button>
+            <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" data-testid="toshi-entry-pill"
+                aria-label="Open Toshi">
+                <span class="toshi-entry-mark" aria-hidden="true">K</span>
+                <span class="toshi-entry-label">{{ $toshiPillLabel }}</span>
             </button>
             @toshiAssistant
             <span class="toshi-early-pill" aria-hidden="true">Early access</span>
             @endtoshiAssistant
         </div>
+        <script src="{{ asset('js/toshi-entry-pill.js') }}?v={{ filemtime(public_path('js/toshi-entry-pill.js')) }}"></script>
         <script>
         (function () {
             var W_KEY = 'toshi_split_w';
@@ -86,6 +100,14 @@
                         setCollapsed(!document.body.classList.contains('toshi-collapsed'));
                     });
                 }
+                var entryPill = document.getElementById('toshi-entry-pill');
+                if (entryPill && !entryPill.dataset.splitBound) {
+                    entryPill.dataset.splitBound = '1';
+                    entryPill.addEventListener('click', function () {
+                        setCollapsed(false);
+                    });
+                }
+                if (window.toshiPlaceEntryPill) window.toshiPlaceEntryPill();
                 // Pill click expands (replaces the old delegated handler, same behavior)
                 document.addEventListener('click', function (e) {
                     if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
