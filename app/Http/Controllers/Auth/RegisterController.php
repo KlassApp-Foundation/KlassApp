@@ -32,10 +32,15 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+        $this->middleware(\App\Http\Middleware\EnsureSignupOpen::class)->only('register');
     }
 
     public function showRegistrationForm(Request $request)
     {
+        if (! config('klassapp.signup_enabled')) {
+            return app(\App\Http\Controllers\EarlyAccessController::class)->show($request);
+        }
+
         if ($request->has('plan')) {
             session(['selected_plan' => $request->plan]);
         }
