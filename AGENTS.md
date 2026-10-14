@@ -98,6 +98,8 @@ These apply to every change, in every session, regardless of which tool is runni
 
 47. **Review builds.** Serve the pull request branch with production-like assets (`npm run build`) and data equal to staging's. Local numbers can differ from staging, and local ports stop when a terminal closes: staging is the proof, so review on staging after merge.
 
+48. **Every bug fix ships with a test that fails without the fix.** Name the test after the register ID (for example `test_K102_active_sidebar_row_has_single_highlight`) and prove it: with the fix reverted the test is red, with it restored the test is green. Behaviour bugs get a PHPUnit or Livewire test; visual and interaction bugs get a browser test with measurable assertions (`getBoundingClientRect`, `elementFromPoint`, real pointer paths), never a screenshot comparison alone. A bug that cannot be tested is recorded as such, with the reason, in the register.
+
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
 Before editing code in these areas, check the fix markers below are still in place. Full root-cause / fix / verification detail lives in `knowledge.md`'s "Known Bug Patterns & Lessons" section — this is a locator, not a replacement for reading it.
