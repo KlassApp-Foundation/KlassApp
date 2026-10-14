@@ -19,4 +19,5 @@
     --d-card-padding: 20px;
     --d-table-cell-x: 20px;      /* ledger td/th horizontal padding */
     --d-table-cell-y: 18px;      /* .dt-comfortable td vertical padding */
+    --d-toshi-pill-zone: 76px;   /* floating launcher clearance */
 }

@@ -87,7 +87,14 @@ class ToshiEntryPillTest extends TestCase
 
     public function test_toshi_pill_onboarding_label_is_setup_guide(): void
     {
-        $this->dashboard('onboarding', false)->assertOk()->assertSee('Setup guide', false);
+        config(['dashboard.v2_enabled' => true]);
+        $html = $this->dashboard('onboarding', false)->assertOk()->assertSee('Setup guide', false)->getContent();
+        $this->assertSame(1, preg_match('/data-setup-done="(\d+)" data-setup-total="(\d+)"/', $html, $count));
+        $this->assertGreaterThan((int) $count[1], (int) $count[2]);
+        $this->assertStringContainsString('>'.$count[1].'/'.$count[2].'<', $html);
+        $this->assertSame(1, preg_match('/aria-valuemax="(\d+)" aria-valuenow="(\d+)"/', $html, $bar));
+        $this->assertSame($count[2], $bar[1]);
+        $this->assertSame($count[1], $bar[2]);
     }
 
     public function test_toshi_pill_assistant_label_is_talk(): void
@@ -101,7 +108,9 @@ class ToshiEntryPillTest extends TestCase
         $section = explode('TOSHI ENTRY PILL', $css, 2)[1] ?? '';
         $this->assertNotSame('', $section);
         $this->assertStringContainsString('color: #15803D', $section);
-        $this->assertStringContainsString('font-size: 20px', $section);
+        $this->assertStringContainsString('toshi-entry-ring', $section);
+        $this->assertStringContainsString('font-weight: 700', $section);
+        $this->assertStringNotContainsString('font-size: 20px', $section);
         $this->assertStringContainsString('body:not(.toshi-collapsed) #toshi-entry-pill', $section);
         $this->assertStringContainsString('@media (max-width: 1279px)', $section);
         $this->assertStringContainsString('#toshi-entry-pill { display: none !important; }', $section);
@@ -115,7 +124,11 @@ class ToshiEntryPillTest extends TestCase
         $this->assertStringContainsString("document.getElementById('toshi-entry-pill')", $embed);
         $this->assertStringContainsString('setCollapsed(false)', $embed);
         $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
-        $this->assertStringContainsString('data-people-bulk', $js);
-        $this->assertStringContainsString('toshiPlaceEntryPill', $js);
+        $this->assertStringContainsString('data-sticky-bar', $js);
+        $this->assertStringContainsString('toshi_opened_', $js);
+        $this->assertStringContainsString('tabIndex', $js);
+        $this->assertStringContainsString('toshi-pill-on', $js);
+        $spacing = file_get_contents(base_path('resources/assets/design-system/tokens/spacing.css'));
+        $this->assertStringContainsString('--d-toshi-pill-zone: 76px', $spacing);
     }
 }

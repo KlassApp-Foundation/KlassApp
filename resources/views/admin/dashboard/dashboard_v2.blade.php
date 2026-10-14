@@ -91,7 +91,7 @@
             <div class="dv2-setup" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14532D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>
                 <b data-testid="dashboard-v2-setup-count">Setup {{ $setup['done'] }} of {{ $setup['total'] }} done</b>
-                <span class="dv2-setup-bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $setup['total'] }}" aria-valuenow="{{ $setup['done'] }}" aria-label="Setup progress" data-testid="dashboard-v2-setup-progress">
+                <span class="dv2-setup-bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $setup['total'] }}" aria-valuenow="{{ $setup['done'] }}" aria-label="Setup progress" data-testid="dashboard-v2-setup-progress" data-setup-done="{{ $setup['done'] }}" data-setup-total="{{ $setup['total'] }}">
                     <i style="width:{{ $setup['percent'] }}%"></i>
                 </span>
                 @if($setup['next'])

@@ -3745,7 +3745,7 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
    cannot put the orange clay tab back. Hidden below 1280. */
 @media (min-width: 1280px) {
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
-        width: 40px !important;
+        width: 36px !important;
         height: 96px !important;
         right: 0 !important;
         background: #fff !important;

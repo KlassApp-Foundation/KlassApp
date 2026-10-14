@@ -19,7 +19,7 @@ class ToshiHandleContractTest extends TestCase
         $this->assertStringNotContainsString('▶', $embed);
 
         $this->assertNotSame('', $handle);
-        $this->assertStringContainsString('width: 40px', $handle);
+        $this->assertStringContainsString('width: 36px', $handle);
         $this->assertStringContainsString('height: 96px', $handle);
         $this->assertStringContainsString('background: #fff', $handle);
         $this->assertStringContainsString('border: 1px solid #E2E8F0', $handle);
