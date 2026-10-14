@@ -47,7 +47,11 @@ class SoftlaunchAccountCardContractTest extends TestCase
         $html = view('layouts.partials.profile-dropdown')->render();
 
         // Userprofile mutators store names uppercased; card must use firstname+lastname, not login handle.
-        $this->assertStringContainsString('ADA LOVELACE', $html);
+        $this->assertStringContainsString('Ada Lovelace', $html);
+        $this->assertStringContainsString('aria-label="Ada Lovelace · School admin"', $html);
+        $this->assertStringContainsString('account-initials', $html);
+        $this->assertStringNotContainsString('default-user.jpg', $html);
+        $this->assertStringNotContainsString('ADA LOVELACE', $html);
         $this->assertStringNotContainsString('login.handle', $html);
         $this->assertStringContainsString('aria-haspopup="menu"', $html);
         $this->assertStringContainsString('role="menu"', $html);

@@ -3,8 +3,16 @@
 @php
     $portalLinks = \App\Support\PortalProfileLinks::forUser(Auth::user());
     $profile = Auth::user()->userprofile;
-    $first = is_string($profile?->firstname) ? trim($profile->firstname) : '';
-    $last = is_string($profile?->lastname) ? trim($profile->lastname) : '';
+    $asWritten = function (string $value): string {
+        $value = trim($value);
+        if ($value === '' || $value !== mb_strtoupper($value)) {
+            return $value;
+        }
+
+        return mb_convert_case(mb_strtolower($value), MB_CASE_TITLE);
+    };
+    $first = is_string($profile?->firstname) ? $asWritten($profile->firstname) : '';
+    $last = is_string($profile?->lastname) ? $asWritten($profile->lastname) : '';
     $displayName = trim($first.' '.$last);
     if ($displayName === '') {
         $displayName = (string) Auth::user()->name;
@@ -36,7 +44,7 @@
         data-tip="{{ $accountTip }}"
         data-account-trigger
     >
-        <x-profile-photo :user="Auth::user()" size="sm" class="account-card__avatar" />
+        <x-profile-photo :user="Auth::user()" size="sm" class="account-card__avatar" initials-when-empty />
         <span class="account-card__identity">
             <span class="account-card__name" title="{{ $displayName }}">{{ $displayName }}</span>
             <span class="account-card__email" title="{{ $email }}">{{ $email }}</span>
@@ -55,11 +63,11 @@
         <div class="account-card__who">
             @if($portalLinks['change_avatar'])
                 <a href="{{ url($portalLinks['change_avatar']) }}" class="account-card__who-photo" tabindex="-1">
-                    <x-profile-photo :user="Auth::user()" size="sm" />
+                    <x-profile-photo :user="Auth::user()" size="sm" initials-when-empty />
                 </a>
             @else
                 <span class="account-card__who-photo">
-                    <x-profile-photo :user="Auth::user()" size="sm" />
+                    <x-profile-photo :user="Auth::user()" size="sm" initials-when-empty />
                 </span>
             @endif
             <span class="account-card__identity">

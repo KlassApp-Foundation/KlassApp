@@ -28,15 +28,37 @@
     'user',
     'size' => 'md',
     'shape' => 'square',
+    'initialsWhenEmpty' => false,
 ])
 
 @php
     $px = ['xs' => 32, 'sm' => 40, 'md' => 64, 'lg' => 128, 'xl' => 192][$size] ?? 64;
 
     $profile = $user?->userprofile;
-    $src = ($profile && $profile->avatar != null)
+    $hasPhoto = $profile && $profile->avatar != null;
+    $src = $hasPhoto
         ? url($profile->AvatarPath)
         : asset('uploads/user/avatar/default-user.jpg');
+    $initials = '';
+    if (! $hasPhoto && $initialsWhenEmpty && $user) {
+        $parts = array_filter([
+            trim((string) ($profile?->firstname ?? '')),
+            trim((string) ($profile?->lastname ?? '')),
+        ]);
+        if ($parts === []) {
+            $parts = preg_split('/\s+/', trim((string) $user->name)) ?: [];
+        }
+        foreach (array_slice($parts, 0, 2) as $part) {
+            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+        }
+        if ($initials === '') {
+            $initials = 'KA';
+        }
+    }
+    $swatches = ['#DCFCE7', '#DBEAFE', '#FEF3C7', '#FCE7F3'];
+    $ink = ['#166534', '#1E40AF', '#92400E', '#9D174D'];
+    $swatch = $swatches[((int) ($user->id ?? 0)) % 4];
+    $swatchInk = $ink[((int) ($user->id ?? 0)) % 4];
 
     // Same display-name rule as the dropdown header; `name` is the login handle.
     $alt = $user
@@ -54,6 +76,11 @@
         : 'border-radius: var(--d-radius-xl, 12px); box-shadow: 0 0 0 1px var(--d-border, #E2E8F0);';
 @endphp
 
+@if($initials !== '')
+<span {{ $attributes->merge(['class' => 'ds-profile-photo account-initials']) }} aria-hidden="true"
+      style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;{{ $sizeStyle }} aspect-ratio:1;box-sizing:border-box;{{ $shapeStyle }} background:{{ $swatch }};color:{{ $swatchInk }};font-weight:700;font-size:{{ (int) round($px * 0.4) }}px;">{{ $initials }}</span>
+@else
 <img src="{{ $src }}" alt="{{ $alt }}" width="{{ $px }}" height="{{ $px }}"
      {{ $attributes->merge(['class' => 'ds-profile-photo']) }}
      style="display: block; flex-shrink: 0; {{ $sizeStyle }} aspect-ratio: 1; object-fit: cover; box-sizing: border-box; {{ $shapeStyle }}">
+@endif

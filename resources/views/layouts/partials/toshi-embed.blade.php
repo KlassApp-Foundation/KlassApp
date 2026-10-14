@@ -25,7 +25,11 @@
         @livewire('agent-toshi')
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
              data-toshi-mode="{{ app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value }}">
-            <div id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle" title="Open Toshi">▶</div>
+            <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
+                aria-label="Open Toshi"
+                title="{{ app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
+                <span class="toshi-handle-mark" aria-hidden="true">K</span>
+            </button>
             @toshiAssistant
             <span class="toshi-early-pill" aria-hidden="true">Early access</span>
             @endtoshiAssistant
@@ -45,11 +49,7 @@
             //    below so ALL existing body.toshi-collapsed CSS keeps working).
 
             function syncToggleGlyph() {
-                var c = document.body.classList.contains('toshi-collapsed');
-                if (toggle) {
-                    toggle.textContent = c ? '▶' : '◀';
-                    toggle.title = c ? 'Open Toshi' : 'Collapse Toshi';
-                }
+                // The collapsed handle keeps its K mark and its server-rendered tooltip.
             }
 
             function persist() {
