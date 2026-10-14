@@ -235,18 +235,64 @@ $(document).ready(function(){
   // former inline onclick="showsidebar('res_sidebar')", which double-bound and made the
   // menu unopenable: the inline handler removed `hidden`, this listener re-added it.
   // Delegation also survives Livewire morphing of the navbar.)
+  var drawerInerted = [];
+
+  function clearDrawerInert() {
+    drawerInerted.forEach(function (el) {
+      if (el) el.removeAttribute('inert');
+    });
+    drawerInerted = [];
+  }
+
+  function inertOutsideDrawer() {
+    clearDrawerInert();
+    var drawer = document.getElementById('res_sidebar');
+    if (!drawer) return;
+    var keep = [];
+    for (var node = drawer; node; node = node.parentElement) keep.push(node);
+    keep.forEach(function (el) {
+      if (!el.parentElement) return;
+      Array.prototype.forEach.call(el.parentElement.children, function (child) {
+        if (keep.indexOf(child) !== -1 || child.id === 'sidebar-scrim') return;
+        child.setAttribute('inert', '');
+        drawerInerted.push(child);
+      });
+    });
+  }
+
+  function drawerFocusable(drawer) {
+    return Array.prototype.filter.call(drawer.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]'), function (el) {
+      if (el.tabIndex < 0) return false;
+      var cs = window.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    });
+  }
+
+  function trapDrawerTab(e) {
+    if (e.key !== 'Tab') return;
+    var drawer = document.getElementById('res_sidebar');
+    if (!drawer || drawer.classList.contains('hidden')) return;
+    var items = drawerFocusable(drawer);
+    if (!items.length) return;
+    e.preventDefault();
+    var index = items.indexOf(document.activeElement);
+    var next;
+    if (e.shiftKey) next = index <= 0 ? items.length - 1 : index - 1;
+    else next = (index < 0 || index >= items.length - 1) ? 0 : index + 1;
+    items[next].focus();
+  }
+
+  document.addEventListener('keydown', trapDrawerTab, true);
+
   function setDrawerChrome(open) {
     var scrim = document.getElementById('sidebar-scrim');
-    var content = document.querySelector('.dashboard-content-area');
     if (scrim) {
       scrim.hidden = !open;
       scrim.classList.toggle('is-open', open);
     }
     document.body.classList.toggle('ka-drawer-open', open);
-    if (content) {
-      if (open) content.setAttribute('inert', '');
-      else content.removeAttribute('inert');
-    }
+    if (open) inertOutsideDrawer();
+    else clearDrawerInert();
   }
 
   $(document).on('click', '#mobile-menu-trigger', function() {
