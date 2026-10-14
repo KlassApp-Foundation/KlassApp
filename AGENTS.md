@@ -1,5 +1,7 @@
 # AGENTS.md — KlassApp Canonical Agent Rules
 
+Read docs/ops/BUILDER-BRIEF.md first.
+
 > **This is the single canonical rules file for every coding agent working on this repo** — Claude Code, Codex, OpenCode, Cursor, or any other tool. `.ai/rules/*.md` and `.cursor/rules/*.mdc` are now one-line pointers back to this file (see "Why one canonical file" below). If you're an agent reading a pointer file, come here for the actual rules.
 >
 > For full project history, past incidents, and session-by-session decisions, sync to latest `origin/main` first (standing rule #19), then read `knowledge.md` in the repo root **before planning**. Update it before ending a phase of work (see "Session workflow" below). This file is the distilled, standing rule set; `knowledge.md` is the historical record and the source of truth for current hosting/ops.
