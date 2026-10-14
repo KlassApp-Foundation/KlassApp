@@ -59,6 +59,8 @@ return [
         'parent_link_flow_screen' => env('WHATSAPP_PARENT_LINK_FLOW_SCREEN', 'LINK_REQUEST'),
         // Inbound "demo" / Try Demo — user whose school_id is written to whatsapp_users
         'demo_parent_user_id' => env('WHATSAPP_DEMO_PARENT_USER_ID', 104),
+        // Public privacy notice linked from the demo chat welcome. Empty until set.
+        'privacy_notice_url' => env('PRIVACY_NOTICE_URL'),
     ],
 
     'google' => [
