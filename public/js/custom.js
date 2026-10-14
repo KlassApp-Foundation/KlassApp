@@ -57,7 +57,9 @@ $(document).ready(function(){
       }
       style.left = cardLeft + 'px';
       style.width = cardWidth + 'px';
+      style.minWidth = cardWidth + 'px';
       style.maxWidth = cardWidth + 'px';
+      style.transform = 'none';
       style.boxSizing = 'border-box';
       style.right = 'auto';
       style.top = 'auto';

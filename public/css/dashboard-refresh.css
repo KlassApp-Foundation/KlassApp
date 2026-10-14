@@ -832,6 +832,8 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 .account-card__menu.user-dtl.is-portaled {
     position: fixed;
+    transform: none;
+    min-width: 0;
 }
 .account-card__menu.user-dtl.is-portaled:not([hidden]) {
     display: block;

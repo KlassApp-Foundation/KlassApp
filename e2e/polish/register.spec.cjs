@@ -14,12 +14,12 @@ function assert(cond, message) {
 
 async function testA13(page) {
   await page.setViewportSize({ width: 1280, height: 680 });
-  await page.setContent(`<!doctype html><body style="margin:0">
+  await page.setContent(`<!doctype html><style>.user-dtl{min-width:250px;transform:translateY(-4px) scale(1.02)}</style><body style="margin:0">
     <div id="admin-sidebar" style="position:fixed;left:0;top:64px;width:248px;height:616px;box-sizing:border-box;">
       <div class="profile-click account-card" style="position:absolute;left:29px;bottom:8px;width:190px;">
         <button type="button" data-account-trigger aria-controls="account-menu" aria-expanded="false" style="width:190px;height:56px;">Account</button>
-        <div id="account-menu" data-account-menu hidden role="menu">
-          <button type="button" role="menuitem">Edit profile</button>
+        <div id="account-menu" class="user-dtl" data-account-menu hidden role="menu">
+          <button type="button" role="menuitem" style="white-space:nowrap">demojunior@klassapp.xyz</button>
         </div>
       </div>
     </div>
