@@ -142,7 +142,8 @@
                         setCollapsed(false);
                     });
                 }
-                if (window.toshiPlaceEntryPill) window.toshiPlaceEntryPill();
+                if (window.toshiSyncLauncher) window.toshiSyncLauncher();
+                else if (window.toshiPlaceEntryPill) window.toshiPlaceEntryPill();
                 // Pill click expands (replaces the old delegated handler, same behavior)
                 document.addEventListener('click', function (e) {
                     if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
