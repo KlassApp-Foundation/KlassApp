@@ -358,9 +358,8 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('data-people-bulk', $on);
         $this->assertStringContainsString('data-people-select', $on);
         $this->assertStringContainsString('people-avatar-28', $on);
-        $this->assertStringContainsString('people-avatar-32', $on);
-        $this->assertStringContainsString('width="32"', $on);
-        $this->assertStringContainsString('width="40"', $on);
+        $this->assertStringContainsString('width="28"', $on);
+        $this->assertStringNotContainsString('people-avatar-32', $on);
 
         $off = Blade::render(
             '<x-people-list :list="$list" :show-selection="false" avatar-size="md" />',

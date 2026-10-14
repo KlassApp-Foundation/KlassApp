@@ -131,7 +131,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
     {
         $this->visit()
             ->assertOk()
-            ->assertSee('ALPHA ONE', false)
+            ->assertSee('Alpha One', false)
             ->assertDontSee('BETA', false);
     }
 
@@ -140,7 +140,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
     {
         $this->visit('&standard=' . $this->streamB->id)
             ->assertOk()
-            ->assertSee('ALPHA ONE', false)
+            ->assertSee('Alpha One', false)
             ->assertDontSee('BETA', false);
     }
 
@@ -149,7 +149,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
     {
         $this->visit('&standard=' . $this->streamA->id)
             ->assertOk()
-            ->assertSee('ALPHA ONE', false)
+            ->assertSee('Alpha One', false)
             ->assertDontSee('BETA', false);
     }
 

@@ -125,7 +125,7 @@
                             @endif
                             <td>
                                 <span class="people-who">
-                                    <span class="people-avatar people-avatar-28">
+                                    <span class="people-avatar {{ in_array($tableAvatar, ['list', 'xs'], true) ? 'people-avatar-28' : '' }}">
                                         <x-profile-photo :user="$row['user']" :size="$tableAvatar" />
                                     </span>
                                     <span class="people-who-text">
@@ -170,7 +170,7 @@
                             <input type="checkbox" value="{{ $row['id'] }}" data-people-check aria-label="Select {{ $row['name'] }}">
                         </label>
                         @endif
-                        <span class="people-avatar people-avatar-28">
+                        <span class="people-avatar {{ $cardAvatar === 'sm' ? 'people-avatar-32' : (in_array($cardAvatar, ['list', 'xs'], true) ? 'people-avatar-28' : '') }}">
                             <x-profile-photo :user="$row['user']" :size="$cardAvatar" />
                         </span>
                         <div class="people-card-main">

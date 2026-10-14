@@ -111,10 +111,10 @@ class StudentListingExcludesInactiveTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/students');
 
         $response->assertOk();
-        $response->assertSee($activeA->userprofile->firstname, false);
-        $response->assertSee($activeB->userprofile->firstname, false);
-        $response->assertSee($inactive->userprofile->firstname, false);
-        $response->assertDontSee($exit->userprofile->firstname, false);
+        $response->assertSee('Activealpha', false);
+        $response->assertSee('Activebeta', false);
+        $response->assertSee('Inactivejunk', false);
+        $response->assertDontSee('Exited', false);
     }
 
     public function test_active_chip_excludes_inactive_and_exit(): void
@@ -126,9 +126,9 @@ class StudentListingExcludesInactiveTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/students?chip=active');
 
         $response->assertOk();
-        $response->assertSee($active->userprofile->firstname, false);
-        $response->assertDontSee($inactive->userprofile->firstname, false);
-        $response->assertDontSee($exit->userprofile->firstname, false);
+        $response->assertSee('Activeonly', false);
+        $response->assertDontSee('Inactivehidden', false);
+        $response->assertDontSee('Exitedhidden', false);
     }
 
     public function test_status_inactive_filter_still_exposes_junk_for_audit(): void
@@ -139,7 +139,7 @@ class StudentListingExcludesInactiveTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/students?status=inactive');
 
         $response->assertOk();
-        $response->assertSee($inactive->userprofile->firstname, false);
-        $response->assertDontSee($active->userprofile->firstname, false);
+        $response->assertSee('Inactivejunk', false);
+        $response->assertDontSee('Activeaudit', false);
     }
 }
