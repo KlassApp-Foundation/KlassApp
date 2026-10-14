@@ -120,17 +120,40 @@ class FeeReminderDispatchTest extends TestCase
             ])
             ->assertRedirect();
 
-        $result = session('reminder_result');
-        $this->assertStringContainsString('Sent 0.', $result);
-        $this->assertStringContainsString('Demo and test schools do not send messages', $result);
+        $ready = 'Reminder ready for 1 parent. This is a demo school, so nothing was sent.';
+        $this->assertSame($ready, session('reminder_result'));
+        $this->assertSame('ready', session('reminder_tone'));
+        $this->assertStringNotContainsString('Skipped', session('reminder_result'));
         Event::assertNotDispatched(SinglePushEvent::class);
+
+        $html = $this->actingAs($this->admin)->get(route('admin.fee-payments'))->assertOk()->getContent();
+        $this->assertStringContainsString($ready, $html);
+        $this->assertStringContainsString('data-tone="ready"', $html);
+        $this->assertStringNotContainsString('#B91C1C', substr($html, (int) strpos($html, 'data-testid="fee-reminder-result"'), 220));
 
         $this->school->forceFill(['is_demo' => false, 'is_test' => true])->save();
         $this->actingAs($this->admin)
             ->post(route('admin.fee-payments.reminders'), [
                 'student_ids' => [$student->id],
                 'confirmed' => 1,
-            ]);
+            ])
+            ->assertSessionHas('reminder_result', $ready);
+        Event::assertNotDispatched(SinglePushEvent::class);
+    }
+
+    public function test_a_real_school_still_reports_sent_and_skipped(): void
+    {
+        Event::fake([SinglePushEvent::class]);
+        $student = $this->student('Ada Owing', 100000, 0);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.fee-payments.reminders'), [
+                'student_ids' => [$student->id],
+                'confirmed' => 1,
+            ])
+            ->assertSessionHas('reminder_result', 'Sent 0. Skipped 1 (ADA OWING: No parent linked).');
+
+        $this->assertNotSame('ready', session('reminder_tone'));
         Event::assertNotDispatched(SinglePushEvent::class);
     }
 

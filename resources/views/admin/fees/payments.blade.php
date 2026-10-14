@@ -88,7 +88,7 @@
 @if(!empty($balances))
     <div data-testid="fee-balances" style="margin-bottom: 16px;">
         @if(session('reminder_result'))
-            <p data-testid="fee-reminder-result" style="margin: 0 0 8px; color: #0F172A;">{{ session('reminder_result') }}</p>
+            <p data-testid="fee-reminder-result" data-tone="{{ session('reminder_tone') === 'ready' ? 'ready' : 'plain' }}" style="margin: 0 0 8px; color: {{ session('reminder_tone') === 'ready' ? '#15803D' : '#0F172A' }};">{{ session('reminder_result') }}</p>
         @endif
         <x-card padding="none">
             <div style="padding: 12px 16px; font-weight: 700; color: #0F172A;">Students with a balance</div>

@@ -177,12 +177,16 @@ class FeePaymentController extends Controller
         }
 
         $blocked = (bool) $school->is_demo || (bool) $school->is_test;
+        if ($blocked) {
+            $noun = $parents === 1 ? '1 parent' : $parents.' parents';
+
+            return back()
+                ->with('reminder_result', 'Reminder ready for '.$noun.'. This is a demo school, so nothing was sent.')
+                ->with('reminder_tone', 'ready');
+        }
+
         $sent = 0;
         foreach ($chosen as $row) {
-            if ($blocked) {
-                $skipped[] = $row['name'].': Demo and test schools do not send messages';
-                continue;
-            }
             if ($row['parents'] < 1) {
                 $skipped[] = $row['name'].': No parent linked';
                 continue;
