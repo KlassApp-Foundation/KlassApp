@@ -915,6 +915,7 @@ Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@
 
 // Fee payment records
 Route::get("/fees/payments", "FeePaymentController@index")->name("admin.fee-payments");
+Route::post("/fees/payments/reminders", "FeePaymentController@sendReminders")->name("admin.fee-payments.reminders");
 Route::get("/fees/payments/create", "FeePaymentController@create")->name("admin.fee-payments.create");
 Route::post("/fees/payments/store", "FeePaymentController@store")->name("admin.fee-payments.store");
 

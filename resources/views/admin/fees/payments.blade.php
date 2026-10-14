@@ -85,6 +85,41 @@
     </x-card>
 </div>
 
+@if(!empty($balances))
+    <div data-testid="fee-balances" style="margin-bottom: 16px;">
+        @if(session('reminder_result'))
+            <p data-testid="fee-reminder-result" data-tone="{{ session('reminder_tone') === 'ready' ? 'ready' : 'plain' }}" style="margin: 0 0 8px; color: {{ session('reminder_tone') === 'ready' ? '#15803D' : '#0F172A' }};">{{ session('reminder_result') }}</p>
+        @endif
+        <x-card padding="none">
+            <div style="padding: 12px 16px; font-weight: 700; color: #0F172A;">Students with a balance</div>
+            <x-table :headers="['', 'Student', 'Balance', '']" striped>
+                @foreach($balances as $row)
+                    <tr data-testid="fee-balance-row">
+                        <td>
+                            <input form="fee-reminder-bulk" type="checkbox" name="student_ids[]" value="{{ $row['id'] }}" data-parents="{{ $row['parents'] }}" aria-label="Select {{ $row['name'] }}">
+                        </td>
+                        <td>{{ $row['name'] }}</td>
+                        <td>UGX {{ number_format($row['balance'], 0) }}</td>
+                        <td>
+                            <form method="POST" action="{{ route('admin.fee-payments.reminders') }}" class="fee-remind-form" style="margin: 0;">
+                                @csrf
+                                <input type="hidden" name="confirmed" value="0">
+                                <input type="hidden" name="student_ids[]" value="{{ $row['id'] }}">
+                                <button type="submit" class="ds-btn ds-btn-ghost text-sm" data-parents="{{ $row['parents'] }}">Send reminder</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+            <form method="POST" action="{{ route('admin.fee-payments.reminders') }}" id="fee-reminder-bulk" class="fee-remind-form" style="padding: 12px 16px;">
+                @csrf
+                <input type="hidden" name="confirmed" value="0">
+                <button type="submit" class="ds-btn ds-btn-primary text-sm" id="fee-remind-selected">Send reminder</button>
+            </form>
+        </x-card>
+    </div>
+@endif
+
 @if($payments->isEmpty())
     <div data-testid="fees-empty">
         <x-card padding="lg" class="text-center">
@@ -156,6 +191,28 @@
     }
 
     // Delegate: Vue remounts #app and replaces the button after this script runs.
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form.classList || !form.classList.contains('fee-remind-form')) return;
+        var confirmed = form.querySelector('[name=confirmed]');
+        if (!confirmed || confirmed.value === '1') return;
+        e.preventDefault();
+        var parents = 0;
+        if (form.id === 'fee-reminder-bulk') {
+            document.querySelectorAll('#fee-balances input[name="student_ids[]"]:checked').forEach(function (box) {
+                parents += parseInt(box.getAttribute('data-parents') || '0', 10);
+            });
+        } else {
+            var button = form.querySelector('[data-parents]');
+            parents = parseInt(button ? button.getAttribute('data-parents') : '0', 10);
+        }
+        var noun = parents === 1 ? '1 parent' : parents + ' parents';
+        if (window.confirm('Send a reminder to ' + noun + '?')) {
+            confirmed.value = '1';
+            form.submit();
+        }
+    });
+
     document.addEventListener('click', function (e) {
         if (e.target.closest('#fees-record-toggle')) {
             var form = formWrap();

@@ -203,7 +203,10 @@ Run in order; stop at the first failure and assess for rollback (§6):
     6. generate a report card for one student — the PDF downloads and opens,
        and shows the student name and the marks;
     7. the bursar records a fee payment, sees the balance (collected this term /
-       outstanding), and sends a fee reminder without error;
+       outstanding), and on Students with a balance uses Send reminder. The
+       confirmation names how many parents would be messaged. Because this
+       school is `is_test`, the result says the reminder was skipped and
+       nothing is sent;
     8. the parent (created through the normal student-add flow) logs in on the
        web and sees the child's grades and fees.
     Purge the school with `test:purge-schools` afterwards (dry run first).
