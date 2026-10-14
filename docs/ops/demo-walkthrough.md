@@ -49,13 +49,15 @@ top bar). The sidebar has four sections:
   - **Parents** (`/admin/parents`).
 - **Academics**:
   - **Classes and subjects**, with Classes and streams (`/admin/classes`),
-    Subjects, Timetable and Calendar.
+    Subjects, Timetable and Calendar (these three from sidebar fixture, not
+    seen expanded on staging).
   - **Attendance**.
   - **Exams and reports**, with Exams and marks, Grading and Report cards.
   - **Library**.
 - **Money**: **Fees** (`/admin/fees/payments`) and **Unmatched payments**.
 - **School**: **WhatsApp**, **Approvals**, **Transport** and **Settings**
-  (School details, Academic years and terms, Data exports).
+  (School details, Academic years and terms, Data exports; from sidebar
+  fixture, not seen expanded on staging).
 
 The account card is in the sidebar footer. Its menu has Edit profile, Change
 password, Settings and Help, and also Log out (don't use Log out mid-demo).
