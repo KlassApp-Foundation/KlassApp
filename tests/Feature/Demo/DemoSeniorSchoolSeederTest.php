@@ -56,6 +56,7 @@ class DemoSeniorSchoolSeederTest extends TestCase
         $this->assertGreaterThan(0, Exam::where('school_id', $school->id)->count());
         $this->assertGreaterThan(0, DB::table('marks')->where('school_id', $school->id)->count());
         $this->assertDemoGenderMix($school->id);
+        $this->assertFemaleTeacherIsFemale($school->id);
     }
 
     public function test_demo_senior_seeder_is_idempotent(): void
@@ -102,5 +103,26 @@ class DemoSeniorSchoolSeederTest extends TestCase
             $ratios[] = ($counts['female'] ?? 0) / max(1, $classTotal);
         }
         $this->assertGreaterThanOrEqual(0.2, max($ratios) - min($ratios));
+    }
+
+    private function assertFemaleTeacherIsFemale(int $schoolId): void
+    {
+        $gender = DB::table('users')
+            ->join('userprofiles', 'userprofiles.user_id', '=', 'users.id')
+            ->where('users.school_id', $schoolId)
+            ->where('users.usergroup_id', 5)
+            ->where('users.name', 'Diana Kembabazi')
+            ->value('userprofiles.gender');
+
+        $this->assertSame('female', $gender);
+
+        $male = DB::table('users')
+            ->join('userprofiles', 'userprofiles.user_id', '=', 'users.id')
+            ->where('users.school_id', $schoolId)
+            ->where('users.usergroup_id', 5)
+            ->where('users.name', 'Peter Okello')
+            ->value('userprofiles.gender');
+
+        $this->assertSame('male', $male);
     }
 }

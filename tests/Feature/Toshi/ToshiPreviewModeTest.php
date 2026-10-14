@@ -103,6 +103,8 @@ class ToshiPreviewModeTest extends TestCase
             ->assertSet('mode', 'preview')
             ->assertSee('Coming soon', false)
             ->assertSee('Founding schools will be the first to try Toshi.', false)
+            ->assertSee('placeholder="Messaging is paused"', false)
+            ->assertDontSee('Coming soon — messaging disabled in preview', false)
             ->assertSee('data-testid="toshi-preview-coming-soon"', false)
             ->assertSee('data-testid="toshi-composer-preview"', false);
 
@@ -112,6 +114,7 @@ class ToshiPreviewModeTest extends TestCase
             ->assertSet('input', '');
 
         $this->assertSame([], $component->get('messages'));
+        $this->assertSame(1, substr_count($component->html(), 'Founding schools will be the first to try Toshi.'));
 
         $component->set('pendingToolConfirm', [
             'tool' => 'toolAddStudent',

@@ -1063,7 +1063,7 @@ trait SeedsRichDemoData
 
     protected function richTeacherProfiles(): void
     {
-        $female = ['Grace', 'Rita', 'Joan', 'Esther', 'Diana', 'Sarah', 'Alice'];
+        $female = ['grace', 'rita', 'joan', 'esther', 'diana', 'sarah', 'alice'];
         $teachers = User::query()
             ->where('school_id', $this->school->id)
             ->where('usergroup_id', 5)
@@ -1073,7 +1073,11 @@ trait SeedsRichDemoData
 
         foreach ($teachers as $index => $teacher) {
             $profile = \App\Models\Userprofile::firstOrNew(['user_id' => $teacher->id]);
-            $first = (string) ($profile->firstname ?: 'Teacher');
+            // firstname is uppercased by Userprofile::getFirstNameAttribute, so the
+            // comparison has to use the stored value. "DIANA" never matched "Diana",
+            // and every demo teacher was saved as male.
+            $storedFirst = (string) ($profile->getAttributes()['firstname'] ?? '');
+            $first = strtolower(trim(strtok($storedFirst, ' ') ?: ''));
             $profile->forceFill([
                 'user_id' => $teacher->id,
                 'school_id' => $this->school->id,

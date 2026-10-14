@@ -17,6 +17,7 @@
 @endphp
 <div class="ka-bare-page" data-testid="student-profile">
     <x-person-profile
+        :user="$student"
         :name="$page['name']"
         :initials="$page['initials']"
         :class-name="$page['class_name']"

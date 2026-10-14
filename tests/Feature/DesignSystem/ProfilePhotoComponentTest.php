@@ -49,7 +49,10 @@ class ProfilePhotoComponentTest extends TestCase
     {
         $html = $this->render('<x-profile-photo :user="$u" size="lg" />', ['u' => $this->user(null)]);
 
-        $this->assertStringContainsString('uploads/user/avatar/default-user.jpg', $html);
+        $this->assertStringContainsString('>AK<', $html);
+        $this->assertStringContainsString('#1E6FD9', $html);
+        $this->assertStringContainsString('#FFFFFF', $html);
+        $this->assertStringNotContainsString('uploads/user/avatar/default-user.jpg', $html);
         $this->assertStringNotContainsString('src=""', $html);
         $this->assertStringContainsString('width="128" height="128"', $html);
     }
@@ -79,9 +82,10 @@ class ProfilePhotoComponentTest extends TestCase
     {
         $html = $this->render('<x-profile-photo :user="null" size="md" />');
 
-        $this->assertStringContainsString('uploads/user/avatar/default-user.jpg', $html);
-        $this->assertStringContainsString('alt=""', $html);
+        $this->assertStringContainsString('#64748B', $html);
+        $this->assertStringNotContainsString('uploads/user/avatar/default-user.jpg', $html);
         $this->assertStringContainsString('width="64" height="64"', $html);
+        $this->assertMatchesRegularExpression('/account-initials[^>]*>\s*</', $html);
     }
 
     public function test_sizes_and_circle_nav_trigger(): void
@@ -91,7 +95,7 @@ class ProfilePhotoComponentTest extends TestCase
             $this->assertStringContainsString('width="'.$px.'" height="'.$px.'"', $html, $size);
         }
 
-        $circle = $this->render('<x-profile-photo :user="null" size="xs" shape="circle" />');
+        $circle = $this->render('<x-profile-photo :user="$u" size="xs" shape="circle" />', ['u' => $this->user('avatars/ann.jpg')]);
         $this->assertStringContainsString('border-radius: 50%', $circle);
         $this->assertStringContainsString('var(--d-avatar-ring, rgba(34,197,94,0.3))', $circle);
     }
@@ -104,7 +108,8 @@ class ProfilePhotoComponentTest extends TestCase
         // Soft-launch Part A: 40px square trigger + menu header (no circle xs).
         $this->assertStringNotContainsString('size="xs" shape="circle"', $dropdown);
         // Trigger + if/else header photos (only one header branch renders at runtime).
-        $this->assertSame(3, substr_count($dropdown, '<x-profile-photo :user="Auth::user()" size="sm"'));
+        $this->assertStringContainsString("\$cardVariant === 'topbar' ? 'rail' : 'account'", $dropdown);
+        $this->assertSame(3, substr_count($dropdown, ':size="$photoSize"'));
         $this->assertStringNotContainsString('rgba(34,197,94,0.3)', $dropdown);
         $this->assertStringNotContainsString('AvatarPath', $dropdown);
 

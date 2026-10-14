@@ -5,7 +5,7 @@
     <ul class="student-guardians" data-testid="student-guardians">
         @foreach($parents as $parent)
             <li class="student-guardian" data-testid="student-guardian">
-                <span class="student-guardian__avatar" aria-hidden="true">{{ $parent['initials'] }}</span>
+                <x-profile-photo :user="$parent['user']" size="guardian" class="student-guardian__avatar" />
                 <span class="student-guardian__body">
                     <span class="student-guardian__name">{{ $parent['name'] }}</span>
                     @if(! empty($parent['relation']))

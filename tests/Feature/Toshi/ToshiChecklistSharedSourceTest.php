@@ -114,6 +114,7 @@ class ToshiChecklistSharedSourceTest extends TestCase
         Livewire::actingAs($admin)
             ->test(AgentToshi::class)
             ->assertSee('aria-disabled="true"', false)
-            ->assertSee('messaging disabled in preview');
+            ->assertSee('Messaging is paused')
+            ->assertDontSee('messaging disabled in preview');
     }
 }

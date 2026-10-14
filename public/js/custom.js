@@ -27,6 +27,12 @@ $(document).ready(function(){
       margin: 0
     };
     var collapsed = document.body.classList.contains('sidebar-collapsed');
+    var sidebar = document.getElementById('admin-sidebar');
+    var side = sidebar ? sidebar.getBoundingClientRect() : box;
+    var sideStyle = sidebar ? getComputedStyle(sidebar) : null;
+    var padL = sideStyle ? (parseFloat(sideStyle.paddingLeft) || 0) : 0;
+    var padR = sideStyle ? (parseFloat(sideStyle.paddingRight) || 0) : 0;
+    var innerWidth = Math.max(160, Math.round(side.width - padL - padR));
     if (phone) {
       style.top = Math.round(box.bottom + 8) + 'px';
       style.bottom = 'auto';
@@ -43,7 +49,10 @@ $(document).ready(function(){
       style.maxWidth = '224px';
       style.boxSizing = 'border-box';
     } else {
-      style.left = Math.round(box.left) + 'px';
+      style.left = Math.round(side.left + padL) + 'px';
+      style.width = innerWidth + 'px';
+      style.maxWidth = innerWidth + 'px';
+      style.boxSizing = 'border-box';
       style.right = 'auto';
       style.top = 'auto';
       style.bottom = Math.round(window.innerHeight - box.top + 8) + 'px';
@@ -240,6 +249,10 @@ $(document).ready(function(){
     resSidebar.classList.toggle('block', willOpen);
     this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     setDrawerChrome(willOpen);
+    if (willOpen) {
+      var closeBtn = document.getElementById('drawer-close');
+      if (closeBtn) closeBtn.focus();
+    }
   });
 
   $(document).on('change', '#academic_year_drawer', function() {
@@ -253,7 +266,7 @@ $(document).ready(function(){
     }).finally(function() { window.location.reload(); });
   });
 
-  function closeMobileDrawer() {
+  function closeMobileDrawer(returnFocus) {
     var resSidebar = document.getElementById('res_sidebar');
     if (!resSidebar || resSidebar.classList.contains('hidden')) return;
     resSidebar.classList.remove('block');
@@ -261,6 +274,7 @@ $(document).ready(function(){
     var trigger = document.getElementById('mobile-menu-trigger');
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
     setDrawerChrome(false);
+    if (returnFocus && trigger) trigger.focus();
   }
 
   // Drawer closes on tap-outside (concept: document click outside #side) and Esc.
@@ -273,8 +287,11 @@ $(document).ready(function(){
   $(document).on('click', '#sidebar-scrim', function() {
     closeMobileDrawer();
   });
+  $(document).on('click', '#drawer-close', function() {
+    closeMobileDrawer(true);
+  });
   $(document).on('keydown', function(e) {
-    if (e.key === 'Escape') closeMobileDrawer();
+    if (e.key === 'Escape') closeMobileDrawer(true);
   });
 
   // Sidebar accordion toggle (moved from superadmin/menu.blade.php — Vue strips inline scripts)

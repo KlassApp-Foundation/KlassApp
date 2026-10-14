@@ -13,6 +13,7 @@
     'baseUrl',
     'backUrl' => null,
     'backLabel' => 'Back',
+    'user' => null,
 ])
 <div {{ $attributes->merge(['class' => 'ka-bare-page', 'style' => 'background:transparent;color:#0F172A;border:0;border-radius:0;padding:0;']) }}>
     @if($backUrl)
@@ -23,7 +24,7 @@
 
     <header data-testid="person-profile-header" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between;background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
         <div style="display:flex;gap:12px;align-items:flex-start;min-width:0;">
-            <div aria-hidden="true" data-testid="person-initials" style="width:48px;height:48px;border-radius:999px;background:#DCFCE7;color:#166534;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 auto;">{{ $initials }}</div>
+            <x-profile-photo :user="$user" size="header" class="person-header-photo" data-testid="person-initials" />
             <div style="min-width:0;">
                 <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:#0F172A;">{{ $name }}</h1>
                 @if(filled($role))
