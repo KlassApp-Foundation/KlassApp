@@ -894,14 +894,11 @@
 
         @if($mode === 'preview')
         <div class="toshi-composer toshi-composer--preview" data-testid="toshi-composer-preview">
-            <p class="toshi-composer-reason" data-testid="toshi-composer-reason" role="status">
-                Messaging is paused while Toshi is in preview. Founding schools will be the first to try Toshi.
-            </p>
             <div class="toshi-composer-inner">
                 <textarea rows="1"
                           id="toshi-input-panel"
                           data-testid="toshi-input-panel"
-                          placeholder="Coming soon — messaging disabled in preview"
+                          placeholder="Messaging is paused"
                           disabled
                           aria-disabled="true"
                           class="toshi-composer-input"></textarea>

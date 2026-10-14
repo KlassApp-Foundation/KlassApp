@@ -4639,6 +4639,7 @@ body.ka-drawer-open .dashboard-content-area select {
     margin-left: 10px;
     margin-right: 10px;
     border-radius: 999px;
+    border-left: 0;
 }
 #admin-sidebar.admin-sidebar .sidebar-v3-child.active,
 #res_sidebar.admin-sidebar .sidebar-v3-child.active {
@@ -4648,6 +4649,7 @@ body.ka-drawer-open .dashboard-content-area select {
     margin: 2px 8px;
     border-radius: 999px;
     width: auto;
+    border-left: 0;
 }
 .sidebar-v3-chevron {
     flex: 0 0 24px;
@@ -4788,11 +4790,25 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-flyout-title {
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-child { height: 32px; min-height: 32px; }
 body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer { max-height: none; padding: 8px 0; align-items: center; }
 body.sidebar-collapsed #admin-sidebar .account-card__trigger {
-    width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; box-shadow: none;
+    width: 32px; height: 32px; min-height: 32px; padding: 0; border: 0; background: transparent; box-shadow: none;
     overflow: hidden;
 }
 body.sidebar-collapsed #admin-sidebar .account-card__avatar,
-body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 36px; height: 36px; border-radius: 999px; }
+body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 32px !important; height: 32px !important; border-radius: 999px; }
+.person-header-photo { width: 88px !important; height: 88px !important; }
+@media (max-width: 767px) {
+    .person-header-photo { width: 64px !important; height: 64px !important; font-size: 22px !important; }
+}
+.ka-drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; min-height: 56px; padding: 0 8px 0 16px; box-sizing: border-box;
+}
+.ka-drawer-logo { height: 24px; width: auto; display: block; }
+.ka-drawer-close {
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+    border: 0; border-radius: 8px; background: transparent; color: #0F172A;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+}
 @media (prefers-reduced-motion: reduce) {
     #admin-sidebar.admin-sidebar { transition: none; }
 }
@@ -4811,8 +4827,8 @@ body.sidebar-collapsed #admin-sidebar .account-card__trigger img { width: 36px; 
 .student-guardians { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .student-guardian { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .student-guardian__avatar {
-    width: 36px; height: 36px; border-radius: 999px; background: #DCFCE7; color: #166534;
-    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: 0 0 auto;
+    width: 40px; height: 40px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
 }
 .student-guardian__body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
 .student-guardian__name { font-weight: 700; color: #0F172A; }

@@ -32,6 +32,7 @@
     $accountTip = $displayName.' · '.$roleLabel;
     $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar').'-'.substr(md5(uniqid('', true)), 0, 8);
     $cardVariant = $variant ?? 'sidebar';
+    $photoSize = $cardVariant === 'topbar' ? 'rail' : 'account';
 @endphp
 <div class="profile-click account-card{{ $cardVariant === 'topbar' ? ' account-card--topbar' : '' }}" dusk="profile-menu" data-account-card>
     <button
@@ -44,7 +45,7 @@
         data-tip="{{ $accountTip }}"
         data-account-trigger
     >
-        <x-profile-photo :user="Auth::user()" size="sm" class="account-card__avatar" initials-when-empty />
+        <x-profile-photo :user="Auth::user()" :size="$photoSize" class="account-card__avatar" />
         <span class="account-card__identity">
             <span class="account-card__name" title="{{ $displayName }}">{{ $displayName }}</span>
             <span class="account-card__email" title="{{ $email }}">{{ $email }}</span>
@@ -63,11 +64,11 @@
         <div class="account-card__who">
             @if($portalLinks['change_avatar'])
                 <a href="{{ url($portalLinks['change_avatar']) }}" class="account-card__who-photo" tabindex="-1">
-                    <x-profile-photo :user="Auth::user()" size="sm" initials-when-empty />
+                    <x-profile-photo :user="Auth::user()" :size="$photoSize" />
                 </a>
             @else
                 <span class="account-card__who-photo">
-                    <x-profile-photo :user="Auth::user()" size="sm" initials-when-empty />
+                    <x-profile-photo :user="Auth::user()" :size="$photoSize" />
                 </span>
             @endif
             <span class="account-card__identity">

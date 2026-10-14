@@ -277,6 +277,7 @@ class StudentProfileService
             $relation = trim((string) ($relations[$parent->id] ?? ''));
             $phone = $this->phoneLink($parent->mobile_no ? (string) $parent->mobile_no : null);
             $rows[] = [
+                'user' => $parent,
                 'name' => $name !== '' ? $name : 'Parent',
                 'initials' => $this->initials($first, $last, $name !== '' ? $name : 'Parent'),
                 'relation' => $relation !== '' ? ucfirst($relation) : null,

@@ -11,6 +11,7 @@
 @endphp
 <div class="px-4 md:px-6 py-4" data-testid="teacher-profile">
     <x-person-profile
+        :user="$teacher"
         :name="$page['name']"
         :initials="$page['initials']"
         :role="$page['role']"
