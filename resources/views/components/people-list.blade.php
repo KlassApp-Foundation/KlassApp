@@ -67,7 +67,7 @@
         @foreach($list['bulk'] as $action)
             <a class="people-bulk-btn" href="{{ $action['href'] }}">{{ $action['label'] }}</a>
         @endforeach
-        <button class="people-bulk-btn" type="button" data-people-clear>Clear</button>
+        <button class="people-bulk-btn" type="button" data-people-clear>Clear selection</button>
         <button class="people-bulk-btn" type="button" data-people-done>Done</button>
     </div>
     @endif

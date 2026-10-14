@@ -841,32 +841,42 @@ class WhatsAppController extends Controller
             return;
         }
 
-        if (!$whatsappUser->opted_in) {
-            $this->businessApi->sendText(
-                $phone,
-                "You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
-                'opted_out',
-            );
-            return;
-        }
-
-        // Handle OPTIN/OPTOUT keywords
         $trimmedBody = strtolower(trim($body));
-        if ($trimmedBody === 'optin') {
-            $whatsappUser->update(['opted_in' => true]);
-            $this->sendMenu($whatsappUser, $phone, $this->businessApi);
-            return;
-        }
-
-        if ($trimmedBody === 'optout') {
+        if (in_array($trimmedBody, ['stop', 'optout', 'unsubscribe'], true)) {
             $whatsappUser->update(['opted_in' => false]);
             $this->businessApi->sendText(
                 $phone,
-                "❌ You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
-                'optout',
+                "You have been unsubscribed from WhatsApp notifications. Reply *OPTIN* to re-enable.",
+                'opted_out',
                 $whatsappUser->user_id,
             );
+
             return;
+        }
+
+        if (in_array($trimmedBody, ['optin', 'join'], true)) {
+            $whatsappUser->update(['opted_in' => true]);
+            $this->businessApi->sendText(
+                $phone,
+                'You are opted in to WhatsApp messages from your school.',
+                'optin',
+                $whatsappUser->user_id,
+            );
+
+            return;
+        }
+
+        if (!$whatsappUser->opted_in) {
+            $demoSchool = (int) ($whatsappUser->user?->school?->is_demo ?? 0) === 1;
+            if (! ($trimmedBody === 'demo' && $demoSchool)) {
+                $this->businessApi->sendText(
+                    $phone,
+                    "You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
+                    'opted_out',
+                );
+
+                return;
+            }
         }
 
         // Parent-link interactive button ids (Request Link / Link help / link_*) are only

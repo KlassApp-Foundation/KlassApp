@@ -171,7 +171,7 @@
                         ctx.textBaseline = 'bottom';
                         chart.data.datasets.forEach(function (ds, di) {
                             const meta = chart.getDatasetMeta(di);
-                            if (meta.hidden || meta.type !== 'bar') return;
+                            if (meta.hidden || meta.type !== 'bar' || ds.kaHideValueLabel) return;
                             meta.data.forEach(function (bar, i) {
                                 const v = ds.data[i];
                                 if (v === null || v === undefined || v === '' || isNaN(v)) return;

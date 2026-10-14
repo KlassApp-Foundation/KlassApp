@@ -49,9 +49,15 @@ $(document).ready(function(){
       style.maxWidth = '224px';
       style.boxSizing = 'border-box';
     } else {
-      style.left = Math.round(side.left + padL) + 'px';
-      style.width = innerWidth + 'px';
-      style.maxWidth = innerWidth + 'px';
+      var cardWidth = Math.max(120, Math.round(box.width));
+      var cardLeft = Math.round(box.left);
+      var sideRight = Math.round(side.right);
+      if (cardLeft + cardWidth > sideRight) {
+        cardWidth = Math.max(120, sideRight - cardLeft);
+      }
+      style.left = cardLeft + 'px';
+      style.width = cardWidth + 'px';
+      style.maxWidth = cardWidth + 'px';
       style.boxSizing = 'border-box';
       style.right = 'auto';
       style.top = 'auto';

@@ -274,7 +274,9 @@
                         <div class="hb" data-testid="dashboard-v2-gender-total">
                             <span>School</span>
                             <span class="stack" role="img" aria-label="School total: girls {{ $g['girls'] }}, boys {{ $g['boys'] }}, not specified {{ $g['not_specified'] }}">
-                                <i style="width:{{ $gp($g['girls']) }}%;background:#B45309"></i><i style="width:{{ $gp($g['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $gp($g['not_specified']) }}%;background:#64748B"></i>
+                                @if((int) $g['girls'] > 0)<i style="flex:{{ (int) $g['girls'] }} 1 0;background:#B45309"></i>@endif
+                                @if((int) $g['boys'] > 0)<i style="flex:{{ (int) $g['boys'] }} 1 0;background:#1E6FD9"></i>@endif
+                                @if((int) $g['not_specified'] > 0)<i style="flex:{{ (int) $g['not_specified'] }} 1 0;background:#64748B"></i>@endif
                             </span>
                             <span class="n">{{ $genderCount($g) }}</span>
                         </div>
@@ -286,15 +288,17 @@
                             <div class="hb" data-testid="dashboard-v2-gender-class">
                                 <span>{{ $row['label'] }}</span>
                                 <span class="stack" role="img" aria-label="{{ $row['label'] }}: girls {{ $row['girls'] }}, boys {{ $row['boys'] }}, not specified {{ $row['not_specified'] }}">
-                                    <i style="width:{{ $rw($row['girls']) }}%;background:#B45309"></i><i style="width:{{ $rw($row['boys']) }}%;background:#1E6FD9"></i><i style="width:{{ $rw($row['not_specified']) }}%;background:#64748B"></i>
+                                    @if((int) $row['girls'] > 0)<i style="flex:{{ (int) $row['girls'] }} 1 0;background:#B45309"></i>@endif
+                                    @if((int) $row['boys'] > 0)<i style="flex:{{ (int) $row['boys'] }} 1 0;background:#1E6FD9"></i>@endif
+                                    @if((int) $row['not_specified'] > 0)<i style="flex:{{ (int) $row['not_specified'] }} 1 0;background:#64748B"></i>@endif
                                 </span>
                                 <span class="n">{{ $genderCount($row) }}</span>
                             </div>
                         @endforeach
-                        <div class="legend">
-                            <span><i style="background:#B45309"></i>Girls {{ $gp($g['girls']) }}%</span>
-                            <span><i style="background:#1E6FD9"></i>Boys {{ $gp($g['boys']) }}%</span>
-                            <span><i style="background:#64748B"></i>Not specified {{ $gp($g['not_specified']) }}%</span>
+                        <div class="legend" data-testid="dashboard-v2-gender-legend">
+                            <span><i style="background:#B45309"></i>{{ (int) $g['girls'] }} {{ (int) $g['girls'] === 1 ? 'girl' : 'girls' }}</span>
+                            <span><i style="background:#1E6FD9"></i>{{ (int) $g['boys'] }} {{ (int) $g['boys'] === 1 ? 'boy' : 'boys' }}</span>
+                            <span><i style="background:#64748B"></i>{{ (int) $g['not_specified'] }} not specified</span>
                         </div>
                     @else
                         <div class="dv2-empty-in"><b>No students yet</b><p>The split appears once students are added.</p></div>
@@ -307,7 +311,7 @@
                     @if(count($charts['fees_months'] ?? []) > 0)
                         @php
                             $fm = $charts['fees_months'];
-                            $fmAria = implode(', ', array_map(fn ($m) => $m['label'].' collected '.($currency ? $currency.' ' : '').number_format($m['collected']), $fm));
+                            $fmAria = implode(', ', array_map(fn ($m) => $m['label'].' collected '.($currency ? $currency.' ' : '').number_format($m['collected']).', expected '.($currency ? $currency.' ' : '').number_format($m['expected']), $fm));
                             $fmCollectedBg = array_map(fn ($m) => ! empty($m['future']) ? 'rgba(21,128,61,0.25)' : '#15803D', $fm);
                             $fmExpectedBg = array_map(fn ($m) => ! empty($m['future']) ? 'rgba(148,163,184,0.06)' : 'rgba(148,163,184,0.10)', $fm);
                         @endphp
@@ -315,7 +319,7 @@
                                  :labels="array_map(fn ($m) => $m['label'], $fm)"
                                  :datasets="[
                                      ['label' => 'Collected', 'data' => array_map(fn ($m) => $m['collected'], $fm), 'kaFuture' => array_map(fn ($m) => ! empty($m['future']), $fm), 'backgroundColor' => $fmCollectedBg, 'borderRadius' => 4],
-                                     ['label' => 'Expected', 'data' => array_map(fn ($m) => $m['expected'], $fm), 'backgroundColor' => $fmExpectedBg, 'borderColor' => '#94A3B8', 'borderDash' => [4, 3], 'borderWidth' => 1.5, 'borderRadius' => 4],
+                                     ['label' => 'Expected', 'data' => array_map(fn ($m) => $m['expected'], $fm), 'kaHideValueLabel' => true, 'backgroundColor' => $fmExpectedBg, 'borderColor' => '#94A3B8', 'borderDash' => [4, 3], 'borderWidth' => 1.5, 'borderRadius' => 4],
                                  ]"
                                  :options="['plugins' => ['dsValueLabels' => ['display' => true]], 'layout' => ['padding' => ['top' => 14, 'left' => 4, 'right' => 8]]]"
                                  options-js='{ scales: { y: { ticks: { maxTicksLimit: 6, callback: function (v) { var n = Number(v); if (!isFinite(n)) return ""; if (Math.abs(n) >= 1000000) return Math.round(n / 1000000) + "M"; if (Math.abs(n) >= 1000) return Math.round(n / 1000) + "K"; return String(n); } }, afterFit: function (scale) { scale.width = Math.max(scale.width, 44); } } } }'

@@ -58,9 +58,9 @@
     @endisset
 
     @if($tabs !== [])
-        <nav data-testid="person-profile-tabs" aria-label="Profile" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <nav data-testid="person-profile-tabs" aria-label="Profile" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:16px;margin-top:16px;">
             @foreach($tabs as $key => $label)
-                <a href="{{ $baseUrl.'?tab='.$key }}" data-tab="{{ $key }}" aria-current="{{ $active === $key ? 'page' : 'false' }}" style="min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;padding:8px 12px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;background:{{ $active === $key ? '#0F172A' : '#fff' }};color:{{ $active === $key ? '#fff' : '#0F172A' }};border:1px solid #E2E8F0;">{{ $label }}</a>
+                <a href="{{ $baseUrl.'?tab='.$key }}" data-tab="{{ $key }}" aria-current="{{ $active === $key ? 'page' : 'false' }}" style="min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;padding:0 2px;border-radius:0;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;background:transparent;color:#0F172A;border:0;border-bottom:2px solid {{ $active === $key ? '#15803D' : 'transparent' }};">{{ $label }}</a>
             @endforeach
         </nav>
     @endif

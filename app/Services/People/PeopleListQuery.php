@@ -255,7 +255,7 @@ class PeopleListQuery
                     ['label' => 'View profile', 'href' => url('/admin/parent/show/'.$parent->name)],
                     ['label' => 'Edit', 'href' => url('/admin/parent/edit/'.$parent->name)],
                     ['label' => 'Link a child', 'href' => url('/admin/parent/edit/'.$parent->name)],
-                    ['label' => 'Send WhatsApp opt-in', 'href' => url('/admin/whatsapp/parents')],
+                    ['label' => 'Open WhatsApp links', 'href' => url('/admin/whatsapp/parents')],
                 ],
             ];
         }

@@ -180,10 +180,18 @@ class StudentProfileService
             $grade = $stored->count() === 1 ? (string) $stored->first() : null;
         }
 
+        $examModel = \App\Models\Academics\Exam::query()
+            ->with(['subject', 'examType'])
+            ->where('school_id', $schoolId)
+            ->where('id', $latestExamId)
+            ->first();
+        $examName = trim((string) (($examModel?->subject?->name ?: 'Exam').' — '.($examModel?->examType?->name ?: 'Exam')));
+
         return [
             'empty' => false,
             'average' => $averageLabel,
             'grade' => $grade,
+            'name' => $examName,
         ];
     }
 
@@ -284,6 +292,7 @@ class StudentProfileService
                 'phone' => $phone['label'] ?? null,
                 'phone_href' => $phone['href'] ?? null,
                 'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'On WhatsApp' : 'Not on WhatsApp',
+                'profile_url' => url('/admin/parent/show/'.$parent->name),
             ];
         }
 

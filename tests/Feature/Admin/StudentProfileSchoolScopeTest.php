@@ -384,6 +384,90 @@ class StudentProfileSchoolScopeTest extends TestCase
         ]);
     }
 
+    public function test_A11_exam_line_shows_percent_grade_and_name(): void
+    {
+        $yearId = AcademicYear::where('school_id', $this->schoolA->id)->value('id');
+        $term = AcademicTerm::where('school_id', $this->schoolA->id)->first();
+        $link = StandardLink::where('school_id', $this->schoolA->id)->first();
+        $teacher = User::factory()->create([
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 5,
+        ]);
+        $subject = Subject::create([
+            'school_id' => $this->schoolA->id,
+            'academic_year_id' => $yearId,
+            'standard_id' => $link->standard_id,
+            'section_id' => $link->section_id,
+            'name' => 'Mathematics',
+            'code' => 'MATH',
+            'type' => 'core',
+        ]);
+        $examType = ExamType::create([
+            'name' => 'End of term',
+            'code' => 'EOT',
+            'contributes_to_report_total' => true,
+        ]);
+        $exam = new Exam([
+            'school_id' => $this->schoolA->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $link->section_id,
+            'academic_year_id' => $yearId,
+            'academic_term_id' => $term->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $teacher->id,
+            'status' => 'done',
+        ]);
+        $exam->exam_type_id = $examType->id;
+        $exam->save();
+        Marks::create([
+            'school_id' => $this->schoolA->id,
+            'exam_id' => $exam->id,
+            'student_id' => $this->studentA->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => $subject->id,
+            'section_id' => $link->section_id,
+            'marks' => 52,
+            'grade' => 'C6',
+        ]);
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/students/'.$this->studentA->id)
+            ->assertOk()
+            ->assertSee('52% · C6', false)
+            ->assertSee('MATHEMATICS — End of term', false);
+    }
+
+    public function test_A9_and_A12_message_uses_the_guardian_profile(): void
+    {
+        $parent = User::factory()->create([
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 7,
+            'name' => 'grace-nakato',
+        ]);
+        Userprofile::create([
+            'user_id' => $parent->id,
+            'school_id' => $this->schoolA->id,
+            'usergroup_id' => 7,
+            'firstname' => 'Grace',
+            'lastname' => 'Nakato',
+            'status' => 'active',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->schoolA->id,
+            'parent_id' => $parent->id,
+            'student_id' => $this->studentA->id,
+            'status' => 1,
+        ]);
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/students/'.$this->studentA->id.'?tab=parents')
+            ->assertOk()
+            ->assertSee('data-testid="profile-message"', false)
+            ->assertSee('data-testid="guardian-message"', false)
+            ->assertSee('href="'.url('/admin/parent/show/grace-nakato').'"', false)
+            ->assertDontSee('Link another', false);
+    }
+
     /**
      * @return array{user: User, link: StandardLink}
      */

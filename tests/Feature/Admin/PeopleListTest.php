@@ -111,7 +111,8 @@ class PeopleListTest extends TestCase
         $students->assertSee('>Export<', false);
         $students->assertDontSee('>Message parents<', false);
         $teachers->assertDontSee('>Send invites<', false);
-        $parents->assertSee('Send WhatsApp opt-in', false);
+        $parents->assertSee('Open WhatsApp links', false);
+        $parents->assertDontSee('Send WhatsApp opt-in', false);
 
         $students->assertSee('Loading students', false);
         $teachers->assertSee('Loading teachers', false);
@@ -474,6 +475,27 @@ class PeopleListTest extends TestCase
             'end_date' => '2026-12-31',
             'status' => 1,
         ]);
+    }
+
+    public function test_K117_parents_row_action_is_open_whatsapp_links(): void
+    {
+        $this->person($this->schoolA, 7, 'Grace Parent', 'grace.k117@people-a.test');
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/parents')
+            ->assertOk()
+            ->assertSee('Open WhatsApp links', false)
+            ->assertSee('/admin/whatsapp/parents', false)
+            ->assertDontSee('Send WhatsApp opt-in', false);
+    }
+
+    public function test_A8_selection_bar_reads_clear_selection(): void
+    {
+        $html = file_get_contents(resource_path('views/components/people-list.blade.php'));
+
+        $this->assertStringContainsString('data-people-clear>Clear selection', $html);
+        $this->assertStringNotContainsString('>Message parents<', $html);
+        $this->assertStringNotContainsString('>Move to class<', $html);
     }
 
     /**
