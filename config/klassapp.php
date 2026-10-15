@@ -26,6 +26,11 @@
 |   bind_ttl_minutes  env DEMO_BIND_TTL_MINUTES (default 45). A number bound
 |                     with BIND <code> is unlinked by demo:expire-chats after
 |                     this many minutes.
+|   bind_requires_approval  env DEMO_BIND_REQUIRES_APPROVAL (default false).
+|                     When true, BIND <code> records a request on the admin
+|                     Approvals page instead of linking at once; approval
+|                     links the number and the TTL counts from the approval.
+|                     A request nobody approves closes after the same TTL.
 |   release_webhook_url     env DEMO_RELEASE_WEBHOOK_URL. When set together
 |   release_webhook_secret  with env DEMO_RELEASE_WEBHOOK_SECRET, a demo
 |                     school's marks release POSTs JSON (the exam, and each
@@ -44,6 +49,7 @@ return [
     'demo' => [
         'whatsapp_number' => env('WHATSAPP_DEMO_NUMBER'),
         'bind_ttl_minutes' => (int) env('DEMO_BIND_TTL_MINUTES', 45),
+        'bind_requires_approval' => filter_var(env('DEMO_BIND_REQUIRES_APPROVAL', false), FILTER_VALIDATE_BOOLEAN),
         'release_webhook_url' => env('DEMO_RELEASE_WEBHOOK_URL'),
         'release_webhook_secret' => env('DEMO_RELEASE_WEBHOOK_SECRET'),
         'links' => [
