@@ -62,13 +62,23 @@
     </form>
 
     @if($showSelection)
+    {{-- Select mode with nothing selected shows one hint line; the bar appears from 1 selected.
+         On phones the bar stays one row: Clear selection and Done move into the ⋯ menu. --}}
+    <p class="people-bulk-hint" data-people-hint hidden>Select rows to export</p>
     <div class="people-bulk" data-people-bulk data-sticky-bar hidden>
         <b><span data-people-count>0</span> selected</b>
         @foreach($list['bulk'] as $action)
             <a class="people-bulk-btn" href="{{ $action['href'] }}">{{ $action['label'] }}</a>
         @endforeach
-        <button class="people-bulk-btn" type="button" data-people-clear>Clear selection</button>
-        <button class="people-bulk-btn" type="button" data-people-done>Done</button>
+        <button class="people-bulk-btn people-bulk-wide" type="button" data-people-clear>Clear selection</button>
+        <button class="people-bulk-btn people-bulk-wide" type="button" data-people-done>Done</button>
+        <details class="people-bulk-more" data-people-bulk-more>
+            <summary class="people-bulk-btn" aria-label="More selection actions"><span aria-hidden="true">⋯</span></summary>
+            <div class="people-bulk-more-menu">
+                <button type="button" data-people-clear>Clear selection</button>
+                <button type="button" data-people-done>Done</button>
+            </div>
+        </details>
     </div>
     @endif
 

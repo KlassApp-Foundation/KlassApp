@@ -177,8 +177,12 @@ class ParentProfileService
     }
 
     /**
+     * The fees tile: the balance as the value, "Paid {currency} x of {currency} y" as the
+     * detail and a status chip, the same as the student profile tile. The currency
+     * shows on every amount.
+     *
      * @param  list<array<string, mixed>>  $children
-     * @return array{empty: bool, text: string}
+     * @return array{empty: bool, text: string, value: ?string, detail: ?string, status: ?string}
      */
     private function feesTile(array $children, ?string $currency): array
     {
@@ -194,16 +198,19 @@ class ParentProfileService
             $paid += (float) $child['paid'];
         }
         if (! $any) {
-            return ['empty' => true, 'text' => 'No fees recorded'];
+            return ['empty' => true, 'text' => 'No fees recorded', 'value' => null, 'detail' => null, 'status' => null];
         }
         $balance = max(0, $expected - $paid);
-        $prefix = $currency ? $currency.' ' : '';
-        $text = $prefix.number_format($balance);
-        if ($expected > 0) {
-            $text .= ' · Paid '.number_format($paid).' of '.number_format($expected);
-        }
+        $value = $this->money($balance, $currency);
+        $detail = $expected > 0 ? $this->paidOf($paid, $expected, $currency) : null;
 
-        return ['empty' => false, 'text' => $text];
+        return [
+            'empty' => false,
+            'text' => $detail === null ? $value : $value.' · '.$detail,
+            'value' => $value,
+            'detail' => $detail,
+            'status' => $this->feeStatus($expected, $paid),
+        ];
     }
 
     /**
@@ -214,13 +221,34 @@ class ParentProfileService
         if ($fees['empty']) {
             return 'No fees recorded';
         }
-        $prefix = $currency ? $currency.' ' : '';
-        $text = $prefix.number_format($fees['balance']);
+        $text = $this->money($fees['balance'], $currency);
         if ($fees['expected'] > 0) {
-            $text .= ' · Paid '.number_format($fees['paid']).' of '.number_format($fees['expected']);
+            $text .= ' · '.$this->paidOf($fees['paid'], $fees['expected'], $currency);
         }
 
         return $text;
+    }
+
+    private function money(float $amount, ?string $currency): string
+    {
+        return ($currency ? $currency.' ' : '').number_format($amount);
+    }
+
+    private function paidOf(float $paid, float $expected, ?string $currency): string
+    {
+        return 'Paid '.$this->money($paid, $currency).' of '.$this->money($expected, $currency);
+    }
+
+    private function feeStatus(float $expected, float $paid): string
+    {
+        if ($expected > 0 && $paid <= 0) {
+            return 'Not paid';
+        }
+        if ($expected > 0 && $paid < $expected) {
+            return 'Partly paid';
+        }
+
+        return 'Paid';
     }
 
     private function lastLogin(int $schoolId, int $parentId): string

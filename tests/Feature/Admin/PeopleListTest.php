@@ -88,9 +88,9 @@ class PeopleListTest extends TestCase
         $teachers->assertSee('data-people-list="teachers"', false);
         $parents->assertSee('data-people-list="parents"', false);
 
-        $students->assertSee('Search by name, KLS number', false);
-        $teachers->assertSee('Search by name, email', false);
-        $parents->assertSee('Search by name, phone', false);
+        $students->assertSee('Search name or KLS number', false);
+        $teachers->assertSee('Search name or email', false);
+        $parents->assertSee('Search name or phone', false);
 
         $students->assertSee('No class', false);
         $students->assertSee('No parent', false);

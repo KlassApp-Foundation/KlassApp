@@ -49,7 +49,8 @@ class DashboardV21TilesTest extends TestCase
         $this->assertStringContainsString('+ Add students', $html);
         $this->assertStringContainsString('View registers', $html);
         $this->assertStringContainsString('Record payment', $html);
-        $this->assertStringContainsString('Send on WhatsApp', $html);
+        // F4: one report cards action by state; no exam yet, so it is Generate.
+        $this->assertStringContainsString('>Generate</a>', $html);
         $this->assertStringContainsString('Enter marks', $html);
         $css = file_get_contents(public_path('css/dashboard-v2.css'));
         $this->assertStringContainsString('min-height:280px', $css);

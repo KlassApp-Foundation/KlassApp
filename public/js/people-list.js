@@ -26,6 +26,8 @@
     }
 
     var bulk = root.querySelector('[data-people-bulk]');
+    var hint = root.querySelector('[data-people-hint]');
+    var more = root.querySelector('[data-people-bulk-more]');
     var count = root.querySelector('[data-people-count]');
     function visibleBoxes() {
         return Array.prototype.filter.call(root.querySelectorAll('[data-people-check]'), function (box) {
@@ -57,8 +59,15 @@
         if (count) {
             count.textContent = String(boxes.length);
         }
+        // The bar shows from 1 selected; at 0 selected Select mode shows the hint line instead.
         if (bulk) {
-            bulk.hidden = !selecting();
+            bulk.hidden = !selecting() || boxes.length === 0;
+        }
+        if (hint) {
+            hint.hidden = !selecting() || boxes.length > 0;
+        }
+        if (more && bulk && bulk.hidden) {
+            more.open = false;
         }
         root.querySelectorAll('.people-row, .people-card').forEach(function (row) {
             var box = row.querySelector('[data-people-check]');
@@ -78,12 +87,14 @@
             setSelecting(!selecting());
         });
     }
-    var done = root.querySelector('[data-people-done]');
-    if (done) {
+    root.querySelectorAll('[data-people-done]').forEach(function (done) {
         done.addEventListener('click', function () {
+            if (more) {
+                more.open = false;
+            }
             setSelecting(false);
         });
-    }
+    });
     root.addEventListener('change', function (event) {
         var target = event.target;
         if (target && target.hasAttribute('data-people-all')) {
@@ -93,15 +104,17 @@
         }
         paint();
     });
-    var clear = root.querySelector('[data-people-clear]');
-    if (clear) {
+    root.querySelectorAll('[data-people-clear]').forEach(function (clear) {
         clear.addEventListener('click', function () {
+            if (more) {
+                more.open = false;
+            }
             root.querySelectorAll('[data-people-check], [data-people-all]').forEach(function (box) {
                 box.checked = false;
             });
             paint();
         });
-    }
+    });
 
     function closeMenus(except) {
         root.querySelectorAll('[data-people-menu]').forEach(function (button) {

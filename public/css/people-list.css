@@ -1,7 +1,7 @@
 .people-list { color: #0f172a; }
 .people-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .people-tools { display: flex; align-items: center; gap: 8px; margin: 16px 0; min-width: 0; }
-.people-search { position: relative; flex: 1 1 220px; min-width: 0; }
+.people-search { position: relative; flex: 1 1 280px; min-width: 280px; }
 .people-search svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); stroke: #64748b; fill: none; stroke-width: 2; }
 .people-search input, .people-search input.ds-form-input { width: 100%; height: 44px; min-height: 44px; box-sizing: border-box; padding: 0 12px 0 40px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; }
 .people-chips { display: flex; gap: 8px; overflow-x: auto; flex: 1 1 auto; min-width: 0; padding-bottom: 2px; }
@@ -19,7 +19,15 @@
 .people-picker-menu a, .people-picker-empty { display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 8px; color: #0f172a; text-decoration: none; }
 .people-picker-menu a:hover { background: #f8fafc; }
 .people-bulk { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; padding: 8px 12px; border-radius: 12px; background: #0f172a; color: #fff; }
-.people-bulk[hidden], .people-loading[hidden], .people-menu-pop[hidden] { display: none !important; }
+.people-bulk[hidden], .people-bulk-hint[hidden], .people-loading[hidden], .people-menu-pop[hidden] { display: none !important; }
+.people-bulk-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: #f1f5f9; color: #334155; font-size: 14px; }
+.people-bulk b { white-space: nowrap; }
+.people-bulk-more { display: none; position: relative; margin-left: auto; }
+.people-bulk-more > summary { list-style: none; cursor: pointer; font-size: 18px; line-height: 1; }
+.people-bulk-more > summary::-webkit-details-marker { display: none; }
+.people-bulk-more-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 180px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; box-shadow: 0 12px 32px rgba(15, 23, 42, .14); z-index: 20; }
+.people-bulk-more-menu button { display: block; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: #0f172a; font: inherit; text-align: left; white-space: nowrap; cursor: pointer; }
+.people-bulk-more-menu button:hover { background: #f1f5f9; }
 .people-bulk-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; text-decoration: none; }
 .people-table-wrap { background: transparent; border: 0; border-radius: 0; overflow: visible; }
 .people-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
@@ -29,6 +37,8 @@
 .people-row:hover td, .people-card:hover { background: #F8FAFC; }
 .people-row:active td, .people-card:active, .people-row:has(.people-name:focus-visible) td, .people-card:has(.people-name:focus-visible) { background: #EFF6FF; }
 .people-row.is-selected td, .people-card.is-selected { background: #F0FDF4; }
+/* A shared rule gives every class containing "select" z-index 50; a selected row must not cover the bulk bar's menu. */
+.people-row.is-selected, .people-card.is-selected { z-index: auto; }
 .people-avatar { display: inline-flex; flex: none; overflow: hidden; border-radius: 50%; }
 .people-avatar-28 { width: 28px; height: 28px; }
 .people-avatar-32 { width: 32px; height: 32px; }
@@ -75,7 +85,10 @@
 }
 @media (max-width: 760px) {
     .people-tools { flex-direction: column; align-items: stretch; }
-    .people-search { flex: 0 0 auto; }
+    .people-search { flex: 0 0 auto; min-width: 0; }
+    .people-bulk { flex-wrap: nowrap; }
+    .people-bulk-wide { display: none; }
+    .people-bulk-more { display: block; }
     .people-table { display: none; }
     .people-cards { display: block; }
 }
