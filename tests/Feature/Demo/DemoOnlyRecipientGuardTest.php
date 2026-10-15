@@ -169,4 +169,37 @@ class DemoOnlyRecipientGuardTest extends TestCase
         $this->assertNull(DemoOnlyRecipientGuard::refusal(self::RANDOM));
         $this->assertTrue(app(WhatsAppBusinessService::class)->sendText(self::RANDOM, 'x')['success']);
     }
+
+    /** The exact envelope Meta posts (object, entry id, field, metadata, timestamp), signed. */
+    private function metaWebhook(array $value): \Illuminate\Testing\TestResponse
+    {
+        $body = json_encode(['object' => 'whatsapp_business_account', 'entry' => [[
+            'id' => '102290129340398',
+            'changes' => [['field' => 'messages', 'value' => ['messaging_product' => 'whatsapp',
+                'metadata' => ['display_phone_number' => '256793844906', 'phone_number_id' => '106540352242922']] + $value]],
+        ]]]);
+
+        return $this->call('POST', '/api/whatsapp/inbound', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X-Hub-Signature-256' => 'sha256=' . hash_hmac('sha256', $body, self::APP_SECRET),
+        ], $body);
+    }
+
+    public function test_demo_guard_answers_a_real_meta_payload_and_ignores_status_callbacks(): void
+    {
+        config(['klassapp.demo.bind_requires_approval' => true]);
+        $code = $this->fx['demo']['students'][0]['code'];
+        $this->metaWebhook([
+            'contacts' => [['profile' => ['name' => 'Attendee'], 'wa_id' => self::BOUND]],
+            'messages' => [['from' => self::BOUND, 'id' => 'wamid.HBgMMjU2NzAwMDAwOTUxFQIAEhgg', 'timestamp' => (string) now()->timestamp, 'type' => 'text', 'text' => ['body' => 'BIND ' . $code]]],
+        ])->assertOk();
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent);
+        $this->assertSame(self::BOUND, $sent[0]['to']);
+        $this->assertStringContainsString('Request sent', $sent[0]['body']);
+
+        $this->resetHttp();
+        $this->metaWebhook(['statuses' => [['id' => 'wamid.out', 'status' => 'delivered', 'timestamp' => (string) now()->timestamp, 'recipient_id' => self::BOUND]]])->assertOk();
+        $this->assertCount(0, $this->outbound());
+    }
 }
