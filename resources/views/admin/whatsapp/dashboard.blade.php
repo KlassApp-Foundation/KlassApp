@@ -2,10 +2,18 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="max-w-7xl">
-    <div class="flex items-center justify-between mb-6">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4 max-w-7xl">
+    @include('layouts.partials.page-header', [
+        'title' => 'WhatsApp',
+        'subtitle' => 'Link requests from parents, numbers linked now, and message delivery.',
+    ])
+
+    {{-- Link requests first, then Linked now (Livewire, refreshes itself). --}}
+    <livewire:admin.whatsapp-link-requests />
+
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3" data-testid="wa-delivery-head">
         <div>
-            <h1 class="admin-h1 my-3">WhatsApp Delivery Dashboard</h1>
+            <h2 class="wa-lr-section__title">WhatsApp Delivery Dashboard</h2>
             <p class="text-gray-600 text-sm">Message delivery stats, failure monitoring, and activity log</p>
         </div>
 

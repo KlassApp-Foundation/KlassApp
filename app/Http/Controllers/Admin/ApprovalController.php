@@ -4,29 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Approval;
-use App\Models\LessonPlan;
 use App\Models\ParentLinkRequest;
-use App\Models\Task;
-use App\Models\TeacherLeaveApplication;
-use App\Models\User;
-use App\Services\Demo\DemoBindApproval;
-use App\Services\ParentLinkService;
-use App\Services\WhatsApp\ParentLinkRequestService;
+use App\Services\Approvals\ApprovalDecisionService;
 use App\States\Approval\Approved;
 use App\States\Approval\Pending;
 use App\States\Approval\Rejected;
-use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 
 class ApprovalController extends Controller
 {
-    use LogActivity;
-
     public function __construct(
-        protected ParentLinkService $parentLinks,
-        protected ParentLinkRequestService $parentLinkRequests,
+        protected ApprovalDecisionService $decisions,
     ) {}
 
     public function inbox()
@@ -71,166 +60,23 @@ class ApprovalController extends Controller
             $request->validate(['comments' => 'nullable|string|max:1000']);
         }
 
-        $this->authorizeApproval($approval);
-
-        if (! $approval->state->canTransitionTo(Approved::class)) {
-            return back()->with('error', 'This approval cannot be transitioned to Approved.');
-        }
-
-        // A demo BIND request (DEMO_BIND_REQUIRES_APPROVAL): bind the number
-        // to the demo student and confirm to that one number. No parent
-        // account is created and the normal Flow notice is not sent.
-        if (DemoBindApproval::isDemoBindRequest($approval->approvable instanceof ParentLinkRequest ? $approval->approvable : null)) {
-            if (! app(DemoBindApproval::class)->approve($approval->approvable, $approval, (int) $request->input('matched_student_id'), Auth::id())) {
-                return back()->with('error', 'Could not link this demo number (the student is not in this demo school).');
-            }
-            $this->doActivityLog($approval->approvable, Auth::user(), ['approval_id' => $approval->id, 'action' => 'approved', 'demo_bind' => true], 'approval', "Approval #{$approval->id} approved by ".Auth::user()->name);
-
-            return back()->with('success', 'Request approved. The number now follows the student.');
-        }
-
-        if ($approval->approvable instanceof ParentLinkRequest) {
-            $linkResult = $this->approveParentLinkRequest($approval->approvable, $request);
-            if ($linkResult !== null) {
-                return $linkResult;
-            }
-        }
-
-        $approval->state->transitionTo(Approved::class);
-        $approval->approved_by = Auth::id();
-        $approval->comments = $request->comments ?? $approval->comments;
-        $approval->resolved_at = now();
-        $approval->save();
-
-        if ($approval->approvable instanceof ParentLinkRequest) {
-            $this->parentLinkRequests->notifyApproved($approval->approvable->fresh(['school']));
-        }
-
-        $this->doActivityLog(
-            $approval->approvable ?? $approval,
+        // The decision itself is shared with the WhatsApp link request cards.
+        $decision = $this->decisions->approve(
+            $approval,
             Auth::user(),
-            ['approval_id' => $approval->id, 'action' => 'approved'],
-            'approval',
-            "Approval #{$approval->id} approved by ".Auth::user()->name
+            $request->filled('matched_student_id') ? (int) $request->input('matched_student_id') : null,
+            $request->comments,
         );
 
-        return back()->with('success', 'Request approved successfully.');
+        return back()->with($decision->ok ? 'success' : 'error', $decision->message);
     }
 
     public function reject(Request $request, Approval $approval)
     {
         $request->validate(['comments' => 'required|string|max:1000']);
 
-        $this->authorizeApproval($approval);
+        $decision = $this->decisions->reject($approval, Auth::user(), $request->comments);
 
-        if (! $approval->state->canTransitionTo(Rejected::class)) {
-            return back()->with('error', 'This approval cannot be transitioned to Rejected.');
-        }
-
-        if (DemoBindApproval::isDemoBindRequest($approval->approvable instanceof ParentLinkRequest ? $approval->approvable : null)) {
-            app(DemoBindApproval::class)->reject($approval->approvable, $approval, $request->comments, Auth::id());
-            $this->doActivityLog($approval->approvable, Auth::user(), ['approval_id' => $approval->id, 'action' => 'rejected', 'demo_bind' => true], 'approval', "Approval #{$approval->id} rejected by ".Auth::user()->name);
-
-            return back()->with('success', 'Request rejected.');
-        }
-
-        if ($approval->approvable instanceof ParentLinkRequest) {
-            $approval->approvable->update(['status' => 'rejected']);
-        }
-
-        $approval->state->transitionTo(Rejected::class);
-        $approval->approved_by = Auth::id();
-        $approval->comments = $request->comments;
-        $approval->resolved_at = now();
-        $approval->save();
-
-        if ($approval->approvable instanceof ParentLinkRequest) {
-            $this->parentLinkRequests->notifyRejected(
-                $approval->approvable->fresh(['school']),
-                $request->comments,
-            );
-        }
-
-        $this->doActivityLog(
-            $approval->approvable ?? $approval,
-            Auth::user(),
-            ['approval_id' => $approval->id, 'action' => 'rejected'],
-            'approval',
-            "Approval #{$approval->id} rejected by ".Auth::user()->name
-        );
-
-        return back()->with('success', 'Request rejected.');
-    }
-
-    /**
-     * @return \Illuminate\Http\RedirectResponse|null  Error redirect, or null on success.
-     */
-    private function approveParentLinkRequest(ParentLinkRequest $linkRequest, Request $request): ?\Illuminate\Http\RedirectResponse
-    {
-        $studentId = (int) $request->input('matched_student_id');
-
-        $student = User::query()
-            ->where('id', $studentId)
-            ->where('school_id', $linkRequest->school_id)
-            ->where('usergroup_id', 6)
-            ->where('status', 'active')
-            ->first();
-
-        if ($student === null) {
-            return back()->with('error', 'Selected student is not active in this school.');
-        }
-
-        $result = $this->parentLinks->linkByStudentId(
-            $linkRequest->phone,
-            $studentId,
-            $linkRequest->parent_name,
-        );
-
-        if (! $result->linked) {
-            return back()->with('error', 'Could not create parent link ('.$result->outcome.').');
-        }
-
-        $linkRequest->update([
-            'status' => 'approved',
-            'matched_student_id' => $studentId,
-        ]);
-
-        return null;
-    }
-
-    private function authorizeApproval(Approval $approval): void
-    {
-        $approval->loadMissing('approvable');
-
-        $approvable = $approval->approvable;
-
-        // Deny by default: only the known approvable types can be actioned, and
-        // each known type must belong to the caller's school (site admins
-        // excepted — the moderation gates below already allow them).
-        $knownTypes = [
-            TeacherLeaveApplication::class,
-            ParentLinkRequest::class,
-            LessonPlan::class,
-            Task::class,
-        ];
-
-        if ($approvable === null || ! in_array($approval->approvable_type, $knownTypes, true)) {
-            abort(403);
-        }
-
-        if ((int) Auth::user()->usergroup_id !== 1
-            && (int) $approvable->school_id !== (int) Auth::user()->school_id) {
-            abort(403);
-        }
-
-        if ($approvable instanceof TeacherLeaveApplication
-            && ! Gate::allows('teacher-leave-manage', $approvable)) {
-            abort(403);
-        }
-
-        if ($approvable instanceof ParentLinkRequest
-            && ! Gate::allows('parent-link-request-manage', $approvable)) {
-            abort(403);
-        }
+        return back()->with($decision->ok ? 'success' : 'error', $decision->message);
     }
 }
