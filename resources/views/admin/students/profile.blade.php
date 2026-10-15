@@ -22,6 +22,7 @@
         :initials="$page['initials']"
         :class-name="$page['class_name']"
         :kls="$page['kls'] ?: 'No KLS number'"
+        :facts="$page['facts']"
         :status="$page['status']"
         :status-label="$page['status_label']"
         :tabs="$tabs"
@@ -52,7 +53,7 @@
             @endif
         </article>
         <article data-testid="kpi-exam" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
-            <p style="margin:0;font-size:13px;color:#475569;">Latest exam</p>
+            <p data-testid="exam-label" style="margin:0;font-size:13px;color:#475569;">{{ $page['exam']['label'] ?? 'Latest exam' }}</p>
             @if($page['exam']['empty'])
                 <p style="margin:8px 0 0;font-size:16px;font-weight:600;">No exam this term</p>
             @else

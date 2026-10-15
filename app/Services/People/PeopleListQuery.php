@@ -81,7 +81,7 @@ class PeopleListQuery
         $selectedClass = $standardId ? $this->classOptionLabel($schoolId, $standardId) : null;
 
         return $this->envelope('students', 'Students', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
-            'placeholder' => 'Search by name, KLS number',
+            'placeholder' => 'Search name or KLS number',
             'add_label' => 'Add student',
             'add_url' => url('/admin/student/add'),
             'import_url' => url('/admin/import'),
@@ -174,7 +174,7 @@ class PeopleListQuery
         $counts = $this->teacherCounts($schoolId, $yearId);
 
         return $this->envelope('teachers', 'Teachers', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
-            'placeholder' => 'Search by name, email',
+            'placeholder' => 'Search name or email',
             'add_label' => 'Add teacher',
             'add_url' => url('/admin/teacher/add'),
             'import_url' => url('/admin/import'),
@@ -263,7 +263,7 @@ class PeopleListQuery
         $counts = $this->parentCounts($schoolId);
 
         return $this->envelope('parents', 'Parents', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
-            'placeholder' => 'Search by name, phone',
+            'placeholder' => 'Search name or phone',
             'add_label' => 'Add parent',
             'add_url' => url('/admin/parent/add'),
             'import_url' => url('/admin/import'),
