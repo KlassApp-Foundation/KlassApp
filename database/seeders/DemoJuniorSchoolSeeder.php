@@ -783,6 +783,9 @@ class DemoJuniorSchoolSeeder extends Seeder
     protected function richMarkParentOptIn(array $parentIds): void
     {
         if (! $this->provisioned()) {
+            // Staging Demo Junior: the same 60 percent flag as every demo seeder.
+            $this->richFlagParentsOptedIn($parentIds);
+
             return;
         }
 
