@@ -27,7 +27,7 @@ class ParentProfileController extends Controller
             'user' => $parent,
             'page' => $profiles->page($schoolId, $parent),
             'tab' => $tab,
-            'tabs' => ParentProfileTabs::labels(),
+            'tabs' => ParentProfileTabs::labels((int) Auth::id() === (int) $parent->id),
             'showUrl' => url('/admin/parent/show/'.$key),
         ]);
     }

@@ -58,7 +58,17 @@
             </article>
             <article data-testid="kpi-fees" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
                 <p style="margin:0;font-size:13px;color:#475569;">Fees balance</p>
-                <p style="margin:8px 0 0;font-size:16px;font-weight:600;">{{ $page['fees']['text'] }}</p>
+                @if($page['fees']['empty'])
+                    <p style="margin:8px 0 0;font-size:16px;font-weight:600;">{{ $page['fees']['text'] }}</p>
+                @else
+                    <p data-testid="fee-balance" style="margin:8px 0 0;font-size:22px;font-weight:700;">{{ $page['fees']['value'] }}</p>
+                    <p style="margin:4px 0 0;font-size:13px;color:#475569;">
+                        @if($page['fees']['detail'])
+                            <span data-testid="fee-paid-of">{{ $page['fees']['detail'] }}</span>
+                        @endif
+                        <span data-testid="fee-status" style="display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600;background:#F1F5F9;">{{ $page['fees']['status'] }}</span>
+                    </p>
+                @endif
             </article>
             <article data-testid="kpi-whatsapp" style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
                 <p style="margin:0;font-size:13px;color:#475569;">WhatsApp</p>

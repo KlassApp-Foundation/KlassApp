@@ -26,7 +26,9 @@
          profile dropdown requires an authenticated user (PortalProfileLinks). --}}
 @else
 <div class="dashboard-sidebar-footer" data-testid="dashboard-sidebar-footer">
-    <p class="sidebar-toshi-soon" data-testid="sidebar-toshi-soon">Toshi · coming soon</p>
+    @unless(app(\App\Services\Toshi\ToshiUiSwitch::class)->enabled())
+        <p class="sidebar-toshi-soon" data-testid="sidebar-toshi-soon">Toshi · coming soon</p>
+    @endunless
     @if(!empty($showYear))
         @php
             $drawerSchoolId = auth()->user()->school_id;

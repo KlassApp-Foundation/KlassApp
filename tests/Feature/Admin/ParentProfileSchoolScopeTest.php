@@ -143,7 +143,7 @@ class ParentProfileSchoolScopeTest extends TestCase
             ->assertSee('P.1')
             ->assertSee('KLS0001001')
             ->assertSee('UGX 6,000')
-            ->assertSee('Paid 4,000 of 10,000')
+            ->assertSee('Paid UGX 4,000 of UGX 10,000')
             ->assertSee('/admin/students/'.$child->id, false)
             ->assertSee('/admin/reports/cards/'.$class['link']->id.'/student/'.$child->id.'/preview', false)
             ->assertSee('Opted in')

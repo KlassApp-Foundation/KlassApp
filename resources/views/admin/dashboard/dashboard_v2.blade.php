@@ -128,7 +128,7 @@
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/attendance/list') }}">View registers</a></span></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/fees/payments/create') }}">Record payment</a></span></div>
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/reports/cards') }}">Generate</a><a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a></span></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a><span class="dv2-kpi-actions" data-testid="dashboard-v2-report-action"><a href="{{ url('/admin/reports/cards') }}">Generate</a></span></div>
             </div>
 
             <div class="dv2-new-empty" data-testid="dashboard-v2-empty-students">
@@ -195,9 +195,13 @@
                         @endif
                         <p class="dv2-kpi-sub">of {{ $kpis['report_cards']['students'] ?? 0 }}@if(!empty($kpis['report_cards']['exam'])) · {{ $kpis['report_cards']['exam'] }}@elseif(($kpis['report_cards']['state'] ?? '') === 'no_exam') · No exam closed yet @endif</p>
                     </a>
-                    <span class="dv2-kpi-actions">
-                        <a href="{{ url('/admin/reports/cards') }}">Generate</a>
-                        <a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a>
+                    {{-- One action by state: Generate while any report card is missing, then Send on WhatsApp. --}}
+                    <span class="dv2-kpi-actions" data-testid="dashboard-v2-report-action">
+                        @if(! empty($kpis['report_cards']['complete']))
+                            <a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a>
+                        @else
+                            <a href="{{ url('/admin/reports/cards') }}">Generate</a>
+                        @endif
                     </span>
                 </div>
             </div>

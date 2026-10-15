@@ -282,6 +282,9 @@ class DashboardV2DataService
                 'exam' => $this->examLabel($exam),
                 'percent' => ($exam && $students > 0) ? (int) round($ready / $students * 100) : null,
                 'state' => $exam ? 'ok' : 'no_exam',
+                // Every student has a report card for the term: the tile's one action
+                // moves from Generate to Send on WhatsApp.
+                'complete' => $exam !== null && $students > 0 && $ready >= $students,
             ],
         ];
     }

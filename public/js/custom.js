@@ -55,6 +55,8 @@ $(document).ready(function(){
       if (cardLeft + cardWidth > sideRight) {
         cardWidth = Math.max(120, sideRight - cardLeft);
       }
+      // The menu is never narrower than 224px, so "Change password" stays on one line.
+      cardWidth = Math.max(224, cardWidth);
       style.left = cardLeft + 'px';
       style.width = cardWidth + 'px';
       style.minWidth = cardWidth + 'px';

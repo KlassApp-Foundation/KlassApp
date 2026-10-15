@@ -833,7 +833,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 .account-card__menu.user-dtl.is-portaled {
     position: fixed;
     transform: none;
-    min-width: 0;
+    min-width: 224px;
 }
 .account-card__menu.user-dtl.is-portaled:not([hidden]) {
     display: block;
@@ -848,6 +848,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     right: 0;
     bottom: calc(100% + 8px);
     top: auto;
+    min-width: 224px;
     max-width: 248px;
     width: auto;
     margin: 0;
@@ -897,6 +898,7 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     font-size: 14.5px;
     cursor: pointer;
     text-align: left;
+    white-space: nowrap;
 }
 .account-card__item:hover {
     background: #F1F5F9;
@@ -919,6 +921,14 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 .account-card__logout-form {
     margin: 0;
+}
+
+/* Shared profile component: a long value (an email, a KLS number) wraps inside its
+   card instead of pushing the page sideways on phones. */
+[data-person-profile] dd,
+[data-person-profile] [data-fact] {
+    overflow-wrap: anywhere;
+    min-width: 0;
 }
 
 /* Collapsed rail: avatar-only trigger; card opens to the right */

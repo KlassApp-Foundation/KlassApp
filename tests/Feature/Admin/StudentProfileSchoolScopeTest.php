@@ -434,7 +434,8 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->get('/admin/students/'.$this->studentA->id)
             ->assertOk()
             ->assertSee('52% · C6', false)
-            ->assertSee('MATHEMATICS — End of term', false);
+            ->assertSee('End of term · 1 of 1', false)
+            ->assertDontSee('MATHEMATICS — ', false);
     }
 
     public function test_A9_and_A12_message_uses_the_guardian_profile(): void
