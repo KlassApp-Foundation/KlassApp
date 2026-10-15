@@ -17,6 +17,8 @@ use Illuminate\Support\Carbon;
 
 class StudentProfileService
 {
+    private const NOT_GIVEN = 'Not given';
+
     public function find(int $schoolId, int $studentId): User
     {
         $student = User::query()
@@ -75,16 +77,19 @@ class StudentProfileService
         $name = $this->readableName($name);
         $profile = $student->userprofile;
         $initials = $this->initials($profile?->firstname, $profile?->lastname, $name);
+        $className = $this->classLabel($link?->section?->name, $link?->stream);
+        $kls = $academic?->klassapp_student_id ?: $student->registration_number;
 
         return [
             'student' => $student,
             'name' => $name,
             'initials' => $initials,
-            'class_name' => $link?->section?->name,
-            'kls' => $academic?->klassapp_student_id ?: $student->registration_number,
+            'class_name' => $className,
+            'kls' => $kls,
             'gender' => $this->genderLabel($profile?->gender),
             'date_of_birth' => $this->dateLabel($profile?->date_of_birth),
             'joined' => $this->dateLabel($profile?->joining_date),
+            'facts' => $this->facts($className, $kls, $profile?->date_of_birth, $profile?->gender, $profile?->joining_date),
             'status' => (string) $student->status,
             'status_label' => $this->statusLabel((string) $student->status),
             'attendance' => $this->attendance($schoolId, $student->id, $term),
@@ -144,11 +149,16 @@ class StudentProfileService
     }
 
     /**
-     * @return array{empty: bool, average: ?string, grade: ?string}
+     * The latest exam tile: the student's average across every subject of the latest
+     * exam (one exam type in the term), its grade, and the student's position in the
+     * class. When the latest marks have no exam type to group by, the tile falls back
+     * to the latest single mark with its subject.
+     *
+     * @return array{empty: bool, label: string, average: ?string, grade: ?string, name?: string}
      */
     private function exam(int $schoolId, int $studentId, ?int $sectionId, ?int $standardId, ?int $termId): array
     {
-        $empty = ['empty' => true, 'average' => null, 'grade' => null];
+        $empty = ['empty' => true, 'label' => 'Latest exam', 'average' => null, 'grade' => null];
         if (! $sectionId || ! $termId) {
             return $empty;
         }
@@ -159,12 +169,61 @@ class StudentProfileService
         }
 
         $latestExamId = (int) $marks->max('exam_id');
-        $latest = $marks->where('exam_id', $latestExamId)->values();
-        $average = round((float) $latest->avg('marks'), 1);
-        $averageLabel = fmod($average, 1.0) === 0.0
-            ? (string) (int) $average
-            : number_format($average, 1);
+        $examModel = \App\Models\Academics\Exam::query()
+            ->with(['subject', 'examType'])
+            ->where('school_id', $schoolId)
+            ->where('id', $latestExamId)
+            ->first();
 
+        $examTypeId = $examModel?->examType ? (int) $examModel->exam_type_id : null;
+        if ($examTypeId === null) {
+            $latest = $marks->where('exam_id', $latestExamId)->values();
+            $average = round((float) $latest->avg('marks'), 1);
+
+            return [
+                'empty' => false,
+                'label' => 'Latest mark',
+                'average' => $this->markLabel($average),
+                'grade' => $this->gradeFor($schoolId, $standardId, $average, $latest),
+                'name' => $this->sentenceCase((string) ($examModel?->subject?->name ?: 'Subject')),
+            ];
+        }
+
+        $examIds = \App\Models\Academics\Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->where('academic_term_id', $termId)
+            ->where('exam_type_id', $examTypeId)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $latest = $marks->whereIn('exam_id', $examIds)->values();
+        $average = round((float) $latest->avg('marks'), 1);
+
+        $classAverages = Marks::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->whereIn('exam_id', $examIds)
+            ->groupBy('student_id')
+            ->selectRaw('student_id, AVG(marks) as average')
+            ->pluck('average', 'student_id')
+            ->map(fn ($value) => round((float) $value, 1));
+        $position = 1 + $classAverages->filter(fn (float $value) => $value > $average)->count();
+
+        $examName = $this->sentenceCase((string) ($examModel->examType?->name ?: 'Exam'));
+
+        return [
+            'empty' => false,
+            'label' => 'Latest exam',
+            'average' => $this->markLabel($average),
+            'grade' => $this->gradeFor($schoolId, $standardId, $average, $latest),
+            'name' => $examName.' · '.$position.' of '.$classAverages->count(),
+        ];
+    }
+
+    private function gradeFor(int $schoolId, ?int $standardId, float $average, $latest): ?string
+    {
         $grade = null;
         if ($standardId) {
             $grade = SchoolGradingSystem::query()
@@ -180,19 +239,54 @@ class StudentProfileService
             $grade = $stored->count() === 1 ? (string) $stored->first() : null;
         }
 
-        $examModel = \App\Models\Academics\Exam::query()
-            ->with(['subject', 'examType'])
-            ->where('school_id', $schoolId)
-            ->where('id', $latestExamId)
-            ->first();
-        $examName = trim((string) (($examModel?->subject?->name ?: 'Exam').' — '.($examModel?->examType?->name ?: 'Exam')));
+        return $grade;
+    }
+
+    /** "SOCIAL STUDIES" reads "Social studies"; names already written in mixed case stay as written. */
+    private function sentenceCase(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '' || $value !== mb_strtoupper($value)) {
+            return $value;
+        }
+
+        $lower = mb_strtolower($value);
+
+        return mb_strtoupper(mb_substr($lower, 0, 1)).mb_substr($lower, 1);
+    }
+
+    /**
+     * The key facts row under the student's name: class with stream, KLS number,
+     * age with the birth date, gender and joined date.
+     *
+     * @return array{class: string, kls: string, age: string, gender: string, joined: string}
+     */
+    private function facts(?string $className, ?string $kls, mixed $dateOfBirth, ?string $gender, mixed $joined): array
+    {
+        $born = \App\Support\DateOfBirth::parse($dateOfBirth);
+        $genderLabel = $this->genderLabel($gender);
+        $joinedLabel = $this->dateLabel($joined);
 
         return [
-            'empty' => false,
-            'average' => $averageLabel,
-            'grade' => $grade,
-            'name' => $examName,
+            'class' => $className ?: 'No class',
+            'kls' => filled($kls) ? (string) $kls : 'No KLS number',
+            'age' => $born ? 'Age '.$born->age.' (born '.$born->format('j M Y').')' : 'Age not given',
+            'gender' => $genderLabel === self::NOT_GIVEN ? 'Gender not given' : $genderLabel,
+            'joined' => $joinedLabel === self::NOT_GIVEN ? 'Joined date not given' : 'Joined '.$joinedLabel,
         ];
+    }
+
+    private function classLabel(?string $section, ?string $stream): ?string
+    {
+        $section = trim((string) $section);
+        $stream = trim((string) $stream);
+        if ($section === '') {
+            return null;
+        }
+        $title = fn (string $value): string => mb_convert_case(mb_strtolower($value), MB_CASE_TITLE, 'UTF-8');
+
+        // Same label as the students list ("P.6 · B").
+        return $stream === '' ? $title($section) : $title($section).' · '.$title($stream);
     }
 
     /**
@@ -417,18 +511,18 @@ class StudentProfileService
         return match (strtolower(trim((string) $gender))) {
             'female', 'f', 'girl' => 'Female',
             'male', 'm', 'boy' => 'Male',
-            default => 'Not specified',
+            default => self::NOT_GIVEN,
         };
     }
 
     private function dateLabel(mixed $value): string
     {
         if ($value === null || $value === '') {
-            return 'Not recorded';
+            return self::NOT_GIVEN;
         }
         $date = $value instanceof Carbon ? $value : Carbon::parse((string) $value);
         if ($date->year <= 1970) {
-            return 'Not recorded';
+            return self::NOT_GIVEN;
         }
 
         return $date->format('j M Y');
