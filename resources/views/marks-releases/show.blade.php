@@ -14,6 +14,12 @@
 <div class="mr" data-testid="marks-release-show">
     <h1>Marks release</h1>
     <p class="mr-sub">Times in {{ $tz }}.</p>
+    @if(session('status'))
+        <div class="mr-card" role="status" data-testid="release-flash">{{ session('status') }}</div>
+    @endif
+    @if(($release->result['queued'] ?? 0) > 0)
+        <p class="mr-sub" data-testid="release-in-progress">{{ $release->result['queued'] }} still sending. Refresh this page to update.</p>
+    @endif
     <div class="mr-card">
         <dl class="mr-dl">
             <dt>Exam</dt><dd>{{ $release->exam?->examType?->name ?? 'Exam' }}{{ $release->exam?->academicTerm?->name ? ' · '.$release->exam->academicTerm->name : '' }}</dd>
@@ -24,9 +30,13 @@
             <dt>By</dt><dd>{{ $release->creator?->name ?? '–' }}</dd>
             <dt>Sent</dt><dd data-testid="release-sent">{{ $release->result['sent'] ?? '–' }}</dd>
             <dt>Skipped</dt><dd data-testid="release-skipped">{{ $release->result['skipped'] ?? '–' }}</dd>
+            @if(isset($release->result['queued']))
+            <dt>Sending</dt><dd data-testid="release-queued">{{ $release->result['queued'] }}</dd>
+            <dt>Failed</dt><dd data-testid="release-failed">{{ $release->result['failed'] ?? 0 }}</dd>
+            @endif
         </dl>
         @if(! empty($release->result['reasons']))
-            <p style="font-weight:600;margin:0 0 6px">Why some were skipped</p>
+            <p style="font-weight:600;margin:0 0 6px">Why some were skipped or failed</p>
             <ul style="margin:0 0 12px;padding-left:18px" data-testid="release-reasons">
                 @foreach($release->result['reasons'] as $reason => $count)
                     <li>{{ $reason }}: {{ $count }}</li>
@@ -42,10 +52,13 @@
             <thead><tr><th>Student</th><th>Number</th><th>Result</th></tr></thead>
             <tbody>
             @foreach($release->result['messages'] as $m)
-                <tr><td>{{ $m['student'] }}</td><td>{{ $m['to'] ?? '–' }}</td><td>{{ $m['status'] === 'sent' ? 'Sent' : 'Skipped: '.$m['reason'] }}</td></tr>
+                <tr><td>{{ $m['student'] }}</td><td>{{ $m['to'] ?? '–' }}</td><td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td></tr>
             @endforeach
             </tbody>
         </table>
+        @if(($release->result['failed'] ?? 0) > 0)
+            <p class="mr-sub" data-testid="release-resend-hint">To try the failed numbers again, release this exam again: numbers already sent are skipped.</p>
+        @endif
     </div>
     @endif
 </div>
