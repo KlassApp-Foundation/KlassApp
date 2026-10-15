@@ -203,8 +203,35 @@ final class DemoBindReplies
         if (! $exam || $exam['subjects'] === []) {
             return "📊 No marks yet for *{$name}*. They appear here once the school enters them.";
         }
+        // Demo schools only (marks() never runs for a real school): marks stay
+        // hidden until the school releases this exam through Marks release.
+        if (! self::examReleased($schoolId, $exam['exams']->first(), (int) ($link?->id ?? 0))) {
+            return "📊 Results for *{$name}* have not been released yet.\n\n"
+                . 'The school will send them here as soon as they release them.';
+        }
 
         return $this->renderMarks($name, $class, $exam);
+    }
+
+    /**
+     * True when a release of this exam (same exam type and term) has gone out
+     * to the whole school, or to this student's class and stream.
+     */
+    public static function examReleased(int $schoolId, ?\App\Models\Academics\Exam $exam, int $standardLinkId): bool
+    {
+        if (! $exam) {
+            return false;
+        }
+
+        return \App\Models\MarksRelease::query()
+            ->where('school_id', $schoolId)
+            ->where('status', \App\Models\MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q->where('school_id', $schoolId)
+                ->where('exam_type_id', $exam->exam_type_id)
+                ->where('academic_term_id', $exam->academic_term_id))
+            ->where(fn ($q) => $q->where('scope', 'school')
+                ->orWhere(fn ($c) => $c->where('scope', 'class')->where('standard_link_id', $standardLinkId)))
+            ->exists();
     }
 
     /**

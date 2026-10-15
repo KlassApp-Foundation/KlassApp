@@ -166,9 +166,46 @@ class DemoBindByCodeTest extends TestCase
         }
     }
 
+    public function test_task9_marks_before_release_says_not_released_yet(): void
+    {
+        $this->inbound(self::SENDER, 'BIND ' . $this->amina()['code'])->assertOk();
+        // A scheduled (not yet sent) release does not count as released.
+        $this->releaseLatestExam('demo', 'scheduled');
+        Http::fake();
+        $this->fakeGraph();
+
+        $this->inbound(self::SENDER, 'MARKS')->assertOk();
+        $this->inbound(self::SENDER, 'Results')->assertOk();
+
+        $expected = "📊 Results for *Amina Nakato* have not been released yet.\n\n"
+            . 'The school will send them here as soon as they release them.';
+        $sent = $this->outbound();
+        $this->assertCount(2, $sent);
+        foreach ($sent as $message) {
+            $this->assertSame(self::SENDER, $message['to']);
+            $this->assertSame($expected, $message['body']);
+            $this->assertStringNotContainsString('Mathematics', $message['body']);
+        }
+    }
+
+    public function test_task9_marks_after_a_class_release_is_the_exact_table(): void
+    {
+        $this->inbound(self::SENDER, 'BIND ' . $this->amina()['code'])->assertOk();
+        $this->releaseLatestExam('demo', 'released', 'class');
+        Http::fake();
+        $this->fakeGraph();
+
+        $this->inbound(self::SENDER, 'MARKS')->assertOk();
+
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent);
+        $this->assertStringContainsString("Mathematics         78  C3", $sent[0]['body']);
+    }
+
     public function test_task9_marks_for_a_bound_number_is_the_exact_table(): void
     {
         $this->inbound(self::SENDER, 'BIND ' . $this->amina()['code'])->assertOk();
+        $this->releaseLatestExam('demo');
         Http::fake();
         $this->fakeGraph();
 
@@ -235,7 +272,7 @@ class DemoBindByCodeTest extends TestCase
             [self::SENDER, 'JOIN', null],
             [self::SENDER, 'BIND ' . $this->amina()['code'], 'You are now following *Amina Nakato*'],
             [$other, 'BIND nope', 'could not find a demo student'],
-            [self::SENDER, 'MARKS', '📊 *Marks for Amina Nakato*'],
+            [self::SENDER, 'MARKS', 'have not been released yet'],
             [$other, 'MARKS', 'This number is not following a demo student'],
             [self::SENDER, 'REPORT', null],
         ];
