@@ -152,6 +152,14 @@ final class DemoBindApproval
         }
 
         $replies = app(DemoBindReplies::class);
+        if ($replies->numberLinkedToRealSchool($request->phone)) {
+            Log::info('[demo-bind] approval refused: number is linked to a school that is not a demo school', [
+                'parent_link_request_id' => $request->id,
+            ]);
+
+            return false;
+        }
+
         $row = $replies->link($request->phone, $student, $school, (string) $request->parent_name);
         if (! $row) {
             return false;

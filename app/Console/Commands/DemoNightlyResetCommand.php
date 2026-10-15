@@ -32,7 +32,10 @@ use Illuminate\Support\Facades\Schema;
  *      stays marked is_public_demo.
  *
  * Every delete is scoped by school_id or by the numbers of that school's own
- * requests and bindings. A school that is not is_demo is never touched.
+ * requests and bindings. Delivery-log rows are removed only when their user
+ * belongs to this school, or when the row has no user and the number is one
+ * of this school's own. A row whose user belongs to another school stays.
+ * A school that is not is_demo is never touched.
  * Sends nothing. A second run changes nothing.
  */
 class DemoNightlyResetCommand extends Command
@@ -102,9 +105,14 @@ class DemoNightlyResetCommand extends Command
 
             // Attendee numbers of this school only, and only once they have no account.
             $forgotten = WhatsAppUser::query()->whereIn('phone', $phones)->whereNull('user_id')->whereNull('school_id')->delete();
-            if (Schema::hasTable('message_delivery_log')) {
-                DB::table('message_delivery_log')->whereIn('phone', $phones)
-                    ->whereNotIn('phone', WhatsAppUser::query()->whereNotNull('user_id')->select('phone'))
+            if (Schema::hasTable('message_delivery_log') && $phones->isNotEmpty()) {
+                $schoolUserIds = User::query()->where('school_id', $schoolId)->select('id');
+                DB::table('message_delivery_log')
+                    ->whereIn('phone', $phones->all())
+                    ->where(function ($query) use ($schoolUserIds) {
+                        $query->whereIn('user_id', $schoolUserIds)
+                            ->orWhereNull('user_id');
+                    })
                     ->delete();
             }
 

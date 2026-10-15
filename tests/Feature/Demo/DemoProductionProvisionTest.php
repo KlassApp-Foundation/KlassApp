@@ -120,6 +120,57 @@ class DemoProductionProvisionTest extends TestCase
         $this->assertSame(1, School::where('is_demo', 1)->count());
     }
 
+    public function test_nightly_reset_keeps_delivery_logs_that_belong_to_another_school(): void
+    {
+        putenv('DEMO_PROVISION_ADMIN_PASSWORD=from-env-secret-123');
+        $_ENV['DEMO_PROVISION_ADMIN_PASSWORD'] = 'from-env-secret-123';
+        $_SERVER['DEMO_PROVISION_ADMIN_PASSWORD'] = 'from-env-secret-123';
+        $this->assertSame(0, Artisan::call('demo:provision', $this->provisionArgs()));
+
+        $school = School::where('name', 'Riverside Primary')->where('is_demo', 1)->firstOrFail();
+        $studentId = (int) StudentAcademic::where('school_id', $school->id)->value('user_id');
+        $phone = '+256700000901';
+        WhatsAppUser::create([
+            'phone' => $phone,
+            'school_id' => $school->id,
+            'opted_in' => true,
+            'demo_student_id' => $studentId,
+            'demo_linked_at' => now(),
+        ]);
+
+        $real = School::create([
+            'name' => 'Other Primary',
+            'slug' => 'other-primary',
+            'email' => 'other@example.com',
+            'registration_country' => 'Uganda',
+            'curriculum' => 'UNEB',
+            'status' => 1,
+        ]);
+        $realUser = User::create([
+            'school_id' => $real->id,
+            'usergroup_id' => 7,
+            'name' => 'Other Parent',
+            'email' => 'other-parent@example.com',
+            'password' => bcrypt('x'),
+            'status' => 'active',
+        ]);
+
+        $now = now();
+        DB::table('message_delivery_log')->insert([
+            ['phone' => $phone, 'user_id' => $studentId, 'direction' => 'outbound', 'status' => 'sent', 'sent_at' => $now],
+            ['phone' => $phone, 'user_id' => $realUser->id, 'direction' => 'outbound', 'status' => 'sent', 'sent_at' => $now],
+            ['phone' => $phone, 'user_id' => null, 'direction' => 'outbound', 'status' => 'sent', 'sent_at' => $now],
+            ['phone' => '+256700000902', 'user_id' => $realUser->id, 'direction' => 'outbound', 'status' => 'sent', 'sent_at' => $now],
+        ]);
+
+        $this->assertSame(0, Artisan::call('demo:nightly-reset'));
+
+        $this->assertSame(0, DB::table('message_delivery_log')->where('phone', $phone)->where('user_id', $studentId)->count());
+        $this->assertSame(0, DB::table('message_delivery_log')->where('phone', $phone)->whereNull('user_id')->count());
+        $this->assertSame(1, DB::table('message_delivery_log')->where('phone', $phone)->where('user_id', $realUser->id)->count());
+        $this->assertSame(1, DB::table('message_delivery_log')->where('phone', '+256700000902')->where('user_id', $realUser->id)->count());
+    }
+
     public function test_nightly_reset_never_touches_a_school_that_is_not_demo(): void
     {
         $real = School::create(['name' => 'Real Primary', 'slug' => 'real-primary', 'email' => 'real@example.com', 'registration_country' => 'Uganda', 'curriculum' => 'UNEB', 'status' => 1]);

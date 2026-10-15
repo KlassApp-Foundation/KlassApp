@@ -82,7 +82,7 @@ class ApprovalController extends Controller
         // account is created and the normal Flow notice is not sent.
         if (DemoBindApproval::isDemoBindRequest($approval->approvable instanceof ParentLinkRequest ? $approval->approvable : null)) {
             if (! app(DemoBindApproval::class)->approve($approval->approvable, $approval, (int) $request->input('matched_student_id'), Auth::id())) {
-                return back()->with('error', 'Could not link this demo number (the student is not in this demo school).');
+                return back()->with('error', 'Could not link this demo number. It may already be linked to another school, or the student is not in this demo school.');
             }
             $this->doActivityLog($approval->approvable, Auth::user(), ['approval_id' => $approval->id, 'action' => 'approved', 'demo_bind' => true], 'approval', "Approval #{$approval->id} approved by ".Auth::user()->name);
 
