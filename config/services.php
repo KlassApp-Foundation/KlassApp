@@ -54,6 +54,11 @@ return [
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'verify_signature' => env('WHATSAPP_VERIFY_SIGNATURE', true),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
+        // When true, every outbound WhatsApp message is refused unless the
+        // recipient follows (or has a pending BIND request for) a demo school's
+        // student, or is the sender of the message being answered. Numbers linked
+        // to a real school are always refused. See DemoOnlyRecipientGuard.
+        'demo_only_recipients' => filter_var(env('WHATSAPP_DEMO_ONLY_RECIPIENTS', false), FILTER_VALIDATE_BOOLEAN),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
         'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),
         'parent_link_flow_screen' => env('WHATSAPP_PARENT_LINK_FLOW_SCREEN', 'LINK_REQUEST'),

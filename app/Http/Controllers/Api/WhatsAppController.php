@@ -781,9 +781,11 @@ class WhatsAppController extends Controller
                         $ir = $msg['interactive'] ?? [];
                         if (($ir['type'] ?? '') === 'nfm_reply') {
                             DemoSchoolCommsGuard::beginInboundReply();
+                            \App\Services\DemoOnlyRecipientGuard::beginInbound($phone);
                             try {
                                 $this->processMetaFlowReply($phone, $ir['nfm_reply'] ?? [], $senderName);
                             } finally {
+                                \App\Services\DemoOnlyRecipientGuard::endInbound();
                                 DemoSchoolCommsGuard::endInboundReply();
                             }
                             continue;
@@ -814,9 +816,11 @@ class WhatsAppController extends Controller
                     // ── Full reply flow (same as Evolution handler) ──
                     // Replies to this message go out. Queued business sends stay blocked.
                     DemoSchoolCommsGuard::beginInboundReply();
+                    \App\Services\DemoOnlyRecipientGuard::beginInbound($phone);
                     try {
                         $this->processMetaMessage($phone, $body, $messageId, $senderName);
                     } finally {
+                        \App\Services\DemoOnlyRecipientGuard::endInbound();
                         DemoSchoolCommsGuard::endInboundReply();
                     }
                 }
