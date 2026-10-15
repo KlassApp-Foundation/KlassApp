@@ -12,9 +12,9 @@ and `demo:reset` only.
 | Name | Value | When |
 |---|---|---|
 | `DEMO_PROVISIONING_ENABLED` | `true` while provisioning, then `false` | The provision command refuses to run unless this is `true`. |
-| `SIGNUP_ENABLED` | `true` by default. `false` closes public registration | `/register` and the verification routes return 404. Login stays open. |
+| `SIGNUP_ENABLED` | `true` by default. `false` closes public registration | `/register` shows the early access page; sign-up posts and the verification routes create nothing and go to that page. Google sign-in works for existing users only. Login stays open. |
 | `WHATSAPP_REPLIES_ENABLED` | `true` by default. `false` stops every outbound WhatsApp message, including replies | Business sends and replies both stop. |
-| `PRIVACY_NOTICE_URL` | the public privacy notice address | Shown under the demo welcome line "Your number is removed after 30 minutes." |
+| `PRIVACY_NOTICE_URL` | the public privacy notice address | Shown under the demo welcome line "Your number is removed after 30 minutes." and linked from the early access consent box. Empty means no link. |
 
 A variable change is read on the next deployment. Set it, then deploy, then
 run the command.
