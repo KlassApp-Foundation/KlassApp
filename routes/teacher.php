@@ -404,6 +404,13 @@ Route::prefix('class-streams')->name('teacher.class-stream.')->group(function ()
     Route::put('/{section}', 'ClassStreamController@update')->name('update');
 });
 
+// Task 9 Tier 2: release marks to parents (demo-bound numbers only for now).
+Route::get('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'index'])->name('teacher.marks.releases.index');
+Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController::class, 'create'])->name('teacher.marks.releases.create');
+Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('teacher.marks.releases.preview');
+Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('teacher.marks.releases.store');
+Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('teacher.marks.releases.show');
+
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
 Route::prefix('exam')->group(function () {

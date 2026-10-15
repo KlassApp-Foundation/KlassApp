@@ -16,6 +16,7 @@
             <div>
                 <h2 class="text-lg font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">Exams to Mark</h2>
             </div>
+            @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline', 'style' => 'white-space:nowrap;min-height:44px'])
         </div>
 
         @if($exams->isEmpty())
@@ -65,7 +66,7 @@
                                             <a href="{{ route('teacher.exam.marks.view', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm">
                                                 View Marks
                                             </a>
-                                            <a href="{{ route('teacher.exam.marksheet', $exam) }}" class="ds-btn ds-btn-secondary ds-btn-sm">
+                                            <a href="{{ route('teacher.exam.marksheet', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm">
                                                 Marksheet
                                             </a>
                                             <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm" data-testid="marks-import-button">

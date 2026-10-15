@@ -26,6 +26,11 @@
 |   bind_ttl_minutes  env DEMO_BIND_TTL_MINUTES (default 45). A number bound
 |                     with BIND <code> is unlinked by demo:expire-chats after
 |                     this many minutes.
+|   release_webhook_url     env DEMO_RELEASE_WEBHOOK_URL. When set together
+|   release_webhook_secret  with env DEMO_RELEASE_WEBHOOK_SECRET, a demo
+|                     school's marks release POSTs JSON (the exam, and each
+|                     student's code and class, nothing else) signed with
+|                     HMAC-SHA256 in the X-KlassApp-Signature header.
 |   links             shared links shown on the page. An entry without a url
 |                     is not shown. The privacy notice link comes from
 |                     services.whatsapp.privacy_notice_url (PRIVACY_NOTICE_URL).
@@ -39,6 +44,8 @@ return [
     'demo' => [
         'whatsapp_number' => env('WHATSAPP_DEMO_NUMBER'),
         'bind_ttl_minutes' => (int) env('DEMO_BIND_TTL_MINUTES', 45),
+        'release_webhook_url' => env('DEMO_RELEASE_WEBHOOK_URL'),
+        'release_webhook_secret' => env('DEMO_RELEASE_WEBHOOK_SECRET'),
         'links' => [
             ['label' => 'n8n workflows', 'url' => null],
             ['label' => 'Project repository', 'url' => 'https://github.com/KlassApp-Foundation/KlassApp'],

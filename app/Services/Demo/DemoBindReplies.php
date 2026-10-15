@@ -162,6 +162,17 @@ final class DemoBindReplies
             return "📊 No marks yet for *{$name}*. They appear here once the school enters them.";
         }
 
+        return $this->renderMarks($name, $class, $exam);
+    }
+
+    /**
+     * The marks table: subject, mark and grade, then total and average, in a
+     * monospace block. $exam is a LatestExamMarks result for one student.
+     *
+     * @param  array{label:string, subjects:array<int, array{id:int,name:string}>, marks:\Illuminate\Support\Collection}  $exam
+     */
+    public function renderMarks(string $name, string $class, array $exam): string
+    {
         $bySubject = $exam['marks']->keyBy('subject_id');
         $width = max(7, ...array_map(fn ($s) => mb_strlen($s['name']), $exam['subjects'])) + 2;
         $lines = [str_pad('Subject', $width) . str_pad('Mark', 6, ' ', STR_PAD_LEFT) . '  Grade'];

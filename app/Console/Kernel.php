@@ -82,6 +82,10 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
+        // Task 9 Tier 2: scheduled marks releases (demo-bound numbers only).
+        $schedule->command('marks:release-due')->everyMinute()
+            ->withoutOverlapping();
+
         // Every minute: links are unlinked one minute before their limit
         // (Try Demo 30 minutes, BIND DEMO_BIND_TTL_MINUTES), never after it.
         $schedule->command('demo:expire-chats')->everyMinute()
