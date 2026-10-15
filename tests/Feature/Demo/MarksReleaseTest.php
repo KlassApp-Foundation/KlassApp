@@ -38,6 +38,9 @@ class MarksReleaseTest extends TestCase
         config(['app.timezone' => 'Pacific/Auckland', 'dashboard.v2_enabled' => true]);
         date_default_timezone_set('Pacific/Auckland');
         Carbon::setTestNow(Carbon::parse('2026-10-15 12:00:00', 'Pacific/Auckland'));
+        // Sends are queued since the queue change; these tests run the jobs
+        // inline. MarksReleaseQueueTest covers the real queue.
+        config(['queue.default' => 'sync']);
         config([
             'services.whatsapp.app_secret' => self::APP_SECRET,
             'services.whatsapp.verify_signature' => true,

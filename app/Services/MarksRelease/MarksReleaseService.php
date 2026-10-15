@@ -2,6 +2,7 @@
 
 namespace App\Services\MarksRelease;
 
+use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
 use App\Models\School;
@@ -35,6 +36,12 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
  * (scheduled → sending) in one UPDATE, and a number never gets the same
  * student's marks for the same exam twice, even across releases.
+ *
+ * Sending is queued: run() decides who gets a message, records each one as
+ * "queued" in the release result, and dispatches one SendMarksReleaseMessage
+ * job per number. deliverOne() (the job) sends it and moves the entry to
+ * sent, skipped, retrying or failed. A new release for the same exam skips
+ * numbers already sent or still queued, so it re-sends only to failed ones.
  */
 final class MarksReleaseService
 {
@@ -275,7 +282,7 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        $result = $this->deliver($release);
+        [$result, $jobs] = $this->deliver($release);
 
         $release->forceFill([
             'status' => MarksRelease::STATUS_RELEASED,
@@ -284,14 +291,168 @@ final class MarksReleaseService
         ])->save();
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
-            ->withProperties(['sent' => $result['sent'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
+            ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
             ->log('Marks released');
+
+        // Dispatched only after the result (with every "queued" entry) is saved.
+        foreach ($jobs as $job) {
+            try {
+                dispatch($job);
+            } catch (\Throwable $e) {
+                // Only reached on the sync queue driver: the job already marked
+                // its entry (retrying/failed); the release itself carries on.
+                Log::warning('Marks release message failed inline', ['release_id' => $releaseId, 'error' => $e->getMessage()]);
+            }
+        }
 
         return true;
     }
 
+    /** How many messages a release queued (sent, still queued or failed). */
+    public function queuedCount(MarksRelease $release): int
+    {
+        return count(array_filter($release->result['messages'] ?? [], fn ($m) => isset($m['key'])));
+    }
+
     /**
-     * @return array{sent:int, skipped:int, reasons:array<string,int>, messages:array<int, array{student:string, to:string|null, status:string, reason:string|null}>}
+     * The queued job: send one parent's message, at most once per release.
+     */
+    public function deliverOne(int $releaseId, int $bindingId, int $studentId, int $standardLinkId, string $key, int $attempt, int $maxTries): void
+    {
+        $release = MarksRelease::with(['school', 'exam'])->find($releaseId);
+        $entry = $release ? $this->entry($release, $key) : null;
+        if ($entry === null || in_array($entry['status'], ['sent', 'skipped', 'failed'], true)) {
+            return; // already done (a retry or a duplicate job): never send twice
+        }
+
+        $skip = fn (string $reason) => $this->updateEntry($releaseId, $key, fn (array $e) => ['status' => 'skipped', 'reason' => $reason] + $e);
+
+        if (! (bool) config('services.whatsapp.replies_enabled')) {
+            $skip('WhatsApp messages are switched off');
+
+            return;
+        }
+        if ((int) ($release->school?->is_demo ?? 0) !== 1) {
+            $skip('Not a demo school: release messages are sent only in the demo for now');
+
+            return;
+        }
+        $binding = $this->activeBindings((int) $release->school_id, $studentId)->firstWhere('id', $bindingId);
+        if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
+            $skip('The number stopped following this student before the message went out');
+
+            return;
+        }
+        if (isset($this->alreadySent($release, ['sent'])[$key])) {
+            $skip('Already sent to this number');
+
+            return;
+        }
+        $link = StandardLink::query()->with('section')->where('school_id', $release->school_id)->find($standardLinkId);
+        $text = $link ? $this->message($release->school, $release->exam, $studentId, $link) : null;
+        if ($text === null) {
+            $skip('No marks for this exam');
+
+            return;
+        }
+
+        try {
+            $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
+                (string) $binding->phone,
+                fn () => $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null),
+            );
+        } catch (\Throwable $e) {
+            $response = ['success' => false, 'error' => $e->getMessage()];
+        }
+
+        if (($response['success'] ?? false) === true) {
+            $this->updateEntry($releaseId, $key, fn (array $e) => ['status' => 'sent', 'reason' => null, 'attempts' => $attempt, 'sent_at' => CarbonImmutable::now('UTC')->format('Y-m-d H:i:s')] + $e);
+
+            return;
+        }
+
+        $error = (string) ($response['message'] ?? $response['error'] ?? 'unknown error');
+        if (($response['blocked'] ?? false) === true) {
+            // Refused by a guard (demo-only recipients, kill switch): retrying cannot help.
+            $skip('Not delivered: ' . $error);
+
+            return;
+        }
+
+        $this->updateEntry($releaseId, $key, fn (array $e) => ['status' => 'retrying', 'reason' => 'Try ' . $attempt . ' of ' . $maxTries . ' failed: ' . $error, 'attempts' => $attempt] + $e);
+
+        throw new \RuntimeException('Marks release message not delivered (try ' . $attempt . ' of ' . $maxTries . '): ' . $error);
+    }
+
+    /** After the last try (or a timeout): the entry shows Failed with the error. */
+    public function markFailed(int $releaseId, string $key, string $error): void
+    {
+        $this->updateEntry($releaseId, $key, function (array $e) use ($error) {
+            if ($e['status'] === 'sent' || $e['status'] === 'skipped') {
+                return $e;
+            }
+            $last = str_starts_with((string) ($e['reason'] ?? ''), 'Try ') ? (string) $e['reason'] : $error;
+
+            return ['status' => 'failed', 'reason' => 'Not delivered: ' . preg_replace('/^Try \d+ of \d+ failed: /', '', $last)] + $e;
+        });
+    }
+
+    /** @return array<string, mixed>|null */
+    private function entry(MarksRelease $release, string $key): ?array
+    {
+        foreach (($release->result['messages'] ?? []) as $m) {
+            if (($m['key'] ?? null) === $key) {
+                return $m;
+            }
+        }
+
+        return null;
+    }
+
+    /** Change one entry under a row lock and recount the totals. */
+    private function updateEntry(int $releaseId, string $key, callable $change): void
+    {
+        DB::transaction(function () use ($releaseId, $key, $change) {
+            $release = MarksRelease::query()->lockForUpdate()->find($releaseId);
+            if (! $release) {
+                return;
+            }
+            $result = $release->result ?? [];
+            foreach (($result['messages'] ?? []) as $i => $m) {
+                if (($m['key'] ?? null) === $key) {
+                    $result['messages'][$i] = $change($m);
+                }
+            }
+            $release->forceFill(['result' => $this->totals($result)])->save();
+        });
+    }
+
+    /** @param array<string, mixed> $result */
+    private function totals(array $result): array
+    {
+        $messages = $result['messages'] ?? [];
+        $count = fn (array $statuses) => count(array_filter($messages, fn ($m) => in_array($m['status'], $statuses, true)));
+        $reasons = [];
+        foreach ($messages as $m) {
+            if (in_array($m['status'], ['skipped', 'failed'], true)) {
+                $reasons[$m['reason']] = ($reasons[$m['reason']] ?? 0) + 1;
+            }
+        }
+
+        return array_merge($result, [
+            'sent' => $count(['sent']),
+            'queued' => $count(['queued', 'retrying']),
+            'failed' => $count(['failed']),
+            'skipped' => $count(['skipped']),
+            'reasons' => $reasons,
+        ]);
+    }
+
+    /**
+     * Decide who gets a message. Returns the result (each recipient "queued",
+     * everyone else "skipped" with a reason) and the jobs to dispatch.
+     *
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>}
      */
     private function deliver(MarksRelease $release): array
     {
@@ -300,8 +461,9 @@ final class MarksReleaseService
         $messages = [];
         $repliesOn = (bool) config('services.whatsapp.replies_enabled');
         $isDemo = (int) ($school?->is_demo ?? 0) === 1;
-        $alreadySent = $this->alreadySent($release);
+        $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
         $released = [];
+        $jobs = [];
 
         foreach ($this->students((int) $release->school_id, $anchor, $release->standardLink) as [$studentId, $link]) {
             $code = $this->studentCode((int) $release->school_id, (int) $studentId);
@@ -346,34 +508,18 @@ final class MarksReleaseService
                     continue;
                 }
 
-                $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
-                    (string) $binding->phone,
-                    fn () => $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null),
-                );
-
-                if (($response['success'] ?? false) === true) {
-                    $messages[] = ['student' => $code, 'to' => $masked, 'status' => 'sent', 'reason' => null, 'key' => $key];
-                    $alreadySent[$key] = true;
-                } else {
-                    $skip('Not delivered: ' . (string) ($response['message'] ?? $response['error'] ?? 'unknown error'), $masked);
-                }
-            }
-        }
-
-        $sent = count(array_filter($messages, fn ($m) => $m['status'] === 'sent'));
-        $reasons = [];
-        foreach ($messages as $m) {
-            if ($m['status'] === 'skipped') {
-                $reasons[$m['reason']] = ($reasons[$m['reason']] ?? 0) + 1;
+                $messages[] = ['student' => $code, 'to' => $masked, 'status' => 'queued', 'reason' => null, 'key' => $key, 'attempts' => 0];
+                $alreadySent[$key] = true;
+                $jobs[] = new SendMarksReleaseMessage((int) $release->id, (int) $binding->id, (int) $studentId, (int) $link->id, $key);
             }
         }
 
         return [
-            'sent' => $sent,
-            'skipped' => count($messages) - $sent,
-            'reasons' => $reasons,
-            'messages' => $messages,
-            'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+            $this->totals([
+                'messages' => $messages,
+                'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+            ]),
+            $jobs,
         ];
     }
 
@@ -434,8 +580,13 @@ final class MarksReleaseService
             ->get(['id', 'phone', 'user_id']);
     }
 
-    /** @return array<string, true> numbers that already got this exam for a student, in any release */
-    private function alreadySent(MarksRelease $release): array
+    /**
+     * Numbers that already got (or are about to get) this exam for a student, in any other release.
+     *
+     * @param  array<int, string>  $statuses
+     * @return array<string, true>
+     */
+    private function alreadySent(MarksRelease $release, array $statuses = ['sent']): array
     {
         $sameExam = Exam::query()
             ->where('school_id', $release->school_id)
@@ -450,9 +601,9 @@ final class MarksReleaseService
             ->whereKeyNot($release->id)
             ->whereNotNull('result')
             ->get(['id', 'result'])
-            ->each(function (MarksRelease $other) use (&$keys) {
+            ->each(function (MarksRelease $other) use (&$keys, $statuses) {
                 foreach (($other->result['messages'] ?? []) as $m) {
-                    if (($m['status'] ?? '') === 'sent' && isset($m['key'])) {
+                    if (in_array($m['status'] ?? '', $statuses, true) && isset($m['key'])) {
                         $keys[$m['key']] = true;
                     }
                 }
