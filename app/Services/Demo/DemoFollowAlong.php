@@ -20,8 +20,12 @@ use Illuminate\Support\Collection;
  */
 final class DemoFollowAlong
 {
-    /** At most this many students are listed on the page. */
-    public const ROSTER_LIMIT = 30;
+    /**
+     * At most this many students are listed on the page. Was 30; raised so a
+     * live demo with about 50 attendees (demo:provision seeds 70
+     * students with marks) can show every code on one page.
+     */
+    public const ROSTER_LIMIT = 120;
 
     /**
      * demo:expire-chats runs every minute. A binding is removed one interval

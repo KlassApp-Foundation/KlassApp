@@ -17,11 +17,16 @@ use Illuminate\Support\Str;
  * Refuses unless DEMO_PROVISIONING_ENABLED=true. A real run also needs
  * --confirm. --dry-run prints a count and writes nothing. A second run
  * changes nothing. The admin password is never printed.
+ *
+ * Non-interactive (Laravel Cloud): put the password in the environment as
+ * DEMO_PROVISION_ADMIN_PASSWORD rather than on the command line. The school
+ * gets the live demo roster (70 students with marks) and its admin is marked
+ * is_public_demo, which turns on PublicDemoLockdown for that account.
  */
 class DemoProvisionCommand extends Command
 {
     protected $signature = 'demo:provision
-        {password? : Admin password. Omit to be prompted. Never printed.}
+        {password? : Admin password. Omit to read DEMO_PROVISION_ADMIN_PASSWORD, or to be prompted. Never printed.}
         {--name= : School name}
         {--city= : City}
         {--admin-name= : Admin name}
@@ -71,6 +76,9 @@ class DemoProvisionCommand extends Command
         }
 
         if ($existing) {
+            if (! $this->option('dry-run') && $this->markPublicDemoAdmin($existing, $adminEmail)) {
+                $this->info('demo admin marked as public demo (locked down)');
+            }
             $this->info('school already provisioned; nothing changed');
             $this->printCounts($existing);
 
@@ -89,7 +97,7 @@ class DemoProvisionCommand extends Command
             return self::FAILURE;
         }
 
-        $password = (string) ($this->argument('password') ?: $this->secret('Admin password'));
+        $password = (string) ($this->argument('password') ?: env('DEMO_PROVISION_ADMIN_PASSWORD') ?: ($this->input->isInteractive() ? $this->secret('Admin password') : ''));
         if ($password === '') {
             $this->error('Refusing: an admin password is required.');
 
@@ -111,6 +119,7 @@ class DemoProvisionCommand extends Command
             'school_email' => $schoolEmail,
             'domain' => 'example.com',
             'terms' => $terms,
+            'student_plan' => DemoJuniorSchoolSeeder::LIVE_DEMO_PLAN,
         ];
 
         try {
@@ -128,12 +137,27 @@ class DemoProvisionCommand extends Command
 
         $admin = User::query()->where('school_id', $school->id)->where('email', $adminEmail)->first();
         if ($admin) {
-            $admin->forceFill(['password' => Hash::make($password)])->save();
+            $admin->forceFill(['password' => Hash::make($password), 'is_public_demo' => true])->save();
         }
 
         $this->printCounts($school);
 
         return self::SUCCESS;
+    }
+
+    /** Mark the demo school's admin as the public demo account. True when it changed. */
+    private function markPublicDemoAdmin(School $school, string $adminEmail): bool
+    {
+        if ((int) $school->is_demo !== 1) {
+            return false;
+        }
+        $admin = User::query()->where('school_id', $school->id)->where('email', $adminEmail)->first();
+        if (! $admin || $admin->isPublicDemo()) {
+            return false;
+        }
+        $admin->forceFill(['is_public_demo' => true])->save();
+
+        return true;
     }
 
     private function printCounts(School $school): void
