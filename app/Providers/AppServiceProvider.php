@@ -103,6 +103,16 @@ class AppServiceProvider extends ServiceProvider {
         // IP across every such route, which would let status polling starve the 3/min resend limit.
         RateLimiter::for('verify-status', fn (Request $request) => Limit::perMinute(60)->by('verify-status|'.$request->ip()));
         RateLimiter::for('demo-page', fn (Request $request) => Limit::perMinute((int) config('klassapp.demo.page_throttle_per_minute', 60))->by('demo-page|'.$request->ip()));
+        // WhatsApp webhooks: Meta delivers from a small pool of IPs, so a valid
+        // X-Hub-Signature-256 gets a very high cap; unsigned or badly signed
+        // requests (and the GET handshake) keep the 60/min per-IP limit.
+        RateLimiter::for('whatsapp-webhook', function (Request $request) {
+            if ($request->isMethod('post') && \App\Http\Middleware\VerifyWhatsAppWebhookSignature::hasValidSignature($request)) {
+                return Limit::perMinute(6000)->by('whatsapp-webhook-signed|'.$request->ip());
+            }
+
+            return Limit::perMinute(60)->by('whatsapp-webhook|'.$request->ip());
+        });
         RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
 
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)

@@ -295,7 +295,10 @@ Route::post('/schoolpay/webhook', 'Api\SchoolPayWebhookController@handle')
 // Both webhook POSTs are verified against Meta's X-Hub-Signature-256 by
 // VerifyWhatsAppWebhookSignature (config services.whatsapp.app_secret; switchable with
 // WHATSAPP_VERIFY_SIGNATURE); the GET verify-token handshake on /inbound is unchanged.
-Route::prefix('whatsapp')->group(function () {
+// Rate limit: the api group's throttle:60,1 is swapped for the 'whatsapp-webhook'
+// limiter (AppServiceProvider): validly signed POSTs get a very high cap because
+// Meta sends from a few IPs; everything else stays at 60/min per IP.
+Route::prefix('whatsapp')->withoutMiddleware('throttle:60,1')->middleware('throttle:whatsapp-webhook')->group(function () {
     // Meta Cloud API webhook verification (GET) + inbound messages (POST)
     Route::match(['get', 'post'], '/inbound', 'Api\WhatsAppController@handleInbound')
         ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
