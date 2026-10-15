@@ -53,11 +53,34 @@ if [ -n "$UNFORCED" ]; then
     fi
 fi
 
-vendor/bin/phpunit --log-junit "$JUNIT" >/dev/null 2>&1 || true
+# TEST_GUARD_PROCESSES > 1 runs the suite with paratest (one PHP process per
+# worker, each with its own sqlite :memory: database). The merged junit report
+# has the same shape, so test-guard-compare.py is unchanged.
+# CI (GITHUB_ACTIONS) defaults to 4 processes; local runs default to 1.
+if [ -n "${GITHUB_ACTIONS:-}" ]; then DEFAULT_PROCESSES=4; else DEFAULT_PROCESSES=1; fi
+PROCESSES="${TEST_GUARD_PROCESSES:-$DEFAULT_PROCESSES}"
+if [ "$PROCESSES" -gt 1 ] && [ -x vendor/bin/paratest ]; then
+    echo "[test-guard] running with paratest, $PROCESSES processes"
+    vendor/bin/paratest --processes="$PROCESSES" \
+        --runner='\Illuminate\Testing\ParallelRunner' \
+        --log-junit "$JUNIT" >/dev/null 2>&1 || true
+else
+    vendor/bin/phpunit --log-junit "$JUNIT" >/dev/null 2>&1 || true
+fi
+
+if [ -n "${TEST_GUARD_KEEP_JUNIT:-}" ] && [ -s "$JUNIT" ]; then
+    cp "$JUNIT" "$TEST_GUARD_KEEP_JUNIT"
+fi
 
 if [ ! -s "$JUNIT" ]; then
     echo "[test-guard] ERROR: phpunit did not produce $JUNIT" >&2
     exit 2
 fi
+
+# 15 slowest tests to the GitHub job summary (or stdout locally).
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    python3 "$ROOT/scripts/test-slowest.py" "$JUNIT" 15 >> "$GITHUB_STEP_SUMMARY" || true
+fi
+python3 "$ROOT/scripts/test-slowest.py" "$JUNIT" 15 || true
 
 python3 "$ROOT/scripts/test-guard-compare.py" "$JUNIT" "$KNOWN" "$KNOWN_LOCAL"

@@ -32,6 +32,7 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+        $this->middleware('signup.enabled');
     }
 
     public function showRegistrationForm(Request $request)

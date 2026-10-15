@@ -82,6 +82,9 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
+        $schedule->command('demo:expire-chats')->everyFiveMinutes()
+                 ->withoutOverlapping();
+
         // ─── Backup Pipeline ────────────────────────────────────────────
         // Database + file backup to Hetzner Object Storage (S3)
         $schedule->command('backup:run')

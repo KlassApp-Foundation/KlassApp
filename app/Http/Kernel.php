@@ -91,6 +91,7 @@ class Kernel extends HttpKernel
         'privilegeconditions'   =>  \App\Http\Middleware\MustBePrivilege::class, //checks academic year and standards  
         'verifyotp'             =>  \App\Http\Middleware\MustBeOTP::class, //verify otp while school registration   
         'alumni'                =>  \App\Http\Middleware\MustBeAlumni::class,
+        'signup.enabled'        =>  \App\Http\Middleware\EnsureSignupEnabled::class,
         
     ];
 }

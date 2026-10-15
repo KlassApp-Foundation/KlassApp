@@ -20,12 +20,14 @@ class WhatsAppUser extends Model
         'opted_in',
         'last_inbound_at',
         'demo_name',
+        'demo_linked_at',
     ];
 
     protected $casts = [
         'verified_at'     => 'datetime',
         'opted_in'        => 'boolean',
         'last_inbound_at' => 'datetime',
+        'demo_linked_at'  => 'datetime',
     ];
 
     /**

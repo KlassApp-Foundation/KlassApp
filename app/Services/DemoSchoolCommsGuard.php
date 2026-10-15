@@ -7,10 +7,12 @@ use App\Models\User;
 use App\Models\WhatsAppUser;
 
 /**
- * Hard guard: demo schools never send real outbound messages.
+ * Hard guard: demo schools never send business-initiated messages.
  *
  * Every is_demo school (including the ones already seeded on production) is
- * blocked across all four channels:
+ * blocked across all four channels. A reply to a message the person just
+ * sent still goes out, and it is not limited to a phone allowlist. Queued
+ * reminders stay blocked even during that reply.
  *   - email  (via the MessageSending listener DemoSchoolBlockOutboundMail)
  *   - SMS    (via MSG91::sendSMS)
  *   - WhatsApp (via WhatsAppBusinessService entry points)
@@ -23,6 +25,10 @@ final class DemoSchoolCommsGuard
 {
     /** @var array<int>|null */
     private static ?array $demoSchoolIds = null;
+
+    private static int $inboundReplies = 0;
+
+    private static int $businessSends = 0;
 
     /** @return array<int> */
     public static function demoSchoolIds(): array
@@ -38,6 +44,8 @@ final class DemoSchoolCommsGuard
     public static function flushCache(): void
     {
         self::$demoSchoolIds = null;
+        self::$inboundReplies = 0;
+        self::$businessSends = 0;
     }
 
     public static function blocksSchool(?int $schoolId): bool
@@ -101,13 +109,49 @@ final class DemoSchoolCommsGuard
         return false;
     }
 
-    public static function blocksWhatsApp(?string $phone, ?int $userId = null): bool
+    public static function beginInboundReply(): void
     {
-        if ($userId !== null && self::blocksUser($userId)) {
-            return true;
+        self::$inboundReplies++;
+    }
+
+    public static function endInboundReply(): void
+    {
+        self::$inboundReplies = max(0, self::$inboundReplies - 1);
+    }
+
+    /**
+     * Queued reminders stay blocked for a demo school even while a reply
+     * to the person's own message is going out.
+     */
+    public static function duringBusinessSend(callable $callback): mixed
+    {
+        self::$businessSends++;
+        try {
+            return $callback();
+        } finally {
+            self::$businessSends = max(0, self::$businessSends - 1);
+        }
+    }
+
+    public static function demoSessionNotice(): string
+    {
+        $notice = 'Your number is removed after 30 minutes.';
+        $url = trim((string) config('services.whatsapp.privacy_notice_url'));
+        if ($url !== '') {
+            $notice .= "\nPrivacy: {$url}";
         }
 
-        return self::blocksPhone($phone);
+        return $notice;
+    }
+
+    public static function blocksWhatsApp(?string $phone, ?int $userId = null): bool
+    {
+        $blocked = ($userId !== null && self::blocksUser($userId)) || self::blocksPhone($phone);
+        if (! $blocked || self::$businessSends > 0) {
+            return $blocked;
+        }
+
+        return self::$inboundReplies === 0;
     }
 
     public static function blocksDeviceToken(?string $token): bool
