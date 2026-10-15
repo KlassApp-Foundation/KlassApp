@@ -11,7 +11,7 @@
 
         @if($requests->isEmpty())
             <div class="ds-card wa-lr-empty" data-testid="wa-link-requests-empty">
-                <p>{{ $isDemoSchool ? 'No requests yet. Scan the QR on /demo to try it' : 'No link requests waiting.' }}</p>
+                <p>{{ $isDemoSchool ? 'No requests yet. Scan the QR on /demo to try it.' : 'No link requests waiting.' }}</p>
             </div>
         @else
             <div class="wa-lr-list">

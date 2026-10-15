@@ -108,6 +108,11 @@
             </div>
         @endif
 
+        {{-- WhatsApp link requests, near the top. Count, latest three, Approve / Reject. Polls itself. --}}
+        @if((int) ($v2User->usergroup_id ?? 0) === 3)
+            <livewire:admin.whatsapp-dashboard-card />
+        @endif
+
         @if($state === 'new')
             {{-- Brand new: quick-action tiles + zeroed tiles + one empty state --}}
             <div class="dv2-qat" data-testid="dashboard-v2-actions">

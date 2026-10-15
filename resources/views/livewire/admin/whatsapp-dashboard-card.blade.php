@@ -18,7 +18,7 @@
 
     @if($requests->isEmpty())
         <div class="wa-lr-empty wa-lr-empty--inline" data-testid="dashboard-whatsapp-empty">
-            <p>{{ $isDemoSchool ? 'No requests yet. Scan the QR on /demo to try it' : 'No link requests waiting.' }}</p>
+            <p>{{ $isDemoSchool ? 'No requests yet. Scan the QR on /demo to try it.' : 'No link requests waiting.' }}</p>
         </div>
     @else
         <div class="wa-lr-list wa-lr-list--compact">

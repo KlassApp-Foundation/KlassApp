@@ -80,7 +80,7 @@
 .dv2-kpi-label .ka-icon{flex:none}
 .dv2-kpi{cursor:pointer}
 .dv2-kpi > .dv2-kpi-link{position:static;z-index:auto}
-.dv2-kpi-link{display:flex;flex-direction:column;gap:4px;color:inherit;text-decoration:none}
+.dv2-kpi-link,.dv2-kpi > a.dv2-kpi-link{display:flex;flex-direction:column;align-items:stretch;gap:4px;color:inherit;text-decoration:none;min-height:0}
 .dv2-kpi-link::after{content:"";position:absolute;inset:0;z-index:1}
 .dv2-kpi:has(.dv2-kpi-link:focus-visible){box-shadow:inset 0 0 0 2px #15803D}
 .dv2-kpi > .dv2-kpi-actions,.dv2-kpi-actions,.dv2-kpi-actions a{position:relative;z-index:2}

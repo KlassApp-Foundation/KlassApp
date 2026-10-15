@@ -2640,8 +2640,11 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     color: #166534;
 }
 
-/* KPI stat links and period tabs */
-.ds-kpi-card a, [class*="kpi"] a, .dashboard-chart-card a {
+/* Links inside a card. Do not match every anchor under a class whose name
+   contains "kpi": that turned the Students tile into one gapless row, so the
+   number and the word sat together as "76Students". */
+.ds-kpi-card a,
+.dashboard-chart-card a {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
