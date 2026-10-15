@@ -25,10 +25,15 @@ class ToshiEntryPillTest extends TestCase
         $this->withoutMiddleware([MustBePrivilege::class]);
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'name' => 'schoolsubadmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 8, 'name' => 'librarian', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 11, 'name' => 'accountant', 'created_at' => now(), 'updated_at' => now()],
         ], 'id');
     }
 
-    private function dashboard(string $mode, bool $enabled, string $path = '/admin/dashboard')
+    private function dashboard(string $mode, bool $enabled, string $path = '/admin/dashboard', int $usergroup = 3)
     {
         $school = School::create([
             'name' => 'Pill School '.Str::random(4),
@@ -55,7 +60,7 @@ class ToshiEntryPillTest extends TestCase
         ]);
         $admin = User::factory()->create([
             'school_id' => $school->id,
-            'usergroup_id' => 3,
+            'usergroup_id' => $usergroup,
             'email' => Str::random(8).'@test.sch.ug',
             'password' => bcrypt('password'),
             'status' => 'active',
@@ -64,7 +69,7 @@ class ToshiEntryPillTest extends TestCase
         Userprofile::create([
             'user_id' => $admin->id,
             'school_id' => $school->id,
-            'usergroup_id' => 3,
+            'usergroup_id' => $usergroup,
             'firstname' => 'Pill',
             'lastname' => 'Admin',
         ]);
@@ -166,5 +171,27 @@ class ToshiEntryPillTest extends TestCase
         $this->assertStringContainsString(".dashboard-content-area", $js);
         $this->assertStringNotContainsString("window.addEventListener('scroll'", $js);
         $this->assertStringNotContainsString('window.scrollY > 80', $js);
+    }
+
+    /** School admin (3) and head teacher (4) get the pill on their dashboard. */
+    public function test_toshi_pill_is_rendered_on_the_dashboard_for_admin_and_head_teacher(): void
+    {
+        foreach ([3 => '/admin/dashboard', 4 => '/admin/dashboard'] as $usergroup => $path) {
+            $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
+            $this->assertStringContainsString('id="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-pill-page="1"', $html, 'pill page for usergroup '.$usergroup);
+        }
+    }
+
+    /** Teacher (5), parent (7), librarian (8) and bursar (11) keep the side handle only. */
+    public function test_toshi_pill_is_not_rendered_on_the_dashboard_for_other_roles(): void
+    {
+        foreach ([5 => '/teacher/dashboard', 7 => '/parent/dashboard', 8 => '/library/dashboard', 11 => '/accountant/dashboard'] as $usergroup => $path) {
+            $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
+            $this->assertStringContainsString('id="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringNotContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-pill-page="0"', $html, 'pill page for usergroup '.$usergroup);
+        }
     }
 }

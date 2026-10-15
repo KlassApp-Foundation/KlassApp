@@ -38,9 +38,11 @@
                 $toshiSetupDone = (int) $toshiSetup['done'];
                 $toshiSetupTotal = (int) $toshiSetup['total'];
             }
-            // The entry pill belongs to the dashboard and the onboarding screens only;
-            // on every other page the side handle alone is the launcher.
-            $toshiPillPage = request()->is('dashboard', '*/dashboard', 'onboarding', 'onboarding/*', '*/onboarding', '*/onboarding/*');
+            // The entry pill is for school admins and head teachers, on the dashboard and
+            // the onboarding screens only. Every other role and page keeps the side
+            // handle alone as the launcher.
+            $toshiPillRole = in_array((int) auth()->user()->usergroup_id, [3, 4], true);
+            $toshiPillPage = $toshiPillRole && request()->is('dashboard', '*/dashboard', 'onboarding', 'onboarding/*', '*/onboarding', '*/onboarding/*');
         @endphp
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
              data-toshi-mode="{{ $toshiMode }}" data-toshi-user="{{ auth()->id() }}"
@@ -51,6 +53,7 @@
                 title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
                 <span class="toshi-handle-mark" aria-hidden="true">K</span>
             </button>
+            @if($toshiPillRole)
             <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" data-testid="toshi-entry-pill"
                 aria-label="Open Toshi">
                 <span class="toshi-entry-ring" aria-hidden="true"><span class="toshi-entry-mark">K</span></span>
@@ -59,6 +62,7 @@
                     <span class="toshi-entry-chip" data-testid="toshi-entry-chip">{{ $toshiSetupDone }}/{{ $toshiSetupTotal }}</span>
                 @endif
             </button>
+            @endif
             @toshiAssistant
             <span class="toshi-early-pill" aria-hidden="true">Early access</span>
             @endtoshiAssistant
