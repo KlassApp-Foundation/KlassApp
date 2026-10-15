@@ -61,6 +61,29 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() { 
+        // Public demo admin (users.is_public_demo): no email and no notification
+        // leaves the app for anything that account starts, including queued
+        // jobs (the request's Context travels with them). WhatsApp is limited
+        // separately by WHATSAPP_DEMO_ONLY_RECIPIENTS.
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Mail\Events\MessageSending::class, function () {
+            if (\App\Http\Middleware\PublicDemoLockdown::actorActive()) {
+                \Illuminate\Support\Facades\Log::warning('[public-demo] email refused');
+
+                return false;
+            }
+
+            return null;
+        });
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Notifications\Events\NotificationSending::class, function () {
+            if (\App\Http\Middleware\PublicDemoLockdown::actorActive()) {
+                \Illuminate\Support\Facades\Log::warning('[public-demo] notification refused');
+
+                return false;
+            }
+
+            return null;
+        });
+
         // OpenCode Go gateway rejects session-less requests (MissingSessionID).
         // Attach the session id to any HTTP request heading for the host of the
         // configured OpenAI-compatible provider (Toshi's LLM path, health checks).

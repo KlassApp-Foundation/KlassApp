@@ -91,6 +91,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('demo:expire-chats')->everyMinute()
                  ->withoutOverlapping();
 
+        // Live demo: restore every provisioned demo school at 03:00 Kampala
+        // (DEMO_NIGHTLY_RESET_ENABLED=true). demo:nightly-reset touches demo schools only.
+        $schedule->command('demo:nightly-reset')->dailyAt('03:00')->timezone('Africa/Kampala')
+            ->when(fn () => (bool) config('klassapp.demo.nightly_reset_enabled'))
+            ->withoutOverlapping();
+
         // ─── Backup Pipeline ────────────────────────────────────────────
         // Database + file backup to Hetzner Object Storage (S3)
         $schedule->command('backup:run')

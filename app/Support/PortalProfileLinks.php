@@ -22,6 +22,11 @@ class PortalProfileLinks
      */
     public static function forUser(User $user): array
     {
+        // The public demo admin cannot change its password, avatar or profile.
+        if ($user->isPublicDemo()) {
+            return ['change_password' => null, 'change_avatar' => null, 'edit_profile' => null, 'settings' => '/admin/settings'];
+        }
+
         $ug = (int) $user->usergroup_id;
 
         return match ($ug) {
