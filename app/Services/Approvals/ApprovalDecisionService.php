@@ -61,7 +61,7 @@ class ApprovalDecisionService
         // account is created and the normal Flow notice is not sent.
         if (DemoBindApproval::isDemoBindRequest($linkRequest)) {
             if (! app(DemoBindApproval::class)->approve($linkRequest, $approval, (int) $matchedStudentId, $admin->id)) {
-                return ApprovalDecision::fail('Could not link this demo number (the student is not in this demo school).');
+                return ApprovalDecision::fail('Could not link this demo number. It may already be linked to another school, or the student is not in this demo school.');
             }
             $this->doActivityLog($linkRequest, $admin, ['approval_id' => $approval->id, 'action' => 'approved', 'demo_bind' => true], 'approval', "Approval #{$approval->id} approved by ".$admin->name);
 
