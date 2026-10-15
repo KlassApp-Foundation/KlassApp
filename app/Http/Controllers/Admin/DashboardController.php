@@ -131,7 +131,19 @@ class DashboardController extends Controller
             );
         }
 
+        // Connected tools: the real number of linked WhatsApp numbers (not the
+        // seeded parents' flags) and whether Google Drive is connected.
+        $connectedTools = [
+            'whatsappLinked' => $school_id ? app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedNumberCount((int) $school_id) : 0,
+            'driveConnected' => $school_id ? \App\Models\SchoolMcpConnector::query()
+                ->forSchool((int) $school_id)
+                ->where('connector_type', 'google-drive')
+                ->where('status', 'active')
+                ->exists() : false,
+        ];
+
         return view( $dashboardView, [
+            'connectedTools' => $connectedTools,
             'v2Data' => $v2Data,
             // Dashboard v2 renders its own year control; the top-bar picker would duplicate it.
             'navShowAcademicYear' => $dashboardView !== '/admin/dashboard/dashboard_v2',
