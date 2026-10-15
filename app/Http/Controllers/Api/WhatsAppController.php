@@ -770,7 +770,7 @@ class WhatsAppController extends Controller
                 // ── Incoming messages ──
                 $messages = $value['messages'] ?? [];
                 foreach ($messages as $msg) {
-                    $phone = WhatsAppPhoneHelper::normalise($msg['from'] ?? '');
+                    $phone = WhatsAppPhoneHelper::fromWaId($msg['from'] ?? '');
                     $messageId = $msg['id'] ?? '';
                     $msgType = $msg['type'] ?? '';
                     $body = '';
