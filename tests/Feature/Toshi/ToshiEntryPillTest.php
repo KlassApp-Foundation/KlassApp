@@ -24,11 +24,17 @@ class ToshiEntryPillTest extends TestCase
         Cache::flush();
         $this->withoutMiddleware([MustBePrivilege::class]);
         DB::table('usergroups')->upsert([
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'name' => 'schoolsubadmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 8, 'name' => 'librarian', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 11, 'name' => 'accountant', 'created_at' => now(), 'updated_at' => now()],
         ], 'id');
     }
 
-    private function dashboard(string $mode, bool $enabled)
+    private function dashboard(string $mode, bool $enabled, string $path = '/admin/dashboard', int $usergroup = 3)
     {
         $school = School::create([
             'name' => 'Pill School '.Str::random(4),
@@ -55,7 +61,7 @@ class ToshiEntryPillTest extends TestCase
         ]);
         $admin = User::factory()->create([
             'school_id' => $school->id,
-            'usergroup_id' => 3,
+            'usergroup_id' => $usergroup,
             'email' => Str::random(8).'@test.sch.ug',
             'password' => bcrypt('password'),
             'status' => 'active',
@@ -64,12 +70,12 @@ class ToshiEntryPillTest extends TestCase
         Userprofile::create([
             'user_id' => $admin->id,
             'school_id' => $school->id,
-            'usergroup_id' => 3,
+            'usergroup_id' => $usergroup,
             'firstname' => 'Pill',
             'lastname' => 'Admin',
         ]);
 
-        return $this->actingAs($admin)->get('/admin/dashboard');
+        return $this->actingAs($admin)->get($path);
     }
 
     public function test_toshi_pill_is_visible_from_1280_in_preview_with_meet_toshi(): void
@@ -140,11 +146,78 @@ class ToshiEntryPillTest extends TestCase
         $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
         $this->assertStringNotContainsString("querySelectorAll('a, button, [data-sticky-bar]')", $js);
         $this->assertStringContainsString('is-compact', $js);
-        $this->assertStringContainsString('scrollY > 80', $js);
+        $this->assertStringContainsString('COMPACT_AFTER = 80', $js);
         $css = file_get_contents(base_path('packages/toshi-ui/resources/css/toshi-ui.css'));
         $section = explode('TOSHI ENTRY PILL', $css, 2)[1] ?? '';
         $this->assertStringContainsString('right: calc(24px + env(safe-area-inset-right))', $section);
         $this->assertStringContainsString('#toshi-entry-pill.is-compact .toshi-entry-label', $section);
         $this->assertStringContainsString('width: 44px', $section);
+    }
+
+    public function test_toshi_pill_page_flag_is_on_for_the_dashboard_and_onboarding_only(): void
+    {
+        $this->dashboard('preview', false)->assertOk()->assertSee('data-pill-page="1"', false);
+        $this->dashboard('preview', false, '/admin/onboarding/wizard')->assertOk()->assertSee('data-pill-page="1"', false);
+        $list = $this->dashboard('preview', false, '/admin/students');
+        $list->assertOk()->assertSee('data-toshi-mode="preview"', false)->assertSee('data-pill-page="0"', false);
+        $list->assertDontSee('data-pill-page="1"', false);
+        $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
+        $this->assertStringContainsString("wrap.dataset.pillPage !== '1'", $js);
+    }
+
+    public function test_toshi_pill_compacts_from_the_element_that_really_scrolls(): void
+    {
+        $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
+        $this->assertStringContainsString('IntersectionObserver', $js);
+        $this->assertStringContainsString(".dashboard-content-area", $js);
+        $this->assertStringNotContainsString("window.addEventListener('scroll'", $js);
+        $this->assertStringNotContainsString('window.scrollY > 80', $js);
+    }
+
+    /** School admin (3) and head teacher (4) get the side handle and the pill on their dashboard. */
+    public function test_toshi_handle_and_pill_are_rendered_for_admin_and_head_teacher(): void
+    {
+        foreach ([3 => '/admin/dashboard', 4 => '/admin/dashboard'] as $usergroup => $path) {
+            $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
+            $this->assertStringContainsString('data-testid="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-pill-page="1"', $html, 'pill page for usergroup '.$usergroup);
+        }
+    }
+
+    /** Teacher (5), bursar (11), librarian (8) and parent (7) get neither launcher; the panel stays. */
+    public function test_toshi_handle_and_pill_are_absent_for_other_school_roles(): void
+    {
+        foreach ([5 => '/teacher/dashboard', 11 => '/accountant/dashboard', 8 => '/library/dashboard', 7 => '/parent/dashboard'] as $usergroup => $path) {
+            $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
+            $this->assertStringNotContainsString('data-testid="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringNotContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
+            $this->assertStringContainsString('window.toshiSetCollapsed', $html, 'panel script for usergroup '.$usergroup);
+        }
+    }
+
+    /** The platform site admin (1) gets neither launcher either. */
+    public function test_toshi_handle_and_pill_are_absent_for_the_site_admin(): void
+    {
+        $siteAdmin = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 1,
+            'email' => Str::random(8).'@test.sch.ug',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        $html = $this->actingAs($siteAdmin)->get('/superadmin/dashboard')->assertOk()->getContent();
+        $this->assertStringContainsString('window.toshiSetCollapsed', $html);
+        $this->assertStringNotContainsString('data-testid="toshi-toggle"', $html);
+        $this->assertStringNotContainsString('data-testid="toshi-entry-pill"', $html);
+    }
+
+    public function test_toshi_launcher_roles_live_in_one_list(): void
+    {
+        $this->assertSame([3, 4], \App\Services\Toshi\ToshiUiSwitch::LAUNCHER_USERGROUPS);
+        $embed = file_get_contents(resource_path('views/layouts/partials/toshi-embed.blade.php'));
+        $this->assertStringContainsString('->showsLauncher()', $embed);
+        $this->assertSame(1, substr_count($embed, 'in_array('), 'only the panel allow-list may use in_array');
     }
 }

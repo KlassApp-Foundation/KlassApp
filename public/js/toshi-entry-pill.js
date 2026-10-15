@@ -16,6 +16,10 @@
     if (window.innerWidth < 1280) return false;
     var wrap = wrapper();
     if (!wrap) return false;
+    // The pill shows only on the dashboard and onboarding screens (set by the
+    // server). Everywhere else the side handle alone is the launcher, so the
+    // pill never covers list rows.
+    if (wrap.dataset.pillPage !== '1') return false;
     var mode = wrap.dataset.toshiMode || '';
     var done = parseInt(wrap.dataset.setupDone || '0', 10);
     var total = parseInt(wrap.dataset.setupTotal || '0', 10);
@@ -47,6 +51,7 @@
       handle.tabIndex = (wanted || !collapsed || window.innerWidth < 1280) ? -1 : 0;
     }
     place();
+    watchScroll();
     compact();
   }
 
@@ -67,10 +72,97 @@
     pill.style.bottom = 'calc(' + bottom + 'px + env(safe-area-inset-bottom))';
   }
 
+  // Compact after 80px of scroll. At 1280+ the document does not scroll: the
+  // body is overflow:hidden and .dashboard-content-area is the scroller, and
+  // its scroll events never reach window. An IntersectionObserver watches a
+  // zero-height sentinel 80px below the top of whichever element really
+  // scrolls, so there is no scroll handler and no forced layout.
+  var COMPACT_AFTER = 80;
+  var scrolledPast = false;
+  var observer = null;
+  var observedRoot;
+
   function compact() {
     var pill = document.getElementById('toshi-entry-pill');
     if (!pill) return;
-    pill.classList.toggle('is-compact', window.scrollY > 80 || document.documentElement.scrollTop > 80);
+    pill.classList.toggle('is-compact', scrolledPast);
+  }
+
+  function scrollRoot() {
+    var area = document.querySelector('.dashboard-content-area');
+    if (area) {
+      var oy = getComputedStyle(area).overflowY;
+      if (oy === 'auto' || oy === 'scroll') return area;
+    }
+    return null; // the document scrolls
+  }
+
+  function sentinel(root) {
+    var el = document.getElementById('toshi-pill-sentinel');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toshi-pill-sentinel';
+      el.setAttribute('aria-hidden', 'true');
+      el.style.cssText = 'height:0;width:1px;margin:0;padding:0;border:0;pointer-events:none;visibility:hidden;';
+    }
+    if (root) {
+      // Static, zero-height first child, nudged down with a relative offset:
+      // it scrolls with the content and changes no layout.
+      el.style.position = 'relative';
+      el.style.top = COMPACT_AFTER + 'px';
+      el.style.left = '0';
+      if (root.firstChild !== el) root.insertBefore(el, root.firstChild);
+    } else {
+      el.style.position = 'absolute';
+      el.style.top = COMPACT_AFTER + 'px';
+      el.style.left = '0';
+      if (el.parentNode !== document.body) document.body.insertBefore(el, document.body.firstChild);
+    }
+    return el;
+  }
+
+  function watchScroll() {
+    if (!('IntersectionObserver' in window)) return fallbackScroll();
+    var root = scrollRoot();
+    var current = document.getElementById('toshi-pill-sentinel');
+    if (observer && observedRoot === root && current && current.isConnected) return;
+    if (observer) observer.disconnect();
+    observedRoot = root;
+    var target = sentinel(root);
+    observer = new IntersectionObserver(function (entries) {
+      var entry = entries[entries.length - 1];
+      if (!target.isConnected) {
+        // The content area was re-rendered (Vue/Livewire): watch it again.
+        observedRoot = undefined;
+        window.requestAnimationFrame(watchScroll);
+        return;
+      }
+      var top = entry.rootBounds ? entry.rootBounds.top : 0;
+      scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < top;
+      compact();
+    }, { root: root, threshold: 0 });
+    observer.observe(target);
+  }
+
+  // Browsers without IntersectionObserver: one capture listener catches the
+  // scroll of any element; the read waits for the next animation frame.
+  var fallbackOn = false;
+  function fallbackScroll() {
+    if (fallbackOn) return;
+    fallbackOn = true;
+    var queued = false;
+    var source = null;
+    document.addEventListener('scroll', function (e) {
+      source = e.target;
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(function () {
+        queued = false;
+        var el = (source && source.nodeType === 1) ? source : (document.scrollingElement || document.documentElement);
+        scrolledPast = el.scrollTop > COMPACT_AFTER;
+        compact();
+      });
+    }, { capture: true, passive: true });
   }
 
   window.toshiPlaceEntryPill = place;
@@ -78,7 +170,6 @@
   function boot() {
     sync();
     window.addEventListener('resize', sync);
-    window.addEventListener('scroll', compact, { passive: true });
     document.addEventListener('toshi-collapsed-changed', sync);
     var bars = document.querySelectorAll('[data-sticky-bar]');
     if (window.MutationObserver) {
