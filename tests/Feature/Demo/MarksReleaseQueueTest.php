@@ -123,7 +123,7 @@ class MarksReleaseQueueTest extends TestCase
 
     private function work(): void
     {
-        $this->artisan('queue:work', ['--stop-when-empty' => true, '--sleep' => 0])->assertExitCode(0);
+        $this->artisan('queue:work', ['--stop-when-empty' => true, '--sleep' => 0, '--memory' => 4096])->assertExitCode(0);
     }
 
     /** Graph fake: FAILING gets a 503 for the first $failures sends, everyone else succeeds. */
