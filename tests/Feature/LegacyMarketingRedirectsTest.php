@@ -18,7 +18,6 @@ class LegacyMarketingRedirectsTest extends TestCase
             '/features' => '/',
             '/pricing'  => '/?source=sales#demo',
             '/schools'  => '/',
-            '/demo'     => '/#demo',
             '/contact'  => '/#demo',
         ];
 

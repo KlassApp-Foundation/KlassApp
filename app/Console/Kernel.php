@@ -82,7 +82,9 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
-        $schedule->command('demo:expire-chats')->everyFiveMinutes()
+        // Every minute: links are unlinked one minute before their limit
+        // (Try Demo 30 minutes, BIND DEMO_BIND_TTL_MINUTES), never after it.
+        $schedule->command('demo:expire-chats')->everyMinute()
                  ->withoutOverlapping();
 
         // ─── Backup Pipeline ────────────────────────────────────────────

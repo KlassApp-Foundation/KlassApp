@@ -21,6 +21,7 @@ class WhatsAppUser extends Model
         'last_inbound_at',
         'demo_name',
         'demo_linked_at',
+        'demo_student_id',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class WhatsAppUser extends Model
         'opted_in'        => 'boolean',
         'last_inbound_at' => 'datetime',
         'demo_linked_at'  => 'datetime',
+        'demo_student_id' => 'integer',
     ];
 
     /**

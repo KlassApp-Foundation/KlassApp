@@ -758,6 +758,7 @@ class DemoJuniorSchoolSeeder extends Seeder
                 ['standard' => 'primary', 'section' => 'P.4', 'name' => 'Aisha Namatovu', 'age' => 9, 'gender' => 'female', 'district' => 'Mukono', 'village' => 'Namatovu Zone', 'last_school' => 'Bright Stars Primary', 'last_class' => 'P.3', 'father' => 'Yusuf Namatovu', 'father_job' => 'Carpenter', 'mother' => 'Sofia Namatovu', 'mother_job' => 'Tailor'],
             ],
             'exam_section_names' => ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+            'follow_along_subjects' => ['Mathematics', 'Science', 'English', 'Social Studies'],
             'skip_second' => ['section' => 'P.6', 'stream' => 'A'],
             'fallback_open' => ['section' => 'P.7', 'subject' => 'Mathematics'],
         ];
