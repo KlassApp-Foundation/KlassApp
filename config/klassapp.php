@@ -53,7 +53,8 @@ return [
         // café wifi shares an IP, so the local kit sets 600; the default stays 60.
         // demo:nightly-reset at 03:00 Africa/Kampala (provisioned demo schools only).
         'nightly_reset_enabled' => filter_var(env('DEMO_NIGHTLY_RESET_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
-        'page_throttle_per_minute' => max(1, (int) env('DEMO_PAGE_THROTTLE_PER_MINUTE', 60)),
+        // An empty value (as in .env.example) means the default, not 0.
+        'page_throttle_per_minute' => max(1, is_numeric(env('DEMO_PAGE_THROTTLE_PER_MINUTE')) ? (int) env('DEMO_PAGE_THROTTLE_PER_MINUTE') : 60),
         'bind_requires_approval' => filter_var(env('DEMO_BIND_REQUIRES_APPROVAL', false), FILTER_VALIDATE_BOOLEAN),
         'release_webhook_url' => env('DEMO_RELEASE_WEBHOOK_URL'),
         'release_webhook_secret' => env('DEMO_RELEASE_WEBHOOK_SECRET'),

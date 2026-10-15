@@ -71,6 +71,7 @@ class DemoProductionProvisionTest extends TestCase
     {
         putenv('DEMO_PROVISION_ADMIN_PASSWORD=from-env-secret-123');
         $_ENV['DEMO_PROVISION_ADMIN_PASSWORD'] = 'from-env-secret-123';
+        $_SERVER['DEMO_PROVISION_ADMIN_PASSWORD'] = 'from-env-secret-123';
 
         $this->assertSame(0, Artisan::call('demo:provision', $this->provisionArgs()));
         $out = Artisan::output();
