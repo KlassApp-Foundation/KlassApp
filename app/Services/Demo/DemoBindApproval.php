@@ -179,6 +179,15 @@ final class DemoBindApproval
             return false;
         }
 
+        // Reply while the request is still pending: the local demo-only send
+        // guard lets a pending demo number through, a closed one it refuses.
+        $text = "Thank you for trying the KlassApp demo. The school did not approve this request to follow *{$request->child_name}*, so this number is not linked.\n\n"
+            . 'You can pick another student on ' . DemoFollowAlong::pageUrl() . ' and send BIND with their code.';
+        DemoSchoolCommsGuard::duringBoundDemoRelease(
+            $request->phone,
+            fn () => $this->api->sendText($request->phone, $text, 'demo_bind_rejected'),
+        );
+
         $request->update(['status' => 'rejected']);
         $approval->state->transitionTo(Rejected::class);
         $approval->approved_by = $adminId;
@@ -186,12 +195,6 @@ final class DemoBindApproval
         $approval->resolved_at = now();
         $approval->save();
 
-        $text = "Thank you for trying the KlassApp demo. The school did not approve this request to follow *{$request->child_name}*, so this number is not linked.\n\n"
-            . 'You can pick another student on ' . DemoFollowAlong::pageUrl() . ' and send BIND with their code.';
-        DemoSchoolCommsGuard::duringBoundDemoRelease(
-            $request->phone,
-            fn () => $this->api->sendText($request->phone, $text, 'demo_bind_rejected'),
-        );
 
         return true;
     }

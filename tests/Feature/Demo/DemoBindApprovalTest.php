@@ -52,6 +52,9 @@ class DemoBindApprovalTest extends TestCase
             'klassapp.demo.whatsapp_number' => '+1 555 010 0000',
             'klassapp.demo.bind_ttl_minutes' => 45,
             'klassapp.demo.bind_requires_approval' => true,
+            // As in the local kit: the demo-only send guard is on, so every reply
+            // here must also get past it (a rejection reply once did not).
+            'services.whatsapp.demo_only_recipients' => true,
             'app.url' => 'https://demo.example.com',
         ]);
         DB::table('usergroups')->upsert([
