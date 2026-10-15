@@ -33,30 +33,43 @@
           @if (session('failmessage'))
             <div class="ap-alert ap-alert--error" role="alert">{{ session('failmessage') }}</div>
           @endif
-          @if ($errors->any())
-            <div class="ap-alert ap-alert--error" role="alert" data-testid="auth-flash-error">
-              @foreach ($errors->all() as $error)
-                <p style="margin:0 0 4px;">{{ $error }}</p>
-              @endforeach
-            </div>
-          @endif
-
-          <form method="POST" action="{{ route('early-access.store') }}" class="ap-form" aria-label="Request early access" data-testid="early-access-form">
-            @csrf
-            @foreach ([
+          @php
+            $eaFields = [
               ['school_name', 'School name', 'text', 'organization'],
               ['contact_name', 'Your name', 'text', 'name'],
               ['contact_role', 'Your role', 'text', 'organization-title'],
               ['email', 'Email address', 'email', 'email'],
               ['phone', 'Phone number', 'tel', 'tel'],
-              ['country', 'Country', 'text', 'country-name'],
+              ['country', 'Country', 'select', 'country-name'],
               ['approx_students', 'Approximate number of students', 'number', 'off'],
-            ] as [$field, $label, $type, $autocomplete])
+            ];
+            $eaFirstError = collect(array_merge(array_column($eaFields, 0), ['consent']))
+              ->first(fn ($f) => $errors->has($f));
+          @endphp
+          @if ($eaFirstError)
+            {{-- One line only; each message is shown next to its field. --}}
+            <p class="ap-alert ap-alert--error" role="alert" data-testid="early-access-error-summary" style="margin:0 0 12px;">
+              Please check the highlighted {{ count(array_intersect(array_keys($errors->getMessages()), array_merge(array_column($eaFields, 0), ['consent']))) === 1 ? 'field' : 'fields' }}. <a href="#ea-{{ $eaFirstError }}">Go to the first one</a>
+            </p>
+          @endif
+
+          <form method="POST" action="{{ route('early-access.store') }}" class="ap-form" aria-label="Request early access" data-testid="early-access-form" novalidate>
+            @csrf
+            @foreach ($eaFields as [$field, $label, $type, $autocomplete])
               <div class="ap-field">
                 <label class="ap-label" for="ea-{{ $field }}">{{ $label }}</label>
-                <input id="ea-{{ $field }}" type="{{ $type }}" name="{{ $field }}" value="{{ old($field) }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required @if($type === 'number') min="1" inputmode="numeric" @endif>
+                @if ($type === 'select')
+                  <select id="ea-{{ $field }}" name="{{ $field }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required data-testid="early-access-country" @if($errors->has($field)) aria-invalid="true" aria-describedby="ea-{{ $field }}-error" @endif>
+                    <option value="" @selected(old($field) === null || old($field) === '')>Choose your country</option>
+                    @foreach ($countries as $countryName)
+                      <option value="{{ $countryName }}" @selected(old($field) === $countryName)>{{ $countryName }}</option>
+                    @endforeach
+                  </select>
+                @else
+                  <input id="ea-{{ $field }}" type="{{ $type }}" name="{{ $field }}" value="{{ old($field) }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required @if($type === 'number') min="1" inputmode="numeric" @endif @if($errors->has($field)) aria-invalid="true" aria-describedby="ea-{{ $field }}-error" @endif>
+                @endif
                 @if ($errors->has($field))
-                  <span class="ap-error" role="alert">{{ $errors->first($field) }}</span>
+                  <span class="ap-error" id="ea-{{ $field }}-error" data-testid="early-access-error-{{ $field }}">{{ $errors->first($field) }}</span>
                 @endif
               </div>
             @endforeach
@@ -68,13 +81,17 @@
             </div>
 
             <div class="ap-field ap-checkbox-row">
-              <input id="ea-consent" type="checkbox" class="ap-checkbox" name="consent" value="1" @checked(old('consent')) required>
+              <input id="ea-consent" type="checkbox" class="ap-checkbox" name="consent" value="1" @checked(old('consent')) required @if($errors->has('consent')) aria-invalid="true" aria-describedby="ea-consent-error" @endif>
               <label for="ea-consent" class="ap-checkbox-label">
-                I agree that KlassApp may store these details to contact me about early access, as described in the <a href="{{ $privacyUrl }}" target="_blank" rel="noopener" data-testid="early-access-privacy-link">privacy notice</a>.
+                @if ($privacyUrl !== '')
+                  I agree that KlassApp may store these details to contact me about early access, as described in the <a href="{{ $privacyUrl }}" target="_blank" rel="noopener" data-testid="early-access-privacy-link">privacy notice</a>.
+                @else
+                  I agree that KlassApp may store these details to contact me about early access.
+                @endif
               </label>
             </div>
             @if ($errors->has('consent'))
-              <span class="ap-error" role="alert">{{ $errors->first('consent') }}</span>
+              <span class="ap-error" id="ea-consent-error" data-testid="early-access-error-consent">{{ $errors->first('consent') }}</span>
             @endif
 
             <button type="submit" class="ap-submit" data-testid="ap-primary-submit">Request early access</button>
@@ -105,21 +122,24 @@
     time.textContent = new Intl.DateTimeFormat(undefined, { dateStyle: 'long', timeStyle: 'short' }).format(new Date(target));
   } catch (e) { /* keep the static UTC fallback */ }
 
-  function parts() {
-    var ms = Math.max(0, target - Date.now());
+  /* ea-countdown-label:start */
+  function eaUnit(n, word) { return n + ' ' + (n === 1 ? word : word + 's'); }
+  function eaCountdownLabel(ms, withSeconds) {
+    ms = Math.max(0, ms);
+    if (ms === 0) return 'Early access is open.';
     var d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
-    return { ms: ms, d: d, h: h, m: m, s: s };
+    var out = [eaUnit(d, 'day'), eaUnit(h, 'hour'), eaUnit(m, 'minute')];
+    if (withSeconds) out.push(eaUnit(s, 'second'));
+    return out.join(', ') + ' to go';
   }
-  function label(p, withSeconds) {
-    if (p.ms === 0) return 'Early access is open.';
-    return p.d + ' days, ' + p.h + ' hours, ' + p.m + ' minutes' + (withSeconds ? ', ' + p.s + ' seconds' : '') + ' to go';
-  }
+  /* ea-countdown-label:end */
+  function label(withSeconds) { return eaCountdownLabel(target - Date.now(), withSeconds); }
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Announced to screen readers once; the ticking text is aria-hidden.
-  sr.textContent = label(parts(), false);
+  sr.textContent = label(false);
   visual.hidden = false;
-  function tick() { visual.textContent = label(parts(), !reduce); }
+  function tick() { visual.textContent = label(!reduce); }
   tick();
   // Reduced motion: update once a minute instead of every second.
   setInterval(tick, reduce ? 60000 : 1000);

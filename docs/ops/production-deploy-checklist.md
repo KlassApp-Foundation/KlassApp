@@ -147,12 +147,18 @@ matches, do not start the production deploy.
 | `LEADS_EMAIL` / `DEMO_BOOKING_URL` | set as configured | Talk-to-sales lead capture destination. |
 | `WHATSAPP_VERIFY_SIGNATURE` | `true` | Reject unverified WhatsApp webhooks. |
 | `FILESYSTEM_DISK` | cloud object storage | Production uploads go to the object bucket, never `local`. **Do not copy the staging value.** |
+| `DEMO_PROVISIONING_ENABLED` | `false` except during a provision | `demo:provision` refuses to run unless this is `true`. Set it back to `false` afterwards. See `docs/ops/PRODUCTION-DEMO-RUNBOOK.md`. |
+| `SIGNUP_ENABLED` | `true` (close with `false`) | `false` shows the early access page at `/register`; nothing can create a new school or school admin. Login stays open. |
+| `WHATSAPP_REPLIES_ENABLED` | `true` (kill switch `false`) | `false` stops every outbound WhatsApp message, including replies. |
+| `PRIVACY_NOTICE_URL` | the public privacy notice address | Linked from the demo welcome line and the early access consent box. Empty means no link. |
 
 `demo:refresh` is a staging-only command for the two walkthrough schools
 (Demo Junior and Demo Senior). Dry-run first (`php artisan demo:refresh 38 --dry-run`
 and the same for 39), then run it without `--dry-run` when the demo data should
 return to the seeded fee mix and walkthrough state. It refuses a school that is
 not `is_demo`. **Never run `demo:refresh` or `demo:set-password` on production.**
+Production demo setup is `demo:provision` and `demo:reset`, in
+`docs/ops/PRODUCTION-DEMO-RUNBOOK.md`.
 
 No other new environment variables were introduced between the 2026-10-08 review
 and `e85c2fc4`. If in doubt, deploy with the values above and change nothing else.

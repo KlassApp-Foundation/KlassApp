@@ -206,6 +206,11 @@ class OutboundWhatsAppService
      */
     public function flushPending(WhatsAppUser $user): int
     {
+        return DemoSchoolCommsGuard::duringBusinessSend(fn () => $this->sendPending($user));
+    }
+
+    private function sendPending(WhatsAppUser $user): int
+    {
         $pending = WhatsAppPendingNotification::where('whatsapp_user_id', $user->id)
             ->where(function ($q) {
                 $q->whereNull('send_after')

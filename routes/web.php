@@ -67,7 +67,7 @@ Route::prefix('preview')->name('preview.')->group(function () {
         return $withDemo('auth.preview.register', [], [
             'email' => 'The email has already been taken.',
         ]);
-    })->name('register');
+    })->middleware('signup.enabled')->name('register');
 
     Route::get('/reset-request', function () use ($withDemo) {
         return $withDemo('auth.preview.reset-request', [], [
@@ -183,11 +183,13 @@ Route::middleware('auth')->prefix('platform')->group(function () {
 });
 
 Route::get('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
+    ->middleware('signup.enabled')
     ->name('register.verify');
 Route::post('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'verify'])
+    ->middleware('signup.enabled')
     ->name('register.verify.submit');
 Route::post('/register/verify/resend', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'resend'])
-    ->middleware('throttle:3,1')
+    ->middleware(['signup.enabled', 'throttle:3,1'])
     ->name('register.verify.resend');
 // Polled by the sign-up tab: {confirmed: bool} for this browser's pending signup only.
 Route::get('/register/verify/status', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'status'])

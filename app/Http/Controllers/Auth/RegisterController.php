@@ -32,7 +32,10 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
-        $this->middleware(\App\Http\Middleware\EnsureSignupOpen::class)->only('register');
+        // Sign-up closed: POST /register creates nothing and goes to the early
+        // access page. GET /register shows that page itself (below), so the
+        // gate is not applied to it.
+        $this->middleware('signup.enabled')->only('register');
     }
 
     public function showRegistrationForm(Request $request)
