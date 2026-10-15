@@ -39,6 +39,15 @@ class WhatsAppBusinessService
      */
     protected function demoBlocked(string $phone, ?int $userId = null): ?array
     {
+        if (! config('services.whatsapp.replies_enabled')) {
+            return [
+                'success' => false,
+                'blocked' => true,
+                'reason' => 'whatsapp_replies_disabled',
+                'message' => 'Outbound WhatsApp is switched off.',
+            ];
+        }
+
         if (! \App\Services\DemoSchoolCommsGuard::blocksWhatsApp($phone, $userId)) {
             return null;
         }

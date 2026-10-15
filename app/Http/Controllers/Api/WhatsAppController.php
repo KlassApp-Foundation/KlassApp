@@ -18,6 +18,7 @@ use App\Models\Events;
 use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
+use App\Services\DemoSchoolCommsGuard;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
@@ -779,7 +780,12 @@ class WhatsAppController extends Controller
                     } elseif ($msgType === 'interactive') {
                         $ir = $msg['interactive'] ?? [];
                         if (($ir['type'] ?? '') === 'nfm_reply') {
-                            $this->processMetaFlowReply($phone, $ir['nfm_reply'] ?? [], $senderName);
+                            DemoSchoolCommsGuard::beginInboundReply();
+                            try {
+                                $this->processMetaFlowReply($phone, $ir['nfm_reply'] ?? [], $senderName);
+                            } finally {
+                                DemoSchoolCommsGuard::endInboundReply();
+                            }
                             continue;
                         }
                         $body = $ir['button_reply']['id'] ?? $ir['list_reply']['id']
@@ -806,7 +812,13 @@ class WhatsAppController extends Controller
                     WhatsAppUser::where('phone', $phone)->update(['last_inbound_at' => now()]);
 
                     // ── Full reply flow (same as Evolution handler) ──
-                    $this->processMetaMessage($phone, $body, $messageId, $senderName);
+                    // Replies to this message go out. Queued business sends stay blocked.
+                    DemoSchoolCommsGuard::beginInboundReply();
+                    try {
+                        $this->processMetaMessage($phone, $body, $messageId, $senderName);
+                    } finally {
+                        DemoSchoolCommsGuard::endInboundReply();
+                    }
                 }
 
                 // ── Delivery status updates ──
@@ -1136,6 +1148,7 @@ class WhatsAppController extends Controller
                     'verified_via_schoolpay' => true,
                     'verified_at'            => now(),
                     'demo_name'              => $senderName,
+                    'demo_linked_at'         => now(),
                 ],
             );
             if (!$whatsappUser->wasRecentlyCreated) {
@@ -1143,6 +1156,7 @@ class WhatsAppController extends Controller
                     'demo_name' => $senderName,
                     'user_id' => $demoParent->id,
                     'school_id' => $demoSchoolId,
+                    'demo_linked_at' => now(),
                 ]);
             }
             $whatsappUser->load(['user.userprofile', 'user.school']);
@@ -1813,6 +1827,10 @@ class WhatsAppController extends Controller
 
         // Send a brief greeting then show role-specific buttons
         $greeting = "👋 Hello, *{$name}*! What would you like to do?";
+        $school = $user->school ?: $user->user?->school;
+        if ($school && (int) $school->is_demo === 1) {
+            $greeting .= "\n\n".DemoSchoolCommsGuard::demoSessionNotice();
+        }
         $whatsAppService->sendText($phone, $greeting, 'menu_greeting', $user->user_id);
         $this->sendMenuButtons($phone, $role, $user->user_id);
     }

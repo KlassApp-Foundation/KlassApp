@@ -66,6 +66,14 @@ class DemoJuniorSchoolSeeder extends Seeder
         'P.5' => 10, 'P.6' => 11, 'P.7' => 12,
     ];
 
+    /**
+     * Set only by demo:provision / demo:reset. Null keeps the staging
+     * Demo Junior identity. Never includes a password.
+     *
+     * @var array<string, mixed>|null
+     */
+    public static ?array $provision = null;
+
     private School $school;
 
     private AcademicYear $year;
@@ -116,11 +124,12 @@ class DemoJuniorSchoolSeeder extends Seeder
         $this->seedAttendance();
         $this->seedExamsAndMarks();
         $this->seedRichDemoData();
+        $this->rememberProvision();
 
         $this->command?->info('Demo Junior School seeded.');
         $this->command?->line('School: ' . $this->school->name . ' (slug ' . $this->school->slug . ', is_demo=1)');
-        $this->command?->line('Admin: ' . self::ADMIN_EMAIL . ' | Head teacher: headteacher@' . self::DOMAIN);
-        $this->command?->line('Teacher: teacher1@' . self::DOMAIN . ' | Bursar: bursar@' . self::DOMAIN);
+        $this->command?->line('Admin: ' . $this->adminEmail() . ' | Head teacher: headteacher@' . $this->richDomain());
+        $this->command?->line('Teacher: teacher1@' . $this->richDomain() . ' | Bursar: bursar@' . $this->richDomain());
         $this->command?->line('Passwords: unique random per account (set at account creation only, never echoed).');
     }
 
@@ -130,10 +139,10 @@ class DemoJuniorSchoolSeeder extends Seeder
     {
         // Key on email: SchoolObserver::created() overwrites slug with Str::slug(name).
         $school = School::firstOrCreate(
-            ['email' => 'demo-junior@klassapp.xyz'],
+            ['email' => $this->schoolEmail()],
             [
-                'name' => 'Demo Junior School',
-                'slug' => 'demo-junior-school',
+                'name' => $this->schoolName(),
+                'slug' => \Illuminate\Support\Str::slug($this->schoolName()),
                 'phone' => '077' . random_int(1000000, 9999999),
                 'registration_country' => 'Uganda',
                 'curriculum' => 'UNEB',
@@ -142,13 +151,13 @@ class DemoJuniorSchoolSeeder extends Seeder
         );
 
         $school->forceFill([
-            'name' => 'Demo Junior School',
+            'name' => $this->schoolName(),
             'registration_country' => 'Uganda',
             'curriculum' => 'UNEB',
             'school_category' => 'primary_nursery',
             'status' => 1,
             'is_demo' => 1,
-            'is_test' => 1,
+            'is_test' => $this->provisioned() ? 0 : 1,
             'toshi_enabled' => 0,
             'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
         ])->save();
@@ -165,15 +174,7 @@ class DemoJuniorSchoolSeeder extends Seeder
             ]
         );
 
-        foreach ([
-            ['name' => 'Term I', 'starts_on' => '2026-02-02', 'ends_on' => '2026-04-30', 'status' => 'last'],
-            ['name' => 'Term II', 'starts_on' => '2026-05-18', 'ends_on' => '2026-08-21', 'status' => 'last'],
-            // Term III opens in late August so that by the October demo the
-            // term is three months of four along. The fee tile caps collected
-            // at the months elapsed; a September–December term cannot show
-            // more than half collected in October.
-            ['name' => 'Term III', 'starts_on' => '2026-08-24', 'ends_on' => '2026-11-28', 'status' => 'current'],
-        ] as $term) {
+        foreach ($this->termRows() as $term) {
             AcademicTerm::updateOrCreate(
                 ['school_id' => $this->school->id, 'academic_year_id' => $this->year->id, 'name' => $term['name']],
                 ['starts_on' => $term['starts_on'], 'ends_on' => $term['ends_on'], 'status' => $term['status']]
@@ -185,7 +186,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function seedStaff(): void
     {
-        $this->staff['admin'] = $this->schoolAdmin(self::ADMIN_NAME);
+        $this->staff['admin'] = $this->schoolAdmin($this->adminName());
         $this->staff['head'] = $this->user('headteacher', 'Sarah Nabukenya', 4);
         $this->bursar = $this->user('bursar', 'Robert Ssekandi', 11);
         $this->staff['librarian'] = $this->user('library', 'Alice Kirabo', 8);
@@ -199,7 +200,7 @@ class DemoJuniorSchoolSeeder extends Seeder
         foreach ($teachers as $i => $name) {
             $teacher = $this->user('teacher' . ($i + 1), $name, 5);
             $teacher->forceFill([
-                'mobile_no' => $this->richFictionalPhone('teacher' . ($i + 1) . '@' . self::DOMAIN),
+                'mobile_no' => $this->richFictionalPhone('teacher' . ($i + 1) . '@' . $this->richDomain()),
             ])->save();
             $this->staff['teacher' . ($i + 1)] = $teacher;
         }
@@ -764,6 +765,91 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     // ───────────────────────────────────────────────────────────────── users
 
+    protected function richDomain(): string
+    {
+        return self::$provision['domain'] ?? self::DOMAIN;
+    }
+
+    protected function richCityName(): string
+    {
+        return self::$provision['city'] ?? 'Kampala';
+    }
+
+    /**
+     * About 60 percent of parents are flagged opted-in. Nothing is sent.
+     *
+     * @param  array<int, int>  $parentIds
+     */
+    protected function richMarkParentOptIn(array $parentIds): void
+    {
+        if (! $this->provisioned()) {
+            return;
+        }
+
+        $keep = (int) floor(count($parentIds) * 0.6);
+        foreach (array_values($parentIds) as $i => $id) {
+            \App\Models\WhatsAppUser::updateOrCreate(
+                ['user_id' => $id],
+                [
+                    'phone' => '+1555000' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                    'school_id' => $this->school->id,
+                    'opted_in' => $i < $keep,
+                ]
+            );
+        }
+    }
+
+    private function provisioned(): bool
+    {
+        return is_array(self::$provision);
+    }
+
+    private function schoolName(): string
+    {
+        return self::$provision['name'] ?? 'Demo Junior School';
+    }
+
+    private function schoolEmail(): string
+    {
+        return self::$provision['school_email'] ?? 'demo-junior@klassapp.xyz';
+    }
+
+    private function adminEmail(): string
+    {
+        return self::$provision['admin_email'] ?? self::ADMIN_EMAIL;
+    }
+
+    private function adminName(): string
+    {
+        return self::$provision['admin_name'] ?? self::ADMIN_NAME;
+    }
+
+    /** @return array<int, array{name:string,starts_on:string,ends_on:string,status:string}> */
+    private function termRows(): array
+    {
+        $terms = self::$provision['terms'] ?? null;
+        if (is_array($terms) && $terms !== []) {
+            return $terms;
+        }
+
+        return [
+            ['name' => 'Term I', 'starts_on' => '2026-02-02', 'ends_on' => '2026-04-30', 'status' => 'last'],
+            ['name' => 'Term II', 'starts_on' => '2026-05-18', 'ends_on' => '2026-08-21', 'status' => 'last'],
+            ['name' => 'Term III', 'starts_on' => '2026-08-24', 'ends_on' => '2026-11-28', 'status' => 'current'],
+        ];
+    }
+
+    private function rememberProvision(): void
+    {
+        if (! $this->provisioned()) {
+            return;
+        }
+
+        $manifest = \App\Support\DemoSeedManifest::read((int) $this->school->id) ?? [];
+        $manifest['provision'] = self::$provision;
+        \App\Support\DemoSeedManifest::write((int) $this->school->id, $manifest);
+    }
+
     /**
      * The school admin is one row per school: the active usergroup-3 account,
      * or the legacy demo-domain admin if that is the only one. A rerun renames
@@ -771,8 +857,8 @@ class DemoJuniorSchoolSeeder extends Seeder
      */
     private function schoolAdmin(string $name): User
     {
-        $email = self::ADMIN_EMAIL;
-        $legacy = 'admin@' . self::DOMAIN;
+        $email = $this->adminEmail();
+        $legacy = 'admin@' . $this->richDomain();
 
         $onSchool = User::where('school_id', $this->school->id)
             ->where('usergroup_id', 3)
@@ -820,7 +906,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function user(string $localPart, string $name, int $usergroupId): User
     {
-        $email = $localPart . '@' . self::DOMAIN;
+        $email = $localPart . '@' . $this->richDomain();
 
         $user = User::where('email', $email)->first();
 
