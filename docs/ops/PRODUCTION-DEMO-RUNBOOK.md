@@ -9,15 +9,41 @@ and `demo:reset` only.
 
 ## Variables
 
-| Name | Value | When |
-|---|---|---|
-| `DEMO_PROVISIONING_ENABLED` | `true` while provisioning, then `false` | The provision command refuses to run unless this is `true`. |
-| `SIGNUP_ENABLED` | `true` by default. `false` closes public registration | `/register` shows the early access page; sign-up posts and the verification routes create nothing and go to that page. Google sign-in works for existing users only. Login stays open. |
-| `WHATSAPP_REPLIES_ENABLED` | `true` by default. `false` stops every outbound WhatsApp message, including replies | Business sends and replies both stop. |
-| `PRIVACY_NOTICE_URL` | the public privacy notice address | Shown under the demo welcome line "Your number is removed after 30 minutes." and linked from the early access consent box. Empty means no link. |
+Set these on production. A change is read on the next deployment.
 
-A variable change is read on the next deployment. Set it, then deploy, then
-run the command.
+| Name | Production value | What it does |
+|---|---|---|
+| `SIGNUP_ENABLED` | `false` | Closes public self-serve registration. `/register` shows the early access page; sign-up posts and the verification routes create nothing and go to that page. Google sign-in works for existing users only. Login stays open. |
+| `PRIVACY_NOTICE_URL` | the public privacy notice address | Shown under the demo welcome line "Your number is removed after 30 minutes." and linked from the early access consent box. Empty means no link. |
+| `WHATSAPP_REPLIES_ENABLED` | `true` | `false` stops every outbound WhatsApp message, including replies. |
+| `DEMO_PROVISIONING_ENABLED` | `true` only while provisioning, then `false` | `demo:provision` refuses to run unless this is `true`. |
+| `SECURITY_HEADERS_ENABLED` | `true` | Sends the security headers. `false` turns them off. |
+| `SESSION_SECURE_COOKIE` | `true` | Session cookie is sent only over HTTPS. |
+| `TOSHI_DEFAULT_MODE` | `preview` | New schools start with the assistant off. |
+| `TOSHI_ONBOARDING_V2` | unset | Leave it unset on production. |
+
+The scheduler must be running. It expires demo chat links with `demo:expire-chats` every five minutes.
+
+Cloudflare, on the production hostname: Always Use HTTPS on, and HSTS on.
+
+## Production build
+
+Rehearsed locally on main `56e0a55`, with `NODE_ENV=production`. PHP `8.4.19`. Node `v24.15.0`. npm `11.12.1`. No production access.
+
+| Variant | npm install | Result |
+|---|---|---|
+| A | `npm ci --no-audit --no-fund` | fails: `sh: vite: command not found` |
+| B | `npm ci --include=dev --no-audit --no-fund` | passes (`vite build`, then `vitepress build docs-site`) |
+
+Both variants ran `composer install --no-dev --optimize-autoloader` first.
+
+Set these on the production environment. Names and values only:
+
+| Setting | Value |
+|---|---|
+| PHP version | `8.4` |
+| Node.js version | `24.15.0` |
+| Build command | `composer install --no-dev --optimize-autoloader && npm ci --include=dev --no-audit --no-fund && npm run build` |
 
 ## Order
 
