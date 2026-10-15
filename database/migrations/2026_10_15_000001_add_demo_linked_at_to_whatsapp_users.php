@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('whatsapp_users', 'demo_linked_at')) {
+            return;
+        }
+
         Schema::table('whatsapp_users', function (Blueprint $table) {
             $table->timestamp('demo_linked_at')->nullable()->after('demo_name');
         });
@@ -15,6 +19,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('whatsapp_users', 'demo_linked_at')) {
+            return;
+        }
+
         Schema::table('whatsapp_users', function (Blueprint $table) {
             $table->dropColumn('demo_linked_at');
         });
