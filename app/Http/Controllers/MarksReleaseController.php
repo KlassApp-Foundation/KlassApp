@@ -74,11 +74,16 @@ class MarksReleaseController extends Controller
             $data['when'] === 'schedule' ? $data['scheduled_for'] : null,
             $data['timezone'],
         );
+        $redirect = redirect()->route($this->area($request) . '.marks.releases.show', $release->id);
         if ($data['when'] !== 'schedule') {
+            // Sends are queued (one job per number): the page returns at once.
             $this->releases->run($release->id);
+            $queued = $this->releases->queuedCount($release->fresh());
+
+            return $redirect->with('status', 'Queued ' . $queued . ' ' . ($queued === 1 ? 'message' : 'messages') . '. Refresh this page to see each one sent.');
         }
 
-        return redirect()->route($this->area($request) . '.marks.releases.show', $release->id);
+        return $redirect;
     }
 
     public function show(Request $request, int $release): View
