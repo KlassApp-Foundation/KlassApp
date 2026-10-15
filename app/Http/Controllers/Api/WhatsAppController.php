@@ -770,7 +770,7 @@ class WhatsAppController extends Controller
                 // ── Incoming messages ──
                 $messages = $value['messages'] ?? [];
                 foreach ($messages as $msg) {
-                    $phone = WhatsAppPhoneHelper::normalise($msg['from'] ?? '');
+                    $phone = WhatsAppPhoneHelper::fromWaId($msg['from'] ?? '');
                     $messageId = $msg['id'] ?? '';
                     $msgType = $msg['type'] ?? '';
                     $body = '';
@@ -838,6 +838,12 @@ class WhatsAppController extends Controller
      */
     protected function processMetaMessage(string $phone, string $body, string $messageId, string $senderName = 'Demo User')
     {
+        // Live demo follow-along: BIND <code>, and MARKS / RESULTS for a bound
+        // or unbound number. Numbers linked to a real school fall through.
+        if (app(\App\Services\Demo\DemoBindReplies::class)->handle($phone, $body, $senderName)) {
+            return;
+        }
+
         $whatsappUser = WhatsAppUser::with(['user.userprofile', 'user.school'])
             ->where('phone', $phone)
             ->first();

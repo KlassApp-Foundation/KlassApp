@@ -118,7 +118,8 @@ Route::prefix('preview')->name('preview.')->group(function () {
 
 // ── Legacy marketing paths → 301 to the new landing (/) ──────────────────
 // The new landing has no features/pricing/schools sections, so those paths
-// land on /. Only /demo and GET /contact map to a section (#demo).
+// land on /. GET /contact maps to a section (#demo); /demo is the live demo
+// follow-along page.
 // Registered GET-only on purpose: Router::redirect() registers any-method and
 // would shadow POST /contact (contact.send), which must keep working.
 // Kept routes under these prefixes: POST /contact, GET /schools/{slug},
@@ -153,7 +154,10 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 
     return redirect('/contact?sent=true#contact');
 })->name('contact.send');
-Route::get('/demo', fn () => redirect('/#demo', 301));
+// Public follow-along page for the live demo (no login, noindex, rate limited).
+Route::get('/demo', [App\Http\Controllers\DemoFollowAlongController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('demo.follow-along');
 
 // Demo request capture (public form on the landing)
 Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class, 'store'])

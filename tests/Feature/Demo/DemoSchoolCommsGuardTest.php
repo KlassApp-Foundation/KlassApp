@@ -288,7 +288,7 @@ class DemoSchoolCommsGuardTest extends TestCase
         $this->assertStringContainsString('unlinked chats=0', Artisan::output());
         $this->assertNull($expired->fresh()->user_id);
         $this->assertStringContainsString(
-            "command('demo:expire-chats')->everyFiveMinutes()",
+            "command('demo:expire-chats')->everyMinute()",
             file_get_contents(app_path('Console/Kernel.php')),
         );
     }

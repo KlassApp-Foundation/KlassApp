@@ -18,6 +18,7 @@
         "php": "^8.2",
         "algolia/algoliasearch-client-php": "3.4.1",
         "aws/aws-sdk-php-laravel": "dev-master",
+        "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "dev-master",
         "caneara/axiom": "^3.2",
         "filament/tables": "^3.3",
