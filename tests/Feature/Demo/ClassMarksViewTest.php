@@ -62,7 +62,13 @@ class ClassMarksViewTest extends TestCase
 
     public function test_task9_class_marks_view_is_scoped_to_the_school(): void
     {
-        $this->actingAs($this->admin('demo'))
+        $admin = $this->admin('demo');
+        $this->actingAs($admin)
+            ->get('/admin/marks/classes/' . $this->fx['demo']['section']->id)
+            ->assertOk()
+            ->assertSee('data-testid="class-marks-grid"', false);
+
+        $this->actingAs($admin)
             ->get('/admin/marks/classes/' . $this->fx['real']['section']->id)
             ->assertNotFound();
     }

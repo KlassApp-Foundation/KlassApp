@@ -133,6 +133,9 @@ class DemoBindByCodeTest extends TestCase
     {
         $realParentPhone = (string) WhatsAppUser::where('user_id', $this->fx['real']['students'][0]['parent']->id)->value('phone');
         $amina = $this->amina();
+        // The same code binds a number that is not linked to a school.
+        $this->inbound(self::SENDER, 'BIND ' . $amina['code'])->assertOk();
+        $this->assertSame((int) $amina['user']->id, (int) WhatsAppUser::where('phone', '+' . self::SENDER)->value('demo_student_id'));
 
         $this->inbound(ltrim($realParentPhone, '+'), 'BIND ' . $amina['code'])->assertOk();
 
@@ -140,7 +143,9 @@ class DemoBindByCodeTest extends TestCase
         $this->assertNull($row->demo_student_id);
         $this->assertSame((int) $this->fx['real']['school']->id, (int) $row->school_id);
         foreach ($this->outbound() as $message) {
-            $this->assertStringNotContainsString('You are now following', $message['body']);
+            if ($message['to'] !== self::SENDER) {
+                $this->assertStringNotContainsString('You are now following', $message['body']);
+            }
         }
     }
 
@@ -238,12 +243,17 @@ class DemoBindByCodeTest extends TestCase
 
     public function test_task9_kill_switch_stops_every_reply(): void
     {
+        // With replies on, BIND answers.
+        $this->inbound('15550100005', 'BIND ' . $this->amina()['code'])->assertOk();
+        $this->assertCount(1, $this->outbound());
+        $this->assertStringContainsString('You are now following', $this->outbound()[0]['body']);
+
         config(['services.whatsapp.replies_enabled' => false]);
 
         foreach (['JOIN', 'BIND ' . $this->amina()['code'], 'MARKS', 'BIND ZZZZ', 'RESULTS'] as $text) {
             $this->inbound(self::SENDER, $text)->assertOk();
         }
 
-        Http::assertNothingSent();
+        $this->assertCount(1, $this->outbound(), 'nothing more is sent once replies are off');
     }
 }

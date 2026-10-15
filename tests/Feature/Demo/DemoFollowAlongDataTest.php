@@ -120,24 +120,32 @@ class DemoFollowAlongDataTest extends TestCase
     private function assertFollowAlongExam(School $school): void
     {
         $current = AcademicTerm::where('school_id', $school->id)->get()->firstWhere('status', 'current');
+        $this->assertNotNull($current);
 
         foreach ($this->examSections($school) as $section) {
-            $latest = LatestExamMarks::forSection((int) $school->id, (int) $section->id);
-            $this->assertNotNull($latest, "{$section->name} has no latest exam");
-            $this->assertSame('End of Term Examination · ' . $current->name, $latest['label'], $section->name);
-            $this->assertSame(self::SUBJECTS, array_column($latest['subjects'], 'name'), $section->name);
-            foreach ($latest['exams'] as $exam) {
+            $exams = $this->followAlongExams($school)->where('section_id', $section->id)->load('subject');
+            $subjects = $exams->map(fn ($exam) => $exam->subject->getRawOriginal('name'))->all();
+            foreach (self::SUBJECTS as $subject) {
+                $this->assertContains($subject, $subjects, "{$section->name} has no current-term {$subject} exam");
+            }
+            $exams = $exams->filter(fn ($exam) => in_array($exam->subject->getRawOriginal('name'), self::SUBJECTS, true));
+            foreach ($exams as $exam) {
                 $this->assertSame('undone', $exam->status, "{$section->name} exam is released");
             }
 
             $students = StudentAcademic::where('school_id', $school->id)
                 ->whereIn('standardLink_id', StandardLink::where('school_id', $school->id)->where('section_id', $section->id)->pluck('id'))
-                ->where('academic_year_id', $current->academic_year_id ?? StudentAcademic::where('school_id', $school->id)->max('academic_year_id'))
+                ->where('academic_year_id', StudentAcademic::where('school_id', $school->id)->max('academic_year_id'))
                 ->pluck('user_id');
             $this->assertNotEmpty($students);
             foreach ($students as $studentId) {
-                $this->assertSame(4, $latest['marks']->where('student_id', $studentId)->count(), "{$section->name} student {$studentId}");
+                $this->assertSame(4, DB::table('marks')->whereIn('exam_id', $exams->pluck('id'))->where('student_id', $studentId)->count(), "{$section->name} student {$studentId}");
             }
+
+            // It is the latest exam of the class, the one MARKS and the class view show.
+            $latest = LatestExamMarks::forSection((int) $school->id, (int) $section->id);
+            $this->assertSame('End of Term Examination · ' . $current->name, $latest['label'] ?? null, $section->name);
+            $this->assertSame(self::SUBJECTS, array_column($latest['subjects'], 'name'), $section->name);
         }
 
         // Unreleased: no report cards for the current term.

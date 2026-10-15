@@ -17,7 +17,6 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
-use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -97,10 +96,16 @@ trait BuildsFollowAlongSchools
                 }
             }
 
-            $rows[] = ['user' => $student, 'parent' => $parent, 'kls' => $kls, 'code' => DemoStudentCode::fromKls($kls), 'first' => $first];
+            $rows[] = ['user' => $student, 'parent' => $parent, 'kls' => $kls, 'code' => self::fxCode($kls), 'first' => $first];
         }
 
         return ['school' => $school, 'section' => $section, 'students' => $rows, 'teacher' => $teacher];
+    }
+
+    /** The documented code rule, written out here: base 36 of the KLS number's digits. */
+    private static function fxCode(string $kls): string
+    {
+        return strtoupper(base_convert(substr($kls, 3), 10, 36));
     }
 
     private function fxGrade(int $score): string
