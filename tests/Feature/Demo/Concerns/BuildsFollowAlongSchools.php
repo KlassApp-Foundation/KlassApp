@@ -87,7 +87,7 @@ trait BuildsFollowAlongSchools
 
             $parent = User::create(['school_id' => $school->id, 'usergroup_id' => 7, 'name' => 'Parent of ' . $first, 'email' => 'parent' . $school->id . '-' . $n . '@example.com', 'password' => bcrypt('x'), 'status' => 'active']);
             StudentParentLink::create(['school_id' => $school->id, 'parent_id' => $parent->id, 'student_id' => $student->id, 'status' => 1]);
-            WhatsAppUser::create(['phone' => sprintf('+1555019%04d', $school->id * 10 + $n), 'user_id' => $parent->id, 'school_id' => $school->id, 'opted_in' => true]);
+            WhatsAppUser::create(['phone' => sprintf('+25670019%04d', $school->id * 10 + $n), 'user_id' => $parent->id, 'school_id' => $school->id, 'opted_in' => true]);
 
             foreach ($marks as $subjectName => $score) {
                 foreach (['old' => 40, 'latest' => $score] as $which => $value) {

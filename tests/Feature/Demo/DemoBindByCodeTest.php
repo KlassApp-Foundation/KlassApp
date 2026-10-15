@@ -23,7 +23,7 @@ class DemoBindByCodeTest extends TestCase
     use BuildsFollowAlongSchools;
     use RefreshDatabase;
 
-    private const SENDER = '15550100004';
+    private const SENDER = '256700000104';
 
     protected function setUp(): void
     {
@@ -152,11 +152,11 @@ class DemoBindByCodeTest extends TestCase
     public function test_task9_marks_from_an_unbound_number_gets_a_polite_reply(): void
     {
         $this->inbound(self::SENDER, 'MARKS')->assertOk();
-        $this->inbound('15550100005', 'results')->assertOk();
+        $this->inbound('256700000105', 'results')->assertOk();
 
         $sent = $this->outbound();
         $this->assertCount(2, $sent);
-        $this->assertSame([self::SENDER, '15550100005'], array_column($sent, 'to'));
+        $this->assertSame([self::SENDER, '256700000105'], array_column($sent, 'to'));
         foreach ($sent as $message) {
             $this->assertSame(
                 "This number is not following a demo student right now.\n\n"
@@ -229,12 +229,24 @@ class DemoBindByCodeTest extends TestCase
 
     public function test_task9_replies_only_ever_go_to_the_inbound_sender(): void
     {
-        $other = '15550100006';
-        foreach ([[self::SENDER, 'JOIN'], [self::SENDER, 'BIND ' . $this->amina()['code']], [$other, 'BIND nope'], [self::SENDER, 'MARKS'], [$other, 'MARKS'], [self::SENDER, 'REPORT']] as [$from, $text]) {
+        $other = '256700000106';
+        // Uganda-format senders, as Meta sends them (digits, no +).
+        $steps = [
+            [self::SENDER, 'JOIN', null],
+            [self::SENDER, 'BIND ' . $this->amina()['code'], 'You are now following *Amina Nakato*'],
+            [$other, 'BIND nope', 'could not find a demo student'],
+            [self::SENDER, 'MARKS', '📊 *Marks for Amina Nakato*'],
+            [$other, 'MARKS', 'This number is not following a demo student'],
+            [self::SENDER, 'REPORT', null],
+        ];
+        foreach ($steps as [$from, $text, $expect]) {
             $before = count($this->outbound());
             $this->inbound($from, $text)->assertOk();
             $new = array_slice($this->outbound(), $before);
             $this->assertNotEmpty($new, "No reply to {$text}");
+            if ($expect !== null) {
+                $this->assertStringContainsString($expect, $new[0]['body'], "Reply to \"{$text}\"");
+            }
             foreach ($new as $message) {
                 $this->assertSame($from, $message['to'], "Reply to \"{$text}\" went to another number");
             }
@@ -244,7 +256,7 @@ class DemoBindByCodeTest extends TestCase
     public function test_task9_kill_switch_stops_every_reply(): void
     {
         // With replies on, BIND answers.
-        $this->inbound('15550100005', 'BIND ' . $this->amina()['code'])->assertOk();
+        $this->inbound('256700000105', 'BIND ' . $this->amina()['code'])->assertOk();
         $this->assertCount(1, $this->outbound());
         $this->assertStringContainsString('You are now following', $this->outbound()[0]['body']);
 

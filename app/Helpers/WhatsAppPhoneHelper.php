@@ -18,23 +18,6 @@ class WhatsAppPhoneHelper
         return '+' . $digits;
     }
 
-    /**
-     * The sender of a Meta webhook message. Meta sends the full international
-     * number as digits ("15550100004", "256770000001"), so it is kept as is;
-     * only a local-looking number falls back to normalise(). Replies then go
-     * back to the number that wrote, whatever its country.
-     */
-    public static function fromWaId(string $waId): string
-    {
-        $digits = preg_replace('/\D/', '', $waId);
-
-        if ($digits === '' || str_starts_with($digits, '0') || strlen($digits) < 11) {
-            return self::normalise($waId);
-        }
-
-        return '+' . $digits;
-    }
-
     public static function validate(string $input): bool
     {
         $normalised = self::normalise($input);

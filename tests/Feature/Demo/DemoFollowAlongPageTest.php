@@ -95,7 +95,7 @@ class DemoFollowAlongPageTest extends TestCase
         $response->assertDontSee($real['code']);
         $response->assertDontSee('Hillside');
         $this->assertDoesNotMatchRegularExpression('/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}/', $html);
-        $this->assertStringNotContainsString('+1555019', $html);
+        $this->assertStringNotContainsString('+25670019', $html);
     }
 
     public function test_task9_demo_page_without_a_number_shows_no_whatsapp_links(): void
