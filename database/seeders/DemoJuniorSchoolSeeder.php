@@ -74,6 +74,26 @@ class DemoJuniorSchoolSeeder extends Seeder
      */
     public static ?array $provision = null;
 
+    /**
+     * Students per class. Null keeps the staging plan below. A provisioned
+     * school stores its plan in $provision['student_plan'] (and so in its
+     * manifest), so demo:reset and demo:refresh reseed the same roster.
+     *
+     * @var array<string, int>|null
+     */
+    public static ?array $studentPlan = null;
+
+    /**
+     * The live demo roster: 70 students with marks (10 in each of P.1 to
+     * P.7) plus 6 nursery pupils, so about 50 attendees each get their own
+     * BIND code. demo:provision uses it.
+     */
+    public const LIVE_DEMO_PLAN = [
+        'Baby Class' => 2, 'Middle Class' => 2, 'Top Class' => 2,
+        'P.1' => 10, 'P.2' => 10, 'P.3' => 10, 'P.4' => 10,
+        'P.5' => 10, 'P.6' => 10, 'P.7' => 10,
+    ];
+
     private School $school;
 
     private AcademicYear $year;
@@ -340,7 +360,7 @@ class DemoJuniorSchoolSeeder extends Seeder
 
     private function seedStudents(): void
     {
-        $plan = [
+        $plan = self::$provision['student_plan'] ?? self::$studentPlan ?? [
             'Baby Class' => 4, 'Middle Class' => 4, 'Top Class' => 4,
             'P.1' => 6, 'P.2' => 6, 'P.3' => 6, 'P.4' => 6,
             'P.5' => 10, 'P.6' => 10, 'P.7' => 10,
@@ -692,6 +712,21 @@ class DemoJuniorSchoolSeeder extends Seeder
         }
 
         $this->command?->info('Exams + marks seeded: ' . $marksCount . ' mark rows across classes.');
+    }
+
+    /**
+     * Put the live demo exam of an existing demo school back to its seeded,
+     * unreleased baseline (status and marks) without reseeding anything
+     * else. Used by demo:nightly-reset. Refuses a school that is not is_demo.
+     */
+    public function restoreFollowAlongExam(School $school): void
+    {
+        if ((int) $school->is_demo !== 1) {
+            throw new \RuntimeException('Refusing: not a demo school.');
+        }
+        $this->school = $school;
+        $this->year = AcademicYear::where('school_id', $school->id)->where('status', 1)->orderByDesc('id')->firstOrFail();
+        $this->richEnsureFollowAlongExam();
     }
 
     private function gradeFor(int $score): string

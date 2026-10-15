@@ -56,7 +56,14 @@ class User extends Authenticatable implements HasMedia
 
     protected $casts = [
         'teacher_designations' => 'array',
+        'is_public_demo' => 'boolean',
     ];
+
+    /** The live demo's admin, whose password is public (see PublicDemoLockdown). */
+    public function isPublicDemo(): bool
+    {
+        return (bool) ($this->attributes['is_public_demo'] ?? false);
+    }
 
     /**
      * The attributes that should be hidden for arrays.

@@ -881,6 +881,12 @@ Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
 Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
 Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');
+// Task 9 Tier 2: release marks to parents (demo-bound numbers only for now).
+Route::get('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'index'])->name('admin.marks.releases.index');
+Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController::class, 'create'])->name('admin.marks.releases.create');
+Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('admin.marks.releases.preview');
+Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('admin.marks.releases.store');
+Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('admin.marks.releases.show');
 Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");

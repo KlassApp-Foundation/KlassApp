@@ -61,6 +61,29 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() { 
+        // Public demo admin (users.is_public_demo): no email and no notification
+        // leaves the app for anything that account starts, including queued
+        // jobs (the request's Context travels with them). WhatsApp is limited
+        // separately by WHATSAPP_DEMO_ONLY_RECIPIENTS.
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Mail\Events\MessageSending::class, function () {
+            if (\App\Http\Middleware\PublicDemoLockdown::actorActive()) {
+                \Illuminate\Support\Facades\Log::warning('[public-demo] email refused');
+
+                return false;
+            }
+
+            return null;
+        });
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Notifications\Events\NotificationSending::class, function () {
+            if (\App\Http\Middleware\PublicDemoLockdown::actorActive()) {
+                \Illuminate\Support\Facades\Log::warning('[public-demo] notification refused');
+
+                return false;
+            }
+
+            return null;
+        });
+
         // OpenCode Go gateway rejects session-less requests (MissingSessionID).
         // Attach the session id to any HTTP request heading for the host of the
         // configured OpenAI-compatible provider (Toshi's LLM path, health checks).
@@ -79,6 +102,7 @@ class AppServiceProvider extends ServiceProvider {
         // Named limiters keep their own counters. Plain `throttle:N,M` shares ONE counter per
         // IP across every such route, which would let status polling starve the 3/min resend limit.
         RateLimiter::for('verify-status', fn (Request $request) => Limit::perMinute(60)->by('verify-status|'.$request->ip()));
+        RateLimiter::for('demo-page', fn (Request $request) => Limit::perMinute((int) config('klassapp.demo.page_throttle_per_minute', 60))->by('demo-page|'.$request->ip()));
         RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
 
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\School;
 use App\Models\WhatsAppUser;
+use App\Services\Demo\DemoBindApproval;
 use App\Services\Demo\DemoFollowAlong;
 use Illuminate\Console\Command;
 
@@ -13,7 +14,9 @@ use Illuminate\Console\Command;
  *
  * The command runs every minute and unlinks each kind one interval before
  * its limit, so no link is kept longer than the time the chat promises.
- * It unlinks only; it does not delete the whatsapp_users row.
+ * It unlinks only; it does not delete the whatsapp_users row. A BIND
+ * request still waiting for approval (DEMO_BIND_REQUIRES_APPROVAL) after
+ * the same TTL is closed: its approval is rejected as expired.
  *
  * Only is_demo schools are visited, and each visit is scoped by that
  * school's id. A non-demo school is refused. --dry-run prints a count
@@ -46,7 +49,12 @@ class DemoExpireChatsCommand extends Command
         $tryDemoCutoff = now()->subMinutes(30 - $interval);
         $bindCutoff = DemoFollowAlong::bindCutoff();
         $total = 0;
+        $requests = 0;
+        $approval = app(DemoBindApproval::class);
         foreach ($schools as $school) {
+            // BIND requests nobody approved within the TTL are closed too.
+            $requests += $approval->expirePending($school, $bindCutoff, (bool) $this->option('dry-run'));
+
             $query = WhatsAppUser::query()
                 ->where('school_id', $school->id)
                 ->whereNotNull('demo_linked_at')
@@ -70,8 +78,14 @@ class DemoExpireChatsCommand extends Command
 
         if ($this->option('dry-run')) {
             $this->info("would unlink chats={$total} (dry run — nothing changed)");
+            if ($requests > 0) {
+                $this->info("would expire pending bind requests={$requests}");
+            }
         } else {
             $this->info("unlinked chats={$total}");
+            if ($requests > 0) {
+                $this->info("expired pending bind requests={$requests}");
+            }
         }
 
         return self::SUCCESS;

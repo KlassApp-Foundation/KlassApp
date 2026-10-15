@@ -58,7 +58,7 @@ class DemoFollowAlongDataTest extends TestCase
         $this->assertFollowAlongExam($school);
         $roster = DemoFollowAlong::roster($school);
         $this->assertGreaterThanOrEqual(20, $roster->count());
-        $this->assertLessThanOrEqual(30, $roster->count());
+        $this->assertLessThanOrEqual(DemoFollowAlong::ROSTER_LIMIT, $roster->count());
     }
 
     public function test_task9_demo_refresh_puts_the_follow_along_exam_back(): void

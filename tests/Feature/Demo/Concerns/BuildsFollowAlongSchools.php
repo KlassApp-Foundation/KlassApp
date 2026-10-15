@@ -99,7 +99,24 @@ trait BuildsFollowAlongSchools
             $rows[] = ['user' => $student, 'parent' => $parent, 'kls' => $kls, 'code' => self::fxCode($kls), 'first' => $first];
         }
 
-        return ['school' => $school, 'section' => $section, 'students' => $rows, 'teacher' => $teacher];
+        return ['school' => $school, 'section' => $section, 'students' => $rows, 'teacher' => $teacher, 'link' => $link, 'exams' => $exams];
+    }
+
+    /** A Tier 2 release record of the latest exam (End of Term, Term III) of a fixture school. */
+    protected function releaseLatestExam(string $key, string $status = 'released', string $scope = 'school'): void
+    {
+        $fx = $this->fx[$key];
+        \App\Models\MarksRelease::create([
+            'school_id' => $fx['school']->id,
+            'exam_id' => $fx['exams']['latest']['Mathematics']->id,
+            'scope' => $scope,
+            'standard_link_id' => $scope === 'class' ? $fx['link']->id : null,
+            'scheduled_at' => now(),
+            'released_at' => $status === 'released' ? now() : null,
+            'status' => $status,
+            'created_by' => $fx['teacher']->id,
+            'timezone' => 'Africa/Kampala',
+        ]);
     }
 
     /** The documented code rule, written out here: base 36 of the KLS number's digits. */

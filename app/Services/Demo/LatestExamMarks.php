@@ -42,6 +42,17 @@ final class LatestExamMarks
         return $latest ? self::group($schoolId, $sectionId, $latest, $studentId) : null;
     }
 
+    /**
+     * One given exam (the exam type and term of $anchor) for one class, with
+     * one student's marks when $studentId is set.
+     *
+     * @return array{label:string, exams:Collection, subjects:array<int, array{id:int,name:string}>, marks:Collection}
+     */
+    public static function forExam(int $schoolId, int $sectionId, Exam $anchor, ?int $studentId = null): array
+    {
+        return self::group($schoolId, $sectionId, $anchor, $studentId);
+    }
+
     private static function latestExam(int $schoolId, int $sectionId, ?int $studentId): ?Exam
     {
         return Exam::query()

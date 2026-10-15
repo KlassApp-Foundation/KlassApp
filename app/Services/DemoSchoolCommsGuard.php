@@ -30,6 +30,9 @@ final class DemoSchoolCommsGuard
 
     private static int $businessSends = 0;
 
+    /** Digits of the one number a demo marks release may reach right now. */
+    private static ?string $releasePhone = null;
+
     /** @return array<int> */
     public static function demoSchoolIds(): array
     {
@@ -46,6 +49,7 @@ final class DemoSchoolCommsGuard
         self::$demoSchoolIds = null;
         self::$inboundReplies = 0;
         self::$businessSends = 0;
+        self::$releasePhone = null;
     }
 
     public static function blocksSchool(?int $schoolId): bool
@@ -133,6 +137,23 @@ final class DemoSchoolCommsGuard
         }
     }
 
+    /**
+     * A demo marks release to ONE number with an active demo binding (the
+     * caller checks the binding). Only that exact number passes while the
+     * callback runs; every other demo recipient stays blocked, and queued
+     * business sends stay blocked too.
+     */
+    public static function duringBoundDemoRelease(string $phone, callable $callback): mixed
+    {
+        $previous = self::$releasePhone;
+        self::$releasePhone = preg_replace('/\D+/', '', $phone) ?: null;
+        try {
+            return $callback();
+        } finally {
+            self::$releasePhone = $previous;
+        }
+    }
+
     public static function demoSessionNotice(): string
     {
         $notice = 'Your number is removed after 30 minutes.';
@@ -149,6 +170,10 @@ final class DemoSchoolCommsGuard
         $blocked = ($userId !== null && self::blocksUser($userId)) || self::blocksPhone($phone);
         if (! $blocked || self::$businessSends > 0) {
             return $blocked;
+        }
+
+        if (self::$releasePhone !== null && preg_replace('/\D+/', '', (string) $phone) === self::$releasePhone) {
+            return false;
         }
 
         return self::$inboundReplies === 0;

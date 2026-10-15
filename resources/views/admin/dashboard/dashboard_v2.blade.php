@@ -225,6 +225,7 @@
                             @endforeach
                         </div>
                         <a class="dv2-btn dv2-btn--soft" style="margin-top:12px" href="{{ route('admin.marks.classes') }}" data-testid="dashboard-v2-view-class-marks">View marks by class</a>
+                        @include('marks-releases._button', ['area' => 'admin', 'class' => 'dv2-btn dv2-btn--soft', 'style' => 'margin-top:12px'])
                     @else
                         <div class="dv2-empty-in">
                             <b>No marks entered yet</b>

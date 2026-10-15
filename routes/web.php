@@ -156,7 +156,7 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 })->name('contact.send');
 // Public follow-along page for the live demo (no login, noindex, rate limited).
 Route::get('/demo', [App\Http\Controllers\DemoFollowAlongController::class, 'show'])
-    ->middleware('throttle:60,1')
+    ->middleware('throttle:demo-page') // klassapp.demo.page_throttle_per_minute, default 60
     ->name('demo.follow-along');
 
 // Demo request capture (public form on the landing)

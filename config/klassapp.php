@@ -26,6 +26,16 @@
 |   bind_ttl_minutes  env DEMO_BIND_TTL_MINUTES (default 45). A number bound
 |                     with BIND <code> is unlinked by demo:expire-chats after
 |                     this many minutes.
+|   bind_requires_approval  env DEMO_BIND_REQUIRES_APPROVAL (default false).
+|                     When true, BIND <code> records a request on the admin
+|                     Approvals page instead of linking at once; approval
+|                     links the number and the TTL counts from the approval.
+|                     A request nobody approves closes after the same TTL.
+|   release_webhook_url     env DEMO_RELEASE_WEBHOOK_URL. When set together
+|   release_webhook_secret  with env DEMO_RELEASE_WEBHOOK_SECRET, a demo
+|                     school's marks release POSTs JSON (the exam, and each
+|                     student's code and class, nothing else) signed with
+|                     HMAC-SHA256 in the X-KlassApp-Signature header.
 |   links             shared links shown on the page. An entry without a url
 |                     is not shown. The privacy notice link comes from
 |                     services.whatsapp.privacy_notice_url (PRIVACY_NOTICE_URL).
@@ -39,6 +49,15 @@ return [
     'demo' => [
         'whatsapp_number' => env('WHATSAPP_DEMO_NUMBER'),
         'bind_ttl_minutes' => (int) env('DEMO_BIND_TTL_MINUTES', 45),
+        // Loads of the public /demo page allowed per minute per IP. Everyone on one
+        // café wifi shares an IP, so the local kit sets 600; the default stays 60.
+        // demo:nightly-reset at 03:00 Africa/Kampala (provisioned demo schools only).
+        'nightly_reset_enabled' => filter_var(env('DEMO_NIGHTLY_RESET_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        // An empty value (as in .env.example) means the default, not 0.
+        'page_throttle_per_minute' => max(1, is_numeric(env('DEMO_PAGE_THROTTLE_PER_MINUTE')) ? (int) env('DEMO_PAGE_THROTTLE_PER_MINUTE') : 60),
+        'bind_requires_approval' => filter_var(env('DEMO_BIND_REQUIRES_APPROVAL', false), FILTER_VALIDATE_BOOLEAN),
+        'release_webhook_url' => env('DEMO_RELEASE_WEBHOOK_URL'),
+        'release_webhook_secret' => env('DEMO_RELEASE_WEBHOOK_SECRET'),
         'links' => [
             ['label' => 'n8n workflows', 'url' => null],
             ['label' => 'Project repository', 'url' => 'https://github.com/KlassApp-Foundation/KlassApp'],
