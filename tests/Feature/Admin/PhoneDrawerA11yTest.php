@@ -21,4 +21,22 @@ class PhoneDrawerA11yTest extends TestCase
         $css = file_get_contents(base_path('packages/toshi-ui/resources/css/toshi-ui.css'));
         $this->assertStringContainsString('[data-toshi-resize-handle] { display: none !important; }', $css);
     }
+
+    public function test_phone_drawer_tab_order_skips_controls_that_are_not_rendered(): void
+    {
+        $js = file_get_contents(public_path('js/custom.js'));
+        $start = strpos($js, 'function drawerFocusable');
+        $this->assertNotFalse($start);
+        $body = substr($js, $start, 700);
+        $this->assertStringContainsString('getClientRects().length', $body);
+        $this->assertStringContainsString("closest('[inert]')", $body);
+    }
+
+    public function test_phone_drawer_script_url_changes_when_the_file_changes(): void
+    {
+        foreach (['layouts/app.blade.php', 'layouts/superadmin-app.blade.php'] as $layout) {
+            $blade = file_get_contents(resource_path('views/'.$layout));
+            $this->assertStringContainsString("asset('js/custom.js') }}?v={{ filemtime(public_path('js/custom.js')) }}", $blade, $layout);
+        }
+    }
 }

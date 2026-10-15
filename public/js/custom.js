@@ -262,11 +262,15 @@ $(document).ready(function(){
     });
   }
 
+  // Only controls that are really rendered can take focus. A sub-item inside a
+  // collapsed group (x-show sets display:none on the group, not on the link)
+  // keeps its own display, so it must be skipped by checking for layout boxes;
+  // otherwise focus() on it does nothing and Tab never moves on.
   function drawerFocusable(drawer) {
     return Array.prototype.filter.call(drawer.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]'), function (el) {
-      if (el.tabIndex < 0) return false;
-      var cs = window.getComputedStyle(el);
-      return cs.display !== 'none' && cs.visibility !== 'hidden';
+      if (el.tabIndex < 0 || el.closest('[inert]')) return false;
+      if (!el.getClientRects().length) return false;
+      return window.getComputedStyle(el).visibility !== 'hidden';
     });
   }
 
