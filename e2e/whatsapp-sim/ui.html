@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>WhatsApp simulator (local)</title>
+<style>
+  :root { --bg: #f4f5f7; --card: #fff; --ink: #1d2433; --muted: #5b6474; --me: #d9fdd3; --bot: #fff; --line: #dde1e7; --accent: #1f6feb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  header .note { color: var(--muted); font-size: 13px; }
+  label { font-size: 13px; color: var(--muted); }
+  input, select, button { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  #chat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-height: 360px; max-height: 65vh; overflow-y: auto; }
+  .msg { max-width: 80%; margin: 6px 0; padding: 8px 10px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; border: 1px solid var(--line); }
+  .me { margin-left: auto; background: var(--me); }
+  .bot { margin-right: auto; background: var(--bot); }
+  .meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .choices { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .choices button { font-size: 13px; }
+  .sys { text-align: center; color: var(--muted); font-size: 12px; margin: 8px 0; }
+  form { display: flex; gap: 8px; margin-top: 12px; }
+  form input { flex: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>WhatsApp simulator</h1>
+  <label>From <input id="phone" value="+15550100009" size="15" aria-label="Sender phone number"></label>
+  <label>Name <input id="name" value="Sim User" size="12" aria-label="Sender profile name"></label>
+  <button id="refresh" type="button">Refresh</button>
+  <button id="clear" type="button">Clear view</button>
+  <span class="note">Local only. Fictional numbers. Replies come from the mock Cloud API.</span>
+</header>
+<main>
+  <div id="chat" role="log" aria-live="polite"></div>
+  <form id="send">
+    <input id="text" placeholder="Type a message, e.g. Hi" aria-label="Message text" autocomplete="off">
+    <button class="primary" type="submit">Send</button>
+  </form>
+</main>
+<script>
+(function () {
+  var chat = document.getElementById('chat');
+  var lastSeq = 0;
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function scroll() { chat.scrollTop = chat.scrollHeight; }
+
+  function addMine(label) {
+    var m = el('div', 'msg me');
+    m.appendChild(el('div', 'meta', document.getElementById('phone').value));
+    m.appendChild(el('div', '', label));
+    chat.appendChild(m); scroll();
+  }
+
+  function addBot(rec) {
+    var s = rec.summary || {};
+    var m = el('div', 'msg bot');
+    m.appendChild(el('div', 'meta', 'KlassApp to ' + rec.to + ' · ' + s.kind));
+    if (s.header) m.appendChild(el('strong', '', s.header + '\n'));
+    m.appendChild(el('div', '', s.text || ''));
+    var choices = el('div', 'choices');
+    (s.buttons || []).forEach(function (b) {
+      var btn = el('button', '', b.title); btn.type = 'button';
+      btn.addEventListener('click', function () { send({ kind: 'button', id: b.id, title: b.title }); });
+      choices.appendChild(btn);
+    });
+    (s.rows || []).forEach(function (r) {
+      var btn = el('button', '', r.title); btn.type = 'button';
+      btn.addEventListener('click', function () { send({ kind: 'list', id: r.id, title: r.title }); });
+      choices.appendChild(btn);
+    });
+    if (s.kind === 'document') {
+      m.appendChild(el('div', '', '📄 ' + (s.filename || 'document')));
+      if (/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(s.link || '')) {
+        var a = el('a', '', 'Open PDF (local app)'); a.href = s.link; a.target = '_blank'; a.rel = 'noopener';
+        m.appendChild(a);
+      } else if (s.link) {
+        m.appendChild(el('div', 'meta', 'link: ' + s.link));
+      }
+    }
+    if (choices.childNodes.length) m.appendChild(choices);
+    chat.appendChild(m); scroll();
+  }
+
+  function sys(text) { chat.appendChild(el('div', 'sys', text)); scroll(); }
+
+  function send(input) {
+    input.from = document.getElementById('phone').value;
+    input.name = document.getElementById('name').value;
+    addMine(input.kind === 'text' ? input.text : '[' + input.kind + '] ' + input.title);
+    return fetch('/__sim/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.error) { sys('Error: ' + res.error.message); return; }
+        sys('webhook answered HTTP ' + res.status + ' in ' + res.ms + ' ms');
+        if (!res.outbound.length) sys('(no outbound message was sent)');
+        res.outbound.forEach(function (rec) { lastSeq = Math.max(lastSeq, rec.seq); addBot(rec); });
+      })
+      .catch(function (e) { sys('Error: ' + e.message); });
+  }
+
+  document.getElementById('send').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = document.getElementById('text');
+    if (!t.value.trim()) return;
+    send({ kind: 'text', text: t.value });
+    t.value = '';
+  });
+
+  document.getElementById('refresh').addEventListener('click', function () {
+    fetch('/__sim/outbox?since=' + lastSeq + '&to=' + encodeURIComponent(document.getElementById('phone').value))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.messages.length) sys('(nothing new)');
+        res.messages.forEach(function (rec) { lastSeq = Math.max(lastSeq, rec.seq); addBot(rec); });
+      });
+  });
+
+  document.getElementById('clear').addEventListener('click', function () { chat.textContent = ''; });
+})();
+</script>
+</body>
+</html>

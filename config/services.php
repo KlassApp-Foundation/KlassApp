@@ -54,6 +54,9 @@ return [
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'verify_signature' => env('WHATSAPP_VERIFY_SIGNATURE', true),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
+        // Base URL for outbound Cloud API calls. Production default is Meta's Graph API host;
+        // override only for a local simulator (e2e/whatsapp-sim), never in production.
+        'graph_api_base_url' => env('WHATSAPP_GRAPH_API_BASE_URL', 'https://graph.facebook.com'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
         'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),
         'parent_link_flow_screen' => env('WHATSAPP_PARENT_LINK_FLOW_SCREEN', 'LINK_REQUEST'),

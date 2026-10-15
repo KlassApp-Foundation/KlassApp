@@ -22,12 +22,22 @@ class WhatsAppBusinessService
     protected ?string $token;
     protected ?string $phoneNumberId;
     protected ?string $apiVersion;
+    protected string $graphBaseUrl;
 
     public function __construct()
     {
         $this->token = config('services.whatsapp.business_api_token', env('WHATSAPP_BUSINESS_API_TOKEN'));
         $this->phoneNumberId = config('services.whatsapp.business_phone_number_id', env('WHATSAPP_BUSINESS_PHONE_NUMBER_ID'));
         $this->apiVersion = config('services.whatsapp.business_api_version', env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'));
+        $this->graphBaseUrl = rtrim((string) config('services.whatsapp.graph_api_base_url', 'https://graph.facebook.com'), '/');
+    }
+
+    /**
+     * Cloud API messages endpoint (base URL from services.whatsapp.graph_api_base_url).
+     */
+    protected function messagesUrl(): string
+    {
+        return "{$this->graphBaseUrl}/{$this->apiVersion}/{$this->phoneNumberId}/messages";
     }
 
     /**
@@ -88,7 +98,7 @@ class WhatsAppBusinessService
 
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+            ->post($this->messagesUrl(), [
                 'messaging_product' => 'whatsapp',
                 'recipient_type'    => 'individual',
                 'to'                => $cleanPhone,
@@ -171,7 +181,7 @@ class WhatsAppBusinessService
 
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+            ->post($this->messagesUrl(), [
                 'messaging_product' => 'whatsapp',
                 'recipient_type'    => 'individual',
                 'to'                => $cleanPhone,
@@ -272,7 +282,7 @@ class WhatsAppBusinessService
 
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+            ->post($this->messagesUrl(), [
                 'messaging_product' => 'whatsapp',
                 'recipient_type'    => 'individual',
                 'to'                => $cleanPhone,
@@ -374,7 +384,7 @@ class WhatsAppBusinessService
 
             $response = Http::withToken($this->token)
                 ->withHeaders(['Content-Type' => 'application/json'])
-                ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+                ->post($this->messagesUrl(), [
                     'messaging_product' => 'whatsapp',
                     'recipient_type'    => 'individual',
                     'to'                => $cleanPhone,
@@ -497,7 +507,7 @@ class WhatsAppBusinessService
 
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+            ->post($this->messagesUrl(), [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
                 'to' => $cleanPhone,
@@ -675,7 +685,7 @@ class WhatsAppBusinessService
 
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", $body);
+            ->post($this->messagesUrl(), $body);
 
         $respBody = $response->json();
         $messageId = $respBody['messages'][0]['id'] ?? Str::uuid()->toString();
