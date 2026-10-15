@@ -19,7 +19,7 @@ function listPage(title) {
       <button type="button" class="menu" style="height:32px;width:32px">Menu</button>
     </div>`).join('');
   return `<!doctype html>
-    <style>${css} :root { --ka-topbar-h: 64px; } body { margin: 0; }</style>
+    <style>${css} :root { --ka-topbar-h: 64px; } body { margin: 0; } *, ::before, ::after { box-sizing: border-box; }</style>
     <body class="toshi-collapsed">
       <script>
         (function () {
@@ -38,7 +38,7 @@ function listPage(title) {
         ${rows}
         <nav class="pager" style="height:48px">Pager</nav>
       </div>
-      <div id="toshi-toggle-wrapper" data-toshi-mode="assistant" data-toshi-user="42" data-setup-done="2" data-setup-total="8">
+      <div id="toshi-toggle-wrapper" data-toshi-mode="assistant" data-toshi-user="42" data-setup-done="2" data-setup-total="8" data-pill-page="1">
         <button type="button" id="toshi-toggle" class="toshi-toggle" aria-label="Open Toshi"><span class="toshi-handle-mark">K</span></button>
         <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" aria-label="Open Toshi">
           <span class="toshi-entry-ring"><span class="toshi-entry-mark">K</span></span>
@@ -46,6 +46,21 @@ function listPage(title) {
         </button>
       </div>
     </body>`;
+}
+
+// Real wheel input over the content: at 1280+ the content area is the scroller,
+// so a synthetic window scroll event never reaches it.
+async function wheel(page, dy) {
+  await page.mouse.move(300, 300);
+  await page.mouse.wheel(0, dy);
+  // Wait until the (possibly smooth) scroll settles.
+  let last = -1;
+  for (let i = 0; i < 40; i++) {
+    await page.waitForTimeout(100);
+    const now = await page.evaluate(() => document.querySelector('.dashboard-content-area').scrollTop + document.documentElement.scrollTop);
+    if (now === last) break;
+    last = now;
+  }
 }
 
 async function bottomOf(page) {
@@ -61,8 +76,7 @@ async function checkList(page, title, width, height) {
   const widthAtTop = await page.locator('#toshi-entry-pill').evaluate((el) => Math.round(el.getBoundingClientRect().width));
   assert(widthAtTop > 44, title + ' pill starts wider than the circle ' + widthAtTop);
 
-  await page.evaluate(() => window.scrollTo(0, 300));
-  await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+  await wheel(page, 300);
   const at300 = await bottomOf(page);
   const widthAt300 = await page.locator('#toshi-entry-pill').evaluate((el) => Math.round(el.getBoundingClientRect().width));
   const labelDisplay = await page.locator('.toshi-entry-label').evaluate((el) => getComputedStyle(el).display);
@@ -72,8 +86,7 @@ async function checkList(page, title, width, height) {
   assert(labelDisplay === 'none', title + ' label still visible');
   assert(aria === 'Open Toshi', title + ' aria-label changed');
 
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+  await wheel(page, 5000);
   const atEnd = await bottomOf(page);
   assert(atEnd === atTop, title + ' bottom changed at the end ' + atTop + ' -> ' + atEnd);
 
@@ -86,8 +99,7 @@ async function checkList(page, title, width, height) {
   });
   assert(clear.last && clear.pager, title + ' last row or pager intersects the pill ' + JSON.stringify(clear));
 
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+  await wheel(page, -10000);
   const expanded = await page.locator('#toshi-entry-pill').evaluate((el) => Math.round(el.getBoundingClientRect().width));
   assert(expanded > 44, title + ' pill did not expand at the top ' + expanded);
 }

@@ -38,10 +38,14 @@
                 $toshiSetupDone = (int) $toshiSetup['done'];
                 $toshiSetupTotal = (int) $toshiSetup['total'];
             }
+            // The entry pill belongs to the dashboard and the onboarding screens only;
+            // on every other page the side handle alone is the launcher.
+            $toshiPillPage = request()->is('dashboard', '*/dashboard', 'onboarding', 'onboarding/*', '*/onboarding', '*/onboarding/*');
         @endphp
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
              data-toshi-mode="{{ $toshiMode }}" data-toshi-user="{{ auth()->id() }}"
-             data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}">
+             data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}"
+             data-pill-page="{{ $toshiPillPage ? '1' : '0' }}">
             <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
                 aria-label="Open Toshi"
                 title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">

@@ -29,6 +29,12 @@ module.exports = defineConfig({
             testIgnore: /prod-uganda-onboarding\.spec\.js/,
         },
         {
+            // Regression specs that must hold in Safari's engine as well.
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+            testMatch: /regression\/.*\.spec\.js/,
+        },
+        {
             // Live production only — run explicitly:
             // PLAYWRIGHT_BASE_URL=https://klassapp.xyz npx playwright test --project=prod
             name: 'prod',

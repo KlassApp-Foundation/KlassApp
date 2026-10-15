@@ -28,7 +28,7 @@ class ToshiEntryPillTest extends TestCase
         ], 'id');
     }
 
-    private function dashboard(string $mode, bool $enabled)
+    private function dashboard(string $mode, bool $enabled, string $path = '/admin/dashboard')
     {
         $school = School::create([
             'name' => 'Pill School '.Str::random(4),
@@ -69,7 +69,7 @@ class ToshiEntryPillTest extends TestCase
             'lastname' => 'Admin',
         ]);
 
-        return $this->actingAs($admin)->get('/admin/dashboard');
+        return $this->actingAs($admin)->get($path);
     }
 
     public function test_toshi_pill_is_visible_from_1280_in_preview_with_meet_toshi(): void
@@ -140,11 +140,31 @@ class ToshiEntryPillTest extends TestCase
         $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
         $this->assertStringNotContainsString("querySelectorAll('a, button, [data-sticky-bar]')", $js);
         $this->assertStringContainsString('is-compact', $js);
-        $this->assertStringContainsString('scrollY > 80', $js);
+        $this->assertStringContainsString('COMPACT_AFTER = 80', $js);
         $css = file_get_contents(base_path('packages/toshi-ui/resources/css/toshi-ui.css'));
         $section = explode('TOSHI ENTRY PILL', $css, 2)[1] ?? '';
         $this->assertStringContainsString('right: calc(24px + env(safe-area-inset-right))', $section);
         $this->assertStringContainsString('#toshi-entry-pill.is-compact .toshi-entry-label', $section);
         $this->assertStringContainsString('width: 44px', $section);
+    }
+
+    public function test_toshi_pill_page_flag_is_on_for_the_dashboard_and_onboarding_only(): void
+    {
+        $this->dashboard('preview', false)->assertOk()->assertSee('data-pill-page="1"', false);
+        $this->dashboard('preview', false, '/admin/onboarding/wizard')->assertOk()->assertSee('data-pill-page="1"', false);
+        $list = $this->dashboard('preview', false, '/admin/students');
+        $list->assertOk()->assertSee('data-toshi-mode="preview"', false)->assertSee('data-pill-page="0"', false);
+        $list->assertDontSee('data-pill-page="1"', false);
+        $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
+        $this->assertStringContainsString("wrap.dataset.pillPage !== '1'", $js);
+    }
+
+    public function test_toshi_pill_compacts_from_the_element_that_really_scrolls(): void
+    {
+        $js = file_get_contents(public_path('js/toshi-entry-pill.js'));
+        $this->assertStringContainsString('IntersectionObserver', $js);
+        $this->assertStringContainsString(".dashboard-content-area", $js);
+        $this->assertStringNotContainsString("window.addEventListener('scroll'", $js);
+        $this->assertStringNotContainsString('window.scrollY > 80', $js);
     }
 }
