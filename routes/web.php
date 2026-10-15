@@ -543,3 +543,9 @@ Route::get('/superadmin/mail-list', function () {
     $subscribers = App\Models\MailList::where('subscribed', true)->latest()->paginate(50);
     return view('superadmin.mail-list', compact('subscribers'));
 })->name('superadmin.mail-list')->middleware(['web', 'auth', 'superadmin']);
+
+// Content-Security-Policy (report-only) violation reports: logged, rate limited.
+Route::post('/csp-report', \App\Http\Controllers\Security\CspReportController::class)
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->middleware('throttle:30,1')
+    ->name('security.csp-report');
