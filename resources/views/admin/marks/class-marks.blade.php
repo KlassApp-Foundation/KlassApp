@@ -29,6 +29,7 @@
 <div class="cm" data-testid="class-marks">
     <h1>Class marks</h1>
     <p class="cm-sub">Read only.@if($exam) {{ $current?->name }} · {{ $exam['label'] }}@endif</p>
+    <p style="margin:0 0 16px">@include('marks-releases._button', ['area' => 'admin', 'style' => 'display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:var(--d-accent, #15803D);color:#fff;font-weight:600;text-decoration:none;white-space:nowrap'])</p>
 
     @if($sections->isNotEmpty())
         <nav aria-label="Classes">

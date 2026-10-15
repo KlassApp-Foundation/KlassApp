@@ -63,7 +63,7 @@ class Transcript {
             `Run at: ${this.startedAt} | app ${ctx.appUrl} | simulator ${ctx.simUrl}`,
             `Result: ${this.status.toUpperCase()}${this.note ? ` (${this.note})` : ''}`,
             'Numbers are fictional (+1 555 01xx). "BOT -> <to>" is the outbound call the app made to the mock Cloud API.',
-            'The app normalises senders to the 256 country code, so replies go to "256" + the fictional digits.',
+            'Replies go back to the sender\'s own number (Meta\'s wa_id, kept as sent since #1104).',
             '',
         ];
         return head.concat(this.lines).join('\n') + '\n';

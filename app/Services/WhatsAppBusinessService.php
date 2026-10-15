@@ -58,6 +58,16 @@ class WhatsAppBusinessService
             ];
         }
 
+        // Demo-only sending (WHATSAPP_DEMO_ONLY_RECIPIENTS): only demo recipients.
+        if (($reason = \App\Services\DemoOnlyRecipientGuard::refusal($phone)) !== null) {
+            return [
+                'success' => false,
+                'blocked' => true,
+                'reason' => 'demo_only_recipients',
+                'message' => 'Refused: demo-only sending is on; this number is not a demo number (' . $reason . ').',
+            ];
+        }
+
         if (! \App\Services\DemoSchoolCommsGuard::blocksWhatsApp($phone, $userId)) {
             return null;
         }

@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Log;
  *
  *   BIND <code>      links the sender's number to one DEMO student for
  *                    DEMO_BIND_TTL_MINUTES (case-insensitive, extra spaces ok).
+ *                    With DEMO_BIND_REQUIRES_APPROVAL on, it records a request
+ *                    for the admin Approvals page instead (DemoBindApproval)
+ *                    and the TTL starts when the school approves.
  *   MARKS / RESULTS  a bound number gets that student's latest exam as a
  *                    text table; a number that is not bound gets a short
  *                    reply pointing at the follow-along page.
@@ -63,20 +66,44 @@ final class DemoBindReplies
             return true;
         }
 
-        $academic = StudentAcademic::query()
-            ->where('school_id', $school->id)
-            ->where('user_id', $student->id)
-            ->with('standardLink.section')
-            ->orderByDesc('id')
-            ->first();
         $guardianId = $this->guardianId((int) $school->id, (int) $student->id);
-        if (! $academic || ! $guardianId) {
+        $hasAcademic = StudentAcademic::query()->where('school_id', $school->id)->where('user_id', $student->id)->exists();
+        if (! $hasAcademic || ! $guardianId) {
             $this->api->sendText($phone, $this->unknownCodeText($code), 'demo_bind_unknown', $row?->user_id);
 
             return true;
         }
 
-        $row = WhatsAppUser::updateOrCreate(['phone' => $phone], [
+        // DEMO_BIND_REQUIRES_APPROVAL: the school approves the request on the
+        // Approvals page first (DemoBindApproval); nothing is linked yet.
+        if (DemoBindApproval::enabled()) {
+            app(DemoBindApproval::class)->request($phone, $student, $school, $senderName);
+
+            return true;
+        }
+
+        $row = $this->link($phone, $student, $school, $senderName);
+        $this->api->sendText($phone, $this->boundText($student, $school), 'demo_bind', $row?->user_id);
+
+        return true;
+    }
+
+    /**
+     * Bind $phone to one demo student for DEMO_BIND_TTL_MINUTES, counting
+     * from now. Null when the school is not a demo school or the student
+     * has no guardian to act as.
+     */
+    public function link(string $phone, User $student, School $school, string $senderName): ?WhatsAppUser
+    {
+        if ((int) $school->is_demo !== 1 || (int) $student->school_id !== (int) $school->id) {
+            return null;
+        }
+        $guardianId = $this->guardianId((int) $school->id, (int) $student->id);
+        if (! $guardianId) {
+            return null;
+        }
+
+        return WhatsAppUser::updateOrCreate(['phone' => $phone], [
             'user_id' => $guardianId,
             'school_id' => (int) $school->id,
             'demo_student_id' => (int) $student->id,
@@ -85,8 +112,18 @@ final class DemoBindReplies
             'opted_in' => true,
             'verified_at' => now(),
         ]);
+    }
 
-        $link = $academic->standardLink;
+    /** The confirmation a number gets once it follows $student. */
+    public function boundText(User $student, School $school): string
+    {
+        $academic = StudentAcademic::query()
+            ->where('school_id', $school->id)
+            ->where('user_id', $student->id)
+            ->with('standardLink.section')
+            ->orderByDesc('id')
+            ->first();
+        $link = $academic?->standardLink;
         $class = trim(($link?->section?->name ?? '') . ' ' . ($link?->stream ?? ''));
 
         $text = "✅ You are now following *{$student->name}*"
@@ -99,9 +136,7 @@ final class DemoBindReplies
             $text .= "\nPrivacy: " . DemoFollowAlong::privacyUrl();
         }
 
-        $this->api->sendText($phone, $text, 'demo_bind', $row->user_id);
-
-        return true;
+        return $text;
     }
 
     private function marks(string $phone): bool
@@ -124,6 +159,13 @@ final class DemoBindReplies
 
         if ($active) {
             $this->api->sendText($phone, $this->marksText((int) $row->school_id, (int) $row->demo_student_id), 'demo_marks', $row->user_id);
+
+            return true;
+        }
+
+        $pending = DemoBindApproval::pendingFor($phone);
+        if ($pending) {
+            $this->api->sendText($phone, app(DemoBindApproval::class)->pendingText($pending), 'demo_bind_pending');
 
             return true;
         }
@@ -161,7 +203,45 @@ final class DemoBindReplies
         if (! $exam || $exam['subjects'] === []) {
             return "📊 No marks yet for *{$name}*. They appear here once the school enters them.";
         }
+        // Demo schools only (marks() never runs for a real school): marks stay
+        // hidden until the school releases this exam through Marks release.
+        if (! self::examReleased($schoolId, $exam['exams']->first(), (int) ($link?->id ?? 0))) {
+            return "📊 Results for *{$name}* have not been released yet.\n\n"
+                . 'The school will send them here as soon as they release them.';
+        }
 
+        return $this->renderMarks($name, $class, $exam);
+    }
+
+    /**
+     * True when a release of this exam (same exam type and term) has gone out
+     * to the whole school, or to this student's class and stream.
+     */
+    public static function examReleased(int $schoolId, ?\App\Models\Academics\Exam $exam, int $standardLinkId): bool
+    {
+        if (! $exam) {
+            return false;
+        }
+
+        return \App\Models\MarksRelease::query()
+            ->where('school_id', $schoolId)
+            ->where('status', \App\Models\MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q->where('school_id', $schoolId)
+                ->where('exam_type_id', $exam->exam_type_id)
+                ->where('academic_term_id', $exam->academic_term_id))
+            ->where(fn ($q) => $q->where('scope', 'school')
+                ->orWhere(fn ($c) => $c->where('scope', 'class')->where('standard_link_id', $standardLinkId)))
+            ->exists();
+    }
+
+    /**
+     * The marks table: subject, mark and grade, then total and average, in a
+     * monospace block. $exam is a LatestExamMarks result for one student.
+     *
+     * @param  array{label:string, subjects:array<int, array{id:int,name:string}>, marks:\Illuminate\Support\Collection}  $exam
+     */
+    public function renderMarks(string $name, string $class, array $exam): string
+    {
         $bySubject = $exam['marks']->keyBy('subject_id');
         $width = max(7, ...array_map(fn ($s) => mb_strlen($s['name']), $exam['subjects'])) + 2;
         $lines = [str_pad('Subject', $width) . str_pad('Mark', 6, ' ', STR_PAD_LEFT) . '  Grade'];

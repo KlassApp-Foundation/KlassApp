@@ -47,11 +47,14 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // users.is_public_demo only: keeps the public demo admin inside its school.
+            \App\Http\Middleware\PublicDemoLockdown::class,
         ],
 
         'api' => [
             'throttle:60,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\PublicDemoLockdown::class,
         ],
     ];
 

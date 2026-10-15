@@ -215,9 +215,9 @@ to that phone.
   webhook settings and `APP_URL` each time.
 - **24-hour window.** Free-form replies need the user to have written first, which is how
   every flow here starts.
-- **Country code.** The inbound handler normalises sender numbers to the `+256` country
-  code, so a tester phone outside `+256` is stored with a `256` prefix and Meta rejects the
-  replies. Use a `+256` tester phone for Level 2.
+- **Country code.** Any country works: the inbound handler keeps Meta's full international
+  sender number (`wa_id`) and replies to it (`WhatsAppPhoneHelper::fromWaId`, #1104). Only a
+  local-looking number (leading 0, or fewer than 11 digits) is still normalised to `+256`.
 - **Your data.** The local app uses your local database and demo seeders, never staging
   or production data.
 

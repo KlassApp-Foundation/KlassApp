@@ -64,6 +64,9 @@
     <section class="card" aria-labelledby="bind-title">
         <h2 id="bind-title">2. Pick a student to follow</h2>
         <p>Tap a student. WhatsApp opens with BIND and the student's code; send it, then reply MARKS to see their marks.</p>
+        @if (config('klassapp.demo.bind_requires_approval'))
+            <p class="muted" data-testid="demo-approval-note">The school approves each request first. WhatsApp tells you when it does.</p>
+        @endif
         @if ($roster->isEmpty())
             <p class="muted" data-testid="demo-roster-empty">The demo class is not ready yet.</p>
         @else

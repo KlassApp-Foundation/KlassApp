@@ -9,6 +9,7 @@ use App\Models\ParentLinkRequest;
 use App\Models\Task;
 use App\Models\TeacherLeaveApplication;
 use App\Models\User;
+use App\Services\Demo\DemoBindApproval;
 use App\Services\ParentLinkService;
 use App\Services\WhatsApp\ParentLinkRequestService;
 use App\States\Approval\Approved;
@@ -76,6 +77,18 @@ class ApprovalController extends Controller
             return back()->with('error', 'This approval cannot be transitioned to Approved.');
         }
 
+        // A demo BIND request (DEMO_BIND_REQUIRES_APPROVAL): bind the number
+        // to the demo student and confirm to that one number. No parent
+        // account is created and the normal Flow notice is not sent.
+        if (DemoBindApproval::isDemoBindRequest($approval->approvable instanceof ParentLinkRequest ? $approval->approvable : null)) {
+            if (! app(DemoBindApproval::class)->approve($approval->approvable, $approval, (int) $request->input('matched_student_id'), Auth::id())) {
+                return back()->with('error', 'Could not link this demo number (the student is not in this demo school).');
+            }
+            $this->doActivityLog($approval->approvable, Auth::user(), ['approval_id' => $approval->id, 'action' => 'approved', 'demo_bind' => true], 'approval', "Approval #{$approval->id} approved by ".Auth::user()->name);
+
+            return back()->with('success', 'Request approved. The number now follows the student.');
+        }
+
         if ($approval->approvable instanceof ParentLinkRequest) {
             $linkResult = $this->approveParentLinkRequest($approval->approvable, $request);
             if ($linkResult !== null) {
@@ -112,6 +125,13 @@ class ApprovalController extends Controller
 
         if (! $approval->state->canTransitionTo(Rejected::class)) {
             return back()->with('error', 'This approval cannot be transitioned to Rejected.');
+        }
+
+        if (DemoBindApproval::isDemoBindRequest($approval->approvable instanceof ParentLinkRequest ? $approval->approvable : null)) {
+            app(DemoBindApproval::class)->reject($approval->approvable, $approval, $request->comments, Auth::id());
+            $this->doActivityLog($approval->approvable, Auth::user(), ['approval_id' => $approval->id, 'action' => 'rejected', 'demo_bind' => true], 'approval', "Approval #{$approval->id} rejected by ".Auth::user()->name);
+
+            return back()->with('success', 'Request rejected.');
         }
 
         if ($approval->approvable instanceof ParentLinkRequest) {

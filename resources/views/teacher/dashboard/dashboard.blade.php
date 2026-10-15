@@ -13,6 +13,7 @@
                 Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.
             </p>
         </div>
+        @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline', 'style' => 'white-space:nowrap;min-height:44px'])
     </div>
 
     @include('partials.message')

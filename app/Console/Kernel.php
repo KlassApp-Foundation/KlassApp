@@ -82,10 +82,20 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
+        // Task 9 Tier 2: scheduled marks releases (demo-bound numbers only).
+        $schedule->command('marks:release-due')->everyMinute()
+            ->withoutOverlapping();
+
         // Every minute: links are unlinked one minute before their limit
         // (Try Demo 30 minutes, BIND DEMO_BIND_TTL_MINUTES), never after it.
         $schedule->command('demo:expire-chats')->everyMinute()
                  ->withoutOverlapping();
+
+        // Live demo: restore every provisioned demo school at 03:00 Kampala
+        // (DEMO_NIGHTLY_RESET_ENABLED=true). demo:nightly-reset touches demo schools only.
+        $schedule->command('demo:nightly-reset')->dailyAt('03:00')->timezone('Africa/Kampala')
+            ->when(fn () => (bool) config('klassapp.demo.nightly_reset_enabled'))
+            ->withoutOverlapping();
 
         // ─── Backup Pipeline ────────────────────────────────────────────
         // Database + file backup to Hetzner Object Storage (S3)
