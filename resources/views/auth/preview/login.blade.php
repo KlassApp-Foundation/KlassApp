@@ -61,7 +61,11 @@
           </a>
 
           <div class="ap-meta">
-            <p>Don't have an account? <a href="{{ route('register') }}">Sign up</a></p>
+            @if (config('klassapp.signup_enabled'))
+              <p>Don't have an account? <a href="{{ route('register') }}">Sign up</a></p>
+            @else
+              <p>Don't have an account? <a href="{{ route('early-access.show') }}" data-testid="login-early-access">Request early access</a></p>
+            @endif
           </div>
       </div>
     </div>

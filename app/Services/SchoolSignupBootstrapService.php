@@ -37,6 +37,26 @@ class SchoolSignupBootstrapService
      */
     public function bootstrap(array $data): User
     {
+        // Self-serve sign-up gate: one check for every sign-up path
+        // (register form, Google sign-in for an unknown email).
+        if (! config('klassapp.signup_enabled')) {
+            throw \App\Exceptions\SignupClosedException::make();
+        }
+
+        return $this->createSchoolAndAdmin($data);
+    }
+
+    /**
+     * Operator-only entry (artisan setup commands). Not reachable from any
+     * HTTP route, so it is not affected by SIGNUP_ENABLED.
+     */
+    public function bootstrapAsOperator(array $data): User
+    {
+        return $this->createSchoolAndAdmin($data);
+    }
+
+    private function createSchoolAndAdmin(array $data): User
+    {
         return DB::transaction(function () use ($data) {
             $adminName = trim((string) $data['name']);
             $email = trim((string) $data['email']);

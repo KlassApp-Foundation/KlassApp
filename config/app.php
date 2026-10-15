@@ -15,9 +15,6 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-    // Public school registration. false closes /register with a 404.
-    'signup_enabled' => filter_var(env('SIGNUP_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN),
-
     /*
     |--------------------------------------------------------------------------
     | Application Environment
