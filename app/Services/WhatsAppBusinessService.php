@@ -39,15 +39,11 @@ class WhatsAppBusinessService
      */
     protected function demoBlocked(string $phone, ?int $userId = null): ?array
     {
-        // Kill switch (WHATSAPP_REPLIES_ENABLED=false): every outbound WhatsApp
-        // message stops, replies included. Every send method checks here first.
-        if (! config('services.whatsapp.replies_enabled', true)) {
-            \Illuminate\Support\Facades\Log::info('[whatsapp-kill-switch] outbound WhatsApp send skipped');
-
+        if (! config('services.whatsapp.replies_enabled')) {
             return [
                 'success' => false,
                 'blocked' => true,
-                'reason' => 'kill_switch',
+                'reason' => 'whatsapp_replies_disabled',
                 'message' => 'Outbound WhatsApp is switched off.',
             ];
         }

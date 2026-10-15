@@ -119,6 +119,10 @@ trait SeedsRichDemoData
             $parentIds[] = (int) $parent->id;
         }
 
+        if (method_exists($this, 'richMarkParentOptIn')) {
+            $this->richMarkParentOptIn($parentIds);
+        }
+
         // Every student gets exactly one parent, round-robin over the pool, so
         // no child is left unlinked and each parent ends with one to two
         // children (the walkthrough expects one to three). Extra links added
@@ -1131,11 +1135,12 @@ trait SeedsRichDemoData
                 'updated_at' => now(),
             ]);
         }
-        $cityId = DB::table('cities')->where('country_id', $countryId)->where('name', 'Kampala')->value('id');
+        $cityName = method_exists($this, 'richCityName') ? $this->richCityName() : 'Kampala';
+        $cityId = DB::table('cities')->where('country_id', $countryId)->where('name', $cityName)->value('id');
         if (! $cityId) {
             $city = [
                 'country_id' => $countryId,
-                'name' => 'Kampala',
+                'name' => $cityName,
                 'status' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

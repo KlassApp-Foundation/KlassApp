@@ -93,6 +93,11 @@ class DemoRefreshCommand extends Command
 
     private function seederFor(School $school): ?string
     {
+        $manifest = \App\Support\DemoSeedManifest::read((int) $school->id);
+        if (is_array($manifest['provision'] ?? null)) {
+            return \Database\Seeders\DemoJuniorSchoolSeeder::class;
+        }
+
         return match (true) {
             str_contains($school->name, 'Junior') => \Database\Seeders\DemoJuniorSchoolSeeder::class,
             str_contains($school->name, 'Senior') => \Database\Seeders\DemoSeniorSchoolSeeder::class,
@@ -213,7 +218,16 @@ class DemoRefreshCommand extends Command
         // 5) Re-seed so everything missing refills deterministically and the
         //    manifest timestamp moves forward for the next refresh.
         if (! $dry && $seeder !== null) {
-            $this->call('db:seed', ['--class' => $seeder, '--force' => true]);
+            $again = \App\Support\DemoSeedManifest::read((int) $school->id);
+            $previous = \Database\Seeders\DemoJuniorSchoolSeeder::$provision;
+            if (is_array($again['provision'] ?? null)) {
+                \Database\Seeders\DemoJuniorSchoolSeeder::$provision = $again['provision'];
+            }
+            try {
+                $this->call('db:seed', ['--class' => $seeder, '--force' => true]);
+            } finally {
+                \Database\Seeders\DemoJuniorSchoolSeeder::$provision = $previous;
+            }
         }
 
         $verb = $dry ? 'would remove' : 'removed';
