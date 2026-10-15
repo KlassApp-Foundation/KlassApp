@@ -79,6 +79,7 @@ class AppServiceProvider extends ServiceProvider {
         // Named limiters keep their own counters. Plain `throttle:N,M` shares ONE counter per
         // IP across every such route, which would let status polling starve the 3/min resend limit.
         RateLimiter::for('verify-status', fn (Request $request) => Limit::perMinute(60)->by('verify-status|'.$request->ip()));
+        RateLimiter::for('demo-page', fn (Request $request) => Limit::perMinute((int) config('klassapp.demo.page_throttle_per_minute', 60))->by('demo-page|'.$request->ip()));
         RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
 
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)
