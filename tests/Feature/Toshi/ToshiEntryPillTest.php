@@ -24,6 +24,7 @@ class ToshiEntryPillTest extends TestCase
         Cache::flush();
         $this->withoutMiddleware([MustBePrivilege::class]);
         DB::table('usergroups')->upsert([
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 4, 'name' => 'schoolsubadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
@@ -173,25 +174,50 @@ class ToshiEntryPillTest extends TestCase
         $this->assertStringNotContainsString('window.scrollY > 80', $js);
     }
 
-    /** School admin (3) and head teacher (4) get the pill on their dashboard. */
-    public function test_toshi_pill_is_rendered_on_the_dashboard_for_admin_and_head_teacher(): void
+    /** School admin (3) and head teacher (4) get the side handle and the pill on their dashboard. */
+    public function test_toshi_handle_and_pill_are_rendered_for_admin_and_head_teacher(): void
     {
         foreach ([3 => '/admin/dashboard', 4 => '/admin/dashboard'] as $usergroup => $path) {
             $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
-            $this->assertStringContainsString('id="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringContainsString('data-testid="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
             $this->assertStringContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
             $this->assertStringContainsString('data-pill-page="1"', $html, 'pill page for usergroup '.$usergroup);
         }
     }
 
-    /** Teacher (5), parent (7), librarian (8) and bursar (11) keep the side handle only. */
-    public function test_toshi_pill_is_not_rendered_on_the_dashboard_for_other_roles(): void
+    /** Teacher (5), bursar (11), librarian (8) and parent (7) get neither launcher; the panel stays. */
+    public function test_toshi_handle_and_pill_are_absent_for_other_school_roles(): void
     {
-        foreach ([5 => '/teacher/dashboard', 7 => '/parent/dashboard', 8 => '/library/dashboard', 11 => '/accountant/dashboard'] as $usergroup => $path) {
+        foreach ([5 => '/teacher/dashboard', 11 => '/accountant/dashboard', 8 => '/library/dashboard', 7 => '/parent/dashboard'] as $usergroup => $path) {
             $html = $this->dashboard('preview', false, $path, $usergroup)->assertOk()->getContent();
-            $this->assertStringContainsString('id="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
+            $this->assertStringNotContainsString('data-testid="toshi-toggle"', $html, 'handle for usergroup '.$usergroup);
             $this->assertStringNotContainsString('data-testid="toshi-entry-pill"', $html, 'pill for usergroup '.$usergroup);
-            $this->assertStringContainsString('data-pill-page="0"', $html, 'pill page for usergroup '.$usergroup);
+            $this->assertStringContainsString('window.toshiSetCollapsed', $html, 'panel script for usergroup '.$usergroup);
         }
+    }
+
+    /** The platform site admin (1) gets neither launcher either. */
+    public function test_toshi_handle_and_pill_are_absent_for_the_site_admin(): void
+    {
+        $siteAdmin = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 1,
+            'email' => Str::random(8).'@test.sch.ug',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        $html = $this->actingAs($siteAdmin)->get('/superadmin/dashboard')->assertOk()->getContent();
+        $this->assertStringContainsString('window.toshiSetCollapsed', $html);
+        $this->assertStringNotContainsString('data-testid="toshi-toggle"', $html);
+        $this->assertStringNotContainsString('data-testid="toshi-entry-pill"', $html);
+    }
+
+    public function test_toshi_launcher_roles_live_in_one_list(): void
+    {
+        $this->assertSame([3, 4], \App\Services\Toshi\ToshiUiSwitch::LAUNCHER_USERGROUPS);
+        $embed = file_get_contents(resource_path('views/layouts/partials/toshi-embed.blade.php'));
+        $this->assertStringContainsString('->showsLauncher()', $embed);
+        $this->assertSame(1, substr_count($embed, 'in_array('), 'only the panel allow-list may use in_array');
     }
 }
