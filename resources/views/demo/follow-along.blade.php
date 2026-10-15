@@ -25,7 +25,7 @@
         .join { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
         .qr { width: 220px; height: 220px; flex: none; background: var(--d-white); }
         .qr svg { display: block; width: 100%; height: 100%; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--d-touch-target-min); padding: 0 16px; border-radius: var(--d-radius-md); background: var(--d-accent); color: #fff; font-weight: 600; text-decoration: none; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; flex-shrink: 0; min-height: var(--d-touch-target-min); padding: 0 16px; border-radius: var(--d-radius-md); background: var(--d-accent); color: #fff; font-weight: 600; text-decoration: none; }
         .btn:hover { background: var(--d-accent-dk); }
         .btn--outline { background: var(--d-white); color: var(--d-accent-dk); border: 1px solid var(--d-border); }
         .btn--outline:hover { background: #F0FDF4; }

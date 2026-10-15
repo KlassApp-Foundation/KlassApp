@@ -2,7 +2,8 @@
 {{-- Read-only class marks for the latest exam: students by code, a row per subject, the grade under the mark. --}}
 @extends('layouts.admin.layout')
 
-@section('content')
+{{-- Outside #app: the Vue root drops <style> tags inside its template. --}}
+@section('outside-app')
 <style>
     .cm { max-width: 1120px; padding: 20px 16px 40px; color: var(--d-text, #1E293B); }
     .cm h1 { font-size: 22px; line-height: 1.25; margin: 0 0 4px; }
@@ -22,6 +23,9 @@
     .cm-mark span { display: block; font-size: 12px; color: var(--d-text-secondary, #64748B); }
     .cm-empty { background: var(--d-white, #fff); border: 1px solid var(--d-border, #E2E8F0); border-radius: var(--d-radius-lg, 12px); padding: 20px; }
 </style>
+@endsection
+
+@section('content')
 <div class="cm" data-testid="class-marks">
     <h1>Class marks</h1>
     <p class="cm-sub">Read only.@if($exam) {{ $current?->name }} · {{ $exam['label'] }}@endif</p>
