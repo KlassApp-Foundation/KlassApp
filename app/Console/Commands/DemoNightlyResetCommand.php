@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\Demo\DemoBindApproval;
+use App\Services\Demo\DemoFollowAlong;
 use App\Support\DemoSeedManifest;
 use Database\Seeders\DemoJuniorSchoolSeeder;
 use Illuminate\Console\Command;
@@ -80,13 +81,7 @@ class DemoNightlyResetCommand extends Command
                 ->where('school_id', $schoolId)
                 ->where(fn ($q) => $q->whereNotNull('demo_linked_at')->orWhereNotNull('demo_student_id'));
             $boundPhones = (clone $bound)->pluck('phone');
-            $unlinked = $bound->update([
-                'user_id' => null,
-                'school_id' => null,
-                'opted_in' => false,
-                'demo_linked_at' => null,
-                'demo_student_id' => null,
-            ]);
+            $unlinked = $bound->update(DemoFollowAlong::unlinkAttributes());
 
             $requestIds = ParentLinkRequest::query()
                 ->where('school_id', $schoolId)

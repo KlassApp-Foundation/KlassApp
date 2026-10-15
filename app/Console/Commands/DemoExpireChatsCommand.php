@@ -67,13 +67,7 @@ class DemoExpireChatsCommand extends Command
             if ($count === 0 || $this->option('dry-run')) {
                 continue;
             }
-            $query->update([
-                'user_id' => null,
-                'school_id' => null,
-                'opted_in' => false,
-                'demo_linked_at' => null,
-                'demo_student_id' => null,
-            ]);
+            $query->update(DemoFollowAlong::unlinkAttributes());
         }
 
         if ($this->option('dry-run')) {

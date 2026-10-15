@@ -25,6 +25,10 @@
         @endif
 
         @if(empty($setupIncomplete))
+        @if((int) auth()->user()->usergroup_id === 3)
+            {{-- WhatsApp link requests: count, latest three, Approve / Reject (refreshes itself). --}}
+            <livewire:admin.whatsapp-dashboard-card />
+        @endif
         <div class="dashboard-kpi-grid" data-testid="dashboard-kpi-grid">
             <x-ds-kpi-card icon="users" value="{{ $dashboard['studentCount'] }}" label="Students" color="green" :link="url('/admin/students')" />
             <x-ds-kpi-card icon="classes" value="{{ $dashboard['teacherCount'] }}" label="Teachers" color="blue" :link="url('/admin/teachers')" />
@@ -85,17 +89,20 @@
                     <li class="dashboard-connected-row">
                         <span class="dashboard-connected-label">
                             <x-brand.whatsapp class="dashboard-connected-mark" />
-                            {{ number_format((int) ($dashboard['whatsapp']['parentsOptedIn'] ?? 0)) }} parents reachable
+                            @php $waLinked = (int) ($connectedTools['whatsappLinked'] ?? 0); @endphp
+                            <span data-testid="dashboard-connected-whatsapp-count">{{ number_format($waLinked) }} WhatsApp {{ \Illuminate\Support\Str::plural('number', $waLinked) }} linked</span>
                         </span>
                         <x-badge variant="active">Live</x-badge>
                     </li>
-                    <li class="dashboard-connected-row">
+                    @if(!empty($connectedTools['driveConnected']))
+                    <li class="dashboard-connected-row" data-testid="dashboard-connected-drive">
                         <span class="dashboard-connected-label">
                             <x-brand.google-drive class="dashboard-connected-mark" />
                             Reports filed to Drive
                         </span>
                         <x-badge variant="active">Live</x-badge>
                     </li>
+                    @endif
                     <li class="dashboard-connected-row">
                         <span class="dashboard-connected-label">
                             <svg class="dashboard-connected-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
