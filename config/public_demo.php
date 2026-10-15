@@ -42,7 +42,8 @@ return [
         ['write', '#^admin/settings/(generalsettings|maintenancesettings|seodetailsettings)$#', 'school-wide settings'],
         ['write', '#^admin/schooldetails/#', 'school details (name, logo, domain)'],
         ['*', '#^admin/settings/integrations(/|$)#', 'integrations'],
-        ['*', '#^admin/(subscriptions|payment)(/|$)#', 'payments or subscription'],
+        ['*', '#^(admin/)?(subscriptions|payment)(/|$)#', 'payments or subscription'],
+        ['*', '#^auth/google(/|$)#', 'linking a Google account'],
         ['*', '#^admin/toshi#', 'Toshi / AI'],
     ],
 
