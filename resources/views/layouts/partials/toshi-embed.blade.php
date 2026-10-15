@@ -38,10 +38,18 @@
                 $toshiSetupDone = (int) $toshiSetup['done'];
                 $toshiSetupTotal = (int) $toshiSetup['total'];
             }
+            // The launchers (side handle and entry pill) are for school admins and head
+            // teachers only (ToshiUiSwitch::LAUNCHER_USERGROUPS). The pill also shows on
+            // the dashboard and the onboarding screens only; elsewhere the handle alone
+            // is the launcher. Other roles keep the panel and its other entry points.
+            $toshiLauncher = app(\App\Services\Toshi\ToshiUiSwitch::class)->showsLauncher();
+            $toshiPillPage = $toshiLauncher && request()->is('dashboard', '*/dashboard', 'onboarding', 'onboarding/*', '*/onboarding', '*/onboarding/*');
         @endphp
+        @if($toshiLauncher)
         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper"
              data-toshi-mode="{{ $toshiMode }}" data-toshi-user="{{ auth()->id() }}"
-             data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}">
+             data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}"
+             data-pill-page="{{ $toshiPillPage ? '1' : '0' }}">
             <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
                 aria-label="Open Toshi"
                 title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
@@ -59,6 +67,7 @@
             <span class="toshi-early-pill" aria-hidden="true">Early access</span>
             @endtoshiAssistant
         </div>
+        @endif
         <script src="{{ asset('js/toshi-entry-pill.js') }}?v={{ filemtime(public_path('js/toshi-entry-pill.js')) }}"></script>
         <script>
         (function () {

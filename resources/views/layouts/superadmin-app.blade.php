@@ -57,7 +57,7 @@
         @filamentScripts
 
         <script src="{{ asset('js/jquery.min.js') }}"></script>
-        <script src="{{ asset('js/custom.js') }}" defer></script>
+        <script src="{{ asset('js/custom.js') }}?v={{ filemtime(public_path('js/custom.js')) }}" defer></script>
         @stack('scripts')
 
         <livewire:scripts>

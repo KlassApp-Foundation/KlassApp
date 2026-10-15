@@ -122,6 +122,20 @@ class ToshiUiSwitch
         return $user->school_id !== null;
     }
 
+    /**
+     * Usergroups that get the Toshi launchers (the side handle and the entry
+     * pill): school admins (3) and head teachers (4). Every other role keeps
+     * the panel's other entry points but no launcher.
+     */
+    public const LAUNCHER_USERGROUPS = [3, 4];
+
+    public function showsLauncher(?User $user = null): bool
+    {
+        $user ??= auth()->user();
+
+        return $user !== null && in_array((int) $user->usergroup_id, self::LAUNCHER_USERGROUPS, true);
+    }
+
     public function hasAiKey(): bool
     {
         $key = config('ai.providers.openai-compatible.key')

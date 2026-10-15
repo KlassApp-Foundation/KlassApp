@@ -39,7 +39,7 @@ function pageHtml(mode, label, chip) {
       <div data-sticky-bar id="form-bar" hidden style="position:fixed;left:0;right:0;bottom:0;height:56px;background:#fff;z-index:15">
         <button type="button" id="save" style="height:44px">Save</button>
       </div>
-      <div id="toshi-toggle-wrapper" data-toshi-mode="${mode}" data-toshi-user="42" data-setup-done="2" data-setup-total="8">
+      <div id="toshi-toggle-wrapper" data-toshi-mode="${mode}" data-toshi-user="42" data-setup-done="2" data-setup-total="8" data-pill-page="1">
         <button type="button" id="toshi-toggle" class="toshi-toggle" aria-label="Open Toshi"><span class="toshi-handle-mark">K</span></button>
         <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" data-testid="toshi-entry-pill" aria-label="Open Toshi">
           <span class="toshi-entry-ring"><span class="toshi-entry-mark">K</span></span>
