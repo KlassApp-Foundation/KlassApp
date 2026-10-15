@@ -4,9 +4,12 @@ namespace Tests\Feature\Demo;
 
 use App\Models\Approval;
 use App\Models\ParentLinkRequest;
+use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
+use App\Support\DemoStudentCode;
 use App\Services\Demo\DemoBindApproval;
 use App\Services\DemoSchoolCommsGuard;
 use App\States\Approval\Approved;
@@ -254,6 +257,72 @@ class DemoBindApprovalTest extends TestCase
         $this->assertCount(1, $sent);
         $this->assertStringContainsString('Waiting for the school to approve', $sent[0]['body']);
         $this->assertStringNotContainsString('Mathematics', $sent[0]['body']);
+    }
+
+    public function test_demo_local_bind_code_is_limited_to_demo_schools(): void
+    {
+        $kls = 'KLS0099901';
+        $this->fx['real']['students'][0]['user']->forceFill(['registration_number' => $kls])->save();
+
+        $school = $this->fx['demo']['school'];
+        $student = User::create([
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'name' => 'Demo Twin',
+            'email' => 'demo-twin@example.com',
+            'password' => bcrypt('x'),
+            'status' => 'active',
+        ]);
+        $student->forceFill(['registration_number' => $kls])->save();
+        $yearId = StudentAcademic::where('user_id', $this->amina()['user']->id)->value('academic_year_id');
+        StudentAcademic::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $yearId,
+            'user_id' => $student->id,
+            'standardLink_id' => $this->fx['demo']['link']->id,
+        ]);
+        $parent = User::create([
+            'school_id' => $school->id,
+            'usergroup_id' => 7,
+            'name' => 'Parent of Twin',
+            'email' => 'parent-twin@example.com',
+            'password' => bcrypt('x'),
+            'status' => 'active',
+        ]);
+        StudentParentLink::create(['school_id' => $school->id, 'parent_id' => $parent->id, 'student_id' => $student->id, 'status' => 1]);
+
+        $this->assertLessThan($student->id, $this->fx['real']['students'][0]['user']->id, 'a global first() would load the real student');
+
+        $this->inbound(self::SENDER, 'BIND ' . DemoStudentCode::fromKls($kls))->assertOk();
+
+        $request = ParentLinkRequest::query()->first();
+        $this->assertNotNull($request);
+        $this->assertSame((int) $school->id, (int) $request->school_id);
+        $this->assertSame((int) $student->id, (int) $request->suggested_student_id);
+        $this->assertStringContainsString('Request sent', $this->outbound()[0]['body']);
+        $this->assertStringContainsString('Demo Twin', $this->outbound()[0]['body']);
+    }
+
+    public function test_demo_local_approval_refuses_when_the_number_is_now_linked_to_a_real_school(): void
+    {
+        $approval = $this->requestBind();
+        $this->resetHttp();
+        WhatsAppUser::create([
+            'phone' => '+' . self::SENDER,
+            'user_id' => $this->fx['real']['students'][0]['parent']->id,
+            'school_id' => $this->fx['real']['school']->id,
+            'opted_in' => true,
+        ]);
+
+        $this->approve($approval)->assertRedirect()->assertSessionHas('error');
+
+        $this->assertInstanceOf(Pending::class, $approval->fresh()->state);
+        $this->assertSame('pending', ParentLinkRequest::findOrFail($approval->approvable_id)->status);
+        $row = WhatsAppUser::where('phone', '+' . self::SENDER)->firstOrFail();
+        $this->assertSame((int) $this->fx['real']['school']->id, (int) $row->school_id);
+        $this->assertSame((int) $this->fx['real']['students'][0]['parent']->id, (int) $row->user_id);
+        $this->assertNull($row->demo_student_id);
+        $this->assertSame([], $this->outbound());
     }
 
     public function test_demo_local_a_real_school_code_makes_no_request(): void
