@@ -28,6 +28,9 @@ class Kernel extends HttpKernel
         // Stamps X-Robots-Tag on every response type while ROBOTS_NOINDEX is on.
         \App\Http\Middleware\AddRobotsNoindexHeader::class,
 
+        // HSTS, Referrer-Policy, Permissions-Policy, report-only CSP (SECURITY_HEADERS_ENABLED).
+        \App\Http\Middleware\SecurityHeaders::class,
+
     ];
 
     /**

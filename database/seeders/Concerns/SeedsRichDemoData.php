@@ -121,6 +121,8 @@ trait SeedsRichDemoData
 
         if (method_exists($this, 'richMarkParentOptIn')) {
             $this->richMarkParentOptIn($parentIds);
+        } else {
+            $this->richFlagParentsOptedIn($parentIds);
         }
 
         // Every student gets exactly one parent, round-robin over the pool, so
@@ -150,6 +152,32 @@ trait SeedsRichDemoData
         }
 
         $this->command?->info("Rich parents: {$made} accounts, {$linked} new child links.");
+    }
+
+    /**
+     * About 60 percent of the demo parents get a WhatsApp row flagged
+     * opted_in. A flag only: the number is a fictional +1 555 value, the
+     * demo send guard blocks business messages to demo schools, and nothing
+     * is sent here. Keyed on user_id, so a rerun (and demo:refresh, which
+     * reruns the seeder) puts the same parents back to the same flag.
+     *
+     * @param  array<int, int>  $parentIds
+     */
+    protected function richFlagParentsOptedIn(array $parentIds): void
+    {
+        $parentIds = array_values($parentIds);
+        $keep = (int) round(count($parentIds) * 0.6);
+
+        foreach ($parentIds as $i => $id) {
+            WhatsAppUser::updateOrCreate(
+                ['user_id' => $id],
+                [
+                    'phone' => '+1555' . str_pad((string) (crc32('wa-parent-' . $this->school->id . '-' . $id) % 10000000), 7, '0', STR_PAD_LEFT),
+                    'school_id' => $this->school->id,
+                    'opted_in' => $i < $keep,
+                ]
+            );
+        }
     }
 
     // ────────────────────────────────────────────────── onboarding steps
