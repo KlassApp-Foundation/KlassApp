@@ -65,7 +65,7 @@ class SetupUiReviewSecondaryDemoSchool extends Command
             $admin = User::where('school_id', $school->id)->where('usergroup_id', 3)->where('email', self::ADMIN_EMAIL)->first()
                 ?? User::where('school_id', $school->id)->where('usergroup_id', 3)->orderBy('id')->first();
         } else {
-            $admin = $bootstrap->bootstrap([
+            $admin = $bootstrap->bootstrapAsOperator([
                 'name' => 'UI Review Secondary Admin',
                 'email' => self::ADMIN_EMAIL,
                 'phone' => '0700119910',

@@ -6396,6 +6396,15 @@ class AgentToshi extends Component
             return;
         }
 
+        // Sign-up closed (SIGNUP_ENABLED=false): only platform admins may create
+        // a new school here. Anyone else in create mode creates nothing.
+        if ($this->mode === 'create' && ! config('klassapp.signup_enabled')
+            && (int) (auth()->user()->usergroup_id ?? 0) !== 1) {
+            \Illuminate\Support\Facades\Log::info('Toshi create mode refused: sign-up is closed');
+            $this->botSay('New schools cannot be created right now. Request early access at ' . route('early-access.show') . '.');
+            return;
+        }
+
         try {
             $wasComplete = $this->mode === 'complete';
             $this->resolveCollectedDataForCommit();

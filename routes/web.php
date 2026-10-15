@@ -169,6 +169,19 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
+// Early access (shown at /register too while SIGNUP_ENABLED=false).
+Route::get('/early-access', [App\Http\Controllers\EarlyAccessController::class, 'show'])
+    ->name('early-access.show');
+Route::post('/early-access', [App\Http\Controllers\EarlyAccessController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('early-access.store');
+Route::middleware('auth')->prefix('platform')->group(function () {
+    Route::get('/early-access', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'index'])
+        ->name('platform.early-access.index');
+    Route::get('/early-access/export', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'export'])
+        ->name('platform.early-access.export');
+});
+
 Route::get('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
     ->middleware('signup.enabled')
     ->name('register.verify');
