@@ -74,6 +74,7 @@ trait SeedsRichDemoData
         $this->richSeedAdmissions();
         $this->richEnsureAttendance();
         $this->richSeedExamRounds();
+        $this->richEnsureFollowAlongExam();
         $this->richCompleteOnboarding();
         $this->richTeacherProfiles();
         $this->richSchoolProfile();
@@ -759,7 +760,7 @@ trait SeedsRichDemoData
                 continue;
             }
 
-            $score = 42 + (int) (crc32($studentId . '|' . $exam->subject_id . '|' . $exam->id . '|rich') % 56);
+            $score = $this->richScore((int) $studentId, $exam);
             $grade = method_exists($this, 'gradeFor') ? $this->gradeFor($score) : 'C3';
 
             DB::table('marks')->insert([
@@ -780,6 +781,84 @@ trait SeedsRichDemoData
         }
 
         return $inserted;
+    }
+
+    /** Deterministic seeded mark (42..97) for one student in one exam. */
+    private function richScore(int $studentId, Exam $exam): int
+    {
+        return 42 + (int) (crc32($studentId . '|' . $exam->subject_id . '|' . $exam->id . '|rich') % 56);
+    }
+
+    /**
+     * The live demo exam: in every exam class, the current term's end-of-term
+     * exam carries a mark for every student of the class in each subject of
+     * richConfig()['follow_along_subjects'] (Mathematics, Science, English,
+     * Social Studies on the junior school). The exam stays UNRELEASED: status
+     * 'undone' and no current-term report cards. Every run (demo:provision,
+     * demo:refresh) puts the status and the seeded marks back to this
+     * baseline, so a demo that edited them starts clean. Scoped by school_id.
+     */
+    protected function richEnsureFollowAlongExam(): void
+    {
+        $names = $this->richConfig()['follow_along_subjects'] ?? [];
+        $current = $this->richCurrentTerm();
+        if ($names === [] || ! $current) {
+            return;
+        }
+
+        $schoolId = (int) $this->school->id;
+        $eot = ExamType::firstOrCreate(['code' => 'EOT'], ['name' => 'End of Term Examination', 'contributes_to_report_total' => true]);
+        $teacherBySubject = Teacherlink::where('school_id', $schoolId)->pluck('teacher_id', 'subject_id');
+        $teacher1Id = $this->richTeacher1()->id;
+        $sections = Section::where('school_id', $schoolId)->whereIn('name', $this->richConfig()['exam_section_names'] ?? [])->get();
+        $marks = 0;
+
+        foreach ($sections as $section) {
+            $students = StudentAcademic::where('school_id', $schoolId)
+                ->where('academic_year_id', $this->year->id)
+                ->whereIn('standardLink_id', StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->pluck('id'))
+                ->pluck('user_id');
+
+            foreach ($names as $name) {
+                $subject = Subject::where('school_id', $schoolId)->where('section_id', $section->id)->where('name', $name)->first();
+                if (! $subject) {
+                    continue;
+                }
+
+                $exam = $this->richMakeExam($schoolId, $section, $subject, $eot, $current, $teacherBySubject[$subject->id] ?? $teacher1Id, 'undone', Carbon::parse($current->ends_on)->subDays(7)->setTime(9, 0), Carbon::parse($current->ends_on)->setTime(17, 0));
+                if ($exam->status !== 'undone') {
+                    $exam->forceFill(['status' => 'undone'])->save();
+                }
+
+                foreach ($students as $studentId) {
+                    $score = $this->richScore((int) $studentId, $exam);
+                    $grade = method_exists($this, 'gradeFor') ? $this->gradeFor($score) : 'C3';
+                    $row = DB::table('marks')->where('school_id', $schoolId)->where('exam_id', $exam->id)->where('student_id', $studentId);
+                    if ((clone $row)->exists()) {
+                        (clone $row)->where(fn ($q) => $q->where('marks', '!=', $score)->orWhere('grade', '!=', $grade))
+                            ->update(['marks' => $score, 'grade' => $grade, 'updated_at' => now()]);
+
+                        continue;
+                    }
+                    DB::table('marks')->insert([
+                        'student_id' => $studentId,
+                        'teacher_id' => $exam->teacher_id,
+                        'school_id' => $schoolId,
+                        'subject_id' => $subject->id,
+                        'exam_id' => $exam->id,
+                        'section_id' => $section->id,
+                        'remark_id' => null,
+                        'marks' => $score,
+                        'grade' => $grade,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $marks++;
+                }
+            }
+        }
+
+        $this->command?->info("Demo exam ({$current->name}, unreleased): {$marks} new mark rows across " . $sections->count() . ' classes.');
     }
 
     private function richEnsureSubmission(Exam $exam, Section $section, Subject $subject, int $teacherId, bool $locked, Carbon $deadline): void

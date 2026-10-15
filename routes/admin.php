@@ -880,6 +880,7 @@ Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
 Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
+Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');
 Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");
