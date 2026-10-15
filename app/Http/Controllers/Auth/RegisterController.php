@@ -32,11 +32,18 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
-        $this->middleware('signup.enabled');
+        // Sign-up closed: POST /register creates nothing and goes to the early
+        // access page. GET /register shows that page itself (below), so the
+        // gate is not applied to it.
+        $this->middleware('signup.enabled')->only('register');
     }
 
     public function showRegistrationForm(Request $request)
     {
+        if (! config('klassapp.signup_enabled')) {
+            return app(\App\Http\Controllers\EarlyAccessController::class)->show($request);
+        }
+
         if ($request->has('plan')) {
             session(['selected_plan' => $request->plan]);
         }

@@ -148,9 +148,9 @@ matches, do not start the production deploy.
 | `WHATSAPP_VERIFY_SIGNATURE` | `true` | Reject unverified WhatsApp webhooks. |
 | `FILESYSTEM_DISK` | cloud object storage | Production uploads go to the object bucket, never `local`. **Do not copy the staging value.** |
 | `DEMO_PROVISIONING_ENABLED` | `false` except during a provision | `demo:provision` refuses to run unless this is `true`. Set it back to `false` afterwards. See `docs/ops/PRODUCTION-DEMO-RUNBOOK.md`. |
-| `SIGNUP_ENABLED` | `true` (close with `false`) | `false` makes the public register routes return 404. Login stays open. |
+| `SIGNUP_ENABLED` | `true` (close with `false`) | `false` shows the early access page at `/register`; nothing can create a new school or school admin. Login stays open. |
 | `WHATSAPP_REPLIES_ENABLED` | `true` (kill switch `false`) | `false` stops every outbound WhatsApp message, including replies. |
-| `PRIVACY_NOTICE_URL` | the public privacy notice address | Linked from the demo welcome line. |
+| `PRIVACY_NOTICE_URL` | the public privacy notice address | Linked from the demo welcome line and the early access consent box. Empty means no link. |
 
 `demo:refresh` is a staging-only command for the two walkthrough schools
 (Demo Junior and Demo Senior). Dry-run first (`php artisan demo:refresh 38 --dry-run`

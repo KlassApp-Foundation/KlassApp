@@ -23,6 +23,12 @@ class GoogleAuthController extends Controller
      */
     public function start(Request $request, SchoolSignupBootstrapService $bootstrap)
     {
+        // Sign-up closed: the register page's Google button must not start a
+        // new-account flow. Existing users sign in with GET /auth/google.
+        if (! config('klassapp.signup_enabled')) {
+            return redirect()->route('early-access.show');
+        }
+
         $phone = $request->input('phone') ?: null;
 
         if ($phone !== null) {
@@ -101,6 +107,16 @@ class GoogleAuthController extends Controller
             session()->forget('saas_signup');
 
             return $this->postAuthRedirect($existingByEmail);
+        }
+
+        // Sign-up closed: Google sign-in is for existing users only. An unknown
+        // email never creates a school or an account.
+        if (! config('klassapp.signup_enabled')) {
+            session()->forget('saas_signup');
+            Log::info('Google sign-in refused for unknown email: sign-up is closed');
+
+            return redirect()->route('early-access.show')
+                ->with('failmessage', 'There is no KlassApp account for that Google address yet. Request early access below.');
         }
 
         // Phone is optional on Google OAuth (Decision B): Google has no phone claim.
