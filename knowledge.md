@@ -13737,3 +13737,17 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Tests:** foreign keys on. `DemoSetAdminLoginTest`, `DemoSetPasswordTest`, and `DemoRichDataTest`: 32 tests, one error (a fixture school reused the unique name Demo Junior School), then the refusal test passed on its own.
 
 **Status:** [#1072](https://github.com/KlassApp-Foundation/KlassApp/pull/1072) is open. Staging command and browser login follow the deploy. Production is not touched. Demo Senior is not touched. No password is written in this file.
+
+## Session: 2026-10-16 — MARKS returns the most recently released exam (PR #1111 OPEN, branch `fix/marks-latest-released-exam`)
+
+**Task (owner's words):** a parent who received released marks then sent MARKS got "Results for [student] have not been released yet." — MARKS looked up the student's latest exam (unreleased) instead of the most recently released one. Fix: reply with the most recently RELEASED exam; say "not released yet" only when no exam has been released. Small, separate PR. Also: check why Betty Kawooya's demo Mid Term shows no Mathematics.
+
+**Change:** `LatestExamMarks::latestReleasedExam()` walks `MarksRelease` newest-first (status `released`; school or class scope) and maps each release's exam type + term to the student's own class exams carrying their marks. `DemoBindReplies::marksText()` renders that exam; "not released yet" only fires when no release covers the student's entered marks. Deleted the unused `examReleased()`; fixture helper `releaseExam()` (which=old|latest) backs `releaseLatestExam()` and the new test.
+
+**Tests:** new `test_task9_marks_show_the_older_released_exam_when_a_later_exam_is_unreleased` — two exams, only the older released. Red on `main` with the fix reverted (13 tests, 1 failure — the new test; actual reply was "have not been released yet"); green here (`DemoBindByCodeTest` + `MarksReleaseTest`: 37 tests, 246 assertions). Full `scripts/test-guard.sh` on the branch: green — 2670 tests, 0 failures, 0 errors, 4 skipped.
+
+**Betty Kawooya:** the missing P.7 Mathematics Mid Term row is the intentionally open/unmarked walkthrough exam (`docs/ops/demo-walkthrough.md`; `DemoRichDataTest:217-218` pins 0 marks / 0 submissions on it). No seed change made; reported to the owner (recommended: leave as-is).
+
+**Files:** `app/Services/Demo/LatestExamMarks.php`, `app/Services/Demo/DemoBindReplies.php`, `tests/Feature/Demo/Concerns/BuildsFollowAlongSchools.php`, `tests/Feature/Demo/DemoBindByCodeTest.php`.
+
+**Status:** PR #1111 OPEN (`fix/marks-latest-released-exam`, off `main` `21c622da`). Not merged. Production untouched.

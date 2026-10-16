@@ -105,10 +105,19 @@ trait BuildsFollowAlongSchools
     /** A Tier 2 release record of the latest exam (End of Term, Term III) of a fixture school. */
     protected function releaseLatestExam(string $key, string $status = 'released', string $scope = 'school'): void
     {
+        $this->releaseExam($key, 'latest', $status, $scope);
+    }
+
+    /**
+     * A Tier 2 release record of one fixture exam: $which is "old"
+     * (Beginning of Term, Term II) or "latest" (End of Term, Term III).
+     */
+    protected function releaseExam(string $key, string $which, string $status = 'released', string $scope = 'school'): void
+    {
         $fx = $this->fx[$key];
         \App\Models\MarksRelease::create([
             'school_id' => $fx['school']->id,
-            'exam_id' => $fx['exams']['latest']['Mathematics']->id,
+            'exam_id' => $fx['exams'][$which]['Mathematics']->id,
             'scope' => $scope,
             'standard_link_id' => $scope === 'class' ? $fx['link']->id : null,
             'scheduled_at' => now(),

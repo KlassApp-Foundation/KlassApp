@@ -19,9 +19,11 @@ use Illuminate\Support\Facades\Log;
  *                    With DEMO_BIND_REQUIRES_APPROVAL on, it records a request
  *                    for the admin Approvals page instead (DemoBindApproval)
  *                    and the TTL starts when the school approves.
- *   MARKS / RESULTS  a bound number gets that student's latest exam as a
- *                    text table; a number that is not bound gets a short
- *                    reply pointing at the follow-along page.
+ *   MARKS / RESULTS  a bound number gets that student's most recently
+ *                    released exam as a text table ("not released yet"
+ *                    only when no exam has been released for them); a
+ *                    number that is not bound gets a short reply pointing
+ *                    at the follow-along page.
  *
  * Every reply goes only to the number that sent the message. A code for a
  * student outside an is_demo school gets the same reply as an unknown code.
@@ -199,39 +201,34 @@ final class DemoBindReplies
         $name = (string) ($student?->name ?? 'this student');
         $class = trim(($link?->section?->name ?? '') . ' ' . ($link?->stream ?? ''));
 
+        // Demo schools only (marks() never runs for a real school): a bound
+        // number sees the most recently RELEASED exam for this student — not
+        // merely the latest exam with marks — because a later exam can still
+        // be unmarked/unreleased while an earlier one is already out.
+        if ($student && $sectionId) {
+            $released = LatestExamMarks::latestReleasedExam(
+                $schoolId,
+                $sectionId,
+                $studentId,
+                (int) ($link?->id ?? 0),
+            );
+            if ($released) {
+                $exam = LatestExamMarks::forExam($schoolId, $sectionId, $released, $studentId);
+                if ($exam['subjects'] !== []) {
+                    return $this->renderMarks($name, $class, $exam);
+                }
+            }
+        }
+
+        // No release covers this student's marks: distinguish "nothing entered
+        // yet" from "entered, but the school has not released it".
         $exam = ($student && $sectionId) ? LatestExamMarks::forStudent($schoolId, $sectionId, $studentId) : null;
         if (! $exam || $exam['subjects'] === []) {
             return "📊 No marks yet for *{$name}*. They appear here once the school enters them.";
         }
-        // Demo schools only (marks() never runs for a real school): marks stay
-        // hidden until the school releases this exam through Marks release.
-        if (! self::examReleased($schoolId, $exam['exams']->first(), (int) ($link?->id ?? 0))) {
-            return "📊 Results for *{$name}* have not been released yet.\n\n"
-                . 'The school will send them here as soon as they release them.';
-        }
 
-        return $this->renderMarks($name, $class, $exam);
-    }
-
-    /**
-     * True when a release of this exam (same exam type and term) has gone out
-     * to the whole school, or to this student's class and stream.
-     */
-    public static function examReleased(int $schoolId, ?\App\Models\Academics\Exam $exam, int $standardLinkId): bool
-    {
-        if (! $exam) {
-            return false;
-        }
-
-        return \App\Models\MarksRelease::query()
-            ->where('school_id', $schoolId)
-            ->where('status', \App\Models\MarksRelease::STATUS_RELEASED)
-            ->whereHas('exam', fn ($q) => $q->where('school_id', $schoolId)
-                ->where('exam_type_id', $exam->exam_type_id)
-                ->where('academic_term_id', $exam->academic_term_id))
-            ->where(fn ($q) => $q->where('scope', 'school')
-                ->orWhere(fn ($c) => $c->where('scope', 'class')->where('standard_link_id', $standardLinkId)))
-            ->exists();
+        return "📊 Results for *{$name}* have not been released yet.\n\n"
+            . 'The school will send them here as soon as they release them.';
     }
 
     /**
