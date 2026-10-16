@@ -91,12 +91,13 @@ class ManualUiWave3ToshiMaximizeTest extends TestCase
 
     public function test_dashboard_banner_dispatches_maximize_for_toshi_cta(): void
     {
+        $this->school->setToshiMode(\App\Enums\ToshiMode::Onboarding);
         $this->actingAs($this->admin);
 
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
         $response->assertSee('toshi-maximize', false);
-        $response->assertSee('data-testid="setup-banner-toshi"', false);
+        $response->assertSee('data-testid="dashboard-v2-toshi-setup"', false);
     }
 }

@@ -118,13 +118,10 @@ class DashboardController extends Controller
             ? ['labels' => [], 'values' => []]
             : $this->computeFeeTrend($school_id, $trendPeriod, 6);
 
-        $dashboardView = (config('dashboard.v2_enabled') || $request->boolean('v2'))
-            ? '/admin/dashboard/dashboard_v2'
-            : '/admin/dashboard/dashboard';
+        $dashboardView = '/admin/dashboard/dashboard_v2';
 
-        // PR1 first screen data — only built when the v2 flag is on.
         $v2Data = null;
-        if ($dashboardView === '/admin/dashboard/dashboard_v2' && $school_id) {
+        if ($school_id) {
             $v2Data = app(\App\Services\DashboardV2DataService::class)->build(
                 Auth::user()->school,
                 Auth::user(),

@@ -75,7 +75,7 @@ class ClassMarksViewTest extends TestCase
 
     public function test_task9_performance_by_class_links_to_the_class_marks_view(): void
     {
-        $response = $this->actingAs($this->admin('demo'))->get('/admin/dashboard?v2=1');
+        $response = $this->actingAs($this->admin('demo'))->get('/admin/dashboard');
 
         $response->assertOk();
         $response->assertSee('data-testid="dashboard-v2-view-class-marks"', false);

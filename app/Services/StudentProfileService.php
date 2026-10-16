@@ -362,15 +362,8 @@ class StudentProfileService
         $parentIds = array_map(fn (User $parent) => $parent->id, $parents);
         $whatsappRows = $parentIds === []
             ? collect()
-            : WhatsAppUser::query()
-                ->where('school_id', $schoolId)
-                ->whereIn('user_id', $parentIds)
-                ->get(['user_id', 'opted_in', 'whatsapp_profile_name']);
-        $optedIn = $whatsappRows
-            ->filter(fn ($row) => (bool) $row->opted_in)
-            ->pluck('user_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+            : app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedRowsForParents($schoolId, $parentIds);
+        $optedIn = $whatsappRows->pluck('user_id')->map(fn ($id) => (int) $id)->all();
         $profileNames = $whatsappRows
             ->filter(fn ($row) => filled($row->whatsapp_profile_name))
             ->mapWithKeys(fn ($row) => [(int) $row->user_id => (string) $row->whatsapp_profile_name]);
@@ -396,7 +389,7 @@ class StudentProfileService
                 'relation' => $relation !== '' ? ucfirst($relation) : null,
                 'phone' => $phone['label'] ?? null,
                 'phone_href' => $phone['href'] ?? null,
-                'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'On WhatsApp' : 'Not on WhatsApp',
+                'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'Linked' : 'Not linked',
                 'whatsapp_profile_name' => $profileNames[(int) $parent->id] ?? null,
                 'profile_url' => url('/admin/parent/show/'.$parent->name),
             ];

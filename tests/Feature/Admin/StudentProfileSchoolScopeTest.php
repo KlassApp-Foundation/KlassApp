@@ -273,6 +273,7 @@ class StudentProfileSchoolScopeTest extends TestCase
             'user_id' => $parent->id,
             'school_id' => $this->schoolA->id,
             'opted_in' => true,
+            'verified_at' => now(),
         ]);
         $unspecified = User::factory()->create([
             'school_id' => $this->schoolA->id,
@@ -333,9 +334,9 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertSee('Mother')
             ->assertSee('GN', false)
             ->assertSee('href="tel:+256700111222"', false)
-            ->assertSee('On WhatsApp')
+            ->assertSee('Linked')
             ->assertSee('Rita Nakato')
-            ->assertSee('Not on WhatsApp')
+            ->assertSee('Not linked')
             ->assertDontSee('Not given')
             ->assertDontSee('Other Guardian')
             ->assertSee('Set your currency', false)
@@ -355,7 +356,7 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->get('/admin/students/'.$this->studentA->id.'?tab=parents')
             ->assertOk()
             ->assertSee('Grace Nakato')
-            ->assertSee('On WhatsApp')
+            ->assertSee('Linked')
             ->assertDontSee('Not given')
             ->assertDontSee('Other Guardian');
 

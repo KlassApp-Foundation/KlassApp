@@ -49,7 +49,7 @@ return [
 
     // Livewire components refused for the public demo admin (name regex).
     'livewire' => [
-        ['#^(agent-toshi|manual-onboarding-wizard)$#', 'Toshi / AI or onboarding'],
+        ['#^(manual-onboarding-wizard)$#', 'onboarding'],
         ['#^superadmin\.#', 'site-admin component'],
         ['#(profile|password|avatar|two-factor|invite|broadcast|reminder|integration|import|upload)#i', 'profile, invite, broadcast, import or upload component'],
     ],

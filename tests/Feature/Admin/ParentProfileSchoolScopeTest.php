@@ -82,7 +82,7 @@ class ParentProfileSchoolScopeTest extends TestCase
             ->assertSee('Parent')
             ->assertSee('No children yet')
             ->assertSee('No fees recorded')
-            ->assertSee('Not opted in')
+            ->assertSee('Not linked')
             ->assertSee('Never')
             ->assertDontSee('Profession')
             ->assertDontSee('Annual income')
@@ -133,6 +133,7 @@ class ParentProfileSchoolScopeTest extends TestCase
             'user_id' => $parent->id,
             'school_id' => $this->schoolA->id,
             'opted_in' => true,
+            'verified_at' => now(),
         ]);
 
         $html = $this->actingAs($this->adminA)
@@ -146,7 +147,7 @@ class ParentProfileSchoolScopeTest extends TestCase
             ->assertSee('Paid UGX 4,000 of UGX 10,000')
             ->assertSee('/admin/students/'.$child->id, false)
             ->assertSee('/admin/reports/cards/'.$class['link']->id.'/student/'.$child->id.'/preview', false)
-            ->assertSee('Opted in')
+            ->assertSee('Linked')
             ->assertDontSee('S.6')
             ->assertDontSee('99,999')
             ->getContent();

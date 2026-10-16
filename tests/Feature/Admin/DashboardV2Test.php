@@ -81,16 +81,16 @@ class DashboardV2Test extends TestCase
         return $this->actingAs($admin)->get('/admin/dashboard');
     }
 
-    public function test_flag_off_renders_v1_and_v2_query_renders_v2(): void
+    public function test_dashboard_is_v2_without_a_flag(): void
     {
-        config(['dashboard.v2_enabled' => false]);
         $school = $this->makeSchool(['name' => 'Flag School']);
         $admin = $this->makeAdmin($school);
 
         $this->actingAs($admin)->get('/admin/dashboard')->assertOk()
-            ->assertDontSee('data-testid="dashboard-v2-shell"', false);
+            ->assertSee('data-testid="dashboard-v2-shell"', false)
+            ->assertSee('data-testid="dashboard-v2-kpi-whatsapp"', false);
 
-        $this->actingAs($admin)->get('/admin/dashboard?v2=1')->assertOk()
+        $this->actingAs($admin)->get('/admin/dashboard?v2=0')->assertOk()
             ->assertSee('data-testid="dashboard-v2-shell"', false);
     }
 

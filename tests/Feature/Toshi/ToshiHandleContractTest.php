@@ -20,13 +20,13 @@ class ToshiHandleContractTest extends TestCase
 
         $this->assertNotSame('', $handle);
         $this->assertStringContainsString('width: 36px', $handle);
-        $this->assertStringContainsString('height: 96px', $handle);
+        $this->assertStringContainsString('height: 168px', $handle);
         $this->assertStringContainsString('background: #fff', $handle);
         $this->assertStringContainsString('border: 1px solid #E2E8F0', $handle);
         $this->assertStringContainsString('border-radius: 8px 0 0 8px', $handle);
         $this->assertStringContainsString('color: #15803D', $handle);
         $this->assertStringContainsString(':focus-visible', $handle);
-        $this->assertStringContainsString('@media (max-width: 1279px)', $handle);
+        $this->assertStringNotContainsString('#toshi-toggle-wrapper { display: none', $handle);
         $this->assertStringNotContainsString('#c96442', $handle);
         $this->assertStringNotContainsString('data-toshi-mode="preview"', $handle);
     }

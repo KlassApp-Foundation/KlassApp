@@ -69,7 +69,9 @@ class PublicDemoLockdownTest extends TestCase
     {
         $admin = $this->admin();
         foreach (['/superadmin/dashboard', '/superadmin/academics/schools', '/platform/early-access', '/tinker'] as $uri) {
-            $this->actingAs($admin)->get($uri)->assertForbidden();
+            $this->actingAs($admin)->get($uri)->assertOk()
+                ->assertSee('data-testid="public-demo-soon"', false)
+                ->assertSee('Coming soon', false);
         }
     }
 
@@ -77,11 +79,11 @@ class PublicDemoLockdownTest extends TestCase
     {
         $admin = $this->admin();
         foreach (['/admin/changepassword', '/admin/editprofile', '/admin/profile', '/admin/changeavatar', '/password/force-change'] as $uri) {
-            $this->actingAs($admin)->get($uri)->assertForbidden();
+            $this->actingAs($admin)->get($uri)->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
         }
-        $this->actingAs($admin)->post('/admin/changepassword', ['password' => 'new-one-123', 'password_confirmation' => 'new-one-123'])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/profile', ['name' => 'Hacked', 'email' => 'x@example.org'])->assertForbidden();
-        $this->actingAs($admin)->post('/password/email', ['email' => $admin->email])->assertForbidden();
+        $this->actingAs($admin)->post('/admin/changepassword', ['password' => 'new-one-123', 'password_confirmation' => 'new-one-123'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/profile', ['name' => 'Hacked', 'email' => 'x@example.org'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/password/email', ['email' => $admin->email])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
 
         $fresh = $admin->fresh();
         $this->assertSame('Admin demo', $fresh->name);
@@ -97,9 +99,9 @@ class PublicDemoLockdownTest extends TestCase
     {
         $admin = $this->admin();
         $teacher = $this->fx['demo']['teacher'];
-        $this->actingAs($admin)->post('/admin/class-teacher-invite/1/store', ['email' => 'someone@example.org'])->assertForbidden();
-        $this->actingAs($admin)->get('/admin/user/resetPassword/' . $teacher->id)->assertForbidden();
-        $this->actingAs($admin)->get('/teacher/' . $teacher->id . '/impersonate')->assertForbidden();
+        $this->actingAs($admin)->post('/admin/class-teacher-invite/1/store', ['email' => 'someone@example.org'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->get('/admin/user/resetPassword/' . $teacher->id)->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->get('/teacher/' . $teacher->id . '/impersonate')->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
     }
 
     public function test_mail_started_by_the_public_demo_admin_is_refused(): void
@@ -119,31 +121,34 @@ class PublicDemoLockdownTest extends TestCase
         $admin = $this->admin();
         $file = UploadedFile::fake()->create('logo.png', 10, 'image/png');
         // Any request carrying a file, even to an allowed route.
-        $this->actingAs($admin)->post('/admin/marks/releases/preview', ['exam_id' => 1, 'when' => 'now', 'f' => $file])->assertForbidden();
-        $this->actingAs($admin)->post('/livewire/upload-file', ['files' => [$file]])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/importUsers', [])->assertForbidden();
-        $this->actingAs($admin)->get('/admin/import')->assertForbidden();
-        $this->actingAs($admin)->post('/admin/document/add/x', [])->assertForbidden();
+        $this->actingAs($admin)->post('/admin/marks/releases/preview', ['exam_id' => 1, 'when' => 'now', 'f' => $file])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/livewire/upload-file', ['files' => [$file]])->assertOk()
+            ->assertJsonPath('message', "This isn't available in the public demo yet. It's coming soon.");
+        $this->actingAs($admin)->post('/admin/importUsers', [])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->get('/admin/import')->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/document/add/x', [])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
     }
 
     public function test_public_demo_admin_cannot_broadcast_remind_or_add_numbers(): void
     {
         $admin = $this->admin();
-        $this->actingAs($admin)->post('/admin/student/sendMessageToAll', ['message' => 'hi'])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/teacher/sendMessageToAll', ['message' => 'hi'])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/fees/payments/reminders', [])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/dashboard/send/reminder/1', [])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/phonenumber/add', ['phone' => '+256700000001'])->assertForbidden();
-        $this->actingAs($admin)->post('/admin/whatsapp/phone', ['phone' => '+256700000001'])->assertForbidden();
-        $this->actingAs($admin)->get('/admin/settings/integrations')->assertForbidden();
-        $this->actingAs($admin)->get('/admin/subscriptions')->assertForbidden();
+        $this->actingAs($admin)->post('/admin/student/sendMessageToAll', ['message' => 'hi'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/teacher/sendMessageToAll', ['message' => 'hi'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/fees/payments/reminders', [])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/dashboard/send/reminder/1', [])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/phonenumber/add', ['phone' => '+256700000001'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->post('/admin/whatsapp/phone', ['phone' => '+256700000001'])->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->get('/admin/settings/integrations')->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
+        $this->actingAs($admin)->get('/admin/subscriptions')->assertOk()->assertSee('data-testid="public-demo-soon"', false)->assertSee('Coming soon', false);
     }
 
     public function test_public_demo_admin_cannot_use_toshi_or_profile_livewire_components(): void
     {
         $admin = $this->admin();
-        $payload = ['components' => [['snapshot' => json_encode(['memo' => ['name' => 'agent-toshi']]), 'updates' => [], 'calls' => []]]];
-        $this->actingAs($admin)->postJson('/livewire/update', $payload)->assertForbidden();
+        $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->assertSee('coming soon', false);
+        $payload = ['components' => [['snapshot' => json_encode(['memo' => ['name' => 'manual-onboarding-wizard']]), 'updates' => [], 'calls' => []]]];
+        $this->actingAs($admin)->postJson('/livewire/update', $payload)->assertOk()
+            ->assertJsonPath('message', "This isn't available in the public demo yet. It's coming soon.");
     }
 
     public function test_a_normal_school_admin_is_untouched(): void

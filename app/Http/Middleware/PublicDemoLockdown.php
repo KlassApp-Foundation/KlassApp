@@ -47,7 +47,14 @@ class PublicDemoLockdown
             if ($reason === 'other school') {
                 abort(404);
             }
-            abort(403, 'Not available in the public demo: ' . $reason . '.');
+
+            $message = "This isn't available in the public demo yet. It's coming soon.";
+            // Livewire speaks JSON. A browser navigation gets the page.
+            if ($request->expectsJson() || $request->is('livewire/*')) {
+                return response()->json(['message' => $message]);
+            }
+
+            return response()->view('demo.public-demo-soon', ['message' => $message]);
         }
 
         return $next($request);

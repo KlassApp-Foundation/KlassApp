@@ -68,34 +68,18 @@ class EmptyStateProductDemoTest extends TestCase
         ]);
     }
 
-    public function test_pre_onboarding_dashboard_renders_product_demo_markup(): void
+    public function test_pre_onboarding_dashboard_is_v2_without_the_product_demo(): void
     {
         $this->actingAs($this->admin);
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('data-testid="empty-state-product-demo"', false);
-        $response->assertSee('data-testid="es-demo-scene-whatsapp"', false);
-        $response->assertSee('data-testid="es-demo-scene-toshi"', false);
-        $response->assertSee('data-testid="es-demo-scene-connectors"', false);
-        $response->assertSee('data-testid="dashboard-greeting"', false);
-        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
-        $response->assertSee('data-testid="dashboard-home-head"', false);
+        $response->assertSee('data-testid="dashboard-v2-shell"', false);
+        $response->assertSee('data-testid="dashboard-v2-empty-students"', false);
+        $response->assertDontSee('data-testid="empty-state-product-demo"', false);
+        $response->assertDontSee('js/empty-state-product-demo.js', false);
         $response->assertDontSee('data-testid="dashboard-kpi-grid"', false);
-        $response->assertDontSee('data-testid="dashboard-connected-tools"', false);
-        $response->assertSee('data-testid="es-demo-connectors-disclaimer"', false);
-        $response->assertSee('Coming soon', false);
-        $response->assertSee('aspirational', false);
-        $response->assertSee('js/empty-state-product-demo.js', false);
-        $response->assertSee('data-testid="setup-banner"', false);
-
-        // Demo appears before setup banner in the HTML (top half).
-        $html = $response->getContent();
-        $demoPos = strpos($html, 'data-testid="empty-state-product-demo"');
-        $bannerPos = strpos($html, 'data-testid="setup-banner"');
-        $this->assertNotFalse($demoPos);
-        $this->assertNotFalse($bannerPos);
-        $this->assertLessThan($bannerPos, $demoPos);
+        $response->assertDontSee('data-testid="setup-banner"', false);
     }
 
     public function test_product_demo_js_and_reduced_motion_css_are_present(): void
@@ -119,69 +103,11 @@ class EmptyStateProductDemoTest extends TestCase
 
     public function test_post_onboarding_dashboard_does_not_include_product_demo(): void
     {
-        $plan = Plan::create([
-            'name' => 'Freemium',
-            'display_name' => 'Freemium',
-            'cycle' => 30,
-            'no_of_students' => 0,
-            'no_of_users' => 0,
-            'amount' => 0,
-            'order' => 1,
-            'is_active' => 1,
-        ]);
+        $this->assertFileDoesNotExist(resource_path('views/admin/dashboard/dashboard.blade.php'));
+        $v2 = file_get_contents(resource_path('views/admin/dashboard/dashboard_v2.blade.php'));
+        $this->assertStringNotContainsString('empty-state-product-demo', $v2);
+        $this->assertStringContainsString('data-testid="dashboard-v2-shell"', $v2);
 
-        $view = $this->view('admin.dashboard.dashboard', [
-            'dashboard' => [
-                'studentCount' => 12,
-                'teacherCount' => 3,
-                'parentCount' => 8,
-                'nonteachingCount' => 1,
-                'femaleCount' => 6,
-                'maleCount' => 6,
-                'unknownCount' => 0,
-                'setupIncomplete' => false,
-                'whatsapp' => ['parentsOptedIn' => 2, 'messagesThisMonth' => 5],
-                'noticeboard' => [],
-                'feedbacks' => [],
-                'events' => [],
-                'products' => [],
-                'upcomingExam' => [],
-                'standardStudentCounts' => collect(),
-                'work' => [],
-                'task' => [],
-                'event' => [],
-                'reminder' => [],
-                'fee' => [],
-                'birthday' => [],
-            ],
-            'standardLink' => null,
-            'selected_teacher' => null,
-            'plan' => $plan,
-            'planUsage' => [
-                'students' => ['used' => 12, 'limit' => 0],
-                'teachers' => ['used' => 3, 'limit' => 0],
-            ],
-            'onboardingMissing' => [],
-            'onboardingSteps' => [],
-            'setupIncomplete' => false,
-            'openToshiOnboarding' => false,
-            'pendingApprovals' => 0,
-            'trendPeriod' => 'month',
-            'feeTrend' => [],
-            'greeting' => ['phrase' => 'Good morning', 'name' => 'Demo'],
-            'dashboardContextLine' => '2026 · Term 1 · 12 students enrolled',
-            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
-        ]);
-
-        $view->assertDontSee('data-testid="empty-state-product-demo"', false);
-        $view->assertDontSee('empty-state-product-demo.js', false);
-        $view->assertSee('ds-kpi-card', false);
-        $view->assertDontSee('dashboard-kpi-card', false);
-        $view->assertSee('data-testid="dashboard-greeting"', false);
-        $view->assertSee('Good morning, Demo', false);
-        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
-        $view->assertSee('data-testid="dashboard-connected-tools"', false);
-        $view->assertSee('data-testid="dashboard-topfold-kit"', false);
-        $view->assertSee('Connected tools', false);
     }
+
 }

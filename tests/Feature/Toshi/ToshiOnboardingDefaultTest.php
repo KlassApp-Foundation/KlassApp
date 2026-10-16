@@ -115,7 +115,7 @@ class ToshiOnboardingDefaultTest extends TestCase
         }
 
         $response->assertOk();
-        $response->assertSee('Set up manually', false);
+        $response->assertSee('Continue setup', false);
         $response->assertSee('Set up with Toshi', false);
         // Auto-open script only — the Set up with Toshi button also dispatches maximize on click.
         $response->assertDontSee('Wave 3: open Toshi maximized', false);

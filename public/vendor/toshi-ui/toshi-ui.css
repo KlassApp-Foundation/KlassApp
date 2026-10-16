@@ -1111,10 +1111,9 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
     .toshi-early-pill { top: auto; bottom: -52px; writing-mode: horizontal-tb; transform: none; }
 }
 
-/* TOSHI HANDLE — collapsed edge tab from 1280 up, in every mode.
-   36×96 white card, slate border, brand K. Centred in the space below
-   the sticky header. No orange. Hidden below 1280. */
-@media (min-width: 1280px) {
+/* TOSHI HANDLE — collapsed edge tab, in every mode, at every width.
+   36×168 white card, slate border, brand K. Centred in the space below
+   the sticky header. No orange. */
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
         display: flex !important;
         position: fixed !important;
@@ -1122,7 +1121,7 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
         top: calc(50% + var(--ka-topbar-h, 64px) / 2) !important;
         transform: translateY(-50%) !important;
         width: 36px !important;
-        height: 96px !important;
+        height: 168px !important;
         margin: 0;
         padding: 0;
         background: #fff !important;
@@ -1145,11 +1144,6 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
         outline: 2px solid #15803D;
         outline-offset: 2px;
     }
-}
-@media (max-width: 1279px) {
-    #toshi-toggle-wrapper,
-    .toshi-toggle-wrapper { display: none !important; width: 0 !important; }
-}
 
 /* TOSHI ENTRY PILL — the second shape of the same launcher. White, just
    left of the 36px gutter. Green K in a ring. 14px/700 label. No orange.

@@ -406,9 +406,30 @@ class MarksReleaseTest extends TestCase
             ->assertSee('Amina Nakato')
             ->assertSee('Mathematics')
             ->assertDontSee('```', false)
-            ->assertSee('data-testid="release-marks-confirm"', false);
+            ->assertSee('data-testid="release-marks-confirm"', false)
+            ->assertSee('Choose the exam and who receives it. The sheet shows the marks that will be sent.')
+            ->assertDontSee('data-testid="sheet-filter-class"', false);
         $this->assertSame(0, MarksRelease::count());
         $this->assertSame([], $this->outbound());
+    }
+
+    public function test_release_page_one_class_and_stream_sets_the_button(): void
+    {
+        $admin = $this->admin();
+        $link = $this->link()->load('section');
+        $class = trim((string) ($link->section?->name ?? ''));
+        $stream = trim((string) $link->stream);
+
+        $this->actingAs($admin)->get('/admin/marks/releases/new')
+            ->assertOk()
+            ->assertSee('Release to all classes (', false)
+            ->assertSee('data-testid="release-class"', false)
+            ->assertSee('data-testid="release-stream"', false)
+            ->assertDontSee('data-testid="sheet-filter-class"', false);
+
+        $this->actingAs($admin)->get('/admin/marks/releases/new?class='.urlencode($class).'&stream='.urlencode($stream))
+            ->assertOk()
+            ->assertSee('Release to '.trim($class.' '.$stream).' (', false);
     }
 
     public function test_task9_result_view_lists_sent_and_skipped_with_reasons_and_masked_numbers(): void
@@ -441,7 +462,7 @@ class MarksReleaseTest extends TestCase
     public function test_task9_release_marks_button_is_on_the_dashboard_and_marks_pages(): void
     {
         $admin = $this->admin();
-        $this->actingAs($admin)->get('/admin/dashboard?v2=1')->assertOk()->assertSee('data-testid="release-marks-button"', false);
+        $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->assertSee('data-testid="release-marks-button"', false);
         $this->actingAs($admin)->get('/admin/marks/classes')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $teacher = $this->teacher();

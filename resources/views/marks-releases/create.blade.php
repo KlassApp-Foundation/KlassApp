@@ -9,89 +9,81 @@
 @section('content')
 @php
     $examId = (int) ($old['exam_id'] ?? 0);
-    $linkId = $old['standard_link_id'] ?? null;
     $when = $old['when'] ?? 'now';
-    $classes = collect($sheet['groups'] ?? [])->pluck('class_name')->filter()->unique()->values();
-    $streams = collect($sheet['groups'] ?? [])->pluck('stream')->filter()->unique()->values();
+    $selectedClass = (string) ($old['class'] ?? '');
+    $selectedStream = (string) ($old['stream'] ?? '');
 @endphp
 <div class="mr" data-testid="marks-release-create">
     <h1>Release marks</h1>
-    <p class="mr-sub">{{ $confirming ? 'Check the sheet, then confirm. Nothing is sent until you do.' : 'Choose the exam and who receives it. The sheet is who those marks belong to.' }}</p>
+    <p class="mr-sub">Choose the exam and who receives it. The sheet shows the marks that will be sent.</p>
 
     @if($exams->isEmpty())
         <div class="mr-card"><p style="margin:0">No exam has marks in your classes yet.</p></div>
     @else
-    <div class="mr-top">
-        <form class="mr-controls" method="GET" action="{{ route($area.'.marks.releases.create') }}" data-testid="marks-release-controls">
-            <label class="mr-control">
-                <span>Exam</span>
-                <select name="exam_id" onchange="this.form.submit()">
-                    @foreach($exams as $e)
-                        <option value="{{ $e['id'] }}" @selected($examId === $e['id'])>{{ $e['label'] }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="mr-control">
-                <span>Class</span>
-                <select name="standard_link_id" onchange="this.form.submit()">
-                    @if($isAdmin)<option value="">All classes</option>@endif
-                    @foreach($links as $l)
-                        <option value="{{ $l->id }}" @selected((int) $linkId === (int) $l->id)>{{ trim(($l->section?->name ?? '').' '.($l->stream ?? '')) }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <input type="hidden" name="when" value="{{ $when }}">
-            <input type="hidden" name="scheduled_for" value="{{ $old['scheduled_for'] ?? '' }}">
-        </form>
+    <div class="mr-head">
+        <div class="mr-bar" data-testid="marks-release-controls">
+            <form class="mr-scope" method="GET" action="{{ route($area.'.marks.releases.create') }}">
+                <label class="mr-control">
+                    <span>Exam</span>
+                    <select name="exam_id" onchange="this.form.submit()">
+                        @foreach($exams as $e)
+                            <option value="{{ $e['id'] }}" @selected($examId === $e['id'])>{{ $e['label'] }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="mr-control">
+                    <span>Class</span>
+                    <select name="class" data-testid="release-class" onchange="this.form.submit()">
+                        @if($isAdmin)<option value="">All classes</option>@endif
+                        @foreach($classOptions as $className)
+                            <option value="{{ $className }}" @selected($selectedClass === $className)>{{ $className }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="mr-control">
+                    <span>Stream</span>
+                    <select name="stream" data-testid="release-stream" onchange="this.form.submit()">
+                        <option value="">All streams</option>
+                        @foreach($streamOptions as $streamName)
+                            <option value="{{ $streamName }}" @selected($selectedStream === $streamName)>{{ $streamName }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <input type="hidden" name="when" id="mr-when-keep" value="{{ $when }}">
+                <input type="hidden" name="scheduled_for" id="mr-when-at" value="{{ $old['scheduled_for'] ?? '' }}">
+            </form>
 
-        <form class="mr-release" method="POST" action="{{ route($area.'.marks.releases.store') }}">
-            @csrf
-            <input type="hidden" name="exam_id" value="{{ $examId }}">
-            <input type="hidden" name="standard_link_id" value="{{ $linkId }}">
-            <input type="hidden" name="timezone" class="mr-timezone" value="{{ $old['timezone'] ?? 'Africa/Kampala' }}">
-            <fieldset class="mr-when">
-                <legend class="sr-only">When</legend>
-                <label><input type="radio" name="when" value="now" @checked($when !== 'schedule')> Release now</label>
-                <label><input type="radio" name="when" value="schedule" @checked($when === 'schedule')> Schedule</label>
-                <input type="datetime-local" name="scheduled_for" value="{{ $old['scheduled_for'] ?? '' }}" aria-label="Date and time">
-            </fieldset>
-            @if($confirming)
-                <p class="mr-when-label" data-testid="release-when">{{ $whenLabel }}</p>
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm">{{ $when === 'schedule' ? 'Confirm schedule' : 'Confirm and release' }}</button>
-            @else
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm">{{ $when === 'schedule' ? 'Schedule release' : 'Release now' }}</button>
-            @endif
-            @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
-            @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
-            @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
-        </form>
+            <form class="mr-go" method="POST" action="{{ route($area.'.marks.releases.store') }}">
+                @csrf
+                <input type="hidden" name="exam_id" value="{{ $examId }}">
+                <input type="hidden" name="class" value="{{ $selectedClass }}">
+                <input type="hidden" name="stream" value="{{ $selectedStream }}">
+                <input type="hidden" name="timezone" class="mr-timezone" value="{{ $old['timezone'] ?? 'Africa/Kampala' }}">
+                <div class="mr-seg" role="radiogroup" aria-label="When">
+                    <label><input type="radio" name="when" value="now" @checked($when !== 'schedule')> Release now</label>
+                    <label><input type="radio" name="when" value="schedule" @checked($when === 'schedule')> Schedule</label>
+                </div>
+                <label class="mr-control mr-when-at" @if($when !== 'schedule') hidden @endif>
+                    <span class="sr-only">Date and time</span>
+                    <input type="datetime-local" name="scheduled_for" value="{{ $old['scheduled_for'] ?? '' }}" aria-label="Date and time">
+                </label>
+                @if($confirming)
+                    <p class="mr-when-label" data-testid="release-when">{{ $whenLabel }}</p>
+                @endif
+                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
+                @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
+                @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
+                @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
+            </form>
+        </div>
 
-        <aside class="mr-wa" data-testid="what-parents-receive">
-            <h2>What parents receive</h2>
+        <details class="mr-wa" data-testid="what-parents-receive">
+            <summary>What parents receive</summary>
             @if($confirming)
                 <p class="mr-when-label">Send these marks?</p>
             @endif
             <div class="mr-wa-body" data-testid="release-marks-message">{!! \App\Support\WhatsAppMessagePreview::html($previewMessage) !!}</div>
-        </aside>
-    </div>
-
-    <div class="mr-sheet-tools">
-        <label>Class
-            <select id="mr-filter-class" data-testid="sheet-filter-class">
-                <option value="">All classes</option>
-                @foreach($classes as $className)
-                    <option value="{{ $className }}">{{ $className }}</option>
-                @endforeach
-            </select>
-        </label>
-        <label>Stream
-            <select id="mr-filter-stream" data-testid="sheet-filter-stream">
-                <option value="">All streams</option>
-                @foreach($streams as $streamName)
-                    <option value="{{ $streamName }}">{{ $streamName }}</option>
-                @endforeach
-            </select>
-        </label>
+        </details>
     </div>
 
     <div class="mr-sheet {{ $wide ? 'mr-sheet--wide' : '' }}" data-testid="marks-release-sheet">
@@ -157,28 +149,37 @@
         if (input && tz) { input.value = tz; }
     }, true);
 
-    var sheet = document.querySelector('[data-testid="marks-release-sheet"]');
-    if (!sheet) { return; }
-    var classFilter = document.getElementById('mr-filter-class');
-    var streamFilter = document.getElementById('mr-filter-stream');
-    function applyFilters() {
-        var cls = classFilter ? classFilter.value : '';
-        var stream = streamFilter ? streamFilter.value : '';
-        sheet.querySelectorAll('tr[data-class]').forEach(function (row) {
-            var show = (cls === '' || row.getAttribute('data-class') === cls) && (stream === '' || row.getAttribute('data-stream') === stream);
-            row.hidden = !show;
-        });
-    }
-    if (classFilter) { classFilter.addEventListener('change', applyFilters); }
-    if (streamFilter) { streamFilter.addEventListener('change', applyFilters); }
+    // Delegate. Vue remounts #app after this script runs, so listeners on the
+    // original nodes would never see a click.
+    document.addEventListener('change', function (e) {
+        var input = e.target;
+        if (!input || !input.matches) { return; }
+        if (input.matches('.mr-seg input[name="when"]')) {
+            var schedule = input.value === 'schedule' && input.checked;
+            var field = document.querySelector('label.mr-when-at');
+            if (field) { field.hidden = !schedule; }
+            var keep = document.getElementById('mr-when-keep');
+            if (keep) { keep.value = input.value; }
+            var button = document.querySelector('[data-testid="release-marks-confirm"]');
+            if (button && button.getAttribute('data-release-to') && !button.textContent.startsWith('Confirm')) {
+                button.textContent = (schedule ? 'Schedule for ' : 'Release to ') + button.getAttribute('data-release-to');
+            }
+        }
+        if (input.matches('label.mr-when-at input')) {
+            var keepAt = document.getElementById('mr-when-at');
+            if (keepAt) { keepAt.value = input.value; }
+        }
+    });
 
     var dir = {};
-    sheet.querySelectorAll('button[data-sort]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            var key = button.getAttribute('data-sort') + ':' + (button.getAttribute('data-subject') || '');
-            dir[key] = dir[key] === 'asc' ? 'desc' : 'asc';
-            var subject = button.getAttribute('data-subject');
-            sheet.querySelectorAll('tr.mr-group').forEach(function (header) {
+    document.addEventListener('click', function (e) {
+        var button = e.target && e.target.closest ? e.target.closest('[data-testid="marks-release-sheet"] button[data-sort]') : null;
+        if (!button) { return; }
+        var sheet = button.closest('[data-testid="marks-release-sheet"]');
+        var key = button.getAttribute('data-sort') + ':' + (button.getAttribute('data-subject') || '');
+        dir[key] = dir[key] === 'asc' ? 'desc' : 'asc';
+        var subject = button.getAttribute('data-subject');
+        sheet.querySelectorAll('tr.mr-group').forEach(function (header) {
                 var rows = [];
                 var next = header.nextElementSibling;
                 while (next && next.classList.contains('mr-student')) {
@@ -207,7 +208,6 @@
                 });
                 rows.forEach(function (row) { header.parentNode.insertBefore(row, next); });
             });
-        });
     });
 })();
 </script>

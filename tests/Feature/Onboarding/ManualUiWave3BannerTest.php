@@ -59,6 +59,9 @@ class ManualUiWave3BannerTest extends TestCase
             'firstname' => 'Banner',
             'lastname' => 'Admin',
         ]);
+
+        // toshi_enabled=1 would be assistant mode, which has no setup CTA.
+        $this->school->setToshiMode(\App\Enums\ToshiMode::Onboarding);
     }
 
     public function test_dashboard_shows_single_consolidated_setup_banner(): void
@@ -68,10 +71,11 @@ class ManualUiWave3BannerTest extends TestCase
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('data-testid="setup-banner"', false);
-        $response->assertSee('Set up manually', false);
+        $response->assertSee('data-testid="dashboard-v2-setup-bar"', false);
+        $response->assertSee('Continue setup', false);
         $response->assertSee('Set up with Toshi', false);
-        $response->assertSee('/admin/onboarding/wizard', false);
+        $response->assertSee('data-testid="dashboard-v2-setup-continue"', false);
+        $response->assertDontSee('data-testid="setup-banner"', false);
 
         // Old competing boxes must not render alongside the consolidated banner.
         $response->assertDontSee('id="onboarding-reminder"', false);
@@ -86,7 +90,8 @@ class ManualUiWave3BannerTest extends TestCase
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('Finish school setup', false);
+        $response->assertSee('data-testid="dashboard-v2-setup-bar"', false);
+        $response->assertSee('Continue setup', false);
         $this->assertTrue(
             OnboardingStepsService::hasIncompleteSteps($this->school->fresh(), $this->admin->id)
         );
@@ -110,6 +115,6 @@ class ManualUiWave3BannerTest extends TestCase
         $this->actingAs($this->admin);
         $response = $this->get('/admin/dashboard');
         $response->assertOk();
-        $response->assertSee('data-testid="setup-banner"', false);
+        $response->assertSee('data-testid="dashboard-v2-setup-bar"', false);
     }
 }

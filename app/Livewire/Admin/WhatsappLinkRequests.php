@@ -30,6 +30,7 @@ class WhatsappLinkRequests extends Component
         $board = app(LinkRequestBoard::class);
         $requests = $board->pending($schoolId);
         $this->announceNewRequests($requests);
+        $this->dispatch('link-request-count', count: $board->pendingCount($schoolId));
 
         return view('livewire.admin.whatsapp-link-requests', [
             'requests' => $requests,

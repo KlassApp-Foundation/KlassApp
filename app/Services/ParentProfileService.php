@@ -53,11 +53,7 @@ class ParentProfileService
         $currency = app(DashboardV2DataService::class)->currencyFor($schoolId);
         $children = $this->children($schoolId, $parent, $currency);
         $fees = $this->feesTile($children, $currency);
-        $whatsapp = WhatsAppUser::query()
-            ->where('school_id', $schoolId)
-            ->where('user_id', $parent->id)
-            ->first();
-        $optedIn = (bool) ($whatsapp?->opted_in);
+        $whatsapp = app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedRowForParent($schoolId, (int) $parent->id);
 
         return [
             'parent' => $parent,
@@ -69,7 +65,7 @@ class ParentProfileService
             'phone' => filled($parent->mobile_no) ? (string) $parent->mobile_no : 'Not recorded',
             'email' => filled($parent->email) ? (string) $parent->email : 'Not recorded',
             'last_login' => $this->lastLogin($schoolId, $parent->id),
-            'whatsapp' => $optedIn ? 'Opted in' : 'Not opted in',
+            'whatsapp' => $whatsapp ? 'Linked' : 'Not linked',
             'whatsapp_profile_name' => filled($whatsapp?->whatsapp_profile_name) ? (string) $whatsapp->whatsapp_profile_name : null,
             'children_count' => count($children),
             'children' => $children,

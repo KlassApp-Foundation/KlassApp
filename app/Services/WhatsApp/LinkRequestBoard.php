@@ -89,6 +89,7 @@ class LinkRequestBoard
                 'approval_id' => (int) $request->pendingApproval->id,
                 'phone' => (string) $request->phone,
                 'phone_display' => WhatsAppPhoneHelper::readable((string) $request->phone),
+                'has_name' => $request->cardParentName() !== '',
                 'parent_name' => $request->cardParentName() !== '' ? $request->cardParentName() : WhatsAppPhoneHelper::readable((string) $request->phone),
                 'profile_name' => (string) ($request->whatsapp_profile_name ?? ''),
                 'child_name' => $childName !== '' ? $childName : 'Student not named',
@@ -134,15 +135,39 @@ class LinkRequestBoard
      */
     public function linkedNumberCount(int $schoolId): int
     {
+        return $this->linkedQuery($schoolId)->count();
+    }
+
+    /** The parent's real WhatsApp link, if one is opted in and verified. */
+    public function linkedRowForParent(int $schoolId, int $parentId): ?WhatsAppUser
+    {
+        return $this->linkedQuery($schoolId)->where('user_id', $parentId)->orderByDesc('verified_at')->first();
+    }
+
+    private function linkedQuery(int $schoolId)
+    {
         return WhatsAppUser::query()
             ->where('school_id', $schoolId)
             ->whereNotNull('user_id')
             ->whereNotNull('verified_at')
             ->where('opted_in', true)
-            ->whereHas('user', fn ($q) => $q->where('school_id', $schoolId)->where('usergroup_id', 7))
+            ->whereHas('user', fn ($q) => $q->where('usergroup_id', 7)->where(function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId)->orWhereNull('school_id');
+            }))
             ->where(fn ($q) => $q->whereNull('demo_student_id')
-                ->orWhere('demo_linked_at', '>', DemoFollowAlong::bindCutoff()))
-            ->count();
+                ->orWhere('demo_linked_at', '>', DemoFollowAlong::bindCutoff()));
+    }
+
+    /** @param  list<int>  $parentIds */
+    public function linkedRowsForParents(int $schoolId, array $parentIds): \Illuminate\Support\Collection
+    {
+        if ($parentIds === []) {
+            return collect();
+        }
+
+        return $this->linkedQuery($schoolId)
+            ->whereIn('user_id', $parentIds)
+            ->get(['user_id', 'whatsapp_profile_name']);
     }
 
     /**

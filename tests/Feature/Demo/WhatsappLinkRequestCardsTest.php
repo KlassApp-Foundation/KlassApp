@@ -266,13 +266,14 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
     public function test_drive_row_is_hidden_unless_the_school_connected_it(): void
     {
-        $blade = file_get_contents(resource_path('views/admin/dashboard/dashboard.blade.php'));
+        $blade = file_get_contents(resource_path('views/admin/dashboard/dashboard_v2.blade.php'));
         $this->assertStringContainsString("!empty(\$connectedTools['driveConnected'])", $blade);
-        $this->assertStringContainsString('dashboard-connected-whatsapp-count', $blade);
+        $this->assertStringContainsString('dashboard-connected-whatsapp-count', file_get_contents(resource_path('views/admin/dashboard/_whatsapp_stat.blade.php')));
         $this->assertMatchesRegularExpression(
             '/@if\(!empty\(\$connectedTools\[\'driveConnected\'\]\)\).*dashboard-connected-drive/s',
             $blade
         );
+        $this->assertFileDoesNotExist(resource_path('views/admin/dashboard/dashboard.blade.php'));
     }
 
     public function test_klassapp_number_form_and_demo_share_one_inbox(): void

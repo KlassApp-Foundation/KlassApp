@@ -92,10 +92,9 @@ class ToshiPreviewEntryPointsTest extends TestCase
 
         $response->assertDontSee('data-testid="toshi-pill"', false);
         $response->assertDontSee('es-demo-scene-toshi', false);
+        $response->assertDontSee('es-demo-scene-whatsapp', false);
         $response->assertDontSee('Toshi helps finish');
-
-        // the rest of the demo still renders
-        $response->assertSee('es-demo-scene-whatsapp', false);
+        $response->assertSee('data-testid="dashboard-v2-shell"', false);
     }
 
     public function test_onboarding_school_also_hides_the_pill_and_demo_slide(): void
@@ -117,7 +116,7 @@ class ToshiPreviewEntryPointsTest extends TestCase
         $response->assertOk();
 
         $response->assertSee('data-testid="toshi-pill"', false);
-        $response->assertSee('es-demo-scene-toshi', false);
-        $response->assertSee('Toshi helps finish');
+        $response->assertDontSee('es-demo-scene-toshi', false);
+        $response->assertSee('data-testid="dashboard-v2-shell"', false);
     }
 }

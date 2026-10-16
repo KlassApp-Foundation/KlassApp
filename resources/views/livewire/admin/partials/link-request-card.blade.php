@@ -2,11 +2,19 @@
 <article class="ds-card wa-lr-card" wire:key="link-request-{{ $r['id'] }}" data-testid="wa-link-request" data-request-id="{{ $r['id'] }}" data-source="{{ $r['source'] }}"
          x-data="{ confirming: false }">
     <div class="wa-lr-card__main">
-        <p class="wa-lr-parent">
-            <span class="wa-lr-parent__name" data-testid="wa-link-request-parent">{{ $r['parent_name'] }}</span>
-            <span class="wa-lr-chip wa-lr-chip--source" data-testid="wa-link-request-source">{{ $r['source_label'] }}</span>
-        </p>
-        <p class="wa-lr-phone" data-testid="wa-link-request-phone">{{ $r['phone_display'] }}</p>
+        @if(! empty($r['has_name']))
+            <p class="wa-lr-parent">
+                <span class="wa-lr-parent__name" data-testid="wa-link-request-parent">{{ $r['parent_name'] }}</span>
+                <span class="wa-lr-chip wa-lr-chip--source" data-testid="wa-link-request-source">{{ $r['source_label'] }}</span>
+            </p>
+            <p class="wa-lr-phone wa-lr-phone--sub" data-testid="wa-link-request-phone">{{ $r['phone_display'] }}</p>
+        @else
+            <p class="wa-lr-parent">
+                <span class="wa-lr-parent__name" data-testid="wa-link-request-parent">{{ $r['phone_display'] }}</span>
+                <span class="wa-lr-chip wa-lr-chip--source" data-testid="wa-link-request-source">{{ $r['source_label'] }}</span>
+            </p>
+            <p class="wa-lr-phone wa-lr-phone--sub" data-testid="wa-link-request-phone" hidden>{{ $r['phone_display'] }}</p>
+        @endif
         <p class="wa-lr-student">
             <span class="wa-lr-student__name">{{ $r['child_name'] }}</span>
             @if($r['class_name'] !== '')
@@ -19,10 +27,7 @@
         @if($r['needs_check'])
             <p class="wa-lr-typed" data-testid="wa-link-request-typed">
                 Parent typed
-                @if($r['typed_child'] !== '') child <strong>{{ $r['typed_child'] }}</strong>@endif
-                @if($r['typed_school'] !== '') , school <strong>{{ $r['typed_school'] }}</strong>@endif
-                @if($r['typed_class'] !== '') , class <strong>{{ $r['typed_class'] }}</strong>@endif
-                — this does not match one student exactly.
+                @if($r['typed_child'] !== '') child <strong>{{ $r['typed_child'] }}</strong>@endif@if($r['typed_school'] !== ''), school <strong>{{ $r['typed_school'] }}</strong>@endif@if($r['typed_class'] !== ''), class <strong>{{ $r['typed_class'] }}</strong>@endif. This doesn't match one student exactly.
             </p>
         @endif
         <p class="wa-lr-meta">

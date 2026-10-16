@@ -46,11 +46,11 @@ class DashboardV21TilesTest extends TestCase
 
         $this->assertStringNotContainsString('aria-label="Quick actions"', $html);
         $this->assertStringContainsString('href="'.url('/admin/students').'"', $html);
-        $this->assertStringContainsString('+ Add students', $html);
-        $this->assertStringContainsString('View registers', $html);
-        $this->assertStringContainsString('Record payment', $html);
-        // F4: one report cards action by state; no exam yet, so it is Generate.
-        $this->assertStringContainsString('>Generate</a>', $html);
+        $this->assertStringContainsString('href="'.url('/admin/whatsapp/dashboard').'"', $html);
+        $this->assertStringNotContainsString('+ Add students', $html);
+        $this->assertStringNotContainsString('View registers', $html);
+        $this->assertStringNotContainsString('Record payment', $html);
+        $this->assertStringNotContainsString('>Generate</a>', $html);
         $this->assertStringContainsString('Enter marks', $html);
         $css = file_get_contents(public_path('css/dashboard-v2.css'));
         $this->assertStringContainsString('min-height:280px', $css);

@@ -28,6 +28,10 @@ class ToshiUiSwitch
             return ToshiMode::Onboarding;
         }
 
+        if ($user->isPublicDemo()) {
+            return ToshiMode::Preview;
+        }
+
         if ((int) $user->usergroup_id === 1 && $user->school_id === null) {
             return ToshiMode::Assistant;
         }
