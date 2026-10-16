@@ -97,7 +97,8 @@ class WhatsAppDemoSchoolIdTest extends TestCase
 
         $this->assertNull(WhatsAppUser::where('phone', $this->phone)->first());
         $this->assertNotEmpty($messages);
-        $this->assertStringContainsString('Demo account not available', $messages[0]);
+        $this->assertStringContainsString('Welcome to the KlassApp demo.', $messages[0]);
+        $this->assertStringContainsString(url('/demo'), $messages[0]);
     }
 
     protected function tearDown(): void

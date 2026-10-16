@@ -142,6 +142,13 @@
                                     ]
                                 },
                                 {
+                                    "label": "Release marks",
+                                    "url": "admin/marks/releases/new",
+                                    "paths": [
+                                        "admin/marks/releases*"
+                                    ]
+                                },
+                                {
                                     "label": "Grading",
                                     "url": "admin/grades",
                                     "paths": [
@@ -200,7 +207,8 @@
                             "url": "admin/whatsapp/dashboard",
                             "paths": [
                                 "admin/whatsapp*"
-                            ]
+                            ],
+                            "count": "whatsapp"
                         },
                         {
                             "label": "Approvals",

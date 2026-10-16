@@ -96,23 +96,26 @@ class SoftLaunchHelpTest extends TestCase
         $this->assertStringContainsString('DEMO', $captured['message']);
     }
 
-    public function test_unknown_number_typing_demo_without_config_degrades_to_text(): void
+    public function test_unknown_number_typing_demo_without_config_still_gets_the_pointer(): void
     {
         $captured = null;
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
         $whatsApp->shouldReceive('sendText')
             ->once()
             ->andReturnUsing(function (string $phone, string $message, ?string $flowType = null) use (&$captured) {
-                $captured = $message;
+                $captured = compact('message', 'flowType');
 
-                return ['success' => true, 'message_id' => 'demo-unavailable'];
+                return ['success' => true, 'message_id' => 'demo-pointer'];
             });
         $whatsApp->shouldNotReceive('sendInteractiveButtons');
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
 
         $this->invokeUnrecognized('DEMO');
 
-        $this->assertStringContainsString('Demo account not available', $captured);
+        $this->assertSame('demo_pointer', $captured['flowType']);
+        $this->assertStringContainsString('Welcome to the KlassApp demo.', $captured['message']);
+        $this->assertStringContainsString(url('/demo'), $captured['message']);
+        $this->assertStringContainsString('the school will approve you', $captured['message']);
     }
 
     public function test_parent_menu_keeps_report_and_dashboard_rows_and_adds_help(): void
@@ -238,6 +241,93 @@ class SoftLaunchHelpTest extends TestCase
         $this->invokeProcessMeta($parentWa->phone, 'menu');
 
         $this->assertTrue($captured);
+    }
+
+    public function test_demo_word_in_any_case_or_sentence_gets_the_pointer(): void
+    {
+        foreach (['demo', 'DEMO', 'demo!', 'can I see the demo please?', 'Send me the DEMO link'] as $text) {
+            $captured = null;
+            $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+            $whatsApp->shouldReceive('sendText')
+                ->once()
+                ->andReturnUsing(function (string $phone, string $message, ?string $flowType = null) use (&$captured) {
+                    $captured = compact('message', 'flowType');
+
+                    return ['success' => true, 'message_id' => 'demo-pointer'];
+                });
+            $whatsApp->shouldNotReceive('sendInteractiveButtons');
+            $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+            $this->invokeUnrecognized($text);
+
+            $this->assertSame('demo_pointer', $captured['flowType'], "variant [{$text}]");
+            $this->assertStringContainsString('Welcome to the KlassApp demo.', $captured['message'], "variant [{$text}]");
+            $this->assertStringContainsString('find a student and tap Bind to them', $captured['message'], "variant [{$text}]");
+        }
+    }
+
+    public function test_demolish_does_not_read_as_demo(): void
+    {
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendInteractiveButtons')
+            ->once()
+            ->andReturnUsing(function (string $phone, string $message, array $buttons, ?string $flowType = null) use (&$captured) {
+                $captured = $flowType;
+
+                return ['success' => true, 'message_id' => 'welcome'];
+            });
+        $whatsApp->shouldNotReceive('sendText');
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeUnrecognized('we will demolish the old building');
+
+        $this->assertSame('unrecognized_prompt', $captured);
+    }
+
+    public function test_parent_menu_lists_a_demo_option_and_tapping_it_returns_the_pointer(): void
+    {
+        [$parentWa] = $this->makeParent();
+
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')->andReturn(['success' => true, 'message_id' => 'greet']);
+        $whatsApp->shouldReceive('sendList')
+            ->once()
+            ->andReturnUsing(function (...$args) use (&$captured) {
+                $captured = $args[2] ?? [];
+
+                return ['success' => true, 'message_id' => 'menu'];
+            });
+        $whatsApp->shouldReceive('sendInteractiveButtons')->zeroOrMoreTimes();
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMeta($parentWa->phone, 'menu');
+
+        $rows = $captured[0]['rows'] ?? [];
+        $demoRow = collect($rows)->firstWhere('id', 'DEMO');
+        $this->assertNotNull($demoRow, 'parent menu must offer a Demo option');
+        $this->assertSame('Demo', $demoRow['title']);
+
+        // Tapping the Demo row sends DEMO back in — it must return the pointer.
+        $capturedText = null;
+        $whatsApp2 = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp2->shouldReceive('sendText')
+            ->andReturnUsing(function (string $phone, string $message, ?string $flowType = null) use (&$capturedText) {
+                if ($flowType === 'demo_pointer') {
+                    $capturedText = $message;
+                }
+
+                return ['success' => true, 'message_id' => 'x'];
+            });
+        $whatsApp2->shouldReceive('sendInteractiveButtons')->zeroOrMoreTimes();
+        $whatsApp2->shouldReceive('sendList')->zeroOrMoreTimes();
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp2);
+
+        $this->invokeProcessMeta($parentWa->phone, 'DEMO');
+
+        $this->assertNotNull($capturedText, 'DEMO must return the demo pointer');
+        $this->assertStringContainsString('Welcome to the KlassApp demo.', $capturedText);
     }
 
     protected function tearDown(): void

@@ -60,7 +60,10 @@
                             <x-icons.sidebar name="{{ $row['icon'] }}"/>
                         @endif
                         <span>{{ $row['label'] }}</span>
-                        @if($rowCount > 0)
+                        @if(!empty($row['count'] ?? null))
+                            {{-- Count rows keep a (hidden) chip so the live poll can reveal it without a reload. --}}
+                            <span class="sidebar-v3-count" data-sidebar-count="{{ $row['count'] }}" @if($rowCount < 1) hidden @endif>{{ $rowCount > 0 ? $rowCount : '' }}</span>
+                        @elseif($rowCount > 0)
                             <span class="sidebar-v3-count">{{ $rowCount }}</span>
                         @endif
                     </a>

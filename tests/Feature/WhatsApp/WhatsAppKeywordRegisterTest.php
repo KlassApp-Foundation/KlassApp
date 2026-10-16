@@ -66,11 +66,11 @@ class WhatsAppKeywordRegisterTest extends TestCase
     public function test_K115_demo_keyword_still_reaches_a_demo_school(): void
     {
         $this->linkedParent(false, true);
-        $greeted = false;
+        $pointer = null;
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
-        $whatsApp->shouldReceive('sendText')->andReturnUsing(function (string $phone, string $message, ?string $flow = null) use (&$greeted) {
-            if ($flow === 'menu_greeting') {
-                $greeted = true;
+        $whatsApp->shouldReceive('sendText')->andReturnUsing(function (string $phone, string $message, ?string $flow = null) use (&$pointer) {
+            if ($flow === 'demo_pointer') {
+                $pointer = $message;
             }
 
             return ['success' => true];
@@ -80,7 +80,8 @@ class WhatsAppKeywordRegisterTest extends TestCase
 
         $this->invoke('DEMO');
 
-        $this->assertTrue($greeted);
+        $this->assertNotNull($pointer, 'DEMO must reach the demo pointer reply');
+        $this->assertStringContainsString('Welcome to the KlassApp demo.', $pointer);
     }
 
     private function linkedParent(bool $optedIn, bool $demo = false): WhatsAppUser

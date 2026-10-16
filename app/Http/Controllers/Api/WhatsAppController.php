@@ -1135,45 +1135,44 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── DEMO: auto-link to configured demo parent (never hardcode school_id) ──
-        if (strtolower($trimmed) === 'demo') {
+        // ── DEMO: point the sender at the follow-along page and the next step.
+        //    Matches any case, alone or with other words. The best-effort demo
+        //    auto-link is kept so the number can still open the sample menu. ──
+        if (preg_match('/\bdemo\b/i', $trimmed)) {
             $demoParentId = (int) config('services.whatsapp.demo_parent_user_id', 104);
             $demoParent = $demoParentId > 0 ? User::with('school')->find($demoParentId) : null;
             $demoSchoolId = $demoParent?->school_id;
 
-            if (! $demoParent || ! $demoSchoolId || ! $demoParent->school) {
-                Log::warning('WhatsApp DEMO unavailable: demo parent/school not configured', [
+            if ($demoParent && $demoSchoolId && $demoParent->school) {
+                $whatsappUser = WhatsAppUser::firstOrCreate(
+                    ['phone' => $phone],
+                    [
+                        'user_id'                => $demoParent->id,
+                        'school_id'              => $demoSchoolId,
+                        'opted_in'               => true,
+                        'verified_via_schoolpay' => true,
+                        'verified_at'            => now(),
+                        'demo_name'              => $senderName,
+                        'demo_linked_at'         => now(),
+                    ],
+                );
+                if (!$whatsappUser->wasRecentlyCreated) {
+                    $whatsappUser->update([
+                        'demo_name' => $senderName,
+                        'user_id' => $demoParent->id,
+                        'school_id' => $demoSchoolId,
+                        'demo_linked_at' => now(),
+                    ]);
+                }
+                Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone}) school_id={$demoSchoolId}");
+            } else {
+                Log::warning('WhatsApp DEMO pointer: demo parent/school not configured', [
                     'demo_parent_user_id' => $demoParentId,
                     'phone' => $phone,
                 ]);
-                $sendText("Demo account not available. Please contact support.");
-                return;
             }
 
-            $whatsappUser = WhatsAppUser::firstOrCreate(
-                ['phone' => $phone],
-                [
-                    'user_id'                => $demoParent->id,
-                    'school_id'              => $demoSchoolId,
-                    'opted_in'               => true,
-                    'verified_via_schoolpay' => true,
-                    'verified_at'            => now(),
-                    'demo_name'              => $senderName,
-                    'demo_linked_at'         => now(),
-                ],
-            );
-            if (!$whatsappUser->wasRecentlyCreated) {
-                $whatsappUser->update([
-                    'demo_name' => $senderName,
-                    'user_id' => $demoParent->id,
-                    'school_id' => $demoSchoolId,
-                    'demo_linked_at' => now(),
-                ]);
-            }
-            $whatsappUser->load(['user.userprofile', 'user.school']);
-            Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone}) school_id={$demoSchoolId}");
-
-            $this->sendMenu($whatsappUser, $phone, $this->businessApi);
+            $sendText($this->demoPointerText(), 'demo_pointer');
             return;
         }
 
@@ -1250,6 +1249,13 @@ class WhatsAppController extends Controller
             ],
             'unrecognized_prompt',
         );
+    }
+
+    /** The demo pointer reply: the /demo link plus the one next step. */
+    protected function demoPointerText(): string
+    {
+        return 'Welcome to the KlassApp demo. Open '.url('/demo')
+            .', find a student and tap Bind to them. Then send the message that opens in WhatsApp, and the school will approve you.';
     }
 
     /**
@@ -1548,6 +1554,12 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Universal: demo pointer — any case, alone or with other words.
+        if (preg_match('/\bdemo\b/i', $normalised)) {
+            $whatsAppService->sendText($phone, $this->demoPointerText(), 'demo_pointer', $user->user_id);
+            return;
+        }
+
         // Universal: role-specific how-to guides (keep above the menu branch)
         if ($match(['help', 'howto', 'how to', 'guide'])) {
             $this->sendHelp($user, $phone, $whatsAppService);
@@ -1555,7 +1567,7 @@ class WhatsAppController extends Controller
         }
 
         // Universal: menu
-        if ($match(['menu', 'start', 'options', 'demo', '❓ help & options'])) {
+        if ($match(['menu', 'start', 'options', '❓ help & options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
@@ -1879,6 +1891,7 @@ class WhatsAppController extends Controller
                         ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
                         ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
                         ['id' => 'HELP', 'title' => 'Help', 'description' => 'See what you can ask for'],
+                        ['id' => 'DEMO', 'title' => 'Demo', 'description' => 'Try the sample school'],
                         ['id' => 'WEB_LOGIN', 'title' => 'Dashboard', 'description' => 'Open the full parent portal'],
                     ],
                 ]],
