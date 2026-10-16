@@ -266,7 +266,8 @@ final class MarksReleaseService
         foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
             $bundles[$classLink->id] ??= LatestExamMarks::forExam($schoolId, (int) $classLink->section_id, $anchor, null);
             foreach ($bundles[$classLink->id]['subjects'] as $subject) {
-                $subjects[$subject['id']] = $subject;
+                $key = mb_strtolower($subject['name']);
+                $subjects[$key] = ['key' => $key, 'name' => $subject['name']];
             }
             $groupKey = (int) $classLink->id;
             if (! isset($groups[$groupKey])) {
@@ -306,16 +307,17 @@ final class MarksReleaseService
         $total = 0.0;
         $count = 0;
         foreach ($bundle['subjects'] as $subject) {
+            $key = mb_strtolower($subject['name']);
             $mark = $bySubject->get($subject['id']);
             if (! $mark) {
-                $cells[$subject['id']] = null;
+                $cells[$key] = null;
 
                 continue;
             }
             $value = (float) $mark->marks;
             $total += $value;
             $count++;
-            $cells[$subject['id']] = [
+            $cells[$key] = [
                 'mark' => fmod($value, 1.0) === 0.0 ? (string) (int) $value : number_format($value, 1),
                 'grade' => (string) $mark->grade,
             ];

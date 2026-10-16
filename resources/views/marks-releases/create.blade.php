@@ -100,7 +100,7 @@
                 <tr>
                     <th><button type="button" data-sort="name">Student</button></th>
                     @foreach($sheet['subjects'] as $subject)
-                        <th class="mr-num"><button type="button" data-sort="subject" data-subject="{{ $subject['id'] }}">{{ $subject['name'] }}</button></th>
+                        <th class="mr-num"><button type="button" data-sort="subject" data-subject="{{ $subject['key'] }}">{{ $subject['name'] }}</button></th>
                     @endforeach
                     <th class="mr-num"><button type="button" data-sort="total">Total</button></th>
                     <th class="mr-num"><button type="button" data-sort="average">Average</button></th>
@@ -120,8 +120,8 @@
                         <tr class="mr-student" data-testid="sheet-student" data-class="{{ $group['class_name'] }}" data-stream="{{ $group['stream'] }}" data-name="{{ $student['name'] }}" data-total="{{ $student['sort_total'] }}" data-average="{{ $student['sort_average'] }}">
                             <th scope="row">{{ $student['name'] }}</th>
                             @foreach($sheet['subjects'] as $subject)
-                                @php $cell = $student['cells'][$subject['id']] ?? null; @endphp
-                                <td class="mr-num" data-subject="{{ $subject['id'] }}" data-value="{{ $cell['mark'] ?? '' }}">
+                                @php $cell = $student['cells'][$subject['key']] ?? null; @endphp
+                                <td class="mr-num" data-subject="{{ $subject['key'] }}" data-value="{{ $cell['mark'] ?? '' }}">
                                     @if($cell)
                                         <span class="mr-mark">{{ $cell['mark'] }}</span>
                                         <span class="mr-grade">{{ $cell['grade'] }}</span>
