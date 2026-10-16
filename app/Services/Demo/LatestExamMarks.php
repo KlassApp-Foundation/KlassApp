@@ -4,6 +4,7 @@ namespace App\Services\Demo;
 
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\MarksRelease;
 use Illuminate\Support\Collection;
 
 /**
@@ -51,6 +52,53 @@ final class LatestExamMarks
     public static function forExam(int $schoolId, int $sectionId, Exam $anchor, ?int $studentId = null): array
     {
         return self::group($schoolId, $sectionId, $anchor, $studentId);
+    }
+
+    /**
+     * The most recently released exam (newest release first) that has this
+     * student's marks in their class. A release counts when its status is
+     * "released" and its scope covers the student: the whole school, or this
+     * student's class and stream. Scheduled/cancelled releases are ignored.
+     */
+    public static function latestReleasedExam(int $schoolId, int $sectionId, int $studentId, int $standardLinkId): ?Exam
+    {
+        $releases = MarksRelease::query()
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->where(fn ($q) => $q->where('scope', 'school')
+                ->orWhere(fn ($c) => $c->where('scope', 'class')->where('standard_link_id', $standardLinkId)))
+            ->with('exam:id,school_id,exam_type_id,academic_term_id')
+            ->orderByDesc('released_at')
+            ->orderByDesc('id')
+            ->get();
+
+        foreach ($releases as $release) {
+            $anchor = $release->exam;
+            if (! $anchor) {
+                continue;
+            }
+
+            // The release points at one subject's exam row; the student's marks
+            // live on the same exam type + term rows in their own class.
+            $exam = Exam::query()
+                ->where('school_id', $schoolId)
+                ->where('section_id', $sectionId)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id)
+                ->whereNull('deleted_at')
+                ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId)
+                    ->where('section_id', $sectionId)
+                    ->where('student_id', $studentId))
+                ->orderByDesc('scheduled_at')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($exam) {
+                return $exam;
+            }
+        }
+
+        return null;
     }
 
     private static function latestExam(int $schoolId, int $sectionId, ?int $studentId): ?Exam

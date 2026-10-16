@@ -202,6 +202,37 @@ class DemoBindByCodeTest extends TestCase
         $this->assertStringContainsString("Mathematics         78  C3", $sent[0]['body']);
     }
 
+    public function test_task9_marks_show_the_older_released_exam_when_a_later_exam_is_unreleased(): void
+    {
+        // Two exams exist: older BOT (Term II, marks 40) and latest EOT
+        // (Term III, real marks). Only the older one is released — MARKS must
+        // return the released exam's table, not "not released yet".
+        $this->inbound(self::SENDER, 'BIND ' . $this->amina()['code'])->assertOk();
+        $this->releaseExam('demo', 'old');
+        Http::fake();
+        $this->fakeGraph();
+
+        $this->inbound(self::SENDER, 'MARKS')->assertOk();
+
+        $expected = "📊 *Marks for Amina Nakato* · P.7 A\n"
+            . "Beginning of Term Examination · Term II\n\n"
+            . "```\n"
+            . "Subject           Mark  Grade\n"
+            . "Mathematics         40  P8\n"
+            . "Science             40  P8\n"
+            . "English             40  P8\n"
+            . "Social Studies      40  P8\n"
+            . "-----------------------------\n"
+            . "Total              160\n"
+            . "Average           40.0\n"
+            . '```';
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent);
+        $this->assertSame(self::SENDER, $sent[0]['to']);
+        $this->assertSame($expected, $sent[0]['body']);
+        $this->assertStringNotContainsString('have not been released yet', $sent[0]['body']);
+    }
+
     public function test_task9_marks_for_a_bound_number_is_the_exact_table(): void
     {
         $this->inbound(self::SENDER, 'BIND ' . $this->amina()['code'])->assertOk();
