@@ -476,9 +476,11 @@
 /* Soft-launch preview: Coming soon card + disabled composer (all viewports) */
 [data-toshi-root] .toshi-messages-area {
     padding-top: 4px; /* first row never hugs the header seam */
+    padding-left: 16px;
+    padding-right: 16px;
 }
 [data-toshi-root] .toshi-preview-card {
-    margin: 16px 14px;
+    margin: 16px 0;
     padding: 20px 18px;
     background: var(--toshi-warm);
     border: 1px solid var(--toshi-border-kit);
@@ -1112,7 +1114,7 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
 }
 
 /* TOSHI HANDLE — collapsed edge tab, in every mode, at every width.
-   36×168 white card, slate border, brand K. Centred in the space below
+   36×188 white card, slate border, brand K. Centred in the space below
    the sticky header. No orange. */
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
         display: flex !important;
@@ -1121,7 +1123,7 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
         top: calc(50% + var(--ka-topbar-h, 64px) / 2) !important;
         transform: translateY(-50%) !important;
         width: 36px !important;
-        height: 168px !important;
+        height: 188px !important;
         margin: 0;
         padding: 0;
         background: #fff !important;

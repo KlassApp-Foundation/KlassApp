@@ -4,10 +4,11 @@
     .mr-head { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
     .mr-bar { display: flex; flex-wrap: nowrap; gap: 8px; align-items: flex-end; min-width: 0; background: #fff; border: 1px solid var(--d-border, #E2E8F0); border-radius: 12px; padding: 10px 12px; }
     .mr-seg, .mr-btn { flex: 0 0 auto; }
-    .mr-when-at { flex: 0 1 9rem; min-width: 0; max-width: 9.2rem; }
+    .mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }
     .mr-scope, .mr-go { display: contents; }
-    .mr-control { display: flex; flex: 1 1 6.5rem; flex-direction: column; gap: 4px; margin: 0; min-width: 0; max-width: 8.5rem; }
-    .mr-control:has(select[name="exam_id"]) { max-width: 10rem; }
+    .mr-control { display: flex; flex: 1 1 6.5rem; flex-direction: column; gap: 4px; margin: 0; min-width: 5.5rem; max-width: 8.5rem; }
+    /* Exam is the widest label; it takes leftover width once Schedule is off. */
+    .mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }
     .mr-control span, .mr-wa h2 { font-size: 12px; font-weight: 700; color: #475569; }
     .mr-control select, .mr-when-at input { width: 100%; min-width: 0; min-height: 40px; max-width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; padding: 0 8px; color: #0F172A; font-size: 14px; }
     .mr-when-at input { font-size: 12px; }

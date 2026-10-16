@@ -159,4 +159,18 @@ class PublicDemoLockdownTest extends TestCase
         $this->actingAs($admin)->get('/_lockdown-probe/' . $other->id)->assertOk();
         $this->assertNotNull(PortalProfileLinks::forUser($admin)['change_password']);
     }
+
+    public function test_public_demo_toshi_preview_sends_visitors_to_the_demo_qr_page(): void
+    {
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
+
+        $this->assertNotSame(403, $response->getStatusCode(), 'Public demo must never paint a raw 403');
+        $response
+            ->assertSee('In the meantime, try WhatsApp: scan the QR on', false)
+            ->assertSee('data-testid="toshi-preview-demo-link"', false)
+            ->assertSee('data-testid="toshi-preview-demo-cta"', false);
+        $this->assertStringContainsString('/demo', $response->getContent());
+        $this->assertStringNotContainsString('Founding schools will be the first to try Toshi.', $response->getContent());
+    }
 }

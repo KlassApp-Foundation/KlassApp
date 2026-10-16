@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\Feature\Demo\Concerns\BuildsFollowAlongSchools;
 use Tests\TestCase;
 
@@ -430,6 +431,23 @@ class MarksReleaseTest extends TestCase
         $this->actingAs($admin)->get('/admin/marks/releases/new?class='.urlencode($class).'&stream='.urlencode($stream))
             ->assertOk()
             ->assertSee('Release to '.trim($class.' '.$stream).' (', false);
+    }
+
+    public function test_release_controls_keep_the_exam_select_on_one_compact_row(): void
+    {
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get('/admin/marks/releases/new')->assertOk();
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('data-testid="marks-release-controls"', $html);
+        $this->assertStringContainsString('.mr-bar { display: flex; flex-wrap: nowrap;', $html);
+        $this->assertStringContainsString('.mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }', $html);
+        $this->assertStringContainsString('.mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }', $html);
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 1100px\) \{ \.mr-bar \{ flex-wrap: wrap; \} \}/',
+            $html,
+            'Only the compact breakpoint should wrap the release bar',
+        );
     }
 
     public function test_task9_result_view_lists_sent_and_skipped_with_reasons_and_masked_numbers(): void

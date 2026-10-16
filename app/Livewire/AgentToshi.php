@@ -114,6 +114,8 @@ class AgentToshi extends Component
     public $input = '';
     public $schoolId = null;
     public $preview = [];
+    /** Public-demo actor: preview card shows the WhatsApp follow-along line. */
+    public $publicDemo = false;
     public $substep = 0;
     public $desktopMode = false; // internal sub-step within a step
 
@@ -363,6 +365,7 @@ class AgentToshi extends Component
             $this->messages = [];
             $this->visible = false;
             $this->maximized = false;
+            $this->publicDemo = (bool) $user->isPublicDemo();
 
             return;
         }

@@ -20,7 +20,7 @@ class ToshiHandleContractTest extends TestCase
 
         $this->assertNotSame('', $handle);
         $this->assertStringContainsString('width: 36px', $handle);
-        $this->assertStringContainsString('height: 168px', $handle);
+        $this->assertStringContainsString('height: 188px', $handle);
         $this->assertStringContainsString('background: #fff', $handle);
         $this->assertStringContainsString('border: 1px solid #E2E8F0', $handle);
         $this->assertStringContainsString('border-radius: 8px 0 0 8px', $handle);

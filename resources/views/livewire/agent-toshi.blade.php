@@ -88,15 +88,27 @@
              x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))">
             @if($mode === 'preview')
             <div class="toshi-preview-card" data-testid="toshi-preview-coming-soon">
-                <p class="toshi-preview-eyebrow">Coming soon</p>
-                <h3 class="toshi-preview-title">Meet Toshi</h3>
-                <p class="toshi-preview-body">
-                    KlassApp is an education protocol that runs in the tools educationists already use.
-                    Admins manage school operations in Slack, teachers enter marks from spreadsheets,
-                    and parents receive their children's school updates on WhatsApp — all by chatting
-                    in natural language with Toshi, your school's AI assistant.
-                </p>
-                <p class="toshi-preview-note">Founding schools will be the first to try Toshi.</p>
+                @if($publicDemo)
+                    <p class="toshi-preview-eyebrow">Coming soon</p>
+                    <h3 class="toshi-preview-title">Meet Toshi</h3>
+                    <p class="toshi-preview-body">
+                        Toshi, your school's AI assistant, is coming soon.
+                        In the meantime, try WhatsApp: scan the QR on <a href="{{ url('/demo') }}" data-testid="toshi-preview-demo-link">/demo</a>.
+                    </p>
+                    <p class="toshi-preview-note">
+                        <a href="{{ url('/demo') }}" data-testid="toshi-preview-demo-cta">Open the demo page and scan</a>
+                    </p>
+                @else
+                    <p class="toshi-preview-eyebrow">Coming soon</p>
+                    <h3 class="toshi-preview-title">Meet Toshi</h3>
+                    <p class="toshi-preview-body">
+                        KlassApp is an education protocol that runs in the tools educationists already use.
+                        Admins manage school operations in Slack, teachers enter marks from spreadsheets,
+                        and parents receive their children's school updates on WhatsApp — all by chatting
+                        in natural language with Toshi, your school's AI assistant.
+                    </p>
+                    <p class="toshi-preview-note">Founding schools will be the first to try Toshi.</p>
+                @endif
             </div>
         </div>
             @else

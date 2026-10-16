@@ -3771,7 +3771,7 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
    cannot put the orange clay tab back. Visible at every width. */
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
         width: 36px !important;
-        height: 168px !important;
+        height: 188px !important;
         right: 0 !important;
         background: #fff !important;
         color: #15803D !important;
@@ -4419,9 +4419,11 @@ li.dashboard-active .ka-nav-icon { color: var(--d-icon-active); }
     box-sizing: border-box;
 }
 
+/* Below 1280px the collapsed edge tab stays visible (same 36×188 white
+   handle as the desktop sheet). Only the expandable panel shell hides. */
 @media (max-width: 1279px) {
-    body [data-toshi-root] .toshi-toggle {
-        display: none !important;
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
+        display: flex !important;
     }
 }
 
