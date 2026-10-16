@@ -13755,3 +13755,15 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Files:** `app/Services/Demo/LatestExamMarks.php`, `app/Services/Demo/DemoBindReplies.php`, `tests/Feature/Demo/Concerns/BuildsFollowAlongSchools.php`, `tests/Feature/Demo/DemoBindByCodeTest.php`.
 
 **Status:** PR #1111 OPEN (`fix/marks-latest-released-exam`, off `main` `21c622da`). Not merged. Production untouched.
+
+## Session: 2026-10-16 — #1110 five demo items: link-request toasts, public-demo copy, whole-card KPIs, compact release row, Toshi tab (PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) OPEN, branch `cursor/whatsapp-link-requests-dce8`)
+
+**Task (owner's words):** the five demo-priority items, in order — (1) toast + bell count on a new link request in every admin layout incl. superadmin; (2) public-demo admin: no 403 page anywhere, Toshi shows the exact copy "Toshi, your school's AI assistant, is coming soon. In the meantime, try WhatsApp: scan the QR on /demo."; (3) dashboard stat cards clickable as whole cards, no action links; (4) release controls fit one compact row; (5) Toshi right-edge tab a little taller, always visible after open/close, cropping fixed. Agent builds and opens PRs; owner merges after reviewing screenshots.
+
+**Change (commit `09e4bb4c`, on top of `fbd085b3`; 13 files, +161/−45):** superadmin-app toast fallback (`#klass-toasts`); `AgentToshi::$publicDemo` + preview-card branch with the exact copy and `/demo` links; whole-card KPI link + test; compact release-row CSS; tab 168→188 and visible below 1280 (`toshi-ui.css` + `dashboard-refresh.css`, published copy byte-identical); six test files extended.
+
+**Tests:** targeted suites 547 tests, 0 failures (DashboardV2, MarksRelease, PublicDemoLockdown, WhatsappLinkRequestCards, ParentLinkRequestApproval, Toshi/*). Full `scripts/test-guard.sh`: 2683 tests, 0 failures, 0 errors, 4 skipped.
+
+**Browser evidence:** all checks passed on Chromium at 375/414/768/1280 — `~/Desktop/klassapp-evidence/1110-five-items/` (`REPORT.json`). Edge tab 36×188 at every width and after open/close; exact preview copy; blocked pages friendly (200, no 403); a real new link request raised the toast and updated the bell; superadmin fallback toast shown.
+
+**Notes:** no merges/deploys by the agent; no env changes; approval logic untouched (`ApprovalDecisionService`). Local verification only.
