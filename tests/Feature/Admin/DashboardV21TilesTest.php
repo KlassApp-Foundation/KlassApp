@@ -54,7 +54,9 @@ class DashboardV21TilesTest extends TestCase
         $this->assertStringContainsString('Enter marks', $html);
         $css = file_get_contents(public_path('css/dashboard-v2.css'));
         $this->assertStringContainsString('min-height:280px', $css);
-        $this->assertStringContainsString('minmax(176px,1fr)', $css);
+        $this->assertStringContainsString('repeat(3,minmax(0,1fr))', $css);
+        $this->assertStringContainsString('repeat(6,minmax(0,1fr))', $css);
+        $this->assertStringContainsString('repeat(2,minmax(0,1fr))', $css);
         $this->assertStringContainsString('max-width: 695px', $css);
         $this->assertStringContainsString('max-height:150px', $css);
         $this->assertStringContainsString('html.toshi-collapsed .dv2-kpi', $css);
