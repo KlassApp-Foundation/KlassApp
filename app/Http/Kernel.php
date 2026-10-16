@@ -23,6 +23,10 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Session\Middleware\StartSession::class,
 
+        // Before route middleware, so a blocked path (web tinker, Horizon, and
+        // the rest) answers with the coming-soon page instead of a package 403.
+        \App\Http\Middleware\PublicDemoLockdown::class,
+
         \Nckg\Impersonate\Impersonate::class,
 
         // Stamps X-Robots-Tag on every response type while ROBOTS_NOINDEX is on.

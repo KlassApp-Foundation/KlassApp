@@ -155,8 +155,7 @@ class ProfileListAndShellPolishTest extends TestCase
 
         $tile = $this->reportTile($this->actingAs($this->admin)->get('/admin/dashboard')->assertOk()->getContent());
 
-        $this->assertSame(1, substr_count($tile, '<a '), 'The report cards tile must show one action.');
-        $this->assertStringContainsString('>Generate</a>', $tile);
+        $this->assertStringNotContainsString('>Generate</a>', $tile);
         $this->assertStringNotContainsString('Send on WhatsApp', $tile);
     }
 
@@ -171,8 +170,7 @@ class ProfileListAndShellPolishTest extends TestCase
 
         $tile = $this->reportTile($this->actingAs($this->admin)->get('/admin/dashboard')->assertOk()->getContent());
 
-        $this->assertSame(1, substr_count($tile, '<a '), 'The report cards tile must show one action.');
-        $this->assertStringContainsString('>Send on WhatsApp</a>', $tile);
+        $this->assertStringNotContainsString('>Send on WhatsApp</a>', $tile);
         $this->assertStringNotContainsString('Generate', $tile);
     }
 

@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\Feature\Demo\Concerns\BuildsFollowAlongSchools;
 use Tests\TestCase;
 
@@ -402,9 +403,51 @@ class MarksReleaseTest extends TestCase
             ->assertSee('Send these marks?')
             ->assertSee('Fri 16 Oct 2026, 21:00 (Africa/Kampala)')
             ->assertSee('Marks for Amina Nakato')
-            ->assertSee('data-testid="release-marks-confirm"', false);
+            ->assertSee('What parents receive')
+            ->assertSee('Amina Nakato')
+            ->assertSee('Mathematics')
+            ->assertDontSee('```', false)
+            ->assertSee('data-testid="release-marks-confirm"', false)
+            ->assertSee('Choose the exam and who receives it. The sheet shows the marks that will be sent.')
+            ->assertDontSee('data-testid="sheet-filter-class"', false);
         $this->assertSame(0, MarksRelease::count());
         $this->assertSame([], $this->outbound());
+    }
+
+    public function test_release_page_one_class_and_stream_sets_the_button(): void
+    {
+        $admin = $this->admin();
+        $link = $this->link()->load('section');
+        $class = trim((string) ($link->section?->name ?? ''));
+        $stream = trim((string) $link->stream);
+
+        $this->actingAs($admin)->get('/admin/marks/releases/new')
+            ->assertOk()
+            ->assertSee('Release to all classes (', false)
+            ->assertSee('data-testid="release-class"', false)
+            ->assertSee('data-testid="release-stream"', false)
+            ->assertDontSee('data-testid="sheet-filter-class"', false);
+
+        $this->actingAs($admin)->get('/admin/marks/releases/new?class='.urlencode($class).'&stream='.urlencode($stream))
+            ->assertOk()
+            ->assertSee('Release to '.trim($class.' '.$stream).' (', false);
+    }
+
+    public function test_release_controls_keep_the_exam_select_on_one_compact_row(): void
+    {
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get('/admin/marks/releases/new')->assertOk();
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('data-testid="marks-release-controls"', $html);
+        $this->assertStringContainsString('.mr-bar { display: flex; flex-wrap: nowrap;', $html);
+        $this->assertStringContainsString('.mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }', $html);
+        $this->assertStringContainsString('.mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }', $html);
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 1100px\) \{ \.mr-bar \{ flex-wrap: wrap; \} \}/',
+            $html,
+            'Only the compact breakpoint should wrap the release bar',
+        );
     }
 
     public function test_task9_result_view_lists_sent_and_skipped_with_reasons_and_masked_numbers(): void
@@ -437,7 +480,7 @@ class MarksReleaseTest extends TestCase
     public function test_task9_release_marks_button_is_on_the_dashboard_and_marks_pages(): void
     {
         $admin = $this->admin();
-        $this->actingAs($admin)->get('/admin/dashboard?v2=1')->assertOk()->assertSee('data-testid="release-marks-button"', false);
+        $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->assertSee('data-testid="release-marks-button"', false);
         $this->actingAs($admin)->get('/admin/marks/classes')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $teacher = $this->teacher();

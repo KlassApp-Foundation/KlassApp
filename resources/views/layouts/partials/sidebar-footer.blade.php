@@ -52,10 +52,21 @@
         @if($notifyMode)
             <div class="dashboard-sidebar-footer-bell">
                 <notification url="{{ url('/') }}" mode="{{ $notifyMode }}"></notification>
+                <span id="link-request-bell" class="link-request-bell" data-testid="link-request-bell" hidden>0</span>
             </div>
         @endif
         @include('layouts.partials.dashboard-v2-chip')
         @include('layouts.partials.profile-dropdown')
     </div>
 </div>
+<script>
+document.addEventListener('link-request-count', function (event) {
+    var detail = event.detail || {};
+    var count = parseInt(detail.count != null ? detail.count : detail[0], 10) || 0;
+    var el = document.getElementById('link-request-bell');
+    if (!el) { return; }
+    el.textContent = count > 99 ? '99+' : String(count);
+    el.hidden = count < 1;
+});
+</script>
 @endif

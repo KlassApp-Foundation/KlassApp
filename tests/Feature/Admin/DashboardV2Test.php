@@ -81,16 +81,16 @@ class DashboardV2Test extends TestCase
         return $this->actingAs($admin)->get('/admin/dashboard');
     }
 
-    public function test_flag_off_renders_v1_and_v2_query_renders_v2(): void
+    public function test_dashboard_is_v2_without_a_flag(): void
     {
-        config(['dashboard.v2_enabled' => false]);
         $school = $this->makeSchool(['name' => 'Flag School']);
         $admin = $this->makeAdmin($school);
 
         $this->actingAs($admin)->get('/admin/dashboard')->assertOk()
-            ->assertDontSee('data-testid="dashboard-v2-shell"', false);
+            ->assertSee('data-testid="dashboard-v2-shell"', false)
+            ->assertSee('data-testid="dashboard-v2-kpi-whatsapp"', false);
 
-        $this->actingAs($admin)->get('/admin/dashboard?v2=1')->assertOk()
+        $this->actingAs($admin)->get('/admin/dashboard?v2=0')->assertOk()
             ->assertSee('data-testid="dashboard-v2-shell"', false);
     }
 
@@ -368,6 +368,36 @@ class DashboardV2Test extends TestCase
             ->assertDontSee('Connected tools', false)
             ->assertDontSee('es-demo-scene-toshi', false)
             ->assertDontSee('data-testid="toshi-pill"', false);
+    }
+
+    public function test_every_kpi_card_is_one_whole_card_link_with_no_inner_action_links(): void
+    {
+        $school = $this->makeSchool(['name' => 'Whole Card School']);
+        $admin = $this->makeAdmin($school);
+
+        $html = $this->render($admin)->assertOk()->getContent();
+        $this->assertMatchesRegularExpression(
+            '/class="dv2-kpis"[^>]*>[\s\S]*<\/div>\s*<\/div>/',
+            $html,
+            'KPI grid must render',
+        );
+
+        preg_match_all('/class="dv2-kpi"[^>]*>(.*?)<\/div>/s', $html, $cards);
+        $this->assertNotEmpty($cards[1], 'Expected dv2-kpi cards on the dashboard');
+
+        foreach ($cards[1] as $i => $card) {
+            $this->assertStringContainsString(
+                'class="dv2-kpi-link"',
+                $card,
+                "KPI card {$i} must be one whole-card link",
+            );
+            $inner = preg_replace('/<a\b[^>]*class="dv2-kpi-link"[^>]*>[\s\S]*?<\/a>/', '', $card);
+            $this->assertStringNotContainsString(
+                '<a',
+                (string) $inner,
+                "KPI card {$i} must not nest another action link inside the whole-card link",
+            );
+        }
     }
 
     public function test_kpis_match_the_database_for_a_school_with_data(): void

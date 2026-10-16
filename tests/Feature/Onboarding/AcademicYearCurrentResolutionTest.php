@@ -145,7 +145,8 @@ class AcademicYearCurrentResolutionTest extends TestCase
 
         $before = $this->get('/admin/dashboard');
         $before->assertOk();
-        $before->assertSee('data-testid="empty-state-product-demo"', false);
+        $before->assertSee('data-testid="dashboard-v2-shell"', false);
+        $before->assertSee('data-testid="dashboard-v2-year-chip"', false);
 
         // Simulate a prior empty-state request that cached "no current year".
         Cache::put('academic_year_for_school_'.$this->school->id, null, 3600);
@@ -205,52 +206,6 @@ class AcademicYearCurrentResolutionTest extends TestCase
         // Same gate Dashboard uses for empty-state vs KPIs (avoid SQLite FIELD() in full dash query).
         $this->assertFalse($resolved === null);
 
-        $plan = Plan::query()->where('name', 'Freemium')->first();
-        $view = $this->view('admin.dashboard.dashboard', [
-            'dashboard' => [
-                'studentCount' => 0,
-                'teacherCount' => 1,
-                'parentCount' => 0,
-                'nonteachingCount' => 0,
-                'femaleCount' => 0,
-                'maleCount' => 0,
-                'setupIncomplete' => false,
-                'whatsapp' => ['parentsOptedIn' => 0, 'messagesThisMonth' => 0],
-                'noticeboard' => [],
-                'feedbacks' => [],
-                'events' => [],
-                'products' => [],
-                'upcomingExam' => [],
-                'standardStudentCounts' => collect(),
-                'work' => [],
-                'task' => [],
-                'event' => [],
-                'reminder' => [],
-                'fee' => [],
-                'birthday' => [],
-            ],
-            'standardLink' => null,
-            'selected_teacher' => null,
-            'plan' => $plan,
-            'planUsage' => [
-                'students' => ['used' => 0, 'limit' => 0],
-                'teachers' => ['used' => 1, 'limit' => 0],
-            ],
-            'onboardingMissing' => [],
-            'onboardingSteps' => [],
-            'setupIncomplete' => false,
-            'openToshiOnboarding' => false,
-            'pendingApprovals' => 0,
-            'trendPeriod' => 'month',
-            'feeTrend' => [],
-            'greeting' => ['phrase' => 'Good morning', 'name' => 'Admin'],
-            'dashboardContextLine' => 'School overview · 0 students enrolled',
-            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
-        ]);
-
-        $view->assertDontSee('data-testid="empty-state-product-demo"', false);
-        $view->assertSee('ds-kpi-card', false);
-        $view->assertDontSee('dashboard-kpi-card', false);
-        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
+        $this->assertFileDoesNotExist(resource_path('views/admin/dashboard/dashboard.blade.php'));
     }
 }

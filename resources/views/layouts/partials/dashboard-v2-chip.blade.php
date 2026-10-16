@@ -9,8 +9,7 @@
 --}}
 @php
     $dv2ChipUser = auth()->user();
-    $dv2ChipActive = ((bool) config('dashboard.v2_enabled') || request()->boolean('v2'))
-        && $dv2ChipUser
+    $dv2ChipActive = $dv2ChipUser
         && (int) $dv2ChipUser->usergroup_id === 3
         && $dv2ChipUser->school;
 @endphp

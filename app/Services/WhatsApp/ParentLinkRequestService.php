@@ -6,7 +6,12 @@ use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Approval;
 use App\Models\ParentLinkRequest;
 use App\Models\School;
+use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Models\WhatsAppUser;
+use App\Services\DemoOnlyRecipientGuard;
+use App\Services\DemoSchoolCommsGuard;
+use App\Services\ParentLinkResult;
 use App\Services\WhatsAppBusinessService;
 use App\States\Approval\Pending;
 use Illuminate\Support\Collection;
@@ -40,6 +45,7 @@ class ParentLinkRequestService
         $phone = WhatsAppPhoneHelper::normalise($phone);
 
         $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
+        $profileName = ParentLinkRequest::profileNameOrNull($senderName);
         $childName = trim((string) ($payload['child_name'] ?? ''));
         $childClass = trim((string) ($payload['child_class'] ?? ''));
         $schoolName = trim((string) ($payload['school_name'] ?? ''));
@@ -61,7 +67,7 @@ class ParentLinkRequestService
             return $existingPending->loadMissing(['school', 'suggestedStudent']);
         }
 
-        return DB::transaction(function () use ($phone, $parentName, $childName, $childClass, $schoolName, $flowToken, $resolvedSchool) {
+        return DB::transaction(function () use ($phone, $parentName, $profileName, $childName, $childClass, $schoolName, $flowToken, $resolvedSchool) {
 
             $candidates = $this->findCandidateStudents(
                 $childName,
@@ -92,14 +98,17 @@ class ParentLinkRequestService
                 'school_id' => $schoolId,
                 'phone' => $phone,
                 'parent_name' => $parentName,
+                'whatsapp_profile_name' => $profileName,
                 'child_name' => $childName,
                 'child_class' => $childClass,
                 'school_name' => $schoolName !== '' ? $schoolName : null,
                 'suggested_student_id' => $suggestedStudentId,
                 'status' => 'pending',
                 'flow_token' => $flowToken,
+                'source' => 'form',
                 'candidate_student_ids' => $candidateIds !== [] ? $candidateIds : null,
             ]);
+            $this->rememberProfileName($phone, $profileName);
 
             if ($schoolId !== null) {
                 Approval::create([
@@ -121,6 +130,119 @@ class ParentLinkRequestService
             // that distinguish a new insert from a duplicate-pending short-circuit.
             return $request->load(['school', 'suggestedStudent']);
         });
+    }
+
+    /**
+     * A parent sent their child's KlassApp student number (KLS#######).
+     * The school gets a pending request; the number is not linked until
+     * an admin approves it. One pending request per phone and school.
+     */
+    public function createFromKlassAppNumber(string $phone, User $student, ?string $profileName): ParentLinkRequest
+    {
+        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $profileName = ParentLinkRequest::profileNameOrNull($profileName);
+        $schoolId = (int) $student->school_id;
+
+        $existing = $this->findPendingForPhoneAtSchool($phone, $schoolId, (string) ($student->school?->name ?? ''));
+        if ($existing !== null) {
+            return $existing->loadMissing(['school', 'suggestedStudent']);
+        }
+
+        $academic = StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('user_id', $student->id)
+            ->with('standardLink.section')
+            ->orderByDesc('id')
+            ->first();
+        $class = trim(($academic?->standardLink?->section?->name ?? '').' '.($academic?->standardLink?->stream ?? ''));
+
+        $request = ParentLinkRequest::create([
+            'school_id' => $schoolId,
+            'phone' => $phone,
+            'parent_name' => $profileName ?: 'Parent',
+            'whatsapp_profile_name' => $profileName,
+            'child_name' => (string) $student->name,
+            'child_class' => mb_substr($class, 0, 50),
+            'school_name' => $student->school?->name,
+            'suggested_student_id' => (int) $student->id,
+            'status' => 'pending',
+            'source' => 'klassapp_number',
+            'candidate_student_ids' => [(int) $student->id],
+        ]);
+
+        Approval::create([
+            'approvable_type' => ParentLinkRequest::class,
+            'approvable_id' => $request->id,
+            'state' => Pending::class,
+            'requested_by' => null,
+            'comments' => $request->summaryLine(),
+        ]);
+
+        $this->rememberProfileName($phone, $profileName);
+
+        return $request->load(['school', 'suggestedStudent']);
+    }
+
+    public function klassAppNumberReceivedMessage(ParentLinkRequest $request): string
+    {
+        $child = $request->child_name !== '' ? $request->child_name : 'your child';
+        $class = $request->child_class !== '' ? ' ('.$request->child_class.')' : '';
+        $school = $request->schoolDisplayName();
+
+        return "✅ *Request received*\n\n"
+            ."We've asked *{$school}* to link you to *{$child}*{$class}. "
+            ."You'll be linked once the school approves.";
+    }
+
+    /** The welcome a KlassApp-number link already sent when it linked instantly. */
+    public function notifyKlassAppNumberApproved(ParentLinkRequest $request, ParentLinkResult $result): void
+    {
+        $name = $request->whatsapp_profile_name ?: ($request->parent_name !== '' ? $request->parent_name : 'Parent');
+        $studentName = $result->studentName ?: 'your child';
+        $className = $result->className ?: '';
+        $schoolName = $result->schoolName ?: $request->schoolDisplayName();
+        $buttons = [
+            ['title' => '💰 Fee Balance', 'id' => 'FEES'],
+            ['title' => '📊 Exam Results', 'id' => 'GRADES'],
+            ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
+        ];
+
+        $body = $result->isNewParent
+            ? "✅ Welcome to KlassApp, *{$name}*!\n\n"
+                ."You're now linked to *{$studentName}* ({$className}) at {$schoolName}.\n\n"
+                .'Tap an option to get started:'
+            : "✅ Linked to *{$studentName}* ({$className})!\n\n"
+                .'You can now check fees, grades, and attendance — tap an option below.';
+
+        try {
+            $this->sendReply($request->phone, fn () => $this->whatsapp->sendInteractiveButtons(
+                $request->phone,
+                $body,
+                $buttons,
+                $result->isNewParent ? 'linked_welcome_new' : 'linked_welcome',
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('KlassApp number approval WhatsApp notify failed', [
+                'parent_link_request_id' => $request->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function klassAppNumberRejectedMessage(ParentLinkRequest $request, ?string $adminComment = null): string
+    {
+        $child = $request->child_name !== '' ? $request->child_name : 'your child';
+        $school = $request->schoolDisplayName();
+        $message = "The school couldn't approve linking you to *{$child}* at *{$school}*.";
+        $comment = $adminComment !== null ? trim($adminComment) : '';
+        if ($comment !== '') {
+            $message .= "\n\nReason: {$comment}";
+        } else {
+            $message .= "\n\nYou can send the KlassApp number again, or tap *Request Link* to fill in the form.";
+        }
+        $message .= "\n\nTap *Request Link* below to try the form.";
+
+        return $message;
     }
 
     public function findPendingForPhone(string $phone): ?ParentLinkRequest
@@ -262,11 +384,18 @@ class ParentLinkRequestService
     public function notifyRejected(ParentLinkRequest $request, ?string $adminComment = null): void
     {
         try {
-            $this->whatsapp->sendInteractiveButtons(
+            $request->loadMissing('school');
+            $message = $request->sourceKey() === 'klassapp_number'
+                ? $this->klassAppNumberRejectedMessage($request, $adminComment)
+                : $this->rejectedStatusMessage($request, $adminComment);
+            $this->sendReply(
                 $request->phone,
-                $this->rejectedStatusMessage($request->loadMissing('school'), $adminComment),
-                $this->rejectedActionButtons(),
-                'parent_link_rejected',
+                fn () => $this->whatsapp->sendInteractiveButtons(
+                    $request->phone,
+                    $message,
+                    $this->rejectedActionButtons(),
+                    'parent_link_rejected',
+                ),
             );
         } catch (\Throwable $e) {
             Log::warning('Parent link rejection WhatsApp notify failed', [
@@ -282,11 +411,14 @@ class ParentLinkRequestService
     public function notifyApproved(ParentLinkRequest $request): void
     {
         try {
-            $this->whatsapp->sendInteractiveButtons(
+            $this->sendReply(
                 $request->phone,
-                $this->approvedStatusMessage($request->loadMissing('school')),
-                $this->approvedActionButtons(),
-                'parent_link_approved',
+                fn () => $this->whatsapp->sendInteractiveButtons(
+                    $request->phone,
+                    $this->approvedStatusMessage($request->loadMissing('school')),
+                    $this->approvedActionButtons(),
+                    'parent_link_approved',
+                ),
             );
         } catch (\Throwable $e) {
             Log::warning('Parent link approval WhatsApp notify failed', [
@@ -572,5 +704,27 @@ class ParentLinkRequestService
         }
 
         return array_values(array_unique(array_filter($variants, fn (string $v): bool => $v !== '')));
+    }
+
+    private function sendReply(string $phone, callable $send): void
+    {
+        DemoSchoolCommsGuard::duringBoundDemoRelease(
+            $phone,
+            fn () => DemoOnlyRecipientGuard::duringReply($phone, $send),
+        );
+    }
+
+    private function rememberProfileName(string $phone, ?string $profileName): void
+    {
+        if ($profileName === null || $profileName === '') {
+            return;
+        }
+
+        WhatsAppUser::query()
+            ->where('phone', $phone)
+            ->where(function ($q) {
+                $q->whereNull('whatsapp_profile_name')->orWhere('whatsapp_profile_name', '');
+            })
+            ->update(['whatsapp_profile_name' => $profileName]);
     }
 }

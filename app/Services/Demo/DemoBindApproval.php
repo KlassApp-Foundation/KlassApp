@@ -93,16 +93,19 @@ final class DemoBindApproval
                 ->first();
             $class = trim(($academic?->standardLink?->section?->name ?? '') . ' ' . ($academic?->standardLink?->stream ?? ''));
 
+            $profileName = ParentLinkRequest::profileNameOrNull($senderName);
             $request = ParentLinkRequest::create([
                 'school_id' => (int) $school->id,
                 'phone' => $phone,
                 'parent_name' => mb_substr(trim($senderName) !== '' ? trim($senderName) : 'Demo guest', 0, 120),
+                'whatsapp_profile_name' => $profileName,
                 'child_name' => (string) $student->name,
                 'child_class' => $class,
                 'school_name' => (string) $school->name,
                 'suggested_student_id' => (int) $student->id,
                 'status' => 'pending',
                 'flow_token' => self::REQUEST_TOKEN,
+                'source' => 'demo',
                 'candidate_student_ids' => [(int) $student->id],
             ]);
 
@@ -155,6 +158,9 @@ final class DemoBindApproval
         $row = $replies->link($request->phone, $student, $school, (string) $request->parent_name);
         if (! $row) {
             return false;
+        }
+        if ($request->whatsapp_profile_name) {
+            $row->update(['whatsapp_profile_name' => $request->whatsapp_profile_name]);
         }
 
         $request->update(['status' => 'approved', 'matched_student_id' => (int) $student->id]);

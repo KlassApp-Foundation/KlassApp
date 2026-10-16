@@ -118,20 +118,29 @@ class DashboardController extends Controller
             ? ['labels' => [], 'values' => []]
             : $this->computeFeeTrend($school_id, $trendPeriod, 6);
 
-        $dashboardView = (config('dashboard.v2_enabled') || $request->boolean('v2'))
-            ? '/admin/dashboard/dashboard_v2'
-            : '/admin/dashboard/dashboard';
+        $dashboardView = '/admin/dashboard/dashboard_v2';
 
-        // PR1 first screen data — only built when the v2 flag is on.
         $v2Data = null;
-        if ($dashboardView === '/admin/dashboard/dashboard_v2' && $school_id) {
+        if ($school_id) {
             $v2Data = app(\App\Services\DashboardV2DataService::class)->build(
                 Auth::user()->school,
                 Auth::user(),
             );
         }
 
+        // Connected tools: the real number of linked WhatsApp numbers (not the
+        // seeded parents' flags) and whether Google Drive is connected.
+        $connectedTools = [
+            'whatsappLinked' => $school_id ? app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedNumberCount((int) $school_id) : 0,
+            'driveConnected' => $school_id ? \App\Models\SchoolMcpConnector::query()
+                ->forSchool((int) $school_id)
+                ->where('connector_type', 'google-drive')
+                ->where('status', 'active')
+                ->exists() : false,
+        ];
+
         return view( $dashboardView, [
+            'connectedTools' => $connectedTools,
             'v2Data' => $v2Data,
             // Dashboard v2 renders its own year control; the top-bar picker would duplicate it.
             'navShowAcademicYear' => $dashboardView !== '/admin/dashboard/dashboard_v2',

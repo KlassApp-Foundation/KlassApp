@@ -70,16 +70,19 @@ class ToshiPanelCollapsedDefaultTest extends TestCase
 
         foreach ([$source, $published] as $css) {
             $this->assertStringContainsString('@media (max-width: 1279px)', $css);
-            $this->assertStringContainsString(
-                'body.toshi-collapsed [data-toshi-root] .toshi-panel',
-                $css,
-            );
             $this->assertMatchesRegularExpression(
                 '/body\.toshi-collapsed\s+\[data-toshi-root\]\s+\.toshi-panel\s*,\s*html\.toshi-collapsed\s+\[data-toshi-root\]\s+\.toshi-panel\s*\{[^}]*display:\s*none\s*!important/s',
                 $css,
                 'Collapsed dock must hide the mobile drawer (display:none !important)',
             );
             $this->assertStringContainsString('display: none !important', $css);
+            // Item 5 (demo): the collapsed edge tab stays visible below 1280
+            // after open/close; only the panel shell hides.
+            $this->assertMatchesRegularExpression(
+                '/@media \(max-width: 1279px\)[\s\S]*body\.toshi-collapsed #toshi-toggle\.toshi-toggle\s*\{[\s\S]*display:\s*flex !important/',
+                $css,
+                'Collapsed edge tab must stay visible below 1280',
+            );
         }
     }
 

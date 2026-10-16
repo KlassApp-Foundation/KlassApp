@@ -15,6 +15,9 @@
                         <a class="student-guardian__phone" href="{{ $parent['phone_href'] }}">{{ $parent['phone'] }}</a>
                     @endif
                     <span class="student-guardian__chip" data-testid="student-guardian-whatsapp">{{ $parent['whatsapp'] }}</span>
+                    @if(! empty($parent['whatsapp_profile_name']))
+                        <span class="student-guardian__chip" data-testid="student-guardian-whatsapp-name">WhatsApp name: {{ $parent['whatsapp_profile_name'] }}</span>
+                    @endif
                     <a data-testid="guardian-message" href="{{ $parent['profile_url'] }}" style="min-height:44px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #E2E8F0;border-radius:8px;background:transparent;color:#0F172A;text-decoration:none;">Message</a>
                 </span>
             </li>

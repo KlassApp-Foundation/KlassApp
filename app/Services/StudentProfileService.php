@@ -347,22 +347,26 @@ class StudentProfileService
         $parents = [];
         foreach ($links as $link) {
             $parent = $link->userParent;
-            if (! $parent || (int) $parent->school_id !== $schoolId) {
+            if (! $parent) {
+                continue;
+            }
+            // WhatsApp-created parents have no school of their own. The link
+            // row is already scoped to this school. A parent who belongs to a
+            // different school stays hidden.
+            if ($parent->school_id !== null && (int) $parent->school_id !== $schoolId) {
                 continue;
             }
             $parents[] = $parent;
         }
 
         $parentIds = array_map(fn (User $parent) => $parent->id, $parents);
-        $optedIn = $parentIds === []
-            ? []
-            : WhatsAppUser::query()
-                ->where('school_id', $schoolId)
-                ->whereIn('user_id', $parentIds)
-                ->where('opted_in', true)
-                ->pluck('user_id')
-                ->map(fn ($id) => (int) $id)
-                ->all();
+        $whatsappRows = $parentIds === []
+            ? collect()
+            : app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedRowsForParents($schoolId, $parentIds);
+        $optedIn = $whatsappRows->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+        $profileNames = $whatsappRows
+            ->filter(fn ($row) => filled($row->whatsapp_profile_name))
+            ->mapWithKeys(fn ($row) => [(int) $row->user_id => (string) $row->whatsapp_profile_name]);
         $relations = $parentIds === []
             ? collect()
             : ParentProfile::query()
@@ -385,7 +389,8 @@ class StudentProfileService
                 'relation' => $relation !== '' ? ucfirst($relation) : null,
                 'phone' => $phone['label'] ?? null,
                 'phone_href' => $phone['href'] ?? null,
-                'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'On WhatsApp' : 'Not on WhatsApp',
+                'whatsapp' => in_array((int) $parent->id, $optedIn, true) ? 'Linked' : 'Not linked',
+                'whatsapp_profile_name' => $profileNames[(int) $parent->id] ?? null,
                 'profile_url' => url('/admin/parent/show/'.$parent->name),
             ];
         }

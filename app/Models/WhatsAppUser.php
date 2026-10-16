@@ -20,6 +20,7 @@ class WhatsAppUser extends Model
         'opted_in',
         'last_inbound_at',
         'demo_name',
+        'whatsapp_profile_name',
         'demo_linked_at',
         'demo_student_id',
     ];

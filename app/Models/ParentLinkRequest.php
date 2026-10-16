@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasApprovals;
 use App\Models\Contracts\Approvable;
+use App\Services\Demo\DemoBindApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +16,7 @@ class ParentLinkRequest extends Model implements Approvable
         'school_id',
         'phone',
         'parent_name',
+        'whatsapp_profile_name',
         'child_name',
         'child_class',
         'school_name',
@@ -22,6 +24,7 @@ class ParentLinkRequest extends Model implements Approvable
         'matched_student_id',
         'status',
         'flow_token',
+        'source',
         'candidate_student_ids',
     ];
 
@@ -69,5 +72,65 @@ class ParentLinkRequest extends Model implements Approvable
     {
         return $this->school?->name
             ?: ($this->school_name !== null && $this->school_name !== '' ? $this->school_name : 'the school');
+    }
+
+    /**
+     * The name Meta put on the message (contacts[].profile.name). Our own
+     * fallbacks ("Demo User", "Parent") are not a profile name.
+     */
+    public static function profileNameOrNull(?string $name): ?string
+    {
+        $name = trim((string) $name);
+        if ($name === '' || in_array($name, ['Demo User', 'Parent', 'Demo guest'], true)) {
+            return null;
+        }
+
+        return mb_substr($name, 0, 150);
+    }
+
+    /** klassapp_number, form, or demo. Older rows are inferred from the token. */
+    public function sourceKey(): string
+    {
+        $source = (string) $this->source;
+        if (in_array($source, ['klassapp_number', 'form', 'demo'], true)) {
+            return $source;
+        }
+
+        return $this->flow_token === DemoBindApproval::REQUEST_TOKEN ? 'demo' : 'form';
+    }
+
+    public function sourceLabel(): string
+    {
+        return match ($this->sourceKey()) {
+            'klassapp_number' => 'KlassApp number',
+            'demo' => 'Demo',
+            default => 'Form',
+        };
+    }
+
+    /**
+     * Name on the request card. A form uses the name the parent typed.
+     * Anything else uses the WhatsApp profile name, then the number.
+     */
+    public function cardParentName(): string
+    {
+        if ($this->sourceKey() === 'form') {
+            $typed = trim((string) $this->parent_name);
+            if ($typed !== '') {
+                return $typed;
+            }
+        }
+
+        $profile = trim((string) $this->whatsapp_profile_name);
+        if ($profile !== '') {
+            return $profile;
+        }
+
+        $fallback = trim((string) $this->parent_name);
+        if ($fallback !== '' && self::profileNameOrNull($fallback) !== null) {
+            return $fallback;
+        }
+
+        return '';
     }
 }

@@ -197,6 +197,21 @@ class ToshiUiSwitchTest extends TestCase
         $this->assertNotNull($component->get('pendingToolConfirm'), 'preview must not consume MCP confirm');
     }
 
+    public function test_public_demo_preview_card_points_at_the_demo_qr_page(): void
+    {
+        $this->school->forceFill(['toshi_mode' => 'preview', 'toshi_enabled' => 0])->save();
+        $this->admin->forceFill(['is_public_demo' => true])->save();
+
+        $component = Livewire::actingAs($this->admin->fresh())
+            ->test(AgentToshi::class)
+            ->assertSet('mode', 'preview')
+            ->assertSet('publicDemo', true)
+            ->assertSee('data-testid="toshi-preview-demo-link"', false)
+            ->assertSee('data-testid="toshi-preview-demo-cta"', false)
+            ->assertSee('In the meantime, try WhatsApp: scan the QR on', false)
+            ->assertDontSee('Founding schools will be the first to try Toshi.', false);
+    }
+
     public function test_toshi_activity_404_when_assistant_off(): void
     {
         Config::set('ai.providers.openai-compatible.key', '');

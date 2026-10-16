@@ -35,6 +35,30 @@ class WhatsAppPhoneHelper
         return '+' . $digits;
     }
 
+    /** "+256 700 000 941" for a Uganda number; other countries grouped in threes. */
+    public static function readable(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+        if ($digits === '') {
+            return $phone;
+        }
+        if (str_starts_with($digits, '256') && strlen($digits) === 12) {
+            return '+256 '.substr($digits, 3, 3).' '.substr($digits, 6, 3).' '.substr($digits, 9, 3);
+        }
+
+        $rest = $digits;
+        $groups = [];
+        while (strlen($rest) > 3) {
+            array_unshift($groups, substr($rest, -3));
+            $rest = substr($rest, 0, -3);
+        }
+        if ($rest !== '') {
+            array_unshift($groups, $rest);
+        }
+
+        return '+'.implode(' ', $groups);
+    }
+
     public static function validate(string $input): bool
     {
         $normalised = self::normalise($input);

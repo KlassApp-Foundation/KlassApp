@@ -96,7 +96,7 @@ class SaasMinimalSignupTest extends TestCase
 
         $dashboard = $this->get('/admin/dashboard');
         $dashboard->assertOk();
-        $dashboard->assertSee('Set up manually', false);
+        $dashboard->assertSee('Continue setup', false);
         $dashboard->assertDontSee('Set up with Toshi', false);
         $dashboard->assertDontSee('data-testid="setup-banner-toshi"', false);
         $dashboard->assertSee('data-testid="toshi-preview-coming-soon"', false);

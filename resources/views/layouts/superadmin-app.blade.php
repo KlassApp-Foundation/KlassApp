@@ -66,25 +66,39 @@
 
 
         <script>
-   window.addEventListener('alert', event => {
-        toastr[event.detail.type](event.detail.message,
-            event.detail.title ?? ''), toastr.options = {
-                "closeButton": true,
-                "progressBar": true,
-                "positionClass": 'bottom-right',
-
-            }
-    });
-
-   window.addEventListener('registeralert', event => {
-        toastr[event.detail.type](event.detail.message,
-            event.detail.title ?? ''), toastr.options = {
-                "closeButton": true,
-                "progressBar": true,
-                "positionClass": 'bottom-right',
-
-            }
-    });
+   function klassShowToast(event) {
+        var detail = event.detail || {};
+        if (Array.isArray(detail)) { detail = detail[0] || {}; }
+        var type = detail.type || 'info';
+        var message = detail.message || '';
+        var title = detail.title || '';
+        if (window.toastr && typeof window.toastr[type] === 'function') {
+            window.toastr[type](message, title);
+            window.toastr.options = { closeButton: true, progressBar: true, positionClass: 'bottom-right' };
+            return;
+        }
+        var host = document.getElementById('klass-toasts');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'klass-toasts';
+            host.setAttribute('data-testid', 'klass-toasts');
+            host.style.cssText = 'position:fixed;right:24px;bottom:24px;z-index:10001;display:flex;flex-direction:column;gap:8px;width:min(380px,calc(100vw - 32px));';
+            document.body.appendChild(host);
+        }
+        var toast = document.createElement('div');
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('data-testid', 'klass-toast');
+        toast.style.cssText = 'background:#0F172A;color:#F8FAFC;border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(15,23,42,.18);font:600 14px/1.45 "DM Sans",system-ui,sans-serif;';
+        var heading = document.createElement('div');
+        heading.textContent = title;
+        var body = document.createElement('div');
+        body.style.cssText = 'font-weight:500;color:#CBD5E1;margin-top:4px;';
+        body.textContent = message;
+        toast.append(heading, body);
+        host.appendChild(toast);
+   }
+   window.addEventListener('alert', klassShowToast);
+   window.addEventListener('registeralert', klassShowToast);
 </script>
 
     </body>

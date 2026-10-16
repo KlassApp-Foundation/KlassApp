@@ -32,6 +32,9 @@ final class DemoOnlyRecipientGuard
     /** @var array<int, string> digits of the senders being answered (nested webhooks) */
     private static array $inboundSenders = [];
 
+    /** @var array<int, string> digits an approval reply is allowed to reach */
+    private static array $replyPhones = [];
+
     public static function enabled(): bool
     {
         return (bool) config('services.whatsapp.demo_only_recipients', false);
@@ -47,10 +50,25 @@ final class DemoOnlyRecipientGuard
         array_pop(self::$inboundSenders);
     }
 
+    /**
+     * Let one approval or rejection reply reach the number that asked.
+     * Only the phone passed in, and only while the callback runs.
+     */
+    public static function duringReply(string $phone, callable $callback): mixed
+    {
+        self::$replyPhones[] = self::digits($phone);
+        try {
+            return $callback();
+        } finally {
+            array_pop(self::$replyPhones);
+        }
+    }
+
     /** Test seam. */
     public static function flush(): void
     {
         self::$inboundSenders = [];
+        self::$replyPhones = [];
     }
 
     /** Null when the send may go out, otherwise the refusal reason. */
@@ -99,7 +117,7 @@ final class DemoOnlyRecipientGuard
             return null;
         }
 
-        if (in_array($digits, self::$inboundSenders, true)) {
+        if (in_array($digits, self::$inboundSenders, true) || in_array($digits, self::$replyPhones, true)) {
             return null;
         }
 

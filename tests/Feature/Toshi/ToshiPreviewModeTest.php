@@ -78,7 +78,7 @@ class ToshiPreviewModeTest extends TestCase
         }
 
         $response->assertOk();
-        $response->assertSee('Set up manually', false);
+        $response->assertSee('Continue setup', false);
         $response->assertDontSee('Set up with Toshi', false);
         $response->assertSee('data-testid="toshi-toggle"', false);
         // Auto-open script on the dashboard must not ship in preview.

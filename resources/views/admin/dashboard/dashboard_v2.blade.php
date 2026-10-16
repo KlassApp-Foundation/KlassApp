@@ -1,8 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 {{--
-    Admin dashboard v2 — PR1 "school-with-data first screen" (combined
-    2026-10-08 handoff). Built from concepts/admin-mvp. Selectable via
-    config('dashboard.v2_enabled') or ?v2=1 (default off).
+    Admin dashboard. Built from concepts/admin-mvp. This is the only
+    school-admin dashboard.
 
     One count: the setup bar and the sidebar chip read OnboardingStepsService
     (neutral step names via displayLabel — K25). No promo carousel, no Toshi
@@ -108,6 +107,11 @@
             </div>
         @endif
 
+        {{-- WhatsApp link requests, near the top. Count, latest three, Approve / Reject. Polls itself. --}}
+        @if((int) ($v2User->usergroup_id ?? 0) === 3)
+            <livewire:admin.whatsapp-dashboard-card />
+        @endif
+
         @if($state === 'new')
             {{-- Brand new: quick-action tiles + zeroed tiles + one empty state --}}
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
@@ -124,11 +128,12 @@
             </div>
 
             <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list"><span class="dv2-kpi-label" data-icon="graduation-cap"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">0</span><p class="dv2-kpi-sub">None added yet</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/student/add') }}">+ Add students</a></span></div>
+                @include('admin.dashboard._whatsapp_stat')
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list"><span class="dv2-kpi-label" data-icon="graduation-cap"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">0</span><p class="dv2-kpi-sub">None added yet</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></a></div>
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/attendance/list') }}">View registers</a></span></div>
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></a><span class="dv2-kpi-actions"><a href="{{ url('/admin/fees/payments/create') }}">Record payment</a></span></div>
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a><span class="dv2-kpi-actions" data-testid="dashboard-v2-report-action"><a href="{{ url('/admin/reports/cards') }}">Generate</a></span></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></a></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a></div>
             </div>
 
             <div class="dv2-new-empty" data-testid="dashboard-v2-empty-students">
@@ -142,13 +147,13 @@
         @else
             {{-- 4 · KPI tiles. The old quick-action row is gone; each tile links to its list. --}}
             <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
+                @include('admin.dashboard._whatsapp_stat')
                 <div class="dv2-kpi">
                     <a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list">
                         <span class="dv2-kpi-label"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span>
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">{{ $kpis['students']['value'] ?? 0 }}</span>
                         <p class="dv2-kpi-sub {{ ($kpis['students']['direction'] ?? null) === 'up' ? 'up' : '' }}">{{ $kpis['students']['detail'] ?? '—' }}</p>
                     </a>
-                    <span class="dv2-kpi-actions"><a href="{{ url('/admin/student/add') }}">+ Add students</a></span>
                 </div>
                 <div class="dv2-kpi">
                     <a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff">
@@ -163,7 +168,6 @@
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-attendance">{{ $kpis['attendance']['value'] ?? '–' }}</span>
                         <p class="dv2-kpi-sub {{ ($kpis['attendance']['direction'] ?? null) === 'up' ? 'up' : (($kpis['attendance']['direction'] ?? null) === 'down' ? 'down' : '') }}">{{ $kpis['attendance']['detail'] ?? '—' }}</p>
                     </a>
-                    <span class="dv2-kpi-actions"><a href="{{ url('/admin/attendance/list') }}">View registers</a></span>
                 </div>
                 <div class="dv2-kpi">
                     <a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees">
@@ -176,18 +180,13 @@
                         <span class="dv2-kpi-value">–</span>
                         <p class="dv2-kpi-sub warn">Set up fees first</p>
                     @endif
+                    @if($currency === null && ($kpis['fees']['state'] ?? 'ok') === 'ok')
+                        <p class="dv2-kpi-sub dv2-currency-hint" data-testid="dashboard-v2-currency-hint">Set your currency</p>
+                    @endif
                     </a>
-                    <span class="dv2-kpi-actions">
-                        <a href="{{ url('/admin/fees/payments/create') }}">Record payment</a>
-                        @if(($kpis['fees']['state'] ?? 'ok') !== 'ok')
-                            <a href="{{ $setup['routes']['fees'] ?? url('/admin/fees-categories') }}">Set up fees</a>
-                        @elseif($currency === null)
-                            <a class="dv2-currency-hint" data-testid="dashboard-v2-currency-hint" href="{{ url('/admin/settings') }}">Set your currency</a>
-                        @endif
-                    </span>
                 </div>
                 <div class="dv2-kpi">
-                    <a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards">
+                    <a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards" data-testid="dashboard-v2-report-action">
                         <span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span>
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-reports">{{ $kpis['report_cards']['ready'] ?? 0 }}</span>
                         @if(($kpis['report_cards']['percent'] ?? null) !== null)
@@ -195,14 +194,6 @@
                         @endif
                         <p class="dv2-kpi-sub">of {{ $kpis['report_cards']['students'] ?? 0 }}@if(!empty($kpis['report_cards']['exam'])) · {{ $kpis['report_cards']['exam'] }}@elseif(($kpis['report_cards']['state'] ?? '') === 'no_exam') · No exam closed yet @endif</p>
                     </a>
-                    {{-- One action by state: Generate while any report card is missing, then Send on WhatsApp. --}}
-                    <span class="dv2-kpi-actions" data-testid="dashboard-v2-report-action">
-                        @if(! empty($kpis['report_cards']['complete']))
-                            <a href="{{ url('/admin/whatsapp/dashboard') }}">Send on WhatsApp</a>
-                        @else
-                            <a href="{{ url('/admin/reports/cards') }}">Generate</a>
-                        @endif
-                    </span>
                 </div>
             </div>
 
@@ -379,6 +370,10 @@
                     <p style="margin:6px 0 0;color:#64748B;font-size:13.5px" data-testid="dashboard-v2-activity-empty">No recent activity yet.</p>
                 @endif
             </div>
+        @endif
+
+        @if(!empty($connectedTools['driveConnected']))
+            <p class="dv2-drive" data-testid="dashboard-connected-drive">Reports filed to Drive</p>
         @endif
 
         {{-- 7 · Toshi line --}}

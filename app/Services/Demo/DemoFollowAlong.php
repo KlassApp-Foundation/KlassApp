@@ -46,6 +46,34 @@ final class DemoFollowAlong
         return now()->subMinutes(self::bindTtlMinutes() - self::EXPIRY_INTERVAL_MINUTES);
     }
 
+    /**
+     * When a BIND started at $start (a pending request's created_at, or a
+     * binding's demo_linked_at) is removed by demo:expire-chats: the same
+     * instant bindCutoff() checks, seen from the start instead of from now.
+     */
+    public static function expiresAt(\DateTimeInterface $start): \Illuminate\Support\Carbon
+    {
+        return \Illuminate\Support\Carbon::instance($start)->addMinutes(self::bindTtlMinutes() - self::EXPIRY_INTERVAL_MINUTES);
+    }
+
+    /**
+     * The columns an unlink clears on a whatsapp_users row: demo:expire-chats,
+     * demo:nightly-reset and the admin Unlink button all write exactly these,
+     * so the row is kept but the number follows nobody.
+     *
+     * @return array<string, mixed>
+     */
+    public static function unlinkAttributes(): array
+    {
+        return [
+            'user_id' => null,
+            'school_id' => null,
+            'opted_in' => false,
+            'demo_linked_at' => null,
+            'demo_student_id' => null,
+        ];
+    }
+
     public static function removalNotice(): string
     {
         return 'Your number is removed after ' . self::bindTtlMinutes() . ' minutes.';

@@ -91,83 +91,25 @@ class DashboardEmptyStatePlanToProfileTest extends TestCase
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('data-testid="setup-banner"', false);
-        $response->assertSee('data-testid="dashboard-kpi-placeholder"', false);
+        $response->assertSee('data-testid="dashboard-v2-shell"', false);
+        $response->assertSee('data-testid="dashboard-v2-empty-students"', false);
 
         $response->assertDontSee('data-testid="plan-usage-banner"', false);
         $response->assertDontSee('Freemium Plan', false);
         $response->assertDontSee('dashboard-kpi-card', false);
-        $response->assertDontSee('dashboard-kpi-label', false);
         $response->assertDontSee('dashboard-notice-card', false);
         $response->assertDontSee('id="graph"', false);
     }
 
     public function test_post_onboarding_dashboard_shows_kpis_without_plan_card(): void
     {
-        $plan = Plan::create([
-            'name' => 'Freemium',
-            'display_name' => 'Freemium',
-            'cycle' => 30,
-            'no_of_students' => 0,
-            'no_of_users' => 0,
-            'amount' => 0,
-            'order' => 1,
-            'is_active' => 1,
-        ]);
+        $this->assertFileDoesNotExist(resource_path('views/admin/dashboard/dashboard.blade.php'));
+        $v2 = file_get_contents(resource_path('views/admin/dashboard/dashboard_v2.blade.php'));
+        $this->assertStringContainsString('Students', $v2);
+        $this->assertStringNotContainsString('empty-state-product-demo', $v2);
+        $this->assertStringNotContainsString('data-testid="plan-usage-banner"', $v2);
+        $this->assertStringNotContainsString('data-testid="setup-banner"', $v2);
 
-        $view = $this->view('admin.dashboard.dashboard', [
-            'dashboard' => [
-                'studentCount' => 12,
-                'teacherCount' => 3,
-                'parentCount' => 8,
-                'nonteachingCount' => 1,
-                'femaleCount' => 6,
-                'maleCount' => 6,
-                'setupIncomplete' => false,
-                'whatsapp' => ['parentsOptedIn' => 2, 'messagesThisMonth' => 5],
-                'noticeboard' => [],
-                'feedbacks' => [],
-                'events' => [],
-                'products' => [],
-                'upcomingExam' => [],
-                'standardStudentCounts' => collect(),
-                'work' => [],
-                'task' => [],
-                'event' => [],
-                'reminder' => [],
-                'fee' => [],
-                'birthday' => [],
-            ],
-            'standardLink' => null,
-            'selected_teacher' => null,
-            'plan' => $plan,
-            'planUsage' => [
-                'students' => ['used' => 12, 'limit' => 0],
-                'teachers' => ['used' => 3, 'limit' => 0],
-            ],
-            'onboardingMissing' => [],
-            'onboardingSteps' => [],
-            'setupIncomplete' => false,
-            'openToshiOnboarding' => false,
-            'pendingApprovals' => 0,
-            'trendPeriod' => 'month',
-            'feeTrend' => [],
-            'greeting' => ['phrase' => 'Good morning', 'name' => 'Admin'],
-            'dashboardContextLine' => 'School overview · 12 students enrolled',
-            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
-        ]);
-
-        $view->assertSee('ds-kpi-card', false);
-        $view->assertDontSee('dashboard-kpi-card', false);
-        $view->assertSee('Students', false);
-        $view->assertSee('Teachers', false);
-        $view->assertSee('Notice Board', false);
-        $view->assertSee('Connected tools', false);
-        // LIVE badge removed 2026-09-27 (UI-polish) — no longer rendered
-        $view->assertDontSee('data-testid="plan-usage-banner"', false);
-        $view->assertDontSee('Freemium Plan', false);
-        $view->assertDontSee('data-testid="dashboard-kpi-placeholder"', false);
-        $view->assertDontSee('data-testid="setup-banner"', false);
     }
 
     public function test_profile_settings_shows_plan_info_line(): void

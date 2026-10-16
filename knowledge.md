@@ -2640,6 +2640,10 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-16: link-request inbox for all three paths, combined mark sheet
+
+WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on the v2 dashboard card and the WhatsApp page. A KlassApp number now files a request instead of linking immediately; approve still sends the existing welcome. Form requests stay on Approvals as well. Only demo links show a countdown. The release page is one screen: compact controls, a combined mark sheet, and a WhatsApp-style example of the message that is already sent. This branch also drops the legacy dashboard and `DASHBOARD_V2_ENABLED` in code. Leave that production variable unset. Do not set it. Draft PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) on `cursor/whatsapp-link-requests-dce8`. Not merged. Handover is in the PR body. The full test guard was not run after the last layout edits.
+
 ### 2026-10-13: cheap screenshot fixes, stacked on #1067
 - **Work done**: Seven small staging-screenshot fixes on `fix/cheap-screenshot-fixes`, branched from #1067 (`c2df02b6`), not from main. KPI tiles stack label, value, meta, then actions, and grow when the Toshi panel is open. The 150px cap stays at 1280 and wider with the panel closed. Sidebar group parents are bold only; the active child is an inset green pill. The Toshi panel sits flush under the header and runs to the bottom of the window. The student profile parents card shows initials, a relation chip only when the relation is known, a tel link, and On WhatsApp / Not on WhatsApp. Dashboard and student profile drop the white mother wrapper and cap content at 1600px. Gender bars have an 8px gap and an end count. Demo seeders vary the girls/boys mix per class and keep the school near 50/50. Legacy delete buttons in table rows are a ghost button with red text and open a confirm dialog.
 - **Files modified**: `public/css/dashboard-v2.css`, `public/css/dashboard-refresh.css`, `public/js/custom.js`, `resources/views/admin/dashboard/dashboard_v2.blade.php`, `resources/views/layouts/partials/sidebar-menu-v3.blade.php`, `resources/views/admin/students/profile.blade.php`, `resources/views/admin/students/_guardians.blade.php`, `resources/views/components/person-profile.blade.php`, `app/Services/StudentProfileService.php`, `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `database/seeders/Concerns/SeedsRichDemoData.php`, `database/seeders/DemoJuniorSchoolSeeder.php`, `database/seeders/DemoSeniorSchoolSeeder.php`, `tests/Feature/Admin/DashboardV21TilesTest.php`, `tests/Feature/Admin/StudentProfileSchoolScopeTest.php`, `tests/Feature/Demo/DemoJuniorSchoolSeederTest.php`, `tests/Feature/Demo/DemoSeniorSchoolSeederTest.php`, `knowledge.md`.
@@ -13751,3 +13755,15 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Files:** `app/Services/Demo/LatestExamMarks.php`, `app/Services/Demo/DemoBindReplies.php`, `tests/Feature/Demo/Concerns/BuildsFollowAlongSchools.php`, `tests/Feature/Demo/DemoBindByCodeTest.php`.
 
 **Status:** PR #1111 OPEN (`fix/marks-latest-released-exam`, off `main` `21c622da`). Not merged. Production untouched.
+
+## Session: 2026-10-16 — #1110 five demo items: link-request toasts, public-demo copy, whole-card KPIs, compact release row, Toshi tab (PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) OPEN, branch `cursor/whatsapp-link-requests-dce8`)
+
+**Task (owner's words):** the five demo-priority items, in order — (1) toast + bell count on a new link request in every admin layout incl. superadmin; (2) public-demo admin: no 403 page anywhere, Toshi shows the exact copy "Toshi, your school's AI assistant, is coming soon. In the meantime, try WhatsApp: scan the QR on /demo."; (3) dashboard stat cards clickable as whole cards, no action links; (4) release controls fit one compact row; (5) Toshi right-edge tab a little taller, always visible after open/close, cropping fixed. Agent builds and opens PRs; owner merges after reviewing screenshots.
+
+**Change (commit `09e4bb4c`, on top of `fbd085b3`; 13 files, +161/−45):** superadmin-app toast fallback (`#klass-toasts`); `AgentToshi::$publicDemo` + preview-card branch with the exact copy and `/demo` links; whole-card KPI link + test; compact release-row CSS; tab 168→188 and visible below 1280 (`toshi-ui.css` + `dashboard-refresh.css`, published copy byte-identical); six test files extended.
+
+**Tests:** targeted suites 547 tests, 0 failures (DashboardV2, MarksRelease, PublicDemoLockdown, WhatsappLinkRequestCards, ParentLinkRequestApproval, Toshi/*). Full `scripts/test-guard.sh`: 2683 tests, 0 failures, 0 errors, 4 skipped.
+
+**Browser evidence:** all checks passed on Chromium at 375/414/768/1280 — `~/Desktop/klassapp-evidence/1110-five-items/` (`REPORT.json`). Edge tab 36×188 at every width and after open/close; exact preview copy; blocked pages friendly (200, no 403); a real new link request raised the toast and updated the bell; superadmin fallback toast shown.
+
+**Notes:** no merges/deploys by the agent; no env changes; approval logic untouched (`ApprovalDecisionService`). Local verification only.

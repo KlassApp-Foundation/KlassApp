@@ -249,6 +249,102 @@ final class MarksReleaseService
         return 'No marks yet for this exam in the chosen class.';
     }
 
+    /**
+     * Combined mark sheet for the release page: one row per student, grouped
+     * by class then stream. Does not change the message that is sent.
+     *
+     * @return array{subjects: array<int, array{id:int,name:string}>, groups: array<int, array<string, mixed>>}
+     */
+    public function combinedSheet(User $user, int $examId, ?int $standardLinkId): array
+    {
+        [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+        $schoolId = (int) $user->school_id;
+        $bundles = [];
+        $subjects = [];
+        $groups = [];
+
+        foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
+            $bundles[$classLink->id] ??= LatestExamMarks::forExam($schoolId, (int) $classLink->section_id, $anchor, null);
+            foreach ($bundles[$classLink->id]['subjects'] as $subject) {
+                $key = mb_strtolower($subject['name']);
+                $subjects[$key] = ['key' => $key, 'name' => $subject['name']];
+            }
+            $groupKey = (int) $classLink->id;
+            if (! isset($groups[$groupKey])) {
+                $groups[$groupKey] = [
+                    'class_name' => trim((string) ($classLink->section?->name ?? '')),
+                    'stream' => trim((string) ($classLink->stream ?? '')),
+                    'students' => [],
+                ];
+            }
+            $groups[$groupKey]['students'][] = $this->sheetRow($studentId, $bundles[$classLink->id]);
+        }
+
+        $subjects = array_values($subjects);
+        usort($subjects, function (array $a, array $b) {
+            $order = ['mathematics', 'math', 'maths', 'science', 'english', 'social studies'];
+            $ra = array_search(strtolower($a['name']), $order, true);
+            $rb = array_search(strtolower($b['name']), $order, true);
+
+            return ($ra === false ? 99 : $ra) <=> ($rb === false ? 99 : $rb) ?: strcmp($a['name'], $b['name']);
+        });
+
+        foreach ($groups as &$group) {
+            usort($group['students'], fn (array $a, array $b) => strcasecmp($a['name'], $b['name']));
+            $group['count'] = count($group['students']);
+        }
+        unset($group);
+
+        return ['subjects' => $subjects, 'groups' => array_values($groups)];
+    }
+
+    /** @param  array{subjects: array<int, array{id:int,name:string}>, marks: \Illuminate\Support\Collection}  $bundle */
+    private function sheetRow(int $studentId, array $bundle): array
+    {
+        $student = User::query()->find($studentId);
+        $bySubject = $bundle['marks']->where('student_id', $studentId)->keyBy('subject_id');
+        $cells = [];
+        $total = 0.0;
+        $count = 0;
+        foreach ($bundle['subjects'] as $subject) {
+            $key = mb_strtolower($subject['name']);
+            $mark = $bySubject->get($subject['id']);
+            if (! $mark) {
+                $cells[$key] = null;
+
+                continue;
+            }
+            $value = (float) $mark->marks;
+            $total += $value;
+            $count++;
+            $cells[$key] = [
+                'mark' => fmod($value, 1.0) === 0.0 ? (string) (int) $value : number_format($value, 1),
+                'grade' => (string) $mark->grade,
+            ];
+        }
+        $average = $count ? $total / $count : null;
+
+        return [
+            'id' => $studentId,
+            'name' => (string) ($student->name ?? 'Student'),
+            'cells' => $cells,
+            'total' => $count ? (fmod($total, 1.0) === 0.0 ? (string) (int) $total : number_format($total, 1)) : '—',
+            'average' => $average === null ? '—' : number_format($average, 1),
+            'grade' => $average === null ? '—' : $this->overallGrade($average),
+            'sort_total' => $count ? $total : -1,
+            'sort_average' => $average ?? -1,
+        ];
+    }
+
+    /** Same UNEB-style bands the demo marks use, for the overall column only. */
+    private function overallGrade(float $score): string
+    {
+        return match (true) {
+            $score >= 95 => 'D1', $score >= 90 => 'D2', $score >= 75 => 'C3', $score >= 65 => 'C4',
+            $score >= 60 => 'C5', $score >= 50 => 'C6', $score >= 45 => 'P7', $score >= 40 => 'P8', default => 'F9',
+        };
+    }
+
     // ── Run ──────────────────────────────────────────────────────
 
     /** Run every scheduled release that is due. Returns how many ran. */
