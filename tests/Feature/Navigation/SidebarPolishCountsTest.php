@@ -58,11 +58,14 @@ class SidebarPolishCountsTest extends TestCase
 
         $this->actingAs($admin);
         $this->assertSame(
-            ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0],
+            ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0, 'whatsapp' => 0],
             SidebarCounts::forSchool($school->id)
         );
         $quiet = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
-        $this->assertStringNotContainsString('sidebar-v3-count', $quiet);
+        // Zero draws no visible chip; count rows keep a hidden span so the
+        // live poll can reveal the badge without a reload.
+        $this->assertDoesNotMatchRegularExpression('/<span class="sidebar-v3-count"(?![^>]*hidden)[^>]*>\s*\d/', $quiet);
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*hidden/', $quiet);
 
         Admission::create([
             'school_id' => $school->id,
@@ -151,9 +154,12 @@ class SidebarPolishCountsTest extends TestCase
         $this->assertSame(1, $counts['admissions']);
         $this->assertSame(1, $counts['unmatched']);
         $this->assertSame(1, $counts['approvals']);
+        $this->assertSame(1, $counts['whatsapp']);
 
         $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
-        $this->assertSame(3, substr_count($html, 'sidebar-v3-count'));
+        $this->assertSame(4, substr_count($html, 'sidebar-v3-count'));
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>1</', $html);
+        $this->assertStringContainsString('>Release marks</span>', $html);
         $this->assertStringContainsString('>Admissions</span>', $html);
         $this->assertStringContainsString('>Unmatched payments</span>', $html);
         $this->assertStringContainsString('>Approvals</span>', $html);
@@ -161,6 +167,71 @@ class SidebarPolishCountsTest extends TestCase
             '/aria-label="Students"[\s\S]{0,180}sidebar-v3-count/',
             $html
         );
+    }
+
+    public function test_whatsapp_badge_counts_all_three_request_sources(): void
+    {
+        DB::table('usergroups')->insert([
+            ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $school = School::create([
+            'name' => 'Badge School',
+            'slug' => 'badge-school-'.uniqid(),
+            'email' => uniqid().'@badge.test',
+            'phone' => '+256700000333',
+            'status' => 1,
+            'registration_country' => 'Uganda',
+        ]);
+        $admin = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'name' => 'Badge Admin',
+        ]);
+        $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'name' => 'Badge Student']);
+
+        foreach (['klassapp_number', 'form', 'demo'] as $i => $source) {
+            $link = ParentLinkRequest::create([
+                'school_id' => $school->id,
+                'phone' => '+25670055510'.$i,
+                'parent_name' => 'Badge Parent '.$i,
+                'child_name' => 'Badge Student',
+                'child_class' => 'P5',
+                'school_name' => 'Badge School',
+                'suggested_student_id' => $student->id,
+                'candidate_student_ids' => [$student->id],
+                'status' => 'pending',
+                'source' => $source,
+            ]);
+            Approval::create([
+                'approvable_type' => ParentLinkRequest::class,
+                'approvable_id' => $link->id,
+                'state' => Pending::class,
+                'requested_by' => null,
+                'comments' => $link->summaryLine(),
+            ]);
+        }
+
+        $this->actingAs($admin);
+
+        $counts = SidebarCounts::forSchool($school->id);
+        $this->assertSame(3, $counts['whatsapp'], 'all three request sources must count');
+
+        $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>3</', $html);
+    }
+
+    public function test_exams_and_reports_offers_release_marks(): void
+    {
+        $exams = collect(config('navigation.roles.admin.sections'))
+            ->flatMap(fn (array $section) => $section['rows'] ?? [])
+            ->firstWhere('label', 'Exams and reports');
+
+        $release = collect($exams['children'])->firstWhere('label', 'Release marks');
+        $this->assertNotNull($release, 'Exams and reports must offer Release marks');
+        $this->assertSame('admin/marks/releases/new', $release['url']);
+        $this->assertContains('admin/marks/releases*', $release['paths']);
     }
 
     public function test_settings_children_use_the_existing_pages(): void

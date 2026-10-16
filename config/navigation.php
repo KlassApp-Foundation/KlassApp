@@ -151,6 +151,7 @@ return [
                             'label' => 'Exams and reports', 'icon' => 'exams', 'url' => 'admin/exams',
                             'children' => [
                                 ['label' => 'Exams and marks', 'url' => 'admin/exams', 'paths' => ['admin/exams*', 'admin/exam*', 'admin/marks*', 'admin/mark*']],
+                                ['label' => 'Release marks', 'url' => 'admin/marks/releases/new', 'paths' => ['admin/marks/releases*']],
                                 ['label' => 'Grading', 'url' => 'admin/grades', 'paths' => ['admin/grades*', 'admin/grade*']],
                                 ['label' => 'Report cards', 'url' => 'admin/reports/cards', 'paths' => ['admin/reports/cards*']],
                             ],
@@ -168,7 +169,7 @@ return [
                 [
                     'label' => 'School',
                     'rows' => [
-                        ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*']],
+                        ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*'], 'count' => 'whatsapp'],
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [
