@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  */
 class ParentLinkService
 {
-    public function linkByStudentId(string $phone, int $studentId, string $senderName = 'Parent'): ParentLinkResult
+    public function linkByStudentId(string $phone, int $studentId, string $senderName = 'Parent', ?string $profileName = null): ParentLinkResult
     {
         $student = User::with(['studentAcademicLatest.standardLink.standard', 'school'])
             ->find($studentId);
@@ -39,7 +39,7 @@ class ParentLinkService
 
             if ($bound && (int) $bound->usergroup_id === 7) {
                 if ($this->linkExists($bound->id, $studentId)) {
-                    $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId);
+                    $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId, null, $profileName);
 
                     return new ParentLinkResult(
                         linked: true,
@@ -54,7 +54,7 @@ class ParentLinkService
                 }
 
                 $this->createLink($bound->id, $studentId, $schoolId);
-                $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId);
+                $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId, null, $profileName);
 
                 return new ParentLinkResult(
                     linked: true,
@@ -69,10 +69,10 @@ class ParentLinkService
 
             // Phone was previously bound to a non-parent (schooladmin / teacher from testing).
             // Reclaim the WhatsApp identity for a new parent — one phone → one WA user row.
-            return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser): ParentLinkResult {
+            return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser, $profileName): ParentLinkResult {
                 $parent = $this->createParentUser($senderName, $studentId);
                 $this->createLink($parent->id, $studentId, $schoolId);
-                $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone);
+                $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone, $profileName);
 
                 return new ParentLinkResult(
                     linked: true,
@@ -87,10 +87,10 @@ class ParentLinkService
             });
         }
 
-        return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser): ParentLinkResult {
+        return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser, $profileName): ParentLinkResult {
             $parent = $this->createParentUser($senderName, $studentId);
             $this->createLink($parent->id, $studentId, $schoolId);
-            $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone);
+            $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone, $profileName);
 
             return new ParentLinkResult(
                 linked: true,
@@ -208,6 +208,7 @@ class ParentLinkService
         int $parentId,
         int $schoolId,
         ?string $phone = null,
+        ?string $profileName = null,
     ): void {
         $payload = [
             'user_id' => $parentId,
@@ -216,6 +217,10 @@ class ParentLinkService
             'verified_at' => now(),
             'verified_via_schoolpay' => false,
         ];
+        $profileName = \App\Models\ParentLinkRequest::profileNameOrNull($profileName);
+        if ($profileName !== null) {
+            $payload['whatsapp_profile_name'] = $profileName;
+        }
 
         if ($whatsappUser) {
             $whatsappUser->update($payload);

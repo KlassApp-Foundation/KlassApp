@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Http\Controllers\Controller;
+use App\Models\ParentLinkRequest;
 use App\Models\WhatsAppUser;
 use App\Models\MessageDeliveryLog;
 use App\Models\User;
@@ -911,7 +912,7 @@ class WhatsAppController extends Controller
         }
 
         // Route to appropriate handler
-        $this->routeInbound($whatsappUser, $phone, $body, $this->businessApi);
+        $this->routeInbound($whatsappUser, $phone, $body, $this->businessApi, $senderName);
 
         // Flush any queued notifications — parent's inbound just opened a free window
         $outboundService = app(OutboundWhatsAppService::class);
@@ -1093,8 +1094,8 @@ class WhatsAppController extends Controller
             if (! ($result['success'] ?? false)) {
                 $sendButtons(
                     "Sorry, the link request form isn't available right now.\n\n"
-                    . "You can still link instantly — type your child's KlassApp ID "
-                    . "(e.g., KLS0010427) from their report card.",
+                    . "You can still ask with your child's KlassApp ID "
+                    . "(e.g., KLS0010427) from their report card. The school reviews it.",
                     [
                         ['title' => '🔗 Link help', 'id' => 'link_help'],
                     ],
@@ -1182,13 +1183,14 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── KlassApp Student ID (instant self-service) ──
+        // ── KlassApp Student ID: the school gets a link request ──
         if (preg_match('/^KLS\d{7}$/i', $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
-                ->with(['user', 'standardLink.standard', 'school'])
+                ->with(['user.school', 'standardLink.standard', 'school'])
                 ->first();
-            if ($academic && $academic->user) {
-                $this->linkParentToStudent($phone, $academic->user->id, $sendText, $sendButtons, $senderName);
+            if ($academic && $academic->user && $academic->user->school_id) {
+                $this->requestKlassAppNumberLink($phone, $academic->user, ParentLinkRequest::profileNameOrNull($senderName), $sendText);
+
                 return;
             }
             $sendButtons(
@@ -1258,7 +1260,7 @@ class WhatsAppController extends Controller
     {
         return "🔗 *Link to your child — 2 ways:*\n\n"
             . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card "
-            . "(e.g., KLS0010427)\n\n"
+            . "(e.g., KLS0010427). The school reviews the request, then you're linked.\n\n"
             . "2️⃣ *Request Form* — Tap *Request Link* below for a short form your "
             . "school will review.\n\n"
             . "No code needed if you don't have the ID — just use the form.";
@@ -1276,6 +1278,22 @@ class WhatsAppController extends Controller
      * Link a parent's WhatsApp number to a student by system user ID.
      * Used for name-based linking (no School Pay code required).
      */
+    /**
+     * KlassApp number path: file a link request for the school. The welcome
+     * is sent later, when an admin approves, by ApprovalDecisionService.
+     */
+    protected function requestKlassAppNumberLink(string $phone, User $student, ?string $profileName, callable $sendText): void
+    {
+        $request = $this->parentLinkRequests->createFromKlassAppNumber($phone, $student, $profileName);
+        if (! $request->wasRecentlyCreated) {
+            $sendText($this->parentLinkRequests->pendingStatusMessage($request), 'parent_link_already_pending');
+
+            return;
+        }
+
+        $sendText($this->parentLinkRequests->klassAppNumberReceivedMessage($request), 'klassapp_number_request');
+    }
+
     protected function linkParentToStudent(string $phone, int $studentId, callable $sendText, callable $sendButtons, string $senderName = 'Parent'): void
     {
         $result = $this->parentLinks->linkByStudentId($phone, $studentId, $senderName);
@@ -1483,7 +1501,7 @@ class WhatsAppController extends Controller
      * @param string $body Raw message body
      * @param WhatsAppBusinessService $whatsAppService
      */
-    private function routeInbound(WhatsAppUser $user, string $phone, string $body, $whatsAppService): void
+    private function routeInbound(WhatsAppUser $user, string $phone, string $body, $whatsAppService, string $senderName = 'Parent'): void
     {
         // Strip emoji characters so list button titles (e.g. "💰 Fee Balance") match keywords
         $clean = preg_replace('/[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F1E0}-\\x{1F1FF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]/u', '', $body);
@@ -1501,22 +1519,20 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Parent (ug7): KLS ID links an additional child (cross-school via ParentLinkService)
+        // Parent (ug7): a KlassApp number asks the school to link another child.
         if ($role === 7 && preg_match('/^kls\d{7}$/', $normalised)) {
             $kls = strtoupper($normalised);
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', $kls)
-                ->with(['user', 'standardLink.standard', 'school'])
+                ->with(['user.school', 'standardLink.standard', 'school'])
                 ->first();
 
-            if ($academic && $academic->user) {
-                $this->linkParentToStudent(
+            if ($academic && $academic->user && $academic->user->school_id) {
+                $this->requestKlassAppNumberLink(
                     $phone,
-                    (int) $academic->user->id,
+                    $academic->user,
+                    ParentLinkRequest::profileNameOrNull($senderName),
                     fn (string $message, ?string $flowType = null, ?int $userId = null) =>
                         $whatsAppService->sendText($phone, $message, $flowType, $userId ?? $user->user_id),
-                    fn (string $bodyText, array $buttons, ?string $flowType = null, ?int $userId = null) =>
-                        $this->businessApi->sendInteractiveButtons($phone, $bodyText, $buttons, $flowType, $userId ?? $user->user_id),
-                    (string) ($this->whatsappDisplayName($user->user, 'Parent')),
                 );
 
                 return;

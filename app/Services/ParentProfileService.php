@@ -53,11 +53,11 @@ class ParentProfileService
         $currency = app(DashboardV2DataService::class)->currencyFor($schoolId);
         $children = $this->children($schoolId, $parent, $currency);
         $fees = $this->feesTile($children, $currency);
-        $optedIn = WhatsAppUser::query()
+        $whatsapp = WhatsAppUser::query()
             ->where('school_id', $schoolId)
             ->where('user_id', $parent->id)
-            ->where('opted_in', true)
-            ->exists();
+            ->first();
+        $optedIn = (bool) ($whatsapp?->opted_in);
 
         return [
             'parent' => $parent,
@@ -70,6 +70,7 @@ class ParentProfileService
             'email' => filled($parent->email) ? (string) $parent->email : 'Not recorded',
             'last_login' => $this->lastLogin($schoolId, $parent->id),
             'whatsapp' => $optedIn ? 'Opted in' : 'Not opted in',
+            'whatsapp_profile_name' => filled($whatsapp?->whatsapp_profile_name) ? (string) $whatsapp->whatsapp_profile_name : null,
             'children_count' => count($children),
             'children' => $children,
             'fees' => $fees,

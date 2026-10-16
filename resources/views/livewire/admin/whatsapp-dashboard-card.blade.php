@@ -5,7 +5,7 @@
             <x-brand.whatsapp class="wa-dash-card__mark" />
             <div>
                 <h2 class="wa-lr-section__title" id="wa-dash-title">WhatsApp link requests</h2>
-                <p class="wa-dash-card__sub">New BIND requests appear here by themselves.</p>
+                <p class="wa-dash-card__sub">KlassApp number, form, and demo requests appear here by themselves.</p>
             </div>
         </div>
         <div class="wa-dash-card__count" data-testid="dashboard-whatsapp-count">

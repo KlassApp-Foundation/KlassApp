@@ -28,9 +28,11 @@ class WhatsappLinkRequests extends Component
     {
         $schoolId = (int) $this->linkRequestAdmin()->school_id;
         $board = app(LinkRequestBoard::class);
+        $requests = $board->pending($schoolId);
+        $this->announceNewRequests($requests);
 
         return view('livewire.admin.whatsapp-link-requests', [
-            'requests' => $board->pending($schoolId),
+            'requests' => $requests,
             'linked' => $board->linkedNow($schoolId),
             'isDemoSchool' => (int) (auth()->user()->school?->is_demo ?? 0) === 1,
             'pollSeconds' => self::POLL_SECONDS,

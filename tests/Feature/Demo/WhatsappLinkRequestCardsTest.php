@@ -104,9 +104,10 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(WhatsappLinkRequests::class)
-            ->assertSee('256700000941')
+            ->assertSee('+256 700 000 941')
             ->assertSee('Amina Nakato')
-            ->assertSee('P.7 A')
+            ->assertSee('P.7')
+            ->assertSee('Demo')
             ->assertSee('44 min left')
             ->assertSee('Approve')
             ->assertSee('Reject');
@@ -187,10 +188,10 @@ class WhatsappLinkRequestCardsTest extends TestCase
         $html = Livewire::actingAs($admin)->test(WhatsappDashboardCard::class)->html();
 
         $this->assertStringContainsString('<span class="wa-dash-card__count-num">4</span>', $html);
-        $this->assertStringNotContainsString('256700000951', $html);
-        $this->assertStringContainsString('256700000954', $html);
-        $this->assertStringContainsString('256700000953', $html);
-        $this->assertStringContainsString('256700000952', $html);
+        $this->assertStringNotContainsString('+256 700 000 951', $html);
+        $this->assertStringContainsString('+256 700 000 954', $html);
+        $this->assertStringContainsString('+256 700 000 953', $html);
+        $this->assertStringContainsString('+256 700 000 952', $html);
         $this->assertSame(3, substr_count($html, 'data-testid="wa-link-request"'));
     }
 
@@ -272,6 +273,116 @@ class WhatsappLinkRequestCardsTest extends TestCase
             '/@if\(!empty\(\$connectedTools\[\'driveConnected\'\]\)\).*dashboard-connected-drive/s',
             $blade
         );
+    }
+
+    public function test_klassapp_number_form_and_demo_share_one_inbox(): void
+    {
+        $admin = $this->admin();
+        $student = $this->amina()['user'];
+        $this->requestBind('256700000941');
+
+        $number = app(\App\Services\WhatsApp\ParentLinkRequestService::class)->createFromKlassAppNumber(
+            '256700000961',
+            $this->fx['demo']['students'][1]['user'],
+            'Grace Namukasa',
+        );
+        $this->assertSame('klassapp_number', $number->source);
+        $this->assertSame('pending', $number->status);
+        $this->assertSame(0, User::where('usergroup_id', 7)->where('name', 'Grace Namukasa')->count());
+
+        ParentLinkRequest::create([
+            'school_id' => $admin->school_id,
+            'phone' => '+256700000962',
+            'parent_name' => 'Sarah Nambi',
+            'whatsapp_profile_name' => 'Sarah On WhatsApp',
+            'child_name' => 'Nobody Matches',
+            'child_class' => 'P.4',
+            'school_name' => 'Another School',
+            'status' => 'pending',
+            'source' => 'form',
+            'candidate_student_ids' => null,
+        ]);
+        $form = ParentLinkRequest::where('phone', '+256700000962')->firstOrFail();
+        Approval::create([
+            'approvable_type' => ParentLinkRequest::class,
+            'approvable_id' => $form->id,
+            'state' => Pending::class,
+            'comments' => 'form',
+        ]);
+
+        $html = Livewire::actingAs($admin)->test(WhatsappLinkRequests::class)->html();
+        $this->assertStringContainsString('KlassApp number', $html);
+        $this->assertStringContainsString('Grace Namukasa', $html);
+        $this->assertStringContainsString('Brian Okello', $html);
+        $this->assertStringContainsString('Form', $html);
+        $this->assertStringContainsString('Sarah Nambi', $html);
+        $this->assertStringContainsString('Nobody Matches', $html);
+        $this->assertStringContainsString('Another School', $html);
+        $this->assertStringContainsString('Demo', $html);
+        $this->assertStringContainsString('44 min left', $html);
+        $this->assertSame(1, substr_count($html, 'data-testid="wa-link-request-time-left"'));
+    }
+
+    public function test_approving_a_klassapp_number_sends_the_existing_welcome(): void
+    {
+        $admin = $this->admin(public: true);
+        $request = app(\App\Services\WhatsApp\ParentLinkRequestService::class)->createFromKlassAppNumber(
+            '256700000963',
+            $this->amina()['user'],
+            'Grace Namukasa',
+        );
+        $this->resetHttp();
+
+        Livewire::actingAs($admin)
+            ->test(WhatsappLinkRequests::class)
+            ->call('approve', $request->id)
+            ->assertSee('Grace Namukasa');
+
+        $this->assertSame('approved', $request->fresh()->status);
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent);
+        $this->assertStringContainsString("You're now linked to *AMINA NAKATO*", $sent[0]['body']);
+        $this->assertStringContainsString('Welcome to KlassApp, *Grace Namukasa*', $sent[0]['body']);
+        $linked = WhatsAppUser::where('phone', '+256700000963')->first();
+        $this->assertSame('Grace Namukasa', $linked?->whatsapp_profile_name);
+        $this->assertNotNull($linked?->user_id);
+        $this->assertNull($linked?->demo_student_id);
+    }
+
+    public function test_real_school_link_has_no_countdown_and_can_be_unlinked(): void
+    {
+        $school = $this->fx['real']['school'];
+        $admin = User::create([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'name' => 'Admin real',
+            'email' => 'admin-real-cards@example.com',
+            'password' => bcrypt('x'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        $parent = $this->fx['real']['students'][0]['parent'];
+        $row = WhatsAppUser::create([
+            'phone' => '+256700000964',
+            'user_id' => $parent->id,
+            'school_id' => $school->id,
+            'opted_in' => true,
+            'verified_at' => now(),
+            'whatsapp_profile_name' => 'Sarah Nambi',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(WhatsappLinkRequests::class)
+            ->assertSee('Sarah Nambi')
+            ->assertSee('Zed Realpupil')
+            ->assertDontSee('min left')
+            ->call('unlink', $row->id)
+            ->assertSee('no longer follows');
+
+        $row->refresh();
+        $this->assertNull($row->user_id);
+        $this->assertNull($row->verified_at);
+        $this->assertSame($school->id, (int) $row->school_id);
     }
 
     private function admin(bool $public = false): User

@@ -1,6 +1,29 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <style>
-    .mr { max-width: 760px; padding: 20px 16px 40px; color: var(--d-text, #1E293B); }
+    .mr { max-width: 100%; padding: 16px 16px 40px; color: var(--d-text, #1E293B); }
+    .mr-top { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; margin: 0 0 12px; }
+    .mr-controls, .mr-release { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; background: #fff; border: 1px solid var(--d-border, #E2E8F0); border-radius: 12px; padding: 10px 12px; }
+    .mr-control, .mr-when { display: flex; flex-direction: column; gap: 4px; border: 0; margin: 0; padding: 0; }
+    .mr-when { flex-direction: row; align-items: center; flex-wrap: wrap; }
+    .mr-control span, .mr-wa h2 { font-size: 13px; font-weight: 700; color: #475569; }
+    .mr-control select, .mr-when input, .mr-sheet-tools select { min-height: 40px; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; padding: 0 8px; color: #0F172A; font-size: 15px; }
+    .mr-wa { flex: 1 1 280px; max-width: 420px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 10px 12px; }
+    .mr-wa h2 { margin: 0 0 6px; }
+    .mr-wa-body { font-size: 14px; line-height: 1.4; color: #0F172A; }
+    .mr-wa-pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre; margin: 8px 0 0; overflow-x: auto; }
+    .mr-when-label { margin: 0; font-size: 13px; font-weight: 600; }
+    .mr-sheet-tools { display: flex; gap: 12px; align-items: center; margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+    .mr-sheet { overflow: auto; max-height: 70vh; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff; }
+    .mr-sheet--wide .mr-grid { min-width: 1100px; }
+    .mr-grid { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15px; color: #0F172A; }
+    .mr-grid th, .mr-grid td { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; text-align: left; background: #fff; }
+    .mr-grid thead th { position: sticky; top: 0; z-index: 2; background: #F8FAFC; font-size: 13px; }
+    .mr-grid thead button { background: transparent; border: 0; padding: 0; font: inherit; font-weight: 700; color: #0F172A; cursor: pointer; text-align: inherit; }
+    .mr-num { text-align: right; white-space: nowrap; }
+    .mr-group th { background: #EEF6FF; font-size: 15px; font-weight: 700; position: sticky; top: 36px; z-index: 1; }
+    .mr-mark { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .mr-grade { display: block; font-size: 12px; font-weight: 600; color: #475569; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
     .mr h1 { font-size: 22px; line-height: 1.25; margin: 0 0 4px; }
     .mr-sub { color: var(--d-text-secondary, #64748B); margin: 0 0 16px; }
     .mr-card { background: var(--d-white, #fff); border: 1px solid var(--d-border, #E2E8F0); border-radius: var(--d-radius-lg, 12px); padding: 18px; margin: 0 0 16px; }

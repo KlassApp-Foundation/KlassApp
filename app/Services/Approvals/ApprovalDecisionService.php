@@ -68,8 +68,9 @@ class ApprovalDecisionService
             return ApprovalDecision::ok('Request approved. The number now follows the student.');
         }
 
+        $linkResult = null;
         if ($linkRequest !== null) {
-            $failure = $this->approveParentLinkRequest($linkRequest, (int) $matchedStudentId);
+            [$failure, $linkResult] = $this->approveParentLinkRequest($linkRequest, (int) $matchedStudentId);
             if ($failure !== null) {
                 return $failure;
             }
@@ -82,7 +83,12 @@ class ApprovalDecisionService
         $approval->save();
 
         if ($linkRequest !== null) {
-            $this->parentLinkRequests->notifyApproved($linkRequest->fresh(['school']));
+            $fresh = $linkRequest->fresh(['school']);
+            if ($fresh->sourceKey() === 'klassapp_number' && $linkResult !== null) {
+                $this->parentLinkRequests->notifyKlassAppNumberApproved($fresh, $linkResult);
+            } else {
+                $this->parentLinkRequests->notifyApproved($fresh);
+            }
         }
 
         $this->doActivityLog(
@@ -178,7 +184,10 @@ class ApprovalDecisionService
         }
     }
 
-    private function approveParentLinkRequest(ParentLinkRequest $linkRequest, int $studentId): ?ApprovalDecision
+    /**
+     * @return array{0: ?ApprovalDecision, 1: ?\App\Services\ParentLinkResult}
+     */
+    private function approveParentLinkRequest(ParentLinkRequest $linkRequest, int $studentId): array
     {
         $student = User::query()
             ->where('id', $studentId)
@@ -188,17 +197,18 @@ class ApprovalDecisionService
             ->first();
 
         if ($student === null) {
-            return ApprovalDecision::fail('Selected student is not active in this school.');
+            return [ApprovalDecision::fail('Selected student is not active in this school.'), null];
         }
 
         $result = $this->parentLinks->linkByStudentId(
             $linkRequest->phone,
             $studentId,
-            $linkRequest->parent_name,
+            $linkRequest->parent_name !== '' ? $linkRequest->parent_name : 'Parent',
+            $linkRequest->whatsapp_profile_name,
         );
 
         if (! $result->linked) {
-            return ApprovalDecision::fail('Could not create parent link ('.$result->outcome.').');
+            return [ApprovalDecision::fail('Could not create parent link ('.$result->outcome.').'), null];
         }
 
         $linkRequest->update([
@@ -206,6 +216,6 @@ class ApprovalDecisionService
             'matched_student_id' => $studentId,
         ]);
 
-        return null;
+        return [null, $result];
     }
 }

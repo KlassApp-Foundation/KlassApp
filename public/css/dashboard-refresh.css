@@ -4894,6 +4894,11 @@ td a.btn-danger:hover {
     padding: 20px 22px; border-left: 4px solid var(--d-accent);
 }
 .wa-lr-card__main { min-width: 0; flex: 1 1 240px; }
+.wa-lr-parent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; }
+.wa-lr-parent__name { font-family: "Sora", sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--d-dark); }
+.wa-lr-chip--source { background: rgba(30, 111, 217, 0.10); color: #1E4F8A; }
+.wa-lr-typed { margin: 8px 0 0; font-size: 1rem; color: var(--d-text); background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 10px; }
+.wa-lr-pick select { min-height: 44px; min-width: 220px; border: 1px solid var(--d-border); border-radius: 8px; background: #fff; padding: 0 8px; }
 .wa-lr-phone {
     font-family: "Sora", sans-serif; font-size: 1.45rem; font-weight: 700; color: var(--d-dark);
     margin: 0; letter-spacing: 0.01em; font-variant-numeric: tabular-nums;

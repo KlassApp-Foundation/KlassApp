@@ -36,31 +36,42 @@ class MarksReleaseController extends Controller
     public function create(Request $request): View
     {
         $user = $this->user();
+        $exams = $this->releases->exams($user);
+        $links = $this->releases->links($user);
+        $isAdmin = $this->releases->isSchoolAdmin($user);
+        $old = [
+            'exam_id' => (int) ($request->input('exam_id') ?: ($exams->first()['id'] ?? 0)),
+            'standard_link_id' => $request->filled('standard_link_id') ? (int) $request->input('standard_link_id') : null,
+            'when' => $request->input('when', 'now'),
+            'scheduled_for' => $request->input('scheduled_for', ''),
+            'timezone' => $request->input('timezone', 'Africa/Kampala'),
+        ];
+        if (! $isAdmin && ! $old['standard_link_id']) {
+            $old['standard_link_id'] = (int) ($links->first()->id ?? 0) ?: null;
+        }
 
-        return view('marks-releases.create', $this->shared($request) + [
-            'exams' => $this->releases->exams($user),
-            'links' => $this->releases->links($user),
-            'isAdmin' => $this->releases->isSchoolAdmin($user),
-            'old' => $request->only(['exam_id', 'standard_link_id', 'when', 'scheduled_for', 'timezone']),
-        ]);
+        return view('marks-releases.create', $this->page($request, $user, $exams, $links, $isAdmin, $old, false));
     }
 
     public function preview(Request $request): View
     {
         $user = $this->user();
         $data = $this->validated($request);
-        [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $data['standard_link_id']);
+        $exams = $this->releases->exams($user);
+        $links = $this->releases->links($user);
+        $isAdmin = $this->releases->isSchoolAdmin($user);
         $timezone = $this->releases->timezone($data['timezone']);
         $when = $data['when'] === 'schedule' ? $this->releases->scheduledAt($data['scheduled_for'], $timezone) : null;
 
-        return view('marks-releases.preview', $this->shared($request) + [
-            'data' => $data,
-            'examLabel' => $this->releases->examLabel($anchor),
-            'classLabel' => $link ? trim(($link->section?->name ?? '') . ' ' . ($link->stream ?? '')) : 'All classes',
+        return view('marks-releases.create', [
             'whenLabel' => $when ? $when->setTimezone($timezone)->format('D j M Y, H:i') . ' (' . $timezone . ')' : 'Now',
+        ] + $this->page($request, $user, $exams, $links, $isAdmin, [
+            'exam_id' => $data['exam_id'],
+            'standard_link_id' => $data['standard_link_id'],
+            'when' => $data['when'],
+            'scheduled_for' => $data['scheduled_for'] ?? '',
             'timezone' => $timezone,
-            'message' => $this->releases->preview($user, $data['exam_id'], $data['standard_link_id']),
-        ]);
+        ], true));
     }
 
     public function store(Request $request): RedirectResponse
@@ -132,6 +143,33 @@ class MarksReleaseController extends Controller
     private function area(Request $request): string
     {
         return str_starts_with((string) $request->route()?->getName(), 'teacher.') ? 'teacher' : 'admin';
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, mixed>  $exams
+     * @param  \Illuminate\Support\Collection<int, mixed>  $links
+     * @param  array{exam_id:int, standard_link_id:?int, when:string, scheduled_for:string, timezone:string}  $old
+     * @return array<string, mixed>
+     */
+    private function page(Request $request, \App\Models\User $user, $exams, $links, bool $isAdmin, array $old, bool $confirming): array
+    {
+        $examId = (int) $old['exam_id'];
+        $linkId = $old['standard_link_id'] ? (int) $old['standard_link_id'] : null;
+        $known = $exams->contains(fn ($exam) => (int) $exam['id'] === $examId);
+        $sheet = ($examId && $known) ? $this->releases->combinedSheet($user, $examId, $linkId) : ['subjects' => [], 'groups' => []];
+        $previewMessage = ($examId && $known) ? $this->releases->preview($user, $examId, $linkId) : '';
+
+        return $this->shared($request) + [
+            'exams' => $exams,
+            'links' => $links,
+            'isAdmin' => $isAdmin,
+            'old' => $old,
+            'confirming' => $confirming,
+            'whenLabel' => 'Now',
+            'sheet' => $sheet,
+            'previewMessage' => $previewMessage,
+            'wide' => count($sheet['subjects']) > 6,
+        ];
     }
 
     /** @return array{area:string, layout:string} */

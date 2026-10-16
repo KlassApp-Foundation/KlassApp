@@ -127,6 +127,9 @@
                     <dt style="color:#475569;">Email</dt><dd style="margin:0;">{{ $page['email'] }}</dd>
                     <dt style="color:#475569;">Last login</dt><dd style="margin:0;">{{ $page['last_login'] }}</dd>
                     <dt style="color:#475569;">WhatsApp</dt><dd style="margin:0;">{{ $page['whatsapp'] }}</dd>
+                    @if(!empty($page['whatsapp_profile_name']))
+                        <dt style="color:#475569;">WhatsApp name</dt><dd style="margin:0;" data-testid="parent-whatsapp-name">{{ $page['whatsapp_profile_name'] }}</dd>
+                    @endif
                 </dl>
             </section>
         @endif

@@ -27,10 +27,12 @@ class WhatsappDashboardCard extends Component
     {
         $schoolId = (int) $this->linkRequestAdmin()->school_id;
         $board = app(LinkRequestBoard::class);
+        $requests = $board->pending($schoolId, self::LATEST);
+        $this->announceNewRequests($requests);
 
         return view('livewire.admin.whatsapp-dashboard-card', [
             'count' => $board->pendingCount($schoolId),
-            'requests' => $board->pending($schoolId, self::LATEST),
+            'requests' => $requests,
             'isDemoSchool' => (int) (auth()->user()->school?->is_demo ?? 0) === 1,
             'pollSeconds' => WhatsappLinkRequests::POLL_SECONDS,
         ]);

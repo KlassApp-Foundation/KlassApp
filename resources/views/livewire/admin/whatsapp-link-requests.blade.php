@@ -7,7 +7,7 @@
             <h2 class="wa-lr-section__title" id="wa-lr-requests-title">Link requests</h2>
             <span class="wa-lr-count" data-testid="wa-link-requests-count">{{ $requests->count() }} waiting</span>
         </div>
-        <p class="ds-section-subtitle wa-lr-section__sub">Parents who sent BIND on WhatsApp and are waiting for the school. This list updates by itself.</p>
+        <p class="ds-section-subtitle wa-lr-section__sub">Parents asking to link a child, by KlassApp number, form, or demo. This list updates by itself.</p>
 
         @if($requests->isEmpty())
             <div class="ds-card wa-lr-empty" data-testid="wa-link-requests-empty">
@@ -27,7 +27,7 @@
             <h2 class="wa-lr-section__title" id="wa-lr-linked-title">Linked now</h2>
             <span class="wa-lr-count wa-lr-count--linked" data-testid="wa-linked-count">{{ $linked->count() }} {{ \Illuminate\Support\Str::plural('number', $linked->count()) }}</span>
         </div>
-        <p class="ds-section-subtitle wa-lr-section__sub">Numbers following a student right now. Each one is removed when its time runs out.</p>
+        <p class="ds-section-subtitle wa-lr-section__sub">Numbers linked to a student. A demo link shows the time left in its session. A school link stays until you unlink it.</p>
 
         @if($linked->isEmpty())
             <div class="ds-card wa-lr-empty wa-lr-empty--quiet" data-testid="wa-linked-empty">
@@ -36,18 +36,29 @@
         @else
             <div class="wa-lr-list">
                 @foreach($linked as $l)
-                    <article class="ds-card wa-lr-card" wire:key="linked-{{ $l['id'] }}" data-testid="wa-linked" x-data="{ confirming: false }">
+                    <article class="ds-card wa-lr-card" wire:key="linked-{{ $l['id'] }}" data-testid="wa-linked" data-demo="{{ $l['demo'] ? '1' : '0' }}" x-data="{ confirming: false }">
                         <div class="wa-lr-card__main">
-                            <p class="wa-lr-phone">{{ $l['phone'] }}</p>
+                            <p class="wa-lr-parent">
+                                <span class="wa-lr-parent__name">{{ $l['name'] }}</span>
+                                @if($l['demo'])
+                                    <span class="wa-lr-chip wa-lr-chip--source">Demo</span>
+                                @endif
+                            </p>
+                            <p class="wa-lr-phone">{{ $l['phone_display'] }}</p>
                             <p class="wa-lr-student">
                                 <span class="wa-lr-student__name">{{ $l['student_name'] }}</span>
-                                @if($l['student_class'] !== '')
-                                    <span class="wa-lr-chip">{{ $l['student_class'] }}</span>
+                                @if($l['class_name'] !== '')
+                                    <span class="wa-lr-chip">{{ $l['class_name'] }}</span>
+                                @endif
+                                @if($l['stream'] !== '')
+                                    <span class="wa-lr-chip">{{ $l['stream'] }}</span>
                                 @endif
                             </p>
                             <p class="wa-lr-meta">
-                                <span>Linked {{ $l['linked_at']->diffForHumans() }} · {{ $l['linked_at']->timezone(config('app.timezone'))->format('H:i') }}</span>
-                                <span class="wa-lr-time {{ $l['expires_at']->lte(now()->addMinutes(5)) ? 'wa-lr-time--soon' : '' }}" data-testid="wa-linked-time-left">{{ $l['time_left'] }}</span>
+                                <span>Linked {{ $l['linked_at']?->diffForHumans() }} · {{ $l['linked_at']?->timezone(config('app.timezone'))->format('H:i') }}</span>
+                                @if($l['time_left'] !== null)
+                                    <span class="wa-lr-time {{ $l['expires_at']->lte(now()->addMinutes(5)) ? 'wa-lr-time--soon' : '' }}" data-testid="wa-linked-time-left">{{ $l['time_left'] }}</span>
+                                @endif
                             </p>
                         </div>
                         <div class="wa-lr-actions">

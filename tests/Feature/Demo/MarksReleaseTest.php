@@ -402,6 +402,10 @@ class MarksReleaseTest extends TestCase
             ->assertSee('Send these marks?')
             ->assertSee('Fri 16 Oct 2026, 21:00 (Africa/Kampala)')
             ->assertSee('Marks for Amina Nakato')
+            ->assertSee('What parents receive')
+            ->assertSee('Amina Nakato')
+            ->assertSee('Mathematics')
+            ->assertDontSee('```', false)
             ->assertSee('data-testid="release-marks-confirm"', false);
         $this->assertSame(0, MarksRelease::count());
         $this->assertSame([], $this->outbound());
