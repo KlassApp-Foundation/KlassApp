@@ -54,6 +54,9 @@ return [
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'verify_signature' => env('WHATSAPP_VERIFY_SIGNATURE', true),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
+        // Base URL for outbound Cloud API calls. Production default is Meta's Graph API host;
+        // override only for a local simulator (e2e/whatsapp-sim), never in production.
+        'graph_api_base_url' => env('WHATSAPP_GRAPH_API_BASE_URL', 'https://graph.facebook.com'),
         // When true, every outbound WhatsApp message is refused unless the
         // recipient follows (or has a pending BIND request for) a demo school's
         // student, or is the sender of the message being answered. Numbers linked
