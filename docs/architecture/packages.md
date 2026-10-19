@@ -286,6 +286,11 @@ That is the proof that a community package can plug in. The curriculum-pack move
 
 ---
 
+## Dependencies and order
+
+- The grading-scale registry plugs into Grok A's `ResultsService` from [#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118) (`App\Services\Results\ResultsService`, proposed in `docs/product/marks-flow.md`). The registry supplies the scale; `ResultsService` stays the one place that computes grades, totals, positions and divisions.
+- The UNEB extraction (`packages/grading-uneb`) starts only after [#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118) is merged.
+
 ## 6. Risks
 
 ### Security
