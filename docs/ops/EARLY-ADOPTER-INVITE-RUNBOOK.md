@@ -1,6 +1,6 @@
 # Early-adopter invite — production runbook
 
-Run this **only after** the early-adopter invite PR is merged and deployed, and after `platform:create-admin` is deployed. **There is no staging environment; this production test-school run is the verification.** Keep `SIGNUP_ENABLED=false` throughout. The invite route is the only sign-up path.
+Run this **only after** the early-adopter invite PR is merged and deployed, and after `platform:create-admin` is deployed. **Production is the only environment, and this production test-school run is the verification.** Keep `SIGNUP_ENABLED=false` throughout. The invite route is the only sign-up path.
 
 Use two test inboxes you control and two test schools named exactly:
 
@@ -136,4 +136,4 @@ Expected `0`. Also revoke any unclaimed invites at `/platform/early-access` if a
 - Do **not** flip `SIGNUP_ENABLED` to true for this test.
 - Do **not** use a real school's email or phone number.
 - Do **not** delete rows manually; `test:purge-schools` owns the dependent-row order.
-- Do **not** merge the invite PR until your screenshot review and this production test-school run are complete.
+- Merge the invite PR after the owner's approval and screenshot review, then deploy it to production. This production test-school run is the verification.
