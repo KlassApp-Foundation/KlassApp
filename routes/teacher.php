@@ -355,9 +355,6 @@ Route::get( '/student/show/activity/{name}', 'StudentDetailsController@showActiv
 Route::get( '/student/show/discipline/{name}', 'StudentDetailsController@showDisciplines' );
 Route::get( '/student/show/attendance/{name}', 'StudentDetailsController@showAttendance' );
 Route::get( '/student/show/libraryactivity/{name}', 'StudentDetailsController@showBookLent' );
-Route::get( '/student/showmark/{name}', 'StudentDetailsController@showmark' );
-Route::get( '/student/showallmark/{name}', 'StudentDetailsController@showAllMark' );
-Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMarks' );
 Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 

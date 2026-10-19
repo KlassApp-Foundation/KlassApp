@@ -342,38 +342,6 @@ class OutboundWhatsAppService
     // =====================================================================
 
     /**
-     * Notify parents when a student's exam results are published.
-     *
-     * @param  int   $studentId
-     * @param  int   $examId
-     * @return int   Number of messages sent
-     */
-    public function notifyGradesPublished(int $studentId, int $examId): int
-    {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
-        if (!$student) {
-            return 0;
-        }
-
-        $exam = Exam::with(['marks' => function ($q) use ($studentId) {
-            $q->where('student_id', $studentId);
-        }, 'examType'])->find($examId);
-
-        if (!$exam || $exam->marks->isEmpty()) {
-            return 0;
-        }
-
-        $message = $this->composeGradesMessage($student, $exam);
-        $sent = 0;
-
-        foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'grades');
-        }
-
-        return $sent;
-    }
-
-    /**
      * Notify parents about overdue or upcoming fee payments.
      *
      * @param  int      $studentId
@@ -458,69 +426,6 @@ class OutboundWhatsAppService
     // =====================================================================
     //  Message composers — each produces a distinct, scannable format
     // =====================================================================
-
-    /**
-     * Compose a grade results message with celebration and class rank.
-     */
-    protected function composeGradesMessage(User $student, Exam $exam): string
-    {
-        $rows = [];
-        $totalScore = 0;
-        $subjectCount = 0;
-        foreach ($exam->marks as $mark) {
-            $grade = $mark->grade ?? 'N/A';
-            $score = $mark->marks_obtained ?? 0;
-            $totalScore += $score;
-            $subjectCount++;
-            $total = $mark->marks_total ?? 100;
-            $rows[] = "• {$mark->subject_name}: {$score}/{$total} ({$grade})";
-        }
-
-        $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $avg = $subjectCount > 0 ? round($totalScore / $subjectCount, 1) : 0;
-
-        // Class rank calculation
-        $rank = null;
-        $totalStudents = null;
-        if ($exam->id) {
-            $allScores = \Illuminate\Support\Facades\DB::table('marks')
-                ->where('exam_id', $exam->id)
-                ->where('student_id', '!=', $student->id)
-                ->select('student_id', \Illuminate\Support\Facades\DB::raw('SUM(marks_obtained) as total'))
-                ->groupBy('student_id')
-                ->get()
-                ->pluck('total');
-            $totalStudents = $allScores->count() + 1;
-            $rank = $allScores->filter(fn($s) => $s > $totalScore)->count() + 1;
-        }
-
-        $message = "📊 *{$examName} — {$className}*\n";
-        $message .= "_{$this->displayNameFor($student)}_\n\n";
-        $message .= implode("\n", $rows);
-
-        if ($subjectCount > 0) {
-            $message .= "\n· · · · · · · · · · · · · · · ·\n";
-            $message .= "_Average: {$avg}%_";
-            if ($rank && $totalStudents) {
-                $ordinal = match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'};
-                $message .= " | #{$rank}{$ordinal} of {$totalStudents}";
-            }
-            $message .= "\n";
-
-            if ($avg >= 80) {
-                $message .= "🎉 *Well done, {$this->displayNameFor($student)}!* ";
-                $message .= "{$avg}% average is a strong performance";
-                if ($rank && $totalStudents) {
-                    $message .= " — ranked {$rank}{$ordinal} out of {$totalStudents}";
-                }
-                $message .= ".\n";
-            }
-        }
-
-        $message .= "\n_Check the KlassApp parent portal for full details._";
-        return $message;
-    }
 
     /**
      * Compose a fee reminder with visual separators.
