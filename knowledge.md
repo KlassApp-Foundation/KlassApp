@@ -680,7 +680,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
 - Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
-- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom. Classroom builds on `feat/google-classroom-wave1` at `db8a5d82` and does not push that branch. Calendar, Gmail, Docs, Slides, and Tasks are not started. `bash scripts/test-guard.sh` on the Classroom tip: 2736 tests, 0 failures, 0 errors.
+- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) Calendar (`cursor/google-connectors-calendar-b53f`, base the Classroom branch). Calendar scope is `calendar.app.created`. Gmail, Docs, Slides, and Tasks are not connected: school mail stays on Laravel Mail (no Gmail send and no compose screen to turn into drafts), report cards are PDFs and marks are spreadsheets, and personal tasks are not a Google Tasks product. Classroom builds on `feat/google-classroom-wave1` at `db8a5d82` and does not push that branch. `bash scripts/test-guard.sh` on the Calendar tip `eb8b4d35`: 2740 tests, 0 failures, 0 errors, 4 skipped.
 
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
@@ -2645,6 +2645,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-19: Google Calendar connector; Gmail, Docs, Slides, and Tasks skipped
+
+- **Work done**: Publish the current academic year's dated terms and active school events onto a secondary calendar this app creates. Connected tools shows Calendar as Live only after that school grants it. `google:smoke calendar` and `docs/ops/google-connectors-smoke-test.md` cover the action. Gmail, Docs, Slides, and Tasks were not built.
+- **Files modified**: `config/google.php`, `app/Services/Google/Calendar/GoogleCalendarService.php`, `app/Http/Controllers/Admin/Setting/GoogleCalendarController.php`, `app/Models/SchoolGoogleConnection.php`, `database/migrations/2026_10_19_180000_add_google_calendar_id_to_school_google_connections_table.php`, `routes/setting.php`, `app/Console/Commands/GoogleConnectorSmokeCommand.php`, `tests/fixtures/google/fake-google-router.php`, `tests/Feature/Google/GoogleCalendarConnectorTest.php`, `docs/ops/google-connectors-smoke-test.md`, `knowledge.md`.
+- **Key decisions**: Scope is `https://www.googleapis.com/auth/calendar.app.created` only (plus the email scope on the consent URL). Not `calendar` and not `calendar.events`. The calendar id is stored on the school row and kept across disconnect. Gmail is neither send nor drafts: there is no school mailbox or compose screen, and existing mail stays on Laravel Mail. Docs, Slides, and Tasks have no product on `main` to attach to. Stacked on the Classroom branch so the fake server and smoke command stay one line.
+- **Status**: Draft [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Not merged. Production and staging not touched. `feat/google-classroom-wave1` was not pushed. Full test guard on `eb8b4d35`: 2740 tests, 0 failures, 0 errors, 4 skipped.
+- **Edge cases flagged**: All-day dates must stay in the app timezone; converting them to UTC first moves the day. Google's event end date is exclusive. The fake server does not prove the real consent screen. #1139's branch contains `8058fac9` (merge of `origin/main`); the Sheets, Drive, Classroom, and Calendar pull requests are still based on the earlier tips so each diff stays its own commits.
+- **PR**: [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) (`cursor/google-connectors-calendar-b53f`, base `cursor/google-connectors-classroom-b53f`). Not merged.
 
 ### 2026-10-19: Google connectors (foundation, Sheets, Drive, Classroom)
 
