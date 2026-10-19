@@ -63,6 +63,6 @@ class DeadUngatedMarksPathsTest extends TestCase
         $this->assertTrue(method_exists(WhatsAppController::class, 'sendGrades'));
         $this->assertTrue(method_exists(WhatsAppController::class, 'sendStudentGrades'));
         $this->assertTrue(method_exists(WhatsAppController::class, 'sendParentReportCards'));
-        $this->assertTrue(method_exists(OutboundWhatsAppService::class, 'notifyComprehensiveGrades'));
+        $this->assertFalse(method_exists(OutboundWhatsAppService::class, 'notifyComprehensiveGrades'));
     }
 }
