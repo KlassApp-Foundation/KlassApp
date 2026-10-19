@@ -57,6 +57,7 @@ class MarksReleaseQueueTest extends TestCase
         DemoSchoolCommsGuard::flushCache();
         $this->relaxDeliveryLog();
         $this->buildSchools();
+        $this->approveFollowAlongSittings();
         DemoSchoolCommsGuard::flushCache();
         Http::preventStrayRequests();
         $this->fakeGraph();
