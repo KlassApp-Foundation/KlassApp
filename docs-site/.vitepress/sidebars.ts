@@ -22,9 +22,14 @@ export const helpSidebar = [
 ]
 export const communitySidebar = [
   { text: 'Start', items: [
-    { text: 'Overview', link: '/community/' }, { text: 'Getting started', link: '/community/getting-started' },
-    { text: 'Architecture', link: '/community/architecture' }, { text: 'Contributing', link: '/community/contributing' } ] },
+    { text: 'Overview', link: '/community/' },
+    { text: 'Local setup', link: '/community/getting-started' },
+    { text: 'Tests', link: '/community/tests' },
+    { text: 'Architecture', link: '/community/architecture' },
+    { text: 'Contributing', link: '/community/contributing' } ] },
   { text: 'Build', items: [
+    { text: 'Packages', link: '/community/packages' },
+    { text: 'WhatsApp', link: '/community/whatsapp' },
     { text: 'Connectors and MCP', link: '/community/connectors' },
     { text: 'Reference', link: '/community/reference/' }, { text: 'Design system', link: '/community/design-system' } ] },
   { text: 'Project', items: [
