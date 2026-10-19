@@ -86,6 +86,37 @@ class DemoOnlyRecipientGuardTest extends TestCase
         );
     }
 
+    public function test_demo_local_guard_refuses_when_another_row_for_the_same_number_is_a_real_school(): void
+    {
+        $digits = '256700000961';
+        // The plus form is what a single first() loads (it is the first predicate).
+        // That row is the demo binding; the real school is stored without the plus.
+        WhatsAppUser::create([
+            'phone' => '+' . $digits,
+            'user_id' => $this->fx['demo']['students'][0]['parent']->id,
+            'school_id' => $this->fx['demo']['school']->id,
+            'opted_in' => true,
+            'demo_linked_at' => now(),
+            'demo_student_id' => $this->fx['demo']['students'][0]['user']->id,
+        ]);
+        WhatsAppUser::create([
+            'phone' => $digits,
+            'user_id' => $this->fx['real']['students'][0]['parent']->id,
+            'school_id' => $this->fx['real']['school']->id,
+            'opted_in' => true,
+        ]);
+
+        $first = WhatsAppUser::query()->where('phone', '+' . $digits)->orWhere('phone', $digits)->first();
+        $this->assertSame('+' . $digits, $first->phone, 'the demo row is the one a single first() would load');
+        $this->assertSame((int) $this->fx['demo']['school']->id, (int) $first->school_id);
+
+        $result = $this->send('+' . $digits);
+
+        $this->assertTrue($result['blocked']);
+        $this->assertStringContainsString('linked_to_a_school_that_is_not_a_demo_school', $result['message']);
+        $this->assertSame([], $this->outbound());
+    }
+
     public function test_demo_local_guard_refuses_a_real_school_recipient(): void
     {
         Log::spy();

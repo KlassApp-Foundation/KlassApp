@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\Log;
  *
  * Every other recipient is refused and the refusal is logged with the last
  * three digits only. Numbers are compared on their full digits, never on a
- * suffix. With the flag off this class does nothing.
+ * suffix. Every WhatsApp row for that number is checked: one row linked to a
+ * school that is not a demo school refuses the send, even when another row
+ * for the same digits is a demo binding. With the flag off this class does nothing.
  */
 final class DemoOnlyRecipientGuard
 {
@@ -97,14 +99,18 @@ final class DemoOnlyRecipientGuard
         }
 
         $demoIds = School::query()->where('is_demo', 1)->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $row = WhatsAppUser::query()->where('phone', '+' . $digits)->orWhere('phone', $digits)->first();
+        $rows = WhatsAppUser::query()->whereIn('phone', ['+' . $digits, $digits])->get();
 
-        if ($row && self::linkedToRealSchool($row, $demoIds)) {
-            return 'linked_to_a_school_that_is_not_a_demo_school';
+        foreach ($rows as $row) {
+            if (self::linkedToRealSchool($row, $demoIds)) {
+                return 'linked_to_a_school_that_is_not_a_demo_school';
+            }
         }
 
-        if ($row && $row->demo_linked_at !== null && in_array((int) $row->school_id, $demoIds, true)) {
-            return null;
+        foreach ($rows as $row) {
+            if ($row->demo_linked_at !== null && in_array((int) $row->school_id, $demoIds, true)) {
+                return null;
+            }
         }
 
         $pending = ParentLinkRequest::query()

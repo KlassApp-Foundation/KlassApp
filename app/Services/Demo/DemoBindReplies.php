@@ -105,6 +105,10 @@ final class DemoBindReplies
             return null;
         }
 
+        if ($this->numberLinkedToRealSchool($phone)) {
+            return null;
+        }
+
         return WhatsAppUser::updateOrCreate(['phone' => $phone], [
             'user_id' => $guardianId,
             'school_id' => (int) $school->id,
@@ -284,14 +288,51 @@ final class DemoBindReplies
             return null;
         }
 
-        $student = User::query()->where('registration_number', $kls)->where('usergroup_id', 6)->first();
+        $demoIds = School::query()->where('is_demo', 1)->select('id');
+
+        $student = User::query()
+            ->where('registration_number', $kls)
+            ->where('usergroup_id', 6)
+            ->whereIn('school_id', $demoIds)
+            ->orderBy('id')
+            ->first();
         if ($student) {
             return $student;
         }
 
-        $academic = StudentAcademic::query()->where('klassapp_student_id', $kls)->first();
+        $academic = StudentAcademic::query()
+            ->where('klassapp_student_id', $kls)
+            ->whereIn('school_id', $demoIds)
+            ->orderBy('id')
+            ->first();
 
-        return $academic ? User::query()->whereKey($academic->user_id)->where('usergroup_id', 6)->first() : null;
+        return $academic
+            ? User::query()->whereKey($academic->user_id)->where('usergroup_id', 6)->whereIn('school_id', $demoIds)->first()
+            : null;
+    }
+
+    /**
+     * True when any WhatsApp row for this number (with or without the leading
+     * +) is linked to a school that is not a demo school.
+     */
+    public function numberLinkedToRealSchool(string $phone): bool
+    {
+        $digits = (string) preg_replace('/\D+/', '', $phone);
+        if ($digits === '') {
+            return false;
+        }
+
+        $rows = WhatsAppUser::query()
+            ->whereIn('phone', array_values(array_unique(['+' . $digits, $digits])))
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($this->linkedToRealSchool($row)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function guardianId(int $schoolId, int $studentId): ?int
