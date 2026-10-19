@@ -83,6 +83,24 @@ return [
             : (rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback'),
         // Browser Maps/Places key — set via env; never commit a literal. Restrict by HTTP referrer in GCP.
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+        // School connectors (Sheets, Drive, Classroom, …). Same OAuth client as
+        // sign-in, different redirect, so Socialite's login callback is unchanged.
+        // Sign-in still uses 'redirect' above. Do not point connector_redirect at it.
+        'connector_redirect' => env('GOOGLE_CONNECTOR_REDIRECT_URI'),
+        // Hosts default to Google. Tests and the local fake server override these
+        // in config; they are not secrets and are not required in .env.
+        'authorize_url' => env('GOOGLE_OAUTH_AUTHORIZE_URL', 'https://accounts.google.com/o/oauth2/v2/auth'),
+        'token_url' => env('GOOGLE_OAUTH_TOKEN_URL', 'https://oauth2.googleapis.com/token'),
+        'revoke_url' => env('GOOGLE_OAUTH_REVOKE_URL', 'https://oauth2.googleapis.com/revoke'),
+        'userinfo_url' => env('GOOGLE_USERINFO_URL', 'https://www.googleapis.com/oauth2/v2/userinfo'),
+        'sheets_base_url' => env('GOOGLE_SHEETS_API_BASE_URL', 'https://sheets.googleapis.com'),
+        'drive_base_url' => env('GOOGLE_DRIVE_API_BASE_URL', 'https://www.googleapis.com'),
+        'classroom_base_url' => env('GOOGLE_CLASSROOM_API_BASE_URL', 'https://classroom.googleapis.com'),
+        'calendar_base_url' => env('GOOGLE_CALENDAR_API_BASE_URL', 'https://www.googleapis.com'),
+        'gmail_base_url' => env('GOOGLE_GMAIL_API_BASE_URL', 'https://gmail.googleapis.com'),
+        'docs_base_url' => env('GOOGLE_DOCS_API_BASE_URL', 'https://docs.googleapis.com'),
+        'slides_base_url' => env('GOOGLE_SLIDES_API_BASE_URL', 'https://slides.googleapis.com'),
+        'tasks_base_url' => env('GOOGLE_TASKS_API_BASE_URL', 'https://tasks.googleapis.com'),
     ],
 
     /*

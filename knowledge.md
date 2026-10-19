@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
+
+- School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
+- Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
+- Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
+
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
 - Branch `feat/teacher-profile-lite`. `/admin/teacher/show/{name}` renders the shared person profile (header, three tiles, Overview, Teaches). The people-list URL is unchanged. JSON teacher-show endpoints are unchanged.

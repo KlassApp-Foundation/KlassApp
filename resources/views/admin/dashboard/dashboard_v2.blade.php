@@ -376,6 +376,10 @@
             <p class="dv2-drive" data-testid="dashboard-connected-drive">Reports filed to Drive</p>
         @endif
 
+        @foreach(($connectedTools['googleLive'] ?? []) as $tool)
+            <p class="dv2-drive" data-testid="dashboard-google-live-{{ $tool['key'] }}" style="color:#0F172A">{{ $tool['label'] }} · Live</p>
+        @endforeach
+
         {{-- 7 · Toshi line --}}
         @if($toshiMode === \App\Enums\ToshiMode::Assistant)
             <p class="dv2-soon" data-testid="dashboard-v2-toshi-line">

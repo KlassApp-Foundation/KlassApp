@@ -88,6 +88,41 @@
         @endforelse
     </div>
 
+    <div class="dashboard-connected-tools mt-8" data-testid="connected-tools-card">
+        <h2 style="color:#0F172A;font-size:18px;font-weight:700;margin:0 0 4px">Connected tools</h2>
+        <p style="color:#64748B;font-size:14px;margin:0 0 14px">A tool shows Live only after this school has connected it.</p>
+        <ul class="dashboard-connected-list">
+            @foreach ($googleConnectors as $tool)
+                <li class="dashboard-connected-row ds-card ds-card-padding-default" data-testid="google-connector-card-{{ $tool['key'] }}" style="background:#FFFFFF;color:#0F172A">
+                    <span class="dashboard-connected-label">
+                        <span>
+                            <span class="font-semibold" style="color:#0F172A">{{ $tool['label'] }}</span>
+                            @if ($tool['live'])
+                                <span class="ds-badge ds-badge-active" data-testid="google-connector-live-{{ $tool['key'] }}">Live</span>
+                            @else
+                                <span class="ds-badge ds-badge-inactive" data-testid="google-connector-status-{{ $tool['key'] }}">Not connected</span>
+                            @endif
+                            <span class="block text-sm" style="color:#64748B">{{ $tool['why'] }}</span>
+                            @if ($tool['live'] && $tool['email'])
+                                <span class="block text-sm" style="color:#64748B">Account: {{ $tool['email'] }}</span>
+                            @endif
+                        </span>
+                    </span>
+                    @if ($tool['live'])
+                        <form method="POST" action="{{ route('admin.google.disconnect', ['connector' => $tool['key']]) }}">
+                            @csrf
+                            <button type="submit" class="ds-btn ds-btn-danger ds-btn-md" data-testid="google-connector-disconnect-{{ $tool['key'] }}">Disconnect</button>
+                        </form>
+                    @elseif ($tool['configured'])
+                        <a href="{{ route('admin.google.connect', ['connector' => $tool['key']]) }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="google-connector-connect-{{ $tool['key'] }}">Connect</a>
+                    @else
+                        <span class="text-sm" style="color:#94A3B8" data-testid="google-connector-unconfigured-{{ $tool['key'] }}">Connect unavailable</span>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
+    </div>
+
     <div class="mt-6 text-sm max-w-2xl" style="color: var(--d-text-secondary, #64748B);">
         @toshiUi
             <p><strong>Safety:</strong> Toshi reads (channels, search, history) run immediately and are fully audited.
