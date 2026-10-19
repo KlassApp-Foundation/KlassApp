@@ -563,8 +563,16 @@ final class MarksReleaseService
 
         foreach ($this->students((int) $release->school_id, $anchor, $release->standardLink) as [$studentId, $link]) {
             $code = $this->studentCode((int) $release->school_id, (int) $studentId);
-            $skip = function (string $reason, ?string $to = null) use (&$messages, $code): void {
-                $messages[] = ['student' => $code, 'to' => $to, 'status' => 'skipped', 'reason' => $reason];
+            $student = User::query()->where('school_id', $release->school_id)->whereKey($studentId)->first();
+            $name = trim((string) ($student?->name ?? ''));
+            $className = trim(($link->section?->name ?? '').' '.($link->stream ?? ''));
+            $identity = [
+                'student' => $code,
+                'name' => $name !== '' ? $name : $code,
+                'class' => $className,
+            ];
+            $skip = function (string $reason, ?string $to = null) use (&$messages, $identity): void {
+                $messages[] = $identity + ['to' => $to, 'status' => 'skipped', 'reason' => $reason];
             };
 
             if (! $repliesOn) {
@@ -604,7 +612,7 @@ final class MarksReleaseService
                     continue;
                 }
 
-                $messages[] = ['student' => $code, 'to' => $masked, 'status' => 'queued', 'reason' => null, 'key' => $key, 'attempts' => 0];
+                $messages[] = $identity + ['to' => $masked, 'status' => 'queued', 'reason' => null, 'key' => $key, 'attempts' => 0];
                 $alreadySent[$key] = true;
                 $jobs[] = new SendMarksReleaseMessage((int) $release->id, (int) $binding->id, (int) $studentId, (int) $link->id, $key);
             }

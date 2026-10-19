@@ -462,6 +462,10 @@ class MarksReleaseTest extends TestCase
             ->assertSee('data-testid="release-skipped">2<', false)
             ->assertSee('No number is following this student: 2')
             ->assertSee('•••201')
+            ->assertSee('data-testid="release-student-name"', false)
+            ->assertSee('Amina Nakato')
+            ->assertSee('data-testid="release-student-class"', false)
+            ->assertSee('P.7 A')
             ->assertDontSee('256700000201');
     }
 
