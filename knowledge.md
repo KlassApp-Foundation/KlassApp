@@ -676,6 +676,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **invite follow-ups OPEN [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123)**
+
+- Branch `cursor/invite-followups-1117`. Follow-up to #1117: a failed invite queue shows an error and Retry (`school_invites.email_failed_at`), and claim locks the invite row so two claims cannot both create a school. No `schools.school_invite_id` column, so no extra unique constraint. Full test-guard: 2709 tests, 0 failures, 4 skipped. Not merged. Production untouched.
+
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
 - Branch `feat/teacher-profile-lite`. `/admin/teacher/show/{name}` renders the shared person profile (header, three tiles, Overview, Teaches). The people-list URL is unchanged. JSON teacher-show endpoints are unchanged.
@@ -2639,6 +2643,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-19: invite queue-failure message and locked claim
+
+- **Work done**: Applied the #1117 follow-up patch. Invite email queue failures set `email_failed_at` and the early-access page shows a failure with Retry instead of "Invite sent". Claim runs in a transaction with `lockForUpdate` and a `whereNull('claimed_at')` update. The queue-failure test restores the real mail manager before `Mail::fake()`.
+- **Files modified**: `app/Http/Controllers/Platform/EarlyAccessRequestController.php`, `app/Models/SchoolInvite.php`, `app/Services/SchoolInviteService.php`, `database/migrations/2026_10_19_000002_add_email_failed_at_to_school_invites_table.php`, `resources/views/platform/early-access/index.blade.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `knowledge.md`.
+- **Key decisions**: No unique constraint. `schools` has no invite foreign key. SQLite ignores row locks; the guarded update covers that driver.
+- **Status**: PR open. Not merged. Production and staging not deployed.
+- **Edge cases flagged**: Retry uses resend, so it issues a new token. An email that already has an account rolls the claim back and leaves the invite unclaimed.
+- **PR**: [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123) on `cursor/invite-followups-1117`. Not merged.
 
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
