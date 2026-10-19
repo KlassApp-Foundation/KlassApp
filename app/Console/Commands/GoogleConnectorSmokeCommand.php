@@ -6,6 +6,7 @@ use App\Models\Academics\Exam;
 use App\Models\School;
 use App\Models\SchoolGoogleConnection;
 use App\Models\User;
+use App\Services\Google\Classroom\GoogleClassroomSyncService;
 use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
@@ -58,6 +59,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'drive') {
             return $this->drive($school->id);
+        }
+
+        if ($connector === 'classroom') {
+            return $this->classroom($school->id);
         }
 
         if (! $catalog->has($connector)) {
@@ -154,6 +159,34 @@ class GoogleConnectorSmokeCommand extends Command
         $this->info('Filed: '.$filed['fileId']);
         $this->line($filed['folder']);
         $this->line($filed['webViewLink']);
+
+        return self::SUCCESS;
+    }
+
+    private function classroom(int $schoolId): int
+    {
+        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
+
+        if ($actor === null) {
+            $this->error('This school needs an active school admin.');
+
+            return self::FAILURE;
+        }
+
+        try {
+            $plan = app(GoogleClassroomSyncService::class)->sync($actor);
+        } catch (GoogleApiException $e) {
+            $this->error('Classroom call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        }
+
+        $matched = collect($plan['classes'])->sum(fn ($class) => count($class['matched']));
+        $review = count($plan['needsReview']) + collect($plan['classes'])->sum(fn ($class) => count($class['needsReview']));
+        $this->info('Classes matched: '.count($plan['classes']));
+        $this->line('Students matched: '.$matched);
+        $this->line('Needs review: '.$review);
+        $this->line('No students were created. Tokens were not printed.');
 
         return self::SUCCESS;
     }

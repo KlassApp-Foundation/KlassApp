@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\McpConnectorTokenRefreshService;
+use App\Services\Google\GoogleAccessRevokedException;
+use App\Services\Google\GoogleConnectorCatalog;
+use App\Services\Google\GoogleOAuthService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
@@ -97,7 +101,21 @@ class SchoolMcpConnector extends Model
         $schoolId = $schoolId ?? auth()->user()?->school_id;
 
         if ($schoolId === null) {
+            $configured = config('toshi.mcp_context.school_id');
+            if (is_numeric($configured) && (int) $configured > 0) {
+                $schoolId = (int) $configured;
+            }
+        }
+
+        if ($schoolId === null) {
             return null;
+        }
+
+        if ($connectorType === 'google-classroom') {
+            $foundationToken = static::foundationClassroomToken($schoolId);
+            if ($foundationToken !== null) {
+                return $foundationToken;
+            }
         }
 
         $connector = static::query()
@@ -123,5 +141,30 @@ class SchoolMcpConnector extends Model
         $connector->update(['last_used_at' => now()]);
 
         return $connector->accessToken();
+    }
+
+    /**
+     * Classroom tokens live on the school's one Google connection. The MCP
+     * subprocess has no HTTP session, so callers pass the school id in
+     * toshi.mcp_context.school_id. A legacy school_mcp_connectors row is
+     * used only when that connection is not live.
+     */
+    private static function foundationClassroomToken(int $schoolId): ?string
+    {
+        $connection = SchoolGoogleConnection::query()->forSchool($schoolId)->first();
+
+        if (! app(GoogleConnectorCatalog::class)->isLive($connection, 'classroom')) {
+            return null;
+        }
+
+        try {
+            $connection = app(GoogleOAuthService::class)->validConnection($connection);
+        } catch (GoogleAccessRevokedException) {
+            return null;
+        }
+
+        $connection->forceFill(['last_used_at' => now()])->save();
+
+        return $connection->accessToken();
     }
 }

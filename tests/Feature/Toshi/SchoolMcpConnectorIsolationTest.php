@@ -68,6 +68,26 @@ class SchoolMcpConnectorIsolationTest extends TestCase
         $this->assertSame('token-b-secret', $tokenB);
     }
 
+    public function test_token_resolution_uses_mcp_school_context_without_auth_session(): void
+    {
+        $school = $this->createSchool('ctx');
+
+        SchoolMcpConnector::create([
+            'school_id' => $school,
+            'connector_type' => 'google-classroom',
+            'external_team_id' => 'school:'.$school,
+            'credentials' => ['access_token' => 'context-token'],
+            'status' => 'active',
+        ]);
+
+        config(['toshi.mcp_context.school_id' => $school]);
+
+        $this->assertSame(
+            'context-token',
+            SchoolMcpConnector::resolveTokenForRequest('google-classroom'),
+        );
+    }
+
     public function test_disabled_connector_does_not_resolve(): void
     {
         $school = $this->createSchool('dis');

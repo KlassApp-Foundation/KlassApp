@@ -461,4 +461,65 @@ if ($path === '/drive/v3/files' || $path === '/upload/drive/v3/files') {
     return;
 }
 
+if (preg_match('#^/v1/courses(?:/([^/]+)/(students|courseWork))?$#', $path, $classMatch)) {
+    $mutate(function (array &$state) use ($record, $bearer, $method, $json, $classMatch) {
+        $state = $record($state);
+        if (($state['modes']['classroom'] ?? null) === '500') {
+            $json(500, ['error' => ['code' => 500, 'message' => 'backend error', 'status' => 'INTERNAL']]);
+
+            return null;
+        }
+        if ($bearer === '' || ! isset($state['tokens'][$bearer]) || ! empty($state['account']['revoked'])) {
+            $json(401, ['error' => ['code' => 401, 'message' => 'Invalid Credentials', 'status' => 'UNAUTHENTICATED']]);
+
+            return null;
+        }
+        if ($method !== 'GET') {
+            $json(405, ['error' => ['code' => 405, 'message' => 'Method not allowed', 'status' => 'METHOD_NOT_ALLOWED']]);
+
+            return null;
+        }
+
+        $courseId = isset($classMatch[1]) ? rawurldecode($classMatch[1]) : null;
+        $collection = $classMatch[2] ?? null;
+        $courses = $state['classroom']['courses'] ?? [];
+        if (! is_array($courses)) {
+            $courses = [];
+        }
+
+        if ($courseId === null) {
+            $wanted = array_filter(explode(',', (string) ($_GET['courseStates'] ?? 'ACTIVE')));
+            $listed = array_values(array_filter($courses, function ($course) use ($wanted) {
+                $stateName = (string) ($course['courseState'] ?? 'ACTIVE');
+
+                return $wanted === [] || in_array($stateName, $wanted, true);
+            }));
+            $json(200, ['courses' => $listed]);
+
+            return null;
+        }
+
+        $known = false;
+        foreach ($courses as $course) {
+            if ((string) ($course['id'] ?? '') === $courseId) {
+                $known = true;
+                break;
+            }
+        }
+        if (! $known) {
+            $json(404, ['error' => ['code' => 404, 'message' => 'Course not found', 'status' => 'NOT_FOUND']]);
+
+            return null;
+        }
+
+        $key = $collection === 'courseWork' ? 'courseWork' : 'students';
+        $rows = $state['classroom'][$key][$courseId] ?? [];
+        $json(200, [$key => is_array($rows) ? array_values($rows) : []]);
+
+        return null;
+    });
+
+    return;
+}
+
 $json(404, ['error' => ['code' => 404, 'message' => 'No fake Google handler for '.$path, 'status' => 'NOT_FOUND']]);

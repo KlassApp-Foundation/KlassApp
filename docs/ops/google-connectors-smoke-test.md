@@ -78,9 +78,10 @@ php artisan google:smoke account --school=SCHOOL_ID
 php artisan google:smoke sheets --school=SCHOOL_ID --exam=EXAM_ID
 php artisan google:smoke sheets --school=SCHOOL_ID --exam=EXAM_ID --spreadsheet=SPREADSHEET_ID
 php artisan google:smoke drive --school=SCHOOL_ID --exam=EXAM_ID --learner=STUDENT_USER_ID
+php artisan google:smoke classroom --school=SCHOOL_ID
 ```
 
-`account` reads the connected Google email (and refreshes the token if it is due). `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through the existing marks import validation. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. Classroom and the later tools are added with those connectors. Until then the command refuses them rather than calling Google.
+`account` reads the connected Google email (and refreshes the token if it is due). `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through the existing marks import validation. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. `classroom` reads active courses and student names. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students and does not print tokens. Calendar, Gmail, Docs, Slides, and Tasks are not built yet. Until then the command refuses them rather than calling Google.
 
 Disconnect on the card revokes the Google token and deletes the stored tokens when it is the last connected tool. Disconnecting one tool while another is still connected removes that tool's scopes from KlassApp and leaves the shared token in place, because Google's revoke endpoint cannot drop a single scope. Disconnect the last tool, or remove KlassApp's access in the Google account, to revoke the token.
 
