@@ -5,6 +5,7 @@
  */
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Http\Controllers\Controller;
 use App\Models\ParentLinkRequest;
@@ -148,7 +149,7 @@ class WhatsAppController extends Controller
      */
     public function grades(string $studentId, Request $request)
     {
-        $student = User::with(['studentAcademic.standard', 'studentAcademic.section'])
+        $student = User::with(['studentAcademicLatest.standardLink.standard'])
             ->where('id', $studentId)
             ->first();
 
@@ -173,12 +174,13 @@ class WhatsAppController extends Controller
             }
         }
 
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
         $exams = $examQuery->latest('id')->take(5)->get();
 
         if ($exams->isEmpty()) {
             return response()->json([
                 'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
+                'class'        => $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A',
                 'message'      => 'No results available yet for ' . $this->whatsappDisplayName($student, 'Student') . '.',
                 'exams'        => [],
             ]);
@@ -207,7 +209,7 @@ class WhatsAppController extends Controller
 
         return response()->json([
             'student_name' => $this->whatsappDisplayName($student, 'Student'),
-            'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
+            'class'        => $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A',
             'exams'        => $formattedExams,
         ]);
     }
@@ -402,11 +404,20 @@ class WhatsAppController extends Controller
         $examTypePrefs = $school ? ($school->exam_type_preferences ?? []) : [];
         $contributingIds = \App\Models\Academics\ExamType::all()->filter(fn($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)->pluck('id')->toArray();
 
-        $exams = \App\Models\Academics\Exam::where('school_id', $schoolId)
+        $examQuery = \App\Models\Academics\Exam::where('school_id', $schoolId)
             ->where('academic_term_id', $term->id)
             ->whereIn('exam_type_id', $contributingIds)
-            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
-            ->get();
+            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject']);
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
+        $exams = $examQuery->get();
+
+        if ($exams->isEmpty()) {
+            return response()->json([
+                'student_name' => $this->whatsappDisplayName($student, 'Student'),
+                'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
+                'approved'     => false,
+            ]);
+        }
 
         $approvedSubjectIds = \DB::table('exam_marks_submissions')
             ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
@@ -2130,6 +2141,9 @@ class WhatsAppController extends Controller
             if ($academicYear) {
                 $examQuery->where('academic_year_id', $academicYear->id);
             }
+            if ($student) {
+                app(ReleaseGate::class)->applyToExams($examQuery, $student);
+            }
             $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
@@ -2480,7 +2494,7 @@ class WhatsAppController extends Controller
     {
         $student = $user->user;
         $studentName = $this->whatsappDisplayName($student, 'Student');
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $className = $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A';
 
         // Find exams that have marks for this student
         $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
@@ -2490,6 +2504,7 @@ class WhatsAppController extends Controller
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
         $exams = $examQuery->latest('id')->take(15)->get();
 
         if ($exams->isEmpty()) {

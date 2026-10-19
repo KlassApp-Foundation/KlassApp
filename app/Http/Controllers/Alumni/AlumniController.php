@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Alumni;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -22,9 +23,9 @@ class AlumniController extends Controller
         $user = Auth::user();
         $schoolId = $user->school_id;
 
-        // Past marks for this alumni
-        $marks = Marks::with(['exam', 'subject'])
-            ->where('student_id', $user->id)
+        // Past marks for this alumni, only from a released sitting.
+        $marks = $this->releasedMarks($user)
+            ->with(['exam', 'subject'])
             ->orderBy('created_at', 'desc')
             ->take(20)
             ->get();
@@ -39,8 +40,7 @@ class AlumniController extends Controller
             ->take(50)
             ->get();
 
-        // Graduation year derived from last academic year the student had marks
-        $lastMarkYear = Marks::where('student_id', $user->id)
+        $lastMarkYear = $this->releasedMarks($user)
             ->join('exams', 'marks.exam_id', '=', 'exams.id')
             ->join('academic_years', 'exams.academic_year_id', '=', 'academic_years.id')
             ->value('academic_years.name');
@@ -61,8 +61,8 @@ class AlumniController extends Controller
     public function marks()
     {
         $user = Auth::user();
-        $marks = Marks::with(['exam', 'subject'])
-            ->where('student_id', $user->id)
+        $marks = $this->releasedMarks($user)
+            ->with(['exam', 'subject'])
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
@@ -93,8 +93,8 @@ class AlumniController extends Controller
     public function downloadReportCard()
     {
         $user = Auth::user();
-        $marks = Marks::with(['exam', 'subject'])
-            ->where('student_id', $user->id)
+        $marks = $this->releasedMarks($user)
+            ->with(['exam', 'subject'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -104,5 +104,13 @@ class AlumniController extends Controller
         ]);
 
         return $pdf->download('report-card-' . $user->name . '.pdf');
+    }
+
+    private function releasedMarks(User $user)
+    {
+        return app(ReleaseGate::class)->applyToMarks(
+            Marks::query()->where('student_id', $user->id),
+            $user,
+        );
     }
 }
