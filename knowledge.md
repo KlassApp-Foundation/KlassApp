@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
+
+- The release result page showed a demo code in the Student column and no class on the row. Branch `cursor/release-result-names-7d0b` from `main` `070584f7`. Not merged. Base is `main`.
+- Each result message now stores `name` and `class`. The table shows them. An older message with no name still shows the code. The number stays masked. No migration. The webhook body is unchanged.
+- On `main` the result-page test failed because `release-student-name` was absent. With the change: release tests 30 / 221. Marks suite on this branch: 201 tests, 1098 assertions. No browser or staging pass. #1123 was not touched. #1126 is on `main` and was not edited.
+
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
 
 - Production deploy of `main` `a958dfc` (#1117) failed on `2026_10_19_000001_create_school_invites_table`: `created_by` was `foreignId()` (`BIGINT UNSIGNED`) and `users.id` is `increments()` (`INT UNSIGNED`). MySQL error 3780, constraint `school_invites_created_by_foreign`. The empty table was left behind with no foreign key, and the migration was not recorded.
