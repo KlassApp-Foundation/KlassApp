@@ -33,5 +33,13 @@ return [
             ],
             'why' => 'Read classes, students, and coursework. No guardian or email scopes.',
         ],
+        'calendar' => [
+            'label' => 'Google Calendar',
+            'scopes' => [
+                // Secondary calendars this app creates, and events on those calendars only.
+                'https://www.googleapis.com/auth/calendar.app.created',
+            ],
+            'why' => 'Publish this school\'s term dates and calendar events onto a KlassApp calendar.',
+        ],
     ],
 ];

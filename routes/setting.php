@@ -29,6 +29,7 @@ Route::post('/settings/google/sheets/export', 'Setting\GoogleSheetsController@ex
 Route::post('/settings/google/sheets/import', 'Setting\GoogleSheetsController@import')->name('admin.google.sheets.import');
 Route::post('/settings/google/drive/file', 'Setting\GoogleDriveController@file')->name('admin.google.drive.file');
 Route::post('/settings/google/classroom/sync', 'Setting\GoogleClassroomController@sync')->name('admin.google.classroom.sync');
+Route::post('/settings/google/calendar/publish', 'Setting\GoogleCalendarController@publish')->name('admin.google.calendar.publish');
 
 // Navigation dropdown + notification list are served by routes/admin.php under
 // the schooladmin group. The copies that used to live here registered later and

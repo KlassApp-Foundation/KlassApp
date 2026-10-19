@@ -27,10 +27,6 @@ Enable these on the same project before you exercise that connector:
 | Drive | Google Drive API |
 | Classroom | Google Classroom API |
 | Calendar | Google Calendar API |
-| Gmail | Gmail API |
-| Docs | Google Docs API |
-| Slides | Google Slides API |
-| Tasks | Google Tasks API |
 
 The account check (`google:smoke account`) uses the OAuth userinfo endpoint. It does not need a separate API enabled beyond the consent screen.
 
@@ -43,11 +39,7 @@ Each connector asks only for its own scopes, plus `https://www.googleapis.com/au
 | Sheets | `https://www.googleapis.com/auth/spreadsheets` | Create a mark sheet and read it back. |
 | Drive | `https://www.googleapis.com/auth/drive.file` | File report-card PDFs this app creates. This scope does not read the rest of the school's Drive. |
 | Classroom | `classroom.courses.readonly`, `classroom.rosters.readonly`, `classroom.coursework.students.readonly` | Read classes, students, and coursework. No guardian scope and no profile-email scope. |
-| Calendar | `https://www.googleapis.com/auth/calendar.events` | Write term dates and school events. |
-| Gmail | `https://www.googleapis.com/auth/gmail.send` | Send one message the admin asked for. Restricted scope: Google verification is required before a public app can use it. |
-| Docs | `https://www.googleapis.com/auth/documents` | Create a document from a class list. |
-| Slides | `https://www.googleapis.com/auth/presentations` | Create a term presentation. |
-| Tasks | `https://www.googleapis.com/auth/tasks` | Create a task for a marks deadline. |
+| Calendar | `https://www.googleapis.com/auth/calendar.app.created` | Create a KlassApp calendar and publish this school's term dates and active events on it. This scope does not read the rest of the person's calendars. |
 
 Add the scope on the consent screen before you connect that tool. While the app is in Testing, only listed test users can consent.
 
@@ -79,9 +71,12 @@ php artisan google:smoke sheets --school=SCHOOL_ID --exam=EXAM_ID
 php artisan google:smoke sheets --school=SCHOOL_ID --exam=EXAM_ID --spreadsheet=SPREADSHEET_ID
 php artisan google:smoke drive --school=SCHOOL_ID --exam=EXAM_ID --learner=STUDENT_USER_ID
 php artisan google:smoke classroom --school=SCHOOL_ID
+php artisan google:smoke calendar --school=SCHOOL_ID
 ```
 
-`account` reads the connected Google email (and refreshes the token if it is due). `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through the existing marks import validation. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. `classroom` reads active courses and student names. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students and does not print tokens. Calendar, Gmail, Docs, Slides, and Tasks are not built yet. Until then the command refuses them rather than calling Google.
+`account` reads the connected Google email (and refreshes the token if it is due). `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through the existing marks import validation. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. `classroom` reads active courses and student names. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students and does not print tokens. `calendar` writes the current academic year's term dates and active school events to a calendar named KlassApp. Running it again updates those events and drops ones that are no longer active.
+
+Gmail, Docs, Slides, and Tasks are not connected. KlassApp already sends sign-in and invite mail through its own mailer, and there is no school Gmail compose screen to turn into drafts. Report cards are PDFs and marks sheets are spreadsheets, so there is no document or slide to create. Personal tasks stay in KlassApp; marks deadlines are already school events and go out with Calendar. The command refuses those four names.
 
 Disconnect on the card revokes the Google token and deletes the stored tokens when it is the last connected tool. Disconnecting one tool while another is still connected removes that tool's scopes from KlassApp and leaves the shared token in place, because Google's revoke endpoint cannot drop a single scope. Disconnect the last tool, or remove KlassApp's access in the Google account, to revoke the token.
 

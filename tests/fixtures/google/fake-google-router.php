@@ -522,4 +522,121 @@ if (preg_match('#^/v1/courses(?:/([^/]+)/(students|courseWork))?$#', $path, $cla
     return;
 }
 
+if (preg_match('#^/calendar/v3/calendars(?:/([^/]+)(?:/events(?:/([^/]+))?)?)?$#', $path, $calMatch)) {
+    $mutate(function (array &$state) use ($record, $bearer, $method, $path, $parsedBody, $json, $calMatch) {
+        $state = $record($state);
+        if (($state['modes']['calendar'] ?? null) === '500') {
+            $json(500, ['error' => ['code' => 500, 'message' => 'backend error', 'status' => 'INTERNAL']]);
+
+            return null;
+        }
+        if ($bearer === '' || ! isset($state['tokens'][$bearer]) || ! empty($state['account']['revoked'])) {
+            $json(401, ['error' => ['code' => 401, 'message' => 'Invalid Credentials', 'status' => 'UNAUTHENTICATED']]);
+
+            return null;
+        }
+        if (! isset($state['calendar']['calendars']) || ! is_array($state['calendar']['calendars'])) {
+            $state['calendar'] = ['calendars' => [], 'next' => 1];
+        }
+
+        $calendarId = isset($calMatch[1]) ? rawurldecode($calMatch[1]) : null;
+        $eventId = isset($calMatch[2]) ? rawurldecode($calMatch[2]) : null;
+        $onEvents = str_contains($path, '/events');
+
+        if ($calendarId === null && $method === 'POST') {
+            $id = 'cal-'.$state['calendar']['next'];
+            $state['calendar']['next']++;
+            $state['calendar']['calendars'][$id] = [
+                'id' => $id,
+                'summary' => (string) ($parsedBody['summary'] ?? ''),
+                'timeZone' => (string) ($parsedBody['timeZone'] ?? ''),
+                'events' => [],
+            ];
+            $json(200, [
+                'id' => $id,
+                'summary' => $state['calendar']['calendars'][$id]['summary'],
+                'timeZone' => $state['calendar']['calendars'][$id]['timeZone'],
+            ]);
+
+            return null;
+        }
+
+        if ($calendarId === null || ! isset($state['calendar']['calendars'][$calendarId])) {
+            $json(404, ['error' => ['code' => 404, 'message' => 'Calendar not found', 'status' => 'NOT_FOUND']]);
+
+            return null;
+        }
+
+        if (! $onEvents && $method === 'GET') {
+            $calendar = $state['calendar']['calendars'][$calendarId];
+            $json(200, [
+                'id' => $calendar['id'],
+                'summary' => $calendar['summary'],
+                'timeZone' => $calendar['timeZone'],
+            ]);
+
+            return null;
+        }
+
+        if ($onEvents && $eventId === null && $method === 'GET') {
+            $json(200, ['items' => array_values($state['calendar']['calendars'][$calendarId]['events'])]);
+
+            return null;
+        }
+
+        if ($onEvents && $eventId === null && $method === 'POST') {
+            $id = (string) ($parsedBody['id'] ?? '');
+            if ($id === '') {
+                $json(400, ['error' => ['code' => 400, 'message' => 'Event id is required', 'status' => 'INVALID_ARGUMENT']]);
+
+                return null;
+            }
+            $stored = $parsedBody;
+            $stored['id'] = $id;
+            $state['calendar']['calendars'][$calendarId]['events'][$id] = $stored;
+            $json(200, $stored);
+
+            return null;
+        }
+
+        if ($onEvents && $eventId !== null && $method === 'GET') {
+            if (! isset($state['calendar']['calendars'][$calendarId]['events'][$eventId])) {
+                $json(404, ['error' => ['code' => 404, 'message' => 'Event not found', 'status' => 'NOT_FOUND']]);
+
+                return null;
+            }
+            $json(200, $state['calendar']['calendars'][$calendarId]['events'][$eventId]);
+
+            return null;
+        }
+
+        if ($onEvents && $eventId !== null && $method === 'PUT') {
+            if (! isset($state['calendar']['calendars'][$calendarId]['events'][$eventId])) {
+                $json(404, ['error' => ['code' => 404, 'message' => 'Event not found', 'status' => 'NOT_FOUND']]);
+
+                return null;
+            }
+            $stored = $parsedBody;
+            $stored['id'] = $eventId;
+            $state['calendar']['calendars'][$calendarId]['events'][$eventId] = $stored;
+            $json(200, $stored);
+
+            return null;
+        }
+
+        if ($onEvents && $eventId !== null && $method === 'DELETE') {
+            unset($state['calendar']['calendars'][$calendarId]['events'][$eventId]);
+            $json(200, ['deleted' => true]);
+
+            return null;
+        }
+
+        $json(405, ['error' => ['code' => 405, 'message' => 'Method not allowed', 'status' => 'METHOD_NOT_ALLOWED']]);
+
+        return null;
+    });
+
+    return;
+}
+
 $json(404, ['error' => ['code' => 404, 'message' => 'No fake Google handler for '.$path, 'status' => 'NOT_FOUND']]);

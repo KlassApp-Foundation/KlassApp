@@ -17,6 +17,7 @@ class SchoolGoogleConnection extends Model
         'status',
         'connected_by',
         'last_refreshed_at',
+        'google_calendar_id',
     ];
 
     protected $hidden = [
