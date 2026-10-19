@@ -2640,6 +2640,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-19: VitePress school, role, and developer docs (open, not merged)
+
+- **Work done**: Wrote docs-site pages from routes, menus, and views on `main`. School help covers invite claim, Wizard or Toshi, WhatsApp for parents, link requests, and approvals. Google Drive, Classroom, and Sheets are marked Coming soon. Marks and report-card pages stay short placeholders until the marks-flow proposal is on `main`. Role pages cover platform admin, school admin, head teacher, class teacher, subject teacher, bursar, parent, and student. Developer pages cover architecture, local setup, tests, the single `packages/toshi-ui` package, a summary of proposal #1119, the WhatsApp simulator, connectors, and contributing. Did not add `community/early-adopters.md` (#1120). Did not merge, approve, or deploy.
+- **Files modified**: `docs-site/**` only, split across three branches. The docs home keeps the tagline; the school PR drops it from the VitePress meta description so the sentence is not repeated.
+- **Key decisions**: Describe only live UI strings. Head teacher is the deputy admin (`usergroup` 4) and loses Settings and Classes and streams. Class and subject teacher share the teacher login. Slack is code on `main` but hidden until the instance enables it.
+- **Status**: Three pull requests open. Not merged.
+- **Edge cases flagged**: School and role PRs both touch `docs-site/help/index.md` and `docs-site/.vitepress/sidebars.ts`. Merge one, then rebase the other if Git conflicts. `vitepress build docs-site` passed on each branch. Conflict-marker and root-clutter checks passed. No browser pass on the docs site (markdown only).
+- **PR**: [#1129](https://github.com/KlassApp-Foundation/KlassApp/pull/1129) schools (`cursor/docs-schools-guides-01cf`). [#1131](https://github.com/KlassApp-Foundation/KlassApp/pull/1131) roles (`cursor/docs-role-guides-01cf`). [#1132](https://github.com/KlassApp-Foundation/KlassApp/pull/1132) developers (`cursor/docs-developer-guides-01cf`). None merged.
+
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
 WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on the v2 dashboard card and the WhatsApp page. A KlassApp number now files a request instead of linking immediately; approve still sends the existing welcome. Form requests stay on Approvals as well. Only demo links show a countdown. The release page is one screen: compact controls, a combined mark sheet, and a WhatsApp-style example of the message that is already sent. This branch also drops the legacy dashboard and `DASHBOARD_V2_ENABLED` in code. Leave that production variable unset. Do not set it. Draft PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) on `cursor/whatsapp-link-requests-dce8`. Not merged. Handover is in the PR body. The full test guard was not run after the last layout edits.
