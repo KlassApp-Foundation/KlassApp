@@ -686,7 +686,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - Production deploy of `main` `a958dfc` (#1117) failed on `2026_10_19_000001_create_school_invites_table`: `created_by` was `foreignId()` (`BIGINT UNSIGNED`) and `users.id` is `increments()` (`INT UNSIGNED`). MySQL error 3780, constraint `school_invites_created_by_foreign`. The empty table was left behind with no foreign key, and the migration was not recorded.
 - [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) (`cursor/fix-school-invites-created-by-248c`) makes `created_by` `unsignedInteger`, nullable, `ON DELETE SET NULL`. An empty pre-existing table is dropped and recreated. A table with rows is altered in place and is never dropped. Not merged. No production access and no environment changes in this session.
-- [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job, stacked on #1126. Not merged. Retarget it to `main` after #1126 merges.
+- [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job. Rebased onto `main` `1dc7fbb`. Not merged.
 - Local MySQL 8.4.11: the pre-fix migration reproduces error 3780; the fix passes on a fresh database, on that half-created empty table, on a second `migrate` (nothing to migrate), and when the half-created table already has a row. `down()` drops the table.
 
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
