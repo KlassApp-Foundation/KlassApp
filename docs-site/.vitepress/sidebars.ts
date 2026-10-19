@@ -4,6 +4,7 @@ export const helpSidebar = [
     { text: 'For bursars', link: '/help/bursars/' }, { text: 'For parents', link: '/help/parents/' },
     { text: 'For students', link: '/help/students/' } ] },
   { text: 'Soft-launch basics', collapsed: false, items: [
+    { text: 'Get started', link: '/help/getting-started' },
     { text: 'Sign up and confirm email', link: '/help/signup' },
     { text: 'Set up your school', link: '/help/setup-school' },
     { text: 'Add students', link: '/help/add-students' },
@@ -12,6 +13,9 @@ export const helpSidebar = [
     { text: 'Report cards on WhatsApp', link: '/help/send-report-cards-whatsapp' } ] },
   { text: 'Set up your school', collapsed: false, items: [
     { text: 'Onboarding paths', link: '/help/admins/onboarding' },
+    { text: 'Link requests', link: '/help/admins/link-requests' },
+    { text: 'Approvals', link: '/help/admins/approvals' },
+    { text: 'Google tools', link: '/help/admins/google' },
     { text: 'Book a setup session', link: '/help/admins/book-onboarding' },
     { text: 'Classes and streams', link: '/help/concepts/classes-and-streams' } ] },
   { text: 'Teachers', collapsed: true, items: [ { text: 'Mark attendance', link: '/help/teachers/attendance' } ] },
