@@ -80,6 +80,11 @@ class MarksReleaseController extends Controller
         if ($targets === null) {
             $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['override_reason']);
         } else {
+            // Every class is checked before any release row is written.
+            foreach ($targets as $linkId) {
+                [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $linkId);
+                $this->releases->requireApproval($user, $anchor, $link, $data['override_reason']);
+            }
             foreach ($targets as $linkId) {
                 $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['override_reason']);
             }

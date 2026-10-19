@@ -2,12 +2,17 @@
 
 namespace Tests\Feature\Marks;
 
+use App\Models\Academics\Exam;
+use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
+use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\Feature\Demo\Concerns\BuildsFollowAlongSchools;
 use Tests\TestCase;
 
@@ -76,6 +81,65 @@ class ReleaseRequiresApprovalTest extends TestCase
             ->post('/teacher/marks/releases', $this->payload($this->fx['demo']['link']->id) + [
                 'override_reason' => 'A teacher must not skip approval.',
             ])
+            ->assertSessionHasErrors('approval');
+
+        $this->assertSame(0, MarksRelease::count());
+    }
+
+    public function test_several_classes_release_nothing_when_one_class_is_not_approved(): void
+    {
+        $this->approveFollowAlongSittings();
+
+        $school = $this->fx['demo']['school'];
+        $link = $this->fx['demo']['link'];
+        $teacher = $this->fx['demo']['teacher'];
+        $anchor = $this->fx['demo']['exams']['latest']['Mathematics'];
+        Schema::table('sections', function ($table) {
+            $table->dropUnique(['school_id', 'name']);
+        });
+        $section = Section::create(['school_id' => $school->id, 'name' => 'P.7', 'status' => 1]);
+        StandardLink::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $link->academic_year_id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'stream' => 'B',
+            'status' => 1,
+        ]);
+        $subject = Subject::create([
+            'school_id' => $school->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'academic_year_id' => $link->academic_year_id,
+            'name' => 'Mathematics',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        $exam = Exam::create([
+            'school_id' => $school->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'academic_year_id' => $link->academic_year_id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $teacher->id,
+            'academic_term_id' => $anchor->academic_term_id,
+            'exam_type_id' => $anchor->exam_type_id,
+            'status' => 'undone',
+            'scheduled_at' => '2026-11-21 09:00:00',
+        ]);
+        Marks::create([
+            'student_id' => $this->fx['demo']['students'][0]['user']->id,
+            'subject_id' => $subject->id,
+            'section_id' => $section->id,
+            'exam_id' => $exam->id,
+            'teacher_id' => $teacher->id,
+            'school_id' => $school->id,
+            'marks' => 70,
+            'grade' => 'C',
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post('/admin/marks/releases', $this->scheduled() + ['class' => 'P.7'])
             ->assertSessionHasErrors('approval');
 
         $this->assertSame(0, MarksRelease::count());
