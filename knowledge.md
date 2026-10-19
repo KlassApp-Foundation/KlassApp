@@ -2653,6 +2653,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-19: reject an out-of-range school_invites.created_by before dropping its foreign key
+
+- **Work done**: In `alignCreatedByWithUsersId()`, the value check (`created_by` > 4294967295) now runs before `dropCreatedByForeignKey()`. Bariyo123's non-blocking note on #1126. No production access.
+- **Files modified**: `database/migrations/2026_10_19_000001_create_school_invites_table.php`, `tests/Feature/Invites/SchoolInviteCreatedByRangeTest.php`, `knowledge.md`.
+- **Status**: Follow-up PR, not merged.
+- **Evidence**: The new test fails when the check is after the drop and passes when it is before. On MySQL 8.4.11, the old order queries `referential_constraints` (index 4) before the range select (index 5). The new order runs the range select and does not query the foreign key; the row `4294967296` stays on `bigint unsigned`.
+
 ### 2026-10-19: school_invites.created_by must match users.id
 
 - **Work done**: `users.id` in `2020_02_18_000000_create_users_table.php` is `increments()` (`INT UNSIGNED`). No later migration changes that column. `schools.id` is `bigIncrements()` and is not referenced by `school_invites`. The only foreign key in `2026_10_19_000001_create_school_invites_table` was `foreignId('created_by')`, which is `BIGINT UNSIGNED`. MySQL 8.4 rejects that pair. The migration now uses `unsignedInteger('created_by')->nullable()` and `nullOnDelete()` on `users.id`. If `school_invites` already exists and has 0 rows, it is dropped and created again. If it has rows, `created_by` is changed to `INT UNSIGNED` and the foreign key is added. `down()` is still `dropIfExists`.
