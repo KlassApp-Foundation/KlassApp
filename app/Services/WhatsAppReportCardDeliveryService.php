@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Contracts\Results\ReleaseGate;
 use App\Models\StudentAcademic;
 use App\Models\StudentParentLink;
 use App\Models\User;
@@ -33,7 +32,6 @@ class WhatsAppReportCardDeliveryService
 
     public function __construct(
         private StudentReportCardService $reports,
-        private ReleaseGate $releases,
     ) {}
 
     /**
@@ -54,7 +52,7 @@ class WhatsAppReportCardDeliveryService
     /**
      * @return array{ok: true, url: string, filename: string, caption: string, bytes: int}|array{ok: false, message: string, flow_type: string}
      */
-    public function prepareForStudent(User $parent, User $student): array
+    public function prepareForStudent(User $parent, User $student, ?int $academicTermId = null): array
     {
         $link = StudentParentLink::query()
             ->where('parent_id', $parent->id)
@@ -101,10 +99,7 @@ class WhatsAppReportCardDeliveryService
             ];
         }
 
-        $exam = $this->reports->resolveExam($schoolId, $stdLink);
-        if ($exam && ! $this->releases->isReleased($student, $exam)) {
-            $exam = null;
-        }
+        $exam = $this->reports->resolveReleasedExam($schoolId, $stdLink, $student, $academicTermId);
         if (! $exam) {
             return [
                 'ok' => false,
@@ -116,7 +111,7 @@ class WhatsAppReportCardDeliveryService
             ];
         }
 
-        if (! $this->reports->studentIds($exam)->contains($student->id)) {
+        if (! $this->reports->studentHasContributingMark($exam, (int) $student->id)) {
             return [
                 'ok' => false,
                 'flow_type' => 'report_none',
@@ -128,7 +123,7 @@ class WhatsAppReportCardDeliveryService
         }
 
         try {
-            $pdf = $this->reports->pdfForStudent($schoolId, $stdLink, $student, null);
+            $pdf = $this->reports->pdfForStudent($schoolId, $stdLink, $student, null, (int) $exam->academic_term_id);
         } catch (RuntimeException $e) {
             return [
                 'ok' => false,

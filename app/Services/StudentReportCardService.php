@@ -2,8 +2,13 @@
 
 namespace App\Services;
 
+use App\Contracts\Results\DivisionRule;
+use App\Contracts\Results\GradingScale;
+use App\Contracts\Results\ReleaseGate;
+use App\Contracts\Results\ReportTemplates;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
+use App\Models\Academics\Marks;
 use App\Models\School;
 use App\Models\SchoolDetail;
 use App\Models\Section;
@@ -53,14 +58,118 @@ class StudentReportCardService
         return 'MID TERM';
     }
 
-    public function resolveExam(int $schoolId, StandardLink $stdLink): ?Exam
+    /**
+     * Contributing exam for a class.
+     *
+     * The term is the one the caller passed, or the school's current term
+     * (latest starts_on, then highest id) when the caller does not pass one.
+     * The exam inside that term is a stable handle (lowest id), not the most
+     * recently created exam. Staff stay on this method and are not release-gated.
+     */
+    public function resolveExam(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): ?Exam
     {
-        return Exam::where('school_id', $schoolId)
+        $termId = $this->termIdForReport($schoolId, $academicTermId);
+        if ($termId === null) {
+            return null;
+        }
+
+        return $this->anchorExam($schoolId, $stdLink, $termId);
+    }
+
+    /**
+     * Parent report: a requested term is used only when that term's contributing
+     * sitting is released. With no request, walk terms from the latest start
+     * date and return the first released one. An unreleased newer term does
+     * not hide an older released term, and an unreleased request is not
+     * replaced with a different term.
+     */
+    public function resolveReleasedExam(int $schoolId, StandardLink $stdLink, User $student, ?int $academicTermId = null): ?Exam
+    {
+        $gate = app(ReleaseGate::class);
+        if ($academicTermId !== null) {
+            $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+
+            return ($exam && $gate->isReleased($student, $exam)) ? $exam : null;
+        }
+
+        $termIds = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->pluck('id');
+
+        foreach ($termIds as $termId) {
+            $exam = $this->anchorExam($schoolId, $stdLink, (int) $termId);
+            if ($exam && $gate->isReleased($student, $exam)) {
+                return $exam;
+            }
+        }
+
+        return null;
+    }
+
+    public function studentHasContributingMark(Exam $anchor, int $studentId): bool
+    {
+        $examIds = $this->contributingExamIds($anchor);
+        if ($examIds->isEmpty()) {
+            return false;
+        }
+
+        return Marks::query()
+            ->where('student_id', $studentId)
+            ->whereIn('exam_id', $examIds)
+            ->whereNotNull('marks')
+            ->exists();
+    }
+
+    private function termIdForReport(int $schoolId, ?int $academicTermId): ?int
+    {
+        if ($academicTermId !== null) {
+            $belongs = AcademicTerm::query()
+                ->where('school_id', $schoolId)
+                ->whereKey($academicTermId)
+                ->exists();
+
+            return $belongs ? $academicTermId : null;
+        }
+
+        $id = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->value('id');
+
+        return $id !== null ? (int) $id : null;
+    }
+
+    /**
+     * Lowest id among contributing exams in the term. created_at is not a term.
+     */
+    private function anchorExam(int $schoolId, StandardLink $stdLink, int $academicTermId): ?Exam
+    {
+        return Exam::query()
+            ->where('school_id', $schoolId)
             ->where('section_id', $stdLink->section_id)
             ->where('standard_id', $stdLink->standard_id)
+            ->where('academic_term_id', $academicTermId)
             ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
-            ->latest()
+            ->orderBy('id')
             ->first();
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    private function contributingExamIds(Exam $anchor): Collection
+    {
+        return Exam::query()
+            ->where('school_id', $anchor->school_id)
+            ->where('section_id', $anchor->section_id)
+            ->where('academic_year_id', $anchor->academic_year_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
+            ->pluck('id');
     }
 
     public function studentIds(Exam $exam): Collection
@@ -110,9 +219,10 @@ class StudentReportCardService
         int $schoolId,
         StandardLink $stdLink,
         User $learner,
-        ?string $templateKey = null
+        ?string $templateKey = null,
+        ?int $academicTermId = null
     ): string {
-        $exam = $this->resolveExam($schoolId, $stdLink);
+        $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
         if (! $exam) {
             throw new \RuntimeException('No EOT exam found for this class.');
         }
@@ -142,9 +252,9 @@ class StudentReportCardService
      *
      * @return array{filled: int, total: int}|null null when no contributing exam
      */
-    public function subjectFillCounts(int $schoolId, StandardLink $stdLink): ?array
+    public function subjectFillCounts(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): ?array
     {
-        $exam = $this->resolveExam($schoolId, $stdLink);
+        $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
         if (! $exam) {
             return null;
         }
@@ -221,42 +331,13 @@ class StudentReportCardService
             ->orderBy('min_score', 'desc')
             ->get();
 
-        $divisionScale = static function (int $points): string {
-            if ($points <= 12) {
-                return '1';
-            }
-            if ($points <= 24) {
-                return '2';
-            }
-            if ($points <= 28) {
-                return '3';
-            }
-            if ($points <= 32) {
-                return '4';
+        $division = app(DivisionRule::class);
+        $divisionLabel = static function (?array $points) use ($division): string {
+            if ($points === null) {
+                return '-';
             }
 
-            return 'U';
-        };
-
-        $aggregatePoints = static function ($learner, $exam, $subjects, $gradingSystem) {
-            $sum = 0;
-            $counted = 0;
-            foreach ($subjects as $subject) {
-                if ($learner->marks->where('subject_id', $subject->id)->isEmpty()) {
-                    continue;
-                }
-                $mark = $learner->marks->where('subject_id', $subject->id)->firstWhere('exam_id', $exam->id);
-                if ($mark && $mark->marks !== null) {
-                    $g = $gradingSystem->first(fn ($gs) => $gs->min_score <= (float) $mark->marks && $gs->max_score >= (float) $mark->marks);
-                    $points = $g ? \App\Helpers\GradingHelper::effectivePoints($g) : null;
-                    if ($points !== null) {
-                        $sum += $points;
-                        $counted++;
-                    }
-                }
-            }
-
-            return $counted ? ['points' => $sum, 'counted' => $counted] : null;
+            return $division->division($points['points'], $points['counted']) ?? '-';
         };
 
         // Stream = a label on a StandardLink (e.g. "EAST"/"WEST"/"A"/"B").
@@ -272,7 +353,11 @@ class StudentReportCardService
         foreach ($midExams as $midExam) {
             $nonNullMarks = $learner->marks->filter(fn ($m) => $m->exam_id === $midExam->id && $m->marks !== null);
             $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
-            $points = $aggregatePoints($learner, $midExam, $subjects, $gradingSystem);
+            $points = $this->sumPoints(
+                $this->chosenMarksBySubject($learner->marks, collect([$midExam])),
+                $schoolId,
+                (int) $stdLink->standard_id
+            );
 
             // Monthly position is class-wide: rank against every student who
             // sat this section's MID exam for the month. A stream is a subset
@@ -299,17 +384,20 @@ class StudentReportCardService
                 'total' => $total,
                 'pos' => $pos,
                 'of' => count($ranked),
-                'division' => $points ? $divisionScale($points['points']) : '-',
+                'division' => $divisionLabel($points),
             ];
         }
 
-        $firstEot = $eotExams->first();
-        $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $gradingSystem) : null;
-        $eotDivision = $eotPoints ? $divisionScale($eotPoints['points']) : '-';
+        $contributing = $eotExams
+            ->filter(fn ($row) => (int) $row->examType->contributes_to_report_total === 1)
+            ->values();
+        $eotMarkBySubject = $this->chosenMarksBySubject($learner->marks, $contributing);
+        $eotPoints = $this->sumPoints($eotMarkBySubject, $schoolId, (int) $stdLink->standard_id);
+        $eotDivision = $divisionLabel($eotPoints);
 
         $streamPos = null;
         $streamTotal = null;
-        if ($streamName && $firstEot) {
+        if ($streamName && $contributing->isNotEmpty()) {
             $streamRows = DB::table('student_academics')
                 ->join('standards_link', 'standards_link.id', '=', 'student_academics.standardLink_id')
                 ->where('standards_link.school_id', $schoolId)
@@ -320,9 +408,20 @@ class StudentReportCardService
                 ->whereNull('student_academics.deleted_at')
                 ->pluck('student_academics.user_id')
                 ->all();
+            $examIds = $contributing->pluck('id');
+            $streamMarks = Marks::query()
+                ->whereIn('student_id', $streamRows)
+                ->whereIn('exam_id', $examIds)
+                ->whereNotNull('marks')
+                ->get()
+                ->groupBy('student_id');
             $ranked = [];
             foreach ($streamRows as $rankedSid) {
-                $ranked[$rankedSid] = (int) round(\App\Models\Academics\Marks::where('student_id', $rankedSid)->where('exam_id', $firstEot->id)->sum('marks'));
+                $chosen = $this->chosenMarksBySubject($streamMarks->get($rankedSid, collect()), $contributing);
+                $ranked[$rankedSid] = (int) round(array_sum(array_map(
+                    fn ($mark) => (float) $mark->marks,
+                    $chosen
+                )));
             }
             arsort($ranked);
             $streamPos = 0;
@@ -335,9 +434,7 @@ class StudentReportCardService
             $streamTotal = count($ranked);
         }
 
-        $total = $learner->marks
-            ? $learner->marks->filter(fn ($m) => $m->exam?->examType?->contributes_to_report_total)->sum('marks')
-            : 0;
+        $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
         $grade = $helper->grade($learner, $exam);
         $teacherComment = $standard
@@ -348,7 +445,7 @@ class StudentReportCardService
             : '';
 
         $school = School::find($schoolId);
-        $view = self::TEMPLATES[$templateKey ?? $school->report_template ?? ''] ?? self::TEMPLATES['formal'];
+        $view = app(ReportTemplates::class)->resolve($templateKey, $school?->report_template);
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -371,6 +468,7 @@ class StudentReportCardService
             'showAgg' => $showAgg,
             'midStats' => $midStats,
             'eotDivision' => $eotDivision,
+            'eotMarkBySubject' => $eotMarkBySubject,
             'streamName' => $streamName,
             'streamPos' => $streamPos,
             'streamTotal' => $streamTotal,
@@ -379,6 +477,66 @@ class StudentReportCardService
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    /**
+     * One contributing mark per subject. Several rows for the same subject
+     * keep the latest scheduled_at, then the highest exam id.
+     *
+     * @param  Collection<int, Marks>  $marks
+     * @param  Collection<int, Exam>  $exams
+     * @return array<int, Marks>
+     */
+    private function chosenMarksBySubject(Collection $marks, Collection $exams): array
+    {
+        $byId = $exams->keyBy('id');
+        $chosen = [];
+        foreach ($marks as $mark) {
+            if ($mark->marks === null || ! $byId->has($mark->exam_id)) {
+                continue;
+            }
+            $subjectId = (int) $mark->subject_id;
+            $current = $chosen[$subjectId] ?? null;
+            if ($current === null || $this->markIsLater($mark, $current, $byId)) {
+                $chosen[$subjectId] = $mark;
+            }
+        }
+
+        return $chosen;
+    }
+
+    private function markIsLater(Marks $candidate, Marks $current, Collection $exams): bool
+    {
+        $candidateAt = $exams[$candidate->exam_id]->scheduled_at;
+        $currentAt = $exams[$current->exam_id]->scheduled_at;
+        $candidateTs = $candidateAt ? $candidateAt->getTimestamp() : 0;
+        $currentTs = $currentAt ? $currentAt->getTimestamp() : 0;
+        if ($candidateTs !== $currentTs) {
+            return $candidateTs > $currentTs;
+        }
+
+        return (int) $candidate->exam_id > (int) $current->exam_id;
+    }
+
+    /**
+     * @param  array<int, Marks>  $marksBySubject
+     * @return array{points: int, counted: int}|null
+     */
+    private function sumPoints(array $marksBySubject, int $schoolId, int $standardId): ?array
+    {
+        $scale = app(GradingScale::class);
+        $sum = 0;
+        $counted = 0;
+        foreach ($marksBySubject as $mark) {
+            $points = $scale->pointsFor($schoolId, $standardId, (float) $mark->marks);
+            if ($points === null) {
+                continue;
+            }
+            $sum += $points;
+            $counted++;
+        }
+
+        return $counted ? ['points' => $sum, 'counted' => $counted] : null;
     }
 
     /**
