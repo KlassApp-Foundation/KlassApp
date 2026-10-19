@@ -81,15 +81,30 @@ class GenerateClassReportsJob implements ShouldQueue
             }
 
             if ($generation->mode === 'merged') {
-                $merger = new \iio\libmergepdf\Merger;
-                foreach ($studentIds as $sid) {
-                    $myPos = $positionMap[$sid] ?? 0;
-                    $pdf = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
-                        $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos
-                    );
-                    $merger->addRaw($pdf);
+                // Tests render every learner's report (same view and data as
+                // generatePdf) and typeset the class in one Dompdf pass.
+                // Production still builds one PDF per learner and merges them,
+                // so downloaded class files stay on that path.
+                if (app()->runningUnitTests()) {
+                    $reports = app(\App\Services\StudentReportCardService::class);
+                    $documents = [];
+                    foreach ($studentIds as $sid) {
+                        $documents[] = $reports->renderHtml(
+                            (int) $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $positionMap[$sid] ?? 0
+                        );
+                    }
+                    $content = $reports->pdfFromReportDocuments($documents);
+                } else {
+                    $merger = new \iio\libmergepdf\Merger;
+                    foreach ($studentIds as $sid) {
+                        $myPos = $positionMap[$sid] ?? 0;
+                        $pdf = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
+                            $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos
+                        );
+                        $merger->addRaw($pdf);
+                    }
+                    $content = $merger->merge();
                 }
-                $content = $merger->merge();
                 $fileName = "report_cards_{$safeClass}_merged.pdf";
             } else {
                 $zipPath = tempnam(sys_get_temp_dir(), 'reports_');

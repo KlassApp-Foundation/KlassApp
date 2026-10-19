@@ -2640,6 +2640,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-19: faster test guard (open PR, not merged)
+
+- **Work done**: Profiled `scripts/test-guard.sh` with `TEST_GUARD_PROCESSES=4` (CI's default; the variable was unset here, which would have used 1 process). Best of two runs before the change was 421s (424s and 421s), 2707 tests, guard green. Demo school seeds dominated; report-card Dompdf was about 17s of a ~21s senior seed. Tests now render every learner's report HTML and typeset the class in one Dompdf pass. Production still merges one PDF per learner. phpunit forces `MAIL_MAILER=array` and `NIGHTWATCH_ENABLED=false`. The user factory reuses one bcrypt hash of `password`. Best of two runs after was 229s (253s and 229s), same 2707 tests, guard green.
+- **Files modified**: `app/Jobs/GenerateClassReportsJob.php`, `app/Services/StudentReportCardService.php`, `database/factories/UserFactory.php`, `phpunit.xml`, `knowledge.md`.
+- **Key decisions**: Do not change production class-PDF bytes. Do not drop assertions. Not merged and not deployed.
+- **Status**: PR opening on `cursor/speed-up-test-suite-ca5a`.
+- **Edge cases flagged**: Joined test PDFs are real multi-page reports (page count matched the class). A sibling stream still renders again because the link passed into the view differs.
+
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
 WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on the v2 dashboard card and the WhatsApp page. A KlassApp number now files a request instead of linking immediately; approve still sends the existing welcome. Form requests stay on Approvals as well. Only demo links show a countdown. The release page is one screen: compact controls, a combined mark sheet, and a WhatsApp-style example of the message that is already sent. This branch also drops the legacy dashboard and `DASHBOARD_V2_ENABLED` in code. Leave that production variable unset. Do not set it. Draft PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) on `cursor/whatsapp-link-requests-dce8`. Not merged. Handover is in the PR body. The full test guard was not run after the last layout edits.

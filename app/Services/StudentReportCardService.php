@@ -185,6 +185,37 @@ class StudentReportCardService
         int $myPos = 0,
         ?string $templateKey = null
     ): string {
+        $pdf = Pdf::loadHTML($this->renderHtml(
+            $sid,
+            $exam,
+            $stdLink,
+            $schoolId,
+            $helper,
+            $svc,
+            $totalLearners,
+            $myPos,
+            $templateKey
+        ));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->output();
+    }
+
+    /**
+     * Render one learner's report card to HTML. The PDF wrappers call this so
+     * a class batch can typeset every card in a single Dompdf pass.
+     */
+    public function renderHtml(
+        int $sid,
+        Exam $exam,
+        StandardLink $stdLink,
+        int $schoolId,
+        $helper,
+        ReportCardCommentService $svc,
+        int $totalLearners,
+        int $myPos = 0,
+        ?string $templateKey = null
+    ): string {
         $learner = User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
@@ -352,7 +383,7 @@ class StudentReportCardService
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
-        $pdf = Pdf::loadView($view['view'], [
+        return view($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => $gradingSystem,
@@ -375,7 +406,49 @@ class StudentReportCardService
             'streamPos' => $streamPos,
             'streamTotal' => $streamTotal,
             'logoPath' => $logoPath,
-        ]);
+        ])->render();
+    }
+
+    /**
+     * Typeset already-rendered report cards as one PDF. Each document is a
+     * full HTML report; the first document's head (styles) is kept and each
+     * body becomes its own sheet.
+     *
+     * @param  list<string>  $documents
+     */
+    public function pdfFromReportDocuments(array $documents): string
+    {
+        $documents = array_values(array_filter($documents, fn ($document) => is_string($document) && $document !== ''));
+        if ($documents === []) {
+            throw new \RuntimeException('No report HTML to render.');
+        }
+
+        if (count($documents) === 1) {
+            $pdf = Pdf::loadHTML($documents[0]);
+            $pdf->setPaper('a4', 'portrait');
+
+            return $pdf->output();
+        }
+
+        $head = '';
+        if (preg_match('/<head\b[^>]*>.*?<\/head>/is', $documents[0], $headMatch)) {
+            $head = $headMatch[0];
+        }
+
+        $sheets = [];
+        foreach ($documents as $document) {
+            $body = $document;
+            if (preg_match('/<body\b[^>]*>(.*)<\/body>/is', $document, $bodyMatch)) {
+                $body = $bodyMatch[1];
+            }
+            $sheets[] = '<div class="report-sheet">'.$body.'</div>';
+        }
+
+        $html = '<!DOCTYPE html><html>'.$head
+            .'<style>.report-sheet{page-break-after:always}.report-sheet:last-child{page-break-after:auto}</style>'
+            .'<body>'.implode('', $sheets).'</body></html>';
+
+        $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
