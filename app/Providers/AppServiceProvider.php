@@ -56,6 +56,7 @@ use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
 use App\Services\Results\DefaultReportTemplates;
 use App\Services\Results\EloquentReleaseGate;
+use App\Services\Results\ResultsService;
 use App\Services\Results\SchoolGradingScale;
 use App\Services\Results\ThresholdDivisionRule;
 use Laravel\Mcp\Client\ClientManager;
@@ -245,5 +246,6 @@ class AppServiceProvider extends ServiceProvider {
         $this->app->singleton(GradingScale::class, SchoolGradingScale::class);
         $this->app->singleton(DivisionRule::class, ThresholdDivisionRule::class);
         $this->app->singleton(ReportTemplates::class, DefaultReportTemplates::class);
+        $this->app->singleton(ResultsService::class);
     }
 }
