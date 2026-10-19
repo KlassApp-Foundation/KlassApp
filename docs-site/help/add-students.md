@@ -5,43 +5,29 @@ minutes: 10
 ---
 <Role r="admin" /> · 10 minutes
 
-# Add students (three ways)
-Add one student at a time, paste a list, or import a spreadsheet. Parents are added with each student's phone numbers.
+# Add students
+Add one student, or import a spreadsheet. Parents are stored with the student.
 
 ## Before you start
-Add your classes and streams first, so each student goes into the right class.
+Classes need to exist so each student has a class. Set those in the [Wizard](/help/admins/onboarding), on **Structure & Class Teachers**, or later under <UiPath to="Classes and subjects > Classes and streams" />. **Classes and streams** is on the school admin menu only.
 
-## Steps
+## On the Students page
+In the menu, choose <UiPath to="Students" />. The page heading is **Students**.
+
 <Steps>
-<Step title="Open Students">
+<Step title="Add one student">
 
-In the sidebar, choose <UiPath to="Students" />.
-
-<Shot src="/docs-preview/img/admin-students_2026-10-01.webp" alt="Students page showing the Add student and Import list buttons" url="app.klassapp.xyz/admin/students" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
-<Mark box :x="72" :y="14" :w="14" :h="6" />
-</Shot>
+Choose <Btn>Add student</Btn>. The form heading is **Add Student**. Enter the name, the class, and the parent phone numbers, then save.
 </Step>
-<Step title="Option A — add one student">
+<Step title="Import a spreadsheet">
 
-Choose <Btn>Add student</Btn> and fill in the name, class and parents' phone numbers.
-</Step>
-<Step title="Option B — paste a list">
+Choose <Btn>Import list</Btn>. The import page heading is **Import**.
 
-Choose <Btn>Import list</Btn> and paste rows straight from WhatsApp or a document. Each row is one student. Choose the class before you paste — if no class is chosen, pasted students default to Primary One.
-
-</Step>
-<Step title="Option C — import a spreadsheet">
-
-Choose <Btn>Import list</Btn>, download the template, fill it in, and upload it. The import shows how many rows were added and which rows were skipped.
-
-<Shot src="/docs-preview/img/admin-import_2026-10-01.webp" alt="Student import page" url="app.klassapp.xyz/admin/import" :w="1280" :h="720" caption="Desktop 1280 × 720 · demo school">
-</Shot>
+Choose <Btn>Download Sample Format</Btn>, fill the file, and upload it. The class belongs in the file. A row with a class the school does not have is skipped. Then choose <Btn>Import</Btn>.
 </Step>
 </Steps>
 
-::: tip
-Tick "on WhatsApp" for a parent whose number is on WhatsApp — that is how report cards and fee reminders reach them.
-:::
+**Import list** does not paste a chat list. Paste is only inside the Wizard, on the **Students** step: **Paste names (one per line)**, then **Add from paste**. Pick the class in that step before you paste.
 
 ## What happens next
-Teachers and parents see the student as soon as the class is right.
+Teachers see the student in their class. Parents link on WhatsApp, and you approve them on [Link requests](/help/admins/link-requests).

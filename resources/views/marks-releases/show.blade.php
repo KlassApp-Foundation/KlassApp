@@ -49,10 +49,15 @@
     @if(! empty($release->result['messages']))
     <div class="mr-card mr-scroll">
         <table class="mr-table">
-            <thead><tr><th>Student</th><th>Number</th><th>Result</th></tr></thead>
+            <thead><tr><th>Student</th><th>Class</th><th>Number</th><th>Result</th></tr></thead>
             <tbody>
             @foreach($release->result['messages'] as $m)
-                <tr><td>{{ $m['student'] }}</td><td>{{ $m['to'] ?? '–' }}</td><td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td></tr>
+                <tr>
+                    <td data-testid="release-student-name">{{ $m['name'] ?? $m['student'] }}</td>
+                    <td data-testid="release-student-class">{{ ($m['class'] ?? '') !== '' ? $m['class'] : '–' }}</td>
+                    <td>{{ $m['to'] ?? '–' }}</td>
+                    <td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td>
+                </tr>
             @endforeach
             </tbody>
         </table>
