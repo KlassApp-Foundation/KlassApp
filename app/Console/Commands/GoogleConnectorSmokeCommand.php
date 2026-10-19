@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Academics\Exam;
 use App\Models\School;
 use App\Models\SchoolGoogleConnection;
+use App\Models\User;
+use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
 use App\Services\Google\GoogleConnectorCatalog;
@@ -48,6 +51,10 @@ class GoogleConnectorSmokeCommand extends Command
             return $this->account($school->id, $client);
         }
 
+        if ($connector === 'sheets') {
+            return $this->sheets($school->id);
+        }
+
         if (! $catalog->has($connector)) {
             $this->error("Unknown connector [{$connector}].");
 
@@ -79,6 +86,41 @@ class GoogleConnectorSmokeCommand extends Command
 
         $this->info('Connected Google account: '.($profile['email'] ?? '(no email)'));
         $this->line('The access token was not printed.');
+
+        return self::SUCCESS;
+    }
+
+    private function sheets(int $schoolId): int
+    {
+        $examId = (int) $this->option('exam');
+        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
+
+        if ($exam === null || $actor === null) {
+            $this->error('Pass --exam= for an exam in this school, and have an active school admin.');
+
+            return self::FAILURE;
+        }
+
+        $sheets = app(GoogleSheetsService::class);
+
+        try {
+            $spreadsheet = (string) $this->option('spreadsheet');
+            if ($spreadsheet !== '') {
+                $outcome = $sheets->import($actor, $exam, $spreadsheet, false);
+                $this->info($outcome['committed'] ? 'Import committed.' : 'Import refused: '.implode(' ', $outcome['plan']->blockers));
+
+                return $outcome['committed'] ? self::SUCCESS : self::FAILURE;
+            }
+            $created = $sheets->export($actor, $exam);
+        } catch (GoogleApiException $e) {
+            $this->error('Sheets call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        }
+
+        $this->info('Spreadsheet: '.$created['spreadsheetId']);
+        $this->line($created['spreadsheetUrl']);
 
         return self::SUCCESS;
     }

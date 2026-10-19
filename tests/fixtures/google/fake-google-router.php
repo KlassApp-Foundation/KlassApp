@@ -231,4 +231,76 @@ if ($path === '/oauth2/v2/userinfo' && $method === 'GET') {
     return;
 }
 
+if (preg_match('#^/v4/spreadsheets(?:/([^/]+)(?:/values/(.+))?)?$#', $path, $sheetMatch)) {
+    $mutate(function (array &$state) use ($record, $bearer, $method, $parsedBody, $json, $sheetMatch) {
+        $state = $record($state);
+        if (($state['modes']['sheets'] ?? null) === '500') {
+            $json(500, ['error' => ['code' => 500, 'message' => 'backend error', 'status' => 'INTERNAL']]);
+
+            return null;
+        }
+        if ($bearer === '' || ! isset($state['tokens'][$bearer]) || ! empty($state['account']['revoked'])) {
+            $json(401, ['error' => ['code' => 401, 'message' => 'Invalid Credentials', 'status' => 'UNAUTHENTICATED']]);
+
+            return null;
+        }
+        $id = isset($sheetMatch[1]) ? rawurldecode($sheetMatch[1]) : null;
+        $range = isset($sheetMatch[2]) ? rawurldecode($sheetMatch[2]) : null;
+        if ($method === 'POST' && $id === null) {
+            $newId = 'sheet-'.bin2hex(random_bytes(4));
+            $tabs = [];
+            foreach ($parsedBody['sheets'] ?? [] as $tab) {
+                $title = (string) ($tab['properties']['title'] ?? 'Sheet1');
+                $tabs[$title] = [];
+            }
+            $state['sheets'][$newId] = [
+                'title' => (string) ($parsedBody['properties']['title'] ?? 'Untitled'),
+                'tabs' => $tabs,
+            ];
+            $json(200, [
+                'spreadsheetId' => $newId,
+                'spreadsheetUrl' => 'https://docs.google.com/spreadsheets/d/'.$newId,
+            ]);
+
+            return null;
+        }
+        if ($id === null || ! isset($state['sheets'][$id])) {
+            $json(404, ['error' => ['code' => 404, 'message' => 'Spreadsheet not found', 'status' => 'NOT_FOUND']]);
+
+            return null;
+        }
+        $tab = 'Marks';
+        if (is_string($range) && preg_match("/^'([^']+)'!/", $range, $rm)) {
+            $tab = $rm[1];
+        } elseif (is_string($range) && preg_match('/^([^!]+)!/', $range, $rm)) {
+            $tab = $rm[1];
+        }
+        if ($method === 'PUT' && $range !== null) {
+            $state['sheets'][$id]['tabs'][$tab] = $parsedBody['values'] ?? [];
+            $json(200, ['spreadsheetId' => $id, 'updatedRange' => $range, 'updatedRows' => count($parsedBody['values'] ?? [])]);
+
+            return null;
+        }
+        if ($method === 'GET' && $range !== null) {
+            $json(200, [
+                'range' => $range,
+                'majorDimension' => 'ROWS',
+                'values' => $state['sheets'][$id]['tabs'][$tab] ?? [],
+            ]);
+
+            return null;
+        }
+        if ($method === 'GET') {
+            $json(200, $state['sheets'][$id]);
+
+            return null;
+        }
+        $json(405, ['error' => ['code' => 405, 'message' => 'Method not allowed', 'status' => 'METHOD_NOT_ALLOWED']]);
+
+        return null;
+    });
+
+    return;
+}
+
 $json(404, ['error' => ['code' => 404, 'message' => 'No fake Google handler for '.$path, 'status' => 'NOT_FOUND']]);
