@@ -29,6 +29,7 @@ export const communitySidebar = [
     { text: 'Reference', link: '/community/reference/' }, { text: 'Design system', link: '/community/design-system' } ] },
   { text: 'Project', items: [
     { text: 'Roadmap', link: '/community/roadmap' }, { text: 'Early Adopters Program', link: '/community/early-adopters' },
+    { text: 'Governance', link: '/community/governance' },
     { text: 'Changelog', link: '/community/changelog' },
     { text: 'Provenance', link: '/community/provenance' }, { text: 'Security', link: '/community/security' },
     { text: 'Code of conduct', link: '/community/code-of-conduct' } ] },
