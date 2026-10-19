@@ -676,8 +676,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 19, 2026 — **L6 teacher mark save no longer messages parents (OPEN, not merged)**
+## Current Status: October 19, 2026 — **L6 teacher mark save no longer messages parents — OPEN [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121)**
 
+- Branch `cursor/l6-teacher-save-no-parent-notify-7d0b`. Not merged. Production untouched.
 - Audit item L6 from the marks-flow proposal ([#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118)). `Teacher\MarksController::saveExamMarks` called `OutboundWhatsAppService::notifyComprehensiveGrades` ("Results Published") when a student had a mark in every counted subject. That call and the method are removed. Parents are messaged from a release, which `MarksReleaseTest` still covers.
 - Other save paths checked and left alone: single-mark update, spreadsheet import (`MarksUpdated` tells school admins), Toshi `TeacherActionService::enterMarks`, Toshi `ToshiActionService::enterMark`, WhatsApp teacher marks (read-only), no marks observer. `GradesPublished` / `SendGradesToWhatsApp` / `notifyGradesPublished` are still registered and unused by a save; deleting them is plan row 3.
 - The subject count on that path queried `subjects.is_active`. The table column is `status`, so the query threw and the catch swallowed it. The new test adds `is_active` so the old path actually queues a parent message, and that test is red without this change.
