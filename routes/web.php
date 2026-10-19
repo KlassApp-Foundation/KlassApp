@@ -184,7 +184,31 @@ Route::middleware('auth')->prefix('platform')->group(function () {
         ->name('platform.early-access.index');
     Route::get('/early-access/export', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'export'])
         ->name('platform.early-access.export');
+    Route::post('/early-access/{earlyAccessRequest}/invite', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'invite'])
+        ->name('platform.early-access.invite');
+    Route::post('/school-invites/{schoolInvite}/resend', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'resend'])
+        ->name('platform.school-invites.resend');
+    Route::post('/school-invites/{schoolInvite}/revoke', [App\Http\Controllers\Platform\EarlyAccessRequestController::class, 'revoke'])
+        ->name('platform.school-invites.revoke');
 });
+
+// Early-adopter school invite. This is deliberately outside the sign-up switch:
+// a valid, email-bound, single-use token is the only way in while
+// SIGNUP_ENABLED=false.
+Route::get('/invite/school/{token}', [App\Http\Controllers\SchoolInviteClaimController::class, 'show'])
+    ->middleware('guest')
+    ->name('school-invite.show');
+Route::post('/invite/school/{token}', [App\Http\Controllers\SchoolInviteClaimController::class, 'claim'])
+    ->middleware(['guest', 'throttle:10,1'])
+    ->name('school-invite.claim');
+
+// Post-claim choice: manual Wizard or scripted Toshi onboarding.
+Route::get('/onboarding/choose', [App\Http\Controllers\OnboardingChoiceController::class, 'show'])
+    ->middleware('auth')
+    ->name('onboarding.choice');
+Route::post('/onboarding/choose', [App\Http\Controllers\OnboardingChoiceController::class, 'store'])
+    ->middleware('auth')
+    ->name('onboarding.choice.store');
 
 Route::get('/register/verify', [\App\Http\Controllers\Auth\EmailVerificationCodeController::class, 'show'])
     ->middleware('signup.enabled')

@@ -16,4 +16,7 @@ return [
 
     'expiry_hours' => (int) env('INVITE_EXPIRY_HOURS', 72),
 
+    /* Early-adopter school invites are deliberately longer-lived (7 days). */
+    'school_expiry_hours' => (int) env('SCHOOL_INVITE_EXPIRY_HOURS', 168),
+
 ];
