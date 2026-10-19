@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Models\EarlyAccessRequest;
+use App\Models\SchoolInvite;
+use App\Models\User;
+use App\Services\SchoolInviteService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,8 +20,23 @@ class EarlyAccessRequestController extends Controller
     {
         $this->authorizePlatformAdmin($request);
 
+        $requests = EarlyAccessRequest::orderByDesc('id')->paginate(50);
+        $emails = collect($requests->items())
+            ->pluck('email')
+            ->map(fn ($email) => mb_strtolower(trim((string) $email)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $invites = SchoolInvite::whereIn('email', $emails)
+            ->orderByDesc('id')
+            ->get()
+            ->keyBy(fn (SchoolInvite $invite) => mb_strtolower($invite->email));
+
         return view('platform.early-access.index', [
-            'requests' => EarlyAccessRequest::orderByDesc('id')->paginate(50),
+            'requests' => $requests,
+            'invites' => $invites,
         ]);
     }
 
@@ -47,6 +65,59 @@ class EarlyAccessRequestController extends Controller
             });
             fclose($out);
         }, 'early-access-requests.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function invite(Request $request, EarlyAccessRequest $earlyAccessRequest)
+    {
+        $this->authorizePlatformAdmin($request);
+
+        $email = mb_strtolower(trim((string) $earlyAccessRequest->email));
+
+        if (User::withTrashed()->where('email', $email)->exists()) {
+            return back()->with('error', 'A user with '.$email.' already exists. This request cannot be invited again.');
+        }
+
+        $active = SchoolInvite::where('email', $email)
+            ->whereNull('claimed_at')
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if ($active) {
+            return back()->with('error', 'An active invite already exists for '.$email.'. Use resend instead.');
+        }
+
+        ['invite' => $invite, 'token' => $token] = SchoolInviteService::issue($earlyAccessRequest, $request->user());
+        SchoolInviteService::sendEmail($invite, $token);
+
+        return back()->with('success', 'Invite sent to '.$email.'.');
+    }
+
+    public function resend(Request $request, SchoolInvite $schoolInvite)
+    {
+        $this->authorizePlatformAdmin($request);
+
+        if ($schoolInvite->isClaimed()) {
+            return back()->with('error', 'This invite has already been claimed.');
+        }
+
+        ['invite' => $invite, 'token' => $token] = SchoolInviteService::reissue($schoolInvite);
+        SchoolInviteService::sendEmail($invite, $token);
+
+        return back()->with('success', 'A fresh invite was sent to '.$invite->email.'.');
+    }
+
+    public function revoke(Request $request, SchoolInvite $schoolInvite)
+    {
+        $this->authorizePlatformAdmin($request);
+
+        if ($schoolInvite->isClaimed()) {
+            return back()->with('error', 'A claimed invite cannot be revoked.');
+        }
+
+        SchoolInviteService::revoke($schoolInvite);
+
+        return back()->with('success', 'Invite revoked for '.$schoolInvite->email.'.');
     }
 
     private function authorizePlatformAdmin(Request $request): void

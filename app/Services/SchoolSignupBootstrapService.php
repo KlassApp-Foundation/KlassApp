@@ -62,7 +62,13 @@ class SchoolSignupBootstrapService
             $email = trim((string) $data['email']);
             $phone = $this->normalizePhone($data['phone'] ?? null);
 
-            $school = $this->createPlaceholderSchool($adminName, $email, $phone);
+            $school = $this->createPlaceholderSchool(
+                $adminName,
+                $email,
+                $phone,
+                $data['school_name'] ?? null,
+                $data['registration_country'] ?? null,
+            );
             $user = $this->createSchoolAdmin($school, $data, $phone);
             $this->createUserProfile($user, $adminName, $phone);
             $this->createPendingSubscription($user);
@@ -151,9 +157,16 @@ class SchoolSignupBootstrapService
         return '+'.$digits;
     }
 
-    private function createPlaceholderSchool(string $adminName, string $email, ?string $phone): School
-    {
-        $name = $this->uniquePlaceholderSchoolName($adminName);
+    private function createPlaceholderSchool(
+        string $adminName,
+        string $email,
+        ?string $phone,
+        ?string $schoolName = null,
+        ?string $country = null,
+    ): School {
+        $name = $schoolName !== null && trim($schoolName) !== ''
+            ? $this->uniqueSchoolName($schoolName)
+            : $this->uniquePlaceholderSchoolName($adminName);
 
         $payload = [
             'name' => $name,
@@ -169,6 +182,10 @@ class SchoolSignupBootstrapService
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ];
+
+        if ($country !== null && trim($country) !== '') {
+            $payload['registration_country'] = trim($country);
+        }
 
         // Force null past the column default ('uneb') when the DB still has a default.
         $school = new School($payload);
