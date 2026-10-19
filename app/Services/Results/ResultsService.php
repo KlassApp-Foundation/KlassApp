@@ -7,6 +7,7 @@ use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
@@ -19,7 +20,8 @@ use Illuminate\Support\Collection;
  * Marks are grouped by exam type, term, class and subject. One exam row
  * per subject and one exam row carrying several subjects both work.
  * A policy may keep each non-contributing exam type as one sitting per
- * calendar month. Totals still use contributing types only.
+ * calendar month. Totals use the school's exam-type setting, or the
+ * global flag when the school has not chosen. The letter is the scale.
  * This service does not decide whether a parent may see the sheet.
  */
 final class ResultsService
@@ -27,6 +29,7 @@ final class ResultsService
     public function __construct(
         private readonly GradingScale $gradingScale,
         private readonly DivisionRule $divisionRule,
+        private readonly ExamTypeContribution $examTypeContribution,
     ) {
     }
 
@@ -51,7 +54,8 @@ final class ResultsService
             ->with('examType')
             ->get();
 
-        $typeMeta = $this->typeMeta($exams);
+        $preferences = School::query()->find($query->schoolId)?->exam_type_preferences;
+        $typeMeta = $this->typeMeta($exams, $preferences);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
         $roster = $this->roster($query, (int) $term->academic_year_id);
@@ -68,7 +72,7 @@ final class ResultsService
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
-        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth) as $plan) {
+        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
             $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
             $bucketMarks = $marks->whereIn('exam_id', $plan['examIds'])->values();
             $bucketChosen = $this->choose($bucketExams, $bucketMarks);
@@ -131,9 +135,10 @@ final class ResultsService
     }
 
     /**
+     * @param array<int|string, mixed>|null $preferences
      * @return array<int, array{id: int, name: string, code: string, contributes: bool}>
      */
-    private function typeMeta(Collection $exams): array
+    private function typeMeta(Collection $exams, ?array $preferences): array
     {
         $types = [];
         foreach ($exams as $exam) {
@@ -145,7 +150,7 @@ final class ResultsService
                 'id' => (int) $type->id,
                 'name' => (string) $type->name,
                 'code' => (string) ($type->code ?? ''),
-                'contributes' => (bool) $type->contributes_to_report_total,
+                'contributes' => $this->examTypeContribution->contributes($type, $preferences),
             ];
         }
         ksort($types);
@@ -159,9 +164,10 @@ final class ResultsService
      * mode stays its own sitting. Contributing types stay one sitting, and
      * the main total is unaffected.
      *
+     * @param array<int|string, mixed>|null $preferences
      * @return list<array{typeId: int, name: string, code: string, contributes: bool, periodKey: string, periodLabel: string, examIds: list<int>}>
      */
-    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth): array
+    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth, ?array $preferences): array
     {
         $plans = [];
         foreach ($exams as $exam) {
@@ -169,7 +175,7 @@ final class ResultsService
             if ($type === null) {
                 continue;
             }
-            $contributes = (bool) $type->contributes_to_report_total;
+            $contributes = $this->examTypeContribution->contributes($type, $preferences);
             $scheduled = $exam->scheduled_at;
             if ($splitMidTermByMonth && ! $contributes && $scheduled !== null) {
                 $key = 'type:'.$type->id.'|month:'.$scheduled->format('Y-m');

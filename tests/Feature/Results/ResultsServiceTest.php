@@ -403,6 +403,35 @@ class ResultsServiceTest extends TestCase
     /**
      * @return array{school: School, year: AcademicYear, standard: Standard, section: Section, link: StandardLink, teacher: User, english: Subject, maths: Subject}
      */
+    public function test_school_exam_type_preference_overrides_the_global_flag_and_the_letter_comes_from_the_scale(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'B', 'points' => 2, 'min' => 0, 'max' => 100],
+        ]);
+        $student = $this->student($ctx, 'Pref Student');
+        $mid = $this->exam($ctx, $term, $ctx['english'], '2026-03-01', 1);
+        $eot = $this->exam($ctx, $term, $ctx['english'], '2026-04-01', 2);
+        $this->mark($ctx, $mid, $ctx['english'], $student, 40, 'C3');
+        $this->mark($ctx, $eot, $ctx['english'], $student, 80, 'C3');
+
+        // The settings form stores the checkbox as the strings "0" and "1".
+        $ctx['school']->exam_type_preferences = ['1' => '1', '2' => '0'];
+        $ctx['school']->save();
+
+        $sheet = $this->sheet($ctx, $term);
+        $row = $sheet->student($student->id);
+
+        $this->assertSame(40.0, $row->total);
+        $this->assertSame('B', $row->cell($ctx['english']->id)->grade);
+        $contributing = array_values(array_filter(
+            $sheet->sittings,
+            fn ($sitting) => $sitting->contributesToReport
+        ));
+        $this->assertSame(['MID'], array_map(fn ($sitting) => $sitting->code, $contributing));
+    }
+
     private function school(string $name = 'Results School'): array
     {
         $school = School::create([
