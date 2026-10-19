@@ -883,7 +883,7 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('admin.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('admin.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('admin.marks.releases.show');
-Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
+Route::post('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "GetStudentsMarks@redirectLegacyReport")->name("admin.report.student.class");
 Route::get('/marks/download/', "DownloadMarksSheet@download")->name("admin.marksheet.download");

@@ -171,7 +171,12 @@ return [
                     'label' => 'School',
                     'rows' => [
                         ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*'], 'count' => 'whatsapp'],
-                        ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
+                        [
+                            'label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals',
+                            'children' => [
+                                ['label' => 'Mark submissions', 'url' => 'admin/marks/submissions', 'paths' => ['admin/marks/submissions*']],
+                            ],
+                        ],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [
                             'label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'condition' => 'school_admin',
