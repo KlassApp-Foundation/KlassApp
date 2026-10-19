@@ -682,6 +682,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - One `App\Contracts\Results\ReleaseGate` (`EloquentReleaseGate`) is the only release check for marks shown to a parent, student, or alumni: portal grades, dashboard panel, `/student/marks`, WhatsApp GRADES/MARKS/REPORT, the unrouted grades and report methods, Toshi parent/student tools, alumni marks/dashboard/PDF. Staff report cards stay ungated. `resolveExam` is unchanged.
 - No migration and no past-term backfill. A released class sitting stays visible for any of the person's enrollments, including a past class. A backfill that marked every old sitting released would publish marks that were never released.
 - L6 stays on #1121. Report-card term selection, single-subject aggregate, and division are the next PR.
+- A class release is skipped unless its sitting's section is the class being asked for, so a student who moved classes does not see the new class's unreleased exam.
 
 ## Session: 2026-10-19 — ReleaseGate for parent and student marks (PR #1122 OPEN)
 

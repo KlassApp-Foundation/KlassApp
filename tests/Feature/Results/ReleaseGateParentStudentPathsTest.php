@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Results;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Http\Controllers\Api\WhatsAppController;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
@@ -493,6 +494,53 @@ class ReleaseGateParentStudentPathsTest extends TestCase
         $marks = StudentActionService::viewMarks($this->student);
         $this->assertStringNotContainsString('score 91', $marks['message']);
         $this->assertStringContainsString('score 80', $marks['message']);
+    }
+
+    public function test_a_moved_student_does_not_see_the_new_class_unreleased_exam(): void
+    {
+        $newLink = $this->otherLink();
+        $this->enroll($this->student, $newLink);
+
+        $newSubject = Subject::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $this->link->standard_id,
+            'section_id' => $newLink->section_id,
+            'name' => 'Newmark',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        $newExam = Exam::withoutEvents(fn () => Exam::create([
+            'school_id' => $this->school->id,
+            'standard_id' => $this->link->standard_id,
+            'section_id' => $newLink->section_id,
+            'academic_year_id' => $this->year->id,
+            'academic_term_id' => $this->term->id,
+            'subject_id' => $newSubject->id,
+            'teacher_id' => $this->exam->teacher_id,
+            'exam_type_id' => $this->exam->exam_type_id,
+            'scheduled_at' => '2026-04-15',
+            'status' => 'done',
+        ]));
+        Marks::create([
+            'student_id' => $this->student->id,
+            'subject_id' => $newSubject->id,
+            'section_id' => $newLink->section_id,
+            'exam_id' => $newExam->id,
+            'teacher_id' => $this->exam->teacher_id,
+            'school_id' => $this->school->id,
+            'marks' => 70,
+            'grade' => 'C3',
+        ]);
+        $this->release();
+
+        $gate = app(ReleaseGate::class);
+
+        $this->assertSame(
+            $this->exam->id,
+            $gate->latestReleasedExam($this->student, (int) $this->link->section_id)?->id,
+        );
+        $this->assertNull($gate->latestReleasedExam($this->student, (int) $newLink->section_id));
     }
 
     public function test_staff_report_exam_resolution_stays_ungated(): void

@@ -94,16 +94,16 @@ final class EloquentReleaseGate implements ReleaseGate
         }
 
         foreach ($this->releasedReleases($person) as $release) {
-            $anchor = $release->exam;
-            if ($anchor === null) {
+            $sitting = $this->sittingFor($release);
+            if ($sitting === null || ($sitting->sectionId !== null && $sitting->sectionId !== $sectionId)) {
                 continue;
             }
 
             $exam = Exam::query()
                 ->where('school_id', $schoolId)
                 ->where('section_id', $sectionId)
-                ->where('exam_type_id', $anchor->exam_type_id)
-                ->where('academic_term_id', $anchor->academic_term_id)
+                ->where('exam_type_id', $sitting->examTypeId)
+                ->where('academic_term_id', $sitting->academicTermId)
                 ->whereNull('deleted_at')
                 ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId)
                     ->where('section_id', $sectionId)
