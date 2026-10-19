@@ -38,12 +38,8 @@ class ReportCardsController extends Controller
             ->with(['section', 'standard'])
             ->get()
             ->filter(function ($sl) use ($schoolId, $selectedTerm) {
-                $sl->eotExam = Exam::where('school_id', $schoolId)
-                    ->where('section_id', $sl->section_id)
-                    ->where('standard_id', $sl->standard_id)
-                    ->where('academic_term_id', $selectedTerm)
-                    ->whereHas('examType', fn($q) => $q->where('contributes_to_report_total', 1))
-                    ->first();
+                $termId = $selectedTerm !== null && $selectedTerm !== '' ? (int) $selectedTerm : null;
+                $sl->eotExam = app(StudentReportCardService::class)->resolveExam($schoolId, $sl, $termId);
 
                 if ($sl->eotExam) {
                     $sl->studentCount = \App\Models\Academics\Marks::where('exam_id', $sl->eotExam->id)
@@ -160,7 +156,7 @@ class ReportCardsController extends Controller
     {
         $schoolId = Auth::user()->school_id;
 
-        $exam = $this->resolveExam($schoolId, $stdLink);
+        $exam = $this->resolveExam($schoolId, $stdLink, $this->requestedTermId($schoolId));
         if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
 
         $studentIds = $this->studentIds($exam);
@@ -217,8 +213,8 @@ class ReportCardsController extends Controller
         $schoolId = Auth::user()?->school_id;
         if (!$schoolId) return back()->with('failmessage', 'No school linked.');
 
-        $academicTermId = request('term', AcademicTerm::where('school_id', $schoolId)
-            ->where('status', 'current')->value('id'));
+        $academicTermId = $this->requestedTermId($schoolId)
+            ?? AcademicTerm::where('school_id', $schoolId)->where('status', 'current')->value('id');
 
         $eotIds = Exam::where('school_id', $schoolId)
             ->where('academic_term_id', $academicTermId)
@@ -233,7 +229,7 @@ class ReportCardsController extends Controller
         $missing = [];
 
         foreach ($stdLinks as $sl) {
-            $exam = $this->resolveExam($schoolId, $sl);
+            $exam = $this->resolveExam($schoolId, $sl, $academicTermId ? (int) $academicTermId : null);
             if (!$exam) continue;
 
             $studentIds = $this->studentIds($exam);
@@ -276,10 +272,11 @@ class ReportCardsController extends Controller
             if (!$schoolId) return back()->with('failmessage', 'Your account is not linked to a school.');
 
             $reports = app(StudentReportCardService::class);
-            $exam = $reports->resolveExam($schoolId, $stdLink);
+            $termId = $this->requestedTermId($schoolId);
+            $exam = $reports->resolveExam($schoolId, $stdLink, $termId);
             if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
 
-            $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner);
+            $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner, null, $termId);
 
             $name = $learner->displayNameFilenameSlug('student');
             $filename = "{$name}_report_card.pdf";
@@ -299,9 +296,27 @@ class ReportCardsController extends Controller
         }
     }
 
-    private function resolveExam(int $schoolId, StandardLink $stdLink): ?Exam
+    private function resolveExam(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): ?Exam
     {
-        return app(StudentReportCardService::class)->resolveExam($schoolId, $stdLink);
+        return app(StudentReportCardService::class)->resolveExam($schoolId, $stdLink, $academicTermId);
+    }
+
+    /**
+     * Term from the report-card page. A term that is not this school's is ignored.
+     */
+    private function requestedTermId(int $schoolId): ?int
+    {
+        $raw = request('term');
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        $id = (int) $raw;
+        if ($id <= 0) {
+            return null;
+        }
+        $belongs = AcademicTerm::query()->where('school_id', $schoolId)->whereKey($id)->exists();
+
+        return $belongs ? $id : null;
     }
 
     private function studentIds(Exam $exam)
@@ -340,9 +355,15 @@ class ReportCardsController extends Controller
         $schoolId = Auth::user()->school_id;
         $reports = app(StudentReportCardService::class);
 
+        $currentTermId = AcademicTerm::where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->value('id');
         $exam = Exam::where('school_id', $schoolId)
+            ->when($currentTermId, fn ($q) => $q->where('academic_term_id', $currentTermId))
             ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
-            ->latest()
+            ->orderBy('id')
             ->first();
 
         if (!$exam) {
@@ -356,7 +377,7 @@ class ReportCardsController extends Controller
             ->first();
 
         if (!$stdLink || !$learner) {
-            return back()->with('failmessage', 'No students with marks for the latest exam — nothing to preview.');
+            return back()->with('failmessage', 'No students with marks for this term — nothing to preview.');
         }
 
         $helper = app(\App\Services\StudentReportHelperService::class);

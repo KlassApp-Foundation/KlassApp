@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
+
+- Stacked on [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122) (`cursor/release-gate-parent-student-marks-7d0b`). Base is that branch, not `main`, because the parent report path has to call `ReleaseGate`. Not merged. Production untouched.
+- Term is the requested id, or the school term with `status = current`. Never the newest created exam. Parent WhatsApp walks released terms, so a newer unreleased exam does not hide an older released term. A requested unreleased term is withheld. End-of-term aggregate and division count every contributing subject.
+- Grading points, division bands, and templates are `GradingScale`, `DivisionRule`, and `ReportTemplates`. The default division binding is the existing 12/24/28/32/U table, not a new country scale. No migration.
+
+## Session: 2026-10-19 — Report card term, release, and full aggregate (PR #1124 OPEN)
+
+- **Work:** explicit term on staff report cards and the class batch job; parent report selection through `ReleaseGate`; end-of-term sheet, aggregate, division, and stream rank from every contributing subject in that term.
+- **Files:** `StudentReportCardService`, admin report-card controller and cards view, both report templates, `GenerateClassReportsJob`, `WhatsAppReportCardDeliveryService`, `AppServiceProvider`, `app/Contracts/Results/{GradingScale,DivisionRule,ReportTemplates}.php`, `app/Services/Results/{SchoolGradingScale,ThresholdDivisionRule,DefaultReportTemplates}.php`, `tests/Feature/Reports/ReportCardTermReleaseAggregateTest.php`.
+- **Decision:** no migration and no backfill. Stacked on #1122 rather than copying the gate onto a `main` branch. `ResultsService` and deletion of dead ungated paths stay later PRs.
+- **Tests:** on `223075d0`, (a) `resolveExam` returned the later-created exam and the batch job threw `No students with marks`; (b) `prepareForStudent` was `ok: false` while an older term was released; (c) aggregate was 9 not 18. With the fix, marks-related PHPUnit: 191 passed (1067 assertions). No browser or staging pass.
+- **Status:** OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124). Do not merge from this session.
+
 ## Current Status: October 19, 2026 — **parent/student ReleaseGate OPEN [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122)**
 
 - Branch `cursor/release-gate-parent-student-marks-7d0b` from `main` (`a958dfc4`). Not stacked on [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121). Not merged. Production untouched.

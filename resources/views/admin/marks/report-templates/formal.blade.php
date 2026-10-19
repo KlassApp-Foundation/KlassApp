@@ -383,8 +383,7 @@
                 <th style="width:10%">TR Initials</th>
             </tr>
             @foreach ($subjects as $subject)
-                @php $subjectMarks = $learner->marks->where('subject_id', $subject->id); @endphp
-                @php $eotMark = $subjectMarks->firstWhere('exam_id', $eotExams->first()->id); @endphp
+                @php $eotMark = ($eotMarkBySubject[$subject->id] ?? null); @endphp
                 @if (!$eotMark) @continue @endif
                 @php
                     $hasEotMarks = $eotMark->marks !== null;
