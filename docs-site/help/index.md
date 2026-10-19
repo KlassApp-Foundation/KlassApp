@@ -2,8 +2,7 @@
 title: Help
 ---
 # Help for schools
-Choose who you are.
-
+Choose who you are. New to the school? Start with [Get started](/help/getting-started).
 <RoleCards :items="[
  {title:'Platform admin',text:'Schools, plans, and invites across KlassApp',link:'/docs-preview/help/platform/'},
  {title:'School admin',text:'People, classes, fees, WhatsApp, and settings',link:'/docs-preview/help/admins/'},
