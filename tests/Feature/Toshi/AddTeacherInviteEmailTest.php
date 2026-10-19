@@ -14,6 +14,7 @@ use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class AddTeacherInviteEmailTest extends TestCase
@@ -129,14 +130,20 @@ class AddTeacherInviteEmailTest extends TestCase
             return $mail->email === 'jane.teacher@test.sch.ug'
                 && $mail->className === null
                 && ! property_exists($mail, 'password')
-                && $mail->existingAccount === false;
+                && $mail->existingAccount === false
+                && str_contains($mail->inviteUrl, '/password/reset/');
         });
 
-        // Rendered email carries a set-password link, never a credential.
-        $mails = Mail::queued(TeacherInviteMail::class);
-        $html = $mails->first()->render();
+        // Rendered email carries a signed set-password link, never a credential.
+        $mail = Mail::queued(TeacherInviteMail::class)->first();
+        $html = $mail->render();
         $this->assertStringContainsString('Set your password', $html);
+        $this->assertStringContainsString($mail->inviteUrl, $html);
         $this->assertStringNotContainsString('Password:', $html);
+        $this->assertStringContainsString((string) $mail->expiresInMinutes, $html);
+
+        $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
+        $this->assertTrue(Password::broker()->tokenExists($teacher, $token));
     }
 
     public function test_add_teacher_with_class_assigns_class_teacher_and_names_class_in_mail(): void

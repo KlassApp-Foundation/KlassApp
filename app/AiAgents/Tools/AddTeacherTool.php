@@ -17,7 +17,7 @@ class AddTeacherTool implements Tool, VerifiableTool
 
     public function description(): string
     {
-        return 'Add a new teacher to the school and email them temporary login credentials. Provide name and email (required). Optionally: phone, subjects (comma-separated), classes (comma-separated — first class sets class-teacher assignment).';
+        return 'Add a new teacher to the school and email them a link to set their own password. Provide name and email (required). Optionally: phone, subjects (comma-separated), classes (comma-separated — first class sets class-teacher assignment).';
     }
 
     public function schema(JsonSchema $schema): array
