@@ -680,7 +680,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
 - Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
-- Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
+- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom. Classroom builds on `feat/google-classroom-wave1` at `db8a5d82` and does not push that branch. Calendar, Gmail, Docs, Slides, and Tasks are not started. `bash scripts/test-guard.sh` on the Classroom tip: 2736 tests, 0 failures, 0 errors.
 
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
@@ -2645,6 +2645,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-19: Google connectors (foundation, Sheets, Drive, Classroom)
+
+- **Work done**: Per-school Google connection with incremental scopes, encrypted tokens, refresh, and disconnect. Sheets export/import through `MarksImportService`. Drive filing of report-card PDFs from `StudentReportCardService::generatePdf()` under `KlassApp / {term} / {class}` with `drive.file`. Classroom read-only class and student match on top of #728 at `db8a5d82`, without pushing that branch. Fake Google HTTP server covers OAuth and each connector's API, including expired tokens, revoked access, and API errors.
+- **Files modified**: `config/google.php`, `config/services.php`, `config/toshi.php`, `app/Services/Google/**`, `app/Http/Controllers/Admin/Setting/Google*Controller.php`, `routes/setting.php`, `routes/ai.php`, `tests/fixtures/google/fake-google-router.php`, `tests/Feature/Google/**`, `docs/ops/google-connectors-smoke-test.md`, Classroom MCP skill and tools brought forward from #728, `knowledge.md`.
+- **Key decisions**: One OAuth client and a separate connector redirect, so Socialite sign-in stays on `/auth/google/callback`. #728's separate Classroom client is not carried forward. Roster scope is included for the student match. `ResultsService` (#1118) is not on main; Sheets reads go through `ClassMarkSheetReader`. A student or class is linked only on an exact unique name. No users are created. Google revoke runs only when the last connector is disconnected.
+- **Status**: Draft PRs open. Not merged. Production and staging not touched. Full test guard on the Classroom tip: 2736 tests, 0 failures, 0 errors, 4 skipped.
+- **Edge cases flagged**: Google cannot revoke one scope. Section names are unique per school, so a duplicate class name cannot be stored today; the sync still refuses that case. Real Google consent, API enablement, and course-ownership rules are not proven by the fake server.
+- **PR**: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation (`cursor/google-connectors-foundation-b53f`). [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets. [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive. [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom (`cursor/google-connectors-classroom-b53f`, head after this note). Not merged.
 
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
