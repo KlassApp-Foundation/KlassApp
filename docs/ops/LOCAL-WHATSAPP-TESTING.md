@@ -29,7 +29,7 @@ are the exact names (line numbers as of this change):
 | `WHATSAPP_BUSINESS_API_TOKEN` | `business_api_token` | `config/services.php:49` | Access token sent as `Authorization: Bearer` |
 | `WHATSAPP_APP_SECRET` | `app_secret` | `config/services.php:54` | Meta app secret; inbound POSTs must carry a valid `X-Hub-Signature-256` made with it |
 | `WHATSAPP_VERIFY_SIGNATURE` | `verify_signature` | `config/services.php:55` | Signature check on (default `true`). Keep it on, also locally |
-| `WHATSAPP_BUSINESS_VERIFY_TOKEN` | `business_verify_token` | `config/services.php:52` | Verify token for Meta's GET handshake. Config has a built-in fallback; always set your own |
+| `WHATSAPP_BUSINESS_VERIFY_TOKEN` | `business_verify_token` | `config/services.php:52` | Verify token for Meta's GET handshake. Required. The handshake returns 403 when this is unset |
 | `WHATSAPP_BUSINESS_API_VERSION` | `business_api_version` | `config/services.php:56` | Graph API version in the outbound URL (default `v21.0`) |
 | `WHATSAPP_GRAPH_API_BASE_URL` | `graph_api_base_url` | `config/services.php:59` | Outbound Cloud API base URL. Default `https://graph.facebook.com`; set it only locally, to the simulator |
 | `WHATSAPP_REPLIES_ENABLED` | `replies_enabled` | `config/services.php:68` | Kill switch. `false` stops every outbound WhatsApp message, replies included (default `true`) |

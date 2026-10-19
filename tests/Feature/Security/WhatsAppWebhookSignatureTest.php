@@ -25,6 +25,7 @@ class WhatsAppWebhookSignatureTest extends TestCase
         config([
             'services.whatsapp.app_secret' => self::SECRET,
             'services.whatsapp.verify_signature' => true,
+            'services.whatsapp.business_verify_token' => 'test-verify-token',
         ]);
     }
 

@@ -723,9 +723,15 @@ class WhatsAppController extends Controller
             $token = $params['hub.verify_token'] ?? null;
             $challenge = $params['hub.challenge'] ?? null;
 
-            $expectedToken = config('services.whatsapp.business_verify_token', env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'));
+            $configured = config('services.whatsapp.business_verify_token');
+            $expectedToken = is_string($configured) ? $configured : '';
 
-            if ($mode === 'subscribe' && $token === $expectedToken && $challenge) {
+            if ($expectedToken !== ''
+                && $mode === 'subscribe'
+                && is_string($token)
+                && hash_equals($expectedToken, $token)
+                && is_string($challenge)
+                && $challenge !== '') {
                 Log::info('WhatsApp Business API: webhook verified');
                 return response($challenge, 200)->header('Content-Type', 'text/plain');
             }
