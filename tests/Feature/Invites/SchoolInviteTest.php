@@ -12,6 +12,7 @@ use App\Services\SchoolInviteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 use Tests\TestCase;
 
 class SchoolInviteTest extends TestCase
@@ -180,6 +181,72 @@ class SchoolInviteTest extends TestCase
 
         $this->assertNotNull($invite->fresh()->revoked_at);
         $this->assertSame('revoked', $invite->fresh()->status());
+    }
+
+    public function test_a_second_claim_of_a_claimed_invite_cannot_create_a_second_school(): void
+    {
+        $admin = $this->platformAdmin();
+        ['invite' => $invite] = SchoolInviteService::issue($this->earlyAccess(), $admin);
+
+        // Two submissions that both loaded the invite before either claimed it.
+        $first = SchoolInvite::findOrFail($invite->id);
+        $second = SchoolInvite::findOrFail($invite->id);
+        $this->assertNull($second->claimed_at);
+
+        $schoolsBefore = School::count();
+
+        $claimOne = SchoolInviteService::claim($first, [
+            'name' => 'Grace Nakato',
+            'phone' => '+256701234567',
+            'password' => 'StrongPass123!',
+        ]);
+        $this->assertTrue($claimOne['success']);
+
+        $claimTwo = SchoolInviteService::claim($second, [
+            'name' => 'Someone Else',
+            'phone' => '+256709876543',
+            'password' => 'StrongPass123!',
+        ]);
+
+        $this->assertFalse($claimTwo['success']);
+        $this->assertStringContainsString('already been used', $claimTwo['message']);
+        $this->assertSame($schoolsBefore + 1, School::count());
+        $this->assertSame(1, School::where('name', 'Greenfield Primary')->count());
+        $this->assertSame(1, User::where('email', 'adopter@school.test')->count());
+        $this->assertNotNull($invite->fresh()->claimed_at);
+    }
+
+    public function test_a_queue_failure_is_reported_and_the_invite_can_be_retried(): void
+    {
+        $admin = $this->platformAdmin();
+        $request = $this->earlyAccess();
+
+        Mail::shouldReceive('to')->andThrow(new RuntimeException('queue connection refused'));
+
+        $this->actingAs($admin)
+            ->post(route('platform.early-access.invite', $request))
+            ->assertRedirect()
+            ->assertSessionMissing('success')
+            ->assertSessionHas('error', fn (string $message) => str_contains($message, 'could not be queued'));
+
+        $invite = SchoolInvite::where('email', 'adopter@school.test')->firstOrFail();
+        $this->assertNotNull($invite->email_failed_at);
+
+        $this->actingAs($admin)
+            ->get(route('platform.early-access.index'))
+            ->assertOk()
+            ->assertSee('Email not sent')
+            ->assertSee('data-testid="invite-retry-button"', false)
+            ->assertDontSee('Invite sent');
+
+        Mail::fake();
+
+        $this->actingAs($admin)
+            ->post(route('platform.school-invites.resend', $invite))
+            ->assertSessionHas('success');
+
+        $this->assertNull($invite->fresh()->email_failed_at);
+        Mail::assertQueued(SchoolInviteMail::class, fn (SchoolInviteMail $mail) => $mail->hasTo('adopter@school.test'));
     }
 
     public function test_the_claim_choice_sets_the_toshi_mode_or_opens_the_wizard(): void
