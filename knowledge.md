@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **parent/student ReleaseGate OPEN [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122)**
+
+- Branch `cursor/release-gate-parent-student-marks-7d0b` from `main` (`a958dfc4`). Not stacked on [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121). Not merged. Production untouched.
+- One `App\Contracts\Results\ReleaseGate` (`EloquentReleaseGate`) is the only release check for marks shown to a parent, student, or alumni: portal grades, dashboard panel, `/student/marks`, WhatsApp GRADES/MARKS/REPORT, the unrouted grades and report methods, Toshi parent/student tools, alumni marks/dashboard/PDF. Staff report cards stay ungated. `resolveExam` is unchanged.
+- No migration and no past-term backfill. A released class sitting stays visible for any of the person's enrollments, including a past class. A backfill that marked every old sitting released would publish marks that were never released.
+- L6 stays on #1121. Report-card term selection, single-subject aggregate, and division are the next PR.
+
+## Session: 2026-10-19 — ReleaseGate for parent and student marks (PR #1122 OPEN)
+
+- **Work:** wired every parent/student/alumni marks read through `ReleaseGate`. Demo `LatestExamMarks::latestReleasedExam` delegates to it and still prefers the newest release.
+- **Files:** `app/Contracts/Results/ReleaseGate.php`, `app/Contracts/Results/ReleasedSitting.php`, `app/Services/Results/EloquentReleaseGate.php`, parent portal, student records, alumni controller, Toshi student/alumni actions, WhatsApp controller, WhatsApp report delivery, `AppServiceProvider`, demo `LatestExamMarks`, `tests/Feature/Results/ReleaseGateParentStudentPathsTest.php`, `tests/Support/ReleasedExam.php`, plus release rows in existing parent/student fixtures that expect marks to be visible.
+- **Decision:** no backfill command. Covered by `test_past_enrollment_class_release_stays_visible_without_a_backfill`.
+- **Tests:** each L-path test failed on `main` because the unreleased mark was shown (L4's keyword threw on a collection `standard` lookup until that lookup used `studentAcademicLatest`; the leak assertion then failed on `GATEMARK`). With the gate, the path file is green. Marks-related PHPUnit: 187 passed (1051 assertions). No browser or staging pass.
+- **Status:** OPEN [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122). Do not merge from this session.
+
 ## Current Status: October 19, 2026 — **L6 teacher mark save no longer messages parents — OPEN [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121)**
 
 - Branch `cursor/l6-teacher-save-no-parent-notify-7d0b`. Not merged. Production untouched.
