@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Helpers\WhatsAppPhoneHelper;
-use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\FeesCategories;
 use App\Models\StudentAcademic;
@@ -454,73 +453,6 @@ class OutboundWhatsAppService
         }
 
         return array_unique($phones);
-    }
-
-    /**
-     * Notify parents with a comprehensive grades report across all subjects.
-     * Called when the LAST subject's marks are entered for a student.
-     *
-     * @param  int   $studentId
-     * @param  int   $examId     The triggering exam (last subject completed)
-     * @return int   Number of messages sent
-     */
-    public function notifyComprehensiveGrades(int $studentId, int $examId): int
-    {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
-        if (!$student) {
-            return 0;
-        }
-
-        $triggerExam = Exam::find($examId);
-        if (!$triggerExam) {
-            return 0;
-        }
-
-        // Find all exams for this period (same exam type + term + class)
-        $periodExams = Exam::with(['examType', 'subject'])
-            ->where('standard_id', $triggerExam->standard_id)
-            ->where('exam_type_id', $triggerExam->exam_type_id)
-            ->where('academic_term_id', $triggerExam->academic_term_id)
-            ->where('school_id', $triggerExam->school_id)
-            ->get();
-
-        if ($periodExams->isEmpty()) {
-            return 0;
-        }
-
-        // Get all marks for this student across those exams
-        $examIds = $periodExams->pluck('id');
-        $marks = Marks::whereIn('exam_id', $examIds)
-            ->where('student_id', $studentId)
-            ->get()
-            ->keyBy('exam_id');
-
-        $rows = [];
-        foreach ($periodExams as $exam) {
-            $mark = $marks->get($exam->id);
-            $subjectName = $exam->subject->name ?? 'Unknown';
-            if ($mark) {
-                $grade = $mark->grade ?? 'N/A';
-                $score = $mark->marks ?? 'N/A';
-                $remark = $mark->remarks ?? '';
-                $rows[] = "{$subjectName}: {$score} ({$grade})" . ($remark ? " — {$remark}" : '');
-            } else {
-                $rows[] = "{$subjectName}: Not yet available";
-            }
-        }
-
-        $message = "📊 *Results Published*\n\n"
-            . "Student: *{$this->displayNameFor($student)}*\n"
-            . "Class: *{($student->studentAcademic?->standard?->name) ?? 'N/A'}*\n"
-            . "Exam: *{$triggerExam->name}*\n\n"
-            . implode("\n", $rows);
-
-        $sent = 0;
-        foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'comprehensive_grades');
-        }
-
-        return $sent;
     }
 
     // =====================================================================
