@@ -97,6 +97,10 @@ class SchoolMcpConnector extends Model
         $schoolId = $schoolId ?? auth()->user()?->school_id;
 
         if ($schoolId === null) {
+            $schoolId = config('toshi.mcp_context.school_id');
+        }
+
+        if ($schoolId === null) {
             return null;
         }
 

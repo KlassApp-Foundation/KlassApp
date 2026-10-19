@@ -1,6 +1,11 @@
 <?php
 
 return [
+    /* Runtime-only context for local MCP subprocesses (never an env value). */
+    'mcp_context' => [
+        'school_id' => null,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Toshi LLM Assistant Configuration

@@ -45,7 +45,7 @@ class GoogleClassroomOAuthCallbackUpsertTest extends TestCase
             [
                 'school_id' => $admin->school_id,
                 'connector_type' => 'google-classroom',
-                'external_team_id' => 'google-user:'.$admin->id,
+                'external_team_id' => 'school:'.$admin->school_id,
             ],
             [
                 'external_team_name' => $admin->name ?? 'Google Classroom',
@@ -81,7 +81,7 @@ class GoogleClassroomOAuthCallbackUpsertTest extends TestCase
             [
                 'school_id' => $admin->school_id,
                 'connector_type' => 'google-classroom',
-                'external_team_id' => 'google-user:'.$admin->id,
+                'external_team_id' => 'school:'.$admin->school_id,
             ],
             [
                 'external_team_name' => $admin->name ?? 'Google Classroom',
@@ -133,7 +133,7 @@ class GoogleClassroomOAuthCallbackUpsertTest extends TestCase
             [
                 'school_id' => $admin->school_id,
                 'connector_type' => 'google-classroom',
-                'external_team_id' => 'google-user:'.$admin->id,
+                'external_team_id' => 'school:'.$admin->school_id,
             ],
             [
                 'external_team_name' => $admin->name ?? 'Google Classroom',
@@ -186,7 +186,7 @@ class GoogleClassroomOAuthCallbackUpsertTest extends TestCase
             [
                 'school_id' => $adminA->school_id,
                 'connector_type' => 'google-classroom',
-                'external_team_id' => 'google-user:'.$adminA->id,
+                'external_team_id' => 'school:'.$adminA->school_id,
             ],
             [
                 'external_team_name' => $adminA->name ?? 'Google Classroom',
@@ -217,7 +217,7 @@ class GoogleClassroomOAuthCallbackUpsertTest extends TestCase
             [
                 'school_id' => $adminB->school_id,
                 'connector_type' => 'google-classroom',
-                'external_team_id' => 'google-user:'.$adminB->id,
+                'external_team_id' => 'school:'.$adminB->school_id,
             ],
             [
                 'external_team_name' => $adminB->name ?? 'Google Classroom',

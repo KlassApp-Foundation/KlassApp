@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
 use Throwable;
 
 /**
@@ -59,7 +60,7 @@ class GoogleClassroomOAuthController extends Controller
                 ->with('failmessage', 'Google Classroom connector is not configured on this instance.');
         }
 
-        return Socialite::driver('google')
+        return $this->provider()
             ->scopes(self::SCOPES)
             ->with([
                 'access_type' => 'offline',
@@ -76,9 +77,16 @@ class GoogleClassroomOAuthController extends Controller
             return redirect('/dashboard');
         }
 
+        // Socialite's redirect() stores the state in the session. Validate it
+        // here before exchanging the code; getAccessTokenResponse() alone does
+        // not perform the state check.
+        $state = $request->session()->pull('state');
+        if (empty($state) || ! hash_equals($state, (string) $request->input('state'))) {
+            abort(403, 'Invalid OAuth state.');
+        }
+
         try {
-            // NOT stateless: Google CSRF state must be verified (session-backed).
-            $tokenResponse = Socialite::driver('google')->getAccessTokenResponse($request->input('code'));
+            $tokenResponse = $this->provider()->getAccessTokenResponse($request->input('code'));
         } catch (Throwable $e) {
             Log::error('Google Classroom connector OAuth failed', ['message' => $e->getMessage()]);
 
@@ -88,8 +96,21 @@ class GoogleClassroomOAuthController extends Controller
         }
 
         $accessToken = $tokenResponse['access_token'] ?? null;
-        $refreshToken = $tokenResponse['refresh_token'] ?? null;
         $expiresIn = $tokenResponse['expires_in'] ?? null;
+
+        // One Classroom connection per school. A reconnect by another admin
+        // updates the same row rather than creating a second token owner.
+        $key = [
+            'school_id' => $user->school_id,
+            'connector_type' => 'google-classroom',
+            'external_team_id' => 'school:'.$user->school_id,
+        ];
+        $existing = SchoolMcpConnector::where($key)->first();
+
+        // Google only returns refresh_token on the first consent (or when
+        // prompt=consent forces it). Never overwrite a stored refresh token
+        // with null on reconnect.
+        $refreshToken = $tokenResponse['refresh_token'] ?? $existing?->refreshToken();
 
         if ($accessToken === null) {
             return redirect()
@@ -100,15 +121,7 @@ class GoogleClassroomOAuthController extends Controller
         $expiresAt = $expiresIn !== null ? now()->addSeconds((int) $expiresIn) : null;
 
         SchoolMcpConnector::updateOrCreate(
-            [
-                'school_id' => $user->school_id,
-                'connector_type' => 'google-classroom',
-                // Google user tokens are per-account; use the school's row as
-                // the single per-school identity (one Classroom connection
-                // per school — the connecting admin's account is the token
-                // owner, recorded via connected_by).
-                'external_team_id' => 'google-user:'.$user->id,
-            ],
+            $key,
             [
                 'external_team_name' => $user->name ?? 'Google Classroom',
                 'credentials' => [
@@ -128,5 +141,17 @@ class GoogleClassroomOAuthController extends Controller
         return redirect()
             ->route('admin.settings.integrations')
             ->with('successmessage', 'Google Classroom connected. Toshi can now list courses and coursework.');
+    }
+
+    private function provider(): GoogleProvider
+    {
+        /** @var GoogleProvider $provider */
+        $provider = Socialite::buildProvider(GoogleProvider::class, [
+            'client_id' => config('services.google_classroom.client_id'),
+            'client_secret' => config('services.google_classroom.client_secret'),
+            'redirect' => url(config('services.google_classroom.redirect', '/mcp/oauth/google-classroom/callback')),
+        ]);
+
+        return $provider;
     }
 }

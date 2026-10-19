@@ -124,26 +124,31 @@ Mcp::local('google-classroom-mock', \App\Mcp\Servers\SpikeGoogleClassroomMockSer
 | CODE COMPLETE, VERIFICATION PENDING — no live agent-loop test yet.
 */
 
-$googleClassroomEnabled = env('TOSHI_GOOGLE_CLASSROOM_ENABLED', false);
+$googleClassroomEnabled = (bool) config('toshi.mcp_connectors.google-classroom.enabled', false);
 
 if ($googleClassroomEnabled) {
     Mcp::local('google-classroom', \App\Mcp\Servers\GoogleClassroomServer::class);
 
     Mcp::registerClient('google-classroom', function () {
+        // The local MCP server is a stdio subprocess with no HTTP session.
+        // Pass the current school id as an argument; the dedicated command
+        // sets it in config before the server starts.
+        $schoolId = (int) (auth()->user()?->school_id ?? 0);
+
         return Client::local(PHP_BINARY, [
             base_path('artisan'),
-            'mcp:start',
-            'google-classroom',
+            'google-classroom:mcp',
+            (string) $schoolId,
         ])->withTimeout((float) config('toshi.mcp_connectors.google-classroom.timeout', 30));
     });
 
     Route::get('/mcp/google-classroom/connect', [\App\Http\Controllers\Admin\Setting\GoogleClassroomOAuthController::class, 'connect'])
         ->name('mcp.oauth.google-classroom.connect')
-        ->middleware(['web', 'auth']);
+        ->middleware(['web', 'auth', 'schooladmin']);
 
     Route::get('/mcp/oauth/google-classroom/callback', [\App\Http\Controllers\Admin\Setting\GoogleClassroomOAuthController::class, 'callback'])
         ->name('mcp.oauth.google-classroom.callback')
-        ->middleware(['web', 'auth']);
+        ->middleware(['web', 'auth', 'schooladmin']);
 }
 
 /*
