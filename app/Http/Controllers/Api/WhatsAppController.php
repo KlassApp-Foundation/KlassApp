@@ -28,6 +28,10 @@ use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsApp\ParentLinkRequestService;
 use App\Services\WhatsAppBusinessService;
+use App\Services\Results\DisplayedGrade;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use App\Services\WhatsAppReportCardDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1957,69 +1961,10 @@ class WhatsAppController extends Controller
             }
 
             $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
-
-            // Group exams by exam type for cleaner display
-            $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
-            foreach ($grouped as $typeName => $typeExams) {
-                $term = $typeExams->first()->academicTerm?->name ?? 'Term';
-                $message .= "📝 *{$typeName}* — {$term}\n";
-
-                $allMarks = collect();
-                foreach ($typeExams as $exam) {
-                    foreach ($exam->marks as $mark) {
-                        $allMarks->push($mark);
-                    }
-                }
-
-                $sorted = $allMarks->sortByDesc('marks')->take(10);
-                foreach ($sorted as $mark) {
-                    $subject = $mark->subject?->name ?? 'Subject';
-                    $score = $mark->marks ?? 0;
-                    $grade = $mark->grade ?? '-';
-                    $message .= "• {$subject}: {$score}/100 ({$grade})\n";
-                }
-
-                $avg = $allMarks->avg('marks');
-                if ($avg) {
-                    // Class rank: count students with higher total in same exams
-                    $totalScore = $allMarks->sum('marks');
-                    $rank = null;
-                    $totalStudents = null;
-                    $examIds = $typeExams->pluck('id');
-                    if ($examIds->isNotEmpty()) {
-                        $allStudentsScores = \Illuminate\Support\Facades\DB::table('marks')
-                            ->whereIn('exam_id', $examIds)
-                            ->where('student_id', '!=', $student->id)
-                            ->select('student_id', \Illuminate\Support\Facades\DB::raw('SUM(marks) as total'))
-                            ->groupBy('student_id')
-                            ->get()
-                            ->pluck('total');
-                        $totalStudents = $allStudentsScores->count() + 1;
-                        $rank = $allStudentsScores->filter(fn($s) => $s > $totalScore)->count() + 1;
-                    }
-
-                    $avgRounded = round($avg, 1);
-                    $celebration = '';
-                    if ($avg >= 80) {
-                        $celebration = "🎉 *Well done, {$studentName}!* ";
-                        $celebration .= "{$avgRounded}% average is a strong performance";
-                        if ($rank && $totalStudents) {
-                            $celebration .= " — ranked {$rank}" . match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'} . " out of {$totalStudents}";
-                        }
-                        $celebration .= ".\n";
-                    }
-
-                    $message .= "· · · · · · · · · · · · · · · ·\n";
-                    $message .= "_Average: {$avgRounded}%_";
-                    if ($rank && $totalStudents) {
-                        $message .= " | #{$rank} of {$totalStudents}";
-                    }
-                    $message .= "\n";
-                    if ($celebration) {
-                        $message .= "{$celebration}";
-                    }
-                }
-                $message .= "\n";
+            $sectionId = (int) ($academic?->standardLink?->section_id ?? 0);
+            $grouped = $exams->groupBy(fn ($e) => ((int) $e->academic_term_id).'|'.((int) $e->exam_type_id));
+            foreach ($grouped as $typeExams) {
+                $message .= $this->sittingLines($student, $typeExams, $sectionId, $studentName, true);
             }
 
             $message .= "_Send GRADES for latest results._";
@@ -2317,34 +2262,109 @@ class WhatsAppController extends Controller
         }
 
         $message = "📊 *My Results — {$studentName}*\n_{$className}_\n\n";
-        $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
-        foreach ($grouped as $typeName => $typeExams) {
-            $term = $typeExams->first()->academicTerm?->name ?? 'Term';
-            $message .= "📝 *{$typeName}* — {$term}\n";
-
-            $allMarks = collect();
-            foreach ($typeExams as $exam) {
-                foreach ($exam->marks as $mark) {
-                    $allMarks->push($mark);
-                }
-            }
-
-            $sorted = $allMarks->sortByDesc('marks')->take(10);
-            foreach ($sorted as $mark) {
-                $subject = $mark->subject?->name ?? 'Subject';
-                $score = $mark->marks ?? 0;
-                $grade = $mark->grade ?? '-';
-                $message .= "• {$subject}: {$score}/100 ({$grade})\n";
-            }
-
-            $avg = $allMarks->avg('marks');
-            if ($avg) {
-                $message .= "_Average: " . round($avg, 1) . "%_\n";
-            }
-            $message .= "\n";
+        $sectionId = (int) ($student->studentAcademicLatest?->standardLink?->section_id ?? 0);
+        $grouped = $exams->groupBy(fn ($e) => ((int) $e->academic_term_id).'|'.((int) $e->exam_type_id));
+        foreach ($grouped as $typeExams) {
+            $message .= $this->sittingLines($student, $typeExams, $sectionId, $studentName, false);
         }
 
         $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
+    }
+
+    /**
+     * One sitting's lines: subject marks from the results service, then
+     * the average and, for a parent, the class position.
+     */
+    private function sittingLines($student, $typeExams, int $sectionId, string $studentName, bool $withRank): string
+    {
+        $first = $typeExams->first();
+        $typeName = $first->examType?->name ?? 'Exam';
+        $termName = $first->academicTerm?->name ?? 'Term';
+        $lines = "📝 *{$typeName}* — {$termName}\n";
+        $sectionId = $sectionId ?: (int) $first->section_id;
+        $schoolId = (int) ($first->school_id ?: $student->school_id);
+
+        $stored = [];
+        $fallback = collect();
+        foreach ($typeExams as $exam) {
+            foreach ($exam->marks as $mark) {
+                $fallback->push($mark);
+                $stored[(int) $mark->subject_id] = (string) ($mark->grade ?? '');
+            }
+        }
+
+        $row = null;
+        $names = [];
+        if ($sectionId && $first->academic_term_id && $first->exam_type_id) {
+            $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+                schoolId: $schoolId,
+                sectionId: $sectionId,
+                academicTermId: (int) $first->academic_term_id,
+                examTypeId: (int) $first->exam_type_id,
+                studentId: (int) $student->id,
+            ));
+            $row = $sheet->student((int) $student->id);
+            foreach ($sheet->subjects as $subject) {
+                $names[(int) $subject['id']] = $subject['name'];
+            }
+        }
+
+        $avg = null;
+        $rank = null;
+        $totalStudents = null;
+        if ($row !== null && $row->subjectsCounted > 0) {
+            $cells = array_values(array_filter(
+                $row->cells,
+                fn (ResultCell $cell) => $cell->status === ResultCell::MARKED && $cell->mark !== null
+            ));
+            usort($cells, fn (ResultCell $left, ResultCell $right) => $right->mark <=> $left->mark);
+            $grades = app(DisplayedGrade::class);
+            foreach (array_slice($cells, 0, 10) as $cell) {
+                $score = fmod($cell->mark, 1.0) === 0.0 ? (string) (int) $cell->mark : (string) $cell->mark;
+                $grade = $grades->subject($schoolId, $row->standardId, $cell->mark, $stored[$cell->subjectId] ?? null);
+                $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": {$score}/100 ({$grade})\n";
+            }
+            $avg = $row->average;
+            if ($withRank) {
+                $rank = $row->classPosition;
+                $totalStudents = $row->classOutOf;
+            }
+        } else {
+            foreach ($fallback->sortByDesc('marks')->take(10) as $mark) {
+                $subject = $mark->subject?->name ?? 'Subject';
+                $score = $mark->marks ?? 0;
+                $grade = $mark->grade ?? '-';
+                $lines .= "• {$subject}: {$score}/100 ({$grade})\n";
+            }
+            $avg = $fallback->avg('marks');
+        }
+
+        if ($avg) {
+            $avgRounded = round($avg, 1);
+            $celebration = '';
+            if ($withRank && $avg >= 80) {
+                $celebration = "🎉 *Well done, {$studentName}!* ";
+                $celebration .= "{$avgRounded}% average is a strong performance";
+                if ($rank && $totalStudents) {
+                    $celebration .= " — ranked {$rank}".match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'}." out of {$totalStudents}";
+                }
+                $celebration .= ".\n";
+            }
+            if ($withRank) {
+                $lines .= "· · · · · · · · · · · · · · · ·\n";
+            }
+            $lines .= "_Average: {$avgRounded}%_";
+            if ($withRank && $rank && $totalStudents) {
+                $lines .= " | #{$rank} of {$totalStudents}";
+            }
+            $lines .= "\n";
+            if ($celebration !== '') {
+                $lines .= $celebration;
+            }
+        }
+        $lines .= "\n";
+
+        return $lines;
     }
 
     /**
