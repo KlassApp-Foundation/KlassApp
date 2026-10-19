@@ -8,7 +8,7 @@ class PositioningCopyTest extends TestCase
 {
     private const TAGLINE = 'An open education protocol for humans and agents.';
 
-    private const DESCRIPTION = 'KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children\'s school updates on WhatsApp, all by chatting in natural language with Toshi, your school\'s AI assistant.';
+    private const DESCRIPTION = 'KlassApp is an education protocol that runs in the tools educationists already use. Admins work in Slack, teachers enter marks from spreadsheets, and parents get school updates on WhatsApp through Toshi, the school\'s AI assistant.';
 
     public function test_live_landing_uses_locked_tagline_and_description(): void
     {
