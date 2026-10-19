@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Models\StudentAcademic;
 use App\Models\StudentParentLink;
 use App\Models\User;
@@ -30,7 +31,10 @@ class WhatsAppReportCardDeliveryService
 
     public const META_DOCUMENT_MAX_BYTES = 100 * 1024 * 1024;
 
-    public function __construct(private StudentReportCardService $reports) {}
+    public function __construct(
+        private StudentReportCardService $reports,
+        private ReleaseGate $releases,
+    ) {}
 
     /**
      * Disk used for temporary WhatsApp report PDFs (default filesystem).
@@ -98,6 +102,9 @@ class WhatsAppReportCardDeliveryService
         }
 
         $exam = $this->reports->resolveExam($schoolId, $stdLink);
+        if ($exam && ! $this->releases->isReleased($student, $exam)) {
+            $exam = null;
+        }
         if (! $exam) {
             return [
                 'ok' => false,
