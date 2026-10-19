@@ -2,7 +2,7 @@
 title: Help
 ---
 # Help for schools
-Choose who you are.
+Choose who you are. New to the school? Start with [Get started](/help/getting-started).
 <RoleCards :items="[
  {title:'Admin',text:'Set up your school, staff and students',link:'/docs-preview/help/admins/'},
  {title:'Teacher',text:'Attendance, marks and your classes',link:'/docs-preview/help/teachers/'},
