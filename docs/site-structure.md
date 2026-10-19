@@ -32,5 +32,6 @@
 | `docs-site/community/reference/` | Reference pages. Building packages extends from `docs/architecture/packages.md` on [#1119](https://github.com/KlassApp-Foundation/KlassApp/pull/1119) once accepted. |
 | `docs-site/community/connectors.md` | The HTTP API, MCP connectors and integrations. |
 | `docs-site/community/early-adopters.md` | Who the Early Adopters Program is for, what a school receives, and how to apply. Includes "Building for you, with you" and a link to Governance. |
+| `docs-site/community/governance.md` | Planned governing council at full launch. Principles only; details to be confirmed with the founding schools. |
 
 Self-hosting is written only after the independent security review; do not revive `docs/dev/digitalocean-deployment.md`.

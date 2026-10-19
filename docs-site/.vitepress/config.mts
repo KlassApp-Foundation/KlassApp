@@ -8,8 +8,6 @@ export default defineConfig({
   description: 'An open education protocol for humans and agents. KlassApp runs in the tools educationists already use — Slack, spreadsheets, WhatsApp — with Toshi, your school\'s AI assistant.',
   lang: 'en',
   base: '/docs-preview/',
-  // Governance is drafted on the stacked docs PR. Ignore this one link until that page is on this branch.
-  ignoreDeadLinks: ['/community/governance'],
   // Soft-launch: build to docs-preview so live Docsify /docs is unchanged until cutover.
   outDir: '../public/docs-preview',
   cleanUrls: true,
