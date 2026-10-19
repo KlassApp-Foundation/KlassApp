@@ -239,6 +239,10 @@ class SchoolInviteTest extends TestCase
             ->assertSee('data-testid="invite-retry-button"', false)
             ->assertDontSee('Invite sent');
 
+        // shouldReceive replaced the mail manager. Mail::fake() asks that
+        // manager for its default driver, so put the real manager back first.
+        $this->app->forgetInstance('mail.manager');
+        Mail::clearResolvedInstances();
         Mail::fake();
 
         $this->actingAs($admin)
