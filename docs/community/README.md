@@ -33,7 +33,6 @@ The GitBook site is kept in sync via GitHub Sync — changes to these files in t
 | [Ecosystem](ecosystem.md) | Product model: WhatsApp live; Drive/Slack in the UI |
 | [Roadmap](../roadmap.md) | Honest public direction (canonical) |
 | [FAQ](faq.md) | Common questions |
-| [Early Adopters Program](early-adopters.md) | How schools join, what they receive, and how to apply |
 
 Direction and backlog live in [`docs/roadmap.md`](../roadmap.md) — not restated here.
 

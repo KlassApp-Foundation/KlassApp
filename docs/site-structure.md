@@ -1,54 +1,36 @@
 # Docs site structure
 
-**Status: proposal.** Phase 1, docs only. One public docs home, three sections. This file lists the pages and a one-line purpose for each. It does not write those pages, except the Early Adopters Program page, which is drafted at the path named below.
+**Status: proposal.** Phase 1, docs only. This file is internal (not published) and lists where public docs pages live and what each is for.
 
-The current public set is the community tree under `docs/community/`, published on GitBook from this repo, plus the short map in `docs/README.md`. `docs/dev/` is archived (the DigitalOcean and Evolution API era) and is not a section of this site. DeepWiki stays the code-derived architecture reference; this site does not become a second wiki.
+## Stack and design
+
+- **Stack:** the existing VitePress site in `docs-site/` (`npm run docs:build` / `docs:dev`, config in `docs-site/.vitepress/config.mts`, sidebars in `docs-site/.vitepress/sidebars.ts`). It builds to `public/docs-preview/` and is served at `/docs-preview/` (Help is at `klassapp.xyz/help`). No second docs stack.
+- **Design:** Claude Design's docs handoff in `design/system/klassapp-handoff-2026-09-29-docs/` (`HANDOFF.md` URL plan, `MIGRATION.md`, `design-system/styles/docs.css`, the voice guide). Pages use its theme (`docs-site/.vitepress/theme/klassapp.css`), its components (`<Steps>`, `<Step>`, `<ToshiCallout>`, …) and VitePress `::: tip` / `::: info` / `::: warning` callouts, and start from the page templates in `docs-site/help/_templates/` and `docs-site/community/_templates/`.
+- The legacy Docsify/GitBook tree under `docs/community/` is being retired by that handoff (P3). New public pages are not added there.
 
 ## Home
 
 | Page | Purpose |
 |---|---|
-| `docs/README.md` | The docs home: three sections (Schools, Developers, Community) and nothing else on the first screen. |
+| `docs-site/index.md` | Docs home: two doors (Help for schools, Community) and the one-line parent note. It carries the tagline; no other page repeats it. |
 
-## Schools
-
-| Page | Purpose |
-|---|---|
-| `docs/schools/getting-started.md` | What a school does on day one, and where staff sign in. |
-| `docs/schools/onboarding.md` | Set the school up with the onboarding Wizard or with Toshi. |
-| `docs/schools/whatsapp-for-parents.md` | How parents get school updates on WhatsApp once they are linked. |
-| `docs/schools/marks-and-reports.md` | How marks are entered, approved, and released as reports. |
-
-## Developers
+## Help (schools, by role)
 
 | Page | Purpose |
 |---|---|
-| `docs/developers/self-hosting.md` | How to run KlassApp yourself; published only after the independent security review. |
-| `docs/developers/building-packages.md` | How to build, register, version, enable, and test a package. |
-| `docs/developers/api-and-mcp.md` | The HTTP API and the MCP connectors a developer can call. |
+| `docs-site/help/{admins,teachers,bursars,parents,students}/` | Role landings and how-tos, from `help/_templates/`. |
+| `docs-site/help/admins/onboarding.md` | Set the school up with the onboarding Wizard or with Toshi. |
+| `docs-site/help/marks.md`, `generate-report-cards.md` | Marks and reports. Extend from the marks-flow proposal on [#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118) once the owner accepts it. |
+| `docs-site/help/parents/whatsapp.md` | How parents get school updates on WhatsApp. |
 
-## Community
+## Community (developers and contributors)
 
 | Page | Purpose |
 |---|---|
-| `CONTRIBUTING.md` | How to contribute code, tests, and docs. |
-| `docs/community/early-adopters.md` | Who the Early Adopters Program is for, what a school receives, and how to apply. |
+| `docs-site/community/getting-started.md` | Run KlassApp locally (one copy of the Quick Start). |
+| `docs-site/community/contributing.md` | How to contribute code, tests and docs. |
+| `docs-site/community/reference/` | Reference pages. Building packages extends from `docs/architecture/packages.md` on [#1119](https://github.com/KlassApp-Foundation/KlassApp/pull/1119) once accepted. |
+| `docs-site/community/connectors.md` | The HTTP API, MCP connectors and integrations. |
+| `docs-site/community/early-adopters.md` | Who the Early Adopters Program is for, what a school receives, and how to apply. Drafted in this change. |
 
-The Early Adopters page is the one full draft in this change. It lives at `docs/community/early-adopters.md` so it sits in the community section and in the tree GitBook already syncs.
-
-## Where today's pages go
-
-Do not start a parallel copy. When a section is written, extend the existing page.
-
-| New page | Start from |
-|---|---|
-| Getting started | `docs/community/for-schools.md` |
-| Onboarding | `docs/community/school-onboarding.md` and `docs/community/book-onboarding.md` |
-| WhatsApp for parents | `docs/community/for-parents.md` |
-| Marks and reports | The marks-flow proposal on [#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118) (`docs/product/marks-flow.md`), once the owner accepts it |
-| Building packages | `docs/architecture/packages.md` on [#1119](https://github.com/KlassApp-Foundation/KlassApp/pull/1119), once the owner accepts it |
-| Contributing | `CONTRIBUTING.md` (already canonical; do not add a second file) |
-| Self-hosting | New, after the security review. Do not revive `docs/dev/digitalocean-deployment.md` |
-| API and MCP | `docs/architecture/toshi-shape-2026-09.md` and `routes/ai.php` as the code map, not as the public page |
-
-`docs/community/faq.md`, `docs/community/ecosystem.md`, and `docs/roadmap.md` stay linked from the home until a section absorbs them. They are not a fourth section.
+Self-hosting is written only after the independent security review; do not revive `docs/dev/digitalocean-deployment.md`.

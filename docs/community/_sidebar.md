@@ -6,6 +6,5 @@
 - [Ecosystem](ecosystem)
 - [Roadmap (see docs hub)](../roadmap.md)
 - [FAQ](faq)
-- [Early Adopters Program](early-adopters)
 - ---
 - [📖 GitBook (live docs)](https://klassdocs.gitbook.io/klassapp-documentation/)
