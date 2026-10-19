@@ -698,6 +698,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job. Rebased onto `main` `1dc7fbb`. Not merged.
 - Local MySQL 8.4.11: the pre-fix migration reproduces error 3780; the fix passes on a fresh database, on that half-created empty table, on a second `migrate` (nothing to migrate), and when the half-created table already has a row. `down()` drops the table.
 
+## Current Status: October 19, 2026 — **invite follow-ups OPEN [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123)**
+
+- Branch `cursor/invite-followups-1117`. Follow-up to #1117: a failed invite queue shows an error and Retry (`school_invites.email_failed_at`), and claim locks the invite row so two claims cannot both create a school. No `schools.school_invite_id` column, so no extra unique constraint. Full test-guard: 2709 tests, 0 failures, 4 skipped. Not merged. Production untouched.
+
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
 - Branch `feat/teacher-profile-lite`. `/admin/teacher/show/{name}` renders the shared person profile (header, three tiles, Overview, Teaches). The people-list URL is unchanged. JSON teacher-show endpoints are unchanged.
@@ -2678,6 +2682,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Edge cases flagged**: The row-preserving alter runs on MySQL only, and it refuses to change the column if `users.id` is not `int unsigned` or if a `created_by` value does not fit `INT UNSIGNED`. SQLite stores both integer widths as `integer`, so the column-type mismatch is proven on MySQL, not by the SQLite suite.
 - **Evidence**: Docker MySQL 8.4.11. Pre-fix `migrate` exit 1, SQLSTATE 3780, table left with `created_by bigint unsigned`, 0 rows, no foreign key, migration not recorded. Fix on that database exit 0: `created_by int unsigned`, FK `school_invites_created_by_foreign` to `users.id`, `DELETE_RULE=SET NULL`, 0 rows, one migrations row. Second `migrate`: "Nothing to migrate", still one row. Fresh database: full `migrate` exit 0, same column and FK. Extra: one existing row (`created_by=1`) kept after the alter, type `int unsigned`, FK added. `migrate:rollback --step=1` drops the table; `migrate` recreates it. PHPUnit: signup files 66 passed (430 assertions); `SchoolInviteTest` 8 passed (47 assertions), including `test_created_by_matches_users_id_and_nulls_on_delete`. A first combined process returned 429 on `SignupEnabledTest` resend because guest `throttle` keys are per IP and the file cache still held earlier invite-claim hits; that test passed after `cache:clear` when the signup files ran on their own.
 - **PR**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) MERGED `070584f7`. [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) rebased onto `main` `1dc7fbb`. [#1143](https://github.com/KlassApp-Foundation/KlassApp/pull/1143) OPEN.
+
+### 2026-10-19: invite queue-failure message and locked claim
+
+- **Work done**: Applied the #1117 follow-up patch. Invite email queue failures set `email_failed_at` and the early-access page shows a failure with Retry instead of "Invite sent". Claim runs in a transaction with `lockForUpdate` and a `whereNull('claimed_at')` update. The queue-failure test restores the real mail manager before `Mail::fake()`.
+- **Files modified**: `app/Http/Controllers/Platform/EarlyAccessRequestController.php`, `app/Models/SchoolInvite.php`, `app/Services/SchoolInviteService.php`, `database/migrations/2026_10_19_000002_add_email_failed_at_to_school_invites_table.php`, `resources/views/platform/early-access/index.blade.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `knowledge.md`.
+- **Key decisions**: No unique constraint. `schools` has no invite foreign key. SQLite ignores row locks; the guarded update covers that driver.
+- **Status**: PR open. Not merged. Production and staging not deployed.
+- **Edge cases flagged**: Retry uses resend, so it issues a new token. An email that already has an account rolls the claim back and leaves the invite unclaimed.
+- **PR**: [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123) on `cursor/invite-followups-1117`. Not merged.
 
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
