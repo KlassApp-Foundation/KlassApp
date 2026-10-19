@@ -31,6 +31,6 @@
 | `docs-site/community/contributing.md` | How to contribute code, tests and docs. |
 | `docs-site/community/reference/` | Reference pages. Building packages extends from `docs/architecture/packages.md` on [#1119](https://github.com/KlassApp-Foundation/KlassApp/pull/1119) once accepted. |
 | `docs-site/community/connectors.md` | The HTTP API, MCP connectors and integrations. |
-| `docs-site/community/early-adopters.md` | Who the Early Adopters Program is for, what a school receives, and how to apply. Drafted in this change. |
+| `docs-site/community/early-adopters.md` | Who the Early Adopters Program is for, what a school receives, and how to apply. Includes "Building for you, with you" and a link to Governance. |
 
 Self-hosting is written only after the independent security review; do not revive `docs/dev/digitalocean-deployment.md`.

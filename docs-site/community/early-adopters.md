@@ -46,3 +46,13 @@ The Public Beta is **15 December 2026**, the date the early access page counts d
 Apply at [klassapp.xyz/early-access](https://klassapp.xyz/early-access).
 
 The form asks for the school name, your name and role, email, phone, country, and roughly how many students you have. Use the champion's name if you already know who that will be. We reply by email to arrange the interview, and we confirm each place before the school is enrolled.
+
+## Building for you, with you
+
+Danson Twesigomwe: "We are building for you, with you."
+
+You shape the product. You help decide which features come first, and how they work. You do that by testing KlassApp in real schools, sharing how your school works today, and joining the regular feedback calls.
+
+During the program you use the Growth plan free.
+
+At full launch, founding schools take part in [Governance](/community/governance).
