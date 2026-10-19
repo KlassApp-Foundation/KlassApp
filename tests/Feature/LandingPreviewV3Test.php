@@ -27,7 +27,16 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('Stated direction. Not a live feature yet.', false);
         $response->assertSee('What we actually address', false);
         $response->assertSee('Just tell Toshi what you need, in plain language, and it does the rest', false);
-        $response->assertSee('Get notified when we open source', false);
+        $response->assertSee('View the source on GitHub', false);
+        $response->assertSee('Try it on WhatsApp', false);
+        $response->assertSee('Request early access', false);
+        $response->assertSee('https://wa.me/256793844906?text=demo', false);
+        $response->assertSee('https://github.com/KlassApp-Foundation/KlassApp', false);
+        $response->assertSee('Self-hosting after security review', false);
+        $response->assertDontSee('Start free', false);
+        $response->assertDontSee('Get notified when we open source', false);
+        $response->assertDontSee('Self-hostable', false);
+        $response->assertSee('application/ld+json', false);
         $response->assertSee('Do parents need to download an app?', false);
         $response->assertSee('One protocol layer. Toshi orchestrates WhatsApp, Drive, and Slack', false);
         $response->assertSee('Toshi · Connector Orchestration', false);

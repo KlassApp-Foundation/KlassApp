@@ -4,13 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KlassApp: An open education protocol for humans and agents.</title>
-    <meta name="description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
+    <meta name="description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins work in Slack, teachers enter marks from spreadsheets, and parents get school updates on WhatsApp through Toshi, the school's AI assistant.">
     <meta property="og:title" content="KlassApp: An open education protocol for humans and agents.">
-    <meta property="og:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
+    <meta property="og:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins work in Slack, teachers enter marks from spreadsheets, and parents get school updates on WhatsApp through Toshi, the school's AI assistant.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="KlassApp: An open education protocol for humans and agents.">
-    <meta name="twitter:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.">
+    <meta name="twitter:description" content="KlassApp is an education protocol that runs in the tools educationists already use. Admins work in Slack, teachers enter marks from spreadsheets, and parents get school updates on WhatsApp through Toshi, the school's AI assistant.">
     <link rel="canonical" href="{{ url()->current() }}">
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "KlassApp",
+      "url": "{{ url('/') }}",
+      "description": "KlassApp is an education protocol that runs in the tools educationists already use.",
+      "sameAs": ["https://github.com/KlassApp-Foundation/KlassApp"]
+    }
+    </script>
+
     @include('layouts.partials.favicon')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,7 +51,7 @@
       <li><a href="#compare">What we address</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
-    <a href="{{ url('/register') }}" class="navbar-cta">Start free</a>
+    <a href="{{ route('early-access.show') }}" class="navbar-cta">Request early access</a>
     <button type="button" class="navbar-mobile-toggle" id="navbarMobileToggle" aria-label="Menu" aria-expanded="false" aria-controls="navbarMobilePanel">
       <svg class="icon-open" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
       <svg class="icon-close" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -54,7 +65,7 @@
       <li><a href="#trust">Protocol Cores</a></li>
       <li><a href="#compare">What we address</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="{{ url('/register') }}" class="navbar-mobile-cta">Start free</a></li>
+      <li><a href="{{ route('early-access.show') }}" class="navbar-mobile-cta">Request early access</a></li>
     </ul>
   </div>
 </nav>
@@ -74,15 +85,19 @@
     <div class="hero-inner">
       <div class="hero-content reveal">
         <div class="hero-kicker">An open education protocol for humans and agents.</div>
-        <h1>The school platform that operates in the tools educationists already use.</h1>
-        <p class="hero-sub">KlassApp is an education protocol that runs in the tools educationists already use. Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.</p>
+        <h1>KlassApp is an education protocol that runs in the tools educationists already use.</h1>
+        <p class="hero-sub">Admins manage school operations in Slack, teachers enter marks from spreadsheets, and parents receive their children's school updates on WhatsApp, all by chatting in natural language with Toshi, your school's AI assistant.</p>
         <div class="hero-actions">
-          <a href="{{ url('/register') }}" class="btn btn-primary">Start free <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
-          <a href="#protocol" class="btn btn-secondary">Get notified when we open source</a>
+          <a href="{{ route('early-access.show') }}" class="btn btn-primary">Request early access <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
+          <a href="https://wa.me/256793844906?text=demo" target="_blank" rel="noopener noreferrer" class="btn" style="background:#25D366;color:#fff;box-shadow:0 1px 3px rgba(37,211,102,0.35);" aria-label="Try it on WhatsApp">
+            <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fff;flex:0 0 22px;"><x-brand.whatsapp style="width:16px;height:16px;" /></span>
+            Try it on WhatsApp
+          </a>
+          <a href="https://github.com/KlassApp-Foundation/KlassApp" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">View the source on GitHub</a>
         </div>
         <div class="hero-trust">
           <span>Free and open (MIT)</span><span class="dot"></span>
-          <span>Self-hostable</span><span class="dot"></span>
+          <span>Self-hosting after security review</span><span class="dot"></span>
           <span>MCP-compatible</span>
         </div>
       </div>
@@ -191,7 +206,7 @@
 <section class="trust-strip" aria-label="Open-source and platform commitments">
   <div class="container trust-strip-inner">
     <span class="trust-strip-item">MIT · Open Source</span>
-    <span class="trust-strip-item">Self-hostable</span>
+    <span class="trust-strip-item">Self-hosting after security review</span>
     <span class="trust-strip-item">MCP-compatible</span>
     <a class="trust-strip-gh" href="https://github.com/KlassApp-Foundation/KlassApp" target="_blank" rel="noopener noreferrer">KlassApp-Foundation/KlassApp ↗</a>
   </div>

@@ -2433,8 +2433,8 @@ body.nav-open { overflow: hidden; }
 }
 
 @media (max-width: 900px) {
-  .hero-inner { grid-template-columns: 1fr; gap: 48px; }
-  .hero-content { text-align: center; }
+  .hero-inner { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  .hero-content { min-width: 0; text-align: center; }
   .hero-sub { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
   .hero-trust { justify-content: center; }
