@@ -27,6 +27,7 @@ Route::get('/settings/google/callback', 'Setting\GoogleConnectController@callbac
 Route::post('/settings/google/{connector}/disconnect', 'Setting\GoogleConnectController@disconnect')->name('admin.google.disconnect');
 Route::post('/settings/google/sheets/export', 'Setting\GoogleSheetsController@export')->name('admin.google.sheets.export');
 Route::post('/settings/google/sheets/import', 'Setting\GoogleSheetsController@import')->name('admin.google.sheets.import');
+Route::post('/settings/google/drive/file', 'Setting\GoogleDriveController@file')->name('admin.google.drive.file');
 
 // Navigation dropdown + notification list are served by routes/admin.php under
 // the schooladmin group. The copies that used to live here registered later and

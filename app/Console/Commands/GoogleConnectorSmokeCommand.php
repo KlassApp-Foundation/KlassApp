@@ -6,6 +6,7 @@ use App\Models\Academics\Exam;
 use App\Models\School;
 use App\Models\SchoolGoogleConnection;
 use App\Models\User;
+use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
@@ -53,6 +54,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'sheets') {
             return $this->sheets($school->id);
+        }
+
+        if ($connector === 'drive') {
+            return $this->drive($school->id);
         }
 
         if (! $catalog->has($connector)) {
@@ -121,6 +126,34 @@ class GoogleConnectorSmokeCommand extends Command
 
         $this->info('Spreadsheet: '.$created['spreadsheetId']);
         $this->line($created['spreadsheetUrl']);
+
+        return self::SUCCESS;
+    }
+
+    private function drive(int $schoolId): int
+    {
+        $examId = (int) $this->option('exam');
+        $learnerId = (int) $this->option('learner');
+        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
+
+        if ($exam === null || $actor === null || $learnerId <= 0) {
+            $this->error('Pass --exam= and --learner= for this school, and have an active school admin.');
+
+            return self::FAILURE;
+        }
+
+        try {
+            $filed = app(GoogleDriveService::class)->fileReportCard($actor, $exam, $learnerId);
+        } catch (GoogleApiException $e) {
+            $this->error('Drive call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        }
+
+        $this->info('Filed: '.$filed['fileId']);
+        $this->line($filed['folder']);
+        $this->line($filed['webViewLink']);
 
         return self::SUCCESS;
     }

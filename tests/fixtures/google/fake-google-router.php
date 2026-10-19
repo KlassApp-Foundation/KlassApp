@@ -25,7 +25,7 @@ $parsedBody = [];
 
 if (str_contains($contentType, 'application/json')) {
     $parsedBody = json_decode($raw, true) ?: [];
-} elseif ($raw !== '') {
+} elseif ($raw !== '' && ! str_contains($contentType, 'multipart/')) {
     parse_str($raw, $parsedBody);
 }
 
@@ -47,7 +47,8 @@ $mutate = function (callable $fn) use ($stateFile) {
     $result = $fn($state);
     ftruncate($fh, 0);
     rewind($fh);
-    fwrite($fh, json_encode($state));
+    $encoded = json_encode($state, JSON_INVALID_UTF8_SUBSTITUTE);
+    fwrite($fh, $encoded === false ? '{}' : $encoded);
     fflush($fh);
     flock($fh, LOCK_UN);
     fclose($fh);
@@ -295,6 +296,163 @@ if (preg_match('#^/v4/spreadsheets(?:/([^/]+)(?:/values/(.+))?)?$#', $path, $she
 
             return null;
         }
+        $json(405, ['error' => ['code' => 405, 'message' => 'Method not allowed', 'status' => 'METHOD_NOT_ALLOWED']]);
+
+        return null;
+    });
+
+    return;
+}
+
+if (! function_exists('drive_store_file')) {
+    /**
+     * @param  array<string, mixed>  $state
+     * @param  array{name: string, mimeType: string, parents: list<string>, content: ?string}  $file
+     * @return array<string, mixed>
+     */
+    function drive_store_file(array &$state, array $file): array
+    {
+        $id = 'drv-'.$state['drive']['next'];
+        $state['drive']['next']++;
+        $stored = [
+            'id' => $id,
+            'name' => $file['name'],
+            'mimeType' => $file['mimeType'],
+            'parents' => $file['parents'],
+            'content' => $file['content'],
+        ];
+        $state['drive']['files'][] = $stored;
+
+        return [
+            'id' => $id,
+            'name' => $stored['name'],
+            'mimeType' => $stored['mimeType'],
+            'parents' => $stored['parents'],
+            'webViewLink' => 'https://drive.google.com/file/d/'.$id.'/view',
+        ];
+    }
+}
+
+if (! function_exists('drive_multipart_parts')) {
+    /**
+     * @return list<array{type: string, body: string}>
+     */
+    function drive_multipart_parts(string $raw, string $contentType): array
+    {
+        if (! preg_match('/boundary=([^;]+)/', $contentType, $match)) {
+            return [];
+        }
+        $boundary = trim($match[1], " \t\"'");
+        $chunks = explode('--'.$boundary, $raw);
+        $parts = [];
+        foreach ($chunks as $chunk) {
+            $chunk = ltrim($chunk, "\r\n");
+            if ($chunk === '' || str_starts_with($chunk, '--')) {
+                continue;
+            }
+            [$headers, $body] = array_pad(preg_split("/\r\n\r\n/", $chunk, 2), 2, '');
+            $type = 'application/octet-stream';
+            if (preg_match('/Content-Type:\s*([^\r\n;]+)/i', $headers, $typeMatch)) {
+                $type = strtolower(trim($typeMatch[1]));
+            }
+            $parts[] = ['type' => $type, 'body' => rtrim($body, "\r\n")];
+        }
+
+        return $parts;
+    }
+}
+
+if ($path === '/drive/v3/files' || $path === '/upload/drive/v3/files') {
+    $mutate(function (array &$state) use ($record, $bearer, $method, $path, $raw, $contentType, $parsedBody, $json) {
+        $state = $record($state);
+        if (($state['modes']['drive'] ?? null) === '500') {
+            $json(500, ['error' => ['code' => 500, 'message' => 'backend error', 'status' => 'INTERNAL']]);
+
+            return null;
+        }
+        if ($bearer === '' || ! isset($state['tokens'][$bearer]) || ! empty($state['account']['revoked'])) {
+            $json(401, ['error' => ['code' => 401, 'message' => 'Invalid Credentials', 'status' => 'UNAUTHENTICATED']]);
+
+            return null;
+        }
+        if (! isset($state['drive']['files']) || ! is_array($state['drive']['files'])) {
+            $state['drive'] = ['files' => [], 'next' => 1];
+        }
+
+        if ($path === '/drive/v3/files' && $method === 'GET') {
+            $q = isset($_GET['q']) ? (string) $_GET['q'] : '';
+            $name = null;
+            $parent = null;
+            if (preg_match("/name = '((?:\\\\'|[^'])*)'/", $q, $match)) {
+                $name = str_replace(["\\'", '\\\\'], ["'", '\\'], $match[1]);
+            }
+            if (preg_match("/'([^']+)' in parents/", $q, $match)) {
+                $parent = $match[1];
+            }
+            $files = [];
+            foreach ($state['drive']['files'] as $file) {
+                if (($file['mimeType'] ?? '') !== 'application/vnd.google-apps.folder') {
+                    continue;
+                }
+                if ($name !== null && ($file['name'] ?? '') !== $name) {
+                    continue;
+                }
+                $parents = $file['parents'] ?? [];
+                if ($parent !== null && ! in_array($parent, $parents, true)) {
+                    continue;
+                }
+                $files[] = [
+                    'id' => $file['id'],
+                    'name' => $file['name'],
+                    'mimeType' => $file['mimeType'],
+                    'parents' => $parents,
+                ];
+            }
+            $json(200, ['files' => $files]);
+
+            return null;
+        }
+
+        if ($path === '/drive/v3/files' && $method === 'POST') {
+            $created = drive_store_file($state, [
+                'name' => (string) ($parsedBody['name'] ?? ''),
+                'mimeType' => (string) ($parsedBody['mimeType'] ?? 'application/octet-stream'),
+                'parents' => array_values($parsedBody['parents'] ?? ['root']),
+                'content' => null,
+            ]);
+            $json(200, $created);
+
+            return null;
+        }
+
+        if ($path === '/upload/drive/v3/files' && $method === 'POST') {
+            $parts = drive_multipart_parts($raw, $contentType);
+            $meta = [];
+            $bytes = '';
+            foreach ($parts as $part) {
+                if (str_contains($part['type'], 'json')) {
+                    $decoded = json_decode($part['body'], true);
+                    $meta = is_array($decoded) ? $decoded : [];
+                } else {
+                    $bytes = $part['body'];
+                }
+            }
+            if (($meta['name'] ?? '') === '' || $bytes === '') {
+                $json(400, ['error' => ['code' => 400, 'message' => 'Upload needs a name and a file body', 'status' => 'INVALID_ARGUMENT']]);
+
+                return null;
+            }
+            $created = drive_store_file($state, [
+                'name' => (string) $meta['name'],
+                'mimeType' => (string) ($meta['mimeType'] ?? 'application/pdf'),
+                'parents' => array_values($meta['parents'] ?? ['root']),
+                'content' => base64_encode($bytes),
+            ]);
+            $json(200, $created);
+
+            return null;
+        }
+
         $json(405, ['error' => ['code' => 405, 'message' => 'Method not allowed', 'status' => 'METHOD_NOT_ALLOWED']]);
 
         return null;
