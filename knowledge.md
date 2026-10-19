@@ -683,6 +683,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Other save paths checked and left alone: single-mark update, spreadsheet import (`MarksUpdated` tells school admins), Toshi `TeacherActionService::enterMarks`, Toshi `ToshiActionService::enterMark`, WhatsApp teacher marks (read-only), no marks observer. `GradesPublished` / `SendGradesToWhatsApp` / `notifyGradesPublished` are still registered and unused by a save; deleting them is plan row 3.
 - The subject count on that path queried `subjects.is_active`. The table column is `status`, so the query threw and the catch swallowed it. The new test adds `is_active` so the old path actually queues a parent message, and that test is red without this change.
 - Production untouched. No migration.
+- Review: Toshi teacher and admin entries now assert a saved mark before the parent-message check. `docs/dev/service-layer.md` no longer documents `notifyComprehensiveGrades`.
 
 ## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
 

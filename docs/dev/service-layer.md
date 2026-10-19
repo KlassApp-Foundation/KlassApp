@@ -303,17 +303,6 @@ public function notifyFeeReminder(
 
 Called by `SendFeeReminders` command. Sends fee notification to the parent.
 
-#### notifyComprehensiveGrades()
-
-```php
-public function notifyComprehensiveGrades(
-    User $student,
-    Exam $exam,
-): void
-```
-
-Sends detailed grade breakdown. Uses `queueOrSend()`.
-
 ---
 
 ### Phone Resolution

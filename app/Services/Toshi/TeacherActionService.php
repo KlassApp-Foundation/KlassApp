@@ -7,7 +7,7 @@ use App\Models\Academics\Marks;
 use App\Models\Assignment;
 use App\Models\Attendance;
 use App\Models\Events;
-use App\Models\Exam;
+use App\Models\Academics\Exam;
 use App\Models\Homework;
 use App\Models\LessonPlan;
 use App\Models\NoticeBoard;
@@ -107,6 +107,8 @@ class TeacherActionService
             return self::result(false, "Student not found: {$data['student']}");
         }
 
+        $grade = app(\App\Services\GradingSystemService::class)->grade((int) $data['marks'], $schoolId, $exam) ?? '-';
+
         Marks::updateOrCreate(
             [
                 'school_id' => $schoolId,
@@ -118,6 +120,7 @@ class TeacherActionService
                 'teacher_id' => $teacher->id,
                 'subject_id' => $exam->subject_id,
                 'section_id' => $exam->section_id ?? null,
+                'grade' => $grade,
             ]
         );
 

@@ -248,16 +248,15 @@ class TeacherSaveMarksDoesNotNotifyParentsTest extends TestCase
     {
         $this->fakeOutbound();
 
-        try {
-            TeacherActionService::enterMarks($this->teacher, [
-                'exam_id' => $this->exam->id,
-                'student' => 'Amina Nakato',
-                'marks' => 84,
-            ]);
-        } catch (\Throwable) {
-            // Grade handling on this path belongs to a later marks PR.
-            // A failed write still must not message parents.
-        }
+        $teacherResult = TeacherActionService::enterMarks($this->teacher, [
+            'exam_id' => $this->exam->id,
+            'student' => 'Amina Nakato',
+            'marks' => 84,
+        ]);
+        $this->assertTrue($teacherResult['success'], $teacherResult['message'] ?? '');
+        $this->assertSame(84, (int) Marks::where('student_id', $this->student->id)->where('exam_id', $this->exam->id)->value('marks'));
+        Event::assertNotDispatched(GradesPublished::class);
+        $this->assertNoParentResultsMessage();
 
         $admin = User::factory()->create([
             'usergroup_id' => 3,
@@ -266,12 +265,30 @@ class TeacherSaveMarksDoesNotNotifyParentsTest extends TestCase
             'email' => 'l6.admin.'.uniqid().'@t.sch.ug',
         ]);
 
-        ToshiActionService::enterMark($admin, [
+        $adminResult = ToshiActionService::enterMark($admin, [
             'student_id' => $this->student->id,
             'exam_id' => $this->exam->id,
             'marks' => 86,
         ]);
+        $this->assertTrue($adminResult['success'], $adminResult['message'] ?? '');
+        $this->assertSame(86, (int) Marks::where('student_id', $this->student->id)->where('exam_id', $this->exam->id)->value('marks'));
 
+        Event::assertNotDispatched(GradesPublished::class);
+        $this->assertNoParentResultsMessage();
+    }
+
+    public function test_L6_a_failed_toshi_entry_does_not_message_parents(): void
+    {
+        $this->fakeOutbound();
+
+        $result = TeacherActionService::enterMarks($this->teacher, [
+            'exam_id' => 999999,
+            'student' => 'Amina Nakato',
+            'marks' => 84,
+        ]);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame(0, Marks::count());
         Event::assertNotDispatched(GradesPublished::class);
         $this->assertNoParentResultsMessage();
     }
