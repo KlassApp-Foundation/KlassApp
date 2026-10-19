@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
+
+- The release result page showed a demo code in the Student column and no class on the row. Branch `cursor/release-result-names-7d0b` from `main` `070584f7`. Not merged. Base is `main`.
+- Each result message now stores `name` and `class`. The table shows them. An older message with no name still shows the code. The number stays masked. No migration. The webhook body is unchanged.
+- On `main` the result-page test failed because `release-student-name` was absent. With the change: release tests 30 / 221. Marks suite on this branch: 201 tests, 1098 assertions. No browser or staging pass. #1123 was not touched. #1126 is on `main` and was not edited.
+
 ## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
 
 - School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
