@@ -10,6 +10,8 @@ namespace App\Services\Results;
  * A set exam type is that sitting alone.
  * A stream or a student narrows the rows that come back. Positions
  * are still worked out for the whole class.
+ * Keeping mid-term months apart is a ResultsPolicy flag. It changes
+ * how sittings are built, not which class or term this query covers.
  */
 final class ResultsQuery
 {

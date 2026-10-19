@@ -885,7 +885,7 @@ Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::cl
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('admin.marks.releases.show');
 Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
-Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");
+Route::get("/report/student/{learner}/class/{class}/{exam}", "GetStudentsMarks@redirectLegacyReport")->name("admin.report.student.class");
 Route::get('/marks/download/', "DownloadMarksSheet@download")->name("admin.marksheet.download");
 
 // ===== Exam Marks Submissions (Lock / Reopen) =====
