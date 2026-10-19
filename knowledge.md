@@ -676,11 +676,24 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
+
+- The release result page showed a demo code in the Student column and no class on the row. Branch `cursor/release-result-names-7d0b` from `main` `070584f7`. Not merged. Base is `main`.
+- Each result message now stores `name` and `class`. The table shows them. An older message with no name still shows the code. The number stays masked. No migration. The webhook body is unchanged.
+- On `main` the result-page test failed because `release-student-name` was absent. With the change: release tests 30 / 221. Marks suite on this branch: 201 tests, 1098 assertions. No browser or staging pass. #1123 was not touched. #1126 is on `main` and was not edited.
+
 ## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
 
 - School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
 - Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
 - Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) Calendar (`cursor/google-connectors-calendar-b53f`, base the Classroom branch). Calendar scope is `calendar.app.created`. Gmail, Docs, Slides, and Tasks are not connected: school mail stays on Laravel Mail (no Gmail send and no compose screen to turn into drafts), report cards are PDFs and marks are spreadsheets, and personal tasks are not a Google Tasks product. Classroom builds on `feat/google-classroom-wave1` at `db8a5d82` and does not push that branch. `bash scripts/test-guard.sh` on the Calendar tip `eb8b4d35`: 2740 tests, 0 failures, 0 errors, 4 skipped.
+
+## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
+
+- Production deploy of `main` `a958dfc` (#1117) failed on `2026_10_19_000001_create_school_invites_table`: `created_by` was `foreignId()` (`BIGINT UNSIGNED`) and `users.id` is `increments()` (`INT UNSIGNED`). MySQL error 3780, constraint `school_invites_created_by_foreign`. The empty table was left behind with no foreign key, and the migration was not recorded.
+- [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) (`cursor/fix-school-invites-created-by-248c`) makes `created_by` `unsignedInteger`, nullable, `ON DELETE SET NULL`. An empty pre-existing table is dropped and recreated. A table with rows is altered in place and is never dropped. Not merged. No production access and no environment changes in this session.
+- [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job, stacked on #1126. Not merged. Retarget it to `main` after #1126 merges.
+- Local MySQL 8.4.11: the pre-fix migration reproduces error 3780; the fix passes on a fresh database, on that half-created empty table, on a second `migrate` (nothing to migrate), and when the half-created table already has a row. `down()` drops the table.
 
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
@@ -2663,6 +2676,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Status**: Draft PRs open. Not merged. Production and staging not touched. Full test guard on the Classroom tip: 2736 tests, 0 failures, 0 errors, 4 skipped.
 - **Edge cases flagged**: Google cannot revoke one scope. Section names are unique per school, so a duplicate class name cannot be stored today; the sync still refuses that case. Real Google consent, API enablement, and course-ownership rules are not proven by the fake server.
 - **PR**: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation (`cursor/google-connectors-foundation-b53f`). [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets. [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive. [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom (`cursor/google-connectors-classroom-b53f`, head after this note). Not merged.
+
+### 2026-10-19: school_invites.created_by must match users.id
+
+- **Work done**: `users.id` in `2020_02_18_000000_create_users_table.php` is `increments()` (`INT UNSIGNED`). No later migration changes that column. `schools.id` is `bigIncrements()` and is not referenced by `school_invites`. The only foreign key in `2026_10_19_000001_create_school_invites_table` was `foreignId('created_by')`, which is `BIGINT UNSIGNED`. MySQL 8.4 rejects that pair. The migration now uses `unsignedInteger('created_by')->nullable()` and `nullOnDelete()` on `users.id`. If `school_invites` already exists and has 0 rows, it is dropped and created again. If it has rows, `created_by` is changed to `INT UNSIGNED` and the foreign key is added. `down()` is still `dropIfExists`.
+- **Files modified**: `database/migrations/2026_10_19_000001_create_school_invites_table.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `knowledge.md`.
+- **Key decisions**: Do not drop a table that has rows. Do not touch production or environment settings. A second PR adds a MySQL 8.4 `php artisan migrate` job so this failure shows up in CI.
+- **Status**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) OPEN. [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) OPEN, stacked on #1126. Neither merged.
+- **Edge cases flagged**: The row-preserving alter runs on MySQL only, and it refuses to change the column if `users.id` is not `int unsigned` or if a `created_by` value does not fit `INT UNSIGNED`. SQLite stores both integer widths as `integer`, so the column-type mismatch is proven on MySQL, not by the SQLite suite.
+- **Evidence**: Docker MySQL 8.4.11. Pre-fix `migrate` exit 1, SQLSTATE 3780, table left with `created_by bigint unsigned`, 0 rows, no foreign key, migration not recorded. Fix on that database exit 0: `created_by int unsigned`, FK `school_invites_created_by_foreign` to `users.id`, `DELETE_RULE=SET NULL`, 0 rows, one migrations row. Second `migrate`: "Nothing to migrate", still one row. Fresh database: full `migrate` exit 0, same column and FK. Extra: one existing row (`created_by=1`) kept after the alter, type `int unsigned`, FK added. `migrate:rollback --step=1` drops the table; `migrate` recreates it. PHPUnit: signup files 66 passed (430 assertions); `SchoolInviteTest` 8 passed (47 assertions), including `test_created_by_matches_users_id_and_nulls_on_delete`. A first combined process returned 429 on `SignupEnabledTest` resend because guest `throttle` keys are per IP and the file cache still held earlier invite-claim hits; that test passed after `cache:clear` when the signup files ran on their own.
+- **PR**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) OPEN (`cursor/fix-school-invites-created-by-248c`). [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) OPEN (`cursor/ci-mysql-84-migrations-248c`), stacked on #1126. Neither merged.
 
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 

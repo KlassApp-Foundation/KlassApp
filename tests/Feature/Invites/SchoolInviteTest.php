@@ -12,6 +12,7 @@ use App\Services\SchoolInviteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class SchoolInviteTest extends TestCase
@@ -212,5 +213,28 @@ class SchoolInviteTest extends TestCase
             ->assertRedirect(route('admin.onboarding.wizard'));
 
         $this->assertSame(ToshiMode::Preview, $school->fresh()->toshi_mode);
+    }
+
+    public function test_created_by_matches_users_id_and_nulls_on_delete(): void
+    {
+        $createdBy = collect(Schema::getColumns('school_invites'))->firstWhere('name', 'created_by');
+        $usersId = collect(Schema::getColumns('users'))->firstWhere('name', 'id');
+
+        $this->assertNotNull($createdBy);
+        $this->assertNotNull($usersId);
+        $this->assertTrue($createdBy['nullable']);
+        $this->assertSame(
+            strtolower((string) $usersId['type']),
+            strtolower((string) $createdBy['type'])
+        );
+
+        $foreignKey = collect(Schema::getForeignKeys('school_invites'))->first(
+            fn (array $fk) => in_array('created_by', $fk['columns'] ?? [], true)
+        );
+
+        $this->assertNotNull($foreignKey);
+        $this->assertSame('users', $foreignKey['foreign_table']);
+        $this->assertSame(['id'], $foreignKey['foreign_columns']);
+        $this->assertSame('set null', $foreignKey['on_delete']);
     }
 }
