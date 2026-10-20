@@ -2722,6 +2722,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Edge cases flagged**: Retry uses resend, so it issues a new token. An email that already has an account rolls the claim back and leaves the invite unclaimed.
 - **PR**: [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123) on `cursor/invite-followups-1117`. Not merged.
 
+### 2026-10-19: webhook verify token, set-password links, high-severity lockfile upgrades
+
+Three draft pull requests, all based on `a958dfc4`. None merged. No environment or production setting was changed.
+
+- **Work done**: WhatsApp webhook verification fails closed when `WHATSAPP_BUSINESS_VERIFY_TOKEN` is unset or empty. Admin resets, the Toshi teacher invite, and a Toshi school create with no chosen password email a signed password-broker link instead of a password. The platform-admin command still prints its one-time password on the console only. High-severity Composer and npm upgrades that fit the current constraints are in the lockfiles. Dependabot's alerts API returned 403, so the list came from `composer audit` and `npm audit`.
+- **Files modified**: webhook config, controller, example env, local WhatsApp note, and handshake tests; set-password mail, reset trait, Toshi teacher invite and create-mode success card; `composer.lock` and `package-lock.json`.
+- **Key decisions**: The public 6-digit reset code stays. WhatsApp template submission scripts stay, so live Meta templates are not edited from here. Medium and low advisories, and npm highs that need a major or have no fix, are listed on the dependency pull request and were not upgraded.
+- **Status**: Draft, not merged. Guarded suites were green on each branch before push (2711, 2710, and 2707 tests, 0 failures). Conflict-marker and root-clutter checks passed.
+- **Edge cases flagged**: Deploying the webhook change while the verify-token variable is empty makes Meta's handshake return 403. Set the variable before that deploy. This session did not set it.
+- **PR**: [#1147](https://github.com/KlassApp-Foundation/KlassApp/pull/1147) `cursor/whatsapp-verify-token-required-c2f9`. [#1146](https://github.com/KlassApp-Foundation/KlassApp/pull/1146) `cursor/set-password-links-c2f9`. [#1148](https://github.com/KlassApp-Foundation/KlassApp/pull/1148) `cursor/high-severity-deps-c2f9`.
+
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 
 WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on the v2 dashboard card and the WhatsApp page. A KlassApp number now files a request instead of linking immediately; approve still sends the existing welcome. Form requests stay on Approvals as well. Only demo links show a countdown. The release page is one screen: compact controls, a combined mark sheet, and a WhatsApp-style example of the message that is already sent. This branch also drops the legacy dashboard and `DASHBOARD_V2_ENABLED` in code. Leave that production variable unset. Do not set it. Draft PR [#1110](https://github.com/KlassApp-Foundation/KlassApp/pull/1110) on `cursor/whatsapp-link-requests-dce8`. Not merged. Handover is in the PR body. The full test guard was not run after the last layout edits.

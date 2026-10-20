@@ -49,7 +49,7 @@ return [
         'business_api_token' => env('WHATSAPP_BUSINESS_API_TOKEN'),
         'business_phone_number_id' => env('WHATSAPP_BUSINESS_PHONE_NUMBER_ID'),
         'business_waba_id' => env('WHATSAPP_BUSINESS_WABA_ID'),
-        'business_verify_token' => env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'),
+        'business_verify_token' => env('WHATSAPP_BUSINESS_VERIFY_TOKEN'),
         // Meta webhook signature verification (X-Hub-Signature-256) for the WhatsApp webhook POSTs
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'verify_signature' => env('WHATSAPP_VERIFY_SIGNATURE', true),
