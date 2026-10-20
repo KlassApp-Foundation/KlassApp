@@ -220,6 +220,22 @@
 
 @elseif($stepKey === 'subjects')
     <div class="manual-wizard-subjects" data-testid="wizard-subjects">
+        @if(count($structureClasses ?? []) > 0)
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-subject-class">Class</label>
+                <select id="wizard-subject-class" class="ds-form-input ds-form-select w-full" wire:model.live="subjectSectionId" data-testid="wizard-subject-class">
+                    @foreach($structureClasses as $class)
+                        <option value="{{ $class['section_id'] }}" data-testid="wizard-subject-class-{{ $class['section_id'] }}">{{ $class['name'] }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Same classes as the classes step. Subjects are saved on the class you pick.</p>
+            </div>
+        @endif
+
+        @if($subjectFlash ?? false)
+            <div class="mb-4 rounded-lg border px-4 py-3 text-sm" data-testid="wizard-subject-flash" style="color:#0F172A;background:#F8FAFC;border-color:#E2E8F0;">{{ $subjectFlash }}</div>
+        @endif
+
         @if(count($existingSubjectNames ?? []) > 0)
             <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3" data-testid="wizard-subjects-seeded">
                 <p class="text-sm font-medium text-green-900" style="color:#14532D;">
@@ -229,21 +245,28 @@
                     These came from your school category (or a previous save). Review them below — click Next to continue, or add another subject.
                 </p>
                 <ul class="mt-2 flex flex-wrap gap-2" data-testid="wizard-subjects-seeded-list">
-                    @foreach($existingSubjectNames as $existingSubject)
-                        <li class="text-xs font-medium px-2 py-1 rounded bg-white border border-green-200 text-green-900">{{ $existingSubject }}</li>
+                    @foreach($existingSubjectNames as $subjectIndex => $existingSubject)
+                        <li class="text-xs font-medium px-2 py-1 rounded bg-white border border-green-200 text-green-900 inline-flex items-center gap-2" data-testid="wizard-subject-row" style="color:#14532D;background:#FFFFFF;border-color:#BBF7D0;">
+                            <span>{{ $existingSubject }}</span>
+                            <button type="button" class="manual-wizard-subject-remove" wire:click="removeSubject({{ $subjectIndex }})" aria-label="Remove {{ $existingSubject }}" data-testid="wizard-subject-remove">✕</button>
+                        </li>
                     @endforeach
                 </ul>
             </div>
-            <div class="ds-form-group">
-                <label class="ds-form-label" for="wizard-subject">Add another subject (optional)</label>
-                <input id="wizard-subject" type="text" class="ds-form-input w-full" wire:model="subjectName" placeholder="e.g. Music" autocomplete="off" />
-            </div>
-        @else
-            <div class="ds-form-group">
-                <label class="ds-form-label" for="wizard-subject">First subject<span class="text-red-500">*</span></label>
-                <input id="wizard-subject" type="text" class="ds-form-input w-full" wire:model="subjectName" placeholder="e.g. Mathematics" autocomplete="off" />
-            </div>
         @endif
+
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-subject">
+                @if(count($existingSubjectNames ?? []) > 0)
+                    Add subjects (optional)
+                @else
+                    Subjects<span class="text-red-500">*</span>
+                @endif
+            </label>
+            <textarea id="wizard-subject" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="subjectName" placeholder="Mathematics, English&#10;Science" autocomplete="off" data-testid="wizard-subject-input"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Separate subjects with commas, or put one on each line.</p>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="addSubjects" data-testid="wizard-subject-add">Add</x-button>
+        </div>
     </div>
 
 @elseif($stepKey === 'teachers')

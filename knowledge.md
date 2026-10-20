@@ -676,7 +676,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
+## Current Status: October 20, 2026 — **wizard subjects step OPEN (PR pending)**
+
+- Manual wizard subjects step attached new subjects with the untouched classes-field default `P1`. Category seeding and a classes-step save store the section name (`Primary One`, or `P1` when that was the name typed). `saveSubjects` matches that string exactly, so `P1` did not resolve to `Primary One` and Next failed with "Class 'P1' does not exist."
+- The subjects step now lists the classes step's section records and saves by section id. A leftover short code still resolves through the existing class-name aliases when no id is chosen. Comma or line lists add immediately, with duplicates and skips reported. Remove soft-deletes that subject on the selected class. Toshi onboarding was not changed.
+- Not merged. Production untouched.
+
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency merged [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
 - Phone header: teacher and student shells below 768px kept the menu and search as separate 44px targets. Desktop header unchanged. Not merged.
 - Bursar dashboard: money uses `school_details.meta_key = currency` through `DashboardV2DataService::currencyFor`. No code when the school has not set one. Not merged. Production untouched.
@@ -2708,6 +2714,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: wizard subjects step uses the classes step's records
+
+- **Work done**: The manual wizard subjects step no longer looks up a class by the free-text field that defaults to `P1`. It selects a base section from the same structure snapshot as the classes step and writes subjects on that section id (and its streams). Schools that already stored `P1` or `Primary One` both resolve. Several names can be added at once (commas or new lines); blanks are ignored, repeats and names already on the class are reported, and each listed subject can be removed (soft delete, restore on add).
+- **Files modified**: `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `tests/Feature/Onboarding/WizardSubjectsClassRecordsTest.php`, `knowledge.md`.
+- **Key decisions**: Do not change `OnboardingEngine::saveSubjects` or Toshi. The wizard writes by id so the shared engine's exact-name match stays as Toshi uses it. Remove uses the subject's soft delete and restores that row on a later add so the unique `(school_id, section_id, name)` key is not violated.
+- **Status**: PR opening. Not merged. No environment or production changes.
+- **Edge cases flagged**: The classes field still defaults to `P1` for a school that has no classes yet. Once classes exist, that string is only an alias hint. A subject name that itself contains a comma is split. Streams of the selected class receive the new subject too.
+- **Evidence**: With the old name lookup restored, `test_seeded_primary_one_is_used_when_the_classes_field_is_still_p1` failed: `Class 'P1' does not exist. Add it on the classes step first.` With the fix, `WizardSubjectsClassRecordsTest` plus the subjects checkpoint and structure wizard tests passed (21 tests, 157 assertions). `bash scripts/test-guard.sh` with 4 processes: 2817 tests, 0 failures, 0 errors, 4 skipped. No browser or staging pass.
 
 ### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
 
