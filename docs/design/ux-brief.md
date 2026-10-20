@@ -38,6 +38,7 @@ Head teacher versus school admin, checked locally against the rendered sidebar:
 - School admin sees Settings (School details, Academic years and terms, Data exports) and Classes and streams.
 - Head teacher does not. Those items use `condition => school_admin` in `config/navigation.php`.
 - The school-details URL is still open to a head teacher. `GET /admin/schooldetails` returned HTTP 200 and the form. The nav hide is not a lock. Settings routes under `routes/setting.php` use `fullschooladmin` and are the ones actually limited to usergroup 3.
+- The classes roster is the other way around. `RosterScopeService::assertActorCanAccessSchool()` allows usergroups 3 and 5 only, so a head teacher is refused there even though they can open much of `/admin/*`.
 
 ## 3. Key workflows
 
@@ -75,13 +76,16 @@ The wizard and Toshi share one step list in `OnboardingStepsService::ALL_STEPS`:
 
 `docs/proposals/2026-10-03-onboarding-steps.md` describes a shared step registry behind `TOSHI_ONBOARDING_V2`, default off in `config/toshi.php`. The wizard on `main` already reads `OnboardingStepsService`. The Toshi v2 chat driver (`ToshiOnboardingV2Driver`) stays behind that flag. Do not design two different step lists.
 
-One behaviour to confirm with the team: choosing Toshi flashes `open_toshi_onboarding`, and `Admin\DashboardController` discards that flash. The panel opens only when the URL has `?toshi_onboarding=1`. The choice redirect does not add that query.
+Two behaviours that do not match the two-path story:
+
+- Choosing Toshi flashes `open_toshi_onboarding`, and `Admin\DashboardController` discards that flash. The panel opens only when the URL has `?toshi_onboarding=1`. The choice redirect does not add that query.
+- `schools.onboarding_finished_at` is set by `ManualOnboardingWizard::confirmReview()` (and by the demo seeder). `AgentToshi` never calls `OnboardingStepsService::markOnboardingFinished()`. A school that finishes only in Toshi can still look unfinished, and the choice screen only skips itself when that timestamp is set.
 
 The invite form's phone rule in `SchoolInviteClaimController` accepts one national mobile pattern. That is a code limit. The screen should work for any country.
 
 **Proposed**
 
-One setup story with two ways to answer it (form or Toshi), same steps, same words. Show only the steps that apply to this school. Prefill ordinary defaults (three terms, a typical class list for the chosen curriculum) and let the school edit them. Standing rule in `AGENTS.md` says this prefill is not built yet. After the last step, land on the school dashboard with a short "what to do next" (invite a teacher, add a class, connect WhatsApp), not a second empty admin.
+One setup story with two ways to answer it (form or Toshi), same steps, same words. Show only the steps that apply to this school. Prefill ordinary defaults (three terms, a typical class list for the chosen curriculum) and let the school edit them. Standing rule in `AGENTS.md` says this prefill is not built yet. Both paths should set the same finished timestamp, then land on the school dashboard with a short "what to do next" (invite a teacher, add a class, connect WhatsApp), not a second empty admin.
 
 ### Parents linking on WhatsApp, then the school approves
 
@@ -90,17 +94,17 @@ One setup story with two ways to answer it (form or Toshi), same steps, same wor
 Parents do not start in the web app. An unknown number hits `POST /api/whatsapp/inbound` (`Api\WhatsAppController`).
 
 1. They can send a student id shaped `KLS` plus 7 digits. `ParentLinkRequestService::createFromKlassAppNumber` stores a pending request for that school.
-2. Or they tap Request Link. The Flow submission calls `createFromFlowSubmission` (parent name, child name, class, school name). A single matching student is suggested. If the name matches more than one school, the code does not guess (`AGENTS.md` standing rule on weak matches).
-3. A unique school student id or board registration number can also start a request (`WhatsAppController` around the "priority 2" branch).
-4. A 10-digit payment code is a different path (fee payment lookup), not the link form.
-5. The school sees the queue on `GET /admin/whatsapp/dashboard` and `GET /admin/whatsapp/parents` (`LinkRequestBoard`) and on `GET /admin/approvals`. Approve or reject with `POST /admin/approvals/{approval}/approve` or `reject`.
+2. Or they tap Request Link. The Flow submission calls `createFromFlowSubmission` (parent name, child name, class, school name). A single matching student is suggested. An approval row is created only when one school is resolved. If it is not, the request is stored and the admin inbox is skipped (`ParentLinkRequestService`, warning log). The code does not guess between schools.
+3. A school's own student id or board registration number, when it matches one student, links immediately (`WhatsAppController` comment "instant, when unique enough" → `ParentLinkService::linkByStudentId`). That path does not wait for approval.
+4. A 10-digit code is School Pay (`std_school_pay_number`), not the link form. If no parent is linked yet, it creates a `WhatsAppUser` for that school and sends a welcome. It does not create a `ParentLinkRequest`. If a parent link already exists, it attaches the number to that parent.
+5. The approval queue, for the paths that use it, is on `GET /admin/whatsapp/dashboard` and `GET /admin/whatsapp/parents` (`LinkRequestBoard`) and on `GET /admin/approvals`. Approve or reject with `POST /admin/approvals/{approval}/approve` or `reject`.
 6. After a link, the parent can sign in to `/parent/dashboard` and open fees, grades and attendance for each child. With one child, the sidebar Fees / Grades / Attendance links go straight to that child. With several, they go to `/parent/children` first (`sidebar-menu.blade.php`).
 
 Local parent grades for an unreleased term correctly said nothing was published (`ux-brief/parent-grades-1280.webp`). That is the release gate (`ReleaseGate` in `ParentPortalService`), not an empty school.
 
 **Proposed**
 
-One linking story: parent sends the student id or a short form on WhatsApp, school confirms on one queue (not three lookalike screens), parent then has a simple home: this child, fees, latest released results, attendance. The web screens and the WhatsApp replies should use the same words.
+Decide which paths need a person to confirm. Today, a KlassApp id and Request Link wait for the school, while a matching school id or a payment code can attach without that queue. Keep one queue, not three lookalike screens. The parent home is this child, fees, latest released results, attendance. The web screens and the WhatsApp replies should use the same words.
 
 ### Marks
 
@@ -110,8 +114,8 @@ The proposal is `docs/product/marks-flow.md` (merged as PR #1118). It still says
 
 1. **Enter or upload.** Subject teacher, class teacher, or admin. Teacher list: `GET /teacher/exam/marks` (`teacher.exam.marks`). `GET /teacher/exams` and `GET /teacher/exam` redirect there (301). Entry: `GET /teacher/exam/{exam}/marks/enter`. Spreadsheet: `GET /teacher/exam/{exam}/marks/import` (template, preview, confirm, result). Admin import: `GET /admin/exams/{exam}/marks/import`. A teacher who does not own the exam gets 403. Local entry for the teacher's own exam returned 200 (`ux-brief/class-teacher-enter-1280.webp`): subject and term in the header, blank grid, Download template, Import from spreadsheet, Submit for review (`resources/views/teacher/marks/enter.blade.php`).
 2. **Submit.** `POST /teacher/exam/{exam}/submit`. Writes `exam_marks_submissions`. Does not message parents and does not flip `exams.status` (#1134).
-3. **Review.** `GET /admin/marks/submissions` lists those rows. Detail `GET /admin/marks/submissions/{exam}`. Approve, reject, lock, reopen are POSTs on that controller. The sidebar child "Mark submissions" shows a count.
-4. **Mark sheet.** `GET /admin/marks/classes/{section?}` and the filter `GET /admin/marks` plus `GET /admin/marks/filter`. Per-student `GET /admin/marks/student/{user}/class/{class}/{exam}`. The old `/admin/report/student/...` redirects. Numbers are supposed to come from `ResultsService` (#1127, #1142, #1144).
+3. **Review.** `GET /admin/marks/submissions` lists rows with `status=submitted`. Detail `GET /admin/marks/submissions/{exam}`. The order on that screen is lock, then approve or reject. Approve and reject refuse rows that are not locked (`ExamMarksSubmissionController`). Reopen lets the teacher edit again. The sidebar child "Mark submissions" shows a count.
+4. **Mark sheet.** Several URLs, not one screen. Class cards `GET /admin/marks/classes/{section?}` and the per-student page `GET /admin/marks/student/{user}/class/{class}/{exam}` use `ResultsService` (#1127, #1142, #1144). The older filter `GET /admin/marks` and `GET /admin/marks/filter` still only counts exams whose `status` is `submitted` (`Admin\MarksController`). The PDF `GET /admin/marks/download` uses `MarksReportService`, not `ResultsService`. The old `/admin/report/student/...` redirects. The proposal's "one results service" and "stop using exam status" are not finished on those two older screens.
 5. **Report cards.** Admin `GET /admin/reports/cards`. Class teacher `GET /teacher/reports/cards`. PDFs from `StudentReportCardService`. #1130 reads aggregate, division and position from `ResultsService`.
 6. **Release.** `GET /admin/marks/releases/new` and the same page under `/teacher/marks/releases/new` for a class teacher. #1135 refuses release until every subject in scope is approved. A school admin may override with a reason of at least 10 characters. A class teacher cannot. Local release screen showed Approved / Pending / Rejected / Not submitted and disabled the release button while a subject was not approved (`ux-brief/admin-release-1280.webp`).
 7. **Parents and students.** Parent `GET /parent/children/{student}/grades`. Student `GET /student/marks` (`Student\RecordsController`, calls `ReleaseGate`). WhatsApp keywords GRADES, MARKS and REPORT go through the same gate (#1122, #1124). Staff screens are not gated.
@@ -159,7 +163,7 @@ A teacher opens today's register for their class, marks it, and leaves. Parents 
 **Today**
 
 - **Web.** Livewire `agent-toshi` is included from `resources/views/layouts/partials/toshi-embed.blade.php` for usergroups 1, 3, 4, 5, 6, 7, 8, 9, 10 and 11. Modes are preview, onboarding, and assistant (`ToshiUiSwitch`). The side launcher is only for school admins and head teachers (usergroups 3 and 4). Assistant mode needs an API key and `toshi_mode=assistant`. New schools do not get that by default.
-- **WhatsApp.** Keyword menu (fees, grades, attendance, link help) is the live path in `Api\WhatsAppController`. Free-form Toshi on WhatsApp is behind `TOSHI_WHATSAPP_CHANNEL_ENABLED` (default false) and the SDK v2 flag (`config/toshi.php`). `docs/toshi-whatsapp-channel-audit.md` is an older audit. The blade allowlist it describes is narrower than `toshi-embed.blade.php` today.
+- **WhatsApp.** Keyword menu (fees, grades, attendance, link help) is the live path in `Api\WhatsAppController`. Free-form Toshi on WhatsApp is behind `TOSHI_WHATSAPP_CHANNEL_ENABLED` (default false) and the SDK v2 flag (`config/toshi.php`). When those flags are on, `WhatsAppToshiChannelService` still skips usergroup 4 (head teacher). `docs/toshi-whatsapp-channel-audit.md` is an older audit. The blade allowlist it describes is narrower than `toshi-embed.blade.php` today.
 - **Slack.** Catalog entry in `config/toshi.php` (`TOSHI_SLACK_CHANNEL_ENABLED`, default false). There is also a local mock MCP server (`app/Mcp/Servers/SpikeSlackMockServer.php`) that is not Slack. No parent conversation runs through Slack on `main`.
 - **Google.** Same catalog, `TOSHI_GOOGLE_DRIVE_ENABLED` default false. The admin dashboard can show a Drive "connected" bit from `school_mcp_connectors`, but the flag is off unless the environment says so.
 
