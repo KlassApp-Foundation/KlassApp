@@ -5,15 +5,18 @@ namespace Tests\Feature\Navigation;
 use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\MustBeSchoolAdmin;
 use App\Http\Middleware\MustBeTeacher;
+use App\Models\Approval;
+use App\Models\ParentLinkRequest;
 use App\Models\School;
 use App\Models\User;
+use App\States\Approval\Pending;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
  * Enter marks has one address, the upcoming-exams tile does not 404,
- * mark submissions sit under Approvals, and promotion is a POST.
+ * mark submissions stay under Exams and reports, and promotion is a POST.
  */
 class MarksQuickActionsTest extends TestCase
 {
@@ -52,9 +55,66 @@ class MarksQuickActionsTest extends TestCase
 
     public function test_approvals_menu_includes_mark_submissions(): void
     {
-        $nav = file_get_contents(base_path('config/navigation.php'));
-        $this->assertStringContainsString("'Mark submissions'", $nav);
-        $this->assertStringContainsString("'admin/marks/submissions'", $nav);
+        $found = [];
+        $approvalsChildren = null;
+        $walk = function (array $rows, ?string $parent) use (&$walk, &$found, &$approvalsChildren): void {
+            foreach ($rows as $row) {
+                if (($row['label'] ?? '') === 'Mark submissions') {
+                    $found[] = $parent;
+                }
+                if (($row['label'] ?? '') === 'Approvals') {
+                    $approvalsChildren = $row['children'] ?? [];
+                }
+                if (! empty($row['children'])) {
+                    $walk($row['children'], $row['label']);
+                }
+                if (! empty($row['rows'])) {
+                    $walk($row['rows'], $parent);
+                }
+            }
+        };
+        $walk(config('navigation.roles.admin.sections'), null);
+
+        $this->assertSame(['Exams and reports'], $found);
+        $this->assertSame([], $approvalsChildren);
+
+        DB::table('usergroups')->insert([
+            ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $admin = $this->user(3);
+        $student = User::factory()->create([
+            'school_id' => $admin->school_id,
+            'usergroup_id' => 6,
+            'status' => 'active',
+        ]);
+        $link = ParentLinkRequest::create([
+            'school_id' => $admin->school_id,
+            'phone' => '+256700444111',
+            'parent_name' => 'Menu Parent',
+            'child_name' => 'Menu Student',
+            'child_class' => 'P5',
+            'school_name' => 'Quick Actions School',
+            'suggested_student_id' => $student->id,
+            'candidate_student_ids' => [$student->id],
+            'status' => 'pending',
+        ]);
+        Approval::create([
+            'approvable_type' => ParentLinkRequest::class,
+            'approvable_id' => $link->id,
+            'state' => Pending::class,
+            'requested_by' => null,
+            'comments' => $link->summaryLine(),
+        ]);
+
+        $html = $this->actingAs($admin)
+            ->view('layouts.partials.sidebar-menu', ['role' => 'admin'])
+            ->render();
+
+        $this->assertSame(1, substr_count($html, '>Mark submissions</span>'));
+        $this->assertMatchesRegularExpression(
+            '/data-sidebar-count="approvals"(?![^>]*hidden)[^>]*>1</',
+            $html
+        );
     }
 
     public function test_promotion_is_posted_and_a_get_does_not_promote(): void
