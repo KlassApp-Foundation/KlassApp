@@ -676,7 +676,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency on its own branch**
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
 - Phone header: teacher and student shells below 768px kept the menu and search as separate 44px targets. Desktop header unchanged. Not merged.
 - Bursar dashboard: money uses `school_details.meta_key = currency` through `DashboardV2DataService::currencyFor`. No code when the school has not set one. Not merged. Production untouched.
@@ -687,7 +687,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `public/css/dashboard-refresh.css`, `e2e/regression/mobile-header-targets.spec.js`, `app/Traits/Dashboard.php`, `resources/views/accountant/dashboard.blade.php`, `tests/Feature/Accountant/BursarDashboardCurrencyTest.php`.
 - **Decision:** currency falls back to no code, the same as the admin dashboard and student profile. Payments and payroll screens still name a code and are outside this dashboard.
 - **Tests:** header measurements fail on `main` (menu width 24px) and pass with the fix at 360, 375, 414 and 1280. Bursar currency test fails on `main` (`Total Fees (UGX)`) and passes for `KES` and for an unset currency.
-- **Status:** header OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). Currency PR URL recorded when that pull request is open.
+- **Status:** header OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). Currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160). Do not merge from this session.
 
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
 
