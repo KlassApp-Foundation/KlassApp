@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Input;
-use Axiom\Rules\ISBN;
+use App\Rules\Isbn;
 use App\Models\Book;
 
 class BookRequest extends FormRequest
@@ -50,7 +50,7 @@ class BookRequest extends FormRequest
             'author'  => 'nullable|max:100',
             'category_id'=>'required|exists:books_category,id',
             'book_code'=>'required|unique:books',
-            'isbn_number'=>['nullable','unique:books',new ISBN],
+            'isbn_number'=>['nullable','unique:books',new Isbn],
             'quantity'=>'nullable|numeric',
             'cover_image'=>'nullable|mimes:jpg,jpeg,png',
            
