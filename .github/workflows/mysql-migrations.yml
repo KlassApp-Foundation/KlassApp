@@ -1,0 +1,128 @@
+name: MySQL 8.4 migrations
+
+# SQLite does not enforce foreign-key column types. Production is MySQL 8.4,
+# and a BIGINT UNSIGNED column cannot reference users.id (INT UNSIGNED).
+# This job migrates an empty MySQL 8.4 database and fails on that mismatch.
+# It is a required-style check: a migration error fails the workflow.
+# Branch protection still has to list this job before GitHub blocks a merge.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mysql-84-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: klassapp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, zip, bcmath, intl, sqlite, mysql, gd
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Migrate an empty MySQL 8.4 database
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: klassapp
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan migrate --force --no-interaction
+
+      - name: Confirm every migration ran
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: klassapp
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: |
+          php artisan migrate:status --no-interaction | tee migrate-status.txt
+          if grep -q 'Pending' migrate-status.txt; then
+            echo 'A migration is still pending'
+            exit 1
+          fi
+          grep -q 'Ran' migrate-status.txt
+
+      - name: Fail when a foreign key column type does not match
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: klassapp
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: |
+          php <<'PHP'
+          <?php
+
+          require getcwd().'/vendor/autoload.php';
+          $app = require getcwd().'/bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+          $version = Illuminate\Support\Facades\DB::selectOne('select version() as version');
+          echo 'mysql '.$version->version.PHP_EOL;
+          if (! str_starts_with((string) $version->version, '8.4')) {
+              fwrite(STDERR, "expected MySQL 8.4.x\n");
+              exit(1);
+          }
+
+          $rows = Illuminate\Support\Facades\DB::select(<<<'SQL'
+          SELECT k.TABLE_NAME, k.CONSTRAINT_NAME, k.COLUMN_NAME,
+                 k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME,
+                 c1.COLUMN_TYPE AS column_type, c2.COLUMN_TYPE AS referenced_type
+          FROM information_schema.KEY_COLUMN_USAGE k
+          JOIN information_schema.COLUMNS c1
+            ON c1.TABLE_SCHEMA = k.TABLE_SCHEMA
+           AND c1.TABLE_NAME = k.TABLE_NAME
+           AND c1.COLUMN_NAME = k.COLUMN_NAME
+          JOIN information_schema.COLUMNS c2
+            ON c2.TABLE_SCHEMA = k.REFERENCED_TABLE_SCHEMA
+           AND c2.TABLE_NAME = k.REFERENCED_TABLE_NAME
+           AND c2.COLUMN_NAME = k.REFERENCED_COLUMN_NAME
+          WHERE k.TABLE_SCHEMA = DATABASE()
+            AND k.REFERENCED_TABLE_NAME IS NOT NULL
+            AND c1.COLUMN_TYPE <> c2.COLUMN_TYPE
+          SQL);
+
+          if ($rows !== []) {
+              fwrite(STDERR, "Foreign key column types do not match:\n");
+              foreach ($rows as $row) {
+                  fwrite(STDERR, json_encode($row).PHP_EOL);
+              }
+              exit(1);
+          }
+
+          echo "foreign key column types match\n";
+          PHP

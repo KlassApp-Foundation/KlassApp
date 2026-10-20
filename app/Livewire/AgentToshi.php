@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Support\PhoneCountry;
 use App\Services\CoAdminInviteLinkService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
@@ -1993,8 +1994,14 @@ class AgentToshi extends Component
         if ($email) {
             $this->actionData['teacherEmails'][$name] = $email;
         }
-        if ($this->teacherFormPhone) {
-            $this->actionData['teacherPhones'][$name] = trim($this->teacherFormPhone);
+        if (trim($this->teacherFormPhone) !== '') {
+            $phone = PhoneCountry::normalise($this->teacherFormPhone, $this->resolvedPhoneCountry());
+            if ($phone === null) {
+                $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), true));
+
+                return;
+            }
+            $this->actionData['teacherPhones'][$name] = $phone;
         }
         if ($this->teacherFormSubjects) {
             $this->actionData['teacherSubjects'][$name] = array_map('trim', explode(',', $this->teacherFormSubjects));
@@ -2303,7 +2310,15 @@ class AgentToshi extends Component
             'board_registration_number' => trim((string) $this->studentFormBoardRegNumber),
         ];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
-        if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
+        if (trim((string) $this->studentFormParentPhone) !== '') {
+            $parentPhone = PhoneCountry::normalise($this->studentFormParentPhone, $this->resolvedPhoneCountry());
+            if ($parentPhone === null) {
+                $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), false));
+
+                return;
+            }
+            $entry['parent_phone'] = $parentPhone;
+        }
 
         $this->actionData['students'][] = $entry;
         $this->studentFormName = '';
@@ -3185,36 +3200,43 @@ class AgentToshi extends Component
     }
 
     /**
-     * Normalize a Ugandan phone number to +256XXXXXXXXX format.
-     * Accepts: +256701234567, 256701234567, 0701234567, +256 701 234 567
-     * Returns normalized number or null on failure.
+     * Normalise a WhatsApp number with the school's country.
+     * Uses WhatsAppPhoneHelper::normaliseForCountry() via PhoneCountry.
      */
     private function normalizeUgandaPhone(string $phone): ?string
     {
-        $phone = trim(preg_replace('/[\s\-\(\)]/', '', $phone));
+        $country = $this->resolvedPhoneCountry();
+        $normalised = PhoneCountry::normalise($phone, $country);
+        if ($normalised === null) {
+            $this->botSay(PhoneCountry::error($country, true));
 
-        // Already in +256 format
-        if (preg_match('/^\+256[0-9]{9}$/', $phone)) {
-            return $phone;
+            return null;
         }
 
-        // 256XXXXXXXXX (no +)
-        if (preg_match('/^256[0-9]{9}$/', $phone)) {
-            return '+' . $phone;
+        return $normalised;
+    }
+
+    public function phoneFormatHint(bool $whatsapp = true, ?string $label = null): string
+    {
+        return PhoneCountry::hint($this->resolvedPhoneCountry(), $whatsapp, $label);
+    }
+
+    private function resolvedPhoneCountry(): string
+    {
+        $named = trim((string) $this->schoolCountry);
+        if ($named !== '') {
+            return $named;
         }
 
-        // 07XXXXXXXX or 07XXX XXX XXX
-        if (preg_match('/^0[0-9]{9}$/', $phone)) {
-            return '+256' . substr($phone, 1);
+        if ($this->schoolId) {
+            $country = trim((string) optional(School::find($this->schoolId))->registration_country);
+
+            if ($country !== '') {
+                return $country;
+            }
         }
 
-        // 7XXXXXXXX (no prefix)
-        if (preg_match('/^7[0-9]{8}$/', $phone)) {
-            return '+256' . $phone;
-        }
-
-        $this->botSay("That doesn't look like a valid Ugandan phone number. Please use format +256701234567.");
-        return null;
+        return '';
     }
 
     /**
@@ -3869,13 +3891,19 @@ class AgentToshi extends Component
             }
             $this->actionData['email'] = $email;
             $this->actionSubstep = 2;
-            $this->botSay("Email: **{$email}**. | What is their phone number? (type **skip** to omit)");
+            $this->botSay('Email: **'.$email.'**. | What is their phone number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), false, "Teacher's phone number").' (type **skip** to omit)');
             return;
         }
 
         if ($this->actionSubstep === 2) {
             if (!in_array($lower, ['skip', 'none', '', 'later'])) {
-                $this->actionData['phone'] = trim($text);
+                $phone = PhoneCountry::normalise($text, $this->resolvedPhoneCountry());
+                if ($phone === null) {
+                    $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), false));
+
+                    return;
+                }
+                $this->actionData['phone'] = $phone;
             }
             $parts = [];
             $parts[] = "Name: **{$this->actionData['name']}**";
@@ -4592,7 +4620,7 @@ class AgentToshi extends Component
         if ($this->substep === 3) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->botSay("Name confirmed. | What is the admin's WhatsApp phone number? This will be used for school notifications. (format: +256XXXXXXXXX)");
+                $this->botSay('Name confirmed. | What is the admin\'s WhatsApp phone number? This will be used for school notifications. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
                 $this->substep = 4;
                 return;
             }
@@ -4620,7 +4648,7 @@ class AgentToshi extends Component
                 $this->substep = 6;
                 return;
             }
-            $this->botSay("No problem. Please enter the correct phone number:");
+            $this->botSay('No problem. Please enter the correct phone number. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
             $this->substep = 4;
             return;
         }
@@ -6084,7 +6112,7 @@ class AgentToshi extends Component
                 $this->substep = 1;
                 return;
             }
-            $this->botSay("What's the admin's WhatsApp number? (e.g., +256701234567) or type 'skip' to skip this step.");
+            $this->botSay('What\'s the admin\'s WhatsApp number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), true).' Or type \'skip\' to skip this step.');
             $this->substep = 2;
             return;
         }
@@ -6104,7 +6132,7 @@ class AgentToshi extends Component
                 $this->advance();
                 return;
             }
-            $this->botSay("Enter the correct WhatsApp number:");
+            $this->botSay('Enter the correct WhatsApp number. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
             $this->substep = 2;
             return;
         }

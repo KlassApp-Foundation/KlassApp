@@ -6,6 +6,7 @@ use App\Helpers\SiteHelper;
 use App\Models\Admission;
 use App\Models\Approval;
 use App\Models\SchoolPayTransaction;
+use App\Services\Marks\MarksSubmissionService;
 use App\Services\WhatsApp\LinkRequestBoard;
 use App\States\Approval\Pending;
 use Illuminate\Support\Facades\Schema;
@@ -16,10 +17,10 @@ use Illuminate\Support\Facades\Schema;
  */
 class SidebarCounts
 {
-    /** @return array{admissions: int, unmatched: int, approvals: int, whatsapp: int} */
+    /** @return array{admissions: int, unmatched: int, approvals: int, whatsapp: int, mark_submissions: int} */
     public static function forSchool(?int $schoolId): array
     {
-        $empty = ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0, 'whatsapp' => 0];
+        $empty = ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0, 'whatsapp' => 0, 'mark_submissions' => 0];
         if (! $schoolId) {
             return $empty;
         }
@@ -53,7 +54,7 @@ class SidebarCounts
 
         // WhatsApp link requests waiting for a decision (all three sources:
         // KlassApp number, form, demo BIND) — the same count the dashboard
-        // card and the footer bell use.
+        // stat and the footer bell use.
         $whatsapp = 0;
         if (Schema::hasTable('parent_link_requests')) {
             try {
@@ -63,11 +64,17 @@ class SidebarCounts
             }
         }
 
+        $markSubmissions = 0;
+        if (Schema::hasTable('exam_marks_submissions')) {
+            $markSubmissions = app(MarksSubmissionService::class)->pendingCount($schoolId);
+        }
+
         return [
             'admissions' => $admissions,
             'unmatched' => $unmatched,
             'approvals' => $approvals,
             'whatsapp' => $whatsapp,
+            'mark_submissions' => $markSubmissions,
         ];
     }
 }

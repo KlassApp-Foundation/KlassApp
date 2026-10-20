@@ -2,6 +2,7 @@
 
 namespace App\Services\Toshi;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Models\Academics\Marks;
 use App\Models\Assignment;
 use App\Models\Attendance;
@@ -98,7 +99,10 @@ class StudentActionService
         $absent = Attendance::where([['user_id', $student->id], ['status', 0]])->count();
         $presentPct = $total > 0 ? number_format(($present / $total) * 100, 0) : '0';
 
-        $marksCount = Marks::where('student_id', $student->id)->where('school_id', $schoolId)->count();
+        $marksCount = app(ReleaseGate::class)->applyToMarks(
+            Marks::where('student_id', $student->id)->where('school_id', $schoolId),
+            $student,
+        )->count();
         $lendCount = BookLending::where('user_id', $student->id)->count();
         $pendingTasks = Task::where('school_id', $schoolId)
             ->where('user_id', $student->id)
@@ -134,8 +138,10 @@ class StudentActionService
     public static function viewMarks(User $student): array
     {
         $student = self::resolveActor($student);
-        $rows = Marks::where('student_id', $student->id)
-            ->where('school_id', $student->school_id)
+        $rows = app(ReleaseGate::class)->applyToMarks(
+            Marks::where('student_id', $student->id)->where('school_id', $student->school_id),
+            $student,
+        )
             ->orderByDesc('id')
             ->limit(20)
             ->get(['id', 'subject_id', 'exam_id', 'marks', 'grade']);

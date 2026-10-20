@@ -12,6 +12,7 @@
  */
 namespace App\Http\Controllers\Student;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
@@ -41,6 +42,7 @@ class RecordsController extends Controller
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
+        app(ReleaseGate::class)->applyToExams($examQuery, Auth::user());
         $exams = $examQuery->take(15)->get();
 
         $groups = [];

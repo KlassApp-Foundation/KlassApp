@@ -5,7 +5,7 @@ import { legacyHashMap } from './legacy-hash-map'
 
 export default defineConfig({
   title: 'KlassApp Docs',
-  description: 'An open education protocol for humans and agents. KlassApp runs in the tools educationists already use — Slack, spreadsheets, WhatsApp — with Toshi, your school\'s AI assistant.',
+  description: 'Help for schools and guides for contributors. Set up a school, message parents on WhatsApp, and work in the code.',
   lang: 'en',
   base: '/docs-preview/',
   // Soft-launch: build to docs-preview so live Docsify /docs is unchanged until cutover.

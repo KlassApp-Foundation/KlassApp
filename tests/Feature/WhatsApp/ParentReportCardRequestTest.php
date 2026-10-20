@@ -179,6 +179,7 @@ class ParentReportCardRequestTest extends TestCase
             'marks' => 72,
             'grade' => 'D1',
         ]);
+        \Tests\Support\ReleasedExam::release($eot, 'class', $this->stdLink->id);
 
         $this->parent = User::factory()->create([
             'school_id' => null,

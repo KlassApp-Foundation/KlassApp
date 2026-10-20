@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Section;
 use App\Models\User;
 use App\Services\Demo\LatestExamMarks;
+use App\Services\Results\DisplayedGrade;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,21 +39,38 @@ class ClassMarksController extends Controller
         $exam = $current ? LatestExamMarks::forSection($schoolId, (int) $current->id) : null;
         $students = collect();
         if ($exam) {
+            $anchor = $exam['exams']->first();
+            $sheet = ($anchor && $anchor->academic_term_id && $anchor->exam_type_id)
+                ? app(ResultsService::class)->sheet(new ResultsQuery(
+                    schoolId: $schoolId,
+                    sectionId: (int) $current->id,
+                    academicTermId: (int) $anchor->academic_term_id,
+                    examTypeId: (int) $anchor->exam_type_id,
+                ))
+                : null;
+            $grades = app(DisplayedGrade::class);
             $bySubject = $exam['marks']->groupBy('student_id');
             $students = User::query()
                 ->where('school_id', $schoolId)
                 ->whereIn('id', $bySubject->keys())
                 ->with('userprofile')
                 ->get()
-                ->map(function (User $student) use ($bySubject, $exam) {
+                ->map(function (User $student) use ($bySubject, $exam, $sheet, $grades, $schoolId) {
                     $marks = $bySubject->get($student->id)->keyBy('subject_id');
+                    $result = $sheet?->student((int) $student->id);
                     $rows = [];
                     foreach ($exam['subjects'] as $subject) {
                         $mark = $marks->get($subject['id']);
+                        $cell = $result?->cell((int) $subject['id']);
+                        $fromSheet = $cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null && $result !== null;
                         $rows[] = [
                             'subject' => $subject['name'],
-                            'mark' => $mark ? rtrim(rtrim(number_format((float) $mark->marks, 1, '.', ''), '0'), '.') : '–',
-                            'grade' => $mark ? (string) $mark->grade : '',
+                            'mark' => $fromSheet
+                                ? rtrim(rtrim(number_format($cell->mark, 1, '.', ''), '0'), '.')
+                                : ($mark ? rtrim(rtrim(number_format((float) $mark->marks, 1, '.', ''), '0'), '.') : '–'),
+                            'grade' => $fromSheet
+                                ? $grades->subject($schoolId, $result->standardId, $cell->mark, $mark?->grade)
+                                : ($mark ? (string) $mark->grade : ''),
                         ];
                     }
                     $first = trim((string) ($student->userprofile?->getRawOriginal('firstname') ?? '')) ?: (string) strtok((string) $student->name, ' ');
