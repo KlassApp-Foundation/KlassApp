@@ -2,8 +2,10 @@
 
 namespace App\Services\Toshi;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Alumni-scoped (ug9) READ helpers for AlumniOperationsAgent.
@@ -19,8 +21,8 @@ class AlumniActionService
     /** The alumni's own exam records. */
     public static function examRecords(User $alumni, int $limit = 20): array
     {
-        $marks = Marks::with(['exam', 'subject'])
-            ->where('student_id', $alumni->id)
+        $marks = self::releasedMarks($alumni)
+            ->with(['exam', 'subject'])
             ->orderBy('created_at', 'desc')
             ->take($limit)
             ->get();
@@ -55,9 +57,9 @@ class AlumniActionService
     /** The alumni's own academic summary (records, subjects, graduation year). */
     public static function academicSummary(User $alumni): array
     {
-        $marks = Marks::where('student_id', $alumni->id)->get();
+        $marks = self::releasedMarks($alumni)->get();
 
-        $lastMarkYear = Marks::where('student_id', $alumni->id)
+        $lastMarkYear = self::releasedMarks($alumni)
             ->join('exams', 'marks.exam_id', '=', 'exams.id')
             ->join('academic_years', 'exams.academic_year_id', '=', 'academic_years.id')
             ->value('academic_years.name');
@@ -126,6 +128,14 @@ class AlumniActionService
             'count'  => $others->count(),
             'alumni' => $list,
         ]);
+    }
+
+    private static function releasedMarks(User $alumni): Builder
+    {
+        return app(ReleaseGate::class)->applyToMarks(
+            Marks::query()->where('student_id', $alumni->id),
+            $alumni,
+        );
     }
 
     /**

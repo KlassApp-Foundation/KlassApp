@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
+use App\Services\Marks\MarksSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -15,32 +16,16 @@ class ExamMarksSubmissionController extends Controller
     {
         $schoolId = Auth::user()->school_id;
 
-        $exams = Exam::with(['subject', 'standard', 'section', 'academicTerm', 'examType'])
-            ->forSchool($schoolId)
+        $submissions = ExamMarksSubmission::forSchool($schoolId)
+            ->with(['exam.examType', 'exam.academicTerm', 'class', 'subject', 'teacher'])
             ->where('status', 'submitted')
-            ->orderBy('scheduled_at', 'desc')
+            ->orderByDesc('submitted_at')
+            ->orderByDesc('id')
             ->paginate(20);
 
-        $stats = [];
-        foreach ($exams as $exam) {
-            $submissions = ExamMarksSubmission::forSchool($schoolId)
-                ->where('exam_id', $exam->id);
+        $pendingCount = app(MarksSubmissionService::class)->pendingCount((int) $schoolId);
 
-            $stats[$exam->id] = [
-                'total'    => (clone $submissions)->count(),
-                'locked'   => (clone $submissions)->where('status', 'locked')->count(),
-                'reopened' => (clone $submissions)->where('status', 'reopened')->count(),
-                'approved' => (clone $submissions)->where('approval_status', 'approved')->count(),
-                'pending'  => (clone $submissions)
-                    ->where(function ($q) {
-                        $q->where('approval_status', 'pending')
-                          ->orWhereNull('approval_status');
-                    })
-                    ->count(),
-            ];
-        }
-
-        return view('admin.marks.submissions', compact('exams', 'stats'));
+        return view('admin.marks.submissions', compact('submissions', 'pendingCount'));
     }
 
     public function show(Exam $exam)
