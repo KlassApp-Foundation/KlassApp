@@ -53,6 +53,21 @@ class GradingHelper
     }
 
     /**
+     * A level whose configured bands have score bounds is graded from a mark.
+     * A descriptive scale (no min and max) is not.
+     */
+    public static function scaleUsesNumericMarks(string $levelType): bool
+    {
+        foreach (self::scaleConfig($levelType) as $band) {
+            if (isset($band['min_score'], $band['max_score']) && $band['min_score'] !== null && $band['max_score'] !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Seed or update SchoolGradingSystem records for a school, for all
      * standards that match a given level type, using the config-driven scale.
      *

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolInvite;
 use App\Models\User;
 use App\Services\SchoolInviteService;
-use App\Services\SchoolSignupBootstrapService;
+use App\Support\PhoneCountry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
@@ -42,13 +42,15 @@ class SchoolInviteClaimController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:100', "regex:/^[\pL\s'\-]+$/u"],
-            'phone' => ['required', 'string', 'max:20', 'regex:/^(\+?256)?0?7[0578]\d{7}$/'],
+            'phone' => ['required', 'string', 'max:32'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
         ]);
 
-        $phone = app(SchoolSignupBootstrapService::class)->normalizePhone($data['phone']);
+        $phone = PhoneCountry::normalise($data['phone'], $invite->country);
         if ($phone === null) {
-            return back()->withErrors(['phone' => 'Enter a valid WhatsApp phone number.'])->withInput();
+            return back()->withErrors([
+                'phone' => PhoneCountry::error($invite->country, true),
+            ])->withInput();
         }
 
         if (User::where('mobile_no', $phone)->exists()) {

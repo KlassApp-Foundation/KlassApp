@@ -258,10 +258,6 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/student/show/attendance/{name}', 'StudentDetailsController@showAttendance' );
 	Route::get( '/student/show/libraryactivity/{name}', 'StudentDetailsController@showBookLent' );
 	Route::get( '/student/show/{name}', 'StudentDetailsController@redirectToIdProfile' )->name('admin.student.show');
-	Route::get( '/student/showmark/{name}', 'StudentDetailsController@showmark' );
-	Route::get( '/student/showallmark/{name}', 'StudentDetailsController@showAllMark' );
-	//Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMarks' );
-	Route::get( '/student/comparemark/{name}', 'StudentDetailsController@marksGraph' );
 	Route::get( '/student/show/fees/{name}', 'StudentDetailsController@showFees' );
 	Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 	Route::get( '/student/add/medicalHistory/{name}', 'StudentDetailsController@createMedicalHistory' );
@@ -887,9 +883,9 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('admin.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('admin.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('admin.marks.releases.show');
-Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
+Route::post('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
-Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");
+Route::get("/report/student/{learner}/class/{class}/{exam}", "GetStudentsMarks@redirectLegacyReport")->name("admin.report.student.class");
 Route::get('/marks/download/', "DownloadMarksSheet@download")->name("admin.marksheet.download");
 
 // ===== Exam Marks Submissions (Lock / Reopen) =====

@@ -16,6 +16,7 @@ class SchoolInvite extends Model
         'expires_at',
         'claimed_at',
         'revoked_at',
+        'email_failed_at',
         'created_by',
     ];
 
@@ -23,6 +24,7 @@ class SchoolInvite extends Model
         'expires_at' => 'datetime',
         'claimed_at' => 'datetime',
         'revoked_at' => 'datetime',
+        'email_failed_at' => 'datetime',
         'approx_students' => 'integer',
     ];
 
@@ -44,6 +46,11 @@ class SchoolInvite extends Model
     public function isRevoked(): bool
     {
         return $this->revoked_at !== null;
+    }
+
+    public function emailFailed(): bool
+    {
+        return $this->email_failed_at !== null;
     }
 
     public function isUsable(): bool

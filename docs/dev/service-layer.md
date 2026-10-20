@@ -284,14 +284,6 @@ Returns: total number of notifications flushed across all users.
 
 These are the public notification methods called by event listeners and commands.
 
-#### notifyGradesPublished()
-
-```php
-public function notifyGradesPublished(int $examId): void
-```
-
-Called by `SendGradesToWhatsApp` listener when `GradesPublished` event fires. Uses `queueOrSend()` internally.
-
 #### notifyFeeReminder()
 
 ```php
@@ -302,17 +294,6 @@ public function notifyFeeReminder(
 ```
 
 Called by `SendFeeReminders` command. Sends fee notification to the parent.
-
-#### notifyComprehensiveGrades()
-
-```php
-public function notifyComprehensiveGrades(
-    User $student,
-    Exam $exam,
-): void
-```
-
-Sends detailed grade breakdown. Uses `queueOrSend()`.
 
 ---
 

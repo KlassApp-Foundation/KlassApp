@@ -26,6 +26,7 @@ class EnterMarksTool implements Tool
             'exam_id' => $schema->integer()->required(),
             'student' => $schema->string()->required(),
             'marks' => $schema->number()->required(),
+            'correction_reason' => $schema->string()->description('Required when this exam was already submitted. At least 10 characters.')->optional(),
         ];
     }
 
@@ -37,7 +38,12 @@ class EnterMarksTool implements Tool
             return $error;
         }
 
-        $args = ['exam_id' => (int) $request->get('exam_id'), 'student' => $request->get('student'), 'marks' => $request->get('marks')];
+        $args = [
+            'exam_id' => (int) $request->get('exam_id'),
+            'student' => $request->get('student'),
+            'marks' => $request->get('marks'),
+            'correction_reason' => $request->get('correction_reason'),
+        ];
 
         $confirm = $this->confirmOrExecute('toolTeacherEnterMarks', $args, fn () => "Enter marks {$args['marks']} for {$args['student']} on exam #{$args['exam_id']}");
         if ($confirm !== null) {

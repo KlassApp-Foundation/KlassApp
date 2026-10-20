@@ -3,11 +3,10 @@
 namespace App\Services\Toshi;
 
 use App\Helpers\SiteHelper;
-use App\Models\Academics\Marks;
+use App\Models\Academics\Exam;
 use App\Models\Assignment;
 use App\Models\Attendance;
 use App\Models\Events;
-use App\Models\Exam;
 use App\Models\Homework;
 use App\Models\LessonPlan;
 use App\Models\NoticeBoard;
@@ -107,19 +106,19 @@ class TeacherActionService
             return self::result(false, "Student not found: {$data['student']}");
         }
 
-        Marks::updateOrCreate(
-            [
-                'school_id' => $schoolId,
-                'exam_id' => $exam->id,
-                'student_id' => $student->id,
-            ],
-            [
-                'marks' => $data['marks'],
-                'teacher_id' => $teacher->id,
-                'subject_id' => $exam->subject_id,
-                'section_id' => $exam->section_id ?? null,
-            ]
-        );
+        try {
+            app(\App\Services\Marks\ExamMarkWriter::class)->save(
+                $teacher,
+                $exam,
+                (int) $student->id,
+                $data['marks'],
+                isset($data['correction_reason']) ? (string) $data['correction_reason'] : null,
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return self::result(false, $e->validator->errors()->first());
+        } catch (\Exception $e) {
+            return self::result(false, $e->getMessage());
+        }
 
         return self::result(true, "Marks **{$data['marks']}** saved for **{$student->name}** on exam #{$exam->id}.");
     }

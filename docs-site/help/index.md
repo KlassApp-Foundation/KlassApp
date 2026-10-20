@@ -2,10 +2,13 @@
 title: Help
 ---
 # Help for schools
-Choose who you are.
+Choose who you are. New to the school? Start with [Get started](/help/getting-started).
 <RoleCards :items="[
- {title:'Admin',text:'Set up your school, staff and students',link:'/docs-preview/help/admins/'},
- {title:'Teacher',text:'Attendance, marks and your classes',link:'/docs-preview/help/teachers/'},
- {title:'Bursar',text:'Payments, balances and reminders',link:'/docs-preview/help/bursars/'},
- {title:'Parent',text:'Report cards and fees on WhatsApp',link:'/docs-preview/help/parents/'},
- {title:'Student',text:'Homework, timetable and results',link:'/docs-preview/help/students/'}]" />
+ {title:'Platform admin',text:'Schools, plans, and invites across KlassApp',link:'/docs-preview/help/platform/'},
+ {title:'School admin',text:'People, classes, fees, WhatsApp, and settings',link:'/docs-preview/help/admins/'},
+ {title:'Head teacher',text:'The same school menu, without Settings',link:'/docs-preview/help/head-teachers/'},
+ {title:'Class teacher',text:'Your stream, attendance, exams, and report cards',link:'/docs-preview/help/teachers/class'},
+ {title:'Subject teacher',text:'Your classes, homework, and marks',link:'/docs-preview/help/teachers/subject'},
+ {title:'Bursar',text:'Fees, exports, and payroll',link:'/docs-preview/help/bursars/'},
+ {title:'Parent',text:'Children, fees, grades, and WhatsApp',link:'/docs-preview/help/parents/'},
+ {title:'Student',text:'Marks, attendance, homework, and notices',link:'/docs-preview/help/students/'}]" />

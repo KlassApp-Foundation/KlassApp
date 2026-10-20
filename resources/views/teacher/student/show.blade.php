@@ -94,8 +94,6 @@
                     <h3 class="font-semibold text-3xl text-gray-700">{{ ucwords($user->FullName) }}</h3>
                     @if(config('gexam.enabled', false))
                     <div class="my-3 flex flex-wrap text-xs">
-                        <a href="{{url('/teacher/student/comparemark/'.$user->name)}}" class="capitalize text-white blue-bg rounded px-2 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0" target="_blank">compare marks</a>
-
                         <a href="{{url('/teacher/marks/show?ref_name='.$user->name.'&standard='.optional($user->studentAcademicLatest)->standardLink_id)}}" class="capitalize text-white blue-bg rounded px-2 py-1 font-medium my-1 lg:my-0 md:my-0" target="_blank">View marks</a>
                     </div>
                     @endif

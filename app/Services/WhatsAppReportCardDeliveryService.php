@@ -30,7 +30,9 @@ class WhatsAppReportCardDeliveryService
 
     public const META_DOCUMENT_MAX_BYTES = 100 * 1024 * 1024;
 
-    public function __construct(private StudentReportCardService $reports) {}
+    public function __construct(
+        private StudentReportCardService $reports,
+    ) {}
 
     /**
      * Disk used for temporary WhatsApp report PDFs (default filesystem).
@@ -50,7 +52,7 @@ class WhatsAppReportCardDeliveryService
     /**
      * @return array{ok: true, url: string, filename: string, caption: string, bytes: int}|array{ok: false, message: string, flow_type: string}
      */
-    public function prepareForStudent(User $parent, User $student): array
+    public function prepareForStudent(User $parent, User $student, ?int $academicTermId = null): array
     {
         $link = StudentParentLink::query()
             ->where('parent_id', $parent->id)
@@ -97,7 +99,7 @@ class WhatsAppReportCardDeliveryService
             ];
         }
 
-        $exam = $this->reports->resolveExam($schoolId, $stdLink);
+        $exam = $this->reports->resolveReleasedExam($schoolId, $stdLink, $student, $academicTermId);
         if (! $exam) {
             return [
                 'ok' => false,
@@ -109,7 +111,7 @@ class WhatsAppReportCardDeliveryService
             ];
         }
 
-        if (! $this->reports->studentIds($exam)->contains($student->id)) {
+        if (! $this->reports->studentHasContributingMark($exam, (int) $student->id)) {
             return [
                 'ok' => false,
                 'flow_type' => 'report_none',
@@ -121,7 +123,7 @@ class WhatsAppReportCardDeliveryService
         }
 
         try {
-            $pdf = $this->reports->pdfForStudent($schoolId, $stdLink, $student, null);
+            $pdf = $this->reports->pdfForStudent($schoolId, $stdLink, $student, null, (int) $exam->academic_term_id);
         } catch (RuntimeException $e) {
             return [
                 'ok' => false,

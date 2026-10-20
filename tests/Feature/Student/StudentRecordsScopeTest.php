@@ -115,6 +115,7 @@ class StudentRecordsScopeTest extends TestCase
             ]);
         }
         $examId = DB::table('exams')->insertGetId($exam);
+        \Tests\Support\ReleasedExam::releaseId($this->school->id, $examId);
 
         DB::table('marks')->insert([
             'student_id' => $studentId, 'teacher_id' => $teacherId, 'school_id' => $this->school->id,
