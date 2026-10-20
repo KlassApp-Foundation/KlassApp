@@ -440,6 +440,10 @@ Store tokens per consenting user if the Google account is a teacher's, not one t
 
 Sensitive-scope review is still real work (policy, demo, a few business days, and the unverified 100-user cap until it finishes). It is a different project from an annual CASA letter.
 
+## Decision (Mucu, 20 Oct 2026)
+
+KlassApp uses Google's REST APIs now for the per-school Google connectors: Drive, Sheets, Classroom, and Calendar. Revisit Google's MCP servers after they reach general availability.
+
 ## Sources
 
 Official Google and ADA pages, opened or retrieved on 2026-10-20 unless the page itself gives an "updated" date in the notes above.
