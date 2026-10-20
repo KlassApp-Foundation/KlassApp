@@ -18,11 +18,56 @@ final class SchoolGradingScale implements GradingScale
 
     public function pointsFor(int $schoolId, int $standardId, float $mark): ?int
     {
-        $row = $this->bands($schoolId, $standardId)->first(
-            fn ($band) => (float) $band->min_score <= $mark && (float) $band->max_score >= $mark
-        );
+        $row = $this->bandFor($schoolId, $standardId, $mark);
 
         return $row ? GradingHelper::effectivePoints($row) : null;
+    }
+
+    public function labelFor(int $schoolId, int $standardId, float $mark): ?string
+    {
+        $row = $this->bandFor($schoolId, $standardId, $mark);
+        if ($row === null) {
+            return null;
+        }
+
+        $grade = trim((string) $row->grade);
+
+        return $grade === '' ? null : $grade;
+    }
+
+    /**
+     * Exact band first (the higher minimum wins when bands overlap).
+     * A decimal that sits in a gap between integer bands stays on the
+     * lower band until the next band starts. A mark above the top
+     * maximum matches nothing.
+     */
+    private function bandFor(int $schoolId, int $standardId, float $mark): ?SchoolGradingSystem
+    {
+        $bands = $this->bands($schoolId, $standardId)
+            ->filter(fn ($band) => $band->min_score !== null && $band->max_score !== null)
+            ->sortBy(fn ($band) => [(float) $band->min_score, (int) $band->id])
+            ->values();
+
+        $exact = $bands->sortByDesc(fn ($band) => (float) $band->min_score)->first(
+            fn ($band) => (float) $band->min_score <= $mark && (float) $band->max_score >= $mark
+        );
+        if ($exact !== null) {
+            return $exact;
+        }
+
+        foreach ($bands as $index => $band) {
+            if ((float) $band->min_score > $mark) {
+                break;
+            }
+            $next = $bands[$index + 1] ?? null;
+            if ($next === null || $mark >= (float) $next->min_score) {
+                continue;
+            }
+
+            return $band;
+        }
+
+        return null;
     }
 
     /**
