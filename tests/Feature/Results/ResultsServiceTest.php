@@ -329,6 +329,77 @@ class ResultsServiceTest extends TestCase
         $this->assertNull($sheet->student($inactive->id));
     }
 
+    public function test_split_mid_term_by_month_keeps_each_month_and_the_default_collapses_them(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => '9', 'points' => 9, 'min' => 0, 'max' => 100],
+        ]);
+        $student = $this->student($ctx, 'Month Student');
+        $june = $this->exam($ctx, $term, $ctx['english'], '2026-06-15', 1);
+        $july = $this->exam($ctx, $term, $ctx['english'], '2026-07-15', 1);
+        $end = $this->exam($ctx, $term, $ctx['english'], '2026-08-01', 2);
+        $this->mark($ctx, $june, $ctx['english'], $student, 40, 'stored');
+        $this->mark($ctx, $july, $ctx['english'], $student, 70, 'stored');
+        $this->mark($ctx, $end, $ctx['english'], $student, 80, 'stored');
+
+        $collapsed = $this->sheet($ctx, $term);
+        $collapsedMid = array_values(array_filter($collapsed->sittings, fn ($sitting) => $sitting->code === 'MID'));
+        $this->assertCount(1, $collapsedMid);
+        $this->assertSame('', $collapsedMid[0]->periodKey);
+        $this->assertSame(70.0, $collapsedMid[0]->student($student->id)->cell($ctx['english']->id)->mark);
+        $this->assertSame(80.0, $collapsed->student($student->id)->total);
+
+        $split = $this->sheet($ctx, $term, $this->policy(splitMidTermByMonth: true));
+        $months = array_values(array_filter($split->sittings, fn ($sitting) => $sitting->code === 'MID'));
+        $this->assertCount(2, $months);
+        $this->assertSame('2026-06', $months[0]->periodKey);
+        $this->assertSame('JUNE', $months[0]->periodLabel);
+        $this->assertSame(40.0, $months[0]->student($student->id)->cell($ctx['english']->id)->mark);
+        $this->assertSame('2026-07', $months[1]->periodKey);
+        $this->assertSame('JULY', $months[1]->periodLabel);
+        $this->assertSame(70.0, $months[1]->student($student->id)->cell($ctx['english']->id)->mark);
+        $this->assertSame(80.0, $split->student($student->id)->total);
+        $this->assertCount(1, array_filter($split->sittings, fn ($sitting) => $sitting->contributesToReport));
+
+        $earlierJune = $this->exam($ctx, $term, $ctx['english'], '2026-06-02', 1);
+        $this->mark($ctx, $earlierJune, $ctx['english'], $student, 11, 'stored');
+        $sameMonth = $this->sheet($ctx, $term, $this->policy(splitMidTermByMonth: true));
+        $juneSitting = null;
+        foreach ($sameMonth->sittings as $sitting) {
+            if ($sitting->periodKey === '2026-06') {
+                $juneSitting = $sitting;
+            }
+        }
+        $this->assertNotNull($juneSitting);
+        $this->assertSame(40.0, $juneSitting->student($student->id)->cell($ctx['english']->id)->mark);
+
+        $undatedEarly = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
+        $undatedLate = $this->exam($ctx, $term, $ctx['maths'], '2026-03-02', 1);
+        Exam::withoutEvents(function () use ($undatedEarly, $undatedLate) {
+            $undatedEarly->scheduled_at = null;
+            $undatedEarly->save();
+            $undatedLate->scheduled_at = null;
+            $undatedLate->save();
+        });
+        $this->mark($ctx, $undatedEarly, $ctx['maths'], $student, 15, 'stored');
+        $this->mark($ctx, $undatedLate, $ctx['maths'], $student, 25, 'stored');
+
+        $separate = $this->sheet($ctx, $term, $this->policy(splitMidTermByMonth: true));
+        $undated = array_values(array_filter(
+            $separate->sittings,
+            fn ($sitting) => $sitting->code === 'MID' && $sitting->periodKey === ''
+        ));
+        $this->assertCount(2, $undated);
+        $undatedMarks = array_map(
+            fn ($sitting) => $sitting->student($student->id)->cell($ctx['maths']->id)->mark,
+            $undated
+        );
+        sort($undatedMarks);
+        $this->assertSame([15.0, 25.0], $undatedMarks);
+    }
+
     /**
      * @return array{school: School, year: AcademicYear, standard: Standard, section: Section, link: StandardLink, teacher: User, english: Subject, maths: Subject}
      */
@@ -489,7 +560,7 @@ class ResultsServiceTest extends TestCase
         }
     }
 
-    private function policy(?string $basis = null, ?bool $higher = null, int $decimals = 0, array $absent = []): ResultsPolicy
+    private function policy(?string $basis = null, ?bool $higher = null, int $decimals = 0, array $absent = [], bool $splitMidTermByMonth = false): ResultsPolicy
     {
         return new ResultsPolicy(
             app(GradingScale::class),
@@ -499,6 +570,7 @@ class ResultsServiceTest extends TestCase
             ResultsPolicy::TIE_SHARED,
             $decimals,
             $absent,
+            $splitMidTermByMonth,
         );
     }
 

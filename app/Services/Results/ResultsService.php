@@ -18,6 +18,8 @@ use Illuminate\Support\Collection;
  *
  * Marks are grouped by exam type, term, class and subject. One exam row
  * per subject and one exam row carrying several subjects both work.
+ * A policy may keep each non-contributing exam type as one sitting per
+ * calendar month. Totals still use contributing types only.
  * This service does not decide whether a parent may see the sheet.
  */
 final class ResultsService
@@ -66,26 +68,31 @@ final class ResultsService
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
-        foreach ($typeMeta as $type) {
+        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth) as $plan) {
+            $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
+            $bucketMarks = $marks->whereIn('exam_id', $plan['examIds'])->values();
+            $bucketChosen = $this->choose($bucketExams, $bucketMarks);
             $sittingSubjects = $this->subjectRows(
                 $query->schoolId,
-                $this->subjectIdsFor($exams, $marks, [$type['id']])
+                $this->subjectIdsFor($bucketExams, $bucketMarks, [$plan['typeId']])
             );
             $sittingStudents = $this->buildStudents(
                 $policy,
                 $query->schoolId,
                 $roster,
-                $chosen,
-                [$type['id']],
+                $bucketChosen,
+                [$plan['typeId']],
                 $sittingSubjects,
             );
             $sittings[] = new ResultSitting(
-                $type['id'],
-                $type['name'],
-                $type['code'],
-                $type['contributes'],
+                $plan['typeId'],
+                $plan['name'],
+                $plan['code'],
+                $plan['contributes'],
                 $sittingSubjects,
                 $this->visible($sittingStudents, $query),
+                $plan['periodKey'],
+                $plan['periodLabel'],
             );
         }
 
@@ -144,6 +151,62 @@ final class ResultsService
         ksort($types);
 
         return $types;
+    }
+
+    /**
+     * One plan per exam type, unless the policy splits non-contributing
+     * types by the calendar month of scheduled_at. An undated exam in that
+     * mode stays its own sitting. Contributing types stay one sitting, and
+     * the main total is unaffected.
+     *
+     * @return list<array{typeId: int, name: string, code: string, contributes: bool, periodKey: string, periodLabel: string, examIds: list<int>}>
+     */
+    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth): array
+    {
+        $plans = [];
+        foreach ($exams as $exam) {
+            $type = $exam->examType;
+            if ($type === null) {
+                continue;
+            }
+            $contributes = (bool) $type->contributes_to_report_total;
+            $scheduled = $exam->scheduled_at;
+            if ($splitMidTermByMonth && ! $contributes && $scheduled !== null) {
+                $key = 'type:'.$type->id.'|month:'.$scheduled->format('Y-m');
+                $periodKey = $scheduled->format('Y-m');
+                $periodLabel = strtoupper($scheduled->format('F'));
+            } elseif ($splitMidTermByMonth && ! $contributes) {
+                $key = 'type:'.$type->id.'|exam:'.$exam->id;
+                $periodKey = '';
+                $periodLabel = '';
+            } else {
+                $key = 'type:'.$type->id;
+                $periodKey = '';
+                $periodLabel = '';
+            }
+            if (! isset($plans[$key])) {
+                $plans[$key] = [
+                    'typeId' => (int) $type->id,
+                    'name' => (string) $type->name,
+                    'code' => (string) ($type->code ?? ''),
+                    'contributes' => $contributes,
+                    'periodKey' => $periodKey,
+                    'periodLabel' => $periodLabel,
+                    'examIds' => [],
+                    'sortExamId' => (int) $exam->id,
+                ];
+            }
+            $plans[$key]['examIds'][] = (int) $exam->id;
+            $plans[$key]['sortExamId'] = min($plans[$key]['sortExamId'], (int) $exam->id);
+        }
+
+        $list = array_values($plans);
+        usort($list, function (array $left, array $right) {
+            return [$left['typeId'], $left['periodKey'], $left['sortExamId']]
+                <=> [$right['typeId'], $right['periodKey'], $right['sortExamId']];
+        });
+
+        return $list;
     }
 
     private function marksFor(int $schoolId, Collection $exams): Collection
