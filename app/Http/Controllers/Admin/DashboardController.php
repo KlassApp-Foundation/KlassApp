@@ -140,7 +140,7 @@ class DashboardController extends Controller
                 ->where('status', 'active')
                 ->exists() : false,
             'googleLive' => $school_id
-                ? app(\App\Services\Google\GoogleConnectionService::class)->liveSummaries((int) $school_id)
+                ? app(\App\Services\Google\GoogleConnectionService::class)->liveSummaries(Auth::user())
                 : [],
         ];
 

@@ -2,7 +2,9 @@
 
 This is the setup a person does in Google Cloud and in the app environment. It does not contain client secrets. Leave the values empty in git. Do not set them on Laravel Cloud from a pull request.
 
-KlassApp sign-in and the school connectors share one OAuth client and use two redirect URIs. Sign-in stays on Socialite and `/auth/google/callback`. School tools use `GOOGLE_CONNECTOR_REDIRECT_URI` and do not go through Socialite. Adding a connector scope does not change the login request.
+KlassApp sign-in and these connectors share one OAuth client and use two redirect URIs. Sign-in stays on Socialite and `/auth/google/callback`. Each person connects their own Google account with `GOOGLE_CONNECTOR_REDIRECT_URI`. That flow does not go through Socialite. Adding a connector scope does not change the login request.
+
+There is one connection per user, not per school. The token is encrypted, and only that user can see it or use it. A school admin chooses which connectors the school allows. That screen shows an anonymous count and does not show anyone's Google account, email, or token. There is no domain-wide delegation and no school service account.
 
 This file is on the foundation pull request, [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) (`cursor/google-connectors-foundation-b53f`). The consent catalog on this branch already lists Sheets, Drive, and Classroom. Their actions are later pull requests: [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) Calendar. Gmail, Docs, Slides, and Tasks are not connectors.
 
@@ -45,9 +47,10 @@ On this branch, `config/google.php` requests these product scopes:
 
 | Connector | Scope | Google's published label |
 | --- | --- | --- |
-| Sheets | `https://www.googleapis.com/auth/spreadsheets` | Sensitive ([Sheets scopes](https://developers.google.com/workspace/sheets/api/scopes)) |
-| Drive | `https://www.googleapis.com/auth/drive.file` | Non-sensitive. This is not the restricted `drive` or `drive.readonly` scope. |
-| Classroom | `https://www.googleapis.com/auth/classroom.courses.readonly` | Read the label in the Cloud Console when you add it. The public scope list does not print Sensitive or Restricted for this URI. |
+| Every connector | `https://www.googleapis.com/auth/userinfo.email` | The [OAuth scope list](https://developers.google.com/identity/protocols/oauth2/scopes) does not print Sensitive or Restricted for this URI. Read the Cloud Console label. |
+| Sheets | `https://www.googleapis.com/auth/spreadsheets` | Sensitive ([Sheets scopes](https://developers.google.com/workspace/sheets/api/scopes), updated 2026-09-03) |
+| Drive | `https://www.googleapis.com/auth/drive.file` | Non-sensitive ([Drive scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth), updated 2026-09-03). Not the restricted `drive` or `drive.readonly` scope. |
+| Classroom | `https://www.googleapis.com/auth/classroom.courses.readonly` | The [Classroom scope list](https://developers.google.com/workspace/classroom/guides/auth) does not print Sensitive or Restricted. Read the Cloud Console label. |
 | Classroom | `https://www.googleapis.com/auth/classroom.rosters.readonly` | Same. Read the console label. |
 | Classroom | `https://www.googleapis.com/auth/classroom.coursework.students.readonly` | Same. Read the console label. |
 
@@ -76,23 +79,23 @@ The last four exist in `config/services.php` and no connector calls them.
 
 ## 5. Connect, then run one action
 
-1. Sign in as a school admin.
-2. Open School Settings → Integrations (`/admin/settings/integrations`).
-3. On Connected tools, choose Connect for one tool and finish Google's consent screen. The card shows **Live** for that tool only after this school has granted its scopes. Another school does not see it.
-4. Run the command. It prints the result and does not print the token.
+1. Sign in as the person who will use the tool (school admin, teacher, parent, or student).
+2. A school admin opens School Settings → Integrations (`/admin/settings/integrations`) and turns the connector on for the school. That page shows how many people have connected it. It does not show their names or Google accounts.
+3. Open My connected tools (`/settings/connected-tools`). Choose Connect for one allowed tool and finish Google's consent screen. The card shows **Live** for that tool only after this user has granted its scopes. Another user, including a school admin at the same school, does not see the account.
+4. Run the command as that user. It prints the result and does not print the token.
 
 ```
-php artisan google:smoke account --school=SCHOOL_ID
+php artisan google:smoke account --user=USER_ID
 ```
 
-`account` reads the connected Google email and refreshes the token if it is due.
+`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection.
 
-The command's signature also names `sheets`, `drive`, `classroom`, `calendar`, `gmail`, `docs`, `slides`, and `tasks`. On this branch only `account` calls Google. `sheets`, `drive`, and `classroom` are in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown. `--section` is accepted and not read.
+The command's argument also accepts `sheets`, `drive`, `classroom`, `calendar`, `gmail`, `docs`, `slides`, and `tasks`. On this branch only `account` calls Google. `sheets`, `drive`, and `classroom` are in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
 
-`php artisan google:refresh-tokens` refreshes tokens that expire within 30 minutes. The scheduler runs it every fifteen minutes. A Testing-mode refresh token that has already passed seven days cannot be refreshed; the school has to connect again.
+A token is refreshed only when that user triggers an action. Nothing on a schedule walks every connection. A Testing-mode refresh token that has already passed seven days cannot be refreshed; that user has to connect again.
 
-Disconnect on the card revokes the Google token and clears the stored credentials when it is the last connected tool. Disconnecting one tool while another is still connected removes that tool's scopes from KlassApp and leaves the shared token in place, because Google's revoke endpoint cannot drop a single scope.
+Disconnecting the last tool revokes the Google token and deletes the local row. Disconnecting one tool while another is still connected removes that tool's scopes and leaves the token in place, because Google's revoke endpoint cannot drop a single scope.
 
 ## 6. What the automated tests prove without a Cloud project
 
-`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature test is `tests/Feature/Google/GoogleConnectorFoundationTest.php`. It connects, reads userinfo from the fake server, and disconnects. It also covers an expired token (refresh), revoked access (`invalid_grant`), an API error, a mismatched OAuth state, a missing client, another school's admin, and the scheduled refresh. It does not prove Google's consent screen, Google's scope verification, or a real API.
+`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature test is `tests/Feature/Google/GoogleConnectorFoundationTest.php`. It connects, reads userinfo from the fake server, and disconnects. It also covers an expired token (refresh on that user's request), revoked access (`invalid_grant`), an API error, a mismatched OAuth state, a missing client, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`. It does not prove Google's consent screen, Google's scope verification, or a real API.

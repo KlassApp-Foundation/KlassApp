@@ -723,8 +723,8 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
 
-- School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
-- Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
+- Google connection: one row per user (`user_google_connections`), not per school. Tokens are encrypted and only that user can use them. A school allow list (`school_google_connector_allows`) decides which connectors people may turn on, and the admin view shows an anonymous count. Disconnect of the last connector revokes the token at Google and deletes the row. No scheduled job refreshes other people's tokens. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`. No domain-wide delegation and no service account.
+- My connected tools (`/settings/connected-tools`) shows Live only for the signed-in user's own grant. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
 - Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
 
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
