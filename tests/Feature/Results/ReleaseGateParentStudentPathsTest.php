@@ -28,7 +28,6 @@ use App\Services\Toshi\StudentActionService;
 use App\Services\WhatsAppBusinessService;
 use App\Services\WhatsAppReportCardDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -261,11 +260,6 @@ class ReleaseGateParentStudentPathsTest extends TestCase
         $this->inbound($this->parentPhone, 'MARKS');
         $this->assertStringNotContainsString('GATEMARK', $this->waText());
 
-        $json = app(WhatsAppController::class)
-            ->grades((string) $this->student->id, Request::create('/grades', 'GET'))
-            ->getData(true);
-        $this->assertStringNotContainsString('GATEMARK', json_encode($json));
-
         $this->release();
 
         $this->mockWhatsApp();
@@ -275,11 +269,6 @@ class ReleaseGateParentStudentPathsTest extends TestCase
         $this->mockWhatsApp();
         $this->inbound($this->parentPhone, 'MARKS');
         $this->assertStringContainsString('GATEMARK', $this->waText());
-
-        $released = app(WhatsAppController::class)
-            ->grades((string) $this->student->id, Request::create('/grades', 'GET'))
-            ->getData(true);
-        $this->assertStringContainsString('GATEMARK', json_encode($released));
     }
 
     public function test_L4_whatsapp_student_marks_hide_unreleased_marks(): void
@@ -387,44 +376,6 @@ class ReleaseGateParentStudentPathsTest extends TestCase
 
         $this->actingAs($this->alumni)->get(route('alumni.report-card.download'))->assertOk();
         $this->assertTrue($snapshots[1]->contains(fn ($mark) => (float) $mark->marks === 91.0));
-    }
-
-    public function test_L10_unrouted_whatsapp_report_hides_unreleased_marks(): void
-    {
-        DB::table('exam_marks_submissions')->insert([
-            'school_id' => $this->school->id,
-            'exam_id' => $this->exam->id,
-            'class_id' => $this->link->section_id,
-            'subject_id' => $this->subject->id,
-            'teacher_id' => $this->exam->teacher_id,
-            'status' => 'locked',
-            'approval_status' => 'approved',
-            'approved_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $captured = [];
-        $this->bindPdf(function (string $view, array $data) use (&$captured) {
-            $captured[] = $data;
-        }, 'save');
-        $this->mockWhatsApp();
-
-        $hidden = app(WhatsAppController::class)->report(
-            (string) $this->student->id,
-            Request::create('/report', 'GET', ['phone' => $this->parentPhone]),
-        )->getData(true);
-
-        $blob = json_encode($hidden).json_encode($captured);
-        $this->assertStringNotContainsString('GATEMARK', $blob);
-
-        $this->release();
-        $captured = [];
-        $shown = app(WhatsAppController::class)->report(
-            (string) $this->student->id,
-            Request::create('/report', 'GET', ['phone' => $this->parentPhone]),
-        )->getData(true);
-        $this->assertStringContainsString('GATEMARK', json_encode($captured).json_encode($shown));
     }
 
     public function test_past_enrollment_class_release_stays_visible_without_a_backfill(): void

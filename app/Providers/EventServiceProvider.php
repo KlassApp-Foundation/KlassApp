@@ -101,10 +101,6 @@ class EventServiceProvider extends ServiceProvider
             'App\Listeners\SinglePushEventListener',
         ],
 
-        'App\Events\GradesPublished' => [
-            'App\Listeners\SendGradesToWhatsApp',
-        ],
-
         'App\Events\MarksUpdated' => [
             'App\Listeners\NotifyAdminMarksUpdated',
         ],

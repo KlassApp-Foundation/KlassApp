@@ -258,10 +258,6 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/student/show/attendance/{name}', 'StudentDetailsController@showAttendance' );
 	Route::get( '/student/show/libraryactivity/{name}', 'StudentDetailsController@showBookLent' );
 	Route::get( '/student/show/{name}', 'StudentDetailsController@redirectToIdProfile' )->name('admin.student.show');
-	Route::get( '/student/showmark/{name}', 'StudentDetailsController@showmark' );
-	Route::get( '/student/showallmark/{name}', 'StudentDetailsController@showAllMark' );
-	//Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMarks' );
-	Route::get( '/student/comparemark/{name}', 'StudentDetailsController@marksGraph' );
 	Route::get( '/student/show/fees/{name}', 'StudentDetailsController@showFees' );
 	Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 	Route::get( '/student/add/medicalHistory/{name}', 'StudentDetailsController@createMedicalHistory' );
