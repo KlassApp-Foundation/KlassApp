@@ -211,6 +211,14 @@
                             "count": "whatsapp"
                         },
                         {
+                            "label": "Connected tools",
+                            "url": "admin/connected-tools",
+                            "paths": [
+                                "admin/connected-tools*"
+                            ],
+                            "condition": "school_admin"
+                        },
+                        {
                             "label": "Approvals",
                             "url": "admin/approvals",
                             "paths": [

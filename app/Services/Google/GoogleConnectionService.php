@@ -47,6 +47,8 @@ class GoogleConnectionService
                 'granted_scopes' => $granted,
                 'token_expires_at' => now()->addSeconds((int) ($token['expires_in'] ?? 3600)),
                 'status' => 'active',
+                'last_error' => null,
+                'attention_scopes' => [],
                 'connected_by' => $user->id,
                 'last_refreshed_at' => now(),
             ],

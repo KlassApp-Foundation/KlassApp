@@ -44,7 +44,7 @@ class ShellSidebarLayoutFixTest extends TestCase
                 $rows[] = $row['label'];
             }
         }
-        $this->assertCount(14, $rows);
+        $this->assertCount(15, $rows);
         $this->assertSame([
             'Dashboard',
             'Students',
@@ -57,6 +57,7 @@ class ShellSidebarLayoutFixTest extends TestCase
             'Fees',
             'Unmatched payments',
             'WhatsApp',
+            'Connected tools',
             'Approvals',
             'Transport',
             'Settings',

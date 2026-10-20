@@ -52,6 +52,7 @@ return [
         'reports' => 'file-text',
         'messages' => 'message-square',
         'settings' => 'settings',
+        'connectors' => 'plug',
         'help' => 'life-buoy',
         'library' => 'library',
         'transport' => 'bus',
@@ -170,6 +171,7 @@ return [
                     'label' => 'School',
                     'rows' => [
                         ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*'], 'count' => 'whatsapp'],
+                        ['label' => 'Connected tools', 'icon' => 'connectors', 'url' => 'admin/connected-tools', 'paths' => ['admin/connected-tools*'], 'condition' => 'school_admin'],
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [

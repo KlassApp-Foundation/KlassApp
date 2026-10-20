@@ -365,7 +365,8 @@ class DashboardV2Test extends TestCase
         $admin = $this->makeAdmin($school);
 
         $this->render($admin)->assertOk()
-            ->assertDontSee('Connected tools', false)
+            ->assertSee('data-testid="dashboard-connected-tools-link"', false)
+            ->assertSee(route('admin.connected-tools'), false)
             ->assertDontSee('es-demo-scene-toshi', false)
             ->assertDontSee('data-testid="toshi-pill"', false);
     }

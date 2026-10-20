@@ -21,6 +21,9 @@ Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('
 Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');
 Route::post('/settings/integrations/{type}/disconnect', 'Setting\IntegrationsController@disconnect')->name('admin.settings.integrations.disconnect');
 
+// Connected tools — one card per product, scoped to this school.
+Route::get('/connected-tools', 'ConnectedToolsController@index')->name('admin.connected-tools');
+
 // School Google account. One connection, incremental scopes per connector.
 Route::get('/settings/google/connect/{connector}', 'Setting\GoogleConnectController@connect')->name('admin.google.connect');
 Route::get('/settings/google/callback', 'Setting\GoogleConnectController@callback')->name('admin.google.callback');

@@ -83,7 +83,7 @@ class GoogleOAuthService
         $refreshToken = $connection->refreshToken();
 
         if ($refreshToken === null) {
-            $this->forgetTokens($connection);
+            $this->forgetTokens($connection, 'no_refresh_token');
 
             throw new GoogleAccessRevokedException(400, 'Google connection has no refresh token.', 'invalid_grant');
         }
@@ -108,7 +108,7 @@ class GoogleOAuthService
         $error = $this->errorCode($body);
 
         if ($response->status() === 400 && $error === 'invalid_grant') {
-            $this->forgetTokens($connection);
+            $this->forgetTokens($connection, 'invalid_grant');
 
             throw new GoogleAccessRevokedException(400, 'Google access was revoked.', 'invalid_grant');
         }
@@ -206,13 +206,17 @@ class GoogleOAuthService
         return $refreshed;
     }
 
-    public function forgetTokens(SchoolGoogleConnection $connection): void
+    public function forgetTokens(SchoolGoogleConnection $connection, ?string $reason = null): void
     {
+        $previousScopes = $connection->granted_scopes ?? [];
+
         $connection->forceFill([
             'credentials' => null,
             'granted_scopes' => [],
+            'attention_scopes' => $reason ? array_values($previousScopes) : [],
             'token_expires_at' => null,
             'status' => 'disabled',
+            'last_error' => $reason,
         ])->save();
     }
 

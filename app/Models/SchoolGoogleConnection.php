@@ -15,7 +15,10 @@ class SchoolGoogleConnection extends Model
         'granted_scopes',
         'token_expires_at',
         'status',
+        'last_error',
+        'attention_scopes',
         'connected_by',
+        'last_used_at',
         'last_refreshed_at',
     ];
 
@@ -28,7 +31,9 @@ class SchoolGoogleConnection extends Model
         return [
             'credentials' => 'encrypted:array',
             'granted_scopes' => 'array',
+            'attention_scopes' => 'array',
             'token_expires_at' => 'datetime',
+            'last_used_at' => 'datetime',
             'last_refreshed_at' => 'datetime',
         ];
     }
