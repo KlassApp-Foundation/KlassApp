@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Setting\GoogleClassroomController;
 use App\Http\Controllers\Admin\Setting\GoogleConnectController;
 use App\Http\Controllers\Admin\Setting\GoogleDriveController;
 use App\Http\Controllers\Admin\Setting\GoogleSheetsController;
@@ -20,4 +21,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/admin/settings/google/sheets/export', [GoogleSheetsController::class, 'export'])->name('admin.google.sheets.export');
     Route::post('/admin/settings/google/sheets/import', [GoogleSheetsController::class, 'import'])->name('admin.google.sheets.import');
     Route::post('/admin/settings/google/drive/file', [GoogleDriveController::class, 'file'])->name('admin.google.drive.file');
+    Route::post('/admin/settings/google/classroom/sync', [GoogleClassroomController::class, 'sync'])->name('admin.google.classroom.sync');
 });

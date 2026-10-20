@@ -6,7 +6,7 @@ KlassApp sign-in and these connectors share one OAuth client and use two redirec
 
 There is one connection per user, not per school. The token is encrypted, and only that user can see it or use it. A school admin chooses which connectors the school allows. That screen shows an anonymous count and does not show anyone's Google account, email, or token. There is no domain-wide delegation and no school service account.
 
-This file is on the Drive pull request, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) (`cursor/google-connectors-drive-b53f`), stacked on Sheets [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) and foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139). Classroom and Calendar actions are later pull requests: [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140), [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Gmail, Docs, Slides, and Tasks are not connectors.
+This file is on the Classroom pull request, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) (`cursor/google-connectors-classroom-b53f`), stacked on Drive [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137), Sheets [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138), and foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139). Calendar is [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Gmail, Docs, Slides, and Tasks are not connectors.
 
 ## 1. Google Cloud project
 
@@ -17,7 +17,7 @@ This file is on the Drive pull request, [#1137](https://github.com/KlassApp-Foun
    - Add every person who will click Connect as a test user (maximum 100).
    - While the app stays in Testing, Google's verification review is not required. A test user still sees a warning before consent. Because the connector asks for scopes beyond `openid`, `profile`, and `email`, that consent and its refresh token expire seven days after consent. The code requests `access_type=offline`, so it stores a refresh token, and that token expires with the consent. Reconnect after seven days, or publish only after the verification in section 3.
 3. Create an OAuth client: Credentials → Create credentials → OAuth client ID → **Web application**. Not a desktop client and not a service account. The Calendar call makes the signed-in user the owner of the new calendar; a service account would own it instead.
-4. Authorized redirect URIs, byte for byte. The connector URI is not built from `APP_URL`. `GoogleOAuthService` sends the raw `GOOGLE_CONNECTOR_REDIRECT_URI` value as `redirect_uri`. The route is `GET /admin/settings/google/callback` (`RouteServiceProvider` prefix `admin`, plus `routes/setting.php`).
+4. Authorized redirect URIs, byte for byte. The connector URI is not built from `APP_URL`. `GoogleOAuthService` sends the raw `GOOGLE_CONNECTOR_REDIRECT_URI` value as `redirect_uri`. The route is `GET /admin/settings/google/callback` in `routes/google.php`.
    - Sign-in, for `APP_URL=https://klassapp.xyz` and `APP_ENV` other than `local`: `https://klassapp.xyz/auth/google/callback`. The code builds that as `rtrim(APP_URL, '/') + '/auth/google/callback'` in `config/services.php`. `routes/web.php` serves `GET /auth/google/callback`.
    - School connectors, production: `https://klassapp.xyz/admin/settings/google/callback`.
    - Local connector example, when the app is on localhost: `http://localhost/admin/settings/google/callback`. If `APP_URL` is a different local host, the path is still `/admin/settings/google/callback` on that host, and the env value must match the authorized URI exactly.
@@ -32,7 +32,7 @@ Enable an API on this project before you call it.
 | Account check | #1139 | none (userinfo) | yes |
 | Sheets | #1138 | Google Sheets API | yes |
 | Drive | #1137 | Google Drive API | yes |
-| Classroom | #1140 | Google Classroom API | no |
+| Classroom | #1140 | Google Classroom API | yes |
 | Calendar | #1149 | Google Calendar API | no |
 
 Do not enable the Gmail API, Google Docs API, Google Slides API, or Google Tasks API for these connectors. Nothing in this stack calls them.
@@ -77,6 +77,8 @@ Leave these unset. Each already defaults to Google's host. Setting one would poi
 
 The last four exist in `config/services.php` and no connector calls them. `GOOGLE_DRIVE_MCP_URL`, `GOOGLE_DRIVE_MCP_CLIENT_ID`, and `GOOGLE_DRIVE_MCP_CLIENT_SECRET` belong to a separate Toshi Drive MCP entry. This connector does not read them. Leave that entry disabled.
 
+`TOSHI_GOOGLE_CLASSROOM_ENABLED` defaults to false. Leave it unset for the settings sync and for `google:smoke classroom`. It only turns on the separate Toshi Classroom MCP tools. There is no second Classroom OAuth client.
+
 ## 5. Connect, then run one action
 
 1. Sign in as the person who will use the tool (school admin, teacher, parent, or student).
@@ -89,11 +91,12 @@ php artisan google:smoke account --user=USER_ID
 php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID
 php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID --spreadsheet=SPREADSHEET_ID
 php artisan google:smoke drive --user=USER_ID --exam=EXAM_ID --learner=STUDENT_USER_ID
+php artisan google:smoke classroom --user=USER_ID
 ```
 
-`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template, as that user, and only if that user may already import marks for the exam. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope, using that user's token, and only if that user is a school admin or the class teacher for that class. The routes are `POST /admin/settings/google/sheets/export`, `POST /admin/settings/google/sheets/import`, and `POST /admin/settings/google/drive/file`.
+`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template, as that user, and only if that user may already import marks for the exam. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope, using that user's token, and only if that user is a school admin or the class teacher for that class. `classroom` reads the triggering user's own active courses and student names, with that user's token. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students. Only a school admin can run the sync. The routes are `POST /admin/settings/google/sheets/export`, `POST /admin/settings/google/sheets/import`, `POST /admin/settings/google/drive/file`, and `POST /admin/settings/google/classroom/sync`.
 
-`classroom` is in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
+`calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
 
 A token is refreshed only when that user triggers an action. Nothing on a schedule walks every connection. A Testing-mode refresh token that has already passed seven days cannot be refreshed; that user has to connect again.
 
@@ -101,4 +104,8 @@ Disconnecting the last tool revokes the Google token and deletes the local row. 
 
 ## 6. What the automated tests prove without a Cloud project
 
-`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests include `GoogleConnectorFoundationTest`, `GoogleSheetsConnectorTest`, and `GoogleDriveConnectorTest`. The Drive test connects one user, uploads one report-card PDF, reads the folder path back from the fake server, and disconnects. They also cover an expired token, revoked access (`invalid_grant`), an API error, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`. They do not prove Google's consent screen, Google's scope verification, or a real Drive API.
+`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests include `GoogleConnectorFoundationTest`, `GoogleSheetsConnectorTest`, `GoogleDriveConnectorTest`, and `GoogleClassroomConnectorTest`. The Classroom test connects one user, reads that user's courses and students from the fake server, matches exact unique names, creates nobody, and disconnects. They also cover an expired token, revoked access (`invalid_grant`), an API error, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`.
+
+`tests/Feature/Toshi/GoogleClassroomSkillTest.php` does not use that fake server. It uses `SpikeGoogleClassroomMockServer`, a local MCP fixture. The Classroom MCP tools read the triggering user's token only, and they are off unless `TOSHI_GOOGLE_CLASSROOM_ENABLED` is set. A school id on its own does not select a token.
+
+None of these tests prove Google's consent screen, Google's scope verification, or a real Classroom API.

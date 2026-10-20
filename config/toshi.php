@@ -1,6 +1,12 @@
 <?php
 
 return [
+    /* Runtime-only context for local MCP subprocesses (never an env value). */
+    'mcp_context' => [
+        'school_id' => null,
+        'user_id' => null,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Toshi LLM Assistant Configuration
@@ -316,6 +322,28 @@ return [
             'enabled' => env('TOSHI_GOOGLE_DRIVE_ENABLED', false),
             'allows_custom_endpoint' => false,
         ],
+        'google-classroom' => [
+            // Local MCP server over the Classroom REST API. Tokens come from
+            // the triggering user's Google connection, not a second OAuth
+            // client and not another person's token. Sign-in stays on the
+            // Socialite redirect.
+            'endpoint' => 'local://google-classroom',
+            'token_url' => 'https://oauth2.googleapis.com/token',
+            'auth_mode' => 'oauth_remote',
+            'oauth_client_id' => null,
+            'oauth_secret' => null,
+            'timeout' => 30,
+            'skill' => \App\AiAgents\Skills\GoogleClassroomSkill::class,
+            'default_write_mode' => 'deny',
+            'read_tools' => [
+                'google_classroom_list_courses',
+                'google_classroom_list_coursework',
+                'google_classroom_list_students',
+            ],
+            'write_tools' => [],
+            'enabled' => filter_var(env('TOSHI_GOOGLE_CLASSROOM_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+            'allows_custom_endpoint' => false,
+        ],
     ],
 
     /*
@@ -353,6 +381,9 @@ return [
             ],
             'google-drive' => [
                 'mode' => 'deny',
+            ],
+            'google-classroom' => [
+                'mode' => env('TOSHI_GOOGLE_CLASSROOM_MCP_WRITE_MODE', 'classify'),
             ],
         ],
     ],

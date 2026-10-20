@@ -2,6 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\McpConnectorTokenRefreshService;
+use App\Services\Google\GoogleAccessRevokedException;
+use App\Services\Google\GoogleConnectionService;
+use App\Services\Google\GoogleConnectorCatalog;
+use App\Services\Google\GoogleOAuthService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
@@ -97,7 +102,21 @@ class SchoolMcpConnector extends Model
         $schoolId = $schoolId ?? auth()->user()?->school_id;
 
         if ($schoolId === null) {
+            $configured = config('toshi.mcp_context.school_id');
+            if (is_numeric($configured) && (int) $configured > 0) {
+                $schoolId = (int) $configured;
+            }
+        }
+
+        if ($schoolId === null) {
             return null;
+        }
+
+        if ($connectorType === 'google-classroom') {
+            $foundationToken = static::foundationClassroomToken($schoolId);
+            if ($foundationToken !== null) {
+                return $foundationToken;
+            }
         }
 
         $connector = static::query()
@@ -123,5 +142,45 @@ class SchoolMcpConnector extends Model
         $connector->update(['last_used_at' => now()]);
 
         return $connector->accessToken();
+    }
+
+    /**
+     * Classroom tokens belong to the triggering user. The MCP subprocess has
+     * no HTTP session, so the parent process passes that user's id. A school
+     * id on its own never selects a token. A legacy school_mcp_connectors row
+     * is used only when this user has no live Classroom grant.
+     */
+    private static function foundationClassroomToken(int $schoolId): ?string
+    {
+        $userId = auth()->id() ?? config('toshi.mcp_context.user_id');
+
+        if (! is_numeric($userId) || (int) $userId <= 0) {
+            return null;
+        }
+
+        $user = User::query()
+            ->whereKey((int) $userId)
+            ->where('school_id', $schoolId)
+            ->first();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $connection = app(GoogleConnectionService::class)->forUser($user);
+
+        if (! app(GoogleConnectorCatalog::class)->isLive($connection, 'classroom')) {
+            return null;
+        }
+
+        try {
+            $connection = app(GoogleOAuthService::class)->validConnection($connection);
+        } catch (GoogleAccessRevokedException) {
+            return null;
+        }
+
+        $connection->forceFill(['last_used_at' => now()])->save();
+
+        return $connection->accessToken();
     }
 }

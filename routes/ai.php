@@ -90,6 +90,30 @@ if ($mode === 'mock') {
 }
 
 /*
+| Google Classroom local MCP. Off unless TOSHI_GOOGLE_CLASSROOM_ENABLED.
+| Connect and disconnect go through the signed-in user's Google connection
+| (/admin/settings/google/...), not a second Socialite client.
+| The stdio subprocess receives that user's school id and user id.
+*/
+Mcp::local('google-classroom-mock', \App\Mcp\Servers\SpikeGoogleClassroomMockServer::class);
+
+if ((bool) config('toshi.mcp_connectors.google-classroom.enabled', false)) {
+    Mcp::local('google-classroom', \App\Mcp\Servers\GoogleClassroomServer::class);
+
+    Mcp::registerClient('google-classroom', function () {
+        $schoolId = Auth::user()?->school_id ?? config('toshi.mcp_context.school_id');
+        $userId = Auth::id() ?? config('toshi.mcp_context.user_id');
+
+        return Client::local(PHP_BINARY, [
+            base_path('artisan'),
+            'google-classroom:mcp',
+            (string) $schoolId,
+            (string) $userId,
+        ])->withTimeout((float) config('toshi.mcp_connectors.google-classroom.timeout', 30));
+    });
+}
+
+/*
 |--------------------------------------------------------------------------
 | MCP transport era gap — dated re-verification marker (2027-04-28)
 |--------------------------------------------------------------------------

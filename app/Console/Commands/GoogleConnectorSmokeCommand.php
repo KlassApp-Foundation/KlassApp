@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Academics\Exam;
 use App\Models\User;
+use App\Services\Google\Classroom\GoogleClassroomSyncService;
 use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
@@ -57,6 +58,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'drive') {
             return $this->drive($user);
+        }
+
+        if ($connector === 'classroom') {
+            return $this->classroom($user);
         }
 
         if (! $catalog->has($connector)) {
@@ -173,6 +178,30 @@ class GoogleConnectorSmokeCommand extends Command
         $this->info('Filed: '.$filed['fileId']);
         $this->line($filed['folder']);
         $this->line($filed['webViewLink']);
+
+        return self::SUCCESS;
+    }
+
+    private function classroom(User $user): int
+    {
+        try {
+            $plan = app(GoogleClassroomSyncService::class)->sync($user);
+        } catch (GoogleApiException $e) {
+            $this->error('Classroom call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot read Classroom.');
+
+            return self::FAILURE;
+        }
+
+        $matched = collect($plan['classes'])->sum(fn ($class) => count($class['matched']));
+        $review = count($plan['needsReview']) + collect($plan['classes'])->sum(fn ($class) => count($class['needsReview']));
+        $this->info('Classes matched: '.count($plan['classes']));
+        $this->line('Students matched: '.$matched);
+        $this->line('Needs review: '.$review);
+        $this->line('No students were created. Tokens were not printed.');
 
         return self::SUCCESS;
     }

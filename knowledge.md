@@ -725,7 +725,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - Google connection: one row per user (`user_google_connections`), not per school. Tokens are encrypted and only that user can use them. A school allow list (`school_google_connector_allows`) decides which connectors people may turn on, and the admin view shows an anonymous count. Disconnect of the last connector revokes the token at Google and deletes the row. No scheduled job refreshes other people's tokens. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`. No domain-wide delegation and no service account.
 - My connected tools (`/settings/connected-tools`) shows Live only for the signed-in user's own grant. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
-- Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
+- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom. Classroom reads the triggering user's own courses and builds on `feat/google-classroom-wave1` at `db8a5d82` without pushing that branch. Calendar is draft [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) on top of this branch. Gmail, Docs, Slides, and Tasks are not connected.
 
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
 
@@ -2701,6 +2701,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: Google connections are per user (Classroom)
+
+- **Work done**: Classroom sync, `google:smoke classroom --user`, and the Classroom MCP token lookup use the triggering user's `user_google_connections` row. A school id alone does not select a token. Only a school admin can run the sync, and only with their own grant. Sheets export still reads one exam through `ExamMarkSheetReader`; `ResultsService` stays the term sheet.
+- **Files modified**: `GoogleClassroomSyncService`, `SchoolMcpConnector`, `StartGoogleClassroomMcpCommand`, `routes/google.php`, `routes/ai.php`, `config/toshi.php`, `GoogleConnectorSmokeCommand`, `GoogleClassroomConnectorTest`, `docs/ops/google-connectors-smoke-test.md`, `knowledge.md`.
+- **Key decisions**: No domain-wide delegation. Disconnect of the last connector revokes and deletes. Classroom scopes stay the three readonly scopes already in the catalog.
+- **Status**: Draft [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140). Not merged. Production and staging not touched.
+- **Edge cases flagged**: Google cannot revoke one scope. The fake server does not prove Google's consent screen or the Cloud Console scope label.
 
 ### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
 
