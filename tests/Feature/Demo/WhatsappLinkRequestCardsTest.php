@@ -91,10 +91,11 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(WhatsappDashboardCard::class)
-            ->assertSee(self::EMPTY)
-            ->assertSeeHtml('<span class="wa-dash-card__count-num">0</span>')
+            ->assertDontSee(self::EMPTY)
+            ->assertDontSee('WhatsApp link requests')
+            ->assertDontSee('wa-dash-card')
             ->assertSeeHtml('wire:poll.4s')
-            ->assertSeeHtml('data-testid="dashboard-whatsapp-card"');
+            ->assertSeeHtml('data-testid="dashboard-whatsapp-poll"');
     }
 
     public function test_pending_card_shows_number_student_class_and_time_left(): void
@@ -144,10 +145,14 @@ class WhatsappLinkRequestCardsTest extends TestCase
         $request = $this->requestBind('256700000942');
         $this->resetHttp();
 
-        Livewire::actingAs($admin)
+        $component = Livewire::actingAs($admin)
             ->test(WhatsappDashboardCard::class)
-            ->call('reject', $request->id)
-            ->assertSee('not linked');
+            ->call('reject', $request->id);
+
+        $notice = $component->get('notice');
+        $this->assertIsArray($notice);
+        $this->assertStringContainsString('not linked', (string) ($notice['text'] ?? ''));
+        $component->assertDispatched('alert');
 
         $this->assertSame('rejected', $request->fresh()->status);
         $this->assertNull(WhatsAppUser::where('phone', '256700000942')->first()?->demo_student_id);
@@ -177,22 +182,92 @@ class WhatsappLinkRequestCardsTest extends TestCase
         $this->assertSame([], $this->outbound());
     }
 
-    public function test_dashboard_card_shows_only_the_latest_three(): void
+    public function test_dashboard_poller_does_not_list_requests(): void
     {
         $admin = $this->admin();
-        $phones = ['256700000951', '256700000952', '256700000953', '256700000954'];
-        foreach ($phones as $phone) {
+        foreach (['256700000951', '256700000952', '256700000953', '256700000954'] as $phone) {
             $this->requestBind($phone);
         }
 
         $html = Livewire::actingAs($admin)->test(WhatsappDashboardCard::class)->html();
 
-        $this->assertStringContainsString('<span class="wa-dash-card__count-num">4</span>', $html);
-        $this->assertStringNotContainsString('+256 700 000 951', $html);
-        $this->assertStringContainsString('+256 700 000 954', $html);
-        $this->assertStringContainsString('+256 700 000 953', $html);
-        $this->assertStringContainsString('+256 700 000 952', $html);
-        $this->assertSame(3, substr_count($html, 'data-testid="wa-link-request"'));
+        $this->assertStringNotContainsString('WhatsApp link requests', $html);
+        $this->assertStringNotContainsString('data-testid="wa-link-request"', $html);
+        $this->assertStringNotContainsString('+256 700 000 954', $html);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-poll"', $html);
+    }
+
+    public function test_dashboard_poller_still_toasts_a_newer_request(): void
+    {
+        $admin = $this->admin();
+        $component = Livewire::actingAs($admin)->test(WhatsappDashboardCard::class);
+
+        $this->requestBind('256700000970');
+        $component->call('dismissNotice')->assertDispatched('alert');
+    }
+
+    public function test_dashboard_stat_shows_parents_reachable_when_nothing_is_waiting(): void
+    {
+        $admin = $this->admin();
+
+        $html = $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->getContent();
+
+        $this->assertDashboardDropsThePanel($html);
+        $this->assertStringContainsString('data-testid="dashboard-connected-whatsapp-count"', $html);
+        $this->assertStringContainsString('parents reachable', $html);
+        $this->assertStringNotContainsString('dv2-kpi--waiting', $html);
+        $this->assertStringNotContainsString('requests waiting', $html);
+        $this->assertStringContainsString('function klassShowToast', $html);
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*hidden/', $html);
+        $this->assertMatchesRegularExpression(
+            '/href="[^"]*\/admin\/whatsapp\/dashboard"[^>]*data-testid="dashboard-v2-kpi-whatsapp"/',
+            $html
+        );
+    }
+
+    public function test_dashboard_stat_shows_one_request_waiting(): void
+    {
+        $admin = $this->admin();
+        $this->requestBind('256700000981');
+
+        $html = $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->getContent();
+
+        $this->assertDashboardDropsThePanel($html);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting-count">1<', $html);
+        $this->assertStringContainsString('>request waiting</p>', $html);
+        $this->assertStringNotContainsString('>requests waiting</p>', $html);
+        $this->assertStringContainsString('dv2-kpi--waiting', $html);
+        $this->assertStringNotContainsString('parents reachable', $html);
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>1</', $html);
+        $this->assertStringContainsString('function klassShowToast', $html);
+    }
+
+    public function test_dashboard_stat_shows_three_requests_waiting_and_links_to_whatsapp(): void
+    {
+        $admin = $this->admin();
+        foreach (['256700000991', '256700000992', '256700000993'] as $phone) {
+            $this->requestBind($phone);
+        }
+
+        $html = $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->getContent();
+
+        $this->assertDashboardDropsThePanel($html);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting-count">3<', $html);
+        $this->assertStringContainsString('>requests waiting</p>', $html);
+        $this->assertStringContainsString('dv2-kpi--waiting', $html);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting"', $html);
+        $this->assertStringNotContainsString('parents reachable', $html);
+        $this->assertMatchesRegularExpression(
+            '/href="[^"]*\/admin\/whatsapp\/dashboard"[^>]*data-testid="dashboard-v2-kpi-whatsapp"/',
+            $html
+        );
+        $this->assertMatchesRegularExpression(
+            '/aria-label="WhatsApp, 3 requests waiting, open WhatsApp"/',
+            $html
+        );
+        $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>3</', $html);
+        $this->assertStringContainsString('function klassShowToast', $html);
+        $this->assertStringContainsString('data-testid="link-request-bell"', $html);
     }
 
     public function test_another_schools_request_cannot_be_approved_from_this_school(): void
@@ -241,10 +316,16 @@ class WhatsappLinkRequestCardsTest extends TestCase
         }
     }
 
-    public function test_v2_dashboard_mounts_the_card_and_kpi_css_keeps_number_and_label_apart(): void
+    public function test_v2_dashboard_mounts_the_poller_and_kpi_css_keeps_number_and_label_apart(): void
     {
         $v2 = file_get_contents(resource_path('views/admin/dashboard/dashboard_v2.blade.php'));
         $this->assertStringContainsString('<livewire:admin.whatsapp-dashboard-card />', $v2);
+        $this->assertStringNotContainsString('WhatsApp link requests', $v2);
+
+        $card = file_get_contents(resource_path('views/livewire/admin/whatsapp-dashboard-card.blade.php'));
+        $this->assertStringNotContainsString('WhatsApp link requests', $card);
+        $this->assertStringNotContainsString('wa-dash-card', $card);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-poll"', $card);
 
         $css = file_get_contents(public_path('css/dashboard-refresh.css'));
         $this->assertStringNotContainsString('[class*="kpi"] a', $css);
@@ -384,6 +465,16 @@ class WhatsappLinkRequestCardsTest extends TestCase
         $this->assertNull($row->user_id);
         $this->assertNull($row->verified_at);
         $this->assertSame($school->id, (int) $row->school_id);
+    }
+
+    private function assertDashboardDropsThePanel(string $html): void
+    {
+        $this->assertStringNotContainsString('WhatsApp link requests', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-whatsapp-card"', $html);
+        $this->assertStringNotContainsString('wa-dash-card', $html);
+        $this->assertStringNotContainsString('Open the WhatsApp page', $html);
+        $this->assertStringNotContainsString('data-testid="wa-link-request"', $html);
+        $this->assertStringContainsString('data-testid="dashboard-whatsapp-poll"', $html);
     }
 
     private function admin(bool $public = false): User

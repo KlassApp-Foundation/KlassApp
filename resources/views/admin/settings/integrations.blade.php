@@ -90,7 +90,7 @@
 
     <div class="dashboard-connected-tools mt-8" data-testid="connected-tools-card">
         <h2 style="color:#0F172A;font-size:18px;font-weight:700;margin:0 0 4px">Connected tools</h2>
-        <p style="color:#64748B;font-size:14px;margin:0 0 14px">A tool shows Live only after this school has connected it.</p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 14px">A tool shows Live only after you have connected your own Google account.</p>
         <ul class="dashboard-connected-list">
             @foreach ($googleConnectors as $tool)
                 <li class="dashboard-connected-row ds-card ds-card-padding-default" data-testid="google-connector-card-{{ $tool['key'] }}" style="background:#FFFFFF;color:#0F172A">
@@ -104,7 +104,10 @@
                             @endif
                             <span class="block text-sm" style="color:#64748B">{{ $tool['why'] }}</span>
                             @if ($tool['live'] && $tool['email'])
-                                <span class="block text-sm" style="color:#64748B">Account: {{ $tool['email'] }}</span>
+                                <span class="block text-sm" style="color:#64748B" data-testid="google-connector-email-{{ $tool['key'] }}">Account: {{ $tool['email'] }}</span>
+                            @endif
+                            @if (! ($tool['allowed'] ?? false))
+                                <span class="block text-sm" style="color:#64748B" data-testid="google-connector-blocked-{{ $tool['key'] }}">Your school has not turned this on.</span>
                             @endif
                         </span>
                     </span>
@@ -113,11 +116,33 @@
                             @csrf
                             <button type="submit" class="ds-btn ds-btn-danger ds-btn-md" data-testid="google-connector-disconnect-{{ $tool['key'] }}">Disconnect</button>
                         </form>
-                    @elseif ($tool['configured'])
+                    @elseif ($tool['configured'] && ($tool['allowed'] ?? false))
                         <a href="{{ route('admin.google.connect', ['connector' => $tool['key']]) }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="google-connector-connect-{{ $tool['key'] }}">Connect</a>
                     @else
                         <span class="text-sm" style="color:#94A3B8" data-testid="google-connector-unconfigured-{{ $tool['key'] }}">Connect unavailable</span>
                     @endif
+                </li>
+            @endforeach
+        </ul>
+    </div>
+
+    <div class="mt-8" data-testid="google-allow-list">
+        <h2 style="color:#0F172A;font-size:18px;font-weight:700;margin:0 0 4px">Connectors this school allows</h2>
+        <p style="color:#64748B;font-size:14px;margin:0 0 14px">People at this school can connect a tool only after you turn it on. This list does not show who connected, or their Google account.</p>
+        <ul class="dashboard-connected-list">
+            @foreach ($googleAllow as $tool)
+                <li class="dashboard-connected-row ds-card ds-card-padding-default" data-testid="google-allow-{{ $tool['key'] }}" style="background:#FFFFFF;color:#0F172A">
+                    <span>
+                        <span class="font-semibold" style="color:#0F172A">{{ $tool['label'] }}</span>
+                        <span class="block text-sm" style="color:#64748B" data-testid="google-allow-count-{{ $tool['key'] }}">{{ $tool['count'] }} connected</span>
+                    </span>
+                    <form method="POST" action="{{ route('admin.google.allow', ['connector' => $tool['key']]) }}">
+                        @csrf
+                        <input type="hidden" name="allowed" value="{{ $tool['allowed'] ? '0' : '1' }}">
+                        <button type="submit" class="ds-btn ds-btn-md {{ $tool['allowed'] ? 'ds-btn-danger' : 'ds-btn-primary' }}" data-testid="google-allow-toggle-{{ $tool['key'] }}">
+                            {{ $tool['allowed'] ? 'Turn off' : 'Allow' }}
+                        </button>
+                    </form>
                 </li>
             @endforeach
         </ul>

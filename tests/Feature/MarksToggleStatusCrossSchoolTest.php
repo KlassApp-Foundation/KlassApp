@@ -110,7 +110,7 @@ class MarksToggleStatusCrossSchoolTest extends TestCase
             ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
             ->patch("/teacher/exam/{$this->examB->id}/change-status");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
 
         $this->assertDatabaseHas('exams', [
             'id' => $this->examB->id,
@@ -133,7 +133,7 @@ class MarksToggleStatusCrossSchoolTest extends TestCase
             ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
             ->patch("/teacher/exam/{$this->examB->id}/change-status");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
 
         $this->assertDatabaseHas('exams', [
             'id' => $this->examB->id,

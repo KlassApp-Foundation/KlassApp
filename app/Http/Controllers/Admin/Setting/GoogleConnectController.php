@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Setting;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\Google\GoogleApiException;
 use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
@@ -12,24 +13,22 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
- * School Google account connect. One row per school, incremental scopes.
- *
- * Sign-in stays on GoogleAuthController / Socialite. This controller uses its
- * own redirect (GOOGLE_CONNECTOR_REDIRECT_URI) and never changes the login driver.
+ * One Google account per user. Sign-in stays on GoogleAuthController.
+ * This redirect is GOOGLE_CONNECTOR_REDIRECT_URI and does not use Socialite.
  */
 class GoogleConnectController extends Controller
 {
-    public function connect(string $connector, GoogleConnectorCatalog $catalog, GoogleOAuthService $oauth)
+    public function connect(string $connector, GoogleConnectorCatalog $catalog, GoogleOAuthService $oauth, GoogleConnectionService $connections)
     {
-        $user = Auth::user();
+        $user = $this->member($connections);
 
-        if ($user?->school_id === null || ! $catalog->has($connector)) {
+        if (! $catalog->has($connector) || ! $connections->schoolAllows((int) $user->school_id, $connector)) {
             abort(404);
         }
 
         if (! $oauth->isConfigured()) {
             return redirect()
-                ->route('admin.settings.integrations')
+                ->route('google.mine')
                 ->with('failmessage', 'Google connectors are not configured on this instance.');
         }
 
@@ -38,17 +37,12 @@ class GoogleConnectController extends Controller
 
     public function callback(Request $request, GoogleConnectionService $connections, GoogleConnectorCatalog $catalog)
     {
-        $user = Auth::user();
-
-        if ($user?->school_id === null) {
-            abort(404);
-        }
-
+        $user = $this->member($connections);
         $pending = $request->session()->pull('google_connector_oauth');
 
         if (! is_array($pending) || empty($pending['state']) || ! hash_equals((string) $pending['state'], (string) $request->query('state', ''))) {
             return redirect()
-                ->route('admin.settings.integrations')
+                ->route('google.mine')
                 ->with('failmessage', 'Google connection could not be verified. Please try again.');
         }
 
@@ -58,13 +52,13 @@ class GoogleConnectController extends Controller
 
         $connector = (string) ($pending['connector'] ?? '');
 
-        if (! $catalog->has($connector)) {
+        if (! $catalog->has($connector) || ! $connections->schoolAllows((int) $user->school_id, $connector)) {
             abort(404);
         }
 
         if ($request->filled('error')) {
             return redirect()
-                ->route('admin.settings.integrations')
+                ->route('google.mine')
                 ->with('failmessage', 'Google connection was cancelled.');
         }
 
@@ -73,33 +67,45 @@ class GoogleConnectController extends Controller
         } catch (GoogleApiException $e) {
             Log::warning('Google connector callback failed', [
                 'connector' => $connector,
+                'user_id' => $user->id,
                 'status' => $e->status,
                 'error' => $e->googleError,
                 'exception' => $e::class,
             ]);
 
             return redirect()
-                ->route('admin.settings.integrations')
+                ->route('google.mine')
                 ->with('failmessage', 'Google connection failed. Please try again.');
         }
 
         return redirect()
-            ->route('admin.settings.integrations')
-            ->with('successmessage', $catalog->get($connector)['label'].' is connected for this school.');
+            ->route('google.mine')
+            ->with('successmessage', $catalog->get($connector)['label'].' is connected.');
     }
 
     public function disconnect(string $connector, GoogleConnectionService $connections, GoogleConnectorCatalog $catalog)
     {
-        $user = Auth::user();
+        $user = $this->member($connections);
 
-        if ($user?->school_id === null || ! $catalog->has($connector)) {
+        if (! $catalog->has($connector)) {
             abort(404);
         }
 
         $connections->disconnect($user, $connector);
 
         return redirect()
-            ->route('admin.settings.integrations')
+            ->route('google.mine')
             ->with('successmessage', $catalog->get($connector)['label'].' disconnected.');
+    }
+
+    private function member(GoogleConnectionService $connections): User
+    {
+        $user = Auth::user();
+
+        if (! $connections->isSchoolMember($user)) {
+            abort(404);
+        }
+
+        return $user;
     }
 }

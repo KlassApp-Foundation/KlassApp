@@ -88,7 +88,12 @@ class EarlyAccessRequestController extends Controller
         }
 
         ['invite' => $invite, 'token' => $token] = SchoolInviteService::issue($earlyAccessRequest, $request->user());
-        SchoolInviteService::sendEmail($invite, $token);
+
+        if (! SchoolInviteService::sendEmail($invite, $token)) {
+            return back()
+                ->with('error', 'The invite for '.$email.' was created, but the email could not be queued. Nothing was sent. Use Retry to send it again.')
+                ->with('retry_invite_id', $invite->id);
+        }
 
         return back()->with('success', 'Invite sent to '.$email.'.');
     }
@@ -102,7 +107,12 @@ class EarlyAccessRequestController extends Controller
         }
 
         ['invite' => $invite, 'token' => $token] = SchoolInviteService::reissue($schoolInvite);
-        SchoolInviteService::sendEmail($invite, $token);
+
+        if (! SchoolInviteService::sendEmail($invite, $token)) {
+            return back()
+                ->with('error', 'The email to '.$invite->email.' could not be queued. Nothing was sent. Use Retry to send it again.')
+                ->with('retry_invite_id', $invite->id);
+        }
 
         return back()->with('success', 'A fresh invite was sent to '.$invite->email.'.');
     }

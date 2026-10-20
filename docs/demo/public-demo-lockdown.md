@@ -42,7 +42,6 @@ GET     /dismiss-onboarding                                                    a
 GET     /whatsapp/report-files/{token}                                         allowed: read-only page (sends are blocked or limited by WHATSAPP_DEMO_ONLY_RECIPIENTS)
 
 ## Toshi/AI/LLM
-GET     /admin/student/showallmark/{name}                                      allowed: read-only page; its saves are blocked or stay inside the demo school
 GET     /admin/toshi-activity                                                  BLOCKED: Toshi / AI
 GET     /superadmin/toshi/ops/{conversation}                                   BLOCKED: site-admin or platform route
 POST    /superadmin/toshi/ops/{conversation}                                   BLOCKED: site-admin or platform route

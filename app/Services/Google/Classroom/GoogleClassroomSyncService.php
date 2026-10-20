@@ -3,13 +3,14 @@
 namespace App\Services\Google\Classroom;
 
 use App\Models\AcademicYear;
-use App\Models\SchoolGoogleConnection;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Models\UserGoogleConnection;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
 use Illuminate\Support\Collection;
 
@@ -18,6 +19,7 @@ class GoogleClassroomSyncService
     public function __construct(
         private readonly GoogleApiClient $client,
         private readonly GoogleConnectorCatalog $catalog,
+        private readonly GoogleConnectionService $connections,
     ) {
     }
 
@@ -78,12 +80,16 @@ class GoogleClassroomSyncService
         return ['classes' => $classes, 'needsReview' => $needsReview];
     }
 
-    private function connection(User $actor): SchoolGoogleConnection
+    private function connection(User $actor): UserGoogleConnection
     {
-        $connection = SchoolGoogleConnection::query()->forSchool((int) $actor->school_id)->first();
+        if ((int) $actor->usergroup_id !== 3) {
+            abort(404);
+        }
+
+        $connection = $this->connections->forUser($actor);
 
         if (! $this->catalog->isLive($connection, 'classroom')) {
-            throw new GoogleApiException(404, 'Google Classroom is not connected for this school.', 'not_connected');
+            throw new GoogleApiException(404, 'Google Classroom is not connected for this user.', 'not_connected');
         }
 
         return $connection;
@@ -92,7 +98,7 @@ class GoogleClassroomSyncService
     /**
      * @return list<array<string, mixed>>
      */
-    private function courses(SchoolGoogleConnection $connection): array
+    private function courses(UserGoogleConnection $connection): array
     {
         $courses = [];
         $pageToken = null;
@@ -120,7 +126,7 @@ class GoogleClassroomSyncService
     /**
      * @return list<array<string, mixed>>
      */
-    private function students(SchoolGoogleConnection $connection, string $courseId): array
+    private function students(UserGoogleConnection $connection, string $courseId): array
     {
         $students = [];
         $pageToken = null;

@@ -4,7 +4,7 @@ namespace Tests\Feature\Google;
 
 use App\Models\AcademicYear;
 use App\Models\School;
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
@@ -37,7 +37,9 @@ class GoogleClassroomConnectorTest extends TestCase
         $this->setUpFakeGoogle();
 
         DB::table('usergroups')->upsert([
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
         ], 'id');
 
@@ -128,7 +130,7 @@ class GoogleClassroomConnectorTest extends TestCase
         $before = User::query()->where('school_id', $this->school->id)->count();
         $this->connectGoogle($this->admin, 'classroom');
 
-        $scopes = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first()->granted_scopes;
+        $scopes = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->granted_scopes;
         $this->assertContains('https://www.googleapis.com/auth/classroom.courses.readonly', $scopes);
         $this->assertContains('https://www.googleapis.com/auth/classroom.rosters.readonly', $scopes);
         $this->assertContains('https://www.googleapis.com/auth/classroom.coursework.students.readonly', $scopes);
@@ -161,17 +163,56 @@ class GoogleClassroomConnectorTest extends TestCase
         $this->assertTrue($paths->contains('/v1/courses/c-p4/students'));
         $this->assertFalse($paths->contains('/v1/courses/c-missing/students'));
 
+        $this->artisan('google:smoke', ['connector' => 'classroom', '--user' => $this->admin->id])
+            ->assertSuccessful();
+
         $this->actingAs($this->admin)
             ->post(route('admin.google.disconnect', ['connector' => 'classroom']))
             ->assertRedirect();
-        $this->assertNull(SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first()->credentials);
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->admin->id)->first());
         $this->assertNotNull(collect($this->google->calls())->first(fn ($call) => $call['path'] === '/revoke'));
+    }
+
+    public function test_another_user_cannot_sync_with_this_users_token(): void
+    {
+        $this->connectGoogle($this->admin, 'classroom');
+        $token = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken();
+        $colleague = User::factory()->create([
+            'usergroup_id' => 3,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $teacher = User::factory()->create([
+            'usergroup_id' => 5,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $platform = User::factory()->create([
+            'usergroup_id' => 1,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $seen = count($this->google->calls());
+
+        $this->actingAs($colleague)->postJson(route('admin.google.classroom.sync'))->assertNotFound();
+        $this->actingAs($teacher)->postJson(route('admin.google.classroom.sync'))->assertNotFound();
+        $this->actingAs($platform)->postJson(route('admin.google.classroom.sync'))->assertNotFound();
+        $this->artisan('google:smoke', ['connector' => 'classroom', '--user' => $colleague->id])->assertFailed();
+        $this->artisan('google:smoke', ['connector' => 'classroom', '--user' => $teacher->id])->assertFailed();
+        $this->artisan('google:smoke', ['connector' => 'classroom'])->assertFailed();
+
+        $later = array_slice($this->google->calls(), $seen);
+        $this->assertFalse(collect($later)->contains(
+            fn ($call) => str_contains((string) ($call['authorization'] ?? ''), (string) $token)
+        ));
+        $this->assertSame($token, UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken());
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $colleague->id)->first());
     }
 
     public function test_expired_token_refreshes_before_sync(): void
     {
         $this->connectGoogle($this->admin, 'classroom');
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
 
         $this->actingAs($this->admin)
@@ -188,7 +229,7 @@ class GoogleClassroomConnectorTest extends TestCase
     {
         $this->connectGoogle($this->admin, 'classroom');
         $before = User::query()->count();
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
         $this->google->update(function (array &$state) {
             $state['modes']['refresh'] = 'invalid_grant';
@@ -198,7 +239,7 @@ class GoogleClassroomConnectorTest extends TestCase
             ->postJson(route('admin.google.classroom.sync'))
             ->assertStatus(400);
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('disabled', $row->status);
         $this->assertNull($row->credentials);
         $this->assertSame($before, User::query()->count());
@@ -220,7 +261,7 @@ class GoogleClassroomConnectorTest extends TestCase
             $this->assertNotInstanceOf(GoogleAccessRevokedException::class, $e);
         }
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('active', $row->status);
         $this->assertNotNull($row->accessToken());
     }

@@ -2,18 +2,27 @@
 
 namespace App\Exports;
 
+use App\Contracts\Results\DivisionRule;
+use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
-use App\Models\Academics\Exam;
-use App\Models\Academics\Marks;
 use App\Models\StandardLink;
 use App\Models\Subject;
-use App\Models\User;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultSitting;
+use App\Services\Results\ResultStudent;
+use App\Services\Results\ResultsPolicy;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 /**
  * Two-sheet workbook: "MONTHLY RESULTS" (subjects as columns, one row per
- * student per MID month) and "END OF TERM" (subjects as columns, one row per
- * student). Raw marks, full active roster, blank cells for missing marks.
+ * student per mid-term month) and "END OF TERM" (subjects as columns, one
+ * row per student). Raw marks, full active roster, blank cells for missing marks.
+ *
+ * Monthly rows come from non-contributing sittings split by calendar month.
+ * The end-of-term sheet is the contributing sitting. Subject columns stay in
+ * report order for the whole class, including a subject with no mark.
  */
 class CombinedMarksheetExport implements WithMultipleSheets
 {
@@ -24,68 +33,74 @@ class CombinedMarksheetExport implements WithMultipleSheets
 
     public function sheets(): array
     {
-        $schoolId = $this->stdLink->school_id;
-        $sectionId = $this->stdLink->section_id;
-        $termId = $this->term->id;
+        $schoolId = (int) $this->stdLink->school_id;
+        $sectionId = (int) $this->stdLink->section_id;
 
         $subjects = Subject::sortByReportOrder(
             Subject::where('school_id', $schoolId)
                 ->where('section_id', $sectionId)
                 ->get()
         );
-
-        $students = User::where('school_id', $schoolId)
-            ->where('usergroup_id', 6)
-            ->where('status', 'active')
-            ->whereHas('studentAcademic', fn ($q) => $q->where('standardLink_id', $this->stdLink->id))
-            ->orderBy('name')
-            ->get();
-
-        $exams = Exam::where('school_id', $schoolId)
-            ->where('section_id', $sectionId)
-            ->where('academic_term_id', $termId)
-            ->with('examType')
-            ->get();
-
-        $midExams = $exams->filter(fn ($e) => $e->examType?->code === 'MID')
-            ->sortBy('scheduled_at')
-            ->values();
-
-        $eotExam = $exams->filter(fn ($e) => (int) $e->examType?->contributes_to_report_total === 1)
-            ->sortByDesc('id')
-            ->first();
-
-        // Preload marks into a [student][exam][subject] => marks lookup to avoid N+1.
-        $markMap = [];
-        foreach (Marks::whereIn('exam_id', $exams->pluck('id'))->get() as $m) {
-            $markMap[$m->student_id][$m->exam_id][$m->subject_id] = $m->marks;
-        }
-
         $subjectNames = $subjects->pluck('name')->all();
 
-        // Sheet 1: MONTHLY RESULTS.
+        $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: $sectionId,
+            academicTermId: (int) $this->term->id,
+            standardLinkId: (int) $this->stdLink->id,
+        ), new ResultsPolicy(
+            app(GradingScale::class),
+            app(DivisionRule::class),
+            splitMidTermByMonth: true,
+        ));
+
+        $students = $sheet->students;
+        usort($students, function (ResultStudent $left, ResultStudent $right) {
+            $byName = strcasecmp($left->name, $right->name);
+            if ($byName !== 0) {
+                return $byName;
+            }
+
+            return $left->studentId <=> $right->studentId;
+        });
+
+        $monthlySittings = array_values(array_filter(
+            $sheet->sittings,
+            fn (ResultSitting $sitting) => ! $sitting->contributesToReport
+        ));
+        usort($monthlySittings, function (ResultSitting $left, ResultSitting $right) {
+            return [$left->periodKey, $left->examTypeId, $left->name]
+                <=> [$right->periodKey, $right->examTypeId, $right->name];
+        });
+
         $monthlyHeadings = array_merge(['STUDENT NAME', 'MONTH'], $subjectNames);
         $monthlyRows = [];
         foreach ($students as $student) {
-            foreach ($midExams as $midExam) {
-                $month = $midExam->scheduled_at ? strtoupper($midExam->scheduled_at->format('F')) : '';
-                $row = [$student->name, $month];
+            foreach ($monthlySittings as $sitting) {
+                $rowStudent = $sitting->student($student->studentId);
+                $row = [$student->name, $sitting->periodLabel];
                 foreach ($subjects as $subject) {
-                    $row[] = $this->markValue($markMap, $student->id, $midExam->id, $subject->id);
+                    $row[] = $this->cellValue($rowStudent?->cell((int) $subject->id));
                 }
                 $monthlyRows[] = $row;
             }
         }
 
-        // Sheet 2: END OF TERM.
+        $contributing = null;
+        foreach ($sheet->sittings as $sitting) {
+            if ($sitting->contributesToReport) {
+                $contributing = $sitting;
+                break;
+            }
+        }
+
         $eotHeadings = array_merge(['STUDENT NAME'], $subjectNames);
         $eotRows = [];
         foreach ($students as $student) {
+            $source = $contributing?->student($student->studentId);
             $row = [$student->name];
             foreach ($subjects as $subject) {
-                $row[] = $eotExam
-                    ? $this->markValue($markMap, $student->id, $eotExam->id, $subject->id)
-                    : '';
+                $row[] = $this->cellValue($source?->cell((int) $subject->id));
             }
             $eotRows[] = $row;
         }
@@ -96,10 +111,12 @@ class CombinedMarksheetExport implements WithMultipleSheets
         ];
     }
 
-    private function markValue(array $map, int $studentId, int $examId, int $subjectId)
+    private function cellValue(?ResultCell $cell): float|string
     {
-        $value = $map[$studentId][$examId][$subjectId] ?? null;
+        if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null) {
+            return '';
+        }
 
-        return $value !== null ? (float) $value : '';
+        return (float) $cell->mark;
     }
 }

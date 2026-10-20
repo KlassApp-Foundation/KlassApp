@@ -107,7 +107,7 @@
             </div>
         @endif
 
-        {{-- WhatsApp link requests, near the top. Count, latest three, Approve / Reject. Polls itself. --}}
+        {{-- Hidden poller: a new link request still toasts, and the sidebar badge still updates. --}}
         @if((int) ($v2User->usergroup_id ?? 0) === 3)
             <livewire:admin.whatsapp-dashboard-card />
         @endif

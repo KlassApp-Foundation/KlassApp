@@ -2,6 +2,7 @@
 
 namespace Tests\Support;
 
+use App\Models\SchoolGoogleConnectorAllow;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
@@ -45,6 +46,11 @@ trait InteractsWithFakeGoogle
 
     protected function connectGoogle(User $admin, string $connector): void
     {
+        SchoolGoogleConnectorAllow::query()->updateOrCreate(
+            ['school_id' => $admin->school_id, 'connector' => $connector],
+            ['allowed' => true],
+        );
+
         $response = $this->actingAs($admin)->get(route('admin.google.connect', ['connector' => $connector]));
         $response->assertRedirect();
         $location = (string) $response->headers->get('Location');
@@ -61,7 +67,7 @@ trait InteractsWithFakeGoogle
         $this->actingAs($admin)->get('/admin/settings/google/callback?'.http_build_query([
             'code' => $issued->json('code'),
             'state' => $issued->json('state'),
-        ]))->assertRedirect(route('admin.settings.integrations'));
+        ]))->assertRedirect(route('google.mine'));
     }
 
     /**

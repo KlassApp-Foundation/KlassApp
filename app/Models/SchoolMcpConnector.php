@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\McpConnectorTokenRefreshService;
 use App\Services\Google\GoogleAccessRevokedException;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
 use App\Services\Google\GoogleOAuthService;
 use Illuminate\Database\Eloquent\Model;
@@ -144,14 +145,29 @@ class SchoolMcpConnector extends Model
     }
 
     /**
-     * Classroom tokens live on the school's one Google connection. The MCP
-     * subprocess has no HTTP session, so callers pass the school id in
-     * toshi.mcp_context.school_id. A legacy school_mcp_connectors row is
-     * used only when that connection is not live.
+     * Classroom tokens belong to the triggering user. The MCP subprocess has
+     * no HTTP session, so the parent process passes that user's id. A school
+     * id on its own never selects a token. A legacy school_mcp_connectors row
+     * is used only when this user has no live Classroom grant.
      */
     private static function foundationClassroomToken(int $schoolId): ?string
     {
-        $connection = SchoolGoogleConnection::query()->forSchool($schoolId)->first();
+        $userId = auth()->id() ?? config('toshi.mcp_context.user_id');
+
+        if (! is_numeric($userId) || (int) $userId <= 0) {
+            return null;
+        }
+
+        $user = User::query()
+            ->whereKey((int) $userId)
+            ->where('school_id', $schoolId)
+            ->first();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $connection = app(GoogleConnectionService::class)->forUser($user);
 
         if (! app(GoogleConnectorCatalog::class)->isLive($connection, 'classroom')) {
             return null;

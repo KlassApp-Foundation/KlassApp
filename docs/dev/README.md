@@ -120,7 +120,7 @@ The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Busin
 | `config/services.php` | WhatsApp configuration (business_number, business_name, evolution_url, evolution_api_key, instance_name, send_delay, template_language) |
 | `app/Services/WhatsAppService.php` | HTTP transport — `sendText()`, `sendList()`, `sendTemplate()`, `sendTextSafe()`, `sendToUser()`, `isWithinServiceWindow()`, `sendMedia()` |
 | `app/Services/OutboundWhatsAppService.php` | Business logic — `queueOrSend()`, `queueNotification()`, `flushPending()`, `sendExpiredQueue()`, `flushAllOpenWindows()`, notification methods |
-| `app/Http/Controllers/Api/WhatsAppController.php` | API endpoints — `handleInbound()`, `identify()`, `sendMenu()`, `buildMenuSections()`, `grades()`, `attendance()`, `feeBalance()`, `schoolEvents()`, `deliveryWebhook()`, `handleDeliveryFailure()` |
+| `app/Http/Controllers/Api/WhatsAppController.php` | API endpoints — `handleInbound()`, `identify()`, `sendMenu()`, `buildMenuSections()`, `attendance()`, `feeBalance()`, `schoolEvents()`, `deliveryWebhook()`, `handleDeliveryFailure()` |
 | `app/Http/Controllers/Admin/WhatsAppDashboardController.php` | Admin delivery dashboard with KPI aggregation |
 | `app/Http/Requests/WhatsApp/StoreWhatsAppWebhookRequest.php` | Inbound webhook payload validation |
 | `app/Helpers/WhatsAppPhoneHelper.php` | Phone normalisation and Uganda (+256) validation |
@@ -129,8 +129,6 @@ The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Busin
 | `app/Models/WhatsAppPendingNotification.php` | Cost-optimized notification queue model |
 | `app/Console/Commands/SendFeeReminders.php` | Scheduled fee reminder dispatcher |
 | `app/Console/Commands/SendWhatsAppPendingNotifications.php` | Queue processor for pending notifications |
-| `app/Events/GradesPublished.php` | Event fired when grades are published |
-| `app/Listeners/SendGradesToWhatsApp.php` | Listener that dispatches grade notifications |
 
 ---
 

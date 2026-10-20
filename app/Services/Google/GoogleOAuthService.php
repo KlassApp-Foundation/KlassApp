@@ -2,7 +2,7 @@
 
 namespace App\Services\Google;
 
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -78,12 +78,12 @@ class GoogleOAuthService
         return $response->json() ?? [];
     }
 
-    public function refresh(SchoolGoogleConnection $connection): SchoolGoogleConnection
+    public function refresh(UserGoogleConnection $connection): UserGoogleConnection
     {
         $refreshToken = $connection->refreshToken();
 
         if ($refreshToken === null) {
-            $this->forgetTokens($connection);
+            $this->forgetTokens($connection, 'no_refresh_token');
 
             throw new GoogleAccessRevokedException(400, 'Google connection has no refresh token.', 'invalid_grant');
         }
@@ -108,7 +108,7 @@ class GoogleOAuthService
         $error = $this->errorCode($body);
 
         if ($response->status() === 400 && $error === 'invalid_grant') {
-            $this->forgetTokens($connection);
+            $this->forgetTokens($connection, 'invalid_grant');
 
             throw new GoogleAccessRevokedException(400, 'Google access was revoked.', 'invalid_grant');
         }
@@ -141,10 +141,10 @@ class GoogleOAuthService
         return $connection->refresh();
     }
 
-    public function validConnection(SchoolGoogleConnection $connection): SchoolGoogleConnection
+    public function validConnection(UserGoogleConnection $connection): UserGoogleConnection
     {
         if (! $connection->isActive() || ($connection->accessToken() === null && $connection->refreshToken() === null)) {
-            throw new GoogleAccessRevokedException(401, 'Google is not connected for this school.', 'not_connected');
+            throw new GoogleAccessRevokedException(401, 'Google is not connected for this user.', 'not_connected');
         }
 
         if ($connection->accessToken() === null || $connection->isTokenExpired()) {
@@ -154,7 +154,7 @@ class GoogleOAuthService
         return $connection;
     }
 
-    public function revokeAndForget(SchoolGoogleConnection $connection): void
+    public function revokeAndForget(UserGoogleConnection $connection): void
     {
         $token = $connection->refreshToken() ?: $connection->accessToken();
 
@@ -174,45 +174,17 @@ class GoogleOAuthService
         $this->forgetTokens($connection);
     }
 
-    public function refreshExpiring(int $withinMinutes = 30): int
+    public function forgetTokens(UserGoogleConnection $connection, ?string $reason = null): void
     {
-        if (! $this->isConfigured()) {
-            return 0;
-        }
+        $previousScopes = $connection->granted_scopes ?? [];
 
-        $connections = SchoolGoogleConnection::query()
-            ->active()
-            ->whereNotNull('token_expires_at')
-            ->where('token_expires_at', '<=', now()->addMinutes($withinMinutes))
-            ->get();
-
-        $refreshed = 0;
-
-        foreach ($connections as $connection) {
-            try {
-                $this->refresh($connection);
-                $refreshed++;
-            } catch (GoogleAccessRevokedException) {
-                // Tokens already cleared.
-            } catch (GoogleApiException $e) {
-                Log::warning('Google scheduled refresh skipped', [
-                    'connection_id' => $connection->id,
-                    'status' => $e->status,
-                    'error' => $e->googleError,
-                ]);
-            }
-        }
-
-        return $refreshed;
-    }
-
-    public function forgetTokens(SchoolGoogleConnection $connection): void
-    {
         $connection->forceFill([
             'credentials' => null,
             'granted_scopes' => [],
+            'attention_scopes' => $reason ? array_values($previousScopes) : [],
             'token_expires_at' => null,
             'status' => 'disabled',
+            'last_error' => $reason,
         ])->save();
     }
 

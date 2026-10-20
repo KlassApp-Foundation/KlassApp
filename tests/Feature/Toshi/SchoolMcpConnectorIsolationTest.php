@@ -4,6 +4,7 @@ namespace Tests\Feature\Toshi;
 
 use App\Models\SchoolMcpConnector;
 use App\Models\User;
+use App\Models\UserGoogleConnection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -86,6 +87,40 @@ class SchoolMcpConnectorIsolationTest extends TestCase
             'context-token',
             SchoolMcpConnector::resolveTokenForRequest('google-classroom'),
         );
+    }
+
+    public function test_classroom_token_is_the_named_user_only(): void
+    {
+        $school = $this->createSchool('own');
+        $owner = User::factory()->create(['school_id' => $school, 'usergroup_id' => 3, 'status' => 'active']);
+        $other = User::factory()->create(['school_id' => $school, 'usergroup_id' => 3, 'status' => 'active']);
+
+        UserGoogleConnection::query()->create([
+            'user_id' => $owner->id,
+            'school_id' => $school,
+            'google_email' => 'owner@example.test',
+            'credentials' => ['access_token' => 'owner-classroom-token', 'refresh_token' => 'owner-refresh'],
+            'granted_scopes' => [
+                'https://www.googleapis.com/auth/classroom.courses.readonly',
+                'https://www.googleapis.com/auth/classroom.rosters.readonly',
+                'https://www.googleapis.com/auth/classroom.coursework.students.readonly',
+            ],
+            'status' => 'active',
+            'token_expires_at' => now()->addHour(),
+        ]);
+
+        config(['toshi.mcp_context.school_id' => $school]);
+        $this->assertNull(SchoolMcpConnector::resolveTokenForRequest('google-classroom'));
+
+        config(['toshi.mcp_context.user_id' => $owner->id]);
+        $this->assertSame('owner-classroom-token', SchoolMcpConnector::resolveTokenForRequest('google-classroom'));
+
+        config(['toshi.mcp_context.user_id' => $other->id]);
+        $this->assertNull(SchoolMcpConnector::resolveTokenForRequest('google-classroom'));
+
+        $this->actingAs($other);
+        config(['toshi.mcp_context.user_id' => $owner->id]);
+        $this->assertNull(SchoolMcpConnector::resolveTokenForRequest('google-classroom'));
     }
 
     public function test_disabled_connector_does_not_resolve(): void

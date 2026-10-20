@@ -78,10 +78,15 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['override_reason']);
         } else {
+            // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone']);
+                [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $linkId);
+                $this->releases->requireApproval($user, $anchor, $link, $data['override_reason']);
+            }
+            foreach ($targets as $linkId) {
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['override_reason']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -131,6 +136,7 @@ class MarksReleaseController extends Controller
             'when' => ['required', 'in:now,schedule'],
             'scheduled_for' => ['nullable', 'required_if:when,schedule', 'date_format:Y-m-d\TH:i'],
             'timezone' => ['nullable', 'string', 'max:64'],
+            'override_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         return [
@@ -141,6 +147,7 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? null,
             'timezone' => $data['timezone'] ?? null,
+            'override_reason' => trim((string) ($data['override_reason'] ?? '')),
         ];
     }
 
@@ -187,6 +194,9 @@ class MarksReleaseController extends Controller
         $sheet = ($examId && $known)
             ? $this->sheetFor($user, $examId, $targets)
             : ['subjects' => [], 'groups' => []];
+        $approvals = ($examId && $known)
+            ? $this->approvalsFor($user, $examId, $targets)
+            : [];
         $previewId = $targets === null ? null : ($targets[0] ?? null);
         $previewMessage = ($examId && $known && $targets !== [])
             ? $this->releases->preview($user, $examId, $previewId)
@@ -208,6 +218,7 @@ class MarksReleaseController extends Controller
             'confirming' => $confirming,
             'whenLabel' => 'Now',
             'sheet' => $sheet,
+            'approvals' => $approvals,
             'previewMessage' => $previewMessage,
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
@@ -309,6 +320,25 @@ class MarksReleaseController extends Controller
         }
 
         return 'all classes';
+    }
+
+    /** @param  array<int, int>|null  $linkIds
+     * @return array<int, array{subject_id:int, name:string, class_name:string, state:string, label:string}>
+     */
+    private function approvalsFor(User $user, int $examId, ?array $linkIds): array
+    {
+        if ($linkIds === null) {
+            return $this->releases->subjectApprovals($user, $examId, null);
+        }
+
+        $rows = [];
+        foreach ($linkIds as $id) {
+            foreach ($this->releases->subjectApprovals($user, $examId, (int) $id) as $row) {
+                $rows[$row['subject_id'].'|'.$row['class_name']] = $row;
+            }
+        }
+
+        return array_values($rows);
     }
 
     /** @param  array<int, int>|null  $linkIds */

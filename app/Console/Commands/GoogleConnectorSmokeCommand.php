@@ -3,66 +3,65 @@
 namespace App\Console\Commands;
 
 use App\Models\Academics\Exam;
-use App\Models\School;
-use App\Models\SchoolGoogleConnection;
 use App\Models\User;
 use App\Services\Google\Classroom\GoogleClassroomSyncService;
 use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
 use App\Services\Google\GoogleOAuthService;
 use Illuminate\Console\Command;
 
 /**
- * One real call per connector. Local only. Never prints tokens.
+ * One real call as one user. Never prints tokens and never loads another user's row.
  */
 class GoogleConnectorSmokeCommand extends Command
 {
     protected $signature = 'google:smoke
-        {connector : account, sheets, drive, classroom, calendar, gmail, docs, slides, or tasks}
-        {--school= : School id}
-        {--exam= : Exam id (sheets)}
+        {connector : account, sheets, or a connector key from config/google.php}
+        {--user= : User id. The command acts only as this user}
+        {--exam= : Exam id (sheets, drive)}
         {--spreadsheet= : Spreadsheet id (sheets import)}
-        {--section= : Section id (drive, classroom)}
         {--learner= : Student user id (drive)}';
 
-    protected $description = 'Run one Google connector action for a school that has already connected it';
+    protected $description = 'Run one Google connector action as the named user';
 
-    public function handle(GoogleOAuthService $oauth, GoogleConnectorCatalog $catalog, GoogleApiClient $client): int
-    {
+    public function handle(
+        GoogleOAuthService $oauth,
+        GoogleConnectorCatalog $catalog,
+        GoogleApiClient $client,
+        GoogleConnectionService $connections,
+    ): int {
         if (! $oauth->isConfigured()) {
             $this->error('Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_CONNECTOR_REDIRECT_URI in the local environment.');
 
             return self::FAILURE;
         }
 
-        $schoolId = (int) $this->option('school');
-        $school = $schoolId > 0 ? School::query()->whereKey($schoolId)->first() : null;
+        $user = $this->user();
 
-        if ($school === null) {
-            $this->error('Pass --school= with a real school id on this machine.');
-
+        if ($user === null) {
             return self::FAILURE;
         }
 
         $connector = (string) $this->argument('connector');
 
         if ($connector === 'account') {
-            return $this->account($school->id, $client);
+            return $this->account($user, $client, $connections);
         }
 
         if ($connector === 'sheets') {
-            return $this->sheets($school->id);
+            return $this->sheets($user);
         }
 
         if ($connector === 'drive') {
-            return $this->drive($school->id);
+            return $this->drive($user);
         }
 
         if ($connector === 'classroom') {
-            return $this->classroom($school->id);
+            return $this->classroom($user);
         }
 
         if (! $catalog->has($connector)) {
@@ -71,17 +70,31 @@ class GoogleConnectorSmokeCommand extends Command
             return self::FAILURE;
         }
 
-        $this->error("The {$catalog->get($connector)['label']} action is not registered yet. Connect it from School Settings → Integrations, then run this command again after that connector's change is installed.");
+        $this->error("The {$catalog->get($connector)['label']} action is not registered yet. That user connects it from My connected tools, then you run this command again after that connector's change is installed.");
 
         return self::FAILURE;
     }
 
-    private function account(int $schoolId, GoogleApiClient $client): int
+    private function user(): ?User
     {
-        $connection = SchoolGoogleConnection::query()->forSchool($schoolId)->active()->first();
+        $userId = (int) $this->option('user');
+        $user = $userId > 0 ? User::query()->whereKey($userId)->first() : null;
 
-        if ($connection === null) {
-            $this->error('This school has not connected a Google account.');
+        if ($user === null || $user->school_id === null) {
+            $this->error('Pass --user= with a real user id on this machine.');
+
+            return null;
+        }
+
+        return $user;
+    }
+
+    private function account(User $user, GoogleApiClient $client, GoogleConnectionService $connections): int
+    {
+        $connection = $connections->forUser($user);
+
+        if ($connection === null || ! $connection->isActive() || $connection->accessToken() === null && $connection->refreshToken() === null) {
+            $this->error('This user has not connected a Google account.');
 
             return self::FAILURE;
         }
@@ -100,14 +113,13 @@ class GoogleConnectorSmokeCommand extends Command
         return self::SUCCESS;
     }
 
-    private function sheets(int $schoolId): int
+    private function sheets(User $user): int
     {
         $examId = (int) $this->option('exam');
-        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
-        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
+        $exam = Exam::query()->where('school_id', $user->school_id)->whereKey($examId)->first();
 
-        if ($exam === null || $actor === null) {
-            $this->error('Pass --exam= for an exam in this school, and have an active school admin.');
+        if ($exam === null) {
+            $this->error('Pass --exam= for an exam in this user\'s school.');
 
             return self::FAILURE;
         }
@@ -117,14 +129,18 @@ class GoogleConnectorSmokeCommand extends Command
         try {
             $spreadsheet = (string) $this->option('spreadsheet');
             if ($spreadsheet !== '') {
-                $outcome = $sheets->import($actor, $exam, $spreadsheet, false);
+                $outcome = $sheets->import($user, $exam, $spreadsheet, false);
                 $this->info($outcome['committed'] ? 'Import committed.' : 'Import refused: '.implode(' ', $outcome['plan']->blockers));
 
                 return $outcome['committed'] ? self::SUCCESS : self::FAILURE;
             }
-            $created = $sheets->export($actor, $exam);
+            $created = $sheets->export($user, $exam);
         } catch (GoogleApiException $e) {
             $this->error('Sheets call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot use that exam.');
 
             return self::FAILURE;
         }
@@ -135,23 +151,26 @@ class GoogleConnectorSmokeCommand extends Command
         return self::SUCCESS;
     }
 
-    private function drive(int $schoolId): int
+    private function drive(User $user): int
     {
         $examId = (int) $this->option('exam');
         $learnerId = (int) $this->option('learner');
-        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
-        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
+        $exam = Exam::query()->where('school_id', $user->school_id)->whereKey($examId)->first();
 
-        if ($exam === null || $actor === null || $learnerId <= 0) {
-            $this->error('Pass --exam= and --learner= for this school, and have an active school admin.');
+        if ($exam === null || $learnerId <= 0) {
+            $this->error('Pass --exam= and --learner= for this user\'s school.');
 
             return self::FAILURE;
         }
 
         try {
-            $filed = app(GoogleDriveService::class)->fileReportCard($actor, $exam, $learnerId);
+            $filed = app(GoogleDriveService::class)->fileReportCard($user, $exam, $learnerId);
         } catch (GoogleApiException $e) {
             $this->error('Drive call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot file that report card.');
 
             return self::FAILURE;
         }
@@ -163,20 +182,16 @@ class GoogleConnectorSmokeCommand extends Command
         return self::SUCCESS;
     }
 
-    private function classroom(int $schoolId): int
+    private function classroom(User $user): int
     {
-        $actor = User::query()->where('school_id', $schoolId)->where('usergroup_id', 3)->where('status', 'active')->first();
-
-        if ($actor === null) {
-            $this->error('This school needs an active school admin.');
-
-            return self::FAILURE;
-        }
-
         try {
-            $plan = app(GoogleClassroomSyncService::class)->sync($actor);
+            $plan = app(GoogleClassroomSyncService::class)->sync($user);
         } catch (GoogleApiException $e) {
             $this->error('Classroom call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot read Classroom.');
 
             return self::FAILURE;
         }

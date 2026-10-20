@@ -71,9 +71,17 @@
                     <p class="mr-when-label" data-testid="release-when">{{ $whenLabel }}</p>
                 @endif
                 <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
+                @if($isAdmin && collect($approvals ?? [])->contains(fn ($row) => $row['state'] !== 'approved'))
+                    <label class="mr-control">
+                        <span>Reason to release before approval</span>
+                        <textarea name="override_reason" maxlength="500" data-testid="release-override-reason">{{ old('override_reason') }}</textarea>
+                    </label>
+                @endif
                 @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
+                @error('approval')<p class="mr-error" data-testid="release-approval-error">{{ $message }}</p>@enderror
+                @error('override_reason')<p class="mr-error">{{ $message }}</p>@enderror
             </form>
         </div>
 
@@ -85,6 +93,14 @@
             <div class="mr-wa-body" data-testid="release-marks-message">{!! \App\Support\WhatsAppMessagePreview::html($previewMessage) !!}</div>
         </details>
     </div>
+
+    @if(!empty($approvals))
+        <ul class="mr-card" data-testid="release-subject-approvals">
+            @foreach($approvals as $row)
+                <li data-testid="release-subject-approval" data-state="{{ $row['state'] }}">{{ $row['name'] }}@if($row['class_name'] !== '') · {{ $row['class_name'] }}@endif — {{ $row['label'] }}</li>
+            @endforeach
+        </ul>
+    @endif
 
     <div class="mr-sheet {{ $wide ? 'mr-sheet--wide' : '' }}" data-testid="marks-release-sheet">
         <table class="mr-grid">
