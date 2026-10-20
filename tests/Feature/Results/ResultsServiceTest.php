@@ -400,9 +400,6 @@ class ResultsServiceTest extends TestCase
         $this->assertSame([15.0, 25.0], $undatedMarks);
     }
 
-    /**
-     * @return array{school: School, year: AcademicYear, standard: Standard, section: Section, link: StandardLink, teacher: User, english: Subject, maths: Subject}
-     */
     public function test_school_exam_type_preference_overrides_the_global_flag_and_the_letter_comes_from_the_scale(): void
     {
         $ctx = $this->school();
@@ -432,6 +429,9 @@ class ResultsServiceTest extends TestCase
         $this->assertSame(['MID'], array_map(fn ($sitting) => $sitting->code, $contributing));
     }
 
+    /**
+     * @return array{school: School, year: AcademicYear, standard: Standard, section: Section, link: StandardLink, teacher: User, english: Subject, maths: Subject}
+     */
     private function school(string $name = 'Results School'): array
     {
         $school = School::create([
