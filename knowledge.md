@@ -2696,6 +2696,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
+
+- **Work done**: Merged `origin/main` (`f14c93a3`) into the set-password branch and the high-severity dependency branch with merge commits. No rebase. Neither pull request was merged. No environment or production setting was changed.
+- **Status**: [#1146](https://github.com/KlassApp-Foundation/KlassApp/pull/1146) and [#1148](https://github.com/KlassApp-Foundation/KlassApp/pull/1148) stay draft. Guarded suites after the merge were green. Dependabot's alerts API was still unavailable; `composer audit` and `npm audit` on #1148 match the previous remaining list, with the targeted highs still upgraded.
+- **Edge cases flagged**: Open [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) also edits `composer.lock` and still pins the older Guzzle, CommonMark, PhpSpreadsheet, HttpFoundation, and Yaml versions. Merging it over #1148 would put those older versions back.
+
 ### 2026-10-19: reject an out-of-range school_invites.created_by before dropping its foreign key
 
 - **Work done**: In `alignCreatedByWithUsersId()`, the value check (`created_by` > 4294967295) now runs before `dropCreatedByForeignKey()`. Bariyo123's non-blocking note on #1126. No production access.

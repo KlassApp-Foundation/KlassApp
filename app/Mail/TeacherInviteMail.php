@@ -31,6 +31,9 @@ class TeacherInviteMail extends Mailable
 
     public ?Carbon $expiresAt;
 
+    /** Broker-link lifetime in minutes, when this mail carries a signed set-password URL. */
+    public ?int $expiresInMinutes;
+
     /** True when the teacher already has a usable account (reassignment). */
     public bool $existingAccount;
 
@@ -42,15 +45,17 @@ class TeacherInviteMail extends Mailable
         ?string $inviteUrl = null,
         bool $existingAccount = false,
         ?Carbon $expiresAt = null,
+        ?int $expiresInMinutes = null,
     ) {
         $this->name = $name;
         $this->email = $email;
         $this->schoolName = $schoolName;
         $this->className = $className !== null && trim($className) !== '' ? trim($className) : null;
         $this->existingAccount = $existingAccount;
-        // New accounts set their password via the reset-code flow; existing ones just sign in.
+        // New accounts get a signed set-password link; existing ones just sign in.
         $this->inviteUrl = $inviteUrl ?: ($existingAccount ? url('/login') : route('password.email'));
         $this->expiresAt = $expiresAt;
+        $this->expiresInMinutes = $expiresInMinutes;
     }
 
     public function build()
