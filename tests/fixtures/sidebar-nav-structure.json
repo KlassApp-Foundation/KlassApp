@@ -149,6 +149,14 @@
                                     ]
                                 },
                                 {
+                                    "label": "Mark submissions",
+                                    "url": "admin/marks/submissions",
+                                    "paths": [
+                                        "admin/marks/submissions*"
+                                    ],
+                                    "count": "mark_submissions"
+                                },
+                                {
                                     "label": "Grading",
                                     "url": "admin/grades",
                                     "paths": [

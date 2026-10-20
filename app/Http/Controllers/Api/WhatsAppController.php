@@ -28,6 +28,10 @@ use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsApp\ParentLinkRequestService;
 use App\Services\WhatsAppBusinessService;
+use App\Services\Results\DisplayedGrade;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use App\Services\WhatsAppReportCardDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -140,78 +144,6 @@ class WhatsAppController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    /**
-     * Get student grades via WhatsApp.
-     *
-     * GET /api/whatsapp/student/{studentId}/grades?term=current
-     */
-    public function grades(string $studentId, Request $request)
-    {
-        $student = User::with(['studentAcademicLatest.standardLink.standard'])
-            ->where('id', $studentId)
-            ->first();
-
-        if (!$student) {
-            return response()->json([
-                'error'   => 'Student not found',
-                'message' => 'No student found with ID: ' . $studentId,
-            ], 404);
-        }
-
-        $term = $request->query('term', 'current');
-
-        // Resolve academic term
-        $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $studentId))
-            ->with(['marks' => fn($q) => $q->where('student_id', $studentId), 'examType', 'subject']);
-
-        if ($term === 'current') {
-            // Get current academic year's latest exam
-            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
-            if ($academicYear) {
-                $examQuery->where('academic_year_id', $academicYear->id);
-            }
-        }
-
-        app(ReleaseGate::class)->applyToExams($examQuery, $student);
-        $exams = $examQuery->latest('id')->take(5)->get();
-
-        if ($exams->isEmpty()) {
-            return response()->json([
-                'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'class'        => $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A',
-                'message'      => 'No results available yet for ' . $this->whatsappDisplayName($student, 'Student') . '.',
-                'exams'        => [],
-            ]);
-        }
-
-        $formattedExams = $exams->map(function ($exam) {
-            $marks = $exam->marks->map(function ($mark) {
-                return [
-                    'subject' => $mark->subject?->name ?? 'Unknown',
-                    'score'   => $mark->marks,
-                    'total'   => 100,
-                    'grade'   => $mark->grade,
-                    'remark'  => $mark->remark ?? '',
-                ];
-            });
-
-            return [
-                'exam_name' => $exam->subject?->name ?? $exam->examType?->name ?? 'Exam',
-                'term'      => $exam->academicTerm?->name ?? 'N/A',
-                'marks'     => $marks,
-                'total'     => $marks->sum('score'),
-                'average'   => $marks->avg('score') ? round($marks->avg('score'), 1) : 0,
-                'position'  => $exam->position ?? 'N/A',
-            ];
-        });
-
-        return response()->json([
-            'student_name' => $this->whatsappDisplayName($student, 'Student'),
-            'class'        => $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A',
-            'exams'        => $formattedExams,
-        ]);
     }
 
     /**
@@ -331,135 +263,6 @@ class WhatsAppController extends Controller
             'fee_breakdown' => $fees,
             'note'         => 'Contact school office for exact payment status.',
         ]);
-    }
-
-    /**
-     * Generate and deliver a report card PDF via WhatsApp.
-     *
-     * GET /api/whatsapp/student/{studentId}/report?phone=+256...&year_id=X&term_id=Y
-     */
-    public function report(string $studentId, Request $request)
-    {
-        $phone = WhatsAppPhoneHelper::normalise($request->input('phone', ''));
-        if (empty($phone)) {
-            return response()->json(['error' => 'Phone number is required.'], 422);
-        }
-
-        $whatsappUser = \App\Models\WhatsAppUser::where('phone', $phone)->with('user')->first();
-        if (!$whatsappUser || !$whatsappUser->user) {
-            return response()->json(['error' => 'Phone number not linked to any account.'], 404);
-        }
-
-        $parent = $whatsappUser->user;
-
-        $student = \App\Models\User::with('studentAcademic.standardLink.standard')->where('id', $studentId)->first();
-        if (!$student) {
-            return response()->json(['error' => 'Student not found.'], 404);
-        }
-
-        $isLinked = \DB::table('student_parent_links')
-            ->where('parent_id', $parent->id)
-            ->where('student_id', $student->id)
-            ->exists();
-        if (!$isLinked) {
-            return response()->json(['error' => 'This student is not linked to your account.'], 403);
-        }
-
-        $schoolId = $student->school_id;
-        $yearId = $request->input('year_id');
-        if (!$yearId) {
-            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($schoolId);
-            $yearId = $academicYear ? $academicYear->id : null;
-        }
-        if (!$yearId) {
-            return response()->json(['error' => 'No academic year found.'], 404);
-        }
-
-        // Check approval status
-        $approvedCount = \DB::table('exam_marks_submissions')
-            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
-            ->join('marks', fn($j) => $j->on('marks.exam_id', '=', 'exams.id')->where('marks.student_id', $studentId))
-            ->where('exams.school_id', $schoolId)
-            ->where('exams.academic_year_id', $yearId)
-            ->where('exam_marks_submissions.approval_status', 'approved')
-            ->distinct('exam_marks_submissions.subject_id')
-            ->count('exam_marks_submissions.subject_id');
-
-        if ($approvedCount === 0) {
-            return response()->json([
-                'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
-                'approved'     => false,
-            ]);
-        }
-
-        $term = $request->input('term_id')
-            ? \App\Models\AcademicTerm::find($request->input('term_id'))
-            : \App\Models\AcademicTerm::where('school_id', $schoolId)->where('academic_year_id', $yearId)->first();
-        if (!$term) {
-            return response()->json(['error' => 'Term not found.'], 404);
-        }
-
-        $school = \App\Models\School::find($schoolId);
-        $examTypePrefs = $school ? ($school->exam_type_preferences ?? []) : [];
-        $contributingIds = \App\Models\Academics\ExamType::all()->filter(fn($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)->pluck('id')->toArray();
-
-        $examQuery = \App\Models\Academics\Exam::where('school_id', $schoolId)
-            ->where('academic_term_id', $term->id)
-            ->whereIn('exam_type_id', $contributingIds)
-            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject']);
-        app(ReleaseGate::class)->applyToExams($examQuery, $student);
-        $exams = $examQuery->get();
-
-        if ($exams->isEmpty()) {
-            return response()->json([
-                'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
-                'approved'     => false,
-            ]);
-        }
-
-        $approvedSubjectIds = \DB::table('exam_marks_submissions')
-            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
-            ->where('exams.school_id', $schoolId)
-            ->where('exams.academic_term_id', $term->id)
-            ->where('exam_marks_submissions.approval_status', 'approved')
-            ->pluck('exam_marks_submissions.subject_id')->unique()->toArray();
-
-        $marksData = [];
-        foreach ($exams as $exam) {
-            $isApproved = in_array($exam->subject_id, $approvedSubjectIds);
-            $mark = $exam->marks->first();
-            $marksData[] = [
-                'subject'  => $exam->subject?->name ?? 'Unknown',
-                'score'    => $isApproved && $mark ? $mark->marks : null,
-                'grade'    => $isApproved && $mark ? $mark->grade : null,
-                'approved' => $isApproved,
-                'display'  => $isApproved && $mark ? $mark->marks . '%' : 'Not yet available',
-            ];
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('whatsapp.report-card', [
-            'student'   => $student,
-            'marksData' => $marksData,
-            'term'      => $term,
-            'school'    => $school,
-            'partial'   => $approvedCount < count($marksData),
-        ]);
-
-        $filename = 'report_' . $student->id . '_' . time() . '.pdf';
-        $path = storage_path('app/public/reports/' . $filename);
-        if (!is_dir(dirname($path))) { mkdir(dirname($path), 0755, true); }
-        $pdf->save($path);
-
-        $fileUrl = url('storage/reports/' . $filename);
-        $caption = 'Report Card for ' . $this->whatsappDisplayName($student, 'Student') . ' — ' . ($term->name ?? '');
-
-        $result = $this->businessApi->sendDocument($phone, $fileUrl, $caption, $filename, 'report_card', $student->id);
-
-        return $result['success']
-            ? response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
-            : response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
     }
 
     /**
@@ -2158,69 +1961,10 @@ class WhatsAppController extends Controller
             }
 
             $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
-
-            // Group exams by exam type for cleaner display
-            $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
-            foreach ($grouped as $typeName => $typeExams) {
-                $term = $typeExams->first()->academicTerm?->name ?? 'Term';
-                $message .= "📝 *{$typeName}* — {$term}\n";
-
-                $allMarks = collect();
-                foreach ($typeExams as $exam) {
-                    foreach ($exam->marks as $mark) {
-                        $allMarks->push($mark);
-                    }
-                }
-
-                $sorted = $allMarks->sortByDesc('marks')->take(10);
-                foreach ($sorted as $mark) {
-                    $subject = $mark->subject?->name ?? 'Subject';
-                    $score = $mark->marks ?? 0;
-                    $grade = $mark->grade ?? '-';
-                    $message .= "• {$subject}: {$score}/100 ({$grade})\n";
-                }
-
-                $avg = $allMarks->avg('marks');
-                if ($avg) {
-                    // Class rank: count students with higher total in same exams
-                    $totalScore = $allMarks->sum('marks');
-                    $rank = null;
-                    $totalStudents = null;
-                    $examIds = $typeExams->pluck('id');
-                    if ($examIds->isNotEmpty()) {
-                        $allStudentsScores = \Illuminate\Support\Facades\DB::table('marks')
-                            ->whereIn('exam_id', $examIds)
-                            ->where('student_id', '!=', $student->id)
-                            ->select('student_id', \Illuminate\Support\Facades\DB::raw('SUM(marks) as total'))
-                            ->groupBy('student_id')
-                            ->get()
-                            ->pluck('total');
-                        $totalStudents = $allStudentsScores->count() + 1;
-                        $rank = $allStudentsScores->filter(fn($s) => $s > $totalScore)->count() + 1;
-                    }
-
-                    $avgRounded = round($avg, 1);
-                    $celebration = '';
-                    if ($avg >= 80) {
-                        $celebration = "🎉 *Well done, {$studentName}!* ";
-                        $celebration .= "{$avgRounded}% average is a strong performance";
-                        if ($rank && $totalStudents) {
-                            $celebration .= " — ranked {$rank}" . match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'} . " out of {$totalStudents}";
-                        }
-                        $celebration .= ".\n";
-                    }
-
-                    $message .= "· · · · · · · · · · · · · · · ·\n";
-                    $message .= "_Average: {$avgRounded}%_";
-                    if ($rank && $totalStudents) {
-                        $message .= " | #{$rank} of {$totalStudents}";
-                    }
-                    $message .= "\n";
-                    if ($celebration) {
-                        $message .= "{$celebration}";
-                    }
-                }
-                $message .= "\n";
+            $sectionId = (int) ($academic?->standardLink?->section_id ?? 0);
+            $grouped = $exams->groupBy(fn ($e) => ((int) $e->academic_term_id).'|'.((int) $e->exam_type_id));
+            foreach ($grouped as $typeExams) {
+                $message .= $this->sittingLines($student, $typeExams, $sectionId, $studentName, true);
             }
 
             $message .= "_Send GRADES for latest results._";
@@ -2518,34 +2262,109 @@ class WhatsAppController extends Controller
         }
 
         $message = "📊 *My Results — {$studentName}*\n_{$className}_\n\n";
-        $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
-        foreach ($grouped as $typeName => $typeExams) {
-            $term = $typeExams->first()->academicTerm?->name ?? 'Term';
-            $message .= "📝 *{$typeName}* — {$term}\n";
-
-            $allMarks = collect();
-            foreach ($typeExams as $exam) {
-                foreach ($exam->marks as $mark) {
-                    $allMarks->push($mark);
-                }
-            }
-
-            $sorted = $allMarks->sortByDesc('marks')->take(10);
-            foreach ($sorted as $mark) {
-                $subject = $mark->subject?->name ?? 'Subject';
-                $score = $mark->marks ?? 0;
-                $grade = $mark->grade ?? '-';
-                $message .= "• {$subject}: {$score}/100 ({$grade})\n";
-            }
-
-            $avg = $allMarks->avg('marks');
-            if ($avg) {
-                $message .= "_Average: " . round($avg, 1) . "%_\n";
-            }
-            $message .= "\n";
+        $sectionId = (int) ($student->studentAcademicLatest?->standardLink?->section_id ?? 0);
+        $grouped = $exams->groupBy(fn ($e) => ((int) $e->academic_term_id).'|'.((int) $e->exam_type_id));
+        foreach ($grouped as $typeExams) {
+            $message .= $this->sittingLines($student, $typeExams, $sectionId, $studentName, false);
         }
 
         $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
+    }
+
+    /**
+     * One sitting's lines: subject marks from the results service, then
+     * the average and, for a parent, the class position.
+     */
+    private function sittingLines($student, $typeExams, int $sectionId, string $studentName, bool $withRank): string
+    {
+        $first = $typeExams->first();
+        $typeName = $first->examType?->name ?? 'Exam';
+        $termName = $first->academicTerm?->name ?? 'Term';
+        $lines = "📝 *{$typeName}* — {$termName}\n";
+        $sectionId = $sectionId ?: (int) $first->section_id;
+        $schoolId = (int) ($first->school_id ?: $student->school_id);
+
+        $stored = [];
+        $fallback = collect();
+        foreach ($typeExams as $exam) {
+            foreach ($exam->marks as $mark) {
+                $fallback->push($mark);
+                $stored[(int) $mark->subject_id] = (string) ($mark->grade ?? '');
+            }
+        }
+
+        $row = null;
+        $names = [];
+        if ($sectionId && $first->academic_term_id && $first->exam_type_id) {
+            $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+                schoolId: $schoolId,
+                sectionId: $sectionId,
+                academicTermId: (int) $first->academic_term_id,
+                examTypeId: (int) $first->exam_type_id,
+                studentId: (int) $student->id,
+            ));
+            $row = $sheet->student((int) $student->id);
+            foreach ($sheet->subjects as $subject) {
+                $names[(int) $subject['id']] = $subject['name'];
+            }
+        }
+
+        $avg = null;
+        $rank = null;
+        $totalStudents = null;
+        if ($row !== null && $row->subjectsCounted > 0) {
+            $cells = array_values(array_filter(
+                $row->cells,
+                fn (ResultCell $cell) => $cell->status === ResultCell::MARKED && $cell->mark !== null
+            ));
+            usort($cells, fn (ResultCell $left, ResultCell $right) => $right->mark <=> $left->mark);
+            $grades = app(DisplayedGrade::class);
+            foreach (array_slice($cells, 0, 10) as $cell) {
+                $score = fmod($cell->mark, 1.0) === 0.0 ? (string) (int) $cell->mark : (string) $cell->mark;
+                $grade = $grades->subject($schoolId, $row->standardId, $cell->mark, $stored[$cell->subjectId] ?? null);
+                $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": {$score}/100 ({$grade})\n";
+            }
+            $avg = $row->average;
+            if ($withRank) {
+                $rank = $row->classPosition;
+                $totalStudents = $row->classOutOf;
+            }
+        } else {
+            foreach ($fallback->sortByDesc('marks')->take(10) as $mark) {
+                $subject = $mark->subject?->name ?? 'Subject';
+                $score = $mark->marks ?? 0;
+                $grade = $mark->grade ?? '-';
+                $lines .= "• {$subject}: {$score}/100 ({$grade})\n";
+            }
+            $avg = $fallback->avg('marks');
+        }
+
+        if ($avg) {
+            $avgRounded = round($avg, 1);
+            $celebration = '';
+            if ($withRank && $avg >= 80) {
+                $celebration = "🎉 *Well done, {$studentName}!* ";
+                $celebration .= "{$avgRounded}% average is a strong performance";
+                if ($rank && $totalStudents) {
+                    $celebration .= " — ranked {$rank}".match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'}." out of {$totalStudents}";
+                }
+                $celebration .= ".\n";
+            }
+            if ($withRank) {
+                $lines .= "· · · · · · · · · · · · · · · ·\n";
+            }
+            $lines .= "_Average: {$avgRounded}%_";
+            if ($withRank && $rank && $totalStudents) {
+                $lines .= " | #{$rank} of {$totalStudents}";
+            }
+            $lines .= "\n";
+            if ($celebration !== '') {
+                $lines .= $celebration;
+            }
+        }
+        $lines .= "\n";
+
+        return $lines;
     }
 
     /**
