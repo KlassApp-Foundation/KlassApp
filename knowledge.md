@@ -676,7 +676,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 20, 2026 — **generic password-reset error OPEN**
+## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
 
 - The set-password form now uses one message for an unknown email, a bad, expired, or used token, and a throttled attempt: "This link is invalid or has expired. Request a new one." A valid reset still signs the user in and changes the password.
 - Reset-code entry and resend use the same response whether or not the email is on file. A valid code still opens the set-password form.
@@ -688,7 +688,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Work:** one failure message on `POST /password/reset/change`. Reset-code verify and resend no longer name a missing account.
 - **Files:** `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `lang/en/passwords.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`.
 - **Tests:** the new cases fail on `main` (distinct messages) and pass with this change. Related auth suites: 40 tests, 331 assertions, OK. Full guard: 2820 tests, 0 failures, 0 errors, 4 skipped.
-- **Status:** OPEN. Do not merge from this session. PR link added when the pull request is open.
+- **Status:** OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166) (`cursor/generic-password-reset-error-821d`). Do not merge from this session.
 
 ## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
