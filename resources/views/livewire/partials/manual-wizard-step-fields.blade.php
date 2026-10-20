@@ -261,8 +261,34 @@
         </div>
         <div wire:loading wire:target="teacherUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
 
-        @if(count($teacherDrafts ?? []) > 0)
+        @if($teacherUploadReport !== '')
+            <p class="manual-wizard-bulk-help" data-testid="wizard-teacher-upload-report">{{ $teacherUploadReport }}</p>
+            @if(count($teacherUploadSkips ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-skips">
+                    @foreach($teacherUploadSkips as $skip)
+                        <li class="manual-wizard-bulk-item" data-testid="wizard-teacher-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            @if(count($teacherUploadNotes ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-notes">
+                    @foreach($teacherUploadNotes as $note)
+                        <li class="manual-wizard-bulk-item">Row {{ $note['row'] }}: {{ $note['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        @endif
+
+        @if(count($this->savedTeacherRows()) > 0 || count($teacherDrafts ?? []) > 0)
             <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-list">
+                @foreach($this->savedTeacherRows() as $row)
+                    <li class="manual-wizard-bulk-item" wire:key="teacher-saved-{{ $row['email'] }}" data-testid="wizard-teacher-saved">
+                        <span class="manual-wizard-bulk-item-main">
+                            <strong>{{ $row['name'] }}</strong>
+                            <span class="manual-wizard-bulk-meta">{{ $row['email'] }}@if($row['phone'] !== '') · {{ $row['phone'] }}@endif</span>
+                        </span>
+                    </li>
+                @endforeach
                 @foreach($teacherDrafts as $i => $row)
                     <li class="manual-wizard-bulk-item" wire:key="teacher-draft-{{ $i }}">
                         <span class="manual-wizard-bulk-item-main">

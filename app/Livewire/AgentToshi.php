@@ -2850,7 +2850,10 @@ class AgentToshi extends Component
      */
     private function extractNamesFromFile(string $path, string $ext): array
     {
-        return $this->nameListExtractor()->extractNamesFromFile($path, $ext);
+        return array_values(array_filter(
+            $this->nameListExtractor()->extractNamesFromFile($path, $ext),
+            fn (array $row): bool => trim((string) ($row['name'] ?? '')) !== ''
+        ));
     }
 
     /**

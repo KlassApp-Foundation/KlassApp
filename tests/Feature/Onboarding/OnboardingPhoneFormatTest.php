@@ -291,14 +291,18 @@ class OnboardingPhoneFormatTest extends TestCase
 
         $mixed = UploadedFile::fake()->createWithContent(
             'teachers-mixed.csv',
-            "Name,Email,Phone\nBen Teacher,ben-upload@phone-format.sch.ug,+256 765 274 289\nCara Teacher,cara-upload@phone-format.sch.ug,12345\n",
+            "Name,Email,Phone\nBen Teacher,ben-upload@phone-format.sch.ug,+256 765 111 222\nCara Teacher,cara-upload@phone-format.sch.ug,12345\n",
         );
         $wizard->set('teacherUpload', $mixed)
-            ->assertCount('teacherDrafts', 3)
-            ->assertSet('errorMessage', 'Could not read the phone for Cara Teacher. The row was kept without that phone. Enter the number with the country code, e.g. +256 765 274 289.');
-        $this->assertSame('+256765274289', $wizard->get('teacherDrafts')[1]['phone']);
-        $this->assertSame('Cara Teacher', $wizard->get('teacherDrafts')[2]['name']);
-        $this->assertSame('', $wizard->get('teacherDrafts')[2]['phone']);
+            ->assertCount('teacherDrafts', 2)
+            ->assertSet('teacherUploadReport', '0 teachers added, 1 skipped')
+            ->assertSet('teacherUploadSkips.0.row', 3)
+            ->assertSet('teacherUploadSkips.0.reason', 'invalid phone');
+        $this->assertSame('Ben Teacher', $wizard->get('teacherDrafts')[1]['name']);
+        $this->assertSame('+256765111222', $wizard->get('teacherDrafts')[1]['phone']);
+        $this->assertFalse(
+            collect($wizard->get('teacherDrafts'))->contains(fn ($draft) => ($draft['name'] ?? '') === 'Cara Teacher')
+        );
 
         $students = UploadedFile::fake()->createWithContent(
             'students.csv',
