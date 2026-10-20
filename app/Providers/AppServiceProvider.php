@@ -242,6 +242,10 @@ class AppServiceProvider extends ServiceProvider {
     public function register() {
         // Named Mcp::client() resolutions always return auditing clients (closes raw callTool bypass).
         $this->app->singleton(ClientManager::class, fn (): ClientManager => new AuditingMcpClientManager);
+        $this->app->bind(
+            \App\Services\Google\Sheets\ClassMarkSheetReader::class,
+            \App\Services\Google\Sheets\ExamMarkSheetReader::class,
+        );
         $this->app->singleton(ReleaseGate::class, EloquentReleaseGate::class);
         $this->app->singleton(GradingScale::class, SchoolGradingScale::class);
         $this->app->singleton(DivisionRule::class, ThresholdDivisionRule::class);

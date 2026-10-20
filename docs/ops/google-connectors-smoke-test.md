@@ -6,7 +6,7 @@ KlassApp sign-in and these connectors share one OAuth client and use two redirec
 
 There is one connection per user, not per school. The token is encrypted, and only that user can see it or use it. A school admin chooses which connectors the school allows. That screen shows an anonymous count and does not show anyone's Google account, email, or token. There is no domain-wide delegation and no school service account.
 
-This file is on the foundation pull request, [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) (`cursor/google-connectors-foundation-b53f`). The consent catalog on this branch already lists Sheets, Drive, and Classroom. Their actions are later pull requests: [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) Calendar. Gmail, Docs, Slides, and Tasks are not connectors.
+This file is on the Sheets pull request, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) (`cursor/google-connectors-sheets-b53f`), stacked on the foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139). Drive, Classroom, and Calendar actions are later pull requests: [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137), [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140), [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Gmail, Docs, Slides, and Tasks are not connectors.
 
 ## 1. Google Cloud project
 
@@ -25,12 +25,12 @@ This file is on the foundation pull request, [#1139](https://github.com/KlassApp
 
 ## 2. APIs to enable
 
-Enable an API on this project before you call it. This branch's smoke command only calls the OAuth userinfo endpoint, which does not need a separate API.
+Enable an API on this project before you call it.
 
 | Connector | Pull request | API | Called on this branch |
 | --- | --- | --- | --- |
 | Account check | #1139 | none (userinfo) | yes |
-| Sheets | #1138 | Google Sheets API | no |
+| Sheets | #1138 | Google Sheets API | yes |
 | Drive | #1137 | Google Drive API | no |
 | Classroom | #1140 | Google Classroom API | no |
 | Calendar | #1149 | Google Calendar API | no |
@@ -86,11 +86,13 @@ The last four exist in `config/services.php` and no connector calls them.
 
 ```
 php artisan google:smoke account --user=USER_ID
+php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID
+php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID --spreadsheet=SPREADSHEET_ID
 ```
 
-`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection.
+`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template, as that user, and only if that user may already import marks for the exam. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. The routes are `POST /admin/settings/google/sheets/export` and `POST /admin/settings/google/sheets/import`.
 
-The command's argument also accepts `sheets`, `drive`, `classroom`, `calendar`, `gmail`, `docs`, `slides`, and `tasks`. On this branch only `account` calls Google. `sheets`, `drive`, and `classroom` are in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
+`drive` and `classroom` are in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
 
 A token is refreshed only when that user triggers an action. Nothing on a schedule walks every connection. A Testing-mode refresh token that has already passed seven days cannot be refreshed; that user has to connect again.
 
@@ -98,4 +100,4 @@ Disconnecting the last tool revokes the Google token and deletes the local row. 
 
 ## 6. What the automated tests prove without a Cloud project
 
-`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature test is `tests/Feature/Google/GoogleConnectorFoundationTest.php`. It connects, reads userinfo from the fake server, and disconnects. It also covers an expired token (refresh on that user's request), revoked access (`invalid_grant`), an API error, a mismatched OAuth state, a missing client, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`. It does not prove Google's consent screen, Google's scope verification, or a real API.
+`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests are `tests/Feature/Google/GoogleConnectorFoundationTest.php` and `tests/Feature/Google/GoogleSheetsConnectorTest.php`. They connect one user, create a spreadsheet on the fake server, read it back, save marks only through the marks import validation, and disconnect. They also cover an expired token, revoked access (`invalid_grant`), an API error, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`. They do not prove Google's consent screen, Google's scope verification, or a real Sheets API.

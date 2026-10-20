@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Academics\Exam;
 use App\Models\User;
+use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
 use App\Services\Google\GoogleConnectionService;
@@ -16,8 +18,10 @@ use Illuminate\Console\Command;
 class GoogleConnectorSmokeCommand extends Command
 {
     protected $signature = 'google:smoke
-        {connector : account, or a connector key from config/google.php}
-        {--user= : User id. The command acts only as this user}';
+        {connector : account, sheets, or a connector key from config/google.php}
+        {--user= : User id. The command acts only as this user}
+        {--exam= : Exam id (sheets)}
+        {--spreadsheet= : Spreadsheet id (sheets import)}';
 
     protected $description = 'Run one Google connector action as the named user';
 
@@ -43,6 +47,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'account') {
             return $this->account($user, $client, $connections);
+        }
+
+        if ($connector === 'sheets') {
+            return $this->sheets($user);
         }
 
         if (! $catalog->has($connector)) {
@@ -90,6 +98,44 @@ class GoogleConnectorSmokeCommand extends Command
 
         $this->info('Connected Google account: '.($profile['email'] ?? '(no email)'));
         $this->line('The access token was not printed.');
+
+        return self::SUCCESS;
+    }
+
+    private function sheets(User $user): int
+    {
+        $examId = (int) $this->option('exam');
+        $exam = Exam::query()->where('school_id', $user->school_id)->whereKey($examId)->first();
+
+        if ($exam === null) {
+            $this->error('Pass --exam= for an exam in this user\'s school.');
+
+            return self::FAILURE;
+        }
+
+        $sheets = app(GoogleSheetsService::class);
+
+        try {
+            $spreadsheet = (string) $this->option('spreadsheet');
+            if ($spreadsheet !== '') {
+                $outcome = $sheets->import($user, $exam, $spreadsheet, false);
+                $this->info($outcome['committed'] ? 'Import committed.' : 'Import refused: '.implode(' ', $outcome['plan']->blockers));
+
+                return $outcome['committed'] ? self::SUCCESS : self::FAILURE;
+            }
+            $created = $sheets->export($user, $exam);
+        } catch (GoogleApiException $e) {
+            $this->error('Sheets call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot use that exam.');
+
+            return self::FAILURE;
+        }
+
+        $this->info('Spreadsheet: '.$created['spreadsheetId']);
+        $this->line($created['spreadsheetUrl']);
 
         return self::SUCCESS;
     }

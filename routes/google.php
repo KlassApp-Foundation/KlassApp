@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Setting\GoogleConnectController;
+use App\Http\Controllers\Admin\Setting\GoogleSheetsController;
 use App\Http\Controllers\Google\GoogleMineController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,4 +16,6 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/admin/settings/google/connect/{connector}', [GoogleConnectController::class, 'connect'])->name('admin.google.connect');
     Route::get('/admin/settings/google/callback', [GoogleConnectController::class, 'callback'])->name('admin.google.callback');
     Route::post('/admin/settings/google/{connector}/disconnect', [GoogleConnectController::class, 'disconnect'])->name('admin.google.disconnect');
+    Route::post('/admin/settings/google/sheets/export', [GoogleSheetsController::class, 'export'])->name('admin.google.sheets.export');
+    Route::post('/admin/settings/google/sheets/import', [GoogleSheetsController::class, 'import'])->name('admin.google.sheets.import');
 });
