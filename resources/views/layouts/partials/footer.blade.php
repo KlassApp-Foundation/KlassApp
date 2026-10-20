@@ -14,7 +14,7 @@
              <li class="font-semibold"><a href="{{url('/faq')}}" class="hover:text-blue-700">{!! __('faq.faq') !!}</a></li>
               <li class="font-semibold"><a href="{{url('/swotanalysis')}}" class="hover:text-blue-700">{!! __('faq.swotanalysis') !!}</a></li>
              <!-- <li class="font-semibold"><a href="{{url('/')}}" class="hover:text-blue-700">{!! __('faq.contact') !!}</a></li> -->
-             <li class="font-semibold"><a href="{{url('/privacypolicy')}}" class="hover:text-blue-700">{!! __('faq.privacypolicy') !!}</a></li>
+             <li class="font-semibold"><a href="{{url('/privacy')}}" class="hover:text-blue-700">{!! __('faq.privacypolicy') !!}</a></li>
 
          </ul>
      </div>
@@ -77,7 +77,7 @@
              <li class="font-semibold py-1"><a href="{{url('/faq')}}" class="text-white">{!! __('faq.faq') !!}</a></li>
               <li class="font-semibold py-1"><a href="{{url('/swotanalysis')}}" class="text-white">{!! __('faq.swotanalysis') !!}</a></li>
              <!-- <li class="font-semibold"><a href="{{url('/')}}" class="text-white">{!! __('faq.contact') !!}</a></li> -->
-             <li class="font-semibold py-1"><a href="{{url('/privacypolicy')}}" class="text-white">{!! __('faq.privacypolicy') !!}</a></li>
+             <li class="font-semibold py-1"><a href="{{url('/privacy')}}" class="text-white">{!! __('faq.privacypolicy') !!}</a></li>
                </ul>
                 </div>
                 </div>

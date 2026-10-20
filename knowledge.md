@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **public /privacy and /terms OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165)**
+
+- Canonical guest pages `/privacy` and `/terms` serve the existing policy and terms views. 301s: `/ploicy`, `/policy`, `/privacy-policy` → `/privacy`; `/terms-of-service` → `/terms`, query string kept. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Public privacy and terms URLs (PR #1165 OPEN)
+
+- **Work:** Google's OAuth consent screen links `/privacy` and `/terms`, which 404. Those paths are now the public pages (no login, no school). Older paths 301 to them. Footers and register links updated. Maintenance mode leaves these paths up.
+- **Files:** `routes/web.php`, `routes/static.php` (still not loaded), `CheckForMaintenanceMode`, landing and register views, footer partials, `TermsOfServiceTest`, `LandingPreviewV3Test`, `LogoGoesHomeTest`.
+- **Decision:** the legal copy stays as it is. A wording rewrite is a later PR.
+- **Tests:** guest 200 and alias 301s pass. Full PHPUnit: 2816 tests, 0 failures, 0 errors, 4 skipped. Guard compare OK, no stale known-failures. Local guest server confirmed the 301s, including the query string.
+- **Status:** OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165) (`cursor/public-privacy-terms-urls-63da`). Do not merge from this session.
+
+## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
+
 ## Current Status: October 20, 2026 — **wizard subjects step OPEN [#1163](https://github.com/KlassApp-Foundation/KlassApp/pull/1163)**
 
 - Manual wizard subjects step attached new subjects with the untouched classes-field default `P1`. Category seeding and a classes-step save store the section name (`Primary One`, or `P1` when that was the name typed). `saveSubjects` matched that string exactly, so `P1` did not resolve to `Primary One` and Next failed with "Class 'P1' does not exist." Toshi's commit uses the same lookup, so a class stored as `Primary One` failed for the typed name `Primary 1`.

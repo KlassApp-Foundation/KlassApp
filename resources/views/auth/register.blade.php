@@ -262,7 +262,7 @@
         <div class="klass-field klass-checkbox-row">
           <input id="termsandcondn" type="checkbox" class="klass-checkbox" name="termsandcondn" value="1" @if(old('termsandcondn')==1) checked @endif required>
           <label for="termsandcondn" class="klass-checkbox-label">
-            I agree to <a href="{{ url('/terms-of-service') }}" target="_blank">Terms and Conditions</a>
+            I agree to <a href="{{ url('/terms') }}" target="_blank">Terms and Conditions</a>
           </label>
         </div>
         @if ($errors->has('termsandcondn'))
