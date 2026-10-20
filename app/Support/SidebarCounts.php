@@ -54,7 +54,7 @@ class SidebarCounts
 
         // WhatsApp link requests waiting for a decision (all three sources:
         // KlassApp number, form, demo BIND) — the same count the dashboard
-        // card and the footer bell use.
+        // stat and the footer bell use.
         $whatsapp = 0;
         if (Schema::hasTable('parent_link_requests')) {
             try {
