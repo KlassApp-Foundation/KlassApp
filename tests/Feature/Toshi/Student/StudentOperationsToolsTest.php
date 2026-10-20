@@ -554,13 +554,22 @@ class StudentOperationsToolsTest extends TestCase
 
     public function test_view_marks_and_attendance_self_scoped(): void
     {
+        $link = StandardLink::findOrFail($this->standardLinkId);
+        $examId = \Tests\Support\ReleasedExam::schoolExam(
+            $this->schoolId,
+            $this->academicYearId,
+            (int) $link->standard_id,
+            (int) $link->section_id,
+            $this->subjectId,
+            $this->teacher->id,
+        );
         Marks::create([
             'student_id' => $this->studentB->id,
             'school_id' => $this->schoolId,
             'teacher_id' => $this->teacher->id,
             'subject_id' => $this->subjectId,
-            'section_id' => 1,
-            'exam_id' => 1,
+            'section_id' => $link->section_id,
+            'exam_id' => $examId,
             'marks' => 99,
             'grade' => 'A',
         ]);
@@ -569,8 +578,8 @@ class StudentOperationsToolsTest extends TestCase
             'school_id' => $this->schoolId,
             'teacher_id' => $this->teacher->id,
             'subject_id' => $this->subjectId,
-            'section_id' => 1,
-            'exam_id' => 1,
+            'section_id' => $link->section_id,
+            'exam_id' => $examId,
             'marks' => 70,
             'grade' => 'B',
         ]);

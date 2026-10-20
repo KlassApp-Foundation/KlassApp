@@ -3,6 +3,7 @@
 namespace App\Services\ConnectedTools;
 
 use App\Contracts\ConnectedTools\ConnectedTool;
+use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\WhatsApp\LinkRequestBoard;
 use DateTimeInterface;
@@ -28,7 +29,30 @@ class WhatsAppConnectedTool implements ConnectedTool
         return 'whatsapp';
     }
 
-    public function stateForSchool(int $schoolId): array
+    public function stateFor(User $user): array
+    {
+        $schoolId = (int) $user->school_id;
+
+        if ($schoolId < 1) {
+            return [
+                'status' => ConnectedToolsRegistry::NOT_CONNECTED,
+                'attention' => null,
+                'note' => null,
+                'account_email' => null,
+                'last_synced_at' => null,
+                'action' => null,
+                'action_url' => null,
+                'action_method' => 'GET',
+            ];
+        }
+
+        return $this->stateForSchool($schoolId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function stateForSchool(int $schoolId): array
     {
         $settings = url('/admin/whatsapp/dashboard');
 
@@ -36,6 +60,8 @@ class WhatsAppConnectedTool implements ConnectedTool
             return [
                 'status' => ConnectedToolsRegistry::CONNECTED,
                 'attention' => null,
+                'note' => null,
+                'account_email' => null,
                 'last_synced_at' => $this->latestActivity($schoolId),
                 'action' => ConnectedToolsRegistry::ACTION_SETTINGS,
                 'action_url' => $settings,
@@ -47,6 +73,8 @@ class WhatsAppConnectedTool implements ConnectedTool
             return [
                 'status' => ConnectedToolsRegistry::NEEDS_ATTENTION,
                 'attention' => 'A parent link is unfinished, or a parent has stopped WhatsApp messages.',
+                'note' => null,
+                'account_email' => null,
                 'last_synced_at' => null,
                 'action' => ConnectedToolsRegistry::ACTION_SETTINGS,
                 'action_url' => $settings,
@@ -57,6 +85,8 @@ class WhatsAppConnectedTool implements ConnectedTool
         return [
             'status' => ConnectedToolsRegistry::NOT_CONNECTED,
             'attention' => null,
+            'note' => null,
+            'account_email' => null,
             'last_synced_at' => null,
             'action' => ConnectedToolsRegistry::ACTION_SETTINGS,
             'action_url' => $settings,

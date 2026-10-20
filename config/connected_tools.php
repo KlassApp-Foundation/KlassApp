@@ -4,7 +4,7 @@
  * School admin → Connected tools.
  *
  * Every product the page lists lives here, in display order. A card stays
- * "Coming soon" until something can actually report that school's status:
+ * "Coming soon" until something can report this person's status:
  *
  * 1. A later pull request calls ConnectedToolsRegistry::register() with a
  *    ConnectedTool whose key() matches one of these keys. That provider
@@ -12,7 +12,7 @@
  * 2. Or `provider` names a ConnectedTool class that exists on this branch.
  * 3. Or the key is already in config/google.php connectors. Sheets, Drive,
  *    and Classroom are, so their connect and disconnect routes are real and
- *    the card reads school_google_connections. Calendar, Gmail, Docs, Slides,
+ *    the card reads that user's own Google connection. Calendar, Gmail, Docs, Slides,
  *    and Tasks are not in that catalog on this branch, so they stay Coming soon.
  */
 return [
@@ -43,7 +43,7 @@ return [
         ],
         'calendar' => [
             'label' => 'Google Calendar',
-            'summary' => 'Publish term dates and school events on a school calendar.',
+            'summary' => 'Publish term dates and school events on a calendar this app creates in your Google account.',
             'icon' => 'images/brand/connectors/google-calendar.png',
             'provider' => null,
         ],

@@ -149,6 +149,14 @@
                                     ]
                                 },
                                 {
+                                    "label": "Mark submissions",
+                                    "url": "admin/marks/submissions",
+                                    "paths": [
+                                        "admin/marks/submissions*"
+                                    ],
+                                    "count": "mark_submissions"
+                                },
+                                {
                                     "label": "Grading",
                                     "url": "admin/grades",
                                     "paths": [
@@ -211,12 +219,11 @@
                             "count": "whatsapp"
                         },
                         {
-                            "label": "Connected tools",
-                            "url": "admin/connected-tools",
+                            "label": "My connected tools",
+                            "url": "settings/connected-tools",
                             "paths": [
-                                "admin/connected-tools*"
-                            ],
-                            "condition": "school_admin"
+                                "settings/connected-tools*"
+                            ]
                         },
                         {
                             "label": "Approvals",
@@ -434,6 +441,13 @@
                     "active": [
                         "events"
                     ]
+                },
+                {
+                    "label": "Connected tools",
+                    "url": "settings/connected-tools",
+                    "paths": [
+                        "settings/connected-tools*"
+                    ]
                 }
             ]
         },
@@ -526,6 +540,13 @@
                     "active": [
                         "activity"
                     ]
+                },
+                {
+                    "label": "Connected tools",
+                    "url": "settings/connected-tools",
+                    "paths": [
+                        "settings/connected-tools*"
+                    ]
                 }
             ]
         },
@@ -570,6 +591,13 @@
                     "child_path": "attendance",
                     "paths": [
                         "parent/*/attendance"
+                    ]
+                },
+                {
+                    "label": "Connected tools",
+                    "url": "settings/connected-tools",
+                    "paths": [
+                        "settings/connected-tools*"
                     ]
                 }
             ]

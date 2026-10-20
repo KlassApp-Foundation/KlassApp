@@ -2,7 +2,7 @@
 
 namespace App\Services\Google;
 
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -16,7 +16,7 @@ class GoogleApiClient
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>
      */
-    public function get(SchoolGoogleConnection $connection, string $url, array $query = []): array
+    public function get(UserGoogleConnection $connection, string $url, array $query = []): array
     {
         return $this->request($connection, 'GET', $url, ['query' => $query]);
     }
@@ -26,7 +26,7 @@ class GoogleApiClient
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>
      */
-    public function postJson(SchoolGoogleConnection $connection, string $url, array $body = [], array $query = []): array
+    public function postJson(UserGoogleConnection $connection, string $url, array $body = [], array $query = []): array
     {
         return $this->request($connection, 'POST', $url, ['json' => $body, 'query' => $query]);
     }
@@ -36,7 +36,7 @@ class GoogleApiClient
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>
      */
-    public function putJson(SchoolGoogleConnection $connection, string $url, array $body = [], array $query = []): array
+    public function putJson(UserGoogleConnection $connection, string $url, array $body = [], array $query = []): array
     {
         return $this->request($connection, 'PUT', $url, ['json' => $body, 'query' => $query]);
     }
@@ -48,7 +48,7 @@ class GoogleApiClient
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>
      */
-    public function postMultipart(SchoolGoogleConnection $connection, string $url, array $parts, array $query = []): array
+    public function postMultipart(UserGoogleConnection $connection, string $url, array $parts, array $query = []): array
     {
         return $this->request($connection, 'POST', $url, ['multipart' => $parts, 'query' => $query]);
     }
@@ -57,7 +57,7 @@ class GoogleApiClient
      * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
-    public function request(SchoolGoogleConnection $connection, string $method, string $url, array $options = []): array
+    public function request(UserGoogleConnection $connection, string $method, string $url, array $options = []): array
     {
         $connection = $this->oauth->validConnection($connection);
         $response = $this->dispatch($connection, $method, $url, $options);
@@ -94,7 +94,7 @@ class GoogleApiClient
     /**
      * @param  array<string, mixed>  $options
      */
-    private function dispatch(SchoolGoogleConnection $connection, string $method, string $url, array $options): Response
+    private function dispatch(UserGoogleConnection $connection, string $method, string $url, array $options): Response
     {
         $pending = Http::withToken((string) $connection->accessToken())
             ->acceptJson()

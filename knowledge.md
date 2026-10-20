@@ -676,18 +676,57 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 20, 2026 — **Connected tools page OPEN (stacked on #1139, not merged)**
+## Current Status: October 20, 2026 — **My connected tools OPEN (stacked on #1139, not merged)**
 
-- Branch `cursor/connected-tools-page-c492` from the Google connection foundation. Draft PR, base `cursor/google-connectors-foundation-b53f` (#1139). Retarget to `main` after #1139 merges. Not merged. No deploy, no production access, no environment changes.
-- School admins get a Connected tools page and a sidebar row under School. Status is read from that school's rows only. Sheets, Drive, and Classroom are in the foundation catalog, so they show Not connected with the real connect route. Calendar, Gmail, Docs, Slides, and Tasks stay Coming soon until a later PR registers a provider. WhatsApp is Connected only when a parent of that school has a verified, opted-in number.
-- Guarded suite on this branch: 2728 tests, 0 failures, 0 errors, 4 skipped. `scripts/check-conflict-markers.sh` and `scripts/check-root-clutter.sh` passed. Screenshots are under `docs/design/connected-tools/`.
+- Branch `cursor/connected-tools-page-c492`, draft, base `cursor/google-connectors-foundation-b53f` (#1139). Not merged. No deploy, no production access, no environment changes.
+- Each school member opens My connected tools and sees only their own Google status. A school admin also sees which connectors the school allows, with an anonymous count and no names, emails, or tokens. Sheets, Drive, and Classroom can be connected only after the school allows them. Calendar, Gmail, Docs, Slides, and Tasks stay Coming soon on this branch. WhatsApp stays the school's linked parent numbers. Slack stays the school's MCP workspace.
+- Screenshots are under `docs/design/connected-tools/`.
 
-## Session: 2026-10-20 — Connected tools page
+## Session: 2026-10-20 — My connected tools
 
-- **Work:** registry (`ConnectedToolsRegistry` plus WhatsApp, Slack, and Google OAuth providers), admin page, sidebar row, dashboard link, `last_error` / `attention_scopes` on `school_google_connections`, local brand icons, feature tests, desktop 1280 and mobile 375 screenshots.
-- **Files:** `app/Services/ConnectedTools/*`, `app/Contracts/ConnectedTools/ConnectedTool.php`, `app/Http/Controllers/Admin/ConnectedToolsController.php`, `config/connected_tools.php`, `config/navigation.php`, `resources/views/admin/connected-tools/index.blade.php`, `resources/views/admin/dashboard/dashboard_v2.blade.php`, `routes/setting.php`, `tests/Feature/Admin/ConnectedToolsPageTest.php`, `public/images/brand/connectors/`, `docs/design/connected-tools/`.
-- **Decision:** WhatsApp Connected follows `LinkRequestBoard::linkedNumberCount` (verified, opted-in parent of this school). An admin's own number does not count. Needs attention is an unfinished or opted-out parent link with no reachable parent number.
-- **Status:** PR opening. Not merged.
+- **Work:** the Connected tools page now reads the signed-in user's Google row. School admins toggle the allow list on that page. WhatsApp and Slack stay school-scoped because they are not a person's Google token.
+- **Files:** `app/Services/ConnectedTools/*`, `app/Contracts/ConnectedTools/ConnectedTool.php`, `ConnectedToolsController`, `config/connected_tools.php`, `config/navigation.php`, `resources/views/admin/connected-tools/index.blade.php`, `routes/google.php`, `tests/Feature/Admin/ConnectedToolsPageTest.php`, `docs/design/connected-tools/`.
+- **Decision:** WhatsApp Connected still follows `LinkRequestBoard::linkedNumberCount` (verified, opted-in parent of this school). An admin's own number does not count. Slack still reads `school_mcp_connectors` for type slack.
+- **Status:** Draft. Not merged.
+
+## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
+
+- Stacked on [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122) (`cursor/release-gate-parent-student-marks-7d0b`). Base is that branch, not `main`, because the parent report path has to call `ReleaseGate`. Not merged. Production untouched.
+- Term is the requested id, or the school term with `status = current`. Never the newest created exam. Parent WhatsApp walks released terms, so a newer unreleased exam does not hide an older released term. A requested unreleased term is withheld. End-of-term aggregate and division count every contributing subject.
+- Grading points, division bands, and templates are `GradingScale`, `DivisionRule`, and `ReportTemplates`. The default division binding is the existing 12/24/28/32/U table, not a new country scale. No migration.
+
+## Session: 2026-10-19 — Report card term, release, and full aggregate (PR #1124 OPEN)
+
+- **Work:** explicit term on staff report cards and the class batch job; parent report selection through `ReleaseGate`; end-of-term sheet, aggregate, division, and stream rank from every contributing subject in that term.
+- **Files:** `StudentReportCardService`, admin report-card controller and cards view, both report templates, `GenerateClassReportsJob`, `WhatsAppReportCardDeliveryService`, `AppServiceProvider`, `app/Contracts/Results/{GradingScale,DivisionRule,ReportTemplates}.php`, `app/Services/Results/{SchoolGradingScale,ThresholdDivisionRule,DefaultReportTemplates}.php`, `tests/Feature/Reports/ReportCardTermReleaseAggregateTest.php`.
+- **Decision:** no migration and no backfill. Stacked on #1122 rather than copying the gate onto a `main` branch. `ResultsService` and deletion of dead ungated paths stay later PRs.
+- **Tests:** on `223075d0`, (a) `resolveExam` returned the later-created exam and the batch job threw `No students with marks`; (b) `prepareForStudent` was `ok: false` while an older term was released; (c) aggregate was 9 not 18. With the fix, marks-related PHPUnit: 191 passed (1067 assertions). No browser or staging pass.
+- **Status:** OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124). Do not merge from this session.
+
+## Current Status: October 19, 2026 — **parent/student ReleaseGate OPEN [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122)**
+
+- Branch `cursor/release-gate-parent-student-marks-7d0b` from `main` (`a958dfc4`). Not stacked on [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121). Not merged. Production untouched.
+- One `App\Contracts\Results\ReleaseGate` (`EloquentReleaseGate`) is the only release check for marks shown to a parent, student, or alumni: portal grades, dashboard panel, `/student/marks`, WhatsApp GRADES/MARKS/REPORT, the unrouted grades and report methods, Toshi parent/student tools, alumni marks/dashboard/PDF. Staff report cards stay ungated. `resolveExam` is unchanged.
+- No migration and no past-term backfill. A released class sitting stays visible for any of the person's enrollments, including a past class. A backfill that marked every old sitting released would publish marks that were never released.
+- L6 stays on #1121. Report-card term selection, single-subject aggregate, and division are the next PR.
+- A class release is skipped unless its sitting's section is the class being asked for, so a student who moved classes does not see the new class's unreleased exam.
+
+## Session: 2026-10-19 — ReleaseGate for parent and student marks (PR #1122 OPEN)
+
+- **Work:** wired every parent/student/alumni marks read through `ReleaseGate`. Demo `LatestExamMarks::latestReleasedExam` delegates to it and still prefers the newest release.
+- **Files:** `app/Contracts/Results/ReleaseGate.php`, `app/Contracts/Results/ReleasedSitting.php`, `app/Services/Results/EloquentReleaseGate.php`, parent portal, student records, alumni controller, Toshi student/alumni actions, WhatsApp controller, WhatsApp report delivery, `AppServiceProvider`, demo `LatestExamMarks`, `tests/Feature/Results/ReleaseGateParentStudentPathsTest.php`, `tests/Support/ReleasedExam.php`, plus release rows in existing parent/student fixtures that expect marks to be visible.
+- **Decision:** no backfill command. Covered by `test_past_enrollment_class_release_stays_visible_without_a_backfill`.
+- **Tests:** each L-path test failed on `main` because the unreleased mark was shown (L4's keyword threw on a collection `standard` lookup until that lookup used `studentAcademicLatest`; the leak assertion then failed on `GATEMARK`). With the gate, the path file is green. Marks-related PHPUnit: 187 passed (1051 assertions). No browser or staging pass.
+- **Status:** OPEN [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122). Do not merge from this session.
+
+## Current Status: October 19, 2026 — **L6 teacher mark save no longer messages parents — OPEN [#1121](https://github.com/KlassApp-Foundation/KlassApp/pull/1121)**
+
+- Branch `cursor/l6-teacher-save-no-parent-notify-7d0b`. Not merged. Production untouched.
+- Audit item L6 from the marks-flow proposal ([#1118](https://github.com/KlassApp-Foundation/KlassApp/pull/1118)). `Teacher\MarksController::saveExamMarks` called `OutboundWhatsAppService::notifyComprehensiveGrades` ("Results Published") when a student had a mark in every counted subject. That call and the method are removed. Parents are messaged from a release, which `MarksReleaseTest` still covers.
+- Other save paths checked and left alone: single-mark update, spreadsheet import (`MarksUpdated` tells school admins), Toshi `TeacherActionService::enterMarks`, Toshi `ToshiActionService::enterMark`, WhatsApp teacher marks (read-only), no marks observer. `GradesPublished` / `SendGradesToWhatsApp` / `notifyGradesPublished` are still registered and unused by a save; deleting them is plan row 3.
+- The subject count on that path queried `subjects.is_active`. The table column is `status`, so the query threw and the catch swallowed it. The new test adds `is_active` so the old path actually queues a parent message, and that test is red without this change.
+- Production untouched. No migration.
+- Review: Toshi teacher and admin entries now assert a saved mark before the parent-message check. `docs/dev/service-layer.md` no longer documents `notifyComprehensiveGrades`.
 
 ## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
 
@@ -697,16 +736,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
 
-- School Google connection: one row per school, incremental scopes per connector, tokens encrypted, refresh, disconnect revokes and deletes tokens when it is the last connector. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`.
-- Connected tools shows Live only when that school has granted the connector. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
+- Google connection: one row per user (`user_google_connections`), not per school. Tokens are encrypted and only that user can use them. A school allow list (`school_google_connector_allows`) decides which connectors people may turn on, and the admin view shows an anonymous count. Disconnect of the last connector revokes the token at Google and deletes the row. No scheduled job refreshes other people's tokens. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`. No domain-wide delegation and no service account.
+- My connected tools (`/settings/connected-tools`) shows Live only for the signed-in user's own grant. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
 - Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
 
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
 
 - Production deploy of `main` `a958dfc` (#1117) failed on `2026_10_19_000001_create_school_invites_table`: `created_by` was `foreignId()` (`BIGINT UNSIGNED`) and `users.id` is `increments()` (`INT UNSIGNED`). MySQL error 3780, constraint `school_invites_created_by_foreign`. The empty table was left behind with no foreign key, and the migration was not recorded.
 - [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) (`cursor/fix-school-invites-created-by-248c`) makes `created_by` `unsignedInteger`, nullable, `ON DELETE SET NULL`. An empty pre-existing table is dropped and recreated. A table with rows is altered in place and is never dropped. Not merged. No production access and no environment changes in this session.
-- [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job, stacked on #1126. Not merged. Retarget it to `main` after #1126 merges.
+- [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) (`cursor/ci-mysql-84-migrations-248c`) adds a MySQL 8.4 `php artisan migrate` job. Rebased onto `main` `1dc7fbb`. Not merged.
 - Local MySQL 8.4.11: the pre-fix migration reproduces error 3780; the fix passes on a fresh database, on that half-created empty table, on a second `migrate` (nothing to migrate), and when the half-created table already has a row. `down()` drops the table.
+
+## Current Status: October 19, 2026 — **invite follow-ups OPEN [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123)**
+
+- Branch `cursor/invite-followups-1117`. Follow-up to #1117: a failed invite queue shows an error and Retry (`school_invites.email_failed_at`), and claim locks the invite row so two claims cannot both create a school. No `schools.school_invite_id` column, so no extra unique constraint. Full test-guard: 2709 tests, 0 failures, 4 skipped. Not merged. Production untouched.
 
 ## Current Status: October 14, 2026 — **teacher profile lite OPEN [#1074](https://github.com/KlassApp-Foundation/KlassApp/pull/1074)**
 
@@ -2672,15 +2715,46 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
+
+- **Work done**: Merged `origin/main` (`f14c93a3`) into the set-password branch and the high-severity dependency branch with merge commits. No rebase. Neither pull request was merged. No environment or production setting was changed.
+- **Status**: [#1146](https://github.com/KlassApp-Foundation/KlassApp/pull/1146) and [#1148](https://github.com/KlassApp-Foundation/KlassApp/pull/1148) stay draft. Guarded suites after the merge were green. Dependabot's alerts API was still unavailable; `composer audit` and `npm audit` on #1148 match the previous remaining list, with the targeted highs still upgraded.
+- **Edge cases flagged**: Open [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) also edits `composer.lock` and still pins the older Guzzle, CommonMark, PhpSpreadsheet, HttpFoundation, and Yaml versions. Merging it over #1148 would put those older versions back.
+
+### 2026-10-19: reject an out-of-range school_invites.created_by before dropping its foreign key
+
+- **Work done**: In `alignCreatedByWithUsersId()`, the value check (`created_by` > 4294967295) now runs before `dropCreatedByForeignKey()`. Bariyo123's non-blocking note on #1126. No production access.
+- **Files modified**: `database/migrations/2026_10_19_000001_create_school_invites_table.php`, `tests/Feature/Invites/SchoolInviteCreatedByRangeTest.php`, `knowledge.md`.
+- **Status**: [#1143](https://github.com/KlassApp-Foundation/KlassApp/pull/1143) OPEN (`cursor/created-by-range-before-fk-248c`). Not merged.
+- **Evidence**: The new test fails when the check is after the drop and passes when it is before. On MySQL 8.4.11, the old order queries `referential_constraints` (index 4) before the range select (index 5). The new order runs the range select and does not query the foreign key; the row `4294967296` stays on `bigint unsigned`.
+
 ### 2026-10-19: school_invites.created_by must match users.id
 
 - **Work done**: `users.id` in `2020_02_18_000000_create_users_table.php` is `increments()` (`INT UNSIGNED`). No later migration changes that column. `schools.id` is `bigIncrements()` and is not referenced by `school_invites`. The only foreign key in `2026_10_19_000001_create_school_invites_table` was `foreignId('created_by')`, which is `BIGINT UNSIGNED`. MySQL 8.4 rejects that pair. The migration now uses `unsignedInteger('created_by')->nullable()` and `nullOnDelete()` on `users.id`. If `school_invites` already exists and has 0 rows, it is dropped and created again. If it has rows, `created_by` is changed to `INT UNSIGNED` and the foreign key is added. `down()` is still `dropIfExists`.
 - **Files modified**: `database/migrations/2026_10_19_000001_create_school_invites_table.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `knowledge.md`.
 - **Key decisions**: Do not drop a table that has rows. Do not touch production or environment settings. A second PR adds a MySQL 8.4 `php artisan migrate` job so this failure shows up in CI.
-- **Status**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) OPEN. [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) OPEN, stacked on #1126. Neither merged.
+- **Status**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) MERGED `070584f7`. [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) rebased onto `main` `1dc7fbb`.
 - **Edge cases flagged**: The row-preserving alter runs on MySQL only, and it refuses to change the column if `users.id` is not `int unsigned` or if a `created_by` value does not fit `INT UNSIGNED`. SQLite stores both integer widths as `integer`, so the column-type mismatch is proven on MySQL, not by the SQLite suite.
 - **Evidence**: Docker MySQL 8.4.11. Pre-fix `migrate` exit 1, SQLSTATE 3780, table left with `created_by bigint unsigned`, 0 rows, no foreign key, migration not recorded. Fix on that database exit 0: `created_by int unsigned`, FK `school_invites_created_by_foreign` to `users.id`, `DELETE_RULE=SET NULL`, 0 rows, one migrations row. Second `migrate`: "Nothing to migrate", still one row. Fresh database: full `migrate` exit 0, same column and FK. Extra: one existing row (`created_by=1`) kept after the alter, type `int unsigned`, FK added. `migrate:rollback --step=1` drops the table; `migrate` recreates it. PHPUnit: signup files 66 passed (430 assertions); `SchoolInviteTest` 8 passed (47 assertions), including `test_created_by_matches_users_id_and_nulls_on_delete`. A first combined process returned 429 on `SignupEnabledTest` resend because guest `throttle` keys are per IP and the file cache still held earlier invite-claim hits; that test passed after `cache:clear` when the signup files ran on their own.
-- **PR**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) OPEN (`cursor/fix-school-invites-created-by-248c`). [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) OPEN (`cursor/ci-mysql-84-migrations-248c`), stacked on #1126. Neither merged.
+- **PR**: [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126) MERGED `070584f7`. [#1128](https://github.com/KlassApp-Foundation/KlassApp/pull/1128) rebased onto `main` `1dc7fbb`. [#1143](https://github.com/KlassApp-Foundation/KlassApp/pull/1143) OPEN.
+
+### 2026-10-19: invite queue-failure message and locked claim
+
+- **Work done**: Applied the #1117 follow-up patch. Invite email queue failures set `email_failed_at` and the early-access page shows a failure with Retry instead of "Invite sent". Claim runs in a transaction with `lockForUpdate` and a `whereNull('claimed_at')` update. The queue-failure test restores the real mail manager before `Mail::fake()`.
+- **Files modified**: `app/Http/Controllers/Platform/EarlyAccessRequestController.php`, `app/Models/SchoolInvite.php`, `app/Services/SchoolInviteService.php`, `database/migrations/2026_10_19_000002_add_email_failed_at_to_school_invites_table.php`, `resources/views/platform/early-access/index.blade.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `knowledge.md`.
+- **Key decisions**: No unique constraint. `schools` has no invite foreign key. SQLite ignores row locks; the guarded update covers that driver.
+- **Status**: PR open. Not merged. Production and staging not deployed.
+- **Edge cases flagged**: Retry uses resend, so it issues a new token. An email that already has an account rolls the claim back and leaves the invite unclaimed.
+- **PR**: [#1123](https://github.com/KlassApp-Foundation/KlassApp/pull/1123) on `cursor/invite-followups-1117`. Not merged.
+
+### 2026-10-19: VitePress school, role, and developer docs (open, not merged)
+
+- **Work done**: Wrote docs-site pages from routes, menus, and views on `main`. School help covers invite claim, Wizard or Toshi, WhatsApp for parents, link requests, and approvals. Google Drive, Classroom, and Sheets are marked Coming soon. Marks and report-card pages stay short placeholders until the marks-flow proposal is on `main`. Role pages cover platform admin, school admin, head teacher, class teacher, subject teacher, bursar, parent, and student. Developer pages cover architecture, local setup, tests, the single `packages/toshi-ui` package, a summary of proposal #1119, the WhatsApp simulator, connectors, and contributing. Did not add `community/early-adopters.md` (#1120). Did not merge, approve, or deploy.
+- **Files modified**: `docs-site/**` only, split across three branches. The docs home keeps the tagline; the school PR drops it from the VitePress meta description so the sentence is not repeated.
+- **Key decisions**: Describe only live UI strings. Head teacher is the deputy admin (`usergroup` 4) and loses Settings and Classes and streams. Class and subject teacher share the teacher login. Slack is code on `main` but hidden until the instance enables it.
+- **Status**: Three pull requests open. Not merged.
+- **Edge cases flagged**: School and role PRs both touch `docs-site/help/index.md` and `docs-site/.vitepress/sidebars.ts`. Merge one, then rebase the other if Git conflicts. `vitepress build docs-site` passed on each branch. Conflict-marker and root-clutter checks passed. No browser pass on the docs site (markdown only).
+- **PR**: [#1129](https://github.com/KlassApp-Foundation/KlassApp/pull/1129) schools (`cursor/docs-schools-guides-01cf`). [#1131](https://github.com/KlassApp-Foundation/KlassApp/pull/1131) roles (`cursor/docs-role-guides-01cf`). [#1132](https://github.com/KlassApp-Foundation/KlassApp/pull/1132) developers (`cursor/docs-developer-guides-01cf`). None merged.
 
 ### 2026-10-16: link-request inbox for all three paths, combined mark sheet
 

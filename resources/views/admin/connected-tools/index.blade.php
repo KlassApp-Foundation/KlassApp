@@ -1,11 +1,11 @@
 {{-- SPDX-License-Identifier: MIT --}}
-@extends('layouts.admin.layout')
+@extends($layout)
 @section('content')
-<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" style="background:#FFFFFF;color:#0F172A">
 
 @include('layouts.partials.page-header', [
-    'title' => 'Connected tools',
-    'subtitle' => 'A tool shows Connected only after this school has connected it.',
+    'title' => 'My connected tools',
+    'subtitle' => 'These are your own accounts. A Google tool shows Connected only after you connect it, and only if your school allows it.',
 ])
 
 @include('partials.message')
@@ -23,6 +23,12 @@
                     <p class="text-sm mt-1" style="color:#64748B">{{ $tool['summary'] }}</p>
                     @if ($tool['status'] === 'needs_attention' && $tool['attention'])
                         <p class="text-sm mt-1" style="color:#B45309" data-testid="connected-tool-attention-{{ $tool['key'] }}">{{ $tool['attention'] }}</p>
+                    @endif
+                    @if (! empty($tool['note']))
+                        <p class="text-sm mt-1" style="color:#64748B" data-testid="connected-tool-note-{{ $tool['key'] }}">{{ $tool['note'] }}</p>
+                    @endif
+                    @if ($tool['status'] === 'connected' && $tool['account_email'])
+                        <p class="text-sm mt-1" style="color:#64748B" data-testid="connected-tool-email-{{ $tool['key'] }}">Account: {{ $tool['account_email'] }}</p>
                     @endif
                     @if ($tool['status'] === 'connected' && $tool['last_synced_at'])
                         <p class="text-sm mt-1" style="color:#64748B">
@@ -48,5 +54,27 @@
         </li>
     @endforeach
 </ul>
+
+@if (is_array($allowRows))
+    <div class="mt-8" data-testid="google-allow-list">
+        <h2 style="color:#0F172A;font-size:18px;font-weight:700;margin:0 0 4px">Tools this school allows</h2>
+        <p style="color:#64748B;font-size:14px;margin:0 0 14px">This list does not show who connected, or their Google account.</p>
+        <ul style="list-style:none;padding:0;margin:0">
+            @foreach ($allowRows as $tool)
+                <li class="ds-card ds-card-padding-default" data-testid="google-allow-{{ $tool['key'] }}" style="background:#FFFFFF;color:#0F172A;margin-bottom:8px">
+                    <span class="font-semibold" style="color:#0F172A">{{ $tool['label'] }}</span>
+                    <span class="block text-sm" style="color:#64748B" data-testid="google-allow-count-{{ $tool['key'] }}">{{ $tool['count'] }} connected</span>
+                    <form method="POST" action="{{ route('admin.google.allow', ['connector' => $tool['key']]) }}">
+                        @csrf
+                        <input type="hidden" name="allowed" value="{{ $tool['allowed'] ? '0' : '1' }}">
+                        <button type="submit" class="ds-btn ds-btn-md {{ $tool['allowed'] ? 'ds-btn-danger' : 'ds-btn-primary' }}" data-testid="google-allow-toggle-{{ $tool['key'] }}">
+                            {{ $tool['allowed'] ? 'Turn off' : 'Allow' }}
+                        </button>
+                    </form>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 </div>
 @endsection

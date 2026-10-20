@@ -41,7 +41,7 @@
                     <td class="gm-pos">{{ $student->position ?? '—' }}</td>
                     <td>
                         @if($exam && $class)
-                            <a href="{{ route('admin.report.student.class', [$student, $class->id, $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
+                            <a href="{{ route('admin.marks.student.class', [$student, $class->id, $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
                         @else
                             —
                         @endif

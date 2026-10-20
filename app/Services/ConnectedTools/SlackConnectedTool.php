@@ -4,6 +4,7 @@ namespace App\Services\ConnectedTools;
 
 use App\Contracts\ConnectedTools\ConnectedTool;
 use App\Models\SchoolMcpConnector;
+use App\Models\User;
 
 /**
  * Slack uses the existing per-school MCP connector row. Connected only when
@@ -19,7 +20,21 @@ class SlackConnectedTool implements ConnectedTool
         return 'slack';
     }
 
-    public function stateForSchool(int $schoolId): array
+    public function stateFor(User $user): array
+    {
+        $schoolId = (int) $user->school_id;
+
+        if ($schoolId < 1) {
+            return $this->notConnected();
+        }
+
+        return $this->stateForSchool($schoolId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function stateForSchool(int $schoolId): array
     {
         $row = SchoolMcpConnector::query()
             ->forSchool($schoolId)
@@ -34,6 +49,8 @@ class SlackConnectedTool implements ConnectedTool
             return [
                 'status' => ConnectedToolsRegistry::NEEDS_ATTENTION,
                 'attention' => 'The Slack connection needs to be renewed.',
+                'note' => null,
+                'account_email' => null,
                 'last_synced_at' => null,
                 'action' => $this->connectable()
                     ? ConnectedToolsRegistry::ACTION_CONNECT
@@ -48,6 +65,8 @@ class SlackConnectedTool implements ConnectedTool
         return [
             'status' => ConnectedToolsRegistry::CONNECTED,
             'attention' => null,
+            'note' => null,
+            'account_email' => null,
             'last_synced_at' => $row->last_used_at,
             'action' => ConnectedToolsRegistry::ACTION_DISCONNECT,
             'action_url' => route('admin.settings.integrations.disconnect', ['type' => 'slack']),
@@ -73,6 +92,8 @@ class SlackConnectedTool implements ConnectedTool
             return [
                 'status' => ConnectedToolsRegistry::NOT_CONNECTED,
                 'attention' => null,
+                'note' => null,
+                'account_email' => null,
                 'last_synced_at' => null,
                 'action' => null,
                 'action_url' => null,
@@ -83,6 +104,8 @@ class SlackConnectedTool implements ConnectedTool
         return [
             'status' => ConnectedToolsRegistry::NOT_CONNECTED,
             'attention' => null,
+            'note' => null,
+            'account_email' => null,
             'last_synced_at' => null,
             'action' => ConnectedToolsRegistry::ACTION_CONNECT,
             'action_url' => url('mcp/slack/connect'),

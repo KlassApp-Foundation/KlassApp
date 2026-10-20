@@ -3,11 +3,12 @@
 namespace App\Services\ConnectedTools;
 
 use App\Contracts\ConnectedTools\ConnectedTool;
+use App\Models\User;
 use App\Services\Google\GoogleConnectorCatalog;
 use DateTimeInterface;
 
 /**
- * One list of connector cards for the signed-in school.
+ * One list of connector cards for the signed-in user.
  *
  * A later pull request flips a Coming soon card by calling register() with a
  * ConnectedTool for that key. An explicit registration wins over the config
@@ -57,13 +58,13 @@ class ConnectedToolsRegistry
      *     action_method: string
      * }>
      */
-    public function cardsFor(int $schoolId): array
+    public function cardsFor(User $user): array
     {
         $cards = [];
 
         foreach (config('connected_tools.tools', []) as $key => $meta) {
             $provider = $this->providerFor((string) $key, is_array($meta) ? $meta : []);
-            $cards[] = $this->card((string) $key, is_array($meta) ? $meta : [], $provider, $schoolId);
+            $cards[] = $this->card((string) $key, is_array($meta) ? $meta : [], $provider, $user);
         }
 
         return $cards;
@@ -99,7 +100,7 @@ class ConnectedToolsRegistry
      * @param  array<string, mixed>  $meta
      * @return array<string, mixed>
      */
-    private function card(string $key, array $meta, ?ConnectedTool $provider, int $schoolId): array
+    private function card(string $key, array $meta, ?ConnectedTool $provider, User $user): array
     {
         $base = [
             'key' => $key,
@@ -107,6 +108,8 @@ class ConnectedToolsRegistry
             'summary' => (string) ($meta['summary'] ?? ''),
             'icon' => (string) ($meta['icon'] ?? ''),
             'attention' => null,
+            'note' => null,
+            'account_email' => null,
             'last_synced_at' => null,
             'action' => null,
             'action_label' => null,
@@ -121,7 +124,7 @@ class ConnectedToolsRegistry
             ]);
         }
 
-        $state = $provider->stateForSchool($schoolId);
+        $state = $provider->stateFor($user);
         $status = (string) ($state['status'] ?? self::NOT_CONNECTED);
 
         if (! in_array($status, [self::CONNECTED, self::NOT_CONNECTED, self::NEEDS_ATTENTION], true)) {
@@ -143,6 +146,8 @@ class ConnectedToolsRegistry
                 default => 'Not connected',
             },
             'attention' => $status === self::NEEDS_ATTENTION ? ($state['attention'] ?? null) : null,
+            'note' => $state['note'] ?? null,
+            'account_email' => $status === self::CONNECTED ? ($state['account_email'] ?? null) : null,
             'last_synced_at' => $status === self::CONNECTED ? ($state['last_synced_at'] ?? null) : null,
             'action' => is_string($action) && isset($labels[$action]) ? $action : null,
             'action_label' => is_string($action) ? ($labels[$action] ?? null) : null,

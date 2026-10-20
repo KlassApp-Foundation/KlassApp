@@ -153,6 +153,7 @@ return [
                             'children' => [
                                 ['label' => 'Exams and marks', 'url' => 'admin/exams', 'paths' => ['admin/exams*', 'admin/exam*', 'admin/marks*', 'admin/mark*']],
                                 ['label' => 'Release marks', 'url' => 'admin/marks/releases/new', 'paths' => ['admin/marks/releases*']],
+                                ['label' => 'Mark submissions', 'url' => 'admin/marks/submissions', 'paths' => ['admin/marks/submissions*'], 'count' => 'mark_submissions'],
                                 ['label' => 'Grading', 'url' => 'admin/grades', 'paths' => ['admin/grades*', 'admin/grade*']],
                                 ['label' => 'Report cards', 'url' => 'admin/reports/cards', 'paths' => ['admin/reports/cards*']],
                             ],
@@ -171,7 +172,7 @@ return [
                     'label' => 'School',
                     'rows' => [
                         ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*'], 'count' => 'whatsapp'],
-                        ['label' => 'Connected tools', 'icon' => 'connectors', 'url' => 'admin/connected-tools', 'paths' => ['admin/connected-tools*'], 'condition' => 'school_admin'],
+                        ['label' => 'My connected tools', 'icon' => 'connectors', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [
@@ -220,6 +221,7 @@ return [
                 ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
                 ['label' => 'Notices', 'icon' => 'notices', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 
@@ -240,6 +242,7 @@ return [
                 ['label' => 'Holidays', 'icon' => 'holidays', 'url' => 'student/holidays', 'active' => ['holidays', 'holiday']],
                 ['label' => 'Chats', 'icon' => 'chats', 'url' => 'student/conversations', 'active' => ['chats', 'chat', 'conversations']],
                 ['label' => 'Activity', 'icon' => 'activity', 'url' => 'student/activity', 'active' => ['activity']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 
@@ -254,6 +257,7 @@ return [
                 ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/*/fees']],
                 ['label' => 'Grades', 'icon' => 'grades', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/*/grades']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'resolver' => 'parent_child', 'child_path' => 'attendance', 'paths' => ['parent/*/attendance']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 

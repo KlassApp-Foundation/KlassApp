@@ -219,6 +219,9 @@ final class DemoBindReplies
             if ($released) {
                 $exam = LatestExamMarks::forExam($schoolId, $sectionId, $released, $studentId);
                 if ($exam['subjects'] !== []) {
+                    $exam = app(\App\Services\Results\DisplayedGrade::class)
+                        ->applyToBundle($schoolId, $released, $sectionId, $studentId, $exam);
+
                     return $this->renderMarks($name, $class, $exam);
                 }
             }

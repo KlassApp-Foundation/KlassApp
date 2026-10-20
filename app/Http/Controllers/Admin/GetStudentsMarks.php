@@ -2,90 +2,97 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Contracts\Results\DivisionRule;
+use App\Contracts\Results\GradingScale;
 use App\Http\Controllers\Controller;
-use App\Models\Academics\Exam;
-use App\Models\Academics\Marks;
-use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicTerm;
-use App\Models\FeesCategories;
-use App\Models\Promotion;
+use App\Models\Academics\Exam;
 use App\Models\Section;
-use App\Models\Standard;
-use App\Models\StandardLink;
-use App\Models\Subject;
 use App\Models\User;
-use App\Services\StudentPromotionService;
-use App\Services\StudentReportHelperService;
-use App\Services\StudentReportCardService;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use App\Services\Results\ResultsPolicy;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use Illuminate\Support\Facades\Auth;
 
 class GetStudentsMarks extends Controller
 {
-    //
-    
-    public function GetStudentMarks(StudentReportHelperService $studentHelper,  User $user, string $section, Exam $exam, StudentPromotionService $studentPromotion){
-        $admin = Auth::user();
-        $schoolId = $admin->school_id;
-        // learner
-         $learner = $studentHelper->learner($schoolId, $user, $exam);
-        //  dd($learner);
-                //    subjects
-            $subjects = $studentHelper->subjects($schoolId, $section, $learner, $exam);
-            $grade = $studentHelper->grade($learner, $exam);
+    public function GetStudentMarks(User $user, string $class, Exam $exam)
+    {
+        [$section, $term, $student, $sheet] = $this->studentSheet($user, $class, $exam);
 
-            $exams = $studentHelper->exam($schoolId, $exam);
-
-            $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
-            $eotExams = $exams->filter(fn($e) => $e->examType->code !== 'MID')->values();
-            $allExamColumns = $midExams->merge($eotExams);
-
-            $controls = ["SUBJECT", "OUT OF"];
-            foreach ($midExams as $ex) {
-                $controls[] = StudentReportCardService::midExamControlColumnLabel($ex);
+        $subjects = [];
+        foreach ($sheet->subjects as $subject) {
+            $subjects[$subject['id']] = $subject['name'];
+        }
+        foreach ($sheet->sittings as $sitting) {
+            foreach ($sitting->subjects as $subject) {
+                $subjects[$subject['id']] = $subject['name'];
             }
-            foreach ($eotExams as $ex) {
-                $controls[] = 'EOT';
-            }
-            $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
-        //    dd($controls);
-        //    student's total marks
-        $studentTotals = $studentHelper->learnersTotal($exam, $user);
-             $marks = $exam->marks->where("student_id", $learner->id);
-             
-             $examsDone = $studentHelper->examsDone($schoolId, $exam);     
-            $class_name = Section::find($section)->name;
-            $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
-            
-            $fees = $studentHelper->fees($admin, $section);
-                             
-    //  position
-    // total students
-    $learners = $studentHelper->totalStudentsInClass($schoolId, $section);
-                    
-    $totalLearners = $learners->count();
-    $learners = $learners->get();
-        
-        $promotion = Promotion::where("school_id", $schoolId)
-                              ->where("user_id", $user->id)
-                              ->value("comments");
+        }
 
-        // totals + position (aggregate-aware)
-        $learners = $studentHelper->position($learners, $exam);
-        $total = $learners->find($user->id)->total;
-
-        $myPos = $learners->where("id", $learner->id)->value("position");
-        $learner = $learner->where("id", $learner->id)->first();
-        $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
-         $school = Auth::user()->school;
-            // $byStandard = $fees->where("standard_id", )
-            // dd($nextTerm);
-    return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "total", "grade", "school",
-                "allExamColumns", "midCount", "eotCount"
-                ));
+        return view('admin.marks.student', [
+            'student' => $student,
+            'sittings' => $sheet->sittings,
+            'subjects' => $subjects,
+            'section' => $section,
+            'term' => $term,
+        ]);
     }
-    
+
+    public function redirectLegacyReport(User $learner, string $class, Exam $exam)
+    {
+        $this->studentSheet($learner, $class, $exam);
+
+        return redirect()->route('admin.marks.student.class', [
+            'user' => $learner->getKey(),
+            'class' => $class,
+            'exam' => $exam->getKey(),
+        ], 301);
+    }
+
+    /**
+     * @return array{0: Section, 1: AcademicTerm, 2: \App\Services\Results\ResultStudent, 3: \App\Services\Results\ResultSheet}
+     */
+    private function studentSheet(User $user, string $class, Exam $exam): array
+    {
+        $admin = Auth::user();
+        $schoolId = (int) $admin->school_id;
+        $sectionId = (int) $class;
+
+        $section = Section::query()
+            ->where('id', $sectionId)
+            ->where('school_id', $schoolId)
+            ->first();
+        $term = AcademicTerm::query()
+            ->where('id', $exam->academic_term_id)
+            ->where('school_id', $schoolId)
+            ->first();
+
+        if ($section === null
+            || $term === null
+            || (int) $user->school_id !== $schoolId
+            || (int) $exam->school_id !== $schoolId
+            || (int) $exam->section_id !== $sectionId
+        ) {
+            abort(404);
+        }
+
+        $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: $sectionId,
+            academicTermId: (int) $term->id,
+            studentId: (int) $user->id,
+        ), new ResultsPolicy(
+            app(GradingScale::class),
+            app(DivisionRule::class),
+            splitMidTermByMonth: true,
+        ));
+
+        $student = $sheet->student((int) $user->id);
+        if ($student === null) {
+            abort(404);
+        }
+
+        return [$section, $term, $student, $sheet];
+    }
 }

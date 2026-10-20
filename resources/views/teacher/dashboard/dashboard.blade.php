@@ -30,7 +30,7 @@
     <div class="dashboard-kpi-grid" data-testid="dashboard-kpi-grid">
         <x-ds-kpi-card icon="users" value="{{ $dashboard['myStudents'] }}" label="My Students" color="green" link="{{ url('/teacher/classes') }}" />
         <x-ds-kpi-card icon="classes" value="{{ $dashboard['myClasses'] }}" label="My Classes" color="blue" />
-        <x-ds-kpi-card icon="exam" value="{{ count($dashboard['upcomingExam']) }}" label="Upcoming Exams" color="amber" link="{{ url('/teacher/exams') }}" />
+        <x-ds-kpi-card icon="exam" value="{{ count($dashboard['upcomingExam']) }}" label="Upcoming Exams" color="amber" link="{{ route('teacher.exam.marks') }}" />
         <x-ds-kpi-card icon="whatsapp" value="{{ $dashboard['whatsapp']['totalLinked'] }}" label="WhatsApp Linked" color="green" />
         <x-ds-kpi-card icon="check" value="{{ $dashboard['marksAttention'] ?? 0 }}" label="Marks needing you" tone="{{ ($dashboard['marksAttention'] ?? 0) > 0 ? 'warning' : 'neutral' }}" link="{{ route('teacher.exam.marks') }}" />
     </div>

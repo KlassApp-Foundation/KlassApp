@@ -2,7 +2,7 @@
 
 namespace App\Services\Google;
 
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 
 class GoogleConnectorCatalog
 {
@@ -65,7 +65,7 @@ class GoogleConnectorCatalog
         return (string) config('google.email_scope');
     }
 
-    public function isLive(?SchoolGoogleConnection $connection, string $key): bool
+    public function isLive(?UserGoogleConnection $connection, string $key): bool
     {
         if ($connection === null || ! $connection->isActive()) {
             return false;

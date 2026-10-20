@@ -3,17 +3,22 @@
 namespace App\Services\ConnectedTools;
 
 use App\Contracts\ConnectedTools\ConnectedTool;
-use App\Models\SchoolGoogleConnection;
+use App\Models\User;
+use App\Models\UserGoogleConnection;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
+use App\Services\Google\GoogleOAuthService;
 use DateTimeInterface;
 
 /**
- * Status from the school's one Google connection row.
+ * Status from the signed-in user's own Google row.
  *
  * Connected only when that row is active, still has a refresh token, and
  * Google granted every scope this connector needs. A revoked or missing
  * refresh token, a partial scope grant, or a recorded sync error is Needs
- * attention. No row, or a clean disconnect, is Not connected.
+ * attention. No row, or a clean disconnect, is Not connected. Connect is
+ * offered only when this school allows the connector and the OAuth client
+ * is configured.
  */
 class GoogleOAuthConnectedTool implements ConnectedTool
 {
@@ -28,11 +33,21 @@ class GoogleOAuthConnectedTool implements ConnectedTool
         return $this->key;
     }
 
-    public function stateForSchool(int $schoolId): array
+    public function stateFor(User $user): array
     {
-        $connection = SchoolGoogleConnection::query()->where('school_id', $schoolId)->first();
+        $connections = app(GoogleConnectionService::class);
+        $connection = $connections->forUser($user);
+        $allowed = $user->school_id !== null && $connections->schoolAllows((int) $user->school_id, $this->key);
         $connectUrl = route('admin.google.connect', ['connector' => $this->key]);
         $required = $this->catalog->scopesFor($this->key);
+
+        if (! $allowed) {
+            return $this->notConnected(null, 'Your school has not turned this on.');
+        }
+
+        if (! app(GoogleOAuthService::class)->isConfigured()) {
+            return $this->notConnected(null, 'Connect unavailable');
+        }
 
         if ($connection === null) {
             return $this->notConnected($connectUrl);
@@ -85,6 +100,8 @@ class GoogleOAuthConnectedTool implements ConnectedTool
             return [
                 'status' => ConnectedToolsRegistry::CONNECTED,
                 'attention' => null,
+                'note' => null,
+                'account_email' => $connection->google_email,
                 'last_synced_at' => $this->lastSync($connection),
                 'action' => ConnectedToolsRegistry::ACTION_DISCONNECT,
                 'action_url' => route('admin.google.disconnect', ['connector' => $this->key]),
@@ -105,7 +122,7 @@ class GoogleOAuthConnectedTool implements ConnectedTool
         return is_string($error) && str_starts_with($error, 'sync_');
     }
 
-    private function lastSync(SchoolGoogleConnection $connection): ?DateTimeInterface
+    private function lastSync(UserGoogleConnection $connection): ?DateTimeInterface
     {
         return $connection->last_used_at ?? $connection->last_refreshed_at;
     }
@@ -113,13 +130,15 @@ class GoogleOAuthConnectedTool implements ConnectedTool
     /**
      * @return array<string, mixed>
      */
-    private function notConnected(string $connectUrl): array
+    private function notConnected(?string $connectUrl, ?string $note = null): array
     {
         return [
             'status' => ConnectedToolsRegistry::NOT_CONNECTED,
             'attention' => null,
+            'note' => $note,
+            'account_email' => null,
             'last_synced_at' => null,
-            'action' => ConnectedToolsRegistry::ACTION_CONNECT,
+            'action' => $connectUrl === null ? null : ConnectedToolsRegistry::ACTION_CONNECT,
             'action_url' => $connectUrl,
             'action_method' => 'GET',
         ];
@@ -133,6 +152,8 @@ class GoogleOAuthConnectedTool implements ConnectedTool
         return [
             'status' => ConnectedToolsRegistry::NEEDS_ATTENTION,
             'attention' => $message,
+            'note' => null,
+            'account_email' => null,
             'last_synced_at' => null,
             'action' => $action,
             'action_url' => $url,

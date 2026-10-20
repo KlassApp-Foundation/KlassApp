@@ -107,7 +107,7 @@
             </div>
         @endif
 
-        {{-- WhatsApp link requests, near the top. Count, latest three, Approve / Reject. Polls itself. --}}
+        {{-- Hidden poller: a new link request still toasts, and the sidebar badge still updates. --}}
         @if((int) ($v2User->usergroup_id ?? 0) === 3)
             <livewire:admin.whatsapp-dashboard-card />
         @endif
@@ -381,7 +381,7 @@
         @endforeach
 
         <p class="dv2-soon">
-            <a href="{{ route('admin.connected-tools') }}" data-testid="dashboard-connected-tools-link" style="color:#1E6FD9;font-weight:600">Connected tools</a>
+            <a href="{{ route('google.mine') }}" data-testid="dashboard-connected-tools-link" style="color:#1E6FD9;font-weight:600">My connected tools</a>
         </p>
 
         {{-- 7 · Toshi line --}}

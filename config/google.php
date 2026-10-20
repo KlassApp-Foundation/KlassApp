@@ -3,7 +3,7 @@
 /**
  * Per-connector Google scopes. Secrets stay in config/services.php (env only).
  * Each connector's consent requests only its own scopes, plus the email scope
- * so the school can see which Google account is connected.
+ * so that user can see which Google account they connected.
  */
 return [
     'email_scope' => 'https://www.googleapis.com/auth/userinfo.email',

@@ -165,12 +165,25 @@ class DashboardV2Test extends TestCase
         ]);
         $standard = Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 1, 'status' => 1]);
         $teacher = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 5, 'status' => 'active']);
-        $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
         $eot = ExamType::create(['name' => 'End of term', 'code' => 'EOT', 'contributes_to_report_total' => true]);
         $mid = ExamType::create(['name' => 'Mid term', 'code' => 'MID', 'contributes_to_report_total' => false]);
+        $p1Student = null;
 
         foreach (['P.1' => 61, 'P.2' => 72] as $class => $score) {
             $section = Section::create(['school_id' => $school->id, 'name' => $class, 'status' => 1]);
+            $link = StandardLink::create([
+                'school_id' => $school->id, 'academic_year_id' => $year->id,
+                'standard_id' => $standard->id, 'section_id' => $section->id,
+                'class_teacher_id' => $teacher->id, 'stream' => 'A', 'status' => 1,
+            ]);
+            $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
+            StudentAcademic::create([
+                'school_id' => $school->id, 'academic_year_id' => $year->id,
+                'user_id' => $student->id, 'standardLink_id' => $link->id,
+            ]);
+            if ($class === 'P.1') {
+                $p1Student = $student;
+            }
             $subject = Subject::create([
                 'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $section->id,
                 'academic_year_id' => $year->id, 'name' => 'Math', 'type' => 'core', 'status' => 1,
@@ -195,7 +208,7 @@ class DashboardV2Test extends TestCase
             'exam_type_id' => $mid->id, 'status' => 'done', 'scheduled_at' => now(),
         ]);
         Marks::create([
-            'student_id' => $student->id, 'subject_id' => $subject->id, 'section_id' => $only->id,
+            'student_id' => $p1Student->id, 'subject_id' => $subject->id, 'section_id' => $only->id,
             'exam_id' => $newerMid->id, 'teacher_id' => $teacher->id, 'school_id' => $school->id,
             'marks' => 10, 'grade' => 'F',
         ]);
@@ -366,7 +379,7 @@ class DashboardV2Test extends TestCase
 
         $this->render($admin)->assertOk()
             ->assertSee('data-testid="dashboard-connected-tools-link"', false)
-            ->assertSee(route('admin.connected-tools'), false)
+            ->assertSee(route('google.mine'), false)
             ->assertDontSee('es-demo-scene-toshi', false)
             ->assertDontSee('data-testid="toshi-pill"', false);
     }

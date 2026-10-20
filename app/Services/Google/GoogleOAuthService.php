@@ -2,7 +2,7 @@
 
 namespace App\Services\Google;
 
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -78,7 +78,7 @@ class GoogleOAuthService
         return $response->json() ?? [];
     }
 
-    public function refresh(SchoolGoogleConnection $connection): SchoolGoogleConnection
+    public function refresh(UserGoogleConnection $connection): UserGoogleConnection
     {
         $refreshToken = $connection->refreshToken();
 
@@ -141,10 +141,10 @@ class GoogleOAuthService
         return $connection->refresh();
     }
 
-    public function validConnection(SchoolGoogleConnection $connection): SchoolGoogleConnection
+    public function validConnection(UserGoogleConnection $connection): UserGoogleConnection
     {
         if (! $connection->isActive() || ($connection->accessToken() === null && $connection->refreshToken() === null)) {
-            throw new GoogleAccessRevokedException(401, 'Google is not connected for this school.', 'not_connected');
+            throw new GoogleAccessRevokedException(401, 'Google is not connected for this user.', 'not_connected');
         }
 
         if ($connection->accessToken() === null || $connection->isTokenExpired()) {
@@ -154,7 +154,7 @@ class GoogleOAuthService
         return $connection;
     }
 
-    public function revokeAndForget(SchoolGoogleConnection $connection): void
+    public function revokeAndForget(UserGoogleConnection $connection): void
     {
         $token = $connection->refreshToken() ?: $connection->accessToken();
 
@@ -174,39 +174,7 @@ class GoogleOAuthService
         $this->forgetTokens($connection);
     }
 
-    public function refreshExpiring(int $withinMinutes = 30): int
-    {
-        if (! $this->isConfigured()) {
-            return 0;
-        }
-
-        $connections = SchoolGoogleConnection::query()
-            ->active()
-            ->whereNotNull('token_expires_at')
-            ->where('token_expires_at', '<=', now()->addMinutes($withinMinutes))
-            ->get();
-
-        $refreshed = 0;
-
-        foreach ($connections as $connection) {
-            try {
-                $this->refresh($connection);
-                $refreshed++;
-            } catch (GoogleAccessRevokedException) {
-                // Tokens already cleared.
-            } catch (GoogleApiException $e) {
-                Log::warning('Google scheduled refresh skipped', [
-                    'connection_id' => $connection->id,
-                    'status' => $e->status,
-                    'error' => $e->googleError,
-                ]);
-            }
-        }
-
-        return $refreshed;
-    }
-
-    public function forgetTokens(SchoolGoogleConnection $connection, ?string $reason = null): void
+    public function forgetTokens(UserGoogleConnection $connection, ?string $reason = null): void
     {
         $previousScopes = $connection->granted_scopes ?? [];
 
