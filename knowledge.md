@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
+
+- The set-password form now uses one message for an unknown email, a bad, expired, or used token, and a throttled attempt: "This link is invalid or has expired. Request a new one." A valid reset still signs the user in and changes the password.
+- Reset-code entry and resend use the same response whether or not the email is on file. A valid code still opens the set-password form.
+- Invite pages that say a link is invalid, expired, or already used were left as they are. They describe that invite. Set-password links for an existing account use the reset form above.
+- Not merged. Production untouched.
+
+## Session: 2026-10-20 — Generic error on the password reset form
+
+- **Work:** one failure message on `POST /password/reset/change`. Reset-code verify and resend no longer name a missing account.
+- **Files:** `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `lang/en/passwords.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`.
+- **Tests:** the new cases fail on `main` (distinct messages) and pass with this change. Related auth suites: 40 tests, 331 assertions, OK. Full guard: 2820 tests, 0 failures, 0 errors, 4 skipped.
+- **Status:** OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166) (`cursor/generic-password-reset-error-821d`). Do not merge from this session.
+
 ## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
 - Phone header: teacher and student shells below 768px kept the menu and search as separate 44px targets. Desktop header unchanged. Not merged.

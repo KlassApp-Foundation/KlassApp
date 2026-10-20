@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ResetPasswordController extends Controller
 {
@@ -108,5 +109,25 @@ class ResetPasswordController extends Controller
 
         return redirect($this->redirectPath())
             ->with('status', trans($response));
+    }
+
+    /**
+     * Every broker failure (unknown email, invalid, expired, or used token,
+     * throttled) uses one message. Distinct wording would show whether an
+     * account exists.
+     */
+    protected function sendResetFailedResponse(Request $request, $response)
+    {
+        $message = trans('passwords.link');
+
+        if ($request->wantsJson()) {
+            throw ValidationException::withMessages([
+                'email' => [$message],
+            ]);
+        }
+
+        return redirect()->back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => $message]);
     }
 }
