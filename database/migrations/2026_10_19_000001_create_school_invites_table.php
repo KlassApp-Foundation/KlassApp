@@ -82,13 +82,13 @@ return new class extends Migration
         $needsChange = $createdByType !== 'int unsigned' || ! ($createdBy['nullable'] ?? false);
 
         if ($needsChange) {
-            $this->dropCreatedByForeignKey();
-
             if (DB::table('school_invites')->where('created_by', '>', 4294967295)->exists()) {
                 throw new RuntimeException(
                     'school_invites.created_by has a value that does not fit users.id. The table was not altered.'
                 );
             }
+
+            $this->dropCreatedByForeignKey();
 
             Schema::table('school_invites', function (Blueprint $table) {
                 $table->unsignedInteger('created_by')->nullable()->change();

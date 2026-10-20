@@ -21,6 +21,7 @@ use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\StudentIdGeneratorService;
 use App\Helpers\DashboardCache;
+use App\Support\PhoneCountry;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -1276,12 +1277,13 @@ class OnboardingEngine
                 foreach ($teachers as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
                     $email = trim((string) ($draft['email'] ?? ''));
-                    $phone = trim((string) ($draft['phone'] ?? ''));
 
                     if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         $skipped[] = ['name' => $name, 'email' => $email, 'reason' => 'Invalid name or email'];
                         continue;
                     }
+
+                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'teachers', false, 'Teacher '.$name);
 
                     $teacher = User::create([
                         'school_id'       => $school->id,
@@ -1451,7 +1453,7 @@ class OnboardingEngine
                         $email = $providedEmail;
                     }
 
-                    $phone = trim((string) ($draft['phone'] ?? ''));
+                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'students', false, 'Student '.$name);
 
                     $student = User::create([
                         'school_id'       => $school->id,
@@ -1729,7 +1731,7 @@ class OnboardingEngine
      */
     public function saveWhatsApp(School $school, int $userId, string $phone): array
     {
-        $phone = trim($phone);
+        $phone = $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
 
         if ($phone === '') {
             return ['linked' => null, 'skipped' => [['reason' => 'Phone number is required']]];
@@ -1763,6 +1765,39 @@ class OnboardingEngine
                 'whatsappPhone' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+    }
+
+    /**
+     * Normalise a phone with the school's country. Empty stays empty. When the
+     * school has no country yet, the typed value is kept. An invalid number for
+     * a known country is rejected. $who names the teacher or student, the same
+     * way the other batch errors in saveTeachers and saveStudents do.
+     */
+    private function normaliseOnboardingPhone(School $school, string $phone, string $errorKey, bool $whatsapp, string $who = ''): string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $country = trim((string) $school->registration_country);
+        if ($country === '') {
+            return $phone;
+        }
+
+        $normalised = PhoneCountry::normalise($phone, $country);
+        if ($normalised === null) {
+            $detail = PhoneCountry::error($country, $whatsapp);
+            if ($who !== '') {
+                $detail = preg_replace('/^Enter your /', 'Enter the ', $detail) ?? $detail;
+                $detail = $who.' has a phone that could not be read. '.$detail;
+            }
+            throw ValidationException::withMessages([
+                $errorKey => $detail,
+            ]);
+        }
+
+        return $normalised;
     }
 
     /**

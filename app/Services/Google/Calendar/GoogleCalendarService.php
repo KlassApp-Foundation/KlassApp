@@ -5,10 +5,11 @@ namespace App\Services\Google\Calendar;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Events;
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\User;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
 use App\Support\DashboardGreeting;
 use Carbon\CarbonInterface;
@@ -18,6 +19,7 @@ class GoogleCalendarService
     public function __construct(
         private readonly GoogleApiClient $client,
         private readonly GoogleConnectorCatalog $catalog,
+        private readonly GoogleConnectionService $connections,
     ) {
     }
 
@@ -65,18 +67,22 @@ class GoogleCalendarService
         ];
     }
 
-    private function connection(User $actor): SchoolGoogleConnection
+    private function connection(User $actor): UserGoogleConnection
     {
-        $connection = SchoolGoogleConnection::query()->forSchool((int) $actor->school_id)->first();
+        if ((int) $actor->usergroup_id !== 3) {
+            abort(404);
+        }
+
+        $connection = $this->connections->forUser($actor);
 
         if (! $this->catalog->isLive($connection, 'calendar')) {
-            throw new GoogleApiException(404, 'Google Calendar is not connected for this school.', 'not_connected');
+            throw new GoogleApiException(404, 'Google Calendar is not connected for this user.', 'not_connected');
         }
 
         return $connection;
     }
 
-    private function ensureCalendar(SchoolGoogleConnection $connection, string $timeZone): string
+    private function ensureCalendar(UserGoogleConnection $connection, string $timeZone): string
     {
         $existing = (string) $connection->google_calendar_id;
 
@@ -99,7 +105,7 @@ class GoogleCalendarService
         return $id;
     }
 
-    private function calendarExists(SchoolGoogleConnection $connection, string $calendarId): bool
+    private function calendarExists(UserGoogleConnection $connection, string $calendarId): bool
     {
         try {
             $this->client->get($connection, $this->url('/calendar/v3/calendars/'.rawurlencode($calendarId)));
@@ -212,7 +218,7 @@ class GoogleCalendarService
     /**
      * @param  list<string>  $keep
      */
-    private function deleteStale(SchoolGoogleConnection $connection, string $calendarId, array $keep): void
+    private function deleteStale(UserGoogleConnection $connection, string $calendarId, array $keep): void
     {
         $pageToken = null;
 
@@ -247,7 +253,7 @@ class GoogleCalendarService
     /**
      * @param  array<string, mixed>  $body
      */
-    private function upsert(SchoolGoogleConnection $connection, string $calendarId, string $eventId, array $body): void
+    private function upsert(UserGoogleConnection $connection, string $calendarId, string $eventId, array $body): void
     {
         $url = $this->url('/calendar/v3/calendars/'.rawurlencode($calendarId).'/events/'.rawurlencode($eventId));
 

@@ -4,6 +4,7 @@ return [
     /* Runtime-only context for local MCP subprocesses (never an env value). */
     'mcp_context' => [
         'school_id' => null,
+        'user_id' => null,
     ],
 
     /*
@@ -323,8 +324,9 @@ return [
         ],
         'google-classroom' => [
             // Local MCP server over the Classroom REST API. Tokens come from
-            // the school's Google connection (SchoolGoogleConnection), not a
-            // second OAuth client. Sign-in stays on the Socialite redirect.
+            // the triggering user's Google connection, not a second OAuth
+            // client and not another person's token. Sign-in stays on the
+            // Socialite redirect.
             'endpoint' => 'local://google-classroom',
             'token_url' => 'https://oauth2.googleapis.com/token',
             'auth_mode' => 'oauth_remote',

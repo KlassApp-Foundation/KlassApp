@@ -21,15 +21,8 @@ Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('
 Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');
 Route::post('/settings/integrations/{type}/disconnect', 'Setting\IntegrationsController@disconnect')->name('admin.settings.integrations.disconnect');
 
-// School Google account. One connection, incremental scopes per connector.
-Route::get('/settings/google/connect/{connector}', 'Setting\GoogleConnectController@connect')->name('admin.google.connect');
-Route::get('/settings/google/callback', 'Setting\GoogleConnectController@callback')->name('admin.google.callback');
-Route::post('/settings/google/{connector}/disconnect', 'Setting\GoogleConnectController@disconnect')->name('admin.google.disconnect');
-Route::post('/settings/google/sheets/export', 'Setting\GoogleSheetsController@export')->name('admin.google.sheets.export');
-Route::post('/settings/google/sheets/import', 'Setting\GoogleSheetsController@import')->name('admin.google.sheets.import');
-Route::post('/settings/google/drive/file', 'Setting\GoogleDriveController@file')->name('admin.google.drive.file');
-Route::post('/settings/google/classroom/sync', 'Setting\GoogleClassroomController@sync')->name('admin.google.classroom.sync');
-Route::post('/settings/google/calendar/publish', 'Setting\GoogleCalendarController@publish')->name('admin.google.calendar.publish');
+// Which connectors this school allows. Does not read anyone's Google account.
+Route::post('/settings/google/{connector}/allow', 'Setting\GoogleConnectorAllowController@update')->name('admin.google.allow');
 
 // Navigation dropdown + notification list are served by routes/admin.php under
 // the schooladmin group. The copies that used to live here registered later and

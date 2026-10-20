@@ -17,7 +17,15 @@
       <p class="ap-alert ap-alert--success" role="status" data-testid="early-access-flash-success">{{ session('success') }}</p>
     @endif
     @if (session('error'))
-      <p class="ap-alert ap-alert--error" role="alert" data-testid="early-access-flash-error">{{ session('error') }}</p>
+      <p class="ap-alert ap-alert--error" role="alert" data-testid="early-access-flash-error">
+        {{ session('error') }}
+        @if (session('retry_invite_id'))
+          <form method="POST" action="{{ route('platform.school-invites.resend', session('retry_invite_id')) }}" style="display:inline;">
+            @csrf
+            <button type="submit" class="ap-link" data-testid="early-access-flash-retry">Retry</button>
+          </form>
+        @endif
+      </p>
     @endif
 
     <table data-testid="early-access-table" style="border-collapse:collapse;width:100%;">
@@ -59,6 +67,16 @@
                 <form method="POST" action="{{ route('platform.school-invites.resend', $invite) }}" style="display:inline;">
                   @csrf
                   <button type="submit" class="ap-link">Resend</button>
+                </form>
+              @elseif ($invite->emailFailed())
+                <span data-testid="invite-status-email-failed">Email not sent</span>
+                <form method="POST" action="{{ route('platform.school-invites.resend', $invite) }}" style="display:inline;">
+                  @csrf
+                  <button type="submit" class="ap-link" data-testid="invite-retry-button">Retry</button>
+                </form>
+                <form method="POST" action="{{ route('platform.school-invites.revoke', $invite) }}" style="display:inline;">
+                  @csrf
+                  <button type="submit" class="ap-link">Revoke</button>
                 </form>
               @else
                 <span data-testid="invite-status-pending">Invited · expires {{ $invite->expires_at->format('Y-m-d') }}</span>

@@ -82,10 +82,6 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
-        $schedule->command('google:refresh-tokens')
-                 ->everyFifteenMinutes()
-                 ->withoutOverlapping();
-
         // Task 9 Tier 2: scheduled marks releases (demo-bound numbers only).
         $schedule->command('marks:release-due')->everyMinute()
             ->withoutOverlapping();

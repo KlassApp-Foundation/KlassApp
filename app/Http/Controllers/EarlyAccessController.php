@@ -6,10 +6,12 @@ use App\Models\Country;
 use App\Models\EarlyAccessRequest;
 use App\Models\User;
 use App\Notifications\EarlyAccessRequestedNotification;
+use App\Support\PhoneCountry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class EarlyAccessController extends Controller
 {
@@ -66,6 +68,14 @@ class EarlyAccessController extends Controller
             'approx_students' => 'required|integer|min:1|max:1000000',
             'consent' => 'accepted',
         ], self::MESSAGES);
+
+        $phone = PhoneCountry::normalise($validated['phone'], $validated['country']);
+        if ($phone === null) {
+            throw ValidationException::withMessages([
+                'phone' => PhoneCountry::error($validated['country'], false),
+            ]);
+        }
+        $validated['phone'] = $phone;
 
         unset($validated['consent']);
         $validated['consented_at'] = now();

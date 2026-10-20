@@ -7,7 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
 use App\Models\School;
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
@@ -249,14 +249,37 @@ class GoogleDriveConnectorTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('admin.google.disconnect', ['connector' => 'drive']))
             ->assertRedirect();
-        $this->assertNull(SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first()->credentials);
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->admin->id)->first());
         $this->assertNotNull(collect($this->google->calls())->first(fn ($call) => $call['path'] === '/revoke'));
+    }
+
+    public function test_another_admin_does_not_use_this_users_drive_token(): void
+    {
+        $this->connectGoogle($this->admin, 'drive');
+        $token = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken();
+        $other = User::factory()->create([
+            'usergroup_id' => 3,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $seen = count($this->google->calls());
+
+        $this->actingAs($other)->postJson(route('admin.google.drive.file'), [
+            'exam_id' => $this->exam->id,
+            'learner_id' => $this->student->id,
+        ])->assertNotFound();
+
+        $later = array_slice($this->google->calls(), $seen);
+        $this->assertFalse(collect($later)->contains(
+            fn ($call) => str_contains((string) ($call['authorization'] ?? ''), (string) $token)
+        ));
+        $this->assertSame($token, UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken());
     }
 
     public function test_expired_token_refreshes_before_upload(): void
     {
         $this->connectGoogle($this->admin, 'drive');
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
 
         $this->actingAs($this->admin)
@@ -278,7 +301,7 @@ class GoogleDriveConnectorTest extends TestCase
     public function test_revoked_access_clears_tokens_and_files_nothing(): void
     {
         $this->connectGoogle($this->admin, 'drive');
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
         $this->google->update(function (array &$state) {
             $state['modes']['refresh'] = 'invalid_grant';
@@ -291,7 +314,7 @@ class GoogleDriveConnectorTest extends TestCase
             ])
             ->assertStatus(400);
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('disabled', $row->status);
         $this->assertNull($row->credentials);
         $this->assertSame([], $this->google->state()['drive']['files']);
@@ -312,7 +335,7 @@ class GoogleDriveConnectorTest extends TestCase
             $this->assertNotInstanceOf(GoogleAccessRevokedException::class, $e);
         }
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('active', $row->status);
         $this->assertNotNull($row->accessToken());
         $this->assertSame([], $this->google->state()['drive']['files']);

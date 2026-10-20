@@ -5,13 +5,15 @@ namespace App\Services\Google\Drive;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
-use App\Models\SchoolGoogleConnection;
+use App\Helpers\SiteHelper;
 use App\Models\Section;
+use App\Models\UserGoogleConnection;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleConnectorCatalog;
 use App\Services\ReportCardCommentService;
 use App\Services\StudentReportCardService;
@@ -22,6 +24,7 @@ class GoogleDriveService
     public function __construct(
         private readonly GoogleApiClient $client,
         private readonly GoogleConnectorCatalog $catalog,
+        private readonly GoogleConnectionService $connections,
         private readonly StudentReportCardService $reports,
         private readonly StudentReportHelperService $helper,
         private readonly ReportCardCommentService $comments,
@@ -55,6 +58,8 @@ class GoogleDriveService
         if ($term === null || $section === null || $stdLink === null) {
             throw new GoogleApiException(404, 'That class is not in this school.', 'class_missing');
         }
+
+        $this->assertMayFile($actor, $stdLink);
 
         $enrolled = StudentAcademic::query()
             ->where('school_id', $schoolId)
@@ -119,15 +124,29 @@ class GoogleDriveService
         ];
     }
 
-    private function connection(User $actor): SchoolGoogleConnection
+    private function connection(User $actor): UserGoogleConnection
     {
-        $connection = SchoolGoogleConnection::query()->forSchool((int) $actor->school_id)->first();
+        $connection = $this->connections->forUser($actor);
 
         if (! $this->catalog->isLive($connection, 'drive')) {
-            throw new GoogleApiException(404, 'Google Drive is not connected for this school.', 'not_connected');
+            throw new GoogleApiException(404, 'Google Drive is not connected for this user.', 'not_connected');
         }
 
         return $connection;
+    }
+
+    private function assertMayFile(User $actor, StandardLink $link): void
+    {
+        if (in_array((int) $actor->usergroup_id, [3, 4], true)) {
+            return;
+        }
+
+        if ((int) $actor->usergroup_id === 5
+            && SiteHelper::isClassTeacherOfStandardLink((int) $actor->school_id, (int) $actor->id, (int) $link->id)) {
+            return;
+        }
+
+        abort(403);
     }
 
     private function learner(int $schoolId, int $learnerId): User
@@ -146,7 +165,7 @@ class GoogleDriveService
         return $learner;
     }
 
-    private function folder(SchoolGoogleConnection $connection, string $name, string $parentId): string
+    private function folder(UserGoogleConnection $connection, string $name, string $parentId): string
     {
         $query = sprintf(
             "mimeType = 'application/vnd.google-apps.folder' and name = '%s' and '%s' in parents and trashed = false",

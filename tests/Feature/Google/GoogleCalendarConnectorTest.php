@@ -6,7 +6,7 @@ use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Events;
 use App\Models\School;
-use App\Models\SchoolGoogleConnection;
+use App\Models\UserGoogleConnection;
 use App\Models\User;
 use App\Services\Google\Calendar\GoogleCalendarService;
 use App\Support\DashboardGreeting;
@@ -42,7 +42,10 @@ class GoogleCalendarConnectorTest extends TestCase
         $this->setUpFakeGoogle();
 
         DB::table('usergroups')->upsert([
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
         ], 'id');
 
         $this->school = School::create([
@@ -162,7 +165,7 @@ class GoogleCalendarConnectorTest extends TestCase
             ->assertOk()
             ->assertDontSee('data-testid="google-connector-live-calendar"', false);
 
-        $scopes = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first()->granted_scopes;
+        $scopes = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->granted_scopes;
         $this->assertContains('https://www.googleapis.com/auth/calendar.app.created', $scopes);
         $this->assertNotContains('https://www.googleapis.com/auth/calendar', $scopes);
         $this->assertNotContains('https://www.googleapis.com/auth/calendar.events', $scopes);
@@ -203,17 +206,53 @@ class GoogleCalendarConnectorTest extends TestCase
         $this->assertSame('Term One', $again['kappterm'.$this->term->id]['summary']);
         $this->assertArrayNotHasKey('kappevent'.$this->visit->id, $again->all());
 
+        $this->artisan('google:smoke', ['connector' => 'calendar', '--user' => $this->admin->id])
+            ->assertSuccessful();
+
         $this->actingAs($this->admin)
             ->post(route('admin.google.disconnect', ['connector' => 'calendar']))
             ->assertRedirect();
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
-        $this->assertNull($row->credentials);
-        $this->assertSame($calendar['id'], $row->google_calendar_id);
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->admin->id)->first());
         $this->assertNotNull(collect($this->google->calls())->first(fn ($call) => $call['path'] === '/revoke'));
         $this->actingAs($this->admin)->get('/admin/settings/integrations')
             ->assertOk()
             ->assertDontSee('data-testid="google-connector-live-calendar"', false)
             ->assertSee('data-testid="google-connector-status-calendar"', false);
+    }
+
+    public function test_another_user_cannot_publish_with_this_users_token(): void
+    {
+        $this->connectGoogle($this->admin, 'calendar');
+        $token = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken();
+        $colleague = User::factory()->create([
+            'usergroup_id' => 3,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $parent = User::factory()->create([
+            'usergroup_id' => 7,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $platform = User::factory()->create([
+            'usergroup_id' => 1,
+            'school_id' => $this->school->id,
+            'status' => 'active',
+        ]);
+        $seen = count($this->google->calls());
+
+        $this->actingAs($colleague)->postJson(route('admin.google.calendar.publish'))->assertNotFound();
+        $this->actingAs($parent)->postJson(route('admin.google.calendar.publish'))->assertNotFound();
+        $this->actingAs($platform)->postJson(route('admin.google.calendar.publish'))->assertNotFound();
+        $this->actingAs($this->otherAdmin)->postJson(route('admin.google.calendar.publish'))->assertNotFound();
+        $this->artisan('google:smoke', ['connector' => 'calendar', '--user' => $colleague->id])->assertFailed();
+        $this->artisan('google:smoke', ['connector' => 'calendar'])->assertFailed();
+
+        $later = array_slice($this->google->calls(), $seen);
+        $this->assertFalse(collect($later)->contains(
+            fn ($call) => str_contains((string) ($call['authorization'] ?? ''), (string) $token)
+        ));
+        $this->assertSame($token, UserGoogleConnection::query()->where('user_id', $this->admin->id)->first()->accessToken());
     }
 
     public function test_created_calendar_uses_the_school_country_timezone(): void
@@ -257,7 +296,7 @@ class GoogleCalendarConnectorTest extends TestCase
     public function test_expired_token_refreshes_before_publish(): void
     {
         $this->connectGoogle($this->admin, 'calendar');
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
 
         $this->actingAs($this->admin)
@@ -273,7 +312,7 @@ class GoogleCalendarConnectorTest extends TestCase
     public function test_revoked_access_clears_tokens_and_creates_no_calendar(): void
     {
         $this->connectGoogle($this->admin, 'calendar');
-        SchoolGoogleConnection::query()->where('school_id', $this->school->id)
+        UserGoogleConnection::query()->where('user_id', $this->admin->id)
             ->update(['token_expires_at' => now()->subMinute()]);
         $this->google->update(function (array &$state) {
             $state['modes']['refresh'] = 'invalid_grant';
@@ -283,7 +322,7 @@ class GoogleCalendarConnectorTest extends TestCase
             ->postJson(route('admin.google.calendar.publish'))
             ->assertStatus(400);
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('disabled', $row->status);
         $this->assertNull($row->credentials);
         $this->assertNull($row->google_calendar_id);
@@ -305,7 +344,7 @@ class GoogleCalendarConnectorTest extends TestCase
             $this->assertNotInstanceOf(GoogleAccessRevokedException::class, $e);
         }
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->school->id)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->admin->id)->first();
         $this->assertSame('active', $row->status);
         $this->assertNotNull($row->accessToken());
         $this->assertNull($row->google_calendar_id);

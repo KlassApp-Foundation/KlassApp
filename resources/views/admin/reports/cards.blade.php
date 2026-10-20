@@ -113,8 +113,8 @@
             </div>
 
             <div class="report-card-actions">
-                <a href="{{ route('admin.reports.cards.merged', $link) }}" class="ds-btn ds-btn-outline">Print all</a>
-                <a href="{{ route('admin.reports.cards.download', $link) }}" class="ds-btn ds-btn-outline">Generate</a>
+                <a href="{{ route('admin.reports.cards.merged', ['stdLink' => $link, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">Print all</a>
+                <a href="{{ route('admin.reports.cards.download', ['stdLink' => $link, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">Generate</a>
                 @if (!empty($link->readyPdf))
                 <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}" class="ds-btn ds-btn-outline">Download PDF</a>
                 @endif
@@ -137,12 +137,12 @@
                             <tr class="border-t hover:bg-gray-50">
                                 <td class="px-2 py-1 text-gray-700">{{ $student->displayName ?: $student->name }}</td>
                                 <td class="px-2 py-1 flex gap-1 justify-center">
-                                    <a href="{{ route('admin.reports.cards.student.preview', ['stdLink' => $link, 'learner' => $student]) }}"
+                                    <a href="{{ route('admin.reports.cards.student.preview', ['stdLink' => $link, 'learner' => $student, 'term' => $selectedTerm]) }}"
                                        target="_blank"
                                        class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded transition">
                                         Preview
                                     </a>
-                                    <a href="{{ route('admin.reports.cards.student.download', ['stdLink' => $link, 'learner' => $student]) }}"
+                                    <a href="{{ route('admin.reports.cards.student.download', ['stdLink' => $link, 'learner' => $student, 'term' => $selectedTerm]) }}"
                                        class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-0.5 rounded transition">
                                         Download
                                     </a>
