@@ -678,17 +678,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 20, 2026 — **stable dependency pins OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156)**
 
-- Branch `cursor/pin-stable-deps-remove-dead-8df9` from `main` (`f14c93a3`). Head `ce3cf44a`. Not merged. Production untouched. Laravel stays 12 (`laravel/framework` v12.63.0). PHP stays 8.4. `maatwebsite/excel` stays `3.1.x-dev`.
+- Rebased onto `main` at `74b18405` (#1148). Not merged. Production untouched. Laravel stays 12 (`laravel/framework` v12.63.0). PHP stays 8.4. `maatwebsite/excel` stays `3.1.x-dev` at the same lock reference as `main`.
+- The lock was regenerated from that `main` lock with `composer update` limited to the pinned and loosened packages. Every version #1148 changed is unchanged in this lock, except `paragonie/sodium_compat` v1.24.2, which is no longer installed because `pusher/pusher-php-server` 7.3.0 does not depend on it. It is not restored at the older v1.24.0.
 - Pins `aws/aws-sdk-php-laravel` 3.11.0, `barryvdh/laravel-dompdf` v3.1.2, `laracasts/presenter` 0.2.9, `laravel/ui` v4.6.3, `twilio/sdk` 8.13.0, `predis/predis` v3.7.0, `pusher/pusher-php-server` 7.3.0. Loosens `mallardduck/blade-lucide-icons` to `^2.0` (locked 2.0.31).
 - Removes unused `laravel/vapor-core`, `laravel/vapor-cli`, `titasgailius/search-relations`, `laravel/scout`, `algolia/algoliasearch-client-php`, and `openai-php/laravel` (plus `config/openai.php` and `config/scout.php`). Replaces abandoned `caneara/axiom` with `App\Rules\Isbn`.
-- Local `scripts/test-guard.sh` (4 processes): **2809 tests, 20,037 assertions, 0 failures, 0 errors, 4 skipped**. The two new tests are `Tests\Unit\Rules\IsbnTest`. The audit baseline of 2774 was `main` at `5f3274f`; this branch is `main` at `f14c93a3` plus those two tests. `composer audit --locked` has no new advisories (one fewer: `paragonie/sodium_compat`, dropped with the Pusher beta).
+- Package files (`package.json`, `package-lock.json`) are unchanged versus `main`, so this rebase does not rebuild frontend assets.
 
 ## Session: 2026-10-20 — Pin stable packages and remove dead ones (PR #1156 OPEN)
 
-- **Work:** PR 1 of the stack plan only. No framework bump, no migrations, no Excel 4, no PHP 8.5.
+- **Work:** PR 1 of the stack plan only. No framework bump, no migrations, no Excel 4, no PHP 8.5. Rebased onto `74b18405` after #1146 and #1148 merged, and regenerated `composer.lock` from `main`'s lock.
 - **Files:** `composer.json`, `composer.lock`, `app/Rules/Isbn.php`, `tests/Unit/Rules/IsbnTest.php`, `app/Http/Requests/BookRequest.php`, `app/Models/LessonPlan.php` (removed unused `searchableAs()` and `toSearchableArray()`), `config/openai.php`, `config/scout.php`, `.env.example` (Algolia block only). `config/ai.php` and credential handling were not touched.
-- **Decision:** `composer update` named only the pinned and loosened packages, so transitive versions other than packages that became unused stayed locked. Excel stays for PR 5.
-- **Tests:** ISBN unit test 2 tests / 44 assertions. Full guard above. CI check and scan were green on `ce3cf44a` while test-guard was still running.
+- **Decision:** `composer update` named only the pinned and loosened packages. #1148's Guzzle 7.16.0, CommonMark 2.10.4, PhpSpreadsheet 1.30.7, HttpFoundation v7.4.21, Yaml v8.1.9, and the other upgraded packages stay at those versions. Excel stays for PR 5.
+- **Tests:** ISBN unit test 2 tests / 44 assertions before the rebase. Full suite re-run is recorded in the follow-up once it finishes.
 - **Status:** OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156). Do not merge from this session.
 
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
