@@ -1,5 +1,12 @@
 {{-- SPDX-License-Identifier: MIT --}}
-@php $stepKey = $stepKey ?? ''; @endphp
+@php
+    $stepKey = $stepKey ?? '';
+    $phoneExample = $phoneExample ?? '';
+    $whatsappHint = $whatsappHint ?? 'Your WhatsApp number, including the country code.';
+    $teacherPhoneHint = $teacherPhoneHint ?? "Teacher's phone number, including the country code.";
+    $parentPhoneHint = $parentPhoneHint ?? "Parent's phone number, including the country code.";
+    $classTeacherPhoneHint = $classTeacherPhoneHint ?? "Class teacher's phone number, including the country code.";
+@endphp
 
 @if($stepKey === 'school_name')
     <div class="ds-form-group">
@@ -195,8 +202,9 @@
                                                data-testid="wizard-structure-ct-name-{{ $sid }}" />
                                         <input type="text" class="ds-form-input w-full"
                                                wire:model="structureCtDrafts.{{ $sid }}.phone"
-                                               placeholder="Phone (optional)"
+                                               placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Phone (optional)' }}"
                                                data-testid="wizard-structure-ct-phone-{{ $sid }}" />
+                                        <p class="text-xs text-gray-500 mt-1" data-testid="wizard-structure-ct-phone-hint">{{ $classTeacherPhoneHint }}</p>
                                     @endif
                                     <x-button type="button" variant="outline" size="sm"
                                               wire:click="inviteStructureClassTeacher({{ $sid }})"
@@ -291,7 +299,8 @@
         </div>
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-phone">Phone (optional)</label>
-            <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="+2567…" data-testid="wizard-teacher-phone" />
+            <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" data-testid="wizard-teacher-phone" aria-describedby="wizard-teacher-phone-hint" />
+            <p class="text-xs text-gray-500 mt-1" id="wizard-teacher-phone-hint" data-testid="wizard-teacher-phone-hint">{{ $teacherPhoneHint }}</p>
         </div>
         <div class="ds-form-group" data-testid="wizard-teacher-classes">
             <label class="ds-form-label">Classes taught <span class="text-xs text-gray-400">(optional)</span></label>
@@ -455,7 +464,8 @@
             </div>
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-parent-phone">Parent phone</label>
-                <input id="wizard-student-parent-phone" type="text" class="ds-form-input w-full" wire:model="studentParentPhone" placeholder="+2567…" />
+                <input id="wizard-student-parent-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="studentParentPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" aria-describedby="wizard-student-parent-phone-hint" data-testid="wizard-student-parent-phone" />
+                <p class="text-xs text-gray-500 mt-1" id="wizard-student-parent-phone-hint" data-testid="wizard-student-parent-phone-hint">{{ $parentPhoneHint }}</p>
             </div>
         </div>
         <div class="manual-wizard-bulk-pair">
@@ -623,7 +633,8 @@
 @elseif($stepKey === 'whatsapp_verify')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-wa">Your WhatsApp number<span class="text-red-500">*</span></label>
-        <input id="wizard-wa" type="text" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="+2567…" data-testid="wizard-wa-phone" />
+        <input id="wizard-wa" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" data-testid="wizard-wa-phone" aria-describedby="wizard-wa-phone-hint" />
+        <p class="text-xs text-gray-500 mt-1" id="wizard-wa-phone-hint" data-testid="wizard-wa-phone-hint">{{ $whatsappHint }}</p>
         <p class="text-xs text-gray-500 mt-1">We send a 6-digit code, then link the number only after you verify it.</p>
     </div>
     <div class="flex flex-wrap gap-2 mt-2 mb-3">

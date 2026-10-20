@@ -54,7 +54,7 @@ class EarlyAccessPageTest extends TestCase
             'contact_name' => 'Alex Example',
             'contact_role' => 'Head teacher',
             'email' => 'alex@example.com',
-            'phone' => '+15550100',
+            'phone' => '+16135550199',
             'country' => 'Canada',
             'approx_students' => '320',
             'consent' => '1',

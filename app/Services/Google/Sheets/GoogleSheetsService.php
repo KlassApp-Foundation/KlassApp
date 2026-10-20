@@ -3,9 +3,10 @@
 namespace App\Services\Google\Sheets;
 
 use App\Models\Academics\Exam;
-use App\Models\SchoolGoogleConnection;
 use App\Models\User;
+use App\Models\UserGoogleConnection;
 use App\Services\Google\GoogleApiClient;
+use App\Services\Google\GoogleConnectionService;
 use App\Services\Google\GoogleApiException;
 use App\Services\Google\GoogleConnectorCatalog;
 use App\Services\MarksImport\MarksImportPlan;
@@ -17,6 +18,7 @@ class GoogleSheetsService
     public function __construct(
         private readonly GoogleApiClient $client,
         private readonly GoogleConnectorCatalog $catalog,
+        private readonly GoogleConnectionService $connections,
         private readonly ClassMarkSheetReader $reader,
         private readonly MarksImportService $imports,
     ) {
@@ -97,12 +99,12 @@ class GoogleSheetsService
         ];
     }
 
-    private function connection(User $actor): SchoolGoogleConnection
+    private function connection(User $actor): UserGoogleConnection
     {
-        $connection = SchoolGoogleConnection::query()->forSchool((int) $actor->school_id)->first();
+        $connection = $this->connections->forUser($actor);
 
         if (! $this->catalog->isLive($connection, 'sheets')) {
-            throw new GoogleApiException(404, 'Google Sheets is not connected for this school.', 'not_connected');
+            throw new GoogleApiException(404, 'Google Sheets is not connected for this user.', 'not_connected');
         }
 
         return $connection;

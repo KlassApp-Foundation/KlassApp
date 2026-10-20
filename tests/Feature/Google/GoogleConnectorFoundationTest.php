@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Google;
 
-use App\Models\SchoolGoogleConnection;
+use App\Models\SchoolGoogleConnectorAllow;
+use App\Models\UserGoogleConnection;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\Google\GoogleAccessRevokedException;
@@ -34,7 +35,10 @@ class GoogleConnectorFoundationTest extends TestCase
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 4, 'name' => 'schoolsubadmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
         ], 'id');
 
         $this->schoolA = $this->makeSchool('A');
@@ -57,6 +61,11 @@ class GoogleConnectorFoundationTest extends TestCase
             ->assertSee('data-testid="google-connector-status-sheets"', false)
             ->assertDontSee('data-testid="google-connector-live-sheets"', false);
 
+        SchoolGoogleConnectorAllow::query()->updateOrCreate(
+            ['school_id' => $this->schoolA, 'connector' => 'sheets'],
+            ['allowed' => true],
+        );
+
         $started = $this->actingAs($this->adminA)->get(route('admin.google.connect', ['connector' => 'sheets']));
         $query = $this->authorizeQuery((string) $started->headers->get('Location'));
         $scopes = preg_split('/\s+/', urldecode((string) ($query['scope'] ?? ''))) ?: [];
@@ -68,12 +77,12 @@ class GoogleConnectorFoundationTest extends TestCase
 
         $this->connectGoogle($this->adminA, 'sheets');
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first();
         $this->assertNotNull($row);
         $this->assertSame('active', $row->status);
         $this->assertSame('school@example.test', $row->google_email);
         $this->assertContains('https://www.googleapis.com/auth/spreadsheets', $row->granted_scopes);
-        $raw = (string) DB::table('school_google_connections')->where('school_id', $this->schoolA)->value('credentials');
+        $raw = (string) DB::table('user_google_connections')->where('user_id', $this->adminA->id)->value('credentials');
         $this->assertStringNotContainsString($row->accessToken(), $raw);
         $this->assertStringNotContainsString('g-access-', $raw);
 
@@ -105,12 +114,9 @@ class GoogleConnectorFoundationTest extends TestCase
             ->assertDontSee('Google Sheets · Live', false);
 
         $this->actingAs($this->adminA)->post(route('admin.google.disconnect', ['connector' => 'sheets']))
-            ->assertRedirect(route('admin.settings.integrations'));
+            ->assertRedirect(route('google.mine'));
 
-        $row->refresh();
-        $this->assertSame('disabled', $row->status);
-        $this->assertNull($row->credentials);
-        $this->assertSame([], $row->granted_scopes ?? []);
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first());
         $this->assertNotEmpty(collect($this->google->calls())->first(fn ($call) => $call['path'] === '/revoke'));
 
         $this->actingAs($this->adminA)->get('/admin/settings/integrations')
@@ -123,6 +129,10 @@ class GoogleConnectorFoundationTest extends TestCase
     {
         $this->connectGoogle($this->adminA, 'sheets');
 
+        SchoolGoogleConnectorAllow::query()->updateOrCreate(
+            ['school_id' => $this->schoolA, 'connector' => 'drive'],
+            ['allowed' => true],
+        );
         $started = $this->actingAs($this->adminA)->get(route('admin.google.connect', ['connector' => 'drive']));
         $scopes = preg_split('/\s+/', urldecode((string) ($this->authorizeQuery((string) $started->headers->get('Location'))['scope'] ?? ''))) ?: [];
         $this->assertContains('https://www.googleapis.com/auth/drive.file', $scopes);
@@ -130,7 +140,7 @@ class GoogleConnectorFoundationTest extends TestCase
 
         $this->connectGoogle($this->adminA, 'drive');
 
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first();
         $this->assertContains('https://www.googleapis.com/auth/spreadsheets', $row->granted_scopes);
         $this->assertContains('https://www.googleapis.com/auth/drive.file', $row->granted_scopes);
 
@@ -145,15 +155,14 @@ class GoogleConnectorFoundationTest extends TestCase
 
         $this->actingAs($this->adminA)->post(route('admin.google.disconnect', ['connector' => 'drive']))
             ->assertRedirect();
-        $row->refresh();
-        $this->assertNull($row->credentials);
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first());
         $this->assertNotNull(collect($this->google->calls())->first(fn ($call) => $call['path'] === '/revoke'));
     }
 
     public function test_expired_token_is_refreshed_before_the_api_call(): void
     {
         $this->connectGoogle($this->adminA, 'sheets');
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first();
         $old = $row->accessToken();
         $row->forceFill(['token_expires_at' => now()->subMinute()])->save();
 
@@ -173,7 +182,7 @@ class GoogleConnectorFoundationTest extends TestCase
     public function test_revoked_refresh_clears_the_stored_tokens(): void
     {
         $this->connectGoogle($this->adminA, 'sheets');
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first();
         $row->forceFill(['token_expires_at' => now()->subMinute()])->save();
         $this->google->update(function (array &$state) {
             $state['modes']['refresh'] = 'invalid_grant';
@@ -194,7 +203,7 @@ class GoogleConnectorFoundationTest extends TestCase
     public function test_api_error_keeps_the_connection(): void
     {
         $this->connectGoogle($this->adminA, 'sheets');
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
+        $row = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first();
         $this->google->update(function (array &$state) {
             $state['modes']['userinfo'] = '500';
         });
@@ -220,22 +229,45 @@ class GoogleConnectorFoundationTest extends TestCase
             ->post(route('admin.google.disconnect', ['connector' => 'sheets']))
             ->assertNotFound();
 
-        $this->assertSame('active', SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->value('status'));
+        $this->assertSame('active', UserGoogleConnection::query()->where('user_id', $this->adminA->id)->value('status'));
+
+        $colleague = User::factory()->create(['usergroup_id' => 3, 'school_id' => $this->schoolA, 'status' => 'active']);
+        $this->actingAs($colleague)
+            ->post(route('admin.google.disconnect', ['connector' => 'sheets']))
+            ->assertNotFound();
+        $this->actingAs($colleague)->get('/admin/settings/integrations')
+            ->assertOk()
+            ->assertDontSee('school@example.test', false);
+        $this->assertSame('active', UserGoogleConnection::query()->where('user_id', $this->adminA->id)->value('status'));
 
         $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $this->schoolA, 'status' => 'active']);
-        $this->actingAs($teacher)->get(route('admin.google.connect', ['connector' => 'sheets']))->assertNotFound();
+        $this->actingAs($teacher)
+            ->post(route('admin.google.disconnect', ['connector' => 'sheets']))
+            ->assertNotFound();
+        $this->assertSame('active', UserGoogleConnection::query()->where('user_id', $this->adminA->id)->value('status'));
         $this->actingAs($teacher)->get('/admin/settings/integrations')->assertNotFound();
+
+        $platform = User::factory()->create(['usergroup_id' => 1, 'school_id' => $this->schoolA, 'status' => 'active']);
+        $this->actingAs($platform)
+            ->post(route('admin.google.disconnect', ['connector' => 'sheets']))
+            ->assertNotFound();
+        $this->actingAs($platform)->get(route('google.mine'))->assertNotFound();
+        $this->assertNotNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first()->accessToken());
     }
 
     public function test_oauth_state_must_match_the_session(): void
     {
+        SchoolGoogleConnectorAllow::query()->updateOrCreate(
+            ['school_id' => $this->schoolA, 'connector' => 'sheets'],
+            ['allowed' => true],
+        );
         $this->actingAs($this->adminA)->get(route('admin.google.connect', ['connector' => 'sheets']));
 
         $this->actingAs($this->adminA)
             ->get('/admin/settings/google/callback?code=nope&state=not-the-session-state')
-            ->assertRedirect(route('admin.settings.integrations'));
+            ->assertRedirect(route('google.mine'));
 
-        $this->assertNull(SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first());
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first());
     }
 
     public function test_missing_client_does_not_redirect_to_google(): void
@@ -246,23 +278,60 @@ class GoogleConnectorFoundationTest extends TestCase
             'services.google.connector_redirect' => null,
         ]);
 
+        SchoolGoogleConnectorAllow::query()->updateOrCreate(
+            ['school_id' => $this->schoolA, 'connector' => 'sheets'],
+            ['allowed' => true],
+        );
+
         $this->actingAs($this->adminA)
             ->get(route('admin.google.connect', ['connector' => 'sheets']))
-            ->assertRedirect(route('admin.settings.integrations'));
+            ->assertRedirect(route('google.mine'));
 
-        $this->assertNull(SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first());
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first());
     }
 
-    public function test_scheduled_refresh_replaces_an_expiring_token(): void
+    public function test_a_school_must_allow_a_connector_before_a_user_can_connect_it(): void
+    {
+        $this->actingAs($this->adminA)
+            ->get(route('admin.google.connect', ['connector' => 'sheets']))
+            ->assertNotFound();
+        $this->assertNull(UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first());
+
+        $this->actingAs($this->adminA)
+            ->post(route('admin.google.allow', ['connector' => 'sheets']), ['allowed' => '1'])
+            ->assertRedirect(route('admin.settings.integrations'));
+
+        $html = $this->actingAs($this->adminA)->get('/admin/settings/integrations')->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="google-allow-count-sheets"', $html);
+        $this->assertStringContainsString('>0 connected<', $html);
+        $this->assertStringNotContainsString('school@example.test', $html);
+
+        $this->connectGoogle($this->adminA, 'sheets');
+
+        $after = $this->actingAs($this->adminA)->get('/admin/settings/integrations')->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="google-allow-count-sheets">1 connected<', $after);
+        $this->assertStringNotContainsString('data-testid="google-allow-email', $after);
+    }
+
+    public function test_smoke_command_acts_only_as_the_named_user(): void
     {
         $this->connectGoogle($this->adminA, 'sheets');
-        $row = SchoolGoogleConnection::query()->where('school_id', $this->schoolA)->first();
-        $old = $row->accessToken();
-        $row->forceFill(['token_expires_at' => now()->addMinutes(5)])->save();
+        $tokenA = UserGoogleConnection::query()->where('user_id', $this->adminA->id)->first()->accessToken();
+        $this->connectGoogle($this->adminB, 'sheets');
+        $beforeB = UserGoogleConnection::query()->where('user_id', $this->adminB->id)->first()->accessToken();
+        $seen = count($this->google->calls());
 
-        $this->artisan('google:refresh-tokens')->assertSuccessful();
+        $this->artisan('google:smoke', ['connector' => 'account', '--user' => $this->adminA->id])
+            ->assertSuccessful()
+            ->expectsOutputToContain('school@example.test');
 
-        $this->assertNotSame($old, $row->fresh()->accessToken());
+        $userinfo = collect(array_slice($this->google->calls(), $seen))
+            ->first(fn ($call) => $call['path'] === '/oauth2/v2/userinfo');
+        $this->assertNotNull($userinfo);
+        $this->assertStringContainsString($tokenA, (string) $userinfo['authorization']);
+        $this->assertStringNotContainsString($beforeB, (string) $userinfo['authorization']);
+        $this->assertSame($beforeB, UserGoogleConnection::query()->where('user_id', $this->adminB->id)->first()->accessToken());
+        $this->artisan('google:smoke', ['connector' => 'account'])->assertFailed();
     }
 
     public function test_foreign_key_rejects_a_missing_school_when_enforced(): void
@@ -281,7 +350,8 @@ class GoogleConnectorFoundationTest extends TestCase
 
         $threw = false;
         try {
-            SchoolGoogleConnection::create([
+            UserGoogleConnection::create([
+                'user_id' => $this->adminA->id,
                 'school_id' => 999999,
                 'status' => 'active',
                 'credentials' => ['access_token' => 'x', 'refresh_token' => 'y'],
@@ -293,7 +363,7 @@ class GoogleConnectorFoundationTest extends TestCase
 
         $this->assertTrue($threw, 'A Google connection for a missing school must fail when foreign keys are enforced.');
 
-        DB::table('school_google_connections')->whereIn('school_id', [$this->schoolA, $this->schoolB, 999999])->delete();
+        DB::table('user_google_connections')->whereIn('school_id', [$this->schoolA, $this->schoolB, 999999])->delete();
         DB::table('userprofiles')->whereIn('school_id', [$this->schoolA, $this->schoolB])->delete();
         DB::table('users')->whereIn('school_id', [$this->schoolA, $this->schoolB])->delete();
         DB::table('schools')->whereIn('id', [$this->schoolA, $this->schoolB])->delete();

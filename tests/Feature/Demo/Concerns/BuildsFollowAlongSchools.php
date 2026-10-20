@@ -5,6 +5,7 @@ namespace Tests\Feature\Demo\Concerns;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 use App\Models\School;
@@ -100,6 +101,32 @@ trait BuildsFollowAlongSchools
         }
 
         return ['school' => $school, 'section' => $section, 'students' => $rows, 'teacher' => $teacher, 'link' => $link, 'exams' => $exams];
+    }
+
+    /** Existing release tests predate the approval rule. Mark every sitting approved. */
+    protected function approveFollowAlongSittings(): void
+    {
+        foreach (['demo', 'real'] as $which) {
+            $school = $this->fx[$which]['school'];
+            $teacher = $this->fx[$which]['teacher'];
+            foreach (Exam::query()->where('school_id', $school->id)->get() as $exam) {
+                ExamMarksSubmission::query()->updateOrCreate(
+                    [
+                        'exam_id' => $exam->id,
+                        'class_id' => $exam->section_id,
+                        'subject_id' => $exam->subject_id,
+                    ],
+                    [
+                        'school_id' => $school->id,
+                        'teacher_id' => $teacher->id,
+                        'status' => 'locked',
+                        'approval_status' => 'approved',
+                        'submitted_at' => now(),
+                        'approved_at' => now(),
+                    ],
+                );
+            }
+        }
     }
 
     /** A Tier 2 release record of the latest exam (End of Term, Term III) of a fixture school. */

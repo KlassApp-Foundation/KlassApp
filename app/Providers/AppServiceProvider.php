@@ -50,6 +50,15 @@ use App\Channels\WhatsAppBackupChannel;
 use Laravel\Ai\Tools\Request as AiToolRequest;
 use Illuminate\Support\Facades\Notification;
 use App\Services\Toshi\AuditingMcpClientManager;
+use App\Contracts\Results\DivisionRule;
+use App\Contracts\Results\GradingScale;
+use App\Contracts\Results\ReleaseGate;
+use App\Contracts\Results\ReportTemplates;
+use App\Services\Results\DefaultReportTemplates;
+use App\Services\Results\EloquentReleaseGate;
+use App\Services\Results\ResultsService;
+use App\Services\Results\SchoolGradingScale;
+use App\Services\Results\ThresholdDivisionRule;
 use Laravel\Mcp\Client\ClientManager;
 // Importing DuskServiceProvider class
 
@@ -237,5 +246,10 @@ class AppServiceProvider extends ServiceProvider {
             \App\Services\Google\Sheets\ClassMarkSheetReader::class,
             \App\Services\Google\Sheets\ExamMarkSheetReader::class,
         );
+        $this->app->singleton(ReleaseGate::class, EloquentReleaseGate::class);
+        $this->app->singleton(GradingScale::class, SchoolGradingScale::class);
+        $this->app->singleton(DivisionRule::class, ThresholdDivisionRule::class);
+        $this->app->singleton(ReportTemplates::class, DefaultReportTemplates::class);
+        $this->app->singleton(ResultsService::class);
     }
 }

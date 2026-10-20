@@ -62,11 +62,15 @@
                   <select id="ea-{{ $field }}" name="{{ $field }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required data-testid="early-access-country" @if($errors->has($field)) aria-invalid="true" aria-describedby="ea-{{ $field }}-error" @endif>
                     <option value="" @selected(old($field) === null || old($field) === '')>Choose your country</option>
                     @foreach ($countries as $countryName)
-                      <option value="{{ $countryName }}" @selected(old($field) === $countryName)>{{ $countryName }}</option>
+                      <option value="{{ $countryName }}" data-example="{{ \App\Support\PhoneCountry::example($countryName) }}" @selected(old($field) === $countryName)>{{ $countryName }}</option>
                     @endforeach
                   </select>
                 @else
-                  <input id="ea-{{ $field }}" type="{{ $type }}" name="{{ $field }}" value="{{ old($field) }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required @if($type === 'number') min="1" inputmode="numeric" @endif @if($errors->has($field)) aria-invalid="true" aria-describedby="ea-{{ $field }}-error" @endif>
+                  <input id="ea-{{ $field }}" type="{{ $type }}" name="{{ $field }}" value="{{ old($field) }}" class="ap-input{{ $errors->has($field) ? ' is-invalid' : '' }}" autocomplete="{{ $autocomplete }}" required @if($type === 'number') min="1" inputmode="numeric" @endif @if($errors->has($field)) aria-invalid="true" @endif @if($field === 'phone') aria-describedby="ea-phone-hint{{ $errors->has($field) ? ' ea-phone-error' : '' }}" @elseif($errors->has($field)) aria-describedby="ea-{{ $field }}-error" @endif>
+                @endif
+                @if ($field === 'phone')
+                  @php $eaPhoneExample = \App\Support\PhoneCountry::example(old('country')); @endphp
+                  <p class="ap-meta" id="ea-phone-hint" data-testid="early-access-phone-hint" style="margin:4px 0 0;">{{ $eaPhoneExample ? 'Your phone number, e.g. '.$eaPhoneExample : 'Your phone number, including the country code.' }}</p>
                 @endif
                 @if ($errors->has($field))
                   <span class="ap-error" id="ea-{{ $field }}-error" data-testid="early-access-error-{{ $field }}">{{ $errors->first($field) }}</span>
@@ -143,6 +147,20 @@
   tick();
   // Reduced motion: update once a minute instead of every second.
   setInterval(tick, reduce ? 60000 : 1000);
+})();
+(function () {
+  var country = document.getElementById('ea-country');
+  var hint = document.getElementById('ea-phone-hint');
+  if (!country || !hint) return;
+  function sync() {
+    var opt = country.options[country.selectedIndex];
+    var example = opt ? (opt.getAttribute('data-example') || '') : '';
+    hint.textContent = example
+      ? 'Your phone number, e.g. ' + example
+      : 'Your phone number, including the country code.';
+  }
+  country.addEventListener('change', sync);
+  sync();
 })();
 </script>
 @endpush

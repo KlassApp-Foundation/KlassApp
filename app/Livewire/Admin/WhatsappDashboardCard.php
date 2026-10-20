@@ -8,15 +8,13 @@ use Illuminate\View\View;
 use Livewire\Component;
 
 /**
- * Admin dashboard: the WhatsApp card near the top. Pending request count,
- * the latest three requests with Approve / Reject, and a link to the
- * WhatsApp page. Polls like the WhatsApp page.
+ * Admin dashboard poller. No panel: a newer link request still toasts, and
+ * the sidebar badge still receives the waiting count. Approve and reject
+ * stay available to the same component the public demo already allows.
  */
 class WhatsappDashboardCard extends Component
 {
     use ActsOnLinkRequests;
-
-    public const LATEST = 3;
 
     public function mount(): void
     {
@@ -27,14 +25,10 @@ class WhatsappDashboardCard extends Component
     {
         $schoolId = (int) $this->linkRequestAdmin()->school_id;
         $board = app(LinkRequestBoard::class);
-        $requests = $board->pending($schoolId, self::LATEST);
-        $this->announceNewRequests($requests);
+        $this->announceNewRequests($board->pending($schoolId, 1));
         $this->dispatch('link-request-count', count: $board->pendingCount($schoolId));
 
         return view('livewire.admin.whatsapp-dashboard-card', [
-            'count' => $board->pendingCount($schoolId),
-            'requests' => $requests,
-            'isDemoSchool' => (int) (auth()->user()->school?->is_demo ?? 0) === 1,
             'pollSeconds' => WhatsappLinkRequests::POLL_SECONDS,
         ]);
     }

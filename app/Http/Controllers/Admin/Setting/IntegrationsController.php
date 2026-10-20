@@ -55,7 +55,9 @@ class IntegrationsController extends Controller
             'slackConnectable' => config('services.slack_mcp.mode') === 'live'
                 && filled(config('services.slack_mcp.client_id')),
             'googleConnectors' => app(\App\Services\Google\GoogleConnectionService::class)
-                ->cardRows((int) $schoolId),
+                ->cardRows(Auth::user()),
+            'googleAllow' => app(\App\Services\Google\GoogleConnectionService::class)
+                ->allowRows((int) $schoolId),
         ]);
     }
 

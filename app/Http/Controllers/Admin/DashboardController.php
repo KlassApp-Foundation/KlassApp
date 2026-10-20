@@ -129,16 +129,18 @@ class DashboardController extends Controller
         }
 
         // Connected tools: the real number of linked WhatsApp numbers (not the
-        // seeded parents' flags) and whether Google Drive is connected.
+        // seeded parents' flags), waiting link requests, and whether Google Drive is connected.
+        $linkBoard = app(\App\Services\WhatsApp\LinkRequestBoard::class);
         $connectedTools = [
-            'whatsappLinked' => $school_id ? app(\App\Services\WhatsApp\LinkRequestBoard::class)->linkedNumberCount((int) $school_id) : 0,
+            'whatsappLinked' => $school_id ? $linkBoard->linkedNumberCount((int) $school_id) : 0,
+            'whatsappPending' => $school_id ? $linkBoard->pendingCount((int) $school_id) : 0,
             'driveConnected' => $school_id ? \App\Models\SchoolMcpConnector::query()
                 ->forSchool((int) $school_id)
                 ->where('connector_type', 'google-drive')
                 ->where('status', 'active')
                 ->exists() : false,
             'googleLive' => $school_id
-                ? app(\App\Services\Google\GoogleConnectionService::class)->liveSummaries((int) $school_id)
+                ? app(\App\Services\Google\GoogleConnectionService::class)->liveSummaries(Auth::user())
                 : [],
         ];
 

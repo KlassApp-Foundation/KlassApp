@@ -35,7 +35,11 @@
           </div>
           <div class="ap-field">
             <label class="ap-label" for="invite-phone">Phone (WhatsApp)</label>
-            <input id="invite-phone" type="tel" name="phone" value="{{ old('phone') }}" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" placeholder="0701234567 or +256701234567" required autocomplete="tel">
+            <input id="invite-phone" type="tel" name="phone" value="{{ old('phone') }}" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" placeholder="{{ \App\Support\PhoneCountry::example($invite->country) }}" required autocomplete="tel" @if($errors->has('phone')) aria-invalid="true" aria-describedby="invite-phone-error" @else aria-describedby="invite-phone-hint" @endif>
+            <p class="ap-meta" id="invite-phone-hint" data-testid="invite-phone-hint" style="margin:4px 0 0;">{{ \App\Support\PhoneCountry::hint($invite->country, true) }}</p>
+            @if ($errors->has('phone'))
+              <span class="ap-error" id="invite-phone-error" data-testid="invite-phone-error">{{ $errors->first('phone') }}</span>
+            @endif
           </div>
           <div class="ap-field">
             <label class="ap-label" for="invite-password">Password</label>
