@@ -43,18 +43,20 @@ class PasswordResetCodeController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return back()->withErrors(['email' => 'No account found with that email.']);
-        }
 
-        $auth = Authentication::where('user_id', $user->id)
-            ->where('type', 'password_reset')
-            ->where('status', 0)
-            ->where('expires_on', '>=', Carbon::now())
-            ->orderBy('id', 'desc')
-            ->first();
+        $auth = $user
+            ? Authentication::where('user_id', $user->id)
+                ->where('type', 'password_reset')
+                ->where('status', 0)
+                ->where('expires_on', '>=', Carbon::now())
+                ->orderBy('id', 'desc')
+                ->first()
+            : null;
 
-        if (!$auth || $auth->token != $request->code) {
+        // Same response when the email is unknown and when the code is wrong,
+        // expired, or already used. A distinct message would show that the
+        // address has an account.
+        if (!$user || !$auth || $auth->token != $request->code) {
             return back()->withErrors(['code' => 'Invalid or expired code. Please request a new one.']);
         }
 
@@ -83,38 +85,35 @@ class PasswordResetCodeController extends Controller
         }
 
         $user = User::where('email', $email)->first();
-        if (!$user) {
-            return redirect()->route('password.email')
-                ->withErrors(['email' => 'No account found with that email.']);
-        }
+        if ($user) {
+            // Invalidate old codes
+            Authentication::where('user_id', $user->id)
+                ->where('type', 'password_reset')
+                ->where('status', 0)
+                ->update(['status' => 2]); // cancelled
 
-        // Invalidate old codes
-        Authentication::where('user_id', $user->id)
-            ->where('type', 'password_reset')
-            ->where('status', 0)
-            ->update(['status' => 2]); // cancelled
+            // Generate new code
+            $code = random_int(100000, 999999);
+            $expiry = Carbon::now()->addMinutes(5);
 
-        // Generate new code
-        $code = random_int(100000, 999999);
-        $expiry = Carbon::now()->addMinutes(5);
-
-        Authentication::create([
-            'user_id'    => $user->id,
-            'type'       => 'password_reset',
-            'token'      => $code,
-            'ip_address' => $request->ip(),
-            'expires_on' => $expiry,
-            'status'     => 0,
-        ]);
-
-        try {
-            \Mail::to($user->email)->send(new \App\Mail\ResetPasswordCodeMail($user, $code));
-        } catch (\Throwable $e) {
-            Log::warning('Password reset code email failed', [
-                'email' => $user->email,
-                'error' => $e->getMessage(),
+            Authentication::create([
+                'user_id'    => $user->id,
+                'type'       => 'password_reset',
+                'token'      => $code,
+                'ip_address' => $request->ip(),
+                'expires_on' => $expiry,
+                'status'     => 0,
             ]);
-            return back()->withErrors(['email' => 'Could not send the code. Please try again.']);
+
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\ResetPasswordCodeMail($user, $code));
+            } catch (\Throwable $e) {
+                Log::warning('Password reset code email failed', [
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                ]);
+                return back()->withErrors(['email' => 'Could not send the code. Please try again.']);
+            }
         }
 
         return redirect()->route('password.reset.code', ['email' => $email])
