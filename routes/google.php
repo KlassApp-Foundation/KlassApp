@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Setting\GoogleConnectController;
+use App\Http\Controllers\Admin\Setting\GoogleDriveController;
 use App\Http\Controllers\Admin\Setting\GoogleSheetsController;
 use App\Http\Controllers\Google\GoogleMineController;
 use Illuminate\Support\Facades\Route;
@@ -18,4 +19,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/admin/settings/google/{connector}/disconnect', [GoogleConnectController::class, 'disconnect'])->name('admin.google.disconnect');
     Route::post('/admin/settings/google/sheets/export', [GoogleSheetsController::class, 'export'])->name('admin.google.sheets.export');
     Route::post('/admin/settings/google/sheets/import', [GoogleSheetsController::class, 'import'])->name('admin.google.sheets.import');
+    Route::post('/admin/settings/google/drive/file', [GoogleDriveController::class, 'file'])->name('admin.google.drive.file');
 });

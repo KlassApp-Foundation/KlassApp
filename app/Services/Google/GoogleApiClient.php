@@ -54,6 +54,21 @@ class GoogleApiClient
     }
 
     /**
+     * Raw body for Drive's multipart/related upload. Form-data is a different encoding.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    public function postBody(UserGoogleConnection $connection, string $url, string $body, string $contentType, array $query = []): array
+    {
+        return $this->request($connection, 'POST', $url, [
+            'raw' => $body,
+            'content_type' => $contentType,
+            'query' => $query,
+        ]);
+    }
+
+    /**
      * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
@@ -106,6 +121,10 @@ class GoogleApiClient
 
         if (isset($options['multipart'])) {
             return $pending->send($method, $url, ['multipart' => $options['multipart']]);
+        }
+
+        if (isset($options['raw'])) {
+            return $pending->withBody($options['raw'], (string) $options['content_type'])->send($method, $url);
         }
 
         if (array_key_exists('json', $options)) {

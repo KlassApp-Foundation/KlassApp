@@ -175,7 +175,8 @@ class FakeGoogleServer
         $result = $fn($state);
         ftruncate($fh, 0);
         rewind($fh);
-        fwrite($fh, json_encode($state));
+        $encoded = json_encode($state, JSON_INVALID_UTF8_SUBSTITUTE);
+        fwrite($fh, $encoded === false ? '{}' : $encoded);
         fflush($fh);
         flock($fh, LOCK_UN);
         fclose($fh);

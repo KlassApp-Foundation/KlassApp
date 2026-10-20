@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Academics\Exam;
 use App\Models\User;
+use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
@@ -20,8 +21,9 @@ class GoogleConnectorSmokeCommand extends Command
     protected $signature = 'google:smoke
         {connector : account, sheets, or a connector key from config/google.php}
         {--user= : User id. The command acts only as this user}
-        {--exam= : Exam id (sheets)}
-        {--spreadsheet= : Spreadsheet id (sheets import)}';
+        {--exam= : Exam id (sheets, drive)}
+        {--spreadsheet= : Spreadsheet id (sheets import)}
+        {--learner= : Student user id (drive)}';
 
     protected $description = 'Run one Google connector action as the named user';
 
@@ -51,6 +53,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'sheets') {
             return $this->sheets($user);
+        }
+
+        if ($connector === 'drive') {
+            return $this->drive($user);
         }
 
         if (! $catalog->has($connector)) {
@@ -136,6 +142,37 @@ class GoogleConnectorSmokeCommand extends Command
 
         $this->info('Spreadsheet: '.$created['spreadsheetId']);
         $this->line($created['spreadsheetUrl']);
+
+        return self::SUCCESS;
+    }
+
+    private function drive(User $user): int
+    {
+        $examId = (int) $this->option('exam');
+        $learnerId = (int) $this->option('learner');
+        $exam = Exam::query()->where('school_id', $user->school_id)->whereKey($examId)->first();
+
+        if ($exam === null || $learnerId <= 0) {
+            $this->error('Pass --exam= and --learner= for this user\'s school.');
+
+            return self::FAILURE;
+        }
+
+        try {
+            $filed = app(GoogleDriveService::class)->fileReportCard($user, $exam, $learnerId);
+        } catch (GoogleApiException $e) {
+            $this->error('Drive call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot file that report card.');
+
+            return self::FAILURE;
+        }
+
+        $this->info('Filed: '.$filed['fileId']);
+        $this->line($filed['folder']);
+        $this->line($filed['webViewLink']);
 
         return self::SUCCESS;
     }
