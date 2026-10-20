@@ -4,7 +4,6 @@ namespace App\Onboarding\Steps\Steps;
 
 use App\Models\AcademicYear;
 use App\Models\School;
-use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Onboarding\Steps\AbstractOnboardingStep;
 use App\Services\OnboardingStepsService;
@@ -188,18 +187,9 @@ class SubjectsStep extends AbstractOnboardingStep
         return ['created' => [['subject_rows_created' => $after - $before]], 'skipped' => []];
     }
 
-    /** Same resolution the engine uses: exact class name plus stream sections. */
+    /** Same resolution the engine uses: real section records, including naming variants. */
     private function linksForClass(School $school, AcademicYear $year, string $className): \Illuminate\Support\Collection
     {
-        return StandardLink::where('school_id', $school->id)
-            ->where('academic_year_id', $year->id)
-            ->whereHas('section', function ($query) use ($school, $className) {
-                $query->where('school_id', $school->id)
-                    ->where(function ($q) use ($className) {
-                        $q->where('name', $className)
-                            ->orWhere('name', 'like', $className.' %');
-                    });
-            })
-            ->get();
+        return $this->engine->standardLinksForClass($school, $year, $className);
     }
 }
