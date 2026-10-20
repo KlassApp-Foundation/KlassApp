@@ -67,7 +67,7 @@ class GenerateClassReportsJob implements ShouldQueue
 
             $helper = app(StudentReportHelperService::class);
             $svc = new ReportCardCommentService;
-            $positionMap = $this->computePositionMap($exam, $schoolId);
+            $positionMap = $reports->computePositionMap($exam, $schoolId);
 
             $className = Section::find($stdLink->section_id)->name ?? 'class';
             $safeClass = str_replace(' ', '_', $className);
@@ -127,29 +127,4 @@ class GenerateClassReportsJob implements ShouldQueue
         }
     }
 
-    private function computePositionMap(Exam $exam, int $schoolId): array
-    {
-        $studentIds = \App\Models\Academics\Marks::where('exam_id', $exam->id)
-            ->distinct('student_id')->orderBy('student_id')->pluck('student_id');
-
-        $helper = app(StudentReportHelperService::class);
-        $scopedExamIds = Exam::where('school_id', $schoolId)
-            ->where('section_id', $exam->section_id)
-            ->where('academic_year_id', $exam->academic_year_id)
-            ->where('academic_term_id', $exam->academic_term_id)
-            ->pluck('id');
-
-        $learners = \App\Models\User::whereIn('id', $studentIds)
-            ->with(['marks' => fn($q) => $q->whereIn('exam_id', $scopedExamIds)->with('exam.examType')])
-            ->where('usergroup_id', 6)
-            ->get();
-
-        $learners = $helper->position($learners, $exam);
-
-        $map = [];
-        foreach ($learners as $l) {
-            $map[$l->id] = $l->position;
-        }
-        return $map;
-    }
 }

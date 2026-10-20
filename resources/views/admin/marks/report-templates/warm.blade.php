@@ -306,6 +306,31 @@
                 <th>POSITION</th>
                 @if ($showAgg) <th>DIVISION</th> @endif
             </tr>
+            @if (!empty($midSittings))
+            @foreach ($midSittings as $sitting)
+                <tr>
+                    <td class="left">{{ $sitting['label'] }}</td>
+                    @foreach ($subjects as $subject)
+                        @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
+                            @php
+                                $cell = $sitting['cells'][$subject->id] ?? null;
+                                $markValue = ($cell && $cell->mark !== null) ? $cell->mark : null;
+                                $midGrade = '-';
+                                if ($markValue !== null) {
+                                    $g = $grading_system->first(fn($gs) => $gs->min_score <= $markValue && $gs->max_score >= $markValue);
+                                    $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
+                                }
+                            @endphp
+                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
+                            @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
+                        @endif
+                    @endforeach
+                    <td><strong>{{ $sitting['total'] ?? '-' }}</strong></td>
+                    <td>{{ !empty($sitting['pos']) ? $ordinal($sitting['pos']) : '-' }}</td>
+                    @if ($showAgg) <td><strong>{{ $sitting['division'] ?? '-' }}</strong></td> @endif
+                </tr>
+            @endforeach
+            @else
             @foreach ($midExams as $midExam)
                 @php $monthLabel = \App\Services\StudentReportCardService::midExamMonthRowLabel($midExam); @endphp
                 @php $ms = $midStats[$midExam->id] ?? null; @endphp
@@ -331,6 +356,7 @@
                     @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
+            @endif
         </table>
         @endif
 

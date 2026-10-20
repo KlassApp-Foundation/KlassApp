@@ -6,6 +6,11 @@ use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
+use App\Services\Results\ResultSheet;
+use App\Services\Results\ResultStudent;
+use App\Services\Results\ResultsPolicy;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
@@ -182,28 +187,16 @@ class StudentReportCardService
 
     public function computePositionMap(Exam $exam, int $schoolId): array
     {
-        $studentIds = $this->studentIds($exam);
-        if ($studentIds->isEmpty()) {
+        $sheet = $this->classSheet($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, (int) $exam->standard_id);
+        if ($sheet === null) {
             return [];
         }
 
-        $helper = app(StudentReportHelperService::class);
-        $scopedExamIds = Exam::where('school_id', $schoolId)
-            ->where('section_id', $exam->section_id)
-            ->where('academic_year_id', $exam->academic_year_id)
-            ->where('academic_term_id', $exam->academic_term_id)
-            ->pluck('id');
-
-        $learners = User::whereIn('id', $studentIds)
-            ->with(['marks' => fn ($q) => $q->whereIn('exam_id', $scopedExamIds)->with('exam.examType')])
-            ->where('usergroup_id', 6)
-            ->get();
-
-        $learners = $helper->position($learners, $exam);
-
         $map = [];
-        foreach ($learners as $l) {
-            $map[$l->id] = $l->position;
+        foreach ($sheet->students as $student) {
+            if ($student->classPosition !== null) {
+                $map[$student->studentId] = $student->classPosition;
+            }
         }
 
         return $map;
@@ -435,6 +428,21 @@ class StudentReportCardService
         }
 
         $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
+        $midSittings = [];
+        $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id);
+        $resultRow = $sheet?->student((int) $learner->id);
+        if ($resultRow !== null) {
+            $total = (float) ($resultRow->total ?? 0);
+            $eotPoints = $resultRow->aggregate === null
+                ? null
+                : ['points' => $resultRow->aggregate, 'counted' => $resultRow->subjectsCounted];
+            $eotDivision = $resultRow->division ?? '-';
+            $myPos = $resultRow->classPosition ?? 0;
+            $totalLearners = $resultRow->classOutOf;
+            $streamPos = $resultRow->streamPosition;
+            $streamTotal = $resultRow->streamOutOf > 0 ? $resultRow->streamOutOf : null;
+            $midSittings = $this->midSittings($sheet, (int) $learner->id, $midExams);
+        }
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
         $grade = $helper->grade($learner, $exam);
         $teacherComment = $standard
@@ -472,11 +480,81 @@ class StudentReportCardService
             'streamName' => $streamName,
             'streamPos' => $streamPos,
             'streamTotal' => $streamTotal,
+            'midSittings' => $midSittings,
             'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null): ?ResultSheet
+    {
+        if ($sectionId < 1 || $academicTermId < 1) {
+            return null;
+        }
+
+        return app(ResultsService::class)->sheet(
+            new ResultsQuery(
+                schoolId: $schoolId,
+                sectionId: $sectionId,
+                academicTermId: $academicTermId,
+                studentId: $studentId,
+            ),
+            $this->resultsPolicy($schoolId, $standardId),
+        );
+    }
+
+    /**
+     * Same basis the class list already used: points when the school has
+     * them, otherwise the mark total. A package replaces the scale and the
+     * division rule. This choice does not add a curriculum.
+     */
+    private function resultsPolicy(int $schoolId, int $standardId): ResultsPolicy
+    {
+        $usesPoints = \App\Models\Academics\SchoolGradingSystem::query()
+            ->where('school_id', $schoolId)
+            ->where('standard_id', $standardId)
+            ->get()
+            ->contains(fn ($row) => \App\Helpers\GradingHelper::effectivePoints($row) !== null);
+
+        return new ResultsPolicy(
+            app(GradingScale::class),
+            app(DivisionRule::class),
+            $usesPoints ? ResultsPolicy::BASIS_AGGREGATE : ResultsPolicy::BASIS_TOTAL,
+            higherIsBetter: ! $usesPoints,
+        );
+    }
+
+    /**
+     * One mid-term row per sitting, with every subject in that sitting.
+     *
+     * @param  Collection<int, Exam>  $midExams
+     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, pos: ?int, of: int, division: string}>
+     */
+    private function midSittings(ResultSheet $sheet, int $studentId, Collection $midExams): array
+    {
+        $rows = [];
+        foreach ($sheet->sittings as $sitting) {
+            if ($sitting->contributesToReport) {
+                continue;
+            }
+            $student = $sitting->student($studentId);
+            if (! $student instanceof ResultStudent) {
+                continue;
+            }
+            $sample = $midExams->first(fn ($exam) => (int) $exam->exam_type_id === $sitting->examTypeId);
+            $rows[] = [
+                'label' => $sample ? self::midExamMonthRowLabel($sample) : $sitting->name,
+                'cells' => $student->cells,
+                'total' => $student->total,
+                'pos' => $student->classPosition,
+                'of' => $student->classOutOf,
+                'division' => $student->division ?? '-',
+            ];
+        }
+
+        return $rows;
     }
 
     /**
