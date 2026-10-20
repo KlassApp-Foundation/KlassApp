@@ -20,6 +20,7 @@ use App\Services\ClassStructureService;
 use App\Services\ClassTeacherInviteService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
+use App\Support\PhoneCountry;
 use App\Services\ToshiActionService;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Steps\StepRegistry;
@@ -390,10 +391,15 @@ class ManualOnboardingWizard extends Component
             $this->teacherEmail = $email;
         }
 
+        $phone = $this->normaliseOptionalPhone($this->teacherPhone, false);
+        if ($phone === null) {
+            return;
+        }
+
         $this->teacherDrafts[] = [
             'name' => $name,
             'email' => $email,
-            'phone' => trim($this->teacherPhone),
+            'phone' => $phone,
             'classes' => array_values(array_filter(array_map('trim', $this->teacherSelectedClasses))),
             'subjects' => array_values(array_filter(array_map('trim', $this->teacherSelectedSubjects))),
         ];
@@ -449,12 +455,17 @@ class ManualOnboardingWizard extends Component
             $gender = '';
         }
 
+        $parentPhone = $this->normaliseOptionalPhone($this->studentParentPhone, false);
+        if ($parentPhone === null) {
+            return;
+        }
+
         $this->studentDrafts[] = [
             'name' => $name,
             'class' => trim($this->studentClass),
             'stream' => trim($this->studentStream),
             'parent' => trim($this->studentParent),
-            'parent_phone' => trim($this->studentParentPhone),
+            'parent_phone' => $parentPhone,
             'school_student_id' => trim($this->studentSchoolStudentId),
             'lin' => trim($this->studentLin),
             'board_registration_number' => trim($this->studentBoardRegNumber),
@@ -595,10 +606,14 @@ class ManualOnboardingWizard extends Component
                 }
                 $subjects = $this->splitCsvList((string) ($row['subjects'] ?? ''));
                 $classes = $this->splitCsvList((string) ($row['classes'] ?? ''));
+                $phone = $this->normaliseOptionalPhone((string) ($row['phone'] ?? ''), false);
+                if ($phone === null) {
+                    continue;
+                }
                 $this->teacherDrafts[] = [
                     'name' => $row['name'],
                     'email' => $email,
-                    'phone' => (string) ($row['phone'] ?? ''),
+                    'phone' => $phone,
                     'classes' => $classes,
                     'subjects' => $subjects,
                 ];
@@ -606,12 +621,16 @@ class ManualOnboardingWizard extends Component
             $this->teacherUpload = null;
         } else {
             foreach ($rows as $row) {
+                $parentPhone = $this->normaliseOptionalPhone((string) ($row['parent_phone'] ?? ''), false);
+                if ($parentPhone === null) {
+                    continue;
+                }
                 $this->studentDrafts[] = [
                     'name' => $row['name'],
                     'class' => (string) ($row['class'] ?? ''),
                     'stream' => (string) ($row['stream'] ?? ''),
                     'parent' => (string) ($row['parent'] ?? ''),
-                    'parent_phone' => (string) ($row['parent_phone'] ?? ''),
+                    'parent_phone' => $parentPhone,
                     'school_student_id' => (string) ($row['school_student_id'] ?? ''),
                     'lin' => (string) ($row['lin'] ?? ''),
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
@@ -622,7 +641,9 @@ class ManualOnboardingWizard extends Component
             $this->studentUpload = null;
         }
 
-        $this->errorMessage = '';
+        if ($this->errorMessage === '' || ! str_contains($this->errorMessage, 'country code')) {
+            $this->errorMessage = '';
+        }
     }
 
     private function advanceToNextIncompleteOrReview(string $fromKey): void
@@ -1089,6 +1110,48 @@ class ManualOnboardingWizard extends Component
         $this->selectedPlanId = $first ? (int) $first->id : null;
     }
 
+    public function phoneCountryName(): string
+    {
+        return trim((string) ($this->school()->registration_country ?? ''));
+    }
+
+    public function phoneExample(): string
+    {
+        return PhoneCountry::example($this->phoneCountryName()) ?? '';
+    }
+
+    public function phoneFormatHint(bool $whatsapp = true): string
+    {
+        return PhoneCountry::hint($this->phoneCountryName(), $whatsapp);
+    }
+
+    /**
+     * Empty stays empty. A number the school's country cannot accept returns null
+     * and sets errorMessage. When the school has no country yet, the typed value
+     * is kept so a later step can still store it.
+     */
+    private function normaliseOptionalPhone(string $phone, bool $whatsapp): ?string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $country = $this->phoneCountryName();
+        if ($country === '') {
+            return $phone;
+        }
+
+        $normalised = PhoneCountry::normalise($phone, $country);
+        if ($normalised === null) {
+            $this->errorMessage = PhoneCountry::error($country, $whatsapp);
+
+            return null;
+        }
+
+        return $normalised;
+    }
+
     private function school(): School
     {
         return School::query()->findOrFail(Auth::user()->school_id);
@@ -1549,11 +1612,16 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        $phone = $this->normaliseOptionalPhone((string) ($draft['phone'] ?? ''), false);
+        if ($phone === null) {
+            return;
+        }
+
         $result = ClassTeacherInviteService::invite(Auth::user(), $link, [
             'email' => $draft['email'] ?? '',
             'existing_teacher_id' => $draft['existing_teacher_id'] ?? '',
             'name' => $draft['name'] ?? '',
-            'phone' => $draft['phone'] ?? '',
+            'phone' => $phone,
         ]);
 
         if (! ($result['success'] ?? false)) {
@@ -2061,6 +2129,7 @@ class ManualOnboardingWizard extends Component
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
+                'phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
                 'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
@@ -2178,12 +2247,19 @@ class ManualOnboardingWizard extends Component
     {
         $this->errorMessage = '';
         $this->whatsappOtpStatus = '';
-        $phone = trim($this->whatsappPhone);
-        if ($phone === '') {
-            $this->errorMessage = 'Enter your WhatsApp number (+256…) before sending a code.';
+        $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
+        if ($phone === null) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerified = false;
 
             return;
         }
+        if ($phone === '') {
+            $this->errorMessage = PhoneCountry::error($this->phoneCountryName(), true);
+
+            return;
+        }
+        $this->whatsappPhone = $phone;
 
         $otpService = app(WhatsAppOnboardingOtpService::class);
         $otp = $otpService->generateCode();
@@ -2251,10 +2327,18 @@ class ManualOnboardingWizard extends Component
 
     private function saveWhatsApp(School $school): void
     {
-        $phone = trim($this->whatsappPhone);
-        if ($phone === '') {
-            throw ValidationException::withMessages(['whatsappPhone' => 'Enter your WhatsApp number (+256…).']);
+        $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
+        if ($phone === null) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => $this->errorMessage,
+            ]);
         }
+        if ($phone === '') {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => PhoneCountry::error($this->phoneCountryName(), true),
+            ]);
+        }
+        $this->whatsappPhone = $phone;
 
         $existing = WhatsAppUser::where('user_id', Auth::id())->whereNotNull('verified_at')->first();
         if ($existing && $existing->phone === $phone) {
