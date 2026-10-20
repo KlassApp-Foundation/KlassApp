@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -189,7 +190,7 @@ class OnboardingPhoneFormatTest extends TestCase
         $this->assertNotFalse($whatsappIndex);
 
         $wizard->call('goToStep', $studentsIndex)
-            ->assertSee('Your phone number, e.g. +256 765 274 289', false);
+            ->assertSee("Parent's phone number, e.g. +256 765 274 289");
         $wizard->call('goToStep', $whatsappIndex)
             ->assertSee('Your WhatsApp number, e.g. +256 765 274 289', false);
     }
@@ -244,6 +245,21 @@ class OnboardingPhoneFormatTest extends TestCase
         $this->assertSame('+256765274289', User::whereKey($studentId)->value('mobile_no'));
 
         try {
+            $engine->saveTeachers($this->school, $year, [[
+                'name' => 'Bad Teacher',
+                'email' => 'bad-engine@phone-format.sch.ug',
+                'phone' => 'not-a-phone',
+            ]]);
+            $this->fail('An invalid teacher phone should be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertSame(
+                'Teacher Bad Teacher has a phone that could not be read. Enter the phone number with the country code, e.g. +256 765 274 289.',
+                $e->errors()['teachers'][0] ?? null,
+            );
+        }
+        $this->assertNull(User::where('email', 'bad-engine@phone-format.sch.ug')->first());
+
+        try {
             $engine->saveStudents($this->school, $year, [[
                 'name' => 'Bad Student',
                 'phone' => '12345',
@@ -251,10 +267,49 @@ class OnboardingPhoneFormatTest extends TestCase
             $this->fail('An invalid parent phone should be rejected.');
         } catch (ValidationException $e) {
             $this->assertSame(
-                'Enter your phone number with the country code, e.g. +256 765 274 289.',
+                'Student Bad Student has a phone that could not be read. Enter the phone number with the country code, e.g. +256 765 274 289.',
                 $e->errors()['students'][0] ?? null,
             );
         }
+        $this->assertNull(User::where('name', 'Bad Student')->first());
+    }
+
+    public function test_upload_keeps_a_row_when_the_phone_cannot_be_read(): void
+    {
+        $this->actingAs($this->admin);
+        $wizard = Livewire::test(ManualOnboardingWizard::class);
+        $wizard->set('errorMessage', 'Enter your phone number with the country code, e.g. leftover from before.');
+
+        $good = UploadedFile::fake()->createWithContent(
+            'teachers-good.csv',
+            "Name,Email,Phone\nAda Teacher,ada-upload@phone-format.sch.ug,0765274289\n",
+        );
+        $wizard->set('teacherUpload', $good)
+            ->assertCount('teacherDrafts', 1)
+            ->assertSet('errorMessage', '');
+        $this->assertSame('+256765274289', $wizard->get('teacherDrafts')[0]['phone']);
+
+        $mixed = UploadedFile::fake()->createWithContent(
+            'teachers-mixed.csv',
+            "Name,Email,Phone\nBen Teacher,ben-upload@phone-format.sch.ug,+256 765 274 289\nCara Teacher,cara-upload@phone-format.sch.ug,12345\n",
+        );
+        $wizard->set('teacherUpload', $mixed)
+            ->assertCount('teacherDrafts', 3)
+            ->assertSet('errorMessage', 'Could not read the phone for Cara Teacher. The row was kept without that phone. Enter the number with the country code, e.g. +256 765 274 289.');
+        $this->assertSame('+256765274289', $wizard->get('teacherDrafts')[1]['phone']);
+        $this->assertSame('Cara Teacher', $wizard->get('teacherDrafts')[2]['name']);
+        $this->assertSame('', $wizard->get('teacherDrafts')[2]['phone']);
+
+        $students = UploadedFile::fake()->createWithContent(
+            'students.csv',
+            "Name,Class,Parent Phone\nAmina Student,P.1,0765-274-289\nBad Student,P.1,not-a-phone\n",
+        );
+        $wizard->set('studentUpload', $students)
+            ->assertCount('studentDrafts', 2)
+            ->assertSet('errorMessage', 'Could not read the phone for Bad Student. The row was kept without that phone. Enter the number with the country code, e.g. +256 765 274 289.');
+        $this->assertSame('Bad Student', $wizard->get('studentDrafts')[1]['name']);
+        $this->assertSame('', $wizard->get('studentDrafts')[1]['parent_phone']);
+        $this->assertSame('+256765274289', $wizard->get('studentDrafts')[0]['parent_phone']);
     }
 
     public function test_wizard_structure_class_teacher_phone_accepts_a_local_number(): void
@@ -295,7 +350,7 @@ class OnboardingPhoneFormatTest extends TestCase
             ->call('next');
 
         $this->assertSame('standards', $wizard->instance()->steps[$wizard->get('stepIndex')]['key'] ?? null);
-        $wizard->assertSee('Your phone number, e.g. +256 765 274 289', false);
+        $wizard->assertSee("Class teacher's phone number, e.g. +256 765 274 289");
 
         $sectionId = (int) $wizard->get('structureClasses')[0]['section_id'];
         $wizard->set('structureCtDrafts.'.$sectionId, [

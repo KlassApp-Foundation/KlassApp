@@ -81,10 +81,10 @@ class PhoneCountry
         return WhatsAppPhoneHelper::example($spec['code'], $spec['max']);
     }
 
-    public static function hint(?string $countryName, bool $whatsapp = true): string
+    public static function hint(?string $countryName, bool $whatsapp = true, ?string $label = null): string
     {
         $example = self::example($countryName);
-        $label = $whatsapp ? 'Your WhatsApp number' : 'Your phone number';
+        $label = $label ?? ($whatsapp ? 'Your WhatsApp number' : 'Your phone number');
         if ($example === null) {
             return $label.', including the country code.';
         }

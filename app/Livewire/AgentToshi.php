@@ -3213,9 +3213,9 @@ class AgentToshi extends Component
         return $normalised;
     }
 
-    public function phoneFormatHint(bool $whatsapp = true): string
+    public function phoneFormatHint(bool $whatsapp = true, ?string $label = null): string
     {
-        return PhoneCountry::hint($this->resolvedPhoneCountry(), $whatsapp);
+        return PhoneCountry::hint($this->resolvedPhoneCountry(), $whatsapp, $label);
     }
 
     private function resolvedPhoneCountry(): string
@@ -3888,7 +3888,7 @@ class AgentToshi extends Component
             }
             $this->actionData['email'] = $email;
             $this->actionSubstep = 2;
-            $this->botSay('Email: **'.$email.'**. | What is their phone number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), false).' (type **skip** to omit)');
+            $this->botSay('Email: **'.$email.'**. | What is their phone number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), false, "Teacher's phone number").' (type **skip** to omit)');
             return;
         }
 

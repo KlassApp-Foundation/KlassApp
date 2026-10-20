@@ -1283,7 +1283,7 @@ class OnboardingEngine
                         continue;
                     }
 
-                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'teachers', false);
+                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'teachers', false, 'Teacher '.$name);
 
                     $teacher = User::create([
                         'school_id'       => $school->id,
@@ -1453,7 +1453,7 @@ class OnboardingEngine
                         $email = $providedEmail;
                     }
 
-                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'students', false);
+                    $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'students', false, 'Student '.$name);
 
                     $student = User::create([
                         'school_id'       => $school->id,
@@ -1770,9 +1770,10 @@ class OnboardingEngine
     /**
      * Normalise a phone with the school's country. Empty stays empty. When the
      * school has no country yet, the typed value is kept. An invalid number for
-     * a known country is rejected.
+     * a known country is rejected. $who names the teacher or student, the same
+     * way the other batch errors in saveTeachers and saveStudents do.
      */
-    private function normaliseOnboardingPhone(School $school, string $phone, string $errorKey, bool $whatsapp): string
+    private function normaliseOnboardingPhone(School $school, string $phone, string $errorKey, bool $whatsapp, string $who = ''): string
     {
         $phone = trim($phone);
         if ($phone === '') {
@@ -1786,8 +1787,13 @@ class OnboardingEngine
 
         $normalised = PhoneCountry::normalise($phone, $country);
         if ($normalised === null) {
+            $detail = PhoneCountry::error($country, $whatsapp);
+            if ($who !== '') {
+                $detail = preg_replace('/^Enter your /', 'Enter the ', $detail) ?? $detail;
+                $detail = $who.' has a phone that could not be read. '.$detail;
+            }
             throw ValidationException::withMessages([
-                $errorKey => PhoneCountry::error($country, $whatsapp),
+                $errorKey => $detail,
             ]);
         }
 

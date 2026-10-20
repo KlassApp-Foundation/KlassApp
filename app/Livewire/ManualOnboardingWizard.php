@@ -598,6 +598,8 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        $unreadable = [];
+
         if ($kind === 'teacher') {
             foreach ($rows as $row) {
                 $email = trim((string) ($row['email'] ?? ''));
@@ -606,9 +608,11 @@ class ManualOnboardingWizard extends Component
                 }
                 $subjects = $this->splitCsvList((string) ($row['subjects'] ?? ''));
                 $classes = $this->splitCsvList((string) ($row['classes'] ?? ''));
-                $phone = $this->normaliseOptionalPhone((string) ($row['phone'] ?? ''), false);
+                $rawPhone = trim((string) ($row['phone'] ?? ''));
+                $phone = $this->normaliseOptionalPhone($rawPhone, false, false);
                 if ($phone === null) {
-                    continue;
+                    $unreadable[] = (string) ($row['name'] ?? '');
+                    $phone = '';
                 }
                 $this->teacherDrafts[] = [
                     'name' => $row['name'],
@@ -621,9 +625,11 @@ class ManualOnboardingWizard extends Component
             $this->teacherUpload = null;
         } else {
             foreach ($rows as $row) {
-                $parentPhone = $this->normaliseOptionalPhone((string) ($row['parent_phone'] ?? ''), false);
+                $rawPhone = trim((string) ($row['parent_phone'] ?? ''));
+                $parentPhone = $this->normaliseOptionalPhone($rawPhone, false, false);
                 if ($parentPhone === null) {
-                    continue;
+                    $unreadable[] = (string) ($row['name'] ?? '');
+                    $parentPhone = '';
                 }
                 $this->studentDrafts[] = [
                     'name' => $row['name'],
@@ -641,9 +647,36 @@ class ManualOnboardingWizard extends Component
             $this->studentUpload = null;
         }
 
-        if ($this->errorMessage === '' || ! str_contains($this->errorMessage, 'country code')) {
-            $this->errorMessage = '';
+        $this->errorMessage = $this->unreadablePhonesMessage($unreadable);
+    }
+
+    /**
+     * Built only from the names this upload could not parse. An earlier
+     * errorMessage is replaced, not inspected.
+     *
+     * @param  list<string>  $names
+     */
+    private function unreadablePhonesMessage(array $names): string
+    {
+        $labels = [];
+        foreach ($names as $name) {
+            $name = trim($name);
+            $labels[] = $name !== '' ? $name : 'a row with no name';
         }
+        if ($labels === []) {
+            return '';
+        }
+
+        $list = count($labels) === 1
+            ? $labels[0]
+            : implode(', ', array_slice($labels, 0, -1)).' and '.$labels[array_key_last($labels)];
+        $kept = count($labels) === 1 ? 'The row was kept' : 'Those rows were kept';
+        $example = PhoneCountry::example($this->phoneCountryName());
+        $how = $example !== null
+            ? "Enter the number with the country code, e.g. {$example}."
+            : 'Enter the number with the country code.';
+
+        return "Could not read the phone for {$list}. {$kept} without that phone. {$how}";
     }
 
     private function advanceToNextIncompleteOrReview(string $fromKey): void
@@ -1120,17 +1153,17 @@ class ManualOnboardingWizard extends Component
         return PhoneCountry::example($this->phoneCountryName()) ?? '';
     }
 
-    public function phoneFormatHint(bool $whatsapp = true): string
+    public function phoneFormatHint(bool $whatsapp = true, ?string $label = null): string
     {
-        return PhoneCountry::hint($this->phoneCountryName(), $whatsapp);
+        return PhoneCountry::hint($this->phoneCountryName(), $whatsapp, $label);
     }
 
     /**
-     * Empty stays empty. A number the school's country cannot accept returns null
-     * and sets errorMessage. When the school has no country yet, the typed value
-     * is kept so a later step can still store it.
+     * Empty stays empty. A number the school's country cannot accept returns null.
+     * When $report is true, errorMessage is set. When the school has no country
+     * yet, the typed value is kept so a later step can still store it.
      */
-    private function normaliseOptionalPhone(string $phone, bool $whatsapp): ?string
+    private function normaliseOptionalPhone(string $phone, bool $whatsapp, bool $report = true): ?string
     {
         $phone = trim($phone);
         if ($phone === '') {
@@ -1144,7 +1177,9 @@ class ManualOnboardingWizard extends Component
 
         $normalised = PhoneCountry::normalise($phone, $country);
         if ($normalised === null) {
-            $this->errorMessage = PhoneCountry::error($country, $whatsapp);
+            if ($report) {
+                $this->errorMessage = PhoneCountry::error($country, $whatsapp);
+            }
 
             return null;
         }

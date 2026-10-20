@@ -101,7 +101,9 @@
                             'reviewSummary' => $reviewSummary,
                             'phoneExample' => $this->phoneExample(),
                             'whatsappHint' => $this->phoneFormatHint(true),
-                            'phoneHint' => $this->phoneFormatHint(false),
+                            'teacherPhoneHint' => $this->phoneFormatHint(false, "Teacher's phone number"),
+                            'parentPhoneHint' => $this->phoneFormatHint(false, "Parent's phone number"),
+                            'classTeacherPhoneHint' => $this->phoneFormatHint(false, "Class teacher's phone number"),
                         ])
                     </div>
 

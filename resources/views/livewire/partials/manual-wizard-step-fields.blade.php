@@ -3,7 +3,9 @@
     $stepKey = $stepKey ?? '';
     $phoneExample = $phoneExample ?? '';
     $whatsappHint = $whatsappHint ?? 'Your WhatsApp number, including the country code.';
-    $phoneHint = $phoneHint ?? 'Your phone number, including the country code.';
+    $teacherPhoneHint = $teacherPhoneHint ?? "Teacher's phone number, including the country code.";
+    $parentPhoneHint = $parentPhoneHint ?? "Parent's phone number, including the country code.";
+    $classTeacherPhoneHint = $classTeacherPhoneHint ?? "Class teacher's phone number, including the country code.";
 @endphp
 
 @if($stepKey === 'school_name')
@@ -202,7 +204,7 @@
                                                wire:model="structureCtDrafts.{{ $sid }}.phone"
                                                placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Phone (optional)' }}"
                                                data-testid="wizard-structure-ct-phone-{{ $sid }}" />
-                                        <p class="text-xs text-gray-500 mt-1" data-testid="wizard-structure-ct-phone-hint">{{ $phoneHint }}</p>
+                                        <p class="text-xs text-gray-500 mt-1" data-testid="wizard-structure-ct-phone-hint">{{ $classTeacherPhoneHint }}</p>
                                     @endif
                                     <x-button type="button" variant="outline" size="sm"
                                               wire:click="inviteStructureClassTeacher({{ $sid }})"
@@ -298,7 +300,7 @@
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-phone">Phone (optional)</label>
             <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" data-testid="wizard-teacher-phone" aria-describedby="wizard-teacher-phone-hint" />
-            <p class="text-xs text-gray-500 mt-1" id="wizard-teacher-phone-hint" data-testid="wizard-teacher-phone-hint">{{ $phoneHint }}</p>
+            <p class="text-xs text-gray-500 mt-1" id="wizard-teacher-phone-hint" data-testid="wizard-teacher-phone-hint">{{ $teacherPhoneHint }}</p>
         </div>
         <div class="ds-form-group" data-testid="wizard-teacher-classes">
             <label class="ds-form-label">Classes taught <span class="text-xs text-gray-400">(optional)</span></label>
@@ -463,7 +465,7 @@
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-parent-phone">Parent phone</label>
                 <input id="wizard-student-parent-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="studentParentPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" aria-describedby="wizard-student-parent-phone-hint" data-testid="wizard-student-parent-phone" />
-                <p class="text-xs text-gray-500 mt-1" id="wizard-student-parent-phone-hint" data-testid="wizard-student-parent-phone-hint">{{ $phoneHint }}</p>
+                <p class="text-xs text-gray-500 mt-1" id="wizard-student-parent-phone-hint" data-testid="wizard-student-parent-phone-hint">{{ $parentPhoneHint }}</p>
             </div>
         </div>
         <div class="manual-wizard-bulk-pair">

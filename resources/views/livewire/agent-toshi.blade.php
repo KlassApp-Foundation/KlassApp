@@ -238,9 +238,9 @@
                            class="toshi-input">
                     <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
                            class="toshi-input">
-                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="teacherFormPhone" placeholder="{{ $this->phoneFormatHint(true) }}"
+                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="teacherFormPhone" placeholder="{{ $this->phoneFormatHint(true, "Teacher's WhatsApp number") }}"
                            class="toshi-input" aria-describedby="toshi-teacher-phone-hint">
-                    <p class="toshi-sub-label" id="toshi-teacher-phone-hint">{{ $this->phoneFormatHint(true) }}</p>
+                    <p class="toshi-sub-label" id="toshi-teacher-phone-hint">{{ $this->phoneFormatHint(true, "Teacher's WhatsApp number") }}</p>
                     <div class="flex gap-2">
                         <div class="flex-1">
                             <div class="toshi-sub-label">Subject(s)</div>
@@ -361,9 +361,9 @@
                     @endif
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                            class="toshi-input">
-                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="studentFormParentPhone" placeholder="{{ $this->phoneFormatHint(false) }}"
+                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="studentFormParentPhone" placeholder="{{ $this->phoneFormatHint(false, "Parent's phone number") }}"
                            class="toshi-input" aria-describedby="toshi-parent-phone-hint">
-                    <p class="toshi-sub-label" id="toshi-parent-phone-hint">{{ $this->phoneFormatHint(false) }}</p>
+                    <p class="toshi-sub-label" id="toshi-parent-phone-hint">{{ $this->phoneFormatHint(false, "Parent's phone number") }}</p>
                     <div class="flex gap-2">
                         <button wire:click="saveStudent" type="button"
                                 class="toshi-btn-primary-sm">
@@ -1171,9 +1171,9 @@
                                                    class="toshi-input">
                                             <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
                                                    class="toshi-input">
-                                            <input type="tel" inputmode="tel" autocomplete="tel" wire:model="teacherFormPhone" placeholder="{{ $this->phoneFormatHint(true) }}"
+                                            <input type="tel" inputmode="tel" autocomplete="tel" wire:model="teacherFormPhone" placeholder="{{ $this->phoneFormatHint(true, "Teacher's WhatsApp number") }}"
                                                    class="toshi-input" aria-describedby="toshi-teacher-phone-hint-modal">
-                                            <p class="toshi-sub-label" id="toshi-teacher-phone-hint-modal">{{ $this->phoneFormatHint(true) }}</p>
+                                            <p class="toshi-sub-label" id="toshi-teacher-phone-hint-modal">{{ $this->phoneFormatHint(true, "Teacher's WhatsApp number") }}</p>
                                             <div class="flex gap-2">
                                                 <div class="flex-1">
                                                     <div class="toshi-sub-label">Subject(s)</div>
@@ -1294,9 +1294,9 @@
                                                         @endif
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                                                                class="toshi-input">
-                                                        <input type="tel" inputmode="tel" autocomplete="tel" wire:model="studentFormParentPhone" placeholder="{{ $this->phoneFormatHint(false) }}"
+                                                        <input type="tel" inputmode="tel" autocomplete="tel" wire:model="studentFormParentPhone" placeholder="{{ $this->phoneFormatHint(false, "Parent's phone number") }}"
                                                                class="toshi-input" aria-describedby="toshi-parent-phone-hint-modal">
-                                                        <p class="toshi-sub-label" id="toshi-parent-phone-hint-modal">{{ $this->phoneFormatHint(false) }}</p>
+                                                        <p class="toshi-sub-label" id="toshi-parent-phone-hint-modal">{{ $this->phoneFormatHint(false, "Parent's phone number") }}</p>
                                                         <div class="flex gap-2">
                                                             <button wire:click="saveStudent" type="button"
                                                                     class="toshi-btn-primary-sm">
