@@ -683,6 +683,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - The wizard still sets its own finished flag and, on the first finish only, dispatches Livewire `manual-onboarding-finished`. Toshi already leaves Completing Setup itself.
 - Before the callers were wired, `test_toshi_completion_sets_onboarding_finished_at_and_the_same_follow_ups_as_the_wizard` failed because `onboarding_finished_at` was null after Toshi confirm (`step` 99, `mode` preview). With the fix, `FinishSchoolOnboardingTest` is 3 tests / 34 assertions. Do not merge.
 
+## Current Status: October 20, 2026 — **public /privacy and /terms OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165)**
+
+- Canonical guest pages `/privacy` and `/terms` serve the existing policy and terms views. 301s: `/ploicy`, `/policy`, `/privacy-policy` → `/privacy`; `/terms-of-service` → `/terms`, query string kept. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Public privacy and terms URLs (PR #1165 OPEN)
+
+- **Work:** Google's OAuth consent screen links `/privacy` and `/terms`, which 404. Those paths are now the public pages (no login, no school). Older paths 301 to them. Footers and register links updated. Maintenance mode leaves these paths up.
+- **Files:** `routes/web.php`, `routes/static.php` (still not loaded), `CheckForMaintenanceMode`, landing and register views, footer partials, `TermsOfServiceTest`, `LandingPreviewV3Test`, `LogoGoesHomeTest`.
+- **Decision:** the legal copy stays as it is. A wording rewrite is a later PR.
+- **Tests:** guest 200 and alias 301s pass. Full PHPUnit: 2816 tests, 0 failures, 0 errors, 4 skipped. Guard compare OK, no stale known-failures. Local guest server confirmed the 301s, including the query string.
+- **Status:** OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165) (`cursor/public-privacy-terms-urls-63da`). Do not merge from this session.
+
 ## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
 
 ## Current Status: October 20, 2026 — **wizard subjects step OPEN [#1163](https://github.com/KlassApp-Foundation/KlassApp/pull/1163)**
