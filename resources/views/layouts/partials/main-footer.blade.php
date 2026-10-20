@@ -53,11 +53,11 @@
         </ul>
          <ul class="flex-grow text-gray-500 text-sm m-0">
             <li class="mb-4">
-                <a href="{{ url('/privacy-policy') }}" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
+                <a href="{{ url('/privacy') }}" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
                 Privacy Policy</a>
             </li>
             <li class="mb-4">
-                <a href="{{ url('/terms-of-service') }}" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
+                <a href="{{ url('/terms') }}" class="font-bold hover:font-bold hover:text-red-600 hover:underline">
                 Terms of Service</a>
             </li>
             <li class="mb-4">
