@@ -2722,6 +2722,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Services/FinishSchoolOnboarding.php`, `app/Events/SchoolOnboardingFinished.php`, `app/Services/OnboardingStepsService.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/FinishSchoolOnboardingTest.php`, `knowledge.md`.
 - **Key decisions**: No migration. The Livewire event stays on the wizard because it only tells the Toshi panel on the same page to leave Completing Setup; Toshi already does that itself, and firing that event from Toshi would run the sync again and clear the completion message when the assistant is off. `SchoolOnboardingFinished` has no listener. Main's set-password edits in `AgentToshi` stayed; this branch only adds the shared finish call.
 - **Status**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157) OPEN (`cursor/toshi-onboarding-finish-2ea1`, feature commit `1dffb4b6`). Not merged. Production untouched.
+- **Evidence**: After the `origin/main` merge, `bash scripts/test-guard.sh` (4 processes): 2815 tests, 0 failures, 0 errors, 4 skipped. Exit 0.
 - **Edge cases flagged**: Create-mode Toshi confirm stamps the new school too. Opening Toshi when the checklist is already complete does not stamp; only confirm, or a v2 reply that just saved the last step, does.
 - **PR**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157). Review requested from Bariyo123. Do not merge.
 
