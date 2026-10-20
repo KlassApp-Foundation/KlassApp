@@ -641,9 +641,14 @@
         <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-send-otp">
             Send verification code
         </button>
+        @if($whatsappSendFailed)
+            <button type="button" class="ds-btn ds-btn-sm ds-btn-primary" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-retry-otp">
+                Retry
+            </button>
+        @endif
     </div>
     @if($whatsappOtpStatus !== '')
-        <p class="text-sm mb-3" style="color:#0F766E;" data-testid="wizard-wa-otp-status">{{ $whatsappOtpStatus }}</p>
+        <p class="text-sm mb-3" style="color: {{ $whatsappSendFailed ? '#B45309' : '#0F766E' }};" @if($whatsappSendFailed) role="alert" @endif data-testid="wizard-wa-otp-status">{{ $whatsappOtpStatus }}</p>
     @endif
     @if(! $whatsappVerified)
         <div class="ds-form-group">
