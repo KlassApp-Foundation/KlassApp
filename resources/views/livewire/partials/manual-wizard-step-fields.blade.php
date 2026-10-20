@@ -1,9 +1,9 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php
     $stepKey = $stepKey ?? '';
-    $phoneExample = $phoneExample ?? $this->phoneExample();
-    $whatsappHint = $whatsappHint ?? $this->phoneFormatHint(true);
-    $phoneHint = $phoneHint ?? $this->phoneFormatHint(false);
+    $phoneExample = $phoneExample ?? '';
+    $whatsappHint = $whatsappHint ?? 'Your WhatsApp number, including the country code.';
+    $phoneHint = $phoneHint ?? 'Your phone number, including the country code.';
 @endphp
 
 @if($stepKey === 'school_name')

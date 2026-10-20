@@ -17,7 +17,8 @@ class WizardStructureKitContractTest extends TestCase
         $this->assertStringContainsString('No class teacher yet', $blade);
         $this->assertStringContainsString('placeholder="e.g. A, East, Science"', $blade);
         $this->assertStringContainsString('— Create a new teacher —', $blade);
-        $this->assertStringContainsString('placeholder="Phone (optional)"', $blade);
+        $this->assertStringContainsString('data-testid="wizard-structure-ct-phone-hint"', $blade);
+        $this->assertStringContainsString("placeholder=\"{{ \$phoneExample !== '' ? \$phoneExample : 'Phone (optional)' }}\"", $blade);
         $this->assertStringContainsString('wire:click="addStructureStream(', $blade);
         $this->assertStringContainsString('wire:click="inviteStructureClassTeacher(', $blade);
         $this->assertStringContainsString('<x-button', $blade);

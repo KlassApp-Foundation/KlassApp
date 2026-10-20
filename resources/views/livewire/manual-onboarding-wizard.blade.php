@@ -99,6 +99,9 @@
                             'plans' => $this->plans,
                             'selectedPlanId' => $selectedPlanId,
                             'reviewSummary' => $reviewSummary,
+                            'phoneExample' => $this->phoneExample(),
+                            'whatsappHint' => $this->phoneFormatHint(true),
+                            'phoneHint' => $this->phoneFormatHint(false),
                         ])
                     </div>
 
