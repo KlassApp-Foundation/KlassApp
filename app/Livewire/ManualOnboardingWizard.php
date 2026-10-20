@@ -133,7 +133,18 @@ class ManualOnboardingWizard extends Component
     public string $subjectName = 'Mathematics';
 
     /**
+     * Base section id chosen on the subjects step. Subjects attach to this
+     * class record (and its streams), not to a free-text code.
+     */
+    public int $subjectSectionId = 0;
+
+    /** Result of the last add/remove on the subjects step. */
+    public string $subjectFlash = '';
+
+    /**
      * Names already in DB for the subjects step (auto-seeded or previously saved).
+     * On the subjects step this is the selected class only. The teachers step
+     * reloads the school-wide unique list.
      *
      * @var list<string>
      */
@@ -1073,6 +1084,9 @@ class ManualOnboardingWizard extends Component
             }
         }
         if ($key === 'subjects') {
+            $this->subjectFlash = '';
+            $this->refreshStructureSnapshot();
+            $this->ensureSubjectClassSelected();
             $this->refreshExistingSubjects();
         }
         if ($key === 'teachers') {
@@ -1090,20 +1104,123 @@ class ManualOnboardingWizard extends Component
 
     private function refreshExistingSubjects(): void
     {
-        $this->existingSubjectNames = Subject::query()
-            ->where('school_id', $this->school()->id)
-            ->orderBy('name')
-            ->pluck('name')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        if ($this->currentKey() === 'subjects') {
+            $this->refreshSubjectsForSelectedClass();
+
+            return;
+        }
+
+        $this->existingSubjectNames = $this->subjectNamesForSchool((int) $this->school()->id);
 
         // Checkpoint land via setStepIndex does not run prepareStepFields — clear the
         // default "Mathematics" so Next is a true no-op when subjects already exist.
         if ($this->existingSubjectNames !== []) {
             $this->subjectName = '';
         }
+    }
+
+    /**
+     * Pick a real base section from the classes step.
+     *
+     * A stored name wins when it is one of those records. Otherwise the classes
+     * field (often the untouched default "P1") is resolved through the same
+     * aliases the rest of onboarding uses, so "P1" lands on "Primary One" when
+     * that is the row the classes step created. Selection by id always wins
+     * once the admin has chosen a class.
+     */
+    private function ensureSubjectClassSelected(): void
+    {
+        $ids = array_map(
+            fn (array $row): int => (int) ($row['section_id'] ?? 0),
+            $this->structureClasses
+        );
+        $ids = array_values(array_filter($ids, fn (int $id): bool => $id > 0));
+
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            return;
+        }
+
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        $hint = trim($this->className);
+        if ($year && $hint !== '') {
+            $link = app(OnboardingEngine::class)->resolveStandardLinkForClass($school, $year, $hint);
+            $section = $link?->section;
+            if ($section && (int) $section->school_id === (int) $school->id) {
+                $baseId = (int) app(ClassStructureService::class)->resolveBaseSection($section)->id;
+                if (in_array($baseId, $ids, true)) {
+                    $this->subjectSectionId = $baseId;
+
+                    return;
+                }
+            }
+        }
+
+        $this->subjectSectionId = $ids[0] ?? 0;
+    }
+
+    public function updatedSubjectSectionId(mixed $value): void
+    {
+        $this->subjectSectionId = (int) $value;
+        $this->subjectFlash = '';
+        $this->errorMessage = '';
+        if ($this->structureClasses === []) {
+            $this->refreshStructureSnapshot();
+        }
+        $this->ensureSubjectClassSelected();
+        $this->refreshSubjectsForSelectedClass();
+    }
+
+    /**
+     * Add every subject in the field now, so the list updates before Next.
+     * Commas and new lines both separate names.
+     */
+    public function addSubjects(): void
+    {
+        $this->errorMessage = '';
+        $this->subjectFlash = '';
+
+        try {
+            $message = $this->persistEnteredSubjects($this->school(), (string) $this->subjectName);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Could not add subjects.';
+
+            return;
+        }
+
+        $this->subjectName = '';
+        $this->subjectFlash = $message;
+        $this->refreshSubjectsForSelectedClass();
+    }
+
+    public function removeSubject(int $index): void
+    {
+        $this->errorMessage = '';
+        $this->subjectFlash = '';
+
+        $name = trim((string) ($this->existingSubjectNames[$index] ?? ''));
+        if ($name === '') {
+            return;
+        }
+
+        try {
+            $school = $this->school();
+            $baseId = $this->selectedSubjectSectionId($school);
+            $sectionIds = $this->schoolSectionIds($school, $this->sectionIdsForBase($baseId));
+            Subject::query()
+                ->where('school_id', $school->id)
+                ->whereIn('section_id', $sectionIds)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->get()
+                ->each(fn (Subject $subject) => $subject->delete());
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Could not remove that subject.';
+
+            return;
+        }
+
+        $this->subjectFlash = 'Removed '.$name.' from '.$this->subjectClassName($baseId).'.';
+        $this->refreshSubjectsForSelectedClass();
     }
 
     public function render()
@@ -1779,34 +1896,285 @@ class ManualOnboardingWizard extends Component
 
     private function saveSubject(School $school): void
     {
-        $name = trim($this->subjectName);
+        $raw = trim($this->subjectName);
 
         // Already seeded/saved and add field left blank → Next is a review no-op.
-        if (Subject::where('school_id', $school->id)->exists() && $name === '') {
-            return;
+        if ($raw !== '') {
+            $this->subjectFlash = $this->persistEnteredSubjects($school, $raw);
+            $this->subjectName = '';
         }
 
-        if ($name === '') {
+        if (! Subject::where('school_id', $school->id)->exists()) {
+            throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
+        }
+    }
+
+    /**
+     * Parse the subjects field and attach each new name to the selected class record.
+     *
+     * @throws ValidationException
+     */
+    private function persistEnteredSubjects(School $school, string $raw): string
+    {
+        [$names, $repeated] = $this->parseSubjectInput($raw);
+        if ($names === []) {
             throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
         }
 
-        // Adding another subject on top of an existing seed is allowed.
-
+        $this->refreshStructureSnapshot();
+        $baseId = $this->selectedSubjectSectionId($school);
         $year = AcademicYear::where('school_id', $school->id)->first();
         if (! $year) {
-            throw ValidationException::withMessages(['subjectName' => 'Add a class first.']);
+            throw ValidationException::withMessages(['subjectName' => 'Add a class on the classes step first.']);
         }
 
-        // Use the wizard's className to scope the subject to the right section
-        $className = trim($this->className);
-
-        try {
-            app(OnboardingEngine::class)->saveSubjects($school, $year, [
-                $className => [$name],
-            ]);
-        } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['subjectName' => collect($e->errors())->flatten()->first()]);
+        $links = $this->linksForSubjectClass($school, $year, $baseId);
+        $baseLink = $links->first(fn (StandardLink $link): bool => (int) $link->section_id === $baseId);
+        if (! $baseLink) {
+            throw ValidationException::withMessages(['subjectName' => 'Add a class on the classes step first.']);
         }
+
+        $present = [];
+        foreach (Subject::query()->where('school_id', $school->id)->where('section_id', $baseId)->get() as $subject) {
+            $present[mb_strtolower((string) $subject->name)] = true;
+        }
+
+        $added = [];
+        $already = [];
+        foreach ($names as $name) {
+            $key = mb_strtolower($name);
+            if (isset($present[$key])) {
+                $already[] = $name;
+                $this->backfillSubjectOnLinks($school, $year, $links, $name);
+
+                continue;
+            }
+
+            foreach ($links as $link) {
+                $this->firstOrRestoreSubject($school, $year, $link, $name);
+            }
+            $present[$key] = true;
+            $added[] = $name;
+        }
+
+        return $this->subjectResultMessage($this->subjectClassName($baseId), $added, $already, $repeated);
+    }
+
+    /**
+     * @return array{0: list<string>, 1: list<string>}
+     */
+    private function parseSubjectInput(string $raw): array
+    {
+        $parts = preg_split('/[\r\n,]+/u', $raw) ?: [];
+        $names = [];
+        $repeated = [];
+        $seen = [];
+
+        foreach ($parts as $part) {
+            $name = trim((string) $part);
+            if ($name === '') {
+                continue;
+            }
+            $key = mb_strtolower($name);
+            if (isset($seen[$key])) {
+                $repeated[] = $name;
+
+                continue;
+            }
+            $seen[$key] = true;
+            $names[] = $name;
+        }
+
+        return [$names, $repeated];
+    }
+
+    /**
+     * The admin's choice when it is one of this school's class records.
+     * Otherwise the classes-step hint (including a legacy short code).
+     *
+     * @throws ValidationException
+     */
+    private function selectedSubjectSectionId(School $school): int
+    {
+        $ids = array_map(
+            fn (array $row): int => (int) ($row['section_id'] ?? 0),
+            $this->structureClasses
+        );
+
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            $owned = Section::query()
+                ->where('school_id', $school->id)
+                ->where('id', $this->subjectSectionId)
+                ->exists();
+            if ($owned) {
+                return $this->subjectSectionId;
+            }
+        }
+
+        $this->ensureSubjectClassSelected();
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            return $this->subjectSectionId;
+        }
+
+        throw ValidationException::withMessages([
+            'subjectName' => 'Add a class on the classes step first.',
+        ]);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function sectionIdsForBase(int $baseSectionId): array
+    {
+        foreach ($this->structureClasses as $class) {
+            if ((int) ($class['section_id'] ?? 0) !== $baseSectionId) {
+                continue;
+            }
+            $ids = [$baseSectionId];
+            foreach ($class['streams'] ?? [] as $stream) {
+                $streamId = (int) ($stream['section_id'] ?? 0);
+                if ($streamId > 0) {
+                    $ids[] = $streamId;
+                }
+            }
+
+            return array_values(array_unique($ids));
+        }
+
+        return [$baseSectionId];
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    private function schoolSectionIds(School $school, array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return Section::query()
+            ->where('school_id', $school->id)
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    private function linksForSubjectClass(School $school, AcademicYear $year, int $baseSectionId): \Illuminate\Support\Collection
+    {
+        return app(OnboardingEngine::class)->standardLinksForClass($school, $year, $baseSectionId);
+    }
+
+    private function backfillSubjectOnLinks(School $school, AcademicYear $year, \Illuminate\Support\Collection $links, string $name): void
+    {
+        foreach ($links as $link) {
+            if ($link instanceof StandardLink) {
+                $this->firstOrRestoreSubject($school, $year, $link, $name);
+            }
+        }
+    }
+
+    private function firstOrRestoreSubject(School $school, AcademicYear $year, StandardLink $link, string $name): void
+    {
+        $row = Subject::withTrashed()
+            ->where('school_id', $school->id)
+            ->where('section_id', $link->section_id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first();
+
+        if ($row) {
+            if ($row->trashed()) {
+                $row->restore();
+            }
+
+            return;
+        }
+
+        Subject::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $link->section_id,
+            'name' => $name,
+            'code' => null,
+            'type' => 'core',
+        ]);
+    }
+
+    private function subjectClassName(int $sectionId): string
+    {
+        foreach ($this->structureClasses as $class) {
+            if ((int) ($class['section_id'] ?? 0) === $sectionId) {
+                $name = trim((string) ($class['name'] ?? ''));
+                if ($name !== '') {
+                    return $name;
+                }
+            }
+        }
+
+        return 'this class';
+    }
+
+    /**
+     * @param  list<string>  $added
+     * @param  list<string>  $already
+     * @param  list<string>  $repeated
+     */
+    private function subjectResultMessage(string $className, array $added, array $already, array $repeated): string
+    {
+        $parts = [];
+        if ($added !== []) {
+            $parts[] = 'Added to '.$className.': '.implode(', ', $added).'.';
+        }
+        if ($already !== []) {
+            $parts[] = 'Already on '.$className.': '.implode(', ', $already).'.';
+        }
+        if ($repeated !== []) {
+            $parts[] = 'Repeated in the list (kept once): '.implode(', ', $repeated).'.';
+        }
+
+        return implode(' ', $parts);
+    }
+
+    private function refreshSubjectsForSelectedClass(): void
+    {
+        $sectionId = (int) $this->subjectSectionId;
+        if ($sectionId <= 0) {
+            $this->existingSubjectNames = [];
+
+            return;
+        }
+
+        $this->existingSubjectNames = Subject::query()
+            ->where('school_id', $this->school()->id)
+            ->where('section_id', $sectionId)
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($this->existingSubjectNames !== []) {
+            $this->subjectName = '';
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function subjectNamesForSchool(int $schoolId): array
+    {
+        return Subject::query()
+            ->where('school_id', $schoolId)
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function saveTeachers(School $school): void

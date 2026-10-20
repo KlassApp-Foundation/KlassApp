@@ -374,6 +374,8 @@ class OnboardingEngine
     public static function classNameCandidates(string $className): array
     {
         $raw = trim($className);
+        $raw = preg_replace('/\s+/u', ' ', $raw) ?? $raw;
+        $raw = preg_replace('/\s*\.\s*/', '.', $raw) ?? $raw;
         if ($raw === '') {
             return [];
         }
@@ -528,6 +530,101 @@ class OnboardingEngine
         }
 
         return null;
+    }
+
+    /**
+     * StandardLinks for one class from the classes step: the base section and its streams.
+     *
+     * An integer is that section's id and wins over any name. A name matches every
+     * stored variant (Primary One, Primary 1, P1, P.1, any case or spacing) and
+     * then uses the real section id — never the caller's free-text as the row key.
+     *
+     * @return \Illuminate\Support\Collection<int, StandardLink>
+     */
+    public function standardLinksForClass(School $school, AcademicYear $year, string|int $class): \Illuminate\Support\Collection
+    {
+        $base = is_int($class)
+            ? $this->baseSectionFromId($school, $year, $class)
+            : $this->baseSectionFromName($school, $year, $class);
+
+        if (! $base) {
+            return collect();
+        }
+
+        $prefix = strtolower(trim((string) $base->name)).' %';
+
+        return StandardLink::query()
+            ->with(['standard', 'section'])
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->whereHas('section', function ($query) use ($school, $base, $prefix) {
+                $query->where('school_id', $school->id)
+                    ->where(function ($q) use ($base, $prefix) {
+                        $q->where('id', $base->id);
+                        if (trim($prefix) !== '%') {
+                            $q->orWhereRaw('LOWER(name) LIKE ?', [$prefix]);
+                        }
+                    });
+            })
+            ->get();
+    }
+
+    private function baseSectionFromId(School $school, AcademicYear $year, int $sectionId): ?Section
+    {
+        if ($sectionId <= 0) {
+            return null;
+        }
+
+        $section = Section::query()
+            ->where('school_id', $school->id)
+            ->where('id', $sectionId)
+            ->first();
+
+        if (! $section) {
+            return null;
+        }
+
+        $linked = StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->where('section_id', $section->id)
+            ->exists();
+
+        if (! $linked) {
+            $base = app(ClassStructureService::class)->resolveBaseSection($section);
+            $linked = (int) $base->school_id === (int) $school->id
+                && StandardLink::query()
+                    ->where('school_id', $school->id)
+                    ->where('academic_year_id', $year->id)
+                    ->where('section_id', $base->id)
+                    ->exists();
+            if (! $linked) {
+                return null;
+            }
+
+            return $base;
+        }
+
+        $base = app(ClassStructureService::class)->resolveBaseSection($section);
+
+        return (int) $base->school_id === (int) $school->id ? $base : null;
+    }
+
+    private function baseSectionFromName(School $school, AcademicYear $year, string $className): ?Section
+    {
+        $className = trim($className);
+        if ($className === '') {
+            return null;
+        }
+
+        $link = $this->resolveStandardLinkForClass($school, $year, $className);
+        if (! $link?->section || (int) $link->section->school_id !== (int) $school->id) {
+            return null;
+        }
+
+        $base = app(ClassStructureService::class)->resolveBaseSection($link->section);
+
+        return (int) $base->school_id === (int) $school->id ? $base : null;
     }
 
     /**
@@ -841,24 +938,11 @@ class OnboardingEngine
             }
         }
 
-        // Resolve each class name to its StandardLinks and create subjects
+        // Resolve each class to the section records created on the classes step.
         foreach ($subjectsByClass as $className => $subjectNames) {
             $className = trim((string) $className);
 
-            // Find all StandardLinks for this school+year whose section name
-            // starts with the class name (covers "P1" and "P1 A" stream sections)
-            $links = StandardLink::where('school_id', $school->id)
-                ->where('academic_year_id', $year->id)
-                ->whereHas('section', function ($query) use ($school, $className) {
-                    // Section name is either the exact class name (no streams)
-                    // or "ClassName StreamLetter" (with streams)
-                    $query->where('school_id', $school->id)
-                        ->where(function ($q) use ($className) {
-                            $q->where('name', $className)
-                              ->orWhere('name', 'like', $className.' %');
-                        });
-                })
-                ->get();
+            $links = $this->standardLinksForClass($school, $year, $className);
 
             if ($links->isEmpty()) {
                 throw ValidationException::withMessages([
