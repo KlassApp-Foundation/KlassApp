@@ -678,10 +678,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 20, 2026 — **Toshi onboarding finish OPEN [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157)**
 
-- Branch `cursor/toshi-onboarding-finish-2ea1` from `main` (`f14c93a3`). Not merged. Production untouched.
+- Branch `cursor/toshi-onboarding-finish-2ea1` from `main` (`f14c93a3`), then `origin/main` (`ce7958c7`) merged in. Not merged. Production untouched.
 - `FinishSchoolOnboarding` is the shared finish for the wizard confirm step and Toshi's confirm (`commit` / `confirmOnboarding`, and the v2 chat when the last step was just saved). First call sets `schools.onboarding_finished_at` and dispatches `SchoolOnboardingFinished`. A second call does neither. No listener, so no job, mail, notification, or WhatsApp send. No migration.
 - The wizard still sets its own finished flag and, on the first finish only, dispatches Livewire `manual-onboarding-finished`. Toshi already leaves Completing Setup itself.
 - Before the callers were wired, `test_toshi_completion_sets_onboarding_finished_at_and_the_same_follow_ups_as_the_wizard` failed because `onboarding_finished_at` was null after Toshi confirm (`step` 99, `mode` preview). With the fix, `FinishSchoolOnboardingTest` is 3 tests / 34 assertions. Do not merge.
+
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
+
+- Phone header: teacher and student shells below 768px kept the menu and search as separate 44px targets. Desktop header unchanged. Not merged.
+- Bursar dashboard: money uses `school_details.meta_key = currency` through `DashboardV2DataService::currencyFor`. No code when the school has not set one. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Phone header targets and bursar dashboard currency
+
+- **Work:** two small PRs from `origin/main`. Header overlap on the shared dashboard nav. Bursar dashboard stopped hardcoding a currency code; the fee-category amounts on that same page use the same setting.
+- **Files:** `public/css/dashboard-refresh.css`, `e2e/regression/mobile-header-targets.spec.js`, `app/Traits/Dashboard.php`, `resources/views/accountant/dashboard.blade.php`, `tests/Feature/Accountant/BursarDashboardCurrencyTest.php`.
+- **Decision:** currency falls back to no code, the same as the admin dashboard and student profile. Payments and payroll screens still name a code and are outside this dashboard.
+- **Tests:** header measurements fail on `main` (menu width 24px) and pass with the fix at 360, 375, 414 and 1280. Bursar currency test fails on `main` (`Total Fees (UGX)`) and passes for `KES` and for an unset currency.
+- **Status:** header OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). Currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160). Do not merge from this session.
 
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
 
@@ -2705,12 +2718,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ### 2026-10-20: Toshi finish uses the wizard's onboarding finish
 
-- **Work done**: `ManualOnboardingWizard::confirmReview()` set `onboarding_finished_at` and dispatched Livewire `manual-onboarding-finished`. It queued no job, sent no notification, cleared no cache, wrote no other flag, and did not redirect. `AgentToshi::confirmOnboarding()` left Completing Setup without that timestamp. Both now call `FinishSchoolOnboarding`, which stamps the timestamp and dispatches `SchoolOnboardingFinished` once. A second call does not repeat those follow-ups. The wizard still dispatches `manual-onboarding-finished` only on the first finish.
+- **Work done**: `ManualOnboardingWizard::confirmReview()` set `onboarding_finished_at` and dispatched Livewire `manual-onboarding-finished`. It queued no job, sent no notification, cleared no cache, wrote no other flag, and did not redirect. `AgentToshi::confirmOnboarding()` left Completing Setup without that timestamp. Both now call `FinishSchoolOnboarding`, which stamps the timestamp and dispatches `SchoolOnboardingFinished` once. A second call does not repeat those follow-ups. The wizard still dispatches `manual-onboarding-finished` only on the first finish. `origin/main` (`ce7958c7`) was merged into this branch; the only conflict was this file.
 - **Files modified**: `app/Services/FinishSchoolOnboarding.php`, `app/Events/SchoolOnboardingFinished.php`, `app/Services/OnboardingStepsService.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/FinishSchoolOnboardingTest.php`, `knowledge.md`.
-- **Key decisions**: No migration. The Livewire event stays on the wizard because it only tells the Toshi panel on the same page to leave Completing Setup; Toshi already does that itself, and firing that event from Toshi would run the sync again and clear the completion message when the assistant is off. `SchoolOnboardingFinished` has no listener.
-- **Status**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157) OPEN (`cursor/toshi-onboarding-finish-2ea1`, `1dffb4b6`). Not merged. Production untouched.
+- **Key decisions**: No migration. The Livewire event stays on the wizard because it only tells the Toshi panel on the same page to leave Completing Setup; Toshi already does that itself, and firing that event from Toshi would run the sync again and clear the completion message when the assistant is off. `SchoolOnboardingFinished` has no listener. Main's set-password edits in `AgentToshi` stayed; this branch only adds the shared finish call.
+- **Status**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157) OPEN (`cursor/toshi-onboarding-finish-2ea1`, feature commit `1dffb4b6`). Not merged. Production untouched.
 - **Edge cases flagged**: Create-mode Toshi confirm stamps the new school too. Opening Toshi when the checklist is already complete does not stamp; only confirm, or a v2 reply that just saved the last step, does.
 - **PR**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157). Review requested from Bariyo123. Do not merge.
+
+### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
+
+- **Work done**: Merged `origin/main` (`f14c93a3`) into the set-password branch and the high-severity dependency branch with merge commits. No rebase. Neither pull request was merged. No environment or production setting was changed.
+- **Status**: [#1146](https://github.com/KlassApp-Foundation/KlassApp/pull/1146) and [#1148](https://github.com/KlassApp-Foundation/KlassApp/pull/1148) stay draft. Guarded suites after the merge were green. Dependabot's alerts API was still unavailable; `composer audit` and `npm audit` on #1148 match the previous remaining list, with the targeted highs still upgraded.
+- **Edge cases flagged**: Open [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) also edits `composer.lock` and still pins the older Guzzle, CommonMark, PhpSpreadsheet, HttpFoundation, and Yaml versions. Merging it over #1148 would put those older versions back.
 
 ### 2026-10-19: reject an out-of-range school_invites.created_by before dropping its foreign key
 

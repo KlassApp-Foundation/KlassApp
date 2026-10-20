@@ -685,7 +685,7 @@
                     <div class="toshi-banner-success">
                         <div class="toshi-green-label">Admin Login Credentials</div>
                         <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                        <div class="toshi-info-sub">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                        <div class="toshi-info-sub">@if(!empty($reviewData['adminSetPasswordEmailed']))A set-password link was emailed. It is not shown here.@elseif(!empty($reviewData['adminPasswordChosen']))A password was set during setup. It is not shown here.@else No password is shown here.@endif</div>
                         <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                     </div>
                     @if(!empty($reviewData['coAdminEmail']))
@@ -695,12 +695,12 @@
                         @if(!empty($reviewData['coAdminPromoted']))
                         <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                         @else
-                        <div class="toshi-info-sub">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                        <div class="toshi-info-sub">An invite email lets them set their own password.</div>
                         @endif
                     </div>
                     @endif
                     <div style="font-size: 12px; color: #5e5d59; line-height: 1.5;">
-                        Share these credentials with the school admin. They can log in at the <strong>KlassApp login page</strong>.
+                        The password is not shown here. They sign in at the <strong>KlassApp login page</strong> after it is set.
                     </div>
                     @else
                     <div style="font-size: 13px; color: #5e5d59; line-height: 1.5;">
@@ -1701,7 +1701,7 @@
                                 <div class="toshi-banner-success">
                                     <div class="toshi-green-label">Admin Login Credentials</div>
                                     <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                                    <div class="toshi-info-sub">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                                    <div class="toshi-info-sub">@if(!empty($reviewData['adminSetPasswordEmailed']))A set-password link was emailed. It is not shown here.@elseif(!empty($reviewData['adminPasswordChosen']))A password was set during setup. It is not shown here.@else No password is shown here.@endif</div>
                                     <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                                 </div>
                                 @if(!empty($reviewData['coAdminEmail']))
@@ -1711,12 +1711,12 @@
                                     @if(!empty($reviewData['coAdminPromoted']))
                                     <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                                     @else
-                                    <div class="toshi-info-sub">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                                    <div class="toshi-info-sub">An invite email lets them set their own password.</div>
                                     @endif
                                 </div>
                                 @endif
                                 <div style="font-size: 12px; color: #5e5d59; line-height: 1.5;">
-                                    Share these credentials with the school admin. They can log in at the <strong>KlassApp login page</strong>.
+                                    The password is not shown here. They sign in at the <strong>KlassApp login page</strong> after it is set.
                                 </div>
                                 @else
                                 <div style="font-size: 13px; color: #5e5d59; line-height: 1.5;">

@@ -2,6 +2,15 @@
 @extends('layouts.accountant.layout')
 
 @section('content')
+@php
+    $currency = $dashboard['currency'] ?? null;
+    $feeMoney = function ($amount) use ($currency): string {
+        $formatted = number_format((float) $amount, 0);
+
+        return $currency ? $currency.' '.$formatted : $formatted;
+    };
+    $totalFeesLabel = $currency ? 'Total Fees ('.$currency.')' : 'Total Fees';
+@endphp
 <div class="dashboard-shell dashboard-shell--accountant px-4 md:px-6 py-4">
     @include('layouts.partials.page-header', [
         'title' => 'Accountant',
@@ -13,7 +22,7 @@
     {{-- KPI Cards --}}
     <div class="dashboard-kpi-grid">
         <x-ds-kpi-card icon="dollar" value="{{ $dashboard['feeCategoryCount'] }}" label="Fee Categories" color="blue" />
-        <x-ds-kpi-card icon="dollar" value="{{ number_format($dashboard['totalFeesAmount'], 0) }}" label="Total Fees (UGX)" color="green" />
+        <x-ds-kpi-card icon="dollar" value="{{ number_format($dashboard['totalFeesAmount'], 0) }}" label="{{ $totalFeesLabel }}" color="green" data-testid="bursar-total-fees" />
         <x-ds-kpi-card icon="users" value="{{ $dashboard['totalStudents'] }}" label="Total Students" color="purple" />
         <x-ds-kpi-card icon="check" value="{{ $dashboard['pendingTasks'] }}" label="Pending Tasks" color="amber" link="{{ url('/accountant/tasks') }}" />
     </div>
@@ -44,7 +53,7 @@
                                         @endif
                                     </p>
                                 </div>
-                                <span class="text-sm font-semibold" style="font-family: Sora, sans-serif; color: var(--d-green);">UGX {{ number_format($fee->amount) }}</span>
+                                <span class="text-sm font-semibold" data-testid="bursar-fee-amount" style="font-family: Sora, sans-serif; color: var(--d-green);">{{ $feeMoney($fee->amount) }}</span>
                             </div>
                         @endforeach
                     </div>
