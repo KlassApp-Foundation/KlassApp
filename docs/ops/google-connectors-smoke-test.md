@@ -1,77 +1,85 @@
-# Google connectors — local smoke test
+# Google connectors — setup and local smoke test
 
-This is for a person setting up a Google Cloud project on their own machine. It does not change staging or production, and it does not contain client secrets. Leave the values empty in git. Put the real values only in the local `.env`.
+This is the setup a person does in Google Cloud and in the app environment. It does not contain client secrets. Leave the values empty in git. Do not set them on Laravel Cloud from a pull request.
 
-KlassApp sign-in and the school connectors share one OAuth client and use two redirect URIs. Sign-in stays on `/auth/google/callback`. School tools use `GOOGLE_CONNECTOR_REDIRECT_URI`. The connector code does not go through the sign-in Socialite driver, so adding a connector scope does not change the login request.
+KlassApp sign-in and the school connectors share one OAuth client and use two redirect URIs. Sign-in stays on Socialite and `/auth/google/callback`. School tools use `GOOGLE_CONNECTOR_REDIRECT_URI` and do not go through Socialite. Adding a connector scope does not change the login request.
+
+This file is on the Drive pull request, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) (`cursor/google-connectors-drive-b53f`), stacked on Sheets [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) and foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139). Classroom and Calendar actions are later pull requests: [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140), [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Gmail, Docs, Slides, and Tasks are not connectors.
 
 ## 1. Google Cloud project
 
-1. Open Google Cloud Console and create a project for this local trial.
-2. Configure the OAuth consent screen.
-   - User type: External, while the app is still in Testing.
+1. Open Google Cloud Console and create a project.
+2. OAuth consent screen. User type: **External**. These schools are not one Google Workspace, so Internal would only allow users inside a single organisation.
    - App name, user support email, and a developer contact email.
-   - Add yourself as a test user. Publishing the app is not part of this check.
-3. Create an OAuth client: Credentials → Create credentials → OAuth client ID → Web application.
-4. Authorized redirect URIs (both, byte for byte):
-   - Sign-in: `{APP_URL}/auth/google/callback` (for local, `http://localhost/auth/google/callback` unless `APP_URL` is something else).
-   - School connectors: the value you will put in `GOOGLE_CONNECTOR_REDIRECT_URI`. Locally that is `http://localhost/admin/settings/google/callback`.
-5. Copy the client id and client secret into the local `.env` only.
+   - Publishing status: **Testing**. Do not publish the app to production as part of this setup.
+   - Add every person who will click Connect as a test user (maximum 100).
+   - While the app stays in Testing, Google's verification review is not required. A test user still sees a warning before consent. Because the connector asks for scopes beyond `openid`, `profile`, and `email`, that consent and its refresh token expire seven days after consent. The code requests `access_type=offline`, so it stores a refresh token, and that token expires with the consent. Reconnect after seven days, or publish only after the verification in section 3.
+3. Create an OAuth client: Credentials → Create credentials → OAuth client ID → **Web application**. Not a desktop client and not a service account. The Calendar call makes the signed-in user the owner of the new calendar; a service account would own it instead.
+4. Authorized redirect URIs, byte for byte. The connector URI is not built from `APP_URL`. `GoogleOAuthService` sends the raw `GOOGLE_CONNECTOR_REDIRECT_URI` value as `redirect_uri`. The route is `GET /admin/settings/google/callback` (`RouteServiceProvider` prefix `admin`, plus `routes/setting.php`).
+   - Sign-in, for `APP_URL=https://klassapp.xyz` and `APP_ENV` other than `local`: `https://klassapp.xyz/auth/google/callback`. The code builds that as `rtrim(APP_URL, '/') + '/auth/google/callback'` in `config/services.php`. `routes/web.php` serves `GET /auth/google/callback`.
+   - School connectors, production: `https://klassapp.xyz/admin/settings/google/callback`.
+   - Local connector example, when the app is on localhost: `http://localhost/admin/settings/google/callback`. If `APP_URL` is a different local host, the path is still `/admin/settings/google/callback` on that host, and the env value must match the authorized URI exactly.
+5. Copy the client id and client secret into the environment only. Never commit them.
 
 ## 2. APIs to enable
 
-Enable these on the same project before you exercise that connector:
+Enable an API on this project before you call it.
 
-| Connector | API |
-| --- | --- |
-| Sheets | Google Sheets API |
-| Drive | Google Drive API |
-| Classroom | Google Classroom API |
-| Calendar | Google Calendar API |
-| Gmail | Gmail API |
-| Docs | Google Docs API |
-| Slides | Google Slides API |
-| Tasks | Google Tasks API |
+| Connector | Pull request | API | Called on this branch |
+| --- | --- | --- | --- |
+| Account check | #1139 | none (userinfo) | yes |
+| Sheets | #1138 | Google Sheets API | yes |
+| Drive | #1137 | Google Drive API | yes |
+| Classroom | #1140 | Google Classroom API | no |
+| Calendar | #1149 | Google Calendar API | no |
 
-The account check (`google:smoke account`) uses the OAuth userinfo endpoint. It does not need a separate API enabled beyond the consent screen.
+Do not enable the Gmail API, Google Docs API, Google Slides API, or Google Tasks API for these connectors. Nothing in this stack calls them.
 
 ## 3. Scopes, and why
 
-Each connector asks only for its own scopes, plus `https://www.googleapis.com/auth/userinfo.email` so the school can see which Google account is connected. `include_granted_scopes=true` keeps scopes already granted. A later connector does not repeat the earlier product scopes on the consent URL.
+Each connector consent asks only for that connector's scopes, plus `https://www.googleapis.com/auth/userinfo.email`, with `include_granted_scopes=true`, `access_type=offline`, and `prompt=consent`. A later connector does not repeat earlier product scopes on the consent URL.
 
-| Connector | Scopes | Why |
+Sign-in is separate. Laravel Socialite's Google driver requests `openid`, `profile`, and `email`.
+
+On this branch, `config/google.php` requests these product scopes:
+
+| Connector | Scope | Google's published label |
 | --- | --- | --- |
-| Sheets | `https://www.googleapis.com/auth/spreadsheets` | Create a mark sheet and read it back. |
-| Drive | `https://www.googleapis.com/auth/drive.file` | File report-card PDFs this app creates. This scope does not read the rest of the school's Drive. |
-| Classroom | `classroom.courses.readonly`, `classroom.rosters.readonly`, `classroom.coursework.students.readonly` | Read classes, students, and coursework. No guardian scope and no profile-email scope. |
-| Calendar | `https://www.googleapis.com/auth/calendar.events` | Write term dates and school events. |
-| Gmail | `https://www.googleapis.com/auth/gmail.send` | Send one message the admin asked for. Restricted scope: Google verification is required before a public app can use it. |
-| Docs | `https://www.googleapis.com/auth/documents` | Create a document from a class list. |
-| Slides | `https://www.googleapis.com/auth/presentations` | Create a term presentation. |
-| Tasks | `https://www.googleapis.com/auth/tasks` | Create a task for a marks deadline. |
+| Sheets | `https://www.googleapis.com/auth/spreadsheets` | Sensitive ([Sheets scopes](https://developers.google.com/workspace/sheets/api/scopes)) |
+| Drive | `https://www.googleapis.com/auth/drive.file` | Non-sensitive. This is not the restricted `drive` or `drive.readonly` scope. |
+| Classroom | `https://www.googleapis.com/auth/classroom.courses.readonly` | Read the label in the Cloud Console when you add it. The public scope list does not print Sensitive or Restricted for this URI. |
+| Classroom | `https://www.googleapis.com/auth/classroom.rosters.readonly` | Same. Read the console label. |
+| Classroom | `https://www.googleapis.com/auth/classroom.coursework.students.readonly` | Same. Read the console label. |
 
-Add the scope on the consent screen before you connect that tool. While the app is in Testing, only listed test users can consent.
+`https://www.googleapis.com/auth/calendar.app.created` is added in #1149. It is not in this branch's catalog. Do not add `calendar`, `calendar.events`, `gmail.send`, `documents`, `presentations`, or `tasks`. The code does not request them.
 
-## 4. Environment variables (local only)
+Add a scope on the consent screen before you connect that tool. Google shows sensitive and restricted scopes with a marker in the console. Verification is not required while Publishing status is Testing. Before you change the app to In production, submit Google's sensitive-scope verification for every scope the console marks sensitive, and a security assessment for any scope it marks restricted. `spreadsheets` is documented as Sensitive, so a public production app needs that verification. These tests have never been run against Google, so the console label is the check.
 
-In `.env` (never commit the filled file):
+## 4. Environment variables
 
-```
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_CONNECTOR_REDIRECT_URI=http://localhost/admin/settings/google/callback
-```
+Set these in the environment. Do not commit the filled values.
 
-Leave the id and secret blank in `.env.example`. Do not set these on Laravel Cloud from this work.
+| Name | Production value |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | The web client id from section 1. Shared with sign-in. |
+| `GOOGLE_CLIENT_SECRET` | The web client secret. |
+| `GOOGLE_CONNECTOR_REDIRECT_URI` | `https://klassapp.xyz/admin/settings/google/callback` |
+| `APP_URL` | `https://klassapp.xyz` (already the site URL). Sign-in redirect is derived from this. |
 
-Sign-in keeps using `APP_URL` + `/auth/google/callback`. `GOOGLE_REDIRECT_URI` is an existing local-only override for that sign-in callback. It is not the connector callback.
+Do not set `GOOGLE_REDIRECT_URI` in production. The code uses it only when `APP_ENV` is `local`. Locally it overrides the sign-in callback, not the connector callback.
+
+Leave these unset. Each already defaults to Google's host. Setting one would point the app at a different host.
+
+`GOOGLE_OAUTH_AUTHORIZE_URL`, `GOOGLE_OAUTH_TOKEN_URL`, `GOOGLE_OAUTH_REVOKE_URL`, `GOOGLE_USERINFO_URL`, `GOOGLE_SHEETS_API_BASE_URL`, `GOOGLE_DRIVE_API_BASE_URL`, `GOOGLE_CLASSROOM_API_BASE_URL`, `GOOGLE_CALENDAR_API_BASE_URL`, `GOOGLE_GMAIL_API_BASE_URL`, `GOOGLE_DOCS_API_BASE_URL`, `GOOGLE_SLIDES_API_BASE_URL`, `GOOGLE_TASKS_API_BASE_URL`.
+
+The last four exist in `config/services.php` and no connector calls them. `GOOGLE_DRIVE_MCP_URL`, `GOOGLE_DRIVE_MCP_CLIENT_ID`, and `GOOGLE_DRIVE_MCP_CLIENT_SECRET` belong to a separate Toshi Drive MCP entry. This connector does not read them. Leave that entry disabled.
 
 ## 5. Connect, then run one action
 
-1. Sign in as a school admin on your local app.
-2. Open School Settings → Integrations.
-3. On Connected tools, choose Connect for one tool and finish Google's consent screen.
-4. The card shows **Live** for that tool only. Another school does not see it.
-5. Run the command for that connector. It prints the result and does not print the token.
+1. Sign in as a school admin.
+2. Open School Settings → Integrations (`/admin/settings/integrations`).
+3. On Connected tools, choose Connect for one tool and finish Google's consent screen. The card shows **Live** for that tool only after this school has granted its scopes. Another school does not see it.
+4. Run the command. It prints the result and does not print the token.
 
 ```
 php artisan google:smoke account --school=SCHOOL_ID
@@ -80,10 +88,14 @@ php artisan google:smoke sheets --school=SCHOOL_ID --exam=EXAM_ID --spreadsheet=
 php artisan google:smoke drive --school=SCHOOL_ID --exam=EXAM_ID --learner=STUDENT_USER_ID
 ```
 
-`account` reads the connected Google email (and refreshes the token if it is due). `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through the existing marks import validation. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. Classroom and the later tools are added with those connectors. Until then the command refuses them rather than calling Google.
+`account` reads the connected Google email and refreshes the token if it is due. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope. There is no button for that upload on the integrations page. The route is `POST /admin/settings/google/drive/file`.
 
-Disconnect on the card revokes the Google token and deletes the stored tokens when it is the last connected tool. Disconnecting one tool while another is still connected removes that tool's scopes from KlassApp and leaves the shared token in place, because Google's revoke endpoint cannot drop a single scope. Disconnect the last tool, or remove KlassApp's access in the Google account, to revoke the token.
+The command's signature also names `classroom`, `calendar`, `gmail`, `docs`, `slides`, and `tasks`. On this branch `classroom` is in the catalog, so the command says the action is not registered yet. `calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown. `--section` is accepted and not read. Drive uses `--exam` and `--learner`.
+
+`php artisan google:refresh-tokens` refreshes tokens that expire within 30 minutes. The scheduler runs it every fifteen minutes. A Testing-mode refresh token that has already passed seven days cannot be refreshed; the school has to connect again.
+
+Disconnect on the card revokes the Google token and clears the stored credentials when it is the last connected tool. Disconnecting one tool while another is still connected removes that tool's scopes from KlassApp and leaves the shared token in place, because Google's revoke endpoint cannot drop a single scope.
 
 ## 6. What the automated tests prove without a Cloud project
 
-`tests/fixtures/google/fake-google-router.php` is a local HTTP server, started by the PHPUnit tests, in the same role as `e2e/whatsapp-sim`. It handles the OAuth authorize, token, refresh, and revoke calls, and each connector's API as that connector is added. The feature tests connect, perform the action, read the result back from the fake server, and disconnect. They also cover an expired token (refresh), revoked access (`invalid_grant`), and an API error. They do not prove Google's production behaviour. That is what this smoke command is for, on a machine that has the client id and secret.
+`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests are `tests/Feature/Google/GoogleConnectorFoundationTest.php`, `tests/Feature/Google/GoogleSheetsConnectorTest.php`, and `tests/Feature/Google/GoogleDriveConnectorTest.php`. The Drive test connects, uploads one report-card PDF, reads the folder path back from the fake server, and disconnects. It also covers an expired token (refresh), revoked access (`invalid_grant`), and an API error. They do not prove Google's consent screen, Google's scope verification, or a real Drive API.
