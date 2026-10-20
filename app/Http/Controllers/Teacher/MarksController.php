@@ -13,13 +13,14 @@ use App\Models\AcademicYear;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
-use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ExamAuthorization;
+use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksImport\MarksImportService;
 use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
+use App\Services\Marks\ExamMarkWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Events\MarksUpdated;
-use App\Events\GradesPublished;
 use App\Exceptions\MarksLockedException;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Exports\CombinedMarksheetExport;
@@ -111,20 +111,20 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
 }
 
-// mark exam as done
-public function TogglekStatus(Exam $exam){
+public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
+{
     /** @var User $teacher */
     $teacher = Auth::user();
     if (! $teacher instanceof User) {
         abort(403, 'Not Authorized');
     }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to submit marks for this exam.');
 
-    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
+    $submissions->submit($exam, $teacher);
 
-    $exam->changeExamStatus();
     return redirect()
-        ->route('teacher.exam.marks')
-        ->with('successmessage', ' Exam status updated!');
+        ->route('teacher.exam.marks.view', $exam)
+        ->with('successmessage', 'Marks submitted for review.');
 }
 
 public function enterExamMarks(Exam $exam)
@@ -253,8 +253,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     $reason = $this->requireCorrectionReason($request, $exam);
     $afterReopen = $this->wasReopened($exam);
 
-    $schoolId = $user->school_id;
-
     // ===== Nursery branch: save domain ratings instead of numeric marks =====
     $exam->load('standard');
     $isNursery = $exam->standard
@@ -288,7 +286,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
             }
         }
 
-        $exam->changeExamStatus();
         $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount, $reason);
 
         return redirect()
@@ -299,70 +296,20 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     // ===== Standard branch: numeric marks =====
     $affectedMarkCount = 0;
 
+    $writer = app(ExamMarkWriter::class);
     foreach ($request->input('marks', []) as $studentId => $mark) {
-        if ($mark === null || trim($mark) === '') continue;
-        $grade = $gradingSystem->grade($mark,$schoolId, $exam);
-        Marks::updateOrCreate(
-            [
-                'student_id' => $studentId,
-                'exam_id'    => $exam->id,
-                'school_id'  => $exam->school_id,
-                'subject_id' => $exam->subject_id,
-            ],
-            [
-                'teacher_id' => $exam->teacher_id,
-                'marks'      => $mark,
-                "grade" => $grade,
-                "section_id" => $exam->section_id
-            ]
-        );
+        if ($mark === null || trim((string) $mark) === '') continue;
+        $writer->save($user, $exam, (int) $studentId, $mark, $reason);
         $affectedMarkCount++;
     }
 
-    // Notify school admins that marks were entered/updated
+    // School admins hear that marks changed. Parents hear about marks only from a release.
     try {
         event(new MarksUpdated($exam, $user, $reason, $afterReopen, $affectedMarkCount));
     } catch (\Throwable $e) {
         \Log::warning("Failed to dispatch MarksUpdated: {$e->getMessage()}");
     }
 
-    // Check if any student now has marks in ALL subjects → comprehensive notification
-    try {
-        $outbound = app(\App\Services\OutboundWhatsAppService::class);
-
-        // Total subjects assigned to this standard/class
-        $totalSubjects = Subject::where('school_id', $exam->school_id)
-            ->where('standard_id', $exam->standard_id)
-            ->where('is_active', 1)
-            ->distinct('name')
-            ->count('name');
-
-        if ($totalSubjects > 0) {
-            // All exams of the same exam type + term + class (this exam period)
-            $periodExamIds = Exam::where('standard_id', $exam->standard_id)
-                ->where('exam_type_id', $exam->exam_type_id)
-                ->where('academic_term_id', $exam->academic_term_id)
-                ->where('school_id', $exam->school_id)
-                ->pluck('id');
-
-            foreach (array_keys($request->marks) as $studentId) {
-                $studentMarksCount = Marks::whereIn('exam_id', $periodExamIds)
-                    ->where('student_id', $studentId)
-                    ->count();
-
-                // Student now has marks in all subjects → notify parent
-                if ($studentMarksCount >= $totalSubjects) {
-                    $sent = $outbound->notifyComprehensiveGrades($studentId, $exam->id);
-                    \Log::info("GradesPublished: student {$studentId} completed all {$totalSubjects} subjects, sent {$sent} message(s)");
-                }
-            }
-        }
-    } catch (\Throwable $e) {
-        \Log::warning("Failed to check/dispatch GradesPublished: {$e->getMessage()}");
-    }
-
-    // change exam status
-    $exam->changeExamStatus();
     $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
 
     return redirect()
@@ -516,22 +463,12 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     // it needs a reason, exactly like an admin reopening a locked submission.
     $reason = $this->requireCorrectionReason($request, $exam);
     $afterReopen = $this->wasReopened($exam);
-     $mark = $validated["marks"];
-      $grade = $gradingSystem->grade($mark,$schoolId, $exam);
-    // Match saveExamMarks: key without actor teacher_id so CT updates the same row.
-    Marks::updateOrCreate(
-        [
-            'exam_id'     => $exam->id,
-            'subject_id'  => $exam->subject_id,
-            'student_id'  => $student->id,
-            'school_id'   => $exam->school_id,
-        ],
-        [
-            'teacher_id'  => $exam->teacher_id,
-            'marks'       => $validated['marks'],
-            'grade'       => $grade ?? null,
-            'section_id'  => $exam->section_id,
-        ]
+    app(ExamMarkWriter::class)->save(
+        $teacher,
+        $exam,
+        (int) $student->id,
+        $validated['marks'] ?? null,
+        $reason,
     );
 
     $this->logMarksActivity($request, $exam, $teacher, 'marks.updated', 1, $reason);
@@ -580,7 +517,7 @@ private function logMarksActivity(
  */
 private function correctionReasonRequired(Exam $exam): bool
 {
-    return $exam->status === 'submitted';
+    return app(ExamMarkWriter::class)->requiresCorrection($exam);
 }
 
 /**

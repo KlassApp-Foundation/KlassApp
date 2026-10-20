@@ -122,10 +122,6 @@ class SchoolInviteService
      */
     public static function claim(SchoolInvite $invite, array $data): array
     {
-        if ($invite->isClaimed()) {
-            return ['success' => false, 'message' => 'This invite has already been used. Sign in with the email it was sent to.'];
-        }
-
         if ($invite->isRevoked()) {
             return ['success' => false, 'message' => 'This invite has been revoked. Ask KlassApp for a new one.'];
         }
@@ -135,27 +131,49 @@ class SchoolInviteService
         }
 
         $email = mb_strtolower(trim((string) $invite->email));
-
-        if (User::withTrashed()->where('email', $email)->exists()) {
-            return ['success' => false, 'message' => 'An account with this email already exists. Sign in instead.'];
-        }
+        $alreadyClaimed = 'This invite has already been used. Sign in with the email it was sent to.';
 
         try {
-            $user = DB::transaction(function () use ($invite, $data, $email) {
+            $result = DB::transaction(function () use ($invite, $data, $email, $alreadyClaimed) {
+                // Lock the invite row and re-check it, so two simultaneous
+                // submissions of the same invite cannot both create a school.
+                $locked = SchoolInvite::whereKey($invite->id)->lockForUpdate()->first();
+
+                if ($locked === null || $locked->isClaimed()) {
+                    return ['success' => false, 'message' => $alreadyClaimed];
+                }
+
+                // Mark claimed before creating anything. The whereNull guard
+                // also holds on drivers without row locks (SQLite in tests).
+                $marked = SchoolInvite::whereKey($locked->id)
+                    ->whereNull('claimed_at')
+                    ->update(['claimed_at' => now(), 'updated_at' => now()]);
+
+                if ($marked !== 1) {
+                    return ['success' => false, 'message' => $alreadyClaimed];
+                }
+
+                if (User::withTrashed()->where('email', $email)->exists()) {
+                    throw new \DomainException('email_exists');
+                }
+
                 $user = app(SchoolSignupBootstrapService::class)->bootstrapAsOperator([
                     'name' => trim((string) $data['name']),
                     'email' => $email,
                     'phone' => $data['phone'] ?? null,
                     'password' => $data['password'],
-                    'school_name' => $invite->school_name,
-                    'registration_country' => $invite->country,
+                    'school_name' => $locked->school_name,
+                    'registration_country' => $locked->country,
                 ]);
 
-                $invite->forceFill(['claimed_at' => now()])->save();
-
-                return $user;
+                return ['success' => true, 'message' => 'Your school is ready.', 'user' => $user];
             });
         } catch (Throwable $e) {
+            if ($e instanceof \DomainException && $e->getMessage() === 'email_exists') {
+                // Rolled back: the invite stays unclaimed.
+                return ['success' => false, 'message' => 'An account with this email already exists. Sign in instead.'];
+            }
+
             Log::error('School invite claim failed', [
                 'invite_id' => $invite->id,
                 'email' => $email,
@@ -166,7 +184,11 @@ class SchoolInviteService
             return ['success' => false, 'message' => 'We could not create the school right now. Please try again.'];
         }
 
-        return ['success' => true, 'message' => 'Your school is ready.', 'user' => $user];
+        if ($result['success']) {
+            $invite->refresh();
+        }
+
+        return $result;
     }
 
     public static function inviteUrl(string $token): string
@@ -174,7 +196,11 @@ class SchoolInviteService
         return url('/invite/school/'.$token);
     }
 
-    public static function sendEmail(SchoolInvite $invite, string $token): void
+    /**
+     * Queue the invite email. Returns false when it could not be queued, and
+     * records that on the invite so the admin page can offer a retry.
+     */
+    public static function sendEmail(SchoolInvite $invite, string $token): bool
     {
         try {
             Mail::to($invite->email)->queue(new SchoolInviteMail(
@@ -189,6 +215,16 @@ class SchoolInviteService
                 'email' => $invite->email,
                 'error' => $e->getMessage(),
             ]);
+
+            $invite->forceFill(['email_failed_at' => now()])->save();
+
+            return false;
         }
+
+        if ($invite->email_failed_at !== null) {
+            $invite->forceFill(['email_failed_at' => null])->save();
+        }
+
+        return true;
     }
 }

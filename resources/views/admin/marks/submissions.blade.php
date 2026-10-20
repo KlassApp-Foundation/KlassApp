@@ -8,60 +8,34 @@
         'subtitle' => 'Overview of all exam marks submissions, lock status, and approval status.',
     ])
 
+    <p class="mb-4 text-sm text-gray-700" data-testid="marks-submissions-count">{{ $pendingCount }} awaiting review</p>
+
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="ds-table w-full">
             <thead>
                 <tr>
-                    <th>Exam</th>
-                    <th>Class</th>
                     <th>Subject</th>
+                    <th>Class</th>
+                    <th>Teacher</th>
                     <th>Term</th>
                     <th>Type</th>
-                    <th>Submissions</th>
-                    <th>Locked</th>
-                    <th>Approved</th>
-                    <th>Pending</th>
+                    <th>Submitted</th>
+                    <th>Approval</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($exams as $exam)
-                    <tr>
-                        <td class="font-medium">{{ $exam->name }}</td>
-                        <td>{{ $exam->standard->name ?? $exam->section->name ?? '-' }}</td>
-                        <td>{{ $exam->subject->name ?? '-' }}</td>
-                        <td>{{ $exam->academicTerm->name ?? '-' }}</td>
-                        <td>{{ $exam->examType->name ?? '-' }}</td>
-                        <td class="text-center">{{ $stats[$exam->id]['total'] ?? 0 }}</td>
-                        <td class="text-center">
-                            @if(($stats[$exam->id]['locked'] ?? 0) > 0)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    {{ $stats[$exam->id]['locked'] }}
-                                </span>
-                            @else
-                                0
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if(($stats[$exam->id]['approved'] ?? 0) > 0)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {{ $stats[$exam->id]['approved'] }}
-                                </span>
-                            @else
-                                0
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if(($stats[$exam->id]['pending'] ?? 0) > 0)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                    {{ $stats[$exam->id]['pending'] }}
-                                </span>
-                            @else
-                                0
-                            @endif
-                        </td>
+                @forelse($submissions as $submission)
+                    <tr data-testid="marks-submission-row">
+                        <td class="font-medium">{{ $submission->subject->name ?? '-' }}</td>
+                        <td>{{ $submission->class->name ?? '-' }}</td>
+                        <td>{{ $submission->teacher->name ?? '-' }}</td>
+                        <td>{{ $submission->exam->academicTerm->name ?? '-' }}</td>
+                        <td>{{ $submission->exam->examType->name ?? '-' }}</td>
+                        <td>{{ $submission->submitted_at?->format('j M Y H:i') ?? '-' }}</td>
+                        <td>{{ $submission->approval_status ?? 'pending' }}</td>
                         <td>
-                            <a href="{{ route('admin.marks.submissions.show', $exam->id) }}"
+                            <a href="{{ route('admin.marks.submissions.show', $submission->exam_id) }}"
                                class="ds-btn ds-btn-sm ds-btn-primary">
                                 View Details
                             </a>
@@ -69,8 +43,8 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="text-center text-gray-500 py-8">
-                            No submitted exams found.
+                        <td colspan="8" class="text-center text-gray-500 py-8">
+                            No submitted marks found.
                         </td>
                     </tr>
                 @endforelse
@@ -79,7 +53,7 @@
     </div>
 
     <div class="mt-4">
-        {{ $exams->links() }}
+        {{ $submissions->links() }}
     </div>
 </div>
 

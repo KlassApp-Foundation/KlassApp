@@ -6,10 +6,11 @@
 --}}
 <form
     id="promotionForm"
-    method="GET"
+    method="POST"
     action="{{ route('admin.students.promote') }}"
     class="flex items-end justify-end gap-2"
 >
+    @csrf
     <input
         type="hidden"
         name="sectionId"

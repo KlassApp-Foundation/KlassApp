@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Support\PhoneCountry;
 use App\Services\CoAdminInviteLinkService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
@@ -146,6 +147,9 @@ class AgentToshi extends Component
     public $adminName = '';
     public $adminEmail = '';
     public $adminPassword = '';
+
+    /** True after create mode emails a signed set-password link instead of a password. */
+    public bool $adminSetPasswordEmailed = false;
     public $coAdminName = '';
     public $coAdminEmail = '';
     public $coAdminUserId = null;
@@ -1990,8 +1994,14 @@ class AgentToshi extends Component
         if ($email) {
             $this->actionData['teacherEmails'][$name] = $email;
         }
-        if ($this->teacherFormPhone) {
-            $this->actionData['teacherPhones'][$name] = trim($this->teacherFormPhone);
+        if (trim($this->teacherFormPhone) !== '') {
+            $phone = PhoneCountry::normalise($this->teacherFormPhone, $this->resolvedPhoneCountry());
+            if ($phone === null) {
+                $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), true));
+
+                return;
+            }
+            $this->actionData['teacherPhones'][$name] = $phone;
         }
         if ($this->teacherFormSubjects) {
             $this->actionData['teacherSubjects'][$name] = array_map('trim', explode(',', $this->teacherFormSubjects));
@@ -2300,7 +2310,15 @@ class AgentToshi extends Component
             'board_registration_number' => trim((string) $this->studentFormBoardRegNumber),
         ];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
-        if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
+        if (trim((string) $this->studentFormParentPhone) !== '') {
+            $parentPhone = PhoneCountry::normalise($this->studentFormParentPhone, $this->resolvedPhoneCountry());
+            if ($parentPhone === null) {
+                $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), false));
+
+                return;
+            }
+            $entry['parent_phone'] = $parentPhone;
+        }
 
         $this->actionData['students'][] = $entry;
         $this->studentFormName = '';
@@ -3182,36 +3200,43 @@ class AgentToshi extends Component
     }
 
     /**
-     * Normalize a Ugandan phone number to +256XXXXXXXXX format.
-     * Accepts: +256701234567, 256701234567, 0701234567, +256 701 234 567
-     * Returns normalized number or null on failure.
+     * Normalise a WhatsApp number with the school's country.
+     * Uses WhatsAppPhoneHelper::normaliseForCountry() via PhoneCountry.
      */
     private function normalizeUgandaPhone(string $phone): ?string
     {
-        $phone = trim(preg_replace('/[\s\-\(\)]/', '', $phone));
+        $country = $this->resolvedPhoneCountry();
+        $normalised = PhoneCountry::normalise($phone, $country);
+        if ($normalised === null) {
+            $this->botSay(PhoneCountry::error($country, true));
 
-        // Already in +256 format
-        if (preg_match('/^\+256[0-9]{9}$/', $phone)) {
-            return $phone;
+            return null;
         }
 
-        // 256XXXXXXXXX (no +)
-        if (preg_match('/^256[0-9]{9}$/', $phone)) {
-            return '+' . $phone;
+        return $normalised;
+    }
+
+    public function phoneFormatHint(bool $whatsapp = true, ?string $label = null): string
+    {
+        return PhoneCountry::hint($this->resolvedPhoneCountry(), $whatsapp, $label);
+    }
+
+    private function resolvedPhoneCountry(): string
+    {
+        $named = trim((string) $this->schoolCountry);
+        if ($named !== '') {
+            return $named;
         }
 
-        // 07XXXXXXXX or 07XXX XXX XXX
-        if (preg_match('/^0[0-9]{9}$/', $phone)) {
-            return '+256' . substr($phone, 1);
+        if ($this->schoolId) {
+            $country = trim((string) optional(School::find($this->schoolId))->registration_country);
+
+            if ($country !== '') {
+                return $country;
+            }
         }
 
-        // 7XXXXXXXX (no prefix)
-        if (preg_match('/^7[0-9]{8}$/', $phone)) {
-            return '+256' . $phone;
-        }
-
-        $this->botSay("That doesn't look like a valid Ugandan phone number. Please use format +256701234567.");
-        return null;
+        return '';
     }
 
     /**
@@ -3866,13 +3891,19 @@ class AgentToshi extends Component
             }
             $this->actionData['email'] = $email;
             $this->actionSubstep = 2;
-            $this->botSay("Email: **{$email}**. | What is their phone number? (type **skip** to omit)");
+            $this->botSay('Email: **'.$email.'**. | What is their phone number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), false, "Teacher's phone number").' (type **skip** to omit)');
             return;
         }
 
         if ($this->actionSubstep === 2) {
             if (!in_array($lower, ['skip', 'none', '', 'later'])) {
-                $this->actionData['phone'] = trim($text);
+                $phone = PhoneCountry::normalise($text, $this->resolvedPhoneCountry());
+                if ($phone === null) {
+                    $this->botSay(PhoneCountry::error($this->resolvedPhoneCountry(), false));
+
+                    return;
+                }
+                $this->actionData['phone'] = $phone;
             }
             $parts = [];
             $parts[] = "Name: **{$this->actionData['name']}**";
@@ -4589,7 +4620,7 @@ class AgentToshi extends Component
         if ($this->substep === 3) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->botSay("Name confirmed. | What is the admin's WhatsApp phone number? This will be used for school notifications. (format: +256XXXXXXXXX)");
+                $this->botSay('Name confirmed. | What is the admin\'s WhatsApp phone number? This will be used for school notifications. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
                 $this->substep = 4;
                 return;
             }
@@ -4617,7 +4648,7 @@ class AgentToshi extends Component
                 $this->substep = 6;
                 return;
             }
-            $this->botSay("No problem. Please enter the correct phone number:");
+            $this->botSay('No problem. Please enter the correct phone number. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
             $this->substep = 4;
             return;
         }
@@ -4625,8 +4656,8 @@ class AgentToshi extends Component
         // substep 6: collect password
         if ($this->substep === 6) {
             if (strtolower(trim($text)) === 'default') {
-                $this->adminPassword = 'password';
-                $this->botSay("Using default password. The admin can change this later.");
+                $this->adminPassword = '';
+                $this->botSay("No password was chosen. When the school is created, the admin receives an email with a link to set one.");
             } else {
                 $pw = trim($text);
                 if (strlen($pw) < 6) {
@@ -6081,7 +6112,7 @@ class AgentToshi extends Component
                 $this->substep = 1;
                 return;
             }
-            $this->botSay("What's the admin's WhatsApp number? (e.g., +256701234567) or type 'skip' to skip this step.");
+            $this->botSay('What\'s the admin\'s WhatsApp number? '.PhoneCountry::hint($this->resolvedPhoneCountry(), true).' Or type \'skip\' to skip this step.');
             $this->substep = 2;
             return;
         }
@@ -6101,7 +6132,7 @@ class AgentToshi extends Component
                 $this->advance();
                 return;
             }
-            $this->botSay("Enter the correct WhatsApp number:");
+            $this->botSay('Enter the correct WhatsApp number. '.PhoneCountry::hint($this->resolvedPhoneCountry(), true));
             $this->substep = 2;
             return;
         }
@@ -6416,8 +6447,10 @@ class AgentToshi extends Component
             $this->reviewData['committed'] = true;
             $this->reviewData['adminEmail'] = $this->adminEmail ?: (auth()->user()->email ?? '');
             $this->reviewData['adminPhone'] = $this->schoolPhone;
-            // Store whether a custom password was set (not the actual value)
-            $this->reviewData['adminHasPassword'] = !empty($this->adminPassword);
+            // Never store or show the password. Record only whether a link was emailed
+            // or the admin typed a password during setup.
+            $this->reviewData['adminSetPasswordEmailed'] = (bool) $this->adminSetPasswordEmailed;
+            $this->reviewData['adminPasswordChosen'] = trim((string) $this->adminPassword) !== '';
             $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
             $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
             $this->reviewData['mode'] = $wasComplete ? 'complete' : $this->mode;
@@ -6720,19 +6753,42 @@ class AgentToshi extends Component
                 $this->schoolId = $school->id;
                 $schoolId = $school->id;
 
-                // Create admin user FIRST so we can reference its ID in subscriptions
-                $password = bcrypt($this->adminPassword ?: 'password');
+                // Create admin user FIRST so we can reference its ID in subscriptions.
+                // A chosen password is stored hashed and is never emailed. When none
+                // was chosen, the account gets an unusable random hash and a signed
+                // set-password link.
+                $this->adminSetPasswordEmailed = false;
+                $chosenPassword = trim((string) $this->adminPassword);
+                $emailSetPasswordLink = $chosenPassword === '';
+                $password = bcrypt($emailSetPasswordLink ? Str::random(32) : $chosenPassword);
                 $adminUser = User::create([
                     'school_id' => $school->id, 'usergroup_id' => 3,
                     'name' => $this->adminName ?: 'School Admin',
                     'email' => $this->adminEmail ?: 'admin@' . Str::slug($this->schoolName) . '.sch.ug',
-                    'password' => $password, 'status' => 'active', 'email_verified' => 1,
+                    'password' => $password,
+                    'is_reset' => $emailSetPasswordLink ? 1 : 0,
+                    'status' => 'active', 'email_verified' => 1,
                 ]);
                 Userprofile::create([
                     'school_id' => $school->id, 'user_id' => $adminUser->id,
                     'usergroup_id' => 3, 'firstname' => $this->adminName ?: 'School',
                     'lastname' => 'Admin', 'status' => 'active',
                 ]);
+
+                if ($emailSetPasswordLink && $adminUser->email) {
+                    try {
+                        $issued = \App\Support\SetPasswordLink::issue($adminUser);
+                        \Mail::to($adminUser->email)->queue(new \App\Mail\SetPasswordLinkMail(
+                            $adminUser->name ?: 'there',
+                            $issued['url'],
+                            $issued['expires_at'],
+                            $issued['minutes'],
+                        ));
+                        $this->adminSetPasswordEmailed = true;
+                    } catch (\Throwable $e) {
+                        \Log::warning('Admin set-password email failed: '.$e->getMessage());
+                    }
+                }
 
                 // ── Plan: delegate to OnboardingEngine for CurrentPlan/TrialService ──
                 // Subscription record is Toshi-specific billing, kept inline.

@@ -22,18 +22,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
 use Illuminate\Http\Request;
-use App\Schoolplus\Student;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;
 use App\Models\ActivityLog;
 use App\Models\FeePayment;
-use App\Models\StandardLink;
-use App\Models\Teacherlink;
-use App\Models\Subject;
 use App\Traits\Common;
 use App\Models\User;
-use App\Models\Exam;
-use App\Models\Mark;
 use App\Models\Fee;
 use Exception;
 use Log;
@@ -380,146 +374,5 @@ class StudentDetailsController extends Controller
         }
 
         return redirect('/admin/students/'.$user->id, 302);
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function showmark($name)
-    {
-       $users = $this->findSchoolStudentByName($name, ['marks']);
-       $studentId=$users->id;
-       $examId=$users->marks[0]['exam_id'];
-
-       return  Student::getStudentMark($studentId,$examId);
-    }
-
-    public function showAllMark($name)
-    {
-        $users = $this->findSchoolStudentByName($name);
-
-        $studentId=$users->id;
-
-        return  Student::getAllMarks($studentId);
-    }
-
-    public function compareMarks($name)
-    {
-        try
-        {
-        $users=collect([$this->findSchoolStudentByName($name, ['studentAcademic'])]);
-        $studentId=$users[0]['id'];
-        $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
-
-        $exam=Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id',DESC)->groupBy('exam_id')->pluck('exam_id')->toArray();
-        //dd($exam);
-        $examIdOne=$exam[0];
-        $examIdTwo=$exam[1];
-
-        //return  Student::CompareMarks($studentId,$examIdOne,$examIdTwo,$standardId);
-
-
-         $standard=StandardLink::where('id',$standardId)->first();
-
-        $standard_id=$standard->standard_id;
-        $section_id=$standard->section_id;
-        //dd($standard_id);
-        //$subjects=$subjects['name'];
-
-        //dd($classCount);
-        $subjects=Subject::where('standard_id',$standard_id)->where('section_id',$section_id)->pluck('name')->toArray();
-        $marksone=Mark::where('user_id',$studentId)->where('exam_id',$examIdOne)->pluck('obtained_marks')->toArray();
-        $markstwo=Mark::where('user_id',$studentId)->where('exam_id',$examIdTwo)->pluck('obtained_marks')->toArray();
-
-        $examone=Exam::where('standard_id',$standardId)->where('id',$examIdOne)->pluck('name')->toArray();
-
-        $examtwo=Exam::where('standard_id',$standardId)->where('id',$examIdTwo)->pluck('name')->toArray();
-        //dd($examIdTwo);
-        $examOneAverage=Mark::where([['standard_id',$standardId],['exam_id',$examIdOne]])->groupBy('subject_id')->selectRaw('round(avg(obtained_marks)) as avg')->pluck('avg');
-
-        $examTwoAverage=Mark::where([['standard_id',$standardId],['exam_id',$examIdTwo]])->groupBy('subject_id')->selectRaw('round(avg(obtained_marks)) as avg')->pluck('avg');
-
-         return view('/admin/exammark/process' , ['subjects'=>$subjects,'marksone'=>$marksone,'markstwo'=>$markstwo,'examone'=>$examone,'examtwo'=>$examtwo,'examOneAverage'=>$examOneAverage,'examTwoAverage'=>$examTwoAverage]);
-
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            dd($e->getMessage());
-        }
-    }
-
-
-    public function marksGraph($name)
-    {
-        $school_id      =   Auth::user()->school_id;
-        $academic_year  =   SiteHelper::getAcademicYear($school_id);
-        $users=collect([$this->findSchoolStudentByName($name, ['studentAcademic'])]);
-        $studentId=$users[0]['id'];
-        $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
-
-
-        $subjects_list=Teacherlink::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standardLink_id',$standardId]]);
-        $subjects=$subjects_list->get()->pluck('subject.name')->toArray();
-        if(class_exists('Gegok12\Exam\Models\Exam'))
-        {
-            $examss=\Gegok12\Exam\Models\Exam::where('standard_id',$standardId)->get();
-
-        }
-        else
-        {
-            $examss=Exam::where('standard_id',$standardId)->get();
-
-        }
-
-          //dd($subjects);
-        $subjects_array[]=array_merge(['Subjects'],$subjects,['average']);
-
-         $data=[];
-         foreach ($examss as $key => $exam) {
-
-            if(class_exists('Gegok12\Exam\Models\Mark'))
-            {
-                $exam_result=\Gegok12\Exam\Models\Mark::where('user_id',$studentId)->where('exam_id',$exam->id);
-            }
-            else{
-                $exam_result=Mark::where('user_id',$studentId)->where('exam_id',$exam->id);
-            }
-
-           $exam_marks=$exam_result->pluck('obtained_marks')->toArray();
-           $exam_avg=$exam_result->avg('obtained_marks');
-
-           $sellers = [];
-
-           $records= $subjects_list->get()->map(function ($seller) use ($school_id,$academic_year,$standardId,$exam) {
-
-            if(class_exists('Gegok12\Exam\Models\Mark'))
-            {
-                $markings=\Gegok12\Exam\Models\Mark::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$standardId],['exam_id',$exam->id],['subject_id',$seller->subject_id]])->first();
-            }
-            else
-            {
-                $markings=Mark::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$standardId],['exam_id',$exam->id],['subject_id',$seller->subject_id]])->first();
-            }
-
-
-                if($markings!=null){
-                return $markings->obtained_marks;
-                }
-                else
-                {
-                    return "0";
-                }
-            })->toArray();
-            //dd($records);
-           //if(count($exam->schedule)==count($exam_marks)){
-            $data[]=array_merge([$exam->name],array_map('intval',$records),[$exam_avg]);
-           //}
-         }
-         $finas=array_merge($subjects_array,$data);
-
-          return view('/admin/exammark/markgraph' , ['subjects'=>$finas,'user'=>$users[0]]);
     }
 }

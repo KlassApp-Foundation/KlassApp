@@ -58,7 +58,7 @@ class SidebarPolishCountsTest extends TestCase
 
         $this->actingAs($admin);
         $this->assertSame(
-            ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0, 'whatsapp' => 0],
+            ['admissions' => 0, 'unmatched' => 0, 'approvals' => 0, 'whatsapp' => 0, 'mark_submissions' => 0],
             SidebarCounts::forSchool($school->id)
         );
         $quiet = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();

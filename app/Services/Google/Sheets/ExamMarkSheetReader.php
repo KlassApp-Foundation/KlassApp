@@ -10,7 +10,9 @@ use App\Services\MarksImport\MarksImportService;
 /**
  * Builds the mark sheet from the marks-import template plus saved marks.
  *
- * TODO: switch to App\Services\Results\ResultsService when PR #1118 is on main.
+ * ResultsService is on main, and it is the term sheet: one chosen mark per
+ * subject and exam type. This export is one exam, so it keeps that exam's
+ * own marks. The roster and the save path stay in MarksImportService.
  */
 class ExamMarkSheetReader implements ClassMarkSheetReader
 {

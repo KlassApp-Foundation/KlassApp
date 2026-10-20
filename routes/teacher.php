@@ -355,9 +355,6 @@ Route::get( '/student/show/activity/{name}', 'StudentDetailsController@showActiv
 Route::get( '/student/show/discipline/{name}', 'StudentDetailsController@showDisciplines' );
 Route::get( '/student/show/attendance/{name}', 'StudentDetailsController@showAttendance' );
 Route::get( '/student/show/libraryactivity/{name}', 'StudentDetailsController@showBookLent' );
-Route::get( '/student/showmark/{name}', 'StudentDetailsController@showmark' );
-Route::get( '/student/showallmark/{name}', 'StudentDetailsController@showAllMark' );
-Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMarks' );
 Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 
@@ -413,10 +410,12 @@ Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseContr
 
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
+Route::redirect('/exams', '/teacher/exam/marks', 301);
+
 Route::prefix('exam')->group(function () {
 
-    // Teacher exam landing page
-    Route::get('/', 'MarksController@teacherExamMarksList')->name('teacher.exam.index');
+    // The marks list is the one Enter marks address. This landing URL follows it.
+    Route::redirect('/', '/teacher/exam/marks', 301)->name('teacher.exam.index');
 
     // List of exams available for this teacher to enter marks
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
@@ -457,8 +456,7 @@ Route::prefix('exam')->group(function () {
 
     Route::patch('/{exam}/students/{student}/mark', "MarksController@updateMark")
     ->name('teacher.marks.update');
-    Route::patch('/{exam}/change-status', "MarksController@TogglekStatus")
-    ->name('teacher.marks.change-status');
+    Route::post('/{exam}/submit', 'MarksController@submitMarks')->name('teacher.exam.marks.submit');
 });
 //class wall
 

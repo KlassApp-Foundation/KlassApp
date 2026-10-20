@@ -36,7 +36,7 @@ final class UserProvisioning
     }
 
     /**
-     * Random credentials when the plain password must be delivered (e.g. invite email).
+     * Random credentials for tests. The plain value must not be emailed or shown in a notification.
      *
      * @return array{plain: string, password: string, is_reset: int}
      */
