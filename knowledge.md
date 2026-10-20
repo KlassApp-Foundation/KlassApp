@@ -689,7 +689,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Work:** PR 1 of the stack plan only. No framework bump, no migrations, no Excel 4, no PHP 8.5. Rebased onto `74b18405` after #1146 and #1148 merged, and regenerated `composer.lock` from `main`'s lock.
 - **Files:** `composer.json`, `composer.lock`, `app/Rules/Isbn.php`, `tests/Unit/Rules/IsbnTest.php`, `app/Http/Requests/BookRequest.php`, `app/Models/LessonPlan.php` (removed unused `searchableAs()` and `toSearchableArray()`), `config/openai.php`, `config/scout.php`, `.env.example` (Algolia block only). `config/ai.php` and credential handling were not touched.
 - **Decision:** `composer update` named only the pinned and loosened packages. #1148's Guzzle 7.16.0, CommonMark 2.10.4, PhpSpreadsheet 1.30.7, HttpFoundation v7.4.21, Yaml v8.1.9, and the other upgraded packages stay at those versions. Excel stays for PR 5.
-- **Tests:** ISBN unit test 2 tests / 44 assertions before the rebase. Full suite re-run is recorded in the follow-up once it finishes.
+- **Tests:** After the rebase, local `scripts/test-guard.sh` (4 processes) was **2812 tests, 20,061 assertions, 0 failures, 0 errors, 4 skipped**. The two new tests are still `Tests\Unit\Rules\IsbnTest`. CI check, scan, mysql-84-migrations, and test-guard were green on `23fb00ff` before this note.
 - **Status:** OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156). Do not merge from this session.
 
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
