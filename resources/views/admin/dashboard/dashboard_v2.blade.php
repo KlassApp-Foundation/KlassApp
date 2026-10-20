@@ -4,8 +4,8 @@
     school-admin dashboard.
 
     One count: the setup bar and the sidebar chip read OnboardingStepsService
-    (neutral step names via displayLabel — K25). No promo carousel, no Toshi
-    slide, no Connected tools card.
+    (neutral step names via displayLabel — K25). No promo carousel and no Toshi
+    slide. A text link opens the Connected tools page.
 --}}
 @extends('layouts.admin.layout')
 
@@ -379,6 +379,10 @@
         @foreach(($connectedTools['googleLive'] ?? []) as $tool)
             <p class="dv2-drive" data-testid="dashboard-google-live-{{ $tool['key'] }}" style="color:#0F172A">{{ $tool['label'] }} · Live</p>
         @endforeach
+
+        <p class="dv2-soon">
+            <a href="{{ route('google.mine') }}" data-testid="dashboard-connected-tools-link" style="color:#1E6FD9;font-weight:600">My connected tools</a>
+        </p>
 
         {{-- 7 · Toshi line --}}
         @if($toshiMode === \App\Enums\ToshiMode::Assistant)

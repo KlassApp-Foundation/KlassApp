@@ -38,6 +38,7 @@ use App\Models\Homework;
 use App\Models\Setting;
 use App\Models\Events;
 use App\Models\School;
+use App\Services\ConnectedTools\ConnectedToolsRegistry;
 
 use App\Models\User;
 use App\Models\Task;
@@ -242,6 +243,7 @@ class AppServiceProvider extends ServiceProvider {
     public function register() {
         // Named Mcp::client() resolutions always return auditing clients (closes raw callTool bypass).
         $this->app->singleton(ClientManager::class, fn (): ClientManager => new AuditingMcpClientManager);
+        $this->app->singleton(ConnectedToolsRegistry::class);
         $this->app->singleton(ReleaseGate::class, EloquentReleaseGate::class);
         $this->app->singleton(GradingScale::class, SchoolGradingScale::class);
         $this->app->singleton(DivisionRule::class, ThresholdDivisionRule::class);

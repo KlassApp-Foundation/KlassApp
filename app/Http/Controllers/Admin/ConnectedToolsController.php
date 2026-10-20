@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Google;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ConnectedTools\ConnectedToolsRegistry;
 use App\Services\Google\GoogleConnectionService;
 use Illuminate\Support\Facades\Auth;
 
-class GoogleMineController extends Controller
+class ConnectedToolsController extends Controller
 {
-    public function index(GoogleConnectionService $connections)
+    public function index(ConnectedToolsRegistry $tools, GoogleConnectionService $connections)
     {
         $user = Auth::user();
 
@@ -23,9 +24,12 @@ class GoogleMineController extends Controller
             default => 'layouts.admin.layout',
         };
 
-        return view('google.mine', [
+        return view('admin.connected-tools.index', [
             'layout' => $layout,
-            'googleConnectors' => $connections->cardRows($user),
+            'tools' => $tools->cardsFor($user),
+            'allowRows' => (int) $user->usergroup_id === 3
+                ? $connections->allowRows((int) $user->school_id)
+                : null,
         ]);
     }
 }

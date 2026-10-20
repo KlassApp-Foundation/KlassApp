@@ -219,6 +219,13 @@
                             "count": "whatsapp"
                         },
                         {
+                            "label": "My connected tools",
+                            "url": "settings/connected-tools",
+                            "paths": [
+                                "settings/connected-tools*"
+                            ]
+                        },
+                        {
                             "label": "Approvals",
                             "url": "admin/approvals",
                             "paths": [
@@ -239,13 +246,6 @@
                             "url": "admin/settings",
                             "condition": "school_admin",
                             "children": [
-                                {
-                                    "label": "My connected tools",
-                                    "url": "settings/connected-tools",
-                                    "paths": [
-                                        "settings/connected-tools*"
-                                    ]
-                                },
                                 {
                                     "label": "School details",
                                     "url": "admin/schooldetails",

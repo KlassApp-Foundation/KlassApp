@@ -676,6 +676,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **My connected tools OPEN (stacked on #1139, not merged)**
+
+- Branch `cursor/connected-tools-page-c492`, draft, base `cursor/google-connectors-foundation-b53f` (#1139). Not merged. No deploy, no production access, no environment changes.
+- Each school member opens My connected tools and sees only their own Google status. A school admin also sees which connectors the school allows, with an anonymous count and no names, emails, or tokens. Sheets, Drive, and Classroom can be connected only after the school allows them. Calendar, Gmail, Docs, Slides, and Tasks stay Coming soon on this branch. WhatsApp stays the school's linked parent numbers. Slack stays the school's MCP workspace.
+- Screenshots are under `docs/design/connected-tools/`.
+
+## Session: 2026-10-20 — My connected tools
+
+- **Work:** the Connected tools page now reads the signed-in user's Google row. School admins toggle the allow list on that page. WhatsApp and Slack stay school-scoped because they are not a person's Google token.
+- **Files:** `app/Services/ConnectedTools/*`, `app/Contracts/ConnectedTools/ConnectedTool.php`, `ConnectedToolsController`, `config/connected_tools.php`, `config/navigation.php`, `resources/views/admin/connected-tools/index.blade.php`, `routes/google.php`, `tests/Feature/Admin/ConnectedToolsPageTest.php`, `docs/design/connected-tools/`.
+- **Decision:** WhatsApp Connected still follows `LinkRequestBoard::linkedNumberCount` (verified, opted-in parent of this school). An admin's own number does not count. Slack still reads `school_mcp_connectors` for type slack.
+- **Status:** Draft. Not merged.
+
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
 
 - Stacked on [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122) (`cursor/release-gate-parent-student-marks-7d0b`). Base is that branch, not `main`, because the parent report path has to call `ReleaseGate`. Not merged. Production untouched.

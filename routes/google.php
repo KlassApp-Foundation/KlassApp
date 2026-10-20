@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Setting\GoogleConnectController;
-use App\Http\Controllers\Google\GoogleMineController;
+use App\Http\Controllers\Admin\ConnectedToolsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
  * only their own row. The handler rejects a platform admin.
  */
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('/settings/connected-tools', [GoogleMineController::class, 'index'])->name('google.mine');
+    Route::get('/settings/connected-tools', [ConnectedToolsController::class, 'index'])->name('google.mine');
     Route::get('/admin/settings/google/connect/{connector}', [GoogleConnectController::class, 'connect'])->name('admin.google.connect');
     Route::get('/admin/settings/google/callback', [GoogleConnectController::class, 'callback'])->name('admin.google.callback');
     Route::post('/admin/settings/google/{connector}/disconnect', [GoogleConnectController::class, 'disconnect'])->name('admin.google.disconnect');

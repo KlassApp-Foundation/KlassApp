@@ -52,6 +52,7 @@ return [
         'reports' => 'file-text',
         'messages' => 'message-square',
         'settings' => 'settings',
+        'connectors' => 'plug',
         'help' => 'life-buoy',
         'library' => 'library',
         'transport' => 'bus',
@@ -171,12 +172,12 @@ return [
                     'label' => 'School',
                     'rows' => [
                         ['label' => 'WhatsApp', 'icon' => 'messages', 'url' => 'admin/whatsapp/dashboard', 'paths' => ['admin/whatsapp*'], 'count' => 'whatsapp'],
+                        ['label' => 'My connected tools', 'icon' => 'connectors', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
                         ['label' => 'Approvals', 'icon' => 'tasks', 'url' => 'admin/approvals', 'paths' => ['admin/approvals*', 'admin/approval*'], 'count' => 'approvals'],
                         ['label' => 'Transport', 'icon' => 'transport', 'url' => 'admin/transport', 'paths' => ['admin/transport*']],
                         [
                             'label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'condition' => 'school_admin',
                             'children' => [
-                                ['label' => 'My connected tools', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
                                 ['label' => 'School details', 'url' => 'admin/schooldetails', 'paths' => ['admin/schooldetails*']],
                                 ['label' => 'Academic years and terms', 'url' => 'admin/academics', 'paths' => ['admin/academics*', 'admin/academic-term*', 'admin/academic/*']],
                                 ['label' => 'Data exports', 'url' => 'admin/reports', 'paths' => ['admin/reports']],
