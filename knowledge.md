@@ -676,6 +676,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **Connected tools page OPEN (stacked on #1139, not merged)**
+
+- Branch `cursor/connected-tools-page-c492` from the Google connection foundation. Draft PR, base `cursor/google-connectors-foundation-b53f` (#1139). Retarget to `main` after #1139 merges. Not merged. No deploy, no production access, no environment changes.
+- School admins get a Connected tools page and a sidebar row under School. Status is read from that school's rows only. Sheets, Drive, and Classroom are in the foundation catalog, so they show Not connected with the real connect route. Calendar, Gmail, Docs, Slides, and Tasks stay Coming soon until a later PR registers a provider. WhatsApp is Connected only when a parent of that school has a verified, opted-in number.
+- Guarded suite on this branch: 2728 tests, 0 failures, 0 errors, 4 skipped. `scripts/check-conflict-markers.sh` and `scripts/check-root-clutter.sh` passed. Screenshots are under `docs/design/connected-tools/`.
+
+## Session: 2026-10-20 — Connected tools page
+
+- **Work:** registry (`ConnectedToolsRegistry` plus WhatsApp, Slack, and Google OAuth providers), admin page, sidebar row, dashboard link, `last_error` / `attention_scopes` on `school_google_connections`, local brand icons, feature tests, desktop 1280 and mobile 375 screenshots.
+- **Files:** `app/Services/ConnectedTools/*`, `app/Contracts/ConnectedTools/ConnectedTool.php`, `app/Http/Controllers/Admin/ConnectedToolsController.php`, `config/connected_tools.php`, `config/navigation.php`, `resources/views/admin/connected-tools/index.blade.php`, `resources/views/admin/dashboard/dashboard_v2.blade.php`, `routes/setting.php`, `tests/Feature/Admin/ConnectedToolsPageTest.php`, `public/images/brand/connectors/`, `docs/design/connected-tools/`.
+- **Decision:** WhatsApp Connected follows `LinkRequestBoard::linkedNumberCount` (verified, opted-in parent of this school). An admin's own number does not count. Needs attention is an unfinished or opted-out parent link with no reachable parent number.
+- **Status:** PR opening. Not merged.
+
 ## Current Status: October 19, 2026 — **release result names OPEN [#1136](https://github.com/KlassApp-Foundation/KlassApp/pull/1136)**
 
 - The release result page showed a demo code in the Student column and no class on the row. Branch `cursor/release-result-names-7d0b` from `main` `070584f7`. Not merged. Base is `main`.
