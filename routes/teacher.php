@@ -410,10 +410,12 @@ Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseContr
 
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
+Route::redirect('/exams', '/teacher/exam/marks', 301);
+
 Route::prefix('exam')->group(function () {
 
-    // Teacher exam landing page
-    Route::get('/', 'MarksController@teacherExamMarksList')->name('teacher.exam.index');
+    // The marks list is the one Enter marks address. This landing URL follows it.
+    Route::redirect('/', '/teacher/exam/marks', 301)->name('teacher.exam.index');
 
     // List of exams available for this teacher to enter marks
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
