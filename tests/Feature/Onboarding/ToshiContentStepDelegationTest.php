@@ -193,6 +193,84 @@ class ToshiContentStepDelegationTest extends TestCase
     }
 
     /** @test */
+    public function toshi_subject_save_resolves_primary_one_from_primary_1_and_short_forms(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(\App\Livewire\AgentToshi::class);
+        $component->set('mode', 'complete');
+        $component->set('schoolId', $this->school->id);
+        $component->set('standards', [
+            ['name' => 'Primary One'],
+        ]);
+        $component->set('subjects', [
+            'Primary 1' => ['Mathematics'],
+            'P.1' => ['English'],
+            'primary  1' => ['Science'],
+            'P1' => ['Social Studies'],
+        ]);
+        $component->set('teacherList', []);
+        $component->set('teacherLinks', []);
+        $component->set('terms', []);
+        $component->set('studentList', []);
+        $component->set('actionData', []);
+        $component->call('commit');
+
+        $section = Section::where('school_id', $this->school->id)->where('name', 'Primary One')->first();
+        $this->assertNotNull($section);
+        $this->assertFalse(
+            Section::where('school_id', $this->school->id)->where('name', 'Primary 1')->exists()
+        );
+
+        $names = DB::table('subjects')
+            ->where('school_id', $this->school->id)
+            ->where('section_id', $section->id)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+        $this->assertSame(['English', 'Mathematics', 'Science', 'Social Studies'], $names);
+    }
+
+    /** @test */
+    public function toshi_subject_save_resolves_primary_1_from_primary_one(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(\App\Livewire\AgentToshi::class);
+        $component->set('mode', 'complete');
+        $component->set('schoolId', $this->school->id);
+        $component->set('standards', [
+            ['name' => 'Primary 1'],
+        ]);
+        $component->set('subjects', [
+            'Primary One' => ['Mathematics'],
+            'PRIMARY 1' => ['English'],
+        ]);
+        $component->set('teacherList', []);
+        $component->set('teacherLinks', []);
+        $component->set('terms', []);
+        $component->set('studentList', []);
+        $component->set('actionData', []);
+        $component->call('commit');
+
+        $section = Section::where('school_id', $this->school->id)->where('name', 'Primary 1')->first();
+        $this->assertNotNull($section);
+        $this->assertFalse(
+            Section::where('school_id', $this->school->id)->where('name', 'Primary One')->exists()
+        );
+
+        $names = DB::table('subjects')
+            ->where('school_id', $this->school->id)
+            ->where('section_id', $section->id)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+        $this->assertSame(['English', 'Mathematics'], $names);
+    }
+
+    /** @test */
     public function toshi_delegates_terms_to_engine(): void
     {
         $this->actingAs($this->admin);
