@@ -18,17 +18,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\StudentAcademic;
 use Illuminate\Http\Request;
-// use App\Schoolplus\Student;
-use App\Schoolplus\StudentService;
 use App\Services\RosterScopeService;
 use App\Traits\LogActivity;
 use App\Models\ActivityLog;
 use App\Models\Document;
 use App\Traits\Common;
 use App\Models\User;
-use App\Models\Exam;
-use App\Models\Mark;
-use Exception;
 
 class StudentDetailsController extends Controller
 {
@@ -205,51 +200,6 @@ class StudentDetailsController extends Controller
         $lent = BookLendingResource::collection($student->lending);
 
         return $lent;
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function showmark($name)
-    {
-       $users = $this->authorizeRosterStudent($name);
-       $users->load('marks');
-       $studentId=$users->id;
-       $examId=$users->marks[0]['exam_id'];
-
-       return Student::getStudentMark($studentId,$examId);
-    }
-
-    public function showAllMark($name)
-    {
-        $users = $this->authorizeRosterStudent($name);
-
-        $studentId=$users->id;
-
-        return Student::getAllMarks($studentId);
-    }
-
-    public function compareMarks($name)
-    {
-        $users = $this->authorizeRosterStudent($name);
-        $users->load('studentAcademic');
-        $studentId=$users->id;
-        $standardId=$users->studentAcademicLatest->standardLink_id;
-        if(class_exists('Gegok12\Exam\Models\Mark'))
-        {
-            $exam=\Gegok12\Exam\Models\Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id','DESC')->groupBy('exam_id')->pluck('exam_id')->toArray();
-        }
-        else{
-            $exam=Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id','DESC')->groupBy('exam_id')->pluck('exam_id')->toArray();
-        }
-        $examIdOne=$exam[0];
-        $examIdTwo=$exam[1];
-
-        // return Student::CompareMarks($studentId,$examIdOne,$examIdTwo,$standardId);
-        $studentService=new StudentService();
-        return $studentService->compareMarks($studentId,$examIdOne,$examIdTwo,$standardId);
     }
 
     /**

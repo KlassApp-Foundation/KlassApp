@@ -290,5 +290,7 @@ class ParentDashboardPhase5Test extends TestCase
             'marks' => $score,
             'grade' => 'D1',
         ]);
+
+        \Tests\Support\ReleasedExam::release($exam, 'class', $standardLink->id);
     }
 }

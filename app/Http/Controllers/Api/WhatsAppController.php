@@ -5,6 +5,7 @@
  */
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Http\Controllers\Controller;
 use App\Models\ParentLinkRequest;
@@ -142,77 +143,6 @@ class WhatsAppController extends Controller
     }
 
     /**
-     * Get student grades via WhatsApp.
-     *
-     * GET /api/whatsapp/student/{studentId}/grades?term=current
-     */
-    public function grades(string $studentId, Request $request)
-    {
-        $student = User::with(['studentAcademic.standard', 'studentAcademic.section'])
-            ->where('id', $studentId)
-            ->first();
-
-        if (!$student) {
-            return response()->json([
-                'error'   => 'Student not found',
-                'message' => 'No student found with ID: ' . $studentId,
-            ], 404);
-        }
-
-        $term = $request->query('term', 'current');
-
-        // Resolve academic term
-        $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $studentId))
-            ->with(['marks' => fn($q) => $q->where('student_id', $studentId), 'examType', 'subject']);
-
-        if ($term === 'current') {
-            // Get current academic year's latest exam
-            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
-            if ($academicYear) {
-                $examQuery->where('academic_year_id', $academicYear->id);
-            }
-        }
-
-        $exams = $examQuery->latest('id')->take(5)->get();
-
-        if ($exams->isEmpty()) {
-            return response()->json([
-                'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
-                'message'      => 'No results available yet for ' . $this->whatsappDisplayName($student, 'Student') . '.',
-                'exams'        => [],
-            ]);
-        }
-
-        $formattedExams = $exams->map(function ($exam) {
-            $marks = $exam->marks->map(function ($mark) {
-                return [
-                    'subject' => $mark->subject?->name ?? 'Unknown',
-                    'score'   => $mark->marks,
-                    'total'   => 100,
-                    'grade'   => $mark->grade,
-                    'remark'  => $mark->remark ?? '',
-                ];
-            });
-
-            return [
-                'exam_name' => $exam->subject?->name ?? $exam->examType?->name ?? 'Exam',
-                'term'      => $exam->academicTerm?->name ?? 'N/A',
-                'marks'     => $marks,
-                'total'     => $marks->sum('score'),
-                'average'   => $marks->avg('score') ? round($marks->avg('score'), 1) : 0,
-                'position'  => $exam->position ?? 'N/A',
-            ];
-        });
-
-        return response()->json([
-            'student_name' => $this->whatsappDisplayName($student, 'Student'),
-            'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
-            'exams'        => $formattedExams,
-        ]);
-    }
-
-    /**
      * Get student attendance via WhatsApp.
      *
      * GET /api/whatsapp/student/{studentId}/attendance?period=week|month|term
@@ -329,126 +259,6 @@ class WhatsAppController extends Controller
             'fee_breakdown' => $fees,
             'note'         => 'Contact school office for exact payment status.',
         ]);
-    }
-
-    /**
-     * Generate and deliver a report card PDF via WhatsApp.
-     *
-     * GET /api/whatsapp/student/{studentId}/report?phone=+256...&year_id=X&term_id=Y
-     */
-    public function report(string $studentId, Request $request)
-    {
-        $phone = WhatsAppPhoneHelper::normalise($request->input('phone', ''));
-        if (empty($phone)) {
-            return response()->json(['error' => 'Phone number is required.'], 422);
-        }
-
-        $whatsappUser = \App\Models\WhatsAppUser::where('phone', $phone)->with('user')->first();
-        if (!$whatsappUser || !$whatsappUser->user) {
-            return response()->json(['error' => 'Phone number not linked to any account.'], 404);
-        }
-
-        $parent = $whatsappUser->user;
-
-        $student = \App\Models\User::with('studentAcademic.standardLink.standard')->where('id', $studentId)->first();
-        if (!$student) {
-            return response()->json(['error' => 'Student not found.'], 404);
-        }
-
-        $isLinked = \DB::table('student_parent_links')
-            ->where('parent_id', $parent->id)
-            ->where('student_id', $student->id)
-            ->exists();
-        if (!$isLinked) {
-            return response()->json(['error' => 'This student is not linked to your account.'], 403);
-        }
-
-        $schoolId = $student->school_id;
-        $yearId = $request->input('year_id');
-        if (!$yearId) {
-            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($schoolId);
-            $yearId = $academicYear ? $academicYear->id : null;
-        }
-        if (!$yearId) {
-            return response()->json(['error' => 'No academic year found.'], 404);
-        }
-
-        // Check approval status
-        $approvedCount = \DB::table('exam_marks_submissions')
-            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
-            ->join('marks', fn($j) => $j->on('marks.exam_id', '=', 'exams.id')->where('marks.student_id', $studentId))
-            ->where('exams.school_id', $schoolId)
-            ->where('exams.academic_year_id', $yearId)
-            ->where('exam_marks_submissions.approval_status', 'approved')
-            ->distinct('exam_marks_submissions.subject_id')
-            ->count('exam_marks_submissions.subject_id');
-
-        if ($approvedCount === 0) {
-            return response()->json([
-                'student_name' => $this->whatsappDisplayName($student, 'Student'),
-                'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
-                'approved'     => false,
-            ]);
-        }
-
-        $term = $request->input('term_id')
-            ? \App\Models\AcademicTerm::find($request->input('term_id'))
-            : \App\Models\AcademicTerm::where('school_id', $schoolId)->where('academic_year_id', $yearId)->first();
-        if (!$term) {
-            return response()->json(['error' => 'Term not found.'], 404);
-        }
-
-        $school = \App\Models\School::find($schoolId);
-        $examTypePrefs = $school ? ($school->exam_type_preferences ?? []) : [];
-        $contributingIds = \App\Models\Academics\ExamType::all()->filter(fn($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)->pluck('id')->toArray();
-
-        $exams = \App\Models\Academics\Exam::where('school_id', $schoolId)
-            ->where('academic_term_id', $term->id)
-            ->whereIn('exam_type_id', $contributingIds)
-            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
-            ->get();
-
-        $approvedSubjectIds = \DB::table('exam_marks_submissions')
-            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
-            ->where('exams.school_id', $schoolId)
-            ->where('exams.academic_term_id', $term->id)
-            ->where('exam_marks_submissions.approval_status', 'approved')
-            ->pluck('exam_marks_submissions.subject_id')->unique()->toArray();
-
-        $marksData = [];
-        foreach ($exams as $exam) {
-            $isApproved = in_array($exam->subject_id, $approvedSubjectIds);
-            $mark = $exam->marks->first();
-            $marksData[] = [
-                'subject'  => $exam->subject?->name ?? 'Unknown',
-                'score'    => $isApproved && $mark ? $mark->marks : null,
-                'grade'    => $isApproved && $mark ? $mark->grade : null,
-                'approved' => $isApproved,
-                'display'  => $isApproved && $mark ? $mark->marks . '%' : 'Not yet available',
-            ];
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('whatsapp.report-card', [
-            'student'   => $student,
-            'marksData' => $marksData,
-            'term'      => $term,
-            'school'    => $school,
-            'partial'   => $approvedCount < count($marksData),
-        ]);
-
-        $filename = 'report_' . $student->id . '_' . time() . '.pdf';
-        $path = storage_path('app/public/reports/' . $filename);
-        if (!is_dir(dirname($path))) { mkdir(dirname($path), 0755, true); }
-        $pdf->save($path);
-
-        $fileUrl = url('storage/reports/' . $filename);
-        $caption = 'Report Card for ' . $this->whatsappDisplayName($student, 'Student') . ' — ' . ($term->name ?? '');
-
-        $result = $this->businessApi->sendDocument($phone, $fileUrl, $caption, $filename, 'report_card', $student->id);
-
-        return $result['success']
-            ? response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
-            : response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
     }
 
     /**
@@ -2136,6 +1946,9 @@ class WhatsAppController extends Controller
             if ($academicYear) {
                 $examQuery->where('academic_year_id', $academicYear->id);
             }
+            if ($student) {
+                app(ReleaseGate::class)->applyToExams($examQuery, $student);
+            }
             $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
@@ -2486,7 +2299,7 @@ class WhatsAppController extends Controller
     {
         $student = $user->user;
         $studentName = $this->whatsappDisplayName($student, 'Student');
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $className = $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A';
 
         // Find exams that have marks for this student
         $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
@@ -2496,6 +2309,7 @@ class WhatsAppController extends Controller
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
         $exams = $examQuery->latest('id')->take(15)->get();
 
         if ($exams->isEmpty()) {

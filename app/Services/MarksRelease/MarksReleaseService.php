@@ -4,8 +4,10 @@ namespace App\Services\MarksRelease;
 
 use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\MarksRelease;
 use App\Models\School;
+use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
@@ -144,9 +146,10 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, ?string $overrideReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+        $override = $this->requireApproval($user, $anchor, $link, $overrideReason);
         $timezone = $this->timezone($timezone);
         $when = $this->scheduledAt($localWhen, $timezone);
 
@@ -161,17 +164,126 @@ final class MarksReleaseService
             'timezone' => $timezone,
         ]);
 
+        $properties = [
+            'exam_id' => $anchor->id,
+            'scope' => $release->scope,
+            'standard_link_id' => $release->standard_link_id,
+            'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
+            'timezone' => $timezone,
+        ];
+        if ($override !== null) {
+            $properties['override_reason'] = $override;
+        }
+
         activity('marks_release')->performedOn($release)->causedBy($user)
-            ->withProperties([
-                'exam_id' => $anchor->id,
-                'scope' => $release->scope,
-                'standard_link_id' => $release->standard_link_id,
-                'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
-                'timezone' => $timezone,
-            ])
+            ->withProperties($properties)
             ->log($localWhen === null || $localWhen === '' ? 'Marks release created (now)' : 'Marks release scheduled');
 
         return $release;
+    }
+
+    /**
+     * Approval state for each subject in the release. A missing row is
+     * "not_submitted". School scope is every class this user may release.
+     *
+     * @return array<int, array{subject_id:int, name:string, class_name:string, state:string, label:string}>
+     */
+    public function subjectApprovals(User $user, int $examId, ?int $standardLinkId): array
+    {
+        [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+
+        return $this->approvalRows($user, $anchor, $link);
+    }
+
+    /**
+     * Refuse the release until every subject in scope is approved.
+     * A school admin may pass a reason of at least 10 characters. That
+     * reason is returned so the caller can log it. A teacher cannot override.
+     */
+    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link, ?string $overrideReason): ?string
+    {
+        $blocked = array_values(array_filter(
+            $this->approvalRows($user, $anchor, $link),
+            fn (array $row) => $row['state'] !== 'approved',
+        ));
+        if ($blocked === []) {
+            return null;
+        }
+
+        $reason = trim((string) $overrideReason);
+        if ($this->isSchoolAdmin($user) && $reason !== '') {
+            if (mb_strlen($reason) < 10 || mb_strlen($reason) > 500) {
+                throw ValidationException::withMessages([
+                    'override_reason' => 'Give a reason of at least 10 characters to release before every subject is approved.',
+                ]);
+            }
+
+            return $reason;
+        }
+
+        $names = implode(', ', array_map(fn (array $row) => $row['name'].($row['class_name'] !== '' ? ' ('.$row['class_name'].')' : ''), $blocked));
+
+        throw ValidationException::withMessages([
+            'approval' => 'These subjects are not approved: '.$names.'.',
+        ]);
+    }
+
+    /**
+     * @return array<int, array{subject_id:int, name:string, class_name:string, state:string, label:string}>
+     */
+    private function approvalRows(User $user, Exam $anchor, ?StandardLink $link): array
+    {
+        $sectionIds = $link
+            ? [(int) $link->section_id]
+            : $this->links($user)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        $exams = Exam::query()
+            ->with('subject')
+            ->where('school_id', $user->school_id)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
+            ->whereNull('deleted_at')
+            ->whereNotNull('subject_id')
+            ->orderBy('section_id')
+            ->orderBy('subject_id')
+            ->get();
+
+        $classNames = Section::query()->whereIn('id', $exams->pluck('section_id')->unique())->pluck('name', 'id');
+        $submissions = ExamMarksSubmission::query()
+            ->where('school_id', $user->school_id)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get()
+            ->keyBy(fn (ExamMarksSubmission $row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
+
+        $labels = [
+            'approved' => 'Approved',
+            'pending' => 'Pending',
+            'rejected' => 'Rejected',
+            'not_submitted' => 'Not submitted',
+        ];
+
+        $rows = [];
+        foreach ($exams as $exam) {
+            $submission = $submissions->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
+            $state = 'not_submitted';
+            if ($submission) {
+                $state = match ($submission->approval_status) {
+                    'approved' => 'approved',
+                    'rejected' => 'rejected',
+                    default => 'pending',
+                };
+            }
+            $rows[] = [
+                'subject_id' => (int) $exam->subject_id,
+                'name' => (string) ($exam->subject?->name ?? 'Subject'),
+                'class_name' => (string) ($classNames[$exam->section_id] ?? ''),
+                'state' => $state,
+                'label' => $labels[$state],
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -563,8 +675,16 @@ final class MarksReleaseService
 
         foreach ($this->students((int) $release->school_id, $anchor, $release->standardLink) as [$studentId, $link]) {
             $code = $this->studentCode((int) $release->school_id, (int) $studentId);
-            $skip = function (string $reason, ?string $to = null) use (&$messages, $code): void {
-                $messages[] = ['student' => $code, 'to' => $to, 'status' => 'skipped', 'reason' => $reason];
+            $student = User::query()->where('school_id', $release->school_id)->whereKey($studentId)->first();
+            $name = trim((string) ($student?->name ?? ''));
+            $className = trim(($link->section?->name ?? '').' '.($link->stream ?? ''));
+            $identity = [
+                'student' => $code,
+                'name' => $name !== '' ? $name : $code,
+                'class' => $className,
+            ];
+            $skip = function (string $reason, ?string $to = null) use (&$messages, $identity): void {
+                $messages[] = $identity + ['to' => $to, 'status' => 'skipped', 'reason' => $reason];
             };
 
             if (! $repliesOn) {
@@ -604,7 +724,7 @@ final class MarksReleaseService
                     continue;
                 }
 
-                $messages[] = ['student' => $code, 'to' => $masked, 'status' => 'queued', 'reason' => null, 'key' => $key, 'attempts' => 0];
+                $messages[] = $identity + ['to' => $masked, 'status' => 'queued', 'reason' => null, 'key' => $key, 'attempts' => 0];
                 $alreadySent[$key] = true;
                 $jobs[] = new SendMarksReleaseMessage((int) $release->id, (int) $binding->id, (int) $studentId, (int) $link->id, $key);
             }
