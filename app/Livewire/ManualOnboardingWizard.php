@@ -2060,13 +2060,7 @@ class ManualOnboardingWizard extends Component
 
     private function linksForSubjectClass(School $school, AcademicYear $year, int $baseSectionId): \Illuminate\Support\Collection
     {
-        $sectionIds = $this->schoolSectionIds($school, $this->sectionIdsForBase($baseSectionId));
-
-        return StandardLink::query()
-            ->where('school_id', $school->id)
-            ->where('academic_year_id', $year->id)
-            ->whereIn('section_id', $sectionIds)
-            ->get();
+        return app(OnboardingEngine::class)->standardLinksForClass($school, $year, $baseSectionId);
     }
 
     private function backfillSubjectOnLinks(School $school, AcademicYear $year, \Illuminate\Support\Collection $links, string $name): void

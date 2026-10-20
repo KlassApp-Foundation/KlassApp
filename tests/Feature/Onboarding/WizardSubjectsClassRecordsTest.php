@@ -117,6 +117,36 @@ class WizardSubjectsClassRecordsTest extends TestCase
         );
     }
 
+    public function test_primary_1_class_from_the_classes_step_is_selectable_on_subjects(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToSubjectsWithClass($component, 'Primary 1');
+
+        $this->assertSame('subjects', $this->stepKey($component));
+        $sectionId = $this->sectionIdNamed('Primary 1');
+        $this->assertSame($sectionId, (int) $component->get('subjectSectionId'));
+
+        $component
+            ->set('className', 'Primary One')
+            ->set('subjectName', 'Mathematics')
+            ->call('addSubjects');
+
+        $this->assertSame('', $component->get('errorMessage'));
+        $this->assertStringContainsString('Added to Primary 1: Mathematics.', (string) $component->get('subjectFlash'));
+        $this->assertTrue(
+            DB::table('subjects')
+                ->where('school_id', $this->school->id)
+                ->where('section_id', $sectionId)
+                ->where('name', 'Mathematics')
+                ->whereNull('deleted_at')
+                ->exists()
+        );
+        $this->assertFalse(
+            Section::query()->where('school_id', $this->school->id)->where('name', 'Primary One')->exists()
+        );
+    }
+
     public function test_seeded_primary_one_is_used_when_the_classes_field_is_still_p1(): void
     {
         $this->actingAs($this->admin);
