@@ -20,6 +20,7 @@ class UserGoogleConnection extends Model
         'status',
         'last_used_at',
         'last_refreshed_at',
+        'google_calendar_id',
     ];
 
     protected $hidden = [

@@ -725,7 +725,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - Google connection: one row per user (`user_google_connections`), not per school. Tokens are encrypted and only that user can use them. A school allow list (`school_google_connector_allows`) decides which connectors people may turn on, and the admin view shows an anonymous count. Disconnect of the last connector revokes the token at Google and deletes the row. No scheduled job refreshes other people's tokens. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`. No domain-wide delegation and no service account.
 - My connected tools (`/settings/connected-tools`) shows Live only for the signed-in user's own grant. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
-- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom. Classroom reads the triggering user's own courses and builds on `feat/google-classroom-wave1` at `db8a5d82` without pushing that branch. Calendar is draft [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) on top of this branch. Gmail, Docs, Slides, and Tasks are not connected.
+- Draft stack, not merged, production and staging untouched: [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139) foundation, [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138) Sheets, [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137) Drive, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) Classroom, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) Calendar (`cursor/google-connectors-calendar-b53f`). Calendar publishes to the triggering user's own app-created calendar. Scope is `calendar.app.created`. The time zone is the school's country zone, otherwise `config('app.timezone')`. Gmail, Docs, Slides, and Tasks are not connected: school mail stays on Laravel Mail (no Gmail send and no compose screen), report cards are PDFs and marks are spreadsheets, and personal tasks are not a Google Tasks product. Classroom reads the triggering user's own courses and builds on `feat/google-classroom-wave1` at `db8a5d82` without pushing that branch.
 
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
 
@@ -2701,6 +2701,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: Google Calendar is the triggering user's calendar
+
+- **Work done**: Calendar publish uses that user's token and stores `google_calendar_id` on their `user_google_connections` row. A full disconnect deletes the row. The time zone stays `DashboardGreeting::timezoneFor` (school country, otherwise `config('app.timezone')`). `google:smoke calendar --user` refuses to run as anyone else.
+- **Files modified**: `GoogleCalendarService`, the calendar-id migration, `routes/google.php`, `GoogleConnectorSmokeCommand`, `GoogleCalendarConnectorTest`, `docs/ops/google-connectors-smoke-test.md`, `knowledge.md`.
+- **Key decisions**: Scope stays `calendar.app.created`. Only a school admin can publish. Gmail, Docs, Slides, and Tasks stay unbuilt.
+- **Status**: Draft [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Not merged. Production and staging not touched. `feat/google-classroom-wave1` was not pushed.
+- **Edge cases flagged**: All-day dates stay in the app timezone. Google's event end date is exclusive. The fake server does not prove the real consent screen.
 
 ### 2026-10-20: Google connections are per user (Classroom)
 

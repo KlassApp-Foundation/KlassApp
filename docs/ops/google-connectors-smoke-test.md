@@ -6,7 +6,7 @@ KlassApp sign-in and these connectors share one OAuth client and use two redirec
 
 There is one connection per user, not per school. The token is encrypted, and only that user can see it or use it. A school admin chooses which connectors the school allows. That screen shows an anonymous count and does not show anyone's Google account, email, or token. There is no domain-wide delegation and no school service account.
 
-This file is on the Classroom pull request, [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140) (`cursor/google-connectors-classroom-b53f`), stacked on Drive [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137), Sheets [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138), and foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139). Calendar is [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149). Gmail, Docs, Slides, and Tasks are not connectors.
+This file is on the Calendar pull request, [#1149](https://github.com/KlassApp-Foundation/KlassApp/pull/1149) (`cursor/google-connectors-calendar-b53f`). It includes foundation [#1139](https://github.com/KlassApp-Foundation/KlassApp/pull/1139), Sheets [#1138](https://github.com/KlassApp-Foundation/KlassApp/pull/1138), Drive [#1137](https://github.com/KlassApp-Foundation/KlassApp/pull/1137), and Classroom [#1140](https://github.com/KlassApp-Foundation/KlassApp/pull/1140). Gmail, Docs, Slides, and Tasks are not connectors.
 
 ## 1. Google Cloud project
 
@@ -27,13 +27,13 @@ This file is on the Classroom pull request, [#1140](https://github.com/KlassApp-
 
 Enable an API on this project before you call it.
 
-| Connector | Pull request | API | Called on this branch |
-| --- | --- | --- | --- |
-| Account check | #1139 | none (userinfo) | yes |
-| Sheets | #1138 | Google Sheets API | yes |
-| Drive | #1137 | Google Drive API | yes |
-| Classroom | #1140 | Google Classroom API | yes |
-| Calendar | #1149 | Google Calendar API | no |
+| Connector | Pull request | API |
+| --- | --- | --- |
+| Account check | #1139 | none (userinfo) |
+| Sheets | #1138 | Google Sheets API |
+| Drive | #1137 | Google Drive API |
+| Classroom | #1140 | Google Classroom API |
+| Calendar | #1149 | Google Calendar API |
 
 Do not enable the Gmail API, Google Docs API, Google Slides API, or Google Tasks API for these connectors. Nothing in this stack calls them.
 
@@ -43,7 +43,7 @@ Each connector consent asks only for that connector's scopes, plus `https://www.
 
 Sign-in is separate. Laravel Socialite's Google driver requests `openid`, `profile`, and `email`.
 
-On this branch, `config/google.php` requests these product scopes:
+`config/google.php` on this branch requests these product scopes:
 
 | Connector | Scope | Google's published label |
 | --- | --- | --- |
@@ -53,8 +53,9 @@ On this branch, `config/google.php` requests these product scopes:
 | Classroom | `https://www.googleapis.com/auth/classroom.courses.readonly` | The [Classroom scope list](https://developers.google.com/workspace/classroom/guides/auth) does not print Sensitive or Restricted. Read the Cloud Console label. |
 | Classroom | `https://www.googleapis.com/auth/classroom.rosters.readonly` | Same. Read the console label. |
 | Classroom | `https://www.googleapis.com/auth/classroom.coursework.students.readonly` | Same. Read the console label. |
+| Calendar | `https://www.googleapis.com/auth/calendar.app.created` | The [Calendar scope list](https://developers.google.com/workspace/calendar/api/auth) does not print Sensitive or Restricted (updated 2026-09-03). Read the Cloud Console label. This scope creates secondary calendars and events on calendars this app created. It is not `calendar` and not `calendar.events`. |
 
-`https://www.googleapis.com/auth/calendar.app.created` is added in #1149. It is not in this branch's catalog. Do not add `calendar`, `calendar.events`, `gmail.send`, `documents`, `presentations`, or `tasks`. The code does not request them.
+Do not add `gmail.send`, `documents`, `presentations`, or `tasks`. The code does not request them.
 
 Add a scope on the consent screen before you connect that tool. Google shows sensitive and restricted scopes with a marker in the console. Verification is not required while Publishing status is Testing. Before you change the app to In production, submit Google's sensitive-scope verification for every scope the console marks sensitive, and a security assessment for any scope it marks restricted. `spreadsheets` is documented as Sensitive, so a public production app needs that verification. These tests have never been run against Google, so the console label is the check.
 
@@ -92,20 +93,23 @@ php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID
 php artisan google:smoke sheets --user=USER_ID --exam=EXAM_ID --spreadsheet=SPREADSHEET_ID
 php artisan google:smoke drive --user=USER_ID --exam=EXAM_ID --learner=STUDENT_USER_ID
 php artisan google:smoke classroom --user=USER_ID
+php artisan google:smoke calendar --user=USER_ID
 ```
 
-`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template, as that user, and only if that user may already import marks for the exam. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope, using that user's token, and only if that user is a school admin or the class teacher for that class. `classroom` reads the triggering user's own active courses and student names, with that user's token. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students. Only a school admin can run the sync. The routes are `POST /admin/settings/google/sheets/export`, `POST /admin/settings/google/sheets/import`, `POST /admin/settings/google/drive/file`, and `POST /admin/settings/google/classroom/sync`.
+`account` reads that user's connected Google email and refreshes the token if it is due. The command refuses to run without `--user`, and it does not load any other user's connection. `sheets` without `--spreadsheet` creates a mark sheet in the marks-import template, as that user, and only if that user may already import marks for the exam. With `--spreadsheet` it reads that sheet and saves marks only through `MarksImportService`. `drive` generates that learner's report card through `StudentReportCardService::generatePdf()` and uploads the PDF under `KlassApp / {term} / {class}` with the `drive.file` scope, using that user's token, and only if that user is a school admin or the class teacher for that class. `classroom` reads the triggering user's own active courses and student names, with that user's token. A course is linked only when one active class in the school has that exact name. A student is linked only when one active student in that class has that exact name. Everyone else is reported as needing review. The command does not create students. Only a school admin can run the sync. `calendar` writes the current academic year's dated terms and active school events onto a calendar this app created in that user's Google account. The calendar time zone is the school's, from its country, or `config('app.timezone')` when the school has none. Running it again updates those events and deletes KlassApp events that are no longer in the set. Only a school admin can publish, and only with their own token.
 
-`calendar`, `gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
+The routes are `POST /admin/settings/google/sheets/export`, `POST /admin/settings/google/sheets/import`, `POST /admin/settings/google/drive/file`, `POST /admin/settings/google/classroom/sync`, and `POST /admin/settings/google/calendar/publish`.
+
+`gmail`, `docs`, `slides`, and `tasks` are not in the catalog, so the command says the connector is unknown.
 
 A token is refreshed only when that user triggers an action. Nothing on a schedule walks every connection. A Testing-mode refresh token that has already passed seven days cannot be refreshed; that user has to connect again.
 
-Disconnecting the last tool revokes the Google token and deletes the local row. Disconnecting one tool while another is still connected removes that tool's scopes and leaves the token in place, because Google's revoke endpoint cannot drop a single scope.
+Disconnecting the last tool revokes the Google token and deletes the local row, including the stored calendar id. A later publish creates a new calendar. Disconnecting one tool while another is still connected removes that tool's scopes and leaves the token in place, because Google's revoke endpoint cannot drop a single scope.
 
 ## 6. What the automated tests prove without a Cloud project
 
-`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests include `GoogleConnectorFoundationTest`, `GoogleSheetsConnectorTest`, `GoogleDriveConnectorTest`, and `GoogleClassroomConnectorTest`. The Classroom test connects one user, reads that user's courses and students from the fake server, matches exact unique names, creates nobody, and disconnects. They also cover an expired token, revoked access (`invalid_grant`), an API error, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`.
+`tests/fixtures/google/fake-google-router.php` is a local HTTP server started by PHPUnit, in the same role as `e2e/whatsapp-sim`. On this branch the feature tests include `GoogleConnectorFoundationTest`, `GoogleSheetsConnectorTest`, `GoogleDriveConnectorTest`, `GoogleClassroomConnectorTest`, and `GoogleCalendarConnectorTest`. The Calendar test connects one user, publishes onto a calendar this app created in that user's account, checks the term dates and the school time zone, updates on a second publish, and disconnects. They also cover an expired token, revoked access (`invalid_grant`), an API error, another user in the same school, another school, a platform admin, the school allow list, and `google:smoke --user`.
 
 `tests/Feature/Toshi/GoogleClassroomSkillTest.php` does not use that fake server. It uses `SpikeGoogleClassroomMockServer`, a local MCP fixture. The Classroom MCP tools read the triggering user's token only, and they are off unless `TOSHI_GOOGLE_CLASSROOM_ENABLED` is set. A school id on its own does not select a token.
 
-None of these tests prove Google's consent screen, Google's scope verification, or a real Classroom API.
+None of these tests prove Google's consent screen, Google's scope verification, or a real Google API.

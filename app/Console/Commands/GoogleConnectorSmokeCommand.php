@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Academics\Exam;
 use App\Models\User;
+use App\Services\Google\Calendar\GoogleCalendarService;
 use App\Services\Google\Classroom\GoogleClassroomSyncService;
 use App\Services\Google\Drive\GoogleDriveService;
 use App\Services\Google\Sheets\GoogleSheetsService;
@@ -20,7 +21,7 @@ use Illuminate\Console\Command;
 class GoogleConnectorSmokeCommand extends Command
 {
     protected $signature = 'google:smoke
-        {connector : account, sheets, or a connector key from config/google.php}
+        {connector : account, sheets, drive, classroom, calendar, or a connector key from config/google.php}
         {--user= : User id. The command acts only as this user}
         {--exam= : Exam id (sheets, drive)}
         {--spreadsheet= : Spreadsheet id (sheets import)}
@@ -62,6 +63,10 @@ class GoogleConnectorSmokeCommand extends Command
 
         if ($connector === 'classroom') {
             return $this->classroom($user);
+        }
+
+        if ($connector === 'calendar') {
+            return $this->calendar($user);
         }
 
         if (! $catalog->has($connector)) {
@@ -202,6 +207,28 @@ class GoogleConnectorSmokeCommand extends Command
         $this->line('Students matched: '.$matched);
         $this->line('Needs review: '.$review);
         $this->line('No students were created. Tokens were not printed.');
+
+        return self::SUCCESS;
+    }
+
+    private function calendar(User $user): int
+    {
+        try {
+            $published = app(GoogleCalendarService::class)->publish($user);
+        } catch (GoogleApiException $e) {
+            $this->error('Calendar call failed ('.$e->status.').');
+
+            return self::FAILURE;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->error('This user cannot publish the school calendar.');
+
+            return self::FAILURE;
+        }
+
+        $this->info('Calendar: '.$published['calendarId']);
+        $this->line('Terms: '.$published['terms']);
+        $this->line('Events: '.$published['events']);
+        $this->line('Tokens were not printed.');
 
         return self::SUCCESS;
     }
