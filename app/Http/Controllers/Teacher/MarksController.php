@@ -20,6 +20,7 @@ use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksImport\MarksImportService;
 use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
+use App\Services\Marks\ExamMarkWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -252,8 +253,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     $reason = $this->requireCorrectionReason($request, $exam);
     $afterReopen = $this->wasReopened($exam);
 
-    $schoolId = $user->school_id;
-
     // ===== Nursery branch: save domain ratings instead of numeric marks =====
     $exam->load('standard');
     $isNursery = $exam->standard
@@ -297,23 +296,10 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     // ===== Standard branch: numeric marks =====
     $affectedMarkCount = 0;
 
+    $writer = app(ExamMarkWriter::class);
     foreach ($request->input('marks', []) as $studentId => $mark) {
-        if ($mark === null || trim($mark) === '') continue;
-        $grade = $gradingSystem->grade($mark,$schoolId, $exam);
-        Marks::updateOrCreate(
-            [
-                'student_id' => $studentId,
-                'exam_id'    => $exam->id,
-                'school_id'  => $exam->school_id,
-                'subject_id' => $exam->subject_id,
-            ],
-            [
-                'teacher_id' => $exam->teacher_id,
-                'marks'      => $mark,
-                "grade" => $grade,
-                "section_id" => $exam->section_id
-            ]
-        );
+        if ($mark === null || trim((string) $mark) === '') continue;
+        $writer->save($user, $exam, (int) $studentId, $mark, $reason);
         $affectedMarkCount++;
     }
 
@@ -477,22 +463,12 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     // it needs a reason, exactly like an admin reopening a locked submission.
     $reason = $this->requireCorrectionReason($request, $exam);
     $afterReopen = $this->wasReopened($exam);
-     $mark = $validated["marks"];
-      $grade = $gradingSystem->grade($mark,$schoolId, $exam);
-    // Match saveExamMarks: key without actor teacher_id so CT updates the same row.
-    Marks::updateOrCreate(
-        [
-            'exam_id'     => $exam->id,
-            'subject_id'  => $exam->subject_id,
-            'student_id'  => $student->id,
-            'school_id'   => $exam->school_id,
-        ],
-        [
-            'teacher_id'  => $exam->teacher_id,
-            'marks'       => $validated['marks'],
-            'grade'       => $grade ?? null,
-            'section_id'  => $exam->section_id,
-        ]
+    app(ExamMarkWriter::class)->save(
+        $teacher,
+        $exam,
+        (int) $student->id,
+        $validated['marks'] ?? null,
+        $reason,
     );
 
     $this->logMarksActivity($request, $exam, $teacher, 'marks.updated', 1, $reason);
@@ -541,7 +517,7 @@ private function logMarksActivity(
  */
 private function correctionReasonRequired(Exam $exam): bool
 {
-    return $exam->status === 'submitted';
+    return app(ExamMarkWriter::class)->requiresCorrection($exam);
 }
 
 /**

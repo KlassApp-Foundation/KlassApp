@@ -1494,31 +1494,21 @@ class ToshiActionService
         $score = (float) ($data['marks'] ?? 0);
         if (!$studentId || !$examId) return self::result(false, 'Student ID and Exam ID are required.');
 
-        $exam = Exam::find($examId);
+        $exam = Exam::where('school_id', $schoolId)->where('id', $examId)->first();
         if (!$exam) return self::result(false, 'Exam not found.');
 
         try {
-            // Look up grade from the actual grading system table
-            $grade = null;
-            $isNursery = \App\Helpers\GradingHelper::levelTypeForStandard(
-                \App\Models\Standard::find($exam->standard_id)
-            ) === 'nursery';
-            if (!$isNursery) {
-                $gradingService = app(\App\Services\GradingSystemService::class);
-                $grade = $gradingService->grade((int)$score, $schoolId, $exam);
-            }
-
-            $mark = Marks::updateOrCreate(
-                ['student_id' => $studentId, 'exam_id' => $examId],
-                [
-                    'school_id' => $schoolId, 'subject_id' => $exam->subject_id,
-                    'section_id' => $exam->section_id,
-                    'teacher_id' => $admin->id,
-                    'marks' => $score,
-                    'grade' => $grade ?? '-',
-                ]
+            $mark = app(\App\Services\Marks\ExamMarkWriter::class)->save(
+                $admin,
+                $exam,
+                $studentId,
+                $score,
+                isset($data['correction_reason']) ? (string) $data['correction_reason'] : null,
             );
+
             return self::result(true, "Mark entered: {$score}.", ['mark_id' => $mark->id]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return self::result(false, $e->validator->errors()->first());
         } catch (\Exception $e) {
             Log::error('ToshiAction: enterMark failed', ['error' => $e->getMessage()]);
             return self::result(false, 'Failed to enter mark: ' . $e->getMessage());
