@@ -26,6 +26,7 @@ use App\Models\OnboardingSession;
 use App\Support\PhoneCountry;
 use App\Services\CoAdminInviteLinkService;
 use App\Services\OnboardingNameListExtractor;
+use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
@@ -1152,6 +1153,9 @@ class AgentToshi extends Component
         }
 
         if ($result['status'] === 'done') {
+            if (filled($result['saved_key'] ?? null)) {
+                $this->finishSchoolOnboarding();
+            }
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
 
             return;
@@ -6396,6 +6400,24 @@ class AgentToshi extends Component
     }
 
     /**
+     * Same durable finish as the manual wizard: stamp onboarding_finished_at
+     * and run its one-time follow-ups. A second call does not repeat them.
+     */
+    private function finishSchoolOnboarding(): void
+    {
+        if (! $this->schoolId) {
+            return;
+        }
+
+        $school = School::query()->find($this->schoolId);
+        if (! $school) {
+            return;
+        }
+
+        app(FinishSchoolOnboarding::class)->finish($school);
+    }
+
+    /**
      * Confirm button handler — aliased from "commit" to avoid Alpine.js
      * which intercepts "commit" as a store mutation keyword and prevents
      * Livewire from dispatching it from the frontend.
@@ -6440,6 +6462,7 @@ class AgentToshi extends Component
             $wasComplete = $this->mode === 'complete';
             $this->resolveCollectedDataForCommit();
             $this->commitAll();
+            $this->finishSchoolOnboarding();
             $this->deleteDraft();
             $this->reviewData['committed'] = true;
             $this->reviewData['adminEmail'] = $this->adminEmail ?: (auth()->user()->email ?? '');
