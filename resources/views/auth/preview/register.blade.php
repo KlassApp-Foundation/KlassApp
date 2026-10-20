@@ -84,7 +84,7 @@
             <div class="ap-field ap-checkbox-row">
               <input id="termsandcondn" type="checkbox" class="ap-checkbox" name="termsandcondn" value="1" @if(old('termsandcondn')==1) checked @endif required>
               <label for="termsandcondn" class="ap-checkbox-label">
-                I agree to <a href="{{ url('/terms-of-service') }}" target="_blank">Terms and Conditions</a>
+                I agree to <a href="{{ url('/terms') }}" target="_blank">Terms and Conditions</a>
               </label>
             </div>
             @if ($errors->has('termsandcondn'))

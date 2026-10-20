@@ -37,10 +37,31 @@ Route::view( '/school-teachers-app', 'pages.teachers-app' );
 // Pricing page removed — /pricing is a 301 to the sales lead form in routes/web.php.
 //about
 Route::get( '/about', 'AboutController@index' );
-//privacypolicy
-Route::get( '/privacy-policy', 'AboutController@create' );
+// Public legal pages. Live copies are in routes/web.php (this file is not
+// loaded). Canonical URLs are /privacy and /terms; older paths 301 to them.
+Route::get( '/privacy', 'AboutController@create' );
+Route::get( '/ploicy', function () {
+    $query = request()->getQueryString();
+
+    return redirect('/privacy'.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+} );
+Route::get( '/policy', function () {
+    $query = request()->getQueryString();
+
+    return redirect('/privacy'.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+} );
+Route::get( '/privacy-policy', function () {
+    $query = request()->getQueryString();
+
+    return redirect('/privacy'.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+} );
 //faq
 Route::get( '/faq', 'FaqController@index' );
 //swotanalysis
 Route::get( '/swotanalysis', 'AboutController@show' );
-Route::get( '/terms-of-service', 'AboutController@terms' );
+Route::get( '/terms', 'AboutController@terms' );
+Route::get( '/terms-of-service', function () {
+    $query = request()->getQueryString();
+
+    return redirect('/terms'.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+} );

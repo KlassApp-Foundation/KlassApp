@@ -916,8 +916,8 @@
         <p class="site-footer-tagline">An open education protocol for humans and agents.</p>
       </div>
       <nav class="site-footer-links" aria-label="Footer">
-        <a href="{{ url('/terms-of-service') }}">Terms</a>
-        <a href="{{ url('/privacy-policy') }}">Privacy</a>
+        <a href="{{ url('/terms') }}">Terms</a>
+        <a href="{{ url('/privacy') }}">Privacy</a>
         <a href="/docs/community/">Docs</a>
         <a href="{{ url('/') }}#demo">Contact</a>
       </nav>
