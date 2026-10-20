@@ -121,8 +121,71 @@ class ToshiMarksUseSharedSaveTest extends TestCase
         $this->assertSame('A', Marks::where('student_id', $ctx['student']->id)->value('grade'));
     }
 
+    public function test_a_submitted_row_needs_a_correction_reason_when_the_exam_status_is_not_submitted(): void
+    {
+        $ctx = $this->school('Row Submitted');
+        $this->assertNotSame('submitted', $ctx['exam']->status);
+        ExamMarksSubmission::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $ctx['exam']->id,
+            'class_id' => $ctx['section']->id,
+            'subject_id' => $ctx['subject']->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'status' => 'submitted',
+        ]);
+
+        $blocked = ToshiActionService::enterMark($ctx['admin'], [
+            'student_id' => $ctx['student']->id,
+            'exam_id' => $ctx['exam']->id,
+            'marks' => 70,
+        ]);
+        $this->assertFalse($blocked['success']);
+        $this->assertSame(0, Marks::count());
+
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->actingAs($ctx['teacher'])
+            ->from('/teacher/exam/marks')
+            ->post(route('teacher.exam.marks.save', $ctx['exam']), [
+                'marks' => [$ctx['student']->id => 70],
+            ])
+            ->assertSessionHasErrors('correction_reason');
+        $this->assertSame(0, Marks::count());
+
+        $saved = ToshiActionService::enterMark($ctx['admin'], [
+            'student_id' => $ctx['student']->id,
+            'exam_id' => $ctx['exam']->id,
+            'marks' => 70,
+            'correction_reason' => 'The submitted total was copied from the wrong script.',
+        ]);
+        $this->assertTrue($saved['success']);
+        $this->assertSame(70, (int) Marks::where('student_id', $ctx['student']->id)->value('marks'));
+    }
+
+    public function test_a_descriptive_level_stores_a_dash_instead_of_a_numeric_letter(): void
+    {
+        $ctx = $this->school('Descriptive Level');
+        $ctx['standard']->update(['name' => 'kindergarten']);
+
+        $saved = ToshiActionService::enterMark($ctx['admin'], [
+            'student_id' => $ctx['student']->id,
+            'exam_id' => $ctx['exam']->id,
+            'marks' => 80,
+        ]);
+
+        $this->assertTrue($saved['success']);
+        $this->assertSame('-', Marks::where('student_id', $ctx['student']->id)->value('grade'));
+
+        $teacher = TeacherActionService::enterMarks($ctx['teacher'], [
+            'exam_id' => $ctx['exam']->id,
+            'student' => $ctx['student']->name,
+            'marks' => 90,
+        ]);
+        $this->assertTrue($teacher['success']);
+        $this->assertSame('-', Marks::where('student_id', $ctx['student']->id)->value('grade'));
+    }
+
     /**
-     * @return array{school: \App\Models\School, admin: User, teacher: User, student: User, exam: Exam, section: \App\Models\Section, subject: \App\Models\Subject}
+     * @return array{school: \App\Models\School, admin: User, teacher: User, student: User, exam: Exam, section: \App\Models\Section, subject: \App\Models\Subject, standard: \App\Models\Standard}
      */
     private function school(string $name): array
     {
@@ -177,7 +240,7 @@ class ToshiMarksUseSharedSaveTest extends TestCase
             'remark' => 'A',
         ]);
 
-        return compact('school', 'admin', 'teacher', 'student', 'exam', 'section', 'subject');
+        return compact('school', 'admin', 'teacher', 'student', 'exam', 'section', 'subject', 'standard');
     }
 
     private function otherSchool(): \App\Models\School

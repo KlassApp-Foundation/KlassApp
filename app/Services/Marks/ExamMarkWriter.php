@@ -3,6 +3,7 @@
 namespace App\Services\Marks;
 
 use App\Exceptions\MarksLockedException;
+use App\Helpers\GradingHelper;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
@@ -47,7 +48,7 @@ class ExamMarkWriter
             [
                 'teacher_id' => $exam->teacher_id ?: $actor->id,
                 'marks' => $mark,
-                'grade' => $this->grading->grade((int) $mark, (int) $exam->school_id, $exam) ?? '-',
+                'grade' => $this->letter($exam, $mark),
                 'section_id' => $exam->section_id,
             ]
         );
@@ -69,9 +70,35 @@ class ExamMarkWriter
         }
     }
 
+    public function requiresCorrection(Exam $exam): bool
+    {
+        if ($exam->status === 'submitted') {
+            return true;
+        }
+
+        return ExamMarksSubmission::query()
+            ->where('school_id', $exam->school_id)
+            ->where('exam_id', $exam->id)
+            ->where('class_id', $exam->section_id)
+            ->where('subject_id', $exam->subject_id)
+            ->where('status', 'submitted')
+            ->exists();
+    }
+
+    private function letter(Exam $exam, mixed $mark): string
+    {
+        $exam->loadMissing('standard');
+        $level = $exam->standard ? GradingHelper::levelTypeForStandard($exam->standard) : null;
+        if (is_string($level) && ! GradingHelper::scaleUsesNumericMarks($level)) {
+            return '-';
+        }
+
+        return $this->grading->grade((int) $mark, (int) $exam->school_id, $exam) ?? '-';
+    }
+
     private function assertCorrectionReason(Exam $exam, ?string $reason): void
     {
-        if ($exam->status !== 'submitted') {
+        if (! $this->requiresCorrection($exam)) {
             return;
         }
 

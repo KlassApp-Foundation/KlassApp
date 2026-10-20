@@ -517,7 +517,7 @@ private function logMarksActivity(
  */
 private function correctionReasonRequired(Exam $exam): bool
 {
-    return $exam->status === 'submitted';
+    return app(ExamMarkWriter::class)->requiresCorrection($exam);
 }
 
 /**
