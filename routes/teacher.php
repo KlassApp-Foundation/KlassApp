@@ -72,7 +72,7 @@ Route::group([ 'namespace' =>'Approval' ], function () {
         Route::get( '/assignment/edit/{id}', 'AssignmentController@edit' );
         Route::post( '/assignment/edit/{id}', 'AssignmentController@update' );
         //delete
-        Route::get( '/assignment/delete/{id}', 'AssignmentController@destroy' );
+        Route::delete( '/assignment/delete/{id}', 'AssignmentController@destroy' );
          Route::get( '/assignment/viewers/{id}', 'AssignmentController@view' );
 
         //assignment-approval
@@ -110,7 +110,7 @@ Route::get( '/leave/edit/{id}', 'LeaveController@edit' );
 Route::post( '/leave/edit/{id}', 'LeaveController@update' );
 
 //delete
-Route::get( '/leave/delete/{id}', 'LeaveController@destroy' );
+Route::delete( '/leave/delete/{id}', 'LeaveController@destroy' );
 
 //holiday
 Route::get( '/holidays/list', 'HolidaysController@list' );
@@ -139,7 +139,7 @@ Route::get('/holidays','HolidaysController@index');
     Route::post('/task/snooze/{id}', 'TaskController@snooze');
 
     //delete
-    Route::get('/task/{id}/delete', 'TaskController@destroy');
+    Route::delete('/task/{id}/delete', 'TaskController@destroy');
 
 //password and avatar
 
@@ -189,7 +189,7 @@ Route::get('/lessonplan/show/{id}', 'LessonPlanController@show');
 Route::get('/lessonplan/print/{id}', 'LessonPlanController@print');
 
 //delete
-Route::get( '/lessonplan/delete/{id}', 'LessonPlanController@destroy');
+Route::delete( '/lessonplan/delete/{id}', 'LessonPlanController@destroy');
 
 //add
 Route::get('/lessonplan/add/list', 'LessonPlanAddController@addList');
@@ -292,7 +292,7 @@ Route::group([ 'namespace' =>'Approval' ], function () {
         Route::post( '/homework/edit/{id}', 'HomeWorkController@update' );
 
         //delete
-        Route::get( '/homework/delete/{id}', 'HomeWorkController@destroy' );
+        Route::delete( '/homework/delete/{id}', 'HomeWorkController@destroy' );
         Route::get( '/homework/viewers/{id}', 'HomeWorkController@view' );
     //with approval  
 });
@@ -315,7 +315,7 @@ Route::post('/visitorlog/add','VisitorLogController@store');
 Route::get('/visitorlog/show/{id}','VisitorLogController@show');
 Route::get('/visitorlog/edit/{id}', 'VisitorLogController@edit');
 Route::post('/visitorlog/update/{id}', 'VisitorLogController@update');
-Route::get('/visitorlog/delete/{id}', 'VisitorLogController@destroy');
+Route::delete('/visitorlog/delete/{id}', 'VisitorLogController@destroy');
 });
 
 
@@ -329,7 +329,7 @@ Route::post('/calllog/add','CallLogController@store');
 Route::get('/calllog/show/{id}','CallLogController@show');
 Route::get('/calllog/edit/{id}', 'CallLogController@edit');
 Route::post('/calllog/update/{id}', 'CallLogController@update');
-Route::get('/calllog/delete/{id}', 'CallLogController@destroy');
+Route::delete('/calllog/delete/{id}', 'CallLogController@destroy');
 });
 
 
@@ -343,7 +343,7 @@ Route::post('/postalrecord/add','PostalRecordController@store');
 Route::get('/postalrecord/show/{id}','PostalRecordController@show');
 Route::get('/postalrecord/edit/{id}', 'PostalRecordController@edit');
 Route::post('/postalrecord/update/{id}', 'PostalRecordController@update');
-Route::get('/postalrecord/delete/{id}', 'PostalRecordController@destroy');
+Route::delete('/postalrecord/delete/{id}', 'PostalRecordController@destroy');
 });
 
 //student details
@@ -479,7 +479,7 @@ Route::get( '/classwall/post/showList/{id}', 'PostsController@showList' );
 Route::get( '/classwall/post/show/{id}', 'PostsController@show' );
 Route::get( '/classwall/post/edit/commentList/{comment_id}', 'PostsController@editCommentList' );
 
-Route::get( '/classwall/post/delete/{id}', 'PostsController@destroy' );
+Route::delete( '/classwall/post/delete/{id}', 'PostsController@destroy' );
 
 Route::get( '/classwall/post/add/list', 'PostAddController@createList' );
 Route::get( '/classwall/post/add', 'PostAddController@create' );
@@ -499,12 +499,12 @@ Route::post( '/classwall/post/unsave/{post_id}', 'PostDetailController@unsave' )
 Route::post( '/classwall/post/add/comment/{post_id}', 'PostCommentsController@addComment' );
 Route::get( '/classwall/post/edit/commentList/{comment_id}', 'PostCommentsController@editCommentList' );
 Route::post( '/classwall/post/edit/comment/{comment_id}', 'PostCommentsController@editComment' );
-Route::get( '/classwall/post/delete/comment/{comment_id}', 'PostCommentsController@destroy' );
+Route::delete( '/classwall/post/delete/comment/{comment_id}', 'PostCommentsController@destroy' );
 
 Route::get( '/classwall/post/replyComment/{post_comment_id}', 'PostReplyCommentsController@list' );
 Route::post( '/classwall/post/reply/add/comment/{post_comment_id}', 'PostReplyCommentsController@addComment' );
 Route::post( '/classwall/post/reply/edit/comment/{post_comment_id}', 'PostReplyCommentsController@editComment' );
-Route::get( '/classwall/post/reply/delete/comment/{post_comment_id}', 'PostReplyCommentsController@destroy' );
+Route::delete( '/classwall/post/reply/delete/comment/{post_comment_id}', 'PostReplyCommentsController@destroy' );
 
 Route::post( '/classwall/post/comment/like/{comment_id}', 'PostCommentDetailsController@like' );
 Route::post( '/classwall/post/comment/dislike/{comment_id}', 'PostCommentDetailsController@dislike' );

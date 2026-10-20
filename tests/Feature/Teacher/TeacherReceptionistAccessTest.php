@@ -106,6 +106,12 @@ class TeacherReceptionistAccessTest extends TestCase
     {
         $this->actingAs($this->teacher)
             ->get('/teacher/visitorlog/delete/'.$this->ownLog->id)
+            ->assertStatus(405);
+
+        $this->assertNull(VisitorLog::withTrashed()->find($this->ownLog->id)->deleted_at);
+
+        $this->actingAs($this->teacher)
+            ->delete('/teacher/visitorlog/delete/'.$this->ownLog->id)
             ->assertForbidden();
 
         $this->assertNull(VisitorLog::withTrashed()->find($this->ownLog->id)->deleted_at);
@@ -125,7 +131,7 @@ class TeacherReceptionistAccessTest extends TestCase
         SiteHelper::forgetTeacherReceptionistAccess($this->school->id);
         $this->assertFalse(SiteHelper::teacherReceptionistAccessEnabled($this->school->id));
 
-        $this->actingAs($this->teacher)->get('/teacher/visitorlog/delete/'.$this->ownLog->id)->assertForbidden();
+        $this->actingAs($this->teacher)->delete('/teacher/visitorlog/delete/'.$this->ownLog->id)->assertForbidden();
     }
 
     public function test_enabling_the_setting_allows_the_write(): void
@@ -134,7 +140,7 @@ class TeacherReceptionistAccessTest extends TestCase
         $this->assertTrue(SiteHelper::teacherReceptionistAccessEnabled($this->school->id));
 
         $this->actingAs($this->teacher)
-            ->get('/teacher/visitorlog/delete/'.$this->ownLog->id)
+            ->delete('/teacher/visitorlog/delete/'.$this->ownLog->id)
             ->assertOk();
 
         $this->assertNotNull(VisitorLog::withTrashed()->find($this->ownLog->id)->deleted_at);
@@ -145,7 +151,7 @@ class TeacherReceptionistAccessTest extends TestCase
         $this->enable();
 
         $this->actingAs($this->teacher)
-            ->get('/teacher/visitorlog/delete/'.$this->foreignLog->id)
+            ->delete('/teacher/visitorlog/delete/'.$this->foreignLog->id)
             ->assertNotFound();
 
         $this->assertNull(VisitorLog::withTrashed()->find($this->foreignLog->id)->deleted_at);

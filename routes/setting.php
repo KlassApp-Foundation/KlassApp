@@ -55,7 +55,7 @@ Route::get( '/absentees/staff/list', 'StaffAttendanceController@stafflist' );
 	Route::post( '/academic/update/{id}', 'AcademicYearController@update' );
 	Route::post( '/academic/updateStatus/{id}', 'AcademicYearController@updateStatus' );
 	//delete
-	Route::get( '/academic/delete/{id}', 'AcademicYearController@destroy' );
+	Route::delete( '/academic/delete/{id}', 'AcademicYearController@destroy' );
 
 //standard setup
 Route::get( '/standard/create', 'StandardController@create' );

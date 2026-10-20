@@ -76,7 +76,7 @@ class PasswordResetCodeController extends Controller
      */
     public function resendCode(Request $request)
     {
-        $email = $request->query('email');
+        $email = $request->input('email');
         if (!$email) {
             return redirect()->route('password.email')
                 ->withErrors(['email' => 'Please enter your email first.']);

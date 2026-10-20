@@ -222,7 +222,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
         $this->get('/student/assignment/show/edit/list/'.$this->ownerAssignment->id)
             ->assertForbidden();
 
-        $this->get('/student/assignment/delete/'.$this->ownerAssignment->id)
+        $this->delete('/student/assignment/delete/'.$this->ownerAssignment->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('student_assignments', [
@@ -239,7 +239,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['assignment_file', 'obtained_marks', 'comments']);
 
-        $this->get('/student/assignment/delete/'.$this->ownerAssignment->id)
+        $this->delete('/student/assignment/delete/'.$this->ownerAssignment->id)
             ->assertOk()
             ->assertJsonStructure(['success']);
 
@@ -255,7 +255,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
         $this->get('/student/homework/show/'.$this->ownerHomework->id)
             ->assertForbidden();
 
-        $this->get('/student/homework/delete/'.$this->ownerHomework->id)
+        $this->delete('/student/homework/delete/'.$this->ownerHomework->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('student_homework', [
@@ -272,7 +272,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['description', 'attachment_file']);
 
-        $this->get('/student/homework/delete/'.$this->ownerHomework->id)
+        $this->delete('/student/homework/delete/'.$this->ownerHomework->id)
             ->assertOk()
             ->assertJsonStructure(['success']);
 
@@ -288,7 +288,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
         $this->getJson('/api/v2/assignment/show/'.$this->owner->id.'/'.$this->ownerAssignment->id)
             ->assertForbidden();
 
-        $this->getJson('/api/v2/assignment/delete/'.$this->ownerAssignment->id.'/'.$this->owner->id)
+        $this->deleteJson('/api/v2/assignment/delete/'.$this->ownerAssignment->id.'/'.$this->owner->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('student_assignments', [
@@ -305,7 +305,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
 
-        $this->getJson('/api/v2/assignment/delete/'.$this->ownerAssignment->id.'/'.$this->peer->id)
+        $this->deleteJson('/api/v2/assignment/delete/'.$this->ownerAssignment->id.'/'.$this->peer->id)
             ->assertOk()
             ->assertJsonPath('success', true);
 
@@ -332,7 +332,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
     {
         $this->actingAs($this->peer, 'sanctum');
 
-        $this->getJson('/api/v2/homework/delete/'.$this->ownerHomework->id.'/'.$this->owner->id)
+        $this->deleteJson('/api/v2/homework/delete/'.$this->ownerHomework->id.'/'.$this->owner->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('student_homework', [
@@ -349,7 +349,7 @@ class LegacyPortalIdorOwnershipTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.studentHomeworkId', $this->ownerHomework->id);
 
-        $this->getJson('/api/v2/homework/delete/'.$this->ownerHomework->id.'/'.$this->peer->id)
+        $this->deleteJson('/api/v2/homework/delete/'.$this->ownerHomework->id.'/'.$this->peer->id)
             ->assertOk()
             ->assertJsonPath('success', true);
 

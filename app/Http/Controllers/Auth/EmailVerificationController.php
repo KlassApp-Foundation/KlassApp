@@ -13,26 +13,55 @@ use Carbon\Carbon;
 
 class EmailVerificationController extends Controller
 {
+  /**
+   * Show a confirmation step. Opening the link must not verify the address.
+   */
   public function emailverification($token)
   {
-    $check = User::where('email_verification_code', $token)->first();
-    if (!is_null($check)) 
-    {
-      $user=User::where('id',$check->id)->first();
-      if ($user->email_verified == 1)
-      {
-        if (!is_null(Auth::id())) 
-        {
-          \Session::put('successmessage','E-mail Verified Successfully,Login Now');
-          return redirect()->to('/home');
-        }
-        \Session::put('successmessage','E-mail Verified Successfully,Login Now');
-        return redirect()->to('login');        
-      }
-      $user->email_verified = 1;
-      $user->email_verified_at = Carbon::now();
+    $user = $this->userForToken($token);
+    if ($user === null) {
+      return redirect()->to('login')->with('errormessage', 'This verification link is not valid.');
+    }
+    if ((int) $user->email_verified === 1) {
+      return $this->alreadyVerifiedRedirect();
+    }
 
-      $user->save();
-    } 
+    return view('auth.email-verification-confirm', ['token' => $token]);
+  }
+
+  /**
+   * Mark the address verified after the person confirms.
+   */
+  public function confirm(Request $request, $token)
+  {
+    $user = $this->userForToken($token);
+    if ($user === null) {
+      return redirect()->to('login')->with('errormessage', 'This verification link is not valid.');
+    }
+    if ((int) $user->email_verified === 1) {
+      return $this->alreadyVerifiedRedirect();
+    }
+
+    $user->email_verified = 1;
+    $user->email_verified_at = Carbon::now();
+    $user->save();
+
+    return $this->alreadyVerifiedRedirect();
+  }
+
+  private function userForToken($token): ?User
+  {
+    return User::where('email_verification_code', $token)->first();
+  }
+
+  private function alreadyVerifiedRedirect()
+  {
+    \Session::put('successmessage', 'E-mail Verified Successfully,Login Now');
+
+    if (! is_null(Auth::id())) {
+      return redirect()->to('/home');
+    }
+
+    return redirect()->to('login');
   }
 }

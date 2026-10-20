@@ -147,7 +147,10 @@
                         <a href="{{url('/admin/parent/add?ref_name='.$user->name)}}" class="capitalize text-gray-700 rounded px-4 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0">add parents</a>
 
                         <a href="{{url('/admin/discipline/add?ref_name='.$user->name)}}" class="capitalize text-gray-700 rounded px-4 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0">add discipline</a>
-                       <a href="{{ url('/student/'.$user->id.'/impersonate') }}" target="_blank" class="capitalize text-gray-700 rounded px-4 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0">Login as Student</a>
+                       <form method="POST" action="{{ url('/student/'.$user->id.'/impersonate') }}" target="_blank" class="inline" onsubmit="return confirm('Log in as this student?');">
+                           @csrf
+                           <button type="submit" class="capitalize text-gray-700 rounded px-4 py-1 mr-2 font-medium my-1 lg:my-0 md:my-0">Login as Student</button>
+                       </form>
                         @if(config('gexam.enabled', false))
                         <a href="{{url('/admin/marks/show?ref_name='.$user->name.'&standard='.optional($user->studentAcademic->first())->standardLink_id)}}" class="capitalize text-gray-700 rounded px-4 py-1 font-medium my-1 lg:my-0 md:my-0">View marks</a>
                         @endif
@@ -236,7 +239,7 @@
                 {
                     $.ajax({
                         url: link,
-                        type: "GET",
+                        type: "POST",
                         headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
                         success:function(data)
                         {
@@ -278,7 +281,7 @@
                 {
                     $.ajax({
                         url: link,
-                        type: "GET",
+                        type: "POST",
                         headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
                         success:function(data)
                         {
@@ -321,7 +324,7 @@
                 {
                     $.ajax({
                         url: link,
-                        type: "GET",
+                        type: "POST",
                         headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
                         success:function(data)
                         {

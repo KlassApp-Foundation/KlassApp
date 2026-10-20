@@ -313,7 +313,7 @@ class LegacyPortalHomeworkAuthorizationTest extends TestCase
     {
         $this->actingAs($this->adminA);
 
-        $this->get('/admin/homework/delete/'.$this->homeworkB->id)
+        $this->delete('/admin/homework/delete/'.$this->homeworkB->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('homeworks', [
@@ -326,7 +326,7 @@ class LegacyPortalHomeworkAuthorizationTest extends TestCase
     {
         $this->actingAs($this->siteAdmin);
 
-        $this->get('/admin/homework/delete/'.$this->homeworkB->id)
+        $this->delete('/admin/homework/delete/'.$this->homeworkB->id)
             ->assertOk();
 
         $this->assertSoftDeleted('homeworks', [
@@ -440,7 +440,7 @@ class LegacyPortalHomeworkAuthorizationTest extends TestCase
     {
         $this->actingAs($this->teacherAssigned);
 
-        $this->get('/teacher/homework/delete/'.$this->homeworkA->id)
+        $this->delete('/teacher/homework/delete/'.$this->homeworkA->id)
             ->assertOk();
 
         $this->assertSoftDeleted('homeworks', [
@@ -469,7 +469,7 @@ class LegacyPortalHomeworkAuthorizationTest extends TestCase
 
         $this->actingAs($this->teacherAssigned);
 
-        $this->get('/teacher/homework/delete/'.$colleagueHomework->id)
+        $this->delete('/teacher/homework/delete/'.$colleagueHomework->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('homeworks', [
