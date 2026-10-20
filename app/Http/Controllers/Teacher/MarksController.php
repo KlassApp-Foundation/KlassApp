@@ -16,6 +16,7 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ExamAuthorization;
+use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksImport\MarksImportService;
 use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
@@ -109,20 +110,20 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
 }
 
-// mark exam as done
-public function TogglekStatus(Exam $exam){
+public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
+{
     /** @var User $teacher */
     $teacher = Auth::user();
     if (! $teacher instanceof User) {
         abort(403, 'Not Authorized');
     }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to submit marks for this exam.');
 
-    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
+    $submissions->submit($exam, $teacher);
 
-    $exam->changeExamStatus();
     return redirect()
-        ->route('teacher.exam.marks')
-        ->with('successmessage', ' Exam status updated!');
+        ->route('teacher.exam.marks.view', $exam)
+        ->with('successmessage', 'Marks submitted for review.');
 }
 
 public function enterExamMarks(Exam $exam)
@@ -286,7 +287,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
             }
         }
 
-        $exam->changeExamStatus();
         $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount, $reason);
 
         return redirect()
@@ -324,8 +324,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         \Log::warning("Failed to dispatch MarksUpdated: {$e->getMessage()}");
     }
 
-    // change exam status
-    $exam->changeExamStatus();
     $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
 
     return redirect()
