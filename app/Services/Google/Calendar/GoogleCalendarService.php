@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Google\GoogleApiClient;
 use App\Services\Google\GoogleApiException;
 use App\Services\Google\GoogleConnectorCatalog;
+use App\Support\DashboardGreeting;
 use Carbon\CarbonInterface;
 
 class GoogleCalendarService
@@ -41,7 +42,7 @@ class GoogleCalendarService
             throw new GoogleApiException(404, 'This school has no current academic year.', 'no_academic_year');
         }
 
-        $calendarId = $this->ensureCalendar($connection);
+        $calendarId = $this->ensureCalendar($connection, DashboardGreeting::timezoneFor($actor));
         $items = $this->desired($schoolId, $year);
         $this->deleteStale($connection, $calendarId, array_column($items, 'id'));
 
@@ -75,7 +76,7 @@ class GoogleCalendarService
         return $connection;
     }
 
-    private function ensureCalendar(SchoolGoogleConnection $connection): string
+    private function ensureCalendar(SchoolGoogleConnection $connection, string $timeZone): string
     {
         $existing = (string) $connection->google_calendar_id;
 
@@ -85,7 +86,7 @@ class GoogleCalendarService
 
         $created = $this->client->postJson($connection, $this->url('/calendar/v3/calendars'), [
             'summary' => 'KlassApp',
-            'timeZone' => 'Africa/Kampala',
+            'timeZone' => $timeZone,
         ]);
         $id = (string) ($created['id'] ?? '');
 

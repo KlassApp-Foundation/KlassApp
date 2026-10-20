@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\SchoolGoogleConnection;
 use App\Models\User;
 use App\Services\Google\Calendar\GoogleCalendarService;
+use App\Support\DashboardGreeting;
 use App\Services\Google\GoogleAccessRevokedException;
 use App\Services\Google\GoogleApiException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -177,7 +178,7 @@ class GoogleCalendarConnectorTest extends TestCase
 
         $calendar = $this->onlyCalendar();
         $this->assertSame('KlassApp', $calendar['summary']);
-        $this->assertSame('Africa/Kampala', $calendar['timeZone']);
+        $this->assertSame(DashboardGreeting::timezoneFor($this->admin->fresh()), $calendar['timeZone']);
         $this->assertSame($published['calendarId'], $calendar['id']);
 
         $bySummary = collect($calendar['events'])->keyBy('summary');
@@ -213,6 +214,44 @@ class GoogleCalendarConnectorTest extends TestCase
             ->assertOk()
             ->assertDontSee('data-testid="google-connector-live-calendar"', false)
             ->assertSee('data-testid="google-connector-status-calendar"', false);
+    }
+
+    public function test_created_calendar_uses_the_school_country_timezone(): void
+    {
+        config(['app.timezone' => 'Africa/Kampala']);
+
+        $countryId = DB::table('countries')->insertGetId([
+            'name' => 'Japan',
+            'short_name' => 'JP',
+            'iso_code' => 'JP',
+            'tel_prefix' => '+81',
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->school->forceFill(['country_id' => $countryId])->save();
+
+        $this->connectGoogle($this->admin, 'calendar');
+
+        $this->actingAs($this->admin->fresh())
+            ->postJson(route('admin.google.calendar.publish'))
+            ->assertOk();
+
+        $this->assertSame('Asia/Tokyo', $this->onlyCalendar()['timeZone']);
+    }
+
+    public function test_created_calendar_falls_back_to_the_app_timezone(): void
+    {
+        config(['app.timezone' => 'Pacific/Auckland']);
+        $this->assertNull($this->school->country_id);
+
+        $this->connectGoogle($this->admin, 'calendar');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('admin.google.calendar.publish'))
+            ->assertOk();
+
+        $this->assertSame('Pacific/Auckland', $this->onlyCalendar()['timeZone']);
     }
 
     public function test_expired_token_refreshes_before_publish(): void
