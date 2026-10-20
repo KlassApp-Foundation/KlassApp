@@ -106,9 +106,8 @@ class MarksQuickActionsTest extends TestCase
             'comments' => $link->summaryLine(),
         ]);
 
-        $html = $this->actingAs($admin)
-            ->view('layouts.partials.sidebar-menu', ['role' => 'admin'])
-            ->render();
+        $this->actingAs($admin);
+        $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
 
         $this->assertSame(1, substr_count($html, '>Mark submissions</span>'));
         $this->assertMatchesRegularExpression(
