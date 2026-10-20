@@ -142,7 +142,7 @@ public function test_invalid_phone_rejected(): void
 Mock `WhatsAppService` HTTP calls to avoid real API calls:
 
 ```php
-public function test_grades_notification_sent(): void
+public function test_fee_reminder_notification_sent(): void
 {
     Http::fake([
         '*/message/sendText/*' => Http::response(['key' => ['id' => 'mock_msg_1']], 200),
@@ -156,7 +156,7 @@ public function test_grades_notification_sent(): void
     ]);
 
     $service = app(OutboundWhatsAppService::class);
-    $service->notifyGradesPublished($examId);
+    $service->notifyFeeReminder($student->id, 'reminder');
 
     Http::assertSent(function ($request) {
         return Str::contains($request->url(), '/message/sendText/');

@@ -4,15 +4,24 @@ namespace App\Services\MarksRelease;
 
 use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
+use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\School;
+use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\Demo\DemoBindReplies;
 use App\Services\Demo\DemoFollowAlong;
 use App\Services\Demo\LatestExamMarks;
+use App\Services\Results\DisplayedGrade;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultSheet;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use App\Services\DemoSchoolCommsGuard;
 use App\Services\WhatsAppBusinessService;
 use App\Support\DemoStudentCode;
@@ -144,9 +153,10 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, ?string $overrideReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+        $override = $this->requireApproval($user, $anchor, $link, $overrideReason);
         $timezone = $this->timezone($timezone);
         $when = $this->scheduledAt($localWhen, $timezone);
 
@@ -161,17 +171,126 @@ final class MarksReleaseService
             'timezone' => $timezone,
         ]);
 
+        $properties = [
+            'exam_id' => $anchor->id,
+            'scope' => $release->scope,
+            'standard_link_id' => $release->standard_link_id,
+            'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
+            'timezone' => $timezone,
+        ];
+        if ($override !== null) {
+            $properties['override_reason'] = $override;
+        }
+
         activity('marks_release')->performedOn($release)->causedBy($user)
-            ->withProperties([
-                'exam_id' => $anchor->id,
-                'scope' => $release->scope,
-                'standard_link_id' => $release->standard_link_id,
-                'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
-                'timezone' => $timezone,
-            ])
+            ->withProperties($properties)
             ->log($localWhen === null || $localWhen === '' ? 'Marks release created (now)' : 'Marks release scheduled');
 
         return $release;
+    }
+
+    /**
+     * Approval state for each subject in the release. A missing row is
+     * "not_submitted". School scope is every class this user may release.
+     *
+     * @return array<int, array{subject_id:int, name:string, class_name:string, state:string, label:string}>
+     */
+    public function subjectApprovals(User $user, int $examId, ?int $standardLinkId): array
+    {
+        [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+
+        return $this->approvalRows($user, $anchor, $link);
+    }
+
+    /**
+     * Refuse the release until every subject in scope is approved.
+     * A school admin may pass a reason of at least 10 characters. That
+     * reason is returned so the caller can log it. A teacher cannot override.
+     */
+    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link, ?string $overrideReason): ?string
+    {
+        $blocked = array_values(array_filter(
+            $this->approvalRows($user, $anchor, $link),
+            fn (array $row) => $row['state'] !== 'approved',
+        ));
+        if ($blocked === []) {
+            return null;
+        }
+
+        $reason = trim((string) $overrideReason);
+        if ($this->isSchoolAdmin($user) && $reason !== '') {
+            if (mb_strlen($reason) < 10 || mb_strlen($reason) > 500) {
+                throw ValidationException::withMessages([
+                    'override_reason' => 'Give a reason of at least 10 characters to release before every subject is approved.',
+                ]);
+            }
+
+            return $reason;
+        }
+
+        $names = implode(', ', array_map(fn (array $row) => $row['name'].($row['class_name'] !== '' ? ' ('.$row['class_name'].')' : ''), $blocked));
+
+        throw ValidationException::withMessages([
+            'approval' => 'These subjects are not approved: '.$names.'.',
+        ]);
+    }
+
+    /**
+     * @return array<int, array{subject_id:int, name:string, class_name:string, state:string, label:string}>
+     */
+    private function approvalRows(User $user, Exam $anchor, ?StandardLink $link): array
+    {
+        $sectionIds = $link
+            ? [(int) $link->section_id]
+            : $this->links($user)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        $exams = Exam::query()
+            ->with('subject')
+            ->where('school_id', $user->school_id)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
+            ->whereNull('deleted_at')
+            ->whereNotNull('subject_id')
+            ->orderBy('section_id')
+            ->orderBy('subject_id')
+            ->get();
+
+        $classNames = Section::query()->whereIn('id', $exams->pluck('section_id')->unique())->pluck('name', 'id');
+        $submissions = ExamMarksSubmission::query()
+            ->where('school_id', $user->school_id)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get()
+            ->keyBy(fn (ExamMarksSubmission $row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
+
+        $labels = [
+            'approved' => 'Approved',
+            'pending' => 'Pending',
+            'rejected' => 'Rejected',
+            'not_submitted' => 'Not submitted',
+        ];
+
+        $rows = [];
+        foreach ($exams as $exam) {
+            $submission = $submissions->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
+            $state = 'not_submitted';
+            if ($submission) {
+                $state = match ($submission->approval_status) {
+                    'approved' => 'approved',
+                    'rejected' => 'rejected',
+                    default => 'pending',
+                };
+            }
+            $rows[] = [
+                'subject_id' => (int) $exam->subject_id,
+                'name' => (string) ($exam->subject?->name ?? 'Subject'),
+                'class_name' => (string) ($classNames[$exam->section_id] ?? ''),
+                'state' => $state,
+                'label' => $labels[$state],
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -263,13 +382,22 @@ final class MarksReleaseService
         $subjects = [];
         $groups = [];
 
+        $grades = app(DisplayedGrade::class);
         foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
-            $bundles[$classLink->id] ??= LatestExamMarks::forExam($schoolId, (int) $classLink->section_id, $anchor, null);
-            foreach ($bundles[$classLink->id]['subjects'] as $subject) {
-                $key = mb_strtolower($subject['name']);
-                $subjects[$key] = ['key' => $key, 'name' => $subject['name']];
-            }
             $groupKey = (int) $classLink->id;
+            if (! isset($bundles[$groupKey])) {
+                $bundles[$groupKey] = [
+                    'sheet' => $this->releaseSheet($schoolId, $anchor, $classLink),
+                    'names' => [],
+                    'stored' => $this->storedGrades($schoolId, $anchor, (int) $classLink->section_id),
+                ];
+                $names = $this->rawSubjectNames($schoolId, array_column($bundles[$groupKey]['sheet']->subjects, 'id'));
+                $bundles[$groupKey]['names'] = $names;
+                foreach ($names as $subjectId => $name) {
+                    $key = mb_strtolower($name);
+                    $subjects[$key] = ['key' => $key, 'name' => $name];
+                }
+            }
             if (! isset($groups[$groupKey])) {
                 $groups[$groupKey] = [
                     'class_name' => trim((string) ($classLink->section?->name ?? '')),
@@ -277,7 +405,14 @@ final class MarksReleaseService
                     'students' => [],
                 ];
             }
-            $groups[$groupKey]['students'][] = $this->sheetRow($studentId, $bundles[$classLink->id]);
+            $groups[$groupKey]['students'][] = $this->sheetRow(
+                $studentId,
+                $bundles[$groupKey]['sheet'],
+                $bundles[$groupKey]['names'],
+                $bundles[$groupKey]['stored'],
+                $schoolId,
+                $grades,
+            );
         }
 
         $subjects = array_values($subjects);
@@ -298,51 +433,94 @@ final class MarksReleaseService
         return ['subjects' => $subjects, 'groups' => array_values($groups)];
     }
 
-    /** @param  array{subjects: array<int, array{id:int,name:string}>, marks: \Illuminate\Support\Collection}  $bundle */
-    private function sheetRow(int $studentId, array $bundle): array
+    private function releaseSheet(int $schoolId, Exam $anchor, StandardLink $classLink): ResultSheet
+    {
+        return app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: (int) $classLink->section_id,
+            academicTermId: (int) $anchor->academic_term_id,
+            standardLinkId: (int) $classLink->id,
+            examTypeId: (int) $anchor->exam_type_id,
+        ));
+    }
+
+    /**
+     * @param list<int> $subjectIds
+     * @return array<int, string>
+     */
+    private function rawSubjectNames(int $schoolId, array $subjectIds): array
+    {
+        if ($subjectIds === []) {
+            return [];
+        }
+
+        return Subject::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $subjectIds)
+            ->get()
+            ->mapWithKeys(fn (Subject $subject) => [(int) $subject->id => (string) $subject->getRawOriginal('name')])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<int, string>>
+     */
+    private function storedGrades(int $schoolId, Exam $anchor, int $sectionId): array
+    {
+        $examIds = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->whereNull('deleted_at')
+            ->pluck('id');
+        $stored = [];
+        if ($examIds->isEmpty()) {
+            return $stored;
+        }
+        foreach (Marks::query()->where('school_id', $schoolId)->whereIn('exam_id', $examIds)->orderBy('id')->get(['student_id', 'subject_id', 'grade']) as $mark) {
+            $stored[(int) $mark->student_id][(int) $mark->subject_id] = (string) $mark->grade;
+        }
+
+        return $stored;
+    }
+
+    /**
+     * @param array<int, string> $names
+     * @param array<int, array<int, string>> $stored
+     */
+    private function sheetRow(int $studentId, ResultSheet $sheet, array $names, array $stored, int $schoolId, DisplayedGrade $grades): array
     {
         $student = User::query()->find($studentId);
-        $bySubject = $bundle['marks']->where('student_id', $studentId)->keyBy('subject_id');
+        $row = $sheet->student($studentId);
         $cells = [];
-        $total = 0.0;
-        $count = 0;
-        foreach ($bundle['subjects'] as $subject) {
-            $key = mb_strtolower($subject['name']);
-            $mark = $bySubject->get($subject['id']);
-            if (! $mark) {
+        foreach ($names as $subjectId => $name) {
+            $key = mb_strtolower($name);
+            $cell = $row?->cell($subjectId);
+            if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null || $row === null) {
                 $cells[$key] = null;
 
                 continue;
             }
-            $value = (float) $mark->marks;
-            $total += $value;
-            $count++;
+            $value = $cell->mark;
             $cells[$key] = [
                 'mark' => fmod($value, 1.0) === 0.0 ? (string) (int) $value : number_format($value, 1),
-                'grade' => (string) $mark->grade,
+                'grade' => $grades->subject($schoolId, $row->standardId, $value, $stored[$studentId][$subjectId] ?? null),
             ];
         }
-        $average = $count ? $total / $count : null;
+        $total = $row?->total;
+        $average = $row?->average;
 
         return [
             'id' => $studentId,
             'name' => (string) ($student->name ?? 'Student'),
             'cells' => $cells,
-            'total' => $count ? (fmod($total, 1.0) === 0.0 ? (string) (int) $total : number_format($total, 1)) : '—',
+            'total' => $total === null ? '—' : (fmod($total, 1.0) === 0.0 ? (string) (int) $total : number_format($total, 1)),
             'average' => $average === null ? '—' : number_format($average, 1),
-            'grade' => $average === null ? '—' : $this->overallGrade($average),
-            'sort_total' => $count ? $total : -1,
+            'grade' => ($average === null || $row === null) ? '—' : $grades->overall($schoolId, $row->standardId, $average),
+            'sort_total' => $total ?? -1,
             'sort_average' => $average ?? -1,
         ];
-    }
-
-    /** Same UNEB-style bands the demo marks use, for the overall column only. */
-    private function overallGrade(float $score): string
-    {
-        return match (true) {
-            $score >= 95 => 'D1', $score >= 90 => 'D2', $score >= 75 => 'C3', $score >= 65 => 'C4',
-            $score >= 60 => 'C5', $score >= 50 => 'C6', $score >= 45 => 'P7', $score >= 40 => 'P8', default => 'F9',
-        };
     }
 
     // ── Run ──────────────────────────────────────────────────────
@@ -762,6 +940,10 @@ final class MarksReleaseService
         }
         $exam = LatestExamMarks::forExam((int) $anchor->school_id, (int) $link->section_id, $anchor, $studentId);
         if ($exam['subjects'] === []) {
+            return null;
+        }
+        $exam = app(DisplayedGrade::class)->applyToBundle((int) $anchor->school_id, $anchor, (int) $link->section_id, $studentId, $exam);
+        if ($exam['marks']->isEmpty()) {
             return null;
         }
         $class = trim(($link->section?->name ?? '') . ' ' . ($link->stream ?? ''));

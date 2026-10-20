@@ -27,25 +27,6 @@ class MarksController extends Controller
         $this->studentPromotion = $studentPromotion;
     }
 
-    public function schoolMarksOverview()
-    {
-        $schoolId = Auth::user()->school_id;
-
-        $students = User::with(
-            ['marks.subject', 'marks.exam', 'marks.student', 'marks.teacher', 'marks.school']
-        )
-            ->whereHas('marks.exam', function ($query) use ($schoolId) {
-                $query->forSchool($schoolId);
-            })
-            ->where('usergroup_id', 6)
-            ->get();
-
-        $studentCount = $students->pluck('student_id')->unique()->count();
-        $subjects = Subject::where('school_id', $schoolId)->get();
-
-        return view('admin.marks.school-overview', compact('students', 'studentCount', 'subjects'));
-    }
-
     public function classExamOverview(Request $request, GradingSystemService $gradingSystem)
     {
         $schoolId = Auth::user()->school_id;

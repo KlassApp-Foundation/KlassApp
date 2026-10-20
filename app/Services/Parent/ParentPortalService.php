@@ -2,6 +2,7 @@
 
 namespace App\Services\Parent;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
 use App\Models\Academics\Exam;
 use App\Models\Attendance;
@@ -24,6 +25,8 @@ use Illuminate\Support\Collection;
  */
 class ParentPortalService
 {
+    public function __construct(private ReleaseGate $releases) {}
+
     /**
      * @return Collection<int, User>
      */
@@ -371,6 +374,7 @@ class ParentPortalService
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
+        $this->releases->applyToExams($examQuery, $student);
         $exams = $examQuery->take(15)->get();
         if ($exams->isEmpty()) {
             return [

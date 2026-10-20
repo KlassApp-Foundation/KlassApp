@@ -16,6 +16,9 @@ use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\UserPreference;
+use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsQuery;
+use App\Services\Results\ResultsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -253,10 +256,16 @@ class DashboardV2DataService
             ->orderByDesc('scheduled_at')
             ->orderByDesc('id')
             ->first();
-        $ready = $exam
-            ? Marks::query()->where('school_id', $sid)->where('exam_id', $exam->id)
-                ->distinct()->count('student_id')
-            : 0;
+        $ready = 0;
+        if ($exam !== null && $exam->section_id && $exam->academic_term_id && $exam->exam_type_id) {
+            $sitting = app(ResultsService::class)->sheet(new ResultsQuery(
+                schoolId: $sid,
+                sectionId: (int) $exam->section_id,
+                academicTermId: (int) $exam->academic_term_id,
+                examTypeId: (int) $exam->exam_type_id,
+            ));
+            $ready = count(array_filter($sitting->students, fn ($student) => $student->subjectsCounted > 0));
+        }
 
         return [
             'students' => [
@@ -352,18 +361,29 @@ class DashboardV2DataService
             if ($latest === null) {
                 continue;
             }
-            $avg = Marks::query()
-                ->where('school_id', $sid)
-                ->where('section_id', $section->id)
-                ->where('exam_id', $latest->id)
-                ->avg('marks');
-            if ($avg === null) {
+            $values = [];
+            if ($latest->academic_term_id && $latest->exam_type_id) {
+                $sitting = app(ResultsService::class)->sheet(new ResultsQuery(
+                    schoolId: $sid,
+                    sectionId: (int) $section->id,
+                    academicTermId: (int) $latest->academic_term_id,
+                    examTypeId: (int) $latest->exam_type_id,
+                ));
+                foreach ($sitting->students as $student) {
+                    foreach ($student->cells as $cell) {
+                        if ($cell->status === ResultCell::MARKED && $cell->mark !== null) {
+                            $values[] = $cell->mark;
+                        }
+                    }
+                }
+            }
+            if ($values === []) {
                 continue;
             }
             $perClass[] = [
                 'label' => (string) $section->name,
                 'section_id' => (int) $section->id,
-                'value' => round((float) $avg, 1),
+                'value' => round(array_sum($values) / count($values), 1),
             ];
             $examLabel ??= (string) ($latest->name ?: 'End of term');
         }

@@ -181,9 +181,6 @@ class TeacherStudentDetailsRosterScopeTest extends TestCase
             '/teacher/student/show/discipline/{name}',
             '/teacher/student/show/attendance/{name}',
             '/teacher/student/show/libraryactivity/{name}',
-            '/teacher/student/showmark/{name}',
-            '/teacher/student/showallmark/{name}',
-            '/teacher/student/comparemark/{name}',
             '/teacher/student/show/medicalHistory/{name}',
             '/teacher/document/get/{name}',
         ];
