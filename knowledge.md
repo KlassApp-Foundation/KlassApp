@@ -676,6 +676,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158)**
+
+- A head teacher could open school details, data exports, academic terms, and the legacy class URLs while the sidebar hides them. Those routes now use the `full-school-admin` gate (usergroups 1, 2, and 3) and return 403. Settings and `GET /admin/academics` were already refused (404). The year switcher and report cards stay open. Not merged. Production untouched.
+- Branch `cursor/menu-hidden-route-auth-8401`. Review requested from Bariyo123. The reviewers API returned 403 for this session, so the request is in the PR body.
+
+## Session: 2026-10-20 — Head-teacher menu URLs (PR #1158 OPEN)
+
+- **Work:** enforce the sidebar `school_admin` condition on the routes it hides, where that condition is the intended permission.
+- **Files:** `app/Providers/AuthServiceProvider.php`, `routes/admin.php`, `resources/views/layouts/partials/sidebar-menu.blade.php`, `tests/Feature/Admin/MenuHiddenSettingsAuthorizationTest.php`.
+- **Decision:** do not lock `/admin/standardLink/*` (attendance links there), teacher release, or routes that are merely absent from a menu. Academic years index stays 404 via `routes/setting.php`.
+- **Tests:** on `main`, the new head-teacher assertions for school details, the academic year list, academic terms, and data exports returned 200. On this branch they return 403, and school admin and site admin still get 200.
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Do not merge from this session.
+
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
 
 - Stacked on [#1122](https://github.com/KlassApp-Foundation/KlassApp/pull/1122) (`cursor/release-gate-parent-student-marks-7d0b`). Base is that branch, not `main`, because the parent report path has to call `ReleaseGate`. Not merged. Production untouched.
