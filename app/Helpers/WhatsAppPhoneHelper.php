@@ -209,6 +209,33 @@ class WhatsAppPhoneHelper
         return '+'.implode(' ', $groups);
     }
 
+    /**
+     * A number safe to write to a log. The country calling code and the last
+     * three digits stay; the rest is a fixed mask. "+256700000123" becomes
+     * "+256*****123". Shorter input is fully masked.
+     */
+    public static function mask(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if (strlen($digits) < 6) {
+            return '***';
+        }
+
+        return '+'.self::callingCode($digits).'*****'.substr($digits, -3);
+    }
+
+    private static function callingCode(string $digits): string
+    {
+        foreach (['256', '255', '254', '253', '252', '251', '250', '257', '260', '234', '233', '27', '44', '91', '1'] as $code) {
+            $national = strlen($digits) - strlen($code);
+            if (str_starts_with($digits, $code) && $national >= 4 && $national <= 12) {
+                return $code;
+            }
+        }
+
+        return substr($digits, 0, max(1, min(3, strlen($digits) - 3)));
+    }
+
     public static function validate(string $input): bool
     {
         $normalised = self::normalise($input);

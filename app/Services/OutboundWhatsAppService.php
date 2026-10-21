@@ -169,7 +169,7 @@ class OutboundWhatsAppService
                 $this->sendText($phone, $message, $flowType, $userId);
                 return 1;
             } catch (\Throwable $e) {
-                Log::error("queueOrSend: immediate send failed for {$phone}", [
+                Log::error('queueOrSend: immediate send failed for '.WhatsAppPhoneHelper::mask($phone), [
                     'error' => $e->getMessage(),
                     'flow'  => $flowType,
                 ]);
@@ -245,7 +245,7 @@ class OutboundWhatsAppService
                 $notification->delete();
                 $sent++;
             } catch (\Throwable $e) {
-                Log::error("flushPending: failed for {$user->phone}", [
+                Log::error('flushPending: failed for '.WhatsAppPhoneHelper::mask((string) $user->phone), [
                     'notification_id' => $notification->id,
                     'error'           => $e->getMessage(),
                 ]);
