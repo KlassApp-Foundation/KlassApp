@@ -894,7 +894,7 @@ public function scopeStudents($query)
     /**
      * Display name shown across class lists and report cards: natural "FIRST LAST"
      * order (matching how report cards have always rendered), with trailing numeric
-     * suffixes stripped from every token (e.g. "nuwagira darius5373" -> "NUWAGIRA DARIUS").
+     * suffixes stripped from every token (e.g. "example learner5373" -> "EXAMPLE LEARNER").
      *
      * Prefers the authoritative userprofile first/last split, falls back to parsing
      * users.name.
