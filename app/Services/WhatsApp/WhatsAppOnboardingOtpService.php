@@ -39,13 +39,17 @@ class WhatsAppOnboardingOtpService
 
     /**
      * Null when this attempt may proceed (and the attempt is then counted).
-     * A string when the admin must wait. Skipped under the test runner so
-     * existing wizard tests can resend; production tests opt in by setting
-     * the environment to production.
+     * A string when the admin must wait, or when there is no signed-in admin.
+     * Skipped under the test runner so existing wizard tests can resend;
+     * production tests opt in by setting the environment to production.
      */
     public function consumeVerificationAttempt(int $adminUserId): ?string
     {
-        if ($adminUserId < 1 || app()->environment('testing')) {
+        if ($adminUserId < 1) {
+            return 'Sign in before we send a verification code.';
+        }
+
+        if (app()->environment('testing')) {
             return null;
         }
 
@@ -80,25 +84,23 @@ class WhatsAppOnboardingOtpService
      */
     public function deliver(string $phone, string $otp, ?int $adminUserId = null): array
     {
-        if (! $this->whatsApp->isConfigured() || trim($phone) === '') {
+        if (! $this->whatsApp->isConfigured() || trim($phone) === '' || $adminUserId === null || $adminUserId < 1) {
             return ['sent' => false, 'result' => null];
         }
 
-        $adminUserId = $adminUserId !== null && $adminUserId > 0 ? $adminUserId : null;
-
         try {
-            $send = fn () => $this->whatsApp->sendTextSafe(
-                $phone,
-                $this->messageBody($otp),
-                null,
-                [],
-                DemoOnlyRecipientGuard::ADMIN_VERIFICATION,
+            $result = DemoOnlyRecipientGuard::duringAdminVerification(
                 $adminUserId,
+                $phone,
+                fn () => $this->whatsApp->sendTextSafe(
+                    $phone,
+                    $this->messageBody($otp),
+                    null,
+                    [],
+                    DemoOnlyRecipientGuard::ADMIN_VERIFICATION,
+                    $adminUserId,
+                ),
             );
-
-            $result = $adminUserId === null
-                ? $send()
-                : DemoOnlyRecipientGuard::duringAdminVerification($adminUserId, $phone, $send);
 
             $ok = ($result['status'] ?? '') === 'success' || ($result['success'] ?? false) === true;
 
@@ -140,6 +142,17 @@ class WhatsAppOnboardingOtpService
     {
         $phone = trim($phone);
 
+        if ($adminUserId < 1) {
+            return [
+                'sent' => false,
+                'failed' => true,
+                'reason' => 'unauthenticated',
+                'phone' => $phone,
+                'message' => 'Sign in before we send a verification code.',
+                'code' => null,
+            ];
+        }
+
         if ($wait = $this->consumeVerificationAttempt($adminUserId)) {
             return [
                 'sent' => false,
@@ -161,6 +174,7 @@ class WhatsAppOnboardingOtpService
             'wizard_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
             'wizard_wa_otp.attempts' => 0,
             'wizard_wa_otp.invalidated' => false,
+            'wizard_wa_otp.expired' => false,
         ]);
 
         $delivery = $this->deliver($phone, $otp, $adminUserId > 0 ? $adminUserId : null);
@@ -195,13 +209,22 @@ class WhatsAppOnboardingOtpService
             return [
                 'verified' => false,
                 'phone' => $sessionPhone,
-                'message' => session('wizard_wa_otp.invalidated')
-                    ? 'That code is no longer valid. Request a new one.'
-                    : 'Send a verification code first.',
+                'message' => session('wizard_wa_otp.expired')
+                    ? 'That code has expired. Send a new one.'
+                    : (session('wizard_wa_otp.invalidated')
+                        ? 'That code is no longer valid. Request a new one.'
+                        : 'Send a verification code first.'),
             ];
         }
 
         if ($expiresAt > 0 && now()->timestamp > $expiresAt) {
+            session()->forget([
+                'wizard_wa_otp.code',
+                'wizard_wa_otp.expires_at',
+                'wizard_wa_otp.attempts',
+            ]);
+            session(['wizard_wa_otp.expired' => true]);
+
             return [
                 'verified' => false,
                 'phone' => $sessionPhone,
@@ -257,6 +280,7 @@ class WhatsAppOnboardingOtpService
             'wizard_wa_otp.expires_at',
             'wizard_wa_otp.attempts',
             'wizard_wa_otp.invalidated',
+            'wizard_wa_otp.expired',
         ]);
 
         return [
@@ -302,6 +326,7 @@ class WhatsAppOnboardingOtpService
             'wizard_wa_otp.expires_at',
             'wizard_wa_otp.attempts',
             'wizard_wa_otp.invalidated',
+            'wizard_wa_otp.expired',
             'toshi_wa_otp.code',
             'toshi_wa_otp.phone',
             'toshi_wa_otp.expires_at',

@@ -6253,6 +6253,12 @@ class AgentToshi extends Component
         // The code stays in the session. Never copy it onto a public property.
         $this->whatsappSentOtp = '';
 
+        if ($result['reason'] === 'unauthenticated') {
+            $this->botSay($result['message']);
+
+            return;
+        }
+
         if ($result['reason'] === 'rate_limited') {
             $this->botSay($result['message']);
             $this->substep = 3;

@@ -1828,15 +1828,12 @@ class OnboardingEngine
             return ['linked' => null, 'skipped' => [['reason' => 'Phone number is required']]];
         }
 
-        // Check if this user already has a WhatsApp record
-        if (WhatsAppUser::where('user_id', $userId)->exists()) {
+        // A verified row is finished. An unverified row is not: the manual
+        // phone form can create one, and a later server-checked code must
+        // still be able to set verified_at on that same row.
+        $existing = WhatsAppUser::where('user_id', $userId)->first();
+        if ($existing && ($existing->verified_at !== null || ! $codeWasVerified)) {
             return ['linked' => null, 'skipped' => [['reason' => 'User already has a WhatsApp record']]];
-        }
-
-        if (WhatsAppUser::where('phone', $phone)->exists()) {
-            throw ValidationException::withMessages([
-                'whatsappPhone' => "WhatsApp number {$phone} is already registered to another account. Use a different number.",
-            ]);
         }
 
         $markVerified = false;
@@ -1847,6 +1844,16 @@ class OnboardingEngine
                 ]);
             }
             $markVerified = true;
+        }
+
+        $phoneTaken = WhatsAppUser::query()
+            ->where('phone', $phone)
+            ->when($existing, fn ($query) => $query->whereKeyNot($existing->id))
+            ->exists();
+        if ($phoneTaken) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => "WhatsApp number {$phone} is already registered to another account. Use a different number.",
+            ]);
         }
 
         try {

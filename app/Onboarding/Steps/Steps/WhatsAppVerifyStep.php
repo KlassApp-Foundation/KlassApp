@@ -51,7 +51,7 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         }
 
         $existing = WhatsAppUser::where('user_id', $userId)->first();
-        if ($existing) {
+        if ($existing && $existing->verified_at !== null) {
             return;
         }
 
@@ -108,6 +108,17 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         }
 
         $userHas = WhatsAppUser::where('user_id', $userId)->first();
+        if ($userHas && $userHas->verified_at === null) {
+            return [
+                'action' => 'change',
+                'summary' => 'This number is saved and still needs the verification code.',
+                'rows' => [[
+                    'label' => (string) $userHas->phone,
+                    'status' => 'create',
+                    'detail' => 'not verified yet',
+                ]],
+            ];
+        }
         if ($userHas) {
             $same = (string) $userHas->phone === (string) $normalized;
 
@@ -149,7 +160,7 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         }
 
         $existing = WhatsAppUser::where('user_id', $userId)->first();
-        if ($existing) {
+        if ($existing && $existing->verified_at !== null) {
             return [
                 'created' => [],
                 'skipped' => [['label' => (string) $existing->phone, 'reason' => 'already present']],

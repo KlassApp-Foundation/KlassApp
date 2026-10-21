@@ -9,9 +9,11 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingEngine;
+use App\Services\OnboardingStepsService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -174,6 +176,99 @@ class WhatsAppVerificationGuardTest extends TestCase
         $this->assertTrue($otp->verifyAdminCode($this->admin->id, $fresh, $phone)['verified']);
         $this->assertSame($phone, $otp->grantPhone());
         $this->assertFalse($otp->verifyAdminCode($this->admin->id, $burned, $phone)['verified']);
+    }
+
+    public function test_expired_code_is_rejected_and_then_deleted(): void
+    {
+        $this->actingAs($this->admin);
+        $otp = app(WhatsAppOnboardingOtpService::class);
+        $sent = $otp->sendAdminVerificationCode($this->admin->id, self::PHONE);
+        $code = (string) $sent['code'];
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
+
+        $this->travel(6)->minutes();
+
+        $expired = $otp->verifyAdminCode($this->admin->id, $code, self::PHONE);
+        $this->assertFalse($expired['verified']);
+        $this->assertStringContainsString('expired', $expired['message']);
+        $this->assertNull($otp->pendingCode());
+        $this->assertNull($otp->grantPhone());
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+
+        $this->travel(-10)->minutes();
+
+        $again = $otp->verifyAdminCode($this->admin->id, $code, self::PHONE);
+        $this->assertFalse($again['verified']);
+        $this->assertStringContainsString('expired', $again['message']);
+        $this->assertNull($otp->pendingCode());
+        $this->assertNull($otp->grantPhone());
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
+        );
+    }
+
+    public function test_a_correct_code_cannot_be_reused(): void
+    {
+        $this->actingAs($this->admin);
+        $otp = app(WhatsAppOnboardingOtpService::class);
+        $sent = $otp->sendAdminVerificationCode($this->admin->id, self::PHONE);
+        $code = (string) $sent['code'];
+
+        $this->assertTrue($otp->verifyAdminCode($this->admin->id, $code, self::PHONE)['verified']);
+        app(OnboardingEngine::class)->saveWhatsApp(
+            $this->school,
+            $this->admin->id,
+            self::PHONE,
+            codeWasVerified: true,
+        );
+        $this->assertNull($otp->grantPhone());
+        $this->assertNull($otp->pendingCode());
+        $verifiedAt = WhatsAppUser::where('user_id', $this->admin->id)->value('verified_at');
+        $this->assertNotNull($verifiedAt);
+
+        $again = $otp->verifyAdminCode($this->admin->id, $code, self::PHONE);
+        $this->assertFalse($again['verified']);
+        $this->assertNull($otp->grantPhone());
+        $this->assertNull($otp->pendingCode());
+        $this->assertSame(1, WhatsAppUser::where('user_id', $this->admin->id)->count());
+        $this->assertEquals($verifiedAt, WhatsAppUser::where('user_id', $this->admin->id)->value('verified_at'));
+    }
+
+    public function test_legacy_send_without_an_authenticated_admin_is_refused(): void
+    {
+        config([
+            'toshi.onboarding_v2' => false,
+            'services.whatsapp.business_api_token' => 'test-token',
+            'services.whatsapp.business_phone_number_id' => '106540352242922',
+            'services.whatsapp.replies_enabled' => true,
+            'services.whatsapp.demo_only_recipients' => false,
+            'services.whatsapp.graph_api_base_url' => 'https://graph.facebook.com',
+        ]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST']]], 200),
+        ]);
+
+        $component = Livewire::test(AgentToshi::class)
+            ->set('mode', 'create')
+            ->set('step', 15)
+            ->set('substep', 2)
+            ->set('schoolCountry', 'Uganda')
+            ->set('whatsappPhone', self::PHONE)
+            ->set('input', self::PHONE)
+            ->call('send');
+
+        $component->assertSee('Sign in before we send a verification code.');
+        $this->assertCount(0, Http::recorded());
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->pendingCode());
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->grantPhone());
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+
+        $direct = app(WhatsAppOnboardingOtpService::class)->sendAdminVerificationCode(0, self::PHONE);
+        $this->assertFalse($direct['sent']);
+        $this->assertSame('unauthenticated', $direct['reason']);
+        $this->assertNull($direct['code']);
+        $this->assertCount(0, Http::recorded());
     }
 
     private function assertNumberStaysUnverified(string $phone): void
