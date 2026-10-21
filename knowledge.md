@@ -676,6 +676,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), brought up to date with main**
+
+- `origin/main` (`a0fc9b39`) merged into `cursor/menu-hidden-route-auth-8401` with a merge commit. Not merged to main. Production untouched.
+- Conflicts: `knowledge.md` kept both sides' entries as written. `routes/admin.php` kept `DELETE /admin/academic/delete/{id}` inside the `full-school-admin` group.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2926 tests, 0 failures, 0 errors, 4 skipped, guard OK.
+
+## Session: 2026-10-21 — Bring #1158 up to date with main
+
+- **Work:** merge `origin/main` into the head-teacher route gate branch. The gate is unchanged. Academic year delete stays the DELETE verb from main, inside that gate.
+- **Files:** `knowledge.md`, `routes/admin.php` (conflict resolution only).
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Review requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 20, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158)**
 
 - A head teacher could open school details, data exports, academic terms, and the legacy class URLs while the sidebar hides them. Those routes now use the `full-school-admin` gate (usergroups 1, 2, and 3) and return 403. Settings and `GET /admin/academics` were already refused (404). The year switcher and report cards stay open. Not merged. Production untouched.
