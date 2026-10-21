@@ -676,6 +676,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **Toshi onboarding finish OPEN [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157)**
+
+- Branch `cursor/toshi-onboarding-finish-2ea1` from `main` (`f14c93a3`), then `origin/main` (`ce7958c7`) merged in. Not merged. Production untouched.
+- `FinishSchoolOnboarding` is the shared finish for the wizard confirm step and Toshi's confirm (`commit` / `confirmOnboarding`, and the v2 chat when the last step was just saved). First call sets `schools.onboarding_finished_at` and dispatches `SchoolOnboardingFinished`. A second call does neither. No listener, so no job, mail, notification, or WhatsApp send. No migration.
+- The wizard still sets its own finished flag and, on the first finish only, dispatches Livewire `manual-onboarding-finished`. Toshi already leaves Completing Setup itself.
+- Before the callers were wired, `test_toshi_completion_sets_onboarding_finished_at_and_the_same_follow_ups_as_the_wizard` failed because `onboarding_finished_at` was null after Toshi confirm (`step` 99, `mode` preview). With the fix, `FinishSchoolOnboardingTest` is 3 tests / 34 assertions. Do not merge.
+
 ## Current Status: October 20, 2026 — **public /privacy and /terms OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165)**
 
 - Canonical guest pages `/privacy` and `/terms` serve the existing policy and terms views. 301s: `/ploicy`, `/policy`, `/privacy-policy` → `/privacy`; `/terms-of-service` → `/terms`, query string kept. Not merged. Production untouched.
@@ -709,6 +716,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `lang/en/passwords.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`.
 - **Tests:** the new cases fail on `main` (distinct messages) and pass with this change. Related auth suites: 40 tests, 331 assertions, OK. Full guard: 2820 tests, 0 failures, 0 errors, 4 skipped.
 - **Status:** MERGED [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166) `2168b7458f3066173e67c810a4a7ff5690d5a0a6` (`cursor/generic-password-reset-error-821d`).
+
+
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
 ## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency MERGED [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)** `ce7958c7`
 
@@ -2742,6 +2752,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: Toshi finish uses the wizard's onboarding finish
+
+- **Work done**: `ManualOnboardingWizard::confirmReview()` set `onboarding_finished_at` and dispatched Livewire `manual-onboarding-finished`. It queued no job, sent no notification, cleared no cache, wrote no other flag, and did not redirect. `AgentToshi::confirmOnboarding()` left Completing Setup without that timestamp. Both now call `FinishSchoolOnboarding`, which stamps the timestamp and dispatches `SchoolOnboardingFinished` once. A second call does not repeat those follow-ups. The wizard still dispatches `manual-onboarding-finished` only on the first finish. `origin/main` (`ce7958c7`) was merged into this branch; the only conflict was this file.
+- **Files modified**: `app/Services/FinishSchoolOnboarding.php`, `app/Events/SchoolOnboardingFinished.php`, `app/Services/OnboardingStepsService.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/FinishSchoolOnboardingTest.php`, `knowledge.md`.
+- **Key decisions**: No migration. The Livewire event stays on the wizard because it only tells the Toshi panel on the same page to leave Completing Setup; Toshi already does that itself, and firing that event from Toshi would run the sync again and clear the completion message when the assistant is off. `SchoolOnboardingFinished` has no listener. Main's set-password edits in `AgentToshi` stayed; this branch only adds the shared finish call.
+- **Status**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157) OPEN (`cursor/toshi-onboarding-finish-2ea1`, feature commit `1dffb4b6`). Not merged. Production untouched.
+- **Evidence**: After the `origin/main` merge, `bash scripts/test-guard.sh` (4 processes): 2815 tests, 0 failures, 0 errors, 4 skipped. Exit 0.
+- **Edge cases flagged**: Create-mode Toshi confirm stamps the new school too. Opening Toshi when the checklist is already complete does not stamp; only confirm, or a v2 reply that just saved the last step, does.
+- **PR**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157). Review requested from Bariyo123. Do not merge.
 
 ### 2026-10-20: wizard subjects step uses the classes step's records
 

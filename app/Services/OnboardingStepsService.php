@@ -155,6 +155,10 @@ class OnboardingStepsService
         $school->forceFill(['onboarding_skipped_steps' => $skipped])->save();
     }
 
+    /**
+     * Stamp schools.onboarding_finished_at. Wizard and Toshi finish go through
+     * FinishSchoolOnboarding, which calls this and the one-time follow-up.
+     */
     public static function markOnboardingFinished(School $school): void
     {
         if ($school->onboarding_finished_at !== null) {
