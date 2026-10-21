@@ -6738,7 +6738,7 @@ class AgentToshi extends Component
     {
         if (! empty($this->actionData['fees']) && is_array($this->actionData['fees'])) {
             $structured = [];
-            foreach ($this->actionData['fees'] as $fee) {
+            foreach ($this->actionData['fees'] as $index => $fee) {
                 if (! is_array($fee)) {
                     continue;
                 }
@@ -6752,6 +6752,7 @@ class AgentToshi extends Component
                 $entry = [
                     'name' => $name,
                     'amount' => is_numeric($amount) ? (float) $amount : 0,
+                    'row' => isset($fee['row']) && is_numeric($fee['row']) ? (int) $fee['row'] : ($index + 1),
                 ];
 
                 $class = trim((string) ($fee['class'] ?? ''));
@@ -6782,10 +6783,21 @@ class AgentToshi extends Component
             }
         }
 
-        return array_map(fn (string $name) => [
-            'name' => trim($name),
-            'amount' => 0,
-        ], array_filter($this->fees, fn ($f) => is_string($f) && trim($f) !== ''));
+        $structured = [];
+        $row = 1;
+        foreach ($this->fees as $fee) {
+            if (! is_string($fee) || trim($fee) === '') {
+                continue;
+            }
+            $structured[] = [
+                'name' => trim($fee),
+                'amount' => 0,
+                'row' => $row,
+            ];
+            $row++;
+        }
+
+        return $structured;
     }
 
     // ════════════════════════════════════════════════
@@ -6797,7 +6809,7 @@ class AgentToshi extends Component
      * (lin = Uganda national Learner Identification Number).
      *
      * @param  list<array<string, mixed>|string>  $studentRecords
-     * @return list<array{name: string, class: string, stream: string, phone: string, school_student_id: string, lin: string, board_registration_number: string, gender: string, date_of_birth: string}>
+     * @return list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, phone: string, school_student_id: string, lin: string, board_registration_number: string, gender: string, date_of_birth: string}>
      */
     private function mapStudentRecordsForEngine(array $studentRecords): array
     {
@@ -6807,6 +6819,8 @@ class AgentToshi extends Component
                     'name' => trim($record),
                     'class' => '',
                     'stream' => '',
+                    'parent' => '',
+                    'parent_phone' => '',
                     'phone' => '',
                     'school_student_id' => '',
                     'lin' => '',
@@ -6825,7 +6839,9 @@ class AgentToshi extends Component
                 'name' => trim((string) ($record['name'] ?? '')),
                 'class' => trim((string) ($record['class'] ?? '')),
                 'stream' => trim((string) ($record['stream'] ?? '')),
-                'phone' => trim((string) ($record['phone'] ?? $record['parent_phone'] ?? '')),
+                'parent' => trim((string) ($record['parent'] ?? $record['parent_name'] ?? '')),
+                'parent_phone' => trim((string) ($record['parent_phone'] ?? $record['parentPhone'] ?? '')),
+                'phone' => trim((string) ($record['phone'] ?? '')),
                 'school_student_id' => trim((string) ($record['school_student_id'] ?? '')),
                 'lin' => trim((string) ($record['lin'] ?? $record['learner_id'] ?? '')),
                 'board_registration_number' => trim((string) ($record['board_registration_number'] ?? '')),
