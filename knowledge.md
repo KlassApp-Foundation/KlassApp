@@ -635,6 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
+
+- Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.
+- `origin/main` (`ef4c499`) merged into this branch with a merge commit. That tip is [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189). The only conflict was `knowledge.md`. Both sides are kept below. No infrastructure identifiers or tokens were added.
+
 ## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
 
 - `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
@@ -3030,6 +3035,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
+
+- **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.
+- **Files touched**: `app/Helpers/WhatsAppPhoneHelper.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Services/WhatsAppBusinessService.php`, `app/Services/OutboundWhatsAppService.php`, `app/Services/TeacherInviteLinkService.php`, `app/Http/Controllers/Api/SchoolPayWebhookController.php`, `app/Channels/WhatsAppBackupChannel.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `tests/Feature/WhatsApp/WhatsAppLogPhoneMaskTest.php`, `tests/Feature/Admin/LinkWhatsAppActivityLogTest.php`, `knowledge.md`.
+- **Decision**: Reused no existing helper. `MarksReleaseService` masks for the result view with a different shape and is private. The activity row still stores the number the admin submitted.
+- **Status**: OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188) (`cursor/mask-whatsapp-log-phones-8f2e`). Not merged. Production untouched. Merged `origin/main` `ef4c499` ([#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)) with a merge commit. The only conflict was `knowledge.md`; both sides are kept. No infrastructure identifiers or tokens were added.
+- **Evidence**: Both new tests failed on `origin/main` and passed with the change. Related WhatsApp suites passed (50 tests, 218 assertions). No browser check; this is log text and an activity row.
 
 ### 2026-10-21: PHP 8.5 deprecations, no runtime change
 
