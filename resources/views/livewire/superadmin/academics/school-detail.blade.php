@@ -151,12 +151,17 @@
                         'Premium' => 'warning',
                         default => 'info',
                     };
+                    $planEndsLabel = app(\App\Services\EarlyAdopterOffer::class)->endLabel($schoolDetail, $plan);
+                    $complimentaryGrowth = app(\App\Services\EarlyAdopterOffer::class)->isComplimentaryGrowth($schoolDetail, $plan);
                 @endphp
                 <span class="ds-badge ds-badge-{{ $planBadge }}">{{ $planName }}</span>
-                @if($plan?->is_custom_pricing)
+                @if($plan?->is_custom_pricing && ! $complimentaryGrowth)
                     <span class="text-xs text-gray-400 ml-2">Contact Us</span>
-                @elseif($plan?->amount > 0)
+                @elseif($plan?->amount > 0 && ! $complimentaryGrowth)
                     <span class="text-xs text-gray-400 ml-2">\${{ $plan->amount }}/mo USD</span>
+                @endif
+                @if($planEndsLabel)
+                    <span class="text-xs text-gray-400 ml-2">{{ $planEndsLabel }}</span>
                 @endif
             </div>
         </div>

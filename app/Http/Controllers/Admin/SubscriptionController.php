@@ -33,7 +33,10 @@ class SubscriptionController extends Controller
             ->where("status", "!=", "running")
             ->latest()
             ->first();
-        return view("admin.subscription.index", compact("subscriptions", "staticStatuses", "currentPlan"));
+         $planEndsLabel = ($currentPlan && $currentPlan->plan && $user->school)
+            ? app(\App\Services\EarlyAdopterOffer::class)->endLabel($user->school, $currentPlan->plan)
+            : null;
+        return view("admin.subscription.index", compact("subscriptions", "staticStatuses", "currentPlan", "planEndsLabel"));
     }
 
     /**
