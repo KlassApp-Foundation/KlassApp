@@ -23,16 +23,20 @@ use App\Models\WhatsAppUser;
  * to the number that admin is verifying, and a reply to the exact inbound
  * sender being answered. Anything inside DemoSchoolCommsGuard::duringBusinessSend()
  * stays blocked, including those two.
+ *
+ * is_test is read from the school row on each check. A queue worker must not
+ * keep a list loaded at startup: a school flagged later in that same process
+ * is still blocked.
  */
 final class TestSchoolCommsGuard
 {
-    /** @var array<int, int>|null */
-    private static ?array $testSchoolIds = null;
-
-    /** Test seam. Clears the per-request school-id cache. */
+    /**
+     * No process-wide list is kept. The method remains so callers and tests
+     * can still invoke it.
+     */
     public static function flushCache(): void
     {
-        self::$testSchoolIds = null;
+        // is_test is read from the school row on every check.
     }
 
     /**
@@ -63,10 +67,6 @@ final class TestSchoolCommsGuard
 
     private static function matchingTestSchoolId(?string $phone, ?int $userId): ?int
     {
-        if (self::testSchoolIds() === []) {
-            return null;
-        }
-
         if ($userId !== null && $userId > 0) {
             $schoolId = (int) User::query()->whereKey($userId)->value('school_id');
             if (self::isTestSchool($schoolId)) {
@@ -122,23 +122,13 @@ final class TestSchoolCommsGuard
         return null;
     }
 
-    /** @return array<int, int> */
-    private static function testSchoolIds(): array
-    {
-        if (self::$testSchoolIds === null) {
-            self::$testSchoolIds = School::query()
-                ->where('is_test', 1)
-                ->pluck('id')
-                ->map(fn ($id) => (int) $id)
-                ->all();
-        }
-
-        return self::$testSchoolIds;
-    }
-
     private static function isTestSchool(int $schoolId): bool
     {
-        return $schoolId > 0 && in_array($schoolId, self::testSchoolIds(), true);
+        if ($schoolId < 1) {
+            return false;
+        }
+
+        return School::query()->whereKey($schoolId)->where('is_test', 1)->exists();
     }
 
     /**

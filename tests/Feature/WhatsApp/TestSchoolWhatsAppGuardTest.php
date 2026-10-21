@@ -296,6 +296,28 @@ class TestSchoolWhatsAppGuardTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_a_school_flagged_after_the_guard_has_run_is_blocked_in_the_same_process(): void
+    {
+        $real = $this->makeSchool('Warm Real School', isTest: false);
+        $realParent = $this->makeUser($real, 'parent@warm-real.sch.ug', 7, self::REAL);
+        TestSchoolCommsGuard::flushCache();
+
+        $warm = app(WhatsAppBusinessService::class)->sendText(self::REAL, 'hello', 'service', $realParent->id);
+        $this->assertTrue($warm['success'] ?? false);
+        Http::assertSentCount(1);
+
+        $later = $this->makeSchool('Flagged Later School', isTest: false);
+        $later->forceFill(['is_test' => 1])->save();
+        $laterParent = $this->makeUser($later, 'parent@flagged-later.sch.ug', 7, '+256770111009');
+
+        $blocked = app(WhatsAppBusinessService::class)->sendText('+256770111009', 'hello later', 'service', $laterParent->id);
+
+        $this->assertTrue($blocked['blocked'] ?? false);
+        $this->assertSame('test_school', $blocked['reason']);
+        $this->assertSame($later->id, TestSchoolCommsGuard::blocksWhatsApp('+256770111009', $laterParent->id));
+        Http::assertSentCount(1);
+    }
+
     public function test_a_real_number_that_only_shares_the_last_nine_digits_still_sends(): void
     {
         $test = $this->makeSchool('Suffix Test School', isTest: true);
