@@ -227,8 +227,8 @@ class ManualOnboardingParityTest extends TestCase
         $this->assertSame('+256700333444', $waUser->phone);
         $this->assertSame($this->school->id, $waUser->school_id);
         $this->assertTrue((bool) $waUser->opted_in);
-        // Parity with Toshi's whatsapp_verify commit: verified_at is set.
-        $this->assertNotNull($waUser->verified_at, 'Manual link must set verified_at like Toshi does.');
+        // A posted phone is not a verification code. The row stays unverified.
+        $this->assertNull($waUser->verified_at);
 
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)

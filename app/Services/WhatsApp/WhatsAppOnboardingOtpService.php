@@ -18,6 +18,13 @@ class WhatsAppOnboardingOtpService
 
     public const WINDOW_SECONDS = 600;
 
+    /**
+     * Wrong guesses against the code the server issued. The 5th failure
+     * deletes that code. A later guess, including the old correct code, fails
+     * until the admin requests a new one.
+     */
+    public const MAX_WRONG_GUESSES = 5;
+
     public function __construct(private WhatsAppBusinessService $whatsApp) {}
 
     /**
@@ -145,11 +152,15 @@ class WhatsAppOnboardingOtpService
         }
 
         $otp = $this->generateCode();
+        // A new code replaces any earlier proof. The previous code is dead.
+        $this->forgetGrant();
         session([
             'wizard_wa_otp.code' => $otp,
             'wizard_wa_otp.phone' => $phone,
             'wizard_wa_otp.user_id' => $adminUserId,
             'wizard_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
+            'wizard_wa_otp.attempts' => 0,
+            'wizard_wa_otp.invalidated' => false,
         ]);
 
         $delivery = $this->deliver($phone, $otp, $adminUserId > 0 ? $adminUserId : null);
@@ -184,7 +195,9 @@ class WhatsAppOnboardingOtpService
             return [
                 'verified' => false,
                 'phone' => $sessionPhone,
-                'message' => 'Send a verification code first.',
+                'message' => session('wizard_wa_otp.invalidated')
+                    ? 'That code is no longer valid. Request a new one.'
+                    : 'Send a verification code first.',
             ];
         }
 
@@ -205,6 +218,24 @@ class WhatsAppOnboardingOtpService
         }
 
         if (! $this->matches($expected, $provided)) {
+            $attempts = (int) session('wizard_wa_otp.attempts', 0) + 1;
+            if ($attempts >= self::MAX_WRONG_GUESSES) {
+                session()->forget([
+                    'wizard_wa_otp.code',
+                    'wizard_wa_otp.expires_at',
+                    'wizard_wa_otp.attempts',
+                ]);
+                session(['wizard_wa_otp.invalidated' => true]);
+
+                return [
+                    'verified' => false,
+                    'phone' => $sessionPhone,
+                    'message' => 'Too many incorrect attempts. That code is no longer valid. Request a new one.',
+                ];
+            }
+
+            session(['wizard_wa_otp.attempts' => $attempts]);
+
             return [
                 'verified' => false,
                 'phone' => $sessionPhone,
@@ -212,13 +243,70 @@ class WhatsAppOnboardingOtpService
             ];
         }
 
-        session()->forget(['wizard_wa_otp.code', 'wizard_wa_otp.phone', 'wizard_wa_otp.user_id', 'wizard_wa_otp.expires_at']);
+        // Proof lives in the session, written only after the issued code matches.
+        // Callers must read grantPhone() — not a browser-sent flag — before
+        // they set whatsapp_users.verified_at.
+        session([
+            'wizard_wa_verified.phone' => $sessionPhone,
+            'wizard_wa_verified.actor_id' => $adminUserId,
+        ]);
+        session()->forget([
+            'wizard_wa_otp.code',
+            'wizard_wa_otp.phone',
+            'wizard_wa_otp.user_id',
+            'wizard_wa_otp.expires_at',
+            'wizard_wa_otp.attempts',
+            'wizard_wa_otp.invalidated',
+        ]);
 
         return [
             'verified' => true,
             'phone' => $sessionPhone,
             'message' => "WhatsApp verified for {$sessionPhone}.",
         ];
+    }
+
+    /**
+     * Phone the server has already checked in this session. Null until
+     * verifyAdminCode matches the code it issued. Not writable from Livewire.
+     */
+    public function grantPhone(): ?string
+    {
+        $phone = trim((string) session('wizard_wa_verified.phone', ''));
+
+        return $phone !== '' ? $phone : null;
+    }
+
+    public function consumeGrant(): void
+    {
+        $this->forgetGrant();
+    }
+
+    public function forgetGrant(): void
+    {
+        session()->forget([
+            'wizard_wa_verified.phone',
+            'wizard_wa_verified.actor_id',
+        ]);
+    }
+
+    /**
+     * Drop a pending code and any proof. Used when onboarding starts over.
+     */
+    public function forgetChallengeAndGrant(): void
+    {
+        session()->forget([
+            'wizard_wa_otp.code',
+            'wizard_wa_otp.phone',
+            'wizard_wa_otp.user_id',
+            'wizard_wa_otp.expires_at',
+            'wizard_wa_otp.attempts',
+            'wizard_wa_otp.invalidated',
+            'toshi_wa_otp.code',
+            'toshi_wa_otp.phone',
+            'toshi_wa_otp.expires_at',
+        ]);
+        $this->forgetGrant();
     }
 
     /**

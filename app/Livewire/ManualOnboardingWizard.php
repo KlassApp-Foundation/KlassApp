@@ -3022,7 +3022,14 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        if (! $this->whatsappVerified) {
+        $grant = app(WhatsAppOnboardingOtpService::class)->grantPhone();
+        $grantPhone = is_string($grant) && $grant !== ''
+            ? $this->normaliseOptionalPhone($grant, true)
+            : null;
+        // The locked flag is not proof. The phone being saved must be the one
+        // whose code the server already checked.
+        if (! $this->whatsappVerified || $grantPhone === null || $grantPhone !== $phone) {
+            $this->whatsappVerified = false;
             throw ValidationException::withMessages([
                 'whatsappOtpInput' => 'Verify the code sent to your WhatsApp before continuing.',
             ]);

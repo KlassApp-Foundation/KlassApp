@@ -284,6 +284,45 @@ class ToshiOnboardingV2WhatsAppVerificationTest extends TestCase
         $this->assertGreaterThanOrEqual(1, count($this->outbound()));
     }
 
+    public function test_v2_whatsapp_sixth_guess_after_five_wrong_attempts_is_rejected(): void
+    {
+        $this->configureWhatsApp();
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class)
+            ->set('input', self::PHONE)
+            ->call('send');
+
+        $code = (string) app(WhatsAppOnboardingOtpService::class)->pendingCode();
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
+        if ($code === '000000') {
+            $component->set('input', 'resend')->call('send');
+            $code = (string) app(WhatsAppOnboardingOtpService::class)->pendingCode();
+        }
+
+        for ($attempt = 0; $attempt < WhatsAppOnboardingOtpService::MAX_WRONG_GUESSES; $attempt++) {
+            $component->set('input', '000000')->call('send');
+            $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        }
+
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->pendingCode());
+
+        $component->set('input', $code)->call('send');
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->grantPhone());
+        $this->assertStringContainsString('Request a new one', $this->botText($component));
+
+        $component->set('input', 'resend')->call('send');
+        $fresh = (string) app(WhatsAppOnboardingOtpService::class)->pendingCode();
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $fresh);
+
+        $component->set('input', $fresh)->call('send');
+        $row = WhatsAppUser::where('user_id', $this->admin->id)->first();
+        $this->assertNotNull($row);
+        $this->assertNotNull($row->verified_at);
+        $this->assertSame(self::NORMALISED, $row->phone);
+    }
+
     public function test_v2_whatsapp_step_does_not_skip(): void
     {
         $this->configureWhatsApp();
