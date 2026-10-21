@@ -12,10 +12,96 @@
         {
             "type": "path",
             "url": "packages/toshi-ui"
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "jantinnerezo/livewire-alert",
+                "version": "3.0.4",
+                "description": "Same code as 3.0.3, with the illuminate/support constraint widened for Laravel 13. v4 replaces the alert() trait.",
+                "type": "library",
+                "license": "MIT",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/jantinnerezo/livewire-alert/zipball/7466b71df6b237dd49dcd741fd872dfaa47977fe",
+                    "reference": "7466b71df6b237dd49dcd741fd872dfaa47977fe"
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/jantinnerezo/livewire-alert.git",
+                    "reference": "7466b71df6b237dd49dcd741fd872dfaa47977fe"
+                },
+                "require": {
+                    "php": "^8.1",
+                    "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                    "livewire/livewire": "^3.0"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Jantinnerezo\\LivewireAlert\\": "src/"
+                    }
+                },
+                "extra": {
+                    "laravel": {
+                        "providers": [
+                            "Jantinnerezo\\LivewireAlert\\LivewireAlertServiceProvider"
+                        ],
+                        "aliases": {
+                            "LivewireAlert": "Jantinnerezo\\LivewireAlert\\LivewireAlertFacade"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "barryvdh/laravel-debugbar",
+                "version": "3.16.6",
+                "description": "Same code as 3.16.5, with the illuminate constraints widened for Laravel 13. v4 changes the package namespace.",
+                "type": "library",
+                "license": "MIT",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/fruitcake/laravel-debugbar/zipball/e85c0a8464da67e5b4a53a42796d46a43fc06c9a",
+                    "reference": "e85c0a8464da67e5b4a53a42796d46a43fc06c9a"
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/fruitcake/laravel-debugbar.git",
+                    "reference": "e85c0a8464da67e5b4a53a42796d46a43fc06c9a"
+                },
+                "require": {
+                    "php": "^8.1",
+                    "php-debugbar/php-debugbar": "^2.2.4",
+                    "illuminate/routing": "^10 || ^11 || ^12 || ^13",
+                    "illuminate/session": "^10 || ^11 || ^12 || ^13",
+                    "illuminate/support": "^10 || ^11 || ^12 || ^13",
+                    "symfony/finder": "^6 || ^7 || ^8"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Barryvdh\\Debugbar\\": "src/"
+                    },
+                    "files": [
+                        "src/helpers.php"
+                    ]
+                },
+                "extra": {
+                    "laravel": {
+                        "providers": [
+                            "Barryvdh\\Debugbar\\ServiceProvider"
+                        ],
+                        "aliases": {
+                            "Debugbar": "Barryvdh\\Debugbar\\Facades\\Debugbar"
+                        }
+                    }
+                }
+            }
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "aws/aws-sdk-php-laravel": "^3.11",
         "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "^3.1",
@@ -28,12 +114,12 @@
         "kreait/laravel-firebase": "^7.0",
         "laracasts/presenter": "^0.2.9",
         "laravel/ai": "^0.10",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "^13.0",
         "laravel/mcp": "^0.8",
         "laravel/nightwatch": "^1.30",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.28",
-        "laravel/tinker": "^2.0",
+        "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6",
         "league/csv": "^9.14",
         "league/flysystem-aws-s3-v3": "^3.24.0",
@@ -61,10 +147,10 @@
         "brianium/paratest": "^7.8",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.0",
-        "laravel/boost": "*",
+        "laravel/boost": "^2.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
-        "phpunit/phpunit": "^11.0",
+        "phpunit/phpunit": "^12.0",
         "spatie/laravel-web-tinker": "^1.8.4"
     },
     "autoload": {

@@ -32,7 +32,7 @@ class SchoolSizeAndLimitsTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware([
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
             \App\Http\Middleware\MustBePrivilege::class,
             \App\Http\Middleware\MustBeSchoolAdmin::class,
         ]);

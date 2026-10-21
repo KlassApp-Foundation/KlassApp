@@ -69,7 +69,16 @@ class AppServiceProvider extends ServiceProvider {
     * @return void
     */
 
-    public function boot() { 
+    public function boot() {
+        // Laravel 13 no longer falls back to route('login') when the auth
+        // middleware has no guest redirect. This app uses the classic HTTP
+        // kernel, which does not register that default, so keep the same
+        // redirect LoginRegressionTest already asserts.
+        $guestLogin = static fn () => route('login');
+        \Illuminate\Auth\Middleware\Authenticate::redirectUsing($guestLogin);
+        \Illuminate\Session\Middleware\AuthenticateSession::redirectUsing($guestLogin);
+        \Illuminate\Auth\AuthenticationException::redirectUsing($guestLogin);
+
         // Public demo admin (users.is_public_demo): no email and no notification
         // leaves the app for anything that account starts, including queued
         // jobs (the request's Context travels with them). WhatsApp is limited
