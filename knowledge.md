@@ -691,6 +691,55 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Tests:** `--list-tests` was 2916 before the edit and 2916 after, with an identical list. Guarded suite: 2916 tests, 0 failures, 0 errors, 4 skipped.
 - **Status:** OPEN [#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170) (`cursor/phpunit-annotations-to-attributes-a453`). Do not merge from this session.
 
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), main merged again**
+
+- `origin/main` (`8fb7c374`, [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169)) merged into `01dd1d93`. Not merged to main. Production untouched. No behaviour change since the fee and parent export fix.
+- Conflicts: `knowledge.md` only. Both sides kept as written. `DELETE /admin/academic/delete/{id}` and the fee and parent export routes are unchanged from `01dd1d93`.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2930 tests, 0 failures, 0 errors, 4 skipped, guard OK.
+
+## Session: 2026-10-21 — Merge main (#1169) into the head-teacher route branch
+
+- **Work:** merge only. The export fix and the DELETE academic-year route stay as they are on `01dd1d93`.
+- **Files:** `knowledge.md` (both session entries kept).
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Re-approval requested from Bariyo123. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), fee and parent exports stay open**
+
+- The data-exports gate no longer covers `GET /admin/report/fees` or `GET /admin/report/parents`. Those pages are linked from Fees and Parents, which a head teacher still opens. The `/admin/reports` index and the exports only linked from that index stay 403. Report cards tell a head teacher that a school admin manages the logo, with no School Details link. The head-teacher dashboard no longer offers the data-exports index. Not merged. Production untouched.
+
+## Session: 2026-10-21 — Head-teacher fee and parent exports stay open
+
+- **Work:** Answer the review on #1158. Keep the two head-teacher-reachable CSV downloads outside `full-school-admin`. Leave the data-exports index and the settings-only exports refused. Reword the report-card logo hint for usergroup 4. Remove the dashboard Reports tile. Add a POST refusal for school details update and class store.
+- **Files:** `routes/admin.php`, `app/Providers/AuthServiceProvider.php`, `resources/views/admin/reports/cards.blade.php`, `resources/views/admin/subadmin/dashboard.blade.php`, `resources/views/layouts/partials/sidebar-menu.blade.php`, `tests/Feature/Admin/MenuHiddenSettingsAuthorizationTest.php`, `tests/Feature/Admin/RoleCrawlNitsTest.php`.
+- **Decision:** Keep the buttons and the routes, rather than hide the buttons. No other head-teacher page links into `/admin/report/*`. The Vue filters that go to `/admin/reports` are rendered on the data-exports index itself.
+- **Tests:** `MenuHiddenSettingsAuthorizationTest` 14 passed (52 assertions). With `RoleCrawlNitsTest`, `ClassRosterLivewireTest`, school-details suites, and the report-card suites: 52 passed, 1 skipped (fee package not installed), 174 assertions.
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Re-review requested from Bariyo123. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), brought up to date with main**
+
+- `origin/main` (`a0fc9b39`) merged into `cursor/menu-hidden-route-auth-8401` with a merge commit. Not merged to main. Production untouched.
+- Conflicts: `knowledge.md` kept both sides' entries as written. `routes/admin.php` kept `DELETE /admin/academic/delete/{id}` inside the `full-school-admin` group.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2926 tests, 0 failures, 0 errors, 4 skipped, guard OK.
+
+## Session: 2026-10-21 — Bring #1158 up to date with main
+
+- **Work:** merge `origin/main` into the head-teacher route gate branch. The gate is unchanged. Academic year delete stays the DELETE verb from main, inside that gate.
+- **Files:** `knowledge.md`, `routes/admin.php` (conflict resolution only).
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Review requested from Bariyo123. Do not merge from this session.
+
+## Current Status: October 20, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158)**
+
+- A head teacher could open school details, data exports, academic terms, and the legacy class URLs while the sidebar hides them. Those routes now use the `full-school-admin` gate (usergroups 1, 2, and 3) and return 403. Settings and `GET /admin/academics` were already refused (404). The year switcher and report cards stay open. Not merged. Production untouched.
+- Branch `cursor/menu-hidden-route-auth-8401`. Review requested from Bariyo123. The reviewers API returned 403 for this session, so the request is in the PR body.
+
+## Session: 2026-10-20 — Head-teacher menu URLs (PR #1158 OPEN)
+
+- **Work:** enforce the sidebar `school_admin` condition on the routes it hides, where that condition is the intended permission.
+- **Files:** `app/Providers/AuthServiceProvider.php`, `routes/admin.php`, `resources/views/layouts/partials/sidebar-menu.blade.php`, `tests/Feature/Admin/MenuHiddenSettingsAuthorizationTest.php`.
+- **Decision:** do not lock `/admin/standardLink/*` (attendance links there), teacher release, or routes that are merely absent from a menu. Academic years index stays 404 via `routes/setting.php`.
+- **Tests:** on `main`, the new head-teacher assertions for school details, the academic year list, academic terms, and data exports returned 200. On this branch they return 403, and school admin and site admin still get 200.
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **PHP 8.5 deprecation fixes OPEN [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169)**
 
 - [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) is merged (`a0fc9b39dbd4326211b8a292b6e127d2d3c44744`, confirmed `merged: true`). This branch starts from that commit.
