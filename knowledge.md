@@ -676,6 +676,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), main merged again**
+
+- `origin/main` (`8fb7c374`, [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169)) merged into `01dd1d93`. Not merged to main. Production untouched. No behaviour change since the fee and parent export fix.
+- Conflicts: `knowledge.md` only. Both sides kept as written. `DELETE /admin/academic/delete/{id}` and the fee and parent export routes are unchanged from `01dd1d93`.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2930 tests, 0 failures, 0 errors, 4 skipped, guard OK.
+
+## Session: 2026-10-21 — Merge main (#1169) into the head-teacher route branch
+
+- **Work:** merge only. The export fix and the DELETE academic-year route stay as they are on `01dd1d93`.
+- **Files:** `knowledge.md` (both session entries kept).
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Re-approval requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), fee and parent exports stay open**
 
 - The data-exports gate no longer covers `GET /admin/report/fees` or `GET /admin/report/parents`. Those pages are linked from Fees and Parents, which a head teacher still opens. The `/admin/reports` index and the exports only linked from that index stay 403. Report cards tell a head teacher that a school admin manages the logo, with no School Details link. The head-teacher dashboard no longer offers the data-exports index. Not merged. Production untouched.
