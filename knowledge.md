@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required (opening PR)**
+
+- Toshi onboarding v2 (`TOSHI_ONBOARDING_V2`) no longer marks a WhatsApp number verified when the admin types the number. The step sends a code through `WhatsAppOnboardingOtpService` (the same send the wizard has used since #1167, including the demo-only allowance for that admin's own code), asks for the code, and sets `verified_at` only after the code matches. A wrong code does not. Resend and retry ask for another send. The code is not put in the chat. Skip is refused, because the wizard does not offer skip on this step.
+- `OnboardingEngine::saveWhatsApp` leaves `verified_at` null unless the caller passes `codeWasVerified: true`. The wizard passes that only after its own check. The legacy Toshi commit does the same, so that flow still stores a verified number after its own check. Not merged. Production untouched. Needs Grok B's approval before merge.
+
+## Session: 2026-10-21 — Toshi v2 WhatsApp verification code
+
+- **Work:** Stop v2 `WhatsAppVerifyStep` from calling `saveWhatsApp` on the bare phone. Reuse `WhatsAppOnboardingOtpService::sendAdminVerificationCode` / `verifyAdminCode` (the wizard's send, store, and compare). The driver stays on the step (`awaiting`) until the code matches. `saveWhatsApp` sets `verified_at` only when `codeWasVerified` is true.
+- **Files:** `app/Onboarding/Steps/Steps/WhatsAppVerifyStep.php`, `app/Onboarding/Steps/OnboardingStepAwaitingInput.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `app/Services/WhatsApp/WhatsAppOnboardingOtpService.php`, `app/Services/OnboardingEngine.php`, `app/Livewire/ManualOnboardingWizard.php` (delegates to the service; still verifies before save), `app/Livewire/AgentToshi.php` (v2 `awaiting` prompt, and the two legacy commit calls pass `codeWasVerified: true`), `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php`, `tests/Feature/Onboarding/OnboardingEngine/SaveWhatsAppTest.php`, `tests/Feature/Onboarding/Steps/StepIdempotenceTest.php`, `tests/Feature/Onboarding/WizardToshiV2RegistryParityTest.php`.
+- **Decision:** Do not redesign v2 and do not change the legacy chat handler. The wizard keeps setting `verified_at` because it already checked the code. A phone alone does not. The code stays in the server session and is never copied into the v2 transcript. Local/testing may still show it in the wizard field, as #1167 already did.
+- **Edge cases:** Send failure offers retry and does not create a row. `skip` does not mark the step skipped. A number already on another account is refused before a send. The idempotence harness submits the stored code after the phone, so a second save still reports already present.
+- **Tests:** Without the step fix, `test_v2_whatsapp_step_does_not_mark_verified_before_the_code` failed because typing `0772000999` created a `whatsapp_users` row. With the fix, `ToshiOnboardingV2WhatsAppVerificationTest` is 6 tests / 88 assertions. `bash scripts/test-guard.sh` (4 processes) — 2936 tests, 0 failures, 0 errors, 4 skipped, guard OK. No browser or staging pass.
+- **Status:** Opening the PR. Do not merge from this session. Touches WhatsApp verification and security; needs Grok B's approval. Review requested from Bariyo123.
+
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
 - 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. OPEN [#1172](https://github.com/KlassApp-Foundation/KlassApp/pull/1172) (`cursor/flysystem-version-range-99e9`). Laravel 13's `^3.25.1` still matches. No other packages moved. Not merged.
