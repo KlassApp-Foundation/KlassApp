@@ -19,6 +19,7 @@ use App\Models\Userprofile;
 use App\Models\ActivityLog;
 use App\Helpers\SiteHelper;
 use App\Helpers\DashboardCache;
+use App\Services\DashboardV2DataService;
 use App\Models\Attendance;
 use Gegok12\Timetable\Models\Timetable;
 use App\Models\Bulletin;
@@ -581,6 +582,11 @@ trait Dashboard
 
         $array['feeCategories'] = \App\Models\FeesCategories::where('school_id', $school_id)
             ->orderBy('created_at', 'DESC')->take(5)->get();
+
+        // Same setting as the admin dashboard and profiles: school_details meta
+        // `currency`. Null when the school has not set one — callers must not
+        // invent a code.
+        $array['currency'] = app(DashboardV2DataService::class)->currencyFor((int) $school_id);
 
         return $array;
     }

@@ -135,14 +135,14 @@ class AdmissionSchoolScopeTest extends TestCase
 
     public function test_destroy_of_another_schools_admission_gets_a_404_and_keeps_it(): void
     {
-        $this->actingAs($this->adminA)->get('/admin/admission/delete/' . $this->admissionB2->id)->assertNotFound();
+        $this->actingAs($this->adminA)->delete('/admin/admission/delete/' . $this->admissionB2->id)->assertNotFound();
 
         $this->assertTrue(Admission::where('id', $this->admissionB2->id)->exists());
     }
 
     public function test_destroy_in_own_school_still_works(): void
     {
-        $this->actingAs($this->adminA)->get('/admin/admission/delete/' . $this->admissionA3->id)->assertOk();
+        $this->actingAs($this->adminA)->delete('/admin/admission/delete/' . $this->admissionA3->id)->assertOk();
 
         $this->assertFalse(Admission::where('id', $this->admissionA3->id)->exists());
     }

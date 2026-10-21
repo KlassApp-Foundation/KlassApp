@@ -40,9 +40,13 @@
                   <a href="{{ url('/admin/discipline/show/'.$discipline->id) }}" class="ds-btn ds-btn-ghost ds-btn-sm" title="View">
                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </a>
-                  <a href="#" rel="{{ url('/admin/discipline/delete/'.$discipline->id) }}" class="ds-btn ds-btn-ghost ds-btn-sm delete" title="Delete">
-                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </a>
+                  <form method="POST" action="{{ url('/admin/discipline/delete/'.$discipline->id) }}" class="inline" onsubmit="return confirm('Delete this discipline record?');">
+                     @csrf
+                     @method('DELETE')
+                     <button type="submit" class="ds-btn ds-btn-ghost ds-btn-sm" title="Delete">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                     </button>
+                  </form>
                </div>
             </td>
          </tr>

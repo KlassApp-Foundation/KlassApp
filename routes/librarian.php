@@ -8,7 +8,7 @@ Route::post( '/bookscategory/add', 'BookCategoryController@store' );
 Route::get( '/bookscategory/show/{id}', 'BookCategoryController@show' );
 Route::get( '/bookscategory/edit/{id}', 'BookCategoryController@edit' );
 Route::post( '/bookscategory/update/{id}', 'BookCategoryController@update' );
-Route::get( '/bookscategory/delete/{id}', 'BookCategoryController@destroy' );
+Route::delete( '/bookscategory/delete/{id}', 'BookCategoryController@destroy' );
 Route::get( '/bookscategory/count', 'BookCategoryController@categorycount' );
 //books
 Route::get( '/bookscategory/list', 'BookController@list' );
@@ -20,7 +20,7 @@ Route::get( '/books/show/{id}', 'BookController@show' );
 Route::get( '/books/edit/{id}', 'BookController@edit' );
 Route::post( '/books/update/{id}', 'BookController@update' );
 //delete
-Route::get( '/books/delete/{id}', 'BookController@destroy' );
+Route::delete( '/books/delete/{id}', 'BookController@destroy' );
 // library cards (view-only lookup — no issue/return/create/update)
 Route::get('/cards', 'LibraryCardController@index')->name('library.cards');
 
@@ -31,7 +31,7 @@ Route::post( '/booklending/add', 'BookLendingController@store' );
 Route::get( '/booklending/show/{id}', 'BookLendingController@show' );
 Route::get( '/booklending/edit/{id}', 'BookLendingController@edit' );
 Route::post( '/booklending/update/{id}', 'BookLendingController@update' );
-Route::get( '/booklending/delete/{id}', 'BookLendingController@destroy' );
+Route::delete( '/booklending/delete/{id}', 'BookLendingController@destroy' );
 
 //holiday
 Route::get( '/holidays/list', 'HolidaysController@list' );
@@ -62,7 +62,7 @@ Route::get( '/activity', 'ActivityLogController@index' );
     Route::post('/task/snooze/{id}', 'TaskController@snooze');
 
     //delete
-    Route::get('/task/{id}/delete', 'TaskController@destroy');
+    Route::delete('/task/{id}/delete', 'TaskController@destroy');
 
 // Notifications — same contract as the other roles: the shared Vue components call
 // {mode}/notification/{list,showList,read} and {mode}/notifications.

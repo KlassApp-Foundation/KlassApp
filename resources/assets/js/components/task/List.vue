@@ -262,7 +262,7 @@
                 }).then(function(result) {
                     if (result.isConfirmed) 
                     {
-                        axios.get('/'+this.mode+'/task/'+id+'/delete').then(response => {
+                        axios.delete('/'+this.mode+'/task/'+id+'/delete').then(response => {
                             thisswal.success    = response.data.message;
                             thisswal.getlist();
                         });  

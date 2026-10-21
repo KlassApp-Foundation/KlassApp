@@ -12,7 +12,6 @@ use App\Models\School;
 use App\Models\StandardLink;
 
 use App\Models\Subject;
-use App\Models\Teacherlink;
 use App\Models\User;
 
 use App\Models\WhatsAppUser;
@@ -22,6 +21,7 @@ use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Support\PhoneCountry;
 use App\Services\ToshiActionService;
+use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
@@ -133,7 +133,18 @@ class ManualOnboardingWizard extends Component
     public string $subjectName = 'Mathematics';
 
     /**
+     * Base section id chosen on the subjects step. Subjects attach to this
+     * class record (and its streams), not to a free-text code.
+     */
+    public int $subjectSectionId = 0;
+
+    /** Result of the last add/remove on the subjects step. */
+    public string $subjectFlash = '';
+
+    /**
      * Names already in DB for the subjects step (auto-seeded or previously saved).
+     * On the subjects step this is the selected class only. The teachers step
+     * reloads the school-wide unique list.
      *
      * @var list<string>
      */
@@ -158,6 +169,23 @@ class ManualOnboardingWizard extends Component
 
     /** @var mixed */
     public $teacherUpload = null;
+
+    /** Result line after a teacher file is read, e.g. "2 teachers added, 1 skipped". */
+    public string $teacherUploadReport = '';
+
+    /**
+     * Rows from the last teacher file that were not saved.
+     *
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $teacherUploadSkips = [];
+
+    /**
+     * Class or subject cells that did not match this school. The teacher was still saved.
+     *
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $teacherUploadNotes = [];
 
     public string $studentName = '';
 
@@ -224,12 +252,16 @@ class ManualOnboardingWizard extends Component
     public string $whatsappOtpInput = '';
 
     /**
-     * Code shown in the wizard UI (parity with Toshi chat always displaying the OTP).
-     * Not used for verification — the authoritative code lives in session.
+     * Code shown in the wizard only when WhatsAppOnboardingOtpService::mayDisplayCode()
+     * is true (local and testing). Empty in production. Not used for verification —
+     * the authoritative code lives in session.
      */
     public string $whatsappOtpDisplay = '';
 
     public string $whatsappOtpStatus = '';
+
+    /** True after a send that did not go out, so the step can offer Retry. */
+    public bool $whatsappSendFailed = false;
 
     /** Set true only after a successful OTP match (or hydrate of an already-verified link). */
     #[Locked]
@@ -601,30 +633,16 @@ class ManualOnboardingWizard extends Component
         $unreadable = [];
 
         if ($kind === 'teacher') {
-            foreach ($rows as $row) {
-                $email = trim((string) ($row['email'] ?? ''));
-                if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test';
-                }
-                $subjects = $this->splitCsvList((string) ($row['subjects'] ?? ''));
-                $classes = $this->splitCsvList((string) ($row['classes'] ?? ''));
-                $rawPhone = trim((string) ($row['phone'] ?? ''));
-                $phone = $this->normaliseOptionalPhone($rawPhone, false, false);
-                if ($phone === null) {
-                    $unreadable[] = (string) ($row['name'] ?? '');
-                    $phone = '';
-                }
-                $this->teacherDrafts[] = [
-                    'name' => $row['name'],
-                    'email' => $email,
-                    'phone' => $phone,
-                    'classes' => $classes,
-                    'subjects' => $subjects,
-                ];
-            }
+            $this->importTeacherUpload($rows);
             $this->teacherUpload = null;
+            $this->errorMessage = '';
+
+            return;
         } else {
             foreach ($rows as $row) {
+                if (trim((string) ($row['name'] ?? '')) === '') {
+                    continue;
+                }
                 $rawPhone = trim((string) ($row['parent_phone'] ?? ''));
                 $parentPhone = $this->normaliseOptionalPhone($rawPhone, false, false);
                 if ($parentPhone === null) {
@@ -857,7 +875,8 @@ class ManualOnboardingWizard extends Component
         }
 
         // Teachers with an empty list can still auto-skip (explicit Skip exists too).
-        if (($step['key'] ?? '') === 'teachers' && $this->teacherDrafts === [] && trim($this->teacherName) === '') {
+        // Teachers already saved from a file are not a reason to mark the step skipped.
+        if (($step['key'] ?? '') === 'teachers' && $this->teacherDrafts === [] && trim($this->teacherName) === '' && $this->savedTeacherRows() === []) {
             $this->skipOptionalStep();
 
             return;
@@ -1025,11 +1044,13 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        OnboardingStepsService::markOnboardingFinished($school);
+        $finishedNow = app(FinishSchoolOnboarding::class)->finish($school);
         $this->finished = true;
         $this->returnToStepIndex = null;
         $this->returnToStepKey = null;
-        $this->notifyToshiOnboardingFinished();
+        if ($finishedNow) {
+            $this->notifyToshiOnboardingFinished();
+        }
     }
 
     private function returnToReviewAfterEdit(): void
@@ -1069,6 +1090,9 @@ class ManualOnboardingWizard extends Component
             }
         }
         if ($key === 'subjects') {
+            $this->subjectFlash = '';
+            $this->refreshStructureSnapshot();
+            $this->ensureSubjectClassSelected();
             $this->refreshExistingSubjects();
         }
         if ($key === 'teachers') {
@@ -1086,20 +1110,123 @@ class ManualOnboardingWizard extends Component
 
     private function refreshExistingSubjects(): void
     {
-        $this->existingSubjectNames = Subject::query()
-            ->where('school_id', $this->school()->id)
-            ->orderBy('name')
-            ->pluck('name')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        if ($this->currentKey() === 'subjects') {
+            $this->refreshSubjectsForSelectedClass();
+
+            return;
+        }
+
+        $this->existingSubjectNames = $this->subjectNamesForSchool((int) $this->school()->id);
 
         // Checkpoint land via setStepIndex does not run prepareStepFields — clear the
         // default "Mathematics" so Next is a true no-op when subjects already exist.
         if ($this->existingSubjectNames !== []) {
             $this->subjectName = '';
         }
+    }
+
+    /**
+     * Pick a real base section from the classes step.
+     *
+     * A stored name wins when it is one of those records. Otherwise the classes
+     * field (often the untouched default "P1") is resolved through the same
+     * aliases the rest of onboarding uses, so "P1" lands on "Primary One" when
+     * that is the row the classes step created. Selection by id always wins
+     * once the admin has chosen a class.
+     */
+    private function ensureSubjectClassSelected(): void
+    {
+        $ids = array_map(
+            fn (array $row): int => (int) ($row['section_id'] ?? 0),
+            $this->structureClasses
+        );
+        $ids = array_values(array_filter($ids, fn (int $id): bool => $id > 0));
+
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            return;
+        }
+
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        $hint = trim($this->className);
+        if ($year && $hint !== '') {
+            $link = app(OnboardingEngine::class)->resolveStandardLinkForClass($school, $year, $hint);
+            $section = $link?->section;
+            if ($section && (int) $section->school_id === (int) $school->id) {
+                $baseId = (int) app(ClassStructureService::class)->resolveBaseSection($section)->id;
+                if (in_array($baseId, $ids, true)) {
+                    $this->subjectSectionId = $baseId;
+
+                    return;
+                }
+            }
+        }
+
+        $this->subjectSectionId = $ids[0] ?? 0;
+    }
+
+    public function updatedSubjectSectionId(mixed $value): void
+    {
+        $this->subjectSectionId = (int) $value;
+        $this->subjectFlash = '';
+        $this->errorMessage = '';
+        if ($this->structureClasses === []) {
+            $this->refreshStructureSnapshot();
+        }
+        $this->ensureSubjectClassSelected();
+        $this->refreshSubjectsForSelectedClass();
+    }
+
+    /**
+     * Add every subject in the field now, so the list updates before Next.
+     * Commas and new lines both separate names.
+     */
+    public function addSubjects(): void
+    {
+        $this->errorMessage = '';
+        $this->subjectFlash = '';
+
+        try {
+            $message = $this->persistEnteredSubjects($this->school(), (string) $this->subjectName);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Could not add subjects.';
+
+            return;
+        }
+
+        $this->subjectName = '';
+        $this->subjectFlash = $message;
+        $this->refreshSubjectsForSelectedClass();
+    }
+
+    public function removeSubject(int $index): void
+    {
+        $this->errorMessage = '';
+        $this->subjectFlash = '';
+
+        $name = trim((string) ($this->existingSubjectNames[$index] ?? ''));
+        if ($name === '') {
+            return;
+        }
+
+        try {
+            $school = $this->school();
+            $baseId = $this->selectedSubjectSectionId($school);
+            $sectionIds = $this->schoolSectionIds($school, $this->sectionIdsForBase($baseId));
+            Subject::query()
+                ->where('school_id', $school->id)
+                ->whereIn('section_id', $sectionIds)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->get()
+                ->each(fn (Subject $subject) => $subject->delete());
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Could not remove that subject.';
+
+            return;
+        }
+
+        $this->subjectFlash = 'Removed '.$name.' from '.$this->subjectClassName($baseId).'.';
+        $this->refreshSubjectsForSelectedClass();
     }
 
     public function render()
@@ -1265,12 +1392,16 @@ class ManualOnboardingWizard extends Component
             ->unique()
             ->values();
         $subjectRowCount = Subject::where('school_id', $sid)->count();
-        $teachers = Teacherlink::with('teacher.userprofile')
+        $teachers = User::query()
+            ->with('userprofile')
             ->where('school_id', $sid)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->limit(20)
             ->get()
-            ->map(fn ($tl) => $tl->teacher?->displayName ?: $tl->teacher?->name)
+            ->map(fn (User $user) => $user->displayName ?: $user->name)
             ->filter()
-            ->unique()
             ->values();
         $students = User::query()
             ->with('userprofile')
@@ -1390,14 +1521,7 @@ class ManualOnboardingWizard extends Component
                     $this->subjectName = 'Mathematics';
                 }
             })(),
-            'teachers' => (function () use ($sid) {
-                $link = Teacherlink::with('teacher')->where('school_id', $sid)->first();
-                if ($link?->teacher) {
-                    $this->teacherName = (string) $link->teacher->name;
-                    $this->teacherEmail = (string) ($link->teacher->email ?: $this->teacherEmail);
-                    $this->teacherPhone = (string) ($link->teacher->mobile_no ?: '');
-                }
-            })(),
+            'teachers' => null,
             'terms' => (function () use ($sid) {
                 $term = AcademicTerm::where('school_id', $sid)->first();
                 if ($term) {
@@ -1775,34 +1899,541 @@ class ManualOnboardingWizard extends Component
 
     private function saveSubject(School $school): void
     {
-        $name = trim($this->subjectName);
+        $raw = trim($this->subjectName);
 
         // Already seeded/saved and add field left blank → Next is a review no-op.
-        if (Subject::where('school_id', $school->id)->exists() && $name === '') {
-            return;
+        if ($raw !== '') {
+            $this->subjectFlash = $this->persistEnteredSubjects($school, $raw);
+            $this->subjectName = '';
         }
 
-        if ($name === '') {
+        if (! Subject::where('school_id', $school->id)->exists()) {
+            throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
+        }
+    }
+
+    /**
+     * Parse the subjects field and attach each new name to the selected class record.
+     *
+     * @throws ValidationException
+     */
+    private function persistEnteredSubjects(School $school, string $raw): string
+    {
+        [$names, $repeated] = $this->parseSubjectInput($raw);
+        if ($names === []) {
             throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
         }
 
-        // Adding another subject on top of an existing seed is allowed.
-
+        $this->refreshStructureSnapshot();
+        $baseId = $this->selectedSubjectSectionId($school);
         $year = AcademicYear::where('school_id', $school->id)->first();
         if (! $year) {
-            throw ValidationException::withMessages(['subjectName' => 'Add a class first.']);
+            throw ValidationException::withMessages(['subjectName' => 'Add a class on the classes step first.']);
         }
 
-        // Use the wizard's className to scope the subject to the right section
-        $className = trim($this->className);
+        $links = $this->linksForSubjectClass($school, $year, $baseId);
+        $baseLink = $links->first(fn (StandardLink $link): bool => (int) $link->section_id === $baseId);
+        if (! $baseLink) {
+            throw ValidationException::withMessages(['subjectName' => 'Add a class on the classes step first.']);
+        }
+
+        $present = [];
+        foreach (Subject::query()->where('school_id', $school->id)->where('section_id', $baseId)->get() as $subject) {
+            $present[mb_strtolower((string) $subject->name)] = true;
+        }
+
+        $added = [];
+        $already = [];
+        foreach ($names as $name) {
+            $key = mb_strtolower($name);
+            if (isset($present[$key])) {
+                $already[] = $name;
+                $this->backfillSubjectOnLinks($school, $year, $links, $name);
+
+                continue;
+            }
+
+            foreach ($links as $link) {
+                $this->firstOrRestoreSubject($school, $year, $link, $name);
+            }
+            $present[$key] = true;
+            $added[] = $name;
+        }
+
+        return $this->subjectResultMessage($this->subjectClassName($baseId), $added, $already, $repeated);
+    }
+
+    /**
+     * @return array{0: list<string>, 1: list<string>}
+     */
+    private function parseSubjectInput(string $raw): array
+    {
+        $parts = preg_split('/[\r\n,]+/u', $raw) ?: [];
+        $names = [];
+        $repeated = [];
+        $seen = [];
+
+        foreach ($parts as $part) {
+            $name = trim((string) $part);
+            if ($name === '') {
+                continue;
+            }
+            $key = mb_strtolower($name);
+            if (isset($seen[$key])) {
+                $repeated[] = $name;
+
+                continue;
+            }
+            $seen[$key] = true;
+            $names[] = $name;
+        }
+
+        return [$names, $repeated];
+    }
+
+    /**
+     * The admin's choice when it is one of this school's class records.
+     * Otherwise the classes-step hint (including a legacy short code).
+     *
+     * @throws ValidationException
+     */
+    private function selectedSubjectSectionId(School $school): int
+    {
+        $ids = array_map(
+            fn (array $row): int => (int) ($row['section_id'] ?? 0),
+            $this->structureClasses
+        );
+
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            $owned = Section::query()
+                ->where('school_id', $school->id)
+                ->where('id', $this->subjectSectionId)
+                ->exists();
+            if ($owned) {
+                return $this->subjectSectionId;
+            }
+        }
+
+        $this->ensureSubjectClassSelected();
+        if ($this->subjectSectionId > 0 && in_array($this->subjectSectionId, $ids, true)) {
+            return $this->subjectSectionId;
+        }
+
+        throw ValidationException::withMessages([
+            'subjectName' => 'Add a class on the classes step first.',
+        ]);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function sectionIdsForBase(int $baseSectionId): array
+    {
+        foreach ($this->structureClasses as $class) {
+            if ((int) ($class['section_id'] ?? 0) !== $baseSectionId) {
+                continue;
+            }
+            $ids = [$baseSectionId];
+            foreach ($class['streams'] ?? [] as $stream) {
+                $streamId = (int) ($stream['section_id'] ?? 0);
+                if ($streamId > 0) {
+                    $ids[] = $streamId;
+                }
+            }
+
+            return array_values(array_unique($ids));
+        }
+
+        return [$baseSectionId];
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    private function schoolSectionIds(School $school, array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return Section::query()
+            ->where('school_id', $school->id)
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    private function linksForSubjectClass(School $school, AcademicYear $year, int $baseSectionId): \Illuminate\Support\Collection
+    {
+        return app(OnboardingEngine::class)->standardLinksForClass($school, $year, $baseSectionId);
+    }
+
+    private function backfillSubjectOnLinks(School $school, AcademicYear $year, \Illuminate\Support\Collection $links, string $name): void
+    {
+        foreach ($links as $link) {
+            if ($link instanceof StandardLink) {
+                $this->firstOrRestoreSubject($school, $year, $link, $name);
+            }
+        }
+    }
+
+    private function firstOrRestoreSubject(School $school, AcademicYear $year, StandardLink $link, string $name): void
+    {
+        $row = Subject::withTrashed()
+            ->where('school_id', $school->id)
+            ->where('section_id', $link->section_id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first();
+
+        if ($row) {
+            if ($row->trashed()) {
+                $row->restore();
+            }
+
+            return;
+        }
+
+        Subject::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $link->section_id,
+            'name' => $name,
+            'code' => null,
+            'type' => 'core',
+        ]);
+    }
+
+    private function subjectClassName(int $sectionId): string
+    {
+        foreach ($this->structureClasses as $class) {
+            if ((int) ($class['section_id'] ?? 0) === $sectionId) {
+                $name = trim((string) ($class['name'] ?? ''));
+                if ($name !== '') {
+                    return $name;
+                }
+            }
+        }
+
+        return 'this class';
+    }
+
+    /**
+     * @param  list<string>  $added
+     * @param  list<string>  $already
+     * @param  list<string>  $repeated
+     */
+    private function subjectResultMessage(string $className, array $added, array $already, array $repeated): string
+    {
+        $parts = [];
+        if ($added !== []) {
+            $parts[] = 'Added to '.$className.': '.implode(', ', $added).'.';
+        }
+        if ($already !== []) {
+            $parts[] = 'Already on '.$className.': '.implode(', ', $already).'.';
+        }
+        if ($repeated !== []) {
+            $parts[] = 'Repeated in the list (kept once): '.implode(', ', $repeated).'.';
+        }
+
+        return implode(' ', $parts);
+    }
+
+    private function refreshSubjectsForSelectedClass(): void
+    {
+        $sectionId = (int) $this->subjectSectionId;
+        if ($sectionId <= 0) {
+            $this->existingSubjectNames = [];
+
+            return;
+        }
+
+        $this->existingSubjectNames = Subject::query()
+            ->where('school_id', $this->school()->id)
+            ->where('section_id', $sectionId)
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($this->existingSubjectNames !== []) {
+            $this->subjectName = '';
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function subjectNamesForSchool(int $schoolId): array
+    {
+        return Subject::query()
+            ->where('school_id', $schoolId)
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Save each readable teacher now. One bad row does not roll the others back,
+     * and nothing here sends an invite — that stays on the class-teacher form.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function importTeacherUpload(array $rows): void
+    {
+        $added = 0;
+        $skipped = [];
+        $notes = [];
+        $seenEmails = [];
+        $seenPhones = [];
+
+        foreach ($this->teacherDrafts as $draft) {
+            $draftEmail = strtolower(trim((string) ($draft['email'] ?? '')));
+            if ($draftEmail !== '') {
+                $seenEmails[$draftEmail] = true;
+            }
+            $draftPhone = trim((string) ($draft['phone'] ?? ''));
+            if ($draftPhone !== '') {
+                $seenPhones[$draftPhone] = true;
+            }
+        }
+
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->first();
+
+        foreach ($rows as $index => $row) {
+            $line = (int) ($row['row'] ?? ($index + 2));
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name === '') {
+                $skipped[] = ['row' => $line, 'reason' => 'missing name'];
+
+                continue;
+            }
+
+            $email = trim((string) ($row['email'] ?? ''));
+            if ($email === '') {
+                $email = app(OnboardingEngine::class)->allocateGeneratedEmail($school, 'teacher', '.test');
+            } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skipped[] = ['row' => $line, 'reason' => 'invalid email'];
+
+                continue;
+            }
+
+            $emailKey = strtolower($email);
+            if (isset($seenEmails[$emailKey])) {
+                $skipped[] = ['row' => $line, 'reason' => 'duplicate email'];
+
+                continue;
+            }
+            if (User::withTrashed()->whereRaw('LOWER(email) = ?', [$emailKey])->exists()) {
+                $skipped[] = ['row' => $line, 'reason' => 'already exists'];
+
+                continue;
+            }
+
+            $phone = $this->normaliseOptionalPhone(trim((string) ($row['phone'] ?? '')), false, false);
+            if ($phone === null) {
+                $skipped[] = ['row' => $line, 'reason' => 'invalid phone'];
+
+                continue;
+            }
+            if ($phone !== '' && (isset($seenPhones[$phone]) || $this->teacherPhoneTaken($school->id, $phone))) {
+                $skipped[] = ['row' => $line, 'reason' => 'duplicate phone'];
+
+                continue;
+            }
+
+            $classes = $this->splitCsvList((string) ($row['classes'] ?? ''));
+            if ($classes === []) {
+                $classes = $this->splitCsvList((string) ($row['class'] ?? ''));
+            }
+            $draft = [
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'classes' => $classes,
+                'subjects' => $this->splitCsvList((string) ($row['subjects'] ?? '')),
+            ];
+
+            if (! $year) {
+                $this->teacherDrafts[] = $draft;
+                $seenEmails[$emailKey] = true;
+                if ($phone !== '') {
+                    $seenPhones[$phone] = true;
+                }
+                $added++;
+
+                continue;
+            }
+
+            $result = $this->commitTeacherDraft($draft, $year);
+            if (! $result['ok']) {
+                $skipped[] = ['row' => $line, 'reason' => $result['reason']];
+
+                continue;
+            }
+
+            $seenEmails[$emailKey] = true;
+            if ($phone !== '') {
+                $seenPhones[$phone] = true;
+            }
+            $added++;
+            foreach ($result['notes'] as $note) {
+                $notes[] = ['row' => $line, 'reason' => $note];
+            }
+        }
+
+        if ($year && $added > 0) {
+            $this->noteTeacherPlanLimit($school);
+        }
+
+        $this->teacherUploadSkips = $skipped;
+        $this->teacherUploadNotes = $notes;
+        $this->teacherUploadReport = ($year || $skipped !== [] || $added > 0)
+            ? $this->formatTeacherUploadReport($year ? $added : 0, count($skipped))
+            : '';
+        if (! $year && $added > 0 && $skipped === []) {
+            $this->teacherUploadReport = '';
+        }
+    }
+
+    /**
+     * @param  array{name: string, email: string, phone: string, classes: list<string>, subjects: list<string>}  $draft
+     * @return array{ok: bool, reason: string, detail: string, notes: list<string>}
+     */
+    private function commitTeacherDraft(array $draft, AcademicYear $year): array
+    {
+        $school = $this->school();
+        $resolved = $this->resolveTeacherAssignmentLinks(
+            $school,
+            $year,
+            $draft['classes'],
+            $draft['subjects'],
+        );
 
         try {
-            app(OnboardingEngine::class)->saveSubjects($school, $year, [
-                $className => [$name],
-            ]);
+            $result = app(OnboardingEngine::class)->saveTeachers($school, $year, [[
+                'name' => $draft['name'],
+                'email' => $draft['email'],
+                'phone' => $draft['phone'],
+                'links' => $resolved['links'],
+            ]]);
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['subjectName' => collect($e->errors())->flatten()->first()]);
+            $detail = (string) (collect($e->errors())->flatten()->first() ?: 'could not save');
+
+            return [
+                'ok' => false,
+                'reason' => $this->shortTeacherSkipReason($detail),
+                'detail' => $detail,
+                'notes' => [],
+            ];
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return [
+                'ok' => false,
+                'reason' => 'already exists',
+                'detail' => 'already exists',
+                'notes' => [],
+            ];
         }
+
+        if (($result['created'] ?? []) === []) {
+            $detail = (string) (collect($result['skipped'] ?? [])->pluck('reason')->filter()->first() ?: 'could not save');
+
+            return [
+                'ok' => false,
+                'reason' => $this->shortTeacherSkipReason($detail),
+                'detail' => $detail,
+                'notes' => [],
+            ];
+        }
+
+        return ['ok' => true, 'reason' => '', 'detail' => '', 'notes' => $resolved['problems']];
+    }
+
+    private function teacherPhoneTaken(int $schoolId, string $phone): bool
+    {
+        return User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->where('mobile_no', $phone)
+            ->exists();
+    }
+
+    private function shortTeacherSkipReason(string $reason): string
+    {
+        $reason = trim($reason);
+        $lower = strtolower($reason);
+        if (str_contains($lower, 'already registered') || str_contains($lower, 'already exists')) {
+            return 'already exists';
+        }
+        if (str_contains($lower, 'phone')) {
+            return 'invalid phone';
+        }
+        if (str_contains($lower, 'email') && str_contains($lower, 'more than once')) {
+            return 'duplicate email';
+        }
+        if (str_contains($lower, 'invalid name') || $lower === 'invalid name or email') {
+            return 'missing name';
+        }
+        if (str_contains($lower, 'email')) {
+            return 'invalid email';
+        }
+
+        return $reason !== '' ? $reason : 'could not save';
+    }
+
+    private function formatTeacherUploadReport(int $added, int $skipped): string
+    {
+        $addedText = $added === 1 ? '1 teacher added' : $added.' teachers added';
+        $skippedText = $skipped === 1 ? '1 skipped' : $skipped.' skipped';
+
+        return $addedText.', '.$skippedText;
+    }
+
+    private function noteTeacherPlanLimit(School $school): void
+    {
+        $teacherOver = ToshiActionService::enforcePlanLimit($school->id, 'teachers');
+        if (! $teacherOver['success']) {
+            $this->overLimitNotice = $teacherOver['message'];
+        }
+    }
+
+    /**
+     * Active teachers already stored for this school. The step list reads this,
+     * not only the unsaved draft rows.
+     *
+     * @return list<array{name: string, email: string, phone: string}>
+     */
+    public function savedTeacherRows(): array
+    {
+        $schoolId = Auth::user()?->school_id;
+        if (! $schoolId) {
+            return [];
+        }
+
+        return User::query()
+            ->with('userprofile')
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (User $user) => [
+                'name' => trim((string) $user->name) !== ''
+                    ? (string) $user->name
+                    : (string) $user->displayName,
+                'email' => (string) $user->email,
+                'phone' => (string) ($user->mobile_no ?? ''),
+            ])
+            ->all();
     }
 
     private function saveTeachers(School $school): void
@@ -1824,38 +2455,52 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['teacherName' => 'Create an academic year first.']);
         }
 
-        $hasAnyLink = StandardLink::where('school_id', $school->id)->exists();
-        $hasAnySubject = Subject::where('school_id', $school->id)->exists();
-        if (! $hasAnyLink || ! $hasAnySubject) {
-            throw ValidationException::withMessages(['teacherName' => 'Add class and subject first.']);
-        }
-
-        $drafts = [];
-        foreach ($this->teacherDrafts as $draft) {
-            $links = $this->resolveTeacherAssignmentLinks(
-                $school,
-                $year,
-                is_array($draft['classes'] ?? null) ? $draft['classes'] : [],
-                is_array($draft['subjects'] ?? null) ? $draft['subjects'] : [],
-            );
-            $drafts[] = [
+        $skipped = [];
+        $kept = [];
+        $saved = 0;
+        foreach ($this->teacherDrafts as $index => $draft) {
+            $email = trim((string) ($draft['email'] ?? ''));
+            if ($email === '') {
+                $email = app(OnboardingEngine::class)->allocateGeneratedEmail($school, 'teacher', '.test');
+            }
+            $result = $this->commitTeacherDraft([
                 'name' => trim((string) ($draft['name'] ?? '')),
-                'email' => trim((string) ($draft['email'] ?? '')),
+                'email' => $email,
                 'phone' => trim((string) ($draft['phone'] ?? '')),
-                'links' => $links,
+                'classes' => is_array($draft['classes'] ?? null) ? $draft['classes'] : [],
+                'subjects' => is_array($draft['subjects'] ?? null) ? $draft['subjects'] : [],
+            ], $year);
+            if ($result['ok']) {
+                $saved++;
+
+                continue;
+            }
+            $kept[] = $draft;
+            $skipped[] = [
+                'row' => $index + 1,
+                'reason' => $result['reason'],
+                'detail' => $result['detail'] !== '' ? $result['detail'] : $result['reason'],
             ];
         }
 
-        $result = app(OnboardingEngine::class)->saveTeachers($school, $year, $drafts);
-        if (($result['created'] ?? []) === []) {
-            $reason = collect($result['skipped'] ?? [])->pluck('reason')->filter()->first()
-                ?: 'Could not save teachers. Check the list and try again.';
-            throw ValidationException::withMessages(['teacherName' => $reason]);
+        $this->teacherDrafts = $kept;
+        if ($saved > 0) {
+            $this->noteTeacherPlanLimit($school);
         }
-
-        $teacherOver = ToshiActionService::enforcePlanLimit($school->id, 'teachers');
-        if (! $teacherOver['success']) {
-            $this->overLimitNotice = $teacherOver['message'];
+        if ($skipped !== []) {
+            $this->teacherUploadSkips = array_map(
+                fn (array $skip) => ['row' => $skip['row'], 'reason' => $skip['reason']],
+                $skipped
+            );
+            $this->teacherUploadNotes = [];
+            $this->teacherUploadReport = $this->formatTeacherUploadReport($saved, count($skipped));
+            $details = array_map(
+                fn (array $skip) => 'Row '.$skip['row'].': '.$skip['detail'],
+                $skipped
+            );
+            throw ValidationException::withMessages([
+                'teacherName' => $this->teacherUploadReport.' '.implode(' ', $details),
+            ]);
         }
 
         $this->teacherDrafts = [];
@@ -1865,7 +2510,7 @@ class ManualOnboardingWizard extends Component
     /**
      * @param  list<string|mixed>  $classes
      * @param  list<string|mixed>  $subjects
-     * @return list<array{standardLink_id: int, subject_id: int}>
+     * @return array{links: list<array{standardLink_id: int, subject_id: int}>, problems: list<string>}
      */
     private function resolveTeacherAssignmentLinks(School $school, AcademicYear $year, array $classes, array $subjects): array
     {
@@ -1879,11 +2524,12 @@ class ManualOnboardingWizard extends Component
         ))));
 
         if ($classNames === [] || $subjectNames === []) {
-            return [];
+            return ['links' => [], 'problems' => []];
         }
 
         $engine = app(OnboardingEngine::class);
         $links = [];
+        $problems = [];
         $seen = [];
 
         foreach ($classNames as $className) {
@@ -1901,17 +2547,17 @@ class ManualOnboardingWizard extends Component
                     });
             }
             if (! $standardLink) {
-                throw ValidationException::withMessages([
-                    'teacherName' => "Class '{$className}' was not found. Add it on the classes step first.",
-                ]);
+                $problems[] = "class '{$className}' was not found";
+
+                continue;
             }
 
             foreach ($subjectNames as $subjectName) {
                 $subject = $engine->resolveOrCreateSubjectForClass($school, $year, $standardLink, $subjectName);
                 if (! $subject) {
-                    throw ValidationException::withMessages([
-                        'teacherName' => "Subject '{$subjectName}' was not found for class '{$className}'.",
-                    ]);
+                    $problems[] = "subject '{$subjectName}' was not found for class '{$className}'";
+
+                    continue;
                 }
 
                 $key = $standardLink->id.':'.$subject->id;
@@ -1926,7 +2572,7 @@ class ManualOnboardingWizard extends Component
             }
         }
 
-        return $links;
+        return ['links' => $links, 'problems' => $problems];
     }
 
     /**
@@ -2275,13 +2921,14 @@ class ManualOnboardingWizard extends Component
 
     /**
      * Send a 6-digit OTP via the same WhatsAppOnboardingOtpService Toshi uses.
-     * Always surfaces the code in the wizard UI so onboarding is never blocked when
-     * the Meta API is unconfigured (same policy as AgentToshi::sendWhatsAppOtp).
+     * The code is a system message to the number this admin is verifying.
+     * Local and testing may show it; production never does.
      */
     public function sendWhatsAppVerificationCode(): void
     {
         $this->errorMessage = '';
         $this->whatsappOtpStatus = '';
+        $this->whatsappSendFailed = false;
         $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
         if ($phone === null) {
             $this->whatsappOtpDisplay = '';
@@ -2297,6 +2944,15 @@ class ManualOnboardingWizard extends Component
         $this->whatsappPhone = $phone;
 
         $otpService = app(WhatsAppOnboardingOtpService::class);
+        $adminId = (int) Auth::id();
+        if ($wait = $otpService->consumeVerificationAttempt($adminId)) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappSendFailed = true;
+            $this->whatsappOtpStatus = $wait;
+
+            return;
+        }
+
         $otp = $otpService->generateCode();
 
         session([
@@ -2307,15 +2963,30 @@ class ManualOnboardingWizard extends Component
 
         $this->whatsappVerified = false;
         $this->whatsappOtpInput = '';
-        $this->whatsappOtpDisplay = $otp;
-        $this->whatsappOtpStatus = "Your verification code: {$otp}";
 
-        $delivery = $otpService->deliver($phone, $otp);
-        if ($delivery['sent']) {
-            $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
-        } else {
-            $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
+        $delivery = $otpService->deliver($phone, $otp, $adminId);
+        if ($otpService->mayDisplayCode()) {
+            $this->whatsappOtpDisplay = $otp;
+            $this->whatsappOtpStatus = "Your verification code: {$otp}";
+            if ($delivery['sent']) {
+                $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
+            } else {
+                $this->whatsappSendFailed = true;
+                $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
+            }
+
+            return;
         }
+
+        $this->whatsappOtpDisplay = '';
+        if ($delivery['sent']) {
+            $this->whatsappOtpStatus = 'We sent a verification code to your WhatsApp. Enter it below.';
+
+            return;
+        }
+
+        $this->whatsappSendFailed = true;
+        $this->whatsappOtpStatus = "We couldn't send the verification code. Please try again.";
     }
 
     public function verifyWhatsAppCode(): void

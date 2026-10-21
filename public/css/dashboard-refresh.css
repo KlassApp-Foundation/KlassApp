@@ -3666,7 +3666,8 @@ body.toshi-manual-wizard [data-toshi-root] {
     font-size: 12px;
     color: #64748B;
 }
-.manual-wizard-bulk-remove {
+.manual-wizard-bulk-remove,
+.manual-wizard-subject-remove {
     border: none;
     background: transparent;
     color: #94A3B8;
@@ -3674,7 +3675,8 @@ body.toshi-manual-wizard [data-toshi-root] {
     font-size: 14px;
     padding: 2px 4px;
 }
-.manual-wizard-bulk-remove:hover {
+.manual-wizard-bulk-remove:hover,
+.manual-wizard-subject-remove:hover {
     color: #DC2626;
 }
 .manual-wizard-bulk-divider {

@@ -47,7 +47,7 @@ class WhatsAppBusinessService
      * Demo schools never receive real WhatsApp messages (hard outbound guard).
      * Returns a skipped response array when blocked, otherwise null.
      */
-    protected function demoBlocked(string $phone, ?int $userId = null): ?array
+    protected function demoBlocked(string $phone, ?int $userId = null, ?string $flowType = null, ?string $body = null): ?array
     {
         if (! config('services.whatsapp.replies_enabled')) {
             return [
@@ -58,8 +58,9 @@ class WhatsAppBusinessService
             ];
         }
 
-        // Demo-only sending (WHATSAPP_DEMO_ONLY_RECIPIENTS): only demo recipients.
-        if (($reason = \App\Services\DemoOnlyRecipientGuard::refusal($phone)) !== null) {
+        // Demo-only sending (WHATSAPP_DEMO_ONLY_RECIPIENTS): only demo recipients,
+        // plus the one system message DemoOnlyRecipientGuard documents.
+        if (($reason = \App\Services\DemoOnlyRecipientGuard::refusal($phone, $flowType, $userId, $body)) !== null) {
             return [
                 'success' => false,
                 'blocked' => true,
@@ -100,7 +101,7 @@ class WhatsAppBusinessService
      */
     public function sendText(string $phone, string $message, ?string $flowType = null, ?int $userId = null, bool $previewUrl = false): array
     {
-        if ($blocked = $this->demoBlocked($phone, $userId)) {
+        if ($blocked = $this->demoBlocked($phone, $userId, $flowType, $message)) {
             return $blocked;
         }
 
@@ -128,9 +129,9 @@ class WhatsAppBusinessService
             'whatsapp_message_id' => $messageId,
             'phone'               => $phone,
             'direction'           => 'outbound',
-            'category'            => $flowType ?? 'service',
+            'category'            => $this->deliveryCategory($flowType),
             'status'              => $success ? 'sent' : 'failed',
-            'content_preview'     => Str::limit($message, 200),
+            'content_preview'     => $this->deliveryPreview($flowType, $message),
             'flow_type'           => $flowType,
             'user_id'             => $userId,
         ]);
@@ -175,7 +176,7 @@ class WhatsAppBusinessService
         ?string $language = null,
         ?string $flowType = null,
     ): array {
-        if ($blocked = $this->demoBlocked($phone)) {
+        if ($blocked = $this->demoBlocked($phone, null, $flowType)) {
             return $blocked;
         }
 
@@ -276,7 +277,7 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($blocked = $this->demoBlocked($phone, $userId)) {
+        if ($blocked = $this->demoBlocked($phone, $userId, $flowType, $body)) {
             return $blocked;
         }
 
@@ -367,7 +368,7 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($blocked = $this->demoBlocked($phone, $userId)) {
+        if ($blocked = $this->demoBlocked($phone, $userId, $flowType, $description)) {
             return $blocked;
         }
 
@@ -477,7 +478,7 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($blocked = $this->demoBlocked($phone, $userId)) {
+        if ($blocked = $this->demoBlocked($phone, $userId, $flowType, $body)) {
             return $blocked;
         }
 
@@ -672,7 +673,7 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($blocked = $this->demoBlocked($phone, $userId)) {
+        if ($blocked = $this->demoBlocked($phone, $userId, $flowType, $caption)) {
             return $blocked;
         }
 
@@ -750,6 +751,32 @@ class WhatsAppBusinessService
         }
 
         return $this->sendText($whatsappUser->phone, $message, $flowType, $userId);
+    }
+
+    /**
+     * message_delivery_log.category is a fixed enum. The verification flow
+     * is authentication; every other caller keeps the category it already passed.
+     */
+    private function deliveryCategory(?string $flowType): string
+    {
+        if ($flowType === \App\Services\DemoOnlyRecipientGuard::ADMIN_VERIFICATION) {
+            return 'authentication';
+        }
+
+        return $flowType ?? 'service';
+    }
+
+    /**
+     * The admin WhatsApp dashboard prints content_preview. The verification
+     * code must not land there.
+     */
+    private function deliveryPreview(?string $flowType, string $message): string
+    {
+        if ($flowType === \App\Services\DemoOnlyRecipientGuard::ADMIN_VERIFICATION) {
+            return 'WhatsApp verification code';
+        }
+
+        return Str::limit($message, 200);
     }
 
     /**

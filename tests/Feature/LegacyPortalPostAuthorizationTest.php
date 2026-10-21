@@ -206,7 +206,7 @@ class LegacyPortalPostAuthorizationTest extends TestCase
         $this->get('/teacher/classwall/post/show/'.$this->postA->id)
             ->assertOk();
 
-        $this->get('/teacher/classwall/post/delete/'.$this->postA->id)
+        $this->delete('/teacher/classwall/post/delete/'.$this->postA->id)
             ->assertOk()
             ->assertJsonStructure(['success']);
 
@@ -222,7 +222,7 @@ class LegacyPortalPostAuthorizationTest extends TestCase
         $this->assertTrue(Gate::allows('post', $this->postA));
         $this->assertTrue(Gate::denies('post-destroy', $this->postA));
 
-        $this->get('/teacher/classwall/post/delete/'.$this->postA->id)
+        $this->delete('/teacher/classwall/post/delete/'.$this->postA->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('posts', [
@@ -237,7 +237,7 @@ class LegacyPortalPostAuthorizationTest extends TestCase
 
         $this->assertTrue(Gate::allows('post-destroy', $this->postA));
 
-        $this->get('/admin/classwall/post/delete/'.$this->postA->id)
+        $this->delete('/admin/classwall/post/delete/'.$this->postA->id)
             ->assertOk()
             ->assertJsonStructure(['success']);
 
@@ -252,7 +252,7 @@ class LegacyPortalPostAuthorizationTest extends TestCase
 
         $this->assertTrue(Gate::denies('post-destroy', $this->postB));
 
-        $this->get('/admin/classwall/post/delete/'.$this->postB->id)
+        $this->delete('/admin/classwall/post/delete/'.$this->postB->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('posts', [
@@ -269,7 +269,7 @@ class LegacyPortalPostAuthorizationTest extends TestCase
         $this->assertTrue(Gate::allows('post-destroy', $this->postA));
         $this->assertTrue(Gate::allows('post-destroy', $this->postB));
 
-        $this->get('/admin/classwall/post/delete/'.$this->postB->id)
+        $this->delete('/admin/classwall/post/delete/'.$this->postB->id)
             ->assertOk()
             ->assertJsonStructure(['success']);
 

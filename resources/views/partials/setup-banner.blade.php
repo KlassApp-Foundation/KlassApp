@@ -53,9 +53,12 @@
                 </button>
                 @endtoshiOnboarding
                 @if(!empty($onboardingMissing))
-                    <a href="{{ route('dismiss.onboarding.reminder') }}" class="ds-btn ds-btn-ghost ds-btn-md" data-testid="setup-banner-dismiss">
-                        Dismiss
-                    </a>
+                    <form method="POST" action="{{ route('dismiss.onboarding.reminder') }}" class="inline" onsubmit="return confirm('Hide the setup banner? Your progress stays available.');">
+                        @csrf
+                        <button type="submit" class="ds-btn ds-btn-ghost ds-btn-md" data-testid="setup-banner-dismiss">
+                            Dismiss
+                        </button>
+                    </form>
                 @endif
             </div>
         </div>
