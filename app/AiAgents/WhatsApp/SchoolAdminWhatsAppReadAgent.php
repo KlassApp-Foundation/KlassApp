@@ -7,6 +7,9 @@ use App\AiAgents\Tools\GenerateReportTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
+use App\AiAgents\Tools\ListStreamsWithoutClassTeacherTool;
+use App\AiAgents\Tools\ListUnpaidFeeBalancesTool;
+use App\AiAgents\Tools\SummarizeClassAttendanceTool;
 use App\AiAgents\Tools\ListEventsTool;
 use App\AiAgents\Tools\ListHolidaysTool;
 use App\AiAgents\Tools\ListHomeworkTool;
@@ -50,7 +53,7 @@ class SchoolAdminWhatsAppReadAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **school administrator** at {$schoolName} over WhatsApp.
 
-You may only use read tools: find students, count students, list classes/sections/teachers, list notices/events/holidays, list timetable slots/homework/student-homework, fee balance lookups, view grading scales, and generate reports.
+You may only use read tools: find students, count students, list classes/sections/teachers, list streams with no class teacher, list notices/events/holidays, list timetable slots/homework/student-homework, fee balance lookups, list students who still owe fees, summarise class attendance, view grading scales, and generate reports.
 
 Rules:
 - This WhatsApp channel is read-only — do not attempt creates, updates, payments, attendance writes, or co-admin changes.
@@ -68,6 +71,7 @@ PROMPT;
             new GetStudentCountTool,
             new ListClassesTool,
             new ListSectionsTool,
+            new ListStreamsWithoutClassTeacherTool,
             new ListTeachersTool,
             new ListNoticesTool,
             new ListEventsTool,
@@ -77,6 +81,8 @@ PROMPT;
             new ListStudentHomeworkTool,
             new ShowStudentHomeworkTool,
             new GetFeeBalanceTool,
+            new ListUnpaidFeeBalancesTool,
+            new SummarizeClassAttendanceTool,
             new ViewGradingScaleTool,
             new GenerateReportTool,
         ];

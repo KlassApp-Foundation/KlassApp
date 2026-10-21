@@ -23,7 +23,11 @@ class ToshiLlmStatusCommand extends Command
         $this->line('  Provider       : '.$this->resolvedProvider());
         $this->line('  Model          : '.$this->resolvedModel());
         $this->line('  URL host       : '.(ToshiLlm::urlHost() !== '' ? ToshiLlm::urlHost() : '(unresolved)'));
-        $this->line('  API key        : '.(ToshiLlm::keyConfigured() ? 'configured' : 'missing'));
+        if (str_starts_with($this->resolvedProvider(), 'bedrock')) {
+            $this->line('  Credentials    : '.ToshiLlm::credentialSummary());
+        } else {
+            $this->line('  API key        : '.(ToshiLlm::keyConfigured() ? 'configured' : 'missing'));
+        }
         $this->line('  Config checksum: '.$this->resolvedChecksum().' (provider|model|host)');
         $this->newLine();
         $this->comment('Same path as agents / UsesToshiLlm. No secrets printed.');

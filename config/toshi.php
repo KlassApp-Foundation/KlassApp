@@ -24,8 +24,10 @@ return [
     |
     | When enabled, assistant-mode queries are routed through the new Laravel AI
     | SDK agent stack (ToshiOrchestrator → Skill Agents with Tool classes).
-    | Uses the 'openai-compatible' provider from config/ai.php which reads
-    | OPENAI_COMPATIBLE_API_KEY (preferred) or TOSHI_LLM_API_KEY (legacy).
+    | Provider comes from TOSHI_LLM_PROVIDER (config toshi.llm_provider).
+    | Unset stays on the 'openai-compatible' provider from config/ai.php, which
+    | reads OPENAI_COMPATIBLE_API_KEY (preferred) or TOSHI_LLM_API_KEY (legacy).
+    | TOSHI_LLM_PROVIDER=bedrock uses the bedrock provider in config/ai.php.
     |
     | Internal accounts only until parity is verified with the legacy paths.
     */
@@ -134,6 +136,13 @@ return [
     | provider/model intent (see docs/toshi-prod-health-check.md).
     */
     'model' => env('OPENAI_COMPATIBLE_MODEL', env('TOSHI_LLM_MODEL', 'deepseek-chat')),
+
+    /*
+    | Which Laravel AI provider Toshi agents use.
+    | openai-compatible (default, current production behaviour) or bedrock.
+    | Blank is treated as openai-compatible. Keys are never hardcoded.
+    */
+    'llm_provider' => env('TOSHI_LLM_PROVIDER', 'openai-compatible'),
 
     /*
     | Raw dual-env snapshots for conflict detection (null when unset).
