@@ -676,7 +676,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required (opening PR)**
+## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180)**
 
 - Toshi onboarding v2 (`TOSHI_ONBOARDING_V2`) no longer marks a WhatsApp number verified when the admin types the number. The step sends a code through `WhatsAppOnboardingOtpService` (the same send the wizard has used since #1167, including the demo-only allowance for that admin's own code), asks for the code, and sets `verified_at` only after the code matches. A wrong code does not. Resend and retry ask for another send. The code is not put in the chat. Skip is refused, because the wizard does not offer skip on this step.
 - `OnboardingEngine::saveWhatsApp` leaves `verified_at` null unless the caller passes `codeWasVerified: true`. The wizard passes that only after its own check. The legacy Toshi commit does the same, so that flow still stores a verified number after its own check. Not merged. Production untouched. Needs Grok B's approval before merge.
@@ -688,7 +688,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Decision:** Do not redesign v2 and do not change the legacy chat handler. The wizard keeps setting `verified_at` because it already checked the code. A phone alone does not. The code stays in the server session and is never copied into the v2 transcript. Local/testing may still show it in the wizard field, as #1167 already did.
 - **Edge cases:** Send failure offers retry and does not create a row. `skip` does not mark the step skipped. A number already on another account is refused before a send. The idempotence harness submits the stored code after the phone, so a second save still reports already present.
 - **Tests:** Without the step fix, `test_v2_whatsapp_step_does_not_mark_verified_before_the_code` failed because typing `0772000999` created a `whatsapp_users` row. With the fix, `ToshiOnboardingV2WhatsAppVerificationTest` is 6 tests / 88 assertions. `bash scripts/test-guard.sh` (4 processes) — 2936 tests, 0 failures, 0 errors, 4 skipped, guard OK. No browser or staging pass.
-- **Status:** Opening the PR. Do not merge from this session. Touches WhatsApp verification and security; needs Grok B's approval. Review requested from Bariyo123.
+- **Status:** OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) (`cursor/toshi-v2-whatsapp-code-bfa1`). Do not merge from this session. Touches WhatsApp verification and security; needs Grok B's approval. Review requested from Bariyo123.
 
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
