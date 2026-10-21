@@ -676,6 +676,65 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged**
+
+- `origin/main` (`78ae595c87924c07abbd36f2d05099a6c01a6f5e`) merged into this branch with a merge commit. That tip is [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (confirmed `merged: true`, `2026-10-21T17:30:43Z`). Not merged to main. Production untouched. The class-teacher upload is unchanged.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. No feature file conflicted. `tests/Feature/PlanLimitEnforcementTest.php` and `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php` match #1185. This note does not add Laravel Cloud environment ids, app ids, or tokens.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1185) into the class-teacher upload branch
+
+- **Work:** merge `origin/main` (`78ae595c87924c07abbd36f2d05099a6c01a6f5e`) only. No rebase. The class-teacher upload behaviour is unchanged.
+- **Files:** `knowledge.md` (both histories kept). The test files are #1185 as it landed on main.
+- **Decision:** Keep both session blocks. Do not copy infrastructure identifiers into this note.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Do not merge from this session.
+
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged again**
+
+- `origin/main` (`80d55b06`) merged into this branch with a merge commit. That tip is [#1182](https://github.com/KlassApp-Foundation/KlassApp/pull/1182) (`80d55b0670853230559c31eed93f7d0d341d67eb`, confirmed `merged: true`, `2026-10-21T16:26:46Z`) and includes [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) (`65d46cf1dcd6abc20c561fdf40f88e45e0af49ce`, confirmed `merged: true`, `2026-10-21T16:23:40Z`). Not merged to main. Production untouched. The class-teacher upload is unchanged.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. #1182 did not edit this file. No feature file conflicted. `ManualOnboardingWizard.php` auto-merged; the class-teacher upload methods are the ones already on this branch.
+- **Tests:** `vendor/bin/phpunit tests/Feature/Onboarding/WizardClassTeacherUploadTest.php tests/Feature/Toshi/ToshiOnboardingV2DriverTest.php` — **11 tests, 120 assertions, 0 failures** (PHP 8.4.26, PHPUnit 12.5.40). Five are the class-teacher upload tests. Six are the Toshi v2 driver tests, including the two legacy-form cases from #1182.
+- Not merged. Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1180, #1182) into the class-teacher upload branch
+
+- **Work:** merge `origin/main` (`80d55b0670853230559c31eed93f7d0d341d67eb`) only. No rebase. The class-teacher upload behaviour is unchanged.
+- **Files:** `knowledge.md` (both histories kept). The other files are #1180 and #1182 as they landed on main.
+- **Decision:** Do not rewrite either session history. Do not edit the class-teacher upload to resolve the merge.
+- **Tests:** `vendor/bin/phpunit` on `tests/Feature/Onboarding/WizardClassTeacherUploadTest.php` and `tests/Feature/Toshi/ToshiOnboardingV2DriverTest.php`: 11 tests, 120 assertions, 0 failures.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Do not merge from this session.
+
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged**
+
+- `origin/main` (`a2ef440c`, [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173)) merged into this branch with a merge commit. Not merged to main. Production untouched. The class-teacher upload is unchanged.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **2938 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Main after #1173 was 2933; the five class-teacher tests are the difference. Known-failures list unchanged.
+- Not merged. Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1173) into the class-teacher upload branch
+
+- **Work:** merge `origin/main` only. No rebase. The class-teacher upload behaviour is unchanged.
+- **Files:** `knowledge.md` (both histories kept). The other files are #1173 as it landed on main.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 2938 tests, 0 failures, 0 errors, 4 skipped, guard OK.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Re-review requested from Bariyo123. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179)**
+
+- The teachers step of the setup wizard has an "Upload class teachers" option beside the teacher file upload. The template is a CSV (`class`, `stream`, `name`, `email`, `phone`) with example rows, downloaded from `admin.class-teachers.upload-template`.
+- Each readable row is saved immediately. The step reports "N class teachers added, M skipped" and a reason per skipped row (unknown class, unknown stream, missing name, bad email). Saved assignments are listed on the step.
+- Class text uses `OnboardingEngine` (`P1`, `Primary 1`, `Primary One`). A stream, when given, must already exist. The teacher is found by email, then by phone, or created. The same email reuses that school's teacher. Assignment writes the existing `standards_link.class_teacher_id` and `sections.class_teacher_id`. No migration. No invite and no message.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Wizard class-teacher upload
+
+- **Work:** add a class-teacher CSV upload on the setup wizard, next to the teacher upload. Reuse that importer's save-as-you-go report. Resolve class and stream through the shared onboarding class lookup. Create or reuse the teacher and assign them with the existing class-teacher columns.
+- **Files:** `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `routes/admin.php`, `app/Http/Controllers/Admin/ClassTeacherUploadTemplateController.php`, `public/templates/class-teacher-upload-template.csv`, `tests/Feature/Onboarding/WizardClassTeacherUploadTest.php`, `knowledge.md`.
+- **Decision:** do not send invites or WhatsApp. The teacher upload does not. Do not add a table. `standards_link.class_teacher_id` and `sections.class_teacher_id` are the assignment. An unknown class or stream is skipped and does not create a teacher. A local `0772…` number is normalised with the same phone helper as the teacher upload. An email that already belongs to someone who is not an active teacher at this school is skipped.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2935 tests, 0 failures, 0 errors, 4 skipped, guard OK. The five new tests cover the template download, saved assignments, an unknown class, `P1` and `Primary 1`, and a duplicate email. No browser or staging pass.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Review requested from Bariyo123. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), stale school cleared**
+
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185)**
 
 - [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) is open. Do not merge from this session.
