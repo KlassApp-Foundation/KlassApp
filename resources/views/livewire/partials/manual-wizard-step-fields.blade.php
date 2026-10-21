@@ -281,8 +281,18 @@
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
             </label>
+            <a href="{{ route('admin.class-teachers.upload-template') }}"
+               class="manual-wizard-bulk-link"
+               data-testid="wizard-class-teacher-template">Download class teacher template</a>
+            <label class="manual-wizard-bulk-upload">
+                <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload class teachers</span>
+                <input type="file" class="manual-wizard-bulk-file" wire:model="classTeacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-class-teacher-upload" />
+            </label>
         </div>
         <div wire:loading wire:target="teacherUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
+        <div wire:loading wire:target="classTeacherUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
+        <p class="manual-wizard-bulk-help">Class teacher columns: class, stream, name, email, phone. Leave stream blank to assign the whole class.</p>
 
         @if($teacherUploadReport !== '')
             <p class="manual-wizard-bulk-help" data-testid="wizard-teacher-upload-report">{{ $teacherUploadReport }}</p>
@@ -300,6 +310,30 @@
                     @endforeach
                 </ul>
             @endif
+        @endif
+
+        @if(($classTeacherUploadReport ?? '') !== '')
+            <p class="manual-wizard-bulk-help" data-testid="wizard-class-teacher-upload-report">{{ $classTeacherUploadReport }}</p>
+            @if(count($classTeacherUploadSkips ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-upload-skips">
+                    @foreach($classTeacherUploadSkips as $skip)
+                        <li class="manual-wizard-bulk-item" data-testid="wizard-class-teacher-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        @endif
+
+        @if(count($this->savedClassTeacherRows()) > 0)
+            <ul class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-list">
+                @foreach($this->savedClassTeacherRows() as $row)
+                    <li class="manual-wizard-bulk-item" wire:key="class-teacher-saved-{{ $row['standard_link_id'] }}" data-testid="wizard-class-teacher-saved">
+                        <span class="manual-wizard-bulk-item-main">
+                            <strong>{{ $row['name'] }}</strong>
+                            <span class="manual-wizard-bulk-meta">{{ $row['class'] }}@if($row['stream'] !== '') · {{ $row['stream'] }}@endif · {{ $row['email'] }}@if($row['phone'] !== '') · {{ $row['phone'] }}@endif</span>
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
         @endif
 
         @if(count($this->savedTeacherRows()) > 0 || count($teacherDrafts ?? []) > 0)

@@ -23,7 +23,7 @@ class ToshiOnboardingV2Driver
      */
     public function promptNext(School $school, ?int $userId = null): array
     {
-        $step = $this->registry->nextUnfinished($school, $userId);
+        $step = $this->currentStep($school, $userId);
         if ($step === null) {
             return [
                 'status' => 'done',
@@ -38,11 +38,11 @@ class ToshiOnboardingV2Driver
     }
 
     /**
-     * @return array{status: 'advanced'|'rejected'|'done', key: ?string, question: ?string, options: list<array{value: string, label: string}>, input_type: ?string, hint: ?string, saved_key: ?string}
+     * @return array{status: 'advanced'|'rejected'|'awaiting'|'done', key: ?string, question: ?string, options: list<array{value: string, label: string}>, input_type: ?string, hint: ?string, saved_key: ?string}
      */
     public function handleReply(School $school, mixed $raw, ?int $userId = null): array
     {
-        $step = $this->registry->nextUnfinished($school, $userId);
+        $step = $this->currentStep($school, $userId);
         if ($step === null) {
             return [
                 'status' => 'done',
@@ -59,6 +59,16 @@ class ToshiOnboardingV2Driver
 
         try {
             $step->save($school, $raw, $userId);
+        } catch (OnboardingStepAwaitingInput $e) {
+            return [
+                'status' => 'awaiting',
+                'key' => $step->key(),
+                'question' => $e->getMessage(),
+                'options' => $step->options($school),
+                'input_type' => $step->inputType(),
+                'hint' => null,
+                'saved_key' => null,
+            ];
         } catch (InvalidArgumentException|ValidationException) {
             $payload = $this->promptPayload($step, $school->fresh());
 
@@ -101,6 +111,26 @@ class ToshiOnboardingV2Driver
     /**
      * @return array{status: 'prompt', key: string, question: string, options: list<array{value: string, label: string}>, input_type: string}
      */
+    /**
+     * Seeded classes and subjects are already "complete" after the academic year
+     * is saved. Ask for them once anyway, until the school confirms or edits them.
+     */
+    private function currentStep(School $school, ?int $userId): ?OnboardingStep
+    {
+        foreach ($this->registry->forSchool($school) as $step) {
+            if (! $step->isComplete($school, $userId)) {
+                return $step;
+            }
+
+            if (in_array($step->key(), ['standards', 'subjects'], true)
+                && ! OnboardingStepReview::reviewed($school, $step->key())) {
+                return $step;
+            }
+        }
+
+        return null;
+    }
+
     private function promptPayload(OnboardingStep $step, School $school): array
     {
         return [

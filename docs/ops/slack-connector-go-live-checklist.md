@@ -107,7 +107,7 @@ these are presumably already live; verify, don't assume):
 - **Redirect URI must be registered exactly** (code builds it via
   `route('mcp.oauth.slack.callback')`):
   - Production: `https://klassapp.xyz/mcp/oauth/slack/callback`
-  - Staging: `https://klassapp-staging-7mpoqg.laravel.cloud/mcp/oauth/slack/callback`
+  - Staging: the staging host from the private repo KlassApp-Foundation/internal or the Cloud dashboard, path `/mcp/oauth/slack/callback`
 
   (Route = `mcp/oauth/{client}/callback`, client `slack` — vendor default, no custom URI
   passed in `routes/ai.php`. Trailing slashes and path variants will fail — OAuth
@@ -237,7 +237,7 @@ product choice to revisit, not a defect.)
 
 **Outcome: FAIL.** Live Gemini agent-loop pass on staging. Evidence: `e2e/screenshots/slack-6c-gemini-e2e/REPORT.json` (local; may not be committed). Production untouched; no app code patched this pass; Classroom #728 still blocked. Slack wave-1 is **not** done.
 
-**Re-run after #955:** [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) MERGED `c1baafed` + staging deploy `depl-a2e2c213-…` succeeded; §6c re-run still **FAIL** (`REPORT.json` run3 — blocked at `no_write_tool_pause`; keyword/chip path, #955 fixes not clearly exercised). Wave-1 not done; #728 still blocked.
+**Re-run after #955:** [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) MERGED `c1baafed` + staging deploy succeeded; §6c re-run still **FAIL** (`REPORT.json` run3 — blocked at `no_write_tool_pause`; keyword/chip path, #955 fixes not clearly exercised). Wave-1 not done; #728 still blocked.
 
 **Observed (PARTIAL):** `RouteToSlackSkillTool` invoked; `mcp_tools_slack_search_channels` stuck `pending_approval`; no UI confirm card; write / approve / reject **not** exercised. Suspected catalog name mismatch: config `read_tools` has `slack_list_channels` / `slack_search` / `slack_get_channel_history` vs live tool `slack_search_channels`.
 
@@ -253,7 +253,7 @@ product choice to revisit, not a defect.)
 **LLM gate (historical — CLOSED as of 2026-10-02):**
 
 - Earlier deferral (2026-09-20) said E2E tool-use was blocked because staging had no working LLM (`OPENAI_COMPATIBLE_URL`/`MODEL` NULL). That framing is **obsolete**.
-- Staging Toshi LLM is **FIXED**: Gemini via `openai-compatible` (`OPENAI_COMPATIBLE_MODEL=gemini-3.8-flash`, host `generativelanguage.googleapis.com`); `toshi:llm-health` **OK** after deploy `depl-a2e1f9d7-…`. Production LLM untouched.
+- Staging Toshi LLM is **FIXED**: Gemini via `openai-compatible` (`OPENAI_COMPATIBLE_MODEL=gemini-3.8-flash`, host `generativelanguage.googleapis.com`); `toshi:llm-health` **OK** after deploy . Production LLM untouched.
 - §6c was simply **never re-entered** after the LLM fix landed — not still waiting on an LLM gap.
 
 **Five checks (listed — outcome FAIL on 2026-10-02 re-run):**

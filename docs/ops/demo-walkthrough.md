@@ -8,8 +8,8 @@ restores it.
 
 | School | Id | URL |
 |---|---|---|
-| Demo Junior School | 38 | https://test.klassapp.xyz |
-| Demo Senior School | 39 | https://test.klassapp.xyz |
+| Demo Junior School | 38 | the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) |
+| Demo Senior School | 39 | the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) |
 
 **Passwords:** ask Rasta. They are never written into the repo or these docs.
 The Demo Junior school admin has its own password. Every other walkthrough
