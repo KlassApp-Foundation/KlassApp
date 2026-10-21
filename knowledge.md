@@ -690,6 +690,45 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Tests:** On `main`, the new send test saw 0 outbound messages. With the fix, `WizardAdminWhatsAppVerificationSendTest` is 5 tests / 67 assertions, green. Onboarding plus the demo-only guard suites: 489 tests, 2445 assertions, green. Full PHPUnit: 2817 tests, 20092 assertions, exit 0 (4 skipped, 2 pre-existing risky tests with no assertions).
 - **Status:** OPEN [#1167](https://github.com/KlassApp-Foundation/KlassApp/pull/1167) (`cursor/wizard-admin-wa-verify-3f91`). Do not merge from this session.
 
+## Current Status: October 20, 2026 — **GET mutations OPEN [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168)**
+
+- Deletes, impersonation, password reset, email verification, and setup-banner dismiss are POST or DELETE with CSRF and a confirmation step. GET of those URLs is 405 and does not write. Not merged. Production untouched.
+- Mail links stay GET. `/emailverification/{token}` shows a confirm page; only the POST verifies the address. API deletes stay on Sanctum (no web CSRF middleware). Toshi onboarding behaviour was not redesigned.
+
+## Current Status: October 20, 2026 — **wizard teacher upload OPEN [#1164](https://github.com/KlassApp-Foundation/KlassApp/pull/1164)**
+
+- A teacher file on the setup wizard was kept in memory and saved as one batch on Continue. One unmatched class, or one bad email or phone, discarded the batch. The step list did not reload teachers already stored, so a hand-added teacher with a class link was the one that still showed.
+- Upload now saves each valid row for the signed-in school and shows added/skipped counts with a reason per skipped row. Template headings already match the importer. No invite mail. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Wizard teacher upload saves and reports results
+
+- **Work:** persist each readable teacher row on upload, list saved teachers on the step, and report skipped rows (row number and reason). Parser accepts “Teacher's Name” and a leading serial column.
+- **Files:** `app/Livewire/ManualOnboardingWizard.php`, `app/Services/OnboardingNameListExtractor.php`, `app/Livewire/AgentToshi.php` (drop blank-name rows), `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `tests/Feature/Onboarding/WizardTeacherUploadResultTest.php`, `ManualWizardBulkTeachersStudentsTest.php`, `OnboardingPhoneFormatTest.php`.
+- **Decision:** one engine save per row so one failure does not roll the others back. Unknown class or subject is a note; the teacher is still created. Blank email gets a generated address, the same as adding one teacher by hand. The step list shows `users.name` (the spelling that was saved). Review still uses the display name. No `ClassTeacherInviteService`.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2815 tests, 0 failures, 0 errors, 4 skipped, guard OK. No browser or staging pass.
+- **Status:** OPEN [#1164](https://github.com/KlassApp-Foundation/KlassApp/pull/1164) (`cursor/wizard-teacher-upload-355a`). Do not merge from this session. `#1163` also edits the wizard (subjects step).
+
+## Current Status: October 20, 2026 — **Toshi onboarding finish OPEN [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157)**
+
+- Branch `cursor/toshi-onboarding-finish-2ea1` from `main` (`f14c93a3`), then `origin/main` (`ce7958c7`) merged in. Not merged. Production untouched.
+- `FinishSchoolOnboarding` is the shared finish for the wizard confirm step and Toshi's confirm (`commit` / `confirmOnboarding`, and the v2 chat when the last step was just saved). First call sets `schools.onboarding_finished_at` and dispatches `SchoolOnboardingFinished`. A second call does neither. No listener, so no job, mail, notification, or WhatsApp send. No migration.
+- The wizard still sets its own finished flag and, on the first finish only, dispatches Livewire `manual-onboarding-finished`. Toshi already leaves Completing Setup itself.
+- Before the callers were wired, `test_toshi_completion_sets_onboarding_finished_at_and_the_same_follow_ups_as_the_wizard` failed because `onboarding_finished_at` was null after Toshi confirm (`step` 99, `mode` preview). With the fix, `FinishSchoolOnboardingTest` is 3 tests / 34 assertions. Do not merge.
+
+## Current Status: October 20, 2026 — **public /privacy and /terms OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165)**
+
+- Canonical guest pages `/privacy` and `/terms` serve the existing policy and terms views. 301s: `/ploicy`, `/policy`, `/privacy-policy` → `/privacy`; `/terms-of-service` → `/terms`, query string kept. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Public privacy and terms URLs (PR #1165 OPEN)
+
+- **Work:** Google's OAuth consent screen links `/privacy` and `/terms`, which 404. Those paths are now the public pages (no login, no school). Older paths 301 to them. Footers and register links updated. Maintenance mode leaves these paths up.
+- **Files:** `routes/web.php`, `routes/static.php` (still not loaded), `CheckForMaintenanceMode`, landing and register views, footer partials, `TermsOfServiceTest`, `LandingPreviewV3Test`, `LogoGoesHomeTest`.
+- **Decision:** the legal copy stays as it is. A wording rewrite is a later PR.
+- **Tests:** guest 200 and alias 301s pass. Full PHPUnit: 2816 tests, 0 failures, 0 errors, 4 skipped. Guard compare OK, no stale known-failures. Local guest server confirmed the 301s, including the query string.
+- **Status:** OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165) (`cursor/public-privacy-terms-urls-63da`). Do not merge from this session.
+
+## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
+
 ## Current Status: October 20, 2026 — **wizard subjects step OPEN [#1163](https://github.com/KlassApp-Foundation/KlassApp/pull/1163)**
 
 - Manual wizard subjects step attached new subjects with the untouched classes-field default `P1`. Category seeding and a classes-step save store the section name (`Primary One`, or `P1` when that was the name typed). `saveSubjects` matched that string exactly, so `P1` did not resolve to `Primary One` and Next failed with "Class 'P1' does not exist." Toshi's commit uses the same lookup, so a class stored as `Primary One` failed for the typed name `Primary 1`.
@@ -709,6 +748,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `lang/en/passwords.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`.
 - **Tests:** the new cases fail on `main` (distinct messages) and pass with this change. Related auth suites: 40 tests, 331 assertions, OK. Full guard: 2820 tests, 0 failures, 0 errors, 4 skipped.
 - **Status:** MERGED [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166) `2168b7458f3066173e67c810a4a7ff5690d5a0a6` (`cursor/generic-password-reset-error-821d`).
+
+
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
 
 ## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency MERGED [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)** `ce7958c7`
 
@@ -2742,6 +2784,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: no GET route changes or deletes records
+
+- **Work done**: Converted live GET deletes and state changes (impersonation, password-reset resend, email verification, setup-banner dismiss, API token update) to POST or DELETE. Web forms and ajax send the CSRF token and ask for confirmation. Callers in Vue, Blade, and both JS bundles were updated. Toshi onboarding flows were not redesigned.
+- **Files modified**: `routes/*.php` (the live delete and state-change lines), the matching Vue/Blade callers, `EmailVerificationController`, `PasswordResetCodeController`, `tests/Feature/Security/NoMutatingGetRouteTest.php`, rebuilt `public/build`, `docs/demo/public-demo-lockdown.md`, `knowledge.md`.
+- **Decision**: API routes stay on Sanctum without the web CSRF middleware. Email-verification GET only renders the confirm page. Commented-out routes were left commented. Authorization middleware was not loosened.
+- **Status**: [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168) OPEN (`cursor/no-get-mutations-005c`). Not merged. `origin/main` through `7746f5ae` merged in (#1163, #1164, #1165, #1166, #1157). Only `knowledge.md` conflicted; both histories kept. `/privacy` and `/terms` stay GET reads. Wizard subject remove, teacher upload, and onboarding finish stay Livewire. Password-reset resend tests now POST. No new data-changing GET route came in with those merges.
+- **Evidence**: After merging `origin/main` at `7746f5ae`, `bash scripts/test-guard.sh` — 2909 tests, 0 failures, 0 errors, 4 skipped. Guard: `OK: 0 failing test(s)`. Confirm dialogs were not clicked in a browser.
+- **Edge cases flagged**: Some legacy destroy methods still 500 when the id is missing. That predates the verb change. Public-demo lockdown now treats directory-number and document deletes as writes.
+
+### 2026-10-20: Toshi finish uses the wizard's onboarding finish
+
+- **Work done**: `ManualOnboardingWizard::confirmReview()` set `onboarding_finished_at` and dispatched Livewire `manual-onboarding-finished`. It queued no job, sent no notification, cleared no cache, wrote no other flag, and did not redirect. `AgentToshi::confirmOnboarding()` left Completing Setup without that timestamp. Both now call `FinishSchoolOnboarding`, which stamps the timestamp and dispatches `SchoolOnboardingFinished` once. A second call does not repeat those follow-ups. The wizard still dispatches `manual-onboarding-finished` only on the first finish. `origin/main` (`ce7958c7`) was merged into this branch; the only conflict was this file.
+- **Files modified**: `app/Services/FinishSchoolOnboarding.php`, `app/Events/SchoolOnboardingFinished.php`, `app/Services/OnboardingStepsService.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/FinishSchoolOnboardingTest.php`, `knowledge.md`.
+- **Key decisions**: No migration. The Livewire event stays on the wizard because it only tells the Toshi panel on the same page to leave Completing Setup; Toshi already does that itself, and firing that event from Toshi would run the sync again and clear the completion message when the assistant is off. `SchoolOnboardingFinished` has no listener. Main's set-password edits in `AgentToshi` stayed; this branch only adds the shared finish call.
+- **Status**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157) OPEN (`cursor/toshi-onboarding-finish-2ea1`, feature commit `1dffb4b6`). Not merged. Production untouched.
+- **Evidence**: After the `origin/main` merge, `bash scripts/test-guard.sh` (4 processes): 2815 tests, 0 failures, 0 errors, 4 skipped. Exit 0.
+- **Edge cases flagged**: Create-mode Toshi confirm stamps the new school too. Opening Toshi when the checklist is already complete does not stamp; only confirm, or a v2 reply that just saved the last step, does.
+- **PR**: [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157). Review requested from Bariyo123. Do not merge.
 
 ### 2026-10-20: wizard subjects step uses the classes step's records
 

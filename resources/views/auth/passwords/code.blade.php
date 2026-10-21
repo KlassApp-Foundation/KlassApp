@@ -138,7 +138,8 @@
       <button type="submit" class="klass-submit">{{ __('Verify Code') }}</button>
     </form>
 
-    <form method="GET" action="{{ route('password.reset.code.resend') }}" style="margin-top: 16px; text-align: center;">
+    <form method="POST" action="{{ route('password.reset.code.resend') }}" style="margin-top: 16px; text-align: center;" onsubmit="return confirm('Send a new reset code to this email?');">
+      @csrf
       <input type="hidden" name="email" value="{{ $email }}">
       <button type="submit" class="klass-back-link" style="border: none; background: none; cursor: pointer; display: inline; font-size: 14px; font-family: 'DM Sans', sans-serif;">
         {{ __("Didn't receive it? Resend code") }}

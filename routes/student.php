@@ -34,7 +34,7 @@ Route::get( '/events/showdetails/{id}', 'EventsController@showdetails' );
     Route::post('/task/snooze/{id}', 'TaskController@snooze');
 
     //delete
-    Route::get('/task/{id}/delete', 'TaskController@destroy');
+    Route::delete('/task/{id}/delete', 'TaskController@destroy');
 
 //assignment
 //index
@@ -45,7 +45,7 @@ Route::post( '/assignment/add', 'AssignmentController@store' );
 //show
 Route::get( '/assignment/show/edit/list/{id}', 'AssignmentController@show' );
 //delete
-Route::get( '/assignment/delete/{id}', 'AssignmentController@destroy' );
+Route::delete( '/assignment/delete/{id}', 'AssignmentController@destroy' );
 
 //homework
 //index
@@ -59,7 +59,7 @@ Route::post( '/homework/reply/{id}', 'HomeworkController@reply' );
 //show
 Route::get( '/homework/show/{id}', 'HomeworkController@show' );
 //delete
-Route::get( '/homework/delete/{id}', 'HomeworkController@destroy' );
+Route::delete( '/homework/delete/{id}', 'HomeworkController@destroy' );
 
 //password and avatar
 Route::get( '/changepassword', 'UserProfileController@ChangePassword' );
@@ -117,12 +117,12 @@ Route::post( '/classwall/post/unsave/{post_id}', 'PostDetailController@unsave' )
 Route::post( '/classwall/post/add/comment/{post_id}', 'PostCommentsController@addComment' );
 Route::get( '/classwall/post/edit/commentList/{comment_id}', 'PostCommentsController@editCommentList' );
 Route::post( '/classwall/post/edit/comment/{comment_id}', 'PostCommentsController@editComment' );
-Route::get( '/classwall/post/delete/comment/{comment_id}', 'PostCommentsController@destroy' );
+Route::delete( '/classwall/post/delete/comment/{comment_id}', 'PostCommentsController@destroy' );
 
 Route::get( '/classwall/post/replyComment/{post_comment_id}', 'PostReplyCommentsController@list' );
       Route::post( '/classwall/post/reply/add/comment/{post_comment_id}', 'PostReplyCommentsController@addComment');
       Route::post( '/classwall/post/reply/edit/comment/{post_comment_id}', 'PostReplyCommentsController@editComment');
-      Route::get( '/classwall/post/reply/delete/comment/{post_comment_id}', 'PostReplyCommentsController@destroy');
+      Route::delete( '/classwall/post/reply/delete/comment/{post_comment_id}', 'PostReplyCommentsController@destroy');
 
 Route::post( '/classwall/post/comment/like/{comment_id}', 'PostCommentDetailsController@like' );
 Route::post( '/classwall/post/comment/dislike/{comment_id}', 'PostCommentDetailsController@dislike' );

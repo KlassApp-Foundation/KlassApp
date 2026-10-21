@@ -9,9 +9,9 @@
  * all, they appear nowhere in the teacher sidebar, and the receptionist controllers are
  * the legitimate owners of the domain. The setting is DISABLED by default.
  *
- * Read actions are deliberately left alone: the audit finding was about writes. The one
- * exception is destructive-by-GET: /delete/{id} routes are Route::get, so a method-only
- * check would have missed every delete. Those are gated by path.
+ * Read actions are deliberately left alone: the audit finding was about writes.
+ * Deletes are DELETE, so a non-read method is gated. The path check remains so a
+ * GET /delete/{id} cannot skip the setting if one is reintroduced.
  */
 namespace App\Http\Middleware;
 

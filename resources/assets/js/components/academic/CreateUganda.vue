@@ -635,7 +635,7 @@ export default {
             if (confirm("Remove this subject and teacher assignment?")) {
                 this.inputs.splice(index, 1);
                 // Optional: delete subject from DB if needed
-                // axios.get("/admin/subject/delete/" + input.subject_id);
+                // axios.delete("/admin/subject/delete/" + input.subject_id);
             }
         },
     },

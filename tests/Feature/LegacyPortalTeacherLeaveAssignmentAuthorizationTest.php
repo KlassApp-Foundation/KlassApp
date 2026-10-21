@@ -307,7 +307,7 @@ class LegacyPortalTeacherLeaveAssignmentAuthorizationTest extends TestCase
         $this->get('/teacher/leave/edit/list/'.$this->leaveA->id)
             ->assertForbidden();
 
-        $this->get('/teacher/leave/delete/'.$this->leaveA->id)
+        $this->delete('/teacher/leave/delete/'.$this->leaveA->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('teacher_leave_applications', [

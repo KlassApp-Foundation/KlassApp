@@ -68,7 +68,7 @@ Route::get( '/notice/show/list', 'NoticeBoardController@showList' );
 	Route::post('/task/snooze/{id}', 'TaskController@snooze');
 
 	//delete
-	Route::get('/task/{id}/delete', 'TaskController@destroy');
+	Route::delete('/task/{id}/delete', 'TaskController@destroy');
 
 //activity log
 Route::get( '/activity', 'ActivityLogController@index' );

@@ -83,8 +83,10 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('compare-band', false);
         $response->assertSee('compare-band-cell', false);
         $response->assertDontSee('compare-table-wrap', false);
-        $response->assertSee('/terms-of-service', false);
-        $response->assertSee('/privacy-policy', false);
+        $response->assertSee('href="'.url('/terms').'"', false);
+        $response->assertSee('href="'.url('/privacy').'"', false);
+        $response->assertDontSee('/terms-of-service', false);
+        $response->assertDontSee('/privacy-policy', false);
         $content = $response->getContent();
         $this->assertStringNotContainsString('href="#">Terms</a>', $content);
         $this->assertStringNotContainsString('href="#">Privacy</a>', $content);

@@ -164,9 +164,23 @@ Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class,
     ->middleware('throttle:5,1')
     ->name('demo.request.store');
 
-// Terms of Service and Privacy Policy
-Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
-Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'create']);
+// Public legal pages. Canonical URLs are /privacy and /terms (no login, no
+// school). Google's OAuth consent screen links here. Older paths 301 to them
+// and keep the query string.
+$redirectKeepingQuery = static function (string $to) {
+    return static function () use ($to) {
+        $query = request()->getQueryString();
+
+        return redirect($to.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+    };
+};
+
+Route::get('/privacy', [App\Http\Controllers\AboutController::class, 'create'])->name('privacy');
+Route::get('/terms', [App\Http\Controllers\AboutController::class, 'terms'])->name('terms');
+Route::get('/ploicy', $redirectKeepingQuery('/privacy'));
+Route::get('/policy', $redirectKeepingQuery('/privacy'));
+Route::get('/privacy-policy', $redirectKeepingQuery('/privacy'));
+Route::get('/terms-of-service', $redirectKeepingQuery('/terms'));
 
 // Premium School Pages (public)
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
@@ -260,7 +274,7 @@ Route::get('/whatsapp/report-files/{token}', [\App\Http\Controllers\WhatsAppRepo
 Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingController::class, 'store']);
 
 // Dismiss onboarding reminder (sets session flag to hide the setup banner)
-Route::get('/dismiss-onboarding', function () {
+Route::post('/dismiss-onboarding', function () {
     $user = auth()->user();
     if ($user && $user->school_id) {
         // Dashboard v2: the dismissal is per user and school, in the database,
@@ -277,12 +291,12 @@ Route::get('/dismiss-onboarding', function () {
 })->name('dismiss.onboarding.reminder')->middleware('auth');
 
 //Impersonate as teacher
-Route::get('/teacher/{id}/impersonate', 'Auth\ImpersonateController@impersonate')->middleware('auth', 'schooladmin');
-Route::get('/library/{id}/impersonate', 'Auth\ImpersonateController@librarianimpersonate')->middleware('auth', 'schooladmin');
-Route::get('/student/{id}/impersonate', 'Auth\ImpersonateController@studentimpersonate')->middleware('auth', 'schooladmin');
-Route::get('/teacher/impersonate/stop', 'Auth\ImpersonateController@stopImpersonate');
+Route::post('/teacher/{id}/impersonate', 'Auth\ImpersonateController@impersonate')->middleware('auth', 'schooladmin');
+Route::post('/library/{id}/impersonate', 'Auth\ImpersonateController@librarianimpersonate')->middleware('auth', 'schooladmin');
+Route::post('/student/{id}/impersonate', 'Auth\ImpersonateController@studentimpersonate')->middleware('auth', 'schooladmin');
+Route::post('/teacher/impersonate/stop', 'Auth\ImpersonateController@stopImpersonate');
 
-Route::get('/schooladmin/{id}/impersonate', 'Auth\ImpersonateController@schoolAdminimpersonate')->middleware('auth', 'superadmin');
+Route::post('/schooladmin/{id}/impersonate', 'Auth\ImpersonateController@schoolAdminimpersonate')->middleware('auth', 'superadmin');
 
 //Reset Password for member
 Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.email');
@@ -291,7 +305,7 @@ Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetFor
 Route::post('/password/reset/change', 'Auth\ResetPasswordController@reset')->name('password.reset');
 Route::get('/password/reset-code', 'Auth\PasswordResetCodeController@showCodeForm')->name('password.reset.code');
 Route::post('/password/reset-code/verify', 'Auth\PasswordResetCodeController@verifyCode')->name('password.reset.code.verify');
-Route::get('/password/reset-code/resend', 'Auth\PasswordResetCodeController@resendCode')->name('password.reset.code.resend');
+Route::post('/password/reset-code/resend', 'Auth\PasswordResetCodeController@resendCode')->name('password.reset.code.resend');
 
 // Force password change for accounts created with temporary/reset credentials
 Route::get('/password/force-change', 'Auth\ForceChangePasswordController@showForm')
@@ -299,8 +313,9 @@ Route::get('/password/force-change', 'Auth\ForceChangePasswordController@showFor
     ->name('password.force-change');
 Route::post('/password/force-change', 'Auth\ForceChangePasswordController@store')
     ->middleware('auth');
-//Email Verification for Member
-Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification');
+//Email Verification for Member. GET only shows the confirmation step.
+Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification')->name('emailverification.show');
+Route::post('/emailverification/{token}', 'Auth\EmailVerificationController@confirm')->name('emailverification.confirm');
 // OTP Verification
 Route::get('/verifyotp', 'OTPController@create');
 Route::post('/verifyotp', 'OTPController@store');

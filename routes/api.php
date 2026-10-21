@@ -43,7 +43,7 @@ Route::group([
 
     //update token
 
-    Route::get('/updatetoken', 'UserController@updatetoken');
+    Route::post('/updatetoken', 'UserController@updatetoken');
 
     //change password
 
@@ -98,7 +98,7 @@ Route::group([
 
     Route::post('/leave/edit/{id}','LeaveController@update');
 
-    Route::get('/leave/delete/{id}','LeaveController@destroy');
+    Route::delete('/leave/delete/{id}','LeaveController@destroy');
 
     //media files
 
@@ -154,7 +154,7 @@ Route::group([
 
     Route::post('/homework/submit/{homework_id}/{student_id}','HomeworkController@store');
 
-    Route::get('/homework/delete/{id}/{student_id}','HomeworkController@destroy');
+    Route::delete('/homework/delete/{id}/{student_id}','HomeworkController@destroy');
 
     Route::post('/homework/reply/{homework_id}/{student_id}','HomeworkController@replycomment');
 
@@ -223,7 +223,7 @@ Route::group([
 
     Route::post('/assignment/submit/{assignment_id}/{student_id}','AssignmentController@store');
 
-    Route::get('/assignment/delete/{id}/{student_id}','AssignmentController@destroy');
+    Route::delete('/assignment/delete/{id}/{student_id}','AssignmentController@destroy');
 
 
 
@@ -254,7 +254,7 @@ Route::group([
         Route::post('/task/snooze/{id}/{student_id}', 'TaskController@snooze');
 
         //delete
-        Route::get('/task/delete/{id}','TaskController@destroy');
+        Route::delete('/task/delete/{id}','TaskController@destroy');
 
     //viewers details
 

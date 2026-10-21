@@ -37,7 +37,7 @@ Route::post('/visitorlog/add','VisitorLogController@store');
 Route::get('/visitorlog/show/{id}','VisitorLogController@show');
 Route::get('/visitorlog/edit/{id}', 'VisitorLogController@edit');
 Route::post('/visitorlog/update/{id}', 'VisitorLogController@update');
-Route::get('/visitorlog/delete/{id}', 'VisitorLogController@destroy');
+Route::delete('/visitorlog/delete/{id}', 'VisitorLogController@destroy');
 Route::get('/visitorlog/view/{id}','VisitorLogController@view');
 Route::get('/visitorlog/print/{id}','VisitorLogController@print');
 
@@ -50,7 +50,7 @@ Route::post('/calllog/add','CallLogController@store');
 Route::get('/calllog/show/{id}','CallLogController@show');
 Route::get('/calllog/edit/{id}', 'CallLogController@edit');
 Route::post('/calllog/update/{id}', 'CallLogController@update');
-Route::get('/calllog/delete/{id}', 'CallLogController@destroy');
+Route::delete('/calllog/delete/{id}', 'CallLogController@destroy');
 
 
 //postal-log
@@ -62,7 +62,7 @@ Route::post('/postalrecord/add','PostalRecordController@store');
 Route::get('/postalrecord/show/{id}','PostalRecordController@show');
 Route::get('/postalrecord/edit/{id}', 'PostalRecordController@edit');
 Route::post('/postalrecord/update/{id}', 'PostalRecordController@update');
-Route::get('/postalrecord/delete/{id}', 'PostalRecordController@destroy');
+Route::delete('/postalrecord/delete/{id}', 'PostalRecordController@destroy');
 
 
 //holiday
@@ -96,7 +96,7 @@ Route::get( '/notice/show/list', 'NoticeBoardController@list' );
     Route::post('/task/snooze/{id}', 'TaskController@snooze');
 
     //delete
-    Route::get('/task/{id}/delete', 'TaskController@destroy');
+    Route::delete('/task/{id}/delete', 'TaskController@destroy');
 
 //activity log
 Route::get( '/activity', 'ActivityLogController@index' );

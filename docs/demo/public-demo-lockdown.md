@@ -52,7 +52,7 @@ POST    /superadmin/toshi/ops/{conversation}                                   B
 ## contacts/phone numbers
 GET     /admin/phonenumber/add                                                 allowed: read-only page; its saves are blocked or stay inside the demo school
 POST    /admin/phonenumber/add                                                 BLOCKED: contact numbers that could receive sends
-GET     /admin/phonenumber/delete/{id}                                         allowed: read-only page; its saves are blocked or stay inside the demo school
+DELETE  /admin/phonenumber/delete/{id}                                         BLOCKED: contact numbers that could receive sends
 GET     /admin/phonenumber/edit/{id}                                           allowed: read-only page; its saves are blocked or stay inside the demo school
 POST    /admin/phonenumber/edit/{id}                                           BLOCKED: contact numbers that could receive sends
 GET     /admin/phonenumber/editlist/{id}                                       allowed: read-only page; its saves are blocked or stay inside the demo school
@@ -232,7 +232,7 @@ POST    /admin/classwall/post/add/attachment                                   B
 POST    /admin/classwall/post/edit/attachment/{id}                             BLOCKED: file upload
 GET     /admin/display/photos/{event_id}                                       allowed: read-only (any upload request is refused by the file check)
 POST    /admin/document/add/{name}                                             BLOCKED: file upload
-GET     /admin/document/delete/{id}                                            allowed: read-only (any upload request is refused by the file check)
+DELETE  /admin/document/delete/{id}                                            BLOCKED: file upload
 GET     /admin/document/edit/list/{id}                                         allowed: read-only (any upload request is refused by the file check)
 POST    /admin/document/edit/{name}/{id}                                       BLOCKED: file upload
 GET     /admin/document/get/{name}                                             allowed: read-only (any upload request is refused by the file check)
