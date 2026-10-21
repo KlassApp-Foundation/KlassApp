@@ -686,6 +686,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php`.
 - **Decision:** Test setup, not a driver change. The chat can reach WhatsApp after the school confirms the seeded classes and subjects.
 - **Tests:** `tests/Feature/Toshi`, `tests/Feature/Onboarding`, and `tests/Feature/WhatsApp`: 1086 tests, 5214 assertions, 0 failures, 2 skipped. Two older methods in `ParentMagicLoginWhatsAppTest` are still risky because they make no assertions. The focused file is 8 tests, 144 assertions.
+- **Follow-up:** CI test-guard on the first head errored in `PlanLimitEnforcementTest::toshi_add_student_saves_with_notice_when_at_plan_limit`. `UserFactory` writes `KLS001` plus a random 4-digit suffix. This test's school id is 1, and `StudentIdGeneratorService` assigns `KLS0010001` to the new student. When a factory draw is `0001`, the unique `(school_id, registration_number)` index throws, which PHPUnit records as an error. The admin and the seeded students in that test, and the matching controller test, now leave `registration_number` null. `PlanLimitEnforcementTest`: 12 tests, 29 assertions.
 - **Status:** OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (`cursor/toshi-v2-whatsapp-after-review-c704`, base `main` `80d55b06`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180)**
