@@ -635,31 +635,22 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Onboarding term dates and year/fee validation OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190), main merged**
+## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
-- Merged `origin/main` `ef4c4998897e2d3298109a65d343b325ef8807f0` with a merge commit (no force-push). That is [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189), confirmed `merged: true` at `2026-10-21T20:43:44Z`. [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) is not merged. Production untouched.
-- The driver keeps both rejection messages. A `ValidationException` (duplicate or overlong EMIS) shows the engine message. Academic-year and fee rejections show their own messages. Other rejections stay on the generic hint.
-- The `knowledge.md` conflict keeps both session notes below. No infrastructure identifiers or tokens were added.
+- Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.
+- `origin/main` (`ef4c499`) merged into this branch with a merge commit. That tip is [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189). The only conflict was `knowledge.md`. Both sides are kept below. No infrastructure identifiers or tokens were added.
 
-## Session: 2026-10-21 — Onboarding term dates follow the academic year
-
-- **Work:** Default term dates in Toshi v2 and the wizard now take their year from the academic year row (the first year in its name, otherwise its start date). The academic-year chat step accepts a year label or a confirmation, and the fees chat step refuses a line with no positive amount.
-- **Files:** `app/Onboarding/Steps/Steps/TermsStep.php`, `app/Onboarding/Steps/Steps/AcademicYearStep.php`, `app/Onboarding/Steps/Steps/FeesStep.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Models/AcademicYear.php`, `tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php`.
-- **Decision:** Structured academic-year answers (a name plus dates) stay valid. Only a free-text chat reply is limited to a year or a confirmation. Toshi's conversation copy is unchanged.
-- **Tests:** `php artisan test tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php` — 4 passed, 49 assertions. The same four failed on main before the fix (2026 term dates, a non-year saved as the year name, a fee saved with no amount).
-- **Status:** OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) (`cursor/onboarding-year-and-fee-af54`). Do not merge from this session. Merged `origin/main` `ef4c4998897e2d3298109a65d343b325ef8807f0` ([#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189), `merged: true`). Both histories are kept.
-
-## Current Status: October 21, 2026 — **EMIS duplicate and length validation MERGED [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)** `ef4c4998897e2d3298109a65d343b325ef8807f0`
+## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
 
 - `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
-- Confirmed `merged: true` at `2026-10-21T20:43:44Z`, merge commit `ef4c4998897e2d3298109a65d343b325ef8807f0`.
+- Not merged. Production untouched.
 
 ## Session: 2026-10-21 — Reject duplicate or overlong EMIS codes (Toshi v2 + wizard)
 
 - **Work:** Applied the EMIS validation patch with `git am` onto `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c`. The patch applied with no conflict.
 - **Files:** `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `tests/Feature/Toshi/ToshiOnboardingV2EmisTest.php`.
 - **Decision:** Check length and uniqueness in `saveEmis` so both Toshi v2 and the wizard get a validation error. The driver surfaces `ValidationException` messages. Other rejections stay on the generic hint. The existence check excludes the current school and does not return another school's data.
-- **Status:** MERGED [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`) as `ef4c4998897e2d3298109a65d343b325ef8807f0`.
+- **Status:** OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
@@ -3044,6 +3035,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
+
+- **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.
+- **Files touched**: `app/Helpers/WhatsAppPhoneHelper.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Services/WhatsAppBusinessService.php`, `app/Services/OutboundWhatsAppService.php`, `app/Services/TeacherInviteLinkService.php`, `app/Http/Controllers/Api/SchoolPayWebhookController.php`, `app/Channels/WhatsAppBackupChannel.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `tests/Feature/WhatsApp/WhatsAppLogPhoneMaskTest.php`, `tests/Feature/Admin/LinkWhatsAppActivityLogTest.php`, `knowledge.md`.
+- **Decision**: Reused no existing helper. `MarksReleaseService` masks for the result view with a different shape and is private. The activity row still stores the number the admin submitted.
+- **Status**: OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188) (`cursor/mask-whatsapp-log-phones-8f2e`). Not merged. Production untouched. Merged `origin/main` `ef4c499` ([#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)) with a merge commit. The only conflict was `knowledge.md`; both sides are kept. No infrastructure identifiers or tokens were added.
+- **Evidence**: Both new tests failed on `origin/main` and passed with the change. Related WhatsApp suites passed (50 tests, 218 assertions). No browser check; this is log text and an activity row.
 
 ### 2026-10-21: PHP 8.5 deprecations, no runtime change
 

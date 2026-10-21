@@ -1,0 +1,17 @@
+class,stream,name,email,phone
+Senior One,A,Emmanuel Nampiima,emmanuel.nampiima@example.com,+256700000610
+Senior One,B,Hellen Bwambale,hellen.bwambale@example.com,+256700000611
+Senior Two,A,Moses Mukasa,moses.mukasa@example.com,+256700000612
+Senior Two,B,Naomi Owor,naomi.owor@example.com,+256700000613
+Senior Three,A,Diana Namukasa,diana.namukasa@example.com,+256700000614
+Senior Three,B,Paul Mutebi,paul.mutebi@example.com,+256700000615
+Senior Four,A,Joy Tumusiime,joy.tumusiime@example.com,+256700000616
+Senior Four,B,Amina Opio,amina.opio@example.com,+256700000617
+Senior Five,PCM,Gloria Apio,gloria.apio@example.com,+256700000626
+Senior Five,BCM,Shamim Sserwadda,shamim.sserwadda@example.com,+256700000627
+Senior Five,HEG,Brenda Byaruhanga,brenda.byaruhanga@example.com,+256700000628
+Senior Five,MEG,Mercy Apio,mercy.apio@example.com,+256700000629
+Senior Six,PCM,Herbert Byaruhanga,herbert.byaruhanga@example.com,+256700000630
+Senior Six,BCM,Solomon Apio,solomon.apio@example.com,+256700000631
+Senior Six,HEG,Amina Isabirye,amina.isabirye@example.com,+256700000632
+Senior Six,MEG,Hellen Wasswa,hellen.wasswa@example.com,+256700000633

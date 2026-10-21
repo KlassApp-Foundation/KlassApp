@@ -466,7 +466,7 @@ class WhatsAppController extends Controller
             ->count();
 
         Log::warning('WhatsApp delivery failure', [
-            'phone'               => $phone,
+            'phone'               => WhatsAppPhoneHelper::mask((string) $phone),
             'message_id'          => $log->whatsapp_message_id,
             'error'               => $error,
             'error_code'          => $errorCode,
@@ -476,7 +476,7 @@ class WhatsAppController extends Controller
         // Alert after 3+ consecutive failures in an hour — likely a systemic issue
         if ($consecutiveFailures >= 3 && $consecutiveFailures % 3 === 0) {
             Log::error('WHATSAPP DELIVERY: High failure rate detected', [
-                'phone'                => $phone,
+                'phone'                => WhatsAppPhoneHelper::mask((string) $phone),
                 'consecutive_failures' => $consecutiveFailures,
                 'recent_error'         => $error,
                 'alert_threshold'      => 3,
@@ -610,7 +610,7 @@ class WhatsAppController extends Controller
                             ?? '';
                     }
 
-                    Log::info('Meta message parsed', ['phone' => $phone, 'body' => $body, 'type' => $msgType]);
+                    Log::info('Meta message parsed', ['phone' => WhatsAppPhoneHelper::mask($phone), 'body' => $body, 'type' => $msgType]);
 
                     if (empty($phone) || empty($body)) {
                         continue;
@@ -756,7 +756,7 @@ class WhatsAppController extends Controller
         $outboundService = app(OutboundWhatsAppService::class);
         $flushed = $outboundService->flushPending($whatsappUser);
         if ($flushed > 0) {
-            Log::info("handleMetaInbound: flushed {$flushed} pending notifications for {$phone}");
+            Log::info('handleMetaInbound: flushed '.$flushed.' pending notifications for '.WhatsAppPhoneHelper::mask($phone));
         }
     }
 
@@ -780,7 +780,7 @@ class WhatsAppController extends Controller
         );
 
         Log::info('WhatsApp Flow completed', [
-            'phone' => $phone,
+            'phone' => WhatsAppPhoneHelper::mask($phone),
             'sender' => $senderName,
             'flow_name' => $nfmReply['name'] ?? null,
             'payload' => $payload,
@@ -1002,11 +1002,11 @@ class WhatsAppController extends Controller
                         'demo_linked_at' => now(),
                     ]);
                 }
-                Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone}) school_id={$demoSchoolId}");
+                Log::info('WhatsApp DEMO (Meta): '.$senderName.' ('.WhatsAppPhoneHelper::mask($phone).') school_id='.$demoSchoolId);
             } else {
                 Log::warning('WhatsApp DEMO pointer: demo parent/school not configured', [
                     'demo_parent_user_id' => $demoParentId,
-                    'phone' => $phone,
+                    'phone' => WhatsAppPhoneHelper::mask($phone),
                 ]);
             }
 

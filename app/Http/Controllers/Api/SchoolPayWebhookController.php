@@ -42,6 +42,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\WhatsAppPhoneHelper;
 use App\Http\Controllers\Controller;
 use App\Models\MessageDeliveryLog;
 use App\Models\School;
@@ -291,7 +292,7 @@ class SchoolPayWebhookController extends Controller
                 ->update(['notification_status' => 'failed']);
 
             Log::error('SchoolPay webhook: WhatsApp send exception', [
-                'phone'  => $whatsappUser->phone,
+                'phone'  => WhatsAppPhoneHelper::mask((string) $whatsappUser->phone),
                 'error'  => $e->getMessage(),
                 'receipt' => $receiptNumber,
             ]);

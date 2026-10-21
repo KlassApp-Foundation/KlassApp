@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\MessageDeliveryLog;
 use App\Models\WhatsAppUser;
 use Illuminate\Support\Facades\Http;
@@ -139,7 +140,7 @@ class WhatsAppBusinessService
         if (!$success) {
             $error = $body['error']['message'] ?? 'Unknown error';
             Log::error('WhatsApp Business API: sendText failed', [
-                'phone'  => $phone,
+                'phone'  => WhatsAppPhoneHelper::mask($phone),
                 'error'  => $error,
                 'status' => $response->status(),
             ]);
@@ -221,7 +222,7 @@ class WhatsAppBusinessService
         if (!$success) {
             $error = $body['error']['message'] ?? 'Unknown error';
             Log::error('WhatsApp Business API: sendTemplate failed', [
-                'phone'         => $phone,
+                'phone'         => WhatsAppPhoneHelper::mask($phone),
                 'template_name' => $templateName,
                 'error'         => $error,
             ]);
@@ -325,7 +326,7 @@ class WhatsAppBusinessService
         if (!$success) {
             $error = $result['error']['message'] ?? 'Unknown error';
             Log::error('WhatsApp Business API: sendInteractiveButtons failed', [
-                'phone'  => $phone,
+                'phone'  => WhatsAppPhoneHelper::mask($phone),
                 'body'   => $body,
                 'error'  => $error,
                 'status' => $response->status(),
@@ -429,7 +430,7 @@ class WhatsAppBusinessService
 
             if (!$success) {
                 Log::error('WhatsApp Business API: sendList failed', [
-                    'phone'  => $phone,
+                    'phone'  => WhatsAppPhoneHelper::mask($phone),
                     'title'  => $title,
                     'error'  => $result['error']['message'] ?? 'Unknown',
                 ]);
@@ -544,7 +545,7 @@ class WhatsAppBusinessService
         if (! $success) {
             $error = $result['error']['message'] ?? 'Unknown error';
             Log::error('WhatsApp Business API: sendFlow failed', [
-                'phone' => $phone,
+                'phone' => WhatsAppPhoneHelper::mask($phone),
                 'flow_id' => $flowId,
                 'screen' => $screenId,
                 'error' => $error,
@@ -714,7 +715,7 @@ class WhatsAppBusinessService
         if (!$success) {
             $error = $respBody['error']['message'] ?? 'Unknown error';
             Log::error('WhatsApp Business API: sendDocument failed', [
-                'phone'  => $phone,
+                'phone'  => WhatsAppPhoneHelper::mask($phone),
                 'error'  => $error,
                 'url'    => $fileUrl,
             ]);
