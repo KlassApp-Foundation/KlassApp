@@ -676,6 +676,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **test:purge-schools named schools and email cleanup OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187)**
+
+- `test:purge-schools` stays a dry run unless `--force` is passed. `--confirm-name` allows an `is_test=1` school whose name does not start with `E2E `, and the name must match exactly. It does not bypass `is_test`, and a demo school is still refused (use `demo:purge-schools`). A school with a usergroup 1 or 2 user is refused, including a soft-deleted one. `--email` clears early-access requests and school, teacher, and co-admin invites for that address, and refuses an address owned by a user outside the targeted schools or by a platform admin (usergroup 1 or 2). Soft-deleted users are inventoried and removed. `school_grading_systems` and `student_id_sequences` are in the school-scoped delete list. Not merged. Production untouched.
+
+## Session: 2026-10-21 — test:purge-schools named schools and email cleanup
+
+- **Work:** Applied the guarded purge extension onto `origin/main` `78ae595c`. Dry run remains the default.
+- **Files:** `app/Console/Commands/TestPurgeSchoolsCommand.php`, `tests/Feature/E2E/TestPurgeSchoolsCommandTest.php`.
+- **Decision:** `--confirm-name` never overrides the demo-school refusal or the `is_test` flag. Email cleanup is refused for a platform admin and for any user outside the targeted schools.
+- **Tests:** `php artisan test tests/Feature/E2E/TestPurgeSchoolsCommandTest.php` — 15 passed, 105 assertions (the patch's cases, plus demo-school refusal with `--confirm-name`, and a platform-admin email refusal).
+- **Status:** OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187) (`cursor/purge-schools-named-email-c67e`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185)**
 
 - [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) is open. Do not merge from this session.
