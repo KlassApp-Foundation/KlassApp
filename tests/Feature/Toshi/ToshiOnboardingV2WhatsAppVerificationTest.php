@@ -9,12 +9,14 @@ use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\FeesCategories;
 use App\Models\School;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Onboarding\Steps\OnboardingStepReview;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\DemoOnlyRecipientGuard;
 use App\Services\DemoSchoolCommsGuard;
@@ -149,6 +151,11 @@ class ToshiOnboardingV2WhatsAppVerificationTest extends TestCase
         OnboardingStepsService::markStepSkipped($school, 'teachers');
         OnboardingStepsService::markStepSkipped($school, 'students');
         $this->school = $school->fresh();
+
+        // #1177: seeded class and subject rows still stop the v2 driver until
+        // the school has reviewed them. These tests start at WhatsApp.
+        OnboardingStepReview::mark($this->school, 'standards');
+        OnboardingStepReview::mark($this->school, 'subjects');
 
         $next = app(StepRegistry::class)->nextUnfinished($this->school, $this->admin->id);
         $this->assertSame('whatsapp_verify', $next?->key());
@@ -339,6 +346,72 @@ class ToshiOnboardingV2WhatsAppVerificationTest extends TestCase
             app(StepRegistry::class)->nextUnfinished($this->school->fresh(), $this->admin->id)?->key()
         );
         $this->assertSame([], $this->outbound());
+    }
+
+    public function test_confirming_seeded_classes_and_subjects_then_enters_the_whatsapp_code(): void
+    {
+        SchoolDetail::query()
+            ->where('school_id', $this->school->id)
+            ->whereIn('meta_key', ['onboarding_v2_reviewed_standards', 'onboarding_v2_reviewed_subjects'])
+            ->delete();
+
+        $this->assertFalse(OnboardingStepReview::reviewed($this->school->fresh(), 'standards'));
+        $this->assertFalse(OnboardingStepReview::reviewed($this->school->fresh(), 'subjects'));
+
+        $this->configureWhatsApp();
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class);
+        $this->assertStringContainsString('Confirm your classes and streams.', $this->botText($component));
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertSame([], $this->outbound());
+
+        $component->set('input', 'done')->call('send');
+        $this->assertTrue(OnboardingStepReview::reviewed($this->school->fresh(), 'standards'));
+        $this->assertFalse(OnboardingStepReview::reviewed($this->school->fresh(), 'subjects'));
+        $this->assertStringContainsString('Confirm subjects for your classes.', $this->botText($component));
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertSame([], $this->outbound());
+
+        $component->set('input', 'done')->call('send');
+        $this->assertTrue(OnboardingStepReview::reviewed($this->school->fresh(), 'subjects'));
+        $this->assertStringContainsString(
+            "We'll send a verification code and link the number only after you enter it.",
+            $this->botText($component)
+        );
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->pendingCode());
+        $this->assertSame(
+            'whatsapp_verify',
+            app(StepRegistry::class)->nextUnfinished($this->school->fresh(), $this->admin->id)?->key()
+        );
+        $this->assertSame([], $this->outbound());
+
+        $component->set('input', self::PHONE)->call('send')->assertSet('whatsappSentOtp', '');
+
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent);
+        $this->assertSame('256772000999', $sent[0]['to']);
+        $code = $this->codeFromBody($sent[0]['body']);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
+        $this->assertSame($code, app(WhatsAppOnboardingOtpService::class)->pendingCode());
+        $messages = $this->botText($component);
+        $this->assertStringContainsString('Enter it below', $messages);
+        $this->assertStringContainsString('resend', $messages);
+        $this->assertResponseHidesCode($component, $code);
+
+        $component->set('input', $code)->call('send');
+
+        $row = WhatsAppUser::where('user_id', $this->admin->id)->first();
+        $this->assertNotNull($row);
+        $this->assertSame(self::NORMALISED, $row->phone);
+        $this->assertSame($this->school->id, $row->school_id);
+        $this->assertNotNull($row->verified_at);
+        $this->assertTrue((bool) $row->opted_in);
+        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->pendingCode());
+        $this->assertStringNotContainsString($code, $this->botText($component));
+        $this->assertStringNotContainsString($code, (string) $component->get('whatsappSentOtp'));
     }
 
     private function configureWhatsApp(int $graphStatus = 200): void

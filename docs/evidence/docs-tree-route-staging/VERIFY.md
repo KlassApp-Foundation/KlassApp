@@ -1,8 +1,8 @@
 # Staging verify — docs tree route (#665)
 
 - **Merge SHA**: `3c3d442ff0f1ee1351e071e8410a45ed63bf0e5e`
-- **Staging deploy**: `deployment.succeeded` (identifier: see the internal ops notes)
-- **URL**: see the internal ops notes
+- **Staging deploy**: `deployment.succeeded` (identifier: see the private repo KlassApp-Foundation/internal or the Cloud dashboard)
+- **URL**: see the private repo KlassApp-Foundation/internal or the Cloud dashboard
 
 ## HTTP
 

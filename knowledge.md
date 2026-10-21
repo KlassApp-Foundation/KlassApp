@@ -6,7 +6,7 @@
 
 | Layer | Version | Source |
 |---|---|---|
-| **PHP** | 8.4.23 | production runtime (see the internal ops notes) |
+| **PHP** | 8.4.23 | production runtime (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) |
 | **Laravel** | 12.63.0 | `php artisan --version` on production |
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
@@ -14,7 +14,7 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). The DigitalOcean droplet is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
+| **Production host** | **Laravel Cloud** (`klassapp.xyz`, eu-central-1, via Composer Build + Valkey). The DigitalOcean droplet is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — verify via Cloud Commands, not SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
@@ -25,18 +25,18 @@ Laravel Cloud MCP (`https://mcp.laravel.cloud/mcp`) is **READ-ONLY**. It can lis
 
 ### Getting the token
 
-The same org API token is used for MCP, the Commands API, and the deploy trigger. It is not stored in this repo. See the internal ops notes. Do **not** hardcode or commit the token.
+The same org API token is used for MCP, the Commands API, and the deploy trigger. It is not stored in this repo. See the private repo KlassApp-Foundation/internal or the Cloud dashboard. Do **not** hardcode or commit the token.
 
 ### Wiring into an MCP-capable agent
 
-MCP clients send the token as **`X-Auth-Token`**. REST write calls (Commands + Deploy) use **`Authorization: Bearer <token>`** instead. The token value comes from the internal ops notes.
+MCP clients send the token as **`X-Auth-Token`**. REST write calls (Commands + Deploy) use **`Authorization: Bearer <token>`** instead. The token value comes from the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
 ```json
 {
   "laravel-cloud": {
     "url": "https://mcp.laravel.cloud/mcp",
     "headers": {
-      "X-Auth-Token": "<token from the internal ops notes>"
+      "X-Auth-Token": "<token from KlassApp-Foundation/internal or the Cloud dashboard>"
     }
   }
 }
@@ -46,7 +46,7 @@ MCP clients send the token as **`X-Auth-Token`**. REST write calls (Commands + D
 |---|---|---|---|
 | **Cursor** | `~/.cursor/mcp.json` under `mcpServers` | HTTP | Add alongside existing `laravel-boost` entry. Do not remove other entries. |
 | **Goose** | `~/.config/goose/config.yaml` under `mcp_servers` | `streamable_http` | Match indentation level of existing `phpstorm` entry. |
-| **Claude Code** | `claude mcp add --transport http laravel-cloud https://mcp.laravel.cloud/mcp --header "X-Auth-Token: <token>"` | HTTP | Then `claude mcp enable laravel-cloud`. The token comes from the internal ops notes. |
+| **Claude Code** | `claude mcp add --transport http laravel-cloud https://mcp.laravel.cloud/mcp --header "X-Auth-Token: <token>"` | HTTP | Then `claude mcp enable laravel-cloud`. The token comes from the private repo KlassApp-Foundation/internal or the Cloud dashboard. |
 | **MCP Inspector / generic** | Same URL + header pattern | HTTP | Add via that tool's own UI or config file. |
 
 Once wired, agents can **inspect** Cloud state (including `list-deployments` / `get-deployment`). To **ship**, POST to the deployments endpoint of the production environment (below). To run `php artisan …` on an environment, use the Commands API.
@@ -55,48 +55,48 @@ Once wired, agents can **inspect** Cloud state (including `list-deployments` / `
 
 POST to the commands endpoint of the target environment with a flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). A top-level commands endpoint redirects and is not usable. Poll the command until it succeeds. Environment variables are set on that environment and apply only after a **real deployment**, not after `config:clear` alone. Prefer `curl` over Python `urllib` — Cloudflare may block some User-Agents.
 
-Production and staging environment identifiers are not in this repo. See the internal ops notes.
+Production and staging environment identifiers are not in this repo. See the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
 This endpoint runs a one-off command. It does **not** build/release a new commit. For that, use the section below.
 
 ## Triggering a real deployment (distinct from the Commands API)
 
-Laravel Cloud's MCP server is **READ-ONLY** — it has no deploy-trigger tool. Push-to-deploy is **off** on production; merging to `main` alone does not ship. To actually start a deployment, POST to the deployments endpoint of the production environment (empty body). See the internal ops notes for the token and the environment.
+Laravel Cloud's MCP server is **READ-ONLY** — it has no deploy-trigger tool. Push-to-deploy is **off** on production; merging to `main` alone does not ship. To actually start a deployment, POST to the deployments endpoint of the production environment (empty body). See the private repo KlassApp-Foundation/internal or the Cloud dashboard for the token and the environment.
 
 This is **different from the Commands API** (which runs a one-off command). The deployments endpoint starts a **real deployment** of the environment’s latest commit (typically current `main` tip).
 
 **After triggering**, poll that deployment until its status is `deployment.succeeded`, failed, or cancelled. MCP can also list or get deployments (read-only).
 
-**Token:** the same Cloud API token already used for the Commands API and MCP. See the internal ops notes.
+**Token:** the same Cloud API token already used for the Commands API and MCP. See the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
-> 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — retrieve it from the internal ops notes.
+> 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — retrieve it from the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
 ## Staging & Preview Environments (contributor reference — provisioned 2026-09-11)
 
-Application: **KlassApp** on Laravel Cloud (eu-west-1, repo `KlassApp-Foundation/KlassApp`). Application and environment identifiers are not in this repo. See the internal ops notes.
+Application: **KlassApp** on Laravel Cloud (eu-central-1, repo `KlassApp-Foundation/KlassApp`). Application and environment identifiers are not in this repo. See the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
 ### What exists today
 
 | Environment | URL | Git branch | Data | Notes |
 |---|---|---|---|---|
 | **production** | `https://klassapp.xyz` | `main` | Real schools (live) | Push-to-deploy **off**; deploy via POST to the deployments endpoint of the production environment |
-| **staging** | see the internal ops notes | `main` | **Demo/seed only** — never production dumps | Push-to-deploy **on**; hibernates; scheduler enabled |
+| **staging** | see the private repo KlassApp-Foundation/internal or the Cloud dashboard | `main` | **Demo/seed only** — never production dumps | Push-to-deploy **on**; hibernates; scheduler enabled |
 
 **Before 2026-09-11:** Cloud had **only production** (confirmed via `list-environments` / API — 1 environment).
 
 ### Staging isolation (verified)
 
-> **2026-09-16 hardening:** Staging was moved off the shared production database cluster after the shared database user could read production school rows. Staging now uses a **dedicated** MySQL cluster. Cluster and schema names are in the internal ops notes.
+> **2026-09-16 hardening:** Staging was moved off the shared production database cluster after the shared database user could read production school rows. Staging now uses a **dedicated** MySQL cluster. Cluster and schema names are in the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 
 - Post-cutover verify (Cloud Commands on staging): a query against the production schema from staging is rejected. The staging host is the staging-only cluster; the staging user is not the production user.
-- Staging cache uses a staging-specific key prefix. The prefix and the cache resource name are in the internal ops notes.
+- Staging cache uses a staging-specific key prefix. The prefix and the cache resource name are in the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 - Staging filesystem: **local** (no production object storage). No production WhatsApp tokens (`mail=log`).
 - Demo passwords: rotated off the briefly public historical password. The pin is not stored in this file. Seeders no longer hardcode/echo that password.
 
 ### Staging demo seed (test data only)
 
 ```bash
-# Via the Cloud Commands API on the staging environment (see the internal ops notes):
+# Via the Cloud Commands API on the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard):
 php artisan db:seed --class=UsergroupTableSeeder --force
 php artisan db:seed --class=RolesTableSeeder --force
 php artisan db:seed --class=CountriesTableSeeder --force
@@ -117,7 +117,7 @@ School: **Phase 4 Roster Demo School** (`phase4-roster-demo@klassapp.xyz`).
 
 ### Deploying staging
 
-POST to the deployments endpoint of the staging environment (empty body). See the internal ops notes for the token and the environment.
+POST to the deployments endpoint of the staging environment (empty body). See the private repo KlassApp-Foundation/internal or the Cloud dashboard for the token and the environment.
 
 Staging also has **push-to-deploy** enabled for `main` (production does not). Prefer the Commands and Deploy API for intentional releases when in doubt.
 
@@ -140,7 +140,7 @@ Laravel Cloud **Preview Environments** auto-create an isolated environment per p
    - Delete on merge/close: **on**
    - Database: **Create new and scale to zero** (or new schema) — **never “Share with target”** for contributor PRs
    - Cache: new/scale-to-zero **or** share with prefix only
-   - Object storage: none or a new bucket (do **not** share the production bucket; see the internal ops notes)
+   - Object storage: none or a new bucket (do **not** share the production bucket; see the private repo KlassApp-Foundation/internal or the Cloud dashboard)
    - Environment variables: set a **fresh** set for previews (Cloud does **not** auto-copy target secrets — good). Include at least `APP_KEY` (Cloud prefills), `APP_ENV=preview`, `APP_DEBUG=true`, and any non-secret config the app needs. **Do not** paste production WhatsApp tokens.
 4. Save. Open a test PR against `main` and confirm:
    - A new environment appears with `created_from_automation: true`
@@ -154,7 +154,7 @@ Laravel Cloud **Preview Environments** auto-create an isolated environment per p
 2. Wait for Cloud to provision + deploy (minutes; scales to zero when idle).
 3. Find the preview URL in the PR timeline comment from Laravel Cloud.
 4. Test against **demo/seed data only** on that ephemeral environment — never against production.
-5. Persistent **staging** (see the internal ops notes) remains the long-lived shared sandbox for manual QA; previews are short-lived per PR.
+5. Persistent **staging** (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) remains the long-lived shared sandbox for manual QA; previews are short-lived per PR.
 
 **Until the dashboard automation exists:** contributors use local Docker / CI + persistent **staging** for live checks; opening a PR will **not** spin a Cloud preview.
 
@@ -166,9 +166,9 @@ Adopted cadence: continuous small fixes/improvements ship as normal (no batching
 
 Product-facing compact notes (contributor detail remains in **Staging & Preview Environments** above):
 
-- URL: see the internal ops notes. The public product URL remains `https://klassapp.xyz`.
-- Environment id: see the internal ops notes.
-- Separate isolated database schema — NOT a production clone, seeded with demo data only. The schema name is in the internal ops notes.
+- URL: see the private repo KlassApp-Foundation/internal or the Cloud dashboard. The public product URL remains `https://klassapp.xyz`.
+- Environment id: see the private repo KlassApp-Foundation/internal or the Cloud dashboard.
+- Separate isolated database schema — NOT a production clone, seeded with demo data only. The schema name is in the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 - Demo login: `phase4.admin@klassapp.xyz` (plus teacher accounts from Phase4RosterDemoSeeder). Password is not published; request access at `community@klassapp.xyz`.
 - Isolation confirmed: 1 school on staging vs 42 on production at time of setup.
 - Preview Environments (auto-provision per PR) NOT yet enabled — must be manually turned on once via the Cloud dashboard (staging → Settings → Preview environments → New automation); no API/CLI path exists for this step. Must isolate the database and NOT share production WhatsApp or object-storage credentials when configuring.
@@ -637,15 +637,29 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
-- Laravel Cloud application, environment, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, and production Doppler secret names are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers: see the internal ops notes (private repo `KlassApp-Foundation/internal`).
+- Laravel Cloud application, environment, organization, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, production Doppler secret names, and token values are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers live in the private repo KlassApp-Foundation/internal or the Cloud dashboard. The app lives in eu-central-1.
 - Docs only. OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Not merged. Production untouched.
+- Merged `origin/main` `78ae595c87924c07abbd36f2d05099a6c01a6f5e` (merge commit, no force-push). That brings in [#1182](https://github.com/KlassApp-Foundation/KlassApp/pull/1182) and [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185). Main's new session is kept below. Those added lines contain no environment, application, or organization identifiers and no tokens.
 
 ## Session: 2026-10-21 — Remove production infrastructure identifiers from public docs
 
-- **Work:** Scrubbed `knowledge.md` and the other public docs that repeated the same identifiers. Operational how-tos keep the process and point at the internal ops notes. Historical notes drop the identifier and keep the surrounding fact.
-- **Files:** `knowledge.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/ops/*`, `docs/readme/README.md`, `docs/research/progress-2026-10-03.md`, `docs/evidence/*` markdown, `e2e/**/*.md`, and the design handoff notes that named the staging host.
-- **Decision:** Do not print identifier values in the commit or the pull request. The private ops notes remain the place those values live.
-- **Status:** OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Docs only. Do not merge from this session. Merged latest `origin/main` with a merge commit. Main's new session notes are kept. No production identifiers or token values were brought back in.
+- **Work:** Scrubbed `knowledge.md` and the other public docs that repeated the same identifiers. Operational how-tos keep the process and point at the private repo KlassApp-Foundation/internal or the Cloud dashboard. Current hosting notes say the app lives in eu-central-1. Historical notes drop the identifier and keep the surrounding fact.
+- **Files:** `knowledge.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/community/faq.md`, `docs/ops/*`, `docs/readme/README.md`, `docs/research/progress-2026-10-03.md`, `docs/evidence/*` markdown, `e2e/**/*.md`, and the design handoff notes that named the staging host.
+- **Decision:** Do not print identifier values in the commit or the pull request. The private repo and the Cloud dashboard remain the places those values live.
+- **Status:** OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Docs only. Do not merge from this session. Merged latest `origin/main` `78ae595c87924c07abbd36f2d05099a6c01a6f5e` with a merge commit. Main's new session notes are kept. No production identifiers or token values were brought back in.
+
+## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185)**
+
+- [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) is open. Do not merge from this session.
+
+## Session: 2026-10-21 — WhatsApp tests mark seeded classes and subjects reviewed
+
+- **Work:** `ToshiOnboardingV2WhatsAppVerificationTest` calls `OnboardingStepReview::mark` for `standards` and `subjects` after the rows exist, so the existing code checks still start on WhatsApp. `test_confirming_seeded_classes_and_subjects_then_enters_the_whatsapp_code` clears those flags, replies `done` to classes and then subjects, and only then sends the phone and the code. The row stays unverified until the code matches. No product change: `StandardsStep::save` and `SubjectsStep::save` already mark the review on confirm.
+- **Files:** `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php`.
+- **Decision:** Test setup, not a driver change. The chat can reach WhatsApp after the school confirms the seeded classes and subjects.
+- **Tests:** `tests/Feature/Toshi`, `tests/Feature/Onboarding`, and `tests/Feature/WhatsApp`: 1086 tests, 5214 assertions, 0 failures, 2 skipped. Two older methods in `ParentMagicLoginWhatsAppTest` are still risky because they make no assertions. The focused file is 8 tests, 144 assertions.
+- **Follow-up:** CI test-guard on the first head errored in `PlanLimitEnforcementTest::toshi_add_student_saves_with_notice_when_at_plan_limit`. `UserFactory` writes `KLS001` plus a random 4-digit suffix. This test's school id is 1, and `StudentIdGeneratorService` assigns `KLS0010001` to the new student. When a factory draw is `0001`, the unique `(school_id, registration_number)` index throws, which PHPUnit records as an error. The admin and the seeded students in that test, and the matching controller test, now leave `registration_number` null. `PlanLimitEnforcementTest`: 12 tests, 29 assertions.
+- **Status:** OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (`cursor/toshi-v2-whatsapp-after-review-c704`, base `main` `80d55b06`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180)**
 
@@ -1161,7 +1175,7 @@ Verified against live staging + `origin/main` (architecture audit [`docs/archite
 - **PR #825** ("fix(nav): mobile sidebar menu could never open — double-bound hamburger toggle"): MERGED `6e7cb4fb205bee9f101daf41888072600b391404`. Staging deploy **succeeded** at commit `6e7cb4fb`.
 - **PR #826** ("fix(parent,student): visitor-lens empty states — helpful redirect, CTA copy, student Toshi greeting"): Still **OPEN** (not merged).
 
-### Staging verification of #825 (Playwright, headless Chromium, real staging `the Cloud environment (see the internal ops notes)`)
+### Staging verification of #825 (Playwright, headless Chromium, real staging `the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)`)
 
 | Layout | 375 | 414 | 768 | 1280 |
 |---|---|---|---|---|
@@ -1271,7 +1285,7 @@ Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xy
 - **Merged**: [#665](https://github.com/KlassApp-Foundation/KlassApp/pull/665) — GitHub API `merged: true`, merge SHA `3c3d442ff0f1ee1351e071e8410a45ed63bf0e5e` (`merged_at` 2026-09-16T23:13:04Z).
 - **Change**: `/docs/{path?}` → `DocsController` allowlist (hub, community, dev, shared theme, readme, roadmap/architecture). Denies `evidence/`, audits, IDOR notes, screenshots, `od-mocks/`, path traversal. MIME + SPA fallback preserved.
 - **Staging deploy**: @ `3c3d442f` → `deployment.succeeded`.
-- **Live verify** (`the Cloud environment (see the internal ops notes)`): shared CSS **200** `text/css`; parchment `--d-canvas` `#fafaf5` / body `rgb(250,250,245)` on community/dev/hub; sensitive paths **404**. Evidence: `docs/evidence/docs-tree-route-staging/`.
+- **Live verify** (`the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)`): shared CSS **200** `text/css`; parchment `--d-canvas` `#fafaf5` / body `rgb(250,250,245)` on community/dev/hub; sensitive paths **404**. Evidence: `docs/evidence/docs-tree-route-staging/`.
 - **Root cause closed**: local `http.server` from `docs/` had hidden that Laravel only served `docs/community/*`.
 
 ## Previous: September 17, 2026 — **Community Docsify content refresh MERGED** ([#663](https://github.com/KlassApp-Foundation/KlassApp/pull/663)) — docs plan closed
@@ -1303,8 +1317,8 @@ Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xy
 ## Previous: September 16, 2026 — **Staging DB isolation MERGED** ([#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656))
 
 - **Merged**: [#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656) — GitHub API `merged: true`, merge SHA `344baf991184a39e53c39d6fbda81bda42539b76` (`merged_at` 2026-09-16T21:33:44Z). Staging deploy **succeeded**.
-- **Ops**: Dedicated Cloud MySQL cluster `the staging database (see the internal ops notes)` ; schema `the staging schema (see the internal ops notes)` ; orphan `production` schema on that cluster deleted.
-- **Verify (post-merge re-probe)**: Staging `SELECT count(*) FROM production.schools` → **`CROSS_BLOCKED`** (`Unknown database 'production'`). `SHOW DATABASES` = `the staging schema (see the internal ops notes)` only (plus system schemas). User `the database user (see the internal ops notes)`.
+- **Ops**: Dedicated Cloud MySQL cluster `the staging database (see KlassApp-Foundation/internal or the Cloud dashboard)` ; schema `the staging schema (see KlassApp-Foundation/internal or the Cloud dashboard)` ; orphan `production` schema on that cluster deleted.
+- **Verify (post-merge re-probe)**: Staging `SELECT count(*) FROM production.schools` → **`CROSS_BLOCKED`** (`Unknown database 'production'`). `SHOW DATABASES` = `the staging schema (see KlassApp-Foundation/internal or the Cloud dashboard)` only (plus system schemas). User `the database user (see KlassApp-Foundation/internal or the Cloud dashboard)`.
 - **Password**: All 6 `phase4.*@klassapp.xyz` users **ROTATED** (`OLD_DEMO123=0`). Doppler + Cloud `STAGING_DEMO_PASSWORD` set (not written here). Seeders use `DemoSeedPassword`.
 - **Prior docs**: [#655](https://github.com/KlassApp-Foundation/KlassApp/pull/655) knowledge PII redaction MERGED (`0f31fab0`).
 
@@ -1312,7 +1326,7 @@ Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xy
 
 - **Merged**: [#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653) — GitHub API `merged: true`, merge SHA `2e5e9318ddda51ad3397dfc8c4c26e19eed373fa` (`merged_at` 2026-09-16T21:02:26Z).
 - **Change**: README no longer publishes `phase4.admin@…` / `[REDACTED - historical password]`; staging URL kept; demo access via `community@klassapp.xyz`.
-- **Why**: Live Cloud Commands on staging (`APP_ENV=staging`, default DB `the staging schema (see the internal ops notes)`, `mail=log`, `disk=local`, WhatsApp token empty, `phase4` user present; prod DB `production`, 46 schools, no `phase4`) — **but** staging MySQL can `SELECT count(*) FROM production.schools` → **46** (`CROSS_OK`). Privilege bleed means staging is **not** safely isolated at the DB ACL layer; public school-admin passwords are inappropriate.
+- **Why**: Live Cloud Commands on staging (`APP_ENV=staging`, default DB `the staging schema (see KlassApp-Foundation/internal or the Cloud dashboard)`, `mail=log`, `disk=local`, WhatsApp token empty, `phase4` user present; prod DB `production`, 46 schools, no `phase4`) — **but** staging MySQL can `SELECT count(*) FROM production.schools` → **46** (`CROSS_OK`). Privilege bleed means staging is **not** safely isolated at the DB ACL layer; public school-admin passwords are inappropriate.
 - **Ops follow-up (not done this PR)**: revoke staging DB user’s access to `production.*` schema; rotate `[REDACTED - historical password]` on staging demo accounts; consider periodic staging wipe/re-seed.
 - **knowledge.md public sensitivity**: later redacted in [#655](https://github.com/KlassApp-Foundation/KlassApp/pull/655) (`0f31fab0`); grey ops IDs intentionally retained.
 
@@ -1363,7 +1377,7 @@ Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xy
 ## Previous: September 16, 2026 — **Landing protocol mesh icon stripped MERGED + STAGING** ([#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627))
 
 - **Merged**: [#627](https://github.com/KlassApp-Foundation/KlassApp/pull/627) — GitHub API `merged: true`, merge SHA `21183487fc2f8221994523d7d2965c514f3df5a1` (`merged_at` 2026-09-16T08:39:45Z). Admin merge past ruleset.
-- **Staging deploy**: @ `21183487` **succeeded**. URL `the Cloud environment (see the internal ops notes)`. **Production: NOT deployed.**
+- **Staging deploy**: @ `21183487` **succeeded**. URL `the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)`. **Production: NOT deployed.**
 - **Staging verify**: Playwright `e2e/landing-protocol-no-mesh-verify.cjs` → **ALL OK** at 375/414/768/1280. Staging HTML: heading present; `protocol-visual` / `class="mesh"` / `mesh-hub-mark` absent; three protocol cards remain. Evidence `e2e/screenshots/landing-protocol-no-mesh/`.
 
 ## Previous: September 16, 2026 — **Landing protocol mesh icon stripped** (PR opening)
@@ -1376,7 +1390,7 @@ Demo credentials used: `phase4.admin@klassapp.xyz` / `phase4.teacher@klassapp.xy
 ## Previous: September 16, 2026 — **Landing Toshi tower + hero X-flip MERGED + STAGING** ([#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624))
 
 - **Merged**: [#624](https://github.com/KlassApp-Foundation/KlassApp/pull/624) — GitHub API `merged: true`, merge SHA `168a054e2a6309ef63436a1a38fb27b4c42e2fd0` (`merged_by` Mucunguzi256, `merged_at` 2026-09-16T08:29:05Z). Admin merge past ruleset (`REVIEW_REQUIRED` block).
-- **Staging deploy**: @ `168a054e` **succeeded** (`deployment.succeeded` 2026-09-16T08:31:27Z). URL `the Cloud environment (see the internal ops notes)`. **Production: NOT deployed.**
+- **Staging deploy**: @ `168a054e` **succeeded** (`deployment.succeeded` 2026-09-16T08:31:27Z). URL `the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)`. **Production: NOT deployed.**
 - **Staging verify**: Playwright `e2e/landing-tower-hero-flip-verify.cjs` → **ALL OK** at 375/414/768/1280. Six marks HTTP **200**. HTML has `toshiTower` + hero deck; no DeepSeek; no `toshi-visual-hub`. Reduced-motion path exercised in the same script. Evidence `e2e/screenshots/landing-tower-hero-flip/` + `report.json` (`base` staging, `ok: true`).
 - **What shipped**: isometric Toshi tower (in-cube emergence), hero X-flip + K-avatars, `--d-*` remapped to landing tokens, marks from `llm-brand-marks.zip` (6 providers).
 
@@ -1656,7 +1670,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 - **Merged to `main`**: [#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) `e5c22ac5` (landing canvas/ink/Sora+DM Sans) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) `33558296` (auth ds-btn metrics + blue focus) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564) `6c76f36d` (error parchment + ds-btn metrics + blue focus).
 - **Staging deploys**: (#562) · (#563) · (#564) — all succeeded on .
-- **Staging verify** (`the Cloud environment (see the internal ops notes)`): landing body `rgb(250,250,245)` + Sora; `/login` Playwright `e2e/auth-d-tokens-verify.cjs` PASS (375/414/768/1280); live 404 Playwright `e2e/errors-d-tokens-verify.cjs` PASS.
+- **Staging verify** (`the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)`): landing body `rgb(250,250,245)` + Sora; `/login` Playwright `e2e/auth-d-tokens-verify.cjs` PASS (375/414/768/1280); live 404 Playwright `e2e/errors-d-tokens-verify.cjs` PASS.
 - **Production**: **NOT deployed** — explicit hold; keep Piece 1 on staging until cutover is approved.
 - **Still open (Piece 1)**: landing `.btn` glow/geometry cleanup; optional class rename `.ap-submit` / `.err-btn*` → `ds-btn` markup (metrics already match).
 
@@ -1701,11 +1715,11 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 ## Previous: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
 
 - **Merged**: [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) merge `7683a604` (`feature/laravel-nightwatch`) — `laravel/nightwatch` ^1.30, published `config/nightwatch.php`, `LOG_STACK` via env (default `daily`; Cloud set to `daily,nightwatch`).
-- **Cloud env (staging + production)**: the Nightwatch token (see the internal ops notes) set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
+- **Cloud env (staging + production)**: the Nightwatch token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
 - **Background agent**: `php artisan nightwatch:agent` on staging + prod App instances.
 - **Staging verify**: `php artisan nightwatch:status` → agent running; agent log `Listening on [127.0.0.1:2407]; Version [1.30.0]`; HTTP probes 200.
 - **Production**: deploy @ `7683a604` **succeeded**; `nightwatch:status` → agent running; Cloud logs show agent initiated listening `:2407` v1.30.0; `klassapp.xyz` /login /contact 200.
-- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token. The token is also in Doppler (see the internal ops notes).
+- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token. The token is also in Doppler (see the private repo KlassApp-Foundation/internal or the Cloud dashboard).
 - **Docs**: root `TOOLING.md` + `AGENTS.md` pointer + Instatus Future Initiative — see this session's docs PR.
 
 ## Previous: September 13, 2026 — Landing official brand connector icons LIVE ([PR #541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) MERGED+DEPLOYED)
@@ -1817,7 +1831,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 
 ## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
 
-- **✅ Object storage (Laravel Cloud R2)**: Bucket `the production bucket (see the internal ops notes)` provisioned; env `FILESYSTEM_DISK=s3` (+ AWS_* / endpoint). Config prefers `FILESYSTEM_DISK` over legacy `FILESYSTEM_DRIVER`; S3 disk omits ACL `visibility` (R2 rejects it). WhatsApp report PDFs use default disk and stream via `Storage::response` when not local.
+- **✅ Object storage (Laravel Cloud R2)**: Bucket `the production bucket (see KlassApp-Foundation/internal or the Cloud dashboard)` provisioned; env `FILESYSTEM_DISK=s3` (+ AWS_* / endpoint). Config prefers `FILESYSTEM_DISK` over legacy `FILESYSTEM_DRIVER`; S3 disk omits ACL `visibility` (R2 rejects it). WhatsApp report PDFs use default disk and stream via `Storage::response` when not local.
 - **✅ Scheduler**: App instance `uses_scheduler: true`. Every-minute `scheduler-heartbeat` writes `Cache::put('scheduler_heartbeat_at', …)`. After clear + ~95s wait: heartbeat=`2026-09-11T13:58:19+03:00` (autonomous `schedule:run`, not manual).
 - **✅ Uganda admission copy** [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519): `AcademicDetail.vue` / student `Edit.vue` — Previous School Marks, Local Language, Examination Board, UNEB candidate classes (S.4/S.6). v-model field names unchanged (copy-only).
 - **Investigation (no code) — promotion vs academic year**: Finalize promotion / `PromotionImport` create next-year `StudentAcademic` rows but **do not** flip `academic_years.status` to make the upcoming year current. Admin must separately set the new year current. Docs silent — treat as **unclear intentional vs oversight**; do not auto-advance until product confirms.
@@ -2102,7 +2116,7 @@ Complete unique-index inventory vs onboarding code (wizard + Toshi → `Onboardi
 - **✅ #435**: complete-mode reload keeps draft step; fee form O'Level/A'Level via `FeesCategories::tierDisplayLabel`; active-step handlers before student-lookup; WhatsApp skip no longer auto-skips School Pay. Merge `11e62e6c`; Cloud deploy **succeeded**. Live Playwright school **19** `REPORT.json` `pass: true` (all four).
 - **✅ #433**: complete-mode `selectPlan()` → Review/`commitAll()` (merge `c215146d`).
 - **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d`.
-- **Domain**: `klassapp.xyz` / vanity `the Cloud environment (see the internal ops notes)` on Cloud.
+- **Domain**: `klassapp.xyz` / vanity `the Cloud environment (see KlassApp-Foundation/internal or the Cloud dashboard)` on Cloud.
 - **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
 
 ## Previous: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**) — superseded above
@@ -3107,7 +3121,7 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Files:** AgentToshi / CreateSchool / SchoolService / demo seeders; `NoSchoolGetsAiByDefaultTest`; profile-dropdown + dashboard-refresh.css + custom.js; AGENTS.md rule 33; this knowledge stamp.
 - **Decisions:** Friday Toshi CTA NO-GO until all Toshi journeys pass at both viewports. AI remains opt-in for new schools; prod still lacks `toshi_mode` until a production deploy.
 - **Status:** Soft-launch code path complete for this plan; Toshi journey product bugs remain open.
-- **Edge cases:** Staging Commands need the Cloud API token (see the internal ops notes; MCP read access alone 403s Commands). Prod school column is `school_category`, not `category`.
+- **Edge cases:** Staging Commands need the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard; MCP read access alone 403s Commands). Prod school column is `school_category`, not `category`.
 
 ### 2026-10-01: Toshi onboarding without AI (switch split + stall fix) — PR #929 MERGED
 - **Work done**: (1a–1c) Onboarding/assistant switch split; `mode=done` when assistant off; e2e stall + decide() checklist false-match fixes; complete-mode commit no longer blocks on school admin's own email. (1d) Journeys pending post-merge staging deploy.
@@ -3173,8 +3187,8 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Status**: ✅ MERGED #650 @ `5f236ad8`. Docs only; no deploy.
 
 ### 2026-09-16: Staging→production DB cross-query closed + demo password rotate — **MERGED** ([#656](https://github.com/KlassApp-Foundation/KlassApp/pull/656))
-- **Work done**: Root cause = shared Laravel Cloud MySQL cluster user with `GRANT … ON *.*` across `production` + `the staging schema (see the internal ops notes)`. Fix = dedicated staging cluster + schema attach + deploy; drop orphan `production` schema on staging cluster; re-seed Phase4; rotate demo passwords; `DemoSeedPassword` + Phase4/Phase5 seeders stop hardcoding/echoing passwords.
-- **Verify**: Post-merge staging re-probe → `CROSS_BLOCKED` Unknown database `production`; schemas visible = `the staging schema (see the internal ops notes)` only; all 6 phase4 users `ROTATED` / `OLD_DEMO123=0`; `STAGING_DEMO_PASSWORD` set in Doppler + Cloud.
+- **Work done**: Root cause = shared Laravel Cloud MySQL cluster user with `GRANT … ON *.*` across `production` + `the staging schema (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)`. Fix = dedicated staging cluster + schema attach + deploy; drop orphan `production` schema on staging cluster; re-seed Phase4; rotate demo passwords; `DemoSeedPassword` + Phase4/Phase5 seeders stop hardcoding/echoing passwords.
+- **Verify**: Post-merge staging re-probe → `CROSS_BLOCKED` Unknown database `production`; schemas visible = `the staging schema (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` only; all 6 phase4 users `ROTATED` / `OLD_DEMO123=0`; `STAGING_DEMO_PASSWORD` set in Doppler + Cloud.
 - **Files**: `app/Support/DemoSeedPassword.php`, `database/seeders/Phase4RosterDemoSeeder.php`, `database/seeders/Phase5CrossTenantTestSeeder.php`, `knowledge.md`.
 - **Status**: ✅ MERGED #656 @ `344baf99` + staging deploy succeeded.
 - **Edge cases flagged**: Cloud still grants `*.*` *within* a cluster — isolation requires separate clusters (or a future per-schema user API). Env var apply needs a staging deploy after set.
@@ -3185,9 +3199,9 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Status**: ✅ MERGED #655 @ `0f31fab0`.
 
 ### 2026-09-16: README staging creds removed + staging isolation probe — **MERGED** ([#653](https://github.com/KlassApp-Foundation/KlassApp/pull/653))
-- **Work done**: Removed public staging passwords from README after live Commands probe. Staging default DB `the staging schema (see the internal ops notes)` (14 schools / 112 users / phase4 present / mail=log / disk=local / WA unset). Prod DB `production` (46 schools / phase4 absent). **Cross-schema**: staging `SELECT` on `production.schools` returned 46.
+- **Work done**: Removed public staging passwords from README after live Commands probe. Staging default DB `the staging schema (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` (14 schools / 112 users / phase4 present / mail=log / disk=local / WA unset). Prod DB `production` (46 schools / phase4 absent). **Cross-schema**: staging `SELECT` on `production.schools` returned 46.
 - **Also merged earlier**: [#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651) global positioning (`d04ae837`); stamp [#652](https://github.com/KlassApp-Foundation/KlassApp/pull/652) (`59e925f9`).
-- **knowledge.md audit (no redaction yet)**: no live API tokens found; **too sensitive for public** candidates include real `+256…` phone numbers, historical password literals (`[REDACTED - historical password]`, `[REDACTED - personal email]` / `[REDACTED - historical password]`), personal gmail in ops notes, Cloud env/app/schema IDs + the Cloud API token retrieval recipe (see the internal ops notes), WABA IDs. Awaiting go-ahead before redact PR.
+- **knowledge.md audit (no redaction yet)**: no live API tokens found; **too sensitive for public** candidates include real `+256…` phone numbers, historical password literals (`[REDACTED - historical password]`, `[REDACTED - personal email]` / `[REDACTED - historical password]`), personal gmail in ops notes, Cloud env/app/schema IDs + the Cloud API token retrieval recipe (see the private repo KlassApp-Foundation/internal or the Cloud dashboard), WABA IDs. Awaiting go-ahead before redact PR.
 - **Status**: ✅ MERGED #653 @ `2e5e9318`. Docs only; no deploy. DB ACL fix is ops, not docs.
 
 ### 2026-09-16: README global positioning — **MERGED** ([#651](https://github.com/KlassApp-Foundation/KlassApp/pull/651))
@@ -3610,7 +3624,7 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Edge cases flagged**: Staging demo school had `toshi_enabled=0` after seed — forced on for gate test; Cloud env had no OPENAI_* vars (relied on committed default).
 
 ### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
-- **Work done**: Provisioned Cloud R2 bucket `the production bucket (see the internal ops notes)` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
+- **Work done**: Provisioned Cloud R2 bucket `the production bucket (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
 - **Files modified**: `config/filesystems.php`, `app/Services/WhatsAppReportCardDeliveryService.php`, `app/Http/Controllers/WhatsAppReportFileController.php`, `app/Console/Kernel.php`, new feature tests.
 - **Key decisions**: Copy-only Uganda labels shipped separately (#519); promotion year-advance left as product question (no code).
 - **PR / merge**: [#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) squash `85452439`
@@ -3796,7 +3810,7 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Work done**: Attempted rotation of the three credentials previously flagged as exposed. Confirmed storage hygiene: `.secrets.local` added to `.gitignore` (was **not** covered by `.env.*`). No secrets written to chat, knowledge, or commits.
 - **Per credential**:
   1. **SSH key (`~/.ssh/id_ed25519_do`)** — **BLOCKED**. Local keypair still present; `ssh -i … root@the retired droplet` times out (port 22). No DigitalOcean API token in this environment to install a replacement key or revoke the old one on droplet 578598104. Production app traffic is on **Laravel Cloud** (`klassapp.xyz`); droplet SSH rotation needs DO console or network access that this session lacks.
-  2. **Laravel Cloud API token** — **BLOCKED**. Current the Cloud API token (see the internal ops notes) still authenticates env/deploy/command APIs (HTTP 200). Creating a **new** token and revoking the old one requires the Cloud dashboard (Settings → API tokens). Token management endpoints (`/api/user`, `/api/tokens`, …) return **401** with this token — cannot self-rotate via API.
+  2. **Laravel Cloud API token** — **BLOCKED**. Current the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) still authenticates env/deploy/command APIs (HTTP 200). Creating a **new** token and revoking the old one requires the Cloud dashboard (Settings → API tokens). Token management endpoints (`/api/user`, `/api/tokens`, …) return **401** with this token — cannot self-rotate via API.
   3. **WhatsApp Business API token** — **BLOCKED**. Local `.env` `WHATSAPP_BUSINESS_API_TOKEN` is empty; Cloud env has the key present (value not read into logs). Rotation requires Meta Business Manager admin to issue a new permanent token, then update Cloud environment variables and revoke the old Meta token. No Meta admin access in this session.
 - **Files modified**: `.gitignore` (`.secrets.local`), `knowledge.md`
 - **Key decisions**: Do not invent “rotated” status without revoke proof. Hand off to a human with DO console + Cloud dashboard + Meta BM admin; after they mint new secrets, store only in gitignored `.secrets.local` / Cloud env — never paste into chat.
@@ -3978,7 +3992,7 @@ WhatsApp link requests (KlassApp number, form, and demo BIND) share one inbox on
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-05: Laravel Cloud API migration setup — **PARTIAL** (no DNS/deploy)
-- **Work done**: Via Cloud REST API (`https://cloud.laravel.com/api`) with org token: created application from `KlassApp-Foundation/KlassApp` (token org had **0** apps — GitHub connect alone had not created one), production env configured PHP 8.4 + build/deploy cmds, provisioned/attached MySQL 8.4 + Valkey (Redis-protocol) in `eu-west-1`, added worker background process, set structural env vars + fresh APP_KEY, disabled push-to-deploy.
+- **Work done**: Via Cloud REST API (`https://cloud.laravel.com/api`) with org token: created application from `KlassApp-Foundation/KlassApp` (token org had **0** apps — GitHub connect alone had not created one), production env configured PHP 8.4 + build/deploy cmds, provisioned/attached MySQL 8.4 + Valkey (Redis-protocol) in `eu-west-1` (the app now lives in eu-central-1), added worker background process, set structural env vars + fresh APP_KEY, disabled push-to-deploy.
 - **Blocked**: Production droplet `the retired droplet` SSH/ping timeout from this network — cannot pull live `.env` for WhatsApp Business / Groq / Claude / mail / etc. Local `.env` copies are not production.
 - **Not done (intentional)**: custom domain `klassapp.xyz`, any deploy, Meta webhook cutover.
 - **Status**: 🚧 Infra configured; secrets + DNS/deploy remain separate steps.
@@ -9534,7 +9548,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 ### 2026-09-17: GitBook migration — community docs with bidirectional sync
 - **Work done**: Migrated KlassApp community Docsify docs to GitBook with real-time bidirectional sync.
 - **Key findings**:
-  - GitBook API token: `GITBOOK` in Doppler (see the internal ops notes)
+  - GitBook API token: `GITBOOK` in Doppler (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)
   - Existing GitBook space: `g6CnNihjBu6JNnwlAA6i` ("KlassApp Documentation") in "Nile Labs" org
   - GitHub Sync was already configured — bidirectional sync between GitBook and `KlassApp-Foundation/KlassApp` main branch
   - All community docs already synced (verified via API): docs/community/*, docs/architecture, docs/roadmap
@@ -11728,7 +11742,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 **Status**: pushed to origin/feature/admin-invite-class-teacher, PR not yet opened. Ready for review.
 
-**2026-09-09 update**: PR #485 merged (squash `5830f747`). Deploy blocked this session — no the Cloud API token (see the internal ops notes) in shell env, Doppler, or local cache; multiple sessions hit the same dead end (see 2026-09-10 entry below for resolution). Live verification will confirm:
+**2026-09-09 update**: PR #485 merged (squash `5830f747`). Deploy blocked this session — no the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) in shell env, Doppler, or local cache; multiple sessions hit the same dead end (see 2026-09-10 entry below for resolution). Live verification will confirm:
 - /admin/sections shows "Invite Class Teacher" button for no-CT classes
 - New-teacher flow: User created, CT fields set, email delivered
 - Existing-teacher flow: CT fields reassigned, notification sent
@@ -11736,14 +11750,14 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 ### 2026-09-10: Laravel Cloud MCP wiring + knowledge update + deploy unblock
 
-**Problem**: Multiple sessions (this one + earlier ones) got stuck trying to trigger a Laravel Cloud deploy because the Cloud API token (see the internal ops notes) was not discoverable — not in shell env, Doppler, local keyring, or file cache. The only documented path was the raw Commands API (`POST /api/commands` with flat body), but session after session failed because the Bearer token was absent.
+**Problem**: Multiple sessions (this one + earlier ones) got stuck trying to trigger a Laravel Cloud deploy because the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) was not discoverable — not in shell env, Doppler, local keyring, or file cache. The only documented path was the raw Commands API (`POST /api/commands` with flat body), but session after session failed because the Bearer token was absent.
 
 **Resolution**: Instead of finding/proxying the token, wired the **official Laravel Cloud MCP server** into both Cursor and Goose so future sessions get native deploy/environment/command tools, not raw REST calls.
 
 **Files modified**:
 - `~/.cursor/mcp.json` — added `laravel-cloud` entry under `mcpServers` (HTTP, URL `https://mcp.laravel.cloud/mcp`, `X-Auth-Token: PASTE_TOKEN_HERE`)
 - `~/.config/goose/config.yaml` — added `laravel-cloud` entry under `mcp_servers` (`type: streamable_http`, matching existing `phpstorm` indentation)
-- `knowledge.md` — added new top-level section "Laravel Cloud MCP (preferred over raw Commands API)" with full wiring instructions for Cursor, Goose, Claude Code, and generic MCP clients. Token retrieval: `see the internal ops notes dev --plain`
+- `knowledge.md` — added new top-level section "Laravel Cloud MCP (preferred over raw Commands API)" with full wiring instructions for Cursor, Goose, Claude Code, and generic MCP clients. Token retrieval: see the private repo KlassApp-Foundation/internal or the Cloud dashboard
 - `knowledge.md` — updated "Verified Stack" production host line from DO droplet to Laravel Cloud; added `⚠️` note about not SSHing the retired droplet
 - `knowledge.md` — updated Future Initiatives "Optional: invite class teacher" → "Invite class teacher to take ownership of a class" with Phase 1 shipped / Phase 2 pending split
 
@@ -11753,7 +11767,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - `public/.gitignore` already contains `.cursor/mcp.json` line — repo-level file would be ignored if present
 - Token placeholder `PASTE_TOKEN_HERE` intentionally left as placeholder — real value to be pasted by the user directly, never by an agent
 
-**Token source**: Doppler `klassapp` project, `dev` config, secret name in the internal ops notes. User confirmed they will paste this directly into both config files.
+**Token source**: Doppler `klassapp` project, `dev` config, secret name in the private repo KlassApp-Foundation/internal or the Cloud dashboard. User confirmed they will paste this directly into both config files.
 
 **Next**: Once the real token is pasted + Cursor/Goose restarted, the agent will have native `laravel-cloud` MCP tools for deploy triggers, environment management, and command execution. Raw Commands API docs preserved as fallback.
 
@@ -11777,7 +11791,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.
 
 ### 2026-09-13: Laravel Nightwatch on staging + production
-- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (deploy succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes. The Nightwatch token is also stored in Doppler (see the internal ops notes).
+- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (deploy succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes. The Nightwatch token is also stored in Doppler (see the private repo KlassApp-Foundation/internal or the Cloud dashboard).
 - **Files modified**: `composer.json`/`lock`, `config/nightwatch.php`, `config/logging.php`, `.env.example`, `knowledge.md` (this stamp).
 - **Key decisions**: Stack channel `daily,nightwatch` (not replacing daily); do not enable Cloud “Connect Nightwatch” UI on top without checking for a double agent; ingest token ≠ Nightwatch dashboard API (403 on public REST).
 - **Status**: ✅ MERGED + DEPLOYED staging & prod. Dashboard chart confirm is UI-side.
@@ -12041,16 +12055,16 @@ Fixes the two `TRACKED ISSUE` entries above.
 
 ### 2026-09-19: Staging deploy failure — ROOT CAUSE FOUND + FIXED + live staging verification of the whole landing spec
 - **Problem**: staging deployments had failed 21 times in a row (`deploy.command.failure`) with `SQLSTATE[HY000]: General error: 9001 Max connect timeout reached while reaching hostgroup 78093 after 10000ms`. Last successful staging deploy was @ `e79951e6` (2026-09-17); everything since failed.
-- **Evidence gathered (Cloud API; token via Doppler (see the internal ops notes) from `/Users/mac/projects/KlassApp`, `User-Agent: curl/*` needed — Cloudflare 403s Python's default UA)**:
+- **Evidence gathered (Cloud API; token via Doppler (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) from `/Users/mac/projects/KlassApp`, `User-Agent: curl/*` needed — Cloudflare 403s Python's default UA)**:
   1. **Full deploy logs** (`GET /api/deployments/{id}/logs`): the build succeeded (`composer install --no-dev && npm run build`); the failure is in **`deploy.command` = `php artisan migrate --force`**, timing out on the migrations-table existence query. So it is *not* the build, and not `deploy.command` config as such — it is the DB connect inside it.
   2. **Independent DB test from inside the running app** (`POST /api/environments/{env}/commands` → `php artisan migrate:status` / `db:show`): **both failed with the identical hostgroup timeout** → the failure is not deploy-runner-specific; the running staging app could not reach its DB either.
-  3. **DB resource**: `GET /api/databases` shows two clusters — `the production database (see the internal ops notes)` (prod) and **`the staging database (see the internal ops notes)`** (the exact host in the error), both `status: available`, `is_public: false`. Config difference: **staging `suspend_seconds: 0`** vs prod `suspend_seconds: 3600`.
+  3. **DB resource**: `GET /api/databases` shows two clusters — `the production database (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` (prod) and **`the staging database (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)`** (the exact host in the error), both `status: available`, `is_public: false`. Config difference: **staging `suspend_seconds: 0`** vs prod `suspend_seconds: 3600`.
   4. **Network**: the private host resolves to a `10.x` VPC address (correct, not externally reachable); TCP to the **public** endpoint succeeds for both DBs (proxy up); external auth is refused by design (`is_public: false`), so backend health can't be probed from outside.
   5. **Cloud status**: `status.laravel.cloud` = *All Systems Operational* — **no platform incident**.
-- **Root cause**: the staging MySQL backend was not serving. ProxySQL (the connection layer) accepted connections but had **no reachable backend in hostgroup 78093**, so both the deploy command and the app timed out at 10s. Host/database/credentials were correct (the error names the right host + `the staging schema (see the internal ops notes)` and reaches the proxy), which rules out a KlassApp config error; staging was the **only** resource configured with `suspend_seconds: 0` (aggressive suspend), consistent with a backend that was suspended/stuck and not resuming inside the 10s connect timeout. **Not a Laravel Cloud platform incident.**
+- **Root cause**: the staging MySQL backend was not serving. ProxySQL (the connection layer) accepted connections but had **no reachable backend in hostgroup 78093**, so both the deploy command and the app timed out at 10s. Host/database/credentials were correct (the error names the right host + `the staging schema (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` and reaches the proxy), which rules out a KlassApp config error; staging was the **only** resource configured with `suspend_seconds: 0` (aggressive suspend), consistent with a backend that was suspended/stuck and not resuming inside the 10s connect timeout. **Not a Laravel Cloud platform incident.**
 - **Fix**: `PATCH /api/databases/{id}` with `{"config":{"suspend_seconds":3600}}` (matching prod) → resource cycled `updating` → `available`. **Immediately after, `php artisan migrate:status` from the running app succeeded** and listed migrations — DB reachable again.
 - **Deploy confirmed**: triggered a real deploy (commit `e3ca375a`) → **`deployment.succeeded`** (build → deployment → succeeded).
-- **Live staging verification (Playwright vs `the Cloud environment (see the internal ops notes)`, 375/414/768/1280)** — the whole landing spec now genuinely works when deployed:
+- **Live staging verification (Playwright vs `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)`, 375/414/768/1280)** — the whole landing spec now genuinely works when deployed:
   - serving `landing-preview-CLLsTUrz.css` + `landing-preview-i2dZuhwk.js` (exact committed hashes); `/css/dashboard-refresh.css` contains `#15803D` (5), `#B45309` (2), `#075985` (4) and **zero `#0284C7`** → #676/#683/#687 shipped.
   - #674 title colon fix ✓, footer `#64748B` ✓, trust `grid` + nav CTA hidden ≤414 ✓.
   - #676 `.btn-primary` = `rgb(21,128,61)` ✓. #677 2 layers / 4 chips / ledger / progress / min font 13px ✓.
@@ -12075,7 +12089,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 
 ### 2026-09-20: Staging synthetic verification account + #692 staging verification + Toshi dock consistency across roles
 - **Synthetic staging account (rule #9 convention, repeatable)** — created on **staging**: `synthetic.verify.staging@klassapp.test`, name **"ZZ Synthetic Verify Admin (staging)"**, `usergroup_id=3` (SchoolAdmin), attached to the **demo** school `id=1` ("Phase 4 Roster Demo School") — deliberately **not** the owner's real staging school. Convention: **`status='inactive'` by default** and **password rotated per run** (no literal credential committed); flip to `active` + set a fresh password via the Cloud Commands API when a verification run needs it, then set back to `inactive`. Created via `POST /api/environments/{env}/commands` → `php artisan tinker --execute='…'`.
-- **#692 staging verification (COMPLETED this time — real auth, not local)** against `the Cloud environment (see the internal ops notes)`: logged in as the synthetic SchoolAdmin. **Without a school logo**: header shows the KlassApp fallback (`/images/klassapp-logo-primary.svg`, alt "KlassApp") **plus the school name** ("Phase 4 Roster Demo School") and `aria-label="Phase 4 Roster Demo School dashboard"` ✓. **With a school logo set**: `src=/storage/<logo>`, `alt="Phase 4 Roster Demo School logo"`, image **loads** (naturalWidth 120) ✓. No horizontal overflow. So #692 is now verified end-to-end on staging, not just locally.
+- **#692 staging verification (COMPLETED this time — real auth, not local)** against `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)`: logged in as the synthetic SchoolAdmin. **Without a school logo**: header shows the KlassApp fallback (`/images/klassapp-logo-primary.svg`, alt "KlassApp") **plus the school name** ("Phase 4 Roster Demo School") and `aria-label="Phase 4 Roster Demo School dashboard"` ✓. **With a school logo set**: `src=/storage/<logo>`, `alt="Phase 4 Roster Demo School logo"`, image **loads** (naturalWidth 120) ✓. No horizontal overflow. So #692 is now verified end-to-end on staging, not just locally.
 - **Env finding + fix (staging): `public/storage` symlink was MISSING** → every storage-served asset (school logos, uploads) 404'd on staging. Fixed with `php artisan storage:link` on the environment (the school-logo URL then served **200 image/svg+xml**). Worth re-checking after deploys, since it is not obviously part of the deploy pipeline.
 - **Toshi dock consistency across roles — VERIFIED CONSISTENT.** Real authenticated logins (local seeded DB) for **SiteAdmin, SchoolAdmin, Teacher, Librarian, Receptionist, Accountant** all show the Toshi panel **docked at 380px** at 1280 ✓ — the IDE-panel docking is uniform across roles, so **no change was needed**. (Student/Parent have no seeded local users; staging has no per-role demo users beyond the synthetic admin.)
 - **Anomaly found (flagged, not fixed): StockKeeper has no dashboard.** `AuthRedirectHelper::dashboardPathForUsergroup` maps 1/4/5/6/7/8/10/11 and **defaults to `/admin/dashboard`**; ug12 (Stock Keeper) therefore lands on `/admin/dashboard`, where `MustBeSchoolAdmin` (allows 1/3/4) `abort(404)`s → "Page Not Found", no Toshi. `layouts/stock/menu.blade.php` links to `stock/dashboard`, but **no such route exists** anywhere. Needs a product decision (build a stock dashboard vs. retarget), so it is reported rather than guess-fixed.
@@ -12088,7 +12102,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Shipped**: **PR [#695](https://github.com/KlassApp-Foundation/KlassApp/pull/695)** — branch `feat/settings-hub-schooladmin`, **MERGED `2b2bbfd7534d6b604db2825e9025f3b29f2e84d7`**. New **hub at `/admin/settings`** (route renders `admin.settings.index` instead of redirecting) with a **grouped IA**: *School* → School profile + Site branding; *Academics* → Exam types; *Connections* → Integrations; *Public presence* → SEO details; *System* → Maintenance & access. New shared **`layouts/partials/settings-nav.blade.php`** included on **every** settings page (replacing the ad-hoc settingsbar + its dead link), with the current section highlighted. Styles added to the **live** stylesheet `public/css/dashboard-refresh.css`. **No backend behaviour changed.**
 - **Trap found:** `admin/settings/maintenance_settings.blade.php` **extends the layout itself** (`@extends('layouts.app')`), so when included from the `maintenancesettings` wrapper its `@section('content')` **overrides the parent** — an `@include` placed in the wrapper never renders. The nav had to go into the *effective renderer*. Same pattern likely applies to the other `*_settings` duplicates.
 - **Verification (local Laravel + real Chrome, authenticated SchoolAdmin)**: hub = 5 groups / 6 cards, computed `display:flex`, 40px icon, 3-col grid @1280; nav present on all 5 settings pages with the correct `is-current` pill (accent `rgb(21,128,61)`); **no horizontal overflow at 375/414/1280**. **@768 the maintenance page overflows ~16px — PRE-EXISTING** (its own `w-1/2` / `w-3/5` rows), not from the nav; flagged for the UX-cleanup pass.
-- **Staging verification (synthetic account, per the established convention)**: activated `synthetic.verify.staging@klassapp.test` with a **freshly rotated password**, verified on `the Cloud environment (see the internal ops notes)` — hub **5 groups / 6 cards**, styled (`display:flex`, 40px icon), nav **6 links** with `is-current = "Exam types"`, **no overflow at 1280 or 375**; then **set back to `inactive`** and the local password file removed. Staging deploy → **deployment.succeeded** (`2b2bbfd7`).
+- **Staging verification (synthetic account, per the established convention)**: activated `synthetic.verify.staging@klassapp.test` with a **freshly rotated password**, verified on `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` — hub **5 groups / 6 cards**, styled (`display:flex`, 40px icon), nav **6 links** with `is-current = "Exam types"`, **no overflow at 1280 or 375**; then **set back to `inactive`** and the local password file removed. Staging deploy → **deployment.succeeded** (`2b2bbfd7`).
 - **Files modified**: `resources/views/admin/settings/index.blade.php` (new), `resources/views/layouts/partials/settings-nav.blade.php` (new), 5 settings views (`generalsettings`, `exam-types`, `integrations`, `seodetailsettings`, `maintenance_settings`) + dead-include cleanup in `maintenancesettings`, `routes/setting.php`, `public/css/dashboard-refresh.css`, `knowledge.md` (this stamp).
 - **Status**: ✅ MERGED + deployed to staging. **StockKeeper left untouched** (deferred, per instruction). **Remaining SchoolAdmin work**: per-function UX cleanup (starting with the StockKeeper 404, the pre-existing 768 maintenance overflow, table density, onboarding-state split).
 - **Edge cases flagged**: (1) append CSS to the **live** `public/css/dashboard-refresh.css` — creating `resources/css/dashboard-refresh.css` produces a dead, unloaded file (my first attempt did exactly that; caught in review). (2) Activating the synthetic staging account must happen **when no deploy is in progress** — the Commands API returns 422 "environment has a deployment in progress" otherwise. (3) Local `php artisan serve` can 30s-timeout under sustained Playwright load; retry or restart it.
@@ -12098,7 +12112,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Shipped**: **PR [#697](https://github.com/KlassApp-Foundation/KlassApp/pull/697)** — branch `feat/sidebar-modernization`, **MERGED `6e6e7386`**. (1) Removed the magic inline width; shell is flex at every width (`.dashboard-content-area { flex:1 1 auto; min-width:0 }` — `min-width:0` is the key, a flex child otherwise refuses to shrink and jumps). (2) `#admin-sidebar` animates width (0.22s); the content transitions with it. (3) Added a **desktop collapse toggle** in the header with a **delegated click handler** (the button lives inside the Vue-mounted `#app`, so direct listeners are lost on re-render), persisted in `localStorage` + `aria-expanded`/label. (4) Collapsed = **icon rail (4.5rem)**: labels/group-labels/chevrons hide, group children collapse, icons centre. (5) Sidebar polish, same IA: rounded hover states, active pill, group labels in `--d-text-secondary`, thin scrollbar, reduced-motion guard.
 - **Bug found while verifying the rail**: the bottom **"Help & Docs"** link is an **`<a class="dashboard-menu-item">`** (the item class is on the anchor, not a wrapping `li`), so the first hide rule missed it → stray clipped text in the rail. Broadened to `… a.dashboard-menu-item > span`; a DOM probe then reported **0 visible text nodes** in the collapsed rail.
 - **Verified (local Laravel + real Chrome, authenticated SchoolAdmin @1280)**: expanded 192 / x192 w708 → collapse moves x **192 → 185 → 169 → … → 72 across 13 intermediate frames** (max step 20px) → collapsed 72 (rail) / x72 w828 → re-expand returns **exactly** to 192/708 (no drift); state **persists across reload**. **Control**: with transitions disabled (`prefers-reduced-motion`) the same toggle jumps **192 → 72 in a single frame** (maxStep 120) — i.e. the old uncontrolled behaviour, now only under an explicit preference. No horizontal overflow at 375/414/768/1280.
-- **Authenticated staging verification** (synthetic account, rotated password, **deactivated after**): on `the Cloud environment (see the internal ops notes)` — expanded 192/708 → collapse **13 intermediate frames** (max step 20) → collapsed **rail 72** / x72 w828 → **re-expanded exactly 192/708**. Deploys → **deployment.succeeded** (`6e6e7386`). Screenshots captured (expanded + collapsed).
+- **Authenticated staging verification** (synthetic account, rotated password, **deactivated after**): on `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` — expanded 192/708 → collapse **13 intermediate frames** (max step 20) → collapsed **rail 72** / x72 w828 → **re-expanded exactly 192/708**. Deploys → **deployment.succeeded** (`6e6e7386`). Screenshots captured (expanded + collapsed).
 - **Files modified**: `resources/views/layouts/app.blade.php`, `resources/views/layouts/partials/navigation.blade.php`, `public/css/dashboard-refresh.css`, `knowledge.md` (this stamp).
 - **Status**: ✅ MERGED + staging-verified. **Step 1 of the SchoolAdmin UX cleanup is complete — stopped here for review as instructed.** Sidebar IA unchanged (nav items + groupings untouched); modernization drew on the project's own tokens/icons and the existing superadmin collapse pattern.
 - **Edge cases flagged**: (1) any inline `width: calc(100vw - …)` in a shell is a reflow trap — express layout with flex + `min-width:0` instead. (2) Listeners bound inside the Vue-mounted `#app` must be **delegated** (Vue re-render drops direct listeners) — same reason `custom.js` owns the mobile hamburger. (3) An interrupted run left the synthetic account ACTIVE once; the activate→verify→deactivate sequence belongs in one guarded block (try/finally) so it can't be left on.
@@ -12119,7 +12133,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Audit correction (measured, not assumed)**: the overflow was NOT the page's `w-1/2` / `w-3/5` form rows — at `md` those compute to **40% + 60% = 100%** and fit. Real cause: the page wrapper `<div class="w-full my-3 lg:mx-8 md:mx-8 px-3 lg:px-0 md:px-0">` applied **`md:mx-8` (32px of *outside* margin)** to a `w-full` box inside the 544px container → right edge at **784 in a 768px viewport** → scrollWidth 784 vs clientWidth 768 = **16px overflow**. (Measured: container x208 w544 right752 ✅; wrapper x240 w544 right784 ❌.)
 - **Shipped**: **PR [#699](https://github.com/KlassApp-Foundation/KlassApp/pull/699)** — branch `fix/maintenance-settings-overflow`, **MERGED `0ca03c35`**. Fix expresses the same 32px inset as **inside padding** instead of margin: `w-full my-3 px-3 md:px-8` — identical visual inset at md+ (content still starts at x=240), box stays 544, nothing overflows. One-line change; nothing else bundled.
 - **Verified (local Laravel + real Chrome, authenticated SchoolAdmin)**: before — W375 ok, W414 ok, **W768 OVERFLOW (784/768)**, W1280 ok; after — **375/375, 414/414, 768/768, 1280/1280, no overflow anywhere**. Form intact at every width: **11 inputs / 4 forms / 3 toggles** (unchanged), rows still 40%+60% (768 → 192+288=480; 1280 → 245+367=612), wrapper padding 32px/32px preserved, `h1` visible, toggles aligned (right edge 508@768). Visual pass: nothing clipped/pushed outside; labels left-aligned; all three switches with ON/OFF labels.
-- **Authenticated staging verification** (synthetic account, rotated password, **deactivated after**): on `the Cloud environment (see the internal ops notes)` — **W768 768/768 (no overflow)**, W375 and W1280 clean, form 11 inputs / 3 toggles, wrapper 544/343/676. Deploy → **deployment.succeeded** (`0ca03c35`).
+- **Authenticated staging verification** (synthetic account, rotated password, **deactivated after**): on `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` — **W768 768/768 (no overflow)**, W375 and W1280 clean, form 11 inputs / 3 toggles, wrapper 544/343/676. Deploy → **deployment.succeeded** (`0ca03c35`).
 - **Files modified**: `resources/views/admin/settings/maintenance_settings.blade.php`, `knowledge.md` (this stamp).
 - **Status**: ✅ MERGED + staging-verified. **Step 2 complete — stopped here for review as instructed.**
 - **Edge cases flagged**: (1) **outside margins (`mx-*`) on a `w-full` box inside a fixed-width container are an overflow trap** — prefer inside padding or flex `min-width:0`; this is the same class of bug as the shell's inline `calc(100vw - …)` fixed in #697. (2) The Commands API returns **422 "environment has a deployment in progress"** if you activate/rotate while a deploy runs — activate **before** triggering a deploy (or after it settles), and keep activate→verify→deactivate in one `try/finally` so the synthetic account can never be left active.
@@ -12164,7 +12178,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Status**: ✅ Pushed to origin/main. Series state on shared main: PR1 (registry core, #672) MERGED · PR2 (HITL write gate, #672) MERGED · transport tripwire (#678) MERGED · PR3 (Slack wave-1, #684) MERGED · PR4 (Notion) DROPPED — series closed, no open items.
 
 ### 2026-09-20: Slack connector go-live prep — wiring verified, ops checklist written (no flip)
-- **Work done**: Production-readiness pass for the dormant Slack connector (#684), no env/Doppler/deploy changes. (1) Env-gate inventory code-verified from current main `e1cbbaf3`: `SLACK_MCP_MODE` (any value ≠ mock = live — typo hazard), `SLACK_MCP_URL`, `SLACK_MCP_CLIENT_ID/SECRET` (dual consumers: OAuth flow + token refresh), `TOSHI_SLACK_CHANNEL_ENABLED` (surface gate), `TOSHI_MCP_WRITE_GATES_ENABLED` (write-gate master), `TOSHI_SLACK_MCP_WRITE_MODE` (deny/classify/allowlist), `SLACK_MCP_TIMEOUT`, `SLACK_MCP_TOKEN` (**dead config — zero runtime consumers, do not set in prod; cleanup candidate**). Prereqs: TOSHI_SDK_V2_ENABLED, OPENAI_COMPATIBLE_* (SlackSkill uses UsesToshiLlm), APP_URL (redirect URI is built from `route('mcp.oauth.slack.callback')`). (2) **Critical ordering finding**: `McpWriteGate::isWrite` returns false for ALL tools when master switch is off — enabling the channel without the gate ships **ungated slack_post_message** (silent — audit row shows no approver). Gate flag must deploy BEFORE/with `TOSHI_SLACK_CHANNEL_ENABLED=true`. (3) Failure-mode table documented: `CHANNEL_ENABLED+mock` = fake data hazard; wrong credentials fail loud at OAuth; unconnected school = friendly fail-closed `ConnectorNotConnected`; refresh failure = semi-silent log + "not connected" state. (4) Redirect URIs (byte-exact): prod `https://klassapp.xyz/mcp/oauth/slack/callback`, staging `the Cloud environment (see the internal ops notes)/mcp/oauth/slack/callback`. (5) Prod-style `composer install --no-dev` re-verified on current tip (throwaway worktree): laravel/mcp + laravel/ai 3.4.1 present, routes/ai.php lints, live-mode OAuth routes register (`mcp/slack/connect`, `mcp/oauth/slack/callback`). (6) Registry row `write_mode` column confirmed NOT consulted by the gate (env-level classification only; row write_mode is display-only; per-school kill = row status). Per-school pilot supported: schools only get Slack when their own admin connects (row-scoped token resolution).
+- **Work done**: Production-readiness pass for the dormant Slack connector (#684), no env/Doppler/deploy changes. (1) Env-gate inventory code-verified from current main `e1cbbaf3`: `SLACK_MCP_MODE` (any value ≠ mock = live — typo hazard), `SLACK_MCP_URL`, `SLACK_MCP_CLIENT_ID/SECRET` (dual consumers: OAuth flow + token refresh), `TOSHI_SLACK_CHANNEL_ENABLED` (surface gate), `TOSHI_MCP_WRITE_GATES_ENABLED` (write-gate master), `TOSHI_SLACK_MCP_WRITE_MODE` (deny/classify/allowlist), `SLACK_MCP_TIMEOUT`, `SLACK_MCP_TOKEN` (**dead config — zero runtime consumers, do not set in prod; cleanup candidate**). Prereqs: TOSHI_SDK_V2_ENABLED, OPENAI_COMPATIBLE_* (SlackSkill uses UsesToshiLlm), APP_URL (redirect URI is built from `route('mcp.oauth.slack.callback')`). (2) **Critical ordering finding**: `McpWriteGate::isWrite` returns false for ALL tools when master switch is off — enabling the channel without the gate ships **ungated slack_post_message** (silent — audit row shows no approver). Gate flag must deploy BEFORE/with `TOSHI_SLACK_CHANNEL_ENABLED=true`. (3) Failure-mode table documented: `CHANNEL_ENABLED+mock` = fake data hazard; wrong credentials fail loud at OAuth; unconnected school = friendly fail-closed `ConnectorNotConnected`; refresh failure = semi-silent log + "not connected" state. (4) Redirect URIs (byte-exact): prod `https://klassapp.xyz/mcp/oauth/slack/callback`, staging `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)/mcp/oauth/slack/callback`. (5) Prod-style `composer install --no-dev` re-verified on current tip (throwaway worktree): laravel/mcp + laravel/ai 3.4.1 present, routes/ai.php lints, live-mode OAuth routes register (`mcp/slack/connect`, `mcp/oauth/slack/callback`). (6) Registry row `write_mode` column confirmed NOT consulted by the gate (env-level classification only; row write_mode is display-only; per-school kill = row status). Per-school pilot supported: schools only get Slack when their own admin connects (row-scoped token resolution).
 - **Output**: `docs/ops/slack-connector-go-live-checklist.md` (env table, failure modes, Slack app config, Doppler keys, 6-step rollout A→C, rollback = env vars + row status, no data migration). **Human-only steps handed off separately** (Slack app creation, scopes, client ID/secret → Doppler `klassapp` stg then prd).
 - **Status**: ✅ Docs-only prep complete. Slack remains **built but dormant** — no env vars set, no Doppler touched, no deploy. Rollout awaits the human credential steps.
 
@@ -12179,7 +12193,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Status**: ✅ Committed & pushed to main (`bdca6b82`), read back from GitHub API to confirm content on origin. Nothing enabled, deployed, or coded.
 
 ### 2026-09-20: Batch A (Slack staging wire-up) — STOPPED at the mirror gate; wiring verified, nothing enabled
-- **Access verified this session**: the Cloud API token (see the internal ops notes) was present (Doppler dev), Cloud REST API confirmed working for read AND write on the staging environment. Doppler CLI available. No SSH anywhere.
+- **Access verified this session**: the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) was present (Doppler dev), Cloud REST API confirmed working for read AND write on the staging environment. Doppler CLI available. No SSH anywhere.
 - **Step 1 findings**: (1) **Doppler `klassapp`/`stg` has all four secrets by name** (values never read/printed): `SLACK_MCP_CLIENT_ID`, `SLACK_MCP_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_VERIFICATION_TOKEN`. (2) **Cloud staging has ZERO SLACK_* env vars** — the Doppler→Cloud mirror does NOT exist and there is NO automatic sync (no Doppler Cloud integration; the project's documented pattern is manual mirroring via `POST /api/environments/{id}/variables` with `method:"set"` + a redeploy, per the WhatsApp Flow-ID precedent ). (3) **`TOSHI_MCP_WRITE_GATES_ENABLED` is NOT set on staging** — the hard ordering prerequisite from the go-live checklist §0 is currently OFF, so Slack must not be enabled until it's set true. (4) Doppler key `SLACK_SIGNING_SECRET` is actually stored misspelled `SLACK_SIGNING_SECRETE` (trailing E) — cosmetic only (zero consumers either way), rename in Doppler whenever convenient. (5) `SLACK_SIGNING_SECRET`/`SLACK_VERIFICATION_TOKEN` confirmed **zero code consumers** (grep: app/, routes/, config/, resources/, tests/, .env*, all *.md) — correctly stored-ahead-of-need per the inbound-Slack roadmap note.
 - **Executed**: NONE of Batch A's flips. No `SLACK_MCP_MODE`, no `TOSHI_SLACK_CHANNEL_ENABLED`, no deploy, nothing in prd, nothing in Doppler. **Blocked at the user's stop-condition: "if sync is not automatic and the values haven't been mirrored yet, stop and tell me exactly what manual step is needed."**
 - **Incident disclosure (API surface discovery)**: probing the Cloud variables API's method vocabulary accidentally wrote 3 junk keys (`__probe__`, `__probe`, `__readback__`) to staging. Found the documented delete endpoint (`POST …/variables/delete` with `keys` array — laravel.com/cloud/docs/api/environments/delete-environment-variables) and removed them; verified staging back to **exactly its original 30 keys** (APP_KEY untouched, none of the 30 altered — `APP_NAME` was re-set to its identical existing value as the read mechanism, a no-op). Lesson recorded: knowledge.md's variables snippet documents `method:"set"` but NOT the delete endpoint — gap closed by this entry.
@@ -12193,7 +12207,7 @@ Fixes the two `TRACKED ISSUE` entries above.
 
 ### 2026-09-20: Batch A EXECUTED (staging Slack wire-up) — live mode on staging, OAuth flow verified to the consent-screen boundary
 - **Executed (staging env only, go-ahead received)**: (1) Mirrored `SLACK_MCP_CLIENT_ID` (29ch) + `SLACK_MCP_CLIENT_SECRET` (32ch) Doppler stg → Cloud staging via `method:"set"`, values piped directly (never printed). (2) Flags set IN ORDER with read-back before each next step: `TOSHI_MCP_WRITE_GATES_ENABLED=true` (FIRST — hard ordering rule), then `SLACK_MCP_MODE=live`, then `TOSHI_SLACK_CHANNEL_ENABLED=true`. (3) Deploy triggered + polled to **`deployment.succeeded`** (~75s, commit `f24303c7`). Production verified untouched: 53 prod env vars, **zero SLACK_*/TOSHI_* changes** (read-back check).
-- **Verified end-to-end to the consent boundary**: (a) live-mode OAuth routes registered on the running app (`/mcp/slack/connect` + `/mcp/oauth/slack/callback` — the unauthenticated connect GET correctly redirected straight to Slack's authorize URL, proving routes/ai.php live branch is live). (b) Integrations page as the authenticated demo SchoolAdmin (`phase4.admin@klassapp.xyz`, `STAGING_DEMO_PASSWORD` from Doppler, piped, session logged out after) renders the green **Connect Slack** button (`slackConnectable` = live mode + client_id both true). (c) The connect redirect carries `redirect_uri=the Cloud environment (see the internal ops notes)/mcp/oauth/slack/callback` — **byte-exact match** to the checklist's registered staging URI — client_id matches Doppler, scope `mcp:read mcp:write`, PKCE S256 challenge present, state present. (d) Slack's authorize endpoint returns 200 sign-in/consent interstitial with NO error banner (invalid_client_id/redirect_uri_mismatch would render an error page) — the request is valid as far as Slack will confirm without a signed-in workspace admin. (e) Unauthenticated callback GET → 500 expected (session state missing) — no oauth-related app exceptions in Cloud logs; the `Ingest failed / No authentication details` Nightwatch errors in the log window are pre-existing staging noise (present before this work; no `mcp`/`slack` query hits).
+- **Verified end-to-end to the consent boundary**: (a) live-mode OAuth routes registered on the running app (`/mcp/slack/connect` + `/mcp/oauth/slack/callback` — the unauthenticated connect GET correctly redirected straight to Slack's authorize URL, proving routes/ai.php live branch is live). (b) Integrations page as the authenticated demo SchoolAdmin (`phase4.admin@klassapp.xyz`, `STAGING_DEMO_PASSWORD` from Doppler, piped, session logged out after) renders the green **Connect Slack** button (`slackConnectable` = live mode + client_id both true). (c) The connect redirect carries `redirect_uri=the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)/mcp/oauth/slack/callback` — **byte-exact match** to the checklist's registered staging URI — client_id matches Doppler, scope `mcp:read mcp:write`, PKCE S256 challenge present, state present. (d) Slack's authorize endpoint returns 200 sign-in/consent interstitial with NO error banner (invalid_client_id/redirect_uri_mismatch would render an error page) — the request is valid as far as Slack will confirm without a signed-in workspace admin. (e) Unauthenticated callback GET → 500 expected (session state missing) — no oauth-related app exceptions in Cloud logs; the `Ingest failed / No authentication details` Nightwatch errors in the log window are pre-existing staging noise (present before this work; no `mcp`/`slack` query hits).
 - **Blocked at the human boundary (by design)**: completing the OAuth handshake requires a Slack workspace admin to sign in at slack.com and click **Allow** on the consent screen. Per instruction, NOT simulated/bypassed. Manual steps handed back to the user: as the pilot workspace admin, open the Connect Slack URL from staging Integrations, sign in to Slack, pick the workspace, click Allow; then the callback upserts the `school_mcp_connectors` row and Step-3 read/write verification (list channels; post-message must PAUSE for approval) can run against real Slack.
 - **Not done**: Batch B (production dark deploy), anything in Doppler prd, production env vars, production deploys. `SLACK_SIGNING_SECRETE` Doppler typo left as-is per instruction (user will fix). No connector row exists yet for the demo school (no consent click happened) — that's the next checkpoint after the user completes consent.
 - **Status**: 🟡 Batch A COMPLETE up to the consent-screen boundary; awaiting user's manual Slack consent; then E2E read/write verification (checklist Step 3), then explicit go-ahead before Batch B.
@@ -12235,7 +12249,7 @@ Fixes the two `TRACKED ISSUE` entries above.
   3. `config/toshi.php`: `token_url` changed from `oauth.v2.access` → `oauth.v2.user.access` (user-token endpoint for MCP refresh). Same commit + test file `McpConnectorTokenRefreshServiceTest.php` updated.
   4. `docs/ops/slack-connector-go-live-checklist.md`: §4 corrected (scope claim removed, real granular scopes documented, user-token caveat added); §2 wiring map updated; §3 token-refresh failure-mode updated.
 - **Deployment**: staging deploy @ commit `87d91509` (includes #710 merge); **deployment.succeeded** (~90s, 23:38:48 UTC). Production env verified untouched (zero SLACK/TOSHI keys).
-- **Verification**: Unauthenticated `GET /mcp/slack/connect` redirected to Slack's authorize URL with the staging callback (see the internal ops notes), the requested scopes, and PKCE. Slack returned the sign-in interstitial with no error page. Consent flow ready for the user.
+- **Verification**: Unauthenticated `GET /mcp/slack/connect` redirected to Slack's authorize URL with the staging callback (see the private repo KlassApp-Foundation/internal or the Cloud dashboard), the requested scopes, and PKCE. Slack returned the sign-in interstitial with no error page. Consent flow ready for the user.
 - **What is NOT fixed / NOT verified**: (a) Whether the configured Slack app (`client_id=1210362447.1211050890`) is installed to the pilot workspace with MCP toggle ON — Slack-side config, outside KlassApp's scope. (b) Completing real OAuth handshake requires a signed-in workspace admin to click Allow. (c) McpConnectorTokenRefreshService's `refreshToken()` does NOT use the `oauth.v2.user.access` token_url — the fix was config-only; `McpConnectorTokenRefreshService` reads config dynamically so it picks up the new URL.
 - **Files modified**: `config/services.php`, `routes/ai.php`, `config/toshi.php`, `tests/Unit/Models/McpConnectorTokenRefreshServiceTest.php`, `docs/ops/slack-connector-go-live-checklist.md`, `knowledge.md` (this stamp).
 - **Status**: ✅ Staging deploy succeeded. OAuth connect flow reaches Slack sign-in successfully. Next: user completes OAuth consent → Step 3 E2E read/write verification. Production untouched.
@@ -13398,7 +13412,7 @@ Also worth a decision, not fixed: the Vue tab components still render raw `<tabl
 
 ### 2026-09-26: PR #825 merged → staging deployed → verified. PR #826 still open.
 
-**What happened:** PR #825 was merged via squash (`gh api PUT .../pulls/825/merge`) → merge commit `6e7cb4fb205bee9f101daf41888072600b391404`. Confirmed `merged:true` per standing rule #21. Staging deploy triggered via Cloud Deploy POST (`POST /api/environments/{environment}/deployments`, empty body), deploy → succeeded at commit `6e7cb4fb` (confirmed by `GET /api/deployments/{id}`). Full Playwright verification on real staging (`the Cloud environment (see the internal ops notes)`), headless Chromium, all 4 roles × 4 viewports.
+**What happened:** PR #825 was merged via squash (`gh api PUT .../pulls/825/merge`) → merge commit `6e7cb4fb205bee9f101daf41888072600b391404`. Confirmed `merged:true` per standing rule #21. Staging deploy triggered via Cloud Deploy POST (`POST /api/environments/{environment}/deployments`, empty body), deploy → succeeded at commit `6e7cb4fb` (confirmed by `GET /api/deployments/{id}`). Full Playwright verification on real staging (`the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)`), headless Chromium, all 4 roles × 4 viewports.
 
 **Demo credential rotation:** `parent1.demo-lakeview-junior@demo.klassapp.test` and `phase4.student.two@klassapp.xyz` had passwords that didn't match `STAGING_DEMO_PASSWORD`. Reset via Cloud Commands API `bcrypt()` tinker one-liner before verification. Both are demo/seed accounts on staging — no production data involved.
 
@@ -13524,7 +13538,7 @@ Visual confirmation on the old assets (read back before overwriting): green LIVE
 
 > ⚠️ **Production verification of `d377e2e1` is NOT complete, and synthetic fixtures are still live on production.** Still to do: (1) attendance write-then-read round trip, (2) #819 cross-tenant IDOR refusal on prod, (3) mobile-nav tap-to-open @375 on prod. Still ACTIVE on prod, to be flagged inactive (rule #3) once those pass: the "verify"-labelled StandardLink **id 307** (school 53, class P4V) and the disposable verification admin account. The interrupted session's `e2e/tmp-prod-*.cjs` scripts and the admin's credentials were never pushed. They exist only on the machine that was interrupted.
 
-- **Why it stopped here**: this cloud session's network policy refuses `klassapp.xyz`, `the Cloud environment (see the internal ops notes)` and `cloud.laravel.com` (proxy 403), and it has no Doppler token (see the internal ops notes). No staging deploy, no prod check, and no merges were attempted.
+- **Why it stopped here**: this cloud session's network policy refuses `klassapp.xyz`, `the Cloud environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` and `cloud.laravel.com` (proxy 403), and it has no Doppler token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard). No staging deploy, no prod check, and no merges were attempted.
 - **Attribution**: checked independently. Every commit on the five branches is authored `Claude <noreply@anthropic.com>`, which matches the attribution note above. Treated as internal work (rule #25 not applied).
 - **Conflicts vs latest main**: all five branch from `d377e2e1` (0 behind main). Merged in order #833→#837 on a throwaway branch: **code merges cleanly**. Only `knowledge.md` conflicts, because each PR's "stamp PR open" entry inserts at the same line (~620). Resolve each merge by keeping both sides.
 - **Tests (local, SQLite, `FILESYSTEM_DISK=public`)**: each PR's own tests pass on its own branch (#833 11/11, #834 2/2, #835 1/1, #836 2/2, #837 5/5). All five combined: DesignSystem + touched feature tests 33/33 (161 assertions). **Full suite main vs all five combined: 141 → 139 failing test cases, 0 new failures.** The 2 fixed are #833's rewritten `DashboardGenderChartTest` cases. Env notes: `.env.example`'s S3 disk with no bucket makes `Storage::url()` throw (swallowed by `Common::getFilePath`), which fails `ProfilePhotoComponentTest` with a false red, so use `FILESYSTEM_DISK=public`. `composer install` needed phpstan/larastan dropped locally because the GitHub dist API is blocked, and those files were restored afterwards.
@@ -13899,7 +13913,7 @@ WhatsApp webhook hardening in progress.
 - Docs platform (2026-09-29): VitePress for all docs, user manuals (/docs/help/) and contributor docs (/docs/community/), replacing Docsify; GitBook to be retired after its content is migrated and redirected. klassapp.xyz/help redirects to the Help section.
 
 ## Cloud hardening — object storage and log streaming (2026-09-29)
-- PR #892: staging attaches the Laravel Cloud object storage bucket (see the internal ops notes) (private, EU, Cloudflare R2). The attach injects FILESYSTEM_DISK + AWS S3 variables; uploads land in R2 (live write/read verified on staging).
+- PR #892: staging attaches the Laravel Cloud object storage bucket (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) (private, EU, Cloudflare R2). The attach injects FILESYSTEM_DISK + AWS S3 variables; uploads land in R2 (live write/read verified on staging).
 - Per-object 'public' visibility removed from uploadFile, putContents and profile avatar uploads (R2 rejects ACL headers); bucket-level visibility governs access.
 - getFilePath resolves per disk: local /storage URLs, public bucket base URL, private bucket 30-minute signed URLs. getFilePathforDownload fixed to ($file, $disk = '') and reads the default disk; video and bulletin downloads updated. .env.example defaults FILESYSTEM_DISK=local.
 - Logging: staging LOG_STACK switched from daily,nightwatch to laravel-cloud-socket,nightwatch so application logs stream to Laravel Cloud Logs (verified live via the Logs API) with Nightwatch kept; no local log file on Cloud. The same variable is set on production and applies on the next production deployment.
@@ -13926,13 +13940,13 @@ WhatsApp webhook hardening in progress.
 - Docs handoff confirmed VitePress (klassapp.xyz/docs/help/ + /docs/community/), not Docsify.
 
 ### 2026-09-30: Staging URL + queued docs-domain redirect work
-- **Staging canonical URL**: see the internal ops notes. The previous Cloud hostname still resolves. Capture and verification scripts should use the staging URL from the internal ops notes.
+- **Staging canonical URL**: see the private repo KlassApp-Foundation/internal or the Cloud dashboard. The previous Cloud hostname still resolves. Capture and verification scripts should use the staging URL from the private repo KlassApp-Foundation/internal or the Cloud dashboard.
 - **QUEUED (blocked on VitePress going live)** — docs domain work, add to the docs work when `klassapp.xyz/docs/` is actually VitePress (as of 2026-09-30 it still serves the Docsify shell, `/docs/help/` 404s, `docs.klassapp.xyz` has no DNS record):
   1. Add `docs.klassapp.xyz` as a production custom domain.
   2. Permanent **301** redirect `docs.klassapp.xyz/{path}` → `https://klassapp.xyz/docs/{path}`, path preserved.
   3. Test first on staging with a staging docs host before doing the production domain.
 - **Staging noindex status (read-only check, 2026-09-30)**: staging currently sends **no** `X-Robots-Tag` header and renders **no** `<meta robots>` tag on `/`, `/login`, `/register`, `/password/reset`, 404, and `/contact` (redirect); `robots.txt` is open (`User-agent: * / Disallow:`) on both staging and production. No noindex mechanism exists in the codebase (only `tests/Feature/LandingAuthErrorCutoverTest.php:20` asserts landing pages do NOT contain `noindex,nofollow`).
-- **PR #899 OPEN** (`feat/robots-noindex`, tip `29955e48`) — noindex switch `ROBOTS_NOINDEX` (default false = production unchanged). Global `AddRobotsNoindexHeader` middleware stamps `X-Robots-Tag: noindex, nofollow` on every response type (page/redirect/404/500/download); static `public/robots.txt` **removed** (edge serves `public/` before Laravel — confirmed via Cloud docs + empirical staging probe: static `etag`/`last-modified`/no session cookie/CF HIT vs Laravel-served 404 with session cookie) and replaced by a `/robots.txt` route (`Disallow: /` when on; byte-identical allow-all when off, with `no-cache, no-store, private` — `robots.txt` was edge-cached at CF HIT/age 1245). Tests: `tests/Feature/RobotsNoindexTest.php` (3 tests / 17 assertions OK); guarded full suite **1884 tests, 0 failures, exit 0**. **Pending ops step with merge: set `ROBOTS_NOINDEX=true` on the staging (and preview) environments** — this session had no Laravel Cloud access; until the var is set the switch is inert on staging. Post-deploy staging verify: `curl -sD- the staging environment (see the internal ops notes)/robots.txt`.
+- **PR #899 OPEN** (`feat/robots-noindex`, tip `29955e48`) — noindex switch `ROBOTS_NOINDEX` (default false = production unchanged). Global `AddRobotsNoindexHeader` middleware stamps `X-Robots-Tag: noindex, nofollow` on every response type (page/redirect/404/500/download); static `public/robots.txt` **removed** (edge serves `public/` before Laravel — confirmed via Cloud docs + empirical staging probe: static `etag`/`last-modified`/no session cookie/CF HIT vs Laravel-served 404 with session cookie) and replaced by a `/robots.txt` route (`Disallow: /` when on; byte-identical allow-all when off, with `no-cache, no-store, private` — `robots.txt` was edge-cached at CF HIT/age 1245). Tests: `tests/Feature/RobotsNoindexTest.php` (3 tests / 17 assertions OK); guarded full suite **1884 tests, 0 failures, exit 0**. **Pending ops step with merge: set `ROBOTS_NOINDEX=true` on the staging (and preview) environments** — this session had no Laravel Cloud access; until the var is set the switch is inert on staging. Post-deploy staging verify: `curl -sD- the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)/robots.txt`.
 
 ## Session: 2026-09-30 — Soft-launch batch: rule #32, default avatars, sign-up email verification, wizard paste class (4 PRs merged)
 
@@ -14043,7 +14057,7 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Evidence branch `evidence/shell-polish`** (commit `114efb2d`, pushed) — 14 side-by-side concept|live pairs in `evidence/shell-polish/pairs/` (items 1–12 + item2b/item12b), `e2e/compose-evidence.cjs`, README + manifest.json. Concept frames rendered headlessly from `app.html` SPA (its `screens/` dir is empty); live frames from the green harness.
 
-**Deviation (documented in report + evidence README):** staging `the staging environment (see the internal ops notes)` unreachable + no Laravel Cloud token this session → side-by-side RIGHT side is local `127.0.0.1:8000`, not staging. Full report at `e2e/screenshots/shell-polish/REPORT-pr-b.md`.
+**Deviation (documented in report + evidence README):** staging `the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` unreachable + no Laravel Cloud token this session → side-by-side RIGHT side is local `127.0.0.1:8000`, not staging. Full report at `e2e/screenshots/shell-polish/REPORT-pr-b.md`.
 
 **Decisions / gotchas:** WebKit classic scrollbars make a 768px window's CSS viewport ~753px < Tailwind `md`, so WebKit correctly shows the *phone* shell at 768 while Chromium shows desktop — harness gates sidebar/laptop-popover checks to `vp.width >= 1024`. Dashboard v2 needs `?v2=1` (a probe without it returned 0 KPIs — selector gotcha). Attendance is 2 sessions per student-day (forenoon+afternoon), so row-count math is students×days×2, not students×days.
 
@@ -14053,9 +14067,9 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Merges (verified `merged: true` via GitHub API per rule #21):** #1043 (phone) merged → `15b5fd80`; #1044 (laptop+dashboard) merged → `3afc5310`. Both staged-deployed successfully (`deployment.succeeded` via Laravel Cloud MCP `list-deployments`). #1044 was admin-merged after all 3 CI checks (`check`/`scan`/`test-guard`) went green — the `BLOCKED` merge state was the same orphaned status-context artifact seen on earlier PRs; repo has no branch protection, so it was not a real gate. Merge used Rasta's explicit go-ahead (rule #32).
 
-**Staging reseed (Demo Junior + Demo Senior, 8-week attendance):** BLOCKED. The Cloud Commands API write path (`POST /api/environments/{id}/commands`) is unreachable this session — the Doppler Cloud API token (see the internal ops notes) returns HTTP 401 "Unauthenticated." on every config (`dev`/`dev_personal`), while the Laravel Cloud MCP read path works fine. Re-verified this pass across configs; no alternate Cloud token found in Doppler. Code is already current on staging (both PRs deployed), so only a manual reseed of pre-existing demo schools is blocked — needs a fresh/valid Cloud API token, not a code change.
+**Staging reseed (Demo Junior + Demo Senior, 8-week attendance):** BLOCKED. The Cloud Commands API write path (`POST /api/environments/{id}/commands`) is unreachable this session — the Doppler Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard) returns HTTP 401 "Unauthenticated." on every config (`dev`/`dev_personal`), while the Laravel Cloud MCP read path works fine. Re-verified this pass across configs; no alternate Cloud token found in Doppler. Code is already current on staging (both PRs deployed), so only a manual reseed of pre-existing demo schools is blocked — needs a fresh/valid Cloud API token, not a code change.
 
-**Post-merge staging verification (substitute for journey rerun):** ran `e2e/shell-polish-verify.cjs` directly against `the staging environment (see the internal ops notes)` with the real staging demo admin (`phase4.admin@klassapp.xyz` / `STAGING_DEMO_PASSWORD` from Doppler) — all five viewports (375/390/768/1280/1440) pass on both engines for the shell-polish structural checks (drawer, popovers, sidebar, year-picker, Toshi-triangle). No droplet SSH used.
+**Post-merge staging verification (substitute for journey rerun):** ran `e2e/shell-polish-verify.cjs` directly against `the staging environment (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` with the real staging demo admin (`phase4.admin@klassapp.xyz` / `STAGING_DEMO_PASSWORD` from Doppler) — all five viewports (375/390/768/1280/1440) pass on both engines for the shell-polish structural checks (drawer, popovers, sidebar, year-picker, Toshi-triangle). No droplet SSH used.
 
 **New defect found on staging (not a shell-polish regression):** axe flags `.ds-chart-empty p` (the chart "no data" empty-state) as WCAG contrast-serious — the text inherits `--d-muted` `#94A3B8` (2.45:1 on `#FAFAF5`, fails AA at 0.8rem). Only shows when charts are empty, which is why it never triggered on populated demo schools. Pre-existing — the offending `color: var(--d-muted)` rule was introduced by commit `8d6fb9eb`, not by either shell-polish PR. Shipped as a **separate, small fix** rather than folding it into already-merged work.
 
@@ -14065,7 +14079,7 @@ Admin merges were used on #904 and #905 under Rasta's explicit in-session author
 
 **Evidence zip:** `~/Desktop/shell-polish-pairs.zip` confirmed present and complete — 14 side-by-side concept|live pairs + README + manifest from `evidence/shell-polish`. Matches the branch content; no deviations.
 
-**Decisions / gotchas (this continuation):** CI `test-guard` on these PRs takes ~8–9 minutes to finish (full suite) — earlier polls still showed `pending` even after `check`/`scan` had already passed; don't assume it's stuck just because it's slower than the other two. The Cloud MCP read path and the Cloud Commands API write path are independently authenticated — a working MCP token does not imply the Doppler `the Cloud API token (see the internal ops notes)` token is valid, and vice versa.
+**Decisions / gotchas (this continuation):** CI `test-guard` on these PRs takes ~8–9 minutes to finish (full suite) — earlier polls still showed `pending` even after `check`/`scan` had already passed; don't assume it's stuck just because it's slower than the other two. The Cloud MCP read path and the Cloud Commands API write path are independently authenticated — a working MCP token does not imply the Doppler `the Cloud API token (see the private repo KlassApp-Foundation/internal or the Cloud dashboard)` token is valid, and vice versa.
 
 **Status:** #1043 + #1044 MERGED and deployed to staging. #1045 (AA-contrast fix) OPEN, CI green, awaiting merge go-ahead. Reseed + journey rerun blocked on external access (valid Cloud token / droplet SSH dependency). Evidence zip done. Next in the authorised queue: demo report cards PR, Toshi checklist PR, PR2, PR3, PR4, A6 — not started this pass.
 

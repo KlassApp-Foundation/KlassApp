@@ -48,7 +48,7 @@ config). Artifacts (per journey): `e2e/onboarding/artifacts/<journey>-<stamp>/` 
   journey run. Demo Junior logins are not hard-coded in this suite. The role
   crawl reads `DEMO_JUNIOR_ADMIN_EMAIL`, `DEMO_JUNIOR_ADMIN_PASSWORD`,
   `DEMO_JUNIOR_EMAIL_DOMAIN`, and `ROLE_CRAWL_PASSWORD`.
-- **Staging only.** The config hard-guards the base URL to the staging host (see the internal ops notes); anything else aborts before a single test runs.
+- **Staging only.** The config hard-guards the base URL to the staging host (see the private repo KlassApp-Foundation/internal or the Cloud dashboard); anything else aborts before a single test runs.
 - **No real people contacted.** Test accounts use `example.com` emails and non-real
   `070…` phone numbers. Staging's mail driver is `log` (no mail leaves the app). Email
   OTP is read from Cloud runtime logs (`klassapp.email_verification_code` marker), with
@@ -64,7 +64,7 @@ config). Artifacts (per journey): `e2e/onboarding/artifacts/<journey>-<stamp>/` 
 - The only direct DB access is a small staging bridge (`lib/stg_bridge.py`, Node
   wrapper `lib/stg-bridge.js`). It runs tinker snippets and reads the Cloud log
   stream against the **staging** environment, and refuses any other environment id.
-  The token comes from the Cloud API token named in the internal ops notes. There is no SSH path.
+  The token comes from the Cloud API token named in the private repo KlassApp-Foundation/internal or the Cloud dashboard. There is no SSH path.
 
 ## Cleaning up E2E schools
 

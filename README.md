@@ -20,7 +20,7 @@ Live product: [https://klassapp.xyz](https://klassapp.xyz)
 - **Connected tools schools already use** — The admin surface is built around WhatsApp, Google Drive, and Slack as first-class channels. WhatsApp messaging is the connector shipping in production today; Drive and Slack are part of the same product model as the protocol expands.
 - **Real school operations** — Academics, attendance, exams and report cards, fees, staff and parent roles, notice board, and a full onboarding wizard — all scoped per school.
 - **Multi-tenant by design** — Every query, job, cache key, and UI list is scoped by `school_id`. Cross-school data leaks are treated as bugs, not edge cases.
-- **Hosted or self-run** — Production SaaS on Laravel Cloud (`klassapp.xyz`, EU-West-1). This repository is MIT-licensed so you can read the code and run your own copy.
+- **Hosted or self-run** — Production SaaS on Laravel Cloud (`klassapp.xyz`, eu-central-1). This repository is MIT-licensed so you can read the code and run your own copy.
 
 ## Architecture: Toshi connector flow
 
@@ -169,7 +169,7 @@ PHPUnit is the project standard. UI checks use Playwright scripts under `e2e/`.
 
 Staging is a separate Laravel Cloud environment with demo/seed data (not a production dump). Public login credentials are **not** published here.
 
-- Staging URL: see the internal ops notes
+- Staging URL: see the private repo KlassApp-Foundation/internal or the Cloud dashboard
 - Request demo access: [community@klassapp.xyz](mailto:community@klassapp.xyz)
 
 ## Resources
@@ -197,7 +197,7 @@ Staging is a separate Laravel Cloud environment with demo/seed data (not a produ
 | Data | MySQL 8, Redis 7 |
 | Auth / API | Session web auth, Laravel Sanctum |
 | AI | Laravel AI SDK + OpenAI-compatible LLM config for Toshi |
-| Production | Laravel Cloud (`klassapp.xyz`, EU-West-1) |
+| Production | Laravel Cloud (`klassapp.xyz`, eu-central-1) |
 
 Session history and verified ops notes live in [`knowledge.md`](knowledge.md) (maintainers).
 

@@ -107,7 +107,7 @@ these are presumably already live; verify, don't assume):
 - **Redirect URI must be registered exactly** (code builds it via
   `route('mcp.oauth.slack.callback')`):
   - Production: `https://klassapp.xyz/mcp/oauth/slack/callback`
-  - Staging: the staging host from the internal ops notes, path `/mcp/oauth/slack/callback`
+  - Staging: the staging host from the private repo KlassApp-Foundation/internal or the Cloud dashboard, path `/mcp/oauth/slack/callback`
 
   (Route = `mcp/oauth/{client}/callback`, client `slack` — vendor default, no custom URI
   passed in `routes/ai.php`. Trailing slashes and path variants will fail — OAuth
