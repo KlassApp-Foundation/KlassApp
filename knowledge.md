@@ -676,7 +676,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN**
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179)**
 
 - The teachers step of the setup wizard has an "Upload class teachers" option beside the teacher file upload. The template is a CSV (`class`, `stream`, `name`, `email`, `phone`) with example rows, downloaded from `admin.class-teachers.upload-template`.
 - Each readable row is saved immediately. The step reports "N class teachers added, M skipped" and a reason per skipped row (unknown class, unknown stream, missing name, bad email). Saved assignments are listed on the step.
@@ -689,7 +689,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `routes/admin.php`, `app/Http/Controllers/Admin/ClassTeacherUploadTemplateController.php`, `public/templates/class-teacher-upload-template.csv`, `tests/Feature/Onboarding/WizardClassTeacherUploadTest.php`, `knowledge.md`.
 - **Decision:** do not send invites or WhatsApp. The teacher upload does not. Do not add a table. `standards_link.class_teacher_id` and `sections.class_teacher_id` are the assignment. An unknown class or stream is skipped and does not create a teacher. A local `0772…` number is normalised with the same phone helper as the teacher upload. An email that already belongs to someone who is not an active teacher at this school is skipped.
 - **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2935 tests, 0 failures, 0 errors, 4 skipped, guard OK. The five new tests cover the template download, saved assignments, an unknown class, `P1` and `Primary 1`, and a duplicate email. No browser or staging pass.
-- **Status:** OPEN on `cursor/wizard-class-teacher-upload-0124`. Review requested from Bariyo123. Do not merge from this session.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
