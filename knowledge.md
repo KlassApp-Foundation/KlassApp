@@ -676,9 +676,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Laravel 13 OPEN (stack upgrade 4)**
+## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
-- Branch `cursor/laravel-13-dc3f` from `origin/main` `5ce6aa45` ([#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170)). Not merged. Production untouched. CI PHP stays 8.4. The production PHP runtime was not changed. The root `php` constraint is now `^8.3` because Laravel 13 requires PHP 8.3; CI already runs 8.4.
+- Branch `cursor/laravel-13-dc3f` from `origin/main` `5ce6aa45` ([#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170)). OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171). Not merged. Production untouched. CI PHP stays 8.4. The production PHP runtime was not changed. The root `php` constraint is now `^8.3` because Laravel 13 requires PHP 8.3; CI already runs 8.4.
 - `laravel/framework` v12.63.0 → v13.38.0. PHPUnit 11.5.56 → 12.5.40. Tinker v2.11.1 → v3.0.2. Boost constraint is `^2.0`; the lock stays v2.4.12. Prompts v0.3.21 → v0.3.26 (the framework requires `^0.3.25`). Paratest v7.8.5 → v7.20.0 (7.22+ requires PHPUnit 13). `symfony/polyfill-php86` v1.43.0 was added because the framework requires it.
 - `maatwebsite/excel` stays `3.1.x-dev`. `laravel/ai` stays v0.10.2. No frontend migration. No migrations. Payments, env vars, and secrets were not touched. `league/flysystem` stays 3.35.2.
 - livewire-alert stays the 3.0.3 code (git `7466b71`) published in this repo as 3.0.4 so `illuminate/support` can allow `^13`. v4 replaces the `alert()` trait. debugbar stays the 3.16.5 code (git `e85c0a8`) as 3.16.6 so its illuminate constraints can allow `^13`. v4 changes the namespace. `klassapp/toshi-ui` allows illuminate `^13`.
@@ -694,7 +694,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `composer.json`, `composer.lock`, `packages/toshi-ui/composer.json`, `app/Providers/AppServiceProvider.php`, `app/Http/Middleware/VerifyCsrfToken.php`, `config/cache.php`, `config/session.php`, `tests/Feature/Admin/SchoolSizeAndLimitsTest.php`, `knowledge.md`.
 - **Decision:** Do not upgrade livewire-alert to v4 or debugbar to v4. Do not change CI's PHP version. Do not switch session serialization to json. Do not set `serializable_classes` to false. A solver pass moved `league/flysystem` to 3.36.0; that was reverted because `^3.25.1` still accepts 3.35.2. Composer now blocks that 3.x range, including 3.36.0, so the restore used policy blocking disabled for that one command. No advisory ignore was added.
 - **Tests:** Guarded suite 2930 tests, 20692 assertions, 0 failures, 0 errors, 4 skipped. Guest redirect was 401 without the callback and a redirect to `/login` with it.
-- **Status:** OPEN on `cursor/laravel-13-dc3f`. Do not merge from this session.
+- **Status:** OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (`cursor/laravel-13-dc3f`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **PHPUnit annotations to attributes OPEN [#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170), main merged**
 
