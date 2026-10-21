@@ -139,12 +139,18 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
 
         $component
             ->set('teacherUpload', $file)
-            ->assertCount('teacherDrafts', 1)
+            ->assertCount('teacherDrafts', 0)
+            ->assertSet('teacherUploadReport', '1 teacher added, 0 skipped')
+            ->assertSee('Ada Teacher')
             ->set('teacherPaste', "Ben Teacher\nCara Teacher")
             ->call('applyTeacherPaste')
-            ->assertCount('teacherDrafts', 3)
+            ->assertCount('teacherDrafts', 2)
             ->call('removeTeacherDraft', 1)
-            ->assertCount('teacherDrafts', 2);
+            ->assertCount('teacherDrafts', 1);
+
+        $this->assertTrue(
+            User::where('school_id', $this->school->id)->where('email', 'ada@bulk.sch.ug')->where('usergroup_id', 5)->exists()
+        );
     }
 
     public function test_teacher_one_at_a_time_and_students_bulk_persist_with_ids(): void

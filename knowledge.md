@@ -676,6 +676,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **wizard teacher upload OPEN [#1164](https://github.com/KlassApp-Foundation/KlassApp/pull/1164)**
+
+- A teacher file on the setup wizard was kept in memory and saved as one batch on Continue. One unmatched class, or one bad email or phone, discarded the batch. The step list did not reload teachers already stored, so a hand-added teacher with a class link was the one that still showed.
+- Upload now saves each valid row for the signed-in school and shows added/skipped counts with a reason per skipped row. Template headings already match the importer. No invite mail. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Wizard teacher upload saves and reports results
+
+- **Work:** persist each readable teacher row on upload, list saved teachers on the step, and report skipped rows (row number and reason). Parser accepts “Teacher's Name” and a leading serial column.
+- **Files:** `app/Livewire/ManualOnboardingWizard.php`, `app/Services/OnboardingNameListExtractor.php`, `app/Livewire/AgentToshi.php` (drop blank-name rows), `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `tests/Feature/Onboarding/WizardTeacherUploadResultTest.php`, `ManualWizardBulkTeachersStudentsTest.php`, `OnboardingPhoneFormatTest.php`.
+- **Decision:** one engine save per row so one failure does not roll the others back. Unknown class or subject is a note; the teacher is still created. Blank email gets a generated address, the same as adding one teacher by hand. The step list shows `users.name` (the spelling that was saved). Review still uses the display name. No `ClassTeacherInviteService`.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2815 tests, 0 failures, 0 errors, 4 skipped, guard OK. No browser or staging pass.
+- **Status:** OPEN [#1164](https://github.com/KlassApp-Foundation/KlassApp/pull/1164) (`cursor/wizard-teacher-upload-355a`). Do not merge from this session. `#1163` also edits the wizard (subjects step).
+
 ## Current Status: October 20, 2026 — **Toshi onboarding finish OPEN [#1157](https://github.com/KlassApp-Foundation/KlassApp/pull/1157)**
 
 - Branch `cursor/toshi-onboarding-finish-2ea1` from `main` (`f14c93a3`), then `origin/main` (`ce7958c7`) merged in. Not merged. Production untouched.
