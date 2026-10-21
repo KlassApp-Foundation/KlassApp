@@ -2078,7 +2078,8 @@ class OnboardingEngine
     {
         if (! $skipCompletionCheck) {
             foreach (OnboardingStepsService::incompleteSteps($school->fresh(), $userId) as $step) {
-                if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)
+                    || in_array($step['key'], OnboardingStepsService::FINISH_WITHOUT, true)) {
                     continue;
                 }
                 if ($step['key'] !== 'plan_selection') {
