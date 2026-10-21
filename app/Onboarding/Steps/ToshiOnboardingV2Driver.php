@@ -131,8 +131,21 @@ class ToshiOnboardingV2Driver
         return null;
     }
 
+    /**
+     * Engine validation messages (a duplicate or overlong EMIS code) and the
+     * academic-year and fee checks tell the admin what to fix. Other rejections
+     * keep the generic hint.
+     */
     private function rejectionHint(OnboardingStep $step, InvalidArgumentException|ValidationException $e): string
     {
+        if ($e instanceof ValidationException) {
+            $message = collect($e->errors())->flatten()->first();
+
+            return is_string($message) && trim($message) !== ''
+                ? trim($message)
+                : self::COMING_SOON_HINT;
+        }
+
         $message = trim($e->getMessage());
         if ($message !== '' && in_array($step->key(), ['academic_year', 'fees'], true)) {
             return $message;

@@ -635,11 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Onboarding term dates and year/fee validation OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190)**
+## Current Status: October 21, 2026 — **Onboarding term dates and year/fee validation OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190), main merged**
 
-- Toshi v2 term defaults and the wizard terms prefill use the academic year being set up, so a 2027 year no longer receives the current calendar year's dates.
-- A Toshi v2 academic-year reply must be a year (`2027` or `2027/2028`). Yes, or another confirmation, uses the suggested calendar year. Any other reply is re-prompted and is not saved.
-- A Toshi v2 fee typed without an amount is rejected and asks for the amount. Not merged. Production untouched.
+- Merged `origin/main` `ef4c4998897e2d3298109a65d343b325ef8807f0` with a merge commit (no force-push). That is [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189), confirmed `merged: true` at `2026-10-21T20:43:44Z`. [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) is not merged. Production untouched.
+- The driver keeps both rejection messages. A `ValidationException` (duplicate or overlong EMIS) shows the engine message. Academic-year and fee rejections show their own messages. Other rejections stay on the generic hint.
+- The `knowledge.md` conflict keeps both session notes below. No infrastructure identifiers or tokens were added.
 
 ## Session: 2026-10-21 — Onboarding term dates follow the academic year
 
@@ -647,7 +647,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `app/Onboarding/Steps/Steps/TermsStep.php`, `app/Onboarding/Steps/Steps/AcademicYearStep.php`, `app/Onboarding/Steps/Steps/FeesStep.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Models/AcademicYear.php`, `tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php`.
 - **Decision:** Structured academic-year answers (a name plus dates) stay valid. Only a free-text chat reply is limited to a year or a confirmation. Toshi's conversation copy is unchanged.
 - **Tests:** `php artisan test tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php` — 4 passed, 49 assertions. The same four failed on main before the fix (2026 term dates, a non-year saved as the year name, a fee saved with no amount).
-- **Status:** OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) (`cursor/onboarding-year-and-fee-af54`). Do not merge from this session.
+- **Status:** OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) (`cursor/onboarding-year-and-fee-af54`). Do not merge from this session. Merged `origin/main` `ef4c4998897e2d3298109a65d343b325ef8807f0` ([#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189), `merged: true`). Both histories are kept.
+
+## Current Status: October 21, 2026 — **EMIS duplicate and length validation MERGED [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)** `ef4c4998897e2d3298109a65d343b325ef8807f0`
+
+- `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
+- Confirmed `merged: true` at `2026-10-21T20:43:44Z`, merge commit `ef4c4998897e2d3298109a65d343b325ef8807f0`.
+
+## Session: 2026-10-21 — Reject duplicate or overlong EMIS codes (Toshi v2 + wizard)
+
+- **Work:** Applied the EMIS validation patch with `git am` onto `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c`. The patch applied with no conflict.
+- **Files:** `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `tests/Feature/Toshi/ToshiOnboardingV2EmisTest.php`.
+- **Decision:** Check length and uniqueness in `saveEmis` so both Toshi v2 and the wizard get a validation error. The driver surfaces `ValidationException` messages. Other rejections stay on the generic hint. The existence check excludes the current school and does not return another school's data.
+- **Status:** MERGED [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`) as `ef4c4998897e2d3298109a65d343b325ef8807f0`.
 
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
