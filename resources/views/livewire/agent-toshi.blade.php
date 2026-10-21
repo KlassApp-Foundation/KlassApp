@@ -607,6 +607,8 @@
             </div>
             @endif
 
+            @include('livewire.partials.toshi-v2-options')
+
             {{-- School Category Buttons (complete-mode action step) --}}
             @if($actionStep === 'onboarding_school_category')
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-category-options">
@@ -1539,6 +1541,8 @@
                             @endforelse
                         </div>
                         @endif
+
+                        @include('livewire.partials.toshi-v2-options')
 
                         @if($actionStep === 'onboarding_school_category')
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-category-options">
