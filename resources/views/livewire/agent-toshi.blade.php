@@ -167,7 +167,7 @@
                 </div>
             @endforeach
             {{-- Subject inline form --}}
-            @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
+            @if($actionStep !== 'onboarding_v2' && $showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
             <div class="toshi-form-card">
                 <div class="toshi-section-title" style="margin-bottom: 10px;">Add Subject</div>
                 @php $subjects = $this->actionData['subjects'] ?? []; @endphp
@@ -207,7 +207,7 @@
             @endif
 
             {{-- Teacher inline form --}}
-            @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
+            @if($actionStep !== 'onboarding_v2' && $showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
             <div class="toshi-form-card">
                 <div class="toshi-flex-row">
                     <span class="toshi-section-title">Add Teacher</span>
@@ -285,7 +285,7 @@
             @endif
 
             {{-- Student inline form --}}
-            @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
+            @if($actionStep !== 'onboarding_v2' && $showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
             @php
                 $students = $this->actionData['students'] ?? [];
                 $toshiStreamOptions = $this->streamsForStudentFormClass();
@@ -402,7 +402,7 @@
             @endif
 
             {{-- Fee inline form --}}
-            @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
+            @if($actionStep !== 'onboarding_v2' && $showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
             <div class="toshi-form-card">
                 <div class="toshi-flex-row">
                     <span class="toshi-section-title">Add Fee</span>
@@ -477,7 +477,7 @@
             @endif
 
             {{-- Exam inline form --}}
-            @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
+            @if($actionStep !== 'onboarding_v2' && $showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
             <div class="toshi-form-card">
                 <div class="toshi-flex-row">
                     <span class="toshi-section-title">Add Exam</span>
@@ -1102,7 +1102,7 @@
                             @endif
                         @endforeach
                                     {{-- Subject inline form --}}
-                                    @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
+                                    @if($actionStep !== 'onboarding_v2' && $showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
                                     <div class="toshi-form-card">
                                         <div class="toshi-section-title" style="margin-bottom: 10px;">Add Subject</div>
                                         @php $subjects = $this->actionData['subjects'] ?? []; @endphp
@@ -1142,7 +1142,7 @@
                                     @endif
 
                                     {{-- Teacher inline form (maximized) --}}
-                                    @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
+                                    @if($actionStep !== 'onboarding_v2' && $showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
                                     <div class="toshi-form-card">
                                         <div class="toshi-flex-row">
                                             <span class="toshi-section-title">Add Teacher</span>
@@ -1220,7 +1220,7 @@
                                     @endif
 
                                                 {{-- Student inline form --}}
-                                                @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
+                                                @if($actionStep !== 'onboarding_v2' && $showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
                                                 @php
                                                     $students = $this->actionData['students'] ?? [];
                                                     $toshiStreamOptions = $this->streamsForStudentFormClass();
@@ -1337,7 +1337,7 @@
                                     @endif
 
                                     {{-- Fee inline form (maximized) --}}
-                                    @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
+                                    @if($actionStep !== 'onboarding_v2' && $showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
                                     <div class="toshi-form-card">
                                         <div class="toshi-flex-row">
                                             <span class="toshi-section-title">Add Fee</span>
@@ -1412,7 +1412,7 @@
                                     @endif
 
                                                 {{-- Exam inline form --}}
-                                                @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
+                                                @if($actionStep !== 'onboarding_v2' && $showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
                                                 <div class="toshi-form-card">
                                                     <div class="toshi-flex-row">
                                                         <span class="toshi-section-title">Add Exam</span>

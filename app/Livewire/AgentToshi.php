@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\School;
@@ -252,7 +253,20 @@ class AgentToshi extends Component
     ];
 
     public $whatsappPhone = '';
+
+    /**
+     * Display-only. The issued code is never stored here. Locked so a browser
+     * payload cannot supply the code that verification compares against.
+     */
+    #[Locked]
     public $whatsappSentOtp = '';
+
+    /**
+     * UI flag set only by the server after verifyAdminCode matches. Locked so
+     * the browser cannot flip it. Commit does not read it; it reads the
+     * session grant from WhatsAppOnboardingOtpService.
+     */
+    #[Locked]
     public $whatsappVerified = false;
 
     public $mode = 'assistant';
@@ -1150,6 +1164,12 @@ class AgentToshi extends Component
         }
 
         $result = app(ToshiOnboardingV2Driver::class)->handleReply($school, $text, auth()->id());
+
+        if ($result['status'] === 'awaiting') {
+            $this->botSay($this->formatOnboardingV2Prompt($result));
+
+            return;
+        }
 
         if ($result['status'] === 'rejected') {
             $this->rememberOnboardingV2Options($result);
@@ -2711,7 +2731,7 @@ class AgentToshi extends Component
             $this->exams = [];
             $this->whatsappPhone = '';
             $this->whatsappSentOtp = '';
-            session()->forget(['toshi_wa_otp.code', 'toshi_wa_otp.phone', 'toshi_wa_otp.expires_at']);
+            app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class)->forgetChallengeAndGrant();
             $this->whatsappVerified = false;
             $this->schoolId = null;
             $this->scope = 'platform';
@@ -6195,21 +6215,15 @@ class AgentToshi extends Component
             return;
         }
 
-        $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
-
         // substep 3: verify OTP
         if ($this->substep === 3) {
-            $code = trim($text);
-            if ($otpService->matches($this->expectedWhatsAppOtp(), $code)) {
-                $this->whatsappVerified = true;
-                $this->forgetWhatsAppOtp();
+            if ($this->acceptLegacyWhatsAppCode(trim($text))) {
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**! The admin will receive school notifications here.");
                 $this->substep = 0;
                 $this->advance();
                 return;
             }
-            $this->botSay("That code doesn't match. Please try again, or type 'resend' for a new code.");
             $this->substep = 4;
             return;
         }
@@ -6226,70 +6240,75 @@ class AgentToshi extends Component
                 $this->advance();
                 return;
             }
-            $code = trim($text);
-            if ($otpService->matches($this->expectedWhatsAppOtp(), $code)) {
-                $this->whatsappVerified = true;
-                $this->forgetWhatsAppOtp();
+            if ($this->acceptLegacyWhatsAppCode(trim($text))) {
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**!");
                 $this->substep = 0;
                 $this->advance();
                 return;
             }
-            $this->botSay("Still doesn't match. Type **resend** for a new code or **skip** to do this later.");
         }
+    }
+
+    /**
+     * Compare the typed code with the one sendWhatsAppOtp stored server-side.
+     * A match records a session grant. The public whatsappVerified flag is
+     * only a UI mirror of that grant.
+     */
+    private function acceptLegacyWhatsAppCode(string $code): bool
+    {
+        $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
+        $adminId = (int) (auth()->id() ?? 0);
+        $result = $otpService->verifyAdminCode($adminId, $code, (string) $this->whatsappPhone);
+        if ($result['verified']) {
+            $this->whatsappPhone = $result['phone'];
+            $this->whatsappVerified = true;
+            $this->whatsappSentOtp = '';
+
+            return true;
+        }
+
+        $this->botSay($result['message']);
+
+        return false;
     }
 
     private function sendWhatsAppOtp()
     {
         $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
         $adminId = (int) (auth()->id() ?? 0);
-        if ($adminId > 0 && ($wait = $otpService->consumeVerificationAttempt($adminId)) !== null) {
-            $this->botSay($wait);
+        $result = $otpService->sendAdminVerificationCode($adminId, (string) $this->whatsappPhone);
+        // The code stays in the session. Never copy it onto a public property.
+        $this->whatsappSentOtp = '';
+
+        if ($result['reason'] === 'unauthenticated') {
+            $this->botSay($result['message']);
+
+            return;
+        }
+
+        if ($result['reason'] === 'rate_limited') {
+            $this->botSay($result['message']);
             $this->substep = 3;
 
             return;
         }
 
-        $otp = $otpService->generateCode();
-        session([
-            'toshi_wa_otp.code' => $otp,
-            'toshi_wa_otp.phone' => (string) $this->whatsappPhone,
-            'toshi_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
-        ]);
-        // Public Livewire state is in the browser payload. Keep the code
-        // there only on local and testing; production reads the session.
-        $this->whatsappSentOtp = $otpService->mayDisplayCode() ? $otp : '';
-
-        $delivery = $otpService->deliver((string) $this->whatsappPhone, $otp, $adminId > 0 ? $adminId : null);
-
-        if ($otpService->mayDisplayCode()) {
+        $otp = $result['code'];
+        if ($otpService->mayDisplayCode() && is_string($otp) && $otp !== '') {
             $this->botSay("📱 Your verification code: **{$otp}**");
             $this->botSay("(A message was also sent to your phone if WhatsApp API is configured.)");
-            if ($delivery['sent']) {
+            if ($result['sent']) {
                 $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
             }
             $this->botSay("Enter the 6-digit code you received:");
-        } elseif ($delivery['sent']) {
+        } elseif ($result['sent']) {
             $this->botSay("✅ We sent a verification code to **{$this->whatsappPhone}**. Enter the 6-digit code you received:");
         } else {
             $this->botSay("We couldn't send the verification code to your WhatsApp. Type **resend** to try again.");
         }
 
         $this->substep = 3;
-    }
-
-    private function expectedWhatsAppOtp(): string
-    {
-        $fromSession = (string) session('toshi_wa_otp.code', '');
-
-        return $fromSession !== '' ? $fromSession : (string) $this->whatsappSentOtp;
-    }
-
-    private function forgetWhatsAppOtp(): void
-    {
-        $this->whatsappSentOtp = '';
-        session()->forget(['toshi_wa_otp.code', 'toshi_wa_otp.phone', 'toshi_wa_otp.expires_at']);
     }
 
     // ════════════════════════════════════════════════
@@ -6816,6 +6835,20 @@ class AgentToshi extends Component
         }, $studentRecords);
     }
 
+    /**
+     * Link the phone verifyAdminCode already checked. Ignores Livewire
+     * properties and restored draft flags.
+     */
+    private function saveVerifiedWhatsAppFromGrant(School $school, int $userId): void
+    {
+        $phone = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class)->grantPhone();
+        if (! is_string($phone) || trim($phone) === '') {
+            return;
+        }
+
+        app(OnboardingEngine::class)->saveWhatsApp($school, $userId, $phone, codeWasVerified: true);
+    }
+
     private function commitAll()
     {
         DB::transaction(function () {
@@ -7017,11 +7050,10 @@ class AgentToshi extends Component
                     );
                 }
 
-                // ── WhatsApp: delegate to OnboardingEngine ──
-                // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch for phone dedup.
-                if ($this->whatsappVerified && $this->whatsappPhone) {
-                    app(OnboardingEngine::class)->saveWhatsApp($school, $adminUser->id, $this->whatsappPhone);
-                }
+                // WhatsApp is linked only from the session grant written after
+                // the issued code matched. Public whatsappVerified / whatsappPhone
+                // are not proof, including when a draft restores them.
+                $this->saveVerifiedWhatsAppFromGrant($school, $adminUser->id);
             }
 
             // ════════════════════════════════════════════
@@ -7164,11 +7196,8 @@ class AgentToshi extends Component
                     );
                 }
 
-                // ── WhatsApp: delegate to OnboardingEngine ──
-                // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch.
-                if ($this->whatsappVerified && $this->whatsappPhone) {
-                    app(OnboardingEngine::class)->saveWhatsApp($school, $user->id, $this->whatsappPhone);
-                }
+                // Same rule as create mode: only the server-side code grant.
+                $this->saveVerifiedWhatsAppFromGrant($school, $user->id);
 
                 // Promote selected teacher to co-admin (usergroup_id: 5 → 3)
                 if ($this->coAdminUserId) {

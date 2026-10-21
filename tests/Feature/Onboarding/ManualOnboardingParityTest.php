@@ -17,7 +17,9 @@ use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
+use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -168,9 +170,8 @@ class ManualOnboardingParityTest extends TestCase
         // represent the outcomes of the manual add-forms; assert against real rows.
         $this->completeContentSteps();
 
-        // WhatsApp verification via the real manual link form.
-        $this->post('/admin/whatsapp/phone', ['phone' => '+256700111222'])
-            ->assertSessionHasNoErrors();
+        // The phone form alone does not finish this step. A checked code does.
+        $this->verifyWhatsAppWithServerCode('+256700111222');
 
         // Free-tier plan milestone (auto-assigned once content is done) — the
         // only thing standing between "content done" and "fully onboarded".
@@ -227,9 +228,38 @@ class ManualOnboardingParityTest extends TestCase
         $this->assertSame('+256700333444', $waUser->phone);
         $this->assertSame($this->school->id, $waUser->school_id);
         $this->assertTrue((bool) $waUser->opted_in);
-        // Parity with Toshi's whatsapp_verify commit: verified_at is set.
-        $this->assertNotNull($waUser->verified_at, 'Manual link must set verified_at like Toshi does.');
+        // A posted phone is not a verification code. The row stays unverified.
+        $this->assertNull($waUser->verified_at);
 
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
+        );
+    }
+
+    public function test_manual_link_without_a_code_leaves_whatsapp_step_incomplete(): void
+    {
+        $this->actingAs($this->admin);
+
+        $this->post('/admin/whatsapp/phone', ['phone' => '+256700333445'])
+            ->assertSessionHasNoErrors();
+
+        $waUser = WhatsAppUser::where('user_id', $this->admin->id)->first();
+        $this->assertNotNull($waUser);
+        $this->assertNull($waUser->verified_at);
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
+        );
+        $this->assertContains(
+            'whatsapp_verify',
+            collect(OnboardingStepsService::blockingIncompleteSteps($this->school->fresh(), $this->admin->id))
+                ->pluck('key')
+                ->all()
+        );
+
+        $this->verifyWhatsAppWithServerCode('+256700333445');
+
+        $waUser->refresh();
+        $this->assertNotNull($waUser->verified_at);
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
         );
@@ -261,6 +291,22 @@ class ManualOnboardingParityTest extends TestCase
     }
 
     // ── helpers ──
+
+    private function verifyWhatsAppWithServerCode(string $phone): void
+    {
+        $otp = app(WhatsAppOnboardingOtpService::class);
+        $sent = $otp->sendAdminVerificationCode($this->admin->id, $phone);
+        $this->assertTrue(
+            $otp->verifyAdminCode($this->admin->id, (string) $sent['code'], $phone)['verified']
+        );
+        $result = app(OnboardingEngine::class)->saveWhatsApp(
+            $this->school->fresh(),
+            $this->admin->id,
+            $phone,
+            codeWasVerified: true,
+        );
+        $this->assertNotNull($result['linked']);
+    }
 
     private function completeContentSteps(): void
     {

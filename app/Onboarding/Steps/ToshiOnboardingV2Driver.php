@@ -38,7 +38,7 @@ class ToshiOnboardingV2Driver
     }
 
     /**
-     * @return array{status: 'advanced'|'rejected'|'done', key: ?string, question: ?string, options: list<array{value: string, label: string}>, input_type: ?string, hint: ?string, saved_key: ?string}
+     * @return array{status: 'advanced'|'rejected'|'awaiting'|'done', key: ?string, question: ?string, options: list<array{value: string, label: string}>, input_type: ?string, hint: ?string, saved_key: ?string}
      */
     public function handleReply(School $school, mixed $raw, ?int $userId = null): array
     {
@@ -59,6 +59,16 @@ class ToshiOnboardingV2Driver
 
         try {
             $step->save($school, $raw, $userId);
+        } catch (OnboardingStepAwaitingInput $e) {
+            return [
+                'status' => 'awaiting',
+                'key' => $step->key(),
+                'question' => $e->getMessage(),
+                'options' => $step->options($school),
+                'input_type' => $step->inputType(),
+                'hint' => null,
+                'saved_key' => null,
+            ];
         } catch (InvalidArgumentException|ValidationException) {
             $payload = $this->promptPayload($step, $school->fresh());
 
