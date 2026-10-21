@@ -635,6 +635,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **real schools stay on the Wizard until Toshi parity OPEN [#1192](https://github.com/KlassApp-Foundation/KlassApp/pull/1192)**
+
+- A school with `is_test` false no longer starts Toshi onboarding. The choice on `/onboarding/choose`, the invite claim page, the dashboard setup control, and the setup banner show "Set up by chatting with Toshi" disabled, labelled "Coming soon". A direct POST or GET that selects that path redirects to the Wizard with a short flash. A real school already in `toshi_mode=onboarding` is sent to the Wizard; completed steps stay completed because both paths read the same step records. Test schools (`is_test = 1`) keep the Toshi path. `TOSHI_ONBOARDING_V2` is unchanged.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Hide the Toshi onboarding path for real schools
+
+- **Work:** One gate, `ToshiOnboardingPath`, decides whether a school may start Toshi onboarding (`is_test` is 1). The choice controller, the welcome screen, and the dashboard query that opens Toshi send a real school to the Wizard. Admin pages and settings pages do the same when that school is still in onboarding mode and has not finished. The mode is set back to preview so the next visit does not re-enter Toshi. Step rows are not rewritten.
+- **Files:** `app/Services/Toshi/ToshiOnboardingPath.php`, `app/Http/Middleware/SendRealSchoolToshiOnboardingToWizard.php`, `app/Http/Middleware/MustBePrivilege.php`, `app/Providers/RouteServiceProvider.php`, `app/Http/Controllers/OnboardingChoiceController.php`, `app/Http/Controllers/Admin/DashboardController.php`, `app/Http/Controllers/Auth/GoogleAuthController.php`, `resources/views/auth/partials/toshi-path-choice.blade.php`, `resources/views/auth/onboarding-choice.blade.php`, `resources/views/auth/school-invite-claim.blade.php`, `resources/views/emails/school-invite.blade.php`, `resources/views/admin/onboarding/wizard.blade.php`, `resources/views/admin/dashboard_v2.blade.php`, `resources/views/admin/partials/setup-banner.blade.php`, `tests/Feature/Onboarding/ToshiPathHiddenForRealSchoolsTest.php`, plus the test fixtures that must stay on the live Toshi path (`is_test = 1`).
+- **Decision:** Do not change `TOSHI_ONBOARDING_V2` or any env var. Do not redirect inside the Toshi Livewire component. Assistant mode is left alone. A finished school is left alone. The invite claim page does not submit a path; it shows the disabled choice, and the real choice remains `/onboarding/choose` after the claim.
+- **Tests:** `tests/Feature/Onboarding/ToshiPathHiddenForRealSchoolsTest.php` — 4 tests, 60 assertions. Related invite, dashboard, and Toshi entry suites were re-run locally and passed. No browser pass. No staging pass. CI was still running when this note was written.
+- **Status:** OPEN [#1192](https://github.com/KlassApp-Foundation/KlassApp/pull/1192) (`cursor/hide-toshi-path-real-schools-472f`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
 - Laravel Cloud application, environment, organization, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, production Doppler secret names, and token values are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers live in the private repo KlassApp-Foundation/internal or the Cloud dashboard. The app lives in eu-central-1.
