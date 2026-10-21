@@ -136,8 +136,12 @@
                                     'Premium' => 'warning',
                                     default => 'info',
                                 };
+                                $planEndsLabel = app(\App\Services\EarlyAdopterOffer::class)->endLabel($school, $plan);
                             @endphp
                             <span class="ds-badge ds-badge-{{ $planBadge }}">{{ $planName }}</span>
+                            @if($planEndsLabel)
+                                <div class="text-xs text-gray-500 mt-1">{{ $planEndsLabel }}</div>
+                            @endif
                         </td>
                         <td class="text-center">
                             <span class="ds-dot ds-dot-{{ $school->status == 1 ? 'green' : 'red' }}"></span>
