@@ -635,6 +635,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
+
+- `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Reject duplicate or overlong EMIS codes (Toshi v2 + wizard)
+
+- **Work:** Applied the EMIS validation patch with `git am` onto `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c`. The patch applied with no conflict.
+- **Files:** `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `tests/Feature/Toshi/ToshiOnboardingV2EmisTest.php`.
+- **Decision:** Check length and uniqueness in `saveEmis` so both Toshi v2 and the wizard get a validation error. The driver surfaces `ValidationException` messages. Other rejections stay on the generic hint. The existence check excludes the current school and does not return another school's data.
+- **Status:** OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
 - Laravel Cloud application, environment, organization, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, production Doppler secret names, and token values are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers live in the private repo KlassApp-Foundation/internal or the Cloud dashboard. The app lives in eu-central-1.
