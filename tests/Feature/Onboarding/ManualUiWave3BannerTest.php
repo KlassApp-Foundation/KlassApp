@@ -61,6 +61,8 @@ class ManualUiWave3BannerTest extends TestCase
         ]);
 
         // toshi_enabled=1 would be assistant mode, which has no setup CTA.
+        // The working Toshi setup button is kept for test schools.
+        $this->school->forceFill(['is_test' => 1])->save();
         $this->school->setToshiMode(\App\Enums\ToshiMode::Onboarding);
     }
 

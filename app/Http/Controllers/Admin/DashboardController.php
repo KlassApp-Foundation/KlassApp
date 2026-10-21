@@ -51,6 +51,15 @@ class DashboardController extends Controller
             return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUsergroup(1));
         }
 
+        $toshiPaths = app(\App\Services\Toshi\ToshiOnboardingPath::class);
+        $requestSchool = Auth::user()->school;
+        if ($requestSchool
+            && $request->boolean('toshi_onboarding')
+            && ! $toshiPaths->openFor($requestSchool)
+            && $requestSchool->onboarding_finished_at === null) {
+            return $toshiPaths->sendToWizard($requestSchool);
+        }
+
         $admin_id  =   Auth::id();
         $school_id =   Auth::user()->school_id;
 

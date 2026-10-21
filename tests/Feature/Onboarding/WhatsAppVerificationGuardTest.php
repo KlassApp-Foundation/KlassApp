@@ -53,6 +53,8 @@ class WhatsAppVerificationGuardTest extends TestCase
             'toshi_enabled' => 0,
             'toshi_mode' => 'onboarding',
         ]);
+        // This test stays on the Toshi path so the phone form and commit still run.
+        $this->school->forceFill(['is_test' => 1])->save();
 
         $this->admin = User::create([
             'school_id' => $this->school->id,

@@ -4,17 +4,24 @@
 @section('title', 'Choose how to set up ' . $school->name)
 
 @section('content')
+@php
+    $toshiPathAvailable = (bool) ($toshiPathAvailable ?? false);
+@endphp
 <div class="ap-page" data-ap-paper="vintage" data-ap-layout="split" data-ap-screen="onboarding-choice">
   @include('auth.preview._paper-bg')
   <div class="ap-shell">
     @include('auth.preview._brand-panel', [
       'tagline' => 'An open education protocol for humans and agents.',
-      'support' => 'Two ways to finish setting up. You can switch later; nothing is locked in.',
+      'support' => $toshiPathAvailable
+        ? 'Two ways to finish setting up. You can switch later; nothing is locked in.'
+        : 'Finish setting up step by step. Chat setup with Toshi is coming soon.',
     ])
     <div class="ap-form-panel">
       <div class="ap-form-shell ap-card ap-card--wide">
         <h1 class="ap-title">How would you like to set up {{ $school->name }}?</h1>
-        <p class="ap-sub">Both paths cover the same steps: school details, classes, subjects, teachers, students, terms, fees, WhatsApp, and plan.</p>
+        <p class="ap-sub">{{ $toshiPathAvailable
+            ? 'Both paths cover the same steps: school details, classes, subjects, teachers, students, terms, fees, WhatsApp, and plan.'
+            : 'The Wizard covers school details, classes, subjects, teachers, students, terms, fees, WhatsApp, and plan.' }}</p>
 
         @if (session('successmessage'))
           <div class="ap-alert ap-alert--success" role="status">{{ session('successmessage') }}</div>
@@ -27,14 +34,13 @@
               <strong style="display:block;font-size:1rem;">Set up step by step</strong>
               <span style="display:block;font-weight:400;opacity:.9;margin-top:4px;">Use the Wizard. Best when you have your class list and fee structure ready.</span>
             </button>
-            <button type="submit" name="path" value="toshi" class="ap-secondary" data-testid="onboarding-choice-toshi" style="text-align:left;padding:18px 20px;">
-              <strong style="display:block;font-size:1rem;">Set up by chatting with Toshi</strong>
-              <span style="display:block;font-weight:400;opacity:.9;margin-top:4px;">Toshi asks one question at a time and saves each answer. No AI key needed for guided setup.</span>
-            </button>
+            @include('auth.partials.toshi-path-choice', ['toshiPathAvailable' => $toshiPathAvailable])
           </div>
         </form>
 
-        <p class="ap-meta" style="margin-top:16px;">You can change paths from the dashboard later.</p>
+        <p class="ap-meta" style="margin-top:16px;">{{ $toshiPathAvailable
+            ? 'You can change paths from the dashboard later.'
+            : 'You can continue setup from the dashboard.' }}</p>
       </div>
     </div>
   </div>

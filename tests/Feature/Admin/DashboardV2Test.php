@@ -308,7 +308,7 @@ class DashboardV2Test extends TestCase
 
         // Onboarding: Set up with Toshi; still no Early access; nothing auto-opens.
         $onboarding = $this->makeSchool(['name' => 'Toshi Onboarding']);
-        $onboarding->forceFill(['toshi_enabled' => 0, 'toshi_mode' => 'onboarding'])->save();
+        $onboarding->forceFill(['toshi_enabled' => 0, 'toshi_mode' => 'onboarding', 'is_test' => 1])->save();
         $response = $this->render($this->makeAdmin($onboarding))->assertOk()
             ->assertSee('data-testid="dashboard-v2-toshi-setup"', false)
             ->assertDontSee('Early access', false);

@@ -135,6 +135,7 @@ class IntegrationsSettingsTest extends TestCase
             'email' => "school-{$suffix}-" . uniqid() . '@test.sch.ug',
             'phone' => '070' . random_int(1000000, 9999999),
             'status' => 1,
+            'toshi_mode' => 'preview',
             'registration_country' => 'Uganda',
             'created_at' => now(),
             'updated_at' => now(),
