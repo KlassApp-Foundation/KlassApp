@@ -676,6 +676,22 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **stable dependency pins OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156)**
+
+- Rebased onto `main` at `74b18405` (#1148). Not merged. Production untouched. Laravel stays 12 (`laravel/framework` v12.63.0). PHP stays 8.4. `maatwebsite/excel` stays `3.1.x-dev` at the same lock reference as `main`.
+- The lock was regenerated from that `main` lock with `composer update` limited to the pinned and loosened packages. Every version #1148 changed is unchanged in this lock, except `paragonie/sodium_compat` v1.24.2, which is no longer installed because `pusher/pusher-php-server` 7.3.0 does not depend on it. It is not restored at the older v1.24.0.
+- Pins `aws/aws-sdk-php-laravel` 3.11.0, `barryvdh/laravel-dompdf` v3.1.2, `laracasts/presenter` 0.2.9, `laravel/ui` v4.6.3, `twilio/sdk` 8.13.0, `predis/predis` v3.7.0, `pusher/pusher-php-server` 7.3.0. Loosens `mallardduck/blade-lucide-icons` to `^2.0` (locked 2.0.31).
+- Removes unused `laravel/vapor-core`, `laravel/vapor-cli`, `titasgailius/search-relations`, `laravel/scout`, `algolia/algoliasearch-client-php`, and `openai-php/laravel` (plus `config/openai.php` and `config/scout.php`). Replaces abandoned `caneara/axiom` with `App\Rules\Isbn`.
+- Package files (`package.json`, `package-lock.json`) are unchanged versus `main`, so this rebase does not rebuild frontend assets.
+
+## Session: 2026-10-20 — Pin stable packages and remove dead ones (PR #1156 OPEN)
+
+- **Work:** PR 1 of the stack plan only. No framework bump, no migrations, no Excel 4, no PHP 8.5. Rebased onto `74b18405` after #1146 and #1148 merged, and regenerated `composer.lock` from `main`'s lock.
+- **Files:** `composer.json`, `composer.lock`, `app/Rules/Isbn.php`, `tests/Unit/Rules/IsbnTest.php`, `app/Http/Requests/BookRequest.php`, `app/Models/LessonPlan.php` (removed unused `searchableAs()` and `toSearchableArray()`), `config/openai.php`, `config/scout.php`, `.env.example` (Algolia block only). `config/ai.php` and credential handling were not touched.
+- **Decision:** `composer update` named only the pinned and loosened packages. #1148's Guzzle 7.16.0, CommonMark 2.10.4, PhpSpreadsheet 1.30.7, HttpFoundation v7.4.21, Yaml v8.1.9, and the other upgraded packages stay at those versions. Excel stays for PR 5.
+- **Tests:** After the rebase, local `scripts/test-guard.sh` (4 processes) was **2812 tests, 20,061 assertions, 0 failures, 0 errors, 4 skipped**. The two new tests are still `Tests\Unit\Rules\IsbnTest`. CI check, scan, mysql-84-migrations, and test-guard were green on `23fb00ff` before this note.
+- **Status:** OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156). Do not merge from this session.
+
 ## Current Status: October 20, 2026 — **wizard WhatsApp verification code OPEN [#1167](https://github.com/KlassApp-Foundation/KlassApp/pull/1167)**
 
 - A school admin's own verification code is allowed through the demo-only recipient guard. Only that message, only to the number that admin is verifying. Other sends stay on the existing guard.
