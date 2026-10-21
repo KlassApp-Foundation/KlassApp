@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **wizard WhatsApp verification code OPEN [#1167](https://github.com/KlassApp-Foundation/KlassApp/pull/1167)**
+
+- A school admin's own verification code is allowed through the demo-only recipient guard. Only that message, only to the number that admin is verifying. Other sends stay on the existing guard.
+- Production and staging do not put the code in the wizard or Toshi response. Local and testing still can. A failed send says so and offers Retry, limited to 5 attempts in 10 minutes.
+- `WHATSAPP_DEMO_ONLY_RECIPIENTS` is unchanged. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Wizard admin WhatsApp verification code
+
+- **Work:** The setup wizard's WhatsApp step printed the code, including "WhatsApp API may be unavailable", because `DemoOnlyRecipientGuard` refused the number and the wizard always rendered the code. The code is now sent as `admin_whatsapp_verification` for that admin and that number only. The screen shows it only when the app environment is local or testing.
+- **Files:** `app/Services/DemoOnlyRecipientGuard.php`, `app/Services/WhatsAppBusinessService.php`, `app/Services/WhatsApp/WhatsAppOnboardingOtpService.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `config/services.php` (comment only), `tests/Feature/Onboarding/WizardAdminWhatsAppVerificationSendTest.php`.
+- **Decision:** Do not change the demo-only flag. Do not let the exception cover marks, fees, or any other body. Keep the code in the session for the check the admin types; do not put it on a public Livewire property in production. Delivery-log preview says "WhatsApp verification code" so the dashboard does not print it.
+- **Tests:** On `main`, the new send test saw 0 outbound messages. With the fix, `WizardAdminWhatsAppVerificationSendTest` is 5 tests / 67 assertions, green. Onboarding plus the demo-only guard suites: 489 tests, 2445 assertions, green. Full PHPUnit: 2817 tests, 20092 assertions, exit 0 (4 skipped, 2 pre-existing risky tests with no assertions).
+- **Status:** OPEN [#1167](https://github.com/KlassApp-Foundation/KlassApp/pull/1167) (`cursor/wizard-admin-wa-verify-3f91`). Do not merge from this session.
+
 ## Current Status: October 20, 2026 — **GET mutations OPEN [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168)**
 
 - Deletes, impersonation, password reset, email verification, and setup-banner dismiss are POST or DELETE with CSRF and a confirmation step. GET of those URLs is 405 and does not write. Not merged. Production untouched.

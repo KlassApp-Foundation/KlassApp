@@ -60,7 +60,9 @@ return [
         // When true, every outbound WhatsApp message is refused unless the
         // recipient follows (or has a pending BIND request for) a demo school's
         // student, or is the sender of the message being answered. Numbers linked
-        // to a real school are always refused. See DemoOnlyRecipientGuard.
+        // to a real school are refused. The one exception is a school admin's
+        // own verification code, to the number that admin is verifying.
+        // See DemoOnlyRecipientGuard. Do not change this flag to unblock that send.
         'demo_only_recipients' => filter_var(env('WHATSAPP_DEMO_ONLY_RECIPIENTS', false), FILTER_VALIDATE_BOOLEAN),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
         'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),

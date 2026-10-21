@@ -2684,6 +2684,7 @@ class AgentToshi extends Component
             $this->exams = [];
             $this->whatsappPhone = '';
             $this->whatsappSentOtp = '';
+            session()->forget(['toshi_wa_otp.code', 'toshi_wa_otp.phone', 'toshi_wa_otp.expires_at']);
             $this->whatsappVerified = false;
             $this->schoolId = null;
             $this->scope = 'platform';
@@ -6165,8 +6166,9 @@ class AgentToshi extends Component
         // substep 3: verify OTP
         if ($this->substep === 3) {
             $code = trim($text);
-            if ($otpService->matches($this->whatsappSentOtp, $code)) {
+            if ($otpService->matches($this->expectedWhatsAppOtp(), $code)) {
                 $this->whatsappVerified = true;
+                $this->forgetWhatsAppOtp();
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**! The admin will receive school notifications here.");
                 $this->substep = 0;
@@ -6191,8 +6193,9 @@ class AgentToshi extends Component
                 return;
             }
             $code = trim($text);
-            if ($otpService->matches($this->whatsappSentOtp, $code)) {
+            if ($otpService->matches($this->expectedWhatsAppOtp(), $code)) {
                 $this->whatsappVerified = true;
+                $this->forgetWhatsAppOtp();
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**!");
                 $this->substep = 0;
@@ -6206,22 +6209,53 @@ class AgentToshi extends Component
     private function sendWhatsAppOtp()
     {
         $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
-        $otp = $otpService->generateCode();
-        $this->whatsappSentOtp = $otp;
+        $adminId = (int) (auth()->id() ?? 0);
+        if ($adminId > 0 && ($wait = $otpService->consumeVerificationAttempt($adminId)) !== null) {
+            $this->botSay($wait);
+            $this->substep = 3;
 
-        // Always show the code in the chat so onboarding is never blocked.
-        // The admin is already authenticated — this step collects their WhatsApp
-        // for notifications, not identity proof. Code is also sent via API if configured.
-        $this->botSay("📱 Your verification code: **{$otp}**");
-        $this->botSay("(A message was also sent to your phone if WhatsApp API is configured.)");
-
-        $delivery = $otpService->deliver((string) $this->whatsappPhone, $otp);
-        if ($delivery['sent']) {
-            $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
+            return;
         }
 
-        $this->botSay("Enter the 6-digit code you received:");
+        $otp = $otpService->generateCode();
+        session([
+            'toshi_wa_otp.code' => $otp,
+            'toshi_wa_otp.phone' => (string) $this->whatsappPhone,
+            'toshi_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
+        // Public Livewire state is in the browser payload. Keep the code
+        // there only on local and testing; production reads the session.
+        $this->whatsappSentOtp = $otpService->mayDisplayCode() ? $otp : '';
+
+        $delivery = $otpService->deliver((string) $this->whatsappPhone, $otp, $adminId > 0 ? $adminId : null);
+
+        if ($otpService->mayDisplayCode()) {
+            $this->botSay("📱 Your verification code: **{$otp}**");
+            $this->botSay("(A message was also sent to your phone if WhatsApp API is configured.)");
+            if ($delivery['sent']) {
+                $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
+            }
+            $this->botSay("Enter the 6-digit code you received:");
+        } elseif ($delivery['sent']) {
+            $this->botSay("✅ We sent a verification code to **{$this->whatsappPhone}**. Enter the 6-digit code you received:");
+        } else {
+            $this->botSay("We couldn't send the verification code to your WhatsApp. Type **resend** to try again.");
+        }
+
         $this->substep = 3;
+    }
+
+    private function expectedWhatsAppOtp(): string
+    {
+        $fromSession = (string) session('toshi_wa_otp.code', '');
+
+        return $fromSession !== '' ? $fromSession : (string) $this->whatsappSentOtp;
+    }
+
+    private function forgetWhatsAppOtp(): void
+    {
+        $this->whatsappSentOtp = '';
+        session()->forget(['toshi_wa_otp.code', 'toshi_wa_otp.phone', 'toshi_wa_otp.expires_at']);
     }
 
     // ════════════════════════════════════════════════

@@ -252,12 +252,16 @@ class ManualOnboardingWizard extends Component
     public string $whatsappOtpInput = '';
 
     /**
-     * Code shown in the wizard UI (parity with Toshi chat always displaying the OTP).
-     * Not used for verification — the authoritative code lives in session.
+     * Code shown in the wizard only when WhatsAppOnboardingOtpService::mayDisplayCode()
+     * is true (local and testing). Empty in production. Not used for verification —
+     * the authoritative code lives in session.
      */
     public string $whatsappOtpDisplay = '';
 
     public string $whatsappOtpStatus = '';
+
+    /** True after a send that did not go out, so the step can offer Retry. */
+    public bool $whatsappSendFailed = false;
 
     /** Set true only after a successful OTP match (or hydrate of an already-verified link). */
     #[Locked]
@@ -2917,13 +2921,14 @@ class ManualOnboardingWizard extends Component
 
     /**
      * Send a 6-digit OTP via the same WhatsAppOnboardingOtpService Toshi uses.
-     * Always surfaces the code in the wizard UI so onboarding is never blocked when
-     * the Meta API is unconfigured (same policy as AgentToshi::sendWhatsAppOtp).
+     * The code is a system message to the number this admin is verifying.
+     * Local and testing may show it; production never does.
      */
     public function sendWhatsAppVerificationCode(): void
     {
         $this->errorMessage = '';
         $this->whatsappOtpStatus = '';
+        $this->whatsappSendFailed = false;
         $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
         if ($phone === null) {
             $this->whatsappOtpDisplay = '';
@@ -2939,6 +2944,15 @@ class ManualOnboardingWizard extends Component
         $this->whatsappPhone = $phone;
 
         $otpService = app(WhatsAppOnboardingOtpService::class);
+        $adminId = (int) Auth::id();
+        if ($wait = $otpService->consumeVerificationAttempt($adminId)) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappSendFailed = true;
+            $this->whatsappOtpStatus = $wait;
+
+            return;
+        }
+
         $otp = $otpService->generateCode();
 
         session([
@@ -2949,15 +2963,30 @@ class ManualOnboardingWizard extends Component
 
         $this->whatsappVerified = false;
         $this->whatsappOtpInput = '';
-        $this->whatsappOtpDisplay = $otp;
-        $this->whatsappOtpStatus = "Your verification code: {$otp}";
 
-        $delivery = $otpService->deliver($phone, $otp);
-        if ($delivery['sent']) {
-            $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
-        } else {
-            $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
+        $delivery = $otpService->deliver($phone, $otp, $adminId);
+        if ($otpService->mayDisplayCode()) {
+            $this->whatsappOtpDisplay = $otp;
+            $this->whatsappOtpStatus = "Your verification code: {$otp}";
+            if ($delivery['sent']) {
+                $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
+            } else {
+                $this->whatsappSendFailed = true;
+                $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
+            }
+
+            return;
         }
+
+        $this->whatsappOtpDisplay = '';
+        if ($delivery['sent']) {
+            $this->whatsappOtpStatus = 'We sent a verification code to your WhatsApp. Enter it below.';
+
+            return;
+        }
+
+        $this->whatsappSendFailed = true;
+        $this->whatsappOtpStatus = "We couldn't send the verification code. Please try again.";
     }
 
     public function verifyWhatsAppCode(): void
