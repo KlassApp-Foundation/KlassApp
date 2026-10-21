@@ -635,50 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Early access existing account brought up to date again [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
+## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
-- Merged `origin/main` `63c45890bd586286e4fd25a6b2a8c6a29409e028` into `cursor/early-access-existing-account-5a7b` with a merge commit. No force-push. That tip is [#1191](https://github.com/KlassApp-Foundation/KlassApp/pull/1191) and includes [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189). The only conflict was `knowledge.md`. Both histories are kept. This note does not add infrastructure identifiers or tokens.
-- Not merged. Production untouched.
+- Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.
+- `origin/main` (`ef4c499`) merged into this branch with a merge commit. That tip is [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189). The only conflict was `knowledge.md`. Both sides are kept below. No infrastructure identifiers or tokens were added.
 
-## Current Status: October 21, 2026 — **Early access existing account message stays generic [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
-
-- The thank-you sentence is still only: "This email already has a KlassApp account. Sign in, or reset your password." It does not include the account's school name or role. The platform list still shows the request's own school and role, plus an "Existing user" badge, and does not show the account's school or role.
-- `POST /early-access` stays `throttle:5,1`. The existing-account lookup is inside that action, so the reply uses the same limit as the rest of the form. The sixth submit from one address is HTTP 429 and does not store another request.
-- Not merged. Production untouched.
-
-## Session: 2026-10-21 — Existing-account reply does not name the school or role
-
-- **Work:** Locked the public sentence so a matching account does not reveal that account's school name or role. Confirmed the lookup sits on the form's `throttle:5,1` route.
-- **Files:** `app/Http/Controllers/EarlyAccessController.php`, `resources/views/early-access/show.blade.php`, `routes/web.php`, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php`, `knowledge.md`.
-- **Decision:** Do not add a second limiter. The form already limits this action. Do not change the sentence; it already says only that the email has an account and links to sign in or reset the password.
-- **Tests:** Without `throttle:5,1`, `test_existing_account_reply_is_rate_limited_with_the_form` failed. With the school name and role pasted into the sentence, `test_existing_account_message_does_not_reveal_school_or_role` failed. Restored, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php` — 6 tests, 70 assertions, 0 failures (PHP 8.4.27).
-- **Status:** OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) (`cursor/early-access-existing-account-5a7b`). Do not merge from this session.
-
-## Current Status: October 21, 2026 — **Early access existing account brought up to date with main [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
-
-- Merged `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c` into `cursor/early-access-existing-account-5a7b` with a merge commit. No force-push. The only conflict was `knowledge.md`. The early-access notes below and the notes that landed on main are both kept. This note does not add infrastructure identifiers or tokens.
-- Not merged. Production untouched.
-
-## Current Status: October 21, 2026 — **Early access existing account synced with main [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
-
-- Merged `origin/main` `a2ef440c` ([#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173), confirmed `merged: true`) into `cursor/early-access-existing-account-5a7b`. No rebase. The only conflict was `knowledge.md`. Both logs are kept below, as written.
-- [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) was still open and not on `main`. Holding for Rasta to confirm the existing-account message trade-off. Do not request re-approval yet. Not merged.
-- **Tests after the merge:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **2937 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Main after #1173 was 2933; the four existing-account tests are the difference. Known-failures list unchanged.
-
-## Current Status: October 21, 2026 — **Early access existing account OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
-
-- Branch `cursor/early-access-existing-account-5a7b` from `origin/main` `b143cfc3`. OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176). Not merged. No migration. Password-reset behaviour is unchanged.
-- Submitting the early-access form (`/register` while sign-up is closed, same form as `/early-access`) with an email that already belongs to a live KlassApp account still stores the request. The thank-you page adds: "This email already has a KlassApp account. Sign in, or reset your password." Sign in links to the login page. Reset links to the existing password-reset request page. A new email still shows only the original thank-you.
-- `/platform/early-access` has an Account column. A matching live account shows an "Existing user" badge. The label is computed from `users.email` (case-insensitive), not stored. Soft-deleted users are not labelled, because they cannot sign in. The badge follows the account: it appears if one is created later, and it goes away if the account is removed.
-- **Tests:** `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php` was 4 failed without the change and 4 passed (39 assertions) with it. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: **2934 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list unchanged. Staging was not checked; this PR is not merged.
-
-## Session: 2026-10-21 — Early access: tell existing users they already have an account
-
-- **Work:** On the early-access form, an email that already belongs to a KlassApp account gets the sign-in / reset-password sentence, and the platform list labels that request Existing user. The request is still stored. New emails are unchanged. No password-reset change.
-- **Files:** `app/Http/Controllers/EarlyAccessController.php`, `app/Http/Controllers/Platform/EarlyAccessRequestController.php`, `app/Models/EarlyAccessRequest.php`, `resources/views/early-access/show.blade.php`, `resources/views/platform/early-access/index.blade.php`, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php`, `knowledge.md`.
-- **Decision:** No column. `users.email` is the source of truth, so a migration is not required and the label cannot drift from the account. The public message is only the sentence Rasta asked for on this form.
-- **Tests:** New tests red without the change (4 failed) and green with it (4 passed, 39 assertions). Guarded suite: 2934 tests, 0 failures, 0 errors, 4 skipped.
-- **Status:** OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
 ## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
 
 - `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
@@ -3074,6 +3035,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
+
+- **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.
+- **Files touched**: `app/Helpers/WhatsAppPhoneHelper.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Services/WhatsAppBusinessService.php`, `app/Services/OutboundWhatsAppService.php`, `app/Services/TeacherInviteLinkService.php`, `app/Http/Controllers/Api/SchoolPayWebhookController.php`, `app/Channels/WhatsAppBackupChannel.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `tests/Feature/WhatsApp/WhatsAppLogPhoneMaskTest.php`, `tests/Feature/Admin/LinkWhatsAppActivityLogTest.php`, `knowledge.md`.
+- **Decision**: Reused no existing helper. `MarksReleaseService` masks for the result view with a different shape and is private. The activity row still stores the number the admin submitted.
+- **Status**: OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188) (`cursor/mask-whatsapp-log-phones-8f2e`). Not merged. Production untouched. Merged `origin/main` `ef4c499` ([#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)) with a merge commit. The only conflict was `knowledge.md`; both sides are kept. No infrastructure identifiers or tokens were added.
+- **Evidence**: Both new tests failed on `origin/main` and passed with the change. Related WhatsApp suites passed (50 tests, 218 assertions). No browser check; this is log text and an activity row.
 
 ### 2026-10-21: PHP 8.5 deprecations, no runtime change
 

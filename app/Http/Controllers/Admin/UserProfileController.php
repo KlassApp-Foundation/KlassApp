@@ -296,7 +296,13 @@ class UserProfileController extends Controller
             WhatsAppUser::where('user_id', $user->id)
                 ->delete();
 
-            $this->doActivityLog($user, $user, [], 'Unlinked WhatsApp Number');
+            $this->doActivityLog(
+                $user,
+                $user,
+                [],
+                'unlinkwhatsapp',
+                'Unlinked WhatsApp Number'
+            );
             return back()->with('success', 'WhatsApp number unlinked successfully.');
         }
 
@@ -321,7 +327,13 @@ class UserProfileController extends Controller
             ]
         );
 
-        $this->doActivityLog($waUser, $user, ['phone' => $request->phone], 'Linked WhatsApp Number');
+        $this->doActivityLog(
+            $waUser,
+            $user,
+            ['phone' => $request->phone],
+            'linkwhatsapp',
+            'Linked WhatsApp Number'
+        );
         return back()->with('success', 'WhatsApp number linked successfully.');
     }
 }

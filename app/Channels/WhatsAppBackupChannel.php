@@ -2,6 +2,7 @@
 
 namespace App\Channels;
 
+use App\Helpers\WhatsAppPhoneHelper;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class WhatsAppBackupChannel
 
         if (! ($result['success'] ?? false)) {
             Log::error('WhatsApp backup channel: send failed', [
-                'phone' => $phone,
+                'phone' => WhatsAppPhoneHelper::mask((string) $phone),
                 'error' => $result['error'] ?? 'unknown',
             ]);
         }
