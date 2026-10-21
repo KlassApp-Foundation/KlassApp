@@ -42,6 +42,23 @@ class AcademicYear extends Model
         'end_date' => 'datetime',
     ];
 
+    /**
+     * Calendar year the academic year is set up in. Term defaults use this
+     * instead of the current calendar year.
+     */
+    public function calendarYear(): int
+    {
+        if (preg_match('/(\d{4})/', (string) $this->name, $matches)) {
+            return (int) $matches[1];
+        }
+
+        if ($this->start_date !== null) {
+            return (int) $this->start_date->year;
+        }
+
+        return (int) now()->year;
+    }
+
     public function getStatusDisplayAttribute()
     {
         if($this->status == 1)

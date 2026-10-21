@@ -69,7 +69,7 @@ class ToshiOnboardingV2Driver
                 'hint' => null,
                 'saved_key' => null,
             ];
-        } catch (InvalidArgumentException|ValidationException) {
+        } catch (InvalidArgumentException|ValidationException $e) {
             $payload = $this->promptPayload($step, $school->fresh());
 
             return [
@@ -78,7 +78,7 @@ class ToshiOnboardingV2Driver
                 'question' => $payload['question'],
                 'options' => $payload['options'],
                 'input_type' => $payload['input_type'],
-                'hint' => self::COMING_SOON_HINT,
+                'hint' => $this->rejectionHint($step, $e),
                 'saved_key' => null,
             ];
         }
@@ -129,6 +129,16 @@ class ToshiOnboardingV2Driver
         }
 
         return null;
+    }
+
+    private function rejectionHint(OnboardingStep $step, InvalidArgumentException|ValidationException $e): string
+    {
+        $message = trim($e->getMessage());
+        if ($message !== '' && in_array($step->key(), ['academic_year', 'fees'], true)) {
+            return $message;
+        }
+
+        return self::COMING_SOON_HINT;
     }
 
     private function promptPayload(OnboardingStep $step, School $school): array
