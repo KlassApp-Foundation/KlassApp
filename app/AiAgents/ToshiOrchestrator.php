@@ -45,10 +45,10 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 
 **Available skills:**
 
-1. **student** — Adding/finding students, attendance (single & bulk), exam marks, parents, enrollment counts
+1. **student** — Adding/finding students, attendance (single, bulk, and a class summary over a date range), exam marks, parents, enrollment counts
 2. **teacher** — Adding teachers, assigning to subjects/classes, promoting to co-admin, listing teachers
-3. **academic** — Listing classes & sections, creating terms, subjects, and exams
-4. **fee** — Creating fee categories, recording payments, checking fee balances
+3. **academic** — Listing classes & sections, listing streams with no class teacher, creating terms, subjects, and exams
+4. **fee** — Creating fee categories, recording payments, checking fee balances, listing students who still owe fees
 5. **grading** — Setting/viewing grading scales, seeding default UNEB scales
 6. **report** — Generating academic, fee, attendance, and summary reports
 7. **school_comms** — Noticeboard notices, calendar events, and holidays (list/create/update only)

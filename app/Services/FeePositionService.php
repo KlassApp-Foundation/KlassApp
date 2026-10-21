@@ -204,15 +204,47 @@ class FeePositionService
     /**
      * Active students in this school whose fee category is not fully paid.
      *
-     * @return list<array{id: int, name: string, lookup_name: string, balance: float, parents: int, payment_id: ?int}>
+     * Same rows the payments dashboard lists. Optional filters narrow the
+     * students (class stream) or, when a term has its own categories, the
+     * categories and the payments recorded against them.
+     *
+     * @param  array{standard_link_ids?: list<int>|null, academic_term_id?: int|null}  $filters
+     * @return list<array{id: int, name: string, lookup_name: string, balance: float, parents: int, payment_id: ?int, standard_link_id: int, class_label: string}>
      */
-    public function studentsWithBalance(int $schoolId): array
+    public function studentsWithBalance(int $schoolId, array $filters = []): array
     {
-        $categoriesByStandard = FeesCategories::query()
+        $termId = isset($filters['academic_term_id']) ? (int) $filters['academic_term_id'] : null;
+        if ($termId !== null && $termId <= 0) {
+            $termId = null;
+        }
+        if ($termId !== null) {
+            $termBelongs = AcademicTerm::query()
+                ->where('school_id', $schoolId)
+                ->whereKey($termId)
+                ->exists();
+            if (! $termBelongs) {
+                return [];
+            }
+        }
+
+        $categoryModels = FeesCategories::query()
             ->where('school_id', $schoolId)
-            ->get()
+            ->get();
+        $termSpecific = false;
+        if ($termId !== null) {
+            $matched = $categoryModels->filter(
+                fn ($row) => $row->academic_term_id !== null && (int) $row->academic_term_id === $termId
+            )->values();
+            if ($matched->isNotEmpty()) {
+                $categoryModels = $matched;
+                $termSpecific = true;
+            }
+        }
+
+        $categoriesByStandard = $categoryModels
             ->groupBy('standard_id')
             ->map(fn ($rows) => (float) $rows->sum('amount'));
+        $categoryIds = $categoryModels->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         $activeStudents = User::query()
             ->where('school_id', $schoolId)
@@ -222,9 +254,19 @@ class FeePositionService
             ->get()
             ->keyBy('id');
 
-        $latestAcademics = StudentAcademic::query()
-            ->select('student_academics.user_id', 'standards_link.standard_id')
+        $academics = StudentAcademic::query()
+            ->select(
+                'student_academics.id',
+                'student_academics.user_id',
+                'standards_link.standard_id',
+                'standards_link.id as standard_link_id',
+                'standards_link.stream as stream_name',
+                'sections.name as section_name',
+                'standards.name as standard_name',
+            )
             ->join('standards_link', 'student_academics.standardLink_id', '=', 'standards_link.id')
+            ->leftJoin('sections', 'standards_link.section_id', '=', 'sections.id')
+            ->leftJoin('standards', 'standards_link.standard_id', '=', 'standards.id')
             ->where('student_academics.school_id', $schoolId)
             ->where('standards_link.school_id', $schoolId)
             ->whereNull('student_academics.deleted_at')
@@ -233,33 +275,57 @@ class FeePositionService
                 $q->select('id')->from('academic_years')
                     ->where('school_id', $schoolId)
                     ->where('status', 1);
-            })
+            });
+
+        if (array_key_exists('standard_link_ids', $filters) && is_array($filters['standard_link_ids'])) {
+            $linkIds = array_values(array_unique(array_map('intval', $filters['standard_link_ids'])));
+            if ($linkIds === []) {
+                return [];
+            }
+            $academics->whereIn('standards_link.id', $linkIds);
+        }
+
+        $latestAcademics = $academics
             ->orderByDesc('student_academics.id')
             ->get()
             ->unique('user_id');
 
         $owing = [];
+        $labels = [];
         foreach ($latestAcademics as $row) {
             $due = (float) ($categoriesByStandard[$row->standard_id] ?? 0);
             if ($due <= 0) {
                 continue;
             }
-            $owing[(int) $row->user_id] = $due;
+            $userId = (int) $row->user_id;
+            $owing[$userId] = $due;
+            $labels[$userId] = [
+                'standard_link_id' => (int) $row->standard_link_id,
+                'class_label' => $this->classLabel($row->standard_name, $row->section_name, $row->stream_name),
+            ];
         }
         if ($owing === []) {
             return [];
         }
 
-        $paidByStudent = FeePayment::query()
+        $paidQuery = FeePayment::query()
             ->where('school_id', $schoolId)
-            ->whereIn('user_id', array_keys($owing))
+            ->whereIn('user_id', array_keys($owing));
+        if ($termSpecific && $categoryIds !== []) {
+            $paidQuery->whereIn('fee_category_id', $categoryIds);
+        }
+        $paidByStudent = $paidQuery
             ->groupBy('user_id')
             ->select('user_id', DB::raw('SUM(amount) as total_paid'))
             ->pluck('total_paid', 'user_id');
 
-        $latestPayment = FeePayment::query()
+        $latestPaymentQuery = FeePayment::query()
             ->where('school_id', $schoolId)
-            ->whereIn('user_id', array_keys($owing))
+            ->whereIn('user_id', array_keys($owing));
+        if ($termSpecific && $categoryIds !== []) {
+            $latestPaymentQuery->whereIn('fee_category_id', $categoryIds);
+        }
+        $latestPayment = $latestPaymentQuery
             ->orderByDesc('id')
             ->get()
             ->unique('user_id')
@@ -290,10 +356,25 @@ class FeePositionService
                 'balance' => $balance,
                 'parents' => (int) ($parentCounts[$userId] ?? 0),
                 'payment_id' => $latestPayment->get($userId)?->id,
+                'standard_link_id' => $labels[$userId]['standard_link_id'],
+                'class_label' => $labels[$userId]['class_label'],
             ];
         }
 
         return $rows;
+    }
+
+    private function classLabel(mixed $standard, mixed $section, mixed $stream): string
+    {
+        $standardName = trim((string) $standard);
+        $sectionName = trim((string) $section);
+        $streamName = trim((string) $stream);
+        $label = trim($standardName.' '.$sectionName);
+        if ($streamName !== '' && strcasecmp($streamName, $sectionName) !== 0) {
+            $label = trim($label.' · '.$streamName);
+        }
+
+        return $label;
     }
 
     private function compactMoney(float $amount): string

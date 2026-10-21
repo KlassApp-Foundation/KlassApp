@@ -12,18 +12,26 @@ class ToshiLlmKeyNotHardcodedTest extends TestCase
     {
         $ai = file_get_contents(base_path('config/ai.php'));
         $toshi = file_get_contents(base_path('config/toshi.php'));
+        $resolver = file_get_contents(base_path('app/AiAgents/ToshiLlm.php'));
 
-        $this->assertDoesNotMatchRegularExpression(
-            "/['\"]sk-[A-Za-z0-9]{10,}['\"]/",
-            $ai,
-            'config/ai.php must not embed a literal LLM API key'
-        );
-        $this->assertDoesNotMatchRegularExpression(
-            "/['\"]sk-[A-Za-z0-9]{10,}['\"]/",
-            $toshi,
-            'config/toshi.php must not embed a literal LLM API key'
-        );
+        foreach (['config/ai.php' => $ai, 'config/toshi.php' => $toshi, 'ToshiLlm.php' => $resolver] as $label => $source) {
+            $this->assertDoesNotMatchRegularExpression(
+                "/['\"]sk-[A-Za-z0-9]{10,}['\"]/",
+                $source,
+                $label.' must not embed a literal LLM API key'
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/AKIA[A-Z0-9]{8,}/',
+                $source,
+                $label.' must not embed an AWS access key id'
+            );
+        }
+
         $this->assertStringContainsString("env('OPENAI_COMPATIBLE_API_KEY'", $ai);
         $this->assertStringContainsString("env('OPENAI_COMPATIBLE_API_KEY'", $toshi);
+        $this->assertStringContainsString("env('AWS_BEARER_TOKEN_BEDROCK')", $ai);
+        $this->assertStringContainsString("env('AWS_ACCESS_KEY_ID')", $ai);
+        $this->assertStringContainsString("env('AWS_SECRET_ACCESS_KEY')", $ai);
+        $this->assertStringNotContainsString("return 'openai-compatible';", $resolver);
     }
 }

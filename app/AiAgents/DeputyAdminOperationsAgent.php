@@ -27,6 +27,8 @@ use App\AiAgents\Tools\ListHolidaysTool;
 use App\AiAgents\Tools\ListHomeworkTool;
 use App\AiAgents\Tools\ListNoticesTool;
 use App\AiAgents\Tools\ListSectionsTool;
+use App\AiAgents\Tools\ListStreamsWithoutClassTeacherTool;
+use App\AiAgents\Tools\ListUnpaidFeeBalancesTool;
 use App\AiAgents\Tools\ListStudentHomeworkTool;
 use App\AiAgents\Tools\ListTeachersTool;
 use App\AiAgents\Tools\ListTimetableSlotsTool;
@@ -37,6 +39,7 @@ use App\AiAgents\Tools\RejectHomeworkTool;
 use App\AiAgents\Tools\SeedDefaultGradingTool;
 use App\AiAgents\Tools\SetGradingScaleTool;
 use App\AiAgents\Tools\ShowStudentHomeworkTool;
+use App\AiAgents\Tools\SummarizeClassAttendanceTool;
 use App\AiAgents\Tools\UpdateEventTool;
 use App\AiAgents\Tools\UpdateHolidayTool;
 use App\AiAgents\Tools\UpdateHomeworkTool;
@@ -91,7 +94,7 @@ class DeputyAdminOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **deputy school administrator** at {$schoolName}.
 
-You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
+You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams, streams missing a class teacher), fees (including a read-only list of students who still owe), grading scales, attendance (including a read-only class summary over a date range), marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
 
 Rules:
 - Do **not** attempt owner-level changes: school Settings (curriculum / academic-year config), or creating co-admins (ug3).
@@ -112,6 +115,7 @@ PROMPT;
             new GetStudentCountTool,
             new RecordAttendanceTool,
             new RecordBulkAttendanceTool,
+            new SummarizeClassAttendanceTool,
             new EnterMarkTool,
             new AddParentTool,
             // Teacher skill surface (minus AddCoAdminTool)
@@ -121,6 +125,7 @@ PROMPT;
             // Academic skill surface
             new ListClassesTool,
             new ListSectionsTool,
+            new ListStreamsWithoutClassTeacherTool,
             new CreateTermTool,
             new CreateSubjectTool,
             new CreateExamTool,
@@ -128,6 +133,7 @@ PROMPT;
             new CreateFeeTool,
             new RecordPaymentTool,
             new GetFeeBalanceTool,
+            new ListUnpaidFeeBalancesTool,
             // Grading skill surface (SetCurriculumTool is orphan / Settings — excluded)
             new SetGradingScaleTool,
             new ViewGradingScaleTool,

@@ -635,6 +635,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Toshi on Bedrock (Claude) proof of concept OPEN**
+
+- `TOSHI_LLM_PROVIDER=bedrock` selects laravel/ai's Bedrock provider and `TOSHI_LLM_MODEL`. Unset, Toshi stays on the openai-compatible provider. Three read-only admin/deputy tools: unpaid fee balances, streams with no class teacher, class attendance summary. Not merged. Production untouched. No live Bedrock call (no credentials).
+
+## Session: 2026-10-21 — Datamellon Bedrock proof of concept
+
+- **Work:** Configurable Toshi provider plus three school-scoped read tools and `docs/ai/bedrock-setup.md`.
+- **Files:** `app/AiAgents/ToshiLlm.php`, the three tools, `FeePositionService`, agent/skill registration, tests.
+- **Status:** OPEN on `cursor/toshi-bedrock-poc-7e97`. Do not merge from this session. Production untouched.
+
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
 - Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.

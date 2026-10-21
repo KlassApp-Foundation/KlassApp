@@ -169,4 +169,41 @@ class ToshiLlmHealthCommandTest extends TestCase
             ->once()
             ->withArgs(fn (string $message, array $context) => ($context['reason'] ?? null) === 'empty_response');
     }
+
+    public function test_bedrock_health_checks_config_and_does_not_call_the_openai_endpoint(): void
+    {
+        Http::fake();
+
+        config([
+            'toshi.llm_provider' => 'bedrock',
+            'toshi.model' => 'deepseek-chat',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'deepseek-chat',
+                'toshi_llm_model' => 'anthropic.claude-placeholder',
+                'openai_compatible_url' => 'https://api.deepseek.com',
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => null,
+            'ai.providers.bedrock.region' => 'eu-central-1',
+            'ai.providers.bedrock.key' => null,
+            'ai.providers.bedrock.access_key_id' => null,
+            'ai.providers.bedrock.secret_access_key' => null,
+            'ai.providers.bedrock.use_default_credential_provider' => true,
+            'ai.providers.bedrock.models.text.default' => 'anthropic.claude-placeholder',
+        ]);
+
+        $exit = Artisan::call('toshi:llm-health');
+        $output = Artisan::output();
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Provider : bedrock', $output);
+        $this->assertStringContainsString('Model    : anthropic.claude-placeholder', $output);
+        $this->assertStringContainsString('Region   : eu-central-1', $output);
+        $this->assertStringContainsString('default AWS credential chain', $output);
+        $this->assertStringContainsString('live Bedrock call skipped', $output);
+        $this->assertStringNotContainsString('sk-', $output);
+
+        Http::assertNothingSent();
+    }
 }

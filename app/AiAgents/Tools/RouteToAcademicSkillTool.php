@@ -13,7 +13,7 @@ class RouteToAcademicSkillTool implements Tool
     use AuthorizesToshiAction;
     public function description(): string
     {
-        return 'Route an academic structure query to the Academic skill. Handles: listing classes and sections, creating terms, subjects, and exams. Call this when the user asks about classes, sections, terms, subjects, exams, or academic year setup.';
+        return 'Route an academic structure query to the Academic skill. Handles: listing classes and sections, listing classes and streams with no class teacher, creating terms, subjects, and exams. Call this when the user asks about classes, sections, streams, class teachers, terms, subjects, exams, or academic year setup.';
     }
 
     public function schema(JsonSchema $schema): array
