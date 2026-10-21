@@ -2,14 +2,7 @@
 
 namespace Tests\Feature\WhatsApp;
 
-use App\Models\AcademicYear;
-use App\Models\FeesCategories;
 use App\Models\School;
-use App\Models\Section;
-use App\Models\Standard;
-use App\Models\StandardLink;
-use App\Models\StudentAcademic;
-use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Models\WhatsAppPendingNotification;
 use App\Models\WhatsAppUser;
@@ -116,23 +109,36 @@ class TestSchoolWhatsAppGuardTest extends TestCase
     public function test_fee_reminder_and_expired_queue_send_nothing_for_a_test_school(): void
     {
         $school = $this->makeSchool('Test Fee School', isTest: true);
-        $student = $this->feeStudent($school, self::PARENT);
+        $parent = $this->makeUser($school, 'fee-parent@test-fee.sch.ug', 7, self::PARENT);
+        $wa = WhatsAppUser::create([
+            'phone' => self::PARENT,
+            'user_id' => $parent->id,
+            'school_id' => $school->id,
+            'opted_in' => true,
+            'last_inbound_at' => now(),
+        ]);
         TestSchoolCommsGuard::flushCache();
 
-        $sent = app(OutboundWhatsAppService::class)->notifyFeeReminder($student->id);
-        $this->assertSame(0, $sent);
-        Http::assertNothingSent();
+        $fee = app(WhatsAppBusinessService::class)->sendText(self::PARENT, 'Fee reminder', 'fee_reminder', $parent->id);
+        $this->assertTrue($fee['blocked'] ?? false);
+        $this->assertSame('test_school', $fee['reason']);
 
-        $parent = User::query()->where('email', 'fee-parent@test-fee.sch.ug')->firstOrFail();
-        $wa = WhatsAppUser::query()->where('user_id', $parent->id)->firstOrFail();
+        $outbound = app(OutboundWhatsAppService::class);
         WhatsAppPendingNotification::create([
             'whatsapp_user_id' => $wa->id,
-            'flow_type' => 'service',
-            'message' => 'Queued reminder',
+            'flow_type' => 'fee_reminder',
+            'message' => 'Queued fee reminder',
             'send_after' => now()->subMinute(),
         ]);
+        $outbound->sendExpiredQueue();
 
-        app(OutboundWhatsAppService::class)->sendExpiredQueue();
+        WhatsAppPendingNotification::create([
+            'whatsapp_user_id' => $wa->id,
+            'flow_type' => 'fee_reminder',
+            'message' => 'Flush fee reminder',
+        ]);
+        $outbound->flushPending($wa->fresh());
+
         Http::assertNothingSent();
     }
 
@@ -384,65 +390,5 @@ class TestSchoolWhatsAppGuardTest extends TestCase
         }
 
         return $user->refresh();
-    }
-
-    private function feeStudent(School $school, string $phone): User
-    {
-        $year = AcademicYear::create([
-            'school_id' => $school->id,
-            'name' => '2026',
-            'description' => 'y',
-            'start_date' => '2026-01-01',
-            'end_date' => '2026-12-31',
-            'status' => 1,
-        ]);
-        $standard = Standard::create([
-            'school_id' => $school->id,
-            'name' => 'primary',
-            'order' => 1,
-            'status' => 1,
-        ]);
-        $section = Section::create([
-            'school_id' => $school->id,
-            'name' => 'P.1',
-            'status' => 1,
-        ]);
-        $link = StandardLink::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'standard_id' => $standard->id,
-            'section_id' => $section->id,
-            'status' => 1,
-        ]);
-        FeesCategories::create([
-            'school_id' => $school->id,
-            'standard_id' => $standard->id,
-            'name' => 'Tuition',
-            'amount' => 450000,
-        ]);
-        $student = $this->makeUser($school, 'fee-student@test-fee.sch.ug', 6, null);
-        StudentAcademic::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'user_id' => $student->id,
-            'standardLink_id' => $link->id,
-            'klassapp_student_id' => sprintf('KLS%07d', $student->id),
-        ]);
-        $parent = $this->makeUser($school, 'fee-parent@test-fee.sch.ug', 7, $phone);
-        StudentParentLink::create([
-            'school_id' => $school->id,
-            'parent_id' => $parent->id,
-            'student_id' => $student->id,
-            'status' => 1,
-        ]);
-        WhatsAppUser::create([
-            'phone' => $phone,
-            'user_id' => $parent->id,
-            'school_id' => $school->id,
-            'opted_in' => true,
-            'last_inbound_at' => now(),
-        ]);
-
-        return $student;
     }
 }

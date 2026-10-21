@@ -166,11 +166,7 @@ class OutboundWhatsAppService
         if ($whatsappUser && $this->isWithinServiceWindow($phone)) {
             // Window is open — send immediately (FREE)
             try {
-                $result = $this->sendText($phone, $message, $flowType, $userId);
-                if (($result['blocked'] ?? false) === true) {
-                    return 0;
-                }
-
+                $this->sendText($phone, $message, $flowType, $userId);
                 return 1;
             } catch (\Throwable $e) {
                 Log::error('queueOrSend: immediate send failed for '.WhatsAppPhoneHelper::mask($phone), [
@@ -310,26 +306,22 @@ class OutboundWhatsAppService
 
             try {
                 if ($notification->template_name) {
-                    $result = $this->sendTemplate(
+                    $this->sendTemplate(
                         $user->phone,
                         $notification->template_name,
                         $notification->template_variables ?? [],
                         'utility',
                     );
                 } elseif ($notification->message) {
-                    $result = $this->sendText(
+                    $this->sendText(
                         $user->phone,
                         $notification->message,
                         $notification->flow_type,
                         $user->user_id,
                     );
-                } else {
-                    $result = ['success' => false];
                 }
                 $notification->delete();
-                if (($result['blocked'] ?? false) !== true) {
-                    $sent++;
-                }
+                $sent++;
             } catch (\Throwable $e) {
                 Log::error("sendExpiredQueue: failed", [
                     'notification_id' => $notification->id,
@@ -451,7 +443,7 @@ class OutboundWhatsAppService
             $total += $fee->amount;
         }
 
-        $className = $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A';
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
         $message = "{$title}\n";
         $message .= "_{$this->displayNameFor($student)} — {$className}_\n\n";
