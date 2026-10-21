@@ -2,8 +2,15 @@
 
 namespace Tests\Feature\WhatsApp;
 
+use App\Models\AcademicYear;
 use App\Models\MessageDeliveryLog;
+use App\Models\ParentLinkRequest;
 use App\Models\School;
+use App\Models\Section;
+use App\Models\Standard;
+use App\Models\StandardLink;
+use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use Illuminate\Database\Schema\Blueprint;
@@ -126,6 +133,244 @@ class OrphanWhatsAppUserInboundTest extends TestCase
         $this->assertNull(User::find($softRow->fresh()->user_id));
         $this->assertNull($nullRow->fresh()->user_id);
         $this->assertNotSame((int) $this->demoParent->id, (int) $softRow->fresh()->user_id);
+    }
+
+    public function test_school_student_id_from_orphan_matches_a_never_seen_number(): void
+    {
+        // The other school is inserted first, so a number with no stored school
+        // resolves that student. The orphan row still points at the old school,
+        // which has a different student under the same school student id.
+        [$otherSchool, $otherLink] = $this->classAt('Other Valley Primary', 'S.2');
+        $other = $this->studentIn($otherSchool, $otherLink, 'Other Child Nia', [
+            'school_student_id' => 'STU-17',
+        ]);
+        [$oldSchool, $oldLink] = $this->classAt('Old Link Primary', 'P.4');
+        $old = $this->studentIn($oldSchool, $oldLink, 'Old Child Amina', [
+            'school_student_id' => 'STU-17',
+        ]);
+
+        $global = StudentAcademic::query()
+            ->where('school_student_id', 'STU-17')
+            ->first();
+        $this->assertSame($other->id, (int) $global->user_id);
+
+        $orphanPhone = '+256700900551';
+        $freshPhone = '+256700900552';
+        $this->orphanAt($oldSchool, $orphanPhone);
+
+        $this->assertSameStrangerOutcome($freshPhone, $orphanPhone, 'STU-17', [
+            'OLD CHILD AMINA',
+            'Old Link Primary',
+            'P.4',
+        ]);
+        $this->assertSame($other->id, $this->linkedStudentId($freshPhone));
+        $this->assertNotSame($old->id, $this->linkedStudentId($orphanPhone));
+    }
+
+    public function test_klassapp_id_from_orphan_matches_a_never_seen_number(): void
+    {
+        [$oldSchool, $oldLink] = $this->classAt('Old Link Primary', 'P.4');
+        $old = $this->studentIn($oldSchool, $oldLink, 'Old Child Amina', [
+            'klassapp_student_id' => 'KLS1000001',
+        ]);
+
+        $orphanPhone = '+256700900561';
+        $freshPhone = '+256700900562';
+        $this->orphanAt($oldSchool, $orphanPhone);
+
+        $this->assertSameStrangerOutcome($freshPhone, $orphanPhone, 'KLS1000001', [
+            'OLD CHILD AMINA',
+            'Old Link Primary',
+            'P.4',
+        ]);
+
+        $request = ParentLinkRequest::query()->where('phone', $orphanPhone)->first();
+        $this->assertNotNull($request);
+        $this->assertSame($old->id, (int) $request->suggested_student_id);
+        $this->assertSame(
+            0,
+            StudentParentLink::query()->where('student_id', $old->id)->count(),
+        );
+        $this->assertNull(WhatsAppUser::query()->where('phone', $orphanPhone)->value('school_id'));
+        $this->assertNull(WhatsAppUser::query()->where('phone', $orphanPhone)->value('user_id'));
+    }
+
+    public function test_payment_code_from_orphan_matches_a_never_seen_number(): void
+    {
+        [$oldSchool, $oldLink] = $this->classAt('Old Link Primary', 'P.4');
+        $old = $this->studentIn($oldSchool, $oldLink, 'Old Child Amina', [
+            'std_school_pay_number' => '1002003001',
+        ]);
+
+        $orphanPhone = '+256700900571';
+        $freshPhone = '+256700900572';
+        $this->orphanAt($oldSchool, $orphanPhone);
+
+        $this->assertSameStrangerOutcome($freshPhone, $orphanPhone, '1002003001', [
+            'OLD CHILD AMINA',
+            'Old Link Primary',
+            'P.4',
+        ]);
+        $this->assertSame(
+            (int) $oldSchool->id,
+            (int) WhatsAppUser::query()->where('phone', $orphanPhone)->value('school_id'),
+        );
+        $this->assertNull(WhatsAppUser::query()->where('phone', $orphanPhone)->value('user_id'));
+        $this->assertSame(
+            0,
+            StudentParentLink::query()->where('student_id', $old->id)->count(),
+        );
+    }
+
+    /**
+     * @param  list<string>  $oldSchoolTokens
+     */
+    private function assertSameStrangerOutcome(string $freshPhone, string $orphanPhone, string $text, array $oldSchoolTokens): void
+    {
+        $this->inbound($freshPhone, $text)->assertOk();
+        // A second parent for the same student is emailed with that student id and the current second.
+        sleep(1);
+        $this->inbound($orphanPhone, $text)->assertOk();
+
+        $fresh = $this->strangerOutcome($freshPhone);
+        $orphan = $this->strangerOutcome($orphanPhone);
+        $this->assertSame($fresh, $orphan);
+
+        $freshReply = json_encode($fresh['replies']);
+        $orphanReply = json_encode($orphan['replies']);
+        foreach ($oldSchoolTokens as $token) {
+            if (! str_contains((string) $freshReply, $token)) {
+                $this->assertStringNotContainsString($token, (string) $orphanReply);
+            }
+        }
+    }
+
+    /**
+     * @return array{linked: bool, school_id: ?int, links: list<array{0: int, 1: int}>, requests: list<array{0: int, 1: int, 2: string, 3: string}>, replies: list<array{0: string, 1: string}>}
+     */
+    private function strangerOutcome(string $phone): array
+    {
+        $wa = WhatsAppUser::query()->where('phone', $phone)->first();
+        $parentId = $wa?->user_id;
+        $links = [];
+        if ($parentId) {
+            $links = StudentParentLink::query()
+                ->where('parent_id', $parentId)
+                ->orderBy('student_id')
+                ->get(['student_id', 'school_id'])
+                ->map(fn ($link) => [(int) $link->student_id, (int) $link->school_id])
+                ->all();
+        }
+
+        $requests = ParentLinkRequest::query()
+            ->where('phone', $phone)
+            ->orderBy('suggested_student_id')
+            ->get(['school_id', 'suggested_student_id', 'status', 'source'])
+            ->map(fn ($request) => [
+                (int) $request->school_id,
+                (int) $request->suggested_student_id,
+                (string) $request->status,
+                (string) $request->source,
+            ])
+            ->all();
+
+        $replies = MessageDeliveryLog::query()
+            ->where('phone', $phone)
+            ->where('direction', 'outbound')
+            ->orderBy('id')
+            ->get(['flow_type', 'content_preview'])
+            ->map(fn ($log) => [(string) $log->flow_type, (string) $log->content_preview])
+            ->all();
+
+        return [
+            'linked' => $parentId !== null,
+            'school_id' => $wa?->school_id !== null ? (int) $wa->school_id : null,
+            'links' => $links,
+            'requests' => $requests,
+            'replies' => $replies,
+        ];
+    }
+
+    private function linkedStudentId(string $phone): ?int
+    {
+        $parentId = WhatsAppUser::query()->where('phone', $phone)->value('user_id');
+        if (! $parentId) {
+            return null;
+        }
+
+        $studentId = StudentParentLink::query()->where('parent_id', $parentId)->value('student_id');
+
+        return $studentId !== null ? (int) $studentId : null;
+    }
+
+    /**
+     * @return array{0: School, 1: StandardLink}
+     */
+    private function classAt(string $schoolName, string $sectionName): array
+    {
+        DB::table('usergroups')->upsert([
+            ['id' => 6, 'name' => 'Student', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+
+        $school = $this->school($schoolName, false);
+        $year = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'status' => 1,
+            'start_date' => '2026-01-01 00:00:00',
+            'end_date' => '2026-12-31 23:59:59',
+        ]);
+        $standard = Standard::create(['school_id' => $school->id, 'name' => 'Primary', 'order' => 1]);
+        $section = Section::create(['school_id' => $school->id, 'name' => $sectionName]);
+        $link = StandardLink::create([
+            'school_id' => $school->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'academic_year_id' => $year->id,
+        ]);
+
+        return [$school, $link];
+    }
+
+    /**
+     * @param  array<string, mixed>  $ids
+     */
+    private function studentIn(School $school, StandardLink $link, string $name, array $ids): User
+    {
+        $student = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 6,
+            'status' => 'active',
+            'name' => $name,
+            'email' => strtolower(str_replace(' ', '-', $name)).'-'.uniqid().'@example.com',
+            'mobile_no' => '702'.random_int(100000, 999999),
+        ]);
+
+        StudentAcademic::create(array_merge([
+            'school_id' => $school->id,
+            'academic_year_id' => $link->academic_year_id,
+            'user_id' => $student->id,
+            'standardLink_id' => $link->id,
+        ], $ids));
+
+        return $student;
+    }
+
+    private function orphanAt(School $school, string $phone): WhatsAppUser
+    {
+        $admin = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'status' => 'active',
+            'name' => 'Removed Admin '.uniqid(),
+            'email' => 'removed-admin-'.uniqid().'@example.com',
+            'mobile_no' => '703'.random_int(100000, 999999),
+        ]);
+        $row = $this->whatsappRow($phone, $admin->id, (int) $school->id);
+        $admin->delete();
+
+        return $row;
     }
 
     private function assertDemoPointer(string $phone): void

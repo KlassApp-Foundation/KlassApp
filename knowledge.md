@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), stale school cleared**
+
+- A number whose user is missing is still answered as unrecognised, and `demo` still relinks that same row. Before the stranger handler runs, the row's old link is cleared (`user_id`, `school_id`, demo fields, payment-code fields, profile name) so those values are not used to look anyone up.
+- A school student id, a KlassApp id, and a 10-digit payment code from that number now get the same reply and the same links as a number that was never seen. The payment-code path updates the cleared row instead of inserting a second one. `whatsappDisplayName` is given the student user directly; `optional()` always wraps its value and the no-parent payment path was returning 500.
+- **Tests:** `OrphanWhatsAppUserInboundTest` **6 tests, 47 assertions, OK**. The three new tests failed on the previous controller (school student id linked the old school; KlassApp id left the old `school_id`; payment code returned 500) and pass with the change. `tests/Feature/WhatsApp`: **106 tests, 396 assertions, 0 failures, 2 risky** (the same Mockery-only methods in `ParentMagicLoginWhatsAppTest`). Full suite left to GitHub CI.
+- Needs Grok B's approval. Do not merge from this session.
+
+## Session: 2026-10-21 — Orphan numbers do not keep the old school
+
+- **Work:** Clear the stale WhatsApp link before the stranger handler. Keep the demo relink.
+- **Files:** `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php`, `knowledge.md`.
+- **Decision:** Clear the stored fields on the existing row rather than delete it, so `demo` still updates that row. The logs at the inbound parse and the demo info line were not changed.
+- **Tests:** Orphan file 6 tests, 47 assertions. WhatsApp feature directory 106 tests, 396 assertions, 0 failures, 2 risky.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Needs Grok B's approval. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), main merged**
 
 - Merged `origin/main` `a2ef440c` ([#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173), confirmed `merged: true`, merge commit `a2ef440cd7770e234acece71f0489693b007138a`) into `cursor/whatsapp-orphan-user-inbound-7a4f` with a merge commit. Not merged to main. Production untouched. No deploy. No environment variables changed.
