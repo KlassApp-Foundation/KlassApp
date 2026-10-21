@@ -253,8 +253,8 @@ class PasswordResetGenericErrorTest extends TestCase
     {
         Mail::fake();
 
-        $known = $this->get('/password/reset-code/resend?email='.$this->user->email);
-        $unknown = $this->get('/password/reset-code/resend?email=nobody@example.com');
+        $known = $this->post('/password/reset-code/resend', ['email' => $this->user->email]);
+        $unknown = $this->post('/password/reset-code/resend', ['email' => 'nobody@example.com']);
 
         $known->assertRedirect(route('password.reset.code', ['email' => $this->user->email]));
         $unknown->assertRedirect(route('password.reset.code', ['email' => 'nobody@example.com']));

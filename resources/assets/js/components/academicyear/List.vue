@@ -168,7 +168,7 @@
                 }).then(function(result) {
                     if (result.isConfirmed) 
                     {
-                        axios.get(thisswal.url+'/admin/academic/delete/'+ id).then(response => {
+                        axios.delete(thisswal.url+'/admin/academic/delete/'+ id).then(response => {
                             thisswal.success = response.data.success;
                             window.location.reload();
                         }); 

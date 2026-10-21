@@ -66,6 +66,6 @@ class ImpersonateSchoolAdminTool implements Approvable, Tool
             return '❌ Validation failed: '.collect($e->errors())->flatten()->implode('; ');
         }
 
-        return "✅ Impersonation started for school admin id={$target->id} ({$target->email}). Session key impersonate={$target->id}. Navigate to /admin/dashboard; stop via /teacher/impersonate/stop.";
+        return "✅ Impersonation started for school admin id={$target->id} ({$target->email}). Session key impersonate={$target->id}. Navigate to /admin/dashboard; stop with a POST to /teacher/impersonate/stop (CSRF token required).";
     }
 }

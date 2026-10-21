@@ -676,6 +676,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 20, 2026 — **GET mutations OPEN [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168)**
+
+- Deletes, impersonation, password reset, email verification, and setup-banner dismiss are POST or DELETE with CSRF and a confirmation step. GET of those URLs is 405 and does not write. Not merged. Production untouched.
+- Mail links stay GET. `/emailverification/{token}` shows a confirm page; only the POST verifies the address. API deletes stay on Sanctum (no web CSRF middleware). Toshi onboarding behaviour was not redesigned.
+
 ## Current Status: October 20, 2026 — **wizard teacher upload OPEN [#1164](https://github.com/KlassApp-Foundation/KlassApp/pull/1164)**
 
 - A teacher file on the setup wizard was kept in memory and saved as one batch on Continue. One unmatched class, or one bad email or phone, discarded the batch. The step list did not reload teachers already stored, so a hand-added teacher with a class link was the one that still showed.
@@ -2765,6 +2770,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-20: no GET route changes or deletes records
+
+- **Work done**: Converted live GET deletes and state changes (impersonation, password-reset resend, email verification, setup-banner dismiss, API token update) to POST or DELETE. Web forms and ajax send the CSRF token and ask for confirmation. Callers in Vue, Blade, and both JS bundles were updated. Toshi onboarding flows were not redesigned.
+- **Files modified**: `routes/*.php` (the live delete and state-change lines), the matching Vue/Blade callers, `EmailVerificationController`, `PasswordResetCodeController`, `tests/Feature/Security/NoMutatingGetRouteTest.php`, rebuilt `public/build`, `docs/demo/public-demo-lockdown.md`, `knowledge.md`.
+- **Decision**: API routes stay on Sanctum without the web CSRF middleware. Email-verification GET only renders the confirm page. Commented-out routes were left commented. Authorization middleware was not loosened.
+- **Status**: [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168) OPEN (`cursor/no-get-mutations-005c`). Not merged. `origin/main` through `7746f5ae` merged in (#1163, #1164, #1165, #1166, #1157). Only `knowledge.md` conflicted; both histories kept. `/privacy` and `/terms` stay GET reads. Wizard subject remove, teacher upload, and onboarding finish stay Livewire. Password-reset resend tests now POST. No new data-changing GET route came in with those merges.
+- **Evidence**: After merging `origin/main` at `7746f5ae`, `bash scripts/test-guard.sh` — 2909 tests, 0 failures, 0 errors, 4 skipped. Guard: `OK: 0 failing test(s)`. Confirm dialogs were not clicked in a browser.
+- **Edge cases flagged**: Some legacy destroy methods still 500 when the id is missing. That predates the verb change. Public-demo lockdown now treats directory-number and document deletes as writes.
 
 ### 2026-10-20: Toshi finish uses the wizard's onboarding finish
 

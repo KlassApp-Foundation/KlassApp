@@ -104,7 +104,10 @@ class ImpersonateControllerTest extends TestCase
         $this->admin->setImpersonating($this->teacher->id);
         $this->assertTrue($this->admin->isImpersonating(), 'Impersonation must be active');
 
-        $response = $this->get('/teacher/impersonate/stop');
+        $this->get('/teacher/impersonate/stop')->assertStatus(405);
+        $this->assertTrue($this->admin->isImpersonating(), 'GET must not stop impersonation');
+
+        $response = $this->post('/teacher/impersonate/stop');
 
         $response->assertRedirect('/admin/dashboard');
         $this->assertFalse($this->admin->isImpersonating(), 'Impersonation must be stopped');
@@ -118,7 +121,7 @@ class ImpersonateControllerTest extends TestCase
         $this->admin->setImpersonating($this->otherAdmin->id);
         $this->assertTrue($this->admin->isImpersonating());
 
-        $response = $this->get('/teacher/impersonate/stop');
+        $response = $this->post('/teacher/impersonate/stop');
 
         $response->assertRedirect('/admin/dashboard');
     }
@@ -131,7 +134,7 @@ class ImpersonateControllerTest extends TestCase
         $this->superadmin->setImpersonating($this->admin->id);
         $this->assertTrue($this->superadmin->isImpersonating());
 
-        $response = $this->get('/teacher/impersonate/stop');
+        $response = $this->post('/teacher/impersonate/stop');
 
         $response->assertRedirect('/superadmin/dashboard');
         $this->assertFalse($this->superadmin->isImpersonating());

@@ -105,7 +105,7 @@
         }).then(function(result) {
           if (result.isConfirmed) 
           {
-            axios.get(thisswal.url+ '/admin/notes/delete/'+ id).then(response => {
+            axios.delete(thisswal.url+ '/admin/notes/delete/'+ id).then(response => {
               thisswal.success = response.data.message;
               thisswal.getallnotes();
             });     

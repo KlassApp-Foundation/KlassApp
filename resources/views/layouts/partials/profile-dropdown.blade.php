@@ -114,12 +114,15 @@
             @if(Auth::user()->isImpersonating())
             <li class="account-card__sep" role="separator"></li>
             <li role="none">
-                <a role="menuitem" href="{{ url('/teacher/impersonate/stop') }}" class="account-card__item">
-                    <span class="dtl-icon" aria-hidden="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 8 21 12 17 16"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    </span>
-                    Stop impersonating
-                </a>
+                <form method="POST" action="{{ url('/teacher/impersonate/stop') }}" onsubmit="return confirm('Stop impersonating and return to your account?');">
+                    @csrf
+                    <button type="submit" role="menuitem" class="account-card__item">
+                        <span class="dtl-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 8 21 12 17 16"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </span>
+                        Stop impersonating
+                    </button>
+                </form>
             </li>
             @endif
 

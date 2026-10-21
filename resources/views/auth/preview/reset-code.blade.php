@@ -44,7 +44,8 @@
           <button type="submit" class="ap-submit" data-testid="ap-primary-submit">{{ __('Verify Code') }}</button>
         </form>
 
-        <form method="GET" action="{{ route('password.reset.code.resend') }}" style="margin-top: 8px;">
+        <form method="POST" action="{{ route('password.reset.code.resend') }}" style="margin-top: 8px;" onsubmit="return confirm('Send a new reset code to this email?');">
+          @csrf
           <input type="hidden" name="email" value="{{ $email }}">
           <button type="submit" class="ap-back">{{ __("Didn't receive it? Resend code") }}</button>
         </form>

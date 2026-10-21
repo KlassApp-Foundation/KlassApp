@@ -139,7 +139,7 @@
                 }).then(function(result) {
                     if (result.isConfirmed) 
                     {
-                        axios.get('/teacher/visitorlog/delete'+id).then(response => {
+                        axios.delete('/teacher/visitorlog/delete'+id).then(response => {
                             thisswal.success    = response.data.message;
                             thisswal.getlist();
                         });  

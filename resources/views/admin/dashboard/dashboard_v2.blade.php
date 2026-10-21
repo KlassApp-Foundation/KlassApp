@@ -103,7 +103,10 @@
                         Set up with Toshi
                     </button>
                 @endif
-                <a href="{{ $dismissUrl }}" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">✕</a>
+                <form method="POST" action="{{ $dismissUrl }}" class="inline" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                    @csrf
+                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">✕</button>
+                </form>
             </div>
         @endif
 
