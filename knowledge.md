@@ -676,6 +676,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **test:purge-schools named schools and email cleanup OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187)**
+
+- `test:purge-schools` stays a dry run unless `--force` is passed. `--confirm-name` allows an `is_test=1` school whose name does not start with `E2E `, and the name must match exactly. It does not bypass `is_test`, and a demo school is still refused (use `demo:purge-schools`). A school with a usergroup 1 or 2 user is refused, including a soft-deleted one. `--email` clears early-access requests and school, teacher, and co-admin invites for that address, and refuses an address owned by a user outside the targeted schools or by a platform admin (usergroup 1 or 2). Soft-deleted users are inventoried and removed. `school_grading_systems` and `student_id_sequences` are in the school-scoped delete list. Not merged. Production untouched.
+
+## Session: 2026-10-21 — test:purge-schools named schools and email cleanup
+
+- **Work:** Applied the guarded purge extension onto `origin/main` `78ae595c`. Dry run remains the default.
+- **Files:** `app/Console/Commands/TestPurgeSchoolsCommand.php`, `tests/Feature/E2E/TestPurgeSchoolsCommandTest.php`.
+- **Decision:** `--confirm-name` never overrides the demo-school refusal or the `is_test` flag. Email cleanup is refused for a platform admin and for any user outside the targeted schools.
+- **Tests:** `php artisan test tests/Feature/E2E/TestPurgeSchoolsCommandTest.php` — 15 passed, 105 assertions (the patch's cases, plus demo-school refusal with `--confirm-name`, and a platform-admin email refusal).
+- **Status:** OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187) (`cursor/purge-schools-named-email-c67e`). Do not merge from this session. Brought up to date with `origin/main` `bf32772b` ([#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179)). The only conflict was this file; both histories are kept.
+
 ## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged**
 
 - `origin/main` (`78ae595c87924c07abbd36f2d05099a6c01a6f5e`) merged into this branch with a merge commit. That tip is [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (confirmed `merged: true`, `2026-10-21T17:30:43Z`). Not merged to main. Production untouched. The class-teacher upload is unchanged.
