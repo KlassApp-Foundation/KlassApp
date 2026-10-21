@@ -649,15 +649,19 @@ Route::get('/combined-marksheet/{stdLink}', 'ReportCardsController@combinedMarks
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
 
-// Data exports (sidebar "Data exports" → /admin/reports). Report cards stay
-// on /admin/reports/cards, which is a separate menu row for head teachers.
+// Data exports index (sidebar "Data exports" → /admin/reports). Report cards
+// stay on /admin/reports/cards, a separate menu row for head teachers.
+// Fee and parent downloads stay outside this gate. Fees and Parents are still
+// in the head-teacher menu, and those pages link to these two URLs.
+Route::get( '/report/fees', 'ReportsController@exportFee' );
+Route::get( '/report/parents', 'ReportsController@exportParent' );
+
 Route::middleware('can:full-school-admin')->group(function () {
 Route::get( '/reports', 'ReportsController@report' );
 Route::get( '/report/events', 'ReportsController@eventReport' );
 //Route::get( '/report/index', 'ReportsController@index' );
 //Route::get( '/report/show/{id}', 'ReportsController@show' );
 //Route::post( '/report/filter', 'ReportsController@create' );
-Route::get( '/report/fees', 'ReportsController@exportFee' );
 Route::get( '/report/downloadholidayformat', 'ReportsController@holidayFormat' );
 Route::get( '/report/holidays', 'ReportsController@holidayCreate' );
 Route::post( '/report/importHolidays', 'ReportsController@holidayImport' );
@@ -667,7 +671,6 @@ Route::get( '/report/birthday/{type}', 'ReportsController@exportBirthday' );
 Route::get( '/report/activeStudents', 'ReportsController@exportActiveStudents' );
 Route::get( '/report/exitStudents', 'ReportsController@exportExitStudents' );
 Route::get( '/report/suspendedStudents', 'ReportsController@exportSuspendedStudents' );
-Route::get( '/report/parents', 'ReportsController@exportParent' );
 
 Route::get( '/report/currentstock', 'ReportsController@currentstock' );
 Route::get( '/report/monthlypurchase', 'ReportsController@monthlypurchase' );

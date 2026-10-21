@@ -111,7 +111,7 @@
         // 'school_admin' — items only the full SchoolAdmin (ug3) may use.
         // SchoolSubadmin (ug4) reuses this nav, but the routes themselves exclude
         // it (Settings: fullschooladmin; school details, academic years and terms,
-        // data exports, and the classes URLs: the full-school-admin gate; the
+        // the data exports index, and the classes URLs: the full-school-admin gate; the
         // classes roster also refuses groups outside [3, 5]), so hide the links for them.
         if ($condition === 'school_admin') {
             return (int) optional(auth()->user())->usergroup_id === 3;

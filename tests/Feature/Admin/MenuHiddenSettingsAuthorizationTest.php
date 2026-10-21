@@ -166,6 +166,77 @@ class MenuHiddenSettingsAuthorizationTest extends TestCase
         $this->actingAs($this->siteAdmin)->get('/admin/reports')->assertOk();
     }
 
+    public function test_head_teacher_can_open_exports_linked_from_fees_and_parents(): void
+    {
+        // Fees and Parents stay in the head-teacher menu. Those pages link to
+        // these two downloads, so they stay outside the data-exports gate.
+        $this->actingAs($this->head)
+            ->get('/admin/fees/payments')
+            ->assertOk()
+            ->assertSee('Export statement', false)
+            ->assertSee('/admin/report/fees', false);
+
+        $this->actingAs($this->head)
+            ->get('/admin/parents')
+            ->assertOk()
+            ->assertSee('/admin/report/parents', false);
+
+        $this->assertSame(200, $this->downloadStatus('/admin/report/fees'));
+        $this->assertSame(200, $this->downloadStatus('/admin/report/parents'));
+
+        $this->actingAs($this->admin);
+        $this->assertSame(200, $this->downloadStatus('/admin/report/fees'));
+        $this->assertSame(200, $this->downloadStatus('/admin/report/parents'));
+    }
+
+    public function test_head_teacher_is_still_forbidden_on_settings_only_exports(): void
+    {
+        // These are linked from the data-exports index, not from a page a
+        // head teacher is meant to use.
+        $this->actingAs($this->head)->get('/admin/report/activeStudents')->assertForbidden();
+        $this->actingAs($this->head)->get('/admin/report/exportHolidays')->assertForbidden();
+        $this->actingAs($this->head)->get('/admin/report/birthday/student')->assertForbidden();
+    }
+
+    public function test_head_teacher_report_cards_do_not_link_to_school_details(): void
+    {
+        $this->actingAs($this->head)
+            ->get('/admin/reports/cards')
+            ->assertOk()
+            ->assertDontSee('/admin/schooldetails', false)
+            ->assertSee('A school admin manages the school logo', false);
+
+        $this->actingAs($this->admin)
+            ->get('/admin/reports/cards')
+            ->assertOk()
+            ->assertSee('/admin/schooldetails/editdetail/'.$this->school->id, false)
+            ->assertDontSee('A school admin manages the school logo', false);
+    }
+
+    public function test_head_teacher_cannot_post_school_details_or_store_a_class(): void
+    {
+        $this->actingAs($this->head)
+            ->post('/admin/schooldetails/update/'.$this->school->id, ['name' => 'Renamed'])
+            ->assertForbidden();
+
+        $this->actingAs($this->head)
+            ->post('/admin/classes/store', ['name' => 'P.1'])
+            ->assertForbidden();
+    }
+
+    /**
+     * The fee and parent exports write a CSV straight to the output buffer.
+     */
+    private function downloadStatus(string $path): int
+    {
+        ob_start();
+        try {
+            return $this->get($path)->getStatusCode();
+        } finally {
+            ob_end_clean();
+        }
+    }
+
     private function makeUser(string $name, string $email, int $usergroupId): User
     {
         $user = User::create([

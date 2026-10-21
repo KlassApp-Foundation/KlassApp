@@ -91,8 +91,12 @@
     </form>
 
     <div class="mt-3 pt-3 border-t text-xs text-gray-500">
-        Logo not showing correctly on the report card? Manage your school's logo on the
-        <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
+        @if((int) optional(auth()->user())->usergroup_id === 4)
+            Logo not showing correctly on the report card? A school admin manages the school logo.
+        @else
+            Logo not showing correctly on the report card? Manage your school's logo on the
+            <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
+        @endif
     </div>
 </div>
 

@@ -676,6 +676,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), fee and parent exports stay open**
+
+- The data-exports gate no longer covers `GET /admin/report/fees` or `GET /admin/report/parents`. Those pages are linked from Fees and Parents, which a head teacher still opens. The `/admin/reports` index and the exports only linked from that index stay 403. Report cards tell a head teacher that a school admin manages the logo, with no School Details link. The head-teacher dashboard no longer offers the data-exports index. Not merged. Production untouched.
+
+## Session: 2026-10-21 — Head-teacher fee and parent exports stay open
+
+- **Work:** Answer the review on #1158. Keep the two head-teacher-reachable CSV downloads outside `full-school-admin`. Leave the data-exports index and the settings-only exports refused. Reword the report-card logo hint for usergroup 4. Remove the dashboard Reports tile. Add a POST refusal for school details update and class store.
+- **Files:** `routes/admin.php`, `app/Providers/AuthServiceProvider.php`, `resources/views/admin/reports/cards.blade.php`, `resources/views/admin/subadmin/dashboard.blade.php`, `resources/views/layouts/partials/sidebar-menu.blade.php`, `tests/Feature/Admin/MenuHiddenSettingsAuthorizationTest.php`, `tests/Feature/Admin/RoleCrawlNitsTest.php`.
+- **Decision:** Keep the buttons and the routes, rather than hide the buttons. No other head-teacher page links into `/admin/report/*`. The Vue filters that go to `/admin/reports` are rendered on the data-exports index itself.
+- **Tests:** `MenuHiddenSettingsAuthorizationTest` 14 passed (52 assertions). With `RoleCrawlNitsTest`, `ClassRosterLivewireTest`, school-details suites, and the report-card suites: 52 passed, 1 skipped (fee package not installed), 174 assertions.
+- **Status:** OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158). Re-review requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **head-teacher menu URLs OPEN [#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158), brought up to date with main**
 
 - `origin/main` (`a0fc9b39`) merged into `cursor/menu-hidden-route-auth-8401` with a merge commit. Not merged to main. Production untouched.
