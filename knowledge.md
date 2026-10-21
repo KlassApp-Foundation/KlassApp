@@ -680,6 +680,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - Merged `origin/main` `a2ef440c` ([#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173), confirmed `merged: true`) into `cursor/early-access-existing-account-5a7b`. No rebase. The only conflict was `knowledge.md`. Both logs are kept below, as written.
 - [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) was still open and not on `main`. Holding for Rasta to confirm the existing-account message trade-off. Do not request re-approval yet. Not merged.
+- **Tests after the merge:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **2937 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Main after #1173 was 2933; the four existing-account tests are the difference. Known-failures list unchanged.
 
 ## Current Status: October 21, 2026 — **Early access existing account OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
 
