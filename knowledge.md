@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
+
+- Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.
+
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
 - Laravel Cloud application, environment, organization, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, production Doppler secret names, and token values are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers live in the private repo KlassApp-Foundation/internal or the Cloud dashboard. The app lives in eu-central-1.
@@ -3018,6 +3022,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
+
+- **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.
+- **Files touched**: `app/Helpers/WhatsAppPhoneHelper.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Services/WhatsAppBusinessService.php`, `app/Services/OutboundWhatsAppService.php`, `app/Services/TeacherInviteLinkService.php`, `app/Http/Controllers/Api/SchoolPayWebhookController.php`, `app/Channels/WhatsAppBackupChannel.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `tests/Feature/WhatsApp/WhatsAppLogPhoneMaskTest.php`, `tests/Feature/Admin/LinkWhatsAppActivityLogTest.php`, `knowledge.md`.
+- **Decision**: Reused no existing helper. `MarksReleaseService` masks for the result view with a different shape and is private. The activity row still stores the number the admin submitted.
+- **Status**: OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188) (`cursor/mask-whatsapp-log-phones-8f2e`). Not merged. Production untouched.
+- **Evidence**: Both new tests failed on `origin/main` and passed with the change. Related WhatsApp suites passed (50 tests, 218 assertions). No browser check; this is log text and an activity row.
 
 ### 2026-10-21: PHP 8.5 deprecations, no runtime change
 
