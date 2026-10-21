@@ -1,5 +1,6 @@
 @once<link rel="stylesheet" href="{{ asset('css/marks-import.css') }}">@endonce
 {{-- Table of import rows. Needs $rows; optional $showExisting (bool), $showStatus (bool). Restacks as cards below 768px via data-label. --}}
+<x-fold-list table>
 <div class="ds-table-wrap">
     <table class="ds-table-ledger ds-table-card-mobile marks-import-table">
         <thead>
@@ -36,3 +37,4 @@
         </tbody>
     </table>
 </div>
+</x-fold-list>

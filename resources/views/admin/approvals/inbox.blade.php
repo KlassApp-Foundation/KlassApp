@@ -32,6 +32,7 @@
                 <p class="ds-empty-state-desc" style="color: var(--d-text-secondary, #64748B);">Staff leave, parent-link and marks requests you need to review will appear here.</p>
             </div>
         @else
+            <x-fold-list table>
             <x-table :headers="['Type', 'Requester', 'Status', 'Comments', 'Requested', 'Actions']">
                         @foreach($approvals as $approval)
                             @php
@@ -145,6 +146,7 @@
                             </tr>
                         @endforeach
             </x-table>
+            </x-fold-list>
 
             @if($approvals->hasPages())
                 <div class="px-5 py-3 border-t border-gray-100">
