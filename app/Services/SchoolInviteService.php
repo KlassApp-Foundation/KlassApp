@@ -27,7 +27,7 @@ class SchoolInviteService
     /**
      * @return array{invite: SchoolInvite, token: string}
      */
-    public static function issue(EarlyAccessRequest $request, User $issuedBy): array
+    public static function issue(EarlyAccessRequest $request, User $issuedBy, bool $isTest = false): array
     {
         $token = Str::random(self::TOKEN_LENGTH);
         $tokenHash = hash('sha256', $token);
@@ -41,6 +41,7 @@ class SchoolInviteService
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours((int) config('invites.school_expiry_hours', 168)),
             'created_by' => $issuedBy->id,
+            'is_test' => $isTest,
         ]);
 
         Log::info('School invite issued', [
@@ -122,6 +123,10 @@ class SchoolInviteService
      */
     public static function claim(SchoolInvite $invite, array $data): array
     {
+        // The claim request cannot choose this. The school flag is copied
+        // from the invite row, which only a platform admin can set.
+        unset($data['is_test']);
+
         if ($invite->isRevoked()) {
             return ['success' => false, 'message' => 'This invite has been revoked. Ask KlassApp for a new one.'];
         }
@@ -165,6 +170,7 @@ class SchoolInviteService
                     'password' => $data['password'],
                     'school_name' => $locked->school_name,
                     'registration_country' => $locked->country,
+                    'is_test' => (bool) $locked->is_test,
                 ]);
 
                 // School invites are issued only from an early-access request.
