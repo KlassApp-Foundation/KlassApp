@@ -232,10 +232,9 @@ class WhatsAppController extends Controller
             ], 404);
         }
 
-        $feeCategories = app(StudentFeeResolver::class)->forStudent(
-            $student,
-            $student->school_id ? (int) $student->school_id : null,
-        );
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
 
@@ -2060,8 +2059,9 @@ class WhatsAppController extends Controller
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
 
+            $resolver = app(StudentFeeResolver::class);
             $feeCategories = ($student && $schoolId > 0)
-                ? app(StudentFeeResolver::class)->forStudent($student, $schoolId)
+                ? $resolver->forStudent($student, $schoolId, $resolver->currentTermId($schoolId))
                 : collect();
 
             $totalFees = $feeCategories->sum('amount');
@@ -2444,10 +2444,9 @@ class WhatsAppController extends Controller
     {
         $student = $user->user;
 
-        $feeCategories = app(StudentFeeResolver::class)->forStudent(
-            $student,
-            $student->school_id ? (int) $student->school_id : null,
-        );
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
         $message = "💰 *My Fee Balance*\n_{$this->whatsappDisplayName($student, 'Student')}_\n\n";

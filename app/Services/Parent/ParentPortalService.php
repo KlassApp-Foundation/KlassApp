@@ -256,7 +256,9 @@ class ParentPortalService
             ];
         }
 
-        $categories = app(StudentFeeResolver::class)->forStudent($student, $schoolId);
+        $fees = app(StudentFeeResolver::class);
+        // One balance for the term in progress. A fee with no term still counts.
+        $categories = $fees->forStudent($student, $schoolId, $fees->currentTermId($schoolId));
 
         $totalFees = (float) $categories->sum('amount');
         // fee_payments.user_id is the student user id (see FeePayment::student()).

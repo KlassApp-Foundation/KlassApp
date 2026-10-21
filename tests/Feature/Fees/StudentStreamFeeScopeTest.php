@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Fees;
 
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
@@ -17,6 +18,7 @@ use App\Services\OutboundWhatsAppService;
 use App\Services\StudentReportHelperService;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -183,6 +185,78 @@ class StudentStreamFeeScopeTest extends TestCase
             '• Level development: UGX 10,000',
             '• Primary Two class fee: UGX 80,000',
         ], $lines);
+    }
+
+    public function test_streamed_student_tuition_is_counted_once_per_term(): void
+    {
+        $year = AcademicYear::query()
+            ->where('school_id', $this->school->id)
+            ->where('status', 1)
+            ->firstOrFail();
+        $primary = Standard::query()
+            ->where('school_id', $this->school->id)
+            ->where('name', 'primary')
+            ->firstOrFail();
+        $stream = Section::query()->findOrFail($this->streamSectionId);
+
+        $term1 = AcademicTerm::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $year->id,
+            'name' => 'Term 1',
+            'status' => 'current',
+            'starts_on' => '2026-02-01',
+            'ends_on' => '2026-04-30',
+        ]);
+        $term2 = AcademicTerm::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $year->id,
+            'name' => 'Term 2',
+            'status' => 'next',
+            'starts_on' => '2026-05-01',
+            'ends_on' => '2026-08-15',
+        ]);
+
+        // Same name, once per term, on the student's own stream. Untied fees from setUp stay.
+        FeesCategories::create([
+            'school_id' => $this->school->id,
+            'standard_id' => $primary->id,
+            'section_id' => $stream->id,
+            'academic_term_id' => $term1->id,
+            'name' => 'Tuition',
+            'amount' => 120000,
+        ]);
+        FeesCategories::create([
+            'school_id' => $this->school->id,
+            'standard_id' => $primary->id,
+            'section_id' => $stream->id,
+            'academic_term_id' => $term2->id,
+            'name' => 'Tuition',
+            'amount' => 45000,
+        ]);
+
+        Cache::forget('academic_year_for_school_'.$this->school->id);
+
+        // Current term (Term 1): untied 115,000 + Tuition 120,000 − paid 15,000 = 220,000.
+        // Term 2 Tuition (45,000) must not be in this balance. Dropping the untied fees
+        // would leave 105,000. Adding both Tuition rows would leave 265,000.
+        $page = $this->actingAs($this->parent)
+            ->get(route('parent.children.fees', $this->streamed->id));
+        $page->assertOk()
+            ->assertSee('Tuition')
+            ->assertSee('UGX 120,000')
+            ->assertSee('Level development')
+            ->assertDontSee('UGX 45,000')
+            ->assertSee('data-testid="parent-fees-total">UGX 220,000', false);
+        $this->assertSame(1, substr_count($page->getContent(), '>Tuition<'));
+
+        $balances = collect(app(FeePositionService::class)->studentsWithBalance($this->school->id))->keyBy('id');
+        $this->assertSame(220000.0, (float) $balances[$this->streamed->id]['balance']);
+
+        $helper = app(StudentReportHelperService::class);
+        // Term 2 report: untied 115,000 + that term's Tuition 45,000. Term 1 Tuition stays out.
+        $this->assertSame(160000.0, (float) $helper->fees($this->admin, $this->streamSectionId, $term2->id));
+        // Term 1 report counts its own Tuition once, together with the same untied fees.
+        $this->assertSame(235000.0, (float) $helper->fees($this->admin, $this->streamSectionId, $term1->id));
     }
 
     /**

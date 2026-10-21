@@ -93,7 +93,7 @@ class StudentProfileService
             'status_label' => $this->statusLabel((string) $student->status),
             'attendance' => $this->attendance($schoolId, $student->id, $term),
             'exam' => $this->exam($schoolId, $student->id, $sectionId, $standardId, $term?->id),
-            'fees' => $this->fees($schoolId, $student),
+            'fees' => $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null),
             'currency' => app(DashboardV2DataService::class)->currencyFor($schoolId),
             'parents' => $this->parents($schoolId, $student),
             'marks' => $this->marks($schoolId, $student->id, $sectionId, $term?->id),
@@ -291,9 +291,11 @@ class StudentProfileService
     /**
      * @return array{empty: bool, balance: ?string, status: ?string, expected: ?string, paid: ?string}
      */
-    private function fees(int $schoolId, User $student): array
+    private function fees(int $schoolId, User $student, ?int $academicTermId): array
     {
-        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId)->sum('amount');
+        // $academicTermId is the current term already loaded for this profile.
+        // Null means the school has no current term, so only untied fees count.
+        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId, $academicTermId)->sum('amount');
         $paid = (float) FeePayment::query()
             ->where('school_id', $schoolId)
             ->where('user_id', $student->id)

@@ -42,7 +42,11 @@ class FeePositionService
             ->whereNull('deleted_at')
             ->get()
             ->keyBy('id');
-        $dueByStudent = $this->dueByStudent($schoolId, $activeStudents);
+        $dueByStudent = $this->dueByStudent(
+            $schoolId,
+            $activeStudents,
+            app(StudentFeeResolver::class)->currentTermId($schoolId),
+        );
 
         $latestAcademics = StudentAcademic::query()
             ->select('student_academics.user_id', 'standards_link.standard_id')
@@ -227,7 +231,11 @@ class FeePositionService
             ->get()
             ->unique('user_id');
 
-        $dueByStudent = $this->dueByStudent($schoolId, $activeStudents);
+        $dueByStudent = $this->dueByStudent(
+            $schoolId,
+            $activeStudents,
+            app(StudentFeeResolver::class)->currentTermId($schoolId),
+        );
         $owing = [];
         foreach ($latestAcademics as $row) {
             $due = (float) ($dueByStudent[(int) $row->user_id] ?? 0);
@@ -290,12 +298,12 @@ class FeePositionService
      * @param  \Illuminate\Support\Collection<int, User>  $students
      * @return array<int, float>
      */
-    private function dueByStudent(int $schoolId, $students): array
+    private function dueByStudent(int $schoolId, $students, ?int $academicTermId): array
     {
         $resolver = app(StudentFeeResolver::class);
         $due = [];
         foreach ($students as $student) {
-            $amount = (float) $resolver->forStudent($student, $schoolId)->sum(fn ($fee) => (float) $fee->amount);
+            $amount = (float) $resolver->forStudent($student, $schoolId, $academicTermId)->sum(fn ($fee) => (float) $fee->amount);
             if ($amount > 0) {
                 $due[(int) $student->id] = $amount;
             }

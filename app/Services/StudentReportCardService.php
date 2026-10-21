@@ -462,7 +462,11 @@ class StudentReportCardService
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => $gradingSystem,
             'fees' => $learner instanceof User
-                ? app(StudentFeeResolver::class)->forStudent($learner, $schoolId)
+                ? app(StudentFeeResolver::class)->forStudent(
+                    $learner,
+                    $schoolId,
+                    $exam->academic_term_id ? (int) $exam->academic_term_id : null,
+                )
                 : collect(),
             'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,

@@ -148,7 +148,9 @@ class ParentProfileService
      */
     private function childFees(int $schoolId, User $student): array
     {
-        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId)->sum('amount');
+        $fees = app(StudentFeeResolver::class);
+        // The profile balance is the current term, plus any fee that has no term.
+        $expected = (float) $fees->forStudent($student, $schoolId, $fees->currentTermId($schoolId))->sum('amount');
         $paid = (float) FeePayment::query()
             ->where('school_id', $schoolId)
             ->where('user_id', $student->id)

@@ -354,10 +354,10 @@ class OutboundWhatsAppService
             return 0;
         }
 
-        $fees = app(StudentFeeResolver::class)->forStudent(
-            $student,
-            $student->school_id ? (int) $student->school_id : null,
-        );
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        // A reminder is for the term in progress, not every term the fee name was used in.
+        $fees = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
         if ($feeId) {
             $fees = $fees->where('id', $feeId)->values();
         }

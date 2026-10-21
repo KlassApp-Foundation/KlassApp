@@ -58,8 +58,8 @@ public function subjects($schoolId, $section, $learner, $exam){
           return $subjects;
 }
 
-// fees — the report-card fee total for a student in this section.
-public function fees($admin, $section)
+// fees — the report-card fee total for a student in this section and term.
+public function fees($admin, $section, ?int $academicTermId = null)
 {
     $schoolId = (int) ($admin->school_id ?? 0);
     $sectionId = $section !== null && $section !== '' ? (int) $section : 0;
@@ -89,7 +89,7 @@ public function fees($admin, $section)
     }
 
     return (float) app(StudentFeeResolver::class)
-        ->forStudent($student, $schoolId)
+        ->forStudent($student, $schoolId, $academicTermId)
         ->sum(fn ($fee) => (float) $fee->amount);
 }
 
