@@ -635,7 +635,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Toshi on Bedrock (Claude) proof of concept OPEN**
+## Current Status: October 21, 2026 — **Toshi on Bedrock (Claude) proof of concept OPEN [#1199](https://github.com/KlassApp-Foundation/KlassApp/pull/1199)**
 
 - `TOSHI_LLM_PROVIDER=bedrock` selects laravel/ai's Bedrock provider and `TOSHI_LLM_MODEL`. Unset, Toshi stays on the openai-compatible provider. Three read-only admin/deputy tools: unpaid fee balances, streams with no class teacher, class attendance summary. Not merged. Production untouched. No live Bedrock call (no credentials).
 
@@ -643,7 +643,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - **Work:** Configurable Toshi provider plus three school-scoped read tools and `docs/ai/bedrock-setup.md`.
 - **Files:** `app/AiAgents/ToshiLlm.php`, the three tools, `FeePositionService`, agent/skill registration, tests.
-- **Status:** OPEN on `cursor/toshi-bedrock-poc-7e97`. Do not merge from this session. Production untouched.
+- **Status:** OPEN [#1199](https://github.com/KlassApp-Foundation/KlassApp/pull/1199) on `cursor/toshi-bedrock-poc-7e97`. Do not merge from this session. Production untouched.
 
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
