@@ -63,6 +63,9 @@ Route::get( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryCre
 Route::post( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryMessage' );
 
 //school details
+// Hidden from head teachers (sidebar condition school_admin). The gate matches
+// MustBeFullSchoolAdmin and answers 403.
+Route::middleware('can:full-school-admin')->group(function () {
 Route::get( '/schooldetails', 'SchoolDetailsController@index' );
 //Route::get( '/schooldetails/list', 'SchoolDetailsController@list' );
 //Route::get( '/schooldetails/create', 'SchoolDetailsController@create' );
@@ -81,8 +84,14 @@ Route::get( '/school-profile', function () {
 })->name('admin.school-profile');
 Route::post( '/schooldetails/update/validationUpdate/{school_id}', 'SchoolDetailsController@validationUpdate' );
 Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@update' );
+});
 
-//academics
+//academics — Settings child, school admin only. The year switcher
+// (/list/academicyear, /academicyear/index) stays on the schooladmin group.
+// GET /academics itself is registered again in routes/setting.php, which wins
+// and already uses fullschooladmin (404). This group covers the academic URLs
+// that file does not replace.
+Route::middleware('can:full-school-admin')->group(function () {
 	//index
 	Route::get( '/academics', 'AcademicYearController@index' );
 	Route::get( '/academic/list', 'AcademicYearController@list' );
@@ -103,6 +112,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 
 	//delete
 	Route::delete( '/academic/delete/{id}', 'AcademicYearController@destroy' );
+});
 
 //holidays
 	//index
@@ -166,6 +176,9 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 //     dd('ROUTE HIT');
 // });
 	// ======= added route for classes/sections@UG ========
+	// Classes and streams is hidden from a head teacher. The roster already
+	// refuses them; these legacy URLs are the same menu item and were still open.
+	Route::middleware('can:full-school-admin')->group(function () {
 	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
 	// Keep the legacy section-management URL available while /classes becomes the read-only roster portal.
 	Route::get("/sections", "SectionController@index")->name("admin.classes");
@@ -174,6 +187,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	})->name('admin.classes.index');
 	Route::get("/classes/create", "SectionController@create")->name("admin.classes.create");
 	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete")->can('delete', 'class');
+	});
 	Route::get("/class-teacher-invite/{section}/create", "ClassTeacherInviteController@create")->name("admin.class-teacher-invite.create");
 	Route::post("/class-teacher-invite/{standardLink}/store", "ClassTeacherInviteController@store")->name("admin.class-teacher-invite.store");
 	Route::post("/class-teacher-invite/{invite}/resend", "ClassTeacherInviteController@resend")->name("admin.class-teacher-invite.resend");
@@ -185,7 +199,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	        'sectionId' => (int) $section,
 	        'academicYearId' => request()->integer('academic_year_id') ?: null,
 	    ]);
-	})->whereNumber('section')->name('admin.classes.show');
+	})->whereNumber('section')->middleware('can:full-school-admin')->name('admin.classes.show');
 //notes
 Route::post( '/getnotes', 'NotesController@index' );
 Route::delete( '/notes/delete/{id}', 'NotesController@delete' );
@@ -635,13 +649,19 @@ Route::get('/combined-marksheet/{stdLink}', 'ReportCardsController@combinedMarks
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
 
-//reports
+// Data exports index (sidebar "Data exports" → /admin/reports). Report cards
+// stay on /admin/reports/cards, a separate menu row for head teachers.
+// Fee and parent downloads stay outside this gate. Fees and Parents are still
+// in the head-teacher menu, and those pages link to these two URLs.
+Route::get( '/report/fees', 'ReportsController@exportFee' );
+Route::get( '/report/parents', 'ReportsController@exportParent' );
+
+Route::middleware('can:full-school-admin')->group(function () {
 Route::get( '/reports', 'ReportsController@report' );
 Route::get( '/report/events', 'ReportsController@eventReport' );
 //Route::get( '/report/index', 'ReportsController@index' );
 //Route::get( '/report/show/{id}', 'ReportsController@show' );
 //Route::post( '/report/filter', 'ReportsController@create' );
-Route::get( '/report/fees', 'ReportsController@exportFee' );
 Route::get( '/report/downloadholidayformat', 'ReportsController@holidayFormat' );
 Route::get( '/report/holidays', 'ReportsController@holidayCreate' );
 Route::post( '/report/importHolidays', 'ReportsController@holidayImport' );
@@ -651,11 +671,11 @@ Route::get( '/report/birthday/{type}', 'ReportsController@exportBirthday' );
 Route::get( '/report/activeStudents', 'ReportsController@exportActiveStudents' );
 Route::get( '/report/exitStudents', 'ReportsController@exportExitStudents' );
 Route::get( '/report/suspendedStudents', 'ReportsController@exportSuspendedStudents' );
-Route::get( '/report/parents', 'ReportsController@exportParent' );
 
 Route::get( '/report/currentstock', 'ReportsController@currentstock' );
 Route::get( '/report/monthlypurchase', 'ReportsController@monthlypurchase' );
 Route::get( '/report/monthlysales', 'ReportsController@monthlysales' );
+});
 
 //payment
 Route::get( '/payment/index/{id}', 'PaymentController@index' );
@@ -898,17 +918,22 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-// handle classes
+// handle classes — same hidden Classes and streams item.
+Route::middleware('can:full-school-admin')->group(function () {
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
+});
 
 // ========== ACADEMIC TERM ============
+// Same Settings row as academic years. School admin only.
+Route::middleware('can:full-school-admin')->group(function () {
 Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
 Route::get("/academic-term/create", "Academics\AcademicTermController@create")->name("admin.academic-term.create");
 Route::post("/academic-term/store", "Academics\AcademicTermController@store")->name("admin.academic-term.store");
 Route::get("/academic-term/{term}/edit", "Academics\AcademicTermController@edit")->name("admin.academic-term.edit");
 Route::patch("/academic-term/{termId}/update", "Academics\AcademicTermController@update")->name("admin.academic-term.update");
 Route::delete("/academic-term/{termId}/destroy", "Academics\AcademicTermController@destroy")->name("admin.academic-term.destroy");
+});
 
 // ============== FEES STRUCTURE =================
 Route::get("/fees-categories", "Academics\FeesCategoryController@index")->name("admin.fees-categories");

@@ -115,6 +115,10 @@ class RoleCrawlNitsTest extends TestCase
         $response = $this->actingAs($this->head)->get('/subadmin/dashboard');
         $response->assertOk();
         $response->assertDontSee(url('/admin/settings'));
+        // Data exports is a Settings row. The quick-access tile used to point
+        // at /admin/reports, which this gate now refuses. Report cards stay
+        // at /admin/reports/cards, so match the index href exactly.
+        $response->assertDontSee('href="'.url('/admin/reports').'"', false);
         // Classes and streams is school-admin only. The parent row stays, and
         // for a subadmin it opens Subjects rather than /admin/classes.
         $response->assertDontSee(url('/admin/classes'));
