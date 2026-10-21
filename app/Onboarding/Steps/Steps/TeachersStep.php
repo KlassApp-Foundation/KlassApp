@@ -36,8 +36,9 @@ class TeachersStep extends AbstractOnboardingStep
             return $raw;
         }
 
-        // Chat path: names alone are not enough (engine requires emails) — reject empty.
-        return [];
+        // A typed line is not a teacher draft. Returning [] used to look like a
+        // successful save with nothing to do, so the chat asked the same question again.
+        $this->reject('Add a teacher with a name and an email, or type skip.');
     }
 
     public function validate(School $school, mixed $normalized): void
