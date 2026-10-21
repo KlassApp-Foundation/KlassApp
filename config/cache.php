@@ -92,4 +92,17 @@ return [
         \Illuminate\Support\Str::slug(env('APP_NAME', 'laravel'), '_').'_cache'
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | Laravel 13's new-app skeleton sets this to false. This app stores
+    | Eloquent models and collections in cache, so true keeps today's
+    | unrestricted unserialization. The prefix above stays explicit too.
+    |
+    */
+
+    'serializable_classes' => true,
+
 ];
