@@ -678,7 +678,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
-- 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. Laravel 13's `^3.25.1` still matches. No other packages moved.
+- 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. OPEN [#1172](https://github.com/KlassApp-Foundation/KlassApp/pull/1172) (`cursor/flysystem-version-range-99e9`). Laravel 13's `^3.25.1` still matches. No other packages moved. Not merged.
 
 - Branch `cursor/laravel-13-dc3f` from `origin/main` `5ce6aa45` ([#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170)). OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171). Not merged. Production untouched. CI PHP stays 8.4. The production PHP runtime was not changed. The root `php` constraint is now `^8.3` because Laravel 13 requires PHP 8.3; CI already runs 8.4.
 - `laravel/framework` v12.63.0 → v13.38.0. PHPUnit 11.5.56 → 12.5.40. Tinker v2.11.1 → v3.0.2. Boost constraint is `^2.0`; the lock stays v2.4.12. Prompts v0.3.21 → v0.3.26 (the framework requires `^0.3.25`). Paratest v7.8.5 → v7.20.0 (7.22+ requires PHPUnit 13). `symfony/polyfill-php86` v1.43.0 was added because the framework requires it.
