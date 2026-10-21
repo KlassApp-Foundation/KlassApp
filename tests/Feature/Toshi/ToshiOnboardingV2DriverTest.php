@@ -120,6 +120,29 @@ class ToshiOnboardingV2DriverTest extends TestCase
         $this->assertStringContainsString(ToshiOnboardingV2Driver::COMING_SOON_HINT, $messages);
     }
 
+    public function test_legacy_exam_form_stays_hidden_during_onboarding_v2(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class)
+            ->set('actionStep', 'onboarding_v2')
+            ->set('showExamForm', true)
+            ->set('step', 14);
+
+        $component->assertDontSee('+ Add Exam', false);
+    }
+
+    public function test_legacy_exam_form_still_shows_when_v2_is_not_the_active_step(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::test(AgentToshi::class)
+            ->set('actionStep', null)
+            ->set('showExamForm', true)
+            ->set('step', 14)
+            ->assertSee('+ Add Exam', false);
+    }
+
     public function test_flag_off_keeps_legacy_action_steps(): void
     {
         config(['toshi.onboarding_v2' => false]);
