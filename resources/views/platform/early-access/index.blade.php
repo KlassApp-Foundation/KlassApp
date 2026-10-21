@@ -31,7 +31,7 @@
     <table data-testid="early-access-table" style="border-collapse:collapse;width:100%;">
       <thead>
         <tr>
-          @foreach (['Received (UTC)', 'School', 'Contact', 'Role', 'Email', 'Phone', 'Country', 'Students', 'Invite'] as $heading)
+          @foreach (['Received (UTC)', 'School', 'Contact', 'Role', 'Email', 'Phone', 'Country', 'Students', 'Account', 'Invite'] as $heading)
             <th scope="col" style="text-align:left;padding:6px;border-bottom:1px solid currentColor;">{{ $heading }}</th>
           @endforeach
         </tr>
@@ -48,6 +48,11 @@
             <td style="padding:6px;">{{ $row->phone }}</td>
             <td style="padding:6px;">{{ $row->country }}</td>
             <td style="padding:6px;">{{ $row->approx_students }}</td>
+            <td style="padding:6px;" data-testid="early-access-account-{{ $row->id }}">
+              @if (! empty($existingAccounts[mb_strtolower(trim((string) $row->email))]))
+                <span data-testid="early-access-existing-user" style="display:inline-block;padding:1px 8px;border:1px solid currentColor;border-radius:999px;font-size:12px;">Existing user</span>
+              @endif
+            </td>
             <td style="padding:6px;white-space:nowrap;" data-testid="early-access-invite-{{ $row->id }}">
               @if (! $invite)
                 <form method="POST" action="{{ route('platform.early-access.invite', $row) }}" style="display:inline;">
@@ -92,7 +97,7 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="9" style="padding:6px;">No requests yet.</td></tr>
+          <tr><td colspan="10" style="padding:6px;">No requests yet.</td></tr>
         @endforelse
       </tbody>
     </table>

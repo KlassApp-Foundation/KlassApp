@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Early access existing account OPEN**
+
+- Branch `cursor/early-access-existing-account-5a7b` from `origin/main` `b143cfc3`. Not merged. No migration. Password-reset behaviour is unchanged.
+- Submitting the early-access form (`/register` while sign-up is closed, same form as `/early-access`) with an email that already belongs to a live KlassApp account still stores the request. The thank-you page adds: "This email already has a KlassApp account. Sign in, or reset your password." Sign in links to the login page. Reset links to the existing password-reset request page. A new email still shows only the original thank-you.
+- `/platform/early-access` has an Account column. A matching live account shows an "Existing user" badge. The label is computed from `users.email` (case-insensitive), not stored. Soft-deleted users are not labelled, because they cannot sign in. The badge follows the account: it appears if one is created later, and it goes away if the account is removed.
+- **Tests:** `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php` was 4 failed without the change and 4 passed (39 assertions) with it. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: **2934 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list unchanged. Staging was not checked; this PR is not merged.
+
+## Session: 2026-10-21 — Early access: tell existing users they already have an account
+
+- **Work:** On the early-access form, an email that already belongs to a KlassApp account gets the sign-in / reset-password sentence, and the platform list labels that request Existing user. The request is still stored. New emails are unchanged. No password-reset change.
+- **Files:** `app/Http/Controllers/EarlyAccessController.php`, `app/Http/Controllers/Platform/EarlyAccessRequestController.php`, `app/Models/EarlyAccessRequest.php`, `resources/views/early-access/show.blade.php`, `resources/views/platform/early-access/index.blade.php`, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php`, `knowledge.md`.
+- **Decision:** No column. `users.email` is the source of truth, so a migration is not required and the label cannot drift from the account. The public message is only the sentence Rasta asked for on this form.
+- **Tests:** New tests red without the change (4 failed) and green with it (4 passed, 39 assertions). Guarded suite: 2934 tests, 0 failures, 0 errors, 4 skipped.
+- **Status:** OPEN on `cursor/early-access-existing-account-5a7b`. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
 - 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. OPEN [#1172](https://github.com/KlassApp-Foundation/KlassApp/pull/1172) (`cursor/flysystem-version-range-99e9`). Laravel 13's `^3.25.1` still matches. No other packages moved. Not merged.

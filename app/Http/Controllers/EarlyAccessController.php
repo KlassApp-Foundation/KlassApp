@@ -47,6 +47,7 @@ class EarlyAccessController extends Controller
                 'privacyUrl' => self::privacyNoticeUrl(),
                 'countries' => self::countryOptions(),
                 'submitted' => (bool) session('early_access_submitted'),
+                'existingAccount' => (bool) session('early_access_existing_account'),
             ])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
@@ -80,6 +81,10 @@ class EarlyAccessController extends Controller
         unset($validated['consent']);
         $validated['consented_at'] = now();
 
+        // Same response shape either way. The only extra fact is the sentence
+        // on this form when the email already belongs to an account.
+        $existingAccount = EarlyAccessRequest::existingAccountEmails([$validated['email']]) !== [];
+
         $earlyAccess = EarlyAccessRequest::create($validated);
 
         Log::info('Early access request received', ['early_access_request_id' => $earlyAccess->id]);
@@ -96,7 +101,9 @@ class EarlyAccessController extends Controller
             ]);
         }
 
-        return redirect()->route('early-access.show')->with('early_access_submitted', true);
+        return redirect()->route('early-access.show')
+            ->with('early_access_submitted', true)
+            ->with('early_access_existing_account', $existingAccount);
     }
 
     /**

@@ -34,9 +34,12 @@ class EarlyAccessRequestController extends Controller
             ->get()
             ->keyBy(fn (SchoolInvite $invite) => mb_strtolower($invite->email));
 
+        $existingAccounts = array_fill_keys(EarlyAccessRequest::existingAccountEmails($emails), true);
+
         return view('platform.early-access.index', [
             'requests' => $requests,
             'invites' => $invites,
+            'existingAccounts' => $existingAccounts,
         ]);
     }
 
