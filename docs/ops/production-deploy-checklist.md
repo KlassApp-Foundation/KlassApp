@@ -5,7 +5,7 @@
 > Cloud, push-to-deploy **off** — merging to `main` does **not** ship; a deploy is an
 > explicit release you start and watch.
 >
-> No secrets in this file. Every credential lives in Doppler (`CLOUD_AGENT_TOOLING`
+> No secrets in this file. Every credential lives in Doppler (the Cloud API token named in the private repo KlassApp-Foundation/internal or the Cloud dashboard
 > for the Cloud API; backup password held by the owner). Environment-variable names
 > and intended values are listed; values are never printed to logs or PRs.
 >
@@ -122,7 +122,7 @@ matches, do not start the production deploy.
 
 1. Deploy from the dedicated main worktree at the reviewed SHA (rule #15).
 2. Trigger the release with the empty-body deploy POST to the production
-   environment (token: Doppler `CLOUD_AGENT_TOOLING`; pattern in
+   environment (token: see the private repo KlassApp-Foundation/internal or the Cloud dashboard; pattern in
    `knowledge.md` → "Triggering a real deployment"). The POST deploys the
    environment's latest commit — confirm the worktree matches `origin/main`
    first.

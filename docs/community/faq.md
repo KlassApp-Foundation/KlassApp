@@ -56,7 +56,7 @@ Most schools finish core setup via the **onboarding wizard** and/or **Toshi** in
 
 ### Where is data hosted?
 
-Production SaaS runs on **Laravel Cloud** (`klassapp.xyz`, EU-West-1). The codebase is MIT — you can also self-host.
+Production SaaS runs on **Laravel Cloud** (`klassapp.xyz`, eu-central-1). The codebase is MIT — you can also self-host.
 
 ### How do we get help?
 
