@@ -155,4 +155,23 @@ class WizardWhatsAppOtpTest extends TestCase
         $this->assertEquals('+256700111222', $wa->phone);
         $this->assertNotNull($wa->verified_at);
     }
+
+    public function test_phone_changed_after_a_correct_code_is_not_marked_verified(): void
+    {
+        $component = $this->advanceToWhatsAppStep()
+            ->set('whatsappPhone', '+256700111222')
+            ->call('sendWhatsAppVerificationCode');
+
+        $code = (string) $component->get('whatsappOtpDisplay');
+        $component
+            ->set('whatsappOtpInput', $code)
+            ->call('verifyWhatsAppCode')
+            ->assertSet('whatsappVerified', true)
+            ->set('whatsappPhone', '+256700999888')
+            ->call('next')
+            ->assertSet('whatsappVerified', false);
+
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertNull(WhatsAppUser::where('phone', '+256700999888')->first());
+    }
 }

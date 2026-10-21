@@ -6,6 +6,8 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingEngine;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -140,6 +142,31 @@ class SaveWhatsAppTest extends TestCase
 
         $whatsapp = WhatsAppUser::where('user_id', $this->user->id)->first();
         $this->assertTrue($whatsapp->opted_in);
-        $this->assertNotNull($whatsapp->verified_at);
+        $this->assertNull($whatsapp->verified_at);
+
+        $verifiedUser = User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 3,
+            'name' => 'Verified Admin',
+            'email' => Str::random(8).'@test.sch.ug',
+            'password' => bcrypt(Str::random(16)),
+            'status' => 'active',
+            'is_reset' => 1,
+        ]);
+        try {
+            $engine->saveWhatsApp($this->school, $verifiedUser->id, '+256700333444', codeWasVerified: true);
+            $this->fail('A caller-supplied verified flag must not mark the number verified.');
+        } catch (ValidationException $e) {
+            $this->assertNull(WhatsAppUser::where('user_id', $verifiedUser->id)->first());
+        }
+
+        $otp = app(WhatsAppOnboardingOtpService::class);
+        $sent = $otp->sendAdminVerificationCode($verifiedUser->id, '+256700333444');
+        $this->assertTrue($otp->verifyAdminCode($verifiedUser->id, (string) $sent['code'], '+256700333444')['verified']);
+
+        $engine->saveWhatsApp($this->school, $verifiedUser->id, '+256700333444', codeWasVerified: true);
+        $verified = WhatsAppUser::where('user_id', $verifiedUser->id)->first();
+        $this->assertNotNull($verified);
+        $this->assertNotNull($verified->verified_at);
     }
 }

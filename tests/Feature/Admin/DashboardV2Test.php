@@ -455,7 +455,7 @@ class DashboardV2Test extends TestCase
         $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
         StudentAcademic::create(['school_id' => $school->id, 'academic_year_id' => $year->id, 'user_id' => $student->id, 'standardLink_id' => $section->id]);
         FeesCategories::create(['school_id' => $school->id, 'standard_id' => $standard->id, 'name' => 'Tuition']);
-        WhatsAppUser::create(['school_id' => $school->id, 'user_id' => $admin->id, 'phone' => '256700000001']);
+        WhatsAppUser::create(['school_id' => $school->id, 'user_id' => $admin->id, 'phone' => '256700000001', 'verified_at' => now(), 'opted_in' => true]);
         $plan = Plan::query()->first() ?? Plan::create([
             'cycle' => 1, 'name' => 'Free '.uniqid(), 'display_name' => 'Free', 'is_active' => 1, 'amount' => 0,
         ]);

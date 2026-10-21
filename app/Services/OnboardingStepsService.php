@@ -319,7 +319,8 @@ class OnboardingStepsService
                 || self::wasStepSkipped($school, 'students'),
             'terms'      => AcademicTerm::where('school_id', $sid)->exists(),
             'fees'       => FeesCategories::where('school_id', $sid)->exists(),
-            'whatsapp_verify' => $userId && WhatsAppUser::where('user_id', $userId)->exists(),
+            'whatsapp_verify' => $userId
+                && WhatsAppUser::where('user_id', $userId)->whereNotNull('verified_at')->exists(),
             'plan_selection' => CurrentPlan::where('school_id', $sid)->exists(),
             default      => false,
         };
