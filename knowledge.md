@@ -635,6 +635,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Onboarding term dates and year/fee validation OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190)**
+
+- Toshi v2 term defaults and the wizard terms prefill use the academic year being set up, so a 2027 year no longer receives the current calendar year's dates.
+- A Toshi v2 academic-year reply must be a year (`2027` or `2027/2028`). Yes, or another confirmation, uses the suggested calendar year. Any other reply is re-prompted and is not saved.
+- A Toshi v2 fee typed without an amount is rejected and asks for the amount. Not merged. Production untouched.
+
+## Session: 2026-10-21 — Onboarding term dates follow the academic year
+
+- **Work:** Default term dates in Toshi v2 and the wizard now take their year from the academic year row (the first year in its name, otherwise its start date). The academic-year chat step accepts a year label or a confirmation, and the fees chat step refuses a line with no positive amount.
+- **Files:** `app/Onboarding/Steps/Steps/TermsStep.php`, `app/Onboarding/Steps/Steps/AcademicYearStep.php`, `app/Onboarding/Steps/Steps/FeesStep.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Models/AcademicYear.php`, `tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php`.
+- **Decision:** Structured academic-year answers (a name plus dates) stay valid. Only a free-text chat reply is limited to a year or a confirmation. Toshi's conversation copy is unchanged.
+- **Tests:** `php artisan test tests/Feature/Onboarding/OnboardingYearAndFeeValidationTest.php` — 4 passed, 49 assertions. The same four failed on main before the fix (2026 term dates, a non-year saved as the year name, a fee saved with no amount).
+- **Status:** OPEN [#1190](https://github.com/KlassApp-Foundation/KlassApp/pull/1190) (`cursor/onboarding-year-and-fee-af54`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
 - Laravel Cloud application, environment, organization, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, production Doppler secret names, and token values are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers live in the private repo KlassApp-Foundation/internal or the Cloud dashboard. The app lives in eu-central-1.
