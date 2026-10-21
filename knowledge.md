@@ -676,6 +676,22 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Toshi v2 onboarding drafts OPEN, not merged**
+
+- Local browser pass of the wizard and Toshi v2 against a MySQL copy. Production was not touched and nothing was merged.
+- Drafts, review requested from Bariyo123: [#1174](https://github.com/KlassApp-Foundation/KlassApp/pull/1174) reject dropped teacher/student chat lines, [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177) confirm seeded classes and subjects, [#1178](https://github.com/KlassApp-Foundation/KlassApp/pull/1178) accept Starter as freemium, [#1181](https://github.com/KlassApp-Foundation/KlassApp/pull/1181) choice buttons, [#1182](https://github.com/KlassApp-Foundation/KlassApp/pull/1182) hide legacy forms during v2.
+- Not opened, because other work already owns them: v2 WhatsApp verify marks the number verified without a code; inbound WhatsApp 500 when the linked user was deleted.
+- Not changed on purpose: skip/done/defaults/uneb text commands, and Uganda-only term and fee defaults. Those belong to the redesign.
+
+## Session: 2026-10-21 — Wizard and Toshi v2 onboarding pass
+
+- **Work:** Ran both onboarding flows in Chrome against a local Laravel 13 / MySQL 8.4 app with Toshi v2 on, demo-only WhatsApp, and the local simulator. Compared the two schools. Opened one small draft per simple v2 bug. Posted the redesign list on issue #1090.
+- **Files:** `TeachersStep.php`, `StudentsStep.php`, `ToshiOnboardingV2Driver.php`, `StandardsStep.php`, `SubjectsStep.php`, `PlanSelectionStep.php`, `AgentToshi.php`, `agent-toshi.blade.php`, `toshi-v2-options.blade.php`, `OnboardingStepReview.php`, and the tests named in the drafts above. Each draft is its own branch.
+- **Decision:** Do not parse free-text rosters, do not redesign buttons or defaults, do not add a migration, and do not change WhatsApp sending. Seeded class confirmation is a `school_details` meta row so the chat can ask once. A finished school is not asked again.
+- **Tests:** Each draft's new test failed on unchanged code and passed after the fix, together with `ToshiOnboardingV2DriverTest` and, where the registry walk changed, `WizardToshiV2RegistryParityTest`. The full guard was not re-run in this session; CI runs it on the drafts.
+- **Status:** OPEN drafts above. Not merged. Production untouched.
+- **Edge:** The wizard student from this pass has no class link because the class list says Primary One, not P.1. Toshi's "Tuition 100000" line saved no academic term; the wizard fee is on Term 1. Term dates differ because v2 `defaults` and the wizard prefill are two different UNEB calendars.
+
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
 - Branch `cursor/laravel-13-dc3f` from `origin/main` `5ce6aa45` ([#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170)). OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171). Not merged. Production untouched. CI PHP stays 8.4. The production PHP runtime was not changed. The root `php` constraint is now `^8.3` because Laravel 13 requires PHP 8.3; CI already runs 8.4.
