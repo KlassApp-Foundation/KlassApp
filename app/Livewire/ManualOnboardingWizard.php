@@ -3365,10 +3365,11 @@ class ManualOnboardingWizard extends Component
         }
 
         $payload = [];
-        foreach ($this->feeDrafts as $draft) {
+        foreach ($this->feeDrafts as $index => $draft) {
             $row = [
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'amount' => (float) ($draft['amount'] ?? 0),
+                'row' => $index + 1,
             ];
             $scope = (string) ($draft['scope'] ?? 'whole_school');
             if ($scope === 'class') {

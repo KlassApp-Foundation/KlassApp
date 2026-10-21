@@ -6738,7 +6738,7 @@ class AgentToshi extends Component
     {
         if (! empty($this->actionData['fees']) && is_array($this->actionData['fees'])) {
             $structured = [];
-            foreach ($this->actionData['fees'] as $fee) {
+            foreach ($this->actionData['fees'] as $index => $fee) {
                 if (! is_array($fee)) {
                     continue;
                 }
@@ -6752,6 +6752,7 @@ class AgentToshi extends Component
                 $entry = [
                     'name' => $name,
                     'amount' => is_numeric($amount) ? (float) $amount : 0,
+                    'row' => isset($fee['row']) && is_numeric($fee['row']) ? (int) $fee['row'] : ($index + 1),
                 ];
 
                 $class = trim((string) ($fee['class'] ?? ''));
@@ -6782,10 +6783,21 @@ class AgentToshi extends Component
             }
         }
 
-        return array_map(fn (string $name) => [
-            'name' => trim($name),
-            'amount' => 0,
-        ], array_filter($this->fees, fn ($f) => is_string($f) && trim($f) !== ''));
+        $structured = [];
+        $row = 1;
+        foreach ($this->fees as $fee) {
+            if (! is_string($fee) || trim($fee) === '') {
+                continue;
+            }
+            $structured[] = [
+                'name' => trim($fee),
+                'amount' => 0,
+                'row' => $row,
+            ];
+            $row++;
+        }
+
+        return $structured;
     }
 
     // ════════════════════════════════════════════════
