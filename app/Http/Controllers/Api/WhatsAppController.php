@@ -667,6 +667,17 @@ class WhatsAppController extends Controller
             ->where('phone', $phone)
             ->first();
 
+        // A row whose user is gone (deleted or soft-deleted account, or no
+        // user_id) is not a recognised user: answer it as a stranger so the
+        // webhook does not fail on $whatsappUser->user. "demo" re-links it.
+        if ($whatsappUser && $whatsappUser->user === null) {
+            Log::warning('WhatsApp inbound: number linked to a missing user, answered as unrecognised', [
+                'whatsapp_user_id' => $whatsappUser->id,
+                'phone' => '•••' . substr(preg_replace('/\D/', '', $phone), -3),
+            ]);
+            $whatsappUser = null;
+        }
+
         if (!$whatsappUser) {
             // Pending/rejected link requests beat the generic stranger menu —
             // a parent who already submitted deserves status, not "who are you?".
@@ -1327,8 +1338,14 @@ class WhatsAppController extends Controller
         $clean = preg_replace('/[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F1E0}-\\x{1F1FF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]/u', '', $body);
         $trimmed = strtolower(trim($body));
         $normalised = strtolower(trim($clean));
-        $role = $user->user->usergroup_id;
-        $hasChildren = $user->user->children()->exists();
+        // Backstop if this row is reached with no account. processMetaMessage
+        // already answers that sender as unrecognised.
+        $linkedUser = $user->user;
+        if ($linkedUser === null) {
+            return;
+        }
+        $role = $linkedUser->usergroup_id;
+        $hasChildren = $linkedUser->children()->exists();
 
         // Match against both raw input and emoji-stripped version
         $match = fn(array $keywords) => in_array($trimmed, $keywords) || in_array($normalised, $keywords);
@@ -1672,10 +1689,15 @@ class WhatsAppController extends Controller
      */
     private function sendMenu(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
+        // Same backstop as routeInbound: menu rendering calls children().
+        $linkedUser = $user->user;
+        if ($linkedUser === null) {
+            return;
+        }
         $name = $user->demo_name
-            ?: $this->whatsappDisplayName($user->user, 'there');
-        $role = $user->user->usergroup_id;
-        $hasChildren = $user->user->children()->exists();
+            ?: $this->whatsappDisplayName($linkedUser, 'there');
+        $role = $linkedUser->usergroup_id;
+        $hasChildren = $linkedUser->children()->exists();
 
         // Send a brief greeting then show role-specific buttons
         $greeting = "👋 Hello, *{$name}*! What would you like to do?";
