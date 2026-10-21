@@ -97,6 +97,9 @@ class PlanLimitEnforcementTest extends TestCase
             'password'     => bcrypt('password'),
             'status'       => 'active',
             'email_verified' => 1,
+            // Factory numbers are KLS001 plus a random suffix. School 1's first
+            // generated id is KLS0010001, so a factory draw of 0001 collides.
+            'registration_number' => null,
         ]);
     }
 
@@ -180,10 +183,12 @@ class PlanLimitEnforcementTest extends TestCase
     #[Test]
     public function toshi_add_student_saves_with_notice_when_at_plan_limit(): void
     {
-        // Fill to exactly 2 students
+        // Fill to exactly 2 students. Leave registration_number empty so it
+        // cannot occupy the id addStudent is about to assign.
         User::factory()->count(2)->create([
             'usergroup_id' => 6,
             'school_id'    => $this->schoolId,
+            'registration_number' => null,
         ]);
 
         $result = ToshiActionService::addStudent($this->admin, ['name' => 'Excess Student']);
@@ -235,10 +240,12 @@ class PlanLimitEnforcementTest extends TestCase
     #[Test]
     public function student_controller_store_saves_with_overlimit_notice_when_at_plan_limit(): void
     {
-        // Fill to exactly 2 students
+        // Fill to exactly 2 students. Leave registration_number empty so it
+        // cannot occupy the id the add-student form is about to assign.
         User::factory()->count(2)->create([
             'usergroup_id' => 6,
             'school_id'    => $this->schoolId,
+            'registration_number' => null,
         ]);
 
         $this->actingAs($this->admin);
