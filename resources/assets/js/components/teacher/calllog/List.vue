@@ -133,7 +133,7 @@ export default {
       }).then(function(result) {
         if (result.isConfirmed) 
         {
-          axios.get('/teacher/calllog/delete/'+id).then(response => {
+          axios.delete('/teacher/calllog/delete/'+id).then(response => {
              thisswal.success    = response.data.message;
              thisswal.getlist();
           });  

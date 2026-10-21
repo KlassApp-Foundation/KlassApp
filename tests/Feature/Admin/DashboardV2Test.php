@@ -233,8 +233,11 @@ class DashboardV2Test extends TestCase
             ->assertSee('data-testid="dashboard-v2-setup-bar"', false)
             ->assertDontSee('data-testid="dashboard-v2-chip"', false);
 
-        // Dismiss (GET route as the banner link does).
-        $this->actingAs($adminA)->get(route('dismiss.onboarding.reminder'))->assertRedirect();
+        // Opening the dismiss URL must not save the preference.
+        $this->actingAs($adminA)->get(route('dismiss.onboarding.reminder'))->assertStatus(405);
+        $this->assertSame(0, UserPreference::query()->where('user_id', $adminA->id)->count());
+
+        $this->actingAs($adminA)->post(route('dismiss.onboarding.reminder'))->assertRedirect();
         $this->assertSame(1, UserPreference::query()->where('user_id', $adminA->id)->count());
 
         $progress = OnboardingStepsService::progress($school, $adminA->id);

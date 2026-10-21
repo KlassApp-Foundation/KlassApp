@@ -456,7 +456,7 @@
                 }).then(function(result) {
                     if (result.isConfirmed) 
                     {
-                        axios.get(thisswal.url+ '/'+thisswal.mode+'/homework/delete/'+ id).then(response => {
+                        axios.delete(thisswal.url+ '/'+thisswal.mode+'/homework/delete/'+ id).then(response => {
                             thisswal.success = response.data.success;
                             window.location.reload();
                         }); 

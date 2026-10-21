@@ -145,7 +145,7 @@ export default {
       }).then(function(result) {
         if (result.isConfirmed) 
         {
-          axios.get(thisswal.url+'/'+thisswal.mode+'/postalrecord/delete/'+id).then(response => {
+          axios.delete(thisswal.url+'/'+thisswal.mode+'/postalrecord/delete/'+id).then(response => {
              thisswal.success    = response.data.message;
              //thisswal.getlist();
              window.location.reload();

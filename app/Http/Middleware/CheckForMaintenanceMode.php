@@ -12,6 +12,13 @@ class CheckForMaintenanceMode extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        // Google's OAuth consent screen links these. Keep them up for guests
+        // while the rest of the app is in maintenance.
+        'privacy',
+        'terms',
+        'ploicy',
+        'policy',
+        'privacy-policy',
+        'terms-of-service',
     ];
 }

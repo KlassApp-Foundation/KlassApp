@@ -331,14 +331,14 @@
                     {
                         if(thisswal.type == 'teacher')
                         {
-                            axios.get(thisswal.url+ '/teacher/assignment/delete/'+ id).then(response => {
+                            axios.delete(thisswal.url+ '/teacher/assignment/delete/'+ id).then(response => {
                                 thisswal.success = response.data.success;
                                 window.location.reload();
                             }); 
                         }
                         else if(thisswal.type == 'student')
                         {
-                            axios.get(thisswal.url+ '/student/assignment/delete/'+ id).then(response => {
+                            axios.delete(thisswal.url+ '/student/assignment/delete/'+ id).then(response => {
                                 thisswal.success = response.data.success;
                                 window.location.reload();
                             }); 

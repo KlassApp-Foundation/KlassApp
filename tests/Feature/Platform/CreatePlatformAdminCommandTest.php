@@ -7,6 +7,7 @@ use Database\Seeders\UsersSiteAdminTableSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CreatePlatformAdminCommandTest extends TestCase
@@ -15,6 +16,8 @@ class CreatePlatformAdminCommandTest extends TestCase
 
     public function test_it_creates_one_platform_admin_with_a_one_time_password(): void
     {
+        Mail::fake();
+
         $exit = Artisan::call('platform:create-admin', [
             'email' => 'new.platform.admin@klassapp.test',
             'name' => 'New Platform Admin',
@@ -37,6 +40,7 @@ class CreatePlatformAdminCommandTest extends TestCase
         $this->assertSame(1, (int) $user->is_reset);
         $this->assertTrue(Hash::check($password, $user->password));
         $this->assertSame(1, substr_count($output, $password));
+        Mail::assertNothingOutgoing();
 
         $this->assertDatabaseHas('userprofiles', [
             'user_id' => $user->id,
@@ -80,7 +84,11 @@ class CreatePlatformAdminCommandTest extends TestCase
 
     public function test_the_site_admin_seeder_never_creates_public_password_admins(): void
     {
+        Mail::fake();
+
         $this->seed(UsersSiteAdminTableSeeder::class);
+
+        Mail::assertNothingOutgoing();
 
         $this->assertSame(0, User::where('email', 'like', '%@gmail.com')->count());
 

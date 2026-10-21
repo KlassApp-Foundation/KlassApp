@@ -187,7 +187,7 @@ class LegacyPortalEventDestroyAuthorizationTest extends TestCase
     {
         $this->actingAs($this->adminA);
 
-        $this->get('/admin/events/delete/'.$this->eventA->id)
+        $this->delete('/admin/events/delete/'.$this->eventA->id)
             ->assertRedirect('/admin/events');
 
         $this->assertSoftDeleted('events', [
@@ -199,7 +199,7 @@ class LegacyPortalEventDestroyAuthorizationTest extends TestCase
     {
         $this->actingAs($this->adminA);
 
-        $this->get('/admin/events/delete/'.$this->eventB->id)
+        $this->delete('/admin/events/delete/'.$this->eventB->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('events', [
@@ -212,7 +212,7 @@ class LegacyPortalEventDestroyAuthorizationTest extends TestCase
     {
         $this->actingAs($this->siteAdmin);
 
-        $this->get('/admin/events/delete/'.$this->eventB->id)
+        $this->delete('/admin/events/delete/'.$this->eventB->id)
             ->assertRedirect('/admin/events');
 
         $this->assertSoftDeleted('events', [

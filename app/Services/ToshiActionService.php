@@ -543,11 +543,15 @@ class ToshiActionService
             DB::commit();
 
             try {
+                $issued = \App\Support\SetPasswordLink::issue($teacher);
                 Mail::to($email)->queue(new TeacherInviteMail(
                     $name,
                     $email,
                     $schoolName,
                     $className,
+                    inviteUrl: $issued['url'],
+                    expiresAt: $issued['expires_at'],
+                    expiresInMinutes: $issued['minutes'],
                 ));
             } catch (\Exception $e) {
                 Log::warning('ToshiAction: teacher invite email failed', [

@@ -37,30 +37,6 @@ class LessonPlan extends Model implements Approvable
      * @var array
      */
     protected $dates = ['deleted_at'];
-    
-    /**
-     * Get the index name for the model.
-     *
-     * @return string
-     */
-    public function searchableAs()
-    {
-        return 'lesson_plans';
-    }
-
-    /**
-     * Get the indexable data array for the model.
-     *
-     * @return array
-     */
-    public function toSearchableArray()
-    {
-        $array = $this->toArray();
-
-        // Customize array...
-        //return array('id' => $array['id'], 'teacher_link_id' => $array['teacher_link_id'], 'title' => $array['title'], 'unit_name' => $array['unit_name']);
-        return $array;
-    }
 
     public function lessonPlanApproval()
     {

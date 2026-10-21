@@ -37,10 +37,12 @@
                         </td>
 			            <td class="py-3 px-2">
 			              <div class="flex items-center justify-center">
-                            <a href="{{ url('schooladmin') }}/{{ $admin->id }}/impersonate"
-                             title="View" class="px-2 py-1 ml-1 rounded menuclick flex items-center justify-center w-fit text-white bg-orange-400 text-xs">
-                                Login as Admin
-                            </a>
+                            <form method="POST" action="{{ url('/schooladmin/'.$admin->id.'/impersonate') }}" class="inline" onsubmit="return confirm('Log in as this school admin?');">
+                                @csrf
+                                <button type="submit" title="Log in as this school admin" class="px-2 py-1 ml-1 rounded menuclick flex items-center justify-center w-fit text-white bg-orange-400 text-xs">
+                                    Login as Admin
+                                </button>
+                            </form>
                             
 			              	<a href="{{ url('/superadmin/academics/school/admin/detail',['id'=>$admin->id]) }}" title="View" class="px-2 py-1 ml-1 rounded menuclick flex items-center justify-center w-fit text-white bg-gray-500 text-xs">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
