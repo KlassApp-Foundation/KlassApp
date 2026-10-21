@@ -111,6 +111,60 @@ class EarlyAccessExistingAccountTest extends TestCase
             ->assertSee('Existing user');
     }
 
+    public function test_existing_account_message_does_not_reveal_school_or_role(): void
+    {
+        $user = $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
+        $user->forceFill([
+            'registration_role' => 'Existing Bursar Role',
+            'teacher_designations' => ['Existing Bursar Role'],
+        ])->save();
+        $this->assertSame('Northwind Existing School', $user->school->name);
+
+        $response = $this->followingRedirects()->post('/early-access', $this->payload('taken@example.com'));
+
+        $response->assertOk();
+        $response->assertSeeText(self::MESSAGE);
+        $response->assertDontSee('Northwind Existing School');
+        $response->assertDontSee('northwind-existing-school');
+        $response->assertDontSee('Existing Bursar Role');
+        $response->assertDontSee('Hillside Academy');
+        $response->assertDontSee('Head teacher');
+
+        $platform = $this->makeUser('platform@example.com', 1);
+        $this->actingAs($platform)
+            ->get(route('platform.early-access.index'))
+            ->assertOk()
+            ->assertSee('Existing user')
+            ->assertSee('Hillside Academy')
+            ->assertSee('Head teacher')
+            ->assertDontSee('Northwind Existing School')
+            ->assertDontSee('Existing Bursar Role');
+    }
+
+    public function test_existing_account_reply_is_rate_limited_with_the_form(): void
+    {
+        $route = app('router')->getRoutes()->getByName('early-access.store');
+        $this->assertNotNull($route);
+        $this->assertContains('throttle:5,1', $route->gatherMiddleware());
+
+        $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
+
+        // Own address, so this counter is the form's limit and not another test's.
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.76']);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/early-access', $this->payload('taken@example.com'))
+                ->assertRedirect(route('early-access.show'));
+        }
+
+        $blocked = $this->post('/early-access', $this->payload('taken@example.com'));
+        $blocked->assertStatus(429);
+        $blocked->assertDontSee('Northwind Existing School');
+        $blocked->assertDontSee('Existing Bursar Role');
+        $blocked->assertDontSee(self::MESSAGE);
+        $this->assertSame(5, EarlyAccessRequest::count());
+    }
+
     public function test_new_email_is_unchanged(): void
     {
         $platform = $this->makeUser('platform@example.com', 1);
@@ -153,14 +207,19 @@ class EarlyAccessExistingAccountTest extends TestCase
         ];
     }
 
-    private function makeUser(string $email, int $group): User
+    private function makeUser(string $email, int $group, ?string $schoolName = null): User
     {
-        $user = app(SchoolSignupBootstrapService::class)->bootstrapAsOperator([
+        $data = [
             'name' => 'Person '.$group,
             'email' => $email,
             'phone' => null,
             'password' => 'secret123',
-        ]);
+        ];
+        if ($schoolName !== null) {
+            $data['school_name'] = $schoolName;
+        }
+
+        $user = app(SchoolSignupBootstrapService::class)->bootstrapAsOperator($data);
         $user->forceFill(['usergroup_id' => $group, 'status' => 'active'])->save();
 
         return $user->fresh();

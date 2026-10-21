@@ -82,7 +82,9 @@ class EarlyAccessController extends Controller
         $validated['consented_at'] = now();
 
         // Same response shape either way. The only extra fact is the sentence
-        // on this form when the email already belongs to an account.
+        // on this form: this email already has an account. School name and
+        // role are not included. store() is throttle:5,1 with the rest of
+        // the form, so this lookup is not a separate unthrottled check.
         $existingAccount = EarlyAccessRequest::existingAccountEmails([$validated['email']]) !== [];
 
         $earlyAccess = EarlyAccessRequest::create($validated);

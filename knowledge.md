@@ -635,6 +635,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Early access existing account message stays generic [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
+
+- The thank-you sentence is still only: "This email already has a KlassApp account. Sign in, or reset your password." It does not include the account's school name or role. The platform list still shows the request's own school and role, plus an "Existing user" badge, and does not show the account's school or role.
+- `POST /early-access` stays `throttle:5,1`. The existing-account lookup is inside that action, so the reply uses the same limit as the rest of the form. The sixth submit from one address is HTTP 429 and does not store another request.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Existing-account reply does not name the school or role
+
+- **Work:** Locked the public sentence so a matching account does not reveal that account's school name or role. Confirmed the lookup sits on the form's `throttle:5,1` route.
+- **Files:** `app/Http/Controllers/EarlyAccessController.php`, `resources/views/early-access/show.blade.php`, `routes/web.php`, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php`, `knowledge.md`.
+- **Decision:** Do not add a second limiter. The form already limits this action. Do not change the sentence; it already says only that the email has an account and links to sign in or reset the password.
+- **Tests:** Without `throttle:5,1`, `test_existing_account_reply_is_rate_limited_with_the_form` failed. With the school name and role pasted into the sentence, `test_existing_account_message_does_not_reveal_school_or_role` failed. Restored, `tests/Feature/EarlyAccess/EarlyAccessExistingAccountTest.php` — 6 tests, 70 assertions, 0 failures (PHP 8.4.27).
+- **Status:** OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) (`cursor/early-access-existing-account-5a7b`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Early access existing account brought up to date with main [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
 
 - Merged `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c` into `cursor/early-access-existing-account-5a7b` with a merge commit. No force-push. The only conflict was `knowledge.md`. The early-access notes below and the notes that landed on main are both kept. This note does not add infrastructure identifiers or tokens.
