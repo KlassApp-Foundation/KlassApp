@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), main merged**
+
+- Merged `origin/main` `a2ef440c` ([#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173), confirmed `merged: true`, merge commit `a2ef440cd7770e234acece71f0489693b007138a`) into `cursor/whatsapp-orphan-user-inbound-7a4f` with a merge commit. Not merged to main. Production untouched. No deploy. No environment variables changed.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. The WhatsApp inbound fix is unchanged: a `whatsapp_users` row whose user is soft-deleted, or whose `user_id` is null, is logged with the phone masked to the last three digits and answered as unrecognised. The existing stranger path answers it. `demo` returns the demo pointer and relinks the row to the demo parent. `routeInbound` and `sendMenu` return before `children()` when the account is missing. The demo-only guard, the send service, and the signature check are unchanged. #1173's early-adopter Growth offer (plan, three-month subscription window, `school_details` record, and the end-date display) is on this branch as it landed on main.
+- **Tests:** `vendor/bin/phpunit` on `tests/Feature/WhatsApp` plus `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `SchoolInviteTest.php`, and `SchoolInvitePhoneFormatTest.php`: **127 tests, 525 assertions, 0 failures, 0 errors** (PHP 8.4.26, PHPUnit 12.5.40). PHPUnit marked 2 tests risky in `ParentMagicLoginWhatsAppTest` (`dashboard_keyword_also_sends_magic_link`, `web_login_without_linked_children_is_denied`) because they use Mockery expectations and do not call a PHPUnit assertion. Those methods were already on this branch and were not part of the conflict. The full suite is left to GitHub CI.
+- Needs Grok B's approval because it changes which replies an inbound number gets. Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1173) into the WhatsApp orphan-inbound branch
+
+- **Work:** merge `origin/main` (`a2ef440cd7770e234acece71f0489693b007138a`) only. The inbound fix is unchanged.
+- **Files:** `knowledge.md` (both histories kept). #1173's files are unchanged from main. `app/Http/Controllers/Api/WhatsAppController.php` and `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php` are unchanged from this branch.
+- **Decision:** Keep both session blocks as written. Do not rewrite the early-adopter offer or the inbound replies.
+- **Tests:** `vendor/bin/phpunit` on `tests/Feature/WhatsApp` plus `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `SchoolInviteTest.php`, and `SchoolInvitePhoneFormatTest.php`: **127 tests, 525 assertions, 0 failures, 0 errors** (PHP 8.4.26, PHPUnit 12.5.40). PHPUnit marked 2 tests risky in `ParentMagicLoginWhatsAppTest` (`dashboard_keyword_also_sends_magic_link`, `web_login_without_linked_children_is_denied`) because they use Mockery expectations and do not call a PHPUnit assertion. Those methods were already on this branch and were not part of the conflict. The full suite is left to GitHub CI.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Re-review requested from Bariyo123. Needs Grok B's approval. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175)**
 
 - A `whatsapp_users` row whose user is soft-deleted, or whose `user_id` is null, was still treated as recognised. `routeInbound` called `children()` on null (`WhatsAppController.php:1331`) and the inbound webhook returned 500, so the sender got no reply, including to `demo`.
@@ -689,6 +704,22 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Decision:** Do not change the demo-only guard, the send service, or the signature check. Relink happens only through the existing stranger `demo` path.
 - **Tests:** The new file was red first (HTTP 500, `children()` on null at line 1331) and green after the fix (3 tests, 23 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: **2933 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list unchanged.
 - **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`, head `b63e31f5` before this note). Review requested from Bariyo123. Needs Grok B's approval because it changes which replies an inbound number gets. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **Early adopter Growth offer OPEN**
+
+- Claiming an early-adopter school invite sets that school's `CurrentPlan` to Growth (`status=running`, not the 30-day trial) and its `Subscription` to an approved window from the claim date to three months later. `amount_paid` is 0. No payment provider is called.
+- The school records the offer in `school_details`: `early_adopter_offer` = `growth_3_months`, and `early_adopter_offer_at` = the claim instant. No migration. `CurrentPlan`, `Subscription`, and `school_details` already exist.
+- A second claim, or applying the offer again, does not move the end date. Confirming that same Growth plan later does not start the 30-day trial or rewrite the subscription. Co-admin invites (and the other non-school invite types) are unchanged.
+- Where a school's plan is shown, the end date is shown with it: Edit Profile, the subscription list, and the superadmin school list and school detail. Complimentary Growth reads "free until {date}" and does not show the catalog price.
+- OPEN [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173) (`cursor/early-adopter-growth-offer-289a`). Not merged. Production untouched. This touches plans, so it needs Grok B's or Rasta's approval and must not be self-reviewed.
+
+## Session: 2026-10-21 — Early adopter invite grants Growth for 3 months
+
+- **Work:** Onboarding item 6 from the Kabale S S walkthrough. An early-adopter school invite claim grants Growth free for 3 months and records the offer on the school.
+- **Files:** `app/Services/EarlyAdopterOffer.php`, `app/Services/SchoolInviteService.php`, `app/Services/OnboardingEngine.php`, `app/Livewire/AgentToshi.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `app/Http/Controllers/Admin/SubscriptionController.php`, `resources/views/admin/subscription/index.blade.php`, `resources/views/livewire/superadmin/academics/school-list.blade.php`, `resources/views/livewire/superadmin/academics/school-detail.blade.php`, `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `tests/Feature/Invites/SchoolInvitePhoneFormatTest.php`, `knowledge.md`.
+- **Decision:** No new columns. The plan is `current_plans` (Growth, running, `is_trial` false). The end date is `subscriptions.end_date`. The offer and its date are `school_details` meta. The 30-day `TrialService` path is a different product and is not used. School invites are the early-adopter path (issued only from an early-access request). Teacher, co-admin, and class-teacher invites are not.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **2933 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Main was 2930; the three new feature tests are the difference. Known-failures list unchanged.
+- **Status:** OPEN [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173) (`cursor/early-adopter-growth-offer-289a`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
