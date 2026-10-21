@@ -2777,7 +2777,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `routes/*.php` (the live delete and state-change lines), the matching Vue/Blade callers, `EmailVerificationController`, `PasswordResetCodeController`, `tests/Feature/Security/NoMutatingGetRouteTest.php`, rebuilt `public/build`, `docs/demo/public-demo-lockdown.md`, `knowledge.md`.
 - **Decision**: API routes stay on Sanctum without the web CSRF middleware. Email-verification GET only renders the confirm page. Commented-out routes were left commented. Authorization middleware was not loosened.
 - **Status**: [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168) OPEN (`cursor/no-get-mutations-005c`). Not merged. `origin/main` through `7746f5ae` merged in (#1163, #1164, #1165, #1166, #1157). Only `knowledge.md` conflicted; both histories kept. `/privacy` and `/terms` stay GET reads. Wizard subject remove, teacher upload, and onboarding finish stay Livewire. Password-reset resend tests now POST. No new data-changing GET route came in with those merges.
-- **Evidence**: After the merge of `5336badd`, `bash scripts/test-guard.sh` — 2903 tests, 0 failures, 0 errors, 4 skipped. Guard: `OK: 0 failing test(s)`. Confirm dialogs were not clicked in a browser.
+- **Evidence**: After merging `origin/main` at `7746f5ae`, `bash scripts/test-guard.sh` — 2909 tests, 0 failures, 0 errors, 4 skipped. Guard: `OK: 0 failing test(s)`. Confirm dialogs were not clicked in a browser.
 - **Edge cases flagged**: Some legacy destroy methods still 500 when the id is missing. That predates the verb change. Public-demo lockdown now treats directory-number and document deletes as writes.
 
 ### 2026-10-20: Toshi finish uses the wizard's onboarding finish
