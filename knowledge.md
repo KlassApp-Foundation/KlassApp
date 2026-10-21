@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175)**
+
+- A `whatsapp_users` row whose user is soft-deleted, or whose `user_id` is null, was still treated as recognised. `routeInbound` called `children()` on null (`WhatsAppController.php:1331`) and the inbound webhook returned 500, so the sender got no reply, including to `demo`.
+- After the lookup, that row is logged with the phone masked to the last three digits and treated as unrecognised. The existing stranger path answers it. `demo` returns the demo pointer and relinks the row to the demo parent. `routeInbound` and `sendMenu` return before `children()` when the account is missing. The demo-only guard, the send service, and the signature check are unchanged.
+- This changes which replies an inbound number gets. It needs Grok B's approval. OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Not merged. Production untouched.
+
+## Session: 2026-10-21 — WhatsApp inbound when the linked user is gone
+
+- **Work:** Stop the inbound webhook from returning 500 when `whatsapp_users` still exists but its user is soft-deleted or `user_id` is null. Answer that number as unrecognised.
+- **Files:** `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php`, `knowledge.md`.
+- **Decision:** Do not change the demo-only guard, the send service, or the signature check. Relink happens only through the existing stranger `demo` path.
+- **Tests:** The new file was red first (HTTP 500, `children()` on null at line 1331) and green after the fix (3 tests, 23 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: **2933 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list unchanged.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`, head `b63e31f5` before this note). Review requested from Bariyo123. Needs Grok B's approval because it changes which replies an inbound number gets. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
 - 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. OPEN [#1172](https://github.com/KlassApp-Foundation/KlassApp/pull/1172) (`cursor/flysystem-version-range-99e9`). Laravel 13's `^3.25.1` still matches. No other packages moved. Not merged.
