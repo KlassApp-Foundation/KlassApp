@@ -638,14 +638,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
 - Laravel Cloud application, environment, database, and deployment identifiers, internal Cloud hostnames, database, cache, and object-storage resource names, the retired host address, and production Doppler secret names are removed from the public docs. `https://klassapp.xyz` stays. A production release is still described as a POST to the deployments endpoint of the production environment. Tokens and identifiers: see the internal ops notes (private repo `KlassApp-Foundation/internal`).
-- Docs only. Not merged from this session. Production untouched.
+- Docs only. OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Not merged. Production untouched.
 
 ## Session: 2026-10-21 — Remove production infrastructure identifiers from public docs
 
 - **Work:** Scrubbed `knowledge.md` and the other public docs that repeated the same identifiers. Operational how-tos keep the process and point at the internal ops notes. Historical notes drop the identifier and keep the surrounding fact.
 - **Files:** `knowledge.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/ops/*`, `docs/readme/README.md`, `docs/research/progress-2026-10-03.md`, `docs/evidence/*` markdown, `e2e/**/*.md`, and the design handoff notes that named the staging host.
 - **Decision:** Do not print identifier values in the commit or the pull request. The private ops notes remain the place those values live.
-- **Status:** OPEN. Docs only. Do not merge from this session.
+- **Status:** OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Docs only. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Early adopter Growth offer OPEN**
 
