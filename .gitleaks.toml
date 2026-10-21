@@ -1,0 +1,25 @@
+# Gitleaks configuration for KlassApp.
+# Extends the default ruleset. The allowlist below covers ONLY paths that a
+# full-history scan (Oct 2026) confirmed as false positives. Never add a path
+# here to hide a real credential: rotate it and remove it instead.
+title = "KlassApp gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Confirmed false positives: test fixtures, compiled assets, alphabets, doc placeholders"
+paths = [
+  # Test fixtures: hard-coded fake passwords/tokens used only in feature tests
+  '''^tests/Feature/Auth/SchoolSubadminAdminAccessTest\.php$''',
+  '''^tests/Feature/CoAdminInvite/CoAdminInviteLinkSecurityTest\.php$''',
+  '''^tests/Feature/Demo/DemoProductionProvisionTest\.php$''',
+  '''^tests/Feature/Invites/EarlyAdopterOfferTest\.php$''',
+  '''^tests/Feature/Onboarding/ToshiStructureStreamsParityTest\.php$''',
+  '''^tests/Feature/TeacherInvite/TeacherInviteLinkSecurityTest\.php$''',
+  '''^tests/Feature/Toshi/GoogleClassroomOAuthCallbackUpsertTest\.php$''',
+  # Compiled/minified bundle (identifier strings trip generic-api-key)
+  '''^public/js/app\.js$''',
+  # Character alphabet constant for confirmation codes, not a secret
+  '''^app/Services/WhatsApp/WhatsAppConfirmationBridge\.php$''',
+]
