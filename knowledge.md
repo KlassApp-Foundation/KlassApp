@@ -676,6 +676,50 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), stale school cleared**
+
+- A number whose user is missing is still answered as unrecognised, and `demo` still relinks that same row. Before the stranger handler runs, the row's old link is cleared (`user_id`, `school_id`, demo fields, payment-code fields, profile name) so those values are not used to look anyone up.
+- A school student id, a KlassApp id, and a 10-digit payment code from that number now get the same reply and the same links as a number that was never seen. The payment-code path updates the cleared row instead of inserting a second one. `whatsappDisplayName` is given the student user directly; `optional()` always wraps its value and the no-parent payment path was returning 500.
+- **Tests:** `OrphanWhatsAppUserInboundTest` **6 tests, 47 assertions, OK**. The three new tests failed on the previous controller (school student id linked the old school; KlassApp id left the old `school_id`; payment code returned 500) and pass with the change. `tests/Feature/WhatsApp`: **106 tests, 396 assertions, 0 failures, 2 risky** (the same Mockery-only methods in `ParentMagicLoginWhatsAppTest`). Full suite left to GitHub CI.
+- Needs Grok B's approval. Do not merge from this session.
+
+## Session: 2026-10-21 — Orphan numbers do not keep the old school
+
+- **Work:** Clear the stale WhatsApp link before the stranger handler. Keep the demo relink.
+- **Files:** `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php`, `knowledge.md`.
+- **Decision:** Clear the stored fields on the existing row rather than delete it, so `demo` still updates that row. The logs at the inbound parse and the demo info line were not changed.
+- **Tests:** Orphan file 6 tests, 47 assertions. WhatsApp feature directory 106 tests, 396 assertions, 0 failures, 2 risky.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Needs Grok B's approval. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), main merged**
+
+- Merged `origin/main` `a2ef440c` ([#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173), confirmed `merged: true`, merge commit `a2ef440cd7770e234acece71f0489693b007138a`) into `cursor/whatsapp-orphan-user-inbound-7a4f` with a merge commit. Not merged to main. Production untouched. No deploy. No environment variables changed.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. The WhatsApp inbound fix is unchanged: a `whatsapp_users` row whose user is soft-deleted, or whose `user_id` is null, is logged with the phone masked to the last three digits and answered as unrecognised. The existing stranger path answers it. `demo` returns the demo pointer and relinks the row to the demo parent. `routeInbound` and `sendMenu` return before `children()` when the account is missing. The demo-only guard, the send service, and the signature check are unchanged. #1173's early-adopter Growth offer (plan, three-month subscription window, `school_details` record, and the end-date display) is on this branch as it landed on main.
+- **Tests:** `vendor/bin/phpunit` on `tests/Feature/WhatsApp` plus `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `SchoolInviteTest.php`, and `SchoolInvitePhoneFormatTest.php`: **127 tests, 525 assertions, 0 failures, 0 errors** (PHP 8.4.26, PHPUnit 12.5.40). PHPUnit marked 2 tests risky in `ParentMagicLoginWhatsAppTest` (`dashboard_keyword_also_sends_magic_link`, `web_login_without_linked_children_is_denied`) because they use Mockery expectations and do not call a PHPUnit assertion. Those methods were already on this branch and were not part of the conflict. The full suite is left to GitHub CI.
+- Needs Grok B's approval because it changes which replies an inbound number gets. Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1173) into the WhatsApp orphan-inbound branch
+
+- **Work:** merge `origin/main` (`a2ef440cd7770e234acece71f0489693b007138a`) only. The inbound fix is unchanged.
+- **Files:** `knowledge.md` (both histories kept). #1173's files are unchanged from main. `app/Http/Controllers/Api/WhatsAppController.php` and `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php` are unchanged from this branch.
+- **Decision:** Keep both session blocks as written. Do not rewrite the early-adopter offer or the inbound replies.
+- **Tests:** `vendor/bin/phpunit` on `tests/Feature/WhatsApp` plus `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `SchoolInviteTest.php`, and `SchoolInvitePhoneFormatTest.php`: **127 tests, 525 assertions, 0 failures, 0 errors** (PHP 8.4.26, PHPUnit 12.5.40). PHPUnit marked 2 tests risky in `ParentMagicLoginWhatsAppTest` (`dashboard_keyword_also_sends_magic_link`, `web_login_without_linked_children_is_denied`) because they use Mockery expectations and do not call a PHPUnit assertion. Those methods were already on this branch and were not part of the conflict. The full suite is left to GitHub CI.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Re-review requested from Bariyo123. Needs Grok B's approval. Do not merge from this session.
+
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175)**
+
+- A `whatsapp_users` row whose user is soft-deleted, or whose `user_id` is null, was still treated as recognised. `routeInbound` called `children()` on null (`WhatsAppController.php:1331`) and the inbound webhook returned 500, so the sender got no reply, including to `demo`.
+- After the lookup, that row is logged with the phone masked to the last three digits and treated as unrecognised. The existing stranger path answers it. `demo` returns the demo pointer and relinks the row to the demo parent. `routeInbound` and `sendMenu` return before `children()` when the account is missing. The demo-only guard, the send service, and the signature check are unchanged.
+- This changes which replies an inbound number gets. It needs Grok B's approval. OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`). Not merged. Production untouched.
+
+## Session: 2026-10-21 — WhatsApp inbound when the linked user is gone
+
+- **Work:** Stop the inbound webhook from returning 500 when `whatsapp_users` still exists but its user is soft-deleted or `user_id` is null. Answer that number as unrecognised.
+- **Files:** `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php`, `knowledge.md`.
+- **Decision:** Do not change the demo-only guard, the send service, or the signature check. Relink happens only through the existing stranger `demo` path.
+- **Tests:** The new file was red first (HTTP 500, `children()` on null at line 1331) and green after the fix (3 tests, 23 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: **2933 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list unchanged.
+- **Status:** OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) (`cursor/whatsapp-orphan-user-inbound-7a4f`, head `b63e31f5` before this note). Review requested from Bariyo123. Needs Grok B's approval because it changes which replies an inbound number gets. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Early adopter Growth offer OPEN**
 
 - Claiming an early-adopter school invite sets that school's `CurrentPlan` to Growth (`status=running`, not the 30-day trial) and its `Subscription` to an approved window from the claim date to three months later. `amount_paid` is 0. No payment provider is called.
