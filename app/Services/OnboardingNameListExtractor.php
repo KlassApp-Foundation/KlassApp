@@ -118,14 +118,14 @@ class OnboardingNameListExtractor
             if (! $handle) {
                 return [];
             }
-            $headerLine = fgetcsv($handle);
+            $headerLine = fgetcsv($handle, null, ',', '"', '\\');
             if ($headerLine === false) {
                 fclose($handle);
 
                 return [];
             }
             $headers = array_map(fn ($cell) => $this->cellText($cell), $headerLine);
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
                 $dataRows[] = $row;
             }
             fclose($handle);
@@ -343,14 +343,14 @@ class OnboardingNameListExtractor
             if (! $handle) {
                 return [];
             }
-            $headerLine = fgetcsv($handle);
+            $headerLine = fgetcsv($handle, null, ',', '"', '\\');
             if ($headerLine === false) {
                 fclose($handle);
 
                 return [];
             }
             $headers = array_map('trim', $headerLine);
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
                 $dataRows[] = $row;
             }
             fclose($handle);
@@ -420,7 +420,7 @@ class OnboardingNameListExtractor
                 $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
             } elseif ($ext === 'csv' || $ext === 'txt') {
                 $handle = fopen($path, 'r');
-                while (($line = fgetcsv($handle)) !== false) {
+                while (($line = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
                     $rows[] = $line;
                 }
                 fclose($handle);

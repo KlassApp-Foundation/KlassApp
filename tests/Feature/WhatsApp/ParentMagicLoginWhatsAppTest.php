@@ -135,7 +135,6 @@ class ParentMagicLoginWhatsAppTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'routeInbound');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->waUser, $this->phone, $body, $this->whatsApp);
     }
 }

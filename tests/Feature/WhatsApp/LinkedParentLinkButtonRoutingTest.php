@@ -186,7 +186,6 @@ class LinkedParentLinkButtonRoutingTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, $body, 'wamid.button.tap', 'Linked Parent');
     }
 }

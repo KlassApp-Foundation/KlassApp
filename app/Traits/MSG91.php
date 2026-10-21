@@ -69,8 +69,6 @@ trait MSG91
                 return "cURL Error #:" . $err;
             }
         
-            curl_close($curl);
-        
             $now=date('Y-m-d');
             $queuelist=Reminder::where('via','=','sms')->where('executed_at','=',$now)->get();
             foreach($queuelist as $queue)
@@ -132,7 +130,6 @@ trait MSG91
             {
                 return "cURL Error #:" . $err;
             }
-            curl_close($curl);
             return $response;
         }
         catch(Exception $e)
@@ -188,7 +185,6 @@ trait MSG91
             {
                 return "cURL Error #:" . $err;
             }
-            curl_close($curl);
             return $response;
         }
         catch(Exception $e)

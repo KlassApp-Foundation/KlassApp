@@ -71,7 +71,6 @@ class ParentCrossSchoolLinkingTest extends TestCase
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'linkParentToStudent');
-        $method->setAccessible(true);
         $noop = static fn (): null => null;
 
         $method->invoke($controller, self::PHONE, $this->studentB->id, $noop, $noop, 'Cross Parent');

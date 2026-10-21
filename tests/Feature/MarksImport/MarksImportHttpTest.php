@@ -192,7 +192,10 @@ class MarksImportHttpTest extends TestCase
             ? file_get_contents($base->getFile()->getPathname())
             : $response->getContent();
 
-        return array_map('str_getcsv', array_values(array_filter(preg_split('/\r\n|\n/', trim($content)))));
+        return array_map(
+            static fn (string $line): array => str_getcsv($line, ',', '"', '\\'),
+            array_values(array_filter(preg_split('/\r\n|\n/', trim($content))))
+        );
     }
 
     public function test_the_986_teacher_template_feeds_the_import_unchanged(): void

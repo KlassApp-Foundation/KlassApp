@@ -122,7 +122,6 @@ class ApprovableMcpToolTest extends TestCase
         $tool = ApprovableMcpTool::wrap('slack', $primitive);
 
         $reflector = new \ReflectionMethod($tool, 'rawToolName');
-        $reflector->setAccessible(true);
 
         $this->assertSame('slack_post_message', $reflector->invoke($tool));
     }
@@ -142,7 +141,6 @@ class ApprovableMcpToolTest extends TestCase
         $tool = ApprovableMcpTool::wrap('slack', $primitive);
 
         $reflector = new \ReflectionMethod($tool, 'rawToolName');
-        $reflector->setAccessible(true);
 
         $this->assertSame('custom_tool', $reflector->invoke($tool));
     }

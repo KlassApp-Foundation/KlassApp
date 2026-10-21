@@ -361,7 +361,6 @@ class WizardToshiParityBugsTest extends TestCase
         $component = Livewire::test(AgentToshi::class);
         $instance = $component->instance();
         $ref = new \ReflectionMethod(AgentToshi::class, 'promptPlanSelection');
-        $ref->setAccessible(true);
         $ref->invoke($instance);
 
         $messages = collect($component->get('messages') ?? []);
