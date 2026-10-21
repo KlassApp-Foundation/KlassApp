@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Subject;
 use App\Onboarding\Steps\AbstractOnboardingStep;
+use App\Onboarding\Steps\OnboardingStepReview;
 use App\Services\OnboardingStepsService;
 
 class SubjectsStep extends AbstractOnboardingStep
@@ -70,10 +71,13 @@ class SubjectsStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'subjects');
+            OnboardingStepReview::mark($school, 'subjects');
 
             return;
         }
         if ($normalized === 'confirm_seeded') {
+            OnboardingStepReview::mark($school, 'subjects');
+
             return;
         }
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -81,6 +85,7 @@ class SubjectsStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
         $this->engine->saveSubjects($school, $year, $normalized);
+        OnboardingStepReview::mark($school, 'subjects');
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -168,11 +173,14 @@ class SubjectsStep extends AbstractOnboardingStep
 
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'subjects');
+            OnboardingStepReview::mark($school, 'subjects');
 
             return ['created' => [], 'skipped' => [['label' => 'subjects', 'reason' => 'skipped']]];
         }
 
         if ($normalized === 'confirm_seeded') {
+            OnboardingStepReview::mark($school, 'subjects');
+
             return ['created' => [], 'skipped' => [['label' => 'subjects', 'reason' => 'already present']]];
         }
 
