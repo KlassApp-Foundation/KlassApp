@@ -49,9 +49,7 @@ Teacher Upload sheet. If you prefer xlsx, copy one sheet into its own file first
 
 - **Fee names include the term** ("Tuition Term 1"). Fee categories are unique on school, level, class and name, so the
   same name for one class in two terms keeps only the first one.
-- **UNEB registration numbers** (`U0000/nnn`, a fake centre) are filled only for Primary Seven, which has no streams.
-  Streamed candidate classes (Senior Four A/B, Senior Six PCM…) are left blank because the importer only keeps a
-  UNEB number when the class name is exactly a candidate class.
+- **UNEB registration numbers** (`U0000/nnn`, a fake centre) are filled for Primary Seven. Streamed candidate classes in these files (Senior Four A/B, Senior Six PCM…) are left blank. The importer keeps a supplied number for a candidate class with or without a stream, and still ignores one for any other class.
 - **Parent Name** is in the student file because the template has it, but onboarding currently keeps only the parent
   phone (saved as the student's phone).
 - Emails and EMIS codes are unique across the whole platform. Before running the same school a second time on one
