@@ -45,12 +45,23 @@
                     Set up manually
                 </a>
                 @toshiOnboarding
+                @if(auth()->user()?->school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor(auth()->user()->school))
                 <button type="button"
                         class="ds-btn ds-btn-success ds-btn-md"
                         data-testid="setup-banner-toshi"
                         onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                     Set up with Toshi
                 </button>
+                @else
+                <button type="button"
+                        disabled
+                        class="ds-btn ds-btn-success ds-btn-md"
+                        data-testid="setup-banner-toshi"
+                        aria-disabled="true">
+                    Set up with Toshi
+                    <span data-testid="setup-banner-toshi-soon">Coming soon</span>
+                </button>
+                @endif
                 @endtoshiOnboarding
                 @if(!empty($onboardingMissing))
                     <form method="POST" action="{{ route('dismiss.onboarding.reminder') }}" class="inline" onsubmit="return confirm('Hide the setup banner? Your progress stays available.');">

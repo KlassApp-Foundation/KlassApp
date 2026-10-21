@@ -287,6 +287,8 @@ class SchoolInviteTest extends TestCase
             'status' => 'active',
         ]);
 
+        $school->forceFill(['is_test' => 1])->save();
+
         $this->actingAs($user)
             ->post(route('onboarding.choice.store'), ['path' => 'toshi'])
             ->assertRedirect('/admin/dashboard');

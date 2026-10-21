@@ -38,6 +38,7 @@
 
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
+    $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -98,10 +99,17 @@
                 @endif
                 <a href="{{ $nextHref }}" class="dv2-btn" data-testid="dashboard-v2-setup-continue">Continue setup</a>
                 @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
+                    @if($toshiPathOpen)
                     <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
                             onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                         Set up with Toshi
                     </button>
+                    @else
+                    <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
+                        Set up with Toshi
+                        <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
+                    </button>
+                    @endif
                 @endif
                 <form method="POST" action="{{ $dismissUrl }}" class="inline" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
                     @csrf

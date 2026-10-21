@@ -214,6 +214,8 @@ class ToshiOnboardingDefaultTest extends TestCase
             'toshi_mode' => $mode,
             'curriculum' => null,
         ]);
+        // Toshi onboarding is kept for test schools. This fixture exercises that path.
+        $this->school->forceFill(['is_test' => 1])->save();
 
         $this->admin = User::create([
             'school_id' => $this->school->id,

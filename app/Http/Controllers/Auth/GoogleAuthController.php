@@ -163,6 +163,12 @@ class GoogleAuthController extends Controller
             return redirect('/login');
         }
 
+        $school = Auth::user()->school;
+        $paths = app(\App\Services\Toshi\ToshiOnboardingPath::class);
+        if ($school && ! $paths->openFor($school) && $school->onboarding_finished_at === null) {
+            return $paths->sendToWizard($school);
+        }
+
         return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser(Auth::user()))
             ->with('open_toshi_onboarding', true);
     }

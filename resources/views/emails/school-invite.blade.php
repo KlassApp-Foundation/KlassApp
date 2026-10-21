@@ -9,7 +9,7 @@ Your early-access request has been approved. Use the button below to create the 
 Set up your school
 @endcomponent
 
-After you create the account, you can choose to set up step by step or by chatting with Toshi.
+After you create the account, you'll set the school up step by step.
 
 If you weren't expecting this, you can ignore it.
 
