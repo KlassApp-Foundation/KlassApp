@@ -76,6 +76,7 @@ class StudentsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
+        $this->createListedMissingStreams($school, $year, $todo);
         $this->engine->saveStudents($school, $year, $todo);
     }
 
@@ -113,7 +114,11 @@ class StudentsStep extends AbstractOnboardingStep
                 continue;
             }
 
-            $rows[] = ['label' => $label, 'status' => 'create', 'detail' => null];
+            $rows[] = [
+                'label' => $label,
+                'status' => 'create',
+                'detail' => $this->missingStreamDetail($school, $className, $stream),
+            ];
         }
 
         $createCount = count(array_filter($rows, fn ($row) => $row['status'] === 'create'));
@@ -152,6 +157,7 @@ class StudentsStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
 
+        $this->createListedMissingStreams($school, $year, $todo);
         $result = $this->engine->saveStudents($school, $year, $todo);
 
         $engineSkipped = array_map(
@@ -166,6 +172,41 @@ class StudentsStep extends AbstractOnboardingStep
             'created' => $result['created'] ?? [],
             'skipped' => array_merge($skipped, $engineSkipped),
         ];
+    }
+
+    /**
+     * Streams named in the confirmation list, and only those. A class that is
+     * not already a base class is left for saveStudents to refuse.
+     *
+     * @param  list<array<string, mixed>>  $drafts
+     */
+    private function createListedMissingStreams(School $school, AcademicYear $year, array $drafts): void
+    {
+        $found = $this->engine->collectMissingStreams($school, $year, $drafts);
+        if ($found['pairs'] === []) {
+            return;
+        }
+
+        $this->engine->createMissingStreams($school, $year, $found['pairs']);
+    }
+
+    private function missingStreamDetail(School $school, string $className, string $stream): ?string
+    {
+        if (trim($className) === '' || trim($stream) === '') {
+            return null;
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            return null;
+        }
+
+        $classified = $this->engine->classifyClassAndStream($school, $year, $className, $stream);
+        if ($classified['status'] !== 'missing_stream') {
+            return null;
+        }
+
+        return $classified['reason'];
     }
 
     /**

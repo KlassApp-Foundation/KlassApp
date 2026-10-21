@@ -187,6 +187,21 @@ class ManualOnboardingWizard extends Component
     public array $classTeacherUploadSkips = [];
 
     /**
+     * Parsed class-teacher rows kept so "Create missing streams and retry" can
+     * run the same file again without asking for another upload.
+     *
+     * @var list<array<string, mixed>>
+     */
+    public array $classTeacherUploadRows = [];
+
+    /**
+     * Unique class + stream pairs the last class-teacher file could not place.
+     *
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $classTeacherMissingStreams = [];
+
+    /**
      * Rows from the last teacher file that were not saved.
      *
      * @var list<array{row: int, reason: string}>
@@ -199,6 +214,16 @@ class ManualOnboardingWizard extends Component
      * @var list<array{row: int, reason: string}>
      */
     public array $teacherUploadNotes = [];
+
+    /**
+     * @var list<array<string, mixed>>
+     */
+    public array $teacherUploadRows = [];
+
+    /**
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $teacherMissingStreams = [];
 
     public string $studentName = '';
 
@@ -227,6 +252,23 @@ class ManualOnboardingWizard extends Component
 
     /** @var mixed */
     public $studentUpload = null;
+
+    public string $studentUploadReport = '';
+
+    /**
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $studentUploadSkips = [];
+
+    /**
+     * @var list<array<string, mixed>>
+     */
+    public array $studentUploadRows = [];
+
+    /**
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $studentMissingStreams = [];
 
     public string $termName = '';
 
@@ -491,6 +533,49 @@ class ManualOnboardingWizard extends Component
         $this->ingestClassTeacherUpload();
     }
 
+    /**
+     * Create the streams named in the confirmation list, then run that upload again.
+     * Does nothing for a class that is not already a base class.
+     */
+    public function createMissingStreamsAndRetry(string $upload): void
+    {
+        if (! in_array($upload, ['class_teachers', 'students', 'teachers'], true)) {
+            return;
+        }
+
+        $this->errorMessage = '';
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            $this->errorMessage = 'Create an academic year first.';
+
+            return;
+        }
+
+        $pairs = match ($upload) {
+            'class_teachers' => $this->classTeacherMissingStreams,
+            'students' => $this->studentMissingStreams,
+            'teachers' => $this->teacherMissingStreams,
+            default => [],
+        };
+        $pendingTeacherRows = $upload === 'teachers' ? $this->teacherRowsPendingStreams() : [];
+
+        if ($pairs !== []) {
+            app(OnboardingEngine::class)->createMissingStreams($school, $year, $pairs);
+        }
+
+        if ($upload === 'class_teachers' && $this->classTeacherUploadRows !== []) {
+            $this->importClassTeacherUpload($this->classTeacherUploadRows);
+        } elseif ($upload === 'students') {
+            $this->retryStudentUpload($school);
+        } elseif ($upload === 'teachers' && $pairs !== [] && $pendingTeacherRows !== []) {
+            $this->importTeacherUpload($pendingTeacherRows, false);
+        }
+
+        $this->refreshStructureSnapshot();
+    }
+
     public function addStudentDraft(): void
     {
         $name = trim($this->studentName);
@@ -657,6 +742,7 @@ class ManualOnboardingWizard extends Component
 
             return;
         } else {
+            $this->studentUploadRows = $rows;
             foreach ($rows as $row) {
                 if (trim((string) ($row['name'] ?? '')) === '') {
                     continue;
@@ -678,12 +764,15 @@ class ManualOnboardingWizard extends Component
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
                     'gender' => (string) ($row['gender'] ?? ''),
                     'date_of_birth' => (string) ($row['date_of_birth'] ?? ''),
+                    'row' => (int) ($row['row'] ?? 0),
                 ];
             }
             $this->studentUpload = null;
+            $this->refreshStudentMissingStreams();
         }
 
-        $this->errorMessage = $this->unreadablePhonesMessage($unreadable);
+        $phoneMessage = $this->unreadablePhonesMessage($unreadable);
+        $this->errorMessage = $phoneMessage;
     }
 
     /**
@@ -1741,7 +1830,7 @@ class ManualOnboardingWizard extends Component
         }
 
         try {
-            $result = app(ClassStructureService::class)->addStream($school, $year, $section, $label);
+            $result = app(OnboardingEngine::class)->addClassStream($school, $year, $section, $label);
             $this->structureStreamDrafts[$key] = '';
             $this->structureFlash = $result['created']
                 ? 'Added stream “'.$label.'” to '.$section->name.'.'
@@ -2204,8 +2293,12 @@ class ManualOnboardingWizard extends Component
      *
      * @param  list<array<string, mixed>>  $rows
      */
-    private function importTeacherUpload(array $rows): void
+    private function importTeacherUpload(array $rows, bool $storeRows = true): void
     {
+        if ($storeRows) {
+            $this->teacherUploadRows = $rows;
+        }
+        $this->teacherMissingStreams = [];
         $added = 0;
         $skipped = [];
         $notes = [];
@@ -2272,6 +2365,38 @@ class ManualOnboardingWizard extends Component
             if ($classes === []) {
                 $classes = $this->splitCsvList((string) ($row['class'] ?? ''));
             }
+
+            if ($year && (int) $year->school_id === (int) $school->id) {
+                $streamHits = app(OnboardingEngine::class)->collectMissingStreams(
+                    $school,
+                    $year,
+                    $this->teacherStreamRows($school, $year, $row, $line, $classes),
+                );
+                if ($streamHits['pairs'] !== []) {
+                    foreach ($streamHits['skips'] as $skip) {
+                        $skipped[] = ['row' => $line, 'reason' => $skip['reason']];
+                    }
+                    foreach ($streamHits['pairs'] as $pair) {
+                        $this->rememberMissingStream($this->teacherMissingStreams, $pair);
+                    }
+
+                    continue;
+                }
+            }
+
+            $rowStream = trim((string) ($row['stream'] ?? ''));
+            if ($year && $rowStream !== '') {
+                $classes = array_map(function (string $className) use ($school, $year, $rowStream) {
+                    $classified = app(OnboardingEngine::class)->classifyClassAndStream($school, $year, $className, $rowStream);
+                    $sectionName = trim((string) ($classified['link']?->section?->name ?? ''));
+                    if ($classified['status'] === 'resolved' && $sectionName !== '') {
+                        return $sectionName;
+                    }
+
+                    return OnboardingEngine::composeClassAndStream($className, $rowStream);
+                }, $classes);
+            }
+
             $draft = [
                 'name' => $name,
                 'email' => $email,
@@ -2466,6 +2591,8 @@ class ManualOnboardingWizard extends Component
      */
     private function importClassTeacherUpload(array $rows): void
     {
+        $this->classTeacherUploadRows = $rows;
+        $this->classTeacherMissingStreams = [];
         $added = 0;
         $skipped = [];
         $created = 0;
@@ -2510,6 +2637,9 @@ class ManualOnboardingWizard extends Component
             );
             if (! $resolved['link'] instanceof StandardLink) {
                 $skipped[] = ['row' => $line, 'reason' => $resolved['reason']];
+                if (is_array($resolved['missing'] ?? null)) {
+                    $this->rememberMissingStream($this->classTeacherMissingStreams, $resolved['missing']);
+                }
 
                 continue;
             }
@@ -2542,7 +2672,7 @@ class ManualOnboardingWizard extends Component
     }
 
     /**
-     * @return array{link: ?StandardLink, reason: string}
+     * @return array{link: ?StandardLink, reason: string, missing?: array{class: string, stream: string}}
      */
     private function resolveClassTeacherLink(School $school, AcademicYear $year, string $className, string $stream): array
     {
@@ -2561,13 +2691,31 @@ class ManualOnboardingWizard extends Component
         }
 
         if ($stream !== '') {
-            $streamLink = $engine->resolveStandardLinkForClass($school, $year, $className, $stream);
+            $classified = $engine->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] === 'missing_stream') {
+                return [
+                    'link' => null,
+                    'reason' => $classified['reason'],
+                    'missing' => [
+                        'class' => $classified['class'],
+                        'stream' => $classified['stream'],
+                    ],
+                ];
+            }
+            $streamLink = $classified['link'];
             if (! $streamLink instanceof StandardLink || ! $this->classTeacherLinkIsAssignable($school, $streamLink)) {
-                return ['link' => null, 'reason' => 'unknown stream'];
+                return ['link' => null, 'reason' => $classified['reason'] !== '' ? $classified['reason'] : 'unknown stream'];
             }
             $belongs = $links->contains(fn (StandardLink $link) => (int) $link->id === (int) $streamLink->id);
             if (! $belongs) {
-                return ['link' => null, 'reason' => 'unknown stream'];
+                return [
+                    'link' => null,
+                    'reason' => OnboardingEngine::missingStreamMessage($classified['class'] !== '' ? $classified['class'] : $className, $classified['stream'] !== '' ? $classified['stream'] : $stream),
+                    'missing' => [
+                        'class' => $classified['class'] !== '' ? $classified['class'] : $className,
+                        'stream' => $classified['stream'] !== '' ? $classified['stream'] : $stream,
+                    ],
+                ];
             }
 
             return ['link' => $streamLink, 'reason' => ''];
@@ -2726,6 +2874,118 @@ class ManualOnboardingWizard extends Component
         $section->save();
 
         return true;
+    }
+
+    /**
+     * @param  array{class?: string, stream?: string}  $pair
+     * @param  list<array{class: string, stream: string}>  $pairs
+     */
+    private function rememberMissingStream(array &$pairs, array $pair): void
+    {
+        $class = trim((string) ($pair['class'] ?? ''));
+        $stream = trim((string) ($pair['stream'] ?? ''));
+        if ($class === '' || $stream === '') {
+            return;
+        }
+        foreach ($pairs as $existing) {
+            if (strcasecmp((string) $existing['class'], $class) === 0
+                && strcasecmp((string) $existing['stream'], $stream) === 0) {
+                return;
+            }
+        }
+        $pairs[] = ['class' => $class, 'stream' => $stream];
+    }
+
+    /**
+     * @param  list<string>  $classes
+     * @return list<array{row: int, class: string, stream: string}>
+     */
+    private function teacherStreamRows(School $school, AcademicYear $year, array $row, int $line, array $classes): array
+    {
+        $engine = app(OnboardingEngine::class);
+        $stream = trim((string) ($row['stream'] ?? ''));
+        $out = [];
+        foreach ($classes as $className) {
+            $className = trim((string) $className);
+            if ($className === '') {
+                continue;
+            }
+            if ($stream !== '') {
+                $out[] = ['row' => $line, 'class' => $className, 'stream' => $stream];
+
+                continue;
+            }
+            $split = $engine->splitStreamedClassToken($school, $year, $className);
+            if ($split['stream'] !== '') {
+                $out[] = ['row' => $line, 'class' => $split['class'], 'stream' => $split['stream']];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function teacherRowsPendingStreams(): array
+    {
+        $wanted = [];
+        foreach ($this->teacherUploadSkips as $skip) {
+            if (! str_contains((string) ($skip['reason'] ?? ''), "doesn't exist yet")) {
+                continue;
+            }
+            $wanted[(int) ($skip['row'] ?? 0)] = true;
+        }
+
+        return array_values(array_filter(
+            $this->teacherUploadRows,
+            fn (array $row): bool => isset($wanted[(int) ($row['row'] ?? 0)])
+        ));
+    }
+
+    private function refreshStudentMissingStreams(): void
+    {
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            return;
+        }
+
+        $found = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $this->studentDrafts);
+        $this->studentMissingStreams = $found['pairs'];
+        $this->studentUploadSkips = $found['skips'];
+        if ($found['skips'] !== []) {
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($found['skips']));
+        }
+    }
+
+    private function retryStudentUpload(School $school): void
+    {
+        if ($this->studentDrafts === []) {
+            return;
+        }
+
+        $before = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->count();
+        $this->saveStudents($school);
+        $added = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->count() - $before;
+        $this->studentMissingStreams = [];
+        $this->studentUploadSkips = [];
+        $this->studentUploadReport = $this->formatStudentUploadReport($added, 0);
+    }
+
+    private function formatStudentUploadReport(int $added, int $skipped): string
+    {
+        $addedText = $added === 1 ? '1 student added' : $added.' students added';
+        $skippedText = $skipped === 1 ? '1 skipped' : $skipped.' skipped';
+
+        return $addedText.', '.$skippedText;
     }
 
     private function formatClassTeacherUploadReport(int $added, int $skipped): string
@@ -3288,10 +3548,22 @@ class ManualOnboardingWizard extends Component
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
                 'gender' => trim((string) ($draft['gender'] ?? '')),
                 'date_of_birth' => trim((string) ($draft['date_of_birth'] ?? '')),
+                'row' => (int) ($draft['row'] ?? 0),
             ];
         }, $this->studentDrafts);
 
+        $missing = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $drafts);
+        if ($missing['pairs'] !== []) {
+            $this->studentMissingStreams = $missing['pairs'];
+            $this->studentUploadSkips = $missing['skips'];
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($missing['skips']));
+            $reason = (string) ($missing['skips'][0]['reason'] ?? "A stream doesn't exist yet.");
+            throw ValidationException::withMessages(['studentName' => $reason]);
+        }
+
         app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
+        $this->studentMissingStreams = [];
+        $this->studentUploadSkips = [];
 
         $overLimit = ToshiActionService::enforcePlanLimit($school->id, 'students');
         $this->overLimitNotice = $overLimit['success'] ? null : $overLimit['message'];

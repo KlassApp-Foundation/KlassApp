@@ -672,12 +672,7 @@ class OnboardingEngine
         }
 
         try {
-            $result = app(ClassStructureService::class)->addStream(
-                $school,
-                $year,
-                $baseLink->section,
-                $stream
-            );
+            $result = $this->addClassStream($school, $year, $baseLink->section, $stream);
         } catch (ValidationException $e) {
             return null;
         }
@@ -687,6 +682,403 @@ class OnboardingEngine
         }
 
         return $this->resolveStandardLinkForClass($school, $year, $className, $stream);
+    }
+
+    /**
+     * Add one stream the same way the Classes step does: same validation,
+     * same "{Class} {Label}" section, same subject copy.
+     *
+     * @return array{section: Section, standard_link: StandardLink, created: bool}
+     *
+     * @throws ValidationException
+     */
+    public function addClassStream(
+        School $school,
+        AcademicYear $year,
+        Section $baseSection,
+        string $streamLabel
+    ): array {
+        return app(ClassStructureService::class)->addStream($school, $year, $baseSection, $streamLabel);
+    }
+
+    /**
+     * Plain-words reason for a stream the Classes step has not created yet.
+     */
+    public static function missingStreamMessage(string $className, string $stream): string
+    {
+        $className = trim($className);
+        $stream = trim($stream);
+
+        return $className.", stream {$stream} doesn't exist yet. Create it in Classes, or use Create missing streams and retry.";
+    }
+
+    /**
+     * Collapse spacing so "Primary  One" and "Primary One" are the same token.
+     */
+    public static function collapseWhitespace(string $value): string
+    {
+        $value = trim($value);
+        $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+
+        return trim($value);
+    }
+
+    /**
+     * Stream cell "A", "P1 A", or "Primary One A" all mean the label "A"
+     * when the class is Primary One (any alias, any case or spacing).
+     */
+    public function normalizeStreamLabel(string $className, string $stream): string
+    {
+        $stream = self::collapseWhitespace($stream);
+        if ($stream === '') {
+            return '';
+        }
+
+        $best = null;
+        foreach (self::classNameCandidates($className) as $alias) {
+            $alias = self::collapseWhitespace($alias);
+            if ($alias === '') {
+                continue;
+            }
+            if (strcasecmp($stream, $alias) === 0) {
+                return '';
+            }
+            $prefix = strtolower($alias).' ';
+            if (! str_starts_with(strtolower($stream), $prefix)) {
+                continue;
+            }
+            $label = trim(mb_substr($stream, mb_strlen($alias)));
+            if ($label === '') {
+                continue;
+            }
+            if ($best === null || mb_strlen($alias) > mb_strlen($best['alias'])) {
+                $best = ['alias' => $alias, 'label' => $label];
+            }
+        }
+
+        return $best['label'] ?? $stream;
+    }
+
+    /**
+     * When a class cell is "Primary One A" (or "P1 A") and that stream section
+     * is not its own base class, split it into the real base plus the label.
+     * A token that is not a stream of an existing base class is returned unchanged.
+     *
+     * @return array{class: string, stream: string}
+     */
+    public function splitStreamedClassToken(School $school, AcademicYear $year, string $token): array
+    {
+        $token = self::collapseWhitespace($token);
+        if ($token === '') {
+            return ['class' => '', 'stream' => ''];
+        }
+
+        $best = null;
+        foreach ($this->baseSectionsForYear($school, $year) as $base) {
+            $baseName = trim((string) $base->name);
+            foreach (self::classNameCandidates($baseName) as $alias) {
+                $alias = self::collapseWhitespace($alias);
+                if ($alias === '') {
+                    continue;
+                }
+                $prefix = strtolower($alias).' ';
+                if (! str_starts_with(strtolower($token), $prefix)) {
+                    continue;
+                }
+                $label = trim(mb_substr($token, mb_strlen($alias)));
+                if ($label === '') {
+                    continue;
+                }
+                if ($best === null || mb_strlen($alias) > mb_strlen($best['alias'])) {
+                    $best = ['class' => $baseName, 'stream' => $label, 'alias' => $alias];
+                }
+            }
+        }
+
+        if ($best !== null) {
+            return ['class' => $best['class'], 'stream' => $best['stream']];
+        }
+
+        return ['class' => $token, 'stream' => ''];
+    }
+
+    /**
+     * Decide whether a class + stream already exists, is a stream that can be
+     * created on an existing base class, or names a class this school does not have.
+     *
+     * Matching is case- and spacing-insensitive. "A", "P1 A", and "Primary One A"
+     * are the same stream of Primary One. A missing stream is not an unknown class.
+     *
+     * @return array{status: string, link: ?StandardLink, class: string, stream: string, reason: string}
+     */
+    public function classifyClassAndStream(
+        School $school,
+        AcademicYear $year,
+        string $className,
+        string $stream
+    ): array {
+        $className = self::collapseWhitespace($className);
+        $stream = self::collapseWhitespace($stream);
+        if ($className === '') {
+            return [
+                'status' => 'unknown_class',
+                'link' => null,
+                'class' => '',
+                'stream' => $stream,
+                'reason' => 'unknown class',
+            ];
+        }
+
+        $label = $stream === '' ? '' : $this->normalizeStreamLabel($className, $stream);
+        $base = $this->baseSectionFromName($school, $year, $className);
+        $classLabel = $base ? trim((string) $base->name) : $className;
+
+        if ($label === '') {
+            if (! $base) {
+                return [
+                    'status' => 'unknown_class',
+                    'link' => null,
+                    'class' => $className,
+                    'stream' => '',
+                    'reason' => 'unknown class',
+                ];
+            }
+
+            $link = StandardLink::with(['standard', 'section'])
+                ->where('school_id', $school->id)
+                ->where('academic_year_id', $year->id)
+                ->where('section_id', $base->id)
+                ->first();
+
+            if (! $link) {
+                return [
+                    'status' => 'unknown_class',
+                    'link' => null,
+                    'class' => $classLabel,
+                    'stream' => '',
+                    'reason' => 'unknown class',
+                ];
+            }
+
+            return [
+                'status' => 'resolved',
+                'link' => $link,
+                'class' => $classLabel,
+                'stream' => '',
+                'reason' => '',
+            ];
+        }
+
+        $link = $this->resolveStandardLinkForClass($school, $year, $classLabel, $label);
+        if ($link && $this->streamLinkBelongsToBase($link, $base)) {
+            return [
+                'status' => 'resolved',
+                'link' => $link,
+                'class' => $classLabel,
+                'stream' => $label,
+                'reason' => '',
+            ];
+        }
+
+        if ($base) {
+            return [
+                'status' => 'missing_stream',
+                'link' => null,
+                'class' => $classLabel,
+                'stream' => $label,
+                'reason' => self::missingStreamMessage($classLabel, $label),
+            ];
+        }
+
+        return [
+            'status' => 'unknown_class',
+            'link' => null,
+            'class' => $className,
+            'stream' => $label,
+            'reason' => 'unknown class',
+        ];
+    }
+
+    /**
+     * Unique missing class+stream pairs in upload rows, plus one skip per row.
+     *
+     * A blank stream is not missing. A class that is not a base class is not
+     * listed here — callers must not invent that class.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{pairs: list<array{class: string, stream: string}>, skips: list<array{row: int, reason: string, class: string, stream: string}>}
+     */
+    public function collectMissingStreams(School $school, AcademicYear $year, array $rows): array
+    {
+        $pairs = [];
+        $skips = [];
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $className = self::collapseWhitespace((string) ($row['class'] ?? ''));
+            $stream = self::collapseWhitespace((string) ($row['stream'] ?? ''));
+            $line = (int) ($row['row'] ?? ($index + 2));
+
+            if ($className !== '' && $stream === '') {
+                $split = $this->splitStreamedClassToken($school, $year, $className);
+                if ($split['stream'] === '') {
+                    continue;
+                }
+                $className = $split['class'];
+                $stream = $split['stream'];
+            }
+
+            if ($className === '' || $stream === '') {
+                continue;
+            }
+
+            $classified = $this->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] !== 'missing_stream') {
+                continue;
+            }
+
+            $skips[] = [
+                'row' => $line,
+                'reason' => $classified['reason'],
+                'class' => $classified['class'],
+                'stream' => $classified['stream'],
+            ];
+            $key = strtolower($classified['class']."\0".$classified['stream']);
+            if (! isset($seen[$key])) {
+                $seen[$key] = true;
+                $pairs[] = [
+                    'class' => $classified['class'],
+                    'stream' => $classified['stream'],
+                ];
+            }
+        }
+
+        return ['pairs' => $pairs, 'skips' => $skips];
+    }
+
+    /**
+     * Create exactly the listed streams on base classes that already exist.
+     *
+     * Uses addClassStream (the Classes step). A second call does not add
+     * another section. A class that is not already a base class is refused
+     * and no section is created for it.
+     *
+     * @param  list<array{class?: string, stream?: string}>  $pairs
+     * @return array{created: list<array{class: string, stream: string, section: string}>, existing: list<array{class: string, stream: string}>, refused: list<array{class: string, stream: string, reason: string}>}
+     */
+    public function createMissingStreams(School $school, AcademicYear $year, array $pairs): array
+    {
+        $created = [];
+        $existing = [];
+        $refused = [];
+        $seen = [];
+
+        foreach ($pairs as $pair) {
+            $className = self::collapseWhitespace((string) ($pair['class'] ?? ''));
+            $stream = self::collapseWhitespace((string) ($pair['stream'] ?? ''));
+            if ($className === '' || $stream === '') {
+                continue;
+            }
+            $key = strtolower($className."\0".$stream);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $classified = $this->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] === 'resolved') {
+                $existing[] = [
+                    'class' => $classified['class'],
+                    'stream' => $classified['stream'],
+                ];
+
+                continue;
+            }
+            if ($classified['status'] !== 'missing_stream') {
+                $refused[] = [
+                    'class' => $className,
+                    'stream' => $stream,
+                    'reason' => 'unknown class',
+                ];
+
+                continue;
+            }
+
+            $base = $this->baseSectionFromName($school, $year, $classified['class']);
+            if (! $base || (int) $base->school_id !== (int) $school->id) {
+                $refused[] = [
+                    'class' => $className,
+                    'stream' => $stream,
+                    'reason' => 'unknown class',
+                ];
+
+                continue;
+            }
+
+            $result = $this->addClassStream($school, $year, $base, $classified['stream']);
+            $record = [
+                'class' => trim((string) $base->name),
+                'stream' => $classified['stream'],
+                'section' => trim((string) $result['section']->name),
+            ];
+            if ($result['created']) {
+                $created[] = $record;
+            } else {
+                $existing[] = [
+                    'class' => $record['class'],
+                    'stream' => $record['stream'],
+                ];
+            }
+        }
+
+        return [
+            'created' => $created,
+            'existing' => $existing,
+            'refused' => $refused,
+        ];
+    }
+
+    /**
+     * @return list<Section>
+     */
+    private function baseSectionsForYear(School $school, AcademicYear $year): array
+    {
+        $structure = app(ClassStructureService::class);
+        $sections = [];
+        $links = StandardLink::with('section')
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        foreach ($links as $link) {
+            $section = $link->section;
+            if (! $section || (int) $section->school_id !== (int) $school->id) {
+                continue;
+            }
+            if (! $structure->isBaseSection($section)) {
+                continue;
+            }
+            $sections[(int) $section->id] = $section;
+        }
+
+        return array_values($sections);
+    }
+
+    private function streamLinkBelongsToBase(?StandardLink $link, ?Section $base): bool
+    {
+        if (! $link || ! $base || ! $link->section) {
+            return false;
+        }
+        if ((int) $link->section->school_id !== (int) $base->school_id) {
+            return false;
+        }
+        if ((int) $link->section_id === (int) $base->id) {
+            return true;
+        }
+
+        $prefix = strtolower(trim((string) $base->name)).' ';
+
+        return $prefix !== ' ' && str_starts_with(strtolower(trim((string) $link->section->name)), $prefix);
     }
 
     /**
@@ -892,13 +1284,12 @@ class OnboardingEngine
             ]));
 
             if (is_array($streams) && count($streams) > 0) {
-                $structure = app(ClassStructureService::class);
                 foreach ($streams as $stream) {
                     $streamName = trim((string) $stream);
                     if ($streamName === '') {
                         continue;
                     }
-                    $result = $structure->addStream($school, $year, $baseSection, $streamName);
+                    $result = $this->addClassStream($school, $year, $baseSection, $streamName);
                     if ($subGroup !== null && $subGroup !== '') {
                         $link = $result['standard_link'];
                         if ($link->sub_group !== $subGroup) {
