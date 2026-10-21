@@ -1,0 +1,25 @@
+Fee name,Amount (UGX),Applies to,Class,Term
+Tuition Term 1,650000,One class,Senior One,Term 1
+Tuition Term 2,650000,One class,Senior One,Term 2
+Tuition Term 3,650000,One class,Senior One,Term 3
+Tuition Term 1,650000,One class,Senior Two,Term 1
+Tuition Term 2,650000,One class,Senior Two,Term 2
+Tuition Term 3,650000,One class,Senior Two,Term 3
+Tuition Term 1,700000,One class,Senior Three,Term 1
+Tuition Term 2,700000,One class,Senior Three,Term 2
+Tuition Term 3,700000,One class,Senior Three,Term 3
+Tuition Term 1,750000,One class,Senior Four,Term 1
+Tuition Term 2,750000,One class,Senior Four,Term 2
+Tuition Term 3,750000,One class,Senior Four,Term 3
+Tuition Term 1,800000,One class,Senior Five,Term 1
+Tuition Term 2,800000,One class,Senior Five,Term 2
+Tuition Term 3,800000,One class,Senior Five,Term 3
+Tuition Term 1,850000,One class,Senior Six,Term 1
+Tuition Term 2,850000,One class,Senior Six,Term 2
+Tuition Term 3,850000,One class,Senior Six,Term 3
+Laboratory Term 1,60000,Whole school,,Term 1
+Laboratory Term 2,60000,Whole school,,Term 2
+Laboratory Term 3,60000,Whole school,,Term 3
+Development Fund,100000,Whole school,,Yearly
+UCE Registration,165000,One class,Senior Four,Yearly
+UACE Registration,190000,One class,Senior Six,Yearly
