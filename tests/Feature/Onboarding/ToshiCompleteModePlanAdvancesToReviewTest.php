@@ -17,6 +17,7 @@ use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -109,7 +110,7 @@ class ToshiCompleteModePlanAdvancesToReviewTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_plan_selection_reaches_review_and_commits_draft_data(): void
     {
         $this->actingAs($this->admin);

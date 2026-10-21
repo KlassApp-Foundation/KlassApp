@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiOnboardingTest extends TestCase
@@ -48,7 +49,7 @@ class ToshiOnboardingTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function super_admin_can_mount_toshi_in_create_mode(): void
     {
         $this->actingAs($this->admin);
@@ -59,7 +60,7 @@ class ToshiOnboardingTest extends TestCase
         $this->assertIsInt($component->get('step'));
     }
 
-    /** @test */
+    #[Test]
     public function curriculum_defaults_returns_primary_classes(): void
     {
         $this->actingAs($this->admin);
@@ -80,7 +81,7 @@ class ToshiOnboardingTest extends TestCase
         $this->assertNotEmpty($standards, 'Primary school should have default classes');
     }
 
-    /** @test */
+    #[Test]
     public function edit_navigation_from_review_goes_to_correct_step(): void
     {
         $this->actingAs($this->admin);
@@ -167,7 +168,7 @@ class ToshiOnboardingTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function normalize_uganda_phone_validates_correctly(): void
     {
         $this->actingAs($this->admin);
@@ -203,7 +204,7 @@ class ToshiOnboardingTest extends TestCase
         $this->assertNotNull($component->get('step'), 'Component should survive valid phone');
     }
 
-    /** @test */
+    #[Test]
     public function onboarding_approve_allows_commit_over_existing_student(): void
     {
         $this->actingAs($this->admin);
@@ -272,7 +273,7 @@ class ToshiOnboardingTest extends TestCase
         $this->assertEquals($schoolId, $component->get('schoolId'));
     }
 
-    /** @test */
+    #[Test]
     public function onboarding_enforces_plan_limit_for_students(): void
     {
         $this->actingAs($this->admin);
@@ -403,7 +404,7 @@ class ToshiOnboardingTest extends TestCase
         $this->assertStringContainsString('upgrade', strtolower($added['message']));
     }
 
-    /** @test */
+    #[Test]
     public function freemium_onboarding_completes_successfully(): void
     {
         $this->actingAs($this->admin);

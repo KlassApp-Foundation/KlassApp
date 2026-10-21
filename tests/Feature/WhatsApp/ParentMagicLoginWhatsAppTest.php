@@ -12,6 +12,7 @@ use App\Services\WhatsAppBusinessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -78,7 +79,7 @@ class ParentMagicLoginWhatsAppTest extends TestCase
         $this->app->instance(WhatsAppBusinessService::class, $this->whatsApp);
     }
 
-    /** @test */
+    #[Test]
     public function web_login_keyword_sends_signed_magic_link_without_url_preview(): void
     {
         $captured = null;
@@ -101,7 +102,7 @@ class ParentMagicLoginWhatsAppTest extends TestCase
         $this->assertNotNull($captured);
     }
 
-    /** @test */
+    #[Test]
     public function dashboard_keyword_also_sends_magic_link(): void
     {
         $this->whatsApp->shouldReceive('sendText')
@@ -112,7 +113,7 @@ class ParentMagicLoginWhatsAppTest extends TestCase
         $this->invokeRouteInbound('DASHBOARD');
     }
 
-    /** @test */
+    #[Test]
     public function web_login_without_linked_children_is_denied(): void
     {
         StudentParentLink::query()->delete();

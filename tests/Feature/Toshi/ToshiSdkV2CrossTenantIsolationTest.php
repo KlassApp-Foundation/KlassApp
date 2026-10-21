@@ -7,6 +7,7 @@ use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListTeachersTool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiSdkV2CrossTenantIsolationTest extends TestCase
@@ -82,7 +83,7 @@ class ToshiSdkV2CrossTenantIsolationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function student_count_is_scoped_to_school()
     {
         $this->actingAs($this->adminA);
@@ -97,7 +98,7 @@ class ToshiSdkV2CrossTenantIsolationTest extends TestCase
             'Admin B should also see 1 student (not 2 — would indicate leak)');
     }
 
-    /** @test */
+    #[Test]
     public function list_teachers_returns_only_own_school()
     {
         $this->actingAs($this->adminA);

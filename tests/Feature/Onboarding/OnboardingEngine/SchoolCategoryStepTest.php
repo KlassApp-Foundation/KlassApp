@@ -9,6 +9,8 @@ use App\Services\OnboardingEngine;
 use App\Services\SchoolCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SchoolCategoryStepTest extends TestCase
@@ -39,10 +41,8 @@ class SchoolCategoryStepTest extends TestCase
         return $school;
     }
 
-    /**
-     * @test
-     * @dataProvider validCategoryProvider
-     */
+    #[Test]
+    #[DataProvider('validCategoryProvider')]
     public function it_persists_valid_category_and_seeds_defaults(string $category, int $expectedLinks): void
     {
         $school = $this->freshSchoolWithYear();
@@ -65,7 +65,7 @@ class SchoolCategoryStepTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_unknown_category(): void
     {
         $school = $this->freshSchoolWithYear();
@@ -75,7 +75,7 @@ class SchoolCategoryStepTest extends TestCase
         app(OnboardingEngine::class)->saveSchoolCategory($school, 'hogwarts');
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_empty_category(): void
     {
         $school = $this->freshSchoolWithYear();
@@ -85,7 +85,7 @@ class SchoolCategoryStepTest extends TestCase
         app(OnboardingEngine::class)->saveSchoolCategory($school, '  ');
     }
 
-    /** @test */
+    #[Test]
     public function it_is_idempotent_across_repeated_calls(): void
     {
         $school = $this->freshSchoolWithYear();

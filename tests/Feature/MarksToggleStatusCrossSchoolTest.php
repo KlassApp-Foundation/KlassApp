@@ -11,6 +11,7 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MarksToggleStatusCrossSchoolTest extends TestCase
@@ -103,7 +104,7 @@ class MarksToggleStatusCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function teacher_cannot_toggle_status_of_another_schools_exam()
     {
         $response = $this->actingAs($this->teacherA)
@@ -118,7 +119,7 @@ class MarksToggleStatusCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function same_school_teacher_cannot_toggle_another_teachers_exam()
     {
         // Create a second teacher in School B who is NOT the exam owner.

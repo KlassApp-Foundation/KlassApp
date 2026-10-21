@@ -3,6 +3,7 @@
 namespace Tests\Feature\Toshi;
 
 use App\Services\ToshiPlanService;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiPlanTest extends TestCase
@@ -15,7 +16,7 @@ class ToshiPlanTest extends TestCase
         $this->service = new ToshiPlanService;
     }
 
-    /** @test */
+    #[Test]
     public function single_item_query_returns_null()
     {
         $plan = $this->service->generatePlan('add student John');
@@ -23,7 +24,7 @@ class ToshiPlanTest extends TestCase
         $this->assertNull($plan, 'Single item should not trigger a plan');
     }
 
-    /** @test */
+    #[Test]
     public function add_students_comma_separated_returns_plan()
     {
         $plan = $this->service->generatePlan('add students John, Grace, Peter');
@@ -36,7 +37,7 @@ class ToshiPlanTest extends TestCase
         $this->assertEquals('Peter', $plan['steps'][2]['args']['name']);
     }
 
-    /** @test */
+    #[Test]
     public function add_students_and_separated_returns_plan()
     {
         $plan = $this->service->generatePlan('add students Alice and Bob and Charlie');
@@ -46,7 +47,7 @@ class ToshiPlanTest extends TestCase
         $this->assertEquals('toolAddStudent', $plan['tool']);
     }
 
-    /** @test */
+    #[Test]
     public function add_students_with_class_includes_shared_arg()
     {
         $plan = $this->service->generatePlan('add students Grace and Peter in Primary 4');
@@ -59,7 +60,7 @@ class ToshiPlanTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function record_attendance_batch_returns_plan()
     {
         $plan = $this->service->generatePlan('record attendance for Alice, Bob, Charlie');
@@ -70,7 +71,7 @@ class ToshiPlanTest extends TestCase
         $this->assertEquals('Alice', $plan['steps'][0]['args']['student']);
     }
 
-    /** @test */
+    #[Test]
     public function record_attendance_with_date_and_status()
     {
         $plan = $this->service->generatePlan('record attendance for Alice, Bob on 2026-07-15 as present');
@@ -81,7 +82,7 @@ class ToshiPlanTest extends TestCase
         $this->assertEquals('present', $plan['steps'][0]['args']['status']);
     }
 
-    /** @test */
+    #[Test]
     public function create_subjects_batch_returns_plan()
     {
         $plan = $this->service->generatePlan('create subjects Math, English, Science');
@@ -92,7 +93,7 @@ class ToshiPlanTest extends TestCase
         $this->assertEquals('Math', $plan['steps'][0]['args']['name']);
     }
 
-    /** @test */
+    #[Test]
     public function single_subject_does_not_trigger_plan()
     {
         $plan = $this->service->generatePlan('create subject Mathematics');
@@ -100,7 +101,7 @@ class ToshiPlanTest extends TestCase
         $this->assertNull($plan);
     }
 
-    /** @test */
+    #[Test]
     public function short_irrelevant_query_returns_null()
     {
         $plan = $this->service->generatePlan('hello');
@@ -108,7 +109,7 @@ class ToshiPlanTest extends TestCase
         $this->assertNull($plan);
     }
 
-    /** @test */
+    #[Test]
     public function empty_query_returns_null()
     {
         $plan = $this->service->generatePlan('');

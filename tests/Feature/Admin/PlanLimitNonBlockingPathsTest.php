@@ -11,6 +11,7 @@ use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -100,7 +101,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function student_create_form_never_hard_blocks_at_limit(): void
     {
         User::factory()->create([
@@ -121,7 +122,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
-    /** @test */
+    #[Test]
     public function parent_create_has_no_plan_upgrade_gate(): void
     {
         $student = User::factory()->create([
@@ -139,7 +140,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $response->assertSee('create-parent', false);
     }
 
-    /** @test */
+    #[Test]
     public function marks_attendance_fees_timetable_controllers_have_no_plan_limit_gate(): void
     {
         // Static contract: these domains must not grow hard plan-limit blocks.
@@ -182,7 +183,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function admission_trait_has_no_plan_limit_block_or_truncate(): void
     {
         $contents = file_get_contents(app_path('Traits/AdmissionUser.php'));
@@ -191,7 +192,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $this->assertStringNotContainsString('array_slice', $contents);
     }
 
-    /** @test */
+    #[Test]
     public function onboarding_engine_save_students_has_no_plan_truncate(): void
     {
         $contents = file_get_contents(app_path('Services/OnboardingEngine.php'));
@@ -204,7 +205,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function plan_limit_notice_helper_returns_message_only_when_over(): void
     {
         $this->assertNull(ToshiActionService::planLimitNotice($this->schoolId, 'students'));
@@ -220,7 +221,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $this->assertStringContainsString('upgrade', strtolower($notice));
     }
 
-    /** @test */
+    #[Test]
     public function teacher_import_does_not_hard_fail_on_stale_session_count(): void
     {
         $contents = file_get_contents(app_path('Http/Controllers/Admin/TeacherImportExportController.php'));
@@ -232,7 +233,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $this->assertStringContainsString('overlimit', $contents);
     }
 
-    /** @test */
+    #[Test]
     public function admission_approve_and_teacher_link_import_flash_overlimit_after_save(): void
     {
         $admission = file_get_contents(app_path('Http/Controllers/Admin/AdmissionController.php'));

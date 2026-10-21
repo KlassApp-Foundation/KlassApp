@@ -11,6 +11,7 @@ use App\Models\Userprofile;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TeacherInviteLinkSecurityTest extends TestCase
@@ -77,7 +78,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function valid_token_shows_password_set_form()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -96,7 +97,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response->assertSee('P.1');
     }
 
-    /** @test */
+    #[Test]
     public function invite_pages_render_on_the_auth_shell()
     {
         ['token' => $token] = TeacherInviteLinkService::issue(
@@ -121,7 +122,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
             ->assertDontSee('auth-shell', false);
     }
 
-    /** @test */
+    #[Test]
     public function invalid_token_shows_error_page()
     {
         $response = $this->get(route('teacher.invite.form', Str::random(64)));
@@ -130,7 +131,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response->assertSee("This invite link doesn't work", false);
     }
 
-    /** @test */
+    #[Test]
     public function expired_token_shows_error_page()
     {
         $token = Str::random(64);
@@ -150,7 +151,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response->assertSee('This invite has expired');
     }
 
-    /** @test */
+    #[Test]
     public function claimed_token_shows_error_page()
     {
         $token = Str::random(64);
@@ -172,7 +173,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $response->assertSee('This invite has already been used');
     }
 
-    /** @test */
+    #[Test]
     public function valid_token_claim_creates_user_with_chosen_password()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -228,7 +229,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertEquals($teacher->id, $invite->user_id);
     }
 
-    /** @test */
+    #[Test]
     public function expired_token_cannot_be_claimed()
     {
         $token = Str::random(64);
@@ -254,7 +255,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'old@invite.test']);
     }
 
-    /** @test */
+    #[Test]
     public function already_claimed_token_cannot_be_reused()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -282,7 +283,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertEquals(1, User::where('email', 'first@invite.test')->count());
     }
 
-    /** @test */
+    #[Test]
     public function password_must_be_at_least_8_characters()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -300,7 +301,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'short@invite.test']);
     }
 
-    /** @test */
+    #[Test]
     public function password_must_contain_uppercase_lowercase_and_digit()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -330,7 +331,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'weak@invite.test']);
     }
 
-    /** @test */
+    #[Test]
     public function password_confirmation_must_match()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -348,7 +349,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'mismatch@invite.test']);
     }
 
-    /** @test */
+    #[Test]
     public function crafted_token_is_rejected()
     {
         $crafterToken = Str::random(64);
@@ -364,7 +365,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
             ->assertSessionHas('error', 'This invite link is invalid.');
     }
 
-    /** @test */
+    #[Test]
     public function token_hash_is_never_plain_text()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(
@@ -377,7 +378,7 @@ class TeacherInviteLinkSecurityTest extends TestCase
         $this->assertEquals(64, strlen($invite->token_hash));
     }
 
-    /** @test */
+    #[Test]
     public function class_teacher_assignment_is_optional()
     {
         ['invite' => $invite, 'token' => $token] = TeacherInviteLinkService::issue(

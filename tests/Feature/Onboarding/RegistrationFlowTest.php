@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\School;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RegistrationFlowTest extends TestCase
@@ -30,7 +31,7 @@ class RegistrationFlowTest extends TestCase
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
     }
 
-    /** @test */
+    #[Test]
     public function admin_name_is_set_on_manual_registration(): void
     {
         $response = $this->post('/register', [
@@ -60,7 +61,7 @@ class RegistrationFlowTest extends TestCase
         $this->assertSame(\App\Enums\ToshiMode::Preview, $school->toshi_mode);
     }
 
-    /** @test */
+    #[Test]
     public function admin_name_is_not_null_even_without_explicit_plan(): void
     {
         $response = $this->post('/register', [

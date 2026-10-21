@@ -10,6 +10,7 @@ use App\Services\StudentReportHelperService;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiReportCardPipelineFixTest extends TestCase
@@ -37,7 +38,7 @@ class ToshiReportCardPipelineFixTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function exam_type_relationship_exists()
     {
         $school = $this->createSchool();
@@ -55,7 +56,7 @@ class ToshiReportCardPipelineFixTest extends TestCase
         $this->assertEquals('MID', $exam->examType->code);
     }
 
-    /** @test */
+    #[Test]
     public function scoped_eager_load_excludes_cross_term_marks()
     {
         $school = $this->createSchool();
@@ -152,7 +153,7 @@ class ToshiReportCardPipelineFixTest extends TestCase
         $this->assertEquals(100, (int) $learner->marks->sum('marks'));
     }
 
-    /** @test */
+    #[Test]
     public function enter_mark_updates_instead_of_duplicating()
     {
         $school = $this->createSchool();

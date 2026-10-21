@@ -10,6 +10,7 @@ use App\Models\StandardLink;
 use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class OnboardingStepsServiceTest extends TestCase
@@ -45,7 +46,7 @@ class OnboardingStepsServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function standards_step_not_complete_when_only_phase_standard_exists(): void
     {
         // Regression test for Finding 3:
@@ -67,7 +68,7 @@ class OnboardingStepsServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function standards_step_not_complete_when_section_exists_without_standard_link(): void
     {
         // Edge case: A Section row exists but no StandardLink.
@@ -92,7 +93,7 @@ class OnboardingStepsServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function standards_step_complete_when_standard_link_exists(): void
     {
         // The correct check: StandardLink rows exist for the school.
@@ -124,7 +125,7 @@ class OnboardingStepsServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function other_steps_still_work_correctly(): void
     {
         // curriculum: based on school->curriculum being set (already 'uneb' in setUp)
@@ -192,7 +193,7 @@ class OnboardingStepsServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function null_curriculum_is_incomplete_and_country_block_sits_between_curriculum_and_academic_year(): void
     {
         $this->school->curriculum = null;

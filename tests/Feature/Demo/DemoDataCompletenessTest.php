@@ -13,6 +13,7 @@ use Database\Seeders\DemoJuniorSchoolSeeder;
 use Database\Seeders\DemoSeniorSchoolSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -47,7 +48,7 @@ class DemoDataCompletenessTest extends TestCase
         return School::where('email', 'demo-' . (str_contains($seeder, 'Junior') ? 'junior' : 'senior') . '@klassapp.xyz')->firstOrFail();
     }
 
-    /** @dataProvider schoolProvider */
+    #[DataProvider('schoolProvider')]
     public function test_every_student_has_a_date_of_birth_and_a_gender(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);
@@ -64,7 +65,7 @@ class DemoDataCompletenessTest extends TestCase
         }
     }
 
-    /** @dataProvider schoolProvider */
+    #[DataProvider('schoolProvider')]
     public function test_every_student_is_linked_to_a_parent_and_parents_have_one_to_three_children(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);
@@ -106,7 +107,7 @@ class DemoDataCompletenessTest extends TestCase
         }
     }
 
-    /** @dataProvider schoolProvider */
+    #[DataProvider('schoolProvider')]
     public function test_every_demo_teacher_and_school_profile_is_filled(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);
@@ -138,7 +139,7 @@ class DemoDataCompletenessTest extends TestCase
         $page->assertDontSee('Center No', false);
     }
 
-    /** @dataProvider schoolProvider */
+    #[DataProvider('schoolProvider')]
     public function test_no_incomplete_setup_steps_and_no_setup_banner_on_the_dashboard(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);
@@ -152,7 +153,7 @@ class DemoDataCompletenessTest extends TestCase
         $response->assertDontSee('Finish school setup');
     }
 
-    /** @dataProvider schoolProvider */
+    #[DataProvider('schoolProvider')]
     public function test_no_profile_points_at_a_missing_avatar_file(string $email, string $seeder): void
     {
         $school = $this->seedSchool($seeder);

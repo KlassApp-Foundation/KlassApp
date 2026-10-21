@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CreateStreamToolTest extends TestCase
@@ -72,7 +73,7 @@ class CreateStreamToolTest extends TestCase
         ToshiActionService::$bypassConfirm = true;
     }
 
-    /** @test */
+    #[Test]
     public function creates_direct_class_with_no_streams(): void
     {
         $this->actingAs($this->admin);
@@ -98,7 +99,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertEquals($this->phase->id, $link->standard_id);
     }
 
-    /** @test */
+    #[Test]
     public function creates_streamed_class(): void
     {
         $this->actingAs($this->admin);
@@ -130,7 +131,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertNull($nullStream, 'Streamed class must not have a null-stream StandardLink');
     }
 
-    /** @test */
+    #[Test]
     public function multi_phase_school_without_phase_param_returns_ambiguity_error(): void
     {
         $this->actingAs($this->admin);
@@ -154,7 +155,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertStringStartsWith('❌', $result, 'Tool must not guess which phase when ambiguous');
     }
 
-    /** @test */
+    #[Test]
     public function multi_phase_school_with_phase_param_lands_on_correct_standard(): void
     {
         $this->actingAs($this->admin);
@@ -186,7 +187,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertEquals($secondaryStandard->id, $link->standard_id);
     }
 
-    /** @test */
+    #[Test]
     public function guard_blocks_direct_class_on_top_of_streamed_class(): void
     {
         $this->actingAs($this->admin);
@@ -207,7 +208,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertStringStartsWith('❌', $result);
     }
 
-    /** @test */
+    #[Test]
     public function guard_allows_streaming_previously_direct_class(): void
     {
         $this->actingAs($this->admin);
@@ -249,7 +250,7 @@ class CreateStreamToolTest extends TestCase
         $this->assertNotNull($westLink, 'New West stream link must be created');
     }
 
-    /** @test */
+    #[Test]
     public function verify_matches_db_state(): void
     {
         $this->actingAs($this->admin);

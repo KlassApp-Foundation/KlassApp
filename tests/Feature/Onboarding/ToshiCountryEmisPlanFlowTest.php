@@ -11,6 +11,7 @@ use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -73,7 +74,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_country_action_persists_registration_country_and_country_id(): void
     {
         $country = \App\Models\Country::create([
@@ -93,7 +94,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         $this->assertSame($country->id, (int) $fresh->country_id);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_emis_action_persists_ministry_code_for_uganda(): void
     {
         $this->school->update(['registration_country' => 'Uganda']);
@@ -110,7 +111,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         $this->assertSame('EMIS-77123', $this->school->fresh()->ministry_code);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_uneb_center_skip_persists_empty_string_and_never_blocks(): void
     {
         $this->actingAs($this->admin);
@@ -128,7 +129,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_uneb_center_stores_provided_value(): void
     {
         $this->actingAs($this->admin);
@@ -142,7 +143,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         $this->assertSame('U0123', $this->school->fresh()->uneb_center_number);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_plan_selection_creates_current_plan_at_end_with_override(): void
     {
         // Freemium fits 50 students; the school already has 120 active students.
@@ -191,7 +192,7 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function create_mode_commit_does_not_truncate_students_below_plan_limit(): void
     {
         // A tiny plan that historically would have truncated the student list.

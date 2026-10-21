@@ -15,6 +15,7 @@ use App\Services\OnboardingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -104,7 +105,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function reload_keeps_complete_mode_step_instead_of_snapping_to_first_db_gap(): void
     {
         $this->actingAs($this->admin);
@@ -139,7 +140,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function fee_level_olevel_persists_tuition_with_labeled_name(): void
     {
         Standard::create(['school_id' => $this->school->id, 'name' => 'o-level', 'order' => 3, 'status' => '1']);
@@ -174,7 +175,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
             ->assertSee("A'Level");
     }
 
-    /** @test */
+    #[Test]
     public function typed_teacher_name_stays_on_teachers_step_not_student_lookup(): void
     {
         $this->actingAs($this->admin);
@@ -199,7 +200,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
         $this->assertStringNotContainsString('Found **', $messages);
     }
 
-    /** @test */
+    #[Test]
     public function skip_and_yes_on_whatsapp_are_not_hijacked_by_lookup(): void
     {
         $this->actingAs($this->admin);
@@ -228,7 +229,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
         $this->assertStringNotContainsString("couldn't find a student matching", $messages);
     }
 
-    /** @test */
+    #[Test]
     public function skipping_whatsapp_lands_on_school_pay_without_auto_skipping_it(): void
     {
         $this->actingAs($this->admin);

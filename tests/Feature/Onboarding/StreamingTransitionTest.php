@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class StreamingTransitionTest extends TestCase
@@ -113,7 +114,7 @@ class StreamingTransitionTest extends TestCase
         ToshiActionService::$bypassConfirm = true;
     }
 
-    /** @test */
+    #[Test]
     public function streaming_transition_round_trip(): void
     {
         $this->actingAs($this->admin);

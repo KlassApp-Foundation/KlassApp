@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AssignStudentsToStreamToolTest extends TestCase
@@ -153,7 +154,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         ToshiActionService::$bypassConfirm = true;
     }
 
-    /** @test */
+    #[Test]
     public function registration_number_match_updates_standard_link(): void
     {
         $this->actingAs($this->admin);
@@ -177,7 +178,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertEquals($this->targetLink->id, $academic->standardLink_id);
     }
 
-    /** @test */
+    #[Test]
     public function name_match_unambiguous_updates_standard_link(): void
     {
         $this->actingAs($this->admin);
@@ -201,7 +202,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertEquals($this->targetLink->id, $academic->standardLink_id);
     }
 
-    /** @test */
+    #[Test]
     public function unique_constraint_blocks_duplicate_registration_number(): void
     {
         $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
@@ -218,7 +219,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function registration_number_not_found_falls_through_to_name_match(): void
     {
         $this->actingAs($this->admin);
@@ -236,7 +237,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertStringStartsWith('❌', $result, 'Non-existent reg number must report as unmatched');
     }
 
-    /** @test */
+    #[Test]
     public function duplicate_names_reported_ambiguous(): void
     {
         $this->actingAs($this->admin);
@@ -265,7 +266,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertStringStartsWith('❌', $result, 'Must not guess when name is ambiguous');
     }
 
-    /** @test */
+    #[Test]
     public function no_match_reported_unmatched(): void
     {
         $this->actingAs($this->admin);
@@ -283,7 +284,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertStringStartsWith('❌', $result, 'Must report failure when no student matches');
     }
 
-    /** @test */
+    #[Test]
     public function only_current_academic_year_row_updated_when_student_has_rows_in_two_years(): void
     {
         $this->actingAs($this->admin);
@@ -344,7 +345,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertEquals($pastLink->id, $pastAcademic->standardLink_id, 'Past year row must be untouched');
     }
 
-    /** @test */
+    #[Test]
     public function student_with_no_prior_student_academic_gets_new_row_created(): void
     {
         $this->actingAs($this->admin);
@@ -378,7 +379,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertEquals($this->targetLink->id, $academic->standardLink_id);
     }
 
-    /** @test */
+    #[Test]
     public function verify_confirms_post_move_state(): void
     {
         $this->actingAs($this->admin);
@@ -396,7 +397,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $this->assertTrue($verifyResult['verified']);
     }
 
-    /** @test */
+    #[Test]
     public function verify_fails_when_student_not_moved(): void
     {
         $this->actingAs($this->admin);

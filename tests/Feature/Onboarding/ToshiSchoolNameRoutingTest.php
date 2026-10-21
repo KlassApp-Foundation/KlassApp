@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiSchoolNameRoutingTest extends TestCase
@@ -57,7 +58,7 @@ class ToshiSchoolNameRoutingTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function stale_action_step_country_does_not_hijack_school_name_answer(): void
     {
         $this->actingAs($this->admin);
@@ -101,7 +102,7 @@ class ToshiSchoolNameRoutingTest extends TestCase
         $this->assertStringNotContainsString('Country set', $botTexts);
     }
 
-    /** @test */
+    #[Test]
     public function stale_action_step_plan_selection_does_not_hijack_school_name_answer(): void
     {
         $this->actingAs($this->admin);

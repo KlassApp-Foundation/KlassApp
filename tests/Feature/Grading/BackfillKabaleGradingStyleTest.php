@@ -9,6 +9,7 @@ use App\Models\Standard;
 use App\Models\StandardLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class BackfillKabaleGradingStyleTest extends TestCase
@@ -74,7 +75,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function dry_run_does_not_write_grading_style(): void
     {
         $nursery = $this->makeStandard('nursery');
@@ -88,7 +89,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertNull($nursery->fresh()->grading_style);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_nursery_standard_with_total_marks(): void
     {
         $nursery = $this->makeStandard('nursery');
@@ -101,7 +102,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('total_marks', $nursery->fresh()->grading_style);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_primary_lower_with_total_marks(): void
     {
         $primaryLower = $this->makeStandard('primary_lower');
@@ -114,7 +115,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('total_marks', $primaryLower->fresh()->grading_style);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_primary_upper_with_aggregate(): void
     {
         $primaryUpper = $this->makeStandard('primary_upper');
@@ -127,7 +128,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('aggregate', $primaryUpper->fresh()->grading_style);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_primary_with_aggregate(): void
     {
         $primary = $this->makeStandard('primary');
@@ -140,7 +141,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('aggregate', $primary->fresh()->grading_style);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_sub_group_on_primary_lower_links(): void
     {
         $primaryLower = $this->makeStandard('primary_lower');
@@ -154,7 +155,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('lower', $link->fresh()->sub_group);
     }
 
-    /** @test */
+    #[Test]
     public function backfills_sub_group_on_primary_upper_links(): void
     {
         $primaryUpper = $this->makeStandard('primary_upper');
@@ -168,7 +169,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('upper', $link->fresh()->sub_group);
     }
 
-    /** @test */
+    #[Test]
     public function does_not_set_sub_group_on_nursery_links(): void
     {
         $nursery = $this->makeStandard('nursery');
@@ -183,7 +184,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertNull($link->fresh()->sub_group);
     }
 
-    /** @test */
+    #[Test]
     public function idempotent_rerunning_does_not_change_already_set_values(): void
     {
         $primaryLower = $this->makeStandard('primary_lower');
@@ -206,7 +207,7 @@ class BackfillKabaleGradingStyleTest extends TestCase
         $this->assertSame('lower', $link->fresh()->sub_group);
     }
 
-    /** @test */
+    #[Test]
     public function fails_gracefully_for_nonexistent_school(): void
     {
         $this->artisan('kabale:backfill-grading-style', [

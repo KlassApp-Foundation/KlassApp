@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -77,7 +78,7 @@ class ToshiContentStepDelegationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_creates_per_class_tier_standards_not_single_phase(): void
     {
         // Bug 1 regression: mixed-level school must get SEPARATE tier Standards,
@@ -135,7 +136,7 @@ class ToshiContentStepDelegationTest extends TestCase
             'Bug 1 regression: S1 StandardLink must reference o-level tier, not primary');
     }
 
-    /** @test */
+    #[Test]
     public function toshi_delegates_subjects_to_engine(): void
     {
         $this->actingAs($this->admin);
@@ -192,7 +193,7 @@ class ToshiContentStepDelegationTest extends TestCase
         $this->assertNotNull($p2Science, 'P2 Science must be created via engine');
     }
 
-    /** @test */
+    #[Test]
     public function toshi_subject_save_resolves_primary_one_from_primary_1_and_short_forms(): void
     {
         $this->actingAs($this->admin);
@@ -232,7 +233,7 @@ class ToshiContentStepDelegationTest extends TestCase
         $this->assertSame(['English', 'Mathematics', 'Science', 'Social Studies'], $names);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_subject_save_resolves_primary_1_from_primary_one(): void
     {
         $this->actingAs($this->admin);
@@ -270,7 +271,7 @@ class ToshiContentStepDelegationTest extends TestCase
         $this->assertSame(['English', 'Mathematics'], $names);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_delegates_terms_to_engine(): void
     {
         $this->actingAs($this->admin);
@@ -302,7 +303,7 @@ class ToshiContentStepDelegationTest extends TestCase
         $this->assertEquals('2026-05-20', $t2->starts_on->toDateString());
     }
 
-    /** @test */
+    #[Test]
     public function toshi_delegates_fees_to_engine_whole_school_spread(): void
     {
         // Bug 1 regression (known bug pattern #7): whole-school fees must be spread
@@ -345,7 +346,7 @@ class ToshiContentStepDelegationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function toshi_complete_mode_also_delegates_to_engine(): void
     {
         // Verify the complete-mode (update/resume) path also delegates

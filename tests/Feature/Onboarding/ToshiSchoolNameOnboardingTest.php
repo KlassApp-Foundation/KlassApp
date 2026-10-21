@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiSchoolNameOnboardingTest extends TestCase
@@ -60,7 +61,7 @@ class ToshiSchoolNameOnboardingTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_multi_word_school_name_via_send_asks_confirm_not_student_lookup(): void
     {
         $this->actingAs($this->admin);
@@ -89,7 +90,7 @@ class ToshiSchoolNameOnboardingTest extends TestCase
         $this->assertStringContainsString('My Cool Primary School', $botTexts);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_colliding_school_name_via_send_gets_unique_suffix(): void
     {
         School::create([
@@ -132,7 +133,7 @@ class ToshiSchoolNameOnboardingTest extends TestCase
         $this->assertSame('Sunrise Primary School-2', $this->school->name);
     }
 
-    /** @test */
+    #[Test]
     public function multi_word_name_still_triggers_student_lookup_outside_school_info(): void
     {
         // Mark school as fully named so mount does not enter school_info complete flow.

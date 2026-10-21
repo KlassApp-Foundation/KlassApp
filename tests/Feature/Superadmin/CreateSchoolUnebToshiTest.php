@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CreateSchoolUnebToshiTest extends TestCase
@@ -68,7 +69,7 @@ class CreateSchoolUnebToshiTest extends TestCase
             ->set('uneb_center_number', 'U0777');
     }
 
-    /** @test */
+    #[Test]
     public function toshi_enabled_defaults_to_off(): void
     {
         $this->actingAs($this->siteadmin);
@@ -77,7 +78,7 @@ class CreateSchoolUnebToshiTest extends TestCase
             ->assertSet('toshi_enabled', false);
     }
 
-    /** @test */
+    #[Test]
     public function creates_school_with_uneb_center_and_toshi_off_by_default(): void
     {
         $this->actingAs($this->siteadmin);
@@ -92,7 +93,7 @@ class CreateSchoolUnebToshiTest extends TestCase
         $this->assertSame('4527', $school->ministry_code);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_can_be_turned_on_explicitly(): void
     {
         $this->actingAs($this->siteadmin);
@@ -107,7 +108,7 @@ class CreateSchoolUnebToshiTest extends TestCase
         $this->assertSame(1, (int) $school->toshi_enabled);
     }
 
-    /** @test */
+    #[Test]
     public function uganda_school_requires_emis_code(): void
     {
         $this->actingAs($this->siteadmin);

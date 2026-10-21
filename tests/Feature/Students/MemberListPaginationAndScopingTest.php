@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MemberListPaginationAndScopingTest extends TestCase
@@ -147,7 +148,7 @@ class MemberListPaginationAndScopingTest extends TestCase
             ->get($endpoint);
     }
 
-    /** @test */
+    #[Test]
     public function teacher_find_returns_paginated_payload()
     {
         $resp = $this->fetch('/admin/teachers/find');
@@ -166,7 +167,7 @@ class MemberListPaginationAndScopingTest extends TestCase
         $this->assertSame(2, $meta['last_page']);
     }
 
-    /** @test */
+    #[Test]
     public function teacher_find_page_two_is_renderable()
     {
         $resp2 = $this->fetch('/admin/teachers/find?page=2');
@@ -181,7 +182,7 @@ class MemberListPaginationAndScopingTest extends TestCase
         $this->assertEmpty(array_intersect($ids2, $ids1), 'page windows must not overlap');
     }
 
-    /** @test */
+    #[Test]
     public function crafted_school_param_does_not_change_scope_on_teacher_find()
     {
         $resp = $this->fetch('/admin/teachers/find?school_id=' . $this->schoolB->id . '&school=' . $this->schoolB->id);
@@ -189,7 +190,7 @@ class MemberListPaginationAndScopingTest extends TestCase
         $this->assertNotContains($this->teacherBId, $rows ? array_column($rows, 'id') : []);
     }
 
-    /** @test */
+    #[Test]
     public function staff_find_returns_paginated_payload()
     {
         $resp = $this->fetch('/admin/staffs/find');

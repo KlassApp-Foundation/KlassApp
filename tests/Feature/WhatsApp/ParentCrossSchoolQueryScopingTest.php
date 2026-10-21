@@ -20,6 +20,7 @@ use App\Services\Toshi\ParentActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ParentCrossSchoolQueryScopingTest extends TestCase
@@ -88,7 +89,7 @@ class ParentCrossSchoolQueryScopingTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function fee_balance_for_school_b_child_uses_school_b_fee_categories(): void
     {
         $result = ParentActionService::feeBalance($this->parent, 'Child Beta');
@@ -99,7 +100,7 @@ class ParentCrossSchoolQueryScopingTest extends TestCase
         $this->assertSame(250000.0, (float) $result['data']['total_balance']);
     }
 
-    /** @test */
+    #[Test]
     public function grades_for_school_b_child_use_school_b_exams(): void
     {
         $result = ParentActionService::grades($this->parent, 'Child Beta');
@@ -109,7 +110,7 @@ class ParentCrossSchoolQueryScopingTest extends TestCase
         $this->assertStringContainsString('88', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function checkschool_allows_parent_with_null_school_id_when_linked_school_is_active(): void
     {
         $this->parent->update([
@@ -127,7 +128,7 @@ class ParentCrossSchoolQueryScopingTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_parent_action_gate_allows_null_school_parent_with_active_links(): void
     {
         $this->assertTrue(Gate::forUser($this->parent)->allows('toshi-parent-action'));

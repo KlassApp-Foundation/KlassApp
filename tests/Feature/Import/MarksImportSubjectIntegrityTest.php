@@ -15,6 +15,7 @@ use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MarksImportSubjectIntegrityTest extends TestCase
@@ -111,7 +112,7 @@ class MarksImportSubjectIntegrityTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function each_column_maps_to_distinct_subject_id(): void
     {
         $row = ['eng' => 90, 'mtc' => 85, 're' => 80, 'lit_i' => 75, 'lit_ii' => 70, 'r_r' => 65];
@@ -136,7 +137,7 @@ class MarksImportSubjectIntegrityTest extends TestCase
         $this->assertEquals(6, Marks::where('exam_id', $this->exam->id)->where('student_id', $this->student->id)->distinct('subject_id')->count('subject_id'));
     }
 
-    /** @test */
+    #[Test]
     public function unknown_column_name_is_detected_before_insert(): void
     {
         $columns = ['eng', 'mtc', 're', 'lit_i', 'lit_ii', 'r_r', 'physics'];
@@ -157,7 +158,7 @@ class MarksImportSubjectIntegrityTest extends TestCase
         $this->assertContains('physics', $missing);
     }
 
-    /** @test */
+    #[Test]
     public function reimport_of_same_data_is_idempotent(): void
     {
         $row = ['eng' => 90, 'mtc' => 85, 're' => 80, 'lit_i' => 75, 'lit_ii' => 70, 'r_r' => 65];
@@ -179,7 +180,7 @@ class MarksImportSubjectIntegrityTest extends TestCase
         $this->assertEquals(6, Marks::where('exam_id', $this->exam->id)->where('student_id', $this->student->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function subject_creation_is_idempotent(): void
     {
         $name = 'English';

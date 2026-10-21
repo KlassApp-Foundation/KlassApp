@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiDuplicateNameGuardTest extends TestCase
@@ -39,7 +40,7 @@ class ToshiDuplicateNameGuardTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function guard_allows_write_when_name_is_unique()
     {
         $school = $this->createSchool('Unique Name Test');
@@ -51,7 +52,7 @@ class ToshiDuplicateNameGuardTest extends TestCase
         $this->assertNull($result, 'Unique name should not trigger guard');
     }
 
-    /** @test */
+    #[Test]
     public function guard_blocks_write_when_duplicate_name_exists()
     {
         $school = $this->createSchool('Duplicate Name Test');
@@ -70,7 +71,7 @@ class ToshiDuplicateNameGuardTest extends TestCase
         $this->assertStringContainsString((string) $s2->id, $result);
     }
 
-    /** @test */
+    #[Test]
     public function guard_is_school_scoped_not_global()
     {
         $schoolA = $this->createSchool('School A');
@@ -87,7 +88,7 @@ class ToshiDuplicateNameGuardTest extends TestCase
         $this->assertNull($result, 'Same name in different school should not trigger guard');
     }
 
-    /** @test */
+    #[Test]
     public function enter_mark_is_blocked_by_duplicate_name()
     {
         $school = $this->createSchool('EnterMark Dup');

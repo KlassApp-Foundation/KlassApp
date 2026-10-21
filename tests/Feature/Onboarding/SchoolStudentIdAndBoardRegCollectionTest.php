@@ -11,6 +11,7 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\OnboardingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
@@ -36,7 +37,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
 
     // ── isCandidateClass() ────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_true_for_p7(): void
     {
         $this->assertTrue(OnboardingEngine::isCandidateClass('P.7'));
@@ -46,7 +47,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertTrue(OnboardingEngine::isCandidateClass('primary seven'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_true_for_s4(): void
     {
         $this->assertTrue(OnboardingEngine::isCandidateClass('S.4'));
@@ -56,7 +57,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertTrue(OnboardingEngine::isCandidateClass('senior four'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_true_for_s6(): void
     {
         $this->assertTrue(OnboardingEngine::isCandidateClass('S.6'));
@@ -66,7 +67,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertTrue(OnboardingEngine::isCandidateClass('senior six'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_false_for_p1(): void
     {
         $this->assertFalse(OnboardingEngine::isCandidateClass('P.1'));
@@ -75,7 +76,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertFalse(OnboardingEngine::isCandidateClass('primary one'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_false_for_s1(): void
     {
         $this->assertFalse(OnboardingEngine::isCandidateClass('S.1'));
@@ -83,7 +84,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertFalse(OnboardingEngine::isCandidateClass('Senior One'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_false_for_nursery(): void
     {
         $this->assertFalse(OnboardingEngine::isCandidateClass('Baby Class'));
@@ -125,7 +126,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function wizard_saves_school_student_id(): void
     {
         $link = $this->createStandardLink('P.1', 'primary');
@@ -142,7 +143,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertEquals('ADM-2025-001', $sa->fresh()->school_student_id);
     }
 
-    /** @test */
+    #[Test]
     public function wizard_saves_board_reg_for_candidate_class(): void
     {
         // P.7 is a UNEB candidate class (PLE)
@@ -161,7 +162,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertEquals('U1234/567', $sa->fresh()->board_registration_number);
     }
 
-    /** @test */
+    #[Test]
     public function board_reg_validation_accepts_alphanumeric(): void
     {
         // board_registration_number changed from numeric to string|max:50
@@ -180,7 +181,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertEquals('U1234/567', $sa->fresh()->board_registration_number);
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_rejects_old_indian_standards(): void
     {
         // The old validation gated to Indian system '10', '11', '12' —
@@ -190,7 +191,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertFalse(OnboardingEngine::isCandidateClass('12'));
     }
 
-    /** @test */
+    #[Test]
     public function user_detail_includes_is_candidate_class_flag(): void
     {
         // Test the isCandidateClass logic directly — the UserDetail resource
@@ -209,7 +210,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertTrue(OnboardingEngine::isCandidateClass('S.4'));
     }
 
-    /** @test */
+    #[Test]
     public function user_detail_non_candidate_class_hides_board_reg(): void
     {
         // P.1 is NOT a candidate class — board_registration_number
@@ -223,7 +224,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_handles_whitespace_and_case(): void
     {
         $this->assertTrue(OnboardingEngine::isCandidateClass('  P.7  '));
@@ -232,7 +233,7 @@ class SchoolStudentIdAndBoardRegCollectionTest extends TestCase
         $this->assertTrue(OnboardingEngine::isCandidateClass('SENior SIX'));
     }
 
-    /** @test */
+    #[Test]
     public function is_candidate_class_returns_false_for_empty_string(): void
     {
         $this->assertFalse(OnboardingEngine::isCandidateClass(''));

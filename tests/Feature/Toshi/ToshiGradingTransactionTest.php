@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiGradingTransactionTest extends TestCase
@@ -41,7 +42,7 @@ class ToshiGradingTransactionTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function transaction_rolls_back_when_insert_fails_partway()
     {
         $school = $this->createSchool('Transaction Test School');
@@ -119,7 +120,7 @@ class ToshiGradingTransactionTest extends TestCase
             'Rollback restored 5 original grades.');
     }
 
-    /** @test */
+    #[Test]
     public function validation_guard_prevents_deletion_when_definitions_are_empty()
     {
         $school = $this->createSchool('Guard Test School');
