@@ -12,6 +12,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
@@ -23,6 +24,7 @@ use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
 use App\Support\PhoneCountry;
+use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -292,6 +294,10 @@ class OnboardingEngine
      * standing discipline is not to over-build ahead of real need,
      * and these three are the only UNEB exam classes in Uganda.
      *
+     * A stream is a separate section named "{base} {stream}" (S4 East,
+     * P7 Blue, Senior Four A). The candidate year is the base class,
+     * so the stream label is ignored.
+     *
      * NOTE: The previous validation gated board_registration_number
      * to Indian-system standards '10'/'11'/'12' — this was a
      * production bug that made the field effectively always-required
@@ -303,6 +309,21 @@ class OnboardingEngine
     {
         $lower = strtolower(trim($className));
 
+        if (self::isExactCandidateClassLabel($lower)) {
+            return true;
+        }
+
+        // One stream token after the base class: "S4 East" → "S4".
+        $space = strrpos($lower, ' ');
+        if ($space === false) {
+            return false;
+        }
+
+        return self::isExactCandidateClassLabel(trim(substr($lower, 0, $space)));
+    }
+
+    private static function isExactCandidateClassLabel(string $lower): bool
+    {
         // PLE: Primary Seven — P.7, P7, P 7, Primary Seven
         if (in_array($lower, ['p.7', 'p7', 'p 7', 'primary seven'], true)) {
             return true;
@@ -1458,9 +1479,16 @@ class OnboardingEngine
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
-     * 'phone', 'school_student_id', 'lin' (Learner Identification Number),
+     * 'phone' (the student's own number), 'parent' or 'parent_name',
+     * 'parent_phone', 'school_student_id', 'lin' (Learner Identification Number),
      * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
+     *
+     * A parent name and/or parent phone creates or reuses a guardian in this
+     * school. The name and phone are stored on that guardian. Guardians in the
+     * same school with the same normalised phone are one person, so siblings
+     * share them. The parent phone is never written onto the student. Nothing
+     * is sent: no mail, no invitation, no WhatsApp user or message.
      *
      * school_student_id = school-internal ID; lin = Uganda national LIN.
      * They are distinct columns on student_academics — never aliases.
@@ -1536,6 +1564,8 @@ class OnboardingEngine
                             .'Known short forms (e.g. S.4) are accepted — students were not silently assigned to another class.',
                     ]);
                 }
+
+                $parentsByPhone = $this->importedParentsByPhone($school);
 
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
@@ -1623,7 +1653,8 @@ class OnboardingEngine
                     $stdName = trim((string) ($link->standard?->name ?? ''));
                     $secName = trim((string) ($link->section?->name ?? $className));
 
-                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6).
+                    // Stream sections are named "{base} {stream}"; isCandidateClass reads the base.
                     if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
                         $boardReg = '';
                     }
@@ -1642,6 +1673,8 @@ class OnboardingEngine
                         'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
                         'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                     ]);
+
+                    $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
 
                     $created[] = [
                         'name'         => $name,
@@ -1663,6 +1696,103 @@ class OnboardingEngine
                 'students' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+    }
+
+    /**
+     * Active guardians in this school, keyed by normalised phone.
+     *
+     * @return array<string, User>
+     */
+    private function importedParentsByPhone(School $school): array
+    {
+        $index = [];
+        $parents = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 7)
+            ->where('status', 'active')
+            ->whereNotNull('mobile_no')
+            ->get();
+
+        foreach ($parents as $parent) {
+            $key = $this->canonicalParentPhone($school, (string) $parent->mobile_no);
+            if ($key !== '' && ! isset($index[$key])) {
+                $index[$key] = $parent;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * Create or reuse this school's guardian and link the student.
+     * No mail, invitation, or WhatsApp record is created.
+     *
+     * @param  array<string, mixed>  $draft
+     * @param  array<string, User>  $parentsByPhone
+     */
+    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): void
+    {
+        $parentName = trim((string) ($draft['parent'] ?? $draft['parent_name'] ?? ''));
+        $rawPhone = trim((string) ($draft['parent_phone'] ?? ''));
+        if ($parentName === '' && $rawPhone === '') {
+            return;
+        }
+
+        $phone = $rawPhone === ''
+            ? ''
+            : $this->normaliseOnboardingPhone($school, $rawPhone, 'students', false, 'Parent of '.$student->name);
+
+        $parent = ($phone !== '' && isset($parentsByPhone[$phone])) ? $parentsByPhone[$phone] : null;
+
+        if ($parent === null) {
+            $password = UserProvisioning::randomPasswordAttributes();
+            $parent = User::create([
+                'school_id' => $school->id,
+                'usergroup_id' => 7,
+                'name' => $parentName !== '' ? $parentName : 'Parent',
+                'email' => $this->allocateGeneratedEmail($school, 'parent', '.local'),
+                'password' => $password['password'],
+                'is_reset' => $password['is_reset'],
+                'email_verified' => 1,
+                'mobile_no' => $phone !== '' ? $phone : null,
+            ]);
+
+            Userprofile::create([
+                'school_id' => $school->id,
+                'user_id' => $parent->id,
+                'usergroup_id' => 7,
+                'firstname' => $parentName !== '' ? $parentName : 'Parent',
+                'lastname' => '',
+            ]);
+
+            if ($phone !== '') {
+                $parentsByPhone[$phone] = $parent;
+            }
+        }
+
+        StudentParentLink::query()->firstOrCreate(
+            [
+                'school_id' => $school->id,
+                'parent_id' => $parent->id,
+                'student_id' => $student->id,
+            ],
+            ['status' => 1]
+        );
+    }
+
+    private function canonicalParentPhone(School $school, string $phone): string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $country = trim((string) $school->registration_country);
+        if ($country === '') {
+            return $phone;
+        }
+
+        return PhoneCountry::normalise($phone, $country) ?? $phone;
     }
 
     /**
