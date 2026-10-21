@@ -131,12 +131,10 @@ class UserProfileController extends Controller
             $currentPlan = \App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first();
             if ($currentPlan && $currentPlan->plan) {
                 $plan = $currentPlan->plan;
-                $planSummary = trim(ucfirst($plan->display_name ?: $plan->name));
-                if ((float) $plan->amount > 0) {
-                    $planSummary .= ' — $'.number_format((float) $plan->amount).' / '.$plan->cycle.' days';
-                } else {
-                    $planSummary .= ' — Free';
-                }
+            }
+            $school = Auth::user()->school;
+            if ($school) {
+                $planSummary = app(\App\Services\EarlyAdopterOffer::class)->profileLine($school);
             }
         }
 

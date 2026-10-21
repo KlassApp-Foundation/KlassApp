@@ -145,9 +145,10 @@ class SchoolInviteService
 
                 // Mark claimed before creating anything. The whereNull guard
                 // also holds on drivers without row locks (SQLite in tests).
+                $claimedAt = now();
                 $marked = SchoolInvite::whereKey($locked->id)
                     ->whereNull('claimed_at')
-                    ->update(['claimed_at' => now(), 'updated_at' => now()]);
+                    ->update(['claimed_at' => $claimedAt, 'updated_at' => $claimedAt]);
 
                 if ($marked !== 1) {
                     return ['success' => false, 'message' => $alreadyClaimed];
@@ -165,6 +166,10 @@ class SchoolInviteService
                     'school_name' => $locked->school_name,
                     'registration_country' => $locked->country,
                 ]);
+
+                // School invites are issued only from an early-access request.
+                // Teacher, co-admin, and class-teacher invites never reach here.
+                app(EarlyAdopterOffer::class)->apply($user->school, $user, $claimedAt);
 
                 return ['success' => true, 'message' => 'Your school is ready.', 'user' => $user];
             });

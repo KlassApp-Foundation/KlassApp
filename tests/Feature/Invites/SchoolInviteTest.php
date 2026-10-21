@@ -20,6 +20,21 @@ class SchoolInviteTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // A claim grants Growth. Without this row the claim rolls back.
+        \App\Models\Plan::create([
+            'name' => 'growth',
+            'display_name' => 'Growth',
+            'cycle' => 30,
+            'amount' => 35,
+            'is_active' => 1,
+            'order' => 2,
+        ]);
+    }
+
     private function platformAdmin(): User
     {
         return User::create([
