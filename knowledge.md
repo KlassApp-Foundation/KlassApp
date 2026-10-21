@@ -676,6 +676,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **PHP 8.5 deprecation fixes OPEN [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169)**
+
+- [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) is merged (`a0fc9b39dbd4326211b8a292b6e127d2d3c44744`, confirmed `merged: true`). This branch starts from that commit.
+- Own code is cleaned for the PHP 8.4/8.5 deprecations that actually fire, without moving CI or `composer.json` off PHP 8.4 / `^8.2`. Laravel and PHPUnit are unchanged. Migrations, payment behaviour, env, and secrets were not edited.
+- OPEN [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169) (`cursor/php85-deprecations-768d`). Not merged. Production untouched.
+
 ## Current Status: October 20, 2026 — **stable dependency pins OPEN [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156)**
 
 - Rebased onto `main` at `74b18405` (#1148). Not merged. Production untouched. Laravel stays 12 (`laravel/framework` v12.63.0). PHP stays 8.4. `maatwebsite/excel` stays `3.1.x-dev` at the same lock reference as `main`.
@@ -2800,6 +2806,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-21: PHP 8.5 deprecations, no runtime change
+
+- **Work done**: Cleared PHP 8.4/8.5 deprecations in our code while keeping today's runtime. `composer.json` still requires `php: ^8.2`. CI (`test-guard.yml`, `mysql-migrations.yml`) still installs PHP 8.4. No Laravel or PHPUnit upgrade.
+- **How found**: `php8.5 -l` on 3,258 PHP files under `app/`, `config/`, `database/`, `routes/`, `tests/`, `packages/`, `bootstrap/`, `public/`, `resources/`, and `scripts/`. The only compile-time warnings were implicitly nullable `Carbon $expiresAt = null` on two mail constructors. A tokenizer pass then looked for the PHP 8.5 UPGRADING list: non-canonical casts `(integer)`, `(boolean)`, `(double)`, `(binary)`, and the removed `(real)` cast; the backtick operator; switch `case`/`default` ended with `;`; `__sleep`, `__wakeup`, and `__debugInfo`; and the runtime no-ops `curl_close`, `imagedestroy`, `finfo_close`, `xml_parser_free`, and `Reflection*::setAccessible()`. It also flagged `fgetcsv` / `fputcsv` / `str_getcsv` calls that omit `$escape` (the PHP 8.4 warning whose default will change). Enum cases such as `case Preview = 'preview';` match the semicolon shape and were left alone: PHP 8.5 lint does not warn on them. No backticks, non-canonical casts, or `__sleep` / `__wakeup` methods are in our code. `__sleep` / `__wakeup` are soft-deprecated in PHP 8.5.11 and do not warn on serialize.
+- **Files modified**: `app/Mail/CoAdminInviteLinkMail.php`, `app/Mail/TeacherInviteLinkMail.php` (`?Carbon`); CSV `$escape` set to the current default `'\\'` in `OnboardingNameListExtractor`, `AgentToshi`, `TeacherLinkImportController`, `PromotionController`, `TeachersImport`, `EarlyAccessRequestController`, and `MarksImportHttpTest`; removed no-op `curl_close` in `app/Traits/MSG91.php` and `imagedestroy` in `FaviconBrandAssetsTest`; removed 25 `setAccessible(true)` calls in tests. `knowledge.md`.
+- **Decision**: Replacements keep today's behaviour. Explicit CSV escape matches `fputcsv` / `fgetcsv` / `str_getcsv` bytes on PHP 8.4. `curl_close` and `imagedestroy` have had no effect since PHP 8.0. `setAccessible` has had no effect since PHP 8.1, and `composer.json` is `^8.2`. Reflection on an implicitly nullable parameter already reports `?string`, so the mail signature change does not change callers. Migrations were not edited (lint was clean). Fee-payment code was not edited. `PromotionController` only gained the CSV escape argument.
+- **Status**: OPEN [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169) (`cursor/php85-deprecations-768d`). Not merged. Production untouched. Review asked of Bariyo123.
+- **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` on PHP 8.4.26 — 2916 tests, 0 failures, 0 errors, 4 skipped. `[test-guard] OK: 0 failing test(s)`. Changed files lint clean on PHP 8.5.11.
 
 ### 2026-10-20: no GET route changes or deletes records
 

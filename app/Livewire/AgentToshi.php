@@ -2779,7 +2779,7 @@ class AgentToshi extends Component
                     } elseif ($ext === 'csv' || $ext === 'txt') {
                         $handle = fopen($this->attachment->getRealPath(), 'r');
                         $first = true;
-                        while (($line = fgetcsv($handle)) !== false) {
+                        while (($line = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
                             if ($first) { $headers = array_map('trim', $line); $first = false; continue; }
                             $dataRows[] = $line;
                         }

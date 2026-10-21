@@ -49,7 +49,6 @@ class DeadUngatedMarksPathsTest extends TestCase
 
         $provider = new EventServiceProvider(app());
         $listen = (new ReflectionClass($provider))->getProperty('listen');
-        $listen->setAccessible(true);
 
         $this->assertArrayNotHasKey('App\Events\GradesPublished', $listen->getValue($provider));
     }

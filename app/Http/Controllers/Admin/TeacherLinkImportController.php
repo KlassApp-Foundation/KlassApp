@@ -224,7 +224,7 @@ class TeacherLinkImportController extends Controller
         } elseif ($ext === 'csv' || $ext === 'txt') {
             $handle = fopen($path, 'r');
             $first = true;
-            while (($line = fgetcsv($handle)) !== false) {
+            while (($line = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
                 if ($first) { $first = false; continue; } // skip header
                 $rows[] = $line;
             }

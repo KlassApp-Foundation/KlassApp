@@ -141,7 +141,6 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, [
             'name' => 'flow',
             'response_json' => json_encode([
@@ -180,7 +179,6 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'handleMetaInbound');
-        $method->setAccessible(true);
 
         $response = $method->invoke($controller, [
             'entry' => [[
@@ -344,7 +342,6 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, [
             'name' => 'flow',
             'response_json' => json_encode([
@@ -370,7 +367,6 @@ class WhatsAppParentLinkFlowTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, $body, 'wamid.test', 'Test Parent');
     }
 
@@ -378,7 +374,6 @@ class WhatsAppParentLinkFlowTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'handleUnrecognizedUserMeta');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, $body, 'Test Parent');
     }
 }

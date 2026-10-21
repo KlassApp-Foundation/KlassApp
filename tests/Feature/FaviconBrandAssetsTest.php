@@ -134,8 +134,6 @@ class FaviconBrandAssetsTest extends TestCase
             }
         }
 
-        imagedestroy($image);
-
         return [$green, $orange];
     }
 }

@@ -397,7 +397,6 @@ class ParentReportCardRequestTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->parentPhone, $body, 'wamid.test', 'Parent');
     }
 }

@@ -63,7 +63,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
 
                 // Additional Courses (if column exists)
                 if (!empty($row['additional_coures'] ?? null)) {
-                    $courses = array_map('trim', str_getcsv($row['additional_coures']));
+                    $courses = array_map('trim', str_getcsv($row['additional_coures'], ',', '"', '\\'));
 
                     foreach ($courses as $course) {
                         $q = Qualification::where('type', 'teacher')

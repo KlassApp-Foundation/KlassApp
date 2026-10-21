@@ -30,7 +30,7 @@ class TeacherInviteLinkMail extends Mailable
         string $schoolName,
         string $inviteUrl,
         ?string $className = null,
-        Carbon $expiresAt = null,
+        ?Carbon $expiresAt = null,
     ) {
         $this->name = $name;
         $this->schoolName = $schoolName;

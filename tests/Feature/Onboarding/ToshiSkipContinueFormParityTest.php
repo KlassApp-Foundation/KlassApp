@@ -168,7 +168,6 @@ class ToshiSkipContinueFormParityTest extends TestCase
 
         // Checklist resume path
         $method = new ReflectionMethod(AgentToshi::class, 'jumpToIncompleteOnboardingStep');
-        $method->setAccessible(true);
         $method->invoke($component->instance(), 'plan_selection');
 
         $this->assertNull($component->get('actionStep'));

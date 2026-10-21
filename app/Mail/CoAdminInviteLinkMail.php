@@ -27,7 +27,7 @@ class CoAdminInviteLinkMail extends Mailable
         string $name,
         string $schoolName,
         string $inviteUrl,
-        Carbon $expiresAt = null,
+        ?Carbon $expiresAt = null,
     ) {
         $this->name = $name;
         $this->schoolName = $schoolName;
