@@ -21,6 +21,7 @@ use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Support\PhoneCountry;
 use App\Services\ToshiActionService;
+use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
@@ -1039,11 +1040,13 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        OnboardingStepsService::markOnboardingFinished($school);
+        $finishedNow = app(FinishSchoolOnboarding::class)->finish($school);
         $this->finished = true;
         $this->returnToStepIndex = null;
         $this->returnToStepKey = null;
-        $this->notifyToshiOnboardingFinished();
+        if ($finishedNow) {
+            $this->notifyToshiOnboardingFinished();
+        }
     }
 
     private function returnToReviewAfterEdit(): void
