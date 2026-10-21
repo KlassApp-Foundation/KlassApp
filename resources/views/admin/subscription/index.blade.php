@@ -56,7 +56,7 @@
     <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
         <div class="p-2 text-xs">
             @if($currentPlan && $currentPlan->plan)
-                <span>Your current plan is {{ $currentPlan->plan->name }}</span>
+                <span>Your current plan is {{ $currentPlan->plan->name }}@if(!empty($planEndsLabel)) — {{ $planEndsLabel }}@endif</span>
                 <a class="text-green-500" href="#">continue to subscription</a>
             @else
                 <span>No current plan selected</span>

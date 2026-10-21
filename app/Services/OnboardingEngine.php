@@ -2023,6 +2023,12 @@ class OnboardingEngine
             throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
         }
 
+        // Complimentary Growth from an early-adopter invite already has its
+        // own end date. Confirming that same plan must not start a 30-day trial.
+        if (app(EarlyAdopterOffer::class)->alreadyGranted($school, (int) $plan->id)) {
+            return CurrentPlan::query()->where('school_id', $school->id)->first();
+        }
+
         // Paid plan → start a trial
         if ($plan->amount > 0) {
             return TrialService::startTrial($school->id, $plan->id);
