@@ -676,9 +676,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review**
+## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185)**
 
-- [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. Not merged.
+- [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) is open. Do not merge from this session.
 
 ## Session: 2026-10-21 — WhatsApp tests mark seeded classes and subjects reviewed
 
@@ -686,7 +686,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php`.
 - **Decision:** Test setup, not a driver change. The chat can reach WhatsApp after the school confirms the seeded classes and subjects.
 - **Tests:** `tests/Feature/Toshi`, `tests/Feature/Onboarding`, and `tests/Feature/WhatsApp`: 1086 tests, 5214 assertions, 0 failures, 2 skipped. Two older methods in `ParentMagicLoginWhatsAppTest` are still risky because they make no assertions. The focused file is 8 tests, 144 assertions.
-- **Status:** Follow-up PR opening from `cursor/toshi-v2-whatsapp-after-review-c704` (base `main` `80d55b06`). Do not merge from this session.
+- **Status:** OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (`cursor/toshi-v2-whatsapp-after-review-c704`, base `main` `80d55b06`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180)**
 
