@@ -261,6 +261,9 @@ class AgentToshi extends Component
 
     // Assistant-mode action flows (multi-step operations)
     public $actionStep = null;    // 'add_student', 'add_teacher', 'enter_marks', etc.
+
+    /** @var list<array{value: string, label: string}> */
+    public $onboardingV2Options = [];
     public $actionSubstep = 0;
     public $actionData = [];
 
@@ -1108,11 +1111,13 @@ class AgentToshi extends Component
 
         $result = app(ToshiOnboardingV2Driver::class)->promptNext($school, auth()->id());
         if ($result['status'] === 'done') {
+            $this->onboardingV2Options = [];
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
 
             return;
         }
 
+        $this->rememberOnboardingV2Options($result);
         $this->botSay($this->formatOnboardingV2Prompt($result));
     }
 
@@ -1147,6 +1152,7 @@ class AgentToshi extends Component
         $result = app(ToshiOnboardingV2Driver::class)->handleReply($school, $text, auth()->id());
 
         if ($result['status'] === 'rejected') {
+            $this->rememberOnboardingV2Options($result);
             if (! empty($result['question'])) {
                 $this->botSay($this->formatOnboardingV2Prompt($result));
             }
@@ -1156,6 +1162,7 @@ class AgentToshi extends Component
         }
 
         if ($result['status'] === 'done') {
+            $this->onboardingV2Options = [];
             if (filled($result['saved_key'] ?? null)) {
                 $this->finishSchoolOnboarding();
             }
@@ -1164,10 +1171,30 @@ class AgentToshi extends Component
             return;
         }
 
+        $this->rememberOnboardingV2Options($result);
         $this->botSay($this->formatOnboardingV2Prompt($result));
     }
 
+    /**
+     * @param  array{options?: list<array{value: string, label: string}>}  $result
+     */
+    private function rememberOnboardingV2Options(array $result): void
+    {
+        $options = $result['options'] ?? [];
+        $this->onboardingV2Options = is_array($options) ? array_values($options) : [];
+    }
+
     /** Chip / button entry for registry options when v2 is active. */
+    public function selectOnboardingV2OptionByIndex(int $index): void
+    {
+        $value = $this->onboardingV2Options[$index]['value'] ?? null;
+        if (! is_string($value) && ! is_numeric($value)) {
+            return;
+        }
+
+        $this->selectOnboardingV2Option((string) $value);
+    }
+
     public function selectOnboardingV2Option(string $value): void
     {
         if (! $this->isOnboardingV2Enabled()) {
@@ -3099,6 +3126,7 @@ class AgentToshi extends Component
             'reviewData'        => $this->reviewData,
             'draftSessionId'    => $this->draftSessionId,
             'actionStep'        => $this->actionStep,
+            'onboardingV2Options' => $this->onboardingV2Options,
             'actionSubstep'     => $this->actionSubstep,
             'actionData'        => $this->actionData,
         ]]);
