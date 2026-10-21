@@ -165,6 +165,20 @@ class OnboardingEngine
             throw ValidationException::withMessages(['ministryCode' => 'Enter your EMIS / ministry code.']);
         }
 
+        // schools.ministry_code is varchar(20) with a unique index; check both
+        // here so a duplicate or overlong code is a validation error, not a 500.
+        if (mb_strlen($ministryCode) > 20) {
+            throw ValidationException::withMessages(['ministryCode' => 'An EMIS / ministry code can be at most 20 characters.']);
+        }
+
+        $taken = School::query()
+            ->where('ministry_code', $ministryCode)
+            ->whereKeyNot($school->getKey())
+            ->exists();
+        if ($taken) {
+            throw ValidationException::withMessages(['ministryCode' => 'That EMIS / ministry code is already used by another school. Check the code and try again.']);
+        }
+
         $school->ministry_code = $ministryCode;
         $school->save();
     }

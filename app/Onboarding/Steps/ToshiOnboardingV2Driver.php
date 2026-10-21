@@ -69,7 +69,12 @@ class ToshiOnboardingV2Driver
                 'hint' => null,
                 'saved_key' => null,
             ];
-        } catch (InvalidArgumentException|ValidationException) {
+        } catch (InvalidArgumentException|ValidationException $e) {
+            // Engine validation messages (e.g. a duplicate EMIS code) tell the
+            // admin what to fix; other rejections keep the generic hint.
+            $hint = $e instanceof ValidationException
+                ? (collect($e->errors())->flatten()->first() ?: self::COMING_SOON_HINT)
+                : self::COMING_SOON_HINT;
             $payload = $this->promptPayload($step, $school->fresh());
 
             return [
@@ -78,7 +83,7 @@ class ToshiOnboardingV2Driver
                 'question' => $payload['question'],
                 'options' => $payload['options'],
                 'input_type' => $payload['input_type'],
-                'hint' => self::COMING_SOON_HINT,
+                'hint' => $hint,
                 'saved_key' => null,
             ];
         }

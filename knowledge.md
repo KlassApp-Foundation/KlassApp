@@ -635,6 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **Early access existing account brought up to date again [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
+
+- Merged `origin/main` `63c45890bd586286e4fd25a6b2a8c6a29409e028` into `cursor/early-access-existing-account-5a7b` with a merge commit. No force-push. That tip is [#1191](https://github.com/KlassApp-Foundation/KlassApp/pull/1191) and includes [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189). The only conflict was `knowledge.md`. Both histories are kept. This note does not add infrastructure identifiers or tokens.
+- Not merged. Production untouched.
+
 ## Current Status: October 21, 2026 — **Early access existing account message stays generic [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176)**
 
 - The thank-you sentence is still only: "This email already has a KlassApp account. Sign in, or reset your password." It does not include the account's school name or role. The platform list still shows the request's own school and role, plus an "Existing user" badge, and does not show the account's school or role.
@@ -674,6 +679,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Decision:** No column. `users.email` is the source of truth, so a migration is not required and the label cannot drift from the account. The public message is only the sentence Rasta asked for on this form.
 - **Tests:** New tests red without the change (4 failed) and green with it (4 passed, 39 assertions). Guarded suite: 2934 tests, 0 failures, 0 errors, 4 skipped.
 - **Status:** OPEN [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
+## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
+
+- `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Reject duplicate or overlong EMIS codes (Toshi v2 + wizard)
+
+- **Work:** Applied the EMIS validation patch with `git am` onto `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c`. The patch applied with no conflict.
+- **Files:** `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `tests/Feature/Toshi/ToshiOnboardingV2EmisTest.php`.
+- **Decision:** Check length and uniqueness in `saveEmis` so both Toshi v2 and the wizard get a validation error. The driver surfaces `ValidationException` messages. Other rejections stay on the generic hint. The existence check excludes the current school and does not return another school's data.
+- **Status:** OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 

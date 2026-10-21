@@ -1,0 +1,36 @@
+Fee name,Amount (UGX),Applies to,Class,Term
+Tuition Term 1,250000,One class,Baby Class,Term 1
+Tuition Term 2,250000,One class,Baby Class,Term 2
+Tuition Term 3,250000,One class,Baby Class,Term 3
+Tuition Term 1,250000,One class,Middle Class,Term 1
+Tuition Term 2,250000,One class,Middle Class,Term 2
+Tuition Term 3,250000,One class,Middle Class,Term 3
+Tuition Term 1,280000,One class,Top Class,Term 1
+Tuition Term 2,280000,One class,Top Class,Term 2
+Tuition Term 3,280000,One class,Top Class,Term 3
+Tuition Term 1,320000,One class,Primary One,Term 1
+Tuition Term 2,320000,One class,Primary One,Term 2
+Tuition Term 3,320000,One class,Primary One,Term 3
+Tuition Term 1,320000,One class,Primary Two,Term 1
+Tuition Term 2,320000,One class,Primary Two,Term 2
+Tuition Term 3,320000,One class,Primary Two,Term 3
+Tuition Term 1,340000,One class,Primary Three,Term 1
+Tuition Term 2,340000,One class,Primary Three,Term 2
+Tuition Term 3,340000,One class,Primary Three,Term 3
+Tuition Term 1,360000,One class,Primary Four,Term 1
+Tuition Term 2,360000,One class,Primary Four,Term 2
+Tuition Term 3,360000,One class,Primary Four,Term 3
+Tuition Term 1,380000,One class,Primary Five,Term 1
+Tuition Term 2,380000,One class,Primary Five,Term 2
+Tuition Term 3,380000,One class,Primary Five,Term 3
+Tuition Term 1,400000,One class,Primary Six,Term 1
+Tuition Term 2,400000,One class,Primary Six,Term 2
+Tuition Term 3,400000,One class,Primary Six,Term 3
+Tuition Term 1,450000,One class,Primary Seven,Term 1
+Tuition Term 2,450000,One class,Primary Seven,Term 2
+Tuition Term 3,450000,One class,Primary Seven,Term 3
+Lunch Term 1,120000,Whole school,,Term 1
+Lunch Term 2,120000,Whole school,,Term 2
+Lunch Term 3,120000,Whole school,,Term 3
+Development Fund,50000,Whole school,,Yearly
+PLE Registration,45000,One class,Primary Seven,Yearly
