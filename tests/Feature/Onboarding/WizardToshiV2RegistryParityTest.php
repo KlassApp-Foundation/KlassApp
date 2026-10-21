@@ -228,8 +228,8 @@ class WizardToshiV2RegistryParityTest extends TestCase
             $payload['ministry_code'],
             'skip',
             $payload['year'],
-            'done', // standards confirm if still open
-            'done', // subjects confirm if still open
+            ['confirm' => 'standards'],
+            ['confirm' => 'subjects'],
             'skip', // teachers
             'skip', // students
             [
@@ -244,8 +244,17 @@ class WizardToshiV2RegistryParityTest extends TestCase
 
         foreach ($replies as $reply) {
             $school = $school->fresh();
-            if ($driver->promptNext($school, $uid)['status'] === 'done') {
+            $prompt = $driver->promptNext($school, $uid);
+            if ($prompt['status'] === 'done') {
                 break;
+            }
+            // "done" confirms seeded classes or subjects only when that step is open.
+            // When the registry has already moved on, do not send it to the next step.
+            if (is_array($reply) && isset($reply['confirm'])) {
+                if (($prompt['key'] ?? null) !== $reply['confirm']) {
+                    continue;
+                }
+                $reply = 'done';
             }
             $result = $driver->handleReply($school, $reply, $uid);
             $this->assertNotSame(

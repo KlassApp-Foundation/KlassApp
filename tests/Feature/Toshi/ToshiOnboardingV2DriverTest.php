@@ -120,6 +120,23 @@ class ToshiOnboardingV2DriverTest extends TestCase
         $this->assertStringContainsString(ToshiOnboardingV2Driver::COMING_SOON_HINT, $messages);
     }
 
+    public function test_v2_choice_steps_render_option_buttons(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class)
+            ->set('input', 'V2 Button School')
+            ->call('send');
+
+        $component->assertSee('data-testid="toshi-v2-options"', false);
+        $component->assertSee('wire:click="selectOnboardingV2OptionByIndex(0)"', false);
+
+        $component->call('selectOnboardingV2Option', 'Up to 500');
+
+        $this->assertSame('Up to 500', $this->school->fresh()->student_size);
+        $this->assertSame('onboarding_v2', $component->get('actionStep'));
+    }
+
     public function test_flag_off_keeps_legacy_action_steps(): void
     {
         config(['toshi.onboarding_v2' => false]);

@@ -49,13 +49,19 @@ class PlanSelectionStep extends AbstractOnboardingStep
 
         if (is_string($raw)) {
             $label = strtolower(trim($raw));
-            $plan = Plan::query()
-                ->where('is_active', 1)
-                ->get()
-                ->first(function (Plan $p) use ($label) {
-                    return strtolower((string) $p->name) === $label
-                        || strtolower((string) ($p->display_name ?: '')) === $label;
+            $plans = Plan::query()->where('is_active', 1)->get();
+            $plan = $plans->first(function (Plan $p) use ($label) {
+                return strtolower((string) $p->name) === $label
+                    || strtolower((string) ($p->display_name ?: '')) === $label;
+            });
+
+            // The public pricing page calls the free plan Starter. The stored name is freemium.
+            if (! $plan && $label === 'starter') {
+                $plan = $plans->first(function (Plan $p) {
+                    return strtolower((string) $p->name) === 'freemium'
+                        || strtolower((string) ($p->display_name ?: '')) === 'freemium';
                 });
+            }
 
             return $plan ? (int) $plan->id : 0;
         }
