@@ -63,7 +63,7 @@ class FeesStep extends AbstractOnboardingStep
 
                 continue;
             }
-            $fees[] = ['name' => $line, 'amount' => 0];
+            $fees[] = ['name' => $line, 'amount' => null];
         }
 
         return $fees;
@@ -73,6 +73,20 @@ class FeesStep extends AbstractOnboardingStep
     {
         if (! is_array($normalized) || $normalized === []) {
             $this->reject('Add at least one fee structure.');
+        }
+
+        foreach ($normalized as $fee) {
+            if (! is_array($fee)) {
+                $this->reject('Add at least one fee structure.');
+            }
+            $name = trim((string) ($fee['name'] ?? ''));
+            $amount = $fee['amount'] ?? null;
+            if ($name === '') {
+                $this->reject('Enter a fee name and an amount.');
+            }
+            if (! is_numeric($amount) || (float) $amount <= 0) {
+                $this->reject("Enter an amount for {$name}. For example: {$name} 250000.");
+            }
         }
     }
 

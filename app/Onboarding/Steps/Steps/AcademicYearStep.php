@@ -8,6 +8,20 @@ use App\Onboarding\Steps\AbstractOnboardingStep;
 
 class AcademicYearStep extends AbstractOnboardingStep
 {
+    /** Chat replies that mean "use the year the prompt suggested". */
+    private const CONFIRMATIONS = [
+        'yes',
+        'y',
+        'yeah',
+        'yep',
+        'correct',
+        'right',
+        'ok',
+        'okay',
+        'sure',
+        'confirm',
+    ];
+
     public function key(): string
     {
         return 'academic_year';
@@ -26,24 +40,95 @@ class AcademicYearStep extends AbstractOnboardingStep
     public function normalize(mixed $raw): mixed
     {
         if (is_array($raw)) {
+            $name = trim((string) ($raw['name'] ?? ''));
+            if ($this->isConfirmation($name)) {
+                $name = $this->suggestedYear();
+            }
+
             return [
-                'name' => trim((string) ($raw['name'] ?? '')),
+                'name' => $name,
                 'start' => $raw['start'] ?? null,
                 'end' => $raw['end'] ?? null,
+                'free_text' => false,
             ];
         }
         if (is_string($raw) && trim($raw) !== '') {
-            return ['name' => trim($raw), 'start' => null, 'end' => null];
+            $text = trim($raw);
+            if ($this->isConfirmation($text)) {
+                return ['name' => $this->suggestedYear(), 'start' => null, 'end' => null, 'free_text' => true];
+            }
+
+            return [
+                'name' => $this->isYearLabel($text) ? $this->canonicalYearLabel($text) : $text,
+                'start' => null,
+                'end' => null,
+                'free_text' => true,
+            ];
         }
 
-        return ['name' => (string) date('Y'), 'start' => null, 'end' => null];
+        return ['name' => $this->suggestedYear(), 'start' => null, 'end' => null, 'free_text' => false];
     }
 
     public function validate(School $school, mixed $normalized): void
     {
-        if (! is_array($normalized) || trim((string) ($normalized['name'] ?? '')) === '') {
-            $this->reject('Enter an academic year name.');
+        $name = trim((string) (is_array($normalized) ? ($normalized['name'] ?? '') : ''));
+        $fromChat = is_array($normalized) && ! empty($normalized['free_text']);
+
+        if ($name === '' || ($fromChat && ! $this->isYearLabel($name))) {
+            $this->reject($this->yearError());
         }
+    }
+
+    private function suggestedYear(): string
+    {
+        return (string) date('Y');
+    }
+
+    private function yearError(): string
+    {
+        $suggested = $this->suggestedYear();
+        $following = (string) ((int) $suggested + 1);
+
+        return "Enter an academic year such as {$suggested} or {$suggested}/{$following}, or reply yes to use {$suggested}.";
+    }
+
+    private function isConfirmation(string $text): bool
+    {
+        $text = strtolower(trim($text));
+        $text = rtrim($text, ".! ");
+
+        return in_array($text, self::CONFIRMATIONS, true);
+    }
+
+    private function isYearLabel(string $text): bool
+    {
+        $text = $this->canonicalYearLabel($text);
+        if (preg_match('/^\d{4}$/', $text)) {
+            return $this->plausibleYear((int) $text);
+        }
+        if (preg_match('/^(\d{4})[\/\-](\d{4})$/', $text, $matches)) {
+            $start = (int) $matches[1];
+            $end = (int) $matches[2];
+
+            return $this->plausibleYear($start) && $this->plausibleYear($end) && $end > $start;
+        }
+
+        return false;
+    }
+
+    private function canonicalYearLabel(string $text): string
+    {
+        $text = trim($text);
+        if (preg_match('/^(\d{4})\s*([\/\-])\s*(\d{4})$/', $text, $matches)) {
+            return $matches[1].$matches[2].$matches[3];
+        }
+
+        return $text;
+    }
+
+    private function plausibleYear(int $year): bool
+    {
+        return $year >= 1990 && $year <= 2200;
     }
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void

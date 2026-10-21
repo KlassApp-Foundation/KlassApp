@@ -3118,17 +3118,85 @@ class ManualOnboardingWizard extends Component
 
     private function prefillDefaultTerms(): void
     {
-        if ($this->termDrafts !== []) {
+        $year = $this->termPrefillYear();
+        if ($this->termDrafts !== [] && ! $this->draftsUseDefaultDatesForAnotherYear($year)) {
             return;
         }
 
-        $year = (int) now()->format('Y');
-        $this->termDrafts = [
+        $current = trim($this->currentTermName);
+        $this->termDrafts = $this->defaultTermDrafts($year);
+        $names = array_column($this->termDrafts, 'name');
+        $this->currentTermName = in_array($current, $names, true) ? $current : 'Term 1';
+    }
+
+    /**
+     * @return list<array{name: string, start: string, end: string}>
+     */
+    private function defaultTermDrafts(int $year): array
+    {
+        return [
             ['name' => 'Term 1', 'start' => "{$year}-02-03", 'end' => "{$year}-05-02"],
             ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-29"],
             ['name' => 'Term 3', 'start' => "{$year}-09-22", 'end' => "{$year}-12-19"],
         ];
-        $this->currentTermName = 'Term 1';
+    }
+
+    private function termPrefillYear(): int
+    {
+        $saved = AcademicYear::query()
+            ->where('school_id', $this->school()->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($saved) {
+            return $saved->calendarYear();
+        }
+
+        if ($this->academicYearStart !== '') {
+            $parsed = strtotime($this->academicYearStart);
+            if ($parsed !== false) {
+                $year = (int) date('Y', $parsed);
+                if ($year >= 1990) {
+                    return $year;
+                }
+            }
+        }
+
+        return (int) now()->year;
+    }
+
+    private function draftsUseDefaultDatesForAnotherYear(int $year): bool
+    {
+        $shape = [
+            ['Term 1', '02-03', '05-02'],
+            ['Term 2', '05-26', '08-29'],
+            ['Term 3', '09-22', '12-19'],
+        ];
+
+        if (count($this->termDrafts) !== count($shape)) {
+            return false;
+        }
+
+        $differentYear = false;
+        foreach ($shape as $index => [$name, $startMonthDay, $endMonthDay]) {
+            $draft = $this->termDrafts[$index] ?? null;
+            if (! is_array($draft) || strcasecmp(trim((string) ($draft['name'] ?? '')), $name) !== 0) {
+                return false;
+            }
+
+            $start = (string) ($draft['start'] ?? '');
+            $end = (string) ($draft['end'] ?? '');
+            $startPattern = '/^(\d{4})-'.preg_quote($startMonthDay, '/').'$/';
+            $endPattern = '/^(\d{4})-'.preg_quote($endMonthDay, '/').'$/';
+            if (! preg_match($startPattern, $start, $startMatch) || ! preg_match($endPattern, $end, $endMatch)) {
+                return false;
+            }
+            if ((int) $startMatch[1] !== $year || (int) $endMatch[1] !== $year) {
+                $differentYear = true;
+            }
+        }
+
+        return $differentYear;
     }
 
     private function ensureTermDraftsPrefill(): void

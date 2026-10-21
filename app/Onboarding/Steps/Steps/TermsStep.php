@@ -36,17 +36,43 @@ class TermsStep extends AbstractOnboardingStep
             return $raw;
         }
 
-        if (is_string($raw) && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true)) {
-            $y = (int) date('Y');
-
-            return [
-                ['name' => 'Term 1', 'start' => "{$y}-02-02", 'end' => "{$y}-05-08", 'status' => 'current'],
-                ['name' => 'Term 2', 'start' => "{$y}-05-26", 'end' => "{$y}-08-28", 'status' => 'next'],
-                ['name' => 'Term 3', 'start' => "{$y}-09-14", 'end' => "{$y}-12-04", 'status' => 'next'],
-            ];
+        if ($this->isDefaultTermsReply($raw)) {
+            return $this->defaultTerms((int) date('Y'));
         }
 
         return [];
+    }
+
+    /**
+     * @return list<array{name: string, start: string, end: string, status: string}>
+     */
+    private function defaultTerms(int $year): array
+    {
+        return [
+            ['name' => 'Term 1', 'start' => "{$year}-02-02", 'end' => "{$year}-05-08", 'status' => 'current'],
+            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-28", 'status' => 'next'],
+            ['name' => 'Term 3', 'start' => "{$year}-09-14", 'end' => "{$year}-12-04", 'status' => 'next'],
+        ];
+    }
+
+    private function isDefaultTermsReply(mixed $raw): bool
+    {
+        return is_string($raw)
+            && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true);
+    }
+
+    private function resolveTerms(School $school, mixed $raw): mixed
+    {
+        if (! $this->isDefaultTermsReply($raw)) {
+            return $this->normalize($raw);
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            $this->reject('Create an academic year before this step.');
+        }
+
+        return $this->defaultTerms($year->calendarYear());
     }
 
     public function validate(School $school, mixed $normalized): void
@@ -65,7 +91,7 @@ class TermsStep extends AbstractOnboardingStep
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
         $this->validate($school, $normalized);
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'terms');
@@ -81,7 +107,7 @@ class TermsStep extends AbstractOnboardingStep
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {
@@ -114,7 +140,7 @@ class TermsStep extends AbstractOnboardingStep
 
     public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {
