@@ -680,6 +680,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 - Toshi onboarding v2 (`TOSHI_ONBOARDING_V2`) no longer marks a WhatsApp number verified when the admin types the number. The step sends a code through `WhatsAppOnboardingOtpService` (the same send the wizard has used since #1167, including the demo-only allowance for that admin's own code), asks for the code, and sets `verified_at` only after the code matches. A wrong code does not. Resend and retry ask for another send. The code is not put in the chat. Skip is refused, because the wizard does not offer skip on this step.
 - `verified_at` is set only when this session holds a grant written by `verifyAdminCode` after the issued code matches that same phone. A Livewire flag, a restored draft, a posted phone, or `saveWhatsApp(..., codeWasVerified: true)` without that grant does not verify the number. The legacy Toshi commit (create and complete) reads the grant and ignores `whatsappVerified` / `whatsappPhone`. The wizard does the same. The manual `/admin/whatsapp/phone` form still links a number, and leaves `verified_at` null. The onboarding step counts as complete only when that row's `verified_at` is set, so the manual form no longer finishes the step. An unverified row can still be verified later with a server-checked code. Five wrong guesses delete the code; the sixth guess, including the old correct code, is rejected until a new code is sent. A code older than 5 minutes is deleted and rejected, including if the clock moves back. A code that already verified cannot be submitted again. Legacy Toshi refuses to send when no admin is signed in. No migration. Not merged. Production untouched. Needs Grok B's approval before merge.
+- Brought up to date with `origin/main` `0ee26b34` (merge commit, no rebase). That includes [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) at `529d649e9a2ca66b0bb06eaf7a743bcdc3cfdea1` (confirmed `merged: true`), [#1178](https://github.com/KlassApp-Foundation/KlassApp/pull/1178), [#1181](https://github.com/KlassApp-Foundation/KlassApp/pull/1181), and [#1174](https://github.com/KlassApp-Foundation/KlassApp/pull/1174). The only conflict was this file. The inbound orphan-user behaviour and the verification guarantees are both kept.
 
 ## Session: 2026-10-21 — Toshi v2 WhatsApp verification code
 
@@ -691,7 +692,30 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Tests:** Without the grant check, `test_tampered_state_cannot_mark_whatsapp_verified` failed because a posted phone set `verified_at`. With the fix, `WhatsAppVerificationGuardTest` (tamper + sixth guess) and `test_v2_whatsapp_sixth_guess_after_five_wrong_attempts_is_rejected` pass. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 2943 tests, 0 failures, 0 errors, 4 skipped, guard OK. No browser or staging pass. CI had not run on the old head because the branch conflicted with main (`pull_request` workflows need a merge ref).
 - **Status:** OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) (`cursor/toshi-v2-whatsapp-code-bfa1`). Do not merge from this session. Touches WhatsApp verification and security; needs Grok B's approval.
 
+## Session: 2026-10-21 — Merge main into #1180
+
+- **Work:** Merge `origin/main` `0ee26b347028af387205665edfba753868c03815` into `cursor/toshi-v2-whatsapp-code-bfa1`. No rebase. No env change. No new feature.
+- **Files:** The only conflict was `knowledge.md`. Both histories are kept. `app/Http/Controllers/Api/WhatsAppController.php` and `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php` match main, so [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) is unchanged. [#1174](https://github.com/KlassApp-Foundation/KlassApp/pull/1174), [#1178](https://github.com/KlassApp-Foundation/KlassApp/pull/1178), and [#1181](https://github.com/KlassApp-Foundation/KlassApp/pull/1181) came in the same merge. `AgentToshi.php` and `WizardToshiV2RegistryParityTest.php` auto-merged; the verification grant, expiry, guess limit, and unsigned-send refusal stayed.
+- **Decision:** Do not rewrite the inbound replies or the verification checks.
+- **Tests:** `tests/Feature/Onboarding`, `tests/Feature/WhatsApp` (includes `OrphanWhatsAppUserInboundTest`), and `tests/Feature/Toshi`: 1088 tests, 5201 assertions, 0 failures, 2 skipped. Two older methods in `ParentMagicLoginWhatsAppTest` are still risky because they make no assertions.
+- **Status:** OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180). [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) is MERGED at `529d649e9a2ca66b0bb06eaf7a743bcdc3cfdea1`.
+
+## Current Status: October 21, 2026 — **WhatsApp orphan inbound MERGED [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175)** `529d649e9a2ca66b0bb06eaf7a743bcdc3cfdea1`
+
+- A number whose user is missing is still answered as unrecognised, and `demo` still relinks that same row. Before the stranger handler runs, the row's old link is cleared (`user_id`, `school_id`, demo fields, payment-code fields, profile name) so those values are not used to look anyone up.
+- A school student id, a KlassApp id, and a 10-digit payment code from that number now get the same reply and the same links as a number that was never seen. The payment-code path updates the cleared row instead of inserting a second one. `whatsappDisplayName` is given the student user directly; `optional()` always wraps its value and the no-parent payment path was returning 500.
+- Confirmed `merged: true` at `529d649e9a2ca66b0bb06eaf7a743bcdc3cfdea1` (`2026-10-21T15:42:59Z`). The notes below are the record from that branch before it landed.
+
+## Session: 2026-10-21 — Orphan numbers do not keep the old school
+
+- **Work:** Clear the stale WhatsApp link before the stranger handler. Keep the demo relink.
+- **Files:** `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/OrphanWhatsAppUserInboundTest.php`, `knowledge.md`.
+- **Decision:** Clear the stored fields on the existing row rather than delete it, so `demo` still updates that row. The logs at the inbound parse and the demo info line were not changed.
+- **Tests:** Orphan file 6 tests, 47 assertions. WhatsApp feature directory 106 tests, 396 assertions, 0 failures, 2 risky.
+- **Status:** MERGED [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175) at `529d649e9a2ca66b0bb06eaf7a743bcdc3cfdea1`.
+
 ## Current Status: October 21, 2026 — **Early adopter Growth offer MERGED [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173)**
+
 
 - Claiming an early-adopter school invite sets that school's `CurrentPlan` to Growth (`status=running`, not the 30-day trial) and its `Subscription` to an approved window from the claim date to three months later. `amount_paid` is 0. No payment provider is called.
 - The school records the offer in `school_details`: `early_adopter_offer` = `growth_3_months`, and `early_adopter_offer_at` = the claim instant. No migration. `CurrentPlan`, `Subscription`, and `school_details` already exist.

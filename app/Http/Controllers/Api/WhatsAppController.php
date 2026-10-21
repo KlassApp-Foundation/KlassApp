@@ -667,6 +667,30 @@ class WhatsAppController extends Controller
             ->where('phone', $phone)
             ->first();
 
+        // A row whose user is gone (deleted or soft-deleted account, or no
+        // user_id) is not a recognised user: answer it as a stranger so the
+        // webhook does not fail on $whatsappUser->user. Drop the old link
+        // first. The stranger handler must not use this row's school_id, or
+        // any other field left from that account, when it looks someone up.
+        // "demo" re-links this same row.
+        if ($whatsappUser && $whatsappUser->user === null) {
+            Log::warning('WhatsApp inbound: number linked to a missing user, answered as unrecognised', [
+                'whatsapp_user_id' => $whatsappUser->id,
+                'phone' => '•••' . substr(preg_replace('/\D/', '', $phone), -3),
+            ]);
+            $whatsappUser->forceFill([
+                'user_id' => null,
+                'school_id' => null,
+                'demo_name' => null,
+                'demo_linked_at' => null,
+                'demo_student_id' => null,
+                'student_payment_code' => null,
+                'verified_via_schoolpay' => false,
+                'whatsapp_profile_name' => null,
+            ])->save();
+            $whatsappUser = null;
+        }
+
         if (!$whatsappUser) {
             // Pending/rejected link requests beat the generic stranger menu —
             // a parent who already submitted deserves status, not "who are you?".
@@ -1198,18 +1222,23 @@ class WhatsAppController extends Controller
 
         if (!$parentLink) {
             // No parent linked — link directly via payment code
-            $studentName = $this->whatsappDisplayName(optional($studentAcademic->user), 'your child');
+            $studentName = $this->whatsappDisplayName($studentAcademic->user, 'your child');
             $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
 
-            WhatsAppUser::create([
-                'phone'                  => $phone,
-                'school_id'              => $studentAcademic->school_id,
-                'student_payment_code'   => $code,
-                'verified_via_schoolpay' => true,
-                'verified_at'            => now(),
-                'opted_in'               => true,
-                'last_inbound_at'        => now(),
-            ]);
+            // updateOrCreate: an orphan row may still exist after its link
+            // fields were cleared. A brand-new number has no row and is created.
+            WhatsAppUser::updateOrCreate(
+                ['phone' => $phone],
+                [
+                    'user_id'                => null,
+                    'school_id'              => $studentAcademic->school_id,
+                    'student_payment_code'   => $code,
+                    'verified_via_schoolpay' => true,
+                    'verified_at'            => now(),
+                    'opted_in'               => true,
+                    'last_inbound_at'        => now(),
+                ],
+            );
 
             $classLine = $className ? " ({$className})" : '';
             $school = DB::table('schools')->find($studentAcademic->school_id);
@@ -1240,21 +1269,23 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Create the WhatsApp user record
+        // Same row as a brand-new number: update the cleared orphan row, or create one.
         $school = DB::table('schools')->find($studentAcademic->school_id);
-        $studentName = $this->whatsappDisplayName(optional($studentAcademic->user), 'your child');
+        $studentName = $this->whatsappDisplayName($studentAcademic->user, 'your child');
         $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
 
-        WhatsAppUser::create([
-            'phone'                  => $phone,
-            'user_id'                => $parentLink->parent_id,
-            'school_id'              => $studentAcademic->school_id,
-            'student_payment_code'   => $code,
-            'verified_via_schoolpay' => true,
-            'verified_at'            => now(),
-            'opted_in'               => true,
-            'last_inbound_at'        => now(),
-        ]);
+        WhatsAppUser::updateOrCreate(
+            ['phone' => $phone],
+            [
+                'user_id'                => $parentLink->parent_id,
+                'school_id'              => $studentAcademic->school_id,
+                'student_payment_code'   => $code,
+                'verified_via_schoolpay' => true,
+                'verified_at'            => now(),
+                'opted_in'               => true,
+                'last_inbound_at'        => now(),
+            ],
+        );
 
         $classLine = $className ? " ({$className})" : '';
         $sendButtons(
@@ -1327,8 +1358,14 @@ class WhatsAppController extends Controller
         $clean = preg_replace('/[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F1E0}-\\x{1F1FF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]/u', '', $body);
         $trimmed = strtolower(trim($body));
         $normalised = strtolower(trim($clean));
-        $role = $user->user->usergroup_id;
-        $hasChildren = $user->user->children()->exists();
+        // Backstop if this row is reached with no account. processMetaMessage
+        // already answers that sender as unrecognised.
+        $linkedUser = $user->user;
+        if ($linkedUser === null) {
+            return;
+        }
+        $role = $linkedUser->usergroup_id;
+        $hasChildren = $linkedUser->children()->exists();
 
         // Match against both raw input and emoji-stripped version
         $match = fn(array $keywords) => in_array($trimmed, $keywords) || in_array($normalised, $keywords);
@@ -1672,10 +1709,15 @@ class WhatsAppController extends Controller
      */
     private function sendMenu(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
+        // Same backstop as routeInbound: menu rendering calls children().
+        $linkedUser = $user->user;
+        if ($linkedUser === null) {
+            return;
+        }
         $name = $user->demo_name
-            ?: $this->whatsappDisplayName($user->user, 'there');
-        $role = $user->user->usergroup_id;
-        $hasChildren = $user->user->children()->exists();
+            ?: $this->whatsappDisplayName($linkedUser, 'there');
+        $role = $linkedUser->usergroup_id;
+        $hasChildren = $linkedUser->children()->exists();
 
         // Send a brief greeting then show role-specific buttons
         $greeting = "👋 Hello, *{$name}*! What would you like to do?";
