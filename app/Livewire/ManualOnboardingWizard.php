@@ -2943,32 +2943,23 @@ class ManualOnboardingWizard extends Component
         }
         $this->whatsappPhone = $phone;
 
-        $otpService = app(WhatsAppOnboardingOtpService::class);
-        $adminId = (int) Auth::id();
-        if ($wait = $otpService->consumeVerificationAttempt($adminId)) {
+        $result = app(WhatsAppOnboardingOtpService::class)->sendAdminVerificationCode((int) Auth::id(), $phone);
+
+        if ($result['reason'] === 'rate_limited') {
             $this->whatsappOtpDisplay = '';
             $this->whatsappSendFailed = true;
-            $this->whatsappOtpStatus = $wait;
+            $this->whatsappOtpStatus = $result['message'];
 
             return;
         }
 
-        $otp = $otpService->generateCode();
-
-        session([
-            'wizard_wa_otp.code' => $otp,
-            'wizard_wa_otp.phone' => $phone,
-            'wizard_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
-        ]);
-
         $this->whatsappVerified = false;
         $this->whatsappOtpInput = '';
 
-        $delivery = $otpService->deliver($phone, $otp, $adminId);
-        if ($otpService->mayDisplayCode()) {
-            $this->whatsappOtpDisplay = $otp;
-            $this->whatsappOtpStatus = "Your verification code: {$otp}";
-            if ($delivery['sent']) {
+        if (is_string($result['code']) && $result['code'] !== '') {
+            $this->whatsappOtpDisplay = $result['code'];
+            $this->whatsappOtpStatus = "Your verification code: {$result['code']}";
+            if ($result['sent']) {
                 $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
             } else {
                 $this->whatsappSendFailed = true;
@@ -2979,56 +2970,36 @@ class ManualOnboardingWizard extends Component
         }
 
         $this->whatsappOtpDisplay = '';
-        if ($delivery['sent']) {
-            $this->whatsappOtpStatus = 'We sent a verification code to your WhatsApp. Enter it below.';
+        if ($result['sent']) {
+            $this->whatsappOtpStatus = $result['message'];
 
             return;
         }
 
         $this->whatsappSendFailed = true;
-        $this->whatsappOtpStatus = "We couldn't send the verification code. Please try again.";
+        $this->whatsappOtpStatus = $result['message'];
     }
 
     public function verifyWhatsAppCode(): void
     {
         $this->errorMessage = '';
-        $expected = (string) session('wizard_wa_otp.code', '');
-        $sessionPhone = (string) session('wizard_wa_otp.phone', '');
-        $expiresAt = (int) session('wizard_wa_otp.expires_at', 0);
+        $result = app(WhatsAppOnboardingOtpService::class)->verifyAdminCode(
+            (int) Auth::id(),
+            $this->whatsappOtpInput,
+            $this->whatsappPhone,
+        );
 
-        if ($expected === '' || $sessionPhone === '') {
-            $this->errorMessage = 'Send a verification code first.';
-
-            return;
-        }
-
-        if ($expiresAt > 0 && now()->timestamp > $expiresAt) {
-            $this->errorMessage = 'That code has expired. Send a new one.';
+        if (! $result['verified']) {
+            $this->errorMessage = $result['message'];
             $this->whatsappVerified = false;
 
             return;
         }
 
-        if (trim($this->whatsappPhone) !== '' && trim($this->whatsappPhone) !== $sessionPhone) {
-            $this->errorMessage = 'Phone number changed after the code was sent. Send a new code.';
-            $this->whatsappVerified = false;
-
-            return;
-        }
-
-        $otpService = app(WhatsAppOnboardingOtpService::class);
-        if (! $otpService->matches($expected, $this->whatsappOtpInput)) {
-            $this->errorMessage = "That code doesn't match. Try again or send a new code.";
-            $this->whatsappVerified = false;
-
-            return;
-        }
-
-        $this->whatsappPhone = $sessionPhone;
+        $this->whatsappPhone = $result['phone'];
         $this->whatsappVerified = true;
-        $this->whatsappOtpStatus = "WhatsApp verified for {$this->whatsappPhone}.";
+        $this->whatsappOtpStatus = $result['message'];
         $this->whatsappOtpDisplay = '';
-        session()->forget(['wizard_wa_otp.code', 'wizard_wa_otp.phone', 'wizard_wa_otp.expires_at']);
     }
 
     private function saveWhatsApp(School $school): void
@@ -3057,7 +3028,7 @@ class ManualOnboardingWizard extends Component
             ]);
         }
 
-        $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone);
+        $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone, codeWasVerified: true);
 
         if ($result['skipped'] !== null) {
             throw ValidationException::withMessages([

@@ -1146,6 +1146,12 @@ class AgentToshi extends Component
 
         $result = app(ToshiOnboardingV2Driver::class)->handleReply($school, $text, auth()->id());
 
+        if ($result['status'] === 'awaiting') {
+            $this->botSay($this->formatOnboardingV2Prompt($result));
+
+            return;
+        }
+
         if ($result['status'] === 'rejected') {
             if (! empty($result['question'])) {
                 $this->botSay($this->formatOnboardingV2Prompt($result));
@@ -6986,7 +6992,7 @@ class AgentToshi extends Component
                 // ── WhatsApp: delegate to OnboardingEngine ──
                 // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch for phone dedup.
                 if ($this->whatsappVerified && $this->whatsappPhone) {
-                    app(OnboardingEngine::class)->saveWhatsApp($school, $adminUser->id, $this->whatsappPhone);
+                    app(OnboardingEngine::class)->saveWhatsApp($school, $adminUser->id, $this->whatsappPhone, codeWasVerified: true);
                 }
             }
 
@@ -7133,7 +7139,7 @@ class AgentToshi extends Component
                 // ── WhatsApp: delegate to OnboardingEngine ──
                 // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch.
                 if ($this->whatsappVerified && $this->whatsappPhone) {
-                    app(OnboardingEngine::class)->saveWhatsApp($school, $user->id, $this->whatsappPhone);
+                    app(OnboardingEngine::class)->saveWhatsApp($school, $user->id, $this->whatsappPhone, codeWasVerified: true);
                 }
 
                 // Promote selected teacher to co-admin (usergroup_id: 5 → 3)

@@ -140,6 +140,20 @@ class SaveWhatsAppTest extends TestCase
 
         $whatsapp = WhatsAppUser::where('user_id', $this->user->id)->first();
         $this->assertTrue($whatsapp->opted_in);
-        $this->assertNotNull($whatsapp->verified_at);
+        $this->assertNull($whatsapp->verified_at);
+
+        $verifiedUser = User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 3,
+            'name' => 'Verified Admin',
+            'email' => Str::random(8).'@test.sch.ug',
+            'password' => bcrypt(Str::random(16)),
+            'status' => 'active',
+            'is_reset' => 1,
+        ]);
+        $engine->saveWhatsApp($this->school, $verifiedUser->id, '+256700333444', codeWasVerified: true);
+        $verified = WhatsAppUser::where('user_id', $verifiedUser->id)->first();
+        $this->assertNotNull($verified);
+        $this->assertNotNull($verified->verified_at);
     }
 }

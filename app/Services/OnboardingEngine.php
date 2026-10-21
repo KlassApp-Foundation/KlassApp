@@ -1811,9 +1811,13 @@ class OnboardingEngine
      *
      * Returns ['linked' => [...], 'skipped' => [...]] for empty / already-linked cases.
      *
+     * verified_at is set only when $codeWasVerified is true. Callers that have
+     * already checked a code (the setup wizard, and the legacy Toshi commit)
+     * pass true. A phone number on its own does not mark the row verified.
+     *
      * @throws ValidationException
      */
-    public function saveWhatsApp(School $school, int $userId, string $phone): array
+    public function saveWhatsApp(School $school, int $userId, string $phone, bool $codeWasVerified = false): array
     {
         $phone = $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
 
@@ -1839,7 +1843,7 @@ class OnboardingEngine
                     'phone'       => $phone,
                     'school_id'   => $school->id,
                     'opted_in'    => true,
-                    'verified_at' => now(),
+                    'verified_at' => $codeWasVerified ? now() : null,
                 ]
             );
 
@@ -1849,6 +1853,17 @@ class OnboardingEngine
                 'whatsappPhone' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+    }
+
+    /**
+     * Canonical WhatsApp number for this school. Empty stays empty. An invalid
+     * number for a known country throws ValidationException.
+     *
+     * @throws ValidationException
+     */
+    public function normaliseOnboardingPhoneForWhatsApp(School $school, string $phone): string
+    {
+        return $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
     }
 
     /**

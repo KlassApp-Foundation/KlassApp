@@ -118,4 +118,123 @@ class WhatsAppOnboardingOtpService
 
         return $expected !== '' && hash_equals($expected, $provided);
     }
+
+    /**
+     * Send (or resend) the code for this admin's own number.
+     *
+     * The code stays in the session the wizard already uses. The returned
+     * message never contains it. `code` is set only when mayDisplayCode()
+     * is true, so the wizard can keep its local/testing hint; callers that
+     * render a chat transcript must ignore that field.
+     *
+     * @return array{sent: bool, failed: bool, reason: string, phone: string, message: string, code: ?string}
+     */
+    public function sendAdminVerificationCode(int $adminUserId, string $phone): array
+    {
+        $phone = trim($phone);
+
+        if ($wait = $this->consumeVerificationAttempt($adminUserId)) {
+            return [
+                'sent' => false,
+                'failed' => true,
+                'reason' => 'rate_limited',
+                'phone' => $phone,
+                'message' => $wait,
+                'code' => null,
+            ];
+        }
+
+        $otp = $this->generateCode();
+        session([
+            'wizard_wa_otp.code' => $otp,
+            'wizard_wa_otp.phone' => $phone,
+            'wizard_wa_otp.user_id' => $adminUserId,
+            'wizard_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
+
+        $delivery = $this->deliver($phone, $otp, $adminUserId > 0 ? $adminUserId : null);
+        $sent = (bool) ($delivery['sent'] ?? false);
+
+        return [
+            'sent' => $sent,
+            'failed' => ! $sent,
+            'reason' => $sent ? 'sent' : 'failed',
+            'phone' => $phone,
+            'message' => $sent
+                ? 'We sent a verification code to your WhatsApp. Enter it below.'
+                : "We couldn't send the verification code. Please try again.",
+            'code' => $this->mayDisplayCode() ? $otp : null,
+        ];
+    }
+
+    /**
+     * Check the code the admin typed against the one sendAdminVerificationCode stored.
+     * Does not write whatsapp_users. On a match, the stored code is forgotten.
+     *
+     * @return array{verified: bool, phone: string, message: string}
+     */
+    public function verifyAdminCode(int $adminUserId, string $provided, string $currentPhone = ''): array
+    {
+        $expected = (string) session('wizard_wa_otp.code', '');
+        $sessionPhone = (string) session('wizard_wa_otp.phone', '');
+        $ownerId = (int) session('wizard_wa_otp.user_id', 0);
+        $expiresAt = (int) session('wizard_wa_otp.expires_at', 0);
+
+        if ($expected === '' || $sessionPhone === '' || ($adminUserId > 0 && $ownerId > 0 && $ownerId !== $adminUserId)) {
+            return [
+                'verified' => false,
+                'phone' => $sessionPhone,
+                'message' => 'Send a verification code first.',
+            ];
+        }
+
+        if ($expiresAt > 0 && now()->timestamp > $expiresAt) {
+            return [
+                'verified' => false,
+                'phone' => $sessionPhone,
+                'message' => 'That code has expired. Send a new one.',
+            ];
+        }
+
+        if (trim($currentPhone) !== '' && trim($currentPhone) !== $sessionPhone) {
+            return [
+                'verified' => false,
+                'phone' => $sessionPhone,
+                'message' => 'Phone number changed after the code was sent. Send a new code.',
+            ];
+        }
+
+        if (! $this->matches($expected, $provided)) {
+            return [
+                'verified' => false,
+                'phone' => $sessionPhone,
+                'message' => "That code doesn't match. Try again or send a new code.",
+            ];
+        }
+
+        session()->forget(['wizard_wa_otp.code', 'wizard_wa_otp.phone', 'wizard_wa_otp.user_id', 'wizard_wa_otp.expires_at']);
+
+        return [
+            'verified' => true,
+            'phone' => $sessionPhone,
+            'message' => "WhatsApp verified for {$sessionPhone}.",
+        ];
+    }
+
+    /**
+     * The code currently waiting to be typed. Server-side only — never render it.
+     */
+    public function pendingCode(): ?string
+    {
+        $code = trim((string) session('wizard_wa_otp.code', ''));
+
+        return $code !== '' ? $code : null;
+    }
+
+    public function pendingPhone(): ?string
+    {
+        $phone = trim((string) session('wizard_wa_otp.phone', ''));
+
+        return $phone !== '' ? $phone : null;
+    }
 }

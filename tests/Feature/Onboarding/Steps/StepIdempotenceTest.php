@@ -8,8 +8,10 @@ use App\Models\School;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Onboarding\Steps\OnboardingStepAwaitingInput;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\OnboardingStepsService;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -137,7 +139,7 @@ class StepIdempotenceTest extends TestCase
 
         foreach ($this->registry->all() as $step) {
             $isTarget = $step->key() === $key;
-            $step->saveAndReport($this->school->fresh(), self::ANSWERS[$step->key()], $userId);
+            $this->saveStructured($step, $userId);
             $this->school = $this->school->fresh();
             if ($isTarget) {
                 return $step;
@@ -145,6 +147,24 @@ class StepIdempotenceTest extends TestCase
         }
 
         $this->fail("Step {$key} not found.");
+    }
+
+    private function saveStructured(\App\Onboarding\Steps\Contracts\OnboardingStep $step, int $userId): void
+    {
+        $answer = self::ANSWERS[$step->key()];
+        if ($step->key() !== 'whatsapp_verify') {
+            $step->saveAndReport($this->school->fresh(), $answer, $userId);
+
+            return;
+        }
+
+        try {
+            $step->saveAndReport($this->school->fresh(), $answer, $userId);
+        } catch (OnboardingStepAwaitingInput) {
+            $code = app(WhatsAppOnboardingOtpService::class)->pendingCode();
+            $this->assertNotNull($code);
+            $step->saveAndReport($this->school->fresh(), $code, $userId);
+        }
     }
 
     /** Run one saveAndReport on the target step and return its report. */
@@ -401,8 +421,9 @@ class StepIdempotenceTest extends TestCase
         $this->prepareThrough('whatsapp_verify');
 
         $user = DB::table('whatsapp_users')->where('phone', '+256770000111')->first();
-        $this->assertNotNull($user, 'the WhatsApp link is created with the structured phone answer');
+        $this->assertNotNull($user, 'the WhatsApp link is created only after the verification code');
         $this->assertSame($this->admin(), $user->user_id);
+        $this->assertNotNull($user->verified_at);
 
         $counts = $this->counts();
         $second = $this->reportOf('whatsapp_verify', self::ANSWERS['whatsapp_verify']);
