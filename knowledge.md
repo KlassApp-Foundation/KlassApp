@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN**
+
+- The teachers step of the setup wizard has an "Upload class teachers" option beside the teacher file upload. The template is a CSV (`class`, `stream`, `name`, `email`, `phone`) with example rows, downloaded from `admin.class-teachers.upload-template`.
+- Each readable row is saved immediately. The step reports "N class teachers added, M skipped" and a reason per skipped row (unknown class, unknown stream, missing name, bad email). Saved assignments are listed on the step.
+- Class text uses `OnboardingEngine` (`P1`, `Primary 1`, `Primary One`). A stream, when given, must already exist. The teacher is found by email, then by phone, or created. The same email reuses that school's teacher. Assignment writes the existing `standards_link.class_teacher_id` and `sections.class_teacher_id`. No migration. No invite and no message.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Wizard class-teacher upload
+
+- **Work:** add a class-teacher CSV upload on the setup wizard, next to the teacher upload. Reuse that importer's save-as-you-go report. Resolve class and stream through the shared onboarding class lookup. Create or reuse the teacher and assign them with the existing class-teacher columns.
+- **Files:** `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `routes/admin.php`, `app/Http/Controllers/Admin/ClassTeacherUploadTemplateController.php`, `public/templates/class-teacher-upload-template.csv`, `tests/Feature/Onboarding/WizardClassTeacherUploadTest.php`, `knowledge.md`.
+- **Decision:** do not send invites or WhatsApp. The teacher upload does not. Do not add a table. `standards_link.class_teacher_id` and `sections.class_teacher_id` are the assignment. An unknown class or stream is skipped and does not create a teacher. A local `0772…` number is normalised with the same phone helper as the teacher upload. An email that already belongs to someone who is not an active teacher at this school is skipped.
+- **Tests:** `bash scripts/test-guard.sh` (4 processes) — 2935 tests, 0 failures, 0 errors, 4 skipped, guard OK. The five new tests cover the template download, saved assignments, an unknown class, `P1` and `Primary 1`, and a duplicate email. No browser or staging pass.
+- **Status:** OPEN on `cursor/wizard-class-teacher-upload-0124`. Review requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
 - 2026-10-21: `league/flysystem` root constraint `^3.35.3` (lock 3.35.2 → 3.35.3) clears Composer advisory PKSA-w9tt-7782-78jx (`<=3.35.2`). Follow-up to #1171. OPEN [#1172](https://github.com/KlassApp-Foundation/KlassApp/pull/1172) (`cursor/flysystem-version-range-99e9`). Laravel 13's `^3.25.1` still matches. No other packages moved. Not merged.

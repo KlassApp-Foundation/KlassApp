@@ -194,6 +194,7 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::get("/class-stream/{section}/create", "ClassStreamController@create")->name("admin.class-stream.create");
 	Route::post("/class-stream/{section}/store", "ClassStreamController@store")->name("admin.class-stream.store");
 	Route::get('/students/upload-template', 'StudentUploadTemplateController@download')->name('admin.students.upload-template');
+	Route::get('/class-teachers/upload-template', 'ClassTeacherUploadTemplateController@download')->name('admin.class-teachers.upload-template');
 	Route::get('/classes/{section}', function ($section) {
 	    return view('class-roster.show', [
 	        'sectionId' => (int) $section,
