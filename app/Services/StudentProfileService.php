@@ -8,7 +8,6 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Attendance;
 use App\Models\FeePayment;
-use App\Models\FeesCategories;
 use App\Models\ParentProfile;
 use App\Models\StudentAcademic;
 use App\Models\User;
@@ -94,7 +93,7 @@ class StudentProfileService
             'status_label' => $this->statusLabel((string) $student->status),
             'attendance' => $this->attendance($schoolId, $student->id, $term),
             'exam' => $this->exam($schoolId, $student->id, $sectionId, $standardId, $term?->id),
-            'fees' => $this->fees($schoolId, $student->id, $standardId),
+            'fees' => $this->fees($schoolId, $student),
             'currency' => app(DashboardV2DataService::class)->currencyFor($schoolId),
             'parents' => $this->parents($schoolId, $student),
             'marks' => $this->marks($schoolId, $student->id, $sectionId, $term?->id),
@@ -292,18 +291,12 @@ class StudentProfileService
     /**
      * @return array{empty: bool, balance: ?string, status: ?string, expected: ?string, paid: ?string}
      */
-    private function fees(int $schoolId, int $studentId, ?int $standardId): array
+    private function fees(int $schoolId, User $student): array
     {
-        $expected = 0.0;
-        if ($standardId) {
-            $expected = (float) FeesCategories::query()
-                ->where('school_id', $schoolId)
-                ->where('standard_id', $standardId)
-                ->sum('amount');
-        }
+        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId)->sum('amount');
         $paid = (float) FeePayment::query()
             ->where('school_id', $schoolId)
-            ->where('user_id', $studentId)
+            ->where('user_id', $student->id)
             ->sum('amount');
 
         if ($expected <= 0 && $paid <= 0) {

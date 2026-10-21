@@ -7,12 +7,11 @@ use App\Helpers\SiteHelper;
 use App\Models\Academics\Exam;
 use App\Models\Attendance;
 use App\Models\FeePayment;
-use App\Models\FeesCategories;
 use App\Models\School;
-use App\Models\StudentAcademic;
 use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
 use App\Models\User;
+use App\Services\StudentFeeResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -257,19 +256,7 @@ class ParentPortalService
             ];
         }
 
-        $academic = StudentAcademic::where('school_id', $schoolId)
-            ->where('user_id', $student->id)
-            ->first();
-
-        $standardId = $academic?->standardLink?->standard_id
-            ?? $student->studentAcademicLatest?->standardLink?->standard_id;
-
-        $categories = collect();
-        if ($standardId) {
-            $categories = FeesCategories::where('school_id', $schoolId)
-                ->where('standard_id', $standardId)
-                ->get();
-        }
+        $categories = app(StudentFeeResolver::class)->forStudent($student, $schoolId);
 
         $totalFees = (float) $categories->sum('amount');
         // fee_payments.user_id is the student user id (see FeePayment::student()).

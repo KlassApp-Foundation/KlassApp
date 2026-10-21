@@ -461,7 +461,10 @@ class StudentReportCardService
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => $gradingSystem,
-            'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
+            'fees' => $learner instanceof User
+                ? app(StudentFeeResolver::class)->forStudent($learner, $schoolId)
+                : collect(),
+            'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
             'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),

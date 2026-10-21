@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\AcademicYear;
 use App\Models\ActivityLog;
 use App\Models\FeePayment;
-use App\Models\FeesCategories;
 use App\Models\ParentProfile;
 use App\Models\StudentAcademic;
 use App\Models\User;
@@ -124,7 +123,7 @@ class ParentProfileService
             if ($standardLink && (int) $standardLink->school_id !== $schoolId) {
                 $standardLink = null;
             }
-            $fees = $this->childFees($schoolId, $student->id, $standardLink?->standard_id);
+            $fees = $this->childFees($schoolId, $student);
             $rows[] = [
                 'id' => $student->id,
                 'name' => $this->personName($student, $student->userprofile),
@@ -147,18 +146,12 @@ class ParentProfileService
     /**
      * @return array{empty: bool, expected: float, paid: float, balance: float}
      */
-    private function childFees(int $schoolId, int $studentId, ?int $standardId): array
+    private function childFees(int $schoolId, User $student): array
     {
-        $expected = 0.0;
-        if ($standardId) {
-            $expected = (float) FeesCategories::query()
-                ->where('school_id', $schoolId)
-                ->where('standard_id', $standardId)
-                ->sum('amount');
-        }
+        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId)->sum('amount');
         $paid = (float) FeePayment::query()
             ->where('school_id', $schoolId)
-            ->where('user_id', $studentId)
+            ->where('user_id', $student->id)
             ->sum('amount');
 
         if ($expected <= 0 && $paid <= 0) {
