@@ -638,15 +638,27 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: October 21, 2026 — **real schools stay on the Wizard until Toshi parity OPEN [#1192](https://github.com/KlassApp-Foundation/KlassApp/pull/1192)**
 
 - A school with `is_test` false no longer starts Toshi onboarding. The choice on `/onboarding/choose`, the invite claim page, the dashboard setup control, and the setup banner show "Set up by chatting with Toshi" disabled, labelled "Coming soon". A direct POST or GET that selects that path redirects to the Wizard with a short flash. A real school already in `toshi_mode=onboarding` is sent to the Wizard; completed steps stay completed because both paths read the same step records. Test schools (`is_test = 1`) keep the Toshi path. `TOSHI_ONBOARDING_V2` is unchanged.
-- Not merged. Production untouched.
+- Merged `origin/main` `63c45890bd586286e4fd25a6b2a8c6a29409e028` (merge commit, no force-push). That brings in [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) and [#1191](https://github.com/KlassApp-Foundation/KlassApp/pull/1191). The only conflict was this file. Both histories are kept below. Not merged. Production untouched.
 
 ## Session: 2026-10-21 — Hide the Toshi onboarding path for real schools
 
 - **Work:** One gate, `ToshiOnboardingPath`, decides whether a school may start Toshi onboarding (`is_test` is 1). The choice controller, the welcome screen, and the dashboard query that opens Toshi send a real school to the Wizard. Admin pages and settings pages do the same when that school is still in onboarding mode and has not finished. The mode is set back to preview so the next visit does not re-enter Toshi. Step rows are not rewritten.
 - **Files:** `app/Services/Toshi/ToshiOnboardingPath.php`, `app/Http/Middleware/SendRealSchoolToshiOnboardingToWizard.php`, `app/Http/Middleware/MustBePrivilege.php`, `app/Providers/RouteServiceProvider.php`, `app/Http/Controllers/OnboardingChoiceController.php`, `app/Http/Controllers/Admin/DashboardController.php`, `app/Http/Controllers/Auth/GoogleAuthController.php`, `resources/views/auth/partials/toshi-path-choice.blade.php`, `resources/views/auth/onboarding-choice.blade.php`, `resources/views/auth/school-invite-claim.blade.php`, `resources/views/emails/school-invite.blade.php`, `resources/views/admin/onboarding/wizard.blade.php`, `resources/views/admin/dashboard_v2.blade.php`, `resources/views/admin/partials/setup-banner.blade.php`, `tests/Feature/Onboarding/ToshiPathHiddenForRealSchoolsTest.php`, plus the test fixtures that must stay on the live Toshi path (`is_test = 1`).
 - **Decision:** Do not change `TOSHI_ONBOARDING_V2` or any env var. Do not redirect inside the Toshi Livewire component. Assistant mode is left alone. A finished school is left alone. The invite claim page does not submit a path; it shows the disabled choice, and the real choice remains `/onboarding/choose` after the claim.
-- **Tests:** `tests/Feature/Onboarding/ToshiPathHiddenForRealSchoolsTest.php` — 4 tests, 60 assertions. Related invite, dashboard, and Toshi entry suites were re-run locally and passed. No browser pass. No staging pass. CI was still running when this note was written.
+- **Tests:** `tests/Feature/Onboarding/ToshiPathHiddenForRealSchoolsTest.php` — 4 tests, 60 assertions. Related invite, dashboard, and Toshi entry suites were re-run locally and passed. No browser pass. No staging pass.
 - **Status:** OPEN [#1192](https://github.com/KlassApp-Foundation/KlassApp/pull/1192) (`cursor/hide-toshi-path-real-schools-472f`). Do not merge from this session.
+
+## Current Status: October 21, 2026 — **EMIS duplicate and length validation OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189)**
+
+- `OnboardingEngine::saveEmis` rejects a ministry code already used by another school, and a code longer than 20 characters, with a `ValidationException` before `schools.ministry_code` (`varchar(20)`, unique) can throw. Toshi v2 shows that message. The manual wizard already maps engine validation onto `ministryCode`. A school can save its own code again.
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — Reject duplicate or overlong EMIS codes (Toshi v2 + wizard)
+
+- **Work:** Applied the EMIS validation patch with `git am` onto `origin/main` `d1326352675bd44e72286b3cb96b8f64a55a290c`. The patch applied with no conflict.
+- **Files:** `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `tests/Feature/Toshi/ToshiOnboardingV2EmisTest.php`.
+- **Decision:** Check length and uniqueness in `saveEmis` so both Toshi v2 and the wizard get a validation error. The driver surfaces `ValidationException` messages. Other rejections stay on the generic hint. The existence check excludes the current school and does not return another school's data.
+- **Status:** OPEN [#1189](https://github.com/KlassApp-Foundation/KlassApp/pull/1189) (`cursor/onboarding-emis-validation-e055`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Public docs drop production infrastructure identifiers**
 
