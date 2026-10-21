@@ -38,34 +38,33 @@ class OnboardingNameListExtractor
         $ext = strtolower($ext);
         $headers = [];
         $dataRows = [];
+        $headerRowIdx = 0;
 
         if (in_array($ext, ['xlsx', 'xls'], true)) {
             try {
                 $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
                 $reader->setReadDataOnly(true);
                 $spreadsheet = $reader->load($path);
-                $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+                $activeRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+                $allRows = $activeRows;
+                $bestScore = $this->headerRowScore($activeRows);
+                // A cover or instructions sheet left active must not hide the roster.
+                if ($bestScore < 2) {
+                    foreach ($spreadsheet->getAllSheets() as $sheet) {
+                        $candidate = $sheet->toArray(null, true, true, false);
+                        $score = $this->headerRowScore($candidate);
+                        if ($score > $bestScore) {
+                            $bestScore = $score;
+                            $allRows = $candidate;
+                        }
+                    }
+                }
                 if (empty($allRows)) {
                     return [];
                 }
 
-                $headerRowIdx = 0;
-                $knownColumns = ['name', 'firstname', 'student_name', 'teacher_name', 'class', 'stream', 'subject', 'email', 'phone', 'parent name', 'parent phone'];
-                foreach ($allRows as $ri => $row) {
-                    $rowLower = array_map('strtolower', array_map('trim', $row ?? []));
-                    $matchCount = 0;
-                    foreach ($knownColumns as $kc) {
-                        if (in_array($kc, $rowLower, true)) {
-                            $matchCount++;
-                        }
-                    }
-                    if ($matchCount >= 2) {
-                        $headerRowIdx = $ri;
-                        break;
-                    }
-                }
-
-                $headers = array_map('trim', $allRows[$headerRowIdx]);
+                $headerRowIdx = $this->headerRowIndex($allRows);
+                $headers = array_map(fn ($cell) => $this->cellText($cell), $allRows[$headerRowIdx] ?? []);
                 $dataRows = array_slice($allRows, $headerRowIdx + 1);
             } catch (\Exception $e) {
                 Log::warning('XLSX parse failed: '.$e->getMessage());
@@ -125,7 +124,7 @@ class OnboardingNameListExtractor
 
                 return [];
             }
-            $headers = array_map('trim', $headerLine);
+            $headers = array_map(fn ($cell) => $this->cellText($cell), $headerLine);
             while (($row = fgetcsv($handle)) !== false) {
                 $dataRows[] = $row;
             }
@@ -136,15 +135,22 @@ class OnboardingNameListExtractor
             return [];
         }
 
-        $lowerHeaders = array_map('strtolower', $headers);
-        $nameIdx = null;
-        foreach (['firstname', 'name', 'first_name', 'student_name', 'teacher_name', 'full_name'] as $col) {
-            $idx = array_search($col, $lowerHeaders, true);
-            if ($idx !== false) {
-                $nameIdx = $idx;
-                break;
-            }
-        }
+        $lowerHeaders = array_map(fn ($header) => $this->normaliseHeader((string) $header), $headers);
+        $nameIdx = $this->findHeaderIndex($lowerHeaders, [
+            'firstname',
+            'first name',
+            'first_name',
+            'name',
+            'student name',
+            'student_name',
+            'teacher name',
+            "teacher's name",
+            'teachers name',
+            'teacher_name',
+            'staff name',
+            'full name',
+            'full_name',
+        ]);
 
         $lastIdx = array_search('lastname', $lowerHeaders, true);
         if ($lastIdx === false) {
@@ -196,11 +202,12 @@ class OnboardingNameListExtractor
 
         $names = [];
         $prevColB = '';
-        foreach ($dataRows as $row) {
+        foreach ($dataRows as $offset => $row) {
             if (! is_array($row) || count($row) === 0) {
                 continue;
             }
-            $row = array_map(fn ($v) => trim((string) $v), $row);
+            $row = array_map(fn ($v) => $this->cellText($v), $row);
+            $sheetRow = $headerRowIdx + (int) $offset + 2;
 
             if ($prevColB !== '' && count($row) > 1 && $row[0] === $prevColB) {
                 $prevColB = $row[1] ?? '';
@@ -208,11 +215,11 @@ class OnboardingNameListExtractor
                 continue;
             }
 
-            if ($nameIdx !== null && ! empty($row[$nameIdx] ?? '')) {
-                $name = $row[$nameIdx];
-            } elseif (count($row) > 0 && ! empty($row[0])) {
+            if ($nameIdx !== null) {
+                $name = $row[$nameIdx] ?? '';
+            } elseif (count($row) > 0 && $row[0] !== '') {
                 $name = $row[0];
-            } elseif (count($row) > 1 && ! empty($row[1])) {
+            } elseif (count($row) > 1 && ($row[1] ?? '') !== '') {
                 $name = $row[1];
             } else {
                 continue;
@@ -220,22 +227,39 @@ class OnboardingNameListExtractor
 
             $prevColB = $row[1] ?? '';
 
-            $upper = strtoupper($name);
-            if (in_array($upper, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY', 'STAFF', 'TEACHERS', 'STUDENTS', 'CLASS', 'NAME', 'NAMES'], true)
-                || preg_match('/^\d+$/', $name)) {
-                continue;
-            }
-
-            if ($nameIdx === null && count($row) > 1 && ! empty($row[1]) && $row[0] !== $row[1]) {
+            if ($nameIdx === null && count($row) > 1 && ($row[1] ?? '') !== '' && $row[0] !== $row[1]) {
                 $candidate = $row[1];
-                $upper2 = strtoupper($candidate);
-                if (! in_array($upper2, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY'], true)) {
+                $keepCurrent = $this->cellLooksLikePerson($name) && $this->cellLooksLikeContact($candidate);
+                if (! $keepCurrent && ! in_array(strtoupper($candidate), ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY'], true)) {
                     $name = $candidate;
                 }
             }
 
-            if ($lastIdx !== false && ! empty($row[$lastIdx] ?? '')) {
+            if (! $this->cellLooksLikePerson($name) && $nameIdx === null) {
+                foreach ($row as $cell) {
+                    if ($this->cellLooksLikePerson($cell)) {
+                        $name = $cell;
+                        break;
+                    }
+                }
+            }
+
+            if ($lastIdx !== false && ! empty($row[$lastIdx] ?? '') && $this->cellLooksLikePerson($name)) {
                 $name .= ' '.$row[$lastIdx];
+            }
+
+            if (! $this->cellLooksLikePerson($name)) {
+                $name = '';
+            }
+
+            $hasDetails = $name !== ''
+                || ($emailIdx !== null && ($row[$emailIdx] ?? '') !== '')
+                || ($phoneIdx !== null && ($row[$phoneIdx] ?? '') !== '')
+                || ($classIdx !== null && ($row[$classIdx] ?? '') !== '')
+                || ($classesIdx !== null && ($row[$classesIdx] ?? '') !== '')
+                || ($subjectsIdx !== null && ($row[$subjectsIdx] ?? '') !== '');
+            if (! $hasDetails) {
+                continue;
             }
 
             $gender = ($genderIdx !== null && ! empty($row[$genderIdx] ?? '')) ? $row[$genderIdx] : '';
@@ -248,7 +272,7 @@ class OnboardingNameListExtractor
                 $gender = '';
             }
 
-            $names[] = $this->emptyRow([
+            $built = $this->emptyRow([
                 'name' => $name,
                 'class' => ($classIdx !== null && ! empty($row[$classIdx] ?? '')) ? $row[$classIdx] : '',
                 'stream' => ($streamIdx !== null && ! empty($row[$streamIdx] ?? '')) ? $row[$streamIdx] : '',
@@ -264,6 +288,8 @@ class OnboardingNameListExtractor
                 'board_registration_number' => ($boardRegIdx !== null && ! empty($row[$boardRegIdx] ?? '')) ? $row[$boardRegIdx] : '',
                 'date_of_birth' => ($dobIdx !== null && ! empty($row[$dobIdx] ?? '')) ? $row[$dobIdx] : '',
             ]);
+            $built['row'] = $sheetRow;
+            $names[] = $built;
         }
 
         return $names;
@@ -494,14 +520,118 @@ class OnboardingNameListExtractor
      */
     private function findHeaderIndex(array $lowerHeaders, array $aliases): ?int
     {
+        $normalised = array_map(fn ($header) => $this->normaliseHeader((string) $header), $lowerHeaders);
         foreach ($aliases as $col) {
-            $idx = array_search($col, $lowerHeaders, true);
+            $idx = array_search($this->normaliseHeader($col), $normalised, true);
             if ($idx !== false) {
                 return (int) $idx;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @param  list<array<int, mixed>|mixed>  $rows
+     */
+    private function headerRowScore(array $rows): int
+    {
+        $best = 0;
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $score = $this->headerMatchCount($row);
+            if ($score > $best) {
+                $best = $score;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @param  list<array<int, mixed>|mixed>  $rows
+     */
+    private function headerRowIndex(array $rows): int
+    {
+        foreach ($rows as $index => $row) {
+            if (is_array($row) && $this->headerMatchCount($row) >= 2) {
+                return (int) $index;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param  array<int, mixed>  $row
+     */
+    private function headerMatchCount(array $row): int
+    {
+        $known = [
+            'name', 'firstname', 'first name', 'first_name', 'student name', 'student_name',
+            'teacher name', "teacher's name", 'teacher_name', 'staff name', 'full name', 'full_name',
+            'class', 'classes', 'stream', 'subject', 'subjects', 'email', 'e-mail', 'phone', 'mobile',
+            'parent name', 'parent phone',
+        ];
+        $cells = array_map(fn ($cell) => $this->normaliseHeader($this->cellText($cell)), $row);
+        $matches = 0;
+        foreach ($known as $header) {
+            if (in_array($this->normaliseHeader($header), $cells, true)) {
+                $matches++;
+            }
+        }
+
+        return $matches;
+    }
+
+    private function cellText(mixed $value): string
+    {
+        if ($value === null || is_bool($value)) {
+            return '';
+        }
+
+        return trim((string) $value);
+    }
+
+    private function normaliseHeader(string $header): string
+    {
+        $header = preg_replace('/^\xEF\xBB\xBF/u', '', $header) ?? $header;
+        $header = str_replace(['’', '`', '´'], "'", strtolower(trim($header)));
+        $header = preg_replace('/\s+/', ' ', $header) ?? $header;
+
+        return rtrim($header, " *:");
+    }
+
+    private function cellLooksLikePerson(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '' || $this->cellLooksLikeContact($value) || preg_match('/^\d+$/', $value) === 1) {
+            return false;
+        }
+        if (in_array(strtoupper($value), ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY', 'STAFF', 'TEACHERS', 'STUDENTS', 'CLASS', 'NAME', 'NAMES'], true)) {
+            return false;
+        }
+        if (preg_match('/^(?:p\.?\s*|primary\s+|s\.?\s*|senior\s+)(?:[1-7]|one|two|three|four|five|six|seven)\b/i', $value) === 1) {
+            return false;
+        }
+        if (in_array(strtolower($value), ['baby', 'baby class', 'middle', 'middle class', 'top', 'top class'], true)) {
+            return false;
+        }
+
+        return preg_match('/\p{L}/u', $value) === 1;
+    }
+
+    private function cellLooksLikeContact(string $value): bool
+    {
+        $value = trim($value);
+        if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            return true;
+        }
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+
+        return strlen($digits) >= 7 && preg_match('/^\+?[\d\s().-]+$/', $value) === 1;
     }
 
     /**
