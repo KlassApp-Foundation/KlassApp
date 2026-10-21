@@ -641,13 +641,26 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Docs only. OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Not merged. Production untouched.
 - Merged `origin/main` `78ae595c87924c07abbd36f2d05099a6c01a6f5e` (merge commit, no force-push). That brings in [#1182](https://github.com/KlassApp-Foundation/KlassApp/pull/1182) and [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185). Main's new session is kept below. Those added lines contain no environment, application, or organization identifiers and no tokens.
 - Merged `origin/main` `4d726643c9fc31d482626769f88bfbdfea61c78e` (merge commit, no force-push). That brings in [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) and [#1186](https://github.com/KlassApp-Foundation/KlassApp/pull/1186). Main's new session notes are kept below. Those added lines contain no environment, application, or organization identifiers and no tokens.
+- Merged `origin/main` `4ab9328c92c073be178e5e855bc12756aa54629f` (merge commit, no force-push). That brings in [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187). Main's new session notes are kept below. Those added lines contain no environment, application, or organization identifiers and no tokens.
 
 ## Session: 2026-10-21 — Remove production infrastructure identifiers from public docs
 
 - **Work:** Scrubbed `knowledge.md` and the other public docs that repeated the same identifiers. Operational how-tos keep the process and point at the private repo KlassApp-Foundation/internal or the Cloud dashboard. Current hosting notes say the app lives in eu-central-1. Historical notes drop the identifier and keep the surrounding fact.
 - **Files:** `knowledge.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/community/faq.md`, `docs/ops/*`, `docs/readme/README.md`, `docs/research/progress-2026-10-03.md`, `docs/evidence/*` markdown, `e2e/**/*.md`, and the design handoff notes that named the staging host.
 - **Decision:** Do not print identifier values in the commit or the pull request. The private repo and the Cloud dashboard remain the places those values live.
-- **Status:** OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Docs only. Do not merge from this session. Merged latest `origin/main` `4d726643c9fc31d482626769f88bfbdfea61c78e` with a merge commit. That brings in [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) and [#1186](https://github.com/KlassApp-Foundation/KlassApp/pull/1186). Main's new session notes are kept. No production identifiers or token values were brought back in.
+- **Status:** OPEN [#1184](https://github.com/KlassApp-Foundation/KlassApp/pull/1184) (`cursor/remove-prod-infra-ids-d73d`). Docs only. Do not merge from this session. Merged latest `origin/main` `4ab9328c92c073be178e5e855bc12756aa54629f` with a merge commit. That brings in [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187). Main's new session notes are kept. No production identifiers or token values were brought back in.
+
+## Current Status: October 21, 2026 — **test:purge-schools named schools and email cleanup OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187)**
+
+- `test:purge-schools` stays a dry run unless `--force` is passed. `--confirm-name` allows an `is_test=1` school whose name does not start with `E2E `, and the name must match exactly. It does not bypass `is_test`, and a demo school is still refused (use `demo:purge-schools`). A school with a usergroup 1 or 2 user is refused, including a soft-deleted one. `--email` clears early-access requests and school, teacher, and co-admin invites for that address, and refuses an address owned by a user outside the targeted schools or by a platform admin (usergroup 1 or 2). Soft-deleted users are inventoried and removed. `school_grading_systems` and `student_id_sequences` are in the school-scoped delete list. Not merged. Production untouched.
+
+## Session: 2026-10-21 — test:purge-schools named schools and email cleanup
+
+- **Work:** Applied the guarded purge extension onto `origin/main` `78ae595c`. Dry run remains the default.
+- **Files:** `app/Console/Commands/TestPurgeSchoolsCommand.php`, `tests/Feature/E2E/TestPurgeSchoolsCommandTest.php`.
+- **Decision:** `--confirm-name` never overrides the demo-school refusal or the `is_test` flag. Email cleanup is refused for a platform admin and for any user outside the targeted schools.
+- **Tests:** `php artisan test tests/Feature/E2E/TestPurgeSchoolsCommandTest.php` — 15 passed, 105 assertions (the patch's cases, plus demo-school refusal with `--confirm-name`, and a platform-admin email refusal).
+- **Status:** OPEN [#1187](https://github.com/KlassApp-Foundation/KlassApp/pull/1187) (`cursor/purge-schools-named-email-c67e`). Do not merge from this session. Brought up to date with `origin/main` `bf32772b` ([#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179)). The only conflict was this file; both histories are kept.
 
 ## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged**
 
