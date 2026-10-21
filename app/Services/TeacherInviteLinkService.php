@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\WhatsAppPhoneHelper;
 use App\Mail\TeacherInviteLinkMail;
 use App\Models\School;
 use App\Models\Section;
@@ -142,7 +143,7 @@ class TeacherInviteLinkService
         } catch (\Exception $e) {
             Log::warning('Teacher invite: WhatsApp send failed', [
                 'invite_id' => $invite->id,
-                'phone'     => $phone,
+                'phone'     => WhatsAppPhoneHelper::mask($phone),
                 'error'     => $e->getMessage(),
             ]);
         }
