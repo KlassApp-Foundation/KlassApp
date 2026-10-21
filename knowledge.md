@@ -681,10 +681,44 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Deletes, impersonation, password reset, email verification, and setup-banner dismiss are POST or DELETE with CSRF and a confirmation step. GET of those URLs is 405 and does not write. Not merged. Production untouched.
 - Mail links stay GET. `/emailverification/{token}` shows a confirm page; only the POST verifies the address. API deletes stay on Sanctum (no web CSRF middleware). Toshi onboarding behaviour was not redesigned.
 
-## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)**
+## Current Status: October 20, 2026 — **public /privacy and /terms OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165)**
+
+- Canonical guest pages `/privacy` and `/terms` serve the existing policy and terms views. 301s: `/ploicy`, `/policy`, `/privacy-policy` → `/privacy`; `/terms-of-service` → `/terms`, query string kept. Not merged. Production untouched.
+
+## Session: 2026-10-20 — Public privacy and terms URLs (PR #1165 OPEN)
+
+- **Work:** Google's OAuth consent screen links `/privacy` and `/terms`, which 404. Those paths are now the public pages (no login, no school). Older paths 301 to them. Footers and register links updated. Maintenance mode leaves these paths up.
+- **Files:** `routes/web.php`, `routes/static.php` (still not loaded), `CheckForMaintenanceMode`, landing and register views, footer partials, `TermsOfServiceTest`, `LandingPreviewV3Test`, `LogoGoesHomeTest`.
+- **Decision:** the legal copy stays as it is. A wording rewrite is a later PR.
+- **Tests:** guest 200 and alias 301s pass. Full PHPUnit: 2816 tests, 0 failures, 0 errors, 4 skipped. Guard compare OK, no stale known-failures. Local guest server confirmed the 301s, including the query string.
+- **Status:** OPEN [#1165](https://github.com/KlassApp-Foundation/KlassApp/pull/1165) (`cursor/public-privacy-terms-urls-63da`). Do not merge from this session.
+
+## Current Status: October 20, 2026 — **generic password-reset error OPEN [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)**
+
+## Current Status: October 20, 2026 — **wizard subjects step OPEN [#1163](https://github.com/KlassApp-Foundation/KlassApp/pull/1163)**
+
+- Manual wizard subjects step attached new subjects with the untouched classes-field default `P1`. Category seeding and a classes-step save store the section name (`Primary One`, or `P1` when that was the name typed). `saveSubjects` matched that string exactly, so `P1` did not resolve to `Primary One` and Next failed with "Class 'P1' does not exist." Toshi's commit uses the same lookup, so a class stored as `Primary One` failed for the typed name `Primary 1`.
+- The subjects step lists the classes step's section records and saves by section id. `OnboardingEngine::standardLinksForClass` resolves naming variants (`Primary 1`, `Primary One`, `P1`, `P.1`, case and spacing) to that section id and its streams. The wizard passes the id. Toshi still passes the name, and the engine resolves it. Comma or line lists add immediately, with duplicates and skips reported. Remove soft-deletes that subject on the selected class. No other Toshi onboarding change.
+- Not merged. Production untouched.
+
+## Current Status: October 20, 2026 — **generic password-reset error MERGED [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166)** `2168b745`
+
+- The set-password form now uses one message for an unknown email, a bad, expired, or used token, and a throttled attempt: "This link is invalid or has expired. Request a new one." A valid reset still signs the user in and changes the password.
+- Reset-code entry and resend use the same response whether or not the email is on file. A valid code still opens the set-password form.
+- Invite pages that say a link is invalid, expired, or already used were left as they are. They describe that invite. Set-password links for an existing account use the reset form above.
+- GitHub API `merged: true`. Merge commit `2168b7458f3066173e67c810a4a7ff5690d5a0a6`.
+
+## Session: 2026-10-20 — Generic error on the password reset form
+
+- **Work:** one failure message on `POST /password/reset/change`. Reset-code verify and resend no longer name a missing account.
+- **Files:** `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `lang/en/passwords.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`.
+- **Tests:** the new cases fail on `main` (distinct messages) and pass with this change. Related auth suites: 40 tests, 331 assertions, OK. Full guard: 2820 tests, 0 failures, 0 errors, 4 skipped.
+- **Status:** MERGED [#1166](https://github.com/KlassApp-Foundation/KlassApp/pull/1166) `2168b7458f3066173e67c810a4a7ff5690d5a0a6` (`cursor/generic-password-reset-error-821d`).
+
+## Current Status: October 20, 2026 — **phone header targets OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159); bursar dashboard currency MERGED [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160)** `ce7958c7`
 
 - Phone header: teacher and student shells below 768px kept the menu and search as separate 44px targets. Desktop header unchanged. Not merged.
-- Bursar dashboard: money uses `school_details.meta_key = currency` through `DashboardV2DataService::currencyFor`. No code when the school has not set one. Not merged. Production untouched.
+- Bursar dashboard: money uses `school_details.meta_key = currency` through `DashboardV2DataService::currencyFor`. No code when the school has not set one. GitHub API `merged: true`, merge commit `ce7958c70a044bc1e267963d0101a8b37869bd01`.
 
 ## Session: 2026-10-20 — Phone header targets and bursar dashboard currency
 
@@ -692,7 +726,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `public/css/dashboard-refresh.css`, `e2e/regression/mobile-header-targets.spec.js`, `app/Traits/Dashboard.php`, `resources/views/accountant/dashboard.blade.php`, `tests/Feature/Accountant/BursarDashboardCurrencyTest.php`.
 - **Decision:** currency falls back to no code, the same as the admin dashboard and student profile. Payments and payroll screens still name a code and are outside this dashboard.
 - **Tests:** header measurements fail on `main` (menu width 24px) and pass with the fix at 360, 375, 414 and 1280. Bursar currency test fails on `main` (`Total Fees (UGX)`) and passes for `KES` and for an unset currency.
-- **Status:** header OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). Currency OPEN [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160). Do not merge from this session.
+- **Status:** header OPEN [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). Currency MERGED [#1160](https://github.com/KlassApp-Foundation/KlassApp/pull/1160) `ce7958c70a044bc1e267963d0101a8b37869bd01`.
 
 ## Current Status: October 19, 2026 — **report-card term, release, and division OPEN [#1124](https://github.com/KlassApp-Foundation/KlassApp/pull/1124)**
 
@@ -2719,9 +2753,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Converted live GET deletes and state changes (impersonation, password-reset resend, email verification, setup-banner dismiss, API token update) to POST or DELETE. Web forms and ajax send the CSRF token and ask for confirmation. Callers in Vue, Blade, and both JS bundles were updated. Toshi onboarding flows were not redesigned.
 - **Files modified**: `routes/*.php` (the live delete and state-change lines), the matching Vue/Blade callers, `EmailVerificationController`, `PasswordResetCodeController`, `tests/Feature/Security/NoMutatingGetRouteTest.php`, rebuilt `public/build`, `docs/demo/public-demo-lockdown.md`, `knowledge.md`.
 - **Decision**: API routes stay on Sanctum without the web CSRF middleware. Email-verification GET only renders the confirm page. Commented-out routes were left commented. Authorization middleware was not loosened.
-- **Status**: [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168) OPEN (`cursor/no-get-mutations-005c`). Not merged.
-- **Evidence**: `bash scripts/test-guard.sh` — 2883 tests, 0 failures, 0 errors, 4 skipped. Guard: `OK: 0 failing test(s)`. Confirm dialogs were not clicked in a browser.
+- **Status**: [#1168](https://github.com/KlassApp-Foundation/KlassApp/pull/1168) OPEN (`cursor/no-get-mutations-005c`). Not merged. `origin/main` (`5336badd`, #1163, #1165, #1166) merged in. Only `knowledge.md` conflicted; both histories kept. `/privacy` and `/terms` stay GET reads. Wizard subject remove stays a Livewire action. Password-reset resend tests now POST.
+- **Evidence**: `bash scripts/test-guard.sh` — 2883 tests, 0 failures, 0 errors, 4 skipped, before this merge. Confirm dialogs were not clicked in a browser.
 - **Edge cases flagged**: Some legacy destroy methods still 500 when the id is missing. That predates the verb change. Public-demo lockdown now treats directory-number and document deletes as writes.
+
+### 2026-10-20: wizard subjects step uses the classes step's records
+
+- **Work done**: The manual wizard subjects step no longer looks up a class by the free-text field that defaults to `P1`. It selects a base section from the same structure snapshot as the classes step and writes subjects on that section id (and its streams). Schools that already stored `P1` or `Primary One` both resolve. Several names can be added at once (commas or new lines); blanks are ignored, repeats and names already on the class are reported, and each listed subject can be removed (soft delete, restore on add).
+- **Files modified**: `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `app/Services/OnboardingEngine.php`, `app/Onboarding/Steps/Steps/SubjectsStep.php`, `tests/Feature/Onboarding/WizardSubjectsClassRecordsTest.php`, `tests/Feature/Onboarding/ToshiContentStepDelegationTest.php`, `knowledge.md`.
+- **Key decisions**: The wizard writes by section id. The shared lookup `standardLinksForClass` is what Toshi's existing subject save calls, so naming variants resolve there too. No other Toshi onboarding change. Remove uses the subject's soft delete and restores that row on a later add so the unique `(school_id, section_id, name)` key is not violated.
+- **Status**: OPEN [#1163](https://github.com/KlassApp-Foundation/KlassApp/pull/1163) (`cursor/wizard-subjects-class-records-23d6`). Not merged. No environment or production changes.
+- **Follow-up**: Toshi's subject save uses the same `OnboardingEngine::saveSubjects` lookup, which matched the typed name exactly, so `Primary 1` missed a class stored as `Primary One`. `standardLinksForClass` now resolves every naming variant to the real section id (and its streams). The wizard passes that id; Toshi still passes the name and the engine resolves it. With the old exact match restored, `toshi_subject_save_resolves_primary_one_from_primary_1_and_short_forms` failed (`assertNotNull` on the Primary One section, because the commit rolled back). With the resolver, that test, the `Primary 1` Toshi test, and the wizard `Primary 1` / `Primary One` subjects tests passed. Full guard after the follow-up: 2820 tests, 0 failures, 0 errors, 4 skipped.
+- **Edge cases flagged**: The classes field still defaults to `P1` for a school that has no classes yet. Once classes exist, that string is only an alias hint. A subject name that itself contains a comma is split. Streams of the selected class receive the new subject too.
+- **Evidence**: With the old name lookup restored, `test_seeded_primary_one_is_used_when_the_classes_field_is_still_p1` failed: `Class 'P1' does not exist. Add it on the classes step first.` With the fix, `WizardSubjectsClassRecordsTest` plus the subjects checkpoint and structure wizard tests passed (21 tests, 157 assertions). `bash scripts/test-guard.sh` with 4 processes: 2817 tests, 0 failures, 0 errors, 4 skipped. No browser or staging pass.
 
 ### 2026-10-20: set-password links and high-severity lockfiles refreshed onto main
 

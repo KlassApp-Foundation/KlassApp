@@ -164,9 +164,23 @@ Route::post('/demo-request', [App\Http\Controllers\DemoRequestController::class,
     ->middleware('throttle:5,1')
     ->name('demo.request.store');
 
-// Terms of Service and Privacy Policy
-Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
-Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'create']);
+// Public legal pages. Canonical URLs are /privacy and /terms (no login, no
+// school). Google's OAuth consent screen links here. Older paths 301 to them
+// and keep the query string.
+$redirectKeepingQuery = static function (string $to) {
+    return static function () use ($to) {
+        $query = request()->getQueryString();
+
+        return redirect($to.($query !== null && $query !== '' ? '?'.$query : ''), 301);
+    };
+};
+
+Route::get('/privacy', [App\Http\Controllers\AboutController::class, 'create'])->name('privacy');
+Route::get('/terms', [App\Http\Controllers\AboutController::class, 'terms'])->name('terms');
+Route::get('/ploicy', $redirectKeepingQuery('/privacy'));
+Route::get('/policy', $redirectKeepingQuery('/privacy'));
+Route::get('/privacy-policy', $redirectKeepingQuery('/privacy'));
+Route::get('/terms-of-service', $redirectKeepingQuery('/terms'));
 
 // Premium School Pages (public)
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);

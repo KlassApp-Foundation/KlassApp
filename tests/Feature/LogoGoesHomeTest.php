@@ -81,7 +81,7 @@ class LogoGoesHomeTest extends TestCase
 
     public function test_privacy_logo_links_home_with_accessible_name(): void
     {
-        $response = $this->get('/privacy-policy');
+        $response = $this->get('/privacy');
 
         $response->assertOk();
         $this->assertStringContainsString('aria-label="KlassApp home"', $response->getContent());
