@@ -682,7 +682,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - The school records the offer in `school_details`: `early_adopter_offer` = `growth_3_months`, and `early_adopter_offer_at` = the claim instant. No migration. `CurrentPlan`, `Subscription`, and `school_details` already exist.
 - A second claim, or applying the offer again, does not move the end date. Confirming that same Growth plan later does not start the 30-day trial or rewrite the subscription. Co-admin invites (and the other non-school invite types) are unchanged.
 - Where a school's plan is shown, the end date is shown with it: Edit Profile, the subscription list, and the superadmin school list and school detail. Complimentary Growth reads "free until {date}" and does not show the catalog price.
-- Not merged. Production untouched. This touches plans, so it needs Grok B's or Rasta's approval and must not be self-reviewed.
+- OPEN [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173) (`cursor/early-adopter-growth-offer-289a`). Not merged. Production untouched. This touches plans, so it needs Grok B's or Rasta's approval and must not be self-reviewed.
 
 ## Session: 2026-10-21 — Early adopter invite grants Growth for 3 months
 
@@ -690,7 +690,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Files:** `app/Services/EarlyAdopterOffer.php`, `app/Services/SchoolInviteService.php`, `app/Services/OnboardingEngine.php`, `app/Livewire/AgentToshi.php`, `app/Http/Controllers/Admin/UserProfileController.php`, `app/Http/Controllers/Admin/SubscriptionController.php`, `resources/views/admin/subscription/index.blade.php`, `resources/views/livewire/superadmin/academics/school-list.blade.php`, `resources/views/livewire/superadmin/academics/school-detail.blade.php`, `tests/Feature/Invites/EarlyAdopterOfferTest.php`, `tests/Feature/Invites/SchoolInviteTest.php`, `tests/Feature/Invites/SchoolInvitePhoneFormatTest.php`, `knowledge.md`.
 - **Decision:** No new columns. The plan is `current_plans` (Growth, running, `is_trial` false). The end date is `subscriptions.end_date`. The offer and its date are `school_details` meta. The 30-day `TrialService` path is a different product and is not used. School invites are the early-adopter path (issued only from an early-access request). Teacher, co-admin, and class-teacher invites are not.
 - **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **2933 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Main was 2930; the three new feature tests are the difference. Known-failures list unchanged.
-- **Status:** OPEN on `cursor/early-adopter-growth-offer-289a`. Do not merge from this session.
+- **Status:** OPEN [#1173](https://github.com/KlassApp-Foundation/KlassApp/pull/1173) (`cursor/early-adopter-growth-offer-289a`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Laravel 13 OPEN [#1171](https://github.com/KlassApp-Foundation/KlassApp/pull/1171) (stack upgrade 4)**
 
