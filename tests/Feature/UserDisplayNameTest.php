@@ -74,10 +74,10 @@ class UserDisplayNameTest extends TestCase
         $user = User::factory()->create([
             'usergroup_id' => 6,
             'school_id' => $this->school->id,
-            'name' => 'nuwagira darius5373',
+            'name' => 'example learner5373',
         ]);
 
-        $this->assertSame('NUWAGIRA DARIUS', $user->displayName);
+        $this->assertSame('EXAMPLE LEARNER', $user->displayName);
     }
 
     public function test_single_token_name_is_returned_stripped(): void
@@ -148,10 +148,10 @@ class UserDisplayNameTest extends TestCase
         $user = User::factory()->create([
             'usergroup_id' => 6,
             'school_id' => $this->school->id,
-            'name' => 'nuwagira darius5373',
+            'name' => 'example learner5373',
         ]);
 
-        $this->assertSame('NUWAGIRA_DARIUS', $user->displayNameFilenameSlug());
+        $this->assertSame('EXAMPLE_LEARNER', $user->displayNameFilenameSlug());
         $this->assertStringNotContainsString('5373', $user->displayNameFilenameSlug());
     }
 }
