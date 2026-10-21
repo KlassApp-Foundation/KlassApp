@@ -38,7 +38,9 @@ class StudentsStep extends AbstractOnboardingStep
             return $raw;
         }
 
-        return [];
+        // A typed line is not a student draft. Returning [] used to look like a
+        // successful save with nothing to do, so the chat asked the same question again.
+        $this->reject('Add a student with a name and a class, or type skip.');
     }
 
     public function validate(School $school, mixed $normalized): void
