@@ -20,6 +20,7 @@ use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
 use App\Services\OnboardingStepsService;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -228,8 +229,8 @@ class WizardToshiV2RegistryParityTest extends TestCase
             $payload['ministry_code'],
             'skip',
             $payload['year'],
-            'done', // standards confirm if still open
-            'done', // subjects confirm if still open
+            ['confirm' => 'standards'],
+            ['confirm' => 'subjects'],
             'skip', // teachers
             'skip', // students
             [
@@ -244,8 +245,17 @@ class WizardToshiV2RegistryParityTest extends TestCase
 
         foreach ($replies as $reply) {
             $school = $school->fresh();
-            if ($driver->promptNext($school, $uid)['status'] === 'done') {
+            $prompt = $driver->promptNext($school, $uid);
+            if ($prompt['status'] === 'done') {
                 break;
+            }
+            // "done" confirms seeded classes or subjects only when that step is open.
+            // When the registry has already moved on, do not send it to the next step.
+            if (is_array($reply) && isset($reply['confirm'])) {
+                if (($prompt['key'] ?? null) !== $reply['confirm']) {
+                    continue;
+                }
+                $reply = 'done';
             }
             $result = $driver->handleReply($school, $reply, $uid);
             $this->assertNotSame(
@@ -253,6 +263,17 @@ class WizardToshiV2RegistryParityTest extends TestCase
                 $result['status'],
                 'V2 rejected reply '.json_encode($reply).' on key '.($result['key'] ?? '?')
             );
+            if ($result['status'] === 'awaiting' && ($result['key'] ?? '') === 'whatsapp_verify') {
+                $code = app(WhatsAppOnboardingOtpService::class)->pendingCode();
+                $this->assertNotNull($code);
+                $this->assertStringNotContainsString($code, (string) ($result['question'] ?? ''));
+                $result = $driver->handleReply($school->fresh(), $code, $uid);
+                $this->assertNotSame(
+                    'rejected',
+                    $result['status'],
+                    'V2 rejected the WhatsApp verification code'
+                );
+            }
             if ($result['status'] === 'done') {
                 break;
             }

@@ -24,6 +24,7 @@ use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -374,8 +375,14 @@ class OnboardingEngineParityTest extends TestCase
             ])
             ->set('studentList', array_column($payload['students'], 'name'))
             ->set('whatsappPhone', $whatsappPhone)
-            ->set('whatsappVerified', true)
             ->set('selectedPlanId', (int) $this->freemium->id);
+
+        $otp = app(WhatsAppOnboardingOtpService::class);
+        $sent = $otp->sendAdminVerificationCode($admin->id, $whatsappPhone);
+        $this->assertTrue(
+            $otp->verifyAdminCode($admin->id, (string) $sent['code'], $whatsappPhone)['verified'],
+            'Toshi complete-mode can only store a verified number after the server checks the code'
+        );
 
         // selectSchoolCategory persistState() stores curriculumDefaults() class names
         // (Primary 1…). Clearing standards to [] would let resolveCollectedDataForCommit()

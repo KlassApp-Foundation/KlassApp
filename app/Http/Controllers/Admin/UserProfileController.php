@@ -300,17 +300,24 @@ class UserProfileController extends Controller
             return back()->with('success', 'WhatsApp number unlinked successfully.');
         }
 
-        // Upsert: link/update the phone number.
-        // Mirror Toshi's whatsapp_verify commit (verified_at + opted_in) so the
-        // manual path produces the same WhatsAppUser state and satisfies the
-        // onboarding whatsapp_verify step identically.
+        // Link the number the admin typed. Do not mark it verified from this
+        // request: verified_at is set only after WhatsAppOnboardingOtpService
+        // checks a code the server issued. A posted phone, hidden field, or
+        // verified flag is not that check. An already-verified row keeps its
+        // timestamp only when the phone did not change.
+        $existing = WhatsAppUser::where('user_id', $user->id)->first();
+        $phone = (string) $request->phone;
+        $alreadyVerified = $existing
+            && $existing->verified_at !== null
+            && (string) $existing->phone === $phone;
+
         $waUser = WhatsAppUser::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'phone'       => $request->phone,
+                'phone'       => $phone,
                 'school_id'   => $user->school_id,
                 'opted_in'    => true,
-                'verified_at' => now(),
+                'verified_at' => $alreadyVerified ? $existing->verified_at : null,
             ]
         );
 

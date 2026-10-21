@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\StudentIdGeneratorService;
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
 use App\Support\PhoneCountry;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -1811,9 +1812,15 @@ class OnboardingEngine
      *
      * Returns ['linked' => [...], 'skipped' => [...]] for empty / already-linked cases.
      *
+     * verified_at is set only when $codeWasVerified is true AND the session
+     * holds a grant from WhatsAppOnboardingOtpService::verifyAdminCode for
+     * this same phone. The boolean alone is not proof. A browser-sent flag
+     * must not be passed as true unless that grant exists. A phone number on
+     * its own does not mark the row verified.
+     *
      * @throws ValidationException
      */
-    public function saveWhatsApp(School $school, int $userId, string $phone): array
+    public function saveWhatsApp(School $school, int $userId, string $phone, bool $codeWasVerified = false): array
     {
         $phone = $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
 
@@ -1821,12 +1828,29 @@ class OnboardingEngine
             return ['linked' => null, 'skipped' => [['reason' => 'Phone number is required']]];
         }
 
-        // Check if this user already has a WhatsApp record
-        if (WhatsAppUser::where('user_id', $userId)->exists()) {
+        // A verified row is finished. An unverified row is not: the manual
+        // phone form can create one, and a later server-checked code must
+        // still be able to set verified_at on that same row.
+        $existing = WhatsAppUser::where('user_id', $userId)->first();
+        if ($existing && ($existing->verified_at !== null || ! $codeWasVerified)) {
             return ['linked' => null, 'skipped' => [['reason' => 'User already has a WhatsApp record']]];
         }
 
-        if (WhatsAppUser::where('phone', $phone)->exists()) {
+        $markVerified = false;
+        if ($codeWasVerified) {
+            if (! $this->serverCheckedWhatsAppCode($school, $phone)) {
+                throw ValidationException::withMessages([
+                    'whatsappOtpInput' => 'Verify the code sent to your WhatsApp before continuing.',
+                ]);
+            }
+            $markVerified = true;
+        }
+
+        $phoneTaken = WhatsAppUser::query()
+            ->where('phone', $phone)
+            ->when($existing, fn ($query) => $query->whereKeyNot($existing->id))
+            ->exists();
+        if ($phoneTaken) {
             throw ValidationException::withMessages([
                 'whatsappPhone' => "WhatsApp number {$phone} is already registered to another account. Use a different number.",
             ]);
@@ -1839,9 +1863,13 @@ class OnboardingEngine
                     'phone'       => $phone,
                     'school_id'   => $school->id,
                     'opted_in'    => true,
-                    'verified_at' => now(),
+                    'verified_at' => $markVerified ? now() : null,
                 ]
             );
+
+            if ($markVerified) {
+                app(WhatsAppOnboardingOtpService::class)->consumeGrant();
+            }
 
             return ['linked' => ['user_id' => $userId, 'phone' => $phone], 'skipped' => null];
         } catch (UniqueConstraintViolationException $e) {
@@ -1849,6 +1877,33 @@ class OnboardingEngine
                 'whatsappPhone' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+    }
+
+    /**
+     * Canonical WhatsApp number for this school. Empty stays empty. An invalid
+     * number for a known country throws ValidationException.
+     *
+     * @throws ValidationException
+     */
+    public function normaliseOnboardingPhoneForWhatsApp(School $school, string $phone): string
+    {
+        return $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
+    }
+
+    /**
+     * True only when this session's OTP grant is the same number being saved.
+     * The grant is written by verifyAdminCode after the issued code matches.
+     */
+    private function serverCheckedWhatsAppCode(School $school, string $normalisedPhone): bool
+    {
+        $grant = app(WhatsAppOnboardingOtpService::class)->grantPhone();
+        if ($grant === null || $grant === '') {
+            return false;
+        }
+
+        $grantPhone = $this->normaliseOnboardingPhone($school, $grant, 'whatsappPhone', true);
+
+        return $grantPhone !== '' && hash_equals($grantPhone, $normalisedPhone);
     }
 
     /**
