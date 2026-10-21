@@ -74,7 +74,7 @@ Every bug fix ships with a test named after its ID. The test is red without the 
 
 Names only. Never write values into a file, a log, a pull request, an issue, or a chat message.
 
-- `CLOUD_AGENT_TOOLING` — Cloud API token, read from Doppler.
+- Cloud API token — read from Doppler. The secret name is in the internal ops notes.
 - `MAIL_MAILER` — mail driver name.
 - `TOSHI_DEFAULT_MODE` — creation default for Toshi. Do not change it.
 - `E2E_ACCOUNT_PASSWORD` — throwaway journey password, generated in the shell, never stored.

@@ -33,7 +33,7 @@ PLAYWRIGHT_BASE_URL=https://klassapp.xyz npx playwright test --project=selfserve
 
 Requirements:
 - SSH key at `~/.ssh/id_ed25519_do` (or set `KLASSAPP_SSH_KEY`)
-- SSH host root@46.101.111.131 (or set `KLASSAPP_SSH_HOST`)
+- SSH host: the retired droplet. The address is in the internal ops notes (or set `KLASSAPP_SSH_HOST`)
 - OTP: SSH strategy queries the `authentications` table directly
 
 ## Naming convention

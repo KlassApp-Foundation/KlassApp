@@ -1,8 +1,8 @@
 # Staging verify — docs tree route (#665)
 
 - **Merge SHA**: `3c3d442ff0f1ee1351e071e8410a45ed63bf0e5e`
-- **Staging deploy**: `depl-a2c36189-21dc-42c1-ad54-d8f0453ce03a` → `deployment.succeeded`
-- **URL**: `https://klassapp-staging-7mpoqg.laravel.cloud`
+- **Staging deploy**: `deployment.succeeded` (identifier: see the internal ops notes)
+- **URL**: see the internal ops notes
 
 ## HTTP
 

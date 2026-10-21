@@ -309,7 +309,7 @@ Empty: "No children linked yet", with **Link a child**.
 - **knowledge.md:** stamped with the branch-point SHA.
 
 ## What the current pages get wrong
-Checked against your screenshots of test.klassapp.xyz (7 Oct). The full list, by page, is at the bottom of `concepts/admin-mvp/index.html`. The ones that matter most:
+Checked against screenshots of staging (see the internal ops notes) on 7 Oct. The full list, by page, is at the bottom of `concepts/admin-mvp/index.html`. The ones that matter most:
 - **Everywhere:**
   - **Toshi:** while it's "coming soon", a floating "Toshi Agent · Talk" pill covers table columns and the Manage links, and an orange tab sits on the right edge of every page.
   - **Capitals:** names print in capitals.

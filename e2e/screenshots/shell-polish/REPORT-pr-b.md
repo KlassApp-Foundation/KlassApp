@@ -34,7 +34,7 @@ All harness checks across every engine/viewport: **`failures: []`** (22 checks @
 - **Screenshots:** `e2e/screenshots/shell-polish/` (harness) + `concept/` frames captured.
 
 ## Deviations (report-required)
-1. **Evidence from local `127.0.0.1:8000`, not staging.** Staging `test.klassapp.xyz` unreachable + no Laravel Cloud token this session — side-by-side uses local. Concept frames rendered headlessly from `design/system/concepts/admin-mvp/app.html` (URL-driven SPA), not static image files (`screens/` empty).
+1. **Evidence from local `127.0.0.1:8000`, not staging.** Staging (see the internal ops notes) was unreachable and this session had no Laravel Cloud token — side-by-side uses local. Concept frames rendered headlessly from `design/system/concepts/admin-mvp/app.html` (URL-driven SPA), not static image files (`screens/` empty).
 2. **768px laptop checks gated to ≥1024px.** WebKit classic scrollbars shrink a 768px window's CSS viewport to ~753px < Tailwind `md`, so WebKit correctly shows the phone shell at 768 while Chromium shows desktop — both correct; harness gates sidebar/popover-laptop checks accordingly.
 3. **Items 6/7/8/9/10/11 evidence via live DOM probe** (no dedicated harness check IDs); item 4/5/12 via harness check IDs. Combined for full item coverage.
 

@@ -1,7 +1,7 @@
 # Staging Docsify serve gap — root cause (investigation only)
 
 Date: 2026-09-17  
-URL under test: `https://klassapp-staging-7mpoqg.laravel.cloud/docs/community/#/./`
+URL under test: the staging `/docs/community/#/./` page (host: see the internal ops notes)
 
 ## How staging actually serves docs
 
@@ -27,7 +27,7 @@ Local verification used `python3 -m http.server` with cwd=`docs/`, so `../shared
 ## Browser evidence (Playwright)
 
 - Theme link href: `../shared/docsify-klassapp.css`
-- Resolved absolute URL: `https://klassapp-staging-7mpoqg.laravel.cloud/docs/shared/docsify-klassapp.css`
+- Resolved absolute URL: the staging `/docs/shared/docsify-klassapp.css` path (host: see the internal ops notes)
 - Network: **404**, `Content-Type: text/html` (app 404 page, not CSS)
 - Console: `Failed to load resource: the server responded with a status of 404 ()`
 - `requestfailed`: same CSS URL → `net::ERR_ABORTED`

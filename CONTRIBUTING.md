@@ -91,8 +91,8 @@ Playwright (landing and UI verify scripts under `e2e/`):
 # Against local app
 PREVIEW_BASE=http://127.0.0.1:8000 node e2e/your-script.cjs
 
-# Against staging after a staging deploy
-PREVIEW_BASE=https://klassapp-staging-7mpoqg.laravel.cloud node e2e/your-script.cjs
+# Against staging after a staging deploy. The staging base URL is in the internal ops notes.
+PREVIEW_BASE="$STAGING_URL" node e2e/your-script.cjs
 ```
 
 Typical landing viewports we check: **375, 414, 768, 1280**.
