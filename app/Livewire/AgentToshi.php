@@ -5182,6 +5182,12 @@ class AgentToshi extends Component
             return;
         }
 
+        // Keep the early-adopter Growth window. Rewriting it here would replace
+        // the 3-month end date with a one-year pending subscription.
+        if (app(\App\Services\EarlyAdopterOffer::class)->alreadyGranted($school, $planId)) {
+            return;
+        }
+
         // Always write through OnboardingEngine (TrialService / CurrentPlan).
         // Complete-mode keeps structure/fees in component drafts until Review
         // commitAll — the DB gate would false-block, so skip there. Callers
