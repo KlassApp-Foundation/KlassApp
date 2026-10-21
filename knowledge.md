@@ -676,6 +676,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged**
+
+- `origin/main` (`78ae595c87924c07abbd36f2d05099a6c01a6f5e`) merged into this branch with a merge commit. That tip is [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (confirmed `merged: true`, `2026-10-21T17:30:43Z`). Not merged to main. Production untouched. The class-teacher upload is unchanged.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. No feature file conflicted. `tests/Feature/PlanLimitEnforcementTest.php` and `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php` match #1185. This note does not add Laravel Cloud environment ids, app ids, or tokens.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1185) into the class-teacher upload branch
+
+- **Work:** merge `origin/main` (`78ae595c87924c07abbd36f2d05099a6c01a6f5e`) only. No rebase. The class-teacher upload behaviour is unchanged.
+- **Files:** `knowledge.md` (both histories kept). The test files are #1185 as it landed on main.
+- **Decision:** Keep both session blocks. Do not copy infrastructure identifiers into this note.
+- **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **wizard class-teacher upload OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179), main merged again**
 
 - `origin/main` (`80d55b06`) merged into this branch with a merge commit. That tip is [#1182](https://github.com/KlassApp-Foundation/KlassApp/pull/1182) (`80d55b0670853230559c31eed93f7d0d341d67eb`, confirmed `merged: true`, `2026-10-21T16:26:46Z`) and includes [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) (`65d46cf1dcd6abc20c561fdf40f88e45e0af49ce`, confirmed `merged: true`, `2026-10-21T16:23:40Z`). Not merged to main. Production untouched. The class-teacher upload is unchanged.
@@ -721,6 +734,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Status:** OPEN [#1179](https://github.com/KlassApp-Foundation/KlassApp/pull/1179) (`cursor/wizard-class-teacher-upload-0124`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **WhatsApp orphan inbound OPEN [#1175](https://github.com/KlassApp-Foundation/KlassApp/pull/1175), stale school cleared**
+
+## Current Status: October 21, 2026 — **Toshi v2 WhatsApp tests after the seeded-classes review OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185)**
+
+- [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180) is MERGED at `65d46cf1dcd6abc20c561fdf40f88e45e0af49ce` (`merged: true`, `2026-10-21T16:23:40Z`). After [#1177](https://github.com/KlassApp-Foundation/KlassApp/pull/1177), `ToshiOnboardingV2Driver` still stops on classes and subjects until `OnboardingStepReview` is set, even when the rows already exist. The WhatsApp tests seeded those rows and then typed a phone number, so that number was read as the review. This follow-up is test-only: setup marks both steps reviewed, and one test replies through the real confirmation before the code. Product `save()` already sets the flag. [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) is open. Do not merge from this session.
+
+## Session: 2026-10-21 — WhatsApp tests mark seeded classes and subjects reviewed
+
+- **Work:** `ToshiOnboardingV2WhatsAppVerificationTest` calls `OnboardingStepReview::mark` for `standards` and `subjects` after the rows exist, so the existing code checks still start on WhatsApp. `test_confirming_seeded_classes_and_subjects_then_enters_the_whatsapp_code` clears those flags, replies `done` to classes and then subjects, and only then sends the phone and the code. The row stays unverified until the code matches. No product change: `StandardsStep::save` and `SubjectsStep::save` already mark the review on confirm.
+- **Files:** `tests/Feature/Toshi/ToshiOnboardingV2WhatsAppVerificationTest.php`.
+- **Decision:** Test setup, not a driver change. The chat can reach WhatsApp after the school confirms the seeded classes and subjects.
+- **Tests:** `tests/Feature/Toshi`, `tests/Feature/Onboarding`, and `tests/Feature/WhatsApp`: 1086 tests, 5214 assertions, 0 failures, 2 skipped. Two older methods in `ParentMagicLoginWhatsAppTest` are still risky because they make no assertions. The focused file is 8 tests, 144 assertions.
+- **Follow-up:** CI test-guard on the first head errored in `PlanLimitEnforcementTest::toshi_add_student_saves_with_notice_when_at_plan_limit`. `UserFactory` writes `KLS001` plus a random 4-digit suffix. This test's school id is 1, and `StudentIdGeneratorService` assigns `KLS0010001` to the new student. When a factory draw is `0001`, the unique `(school_id, registration_number)` index throws, which PHPUnit records as an error. The admin and the seeded students in that test, and the matching controller test, now leave `registration_number` null. `PlanLimitEnforcementTest`: 12 tests, 29 assertions.
+- **Status:** OPEN [#1185](https://github.com/KlassApp-Foundation/KlassApp/pull/1185) (`cursor/toshi-v2-whatsapp-after-review-c704`, base `main` `80d55b06`). Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **Toshi v2 WhatsApp code required OPEN [#1180](https://github.com/KlassApp-Foundation/KlassApp/pull/1180)**
 
