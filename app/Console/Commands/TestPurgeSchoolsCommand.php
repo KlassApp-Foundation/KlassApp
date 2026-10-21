@@ -24,7 +24,8 @@ use Illuminate\Support\Facades\Schema;
  *    co-admin (usergroup 2) among its users.
  *  - --email purges early-access requests and invites (school, teacher,
  *    co-admin) for that address, so it can sign up again. Refused when the
- *    address belongs to a user outside the targeted schools.
+ *    address belongs to a user outside the targeted schools, or to a platform
+ *    admin (usergroup 1 or 2).
  *  - Demo schools are owned by demo:purge-schools and are refused here.
  *  - Idempotent: schools that are already gone are reported and skipped.
  *  - One transaction per school; a failure rolls that school back cleanly.
@@ -32,7 +33,7 @@ use Illuminate\Support\Facades\Schema;
  * Run on purpose only (never automatic, never from a migration):
  *     php artisan test:purge-schools --school=123           (dry run)
  *     php artisan test:purge-schools --school=123 --force    (delete)
- *     php artisan test:purge-schools --school=3 --confirm-name="Kabale S S" \
+ *     php artisan test:purge-schools --school=123 --confirm-name="Example Test School" \
  *         --email=admin@example.com                           (dry run)
  */
 class TestPurgeSchoolsCommand extends Command
