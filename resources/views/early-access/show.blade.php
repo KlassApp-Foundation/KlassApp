@@ -25,6 +25,10 @@
         </div>
 
         @if ($submitted)
+          @if ($existingAccount)
+            {{-- The only account fact. Do not add the school name or the role. --}}
+            <p class="ap-alert ap-alert--success" role="status" data-testid="early-access-existing-account">This email already has a KlassApp account. <a href="{{ route('login') }}" data-testid="early-access-existing-sign-in" style="color:#1E6FD9;text-decoration:underline;">Sign in</a>, or <a href="{{ route('password.email') }}" data-testid="early-access-existing-reset" style="color:#1E6FD9;text-decoration:underline;">reset your password</a>.</p>
+          @endif
           <div class="ap-alert ap-alert--success" role="status" data-testid="early-access-success">
             Thank you. Your request is in, and we will contact you before launch.
           </div>
