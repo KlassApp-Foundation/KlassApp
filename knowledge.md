@@ -676,6 +676,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **PHPUnit annotations to attributes OPEN [#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170), main merged**
+
+- Merged `origin/main` `72a77b56` ([#1158](https://github.com/KlassApp-Foundation/KlassApp/pull/1158)) into this branch with a merge commit. Not merged to main. Production untouched.
+- The only conflict was `knowledge.md`. Both sides are kept below, as written. #1158's new tests use `test_` method names, so no `@test` or `@dataProvider` annotations came in to convert.
+- Main's discovered list is **2930** tests. This branch lists the same **2930** names in the same order. `bash scripts/test-guard.sh` (4 processes): **2930 tests, 0 failures, 0 errors, 4 skipped**, guard OK. Known-failures list still matches.
+- Do not merge from this session.
+
+## Session: 2026-10-21 — Merge main (#1158) into the PHPUnit attribute branch
+
+- **Work:** merge `origin/main` (`72a77b56`) only. The attribute conversion is unchanged.
+- **Files:** `knowledge.md` (both histories kept). The other files are #1158 as it landed on main.
+- **Tests:** `--list-tests` on main and on this branch: 2930, identical. Guarded suite: 2930 tests, 0 failures, 0 errors, 4 skipped.
+- **Status:** OPEN [#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170) (`cursor/phpunit-annotations-to-attributes-a453`). Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **PHPUnit annotations to attributes OPEN [#1170](https://github.com/KlassApp-Foundation/KlassApp/pull/1170)**
 
 - [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) is merged (`a0fc9b39dbd4326211b8a292b6e127d2d3c44744`, confirmed `merged: true`). [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169) is merged (`8fb7c374dd1613a398a7d21e6d12831ab0fe1cbf`, confirmed `merged: true`). This branch starts from that commit.
