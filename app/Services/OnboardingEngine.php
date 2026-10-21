@@ -1119,8 +1119,11 @@ class OnboardingEngine
      * standard_id. A fee scoped to one arbitrary Standard would be invisible
      * to students in other grading tiers.
      *
-     * Idempotent via firstOrCreate on the unique constraint columns:
-     * (school_id, standard_id, section_id, name).
+     * Idempotent via firstOrCreate on
+     * (school_id, standard_id, section_id, academic_term_id, name).
+     * The same fee name in another term is a different fee. A second row in
+     * this list with the same school, term, class or level, and name is rejected.
+     * Academic year is the year on the matched term.
      *
      * @param  School  $school
      * @param  array  $fees  [ ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P1', 'term' => 'Term 1'], ... ]
@@ -1145,24 +1148,15 @@ class OnboardingEngine
             }
         }
 
+        $this->assertNoDuplicateFeesInBatch($school, $fees);
+
         foreach ($fees as $fee) {
             $name = trim((string) ($fee['name'] ?? ''));
             $amount = isset($fee['amount']) ? (float) $fee['amount'] : 0.00;
 
             $className = trim((string) ($fee['class'] ?? ''));
-            $termName = trim((string) ($fee['term'] ?? ''));
             $level = strtolower(trim((string) ($fee['level'] ?? '')));
-
-            // Resolve academic_term_id from term name if provided
-            $academicTermId = null;
-            if ($termName !== '') {
-                $term = AcademicTerm::where('school_id', $school->id)
-                    ->where('name', $termName)
-                    ->first();
-                if ($term) {
-                    $academicTermId = $term->id;
-                }
-            }
+            $academicTermId = $this->resolveFeeAcademicTermId($school, $fee);
 
             if ($className !== '') {
                 // Class-specific fee: resolve to one Standard + Section
@@ -1218,18 +1212,7 @@ class OnboardingEngine
             ]);
         }
 
-        FeesCategories::firstOrCreate(
-            [
-                'school_id' => $school->id,
-                'standard_id' => $standardId,
-                'section_id' => $sectionId,
-                'name' => $name,
-            ],
-            [
-                'amount' => $amount,
-                'academic_term_id' => $academicTermId,
-            ],
-        );
+        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount);
     }
 
     /**
@@ -1264,18 +1247,7 @@ class OnboardingEngine
             }
 
             $found = true;
-            FeesCategories::firstOrCreate(
-                [
-                    'school_id' => $school->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => null,
-                    'name' => $name,
-                ],
-                [
-                    'amount' => $amount,
-                    'academic_term_id' => $academicTermId,
-                ],
-            );
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
         }
 
         if (! $found) {
@@ -1312,19 +1284,176 @@ class OnboardingEngine
         }
 
         foreach ($standards as $standard) {
-            FeesCategories::firstOrCreate(
-                [
-                    'school_id' => $school->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => null,
-                    'name' => $name,
-                ],
-                [
-                    'amount' => $amount,
-                    'academic_term_id' => $academicTermId,
-                ],
-            );
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
         }
+    }
+
+    /**
+     * Identity is school + academic year (via the term) + term + class/level + name.
+     * A repeated row in one upload is an error. Saving the same list again is not:
+     * rememberFee() keeps the existing amount.
+     *
+     * @param  list<array<string, mixed>>  $fees
+     */
+    private function assertNoDuplicateFeesInBatch(School $school, array $fees): void
+    {
+        $seen = [];
+
+        foreach ($fees as $index => $fee) {
+            if (! is_array($fee)) {
+                continue;
+            }
+
+            $name = trim((string) ($fee['name'] ?? ''));
+            [$termKey, $termLabel] = $this->feeTermDedupe($school, $fee);
+            $scopeKey = $this->feeScopeDedupeKey($school, $fee);
+            $key = $scopeKey.'|'.$termKey.'|'.mb_strtolower($name);
+
+            if (isset($seen[$key])) {
+                $row = $this->feeRowNumber($fee, $index);
+                $scopeLabel = $this->feeScopeLabel($fee);
+
+                throw ValidationException::withMessages([
+                    'fees' => 'Row '.$row.': "'.$name.'" for '.$scopeLabel.' is already listed for '.$seen[$key].'. Remove the duplicate row or change the term.',
+                ]);
+            }
+
+            $seen[$key] = $termLabel;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     * @return array{0: string, 1: string} dedupe key + label used in the error
+     */
+    private function feeTermDedupe(School $school, array $fee): array
+    {
+        $termName = trim((string) ($fee['term'] ?? ''));
+        if (! empty($fee['is_yearly']) || $termName === '') {
+            return ['yearly', 'Yearly'];
+        }
+
+        $termId = $this->resolveFeeAcademicTermId($school, $fee);
+        if ($termId === null) {
+            return ['term-name:'.mb_strtolower($termName), $termName];
+        }
+
+        $yearId = AcademicTerm::query()
+            ->where('school_id', $school->id)
+            ->whereKey($termId)
+            ->value('academic_year_id');
+
+        $key = 'term:'.$termId;
+        if ($yearId) {
+            $key = 'year:'.$yearId.'|'.$key;
+        }
+
+        return [$key, $termName];
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeScopeDedupeKey(School $school, array $fee): string
+    {
+        $className = trim((string) ($fee['class'] ?? ''));
+        if ($className !== '') {
+            $year = AcademicYear::where('school_id', $school->id)->orderByDesc('id')->first();
+            if ($year) {
+                $link = $this->resolveStandardLinkForClass($school, $year, $className);
+                if ($link?->section_id) {
+                    return 'section:'.$link->section_id;
+                }
+            }
+
+            return 'class:'.mb_strtolower($className);
+        }
+
+        $level = strtolower(trim((string) ($fee['level'] ?? '')));
+        if ($level !== '' && $level !== 'all') {
+            return 'level:'.match ($level) {
+                'o-level', 'o_level', 'olevel' => 'o-level',
+                'a-level', 'a_level', 'alevel' => 'a-level',
+                default => $level,
+            };
+        }
+
+        return 'school';
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeScopeLabel(array $fee): string
+    {
+        $className = trim((string) ($fee['class'] ?? ''));
+        if ($className !== '') {
+            return $className;
+        }
+
+        $level = trim((string) ($fee['level'] ?? ''));
+        if ($level !== '' && strtolower($level) !== 'all') {
+            return $level;
+        }
+
+        return 'the whole school';
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeRowNumber(array $fee, int $index): int
+    {
+        if (isset($fee['row']) && is_numeric($fee['row'])) {
+            return (int) $fee['row'];
+        }
+
+        return $index + 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function resolveFeeAcademicTermId(School $school, array $fee): ?int
+    {
+        if (! empty($fee['is_yearly'])) {
+            return null;
+        }
+
+        $termName = trim((string) ($fee['term'] ?? ''));
+        if ($termName === '') {
+            return null;
+        }
+
+        $term = AcademicTerm::where('school_id', $school->id)
+            ->where('name', $termName)
+            ->orderByDesc('academic_year_id')
+            ->orderByDesc('id')
+            ->first();
+
+        return $term?->id;
+    }
+
+    private function rememberFee(
+        int $schoolId,
+        int $standardId,
+        ?int $sectionId,
+        ?int $academicTermId,
+        string $name,
+        float $amount
+    ): void {
+        FeesCategories::firstOrCreate(
+            [
+                'school_id' => $schoolId,
+                'standard_id' => $standardId,
+                'section_id' => $sectionId,
+                'academic_term_id' => $academicTermId,
+                'name' => $name,
+            ],
+            [
+                'amount' => $amount,
+            ],
+        );
     }
 
     // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
