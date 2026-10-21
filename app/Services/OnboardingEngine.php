@@ -292,6 +292,10 @@ class OnboardingEngine
      * standing discipline is not to over-build ahead of real need,
      * and these three are the only UNEB exam classes in Uganda.
      *
+     * A stream is a separate section named "{base} {stream}" (S4 East,
+     * P7 Blue, Senior Four A). The candidate year is the base class,
+     * so the stream label is ignored.
+     *
      * NOTE: The previous validation gated board_registration_number
      * to Indian-system standards '10'/'11'/'12' — this was a
      * production bug that made the field effectively always-required
@@ -303,6 +307,21 @@ class OnboardingEngine
     {
         $lower = strtolower(trim($className));
 
+        if (self::isExactCandidateClassLabel($lower)) {
+            return true;
+        }
+
+        // One stream token after the base class: "S4 East" → "S4".
+        $space = strrpos($lower, ' ');
+        if ($space === false) {
+            return false;
+        }
+
+        return self::isExactCandidateClassLabel(trim(substr($lower, 0, $space)));
+    }
+
+    private static function isExactCandidateClassLabel(string $lower): bool
+    {
         // PLE: Primary Seven — P.7, P7, P 7, Primary Seven
         if (in_array($lower, ['p.7', 'p7', 'p 7', 'primary seven'], true)) {
             return true;
@@ -1623,7 +1642,8 @@ class OnboardingEngine
                     $stdName = trim((string) ($link->standard?->name ?? ''));
                     $secName = trim((string) ($link->section?->name ?? $className));
 
-                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6).
+                    // Stream sections are named "{base} {stream}"; isCandidateClass reads the base.
                     if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
                         $boardReg = '';
                     }
