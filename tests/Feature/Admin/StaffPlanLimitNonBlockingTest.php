@@ -11,6 +11,7 @@ use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -114,7 +115,7 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         return $plan;
     }
 
-    /** @test */
+    #[Test]
     public function freemium_unlimited_staff_shows_add_form_not_upgrade_gate(): void
     {
         // Freemium / Growth: no_of_users = 0 means unlimited. The old blade
@@ -133,7 +134,7 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
-    /** @test */
+    #[Test]
     public function at_staff_limit_still_shows_form_with_notice_and_relative_pricing_link(): void
     {
         $this->attachPlan(1);
@@ -157,7 +158,7 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
-    /** @test */
+    #[Test]
     public function support_staff_create_also_non_blocking_with_relative_pricing_link(): void
     {
         $this->attachPlan(1);
@@ -180,7 +181,7 @@ class StaffPlanLimitNonBlockingTest extends TestCase
         $response->assertDontSee('http://127.0.0.1:8899/pricing', false);
     }
 
-    /** @test */
+    #[Test]
     public function admin_upgrade_and_pricing_blades_use_talk_to_sales(): void
     {
         // Soft-launch: CTAs go to the sales lead form, not /pricing.

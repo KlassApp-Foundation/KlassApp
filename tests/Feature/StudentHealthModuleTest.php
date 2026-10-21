@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class StudentHealthModuleTest extends TestCase
@@ -74,7 +75,7 @@ class StudentHealthModuleTest extends TestCase
         Userprofile::create(['user_id' => $this->teacher->id, 'school_id' => $schoolA->id, 'usergroup_id' => 5, 'firstname' => 'Health', 'lastname' => 'Teacher', 'status' => 'active']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_health_profile_for_student(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -97,7 +98,7 @@ class StudentHealthModuleTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_existing_health_profile(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -120,7 +121,7 @@ class StudentHealthModuleTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_add_immunization_record(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -140,7 +141,7 @@ class StudentHealthModuleTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_delete_immunization_record(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -157,7 +158,7 @@ class StudentHealthModuleTest extends TestCase
         $this->assertModelMissing($immunization);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_record_health_incident(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -179,7 +180,7 @@ class StudentHealthModuleTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_delete_health_incident(): void
     {
         $this->actingAs($this->schoolAdmin);
@@ -197,7 +198,7 @@ class StudentHealthModuleTest extends TestCase
         $this->assertModelMissing($incident);
     }
 
-    /** @test */
+    #[Test]
     public function cross_school_isolation_prevents_access_to_other_school_health_data(): void
     {
         // School A admin creates health data for School A student
@@ -225,7 +226,7 @@ class StudentHealthModuleTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
+    #[Test]
     public function health_records_do_not_affect_plan_limits(): void
     {
         // Health records are attached to existing students and don't create

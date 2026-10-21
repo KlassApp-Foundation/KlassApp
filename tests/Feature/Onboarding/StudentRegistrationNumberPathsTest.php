@@ -15,6 +15,7 @@ use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -129,7 +130,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
         return $student->registration_number;
     }
 
-    /** @test */
+    #[Test]
     public function commit_all_create_mode_sets_both_student_id_fields(): void
     {
         $superadmin = User::create([
@@ -177,7 +178,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
         $this->assertStudentIdsSynced($student);
     }
 
-    /** @test */
+    #[Test]
     public function commit_all_complete_mode_sets_both_student_id_fields(): void
     {
         $this->actingAs($this->admin);
@@ -205,7 +206,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
         $this->assertStudentIdsSynced($student);
     }
 
-    /** @test */
+    #[Test]
     public function add_student_tool_sets_both_student_id_fields(): void
     {
         $this->actingAs($this->admin);
@@ -228,7 +229,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function student_ids_are_unique_within_school_across_paths(): void
     {
         $this->actingAs($this->admin);

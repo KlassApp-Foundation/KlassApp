@@ -16,6 +16,7 @@ use App\Models\Academics\Marks;
 use App\Services\ReportCardCommentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ReportTotalExcludesNonContributingExamsTest extends TestCase
@@ -116,7 +117,7 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         ]));
     }
 
-    /** @test */
+    #[Test]
     public function total_excludes_mid_marks(): void
     {
         $eot = $this->createExam($this->eotType);
@@ -132,7 +133,7 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         $this->assertEquals(130, (int) $learner->marks->sum('marks'));
     }
 
-    /** @test */
+    #[Test]
     public function comment_deterministic_same_student_exam(): void
     {
         $svc = new ReportCardCommentService;
@@ -142,7 +143,7 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         $this->assertSame($c1, $c2);
     }
 
-    /** @test */
+    #[Test]
     public function comment_differs_by_student(): void
     {
         $svc = new ReportCardCommentService;
@@ -155,14 +156,14 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         $this->assertContains($c2, $allComments);
     }
 
-    /** @test */
+    #[Test]
     public function out_of_range_returns_empty(): void
     {
         $svc = new ReportCardCommentService;
         $this->assertSame('', $svc->commentFor(99999, 'primary_lower', 1, 1));
     }
 
-    /** @test */
+    #[Test]
     public function band_boundaries_resolved_correctly(): void
     {
         $svc = new ReportCardCommentService;
@@ -175,7 +176,7 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         $this->assertNotEmpty($svc->commentFor(0, 'primary_lower', 5, 5));
     }
 
-    /** @test */
+    #[Test]
     public function upper_and_lower_different_ranges(): void
     {
         $svc = new ReportCardCommentService;
@@ -185,7 +186,7 @@ class ReportTotalExcludesNonContributingExamsTest extends TestCase
         $this->assertNotEmpty($lower);
     }
 
-    /** @test */
+    #[Test]
     public function contributes_flag_is_correct(): void
     {
         $this->assertEquals(0, (int) $this->midType->contributes_to_report_total);

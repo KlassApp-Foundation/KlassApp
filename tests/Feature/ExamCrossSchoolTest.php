@@ -11,6 +11,7 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ExamCrossSchoolTest extends TestCase
@@ -104,7 +105,7 @@ class ExamCrossSchoolTest extends TestCase
         $this->examBId = $examB->id;
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_update_another_schools_exam()
     {
         // Admin A tries to update School B's exam

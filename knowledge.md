@@ -676,6 +676,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 21, 2026 — **PHPUnit annotations to attributes OPEN**
+
+- [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) is merged (`a0fc9b39dbd4326211b8a292b6e127d2d3c44744`, confirmed `merged: true`). [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169) is merged (`8fb7c374dd1613a398a7d21e6d12831ab0fe1cbf`, confirmed `merged: true`). This branch starts from that commit.
+- PHPUnit doc-comment annotations in tests are now native attributes (`#[Test]`, `#[DataProvider]`, `#[Group]`). PHPUnit stays 11.5.56, Laravel stays 12, PHP and CI are unchanged. App code, migrations, payments, env, and secrets were not edited.
+- Discovered test list before and after: **2916** tests, same names in the same order. `bash scripts/test-guard.sh` (4 processes): **2916 tests, 0 failures, 0 errors, 4 skipped**. Known-failures list still matches (empty; no stale entries).
+- Not merged. Production untouched.
+
+## Session: 2026-10-21 — PHPUnit annotations to attributes (no version change)
+
+- **Work:** Stack upgrade step 3. Replaced the remaining PHPUnit docblock annotations (`391` `@test`, `7` `@dataProvider`, `1` `@group`) with attributes so the suite is ready for PHPUnit 12. No version bump.
+- **Files:** 71 test files under `tests/Feature` and `tests/Unit`, plus this note. Descriptions that shared a docblock with `@test` were kept.
+- **Decision:** Only annotations that PHPUnit reads were converted. `@param` and `@return` stayed. The `live-llm` group name is unchanged; it is now `#[Group('live-llm')]` on the class.
+- **Tests:** `--list-tests` was 2916 before the edit and 2916 after, with an identical list. Guarded suite: 2916 tests, 0 failures, 0 errors, 4 skipped.
+- **Status:** Opening the pull request. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **PHP 8.5 deprecation fixes OPEN [#1169](https://github.com/KlassApp-Foundation/KlassApp/pull/1169)**
 
 - [#1156](https://github.com/KlassApp-Foundation/KlassApp/pull/1156) is merged (`a0fc9b39dbd4326211b8a292b6e127d2d3c44744`, confirmed `merged: true`). This branch starts from that commit.

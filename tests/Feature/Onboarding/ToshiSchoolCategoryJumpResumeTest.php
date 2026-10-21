@@ -10,6 +10,8 @@ use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -78,7 +80,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function mount_jumps_to_school_category_action_with_actionable_prompt(): void
     {
         $this->actingAs($this->admin);
@@ -97,7 +99,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
         $this->assertStringNotContainsString("Let's continue setting up.", $botText);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_select_school_category_persists_and_clears_action_step(): void
     {
         $this->actingAs($this->admin);
@@ -109,7 +111,7 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
         $this->assertSame('onboarding_emis', $component->get('actionStep'));
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_text_input_on_school_category_action_persists_category(): void
     {
         $this->actingAs($this->admin);
@@ -126,10 +128,9 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
     /**
      * Template guard: every key that uses the action-step resume path must stay
      * registered in jumpToIncompleteOnboardingStep()'s actionMap.
-     *
-     * @test
-     * @dataProvider actionMappedOnboardingStepProvider
      */
+    #[Test]
+    #[DataProvider('actionMappedOnboardingStepProvider')]
     public function jump_to_incomplete_onboarding_step_maps_action_steps(string $key, string $expectedActionStep): void
     {
         $this->actingAs($this->admin);

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PlanLimitEnforcementTest extends TestCase
@@ -101,7 +102,7 @@ class PlanLimitEnforcementTest extends TestCase
 
     // ── enforcePlanLimit() unit-style tests ──
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_passes_when_under_limit(): void
     {
         // 0 students exist, limit is 2
@@ -111,7 +112,7 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertSame('', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_blocks_when_at_limit(): void
     {
         // Fill to exactly 2 students
@@ -127,7 +128,7 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertStringContainsString('upgrade', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_passes_when_no_plan_configured(): void
     {
         // School with no CurrentPlan
@@ -143,7 +144,7 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertTrue($result['success']);
     }
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_blocks_teachers_separately(): void
     {
         // 2 teachers already (at limit)
@@ -158,7 +159,7 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertStringContainsString('2 teachers', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_blocks_admins_separately(): void
     {
         // Admin + 1 additional co-admin = 2 users with usergroup_id=3
@@ -176,7 +177,7 @@ class PlanLimitEnforcementTest extends TestCase
 
     // ── ToshiActionService integration tests ──
 
-    /** @test */
+    #[Test]
     public function toshi_add_student_saves_with_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 students
@@ -195,7 +196,7 @@ class PlanLimitEnforcementTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function toshi_add_teacher_saves_with_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 teachers
@@ -212,7 +213,7 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertStringContainsString('allows a maximum of 2 teachers', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function toshi_add_coadmin_saves_with_notice_when_at_plan_limit(): void
     {
         // Admin exists from setUp + 1 more = 2 total (at limit)
@@ -231,7 +232,7 @@ class PlanLimitEnforcementTest extends TestCase
 
     // ── HTTP StudentController integration tests ──
 
-    /** @test */
+    #[Test]
     public function student_controller_store_saves_with_overlimit_notice_when_at_plan_limit(): void
     {
         // Fill to exactly 2 students
@@ -255,7 +256,7 @@ class PlanLimitEnforcementTest extends TestCase
         $response->assertRedirect();
     }
 
-    /** @test */
+    #[Test]
     public function student_controller_store_succeeds_when_under_limit(): void
     {
         $this->actingAs($this->admin);
@@ -274,7 +275,7 @@ class PlanLimitEnforcementTest extends TestCase
 
     // ── Divergence regression test ──
 
-    /** @test */
+    #[Test]
     public function enforcement_uses_current_plan_not_stale_subscription(): void
     {
         // Simulate divergence: admin changed plan via CurrentPlanController
@@ -333,7 +334,7 @@ class PlanLimitEnforcementTest extends TestCase
 
     // ── Message format ──
 
-    /** @test */
+    #[Test]
     public function enforce_plan_limit_message_is_safe_for_toshi_and_http(): void
     {
         // Fill to exactly 2 students (at the limit)

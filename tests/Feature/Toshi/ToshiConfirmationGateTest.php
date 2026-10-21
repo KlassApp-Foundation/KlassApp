@@ -6,6 +6,7 @@ use App\Services\ToshiActionService;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiConfirmationGateTest extends TestCase
@@ -29,7 +30,7 @@ class ToshiConfirmationGateTest extends TestCase
         ], 'id');
     }
 
-    /** @test */
+    #[Test]
     public function confirmation_payload_returns_json_when_not_bypassing()
     {
         $result = ToshiActionService::confirmationPayload(
@@ -49,7 +50,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertEquals(['student' => 'Alice', 'date' => '2026-07-15'], $decoded['args']);
     }
 
-    /** @test */
+    #[Test]
     public function confirmation_payload_returns_null_when_bypassing()
     {
         ToshiActionService::$bypassConfirm = true;
@@ -64,7 +65,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertNull($result);
     }
 
-    /** @test */
+    #[Test]
     public function side_chain_stores_pending_payload()
     {
         ToshiActionService::confirmationPayload(
@@ -79,7 +80,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertEquals(['name' => 'Tuition', 'amount' => 500000], ToshiActionService::$pendingConfirmPayload['args']);
     }
 
-    /** @test */
+    #[Test]
     public function side_chain_is_not_set_when_bypassing()
     {
         ToshiActionService::$bypassConfirm = true;
@@ -94,7 +95,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertNull(ToshiActionService::$pendingConfirmPayload);
     }
 
-    /** @test */
+    #[Test]
     public function confirm_yes_clears_pending_state()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);
@@ -115,7 +116,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertFalse($livewire->get('awaitingConfirm'));
     }
 
-    /** @test */
+    #[Test]
     public function confirm_no_clears_pending_and_sets_cancelled()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);
@@ -139,7 +140,7 @@ class ToshiConfirmationGateTest extends TestCase
         $this->assertEquals('toolCreateExam', $livewire->get('cancelledToolConfirm')['tool']);
     }
 
-    /** @test */
+    #[Test]
     public function confirm_yes_executes_action_and_bot_says_result()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);

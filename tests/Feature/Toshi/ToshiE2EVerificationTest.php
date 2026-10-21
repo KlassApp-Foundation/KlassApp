@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiE2EVerificationTest extends TestCase
@@ -48,7 +49,7 @@ class ToshiE2EVerificationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function llm_responds_and_route_tool_fails_authentication_gracefully()
     {
         if (env('TOSHI_E2E_LIVE') != 1) {
@@ -81,7 +82,7 @@ class ToshiE2EVerificationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function write_tool_triggers_confirmation_card()
     {
         $this->actingAs($this->admin);
@@ -117,7 +118,7 @@ class ToshiE2EVerificationTest extends TestCase
         $this->assertNotNull($livewire->get('mode'), 'Component should be mounted');
     }
 
-    /** @test */
+    #[Test]
     public function llm_timeout_falls_back_to_keyword_router()
     {
         $this->actingAs($this->admin);
@@ -148,7 +149,7 @@ class ToshiE2EVerificationTest extends TestCase
         $this->assertStringContainsString('Toshi', $lastText, 'Fallback should mention Toshi in greeting');
     }
 
-    /** @test */
+    #[Test]
     public function confirm_yes_executes_pending_tool()
     {
         $this->actingAs($this->admin);
@@ -172,7 +173,7 @@ class ToshiE2EVerificationTest extends TestCase
         $this->assertNotEmpty($messages);
     }
 
-    /** @test */
+    #[Test]
     public function confirm_no_prevents_write()
     {
         $this->actingAs($this->admin);

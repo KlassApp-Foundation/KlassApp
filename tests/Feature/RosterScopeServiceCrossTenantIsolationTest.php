@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\RosterScopeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -153,7 +154,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->service = app(RosterScopeService::class);
     }
 
-    /** @test */
+    #[Test]
     public function admin_a_cannot_access_school_b(): void
     {
         $this->expectException(HttpException::class);
@@ -162,7 +163,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->service->visibleSections($this->adminA, $this->schoolB->id, $this->academicYearBId);
     }
 
-    /** @test */
+    #[Test]
     public function admin_b_cannot_access_school_a(): void
     {
         $this->expectException(HttpException::class);
@@ -171,7 +172,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->service->visibleSections($this->adminB, $this->schoolA->id, $this->academicYearAId);
     }
 
-    /** @test */
+    #[Test]
     public function teacher_a_cannot_access_school_b(): void
     {
         $this->expectException(HttpException::class);
@@ -180,7 +181,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->service->visibleSections($this->teacherA, $this->schoolB->id, $this->academicYearBId);
     }
 
-    /** @test */
+    #[Test]
     public function visible_sections_returns_only_school_a_sections(): void
     {
         $sections = $this->service->visibleSections($this->adminA, $this->schoolA->id, $this->academicYearAId)->get();
@@ -190,7 +191,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->assertNotContains($this->sectionB->id, $ids, 'School B section must NOT leak to admin A');
     }
 
-    /** @test */
+    #[Test]
     public function visible_sections_returns_only_school_b_sections(): void
     {
         $sections = $this->service->visibleSections($this->adminB, $this->schoolB->id, $this->academicYearBId)->get();
@@ -200,7 +201,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->assertNotContains($this->sectionA->id, $ids, 'School A section must NOT leak to admin B');
     }
 
-    /** @test */
+    #[Test]
     public function students_for_stream_only_returns_school_a_students(): void
     {
         $students = $this->service->studentsForStream($this->streamA, $this->schoolA->id, $this->adminA)->get();
@@ -210,7 +211,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->assertSame($this->schoolA->id, $schoolIds[0]);
     }
 
-    /** @test */
+    #[Test]
     public function direct_id_substitution_cannot_leak_data(): void
     {
         // Admin A tries to query School B stream by substituting the ID directly
@@ -222,7 +223,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function students_for_stream_returns_only_school_b_students(): void
     {
         $students = $this->service->studentsForStream($this->streamB, $this->schoolB->id, $this->adminB)->get();
@@ -232,7 +233,7 @@ class RosterScopeServiceCrossTenantIsolationTest extends TestCase
         $this->assertSame($this->schoolB->id, $schoolIds[0]);
     }
 
-    /** @test */
+    #[Test]
     public function school_a_academic_year_rejected_for_school_b(): void
     {
         $this->expectException(NotFoundHttpException::class);

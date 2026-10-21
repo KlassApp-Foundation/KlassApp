@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\Standard;
 use App\Services\ReportCardCommentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class GradingStyleResolutionTest extends TestCase
@@ -40,7 +41,7 @@ class GradingStyleResolutionTest extends TestCase
 
     // --- commentFor: explicit grading_style takes precedence ---
 
-    /** @test */
+    #[Test]
     public function comment_for_with_total_marks_grading_style_uses_lower_group(): void
     {
         // A standard named 'primary' but with grading_style='total_marks' should use 'lower' group
@@ -57,7 +58,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertNotEmpty($upper);
     }
 
-    /** @test */
+    #[Test]
     public function comment_for_with_aggregate_grading_style_uses_upper_group(): void
     {
         // A standard named 'nursery' but with grading_style='aggregate' should use 'upper' group
@@ -70,7 +71,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    /** @test */
+    #[Test]
     public function comment_for_null_grading_style_falls_back_to_name_based_logic(): void
     {
         $svc = new ReportCardCommentService;
@@ -81,7 +82,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertNotEmpty($svc->commentFor(360, 'nursery', 1, 1));
     }
 
-    /** @test */
+    #[Test]
     public function comment_for_explicit_total_marks_overrides_name_primary_lower(): void
     {
         // 'primary_lower' with explicit grading_style='total_marks' — same result as NULL fallback
@@ -96,7 +97,7 @@ class GradingStyleResolutionTest extends TestCase
 
     // --- headTeacherCommentFor: same resolution logic ---
 
-    /** @test */
+    #[Test]
     public function head_comment_with_total_marks_grading_style_uses_lower_group(): void
     {
         $standard = $this->makeStandard('primary', 'total_marks');
@@ -106,7 +107,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_with_aggregate_grading_style_uses_upper_group(): void
     {
         $standard = $this->makeStandard('nursery', 'aggregate');
@@ -116,7 +117,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_null_grading_style_falls_back_to_name_based_logic(): void
     {
         $svc = new ReportCardCommentService;
@@ -127,7 +128,7 @@ class GradingStyleResolutionTest extends TestCase
 
     // --- showAgg resolution (ReportCardsController logic tested via helper) ---
 
-    /** @test */
+    #[Test]
     public function standard_with_aggregate_grading_style_show_agg_is_true(): void
     {
         $standard = $this->makeStandard('primary', 'aggregate');
@@ -135,7 +136,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertTrue($standard->grading_style === 'aggregate');
     }
 
-    /** @test */
+    #[Test]
     public function standard_with_total_marks_grading_style_show_agg_is_false(): void
     {
         $standard = $this->makeStandard('primary_lower', 'total_marks');
@@ -143,7 +144,7 @@ class GradingStyleResolutionTest extends TestCase
         $this->assertTrue($standard->grading_style === 'total_marks');
     }
 
-    /** @test */
+    #[Test]
     public function standard_with_null_grading_style_uses_fallback(): void
     {
         $standard = $this->makeStandard('primary_lower');

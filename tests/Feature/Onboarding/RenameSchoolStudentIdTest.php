@@ -11,6 +11,7 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RenameSchoolStudentIdTest extends TestCase
@@ -53,7 +54,7 @@ class RenameSchoolStudentIdTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function student_academics_table_has_school_student_id_column(): void
     {
         $this->assertTrue(
@@ -62,7 +63,7 @@ class RenameSchoolStudentIdTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function student_academics_table_no_longer_has_id_card_number_column(): void
     {
         $this->assertFalse(
@@ -71,7 +72,7 @@ class RenameSchoolStudentIdTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function school_student_id_is_fillable_on_student_academic(): void
     {
         $this->assertContains(
@@ -81,7 +82,7 @@ class RenameSchoolStudentIdTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function school_student_id_can_be_set_and_retrieved(): void
     {
         $student = $this->createStudent();
@@ -97,7 +98,7 @@ class RenameSchoolStudentIdTest extends TestCase
         $this->assertEquals('ADM-2025-001', $sa->fresh()->school_student_id);
     }
 
-    /** @test */
+    #[Test]
     public function school_student_id_accepts_null(): void
     {
         $student = $this->createStudent();
@@ -113,7 +114,7 @@ class RenameSchoolStudentIdTest extends TestCase
         $this->assertNull($sa->fresh()->school_student_id);
     }
 
-    /** @test */
+    #[Test]
     public function klassapp_student_id_still_stores_after_rename(): void
     {
         // Verify the platform ID field still works after the rename —
@@ -131,7 +132,7 @@ class RenameSchoolStudentIdTest extends TestCase
         $this->assertEquals('KLS0010001', $sa->fresh()->klassapp_student_id);
     }
 
-    /** @test */
+    #[Test]
     public function admission_user_no_longer_copies_registration_number_to_school_student_id(): void
     {
         // Verify the bug is gone: AdmissionUser::CreateStudent should NOT copy
@@ -154,7 +155,7 @@ class RenameSchoolStudentIdTest extends TestCase
         $this->assertFalse($foundOldBug, 'AdmissionUser should not copy registration_number into school_student_id');
     }
 
-    /** @test */
+    #[Test]
     public function school_student_id_accepts_alphanumeric_values(): void
     {
         // School student IDs are diverse: "P1-A-2025", "ADM/001", etc.

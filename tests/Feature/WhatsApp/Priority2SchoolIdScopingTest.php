@@ -11,6 +11,7 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class Priority2SchoolIdScopingTest extends TestCase
@@ -84,7 +85,7 @@ class Priority2SchoolIdScopingTest extends TestCase
         return [$student, $sa];
     }
 
-    /** @test */
+    #[Test]
     public function priority2_query_groups_or_conditions_correctly(): void
     {
         // Verify the generated SQL groups the OR inside a parenthesized WHERE clause.
@@ -104,7 +105,7 @@ class Priority2SchoolIdScopingTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function priority2_scoped_by_school_id_when_whatsapp_user_has_school(): void
     {
         // School A student with school_student_id = "P1-001"
@@ -140,7 +141,7 @@ class Priority2SchoolIdScopingTest extends TestCase
         $this->assertEquals($studentA->id, $result->user_id);
     }
 
-    /** @test */
+    #[Test]
     public function priority2_global_search_without_school_context(): void
     {
         // A first-time parent with no WhatsAppUser — global search must still work
@@ -162,7 +163,7 @@ class Priority2SchoolIdScopingTest extends TestCase
         $this->assertEquals('UNIQUE-001', $result->school_student_id);
     }
 
-    /** @test */
+    #[Test]
     public function priority2_does_not_cross_school_boundary_when_scoped(): void
     {
         // School A has board_registration_number = "UNE1234"
@@ -194,7 +195,7 @@ class Priority2SchoolIdScopingTest extends TestCase
         $this->assertEquals($studentA->id, $result->user_id);
     }
 
-    /** @test */
+    #[Test]
     public function priority2_auto_learns_school_id_on_global_match(): void
     {
         // First-time parent, no WhatsAppUser yet

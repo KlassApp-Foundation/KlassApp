@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UgSubjectCrossSchoolTest extends TestCase
@@ -88,7 +89,7 @@ class UgSubjectCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_own_subject()
     {
         $response = $this->actingAs($this->adminA)
@@ -105,7 +106,7 @@ class UgSubjectCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_update_another_schools_subject()
     {
         $response = $this->actingAs($this->adminA)
@@ -125,7 +126,7 @@ class UgSubjectCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_force_delete_another_schools_subject()
     {
         // First soft-delete within own school so it's trashed
@@ -140,7 +141,7 @@ class UgSubjectCrossSchoolTest extends TestCase
         $this->assertSoftDeleted('subjects', ['id' => $this->subjectB->id]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_restore_another_schools_subject()
     {
         // Soft-delete within own school so it's trashed

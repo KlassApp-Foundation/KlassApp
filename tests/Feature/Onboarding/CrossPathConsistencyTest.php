@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -41,7 +42,7 @@ class CrossPathConsistencyTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function create_mode_writes_admin_name_correctly(): void
     {
         $school = School::create([
@@ -127,7 +128,7 @@ class CrossPathConsistencyTest extends TestCase
         $this->assertEquals(1, $school->toshi_enabled);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_writes_standard_link(): void
     {
         $school = School::create([

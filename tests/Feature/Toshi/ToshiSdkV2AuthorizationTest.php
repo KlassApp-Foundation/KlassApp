@@ -9,6 +9,7 @@ use App\AiAgents\Tools\AddStudentTool;
 use App\AiAgents\Tools\FindStudentTool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiSdkV2AuthorizationTest extends TestCase
@@ -78,7 +79,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
 
     // ── Authorization scenario tests ──
 
-    /** @test */
+    #[Test]
     public function school_admin_can_access_tools()
     {
         $this->actingAs($this->schoolAdmin);
@@ -91,7 +92,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'SchoolAdmin should see teacher data, not an auth error');
     }
 
-    /** @test */
+    #[Test]
     public function superadmin_not_impersonating_is_denied()
     {
         $this->actingAs($this->superadmin);
@@ -102,7 +103,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'Superadmin without impersonation must be denied');
     }
 
-    /** @test */
+    #[Test]
     public function superadmin_impersonating_schooladmin_is_authorized()
     {
         $this->actingAs($this->superadmin);
@@ -115,7 +116,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'Impersonating superadmin should see teacher data');
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_is_denied()
     {
         $tool = app(GetStudentCountTool::class);
@@ -127,7 +128,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
 
     // ── Role-based denial tests ──
 
-    /** @test */
+    #[Test]
     public function teacher_is_denied()
     {
         $teacher = User::factory()->create([
@@ -144,7 +145,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'Teacher must be denied');
     }
 
-    /** @test */
+    #[Test]
     public function student_is_denied()
     {
         $student = User::factory()->create([
@@ -163,7 +164,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
 
     // ── Tool coverage tests: different tool types ──
 
-    /** @test */
+    #[Test]
     public function add_student_tool_authorized_for_school_admin()
     {
         $this->actingAs($this->schoolAdmin);
@@ -177,7 +178,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'SchoolAdmin should be able to add students');
     }
 
-    /** @test */
+    #[Test]
     public function find_student_tool_authorized_for_school_admin()
     {
         $this->actingAs($this->schoolAdmin);
@@ -190,7 +191,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'SchoolAdmin should be able to find students');
     }
 
-    /** @test */
+    #[Test]
     public function add_student_tool_denied_for_teacher()
     {
         $teacher = User::factory()->create([
@@ -210,7 +211,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'Teacher must not be able to add students');
     }
 
-    /** @test */
+    #[Test]
     public function find_student_tool_denied_for_teacher()
     {
         $teacher = User::factory()->create([
@@ -229,7 +230,7 @@ class ToshiSdkV2AuthorizationTest extends TestCase
             'Teacher must not be able to find students');
     }
 
-    /** @test */
+    #[Test]
     public function superadmin_impersonating_can_write_tools()
     {
         $this->actingAs($this->superadmin);

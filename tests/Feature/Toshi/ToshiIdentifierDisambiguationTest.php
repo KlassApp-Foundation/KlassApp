@@ -16,6 +16,7 @@ use App\Services\EntityResolver;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiIdentifierDisambiguationTest extends TestCase
@@ -42,7 +43,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function resolve_by_id_returns_correct_student()
     {
         $student = User::factory()->create([
@@ -58,7 +59,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertEquals('Alice Smith', $result['model']->name);
     }
 
-    /** @test */
+    #[Test]
     public function resolve_by_id_returns_not_found_for_nonexistent_id()
     {
         $result = EntityResolver::resolveStudentByIdentifier(
@@ -68,7 +69,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertEquals('not_found', $result['state']);
     }
 
-    /** @test */
+    #[Test]
     public function resolve_by_id_is_scoped_to_school()
     {
         $otherSchool = School::create([
@@ -89,7 +90,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
             'Should not find student from a different school');
     }
 
-    /** @test */
+    #[Test]
     public function class_label_returns_null_when_no_academic_record()
     {
         $student = User::factory()->create([
@@ -100,7 +101,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertNull($label);
     }
 
-    /** @test */
+    #[Test]
     public function class_label_returns_class_section_when_academic_record_exists()
     {
         $section = Section::create(['school_id' => $this->school->id, 'name' => 'A', 'status' => 1]);
@@ -133,7 +134,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertEquals('Primary 4-A', $label);
     }
 
-    /** @test */
+    #[Test]
     public function ambiguous_result_includes_class_label()
     {
         Standard::create(['school_id' => $this->school->id, 'name' => 'Primary 4', 'order' => 1, 'status' => 1]);
@@ -158,7 +159,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function identifier_plus_enter_mark_writes_to_correct_student()
     {
         $ay = AcademicYear::create([
@@ -226,7 +227,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertEquals(0, $s2Marks, 'Duplicate-named student should have 0 marks');
     }
 
-    /** @test */
+    #[Test]
     public function identifier_without_confirmation_blocked_by_guard()
     {
         $s1 = User::factory()->create([
@@ -243,7 +244,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         $this->assertStringContainsString('multiple students', $result);
     }
 
-    /** @test */
+    #[Test]
     public function identifier_with_confirmation_bypasses_guard()
     {
         $s1 = User::factory()->create([
@@ -265,7 +266,7 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         // This test proves the guard still exists and works as a standalone method.
     }
 
-    /** @test */
+    #[Test]
     public function identifier_resolved_student_guard_fires_at_tool_level()
     {
         // This simulates what happens at the tool level when identifier is

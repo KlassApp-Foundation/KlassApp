@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ParentCrossSchoolIsolationTest extends TestCase
@@ -112,7 +113,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function school_b_admin_cannot_view_school_a_parent_show(): void
     {
         $this->actingAs($this->adminB);
@@ -121,7 +122,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
             ->assertNotFound();
     }
 
-    /** @test */
+    #[Test]
     public function school_b_admin_cannot_view_school_a_parent_edit(): void
     {
         $this->actingAs($this->adminB);
@@ -130,7 +131,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
             ->assertNotFound();
     }
 
-    /** @test */
+    #[Test]
     public function school_b_admin_cannot_update_school_a_parent(): void
     {
         $this->actingAs($this->adminB);
@@ -149,7 +150,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
         ])->assertNotFound();
     }
 
-    /** @test */
+    #[Test]
     public function school_b_admin_cannot_delete_school_a_parent(): void
     {
         $this->actingAs($this->adminB);
@@ -158,7 +159,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
             ->assertNotFound();
     }
 
-    /** @test */
+    #[Test]
     public function school_a_admin_can_view_own_parents(): void
     {
         $this->actingAs($this->adminA);

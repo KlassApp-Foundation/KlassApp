@@ -9,6 +9,7 @@ use App\Models\Standard;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CrossSchoolSectionDeleteTest extends TestCase
@@ -71,7 +72,7 @@ class CrossSchoolSectionDeleteTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_delete_their_own_section()
     {
         $response = $this->actingAs($this->adminA)
@@ -82,7 +83,7 @@ class CrossSchoolSectionDeleteTest extends TestCase
         $this->assertSoftDeleted('sections', ['id' => $this->sectionA->id]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_delete_another_schools_section()
     {
         $sectionB = Section::create([

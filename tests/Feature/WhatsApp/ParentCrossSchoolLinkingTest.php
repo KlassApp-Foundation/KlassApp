@@ -15,6 +15,7 @@ use App\Models\WhatsAppUser;
 use App\Services\ParentLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -61,9 +62,8 @@ class ParentCrossSchoolLinkingTest extends TestCase
 
     /**
      * Regression: controller delegates to ParentLinkService — no duplicate WhatsAppUser on 2nd school.
-     *
-     * @test
      */
+    #[Test]
     public function controller_link_parent_to_student_allows_cross_school_second_child(): void
     {
         $service = app(ParentLinkService::class);
@@ -79,7 +79,7 @@ class ParentCrossSchoolLinkingTest extends TestCase
         $this->assertSame(2, StudentParentLink::count());
     }
 
-    /** @test */
+    #[Test]
     public function parent_links_child_at_school_a_then_school_b_via_service(): void
     {
         $service = app(ParentLinkService::class);
@@ -112,7 +112,7 @@ class ParentCrossSchoolLinkingTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function payment_code_link_for_existing_user_sets_school_id_on_link(): void
     {
         $service = app(ParentLinkService::class);

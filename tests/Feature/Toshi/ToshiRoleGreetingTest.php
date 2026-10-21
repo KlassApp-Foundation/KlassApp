@@ -8,6 +8,7 @@ use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -76,7 +77,7 @@ class ToshiRoleGreetingTest extends TestCase
             ?? '';
     }
 
-    /** @test */
+    #[Test]
     public function student_is_greeted_about_their_own_records_never_children(): void
     {
         $greeting = $this->firstGreeting($this->makeUser(6, 'Solo Student'));
@@ -87,7 +88,7 @@ class ToshiRoleGreetingTest extends TestCase
         $this->assertStringNotContainsString("children's", $greeting, 'students have no children — the greeting must not assume parent context');
     }
 
-    /** @test */
+    #[Test]
     public function parent_is_greeted_about_their_children(): void
     {
         $greeting = $this->firstGreeting($this->makeUser(7, 'Linked Parent'));

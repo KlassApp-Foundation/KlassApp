@@ -12,6 +12,7 @@ use App\Models\Subject;
 use App\Services\SchoolCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SchoolCategorySeederTest extends TestCase
@@ -49,7 +50,7 @@ class SchoolCategorySeederTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function primary_category_seeds_classes_subjects_and_primary_grading(): void
     {
         $this->school->school_category = 'primary';
@@ -96,7 +97,7 @@ class SchoolCategorySeederTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function nursery_category_seeds_sections_grading_and_early_years_subjects(): void
     {
         $this->school->school_category = 'nursery';
@@ -123,7 +124,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(4, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function primary_nursery_category_seeds_both_levels(): void
     {
         $this->school->school_category = 'primary_nursery';
@@ -140,7 +141,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(13, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function o_level_category_seeds_senior_one_to_four_and_letter_grading(): void
     {
         $this->school->school_category = 'o_level';
@@ -182,7 +183,7 @@ class SchoolCategorySeederTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function o_a_level_category_seeds_senior_five_and_six_with_uace_points(): void
     {
         $this->school->school_category = 'o_a_level';
@@ -225,9 +226,8 @@ class SchoolCategorySeederTest extends TestCase
     /**
      * Soft-launch A4 false alarm: journeys logged standards.name (primary / o-level)
      * as "classes seeded". Classes are sections — never tier-band standard names.
-     *
-     * @test
      */
+    #[Test]
     public function seeded_section_names_match_category_contract_and_never_tier_bands(): void
     {
         $cases = [
@@ -293,7 +293,7 @@ class SchoolCategorySeederTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function seed_is_idempotent_and_never_duplicates_rows(): void
     {
         $this->school->school_category = 'primary';
@@ -310,7 +310,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(9, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function seed_is_noop_when_school_has_no_category_or_unknown_category(): void
     {
         SchoolCategorySeeder::seed($this->school->fresh());
@@ -325,7 +325,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(0, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function seed_is_noop_without_an_academic_year(): void
     {
         $this->school->school_category = 'primary';
@@ -339,7 +339,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(0, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function seed_never_clobbers_existing_manual_classes(): void
     {
         // A school that already built its own classes (e.g. via the manual

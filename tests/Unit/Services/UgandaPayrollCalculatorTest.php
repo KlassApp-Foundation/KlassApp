@@ -4,25 +4,26 @@ namespace Tests\Unit\Services;
 
 use App\Services\UgandaPayrollCalculator;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UgandaPayrollCalculatorTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_returns_zero_paye_below_threshold()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(200000);
         $this->assertEquals(0, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_zero_paye_at_threshold_boundary()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(235000);
         $this->assertEquals(0, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_paye_in_first_bracket()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(300000);
@@ -30,7 +31,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(6500, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_paye_at_second_bracket_boundary()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(335000);
@@ -38,7 +39,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(10000, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_paye_in_third_bracket()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(400000);
@@ -48,7 +49,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(23000, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_paye_in_fourth_bracket()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(1000000);
@@ -59,7 +60,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(202000, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_paye_in_top_bracket()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(15000000);
@@ -69,7 +70,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(4902000, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_exact_bracket_boundary_between_three_and_four()
     {
         $tax = UgandaPayrollCalculator::calculatePAYE(410000);
@@ -79,14 +80,14 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(25000, $tax);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_nssf_employee_contribution()
     {
         $nssf = UgandaPayrollCalculator::calculateNSSF(1000000);
         $this->assertEquals(50000, $nssf); // 5% of 1,000,000
     }
 
-    /** @test */
+    #[Test]
     public function it_caps_nssf_at_max_insurable_wage()
     {
         $nssf = UgandaPayrollCalculator::calculateNSSF(10000000);
@@ -94,28 +95,28 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(250000, $nssf);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_employer_nssf()
     {
         $nssf = UgandaPayrollCalculator::calculateEmployerNSSF(1000000);
         $this->assertEquals(100000, $nssf); // 10% of 1,000,000
     }
 
-    /** @test */
+    #[Test]
     public function it_caps_employer_nssf_at_max_insurable_wage()
     {
         $nssf = UgandaPayrollCalculator::calculateEmployerNSSF(10000000);
         $this->assertEquals(500000, $nssf); // 10% of 5M = 500,000
     }
 
-    /** @test */
+    #[Test]
     public function lst_is_zero_outside_applicable_months()
     {
         $lst = UgandaPayrollCalculator::calculateLST(1000000, Carbon::parse('2026-06-15'));
         $this->assertEquals(0, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function lst_is_applicable_in_july()
     {
         $lst = UgandaPayrollCalculator::calculateLST(1000000, Carbon::parse('2026-07-15'));
@@ -123,35 +124,35 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(20000, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function lst_is_applicable_in_october()
     {
         $lst = UgandaPayrollCalculator::calculateLST(1000000, Carbon::parse('2026-10-15'));
         $this->assertEquals(20000, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function lst_uses_highest_band_for_high_income()
     {
         $lst = UgandaPayrollCalculator::calculateLST(2000000, Carbon::parse('2026-08-15'));
         $this->assertEquals(30000, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function lst_returns_zero_for_low_income()
     {
         $lst = UgandaPayrollCalculator::calculateLST(150000, Carbon::parse('2026-08-15'));
         $this->assertEquals(0, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function lst_uses_middle_band_for_mid_income()
     {
         $lst = UgandaPayrollCalculator::calculateLST(600000, Carbon::parse('2026-08-15'));
         $this->assertEquals(20000, $lst);
     }
 
-    /** @test */
+    #[Test]
     public function compute_all_returns_expected_structure()
     {
         $result = UgandaPayrollCalculator::computeAll(
@@ -177,7 +178,7 @@ class UgandaPayrollCalculatorTest extends TestCase
         $this->assertEquals(728000, $result['net_pay']);
     }
 
-    /** @test */
+    #[Test]
     public function compute_all_returns_zero_lst_in_non_lst_month()
     {
         $result = UgandaPayrollCalculator::computeAll(

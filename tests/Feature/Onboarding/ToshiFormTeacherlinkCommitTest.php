@@ -12,6 +12,7 @@ use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -68,7 +69,7 @@ class ToshiFormTeacherlinkCommitTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function done_teachers_expands_form_classes_and_subjects_into_teacher_links(): void
     {
         $this->actingAs($this->admin);
@@ -100,7 +101,7 @@ class ToshiFormTeacherlinkCommitTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_commit_creates_teacherlinks_from_form_classes_and_subjects(): void
     {
         $this->actingAs($this->admin);
@@ -156,7 +157,7 @@ class ToshiFormTeacherlinkCommitTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function form_class_alias_resolves_to_existing_section_name(): void
     {
         $this->actingAs($this->admin);

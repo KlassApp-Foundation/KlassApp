@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AuthPageCacheControlTest extends TestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function register_page_prevents_browser_caching_with_no_store(): void
     {
         $response = $this->get('/register');
@@ -17,9 +16,7 @@ class AuthPageCacheControlTest extends TestCase
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_page_prevents_browser_caching_with_no_store(): void
     {
         $response = $this->get('/login');
@@ -28,9 +25,7 @@ class AuthPageCacheControlTest extends TestCase
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function google_login_get_is_not_csrf_protected_and_redirects(): void
     {
         $response = $this->get('/auth/google');
@@ -38,9 +33,7 @@ class AuthPageCacheControlTest extends TestCase
         $response->assertStatus(302);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function register_google_button_has_formnovalidate_to_skip_password_field_validation(): void
     {
         $response = $this->get('/register');

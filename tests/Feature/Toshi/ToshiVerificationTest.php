@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiVerificationTest extends TestCase
@@ -33,7 +34,7 @@ class ToshiVerificationTest extends TestCase
         ], 'id');
     }
 
-    /** @test */
+    #[Test]
     public function verify_returns_false_when_record_does_not_exist()
     {
         $user = User::factory()->create(['usergroup_id' => 3, 'school_id' => 999]);
@@ -52,7 +53,7 @@ class ToshiVerificationTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('not found', $result['message']);
     }
 
-    /** @test */
+    #[Test]
     public function verify_returns_true_after_successful_attendance_write()
     {
         $school = $this->createSchool('Verification School');
@@ -124,7 +125,7 @@ class ToshiVerificationTest extends TestCase
         $this->assertStringStartsWith('✅', $lastMessage['text']);
     }
 
-    /** @test */
+    #[Test]
     public function verification_warning_appears_when_verify_fails_after_write()
     {
         $school = $this->createSchool('Verification Fail School');

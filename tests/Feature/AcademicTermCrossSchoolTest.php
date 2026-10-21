@@ -9,6 +9,7 @@ use App\Models\Standard;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AcademicTermCrossSchoolTest extends TestCase
@@ -68,7 +69,7 @@ class AcademicTermCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_update_another_schools_academic_term()
     {
         $response = $this->actingAs($this->adminA)

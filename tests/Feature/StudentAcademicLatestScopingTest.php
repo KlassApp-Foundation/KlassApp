@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\StudentAcademic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class StudentAcademicLatestScopingTest extends TestCase
@@ -79,7 +80,7 @@ class StudentAcademicLatestScopingTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function returns_current_year_record_when_current_has_higher_id(): void
     {
         // This is the "normal promotion" scenario: old record created first,
@@ -111,7 +112,7 @@ class StudentAcademicLatestScopingTest extends TestCase
         $this->assertEquals(130.00, $latest->height);
     }
 
-    /** @test */
+    #[Test]
     public function returns_current_year_record_when_current_has_lower_id(): void
     {
         // This is the "backfill" scenario that the original orderByDesc('id')
@@ -144,7 +145,7 @@ class StudentAcademicLatestScopingTest extends TestCase
         $this->assertEquals(130.00, $latest->height);
     }
 
-    /** @test */
+    #[Test]
     public function returns_null_when_student_has_no_current_year_record(): void
     {
         // Only an old-year record exists
@@ -161,7 +162,7 @@ class StudentAcademicLatestScopingTest extends TestCase
         $this->assertNull($latest);
     }
 
-    /** @test */
+    #[Test]
     public function eager_loading_returns_current_year_record(): void
     {
         StudentAcademic::create([

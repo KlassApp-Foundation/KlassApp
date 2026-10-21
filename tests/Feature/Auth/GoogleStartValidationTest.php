@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class GoogleStartValidationTest extends TestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function google_start_accepts_empty_registration_fields_and_redirects_to_google(): void
     {
         $register = $this->get('/register');

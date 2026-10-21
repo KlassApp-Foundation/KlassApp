@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ParentMagicLoginTest extends TestCase
@@ -61,7 +62,7 @@ class ParentMagicLoginTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function valid_magic_link_shows_confirm_page_then_logs_in_on_post(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111222', $this->parent);
@@ -84,7 +85,7 @@ class ParentMagicLoginTest extends TestCase
         $this->assertTrue(app(ParentMagicLoginService::class)->isNonceConsumed($this->nonceFromUrl($url)));
     }
 
-    /** @test */
+    #[Test]
     public function preview_crawler_get_does_not_consume_the_link(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111226', $this->parent);
@@ -105,7 +106,7 @@ class ParentMagicLoginTest extends TestCase
         $this->assertTrue(Auth::check());
     }
 
-    /** @test */
+    #[Test]
     public function magic_link_is_single_use_after_confirm(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111223', $this->parent);
@@ -117,7 +118,7 @@ class ParentMagicLoginTest extends TestCase
         $this->get($url)->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function expired_magic_link_is_rejected(): void
     {
         $nonce = 'test-nonce-expired';
@@ -132,7 +133,7 @@ class ParentMagicLoginTest extends TestCase
         $this->get($url)->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function tampered_signature_is_rejected(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111224', $this->parent);
@@ -141,7 +142,7 @@ class ParentMagicLoginTest extends TestCase
         $this->get($tampered)->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function non_parent_user_is_rejected(): void
     {
         $teacher = User::factory()->create([
@@ -159,7 +160,7 @@ class ParentMagicLoginTest extends TestCase
         $this->get($url)->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function link_generation_is_rate_limited_per_phone(): void
     {
         $service = app(ParentMagicLoginService::class);

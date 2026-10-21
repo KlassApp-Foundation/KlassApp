@@ -3,6 +3,7 @@
 namespace Tests\Feature\Grading;
 
 use App\Services\ReportCardCommentService;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ReportCardHeadTeacherCommentTest extends TestCase
@@ -19,7 +20,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_is_deterministic_and_from_the_bank(): void
     {
         config(['report_card_head_comments.lower' => $this->bank([
@@ -35,7 +36,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertContains($c1, ['Excellent.', 'Very good.', 'Keep it up.', 'Well done.', 'Impressive.']);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_never_equals_class_comment_when_seed_collides(): void
     {
         $studentId = 100;
@@ -52,7 +53,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertContains($head, $options);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_advances_to_next_phrase_in_same_tier(): void
     {
         $studentId = 50;
@@ -69,7 +70,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame($expected, $head);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_returns_empty_when_every_tier_option_collides(): void
     {
         config(['report_card_head_comments.lower' => $this->bank(['Only phrase'])]);
@@ -80,7 +81,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame('', $head);
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_empty_bank_returns_empty(): void
     {
         config(['report_card_head_comments.lower' => $this->bank([])]);
@@ -89,7 +90,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame('', $svc->headTeacherCommentFor(580, 'primary_lower', 1, 1, 'Anything'));
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_uses_upper_group_for_primary_standards(): void
     {
         config(['report_card_head_comments.upper' => [
@@ -106,7 +107,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame('Upper band phrase.', $svc->headTeacherCommentFor(380, 'primary_upper', 1, 1, 'Class comment'));
     }
 
-    /** @test */
+    #[Test]
     public function head_comment_band_boundaries_resolve(): void
     {
         config(['report_card_head_comments.lower' => $this->bank(['Boundary phrase.'])]);
@@ -117,7 +118,7 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame('', $svc->headTeacherCommentFor(601, 'primary_lower', 3, 3, 'x'));
     }
 
-    /** @test */
+    #[Test]
     public function real_bank_is_populated_and_never_collides_with_class_comments(): void
     {
         $svc = new ReportCardCommentService;

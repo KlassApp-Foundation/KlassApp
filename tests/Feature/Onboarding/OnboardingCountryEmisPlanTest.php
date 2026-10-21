@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -46,7 +47,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── isUganda / isUnebCurriculum ────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function is_uganda_matches_name_and_code_case_insensitively(): void
     {
         $this->assertTrue(OnboardingStepsService::isUganda('Uganda'));
@@ -57,7 +58,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertFalse(OnboardingStepsService::isUganda(null));
     }
 
-    /** @test */
+    #[Test]
     public function is_uneb_curriculum_is_case_insensitive(): void
     {
         $this->assertTrue(OnboardingStepsService::isUnebCurriculum('uneb'));
@@ -68,7 +69,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── EMIS (Uganda-only, required) ───────────────────────────────
 
-    /** @test */
+    #[Test]
     public function emis_required_for_uganda_and_incomplete_until_ministry_code_set(): void
     {
         $school = $this->makeSchool(['registration_country' => 'Uganda', 'ministry_code' => null]);
@@ -83,7 +84,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertTrue(OnboardingStepsService::isStepComplete('emis', $school->fresh()));
     }
 
-    /** @test */
+    #[Test]
     public function emis_auto_complete_and_not_applicable_for_non_uganda(): void
     {
         $school = $this->makeSchool(['registration_country' => 'Kenya', 'ministry_code' => null]);
@@ -96,7 +97,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertArrayNotHasKey('emis', OnboardingStepsService::applicableSteps($school));
     }
 
-    /** @test */
+    #[Test]
     public function emis_step_is_applicable_for_uganda(): void
     {
         $school = $this->makeSchool(['registration_country' => 'Uganda']);
@@ -106,7 +107,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── UNEB centre (UNEB-only, optional, never blocks) ────────────
 
-    /** @test */
+    #[Test]
     public function uneb_center_optional_null_incomplete_but_empty_or_value_complete(): void
     {
         $school = $this->makeSchool(['curriculum' => 'uneb', 'uneb_center_number' => null]);
@@ -125,7 +126,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertTrue(OnboardingStepsService::isUnebCenterComplete($school->fresh()));
     }
 
-    /** @test */
+    #[Test]
     public function uneb_center_not_applicable_and_auto_complete_for_non_uneb(): void
     {
         $school = $this->makeSchool(['curriculum' => 'cambridge', 'uneb_center_number' => null]);
@@ -135,7 +136,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertArrayNotHasKey('uneb_center', OnboardingStepsService::applicableSteps($school));
     }
 
-    /** @test */
+    #[Test]
     public function uneb_center_step_is_applicable_for_uneb_curriculum(): void
     {
         $school = $this->makeSchool(['curriculum' => 'uneb']);
@@ -145,7 +146,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── School category (UNEB-only smart-default step) ───────────
 
-    /** @test */
+    #[Test]
     public function school_category_not_applicable_for_non_uneb(): void
     {
         $school = $this->makeSchool(['curriculum' => 'cambridge', 'school_category' => null]);
@@ -153,7 +154,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertArrayNotHasKey('school_category', OnboardingStepsService::applicableSteps($school));
     }
 
-    /** @test */
+    #[Test]
     public function school_category_step_is_applicable_for_uneb_curriculum(): void
     {
         $school = $this->makeSchool(['curriculum' => 'uneb']);
@@ -163,7 +164,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── persistCountry ─────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function persist_country_sets_registration_country_and_country_id_when_matched(): void
     {
         $country = \App\Models\Country::create([
@@ -182,7 +183,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertSame($country->id, (int) $fresh->country_id);
     }
 
-    /** @test */
+    #[Test]
     public function persist_country_stores_name_even_without_matching_country_row(): void
     {
         $school = $this->makeSchool(['registration_country' => null]);
@@ -194,7 +195,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── countActiveStudents ────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function count_active_students_excludes_exited_and_non_students(): void
     {
         $school = $this->makeSchool();
@@ -240,7 +241,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         Plan::create(['name' => 'premium', 'display_name' => 'Premium', 'amount' => 150000, 'no_of_students' => 0, 'no_of_users' => 0, 'cycle' => 365, 'is_active' => 1, 'order' => 3]);
     }
 
-    /** @test */
+    #[Test]
     public function suggest_plan_picks_smallest_tier_that_fits(): void
     {
         $this->seedTierPlans();
@@ -253,7 +254,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertSame('premium', OnboardingStepsService::suggestPlanForStudentCount(5000)?->name);
     }
 
-    /** @test */
+    #[Test]
     public function suggest_plan_returns_null_when_no_plans_exist(): void
     {
         $this->assertNull(OnboardingStepsService::suggestPlanForStudentCount(100));
@@ -261,7 +262,7 @@ class OnboardingCountryEmisPlanTest extends TestCase
 
     // ── plan_selection completes only when CurrentPlan exists (end) ─
 
-    /** @test */
+    #[Test]
     public function plan_selection_step_incomplete_until_current_plan_created_at_end(): void
     {
         $this->seedTierPlans();

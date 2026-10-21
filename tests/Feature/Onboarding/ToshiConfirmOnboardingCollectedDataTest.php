@@ -15,6 +15,7 @@ use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -155,7 +156,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
             ->call('doneTermsCurrent');
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_confirm_onboarding_persists_students_collected_via_save_student_flow(): void
     {
         $this->actingAs($this->admin);
@@ -178,7 +179,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertEquals(2, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_confirm_onboarding_restores_students_from_session_when_wire_payload_cleared(): void
     {
         $this->actingAs($this->admin);
@@ -200,7 +201,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertEquals(2, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_confirm_onboarding_persists_terms_after_confirm_yes_flow(): void
     {
         $this->actingAs($this->admin);
@@ -224,7 +225,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertNotNull(AcademicTerm::where('school_id', $this->school->id)->where('name', 'Term I')->first());
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_confirm_onboarding_persists_fees_from_action_data_without_done_fees(): void
     {
         $this->actingAs($this->admin);
@@ -256,7 +257,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertEquals(500000.0, (float) $fee->amount);
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_full_collection_flow_persists_students_terms_and_fees_on_commit(): void
     {
         $this->actingAs($this->admin);
@@ -290,7 +291,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertGreaterThanOrEqual(1, FeesCategories::where('school_id', $this->school->id)->where('name', 'Tuition')->count());
     }
 
-    /** @test */
+    #[Test]
     public function complete_mode_commit_succeeds_when_admin_email_matches_logged_in_user(): void
     {
         $this->actingAs($this->admin);
@@ -318,7 +319,7 @@ class ToshiConfirmOnboardingCollectedDataTest extends TestCase
         $this->assertStringContainsString('set up', strtolower($messages));
     }
 
-    /** @test */
+    #[Test]
     public function create_mode_confirm_onboarding_persists_students_collected_via_save_student_flow(): void
     {
         $superadmin = User::create([

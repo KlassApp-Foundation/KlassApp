@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiCommitAllCompleteModeTest extends TestCase
@@ -62,7 +63,7 @@ class ToshiCommitAllCompleteModeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function commit_all_complete_mode_creates_standard_link_for_each_class(): void
     {
         // Regression test for Finding 2:

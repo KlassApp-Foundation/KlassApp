@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
@@ -126,7 +127,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
             ->get('/admin/students?status=active' . $query);
     }
 
-    /** @test */
+    #[Test]
     public function unfiltered_roster_never_shows_school_b_students()
     {
         $this->visit()
@@ -135,7 +136,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
             ->assertDontSee('BETA', false);
     }
 
-    /** @test */
+    #[Test]
     public function crafted_foreign_standard_link_id_is_ignored_not_cross_school_applied()
     {
         $this->visit('&standard=' . $this->streamB->id)
@@ -144,7 +145,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
             ->assertDontSee('BETA', false);
     }
 
-    /** @test */
+    #[Test]
     public function valid_same_school_standard_link_filters_by_class()
     {
         $this->visit('&standard=' . $this->streamA->id)
@@ -153,7 +154,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
             ->assertDontSee('BETA', false);
     }
 
-    /** @test */
+    #[Test]
     public function update_status_refuses_foreign_standard_link()
     {
         $this->actingAs($this->adminA)
@@ -167,7 +168,7 @@ class StudentsRosterStandardFilterCrossSchoolTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function update_status_applies_for_same_school_standard_link()
     {
         $this->actingAs($this->adminA)

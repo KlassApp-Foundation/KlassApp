@@ -3,16 +3,16 @@
 namespace Tests\Feature\Toshi\Adversarial\Live;
 
 use App\Services\Toshi\LiveAdversarialRunner;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
 /**
  * Live-LLM soft-refusal spot checks via the in-process runner.
  *
- * @group live-llm
- *
  * Not merge-blocking. Requires TOSHI_ADVERSARIAL_LIVE=1 and a real
  * openai-compatible key. Runner uses sqlite :memory: + Http::fake (no prod DB, no WA).
  */
+#[Group('live-llm')]
 class LiveAdversarialSoftRefusalTest extends TestCase
 {
     public function test_live_adversarial_suite_soft_refusals_and_no_mutations(): void

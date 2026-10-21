@@ -18,6 +18,7 @@ use App\Models\WhatsAppUser;
 use App\Services\FreeTierPlanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class FreeTierPlanServiceTest extends TestCase
@@ -112,7 +113,7 @@ class FreeTierPlanServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function assigns_freemium_when_content_complete_and_no_plan(): void
     {
         $this->completeAllContentExceptPlan();
@@ -127,7 +128,7 @@ class FreeTierPlanServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function does_not_assign_when_content_incomplete(): void
     {
         // Only some content — no fees/whatsapp etc.
@@ -139,7 +140,7 @@ class FreeTierPlanServiceTest extends TestCase
         $this->assertDatabaseMissing('current_plans', ['school_id' => $this->school->id]);
     }
 
-    /** @test */
+    #[Test]
     public function never_overwrites_an_existing_current_plan(): void
     {
         $this->completeAllContentExceptPlan();
@@ -152,7 +153,7 @@ class FreeTierPlanServiceTest extends TestCase
         $this->assertSame(1, CurrentPlan::where('school_id', $this->school->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function does_not_assign_a_plan_that_would_block_current_usage(): void
     {
         // Existing "unlimited" school that is already larger than the free tier.
@@ -170,7 +171,7 @@ class FreeTierPlanServiceTest extends TestCase
         $this->assertDatabaseMissing('current_plans', ['school_id' => $this->school->id]);
     }
 
-    /** @test */
+    #[Test]
     public function falls_back_to_smallest_fitting_plan_when_no_freemium_named(): void
     {
         // No plan literally named "Freemium" — service should still pick the

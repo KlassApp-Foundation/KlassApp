@@ -10,6 +10,7 @@ use App\Services\ToshiAuditService;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ToshiAuditTrailTest extends TestCase
@@ -46,7 +47,7 @@ class ToshiAuditTrailTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function log_execution_creates_activity_log_entry_with_correct_data()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);
@@ -72,7 +73,7 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertNull($log->properties['approver_id']);
     }
 
-    /** @test */
+    #[Test]
     public function log_execution_marks_failed_when_result_starts_with_cross_mark()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);
@@ -89,7 +90,7 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertEquals('failed', $log->properties['status']);
     }
 
-    /** @test */
+    #[Test]
     public function log_cancellation_creates_activity_log_entry()
     {
         $user = User::factory()->create(['usergroup_id' => 3]);
@@ -111,7 +112,7 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertEquals('toolCreateFee', $log->properties['tool']);
     }
 
-    /** @test */
+    #[Test]
     public function confirm_yes_creates_audit_log_entry()
     {
         $school = $this->createSchool('Confirm Yes Audit');
@@ -140,7 +141,7 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertEquals($user->id, $log->properties['approver_id']);
     }
 
-    /** @test */
+    #[Test]
     public function confirm_no_creates_audit_log_entry_for_cancellation()
     {
         $school = $this->createSchool('Confirm No Audit');
@@ -168,7 +169,7 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertEquals('toolCreateFee', $log->properties['tool']);
     }
 
-    /** @test */
+    #[Test]
     public function audit_log_is_scoped_to_correct_school()
     {
         $schoolA = $this->createSchool('School A');

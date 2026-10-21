@@ -12,6 +12,7 @@ use App\Models\StandardLink;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -91,7 +92,7 @@ class StandardLinkListHelperTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function each_class_under_one_standard_keeps_its_own_id(): void
     {
         $list = collect(SiteHelper::getStandardLinkList($this->school->id)->resolve());
@@ -100,7 +101,7 @@ class StandardLinkListHelperTest extends TestCase
         $this->assertEqualsCanonicalizing(['P.1', 'P.2', 'P.3'], $list->pluck('section_name')->all());
     }
 
-    /** @test */
+    #[Test]
     public function attendance_class_dropdown_offers_each_real_class_id(): void
     {
         $offeredIds = collect(

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ImpersonateControllerTest extends TestCase
@@ -95,7 +96,7 @@ class ImpersonateControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function school_admin_impersonating_teacher_returns_to_admin_dashboard_on_stop(): void
     {
         // Auth::login stores the real user id in the session (actingAs does not).
@@ -113,7 +114,7 @@ class ImpersonateControllerTest extends TestCase
         $this->assertFalse($this->admin->isImpersonating(), 'Impersonation must be stopped');
     }
 
-    /** @test */
+    #[Test]
     public function school_admin_impersonating_admin_redirects_to_admin_dashboard_not_superadmin(): void
     {
         \Illuminate\Support\Facades\Auth::login($this->admin);
@@ -126,7 +127,7 @@ class ImpersonateControllerTest extends TestCase
         $response->assertRedirect('/admin/dashboard');
     }
 
-    /** @test */
+    #[Test]
     public function superadmin_impersonating_school_admin_returns_to_superadmin_dashboard_on_stop(): void
     {
         \Illuminate\Support\Facades\Auth::login($this->superadmin);
