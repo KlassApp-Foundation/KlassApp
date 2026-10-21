@@ -17,7 +17,14 @@ use Illuminate\Support\Facades\Schema;
  * Safety rails:
  *  - Every targeted school must be flagged is_test AND named "E2E ..."
  *    (refuses anything else, so the phase-4 roster fixture and any other
- *    is_test school are never touched).
+ *    is_test school are never touched). A manually created test school with a
+ *    real-looking name can only be targeted by also passing its exact name
+ *    with --confirm-name; it must still be is_test.
+ *  - Refuses a school that has a platform admin (usergroup 1) or platform
+ *    co-admin (usergroup 2) among its users.
+ *  - --email purges early-access requests and invites (school, teacher,
+ *    co-admin) for that address, so it can sign up again. Refused when the
+ *    address belongs to a user outside the targeted schools.
  *  - Demo schools are owned by demo:purge-schools and are refused here.
  *  - Idempotent: schools that are already gone are reported and skipped.
  *  - One transaction per school; a failure rolls that school back cleanly.
@@ -25,11 +32,15 @@ use Illuminate\Support\Facades\Schema;
  * Run on purpose only (never automatic, never from a migration):
  *     php artisan test:purge-schools --school=123           (dry run)
  *     php artisan test:purge-schools --school=123 --force    (delete)
+ *     php artisan test:purge-schools --school=3 --confirm-name="Kabale S S" \
+ *         --email=admin@example.com                           (dry run)
  */
 class TestPurgeSchoolsCommand extends Command
 {
     protected $signature = 'test:purge-schools
         {--school=* : School ids to purge (repeatable; each must be an is_test school named "E2E ...")}
+        {--confirm-name=* : Exact name of an is_test school that is not "E2E ..."-named, to allow targeting it (repeatable)}
+        {--email=* : Also purge early-access requests and school/teacher/co-admin invites for this email (repeatable)}
         {--force : Actually delete rows. Without this flag the command is a dry run.}';
 
     protected $description = 'Remove E2E test schools ("E2E ...", is_test) and their dependent rows (dry run unless --force).';
@@ -60,10 +71,23 @@ class TestPurgeSchoolsCommand extends Command
         'standards_link',
         'subjects',
         'sections',
+        'school_grading_systems',
+        'student_id_sequences',
         'standards',
         'academic_terms',
         'academic_years',
     ];
+
+    /** Tables with an email column cleared by --email, in delete order. */
+    private const EMAIL_SCOPED = [
+        'early_access_requests',
+        'school_invites',
+        'teacher_invites',
+        'co_admin_invites',
+    ];
+
+    /** Platform-level user groups: super admin (1) and platform co-admin (2). */
+    private const PLATFORM_USERGROUPS = [1, 2];
 
     /**
      * Tables with a user_id column whose FK to users makes them break the
@@ -92,6 +116,12 @@ class TestPurgeSchoolsCommand extends Command
             return self::FAILURE;
         }
 
+        $confirmNames = array_values(array_map('strval', (array) $this->option('confirm-name')));
+        $emails = array_values(array_unique(array_filter(array_map(
+            fn ($e) => strtolower(trim((string) $e)),
+            (array) $this->option('email')
+        ))));
+
         $schools = [];
         foreach ($ids as $id) {
             $school = \App\Models\School::find($id);
@@ -113,8 +143,19 @@ class TestPurgeSchoolsCommand extends Command
                 return self::FAILURE;
             }
 
-            if (! str_starts_with((string) $school->name, 'E2E ')) {
-                $this->error("school {$id} ({$school->name}) is not an E2E test school (name must start with \"E2E \") — refusing to purge it.");
+            $confirmed = in_array((string) $school->name, $confirmNames, true);
+            if (! str_starts_with((string) $school->name, 'E2E ') && ! $confirmed) {
+                $this->error("school {$id} ({$school->name}) is not an E2E test school (name must start with \"E2E \", or pass --confirm-name with its exact name) — refusing to purge it.");
+
+                return self::FAILURE;
+            }
+
+            $platformUsers = DB::table('users')
+                ->where('school_id', $school->id)
+                ->whereIn('usergroup_id', self::PLATFORM_USERGROUPS)
+                ->pluck('id')->all();
+            if ($platformUsers) {
+                $this->error("school {$id} ({$school->name}) has platform admin user(s) " . implode(',', $platformUsers) . ' — refusing to purge it.');
 
                 return self::FAILURE;
             }
@@ -122,7 +163,23 @@ class TestPurgeSchoolsCommand extends Command
             $schools[] = $school;
         }
 
-        if (empty($schools)) {
+        foreach ($emails as $email) {
+            $owners = DB::table('users')->whereRaw('lower(email) = ?', [$email])->get(['id', 'school_id', 'usergroup_id']);
+            foreach ($owners as $owner) {
+                if (in_array((int) $owner->usergroup_id, self::PLATFORM_USERGROUPS, true)) {
+                    $this->error("email {$email} belongs to platform admin user {$owner->id} — refusing.");
+
+                    return self::FAILURE;
+                }
+                if (! in_array((int) $owner->school_id, $ids, true)) {
+                    $this->error("email {$email} belongs to user {$owner->id} at school {$owner->school_id}, outside the targeted schools — refusing.");
+
+                    return self::FAILURE;
+                }
+            }
+        }
+
+        if (empty($schools) && empty($emails)) {
             $this->info('Nothing to purge.');
 
             return self::SUCCESS;
@@ -135,6 +192,9 @@ class TestPurgeSchoolsCommand extends Command
 
         $this->printPlan($plan, $schools);
 
+        $emailPlan = $this->emailInventory($emails);
+        $this->printEmailPlan($emailPlan, $emails);
+
         if (! $this->option('force')) {
             $this->newLine();
             $this->comment('Dry run — nothing was deleted. Re-run with --force to execute.');
@@ -144,6 +204,15 @@ class TestPurgeSchoolsCommand extends Command
 
         foreach ($schools as $school) {
             $this->purgeSchool($school, $plan[$school->id]);
+        }
+
+        if ($emails) {
+            DB::transaction(function () use ($emailPlan) {
+                foreach ($emailPlan as $table => $meta) {
+                    DB::table($table)->whereIn('id', $meta['ids'])->delete();
+                }
+            });
+            $this->info('Early-access requests and invites for ' . implode(', ', $emails) . ' purged.');
         }
 
         $this->newLine();
@@ -159,7 +228,9 @@ class TestPurgeSchoolsCommand extends Command
      */
     private function inventoryFor(\App\Models\School $school): array
     {
-        $users = \App\Models\User::where('school_id', $school->id)
+        // Query builder, not Eloquent: soft-deleted users still hold the
+        // users.school_id FK and must be inventoried and removed too.
+        $users = DB::table('users')->where('school_id', $school->id)
             ->orderBy('id')
             ->get(['id', 'email', 'name', 'usergroup_id', 'status']);
 
@@ -168,6 +239,14 @@ class TestPurgeSchoolsCommand extends Command
         $tables = [];
         foreach (self::SCHOOL_SCOPED as $table) {
             if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'school_id')) {
+                continue;
+            }
+            if (! Schema::hasColumn($table, 'id')) {
+                // e.g. student_id_sequences (keyed by school_id only).
+                $count = DB::table($table)->where('school_id', $school->id)->count();
+                if ($count) {
+                    $tables[$table] = ['ids' => [], 'count' => $count];
+                }
                 continue;
             }
             $ids = DB::table($table)->where('school_id', $school->id)->orderBy('id')->pluck('id')->all();
@@ -186,6 +265,44 @@ class TestPurgeSchoolsCommand extends Command
         }
 
         return ['users' => $users->all(), 'tables' => $tables];
+    }
+
+    /**
+     * @param  list<string>  $emails  lower-cased
+     * @return array<string, array{ids: array, count: int}>
+     */
+    private function emailInventory(array $emails): array
+    {
+        $tables = [];
+        if (! $emails) {
+            return $tables;
+        }
+        foreach (self::EMAIL_SCOPED as $table) {
+            if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'email')) {
+                continue;
+            }
+            $ids = DB::table($table)->whereIn(DB::raw('lower(email)'), $emails)->orderBy('id')->pluck('id')->all();
+            if ($ids) {
+                $tables[$table] = ['ids' => $ids, 'count' => count($ids)];
+            }
+        }
+
+        return $tables;
+    }
+
+    private function printEmailPlan(array $emailPlan, array $emails): void
+    {
+        if (! $emails) {
+            return;
+        }
+        $this->line('');
+        $this->info('emails ' . implode(', ', $emails) . ($this->option('force') ? ' — PURGING' : ' — would purge'));
+        if (! $emailPlan) {
+            $this->line('    (no early-access requests or invites)');
+        }
+        foreach ($emailPlan as $table => $meta) {
+            $this->line("    {$table}: {$meta['count']} row(s) [ids " . implode(',', $meta['ids']) . ']');
+        }
     }
 
     private function printPlan(array $plan, array $schools): void

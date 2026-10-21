@@ -252,6 +252,132 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->assertDatabaseMissing('school_grading_systems', ['school_id' => $e2e->id]);
     }
 
+    private function makeEarlyAccessAndInvite(string $email): void
+    {
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Purge School',
+            'contact_name' => 'Purge Contact',
+            'contact_role' => 'Head teacher',
+            'email' => $email,
+            'phone' => '+256700000000',
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('school_invites')->insert([
+            'email' => $email,
+            'school_name' => 'Purge School',
+            'token_hash' => hash('sha256', 'invite-' . $email),
+            'expires_at' => now()->addDays(7),
+            'claimed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_confirm_name_allows_a_manually_named_is_test_school(): void
+    {
+        $school = $this->makeSchool('Kabale S S', true);
+        $user = $this->makeUser($school);
+        $this->makeSchoolScopedRows($school);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--confirm-name' => ['Kabale S S']])
+            ->expectsOutputToContain("user id={$user->id}")
+            ->expectsOutputToContain('Dry run — nothing was deleted.')
+            ->assertExitCode(0);
+        $this->assertDatabaseHas('schools', ['id' => $school->id]);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--confirm-name' => ['Kabale S S'], '--force' => true])
+            ->assertExitCode(0);
+        $this->assertDatabaseMissing('schools', ['id' => $school->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('subjects', ['school_id' => $school->id]);
+    }
+
+    public function test_confirm_name_must_match_exactly_and_does_not_bypass_is_test(): void
+    {
+        $test = $this->makeSchool('Kabale S S', true);
+        $this->artisan('test:purge-schools', ['--school' => [$test->id], '--confirm-name' => ['Kabale SS'], '--force' => true])
+            ->expectsOutputToContain('not an E2E test school')
+            ->assertExitCode(1);
+        $this->assertDatabaseHas('schools', ['id' => $test->id]);
+
+        $real = $this->makeSchool('Mazi P S', false);
+        $this->artisan('test:purge-schools', ['--school' => [$real->id], '--confirm-name' => ['Mazi P S'], '--force' => true])
+            ->expectsOutputToContain('is not flagged is_test')
+            ->assertExitCode(1);
+        $this->assertDatabaseHas('schools', ['id' => $real->id]);
+    }
+
+    public function test_refuses_a_school_with_a_platform_admin_user(): void
+    {
+        $school = $this->makeSchool('E2E Has Superadmin', true);
+        $admin = $this->makeUser($school);
+        $admin->forceFill(['usergroup_id' => 1])->save();
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--force' => true])
+            ->expectsOutputToContain('platform admin')
+            ->assertExitCode(1);
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    public function test_email_option_purges_early_access_requests_and_invites_for_those_emails_only(): void
+    {
+        $school = $this->makeSchool('E2E Email Purge', true);
+        $user = $this->makeUser($school);
+        $this->makeEarlyAccessAndInvite($user->email);
+        $this->makeEarlyAccessAndInvite('keep-me@schools.test');
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--email' => [strtoupper($user->email)]])
+            ->expectsOutputToContain('early_access_requests: 1 row(s)')
+            ->expectsOutputToContain('school_invites: 1 row(s)')
+            ->expectsOutputToContain('Dry run — nothing was deleted.')
+            ->assertExitCode(0);
+        $this->assertDatabaseHas('early_access_requests', ['email' => $user->email]);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--email' => [$user->email], '--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('early_access_requests', ['email' => $user->email]);
+        $this->assertDatabaseMissing('school_invites', ['email' => $user->email]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('early_access_requests', ['email' => 'keep-me@schools.test']);
+        $this->assertDatabaseHas('school_invites', ['email' => 'keep-me@schools.test']);
+    }
+
+    public function test_email_option_refuses_an_email_owned_by_a_user_outside_the_targeted_schools(): void
+    {
+        $target = $this->makeSchool('E2E Email Target', true);
+        $other = $this->makeSchool('Real Other School', false);
+        $otherUser = $this->makeUser($other);
+        $this->makeEarlyAccessAndInvite($otherUser->email);
+
+        $this->artisan('test:purge-schools', ['--school' => [$target->id], '--email' => [$otherUser->email], '--force' => true])
+            ->expectsOutputToContain('outside the targeted schools')
+            ->assertExitCode(1);
+
+        $this->assertDatabaseHas('schools', ['id' => $target->id]);
+        $this->assertDatabaseHas('early_access_requests', ['email' => $otherUser->email]);
+    }
+
+    public function test_soft_deleted_users_are_inventoried_and_removed(): void
+    {
+        $school = $this->makeSchool('E2E Soft Deleted User', true);
+        $user = $this->makeUser($school);
+        $user->delete(); // soft delete
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id]])
+            ->expectsOutputToContain("user id={$user->id}")
+            ->assertExitCode(0);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--force' => true])
+            ->assertExitCode(0);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('schools', ['id' => $school->id]);
+    }
+
     public function test_is_idempotent_when_the_school_is_already_gone(): void
     {
         $school = $this->makeSchool('E2E Primary Manual 2026-10-01', true);
