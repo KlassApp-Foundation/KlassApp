@@ -588,7 +588,6 @@ class ReleaseGateParentStudentPathsTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
-        $method->setAccessible(true);
         $method->invoke($controller, $phone, $body, 'm-'.uniqid(), 'Tester');
     }
 

@@ -48,7 +48,7 @@ class EarlyAccessRequestController extends Controller
 
         return response()->streamDownload(function () use ($columns) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, $columns);
+            fputcsv($out, $columns, ',', '"', '\\');
             EarlyAccessRequest::orderBy('id')->chunk(500, function ($rows) use ($out, $columns) {
                 foreach ($rows as $row) {
                     fputcsv($out, array_map(function ($column) use ($row) {
@@ -60,7 +60,7 @@ class EarlyAccessRequestController extends Controller
 
                         // Neutralise spreadsheet formulas in user-supplied text.
                         return preg_match('/^[=+\-@\t\r]/', $value) ? "'" . $value : $value;
-                    }, $columns));
+                    }, $columns), ',', '"', '\\');
                 }
             });
             fclose($out);

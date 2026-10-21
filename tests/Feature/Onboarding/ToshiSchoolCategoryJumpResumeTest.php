@@ -136,7 +136,6 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
 
         $component = Livewire::test(AgentToshi::class);
         $method = new ReflectionMethod(AgentToshi::class, 'jumpToIncompleteOnboardingStep');
-        $method->setAccessible(true);
         $method->invoke($component->instance(), $key);
 
         $this->assertSame($expectedActionStep, $component->get('actionStep'));
@@ -160,7 +159,6 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
 
         $component = Livewire::test(AgentToshi::class);
         $method = new ReflectionMethod(AgentToshi::class, 'jumpToIncompleteOnboardingStep');
-        $method->setAccessible(true);
         $method->invoke($component->instance(), 'plan_selection');
 
         $this->assertNull($component->get('actionStep'));

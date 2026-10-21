@@ -109,7 +109,6 @@ class NestedMcpApprovalSurfacingTest extends TestCase
 
         $service = app(ToshiSdkV2Service::class);
         $method = new ReflectionMethod(ToshiSdkV2Service::class, 'consumePendingConfirmPayload');
-        $method->setAccessible(true);
 
         $json = $method->invoke($service);
         $decoded = json_decode((string) $json, true);
@@ -140,7 +139,6 @@ class NestedMcpApprovalSurfacingTest extends TestCase
 
         $service = app(ToshiSdkV2Service::class);
         $method = new ReflectionMethod(ToshiSdkV2Service::class, 'consumePendingConfirmPayload');
-        $method->setAccessible(true);
 
         // Same method both PendingMcpApprovalException and Throwable catches use.
         $json = $method->invoke($service);

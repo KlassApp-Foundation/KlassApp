@@ -111,7 +111,6 @@ class WhatsAppDemoSchoolIdTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'handleUnrecognizedUserMeta');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->phone, $body, 'Nightwatch Tester');
     }
 }

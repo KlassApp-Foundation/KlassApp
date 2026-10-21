@@ -412,7 +412,6 @@ class SoftLaunchHelpTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'handleUnrecognizedUserMeta');
-        $method->setAccessible(true);
         $method->invoke($controller, $this->strangerPhone, $body, 'Stranger');
     }
 
@@ -420,7 +419,6 @@ class SoftLaunchHelpTest extends TestCase
     {
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
-        $method->setAccessible(true);
         $method->invoke($controller, $phone, $body, 'wamid.test', 'Parent');
     }
 }

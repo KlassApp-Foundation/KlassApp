@@ -126,7 +126,7 @@ class PromotionController extends Controller
                 $file   =   'uploads/promotion/promotionlist'.$standard_name.date('_d-m-Y_H_i_s').'.csv';
                 $file_open = fopen($file, 'w');
 
-                fputcsv($file_open,['std_school_pay_number','student_name','academic_status','comments']);
+                fputcsv($file_open,['std_school_pay_number','student_name','academic_status','comments'], ',', '"', '\\');
       
                 foreach($users as $user)
                 { 
@@ -138,7 +138,7 @@ class PromotionController extends Controller
                     $csv_file[] = 'P';
                     $csv_file[] = '';
                 
-                    fputcsv($file_open,$csv_file);
+                    fputcsv($file_open,$csv_file, ',', '"', '\\');
                 }
                 $res['path'] = url($file);
             }
