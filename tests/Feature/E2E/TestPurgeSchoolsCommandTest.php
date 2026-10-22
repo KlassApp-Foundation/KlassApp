@@ -454,6 +454,200 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->assertDatabaseHas('early_access_requests', ['email' => $otherUser->email]);
     }
 
+    private function makeContactRows(School $school, User $user, string $phone, string $email): void
+    {
+        \DB::table('users')->where('id', $user->id)->update(['mobile_no' => $phone]);
+
+        \DB::table('whatsapp_users')->insert([
+            'phone' => $phone,
+            'user_id' => $user->id,
+            'school_id' => $school->id,
+            'opted_in' => 1,
+            'verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Purge School',
+            'contact_name' => 'Purge Contact',
+            'contact_role' => 'Head teacher',
+            'email' => $email,
+            'phone' => $phone,
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        \DB::table('message_delivery_log')->insert([
+            'whatsapp_message_id' => 'wamid.purge',
+            'phone' => $phone,
+            'direction' => 'outbound',
+            'status' => 'sent',
+            'content_preview' => 'purge fixture',
+        ]);
+
+        if (\Schema::hasTable('whatsapp_verification_challenges')) {
+            \DB::table('whatsapp_verification_challenges')->insert([
+                'school_id' => $school->id,
+                'user_id' => $user->id,
+                'phone' => $phone,
+                'phone_digits' => ltrim($phone, '+'),
+                'code_hash' => hash('sha256', 'purge-code'),
+                'attempts' => 0,
+                'expires_at' => now()->addMinutes(10),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    public function test_purging_a_school_frees_its_admin_email_and_phone(): void
+    {
+        $school = $this->makeSchool('E2E Contact Freedom', true);
+        $user = $this->makeUser($school);
+        $this->makeContactRows($school, $user, '+256770123456', $user->email);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id]])
+            ->expectsOutputToContain('early_access_requests: 1 row(s)')
+            ->expectsOutputToContain('whatsapp_users: 1 row(s)')
+            ->expectsOutputToContain('message_delivery_log: 1 row(s)')
+            ->expectsOutputToContain('phones +256770123456 — would purge')
+            ->expectsOutputToContain('Dry run — nothing was deleted.')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('whatsapp_users', ['phone' => '+256770123456']);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('early_access_requests', ['email' => $user->email]);
+        $this->assertDatabaseMissing('early_access_requests', ['phone' => '+256770123456']);
+        $this->assertDatabaseMissing('whatsapp_users', ['phone' => '+256770123456']);
+        $this->assertDatabaseMissing('message_delivery_log', ['phone' => '+256770123456']);
+        if (\Schema::hasTable('whatsapp_verification_challenges')) {
+            $this->assertDatabaseMissing('whatsapp_verification_challenges', ['phone' => '+256770123456']);
+        }
+
+        // The same person can sign up again with that address and number.
+        $again = School::create([
+            'name' => 'Recreated After Purge',
+            'slug' => 'recreated-after-purge',
+            'email' => 'recreated@schools.test',
+            'registration_country' => 'Uganda',
+            'curriculum' => 'UNEB',
+            'status' => 1,
+        ]);
+        $fresh = User::create([
+            'school_id' => $again->id,
+            'usergroup_id' => 3,
+            'name' => 'Purge Tester',
+            'email' => $user->email,
+            'mobile_no' => '+256770123456',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+        ]);
+        \DB::table('whatsapp_users')->insert([
+            'phone' => '+256770123456',
+            'user_id' => $fresh->id,
+            'school_id' => $again->id,
+            'opted_in' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Recreated',
+            'contact_name' => 'Purge Tester',
+            'contact_role' => 'Head teacher',
+            'email' => $user->email,
+            'phone' => '+256770123456',
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->assertDatabaseHas('users', ['id' => $fresh->id]);
+        $this->assertDatabaseHas('whatsapp_users', ['phone' => '+256770123456']);
+    }
+
+    public function test_email_and_phone_cleanup_runs_without_a_school_id(): void
+    {
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Mazi P S',
+            'contact_name' => 'Leftover',
+            'contact_role' => 'Head teacher',
+            'email' => 'mazi-leftover@schools.test',
+            'phone' => '+256773333444',
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('test:purge-schools', [
+            '--email' => ['mazi-leftover@schools.test'],
+            '--phone' => ['+256773333444'],
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->assertDatabaseMissing('early_access_requests', ['email' => 'mazi-leftover@schools.test']);
+        $this->assertDatabaseMissing('early_access_requests', ['phone' => '+256773333444']);
+    }
+
+    public function test_phone_option_refuses_a_number_owned_by_a_user_outside_the_targeted_schools(): void
+    {
+        $target = $this->makeSchool('E2E Phone Target', true);
+        $other = $this->makeSchool('Real Phone Owner', false);
+        $otherUser = $this->makeUser($other);
+        $otherUser->forceFill(['mobile_no' => '+256771111222'])->save();
+
+        $this->artisan('test:purge-schools', [
+            '--school' => [$target->id],
+            '--phone' => ['+256771111222'],
+            '--force' => true,
+        ])
+            ->expectsOutputToContain('outside the targeted schools')
+            ->assertExitCode(1);
+
+        $this->assertDatabaseHas('schools', ['id' => $target->id]);
+        $this->assertDatabaseHas('users', ['id' => $otherUser->id]);
+    }
+
+    public function test_phone_option_frees_a_number_left_by_an_already_removed_school(): void
+    {
+        $host = $this->makeSchool('E2E Leftover Host', true);
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Kabale S S',
+            'contact_name' => 'Leftover',
+            'contact_role' => 'Head teacher',
+            'email' => 'leftover@schools.test',
+            'phone' => '+256772222333',
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('test:purge-schools', ['--school' => [$host->id], '--phone' => ['0772222333']])
+            ->expectsOutputToContain('early_access_requests: 1 row(s)')
+            ->expectsOutputToContain('phones 0772222333 — would purge')
+            ->assertExitCode(0);
+        $this->assertDatabaseHas('early_access_requests', ['phone' => '+256772222333']);
+
+        $this->artisan('test:purge-schools', ['--school' => [$host->id], '--phone' => ['0772222333'], '--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('early_access_requests', ['phone' => '+256772222333']);
+    }
+
     public function test_soft_deleted_users_are_inventoried_and_removed(): void
     {
         $school = $this->makeSchool('E2E Soft Deleted User', true);
