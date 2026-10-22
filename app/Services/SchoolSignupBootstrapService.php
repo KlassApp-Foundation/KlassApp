@@ -43,21 +43,33 @@ class SchoolSignupBootstrapService
             throw \App\Exceptions\SignupClosedException::make();
         }
 
-        return $this->createSchoolAndAdmin($data);
+        // Self-serve sign-up can never mark a school as a test school.
+        unset($data['is_test']);
+
+        return $this->createSchoolAndAdmin($data, false);
     }
 
     /**
-     * Operator-only entry (artisan setup commands). Not reachable from any
-     * HTTP route, so it is not affected by SIGNUP_ENABLED.
+     * Operator entry (artisan setup commands and the school-invite claim).
+     * Not affected by SIGNUP_ENABLED. `is_test` is honored only here, and
+     * the claim path copies it from the invite row rather than the request.
+     *
+     * @param  array<string, mixed>  $data
      */
     public function bootstrapAsOperator(array $data): User
     {
-        return $this->createSchoolAndAdmin($data);
+        $isTest = (bool) ($data['is_test'] ?? false);
+        unset($data['is_test']);
+
+        return $this->createSchoolAndAdmin($data, $isTest);
     }
 
-    private function createSchoolAndAdmin(array $data): User
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createSchoolAndAdmin(array $data, bool $isTest = false): User
     {
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $isTest) {
             $adminName = trim((string) $data['name']);
             $email = trim((string) $data['email']);
             $phone = $this->normalizePhone($data['phone'] ?? null);
@@ -68,6 +80,7 @@ class SchoolSignupBootstrapService
                 $phone,
                 $data['school_name'] ?? null,
                 $data['registration_country'] ?? null,
+                $isTest,
             );
             $user = $this->createSchoolAdmin($school, $data, $phone);
             $this->createUserProfile($user, $adminName, $phone);
@@ -163,6 +176,7 @@ class SchoolSignupBootstrapService
         ?string $phone,
         ?string $schoolName = null,
         ?string $country = null,
+        bool $isTest = false,
     ): School {
         $name = $schoolName !== null && trim($schoolName) !== ''
             ? $this->uniqueSchoolName($schoolName)
@@ -188,8 +202,13 @@ class SchoolSignupBootstrapService
         }
 
         // Force null past the column default ('uneb') when the DB still has a default.
+        // is_test is not fillable. Set it on the insert so a test school is
+        // flagged before any later observer save.
         $school = new School($payload);
         $school->curriculum = null;
+        if ($isTest) {
+            $school->is_test = 1;
+        }
         $school->save();
 
         // Re-assert after observer saves (slug), in case MySQL default re-applied.

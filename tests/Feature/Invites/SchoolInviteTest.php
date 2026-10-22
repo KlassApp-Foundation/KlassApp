@@ -325,4 +325,166 @@ class SchoolInviteTest extends TestCase
         $this->assertSame(['id'], $foreignKey['foreign_columns']);
         $this->assertSame('set null', $foreignKey['on_delete']);
     }
+
+    public function test_a_ticked_invite_claims_a_school_with_is_test_set(): void
+    {
+        Mail::fake();
+
+        $admin = $this->platformAdmin();
+        $request = $this->earlyAccess('ticked@school.test');
+
+        $page = $this->actingAs($admin)->get(route('platform.early-access.index'));
+        $page->assertOk();
+        $this->assertTestSchoolCheckboxIsUnchecked($page);
+
+        $this->actingAs($admin)
+            ->post(route('platform.early-access.invite', $request), ['is_test' => '1'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $invite = SchoolInvite::where('email', 'ticked@school.test')->firstOrFail();
+        $this->assertSame(1, (int) $invite->is_test);
+
+        $this->actingAs($admin)
+            ->get(route('platform.early-access.index'))
+            ->assertOk()
+            ->assertSee('data-testid="invite-test-badge"', false)
+            ->assertSee('Test', false);
+
+        $isTestAtInsert = null;
+        School::creating(function (School $school) use (&$isTestAtInsert) {
+            if (strcasecmp((string) $school->email, 'ticked@school.test') === 0) {
+                $isTestAtInsert = $school->is_test;
+            }
+        });
+
+        Auth::logout();
+
+        $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
+            'name' => 'Grace Nakato',
+            'phone' => '0701234567',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
+        ])->assertRedirect(route('onboarding.choice'));
+
+        $this->assertSame(1, (int) $isTestAtInsert);
+        $this->assertSame(1, (int) School::where('email', 'ticked@school.test')->value('is_test'));
+    }
+
+    public function test_an_unticked_invite_claims_a_school_with_is_test_clear(): void
+    {
+        Mail::fake();
+
+        $admin = $this->platformAdmin();
+        $request = $this->earlyAccess('unticked@school.test');
+
+        $page = $this->actingAs($admin)->get(route('platform.early-access.index'));
+        $page->assertOk();
+        $this->assertTestSchoolCheckboxIsUnchecked($page);
+
+        $this->actingAs($admin)
+            ->post(route('platform.early-access.invite', $request))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $invite = SchoolInvite::where('email', 'unticked@school.test')->firstOrFail();
+        $this->assertSame(0, (int) $invite->is_test);
+
+        $this->actingAs($admin)
+            ->get(route('platform.early-access.index'))
+            ->assertOk()
+            ->assertDontSee('data-testid="invite-test-badge"', false);
+
+        $isTestAtInsert = null;
+        School::creating(function (School $school) use (&$isTestAtInsert) {
+            if (strcasecmp((string) $school->email, 'unticked@school.test') === 0) {
+                $isTestAtInsert = $school->is_test;
+            }
+        });
+
+        Auth::logout();
+
+        $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
+            'name' => 'Grace Nakato',
+            'phone' => '0701234567',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
+        ])->assertRedirect(route('onboarding.choice'));
+
+        $this->assertTrue($isTestAtInsert === null || (int) $isTestAtInsert === 0);
+        $this->assertSame(0, (int) School::where('email', 'unticked@school.test')->value('is_test'));
+    }
+
+    public function test_a_non_admin_cannot_set_the_test_school_flag(): void
+    {
+        $school = School::create(['name' => 'A School', 'email' => 'school@test.test', 'status' => 1]);
+        $user = User::create([
+            'name' => 'School Admin',
+            'email' => 'school.admin@test.test',
+            'password' => bcrypt('not-a-public-password'),
+            'usergroup_id' => 3,
+            'school_id' => $school->id,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('platform.early-access.invite', $this->earlyAccess('nonadmin@school.test')), [
+                'is_test' => '1',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(0, SchoolInvite::count());
+        $this->assertNull(School::where('email', 'nonadmin@school.test')->first());
+    }
+
+    public function test_a_tampered_claim_request_cannot_set_is_test(): void
+    {
+        $admin = $this->platformAdmin();
+        ['token' => $token] = SchoolInviteService::issue(
+            $this->earlyAccess('tamper@school.test'),
+            $admin,
+            false,
+        );
+
+        $this->post(route('school-invite.claim', $token), [
+            'name' => 'Grace Nakato',
+            'phone' => '0701234567',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
+            'is_test' => '1',
+        ])->assertRedirect(route('onboarding.choice'));
+
+        $this->assertSame(0, (int) SchoolInvite::where('email', 'tamper@school.test')->value('is_test'));
+        $this->assertSame(0, (int) School::where('email', 'tamper@school.test')->value('is_test'));
+    }
+
+    private function assertTestSchoolCheckboxIsUnchecked(\Illuminate\Testing\TestResponse $response): void
+    {
+        $response->assertSee('name="is_test"', false);
+        $response->assertSee('data-testid="early-access-test-school"', false);
+        $response->assertSee('Test school', false);
+
+        preg_match_all('/<input\b[^>]*data-testid="early-access-test-school"[^>]*>/i', $response->getContent(), $matches);
+        $this->assertNotEmpty($matches[0]);
+
+        foreach ($matches[0] as $tag) {
+            $this->assertDoesNotMatchRegularExpression('/(?:^|\s)checked(?:\s|=|>|$)/i', $tag);
+        }
+    }
+
+    private function queuedInviteToken(): string
+    {
+        $token = null;
+
+        Mail::assertQueued(SchoolInviteMail::class, function (SchoolInviteMail $mail) use (&$token) {
+            $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
+
+            return $token !== '';
+        });
+
+        $this->assertIsString($token);
+        $this->assertNotSame('', $token);
+
+        return $token;
+    }
 }
