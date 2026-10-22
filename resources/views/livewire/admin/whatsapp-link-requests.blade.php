@@ -14,11 +14,11 @@
                 <p>{{ $isDemoSchool ? 'No requests yet. Scan the QR on /demo to try it.' : 'No link requests waiting.' }}</p>
             </div>
         @else
-            <div class="wa-lr-list">
+            <x-fold-list tag="div" class="wa-lr-list" name="link-requests">
                 @foreach($requests as $r)
                     @include('livewire.admin.partials.link-request-card', ['r' => $r])
                 @endforeach
-            </div>
+            </x-fold-list>
         @endif
     </section>
 
@@ -34,7 +34,7 @@
                 <p>No numbers are linked right now.@unless($isDemoSchool) <a href="{{ url('/admin/whatsapp/parents') }}">See linked parents</a>@endunless</p>
             </div>
         @else
-            <div class="wa-lr-list">
+            <x-fold-list tag="div" class="wa-lr-list" name="linked-numbers">
                 @foreach($linked as $l)
                     <article class="ds-card wa-lr-card" wire:key="linked-{{ $l['id'] }}" data-testid="wa-linked" data-demo="{{ $l['demo'] ? '1' : '0' }}" x-data="{ confirming: false }">
                         <div class="wa-lr-card__main">
@@ -75,7 +75,7 @@
                         </div>
                     </article>
                 @endforeach
-            </div>
+            </x-fold-list>
         @endif
     </section>
 </div>
