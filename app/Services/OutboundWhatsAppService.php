@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Academics\Exam;
-use App\Models\FeesCategories;
-use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppPendingNotification;
 use App\Models\WhatsAppUser;
@@ -356,15 +354,13 @@ class OutboundWhatsAppService
             return 0;
         }
 
-        $standardId = $student->studentAcademicLatest?->standardLink?->standard_id;
-        if (! $standardId) {
-            return 0;
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        // A reminder is for the term in progress, not every term the fee name was used in.
+        $fees = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
+        if ($feeId) {
+            $fees = $fees->where('id', $feeId)->values();
         }
-
-        $fees = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', $standardId)
-            ->when($feeId, fn ($q) => $q->where('id', $feeId))
-            ->get();
 
         if ($fees->isEmpty()) {
             return 0;

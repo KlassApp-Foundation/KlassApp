@@ -21,6 +21,7 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\DemoSchoolCommsGuard;
+use App\Services\StudentFeeResolver;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
@@ -232,15 +233,9 @@ class WhatsAppController extends Controller
             ], 404);
         }
 
-        $feeCategories = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', function ($q) use ($student) {
-                $q->select('standard_id')
-                    ->from('student_academics')
-                    ->where('student_id', $student->id)
-                    ->latest()
-                    ->limit(1);
-            })
-            ->get();
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
 
@@ -2073,14 +2068,10 @@ class WhatsAppController extends Controller
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
 
-            $standardId = $academic?->standardLink?->standard_id;
-
-            $feeCategories = collect();
-            if ($standardId) {
-                $feeCategories = FeesCategories::where('school_id', $schoolId)
-                    ->where('standard_id', $standardId)
-                    ->get();
-            }
+            $resolver = app(StudentFeeResolver::class);
+            $feeCategories = ($student && $schoolId > 0)
+                ? $resolver->forStudent($student, $schoolId, $resolver->currentTermId($schoolId))
+                : collect();
 
             $totalFees = $feeCategories->sum('amount');
 
@@ -2462,15 +2453,9 @@ class WhatsAppController extends Controller
     {
         $student = $user->user;
 
-        $feeCategories = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', function ($q) use ($student) {
-                $q->select('standard_id')
-                    ->from('student_academics')
-                    ->where('student_id', $student->id)
-                    ->latest()
-                    ->limit(1);
-            })
-            ->get();
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
         $message = "💰 *My Fee Balance*\n_{$this->whatsappDisplayName($student, 'Student')}_\n\n";

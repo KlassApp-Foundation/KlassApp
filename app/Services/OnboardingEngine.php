@@ -1526,10 +1526,9 @@ class OnboardingEngine
      *
      * Whole-school fees (no 'class'): when no class is specified, the fee is
      * genuinely school-wide — one row per Standard with section_id = NULL.
-     * This matches StudentReportHelperService::fees() which reads school-wide
-     * fees as whereNull('section_id'), and WhatsApp queries that filter by
-     * standard_id. A fee scoped to one arbitrary Standard would be invisible
-     * to students in other grading tiers.
+     * StudentFeeResolver includes only the row for the student's own standard,
+     * plus that student's section and stream. A fee scoped to one arbitrary
+     * Standard would be invisible to students in other grading tiers.
      *
      * Idempotent via firstOrCreate on
      * (school_id, standard_id, section_id, academic_term_id, name).
@@ -1669,14 +1668,6 @@ class OnboardingEngine
         }
     }
 
-    /**
-     * Save a whole-school fee: one row per Standard with section_id = NULL.
-     *
-     * This matches StudentReportHelperService::fees() which reads school-wide
-     * fees as whereNull('section_id'), and WhatsApp queries that filter by
-     * standard_id. A fee on just one Standard would be invisible to students
-     * in other grading tiers.
-     */
     /**
      * Save a whole-school fee as one row per Standard (section_id = NULL).
      *
