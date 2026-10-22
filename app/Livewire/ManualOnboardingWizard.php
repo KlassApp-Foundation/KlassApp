@@ -3297,7 +3297,8 @@ class ManualOnboardingWizard extends Component
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
-                'phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
+                'parent' => trim((string) ($draft['parent'] ?? '')),
+                'parent_phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
                 'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
@@ -3379,10 +3380,11 @@ class ManualOnboardingWizard extends Component
         }
 
         $payload = [];
-        foreach ($this->feeDrafts as $draft) {
+        foreach ($this->feeDrafts as $index => $draft) {
             $row = [
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'amount' => (float) ($draft['amount'] ?? 0),
+                'row' => $index + 1,
             ];
             $scope = (string) ($draft['scope'] ?? 'whole_school');
             if ($scope === 'class') {
