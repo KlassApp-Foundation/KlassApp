@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingNameListExtractor;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
@@ -49,6 +48,12 @@ class OnboardingUploadService
             ->first();
 
         if ($existing && $existing->status === OnboardingUpload::STATUS_DONE) {
+            return ['upload' => $existing, 'reused' => true];
+        }
+
+        // Already being imported: return that row. Dispatching again would run
+        // two jobs over the same rows before either commits.
+        if ($existing && in_array($existing->status, [OnboardingUpload::STATUS_QUEUED, OnboardingUpload::STATUS_RUNNING], true)) {
             return ['upload' => $existing, 'reused' => true];
         }
 
@@ -231,10 +236,6 @@ class OnboardingUploadService
 
     private function wizardFor(OnboardingUpload $upload): ManualOnboardingWizard
     {
-        if (! Auth::check() || (int) Auth::id() !== (int) $upload->user_id) {
-            Auth::loginUsingId((int) $upload->user_id);
-        }
-
         return app(ManualOnboardingWizard::class);
     }
 

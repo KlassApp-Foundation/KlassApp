@@ -739,7 +739,11 @@ class ManualOnboardingWizard extends Component
         $this->activeUpload = $result['upload']->progress();
 
         if ($result['reused']) {
-            $this->applyFinishedUpload($result['upload']->fresh());
+            // A finished import shows its result at once; one still queued or
+            // running is left to the poller.
+            if ($result['upload']->isFinished()) {
+                $this->applyFinishedUpload($result['upload']->fresh());
+            }
 
             return;
         }

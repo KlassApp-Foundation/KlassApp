@@ -6,6 +6,8 @@ use App\Models\OnboardingUpload;
 use App\Services\Onboarding\OnboardingUploadService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -32,6 +34,23 @@ class ProcessOnboardingUpload implements ShouldQueue
         }
 
         $upload->forceFill(['status' => OnboardingUpload::STATUS_RUNNING, 'error' => null])->save();
+
+        // The importer calls the same component a signed-in admin would use,
+        // so it needs that identity — but only for as long as this job runs.
+        // A queue worker is long-lived; leaving the user on the guard would
+        // make every later job run as this school admin.
+        $previousUser = Auth::user();
+        $owner = User::query()->find($upload->user_id);
+        if (! $owner) {
+            $upload->forceFill([
+                'status' => OnboardingUpload::STATUS_FAILED,
+                'error' => 'The person who uploaded this file no longer exists.',
+                'finished_at' => now(),
+            ])->save();
+
+            return;
+        }
+        Auth::setUser($owner);
 
         try {
             $rows = $upload->rows;
@@ -76,6 +95,11 @@ class ProcessOnboardingUpload implements ShouldQueue
                 'school_id' => (int) $upload->school_id,
                 'kind' => (string) $upload->kind,
             ]);
+        } finally {
+            Auth::forgetGuards();
+            if ($previousUser) {
+                Auth::setUser($previousUser);
+            }
         }
     }
 }
