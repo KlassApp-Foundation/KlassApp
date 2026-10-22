@@ -29,7 +29,7 @@ class WhatsAppUserInitiatedVerification
      * Uppercase letters and digits without 0/O, 1/I/L. Six of these are what
      * the admin reads out and sends.
      */
-    public const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    public const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
     public const MESSAGE_PREFIX = 'Verify KlassApp: ';
 
