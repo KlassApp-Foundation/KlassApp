@@ -1,3 +1,4 @@
+@include('livewire.partials.manual-wizard-upload-progress')
 {{-- SPDX-License-Identifier: MIT --}}
 @php
     $stepKey = $stepKey ?? '';

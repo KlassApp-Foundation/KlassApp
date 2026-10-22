@@ -174,15 +174,17 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $csv = "Name,Class,Stream,Parent Name,Parent Phone\nAmina Student,P.1,,Parent A,+256700333444\nBrian Student,P.1,,Parent B,+256700555666\n";
         $file = UploadedFile::fake()->createWithContent('students.csv', $csv);
 
+        // The file is imported in the background, so the students exist before Next.
         $component
             ->set('studentUpload', $file)
-            ->assertCount('studentDrafts', 2)
-            ->assertSet('studentDrafts.0.stream', '')
-            ->assertSet('studentDrafts.1.stream', '')
+            ->assertSet('studentUploadReport', '2 students added, 0 skipped');
+        $this->assertSame(2, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+
+        $component
             ->set('studentName', 'Solo Student')
             ->set('studentClass', 'P.1')
             ->call('addStudentDraft')
-            ->assertCount('studentDrafts', 3)
+            ->assertCount('studentDrafts', 1)
             ->call('next');
 
         $students = User::where('school_id', $this->school->id)->where('usergroup_id', 6)->get();

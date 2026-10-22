@@ -256,6 +256,13 @@ class ManualOnboardingWizard extends Component
     public string $studentUploadReport = '';
 
     /**
+     * Progress of the roster file the queue is importing for this school.
+     *
+     * @var array{id: int, kind: string, status: string, total: int, processed: int, added: int, skipped: int, report: ?string, error: ?string}|null
+     */
+    public ?array $activeUpload = null;
+
+    /**
      * @var list<array{row: int, reason: string}>
      */
     public array $studentUploadSkips = [];
@@ -525,12 +532,12 @@ class ManualOnboardingWizard extends Component
 
     public function updatedTeacherUpload(): void
     {
-        $this->ingestUpload('teacher');
+        $this->queueUpload('teachers', $this->teacherUpload);
     }
 
     public function updatedClassTeacherUpload(): void
     {
-        $this->ingestClassTeacherUpload();
+        $this->queueUpload('class_teachers', $this->classTeacherUpload);
     }
 
     /**
@@ -652,7 +659,155 @@ class ManualOnboardingWizard extends Component
 
     public function updatedStudentUpload(): void
     {
-        $this->ingestUpload('student');
+        $this->queueUpload('students', $this->studentUpload);
+    }
+
+    /**
+     * Import one chunk of already-parsed rows. Called by the queue job through
+     * the same component so the behaviour matches a foreground upload.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{added: int, skipped: int, skips: array, notes: array, missing_streams: array}
+     */
+    public function runRosterImport(string $kind, array $rows): array
+    {
+        $this->errorMessage = '';
+
+        if ($kind === \App\Models\OnboardingUpload::KIND_TEACHERS) {
+            $result = $this->importTeacherUpload($rows, false);
+            $this->teacherUploadRows = array_merge($this->teacherUploadRows, $rows);
+
+            return $result;
+        }
+
+        if ($kind === \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS) {
+            return $this->importClassTeacherUpload($rows);
+        }
+
+        $this->studentDrafts = $rows;
+
+        return $this->saveStudents($this->school());
+    }
+
+    /**
+     * Store the file and hand it to the queue. The page keeps working while
+     * the import runs; refreshUpload() mirrors its progress.
+     */
+    private function queueUpload(string $kind, $file): void
+    {
+        if (! $file) {
+            return;
+        }
+
+        try {
+            $this->validate([
+                match ($kind) {
+                    \App\Models\OnboardingUpload::KIND_TEACHERS => 'teacherUpload',
+                    \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS => 'classTeacherUpload',
+                    default => 'studentUpload',
+                } => 'file|max:10240',
+            ]);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Upload failed.';
+
+            return;
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension() ?: '');
+        if (! in_array($extension, OnboardingNameListExtractor::ACCEPTED_MIMES, true)) {
+            $this->errorMessage = 'Supported files: CSV, XLSX, TXT, DOCX, PDF.';
+
+            return;
+        }
+
+        $this->errorMessage = '';
+        $result = app(\App\Services\Onboarding\OnboardingUploadService::class)
+            ->start($this->school(), (int) Auth::id(), $kind, $file);
+
+        $this->teacherUpload = null;
+        $this->classTeacherUpload = null;
+        $this->studentUpload = null;
+        $this->activeUpload = $result['upload']->progress();
+
+        if ($result['reused']) {
+            $this->applyFinishedUpload($result['upload']->fresh());
+
+            return;
+        }
+
+        // Tests and sync-queue setups: run it now so callers still see the
+        // result. A test that wants the real queued path turns this off.
+        $inline = config('queue.default') === 'sync'
+            || (app()->runningUnitTests() && (config('onboarding.uploads.run_inline_in_tests') ?? true));
+
+        if ($inline) {
+            app(\App\Services\Onboarding\OnboardingUploadService::class);
+            (new \App\Jobs\ProcessOnboardingUpload((int) $result['upload']->id))
+                ->handle(app(\App\Services\Onboarding\OnboardingUploadService::class));
+            $this->applyFinishedUpload($result['upload']->fresh());
+        }
+    }
+
+    /**
+     * Polled by the page while a file is being imported.
+     */
+    public function refreshUpload(): void
+    {
+        $id = (int) ($this->activeUpload['id'] ?? 0);
+        if ($id < 1) {
+            return;
+        }
+
+        $upload = \App\Models\OnboardingUpload::query()
+            ->where('school_id', $this->school()->id)
+            ->find($id);
+        if (! $upload) {
+            $this->activeUpload = null;
+
+            return;
+        }
+
+        $this->activeUpload = $upload->progress();
+
+        if ($upload->isFinished()) {
+            $this->applyFinishedUpload($upload);
+        }
+    }
+
+    private function applyFinishedUpload(\App\Models\OnboardingUpload $upload): void
+    {
+        $this->activeUpload = $upload->progress();
+
+        if ($upload->status === \App\Models\OnboardingUpload::STATUS_FAILED) {
+            $this->errorMessage = 'Import failed: '.\Illuminate\Support\Str::limit((string) $upload->error, 200);
+
+            return;
+        }
+
+        $skips = is_array($upload->skips) ? $upload->skips : [];
+        $notes = is_array($upload->notes) ? $upload->notes : [];
+        $missing = is_array($upload->missing_streams) ? $upload->missing_streams : [];
+
+        if ($upload->kind === \App\Models\OnboardingUpload::KIND_TEACHERS) {
+            $this->teacherUploadSkips = $skips;
+            $this->teacherUploadNotes = $notes;
+            $this->teacherUploadReport = (string) $upload->report;
+            $this->teacherUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->teacherMissingStreams = $missing;
+        } elseif ($upload->kind === \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS) {
+            $this->classTeacherUploadSkips = $skips;
+            $this->classTeacherUploadReport = (string) $upload->report;
+            $this->classTeacherUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->classTeacherMissingStreams = $missing;
+        } else {
+            $this->studentUploadSkips = $skips;
+            $this->studentUploadReport = (string) $upload->report;
+            $this->studentUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->studentMissingStreams = $missing;
+            // Only a stream-blocked file keeps its rows for the retry; a
+            // finished import leaves the manual draft list alone.
+            $this->studentDrafts = $missing !== [] && is_array($upload->rows) ? $upload->rows : [];
+        }
     }
 
     /**
@@ -2293,7 +2448,7 @@ class ManualOnboardingWizard extends Component
      *
      * @param  list<array<string, mixed>>  $rows
      */
-    private function importTeacherUpload(array $rows, bool $storeRows = true): void
+    private function importTeacherUpload(array $rows, bool $storeRows = true): array
     {
         if ($storeRows) {
             $this->teacherUploadRows = $rows;
@@ -2445,6 +2600,14 @@ class ManualOnboardingWizard extends Component
         if (! $year && $added > 0 && $skipped === []) {
             $this->teacherUploadReport = '';
         }
+
+        return [
+            'added' => $added,
+            'skipped' => count($skipped),
+            'skips' => $skipped,
+            'notes' => $notes,
+            'missing_streams' => $this->teacherMissingStreams,
+        ];
     }
 
     /**
@@ -2589,7 +2752,7 @@ class ManualOnboardingWizard extends Component
     /**
      * @param  list<array<string, mixed>>  $rows
      */
-    private function importClassTeacherUpload(array $rows): void
+    private function importClassTeacherUpload(array $rows): array
     {
         $this->classTeacherUploadRows = $rows;
         $this->classTeacherMissingStreams = [];
@@ -2669,6 +2832,14 @@ class ManualOnboardingWizard extends Component
 
         $this->classTeacherUploadSkips = $skipped;
         $this->classTeacherUploadReport = $this->formatClassTeacherUploadReport($added, count($skipped));
+
+        return [
+            'added' => $added,
+            'skipped' => count($skipped),
+            'skips' => $skipped,
+            'notes' => [],
+            'missing_streams' => $this->classTeacherMissingStreams,
+        ];
     }
 
     /**
@@ -3514,7 +3685,7 @@ class ManualOnboardingWizard extends Component
         return 'teacher.'.Str::lower(Str::random(6)).'@'.$slug.'.test';
     }
 
-    private function saveStudents(School $school): void
+    private function saveStudents(School $school): array
     {
         if (trim($this->studentName) !== '') {
             $this->addStudentDraft();
@@ -3524,7 +3695,7 @@ class ManualOnboardingWizard extends Component
         }
 
         if ($this->studentDrafts === []) {
-            return;
+            return ['added' => 0, 'skipped' => 0, 'skips' => [], 'notes' => [], 'missing_streams' => []];
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -3562,7 +3733,7 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['studentName' => $reason]);
         }
 
-        app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
+        $saved = app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
         $this->studentMissingStreams = [];
         $this->studentUploadSkips = [];
 
@@ -3570,6 +3741,14 @@ class ManualOnboardingWizard extends Component
         $this->overLimitNotice = $overLimit['success'] ? null : $overLimit['message'];
 
         $this->studentDrafts = [];
+
+        return [
+            'added' => count($saved['created'] ?? []),
+            'skipped' => count($saved['skipped'] ?? []),
+            'skips' => $saved['skipped'] ?? [],
+            'notes' => [],
+            'missing_streams' => [],
+        ];
     }
 
     private function saveTerm(School $school): void
