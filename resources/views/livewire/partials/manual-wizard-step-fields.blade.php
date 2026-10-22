@@ -310,6 +310,11 @@
                     @endforeach
                 </ul>
             @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $teacherMissingStreams ?? [],
+                'upload' => 'teachers',
+                'testId' => 'wizard-teacher-missing-streams',
+            ])
         @endif
 
         @if(($classTeacherUploadReport ?? '') !== '')
@@ -321,6 +326,11 @@
                     @endforeach
                 </ul>
             @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $classTeacherMissingStreams ?? [],
+                'upload' => 'class_teachers',
+                'testId' => 'wizard-class-teacher-missing-streams',
+            ])
         @endif
 
         @if(count($this->savedClassTeacherRows()) > 0)
@@ -452,6 +462,22 @@
             </label>
         </div>
         <div wire:loading wire:target="studentUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
+
+        @if(($studentUploadReport ?? '') !== '')
+            <p class="manual-wizard-bulk-help" data-testid="wizard-student-upload-report">{{ $studentUploadReport }}</p>
+            @if(count($studentUploadSkips ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-student-upload-skips">
+                    @foreach($studentUploadSkips as $skip)
+                        <li class="manual-wizard-bulk-item" data-testid="wizard-student-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $studentMissingStreams ?? [],
+                'upload' => 'students',
+                'testId' => 'wizard-student-missing-streams',
+            ])
+        @endif
 
         @if(count($studentDrafts ?? []) > 0)
             <ul class="manual-wizard-bulk-list" data-testid="wizard-student-list">

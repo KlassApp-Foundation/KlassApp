@@ -180,8 +180,11 @@ final class DemoOnlyRecipientGuard
      * True only for the verification code itself, sent to the number the
      * active school admin is verifying. A different flow, body, number, or
      * user falls through to the recipient checks that follow.
+     *
+     * Public so TestSchoolCommsGuard can apply this same check. Callers pass
+     * digits from {@see digitsOnly()}, not a formatted phone.
      */
-    private static function adminVerificationAllowed(string $digits, ?string $flowType, ?int $userId, ?string $body): bool
+    public static function adminVerificationAllowed(string $digits, ?string $flowType, ?int $userId, ?string $body): bool
     {
         if ($flowType !== self::ADMIN_VERIFICATION || $userId === null || $userId < 1 || $body === null) {
             return false;
@@ -224,6 +227,24 @@ final class DemoOnlyRecipientGuard
         }
 
         return false;
+    }
+
+    /** Digits only, for an exact full-number comparison. */
+    public static function digitsOnly(string $phone): string
+    {
+        return self::digits($phone);
+    }
+
+    /**
+     * True when $phone is the exact sender of the inbound message being
+     * answered right now. Queued sends do not use this; they stay on the
+     * business-send path.
+     */
+    public static function isCurrentInboundSender(string $phone): bool
+    {
+        $digits = self::digits($phone);
+
+        return $digits !== '' && in_array($digits, self::$inboundSenders, true);
     }
 
     private static function digits(string $phone): string
