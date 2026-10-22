@@ -134,12 +134,6 @@ class WizardFinishPhaseKeyTest extends TestCase
 
         $component
             ->set('whatsappPhone', '+256700777888')
-            ->call('sendWhatsAppVerificationCode');
-        $code = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
-        $component
-            ->set('whatsappOtpInput', $code)
-            ->call('verifyWhatsAppCode')
             ->call('next')
             ->call('next')
             ->call('confirmReview')

@@ -27,6 +27,7 @@ use App\Models\StudentParentLink;
 use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsApp\ParentLinkRequestService;
+use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 use App\Services\WhatsAppBusinessService;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
@@ -610,19 +611,20 @@ class WhatsAppController extends Controller
                             ?? '';
                     }
 
-                    Log::info('Meta message parsed', ['phone' => WhatsAppPhoneHelper::mask($phone), 'body' => $body, 'type' => $msgType]);
+                    $loggedBody = app(WhatsAppUserInitiatedVerification::class)->redact($body);
+                    Log::info('Meta message parsed', ['phone' => WhatsAppPhoneHelper::mask($phone), 'body' => $loggedBody, 'type' => $msgType]);
 
                     if (empty($phone) || empty($body)) {
                         continue;
                     }
 
-                    // Log inbound message
+                    // Log inbound message. The preview never keeps a verification code.
                     MessageDeliveryLog::create([
                         'whatsapp_message_id' => $messageId,
                         'phone'               => $phone,
                         'direction'           => 'inbound',
                         'status'              => 'received',
-                        'content_preview'     => \Illuminate\Support\Str::limit($body, 200),
+                        'content_preview'     => \Illuminate\Support\Str::limit($loggedBody, 200),
                     ]);
 
                     // Track last inbound activity (24hr service window)
@@ -657,6 +659,13 @@ class WhatsAppController extends Controller
      */
     protected function processMetaMessage(string $phone, string $body, string $messageId, string $senderName = 'Demo User')
     {
+        // Admin setup: the message comes FROM the number they entered and
+        // contains the code the wizard showed them. A different number falls
+        // through and gets no verification reply.
+        if (app(WhatsAppUserInitiatedVerification::class)->handleInbound($phone, $body)) {
+            return;
+        }
+
         // Live demo follow-along: BIND <code>, and MARKS / RESULTS for a bound
         // or unbound number. Numbers linked to a real school fall through.
         if (app(\App\Services\Demo\DemoBindReplies::class)->handle($phone, $body, $senderName)) {

@@ -168,14 +168,7 @@ class WizardSkipFinishStickyTest extends TestCase
 
         $component
             ->set('whatsappPhone', '+256700666777')
-            ->call('sendWhatsAppVerificationCode');
-        $code = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
-        $component
-            ->set('whatsappOtpInput', $code)
-            ->call('verifyWhatsAppCode')
-            ->assertSet('whatsappVerified', true)
-            ->call('next'); // whatsapp → plan
+            ->call('next'); // whatsapp is not required to finish setup
         $component->call('next'); // plan → review
         $this->assertSame(
             'review',

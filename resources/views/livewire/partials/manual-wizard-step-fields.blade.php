@@ -744,32 +744,27 @@
         <label class="ds-form-label" for="wizard-wa">Your WhatsApp number<span class="text-red-500">*</span></label>
         <input id="wizard-wa" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" data-testid="wizard-wa-phone" aria-describedby="wizard-wa-phone-hint" />
         <p class="text-xs text-gray-500 mt-1" id="wizard-wa-phone-hint" data-testid="wizard-wa-phone-hint">{{ $whatsappHint }}</p>
-        <p class="text-xs text-gray-500 mt-1">We send a 6-digit code, then link the number only after you verify it.</p>
+        <p class="text-xs mt-1" style="color:#64748B;">Send the code below from this number. You can finish setup without it. Messages to parents stay off until this number is verified.</p>
     </div>
     <div class="flex flex-wrap gap-2 mt-2 mb-3">
-        <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-send-otp">
-            Send verification code
+        <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="issueWhatsAppVerificationCode" data-testid="wizard-wa-issue">
+            Get a code
         </button>
-        @if($whatsappSendFailed)
-            <button type="button" class="ds-btn ds-btn-sm ds-btn-primary" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-retry-otp">
-                Retry
-            </button>
-        @endif
     </div>
     @if($whatsappOtpStatus !== '')
         <p class="text-sm mb-3" style="color: {{ $whatsappSendFailed ? '#B45309' : '#0F766E' }};" @if($whatsappSendFailed) role="alert" @endif data-testid="wizard-wa-otp-status">{{ $whatsappOtpStatus }}</p>
     @endif
-    @if(! $whatsappVerified)
-        <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-wa-otp">6-digit code<span class="text-red-500">*</span></label>
-            <input id="wizard-wa-otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
-                   class="ds-form-input w-full" wire:model="whatsappOtpInput" placeholder="123456"
-                   data-testid="wizard-wa-otp-input" />
+    @if($whatsappOtpDisplay !== '' && ! $whatsappVerified)
+        <div wire:poll.5s="pollWhatsAppVerification" data-testid="wizard-wa-poll" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <p class="text-xs" style="color:#64748B;">Your code</p>
+            <p class="font-bold" style="color:#0F172A;font-size:1.5rem;letter-spacing:0.2em;margin:4px 0 8px;" data-testid="wizard-wa-code">{{ $whatsappOtpDisplay }}</p>
+            <p class="text-sm mb-3" style="color:#0F172A;">Or send this message yourself: Verify KlassApp: {{ $whatsappOtpDisplay }}</p>
+            @if($whatsappVerifyUrl !== '')
+                <a href="{{ $whatsappVerifyUrl }}" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-sm ds-btn-primary" data-testid="wizard-wa-open" style="background:#15803D;color:#FFFFFF;">Open WhatsApp</a>
+            @endif
         </div>
-        <button type="button" class="ds-btn ds-btn-sm ds-btn-primary mt-1" wire:click="verifyWhatsAppCode" data-testid="wizard-wa-verify-otp">
-            Verify code
-        </button>
-    @else
+    @endif
+    @if($whatsappVerified)
         <p class="text-sm font-medium" style="color:#15803D;" data-testid="wizard-wa-verified">Verified — you can continue.</p>
     @endif
 
