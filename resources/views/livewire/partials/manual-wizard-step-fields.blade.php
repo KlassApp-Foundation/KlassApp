@@ -1,3 +1,4 @@
+@include('livewire.partials.manual-wizard-upload-progress')
 {{-- SPDX-License-Identifier: MIT --}}
 @php
     $stepKey = $stepKey ?? '';
@@ -465,6 +466,13 @@
 
         @if(($studentUploadReport ?? '') !== '')
             <p class="manual-wizard-bulk-help" data-testid="wizard-student-upload-report">{{ $studentUploadReport }}</p>
+            @if(count($studentUploadNotes ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-student-upload-notes">
+                    @foreach($studentUploadNotes as $note)
+                        <li class="manual-wizard-bulk-item">Row {{ $note['row'] }}: {{ $note['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
             @if(count($studentUploadSkips ?? []) > 0)
                 <ul class="manual-wizard-bulk-list" data-testid="wizard-student-upload-skips">
                     @foreach($studentUploadSkips as $skip)

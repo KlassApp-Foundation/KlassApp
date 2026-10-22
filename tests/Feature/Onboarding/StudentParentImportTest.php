@@ -173,10 +173,7 @@ class StudentParentImportTest extends TestCase
         $component
             ->call('goToStep', $studentsIndex)
             ->set('studentUpload', UploadedFile::fake()->createWithContent('student-upload-template.csv', $csv))
-            ->assertCount('studentDrafts', 4)
-            ->assertSet('studentDrafts.0.parent', 'Herbert Ssekitoleko')
-            ->assertSet('studentDrafts.0.parent_phone', '+256700000400')
-            ->assertSet('studentDrafts.1.parent_phone', '+256700000400')
+            ->assertSet('studentUploadReport', '4 students added, 0 skipped')
             ->call('next')
             ->assertSet('errorMessage', '');
 
@@ -222,7 +219,9 @@ class StudentParentImportTest extends TestCase
             $this->assertNull($student->userprofile->alternate_no);
         }
 
-        Queue::assertNothingPushed();
+        // The roster import itself is the only queued job.
+        Queue::assertPushed(\App\Jobs\ProcessOnboardingUpload::class);
+        Queue::assertCount(1);
         Notification::assertNothingSent();
         Http::assertNothingSent();
         Mail::assertNothingSent();
