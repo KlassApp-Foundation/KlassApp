@@ -249,11 +249,12 @@ class ManualOnboardingParityTest extends TestCase
         $this->assertFalse(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
         );
-        $this->assertContains(
+        $this->assertNotContains(
             'whatsapp_verify',
             collect(OnboardingStepsService::blockingIncompleteSteps($this->school->fresh(), $this->admin->id))
                 ->pluck('key')
-                ->all()
+                ->all(),
+            'Setup can finish without WhatsApp. The step stays incomplete until verified_at is set.'
         );
 
         $this->verifyWhatsAppWithServerCode('+256700333445');

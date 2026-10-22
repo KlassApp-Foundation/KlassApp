@@ -137,9 +137,7 @@ class WizardReviewPanelsKitContractTest extends TestCase
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700111222')
-            ->call('sendWhatsAppVerificationCode');
-        $otp = (string) $component->get('whatsappOtpDisplay');
-        $component->set('whatsappOtpInput', $otp)->call('verifyWhatsAppCode')->call('next');
+            ->call('next');
         $component->call('next'); // plan → review
 
         $this->assertSame('review', $component->instance()->steps[$component->get('stepIndex')]['key'] ?? null);

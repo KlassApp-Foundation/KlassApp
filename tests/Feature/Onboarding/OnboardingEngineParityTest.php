@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingStepsService;
+use Tests\Support\PostsMetaWhatsApp;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,6 +41,7 @@ use Tests\TestCase;
  */
 class OnboardingEngineParityTest extends TestCase
 {
+    use PostsMetaWhatsApp;
     use RefreshDatabase;
 
     private Country $uganda;
@@ -299,12 +301,12 @@ class OnboardingEngineParityTest extends TestCase
             ->call('sendWhatsAppVerificationCode');
 
         $otp = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
+        $this->assertMatchesRegularExpression('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $otp);
+        $this->postMetaWhatsAppText($payload['whatsapp'], 'Verify KlassApp: '.$otp)->assertOk();
 
         $component
-            ->set('whatsappOtpInput', $otp)
-            ->call('verifyWhatsAppCode')
-            ->call('next')
+            ->call('pollWhatsAppVerification')
+            ->assertSet('whatsappVerified', true)
             ->set('selectedPlanId', (int) $this->freemium->id)
             ->call('next'); // plan → review
 

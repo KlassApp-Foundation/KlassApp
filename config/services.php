@@ -73,6 +73,20 @@ return [
         'privacy_notice_url' => env('PRIVACY_NOTICE_URL'),
         // false stops every outbound WhatsApp message, including replies.
         'replies_enabled' => filter_var(env('WHATSAPP_REPLIES_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN),
+        // User-initiated admin verification. Defaults only — no environment variables.
+        // The wa.me link uses business_number above (default +256793844906).
+        'user_initiated_verification' => [
+            'ttl_minutes' => 10,
+            'codes_per_phone' => 5,
+            'phone_window_seconds' => 3600,
+            'max_attempts' => 5,
+            'codes_per_ip' => 10,
+            'ip_window_seconds' => 3600,
+            'code_length' => 6,
+            // The test suite issues codes as 127.0.0.1. Production always applies
+            // the limits above; this flag only lets a test opt in while APP_ENV=testing.
+            'enforce_limits_in_tests' => false,
+        ],
     ],
 
     'google' => [

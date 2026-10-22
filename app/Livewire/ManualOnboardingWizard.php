@@ -25,7 +25,7 @@ use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
-use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
+use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 
 use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
@@ -314,11 +314,13 @@ class ManualOnboardingWizard extends Component
     public string $whatsappOtpInput = '';
 
     /**
-     * Code shown in the wizard only when WhatsAppOnboardingOtpService::mayDisplayCode()
-     * is true (local and testing). Empty in production. Not used for verification —
-     * the authoritative code lives in session.
+     * Code the admin sends from their own WhatsApp. Shown on this step only.
+     * The stored copy is a hash. Inbound verification sets verified_at.
      */
     public string $whatsappOtpDisplay = '';
+
+    /** wa.me link that opens WhatsApp with the code filled in. */
+    public string $whatsappVerifyUrl = '';
 
     public string $whatsappOtpStatus = '';
 
@@ -1157,27 +1159,34 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        try {
-            $this->persistCurrentStep($step['key']);
-        } catch (ValidationException $e) {
-            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
+        // WhatsApp verification is not required to finish setup. Continue
+        // leaves the step unverified. Parent messaging still waits on verified_at.
+        $leavingWhatsAppUnverified = ($step['key'] ?? '') === 'whatsapp_verify'
+            && ! $this->whatsappAlreadyVerified();
 
-            return;
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            report($e);
-            $this->errorMessage = app(\App\Services\OnboardingEngine::class)
-                ->describeUniqueConstraintViolation($e);
+        if (! $leavingWhatsAppUnverified) {
+            try {
+                $this->persistCurrentStep($step['key']);
+            } catch (ValidationException $e) {
+                $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
 
-            return;
-        } catch (\Throwable $e) {
-            report($e);
-            // Never surface raw SQL / connection strings to the wizard UI.
-            $this->errorMessage = 'Could not save this step. Please try again.';
+                return;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                report($e);
+                $this->errorMessage = app(\App\Services\OnboardingEngine::class)
+                    ->describeUniqueConstraintViolation($e);
 
-            return;
+                return;
+            } catch (\Throwable $e) {
+                report($e);
+                // Never surface raw SQL / connection strings to the wizard UI.
+                $this->errorMessage = 'Could not save this step. Please try again.';
+
+                return;
+            }
         }
 
-        if (! in_array($step['key'], $this->completedDuringSession, true)) {
+        if (! $leavingWhatsAppUnverified && ! in_array($step['key'], $this->completedDuringSession, true)) {
             $this->completedDuringSession[] = $step['key'];
         }
 
@@ -1230,6 +1239,9 @@ class ManualOnboardingWizard extends Component
             if (($this->steps[$i]['key'] ?? '') === 'review') {
                 continue;
             }
+            if ($leavingWhatsAppUnverified && ($this->steps[$i]['key'] ?? '') === 'whatsapp_verify') {
+                continue;
+            }
             if (! $this->steps[$i]['is_complete']) {
                 $this->setStepIndex($i);
 
@@ -1239,6 +1251,9 @@ class ManualOnboardingWizard extends Component
 
         foreach ($this->steps as $i => $candidate) {
             if (($candidate['key'] ?? '') === 'review') {
+                continue;
+            }
+            if ($leavingWhatsAppUnverified && ($candidate['key'] ?? '') === 'whatsapp_verify') {
                 continue;
             }
             if (! $candidate['is_complete']) {
@@ -3845,11 +3860,18 @@ class ManualOnboardingWizard extends Component
     }
 
     /**
-     * Send a 6-digit OTP via the same WhatsAppOnboardingOtpService Toshi uses.
-     * The code is a system message to the number this admin is verifying.
-     * Local and testing may show it; production never does.
+     * Older tests and callers still use this name. It does not send a message.
+     * The admin sends the code to KlassApp.
      */
     public function sendWhatsAppVerificationCode(): void
+    {
+        $this->issueWhatsAppVerificationCode();
+    }
+
+    /**
+     * Show a code and a wa.me link. Nothing is sent to the admin.
+     */
+    public function issueWhatsAppVerificationCode(): void
     {
         $this->errorMessage = '';
         $this->whatsappOtpStatus = '';
@@ -3857,74 +3879,99 @@ class ManualOnboardingWizard extends Component
         $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
         if ($phone === null) {
             $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->whatsappVerified = false;
 
             return;
         }
         if ($phone === '') {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->errorMessage = PhoneCountry::error($this->phoneCountryName(), true);
 
             return;
         }
         $this->whatsappPhone = $phone;
 
-        $result = app(WhatsAppOnboardingOtpService::class)->sendAdminVerificationCode((int) Auth::id(), $phone);
-
-        if ($result['reason'] === 'rate_limited') {
-            $this->whatsappOtpDisplay = '';
-            $this->whatsappSendFailed = true;
-            $this->whatsappOtpStatus = $result['message'];
-
-            return;
-        }
-
-        $this->whatsappVerified = false;
-        $this->whatsappOtpInput = '';
-
-        if (is_string($result['code']) && $result['code'] !== '') {
-            $this->whatsappOtpDisplay = $result['code'];
-            $this->whatsappOtpStatus = "Your verification code: {$result['code']}";
-            if ($result['sent']) {
-                $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
-            } else {
-                $this->whatsappSendFailed = true;
-                $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
-            }
-
-            return;
-        }
-
-        $this->whatsappOtpDisplay = '';
-        if ($result['sent']) {
-            $this->whatsappOtpStatus = $result['message'];
-
-            return;
-        }
-
-        $this->whatsappSendFailed = true;
-        $this->whatsappOtpStatus = $result['message'];
-    }
-
-    public function verifyWhatsAppCode(): void
-    {
-        $this->errorMessage = '';
-        $result = app(WhatsAppOnboardingOtpService::class)->verifyAdminCode(
+        $result = app(WhatsAppUserInitiatedVerification::class)->issue(
             (int) Auth::id(),
-            $this->whatsappOtpInput,
-            $this->whatsappPhone,
+            $phone,
+            (string) request()->ip(),
         );
 
-        if (! $result['verified']) {
-            $this->errorMessage = $result['message'];
+        if (! $result['ok']) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->whatsappVerified = false;
+            $this->whatsappSendFailed = true;
+            $this->errorMessage = $result['message'];
+            $this->whatsappOtpStatus = $result['message'];
 
             return;
         }
 
         $this->whatsappPhone = $result['phone'];
-        $this->whatsappVerified = true;
+        $this->whatsappVerified = false;
+        $this->whatsappOtpInput = '';
+        $this->whatsappOtpDisplay = (string) $result['code'];
+        $this->whatsappVerifyUrl = (string) $result['url'];
         $this->whatsappOtpStatus = $result['message'];
-        $this->whatsappOtpDisplay = '';
+    }
+
+    /**
+     * wire:poll. Moves on once the inbound message has verified this number.
+     * An expired code stays on the step with a cause and a fix.
+     */
+    public function pollWhatsAppVerification(): void
+    {
+        if ($this->currentKey() !== 'whatsapp_verify' || $this->whatsappVerified) {
+            return;
+        }
+
+        $status = app(WhatsAppUserInitiatedVerification::class)->statusFor(
+            (int) Auth::id(),
+            $this->whatsappPhone,
+        );
+
+        if ($status['verified']) {
+            $this->whatsappPhone = $status['phone'];
+            $this->whatsappVerified = true;
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
+            $this->errorMessage = '';
+            $this->whatsappOtpStatus = 'Verified. You can continue.';
+            $this->next();
+
+            return;
+        }
+
+        if ($status['expired']) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
+            $this->whatsappVerified = false;
+            $this->errorMessage = WhatsAppUserInitiatedVerification::EXPIRED_MESSAGE;
+            $this->whatsappOtpStatus = WhatsAppUserInitiatedVerification::EXPIRED_MESSAGE;
+        }
+    }
+
+    private function whatsappAlreadyVerified(): bool
+    {
+        $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true, false);
+        if (! is_string($phone) || $phone === '') {
+            return false;
+        }
+
+        $verified = WhatsAppUser::query()
+            ->where('user_id', Auth::id())
+            ->where('phone', $phone)
+            ->whereNotNull('verified_at')
+            ->exists();
+
+        if ($verified) {
+            $this->whatsappVerified = true;
+        }
+
+        return $verified;
     }
 
     private function saveWhatsApp(School $school): void
@@ -3944,29 +3991,13 @@ class ManualOnboardingWizard extends Component
 
         $existing = WhatsAppUser::where('user_id', Auth::id())->whereNotNull('verified_at')->first();
         if ($existing && $existing->phone === $phone) {
+            $this->whatsappVerified = true;
+
             return;
         }
 
-        $grant = app(WhatsAppOnboardingOtpService::class)->grantPhone();
-        $grantPhone = is_string($grant) && $grant !== ''
-            ? $this->normaliseOptionalPhone($grant, true)
-            : null;
-        // The locked flag is not proof. The phone being saved must be the one
-        // whose code the server already checked.
-        if (! $this->whatsappVerified || $grantPhone === null || $grantPhone !== $phone) {
-            $this->whatsappVerified = false;
-            throw ValidationException::withMessages([
-                'whatsappOtpInput' => 'Verify the code sent to your WhatsApp before continuing.',
-            ]);
-        }
-
-        $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone, codeWasVerified: true);
-
-        if ($result['skipped'] !== null) {
-            throw ValidationException::withMessages([
-                'whatsappPhone' => $result['skipped'][0]['reason'],
-            ]);
-        }
+        // verified_at is written by the inbound webhook, not by this form.
+        $this->whatsappVerified = false;
     }
 
     private function savePlan(School $school): void

@@ -103,7 +103,7 @@ class WizardAdminWhatsAppVerificationSendTest extends TestCase
         RateLimiter::clear('admin-wa-verification:'.$this->admin->id);
     }
 
-    public function test_verification_code_is_sent_for_a_non_demo_school_when_demo_only_recipients_is_on(): void
+    public function test_wizard_shows_a_code_and_does_not_send_one(): void
     {
         $this->assertSame(0, (int) $this->school->fresh()->is_demo);
         $this->configureWhatsApp();
@@ -111,33 +111,16 @@ class WizardAdminWhatsAppVerificationSendTest extends TestCase
         $component = $this->advanceToWhatsAppStep()
             ->set('whatsappPhone', self::PHONE)
             ->call('sendWhatsAppVerificationCode')
-            ->assertSet('whatsappSendFailed', false);
+            ->assertSet('whatsappSendFailed', false)
+            ->assertSet('errorMessage', '');
 
-        $sent = $this->outbound();
-        $this->assertCount(1, $sent);
-        $this->assertSame(ltrim(self::PHONE, '+'), $sent[0]['to']);
-        $this->assertMatchesRegularExpression('/Your KlassApp verification code is: \d{6}\./', $sent[0]['body']);
+        Http::assertNothingSent();
+        $code = (string) $component->get('whatsappOtpDisplay');
+        $this->assertMatchesRegularExpression('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $code);
+        $component->assertSee('https://wa.me/256793844906?text='.rawurlencode('Verify KlassApp: '.$code), false);
+        $this->assertSame('', (string) session('wizard_wa_otp.code'));
 
-        $log = MessageDeliveryLog::query()->first();
-        $this->assertNotNull($log);
-        $this->assertSame(DemoOnlyRecipientGuard::ADMIN_VERIFICATION, $log->flow_type);
-        $this->assertSame('authentication', $log->category);
-        $this->assertSame('WhatsApp verification code', $log->content_preview);
-        $this->assertStringNotContainsString($this->codeFromBody($sent[0]['body']), (string) $log->content_preview);
-
-        $component->assertSet('errorMessage', '');
-
-        // A number already stored on this real school used to be refused
-        // before the "not a demo recipient" check. The verification code still goes.
-        WhatsAppUser::create([
-            'phone' => self::PHONE,
-            'user_id' => $this->admin->id,
-            'school_id' => $this->school->id,
-            'opted_in' => true,
-        ]);
-        Http::fake([
-            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.LINKED']]], 200),
-        ]);
+        // Toshi still sends a code. The demo-only exception stays limited to that body.
         $linked = DemoOnlyRecipientGuard::duringAdminVerification(
             (int) $this->admin->id,
             self::PHONE,
@@ -150,74 +133,12 @@ class WizardAdminWhatsAppVerificationSendTest extends TestCase
         );
         $this->assertTrue($linked['success'] ?? false);
         $bodies = $this->outbound();
-        $last = $bodies[array_key_last($bodies)]['body'] ?? '';
-        $this->assertStringContainsString('654321', $last);
-    }
-
-    public function test_verification_code_never_appears_in_the_production_response(): void
-    {
-        $this->asProduction();
-        $this->configureWhatsApp();
-
-        $component = $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', self::PHONE)
-            ->call('sendWhatsAppVerificationCode')
-            ->assertSet('whatsappOtpDisplay', '')
-            ->assertSet('whatsappSendFailed', false)
-            ->assertSee('We sent a verification code to your WhatsApp.')
-            ->assertDontSee('WhatsApp API may be unavailable')
-            ->assertDontSee('Your verification code');
-
-        $code = $this->codeFromBody($this->outbound()[0]['body']);
-        $this->assertResponseHidesCode($component, $code);
-        $this->assertSame($code, (string) session('wizard_wa_otp.code'));
-    }
-
-    public function test_failed_send_shows_an_error_and_retry_and_not_the_code(): void
-    {
-        $this->asProduction();
-        $this->configureWhatsApp(500);
-
-        $component = $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', self::PHONE)
-            ->call('sendWhatsAppVerificationCode')
-            ->assertSet('whatsappSendFailed', true)
-            ->assertSet('whatsappOtpDisplay', '')
-            ->assertSee("We couldn't send the verification code. Please try again.")
-            ->assertSee('Retry')
-            ->assertDontSee('WhatsApp API may be unavailable')
-            ->assertDontSee('Your verification code');
-
-        $code = (string) session('wizard_wa_otp.code');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
-        $this->assertStringContainsString('data-testid="wizard-wa-retry-otp"', $component->html());
-        $this->assertResponseHidesCode($component, $code);
-        $this->assertCount(1, $this->outbound(), 'the failure is a real send attempt, not a skipped guard');
-    }
-
-    public function test_verification_sends_are_rate_limited_without_showing_the_code(): void
-    {
-        $this->asProduction();
-        $this->configureWhatsApp();
-
-        $key = 'admin-wa-verification:'.$this->admin->id;
-        for ($i = 0; $i < WhatsAppOnboardingOtpService::SENDS_PER_WINDOW; $i++) {
-            RateLimiter::hit($key, WhatsAppOnboardingOtpService::WINDOW_SECONDS);
-        }
-
-        $component = $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', self::PHONE)
-            ->call('sendWhatsAppVerificationCode')
-            ->assertSet('whatsappSendFailed', true)
-            ->assertSet('whatsappOtpDisplay', '')
-            ->assertSee('Please wait')
-            ->assertSee('before requesting another code')
-            ->assertSee('Retry')
-            ->assertDontSee('Your verification code');
-
-        $this->assertSame([], $this->outbound());
-        $this->assertSame('', (string) session('wizard_wa_otp.code'));
-        $this->assertStringNotContainsString('verification code is:', $component->html());
+        $this->assertCount(1, $bodies);
+        $this->assertStringContainsString('654321', $bodies[0]['body']);
+        $log = MessageDeliveryLog::query()->first();
+        $this->assertNotNull($log);
+        $this->assertSame('WhatsApp verification code', $log->content_preview);
+        $this->assertStringNotContainsString('654321', (string) $log->content_preview);
     }
 
     public function test_other_message_types_stay_blocked_by_the_demo_only_guard(): void

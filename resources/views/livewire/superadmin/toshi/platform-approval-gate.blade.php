@@ -23,7 +23,7 @@
             </p>
         </div>
 
-        <div class="space-y-4">
+        <x-fold-list tag="div" class="space-y-4">
             @foreach ($pendingApprovals as $approval)
                 <article wire:key="approval-{{ $approval->id }}" class="rounded border border-gray-300 bg-white p-4 shadow-sm">
                     <div class="flex flex-wrap items-start justify-between gap-2">
@@ -107,7 +107,7 @@
                     </div>
                 </article>
             @endforeach
-        </div>
+        </x-fold-list>
     @else
         <div class="rounded border border-gray-300 bg-white px-4 py-6">
             <p class="text-xs font-bold uppercase tracking-widest text-gray-500">No pending approvals</p>

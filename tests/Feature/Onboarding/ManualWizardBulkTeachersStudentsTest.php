@@ -218,14 +218,6 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
             ->set('feeIsYearly', true)
             ->call('next') // fees → whatsapp
             ->set('whatsappPhone', '+256700777888')
-            ->call('sendWhatsAppVerificationCode');
-
-        $otp = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
-
-        $component
-            ->set('whatsappOtpInput', $otp)
-            ->call('verifyWhatsAppCode')
             ->call('next');
 
         $this->assertSame('plan_selection', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);
@@ -233,7 +225,11 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $this->assertSame(0, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
         $blocking = OnboardingStepsService::incompleteSteps($this->school->fresh(), $this->admin->id);
         $blocking = array_values(array_filter($blocking, fn ($s) => ! in_array($s['key'], OnboardingStepsService::OPTIONAL_STEPS, true)));
-        $this->assertSame(['plan_selection'], array_column($blocking, 'key'), json_encode(array_column($blocking, 'key')));
+        $this->assertSame(
+            ['whatsapp_verify', 'plan_selection'],
+            array_column($blocking, 'key'),
+            json_encode(array_column($blocking, 'key'))
+        );
     }
 
     public function test_template_assets_exist(): void
