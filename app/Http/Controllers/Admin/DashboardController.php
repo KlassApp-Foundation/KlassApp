@@ -148,6 +148,9 @@ class DashboardController extends Controller
                 ->where('connector_type', 'google-drive')
                 ->where('status', 'active')
                 ->exists() : false,
+            'googleLive' => $school_id
+                ? app(\App\Services\Google\GoogleConnectionService::class)->liveSummaries(Auth::user())
+                : [],
         ];
 
         return view( $dashboardView, [

@@ -21,6 +21,9 @@ Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('
 Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');
 Route::post('/settings/integrations/{type}/disconnect', 'Setting\IntegrationsController@disconnect')->name('admin.settings.integrations.disconnect');
 
+// Which connectors this school allows. Does not read anyone's Google account.
+Route::post('/settings/google/{connector}/allow', 'Setting\GoogleConnectorAllowController@update')->name('admin.google.allow');
+
 // Navigation dropdown + notification list are served by routes/admin.php under
 // the schooladmin group. The copies that used to live here registered later and
 // shadowed the admin definitions with fullschooladmin — every SchoolSubadmin

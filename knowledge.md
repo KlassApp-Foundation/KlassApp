@@ -1061,6 +1061,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Each result message now stores `name` and `class`. The table shows them. An older message with no name still shows the code. The number stays masked. No migration. The webhook body is unchanged.
 - On `main` the result-page test failed because `release-student-name` was absent. With the change: release tests 30 / 221. Marks suite on this branch: 201 tests, 1098 assertions. No browser or staging pass. #1123 was not touched. #1126 is on `main` and was not edited.
 
+## Current Status: October 19, 2026 — **Google connectors in review (not merged)**
+
+- Google connection: one row per user (`user_google_connections`), not per school. Tokens are encrypted and only that user can use them. A school allow list (`school_google_connector_allows`) decides which connectors people may turn on, and the admin view shows an anonymous count. Disconnect of the last connector revokes the token at Google and deletes the row. No scheduled job refreshes other people's tokens. Config is `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CONNECTOR_REDIRECT_URI` only. Sign-in still uses Socialite and `/auth/google/callback`. No domain-wide delegation and no service account.
+- My connected tools (`/settings/connected-tools`) shows Live only for the signed-in user's own grant. Proof is a local fake Google HTTP server (same role as the WhatsApp simulator), not a live Google project.
+- Classroom item builds on `feat/google-classroom-wave1` at `db8a5d82` (rebased onto main, not pushed by this work). Production and staging were not touched. PR URLs are in the session that opened them.
+
 ## Current Status: October 19, 2026 — **school_invites migration fix OPEN [#1126](https://github.com/KlassApp-Foundation/KlassApp/pull/1126)**
 
 - Production deploy of `main` `a958dfc` (#1117) failed on `2026_10_19_000001_create_school_invites_table`: `created_by` was `foreignId()` (`BIGINT UNSIGNED`) and `users.id` is `increments()` (`INT UNSIGNED`). MySQL error 3780, constraint `school_invites_created_by_foreign`. The empty table was left behind with no foreign key, and the migration was not recorded.
