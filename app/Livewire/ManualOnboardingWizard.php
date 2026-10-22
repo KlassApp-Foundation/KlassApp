@@ -268,6 +268,13 @@ class ManualOnboardingWizard extends Component
     public array $studentUploadSkips = [];
 
     /**
+     * Rows that were saved with a note (for example an unreadable parent phone).
+     *
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $studentUploadNotes = [];
+
+    /**
      * @var list<array<string, mixed>>
      */
     public array $studentUploadRows = [];
@@ -803,6 +810,7 @@ class ManualOnboardingWizard extends Component
             $this->classTeacherMissingStreams = $missing;
         } else {
             $this->studentUploadSkips = $skips;
+            $this->studentUploadNotes = $notes;
             $this->studentUploadReport = (string) $upload->report;
             $this->studentUploadRows = is_array($upload->rows) ? $upload->rows : [];
             $this->studentMissingStreams = $missing;
@@ -1146,7 +1154,7 @@ class ManualOnboardingWizard extends Component
             return;
         }
         // Students: never silently skip on Continue — require add or explicit Skip for now.
-        if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '') {
+        if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '' && $this->savedStudentRows() === []) {
             $this->errorMessage = 'Add at least one student, or click “Skip for now” if you’ll enrol later.';
 
             return;
@@ -3129,6 +3137,23 @@ class ManualOnboardingWizard extends Component
         ));
     }
 
+    /**
+     * Students already imported from a file (the background upload saves them
+     * before Continue), so an empty draft list is not an empty step.
+     *
+     * @return list<int>
+     */
+    private function savedStudentRows(): array
+    {
+        return User::query()
+            ->where('school_id', $this->school()->id)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->limit(1)
+            ->pluck('id')
+            ->all();
+    }
+
     private function refreshStudentMissingStreams(): void
     {
         $school = $this->school();
@@ -3739,6 +3764,19 @@ class ManualOnboardingWizard extends Component
             ];
         }, $this->studentDrafts);
 
+        // A retry, or a second file with the same people, must not add them twice.
+        $deduped = app(\App\Services\Onboarding\OnboardingUploadService::class)
+            ->filterExistingStudents($school, $drafts);
+        $drafts = $deduped['rows'];
+        $alreadyThere = $deduped['skips'];
+        if ($drafts === []) {
+            $this->studentUploadSkips = $alreadyThere;
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($alreadyThere));
+            $this->studentDrafts = [];
+
+            return ['added' => 0, 'skipped' => count($alreadyThere), 'skips' => $alreadyThere, 'notes' => [], 'missing_streams' => []];
+        }
+
         $missing = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $drafts);
         if ($missing['pairs'] !== []) {
             $this->studentMissingStreams = $missing['pairs'];
@@ -3757,10 +3795,12 @@ class ManualOnboardingWizard extends Component
 
         $this->studentDrafts = [];
 
+        $skips = array_merge($alreadyThere, $saved['skipped'] ?? []);
+
         return [
             'added' => count($saved['created'] ?? []),
-            'skipped' => count($saved['skipped'] ?? []),
-            'skips' => $saved['skipped'] ?? [],
+            'skipped' => count($skips),
+            'skips' => $skips,
             'notes' => [],
             'missing_streams' => [],
         ];

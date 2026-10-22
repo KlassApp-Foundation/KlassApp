@@ -110,6 +110,10 @@ class OnboardingUploadService
         $year = AcademicYear::query()->where('school_id', $school->id)->where('status', 1)->first()
             ?? AcademicYear::query()->where('school_id', $school->id)->first();
 
+        if (! $year) {
+            throw new \RuntimeException('Create an academic year first, then upload the file again.');
+        }
+
         $wizard = $this->wizardFor($upload);
 
         $added = 0;
@@ -120,8 +124,25 @@ class OnboardingUploadService
         $processed = 0;
 
         if ($upload->kind === OnboardingUpload::KIND_STUDENTS) {
+            $rows = $this->prepareStudentRows($school, $rows, $notes);
+            $skips = [];
             $rows = $this->dropExistingStudents($school, $rows, $skips);
             $skipped += count($skips);
+
+            // Rows that need a stream the school has not created yet wait for
+            // the "Create missing streams and retry" button; the rest go in.
+            $pre = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $rows);
+            if (($pre['pairs'] ?? []) !== []) {
+                $blocked = array_map(fn ($skip) => (int) ($skip['row'] ?? 0), $pre['skips'] ?? []);
+                $rows = array_values(array_filter(
+                    $rows,
+                    fn ($row) => ! in_array((int) ($row['row'] ?? 0), $blocked, true)
+                ));
+                $skips = array_merge($skips, $pre['skips'] ?? []);
+                $skipped += count($pre['skips'] ?? []);
+                $missing = array_merge($missing, $pre['pairs']);
+            }
+
             $progress($processed, $added, $skipped);
         } elseif ($upload->kind === OnboardingUpload::KIND_TEACHERS) {
             $rows = $this->dropExistingTeachers($school, $rows, $skips);
@@ -224,6 +245,18 @@ class OnboardingUploadService
      * @param  list<array<string, mixed>>  $rows
      * @return list<array<string, mixed>>
      */
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{rows: list<array<string, mixed>>, skips: list<array{row: int, reason: string}>}
+     */
+    public function filterExistingStudents(School $school, array $rows): array
+    {
+        $skips = [];
+        $rows = $this->dropExistingStudents($school, $rows, $skips);
+
+        return ['rows' => $rows, 'skips' => $skips];
+    }
+
     private function dropExistingStudents(School $school, array $rows, array &$skips): array
     {
         $existing = [];
@@ -241,13 +274,8 @@ class OnboardingUploadService
             ]);
 
         foreach ($academics as $row) {
-            $existing[$this->studentFingerprint([
-                'name' => (string) $row->student_name,
-                'class' => $this->baseClass((string) $row->section_name),
-                'stream' => $this->streamOf((string) $row->section_name),
-                'school_student_id' => (string) ($row->school_student_id ?? ''),
-                'lin' => (string) ($row->lin ?? ''),
-            ])] = true;
+            $existing[$this->normaliseKey((string) $row->student_name)
+                .'|'.$this->normaliseKey((string) ($row->section_name ?? ''))] = true;
         }
 
         $keep = [];
@@ -267,6 +295,47 @@ class OnboardingUploadService
         }
 
         return $keep;
+    }
+
+    /**
+     * A parent phone the school's country cannot read is dropped from the row,
+     * never from the student: the learner is still added and the row is named
+     * in the notes. Matches what the foreground wizard did before.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @param  list<array{row: int, reason: string}>  $notes
+     * @return list<array<string, mixed>>
+     */
+    private function prepareStudentRows(School $school, array $rows, array &$notes): array
+    {
+        $country = trim((string) ($school->registration_country ?? ''));
+        if ($country === '') {
+            return $rows;
+        }
+
+        foreach ($rows as $index => $row) {
+            $raw = trim((string) ($row['parent_phone'] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+
+            $normalised = \App\Support\PhoneCountry::normalise($raw, $country);
+            if ($normalised === null) {
+                $name = trim((string) ($row['name'] ?? ''));
+                $notes[] = [
+                    'row' => (int) ($row['row'] ?? 0),
+                    'reason' => 'Could not read the phone for '.($name !== '' ? $name : 'a row with no name')
+                        .'. The row was kept without that phone.',
+                ];
+                $rows[$index]['parent_phone'] = '';
+
+                continue;
+            }
+
+            $rows[$index]['parent_phone'] = $normalised;
+        }
+
+        return $rows;
     }
 
     /**
@@ -306,37 +375,17 @@ class OnboardingUploadService
 
     private function studentFingerprint(array $row): string
     {
-        $normalise = fn ($value) => strtolower(trim((string) $value));
+        $name = $this->normaliseKey((string) ($row['name'] ?? ''));
+        $className = $this->normaliseKey((string) ($row['class'] ?? ''));
+        $stream = $this->normaliseKey((string) ($row['stream'] ?? ''));
+        $section = $stream !== '' && $className !== '' ? $className.' '.$stream : $className;
 
-        return implode('|', [
-            $normalise($row['name'] ?? ''),
-            $normalise($row['class'] ?? ''),
-            $normalise($row['stream'] ?? ''),
-            $normalise($row['school_student_id'] ?? ''),
-            $normalise($row['lin'] ?? ''),
-        ]);
+        return $name.'|'.$section;
     }
 
-    private function baseClass(string $section): string
+    private function normaliseKey(string $value): string
     {
-        $section = trim($section);
-        if ($section === '') {
-            return '';
-        }
-
-        $parts = preg_split('/\s+/', $section) ?: [];
-        $last = end($parts);
-
-        return count($parts) > 1 && strlen((string) $last) <= 3 ? trim(substr($section, 0, -(strlen((string) $last) + 1))) : $section;
-    }
-
-    private function streamOf(string $section): string
-    {
-        $section = trim($section);
-        $parts = preg_split('/\s+/', $section) ?: [];
-        $last = (string) end($parts);
-
-        return count($parts) > 1 && strlen($last) <= 3 ? $last : '';
+        return strtolower(trim(preg_replace('/\\s+/', ' ', $value) ?? ''));
     }
 
     private function report(string $kind, int $added, int $skipped): string

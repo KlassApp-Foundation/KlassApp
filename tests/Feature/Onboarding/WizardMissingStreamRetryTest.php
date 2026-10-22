@@ -279,7 +279,7 @@ class WizardMissingStreamRetryTest extends TestCase
         $file = $this->upload('students.csv', (string) file_get_contents($path));
         $component
             ->set('studentUpload', $file)
-            ->assertSet('studentUploadReport', '0 students added, 50 skipped')
+            ->assertSet('studentUploadReport', '70 students added, 50 skipped')
             ->assertCount('studentDrafts', 120)
             ->assertSee("Row {$streamed[0]['row']}: Primary One, stream A doesn't exist yet. Create it in Classes, or use Create missing streams and retry.")
             ->assertSee('Create missing streams and retry');
@@ -292,15 +292,18 @@ class WizardMissingStreamRetryTest extends TestCase
             ['class' => 'Primary Five', 'stream' => 'A'],
             ['class' => 'Primary Five', 'stream' => 'B'],
         ], $component->get('studentMissingStreams'));
-        $this->assertSame(0, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+        // Rows that do not need a missing stream are imported straight away;
+        // the 50 streamed rows wait for the streams.
+        $this->assertSame(70, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
         $this->assertSame($sectionsBefore, Section::where('school_id', $this->school->id)->count());
 
-        $component->call('createMissingStreamsAndRetry', 'students')
-            ->assertSet('studentUploadReport', '120 students added, 0 skipped')
-            ->assertSet('studentMissingStreams', [])
-            ->assertSet('studentDrafts', []);
+        $component->call('createMissingStreamsAndRetry', 'students');
 
         $this->assertSame(120, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+        $component
+            ->assertSet('studentUploadReport', '50 students added, 0 skipped')
+            ->assertSet('studentMissingStreams', [])
+            ->assertSet('studentDrafts', []);
         $this->assertSame($sectionsBefore + 6, Section::where('school_id', $this->school->id)->count());
 
         $robert = User::where('school_id', $this->school->id)->where('name', 'Robert Ayebare')->first();
