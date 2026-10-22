@@ -137,6 +137,12 @@ final class DemoSchoolCommsGuard
         }
     }
 
+    /** True while {@see duringBusinessSend()} is on the stack. */
+    public static function businessSendInProgress(): bool
+    {
+        return self::$businessSends > 0;
+    }
+
     /**
      * A demo marks release to ONE number with an active demo binding (the
      * caller checks the binding). Only that exact number passes while the
