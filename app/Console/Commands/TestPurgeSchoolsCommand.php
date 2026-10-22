@@ -132,13 +132,6 @@ class TestPurgeSchoolsCommand extends Command
     public function handle(): int
     {
         $ids = array_values(array_unique(array_map('intval', (array) $this->option('school'))));
-
-        if (empty($ids)) {
-            $this->error('Pass at least one --school=<id>.');
-
-            return self::FAILURE;
-        }
-
         $confirmNames = array_values(array_map('strval', (array) $this->option('confirm-name')));
         $emails = array_values(array_unique(array_filter(array_map(
             fn ($e) => strtolower(trim((string) $e)),
@@ -148,6 +141,12 @@ class TestPurgeSchoolsCommand extends Command
             fn ($p) => trim((string) $p),
             (array) $this->option('phone')
         ))));
+
+        if (empty($ids) && empty($emails) && empty($phones)) {
+            $this->error('Pass at least one --school=<id>, --email=<address> or --phone=<number>.');
+
+            return self::FAILURE;
+        }
 
         $schools = [];
         foreach ($ids as $id) {

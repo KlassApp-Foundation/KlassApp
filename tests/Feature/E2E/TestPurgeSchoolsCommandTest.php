@@ -576,6 +576,31 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->assertDatabaseHas('whatsapp_users', ['phone' => '+256770123456']);
     }
 
+    public function test_email_and_phone_cleanup_runs_without_a_school_id(): void
+    {
+        \DB::table('early_access_requests')->insert([
+            'school_name' => 'Mazi P S',
+            'contact_name' => 'Leftover',
+            'contact_role' => 'Head teacher',
+            'email' => 'mazi-leftover@schools.test',
+            'phone' => '+256773333444',
+            'country' => 'Uganda',
+            'approx_students' => 100,
+            'consented_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('test:purge-schools', [
+            '--email' => ['mazi-leftover@schools.test'],
+            '--phone' => ['+256773333444'],
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->assertDatabaseMissing('early_access_requests', ['email' => 'mazi-leftover@schools.test']);
+        $this->assertDatabaseMissing('early_access_requests', ['phone' => '+256773333444']);
+    }
+
     public function test_phone_option_refuses_a_number_owned_by_a_user_outside_the_targeted_schools(): void
     {
         $target = $this->makeSchool('E2E Phone Target', true);
