@@ -177,7 +177,7 @@
                                            data-testid="wizard-structure-stream-input-{{ $sid }}" />
                                     <x-button type="button" variant="outline" size="sm" class="whitespace-nowrap"
                                               wire:click="addStructureStream({{ $sid }})"
-                                              data-testid="wizard-structure-add-stream-{{ $sid }}">Add</x-button>
+                                              data-testid="wizard-structure-add-stream-{{ $sid }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</x-button>
                                 </div>
                             </div>
 
@@ -266,26 +266,29 @@
             </label>
             <textarea id="wizard-subject" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="subjectName" placeholder="Mathematics, English&#10;Science" autocomplete="off" data-testid="wizard-subject-input"></textarea>
             <p class="text-xs text-gray-500 mt-1">Separate subjects with commas, or put one on each line.</p>
-            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="addSubjects" data-testid="wizard-subject-add">Add</x-button>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="addSubjects" data-testid="wizard-subject-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</x-button>
         </div>
     </div>
 
 @elseif($stepKey === 'teachers')
     <div class="manual-wizard-bulk" data-testid="wizard-teachers-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <a href="{{ asset('templates/teacher-upload-template.xlsx') }}"
-               download
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-teacher-template">Download template</a>
-            <label class="manual-wizard-bulk-upload">
+            <x-button href="{{ asset('templates/teacher-upload-template.xlsx') }}" download variant="outline" size="md"
+                      data-testid="wizard-teacher-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download template
+            </x-button>
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
             </label>
-            <a href="{{ route('admin.class-teachers.upload-template') }}"
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-class-teacher-template">Download class teacher template</a>
-            <label class="manual-wizard-bulk-upload">
+            <x-button href="{{ route('admin.class-teachers.upload-template') }}" variant="outline" size="md"
+                      data-testid="wizard-class-teacher-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download class teacher template
+            </x-button>
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload class teachers</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="classTeacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-class-teacher-upload" />
@@ -376,7 +379,7 @@
         <div class="ds-form-group" data-testid="wizard-teacher-paste-block">
             <label class="ds-form-label" for="wizard-teacher-paste">Paste names (one per line)</label>
             <textarea id="wizard-teacher-paste" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="teacherPaste" placeholder="John Ssali&#10;Grace Nakamya" data-testid="wizard-teacher-paste"></textarea>
-            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn">Add from paste</x-button>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>Add from paste</x-button>
         </div>
 
         <div class="manual-wizard-bulk-divider"><span>or add one at a time</span></div>
@@ -422,7 +425,7 @@
                 @endforelse
             </div>
         </div>
-        <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</x-button>
+        <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add teacher</x-button>
         <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
         {{-- Do not put @if inside <x-button> attrs — it breaks the outer @elseif chain when Blade compiles components. --}}
         @if(count($teacherDrafts ?? []) > 0)
@@ -446,9 +449,11 @@
 @elseif($stepKey === 'students')
     <div class="manual-wizard-bulk" data-testid="wizard-students-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <a href="{{ route('admin.students.upload-template') }}"
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-student-template">Download template</a>
+            <x-button href="{{ route('admin.students.upload-template') }}" variant="outline" size="md"
+                      data-testid="wizard-student-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download template
+            </x-button>
             <p class="manual-wizard-bulk-help w-full" data-testid="wizard-student-stream-help">
                 @if(!empty($schoolHasStreams))
                     When a class has streams, pick a stream by default. You can still choose “Base class (no stream)” to enrol on the undivided class.
@@ -456,7 +461,7 @@
                     Leave Stream blank if your school doesn't use streams.
                 @endif
             </p>
-            <label class="manual-wizard-bulk-upload">
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="studentUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-student-upload" />
@@ -645,7 +650,7 @@
                         </span>
                         <span class="manual-wizard-bulk-item-actions">
                             @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($row['name'] ?? '')) !== 0)
-                                <button type="button" class="manual-wizard-bulk-link" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $row['name']) }}')" data-testid="wizard-term-mark-current-{{ $i }}">Mark current</button>
+                                <x-button type="button" variant="outline" size="sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $row['name']) }}')" data-testid="wizard-term-mark-current-{{ $i }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Mark current</x-button>
                             @endif
                             <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTermDraft({{ $i }})" aria-label="Remove">✕</button>
                         </span>
