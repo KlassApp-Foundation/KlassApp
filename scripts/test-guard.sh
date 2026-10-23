@@ -59,6 +59,11 @@ fi
 # CI (GITHUB_ACTIONS) defaults to 4 processes; local runs default to 1.
 if [ -n "${GITHUB_ACTIONS:-}" ]; then DEFAULT_PROCESSES=4; else DEFAULT_PROCESSES=1; fi
 PROCESSES="${TEST_GUARD_PROCESSES:-$DEFAULT_PROCESSES}"
+# Compile every Blade view once, in this process. Parallel workers otherwise
+# compile the same view at the same time and can include a half-written file,
+# which surfaces as a random "unexpected token" in whichever tests render it.
+php artisan view:cache >/dev/null 2>&1 || true
+
 if [ "$PROCESSES" -gt 1 ] && [ -x vendor/bin/paratest ]; then
     echo "[test-guard] running with paratest, $PROCESSES processes"
     vendor/bin/paratest --processes="$PROCESSES" \
