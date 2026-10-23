@@ -78,10 +78,10 @@ class WhatsAppVerificationGuardTest extends TestCase
             'verified_at' => now()->toDateTimeString(),
         ]);
 
-        $posted = WhatsAppUser::where('user_id', $this->admin->id)->where('phone', self::PHONE)->first();
-        $this->assertNotNull($posted);
-        $this->assertNull($posted->verified_at);
-        WhatsAppUser::where('user_id', $this->admin->id)->delete();
+        $this->assertNull(
+            WhatsAppUser::where('user_id', $this->admin->id)->where('phone', self::PHONE)->first(),
+            'A posted phone with forged flags must not link anything — linking only happens by sending the code from WhatsApp.'
+        );
 
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')
