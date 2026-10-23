@@ -20,8 +20,11 @@ use App\Models\WhatsAppUser;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
+use App\Services\WhatsApp\WhatsAppLinkCodeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Tests\Support\PostsMetaWhatsApp;
 use Tests\TestCase;
 
 /**
@@ -33,6 +36,7 @@ use Tests\TestCase;
 class ManualOnboardingParityTest extends TestCase
 {
     use RefreshDatabase;
+    use PostsMetaWhatsApp;
 
     private School $school;
 
@@ -45,6 +49,17 @@ class ManualOnboardingParityTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
+
+        config([
+            'services.whatsapp.business_api_token' => 'test-token',
+            'services.whatsapp.business_phone_number_id' => '000000',
+            'services.whatsapp.replies_enabled' => true,
+            'services.whatsapp.demo_only_recipients' => false,
+            'services.whatsapp.business_number' => '+256793844906',
+        ]);
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.out']]], 200),
+        ]);
 
         DB::table('usergroups')->insert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -218,20 +233,21 @@ class ManualOnboardingParityTest extends TestCase
     public function test_manual_whatsapp_link_matches_toshi_state(): void
     {
         $this->actingAs($this->admin);
+        $this->admin->refresh();
 
-        $this->post('/admin/whatsapp/phone', ['phone' => '+256700333444'])
-            ->assertSessionHasNoErrors();
+        $issued = app(WhatsAppLinkCodeService::class)->issue($this->admin, '203.0.113.5');
+        $this->assertTrue($issued['ok']);
+        $this->postMetaWhatsAppText('+256700333444', 'Link KlassApp: '.(string) $issued['code'])->assertOk();
 
         $waUser = WhatsAppUser::where('user_id', $this->admin->id)->first();
 
-        $this->assertNotNull($waUser, 'Manual link must create a WhatsAppUser (satisfies whatsapp_verify).');
+        $this->assertNotNull($waUser, 'Sending the link code from a number must create a WhatsAppUser (satisfies whatsapp_verify).');
         $this->assertSame('+256700333444', $waUser->phone);
         $this->assertSame($this->school->id, $waUser->school_id);
         $this->assertTrue((bool) $waUser->opted_in);
-        // A posted phone is not a verification code. The row stays unverified.
-        $this->assertNull($waUser->verified_at);
+        $this->assertNotNull($waUser->verified_at);
 
-        $this->assertFalse(
+        $this->assertTrue(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
         );
     }
@@ -243,9 +259,7 @@ class ManualOnboardingParityTest extends TestCase
         $this->post('/admin/whatsapp/phone', ['phone' => '+256700333445'])
             ->assertSessionHasNoErrors();
 
-        $waUser = WhatsAppUser::where('user_id', $this->admin->id)->first();
-        $this->assertNotNull($waUser);
-        $this->assertNull($waUser->verified_at);
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
         $this->assertFalse(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)
         );
@@ -254,12 +268,15 @@ class ManualOnboardingParityTest extends TestCase
             collect(OnboardingStepsService::blockingIncompleteSteps($this->school->fresh(), $this->admin->id))
                 ->pluck('key')
                 ->all(),
-            'Setup can finish without WhatsApp. The step stays incomplete until verified_at is set.'
+            'Setup can finish without WhatsApp. The step stays incomplete until the number is linked.'
         );
 
-        $this->verifyWhatsAppWithServerCode('+256700333445');
+        $this->admin->refresh();
+        $issued = app(WhatsAppLinkCodeService::class)->issue($this->admin, '203.0.113.5');
+        $this->postMetaWhatsAppText('+256700333445', 'Link KlassApp: '.(string) $issued['code'])->assertOk();
 
-        $waUser->refresh();
+        $waUser = WhatsAppUser::where('user_id', $this->admin->id)->first();
+        $this->assertNotNull($waUser);
         $this->assertNotNull($waUser->verified_at);
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('whatsapp_verify', $this->school->fresh(), $this->admin->id)

@@ -18,6 +18,11 @@ use App\Traits\Common;
 use App\Models\User;
 use App\Models\City;
 use App\Models\WhatsAppUser;
+use App\Services\WhatsApp\WhatsAppLinkCodeService;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Exception;
 use Hash;
 
@@ -268,25 +273,64 @@ class UserProfileController extends Controller
 
     /**
      * Show WhatsApp phone-linking page.
+     *
+     * Nothing is typed: the page issues a short code, shows a QR and an
+     * "Open WhatsApp" link that prefill it, and links the number the message
+     * actually arrives from.
      */
     public function phoneLink()
     {
+        $user = Auth::user();
         $waUser = WhatsAppUser::where('user_id', Auth::id())
             ->first();
 
+        $link = null;
+        $qrSvg = null;
+        if (! ($waUser && $waUser->phone)) {
+            $link = app(WhatsAppLinkCodeService::class)->issue($user, $this->getRequestIP());
+            if (($link['ok'] ?? false) && ! empty($link['url'])) {
+                $qrSvg = $this->linkCodeQr((string) $link['url']);
+            }
+        }
+
         return view('/admin/whatsapp/phone-link', [
             'waUser' => $waUser,
-            'user'   => Auth::user(),
+            'user'   => $user,
+            'link'   => $link,
+            'qrSvg'  => $qrSvg,
         ]);
     }
 
     /**
-     * Link or unlink WhatsApp phone number.
+     * Get a fresh link code (the previous one stops working).
+     */
+    public function issueWhatsAppLinkCode()
+    {
+        app(WhatsAppLinkCodeService::class)->issue(Auth::user(), $this->getRequestIP());
+
+        return redirect()->route('whatsapp.phone');
+    }
+
+    /**
+     * Polled by the page while it waits for the message to arrive.
+     */
+    public function whatsappLinkStatus()
+    {
+        $status = app(WhatsAppLinkCodeService::class)->status(Auth::user());
+
+        return response()->json([
+            'linked'   => (bool) $status['linked'],
+            'verified' => (bool) $status['verified'],
+        ]);
+    }
+
+    /**
+     * Unlink the signed-in person's WhatsApp number. Numbers are linked by
+     * sending a code from WhatsApp, not by posting a phone number here.
      */
     public function linkWhatsApp(Request $request)
     {
         $request->validate([
-            'phone'    => 'required|string|max:20',
             'unlink'   => 'boolean',
         ]);
 
@@ -306,34 +350,16 @@ class UserProfileController extends Controller
             return back()->with('success', 'WhatsApp number unlinked successfully.');
         }
 
-        // Link the number the admin typed. Do not mark it verified from this
-        // request: verified_at is set only after WhatsAppOnboardingOtpService
-        // checks a code the server issued. A posted phone, hidden field, or
-        // verified flag is not that check. An already-verified row keeps its
-        // timestamp only when the phone did not change.
-        $existing = WhatsAppUser::where('user_id', $user->id)->first();
-        $phone = (string) $request->phone;
-        $alreadyVerified = $existing
-            && $existing->verified_at !== null
-            && (string) $existing->phone === $phone;
+        return back();
+    }
 
-        $waUser = WhatsAppUser::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'phone'       => $phone,
-                'school_id'   => $user->school_id,
-                'opted_in'    => true,
-                'verified_at' => $alreadyVerified ? $existing->verified_at : null,
-            ]
-        );
+    /**
+     * Inline SVG QR for the wa.me link, the same shape the demo page uses.
+     */
+    private function linkCodeQr(string $url): string
+    {
+        $writer = new Writer(new ImageRenderer(new RendererStyle(220, 2), new SvgImageBackEnd));
 
-        $this->doActivityLog(
-            $waUser,
-            $user,
-            ['phone' => $request->phone],
-            'linkwhatsapp',
-            'Linked WhatsApp Number'
-        );
-        return back()->with('success', 'WhatsApp number linked successfully.');
+        return preg_replace('/^<\?xml[^>]*>\s*/', '', $writer->writeString($url)) ?? '';
     }
 }

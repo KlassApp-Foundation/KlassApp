@@ -25,6 +25,8 @@ Route::get( '/dashboard/task/count','DashboardController@listCount' );
 // WhatsApp
 Route::get( '/whatsapp/phone', 'UserProfileController@phoneLink' )->name( 'whatsapp.phone' );
 Route::post( '/whatsapp/phone', 'UserProfileController@linkWhatsApp' );
+Route::post( '/whatsapp/phone/code', 'UserProfileController@issueWhatsAppLinkCode' )->name( 'whatsapp.phone.code' );
+Route::get( '/whatsapp/phone/status', 'UserProfileController@whatsappLinkStatus' )->name( 'whatsapp.phone.status' );
 Route::get( '/whatsapp/dashboard', 'WhatsAppDashboardController@index' )->name( 'whatsapp.dashboard' );
 Route::get( '/whatsapp/parents', 'WhatsAppParentController@index' )->name( 'whatsapp.parents' );
 Route::post( '/whatsapp/parents/unlink/{id}', 'WhatsAppParentController@unlink' );
