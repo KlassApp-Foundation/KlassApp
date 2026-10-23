@@ -349,7 +349,7 @@ class WhatsAppBusinessService
         }
 
         Log::info('WhatsApp Business API: interactive buttons sent', [
-            'phone'  => $phone,
+            'phone'  => WhatsAppPhoneHelper::mask($phone),
             'body'   => $body,
             'buttons' => $preview,
         ]);
@@ -654,7 +654,7 @@ class WhatsAppBusinessService
 
         if ($fallbackTemplate) {
             Log::info('WhatsApp Business: window closed, using template fallback', [
-                'phone'     => $phone,
+                'phone'     => WhatsAppPhoneHelper::mask($phone),
                 'template'  => $fallbackTemplate,
             ]);
             return $this->sendTemplate($phone, $fallbackTemplate, $templateVariables, $flowType);
@@ -662,7 +662,7 @@ class WhatsAppBusinessService
 
         // Window closed but no fallback template — send free-form anyway
         Log::warning('WhatsApp Business: window closed, sending free-form outside window', [
-            'phone' => $phone,
+            'phone' => WhatsAppPhoneHelper::mask($phone),
         ]);
         return $this->sendText($phone, $message, $flowType, $userId);
     }
