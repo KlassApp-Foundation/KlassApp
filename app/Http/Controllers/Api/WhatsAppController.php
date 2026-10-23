@@ -1454,6 +1454,12 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Parents: health details only after they ask for them.
+        if ($role === 7 && $match(['health', 'health update', 'clinic', 'sick'])) {
+            $this->sendHealthUpdate($user, $phone, $whatsAppService);
+            return;
+        }
+
         // Universal: events (any role)
         if ($match(['events', 'event', 'calendar', 'news'])) {
             $this->sendEvents($user, $phone, $whatsAppService);
@@ -1956,6 +1962,76 @@ class WhatsAppController extends Controller
         }
 
         $this->sendActionButtons($phone, $user->user_id, 'report');
+    }
+
+
+    /**
+     * Health details are only sent here: the parent asked, from their linked
+     * number. Unrequested notices carry no clinical detail.
+     */
+    private function sendHealthUpdate(WhatsAppUser $user, string $phone, $whatsAppService): void
+    {
+        $children = $user->user->children()
+            ->with('userStudent')
+            ->get();
+
+        if ($children->isEmpty()) {
+            $whatsAppService->sendText(
+                $phone,
+                "No children are linked to your account yet. Please contact your school office.",
+                'health_no_children',
+                $user->user_id,
+            );
+            return;
+        }
+
+        $sent = false;
+        foreach ($children as $link) {
+            $student = $link->userStudent;
+            if (! $student) {
+                continue;
+            }
+
+            $incidents = \App\Models\StudentHealthIncident::query()
+                ->where('school_id', $student->school_id)
+                ->where('user_id', $student->id)
+                ->where('incident_date', '>=', now()->subDays(30)->toDateString())
+                ->orderByDesc('incident_date')
+                ->limit(5)
+                ->get();
+
+            if ($incidents->isEmpty()) {
+                continue;
+            }
+
+            $name = $this->whatsappDisplayName($student, 'your child');
+            $message = "🏥 *Health updates — {$name}*\n\n";
+            foreach ($incidents as $incident) {
+                $severity = match ($incident->severity) {
+                    'serious' => 'Serious',
+                    'moderate' => 'Moderate',
+                    default => 'Minor',
+                };
+                $message .= '• '.$incident->incident_date->format('d M Y').' — '.$severity."\n";
+                $message .= '  '.$incident->description."\n";
+                if ($incident->action_taken) {
+                    $message .= '  Action: '.$incident->action_taken."\n";
+                }
+            }
+            $message .= "\n_Please contact the school if you have questions._";
+
+            $whatsAppService->sendText($phone, $message, 'health_details', $user->user_id);
+            $sent = true;
+        }
+
+        if (! $sent) {
+            $whatsAppService->sendText(
+                $phone,
+                "No health updates for your children in the last 30 days.",
+                'health_none',
+                $user->user_id,
+            );
+        }
     }
 
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
