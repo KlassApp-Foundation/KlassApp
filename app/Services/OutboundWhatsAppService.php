@@ -399,20 +399,14 @@ class OutboundWhatsAppService
                 continue;
             }
 
+            // Only a linked, opted-in WhatsApp number. A parent's profile phone
+            // is not a WhatsApp number until they have linked it.
             $waUser = WhatsAppUser::optedIn()
                 ->where('user_id', $parent->id)
                 ->first();
 
             if ($waUser?->phone) {
                 $phones[] = $waUser->phone;
-            }
-
-            // Fallback: if parent has a mobile_no in User but no WhatsAppUser yet
-            if (! $waUser && $parent->mobile_no) {
-                $normalised = WhatsAppPhoneHelper::normalise($parent->mobile_no);
-                if (WhatsAppPhoneHelper::validate($normalised)) {
-                    $phones[] = $normalised;
-                }
             }
         }
 
