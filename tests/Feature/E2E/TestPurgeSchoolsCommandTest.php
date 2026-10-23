@@ -576,6 +576,31 @@ class TestPurgeSchoolsCommandTest extends TestCase
         $this->assertDatabaseHas('whatsapp_users', ['phone' => '+256770123456']);
     }
 
+    public function test_a_reminder_row_does_not_block_the_school_delete(): void
+    {
+        $school = $this->makeSchool('E2E Reminder Block', true);
+        $user = $this->makeUser($school);
+
+        \DB::table('reminders')->insert([
+            'school_id' => $school->id,
+            'from' => $user->email,
+            'to' => 'parent@schools.test',
+            'subject' => 'Fees',
+            'message' => 'Reminder fixture',
+            'via' => 'mail',
+            'queue_status' => 'queue',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->artisan('test:purge-schools', ['--school' => [$school->id], '--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('schools', ['id' => $school->id]);
+        $this->assertDatabaseMissing('reminders', ['school_id' => $school->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
     public function test_email_and_phone_cleanup_runs_without_a_school_id(): void
     {
         \DB::table('early_access_requests')->insert([
