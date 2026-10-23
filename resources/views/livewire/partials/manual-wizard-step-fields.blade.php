@@ -273,21 +273,19 @@
 @elseif($stepKey === 'teachers')
     <div class="manual-wizard-bulk" data-testid="wizard-teachers-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <x-button href="{{ asset('templates/teacher-upload-template.xlsx') }}" download variant="outline" size="md"
-                      data-testid="wizard-teacher-template">
+            <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-teacher-template">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download template
-            </x-button>
+            </a>
             <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
             </label>
-            <x-button href="{{ route('admin.class-teachers.upload-template') }}" variant="outline" size="md"
-                      data-testid="wizard-class-teacher-template">
+            <a href="{{ route('admin.class-teachers.upload-template') }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-class-teacher-template">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download class teacher template
-            </x-button>
+            </a>
             <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload class teachers</span>
@@ -449,11 +447,10 @@
 @elseif($stepKey === 'students')
     <div class="manual-wizard-bulk" data-testid="wizard-students-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <x-button href="{{ route('admin.students.upload-template') }}" variant="outline" size="md"
-                      data-testid="wizard-student-template">
+            <a href="{{ route('admin.students.upload-template') }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-student-template">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download template
-            </x-button>
+            </a>
             <p class="manual-wizard-bulk-help w-full" data-testid="wizard-student-stream-help">
                 @if(!empty($schoolHasStreams))
                     When a class has streams, pick a stream by default. You can still choose “Base class (no stream)” to enrol on the undivided class.
