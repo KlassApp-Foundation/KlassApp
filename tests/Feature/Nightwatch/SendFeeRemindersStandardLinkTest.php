@@ -230,8 +230,19 @@ class SendFeeRemindersStandardLinkTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        // A profile phone without a WhatsApp link is not a WhatsApp number.
+        $this->assertSame([], app(OutboundWhatsAppService::class)->getParentPhones($student));
+
+        \App\Models\WhatsAppUser::create([
+            'phone' => '+256700555666',
+            'user_id' => $parent->id,
+            'school_id' => $school->id,
+            'opted_in' => true,
+            'verified_at' => now(),
+        ]);
+
         $phones = app(OutboundWhatsAppService::class)->getParentPhones($student);
-        $this->assertContains('+256700555666', $phones);
+        $this->assertSame(['+256700555666'], $phones);
     }
 
     protected function tearDown(): void
