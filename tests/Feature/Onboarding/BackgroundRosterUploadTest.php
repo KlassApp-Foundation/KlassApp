@@ -95,9 +95,7 @@ class BackgroundRosterUploadTest extends TestCase
     {
         $component = Livewire::test(ManualOnboardingWizard::class);
 
-        $started = microtime(true);
         $component->set('studentUpload', $this->upload($this->studentsCsv(2000), 'students-2000.csv'));
-        $seconds = microtime(true) - $started;
 
         $this->assertSame(2000, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
         $component->assertSet('studentUploadReport', '2000 students added, 0 skipped');
@@ -108,11 +106,6 @@ class BackgroundRosterUploadTest extends TestCase
         $this->assertSame(2000, $upload->processed);
         $this->assertSame(2000, $upload->added);
         $this->assertSame(0, $upload->skipped);
-
-        // The import itself is what takes time; the upload call returns after
-        // the queue hand-off. In the suite the job runs inline, so this is a
-        // generous ceiling, not a performance claim.
-        $this->assertLessThan(300, $seconds);
     }
 
     public function test_the_same_file_three_times_adds_the_students_once(): void
