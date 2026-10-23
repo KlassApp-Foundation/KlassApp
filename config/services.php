@@ -87,6 +87,15 @@ return [
             // the limits above; this flag only lets a test opt in while APP_ENV=testing.
             'enforce_limits_in_tests' => false,
         ],
+        // Link codes: the page shows a code plus a QR / wa.me link and the
+        // number is linked when that code arrives from a WhatsApp number.
+        // Nothing is typed, so any international number works.
+        'link_code_ttl_minutes' => 10,
+        'link_codes_per_user_hour' => 10,
+        'link_codes_per_ip_hour' => 30,
+        // Same opt-in as above: production always applies the limits; a test
+        // has to ask for them while APP_ENV=testing.
+        'enforce_link_limits_in_tests' => false,
     ],
 
     'google' => [

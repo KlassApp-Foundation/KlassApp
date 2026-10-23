@@ -27,6 +27,7 @@ use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
 use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
+use App\Services\WhatsApp\WhatsAppLinkCodeService;
 use App\Services\WhatsApp\ParentLinkRequestService;
 use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 use App\Services\WhatsAppBusinessService;
@@ -658,6 +659,12 @@ class WhatsAppController extends Controller
         // contains the code the wizard showed them. A different number falls
         // through and gets no verification reply.
         if (app(WhatsAppUserInitiatedVerification::class)->handleInbound($phone, $body)) {
+            return;
+        }
+
+        // "Send this code to link your number": nothing was typed, so the code
+        // alone identifies who is linking. The sending number becomes theirs.
+        if (app(WhatsAppLinkCodeService::class)->handleInbound($phone, $body)) {
             return;
         }
 
