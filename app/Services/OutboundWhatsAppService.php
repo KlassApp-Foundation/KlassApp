@@ -590,27 +590,16 @@ class OutboundWhatsAppService
      */
     public function notifyHealthIncident(User $student, \App\Models\StudentHealthIncident $incident): int
     {
-        $severityLabel = match ($incident->severity) {
-            'serious' => '🚨 SERIOUS',
-            'moderate' => '⚠️ Moderate',
-            default => 'Minor',
-        };
-
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $message = "🏥 *Health Incident — {$this->displayNameFor($student)}*\n";
-        $message .= "_{$className}_\n\n";
-        $message .= "• Date: {$incident->incident_date->format('d M Y')}\n";
-        $message .= "• Severity: {$severityLabel}\n";
-        $message .= "• Description: {$incident->description}\n";
-        if ($incident->action_taken) {
-            $message .= "• Action taken: {$incident->action_taken}\n";
-        }
-        $message .= "\n_Please contact the school for more information._\n";
+        // No details in an unrequested message. The parent has to reply HEALTH
+        // from their linked number; the inbound handler sends the record then.
+        $message = "🏥 There is a health update about {$this->displayNameFor($student)} from school.\n\n"
+            ."Reply *HEALTH* to see it.";
 
         $sent = 0;
         foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $student->id, $message, 'health_incident');
+            $sent += $this->queueOrSend($phone, $student->id, $message, 'health_notice');
         }
+
         return $sent;
     }
 
