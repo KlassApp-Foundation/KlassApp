@@ -64,6 +64,7 @@ class TestPurgeSchoolsCommand extends Command
         'subscriptions',
         'marks',
         'exams',
+        'reminders',
         'attendances',
         'fee_payments',
         'fees_categories',
@@ -128,6 +129,37 @@ class TestPurgeSchoolsCommand extends Command
         'parent_profiles',
         'toshi_personas',
     ];
+
+    /**
+     * The curated list plus any other table that has a foreign key to schools
+     * (MySQL only; tests run sqlite). A new feature adding one more such table
+     * must not make a purge fail halfway through.
+     *
+     * @return list<string>
+     */
+    private function schoolScopedTables(): array
+    {
+        $tables = self::SCHOOL_SCOPED;
+
+        if (DB::getDriverName() !== 'mysql') {
+            return $tables;
+        }
+
+        $rows = DB::select(
+            "select TABLE_NAME as name from information_schema.KEY_COLUMN_USAGE
+             where TABLE_SCHEMA = database() and REFERENCED_TABLE_NAME = 'schools'"
+        );
+
+        foreach ($rows as $row) {
+            $table = (string) $row->name;
+            if ($table === 'users' || in_array($table, self::USER_SCOPED, true) || in_array($table, $tables, true)) {
+                continue;
+            }
+            $tables[] = $table;
+        }
+
+        return $tables;
+    }
 
     public function handle(): int
     {
@@ -318,7 +350,7 @@ class TestPurgeSchoolsCommand extends Command
         $userIds = $users->pluck('id')->all();
 
         $tables = [];
-        foreach (self::SCHOOL_SCOPED as $table) {
+        foreach ($this->schoolScopedTables() as $table) {
             if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'school_id')) {
                 continue;
             }
