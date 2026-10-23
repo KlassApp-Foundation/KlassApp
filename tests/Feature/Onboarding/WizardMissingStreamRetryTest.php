@@ -146,6 +146,39 @@ class WizardMissingStreamRetryTest extends TestCase
         return UploadedFile::fake()->createWithContent($filename, $contents);
     }
 
+    public function test_the_structure_step_picks_up_classes_added_while_it_is_open(): void
+    {
+        $this->actingAs($this->admin);
+
+        $year = AcademicYear::create([
+            'school_id' => $this->school->id,
+            'name' => '2027',
+            'description' => 'structure refresh',
+            'start_date' => '2027-01-01',
+            'end_date' => '2027-12-31',
+            'status' => 1,
+        ]);
+        app(OnboardingEngine::class)->saveStandards($this->school, $year, [['name' => 'Primary One']]);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $index = null;
+        foreach ($component->instance()->steps as $i => $step) {
+            if (($step['key'] ?? '') === 'standards') {
+                $index = $i;
+                break;
+            }
+        }
+        $this->assertNotNull($index);
+
+        $component->call('goToStep', $index)->assertSee('Primary One');
+
+        // A class added by the academic-year seeding (or another tab) must show
+        // without a full page reload.
+        app(OnboardingEngine::class)->saveStandards($this->school, $year, [['name' => 'Primary Two']]);
+
+        $component->call('$refresh')->assertSee('Primary Two');
+    }
+
     public function test_sunrise_class_teacher_rows_name_the_missing_streams_and_retry_saves_all_thirteen(): void
     {
         $this->actingAs($this->admin);

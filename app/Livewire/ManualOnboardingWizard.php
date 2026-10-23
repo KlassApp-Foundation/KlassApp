@@ -1520,6 +1520,13 @@ class ManualOnboardingWizard extends Component
 
     public function render()
     {
+        // The structure step shows classes and the class-teacher controls that
+        // only exist once classes do. Re-read them on every render so the step
+        // updates itself instead of needing a page refresh.
+        if ($this->currentKey() === 'standards') {
+            $this->refreshStructureSnapshot();
+        }
+
         return view('livewire.manual-onboarding-wizard', [
             'countries' => Country::query()->orderBy('order')->orderBy('name')->get(['id', 'name']),
             'school' => $this->school(),
@@ -2184,6 +2191,10 @@ class ManualOnboardingWizard extends Component
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['className' => collect($e->errors())->flatten()->first()]);
         }
+
+        // The new class must appear (with its stream and class-teacher
+        // controls) without a refresh.
+        $this->refreshStructureSnapshot();
     }
 
     private function saveSubject(School $school): void
