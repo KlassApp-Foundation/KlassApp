@@ -647,7 +647,7 @@
                         </span>
                         <span class="manual-wizard-bulk-item-actions">
                             @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($row['name'] ?? '')) !== 0)
-                                <x-button type="button" variant="outline" size="sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $row['name']) }}')" data-testid="wizard-term-mark-current-{{ $i }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Mark current</x-button>
+                                <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="markTermCurrentByIndex({{ $i }})" data-testid="wizard-term-mark-current-{{ $i }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Mark current</button>
                             @endif
                             <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTermDraft({{ $i }})" aria-label="Remove">✕</button>
                         </span>
