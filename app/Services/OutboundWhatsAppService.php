@@ -433,7 +433,7 @@ class OutboundWhatsAppService
             $total += $fee->amount;
         }
 
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $className = $student->studentAcademicLatest?->standardLink?->standard?->name ?? 'N/A';
 
         $message = "{$title}\n";
         $message .= "_{$this->displayNameFor($student)} — {$className}_\n\n";
