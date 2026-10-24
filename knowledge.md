@@ -14250,3 +14250,23 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Browser evidence:** all checks passed on Chromium at 375/414/768/1280 — `~/Desktop/klassapp-evidence/1110-five-items/` (`REPORT.json`). Edge tab 36×188 at every width and after open/close; exact preview copy; blocked pages friendly (200, no 403); a real new link request raised the toast and updated the bell; superadmin fallback toast shown.
 
 **Notes:** no merges/deploys by the agent; no env changes; approval logic untouched (`ApprovalDecisionService`). Local verification only.
+
+## Session: 2026-10-24 — Onboarding polish batch (WhatsApp QR linking, structure refresh, step buttons, health/approval safety, class-teacher self-setup)
+
+**Shipped (merged to `main`, deployed by the owner-run release):**
+- WhatsApp linking by QR/code instead of typing a number (`/admin/whatsapp/phone`): a six-character code (no 0/O/1/I/L, at least three distinct characters), HMAC at rest, 10-minute expiry, rate-limited; the number is linked from the inbound message. New table `whatsapp_link_codes`.
+- Structure & Class Teachers step re-reads classes on render, so the class-teacher controls appear without a page refresh.
+- Onboarding buttons use the design system: outline “Download template”, primary “Upload file”, outline “Add …”. The term “Mark current” button no longer carries the term name in `wire:click` — a quoted `str_replace()` inside a component attribute compiled into a broken attribute and produced an `unexpected endif` on a cold CI compile.
+- Approval status changes queue for the teacher's next inbound message instead of a cold send.
+- Health notices carry no clinical detail; details are sent only after the parent replies `HEALTH` from the linked number.
+- `getParentPhones` returns only linked, opted-in `WhatsAppUser` numbers (no `users.mobile_no` fallback).
+- WhatsApp log lines mask phone numbers.
+- Class teachers set up their own class: personal single-use setup links (hashed, 14 days), an optional school staff link (7 days) that matches the uploaded teacher list by email or phone, an approval queue for everyone else, “Set up my class” (class, learners, subjects, subject teachers, WhatsApp link) and per-class progress for admins. New tables `teacher_setup_tokens`, `school_staff_links`, `staff_link_requests`.
+
+**WhatsApp safety report (after those fixes):** no outbound path can reach a real parent or teacher before they write first. Marks releases remain demo-only in code, fee reminders require a linked number and are queued, approval messages are queued, health notices are queued and generic, and the only business-initiated send left is the ops backup alert to the owner's own number. The demo-only recipient flag is therefore safe to switch off for real schools, subject to the owner's decision.
+
+**Process notes:** `main` has a ruleset requiring one approving review; small fixes in this batch merged under the owner's self-review rule with an admin merge after check, scan and test-guard were green, and each sensitive PR carries a written safety checklist. Grok B reviews #1212–#1215 after the fact; anything it flags becomes a follow-up PR.
+
+### Logged for later (do not build yet)
+- A slightly larger Toshi panel, as on the Super Admin page, in the established colours.
+- Super Admin area redesign with feature switches visible.
