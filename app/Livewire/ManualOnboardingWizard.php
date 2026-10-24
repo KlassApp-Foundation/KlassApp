@@ -592,6 +592,18 @@ class ManualOnboardingWizard extends Component
         $this->refreshStructureSnapshot();
     }
 
+    /**
+     * Mark the term at this draft index as current. Keeps the term name out of
+     * the wire:click attribute, where quoting broke Blade compilation.
+     */
+    public function markTermCurrentByIndex(int $index): void
+    {
+        $name = trim((string) ($this->termDrafts[$index]['name'] ?? ''));
+        if ($name !== '') {
+            $this->markTermCurrent($name);
+        }
+    }
+
     public function addStudentDraft(): void
     {
         $name = trim($this->studentName);

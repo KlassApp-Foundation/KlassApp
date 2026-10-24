@@ -33,4 +33,16 @@ jobs:
           php artisan key:generate --force
 
       - name: Run full suite with known-failures guard
-        run: bash scripts/test-guard.sh
+        env:
+          TEST_GUARD_KEEP_JUNIT: build/junit.xml
+        run: |
+          mkdir -p build
+          bash scripts/test-guard.sh
+
+      - name: Upload JUnit on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit
+          path: build/junit.xml
+          if-no-files-found: warn
