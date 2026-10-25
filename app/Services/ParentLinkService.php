@@ -166,7 +166,9 @@ class ParentLinkService
             'school_id' => null,
             'usergroup_id' => 7,
             'name' => $senderName ?: 'Parent',
+            // FLAGGED(product-decision): generated parent email uses the .sch.ug domain. see docs/onboarding-engine-plan.md
             'email' => 'parent_'.$studentId.'_'.time().'@klassapp.sch.ug',
+            // FLAGGED(product-decision): a linked parent is created with a random password. see docs/onboarding-engine-plan.md
             'password' => bcrypt(Str::random(12)),
             'status' => 'active',
             'email_verified' => 1,

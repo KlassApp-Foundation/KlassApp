@@ -313,6 +313,7 @@ class LiveAdversarialRunner
 
         return User::unguarded(function () use ($attributes, $seq): User {
             return User::query()->create(array_merge([
+                // FLAGGED(product-decision): this service creates users with the password 'password'. see docs/onboarding-engine-plan.md
                 'password' => Hash::make('password'),
                 'mobile_no' => sprintf('700%06d', $seq),
                 'registration_number' => sprintf('KLS%03d%04d', $attributes['school_id'] ?? $this->schoolId ?? 1, $seq),

@@ -18,6 +18,7 @@
     <div class="ap-form-panel">
       <div class="ap-form-shell ap-card">
         <h1 class="ap-title">Update your password</h1>
+        {{-- FLAGGED(product-decision): this screen says the account was created with a temporary password. see docs/onboarding-engine-plan.md --}}
         <p class="ap-sub">Your account was created with a temporary password. Please set a new one to continue.</p>
 
         @if(session('successmessage'))

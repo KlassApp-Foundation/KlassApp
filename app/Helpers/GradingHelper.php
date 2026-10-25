@@ -47,6 +47,7 @@ class GradingHelper
      */
     public static function scaleConfig(string $levelType): array
     {
+        // FLAGGED(product-decision): onboarding seeds the Uganda grading scales, including O-level and A-level bands. see docs/onboarding-engine-plan.md
         $scales = config('grading_uganda', []);
 
         return $scales[$levelType] ?? [];

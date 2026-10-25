@@ -56,6 +56,7 @@ class PhoneCountry
         return ['code' => $code, 'min' => 8, 'max' => 12];
     }
 
+    // FLAGGED(product-decision): known countries come from a fixed list, not libphonenumber. see docs/onboarding-engine-plan.md
     public static function normalise(?string $input, ?string $countryName): ?string
     {
         $raw = trim((string) $input);

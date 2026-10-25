@@ -24,6 +24,7 @@
  * See App\Helpers\GradingHelper::levelTypeForStandard() for the mapping logic.
  */
 
+// FLAGGED(product-decision): these bands are the Uganda primary, O-level, A-level, and nursery scales. see docs/onboarding-engine-plan.md
 return [
 
     /*

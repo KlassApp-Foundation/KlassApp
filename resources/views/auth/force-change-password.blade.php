@@ -68,6 +68,7 @@
       </a>
     </span>
     <p class="klass-intro-title">Update your password</p>
+    {{-- FLAGGED(product-decision): this screen says the account was created with a temporary password. see docs/onboarding-engine-plan.md --}}
     <p class="klass-intro-sub">Your account was created with a temporary password. Please set a new one to continue.</p>
   </div>
 

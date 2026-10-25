@@ -318,3 +318,123 @@ When a step's underlying data model is genuinely configurable (any number of ter
 2. Should Toshi ask `school_category` explicitly, or continue deriving it from `schoolType`/`hasNursery`?
 3. Do we remove the `exams` onboarding step, or should exams get a real `OnboardingStepsService` step and persistence?
 4. Should the manual fee step require an amount (current behavior) or accept name-only (engine proposal)?
+
+---
+
+## 9. Conflicts with product decisions (flagged, not fixed)
+
+Two product decisions are in force. Nothing in this section changes runtime behaviour. Each code site below has a one-line `FLAGGED(product-decision)` comment (a `//` comment in PHP, a `{{-- --}}` comment in Blade). Blade comments are not rendered.
+
+1. **Invite links only.** KlassApp uses invite links and never sets or emails a password.
+2. **Global.** KlassApp must accept any international phone number and any curriculum.
+
+Proposed fixes, used in the table:
+
+- **Invite-only.** Create the admin (and other people) with an invite link. Do not store a chosen, default, or random password, and do not email one.
+- **E.164.** Normalise with `giggsey/libphonenumber-for-php`, using the school's country as the default region.
+- **Profile data.** Drive curriculum, country, classes, terms, grading, and currency from the country profile and preset data, not from PHP constants.
+
+Rough size is the follow-up that would apply that fix. Small is one method or one string. Medium is one flow plus its tests. Large is every create path, or the schema default plus every caller.
+
+### 9.1 Passwords
+
+The engine does **not** currently hash the literal string `password` for a school admin. Section 2.1 above (line 25) still specifies that default. The live create paths store a typed password or a random hash, and some copy still offers a "default" or "temporary" password. `database/factories/UserFactory.php` does hash `password`, and it is used from tests only (no `User::factory()` call under `app/`), so it is not flagged.
+
+`UsersSchoolAdminTableSeeder` (`password123`), `UsersTeacherTableSeeder` and `UsersTableSeeder` (`password`), `UsersStudentTableSeeder` (`student123`), and `TestSchoolOneDataSeeder` (`password123`) are not flagged. They are not called by `ProductionSeeder`. `entrypoint.sh` and the Cloud deploy path do not run `DatabaseSeeder`. `UsersSiteAdminTableSeeder` does run from `ProductionSeeder`, so it is flagged.
+
+Teacher and co-admin invite mail already sends a link and does not include a password. Those templates are not flagged. The user rows those invites create still receive a stored hash, and that write is flagged.
+
+| File:line | What it does | Decision | Proposed fix and rough size |
+|---|---|---|---|
+| `docs/onboarding-engine-plan.md:25` | Design text says `createAdmin` defaults the password to `'password'`. | Invite-only | Drop that default from the design. Small. |
+| `app/Livewire/AgentToshi.php:4706` | Create-mode chat asks for a password or the word `default`. | Invite-only | Ask for an invite, not a password. Small. |
+| `app/Livewire/AgentToshi.php:6915` | Create mode stores the chosen password or a random hash, then can email a set-password link. | Invite-only | Invite-only admin creation. Medium. |
+| `app/Http/Controllers/Auth/RegisterController.php:63` | Public signup passes the typed password into bootstrap. | Invite-only | Invite-only admin creation. Medium, with the signup form. |
+| `app/Services/SchoolSignupBootstrapService.php:238` | Signup stores the typed password, or a random hash when none was typed. | Invite-only | Invite-only admin creation. Medium. |
+| `resources/views/auth/register.blade.php:272` | The button is "Create account with password". | Invite-only | Invite-only admin creation. Small, same change as the preview register view. |
+| `resources/views/auth/preview/register.blade.php:94` | The live register view uses the same button. | Invite-only | Same as the register view. Small. |
+| `app/Services/OnboardingEngine.php:1843` | `saveTeachers` stores `bcrypt(Str::random(16))`. | Invite-only | Invite link for each teacher. Medium. |
+| `app/Services/OnboardingEngine.php:2072` | `saveStudents` stores the same random hash. | Invite-only | Invite link, or no login until one is issued. Medium. |
+| `app/Services/OnboardingEngine.php:2227` | An imported parent is created with `UserProvisioning::randomPasswordAttributes()`. | Invite-only | Invite link for the parent. Medium. |
+| `app/Support/UserProvisioning.php:30` | Shared helper used at runtime to store a random password and `is_reset = 1`. | Invite-only | Stop issuing a hash from this helper. Medium, because several callers use it. |
+| `app/Services/ToshiActionService.php:508` | Adding a teacher stores that random password. | Invite-only | Invite link. Small once the helper changes. |
+| `app/Services/ToshiActionService.php:1437` | Adding a parent stores that random password. | Invite-only | Invite link. Small once the helper changes. |
+| `app/Services/ParentLinkService.php:171` | WhatsApp parent linking stores `bcrypt(Str::random(12))`. | Invite-only | Invite link. Small. |
+| `app/Services/Toshi/LiveAdversarialRunner.php:316` | The live adversarial command creates users with `Hash::make('password')`. | Invite-only | Do not use a shared password. Small. |
+| `database/seeders/UsersSiteAdminTableSeeder.php:51` | `ProductionSeeder` stores `Str::password(20)` on a new site admin and does not email it. | Invite-only | Invite link for the site admin. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:692` | The create review says a password was set or a set-password link was emailed. | Invite-only | Say an invite was sent. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:1713` | The same sentence in the second review block. | Invite-only | Same copy change. Small. |
+| `resources/views/emails/set-password-link.blade.php:2` | The mail Toshi queues after creating the admin is a set-password message. | Invite-only | Send an invite that does not talk about a stored password. Small. |
+| `resources/views/auth/force-change-password.blade.php:71` | The gate says the account was created with a temporary password. | Invite-only | Remove the temporary-password gate when nothing sets one. Medium. |
+| `resources/views/auth/preview/force-change-password.blade.php:21` | The preview of that gate uses the same sentence. | Invite-only | Same as the force-change view. Small. |
+| `scripts/submit-whatsapp-message-templates.php:155` | The teacher WhatsApp template says "Your temporary login" and "set your password". | Invite-only | Invite-link copy, with no temporary login. Small, and a new template approval. |
+| `scripts/retry-rejected-whatsapp-templates.php:41` | The same template body. | Invite-only | Same copy. Small. |
+| `scripts/retry-rejected-whatsapp-templates-en-us.php:29` | The same template body for `en_US`. | Invite-only | Same copy. Small. |
+
+### 9.2 Phones, country, curriculum, currency
+
+No timezone constant lives in the engine or the onboarding paths. `config/app.php` uses `UTC`. `Africa/Kampala` appears on the demo nightly schedule in `config/klassapp.php`, which is outside onboarding, so it is not flagged. There is no UNEB "Division 1" constant on the onboarding path. The grade bands in `config/grading_uganda.php` are what onboarding seeds, and those are flagged.
+
+Post-onboarding Toshi fee and payment replies still print `UGX` (`AgentToshi` around the payment and fee-balance prompts, and `ToshiActionService` fee and payment results). They are outside the onboarding steps, so they are not flagged here. The same is true of WhatsApp fee messages that print `UGX`.
+
+| File:line | What it does | Decision | Proposed fix and rough size |
+|---|---|---|---|
+| `app/Helpers/WhatsAppPhoneHelper.php:6` | `normalise()` rewrites a leading `0` or any short number to `+256`. | E.164 | libphonenumber with the school country as the region. Medium. The method is also the WhatsApp send fallback. |
+| `app/Helpers/WhatsAppPhoneHelper.php:241` | `validate()` accepts only `+256` numbers matching `7[0578]`. | E.164 | Same library. Small once `normalise()` moves. |
+| `app/Helpers/WhatsAppPhoneHelper.php:190` | `readable()` special-cases a 12-digit `256` number. | E.164 | Format with the library. Small. |
+| `app/Services/SchoolSignupBootstrapService.php:138` | Signup strips a leading `0` and prefixes `+256` for `7[0578]` numbers. | E.164 | libphonenumber, school country as the region. Small. |
+| `app/Support/PhoneCountry.php:59` | Onboarding normalisation uses `config/phone_countries.php`, then a coarse 8–12 digit fallback. | E.164 | Replace the list with libphonenumber. Medium. |
+| `config/phone_countries.php:13` | Calling codes and national lengths are a fixed list, including Uganda `256` / 9 digits. | E.164 | Same replacement. Medium. |
+| `app/Livewire/AgentToshi.php:6884` | A missing school phone is stored as `0700000000`. | E.164 | Leave the phone empty. Small. |
+| `database/seeders/UsersSiteAdminTableSeeder.php:25` | The production seeder defaults one mobile to `+256700000000`. | E.164 | No country default. Small. |
+| `database/seeders/UsersSiteAdminTableSeeder.php:34` | The second site-admin mobile uses the same default. | E.164 | Same. Small. |
+| `app/Livewire/ManualOnboardingWizard.php:94` | The wizard property starts as `Uganda`. | Profile data | Default from the country profile, or no default. Small. |
+| `app/Livewire/ManualOnboardingWizard.php:1905` | A blank saved country is shown as `Uganda`. | Profile data | Show the saved value only. Small. |
+| `app/Livewire/AgentToshi.php:6897` | Create mode stores `Uganda` when no country was chosen. | Profile data | Require a country. Small. |
+| `app/Onboarding/Steps/StepSchemaCatalog.php:93` | The Toshi v2 country field defaults to `Uganda`. | Profile data | No country constant. Small. |
+| `app/Onboarding/Steps/StepSchemaCatalog.php:97` | The country answer defaults to `Uganda`. | Profile data | Same. Small. |
+| `app/Onboarding/Steps/StepSchemaCatalog.php:506` | An empty `countries` table falls back to Uganda, Kenya, and Tanzania. | Profile data | Use the country table only. Small. |
+| `resources/views/livewire/partials/manual-wizard-step-fields.blade.php:52` | The wizard select uses that same three-country fallback. | Profile data | Same. Small. |
+| `app/Services/OnboardingStepsService.php:194` | `isUganda()` still special-cases the country name. | Profile data | Ask the country profile. Small. |
+| `app/Onboarding/Steps/Steps/EmisStep.php:40` | The skip summary says EMIS applies only to Uganda. | Profile data | Use the profile's ministry-code rule. Small. |
+| `app/Onboarding/Country/UgandaOnboardingProfile.php:9` | EMIS, `UGX`, `uneb`, the three term dates, and the class preset are constants on the Uganda profile. | Profile data | Move them into preset data. Medium. Keeping a Uganda profile is fine; the constants should not be the only source. |
+| `app/Onboarding/Country/GenericOnboardingProfile.php:39` | A country with no profile is offered `uneb`. | Profile data | No curriculum until the profile says so. Small. |
+| `app/Onboarding/Country/GenericOnboardingProfile.php:47` | That same fallback copies Uganda's term dates. | Profile data | Terms come from the profile. Small. |
+| `app/Services/OnboardingEngine.php:127` | `saveCurriculum` allows only `uneb`, `cambridge`, `montessori`, and `other`. | Profile data | Allow the curricula the profile offers. Medium. |
+| `app/Onboarding/Steps/Steps/CurriculumStep.php:10` | Toshi v2 offers that same list, with UNEB first. | Profile data | Options from the profile. Small. |
+| `resources/views/livewire/partials/manual-wizard-step-fields.blade.php:65` | The wizard select labels the first option "UNEB (Uganda National Examinations Board)". | Profile data | Options from the profile. Small. |
+| `app/Livewire/ManualOnboardingWizard.php:89` | The wizard opens on `uneb`. | Profile data | Open on the profile default, which may be empty. Small. |
+| `app/Livewire/ManualOnboardingWizard.php:1902` | A blank saved curriculum is shown as `uneb`. | Profile data | Show the saved value only. Small. |
+| `app/Livewire/AgentToshi.php:146` | The curriculum property starts as `uneb`, and an unanswered picker can be committed. | Profile data | Do not commit a constant. Small. |
+| `app/Livewire/AgentToshi.php:642` | A restored draft falls back to `uneb`. | Profile data | Keep the draft empty. Small. |
+| `app/Livewire/AgentToshi.php:4895` | The words `uganda` and `ncdc` map to `uneb`. | Profile data | Map from the profile. Small. |
+| `app/Livewire/AgentToshi.php:6888` | Create mode stores `uneb` when no curriculum was chosen. | Profile data | Require a curriculum from the profile. Small. |
+| `database/migrations/2026_08_03_235031_make_schools_curriculum_nullable.php:43` | `schools.curriculum` is `NOT NULL DEFAULT 'uneb'`. The migration already ran; the default remains in the database. | Profile data | A later migration drops the default. Medium, because existing rows stay. |
+| `app/Onboarding/Steps/Steps/UnebCenterStep.php:17` | The exam-centre question asks for a UNEB centre number. | Profile data | The profile names the exam centre, or the step is absent. Small. |
+| `app/Services/OnboardingEngine.php:196` | `saveUnebCenter` writes `uneb_center_number`. | Profile data | A profile-named centre field. Medium, with the column. |
+| `resources/views/livewire/partials/manual-wizard-step-fields.blade.php:103` | The wizard label is "UNEB centre number". | Profile data | Label from the profile. Small. |
+| `app/Onboarding/Steps/Steps/TermsStep.php:108` | Typing `uneb` accepts the default term calendar. | Profile data | The profile's term preset, under a neutral word. Small. |
+| `app/Services/SchoolCategorySeeder.php:29` | Categories are Nursery, Primary, O-Level, and O-Level + A-Level. | Profile data | Categories from preset data. Large, because seeding, the wizard, and Toshi all read this list. |
+| `app/Services/SchoolCategorySeeder.php:63` | Seeded classes are Baby/Middle/Top, Primary One–Seven, and Senior One–Six. | Profile data | Class names from the preset. Large, same callers. |
+| `app/Onboarding/Country/SchoolTypePreset.php:59` | `uganda()` is the only preset, and it reads those class lists. | Profile data | One preset per country profile. Medium. |
+| `app/Onboarding/Country/SchoolTypePreset.php:27` | A-level streams are the constants PCM, BCM, HEG, and MEG. | Profile data | Streams from the preset. Small. |
+| `app/Services/OnboardingEngine.php:311` | Candidate classes are P.7, S.4, and S.6 only. | Profile data | The profile says which classes take a board number. Medium. |
+| `app/Services/OnboardingEngine.php:357` | Class names are mapped onto nursery, O-level, and A-level. | Profile data | Mapping from the preset. Medium. |
+| `app/Services/OnboardingEngine.php:394` | Ordinals cover Primary 1–7 and Senior 1–6 only. | Profile data | Aliases from the preset. Medium. |
+| `app/Livewire/AgentToshi.php:7263` | `curriculumDefaults()` is the NCDC nursery, P1–P7, and S1–S6 list. | Profile data | Delete this list and use the preset. Medium. |
+| `app/Livewire/ManualOnboardingWizard.php:107` | The class field opens on `P1`. | Profile data | Open on the preset's first class, or empty. Small. |
+| `app/Helpers/GradingHelper.php:50` | Onboarding seeding loads `config/grading_uganda.php`. | Profile data | Grading scales from the profile. Medium. |
+| `config/grading_uganda.php:27` | The file is the Uganda primary nine-band scale, the O-level A–E scale, and the A-level points scale. | Profile data | Preset data per curriculum. Large, because report cards read it too. |
+| `app/Onboarding/Country/UgandaOnboardingProfile.php:9` | Currency is the constant `UGX`. Listed again because fee screens do not read it. | Profile data | Callers read `currency()`. Small on the profile, medium at the screens. |
+| `app/Livewire/ManualOnboardingWizard.php:1770` | The review prints fee amounts as `UGX`. | Profile data | Use the profile currency. Small. |
+| `resources/views/livewire/partials/manual-wizard-step-fields.blade.php:713` | The fee list prints `UGX`. | Profile data | Same. Small. |
+| `resources/views/livewire/partials/manual-wizard-step-fields.blade.php:730` | The amount label says "Amount (UGX)". | Profile data | Same. Small. |
+| `app/Livewire/AgentToshi.php:2459` | The onboarding fee reply says `UGX`. | Profile data | Use the profile currency. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:423` | The onboarding fee list prints `UGX`. | Profile data | Same. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:434` | The amount placeholder says "Amount (UGX)". | Profile data | Same. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:1361` | The second fee list prints `UGX`. | Profile data | Same. Small. |
+| `resources/views/livewire/agent-toshi.blade.php:1372` | The second amount placeholder says "Amount (UGX)". | Profile data | Same. Small. |
+| `app/Livewire/AgentToshi.php:6882` | A missing school email uses `@klassapp.sch.ug`. | Profile data | A neutral domain, or no invented email. Small. |
+| `app/Livewire/AgentToshi.php:6920` | A missing admin email uses `.sch.ug`. | Profile data | Same. Small. |
+| `app/Services/ToshiActionService.php:1435` | A generated parent email uses `@school.ug`. | Profile data | A neutral domain. Small. |
+| `app/Services/ParentLinkService.php:169` | A generated parent email uses `@klassapp.sch.ug`. | Profile data | A neutral domain. Small. |

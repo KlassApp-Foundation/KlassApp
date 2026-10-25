@@ -191,6 +191,7 @@ class OnboardingStepsService
         return (bool) preg_match("/^.+'s School(-\d+)?$/u", trim($name));
     }
 
+    // FLAGGED(product-decision): step rules still special-case the country name Uganda. see docs/onboarding-engine-plan.md
     public static function isUganda(?string $country): bool
     {
         return (new UgandaOnboardingProfile())->matches($country);

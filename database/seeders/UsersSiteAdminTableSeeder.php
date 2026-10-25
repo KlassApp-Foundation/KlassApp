@@ -22,6 +22,7 @@ class UsersSiteAdminTableSeeder extends Seeder
             [
                 'name'       => 'elicom',
                 'email'      => env('TEAM_ADMIN_EMAIL', 'team.admin@klassapp.test'),
+                // FLAGGED(product-decision): this production seeder defaults the mobile number to +256. see docs/onboarding-engine-plan.md
                 'mobile_no'  => env('TEAM_ADMIN_MOBILE_NO', '+256700000000'),
                 'firstname'  => 'Mugisha',
                 'lastname'   => 'Elijah',
@@ -30,6 +31,7 @@ class UsersSiteAdminTableSeeder extends Seeder
             [
                 'name'       => 'mucu',
                 'email'      => env('SITE_OWNER_EMAIL', 'owner@klassapp.test'),
+                // FLAGGED(product-decision): this production seeder defaults the mobile number to +256. see docs/onboarding-engine-plan.md
                 'mobile_no'  => env('SITE_OWNER_MOBILE_NO', '+256700000000'),
                 'firstname'  => 'Mucunguzi',
                 'lastname'   => 'Moses',
@@ -46,6 +48,7 @@ class UsersSiteAdminTableSeeder extends Seeder
                 $user = new User([
                     'name'         => $admin['name'],
                     'email'        => $admin['email'],
+                    // FLAGGED(product-decision): this production seeder stores a generated password. see docs/onboarding-engine-plan.md
                     'password'     => Hash::make($plain),
                     'mobile_no'    => $admin['mobile_no'],
                     'usergroup_id' => 1,
