@@ -117,18 +117,25 @@ class OnboardingYearAndFeeValidationTest extends TestCase
         $prompt = $driver->promptNext($school, $this->admin->id);
         $this->assertSame('terms', $prompt['key']);
 
+        $step = app(\App\Onboarding\Steps\Steps\TermsStep::class);
+        $this->assertSame(['__country_defaults' => true], $step->normalize('defaults'));
+        $preview = $step->preview($school, 'defaults');
+        $this->assertStringContainsString('2027-02-03', (string) $preview['rows'][0]['detail']);
+
         $result = $driver->handleReply($school, 'defaults', $this->admin->id);
 
         $this->assertSame('advanced', $result['status'], (string) ($result['hint'] ?? ''));
 
         $terms = AcademicTerm::where('school_id', $school->id)->orderBy('id')->get();
         $this->assertCount(3, $terms);
-        $this->assertSame('2027-02-02', $terms[0]->starts_on->format('Y-m-d'));
-        $this->assertSame('2027-05-08', $terms[0]->ends_on->format('Y-m-d'));
+        $this->assertSame('2027-02-03', $terms[0]->starts_on->format('Y-m-d'));
+        $this->assertSame('2027-05-02', $terms[0]->ends_on->format('Y-m-d'));
+        $this->assertSame('current', $terms[0]->status);
         $this->assertSame('2027-05-26', $terms[1]->starts_on->format('Y-m-d'));
-        $this->assertSame('2027-08-28', $terms[1]->ends_on->format('Y-m-d'));
-        $this->assertSame('2027-09-14', $terms[2]->starts_on->format('Y-m-d'));
-        $this->assertSame('2027-12-04', $terms[2]->ends_on->format('Y-m-d'));
+        $this->assertSame('2027-08-29', $terms[1]->ends_on->format('Y-m-d'));
+        $this->assertSame('next', $terms[1]->status);
+        $this->assertSame('2027-09-22', $terms[2]->starts_on->format('Y-m-d'));
+        $this->assertSame('2027-12-19', $terms[2]->ends_on->format('Y-m-d'));
         $this->assertTrue($terms->every(fn (AcademicTerm $term) => $term->starts_on->year === 2027));
     }
 

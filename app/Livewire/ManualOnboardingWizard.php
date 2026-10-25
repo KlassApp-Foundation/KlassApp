@@ -23,6 +23,7 @@ use App\Support\PhoneCountry;
 use App\Services\ToshiActionService;
 use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
+use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
@@ -3622,21 +3623,32 @@ class ManualOnboardingWizard extends Component
         }
 
         $current = trim($this->currentTermName);
-        $this->termDrafts = $this->defaultTermDrafts($year);
+        $this->termDrafts = $this->defaultTermDrafts($year, $this->countryForTerms());
         $names = array_column($this->termDrafts, 'name');
         $this->currentTermName = in_array($current, $names, true) ? $current : 'Term 1';
     }
 
     /**
+     * Same dates the country profile gives the schema. Country is optional so a
+     * reflection call with only the year still returns the fallback calendar.
+     *
      * @return list<array{name: string, start: string, end: string}>
      */
-    private function defaultTermDrafts(int $year): array
+    private function defaultTermDrafts(int $year, ?string $country = null): array
     {
-        return [
-            ['name' => 'Term 1', 'start' => "{$year}-02-03", 'end' => "{$year}-05-02"],
-            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-29"],
-            ['name' => 'Term 3', 'start' => "{$year}-09-22", 'end' => "{$year}-12-19"],
-        ];
+        return CountryProfiles::forCountry($country)->defaultTerms($year);
+    }
+
+    private function countryForTerms(): ?string
+    {
+        $saved = trim((string) ($this->school()->registration_country ?? ''));
+        if ($saved !== '') {
+            return $saved;
+        }
+
+        $typed = trim($this->countryName);
+
+        return $typed !== '' ? $typed : null;
     }
 
     private function termPrefillYear(): int
@@ -3665,11 +3677,14 @@ class ManualOnboardingWizard extends Component
 
     private function draftsUseDefaultDatesForAnotherYear(int $year): bool
     {
-        $shape = [
-            ['Term 1', '02-03', '05-02'],
-            ['Term 2', '05-26', '08-29'],
-            ['Term 3', '09-22', '12-19'],
-        ];
+        $shape = [];
+        foreach ($this->defaultTermDrafts(2000, $this->countryForTerms()) as $term) {
+            $shape[] = [
+                (string) $term['name'],
+                substr((string) $term['start'], 5),
+                substr((string) $term['end'], 5),
+            ];
+        }
 
         if (count($this->termDrafts) !== count($shape)) {
             return false;

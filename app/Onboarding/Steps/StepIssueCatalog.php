@@ -4,6 +4,7 @@ namespace App\Onboarding\Steps;
 
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
 use App\Services\OnboardingStepsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -228,7 +229,7 @@ final class StepIssueCatalog
      */
     private static function emisSaveIssues(School $school, mixed $normalized): array
     {
-        if (! OnboardingStepsService::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return [];
         }
 

@@ -5,8 +5,12 @@ namespace App\Onboarding\Steps\Steps;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Steps\AbstractOnboardingStep;
+use App\Onboarding\Steps\StepIssueCatalog;
+use App\Onboarding\Steps\StepIssueException;
 use App\Services\OnboardingStepsService;
+use InvalidArgumentException;
 
 class TermsStep extends AbstractOnboardingStep
 {
@@ -37,22 +41,47 @@ class TermsStep extends AbstractOnboardingStep
         }
 
         if ($this->isDefaultTermsReply($raw)) {
-            return $this->defaultTerms((int) date('Y'));
+            return ['__country_defaults' => true];
         }
 
         return [];
     }
 
-    /**
-     * @return list<array{name: string, start: string, end: string, status: string}>
-     */
-    private function defaultTerms(int $year): array
+    public function inputIssues(School $school, mixed $raw): array
     {
-        return [
-            ['name' => 'Term 1', 'start' => "{$year}-02-02", 'end' => "{$year}-05-08", 'status' => 'current'],
-            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-28", 'status' => 'next'],
-            ['name' => 'Term 3', 'start' => "{$year}-09-14", 'end' => "{$year}-12-04", 'status' => 'next'],
-        ];
+        $normalized = $this->resolvedOrIssue($school, $raw);
+        if (isset($normalized['issue'])) {
+            return [$normalized['issue']];
+        }
+
+        return $this->issues($school, $normalized['value']);
+    }
+
+    public function allIssues(School $school, mixed $raw): array
+    {
+        $normalized = $this->resolvedOrIssue($school, $raw);
+        if (isset($normalized['issue'])) {
+            return [$normalized['issue']];
+        }
+
+        return array_values(array_merge(
+            $this->issues($school, $normalized['value']),
+            $this->saveIssues($school, $normalized['value']),
+        ));
+    }
+
+    /**
+     * @return array{value: mixed, issue?: \App\Onboarding\Steps\StepIssue}
+     */
+    private function resolvedOrIssue(School $school, mixed $raw): array
+    {
+        try {
+            return ['value' => $this->resolveTerms($school, $raw)];
+        } catch (StepIssueException $e) {
+            return ['value' => null, 'issue' => $e->issue];
+        } catch (InvalidArgumentException $e) {
+            return ['value' => null, 'issue' => StepIssueCatalog::fromMessage($this->key(), $e->getMessage())];
+        }
     }
 
     private function isDefaultTermsReply(mixed $raw): bool
@@ -61,10 +90,19 @@ class TermsStep extends AbstractOnboardingStep
             && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true);
     }
 
+    private function isCountryDefaultMarker(mixed $normalized): bool
+    {
+        return is_array($normalized)
+            && ($normalized['__country_defaults'] ?? false) === true
+            && count($normalized) === 1;
+    }
+
     private function resolveTerms(School $school, mixed $raw): mixed
     {
-        if (! $this->isDefaultTermsReply($raw)) {
-            return $this->normalize($raw);
+        $normalized = $this->normalize($raw);
+
+        if ($normalized === 'skip' || ! $this->isCountryDefaultMarker($normalized)) {
+            return $normalized;
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -72,7 +110,24 @@ class TermsStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
 
-        return $this->defaultTerms($year->calendarYear());
+        return $this->termsFromProfile($school, $year->calendarYear());
+    }
+
+    /**
+     * The country's term calendar, in the academic year's calendar year.
+     * The first term is current and the rest are next.
+     *
+     * @return list<array{name: string, start: string, end: string, status: string}>
+     */
+    private function termsFromProfile(School $school, int $year): array
+    {
+        $terms = [];
+        foreach (CountryProfiles::forCountry($school->registration_country)->defaultTerms($year) as $index => $term) {
+            $term['status'] = $index === 0 ? 'current' : 'next';
+            $terms[] = $term;
+        }
+
+        return $terms;
     }
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
