@@ -124,6 +124,7 @@ class OnboardingEngine
             throw ValidationException::withMessages(['curriculum' => 'Choose a curriculum.']);
         }
 
+        // FLAGGED(product-decision): curriculum is a fixed list headed by uneb, not the country profile. see docs/onboarding-engine-plan.md
         if (! in_array($curriculum, ['uneb', 'cambridge', 'montessori', 'other'], true)) {
             throw ValidationException::withMessages(['curriculum' => 'Choose a valid curriculum.']);
         }
@@ -192,6 +193,7 @@ class OnboardingEngine
      * null means "not asked yet" and is a no-op.
      * '' means "asked and skipped" and is stored as the empty string.
      */
+    // FLAGGED(product-decision): the centre number stored here is the UNEB centre number. see docs/onboarding-engine-plan.md
     public function saveUnebCenter(School $school, ?string $unebCenterNumber): void
     {
         if (! Schema::hasColumn('schools', 'uneb_center_number')) {
@@ -306,6 +308,7 @@ class OnboardingEngine
      * actual Ugandan class names in the database). This method
      * replaces that with the correct Ugandan candidate-class check.
      */
+    // FLAGGED(product-decision): candidate classes are the Uganda P.7 / S.4 / S.6 constants. see docs/onboarding-engine-plan.md
     public static function isCandidateClass(string $className): bool
     {
         $lower = strtolower(trim($className));
@@ -351,6 +354,7 @@ class OnboardingEngine
      * to 'nursery', Senior names to 'o-level' or 'a-level', and
      * everything else defaults to 'primary'.
      */
+    // FLAGGED(product-decision): maps class names onto nursery, O-level, and A-level constants. see docs/onboarding-engine-plan.md
     public function standardNameForClass(string $className): string
     {
         $lower = strtolower(trim($className));
@@ -387,6 +391,7 @@ class OnboardingEngine
      *
      * @return array<int, string>
      */
+    // FLAGGED(product-decision): ordinals cover Uganda Primary 1–7 and Senior 1–6 only. see docs/onboarding-engine-plan.md
     private static function classOrdinalWords(): array
     {
         return [
@@ -1835,6 +1840,7 @@ class OnboardingEngine
                         'usergroup_id'   => 5,
                         'name'            => $name,
                         'email'           => $email,
+                        // FLAGGED(product-decision): a new teacher gets a random password, not an invite link. see docs/onboarding-engine-plan.md
                         'password'        => bcrypt(Str::random(16)),
                         'status'          => 'active',
                         'email_verified'  => 1,
@@ -2063,6 +2069,7 @@ class OnboardingEngine
                         'usergroup_id'   => 6,
                         'name'            => $name,
                         'email'           => $email,
+                        // FLAGGED(product-decision): a new student gets a random password, not an invite link. see docs/onboarding-engine-plan.md
                         'password'        => bcrypt(Str::random(16)),
                         'status'          => 'active',
                         'email_verified'  => 1,
@@ -2217,6 +2224,7 @@ class OnboardingEngine
         $parent = ($phone !== '' && isset($parentsByPhone[$phone])) ? $parentsByPhone[$phone] : null;
 
         if ($parent === null) {
+            // FLAGGED(product-decision): a new parent gets a random password, not an invite link. see docs/onboarding-engine-plan.md
             $password = UserProvisioning::randomPasswordAttributes();
             $parent = User::create([
                 'school_id' => $school->id,

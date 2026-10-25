@@ -10,6 +10,7 @@
 | tel_prefix.
 */
 
+// FLAGGED(product-decision): calling codes are a fixed list, with Uganda's 256/9-digit rule inside it. see docs/onboarding-engine-plan.md
 return [
     'aliases' => [
         'ug' => 'Uganda',

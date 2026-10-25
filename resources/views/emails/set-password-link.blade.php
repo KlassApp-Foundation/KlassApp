@@ -1,4 +1,5 @@
 <x-mail::message :preheader="'This link expires in '.$minutes.' minutes.'">
+{{-- FLAGGED(product-decision): school creation emails a set-password link after storing a password hash. see docs/onboarding-engine-plan.md --}}
 # Set your password
 
 Hi {{ $name }},

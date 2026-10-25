@@ -269,6 +269,7 @@
           <span class="klass-error" role="alert">{{ $errors->first('termsandcondn') }}</span>
         @endif
 
+        {{-- FLAGGED(product-decision): signup asks for a password instead of an invite link. see docs/onboarding-engine-plan.md --}}
         <button type="submit" class="klass-submit">Create account with password</button>
 
         <div class="klass-divider"><span>or</span></div>

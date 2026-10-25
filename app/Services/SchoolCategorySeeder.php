@@ -26,6 +26,7 @@ use App\Models\Subject;
 class SchoolCategorySeeder
 {
     /** Internal value -> human label shown on the wizard step. */
+    // FLAGGED(product-decision): school types are Nursery, Primary, O-Level, and A-Level constants. see docs/onboarding-engine-plan.md
     public const CATEGORIES = [
         'nursery' => 'Nursery only',
         'primary' => 'Primary',
@@ -59,6 +60,7 @@ class SchoolCategorySeeder
     ];
 
     /** Sections per level type (K12 Uganda naming; matches AcademicSetupService). */
+    // FLAGGED(product-decision): seeded classes are Baby/Middle/Top, Primary One–Seven, and Senior One–Six. see docs/onboarding-engine-plan.md
     private const SECTIONS = [
         'nursery' => ['Baby Class', 'Middle Class', 'Top Class'],
         'primary' => [

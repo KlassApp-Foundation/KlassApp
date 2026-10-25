@@ -105,6 +105,7 @@ class TermsStep extends AbstractOnboardingStep
         }
 
         return is_string($raw)
+            // FLAGGED(product-decision): typing uneb accepts the default term calendar. see docs/onboarding-engine-plan.md
             && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true);
     }
 

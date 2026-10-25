@@ -648,6 +648,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Decision:** Keep Demo Junior on `UG-JUN-LIN-####`. Only the provisioned identity gets a school-id learner number. No migration, no delete, no update of another school's rows.
 - **Edge:** A second run of `demo:provision` for a school that already exists still changes nothing. A partial Sunset left behind by the old crash is not resumed; the name is already taken.
 
+## Current Status: October 25, 2026 — **Onboarding password and Uganda assumptions flagged OPEN [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233)**
+
+- Comments only. No behaviour change. `docs/onboarding-engine-plan.md` section 9 lists each site: a password stored or offered during signup, Toshi create, the engine's teacher/student/parent create, and the production site-admin seeder; and Uganda phone, country, curriculum, class, grading, and currency constants on the onboarding paths. Proposed fixes are invite-link-only creation, E.164 via libphonenumber with the school country as the region, and country-profile preset data.
+- `UserFactory` and the `DatabaseSeeder` password seeders were not flagged. `ProductionSeeder` does not call them. No timezone constant was found in the engine or the onboarding paths.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` on `9ce76ee6` — 3184 tests, 0 failures, 0 errors, 9 skipped, guard OK.
+- **Status:** OPEN [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233) (`cursor/flag-onboarding-product-decisions-8f49`). Written review requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 25, 2026 — **Early access does not reveal an existing account OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230)**
 
 - Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
@@ -14302,3 +14309,25 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Tests:** Sunset PS (Uganda O-level + A-level) with A-level streams cleared, wizard reopened, Continue: no class or stream row changed. First run with no structure: Continue creates the preset section names. Apply shows the preview and writes nothing, then confirm adds exactly those names. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3185 tests, 0 failures, 0 errors, 9 skipped.
 
 **Edge:** A removed stream stays as an inactive section, so the school still has structure and Continue will not recreate it. An explicit confirm can add a missing preset name back, and only the names in the preview. No migration or env change. @Bariyo123 asked to re-review. Not merged.
+
+## Session: 2026-10-25 — Marks workflow audit and flow spec (docs only)
+
+**Work:** Audited marks screens, routes (web, API, WhatsApp), controllers, services, jobs, notifications, and calculations on `a6cf68e7`. Wrote `docs/product/marks-audit.md` (34 working, 21 partial, 8 broken, 4 duplicate). Replaced `docs/product/marks-flow.md` with a short flow spec. The spec is awaiting the product owner's approval. No application code, and nothing in the spec is built.
+
+**Open pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
+
+**Early-access neutral reply:** that pull request is [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) ("Early access: same reply for every email"). This file has no entry that cites it as #1176, so there was no wrong citation to rewrite. #1230 is open and is not this session's work.
+
+**Checks:** relative links in the two docs resolve. `scripts/check-conflict-markers.sh` passed. `scripts/check-root-clutter.sh` against `origin/main` passed. test-guard was not run; no tests changed.
+
+**Status:** #1232 OPEN. Not merged. Production untouched. The product owner approved the flow on 2026-10-25; the spec update is the next session on this branch.
+
+## Session: 2026-10-25 — Marks flow approved (docs only, #1232)
+
+**Work:** Rasta approved the marks flow. `docs/product/marks-flow.md` now records the twelve decisions, the adjusted flow and phase plan, and a WhatsApp results-template check. Status is **Approved by product owner 2026-10-25**. The build waits for the UI audit and a separate approval for each phase. No application code. Nothing submitted to Meta.
+
+**Template finding:** No template in `scripts/submit-whatsapp-message-templates.php` is a results-released notice that can leave the 24-hour window. `grade_entered` and `report_card_ready` are UTILITY, and their wording is a recorded grade and a report-card PDF follow-up. The release job still calls `sendText` (`MarksReleaseService.php:636`).
+
+**Pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
+
+**Early-access neutral reply:** still [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230). This file does not cite it as #1176.

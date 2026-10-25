@@ -6,6 +6,7 @@ namespace App\Onboarding\Country;
  * Uganda, as onboarding already behaves: EMIS is required, the curriculum
  * starts on UNEB, and the wizard's three term dates are the calendar.
  */
+// FLAGGED(product-decision): EMIS, UGX, uneb, term dates, and class presets are PHP constants. see docs/onboarding-engine-plan.md
 final class UgandaOnboardingProfile implements CountryOnboardingProfile
 {
     public function key(): string
