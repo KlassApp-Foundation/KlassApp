@@ -81,6 +81,14 @@ final class ToshiLlm
         return $raw !== null ? strtolower($raw) : 'openai-compatible';
     }
 
+    /**
+     * Model name from config, before credential checks.
+     */
+    public static function configuredModel(): string
+    {
+        return self::resolvedModel();
+    }
+
     public static function url(): string
     {
         return (string) config('ai.providers.openai-compatible.url', '');

@@ -48,8 +48,8 @@ class ToshiLlmHealthCommand extends Command
 
         if (! ToshiLlm::keyConfigured()) {
             return $this->failCritical('missing_api_key', 'openai-compatible API key is not configured.', [
-                'provider' => ToshiLlm::provider(),
-                'model' => ToshiLlm::model(),
+                'provider' => ToshiLlm::configuredProvider(),
+                'model' => ToshiLlm::configuredModel(),
                 'url_host' => ToshiLlm::urlHost(),
             ]);
         }

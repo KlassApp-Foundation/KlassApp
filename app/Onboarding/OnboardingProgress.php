@@ -17,6 +17,7 @@ use App\Onboarding\Steps\StepSchemaCatalog;
 use App\Services\ClassStructureService;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -25,6 +26,11 @@ use RuntimeException;
  * The playbook's Summary line is the sentence. Tokens in that line are filled
  * from the school's saved data, so the wizard sidebar, the Toshi bar and the
  * dashboard banner say the same thing after a reload.
+ *
+ * A missing playbook or summary line is logged once and skipped. The three
+ * surfaces still render the step counts. The parsed lines are kept for the
+ * life of this process, so a Livewire refresh does not read the file again
+ * while it is unchanged.
  */
 final class OnboardingProgress
 {
@@ -36,6 +42,17 @@ final class OnboardingProgress
 
     /** @var array<string, string>|null */
     private static ?array $templates = null;
+
+    private static ?string $cachedKey = null;
+
+    private static ?string $playbookPath = null;
+
+    private static bool $playbookMissing = false;
+
+    private static int $playbookReads = 0;
+
+    /** @var array<string, true> */
+    private static array $warnings = [];
 
     /**
      * Tokens each playbook summary line must contain, in order.
@@ -97,7 +114,10 @@ final class OnboardingProgress
 
             if (! empty($step['is_complete'])) {
                 $done++;
-                $summary[] = self::line($key, $school, $userId);
+                $line = self::safeLine($key, $school, $userId);
+                if ($line !== null) {
+                    $summary[] = $line;
+                }
 
                 continue;
             }
@@ -358,17 +378,101 @@ final class OnboardingProgress
     }
 
     /**
+     * Tests point this at a fixture. Null reads docs/onboarding/playbook.md.
+     * Clears the process cache so the next call parses that file once.
+     */
+    public static function setPlaybookPath(?string $path): void
+    {
+        self::$playbookPath = $path;
+        self::$templates = null;
+        self::$cachedKey = null;
+        self::$playbookMissing = false;
+        self::$warnings = [];
+    }
+
+    public static function playbookReads(): int
+    {
+        return self::$playbookReads;
+    }
+
+    private static function safeLine(string $key, School $school, ?int $userId): ?string
+    {
+        $templates = self::templates();
+        if (! isset($templates[$key]) || $templates[$key] === '') {
+            if (! self::$playbookMissing) {
+                self::warn('missing_line', $key);
+            }
+
+            return null;
+        }
+
+        try {
+            return self::line($key, $school, $userId);
+        } catch (RuntimeException) {
+            self::warn('summary_unavailable', $key);
+
+            return null;
+        }
+    }
+
+    /**
+     * Step key only. The filled sentence can contain a school name or phone.
+     */
+    private static function warn(string $reason, ?string $step): void
+    {
+        $id = $reason.'|'.($step ?? '');
+        if (isset(self::$warnings[$id])) {
+            return;
+        }
+        self::$warnings[$id] = true;
+
+        $context = ['reason' => $reason];
+        if ($step !== null && $step !== '') {
+            $context['step'] = $step;
+        }
+
+        Log::warning('Onboarding running summary skipped.', $context);
+    }
+
+    /**
      * @return array<string, string>
      */
     private static function templates(): array
     {
-        if (self::$templates !== null) {
+        $path = self::$playbookPath ?? base_path('docs/onboarding/playbook.md');
+        $key = self::cacheKey($path);
+        if (self::$templates !== null && self::$cachedKey === $key) {
             return self::$templates;
         }
 
-        $markdown = file_get_contents(base_path('docs/onboarding/playbook.md'));
+        self::$playbookReads++;
+        $parsed = self::parsePlaybook($path);
+        self::$templates = $parsed['templates'];
+        self::$playbookMissing = $parsed['missing'];
+        self::$cachedKey = $key;
+
+        return self::$templates;
+    }
+
+    private static function cacheKey(string $path): string
+    {
+        if (! is_file($path)) {
+            return 'missing:'.$path;
+        }
+
+        return $path.'|'.filemtime($path).'|'.filesize($path);
+    }
+
+    /**
+     * @return array{templates: array<string, string>, missing: bool}
+     */
+    private static function parsePlaybook(string $path): array
+    {
+        $markdown = is_file($path) ? file_get_contents($path) : false;
         if ($markdown === false) {
-            throw new RuntimeException('The onboarding playbook is missing.');
+            self::warn('missing_file', null);
+
+            return ['templates' => [], 'missing' => true];
         }
 
         preg_match_all('/^## step: (\S+)\s*$/m', $markdown, $matches, PREG_OFFSET_CAPTURE);
@@ -376,7 +480,7 @@ final class OnboardingProgress
         $count = count($matches[0]);
 
         for ($i = 0; $i < $count; $i++) {
-            $key = $matches[1][$i][0];
+            $step = $matches[1][$i][0];
             $start = $matches[0][$i][1] + strlen($matches[0][$i][0]);
             $end = $i + 1 < $count ? $matches[0][$i + 1][1] : strlen($markdown);
             $body = substr($markdown, $start, $end - $start);
@@ -384,13 +488,13 @@ final class OnboardingProgress
                 $body = substr($body, 0, $heading[0][1]);
             }
             if (preg_match('/^Summary:\s*(.+)$/m', $body, $summary) !== 1) {
-                throw new RuntimeException('Playbook step '.$key.' has no summary line.');
+                self::warn('missing_line', $step);
+
+                continue;
             }
-            $templates[$key] = trim($summary[1]);
+            $templates[$step] = trim($summary[1]);
         }
 
-        self::$templates = $templates;
-
-        return $templates;
+        return ['templates' => $templates, 'missing' => false];
     }
 }

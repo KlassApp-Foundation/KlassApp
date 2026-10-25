@@ -12,7 +12,9 @@ use App\Onboarding\OnboardingProgress;
 use App\Onboarding\Steps\StepSchemaCatalog;
 use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -24,8 +26,14 @@ class OnboardingProgressTest extends TestCase
 
     private User $admin;
 
+    private ?string $playbookFixture = null;
+
+    /** @var list<array<string, mixed>> */
+    private array $summaryWarnings = [];
+
     protected function setUp(): void
     {
+        OnboardingProgress::setPlaybookPath(null);
         parent::setUp();
 
         DB::table('usergroups')->insert([
@@ -166,6 +174,51 @@ class OnboardingProgressTest extends TestCase
         $this->assertStringContainsString('data-testid="toshi-setup-list-modal"', $html);
     }
 
+    public function test_dashboard_banner_survives_a_missing_playbook(): void
+    {
+        $this->assertSurfaceSurvives('dashboard', 'missing_file');
+    }
+
+    public function test_dashboard_banner_survives_a_missing_summary_line(): void
+    {
+        $this->assertSurfaceSurvives('dashboard', 'missing_line');
+    }
+
+    public function test_wizard_sidebar_survives_a_missing_playbook(): void
+    {
+        $this->assertSurfaceSurvives('wizard', 'missing_file');
+    }
+
+    public function test_wizard_sidebar_survives_a_missing_summary_line(): void
+    {
+        $this->assertSurfaceSurvives('wizard', 'missing_line');
+    }
+
+    public function test_toshi_dock_survives_a_missing_playbook(): void
+    {
+        $this->assertSurfaceSurvives('toshi', 'missing_file');
+    }
+
+    public function test_toshi_dock_survives_a_missing_summary_line(): void
+    {
+        $this->assertSurfaceSurvives('toshi', 'missing_line');
+    }
+
+    public function test_parsed_playbook_is_not_read_again_in_the_same_process(): void
+    {
+        $this->school->forceFill(['name' => 'Kisubi Primary School'])->save();
+        OnboardingProgress::setPlaybookPath(null);
+        $before = OnboardingProgress::playbookReads();
+
+        $first = OnboardingProgress::for($this->school->fresh(), $this->admin->id);
+        $second = OnboardingProgress::for($this->school->fresh(), $this->admin->id);
+        OnboardingProgress::template('school_name');
+
+        $this->assertSame($before + 1, OnboardingProgress::playbookReads());
+        $this->assertSame($first['summary'], $second['summary']);
+        $this->assertContains('School name: Kisubi Primary School', $second['summary']);
+    }
+
     public function test_running_summary_is_not_added_outside_the_three_surfaces(): void
     {
         $wizard = file_get_contents(resource_path('views/livewire/manual-onboarding-wizard.blade.php'));
@@ -182,6 +235,105 @@ class OnboardingProgressTest extends TestCase
         $this->assertStringContainsString('OnboardingProgress', $dashboard);
         $this->assertStringNotContainsString('OnboardingProgress', (string) $chip);
         $this->assertStringNotContainsString('OnboardingProgress', (string) $pill);
+    }
+
+    protected function tearDown(): void
+    {
+        OnboardingProgress::setPlaybookPath(null);
+        if ($this->playbookFixture !== null && is_file($this->playbookFixture)) {
+            unlink($this->playbookFixture);
+        }
+        $this->playbookFixture = null;
+
+        parent::tearDown();
+    }
+
+    private function assertSurfaceSurvives(string $surface, string $kind): void
+    {
+        $this->school->forceFill(['name' => 'Kisubi Primary School'])->save();
+        if ($surface === 'toshi') {
+            $this->school->forceFill([
+                'toshi_mode' => 'onboarding',
+                'toshi_enabled' => 0,
+            ])->save();
+        }
+
+        $this->usePlaybook($kind);
+        $this->listenForSummaryWarnings();
+
+        $running = OnboardingProgress::for($this->school->fresh(), $this->admin->id);
+        $this->assertSame([], $running['summary']);
+        $this->assertGreaterThan(0, $running['done']);
+        $count = 'Setup '.$running['done'].' of '.$running['total'];
+
+        if ($surface === 'dashboard') {
+            $this->actingAs($this->admin)
+                ->get('/admin/dashboard')
+                ->assertOk()
+                ->assertSee($count.' done', false)
+                ->assertDontSee('data-testid="dashboard-v2-setup-summary"', false)
+                ->assertDontSee('School name: Kisubi Primary School', false);
+        } elseif ($surface === 'wizard') {
+            $this->actingAs($this->admin);
+            Livewire::test(ManualOnboardingWizard::class)
+                ->assertSeeHtml('data-testid="wizard-running-summary"')
+                ->assertSee($count)
+                ->assertSee('Nothing saved yet.')
+                ->assertDontSee('School name: Kisubi Primary School');
+        } else {
+            $html = Livewire::actingAs($this->admin)
+                ->test(AgentToshi::class)
+                ->set('mode', 'complete')
+                ->set('schoolId', $this->school->id)
+                ->html();
+
+            $this->assertStringContainsString('data-testid="toshi-running-summary"', $html);
+            $this->assertStringContainsString($count, $html);
+            $this->assertStringContainsString('Nothing saved yet.', $html);
+            $this->assertStringNotContainsString('School name: Kisubi Primary School', $html);
+        }
+
+        $this->assertSame(
+            [['reason' => $kind] + ($kind === 'missing_line' ? ['step' => 'school_name'] : [])],
+            $this->summaryWarnings,
+        );
+        $encoded = (string) json_encode($this->summaryWarnings);
+        $this->assertStringNotContainsString('Kisubi', $encoded);
+        $this->assertStringNotContainsString("Ada", $encoded);
+        $this->assertStringNotContainsString('@', $encoded);
+        $this->assertStringNotContainsString((string) $this->school->phone, $encoded);
+    }
+
+    private function usePlaybook(string $kind): void
+    {
+        if ($kind === 'missing_file') {
+            OnboardingProgress::setPlaybookPath(sys_get_temp_dir().'/klassapp-playbook-missing-'.uniqid('', true).'.md');
+
+            return;
+        }
+
+        $this->playbookFixture = tempnam(sys_get_temp_dir(), 'klassapp-playbook-');
+        $this->assertIsString($this->playbookFixture);
+        file_put_contents($this->playbookFixture, <<<'MD'
+## step: school_name
+
+Saved on the school. This step has no Summary line.
+
+## step: student_size
+
+Summary: School size: {size}
+MD);
+        OnboardingProgress::setPlaybookPath($this->playbookFixture);
+    }
+
+    private function listenForSummaryWarnings(): void
+    {
+        $this->summaryWarnings = [];
+        Log::listen(function (MessageLogged $event): void {
+            if ($event->level === 'warning' && $event->message === 'Onboarding running summary skipped.') {
+                $this->summaryWarnings[] = $event->context;
+            }
+        });
     }
 
     /**

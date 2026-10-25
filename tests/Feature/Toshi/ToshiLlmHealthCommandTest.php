@@ -206,4 +206,36 @@ class ToshiLlmHealthCommandTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    public function test_missing_api_key_prints_critical_and_exits_without_throwing(): void
+    {
+        Log::spy();
+        Http::fake();
+
+        config([
+            'toshi.llm_provider' => 'openai-compatible',
+            'toshi.model' => 'deepseek-v4-flash',
+            'ai.providers.openai-compatible.key' => '',
+        ]);
+
+        $exit = Artisan::call('toshi:llm-health');
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exit);
+        $this->assertStringContainsString('CRITICAL: openai-compatible API key is not configured.', $output);
+        $this->assertStringContainsString('Reason: missing_api_key', $output);
+        $this->assertStringContainsString('provider: openai-compatible', $output);
+        $this->assertStringNotContainsString('MissingToshiLlmApiKeyException', $output);
+        $this->assertStringNotContainsString('sk-', $output);
+
+        Http::assertNothingSent();
+
+        Log::shouldHaveReceived('critical')
+            ->once()
+            ->withArgs(function (string $message, array $context) {
+                return str_contains($message, 'Toshi LLM health check FAILED')
+                    && ($context['reason'] ?? null) === 'missing_api_key'
+                    && ($context['provider'] ?? null) === 'openai-compatible';
+            });
+    }
 }
