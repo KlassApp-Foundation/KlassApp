@@ -19,6 +19,7 @@ class SchoolInvite extends Model
         'email_failed_at',
         'created_by',
         'is_test',
+        'early_access_request_id',
     ];
 
     protected $casts = [
@@ -33,6 +34,11 @@ class SchoolInvite extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function earlyAccessRequest()
+    {
+        return $this->belongsTo(EarlyAccessRequest::class);
     }
 
     public function isExpired(): bool

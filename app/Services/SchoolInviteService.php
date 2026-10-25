@@ -6,6 +6,7 @@ use App\Mail\SchoolInviteMail;
 use App\Models\EarlyAccessRequest;
 use App\Models\SchoolInvite;
 use App\Models\User;
+use App\Services\EarlyAccessOpsWebhook;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -42,7 +43,12 @@ class SchoolInviteService
             'expires_at' => now()->addHours((int) config('invites.school_expiry_hours', 168)),
             'created_by' => $issuedBy->id,
             'is_test' => $isTest,
+            'early_access_request_id' => $request->id,
         ]);
+
+        // Issuing the invite is the approval. The invite email says the
+        // request has been approved, including when that email cannot be queued.
+        app(EarlyAccessOpsWebhook::class)->queue($request, 'approved');
 
         Log::info('School invite issued', [
             'invite_id' => $invite->id,
@@ -177,6 +183,12 @@ class SchoolInviteService
                 // Teacher, co-admin, and class-teacher invites never reach here.
                 app(EarlyAdopterOffer::class)->apply($user->school, $user, $claimedAt);
 
+                $linked = self::earlyAccessRequestFor($locked, 'claimed');
+                if ($linked !== null) {
+                    // afterCommit: a rollback of this claim does not notify ops.
+                    app(EarlyAccessOpsWebhook::class)->queue($linked, 'claimed');
+                }
+
                 return ['success' => true, 'message' => 'Your school is ready.', 'user' => $user];
             });
         } catch (Throwable $e) {
@@ -236,6 +248,50 @@ class SchoolInviteService
             $invite->forceFill(['email_failed_at' => null])->save();
         }
 
+        $linked = self::earlyAccessRequestFor($invite, 'invited');
+        if ($linked !== null) {
+            app(EarlyAccessOpsWebhook::class)->queue($linked, 'invited');
+        }
+
         return true;
+    }
+
+    /**
+     * The request this invite was issued from. One email match is used only
+     * when the invite has no request id (invites issued before that column).
+     * Two matches are left alone.
+     */
+    private static function earlyAccessRequestFor(SchoolInvite $invite, string $event): ?EarlyAccessRequest
+    {
+        if ($invite->early_access_request_id) {
+            $found = EarlyAccessRequest::query()->find($invite->early_access_request_id);
+            if ($found !== null) {
+                return $found;
+            }
+        }
+
+        $email = mb_strtolower(trim((string) $invite->email));
+        if ($email === '') {
+            return null;
+        }
+
+        $ids = EarlyAccessRequest::query()
+            ->whereRaw('lower(email) = ?', [$email])
+            ->orderBy('id')
+            ->limit(2)
+            ->pluck('id');
+
+        if ($ids->count() === 1) {
+            return EarlyAccessRequest::query()->find($ids->first());
+        }
+
+        if ($ids->count() > 1 && trim((string) config('services.ops_webhook.url')) !== '') {
+            Log::warning('Early access ops webhook skipped: invite does not match one request', [
+                'invite_id' => $invite->id,
+                'event' => $event,
+            ]);
+        }
+
+        return null;
     }
 }
