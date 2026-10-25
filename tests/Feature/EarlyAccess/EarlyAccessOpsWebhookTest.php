@@ -316,29 +316,112 @@ class EarlyAccessOpsWebhookTest extends TestCase
             ->assertRedirect();
         $this->workOps();
 
-        User::create([
-            'name' => 'Already There',
-            'email' => self::EMAIL,
-            'password' => bcrypt('not-a-public-password'),
-            'usergroup_id' => 3,
-            'status' => 'active',
-        ]);
+        // The webhook is queued, then the offer runs. Without Growth the offer
+        // throws after that dispatch, and the claim transaction rolls back.
+        Plan::query()->whereRaw('LOWER(name) = ?', ['growth'])->delete();
 
         $mail = Mail::queued(SchoolInviteMail::class)->first();
         $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
         $this->freshHttp();
         auth()->logout();
 
-        $this->post(route('school-invite.claim', $token), [
-            'name' => 'Grace Nakato',
-            'phone' => '0709999999',
-            'password' => 'StrongPass123!',
-            'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect();
+        $sql = $this->captureSql(function () use ($token) {
+            $this->post(route('school-invite.claim', $token), [
+                'name' => 'Grace Nakato',
+                'phone' => self::PHONE,
+                'password' => 'StrongPass123!',
+                'password_confirmation' => 'StrongPass123!',
+            ])->assertRedirect()
+                ->assertSessionHasErrors('invite');
+        });
+        $this->assertTrue(
+            collect($sql)->contains(fn (string $statement) => str_contains(strtolower($statement), 'early_access_requests')),
+            'The claim should look the request up before the later failure rolls the transaction back.'
+        );
 
         $this->assertNull(SchoolInvite::sole()->claimed_at);
+        $this->assertNull(User::where('email', self::EMAIL)->first());
         $this->assertSame(0, $this->opsJobCount());
         Http::assertNothingSent();
+    }
+
+    public function test_a_lookup_failure_during_claim_still_commits(): void
+    {
+        Mail::fake();
+        $this->fakeOk();
+        $row = $this->storeRequest();
+        $this->workOps();
+        $this->actingAs($this->platformAdmin())
+            ->post(route('platform.early-access.invite', $row))
+            ->assertRedirect();
+        $this->workOps();
+
+        $mail = Mail::queued(SchoolInviteMail::class)->first();
+        $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
+        $this->freshHttp();
+        auth()->logout();
+        $this->listenToLogs();
+
+        EarlyAccessRequest::addGlobalScope('broken-lookup', function () {
+            throw new \RuntimeException('lookup failed '.self::EMAIL.' '.self::SECRET);
+        });
+
+        try {
+            $this->post(route('school-invite.claim', $token), [
+                'name' => 'Grace Nakato',
+                'phone' => self::PHONE,
+                'password' => 'StrongPass123!',
+                'password_confirmation' => 'StrongPass123!',
+            ])->assertRedirect(route('onboarding.choice'));
+        } finally {
+            $this->removeBrokenLookupScope();
+        }
+
+        $this->assertNotNull(SchoolInvite::sole()->claimed_at);
+        $this->assertNotNull(User::where('email', self::EMAIL)->first());
+        $this->assertSame(0, $this->opsJobCount());
+        Http::assertNothingSent();
+
+        $webhookLines = array_values(array_filter(
+            $this->logLines,
+            fn (string $line) => str_contains($line, 'ops webhook')
+        ));
+        $text = implode("\n", $webhookLines);
+        $this->assertStringContainsString('Early access ops webhook skipped', $text);
+        $this->assertStringContainsString('RuntimeException', $text);
+        $this->assertStringContainsString('event=claimed', $text);
+        foreach ($this->personalMarkers() as $marker) {
+            $this->assertStringNotContainsString($marker, $text);
+        }
+    }
+
+    public function test_a_disabled_webhook_does_not_look_up_the_request(): void
+    {
+        config([
+            'services.ops_webhook.url' => null,
+            'services.ops_webhook.secret' => self::SECRET,
+        ]);
+        Mail::fake();
+
+        $row = $this->makeRequest(self::EMAIL);
+        $issued = SchoolInviteService::issue($row, $this->platformAdmin());
+
+        $duringEmail = $this->captureSql(function () use ($issued) {
+            $this->assertTrue(SchoolInviteService::sendEmail($issued['invite'], $issued['token']));
+        });
+        $this->assertNotContainsEarlyAccessLookup($duringEmail);
+
+        $duringClaim = $this->captureSql(function () use ($issued) {
+            $claim = SchoolInviteService::claim($issued['invite']->fresh(), [
+                'name' => 'Grace Nakato',
+                'phone' => '+256701234567',
+                'password' => 'StrongPass123!',
+            ]);
+            $this->assertTrue($claim['success']);
+        });
+        $this->assertNotContainsEarlyAccessLookup($duringClaim);
+        $this->assertNotNull($issued['invite']->fresh()->claimed_at);
+        $this->assertSame(0, $this->opsJobCount());
     }
 
     public function test_an_old_invite_with_two_requests_for_the_email_does_not_guess(): void
@@ -386,6 +469,38 @@ class EarlyAccessOpsWebhookTest extends TestCase
         $migration->up();
 
         $this->assertTrue(Schema::hasColumn('school_invites', 'early_access_request_id'));
+    }
+
+    private function removeBrokenLookupScope(): void
+    {
+        (function () {
+            unset(static::$globalScopes[EarlyAccessRequest::class]['broken-lookup']);
+        })->call(new EarlyAccessRequest);
+    }
+
+    /**
+     * @param  callable(): void  $callback
+     * @return list<string>
+     */
+    private function captureSql(callable $callback): array
+    {
+        $sql = [];
+        DB::listen(function ($query) use (&$sql) {
+            $sql[] = $query->sql;
+        });
+        $callback();
+
+        return $sql;
+    }
+
+    /**
+     * @param  list<string>  $sql
+     */
+    private function assertNotContainsEarlyAccessLookup(array $sql): void
+    {
+        foreach ($sql as $statement) {
+            $this->assertStringNotContainsString('early_access_requests', strtolower($statement));
+        }
     }
 
     private function configureWebhook(): void

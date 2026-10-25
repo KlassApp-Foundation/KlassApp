@@ -23,12 +23,11 @@ use Throwable;
  *   X-KlassApp-Signature: sha256=<hex>
  *   X-KlassApp-Timestamp: unix seconds for the same instant as "timestamp"
  *
- * n8n verification: take the webhook's raw body bytes (do not parse and
- * re-encode the JSON). HMAC-SHA256 those bytes with the secret and compare
- * "sha256=" plus the hex digest to X-KlassApp-Signature with a timing-safe
- * compare. The header timestamp must equal the body's timestamp converted
- * to unix seconds. Retries send that same body, so allow for queue delay.
- * Reject a timestamp that is in the future.
+ * n8n: respond immediately. Verify HMAC-SHA256 of the raw body (do not
+ * re-encode the JSON) against X-KlassApp-Signature. Require
+ * X-KlassApp-Timestamp to match the body's timestamp, and accept events
+ * up to about 10 minutes old. Drop duplicates on id + event + timestamp.
+ * Put no token in the URL. Retries send the same body.
  */
 class EarlyAccessOpsWebhook
 {
