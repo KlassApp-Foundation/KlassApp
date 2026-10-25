@@ -606,5 +606,5 @@ Route::get('/school/staff/{token}', [\App\Http\Controllers\TeacherSetup\StaffLin
     ->middleware('throttle:30,1')
     ->name('school.staff.form');
 Route::post('/school/staff/{token}', [\App\Http\Controllers\TeacherSetup\StaffLinkController::class, 'submit'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:staff-link-submit')
     ->name('school.staff.submit');

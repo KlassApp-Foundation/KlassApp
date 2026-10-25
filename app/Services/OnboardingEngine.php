@@ -1986,6 +1986,26 @@ class OnboardingEngine
     }
 
     /**
+     * A locked class upload names another class when the row's class or stream
+     * is not this class. A blank class stays on the locked class.
+     */
+    private function rowNamesAnotherClass(StandardLink $pinned, string $className, string $stream): bool
+    {
+        $className = self::collapseWhitespace($className);
+        $stream = self::collapseWhitespace($stream);
+        if ($className === '' && $stream === '') {
+            return false;
+        }
+
+        $label = self::collapseWhitespace($stream === '' ? $className : self::composeClassAndStream($className, $stream));
+        $pinnedName = self::collapseWhitespace((string) ($pinned->section?->name ?? ''));
+        $namedKeys = array_map('strtolower', self::classNameCandidates($label));
+        $pinnedKeys = array_map('strtolower', self::classNameCandidates($pinnedName));
+
+        return $namedKeys === [] || array_intersect($namedKeys, $pinnedKeys) === [];
+    }
+
+    /**
      * Create student users with random passwords, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
@@ -2016,12 +2036,27 @@ class OnboardingEngine
      *
      * @throws ValidationException
      */
-    public function saveStudents(School $school, AcademicYear $year, array $students): array
+    public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $students) {
+            return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
+
+                $pinned = null;
+                if ($onlyStandardLinkId !== null) {
+                    $pinned = StandardLink::query()
+                        ->with(['standard', 'section'])
+                        ->where('school_id', $school->id)
+                        ->where('academic_year_id', $year->id)
+                        ->whereKey($onlyStandardLinkId)
+                        ->first();
+                    if ($pinned === null) {
+                        throw ValidationException::withMessages([
+                            'students' => 'That class is not part of this school year.',
+                        ]);
+                    }
+                }
 
                 // Pass 1: refuse unmatched classes / colliding emails / LINs before creating anyone.
                 $unmatchedClasses = [];
@@ -2031,7 +2066,10 @@ class OnboardingEngine
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    if ($name !== '' && $className !== '') {
+                    if ($pinned !== null && $name !== '' && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        continue;
+                    }
+                    if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
                             $unmatchedClasses[] = "{$name} → {$label}";
@@ -2083,6 +2121,17 @@ class OnboardingEngine
 
                     if ($name === '') {
                         $skipped[] = ['name' => '', 'reason' => 'Name is required'];
+                        continue;
+                    }
+
+                    $className = trim((string) ($draft['class'] ?? ''));
+                    $stream = trim((string) ($draft['stream'] ?? ''));
+                    if ($pinned !== null && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        $skipped[] = [
+                            'name' => $name,
+                            'reason' => 'another class',
+                            'row' => (int) ($draft['row'] ?? 0),
+                        ];
                         continue;
                     }
 
@@ -2146,11 +2195,9 @@ class OnboardingEngine
                     // Generate KlassApp student ID
                     $klassappId = StudentIdGeneratorService::nextForStudent($student);
 
-                    $className = trim((string) ($draft['class'] ?? ''));
-                    $stream = trim((string) ($draft['stream'] ?? ''));
-                    $link = null;
+                    $link = $pinned;
 
-                    if ($className !== '') {
+                    if ($pinned === null && $className !== '') {
                         $link = $this->ensureStandardLinkForClass(
                             $school,
                             $year,

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\TeacherSetup\TeacherSetupLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -120,11 +121,14 @@ class TeacherSetupTest extends TestCase
 
     public function test_the_staff_link_matches_a_teacher_by_email_and_queues_a_stranger(): void
     {
+        Mail::fake();
         $service = app(TeacherSetupLinkService::class);
         $staff = $service->issueStaffLink($this->school, $this->admin);
 
         $this->post('/school/staff/'.$staff, ['email' => 'class-teacher@schools.test'])
-            ->assertRedirect();
+            ->assertOk()
+            ->assertSee('Check your email to finish setting up')
+            ->assertDontSee('/teacher/setup/');
 
         $this->post('/school/staff/'.$staff, ['name' => 'Stranger', 'email' => 'stranger@example.com'])
             ->assertOk()

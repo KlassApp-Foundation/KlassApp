@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
@@ -11,7 +12,7 @@ use Illuminate\Support\Carbon;
  * Invite email for new teachers — contains a one-time setup link,
  * NEVER a password.
  */
-class TeacherInviteLinkMail extends Mailable
+class TeacherInviteLinkMail extends Mailable implements ShouldBeEncrypted
 {
     use Queueable, SerializesModels;
 
