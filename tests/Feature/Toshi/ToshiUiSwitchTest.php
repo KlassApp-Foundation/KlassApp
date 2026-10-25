@@ -47,6 +47,7 @@ class ToshiUiSwitchTest extends TestCase
             'toshi_enabled' => 0,
             'toshi_mode' => ToshiMode::Onboarding,
         ]);
+        $this->school->forceFill(['is_test' => 1])->save();
 
         $this->admin = User::create([
             'school_id' => $this->school->id,

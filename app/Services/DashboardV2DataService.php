@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\SiteHelper;
+use App\Onboarding\OnboardingProgress;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam as ExamModel;
 use App\Models\Academics\ExamType;
@@ -26,7 +27,8 @@ use Illuminate\Support\Facades\DB;
  * Data for the PR1 admin first screen (school-with-data dashboard, v2 flag).
  *
  * Contract:
- *  - ONE step source: OnboardingStepsService (progress + neutral labels).
+ *  - ONE step count: OnboardingStepsService (progress + neutral labels).
+ *  - Running summary lines: OnboardingProgress, filled from the playbook.
  *  - Money strings use the school's currency (school_details meta `currency`,
  *    default UGX) and the compact KlassApp style ("UGX 30.5M").
  *  - Everything is school-scoped and counts active accounts only.
@@ -172,6 +174,7 @@ class DashboardV2DataService
             'labels' => $labels,
             'incomplete' => $progress['incomplete'],
             'routes' => $routes,
+            'summary' => OnboardingProgress::for($school, (int) $user->id)['summary'],
             'dismissed' => UserPreference::get(
                 $user,
                 UserPreference::setupBannerDismissedKey((int) $school->id),

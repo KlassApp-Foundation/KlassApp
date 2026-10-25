@@ -53,6 +53,8 @@ class WhatsAppVerificationGuardTest extends TestCase
             'toshi_enabled' => 0,
             'toshi_mode' => 'onboarding',
         ]);
+        // This test stays on the Toshi path so the phone form and commit still run.
+        $this->school->forceFill(['is_test' => 1])->save();
 
         $this->admin = User::create([
             'school_id' => $this->school->id,
@@ -76,10 +78,10 @@ class WhatsAppVerificationGuardTest extends TestCase
             'verified_at' => now()->toDateTimeString(),
         ]);
 
-        $posted = WhatsAppUser::where('user_id', $this->admin->id)->where('phone', self::PHONE)->first();
-        $this->assertNotNull($posted);
-        $this->assertNull($posted->verified_at);
-        WhatsAppUser::where('user_id', $this->admin->id)->delete();
+        $this->assertNull(
+            WhatsAppUser::where('user_id', $this->admin->id)->where('phone', self::PHONE)->first(),
+            'A posted phone with forged flags must not link anything — linking only happens by sending the code from WhatsApp.'
+        );
 
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')

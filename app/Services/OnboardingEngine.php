@@ -12,6 +12,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
@@ -19,10 +20,12 @@ use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
+use App\Onboarding\Country\CountryProfiles;
 use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
 use App\Support\PhoneCountry;
+use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -157,7 +160,7 @@ class OnboardingEngine
     {
         $ministryCode = trim($ministryCode);
 
-        if (! OnboardingStepsService::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return;
         }
 
@@ -292,6 +295,10 @@ class OnboardingEngine
      * standing discipline is not to over-build ahead of real need,
      * and these three are the only UNEB exam classes in Uganda.
      *
+     * A stream is a separate section named "{base} {stream}" (S4 East,
+     * P7 Blue, Senior Four A). The candidate year is the base class,
+     * so the stream label is ignored.
+     *
      * NOTE: The previous validation gated board_registration_number
      * to Indian-system standards '10'/'11'/'12' — this was a
      * production bug that made the field effectively always-required
@@ -303,6 +310,21 @@ class OnboardingEngine
     {
         $lower = strtolower(trim($className));
 
+        if (self::isExactCandidateClassLabel($lower)) {
+            return true;
+        }
+
+        // One stream token after the base class: "S4 East" → "S4".
+        $space = strrpos($lower, ' ');
+        if ($space === false) {
+            return false;
+        }
+
+        return self::isExactCandidateClassLabel(trim(substr($lower, 0, $space)));
+    }
+
+    private static function isExactCandidateClassLabel(string $lower): bool
+    {
         // PLE: Primary Seven — P.7, P7, P 7, Primary Seven
         if (in_array($lower, ['p.7', 'p7', 'p 7', 'primary seven'], true)) {
             return true;
@@ -329,7 +351,7 @@ class OnboardingEngine
      * to 'nursery', Senior names to 'o-level' or 'a-level', and
      * everything else defaults to 'primary'.
      */
-    private function standardNameForClass(string $className): string
+    public function standardNameForClass(string $className): string
     {
         $lower = strtolower(trim($className));
 
@@ -672,12 +694,7 @@ class OnboardingEngine
         }
 
         try {
-            $result = app(ClassStructureService::class)->addStream(
-                $school,
-                $year,
-                $baseLink->section,
-                $stream
-            );
+            $result = $this->addClassStream($school, $year, $baseLink->section, $stream);
         } catch (ValidationException $e) {
             return null;
         }
@@ -687,6 +704,403 @@ class OnboardingEngine
         }
 
         return $this->resolveStandardLinkForClass($school, $year, $className, $stream);
+    }
+
+    /**
+     * Add one stream the same way the Classes step does: same validation,
+     * same "{Class} {Label}" section, same subject copy.
+     *
+     * @return array{section: Section, standard_link: StandardLink, created: bool}
+     *
+     * @throws ValidationException
+     */
+    public function addClassStream(
+        School $school,
+        AcademicYear $year,
+        Section $baseSection,
+        string $streamLabel
+    ): array {
+        return app(ClassStructureService::class)->addStream($school, $year, $baseSection, $streamLabel);
+    }
+
+    /**
+     * Plain-words reason for a stream the Classes step has not created yet.
+     */
+    public static function missingStreamMessage(string $className, string $stream): string
+    {
+        $className = trim($className);
+        $stream = trim($stream);
+
+        return $className.", stream {$stream} doesn't exist yet. Create it in Classes, or use Create missing streams and retry.";
+    }
+
+    /**
+     * Collapse spacing so "Primary  One" and "Primary One" are the same token.
+     */
+    public static function collapseWhitespace(string $value): string
+    {
+        $value = trim($value);
+        $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+
+        return trim($value);
+    }
+
+    /**
+     * Stream cell "A", "P1 A", or "Primary One A" all mean the label "A"
+     * when the class is Primary One (any alias, any case or spacing).
+     */
+    public function normalizeStreamLabel(string $className, string $stream): string
+    {
+        $stream = self::collapseWhitespace($stream);
+        if ($stream === '') {
+            return '';
+        }
+
+        $best = null;
+        foreach (self::classNameCandidates($className) as $alias) {
+            $alias = self::collapseWhitespace($alias);
+            if ($alias === '') {
+                continue;
+            }
+            if (strcasecmp($stream, $alias) === 0) {
+                return '';
+            }
+            $prefix = strtolower($alias).' ';
+            if (! str_starts_with(strtolower($stream), $prefix)) {
+                continue;
+            }
+            $label = trim(mb_substr($stream, mb_strlen($alias)));
+            if ($label === '') {
+                continue;
+            }
+            if ($best === null || mb_strlen($alias) > mb_strlen($best['alias'])) {
+                $best = ['alias' => $alias, 'label' => $label];
+            }
+        }
+
+        return $best['label'] ?? $stream;
+    }
+
+    /**
+     * When a class cell is "Primary One A" (or "P1 A") and that stream section
+     * is not its own base class, split it into the real base plus the label.
+     * A token that is not a stream of an existing base class is returned unchanged.
+     *
+     * @return array{class: string, stream: string}
+     */
+    public function splitStreamedClassToken(School $school, AcademicYear $year, string $token): array
+    {
+        $token = self::collapseWhitespace($token);
+        if ($token === '') {
+            return ['class' => '', 'stream' => ''];
+        }
+
+        $best = null;
+        foreach ($this->baseSectionsForYear($school, $year) as $base) {
+            $baseName = trim((string) $base->name);
+            foreach (self::classNameCandidates($baseName) as $alias) {
+                $alias = self::collapseWhitespace($alias);
+                if ($alias === '') {
+                    continue;
+                }
+                $prefix = strtolower($alias).' ';
+                if (! str_starts_with(strtolower($token), $prefix)) {
+                    continue;
+                }
+                $label = trim(mb_substr($token, mb_strlen($alias)));
+                if ($label === '') {
+                    continue;
+                }
+                if ($best === null || mb_strlen($alias) > mb_strlen($best['alias'])) {
+                    $best = ['class' => $baseName, 'stream' => $label, 'alias' => $alias];
+                }
+            }
+        }
+
+        if ($best !== null) {
+            return ['class' => $best['class'], 'stream' => $best['stream']];
+        }
+
+        return ['class' => $token, 'stream' => ''];
+    }
+
+    /**
+     * Decide whether a class + stream already exists, is a stream that can be
+     * created on an existing base class, or names a class this school does not have.
+     *
+     * Matching is case- and spacing-insensitive. "A", "P1 A", and "Primary One A"
+     * are the same stream of Primary One. A missing stream is not an unknown class.
+     *
+     * @return array{status: string, link: ?StandardLink, class: string, stream: string, reason: string}
+     */
+    public function classifyClassAndStream(
+        School $school,
+        AcademicYear $year,
+        string $className,
+        string $stream
+    ): array {
+        $className = self::collapseWhitespace($className);
+        $stream = self::collapseWhitespace($stream);
+        if ($className === '') {
+            return [
+                'status' => 'unknown_class',
+                'link' => null,
+                'class' => '',
+                'stream' => $stream,
+                'reason' => 'unknown class',
+            ];
+        }
+
+        $label = $stream === '' ? '' : $this->normalizeStreamLabel($className, $stream);
+        $base = $this->baseSectionFromName($school, $year, $className);
+        $classLabel = $base ? trim((string) $base->name) : $className;
+
+        if ($label === '') {
+            if (! $base) {
+                return [
+                    'status' => 'unknown_class',
+                    'link' => null,
+                    'class' => $className,
+                    'stream' => '',
+                    'reason' => 'unknown class',
+                ];
+            }
+
+            $link = StandardLink::with(['standard', 'section'])
+                ->where('school_id', $school->id)
+                ->where('academic_year_id', $year->id)
+                ->where('section_id', $base->id)
+                ->first();
+
+            if (! $link) {
+                return [
+                    'status' => 'unknown_class',
+                    'link' => null,
+                    'class' => $classLabel,
+                    'stream' => '',
+                    'reason' => 'unknown class',
+                ];
+            }
+
+            return [
+                'status' => 'resolved',
+                'link' => $link,
+                'class' => $classLabel,
+                'stream' => '',
+                'reason' => '',
+            ];
+        }
+
+        $link = $this->resolveStandardLinkForClass($school, $year, $classLabel, $label);
+        if ($link && $this->streamLinkBelongsToBase($link, $base)) {
+            return [
+                'status' => 'resolved',
+                'link' => $link,
+                'class' => $classLabel,
+                'stream' => $label,
+                'reason' => '',
+            ];
+        }
+
+        if ($base) {
+            return [
+                'status' => 'missing_stream',
+                'link' => null,
+                'class' => $classLabel,
+                'stream' => $label,
+                'reason' => self::missingStreamMessage($classLabel, $label),
+            ];
+        }
+
+        return [
+            'status' => 'unknown_class',
+            'link' => null,
+            'class' => $className,
+            'stream' => $label,
+            'reason' => 'unknown class',
+        ];
+    }
+
+    /**
+     * Unique missing class+stream pairs in upload rows, plus one skip per row.
+     *
+     * A blank stream is not missing. A class that is not a base class is not
+     * listed here — callers must not invent that class.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{pairs: list<array{class: string, stream: string}>, skips: list<array{row: int, reason: string, class: string, stream: string}>}
+     */
+    public function collectMissingStreams(School $school, AcademicYear $year, array $rows): array
+    {
+        $pairs = [];
+        $skips = [];
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $className = self::collapseWhitespace((string) ($row['class'] ?? ''));
+            $stream = self::collapseWhitespace((string) ($row['stream'] ?? ''));
+            $line = (int) ($row['row'] ?? ($index + 2));
+
+            if ($className !== '' && $stream === '') {
+                $split = $this->splitStreamedClassToken($school, $year, $className);
+                if ($split['stream'] === '') {
+                    continue;
+                }
+                $className = $split['class'];
+                $stream = $split['stream'];
+            }
+
+            if ($className === '' || $stream === '') {
+                continue;
+            }
+
+            $classified = $this->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] !== 'missing_stream') {
+                continue;
+            }
+
+            $skips[] = [
+                'row' => $line,
+                'reason' => $classified['reason'],
+                'class' => $classified['class'],
+                'stream' => $classified['stream'],
+            ];
+            $key = strtolower($classified['class']."\0".$classified['stream']);
+            if (! isset($seen[$key])) {
+                $seen[$key] = true;
+                $pairs[] = [
+                    'class' => $classified['class'],
+                    'stream' => $classified['stream'],
+                ];
+            }
+        }
+
+        return ['pairs' => $pairs, 'skips' => $skips];
+    }
+
+    /**
+     * Create exactly the listed streams on base classes that already exist.
+     *
+     * Uses addClassStream (the Classes step). A second call does not add
+     * another section. A class that is not already a base class is refused
+     * and no section is created for it.
+     *
+     * @param  list<array{class?: string, stream?: string}>  $pairs
+     * @return array{created: list<array{class: string, stream: string, section: string}>, existing: list<array{class: string, stream: string}>, refused: list<array{class: string, stream: string, reason: string}>}
+     */
+    public function createMissingStreams(School $school, AcademicYear $year, array $pairs): array
+    {
+        $created = [];
+        $existing = [];
+        $refused = [];
+        $seen = [];
+
+        foreach ($pairs as $pair) {
+            $className = self::collapseWhitespace((string) ($pair['class'] ?? ''));
+            $stream = self::collapseWhitespace((string) ($pair['stream'] ?? ''));
+            if ($className === '' || $stream === '') {
+                continue;
+            }
+            $key = strtolower($className."\0".$stream);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $classified = $this->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] === 'resolved') {
+                $existing[] = [
+                    'class' => $classified['class'],
+                    'stream' => $classified['stream'],
+                ];
+
+                continue;
+            }
+            if ($classified['status'] !== 'missing_stream') {
+                $refused[] = [
+                    'class' => $className,
+                    'stream' => $stream,
+                    'reason' => 'unknown class',
+                ];
+
+                continue;
+            }
+
+            $base = $this->baseSectionFromName($school, $year, $classified['class']);
+            if (! $base || (int) $base->school_id !== (int) $school->id) {
+                $refused[] = [
+                    'class' => $className,
+                    'stream' => $stream,
+                    'reason' => 'unknown class',
+                ];
+
+                continue;
+            }
+
+            $result = $this->addClassStream($school, $year, $base, $classified['stream']);
+            $record = [
+                'class' => trim((string) $base->name),
+                'stream' => $classified['stream'],
+                'section' => trim((string) $result['section']->name),
+            ];
+            if ($result['created']) {
+                $created[] = $record;
+            } else {
+                $existing[] = [
+                    'class' => $record['class'],
+                    'stream' => $record['stream'],
+                ];
+            }
+        }
+
+        return [
+            'created' => $created,
+            'existing' => $existing,
+            'refused' => $refused,
+        ];
+    }
+
+    /**
+     * @return list<Section>
+     */
+    private function baseSectionsForYear(School $school, AcademicYear $year): array
+    {
+        $structure = app(ClassStructureService::class);
+        $sections = [];
+        $links = StandardLink::with('section')
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        foreach ($links as $link) {
+            $section = $link->section;
+            if (! $section || (int) $section->school_id !== (int) $school->id) {
+                continue;
+            }
+            if (! $structure->isBaseSection($section)) {
+                continue;
+            }
+            $sections[(int) $section->id] = $section;
+        }
+
+        return array_values($sections);
+    }
+
+    private function streamLinkBelongsToBase(?StandardLink $link, ?Section $base): bool
+    {
+        if (! $link || ! $base || ! $link->section) {
+            return false;
+        }
+        if ((int) $link->section->school_id !== (int) $base->school_id) {
+            return false;
+        }
+        if ((int) $link->section_id === (int) $base->id) {
+            return true;
+        }
+
+        $prefix = strtolower(trim((string) $base->name)).' ';
+
+        return $prefix !== ' ' && str_starts_with(strtolower(trim((string) $link->section->name)), $prefix);
     }
 
     /**
@@ -809,106 +1223,18 @@ class OnboardingEngine
     }
 
     /**
-     * Persist standards (grading tiers), sections (classes), and standard_links
-     * for the given academic year.
+     * Persist classes and streams for the academic year.
      *
-     * Each entry in $classes creates a Section and a StandardLink. If the school
-     * has a school_category set, SchoolCategorySeeder is run first as a baseline,
-     * and user-supplied classes supplement (not replace) the seeded defaults.
-     * When no category is set, a 'primary' standard is created as fallback.
+     * The write lives in ClassStructureService. This remains so existing callers
+     * keep the same method.
      *
-     * Streams: if 'streams' is non-empty, keeps the undivided base Section + link
-     * and adds each stream via ClassStructureService::addStream ("{Class} {Label}").
-     * If empty, one Section per class name with one StandardLink.
-     *
-     * @param  School  $school
-     * @param  AcademicYear  $year
      * @param  array  $classes  [ ['name' => 'P1', 'streams' => ['A','B']], ... ]
      *
      * @throws ValidationException
      */
     public function saveStandards(School $school, AcademicYear $year, array $classes): void
     {
-        if (empty($classes)) {
-            throw ValidationException::withMessages(['classes' => 'Add at least one class.']);
-        }
-
-        // Validate class names and check for duplicates
-        $seenNames = [];
-        foreach ($classes as $class) {
-            $name = trim((string) ($class['name'] ?? ''));
-            if ($name === '') {
-                throw ValidationException::withMessages(['classes' => 'Each class must have a name.']);
-            }
-            if (in_array($name, $seenNames, true)) {
-                throw ValidationException::withMessages(['classes' => "Duplicate class name: {$name}."]);
-            }
-            $seenNames[] = $name;
-        }
-
-        // If school has a category, run the seeder first as a baseline
-        // (SchoolCategorySeeder is idempotent — early-returns if links already exist)
-        if ($school->school_category) {
-            SchoolCategorySeeder::seed($school);
-        }
-
-        foreach ($classes as $class) {
-            $className = trim((string) ($class['name'] ?? ''));
-            $streams = $class['streams'] ?? [];
-            $subGroup = $class['sub_group'] ?? null;
-
-            $standardName = $this->standardNameForClass($className);
-
-            // Ensure the grading-tier Standard exists
-            $standard = Standard::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $standardName],
-                [
-                    'order' => match ($standardName) {
-                        'nursery' => 1,
-                        'primary' => 2,
-                        'o-level' => 3,
-                        'a-level' => 4,
-                        default => 5,
-                    },
-                    'status' => '1',
-                ]
-            );
-
-            // Always keep the undivided base section (ClassStructureService parity).
-            // Streams are additive name-encoded children ("{Class} {Label}"), never
-            // replacements for the base.
-            $baseSection = Section::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $className],
-                ['status' => '1']
-            );
-
-            StandardLink::firstOrCreate(array_filter([
-                'school_id' => $school->id,
-                'academic_year_id' => $year->id,
-                'standard_id' => $standard->id,
-                'section_id' => $baseSection->id,
-                'status' => '1',
-                'sub_group' => $subGroup,
-            ]));
-
-            if (is_array($streams) && count($streams) > 0) {
-                $structure = app(ClassStructureService::class);
-                foreach ($streams as $stream) {
-                    $streamName = trim((string) $stream);
-                    if ($streamName === '') {
-                        continue;
-                    }
-                    $result = $structure->addStream($school, $year, $baseSection, $streamName);
-                    if ($subGroup !== null && $subGroup !== '') {
-                        $link = $result['standard_link'];
-                        if ($link->sub_group !== $subGroup) {
-                            $link->sub_group = $subGroup;
-                            $link->save();
-                        }
-                    }
-                }
-            }
-        }
+        app(ClassStructureService::class)->saveClasses($school, $year, $classes);
     }
 
     /**
@@ -1114,13 +1440,15 @@ class OnboardingEngine
      *
      * Whole-school fees (no 'class'): when no class is specified, the fee is
      * genuinely school-wide — one row per Standard with section_id = NULL.
-     * This matches StudentReportHelperService::fees() which reads school-wide
-     * fees as whereNull('section_id'), and WhatsApp queries that filter by
-     * standard_id. A fee scoped to one arbitrary Standard would be invisible
-     * to students in other grading tiers.
+     * StudentFeeResolver includes only the row for the student's own standard,
+     * plus that student's section and stream. A fee scoped to one arbitrary
+     * Standard would be invisible to students in other grading tiers.
      *
-     * Idempotent via firstOrCreate on the unique constraint columns:
-     * (school_id, standard_id, section_id, name).
+     * Idempotent via firstOrCreate on
+     * (school_id, standard_id, section_id, academic_term_id, name).
+     * The same fee name in another term is a different fee. A second row in
+     * this list with the same school, term, class or level, and name is rejected.
+     * Academic year is the year on the matched term.
      *
      * @param  School  $school
      * @param  array  $fees  [ ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P1', 'term' => 'Term 1'], ... ]
@@ -1145,24 +1473,15 @@ class OnboardingEngine
             }
         }
 
+        $this->assertNoDuplicateFeesInBatch($school, $fees);
+
         foreach ($fees as $fee) {
             $name = trim((string) ($fee['name'] ?? ''));
             $amount = isset($fee['amount']) ? (float) $fee['amount'] : 0.00;
 
             $className = trim((string) ($fee['class'] ?? ''));
-            $termName = trim((string) ($fee['term'] ?? ''));
             $level = strtolower(trim((string) ($fee['level'] ?? '')));
-
-            // Resolve academic_term_id from term name if provided
-            $academicTermId = null;
-            if ($termName !== '') {
-                $term = AcademicTerm::where('school_id', $school->id)
-                    ->where('name', $termName)
-                    ->first();
-                if ($term) {
-                    $academicTermId = $term->id;
-                }
-            }
+            $academicTermId = $this->resolveFeeAcademicTermId($school, $fee);
 
             if ($className !== '') {
                 // Class-specific fee: resolve to one Standard + Section
@@ -1218,18 +1537,7 @@ class OnboardingEngine
             ]);
         }
 
-        FeesCategories::firstOrCreate(
-            [
-                'school_id' => $school->id,
-                'standard_id' => $standardId,
-                'section_id' => $sectionId,
-                'name' => $name,
-            ],
-            [
-                'amount' => $amount,
-                'academic_term_id' => $academicTermId,
-            ],
-        );
+        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount);
     }
 
     /**
@@ -1264,18 +1572,7 @@ class OnboardingEngine
             }
 
             $found = true;
-            FeesCategories::firstOrCreate(
-                [
-                    'school_id' => $school->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => null,
-                    'name' => $name,
-                ],
-                [
-                    'amount' => $amount,
-                    'academic_term_id' => $academicTermId,
-                ],
-            );
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
         }
 
         if (! $found) {
@@ -1285,14 +1582,6 @@ class OnboardingEngine
         }
     }
 
-    /**
-     * Save a whole-school fee: one row per Standard with section_id = NULL.
-     *
-     * This matches StudentReportHelperService::fees() which reads school-wide
-     * fees as whereNull('section_id'), and WhatsApp queries that filter by
-     * standard_id. A fee on just one Standard would be invisible to students
-     * in other grading tiers.
-     */
     /**
      * Save a whole-school fee as one row per Standard (section_id = NULL).
      *
@@ -1312,19 +1601,176 @@ class OnboardingEngine
         }
 
         foreach ($standards as $standard) {
-            FeesCategories::firstOrCreate(
-                [
-                    'school_id' => $school->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => null,
-                    'name' => $name,
-                ],
-                [
-                    'amount' => $amount,
-                    'academic_term_id' => $academicTermId,
-                ],
-            );
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
         }
+    }
+
+    /**
+     * Identity is school + academic year (via the term) + term + class/level + name.
+     * A repeated row in one upload is an error. Saving the same list again is not:
+     * rememberFee() keeps the existing amount.
+     *
+     * @param  list<array<string, mixed>>  $fees
+     */
+    private function assertNoDuplicateFeesInBatch(School $school, array $fees): void
+    {
+        $seen = [];
+
+        foreach ($fees as $index => $fee) {
+            if (! is_array($fee)) {
+                continue;
+            }
+
+            $name = trim((string) ($fee['name'] ?? ''));
+            [$termKey, $termLabel] = $this->feeTermDedupe($school, $fee);
+            $scopeKey = $this->feeScopeDedupeKey($school, $fee);
+            $key = $scopeKey.'|'.$termKey.'|'.mb_strtolower($name);
+
+            if (isset($seen[$key])) {
+                $row = $this->feeRowNumber($fee, $index);
+                $scopeLabel = $this->feeScopeLabel($fee);
+
+                throw ValidationException::withMessages([
+                    'fees' => 'Row '.$row.': "'.$name.'" for '.$scopeLabel.' is already listed for '.$seen[$key].'. Remove the duplicate row or change the term.',
+                ]);
+            }
+
+            $seen[$key] = $termLabel;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     * @return array{0: string, 1: string} dedupe key + label used in the error
+     */
+    private function feeTermDedupe(School $school, array $fee): array
+    {
+        $termName = trim((string) ($fee['term'] ?? ''));
+        if (! empty($fee['is_yearly']) || $termName === '') {
+            return ['yearly', 'Yearly'];
+        }
+
+        $termId = $this->resolveFeeAcademicTermId($school, $fee);
+        if ($termId === null) {
+            return ['term-name:'.mb_strtolower($termName), $termName];
+        }
+
+        $yearId = AcademicTerm::query()
+            ->where('school_id', $school->id)
+            ->whereKey($termId)
+            ->value('academic_year_id');
+
+        $key = 'term:'.$termId;
+        if ($yearId) {
+            $key = 'year:'.$yearId.'|'.$key;
+        }
+
+        return [$key, $termName];
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeScopeDedupeKey(School $school, array $fee): string
+    {
+        $className = trim((string) ($fee['class'] ?? ''));
+        if ($className !== '') {
+            $year = AcademicYear::where('school_id', $school->id)->orderByDesc('id')->first();
+            if ($year) {
+                $link = $this->resolveStandardLinkForClass($school, $year, $className);
+                if ($link?->section_id) {
+                    return 'section:'.$link->section_id;
+                }
+            }
+
+            return 'class:'.mb_strtolower($className);
+        }
+
+        $level = strtolower(trim((string) ($fee['level'] ?? '')));
+        if ($level !== '' && $level !== 'all') {
+            return 'level:'.match ($level) {
+                'o-level', 'o_level', 'olevel' => 'o-level',
+                'a-level', 'a_level', 'alevel' => 'a-level',
+                default => $level,
+            };
+        }
+
+        return 'school';
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeScopeLabel(array $fee): string
+    {
+        $className = trim((string) ($fee['class'] ?? ''));
+        if ($className !== '') {
+            return $className;
+        }
+
+        $level = trim((string) ($fee['level'] ?? ''));
+        if ($level !== '' && strtolower($level) !== 'all') {
+            return $level;
+        }
+
+        return 'the whole school';
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeRowNumber(array $fee, int $index): int
+    {
+        if (isset($fee['row']) && is_numeric($fee['row'])) {
+            return (int) $fee['row'];
+        }
+
+        return $index + 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function resolveFeeAcademicTermId(School $school, array $fee): ?int
+    {
+        if (! empty($fee['is_yearly'])) {
+            return null;
+        }
+
+        $termName = trim((string) ($fee['term'] ?? ''));
+        if ($termName === '') {
+            return null;
+        }
+
+        $term = AcademicTerm::where('school_id', $school->id)
+            ->where('name', $termName)
+            ->orderByDesc('academic_year_id')
+            ->orderByDesc('id')
+            ->first();
+
+        return $term?->id;
+    }
+
+    private function rememberFee(
+        int $schoolId,
+        int $standardId,
+        ?int $sectionId,
+        ?int $academicTermId,
+        string $name,
+        float $amount
+    ): void {
+        FeesCategories::firstOrCreate(
+            [
+                'school_id' => $schoolId,
+                'standard_id' => $standardId,
+                'section_id' => $sectionId,
+                'academic_term_id' => $academicTermId,
+                'name' => $name,
+            ],
+            [
+                'amount' => $amount,
+            ],
+        );
     }
 
     // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
@@ -1454,13 +1900,40 @@ class OnboardingEngine
     }
 
     /**
+     * A locked class upload names another class when the row's class or stream
+     * is not this class. A blank class stays on the locked class.
+     */
+    private function rowNamesAnotherClass(StandardLink $pinned, string $className, string $stream): bool
+    {
+        $className = self::collapseWhitespace($className);
+        $stream = self::collapseWhitespace($stream);
+        if ($className === '' && $stream === '') {
+            return false;
+        }
+
+        $label = self::collapseWhitespace($stream === '' ? $className : self::composeClassAndStream($className, $stream));
+        $pinnedName = self::collapseWhitespace((string) ($pinned->section?->name ?? ''));
+        $namedKeys = array_map('strtolower', self::classNameCandidates($label));
+        $pinnedKeys = array_map('strtolower', self::classNameCandidates($pinnedName));
+
+        return $namedKeys === [] || array_intersect($namedKeys, $pinnedKeys) === [];
+    }
+
+    /**
      * Create student users with random passwords, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
-     * 'phone', 'school_student_id', 'lin' (Learner Identification Number),
+     * 'phone' (the student's own number), 'parent' or 'parent_name',
+     * 'parent_phone', 'school_student_id', 'lin' (Learner Identification Number),
      * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
+     *
+     * A parent name and/or parent phone creates or reuses a guardian in this
+     * school. The name and phone are stored on that guardian. Guardians in the
+     * same school with the same normalised phone are one person, so siblings
+     * share them. The parent phone is never written onto the student. Nothing
+     * is sent: no mail, no invitation, no WhatsApp user or message.
      *
      * school_student_id = school-internal ID; lin = Uganda national LIN.
      * They are distinct columns on student_academics — never aliases.
@@ -1477,12 +1950,27 @@ class OnboardingEngine
      *
      * @throws ValidationException
      */
-    public function saveStudents(School $school, AcademicYear $year, array $students): array
+    public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $students) {
+            return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
+
+                $pinned = null;
+                if ($onlyStandardLinkId !== null) {
+                    $pinned = StandardLink::query()
+                        ->with(['standard', 'section'])
+                        ->where('school_id', $school->id)
+                        ->where('academic_year_id', $year->id)
+                        ->whereKey($onlyStandardLinkId)
+                        ->first();
+                    if ($pinned === null) {
+                        throw ValidationException::withMessages([
+                            'students' => 'That class is not part of this school year.',
+                        ]);
+                    }
+                }
 
                 // Pass 1: refuse unmatched classes / colliding emails / LINs before creating anyone.
                 $unmatchedClasses = [];
@@ -1492,7 +1980,10 @@ class OnboardingEngine
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    if ($name !== '' && $className !== '') {
+                    if ($pinned !== null && $name !== '' && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        continue;
+                    }
+                    if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
                             $unmatchedClasses[] = "{$name} → {$label}";
@@ -1537,11 +2028,24 @@ class OnboardingEngine
                     ]);
                 }
 
+                $parentsByPhone = $this->importedParentsByPhone($school);
+
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
 
                     if ($name === '') {
                         $skipped[] = ['name' => '', 'reason' => 'Name is required'];
+                        continue;
+                    }
+
+                    $className = trim((string) ($draft['class'] ?? ''));
+                    $stream = trim((string) ($draft['stream'] ?? ''));
+                    if ($pinned !== null && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        $skipped[] = [
+                            'name' => $name,
+                            'reason' => 'another class',
+                            'row' => (int) ($draft['row'] ?? 0),
+                        ];
                         continue;
                     }
 
@@ -1605,11 +2109,9 @@ class OnboardingEngine
                     // Generate KlassApp student ID
                     $klassappId = StudentIdGeneratorService::nextForStudent($student);
 
-                    $className = trim((string) ($draft['class'] ?? ''));
-                    $stream = trim((string) ($draft['stream'] ?? ''));
-                    $link = null;
+                    $link = $pinned;
 
-                    if ($className !== '') {
+                    if ($pinned === null && $className !== '') {
                         $link = $this->ensureStandardLinkForClass(
                             $school,
                             $year,
@@ -1623,7 +2125,8 @@ class OnboardingEngine
                     $stdName = trim((string) ($link->standard?->name ?? ''));
                     $secName = trim((string) ($link->section?->name ?? $className));
 
-                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                    // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6).
+                    // Stream sections are named "{base} {stream}"; isCandidateClass reads the base.
                     if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
                         $boardReg = '';
                     }
@@ -1642,6 +2145,8 @@ class OnboardingEngine
                         'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
                         'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                     ]);
+
+                    $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
 
                     $created[] = [
                         'name'         => $name,
@@ -1663,6 +2168,103 @@ class OnboardingEngine
                 'students' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+    }
+
+    /**
+     * Active guardians in this school, keyed by normalised phone.
+     *
+     * @return array<string, User>
+     */
+    private function importedParentsByPhone(School $school): array
+    {
+        $index = [];
+        $parents = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 7)
+            ->where('status', 'active')
+            ->whereNotNull('mobile_no')
+            ->get();
+
+        foreach ($parents as $parent) {
+            $key = $this->canonicalParentPhone($school, (string) $parent->mobile_no);
+            if ($key !== '' && ! isset($index[$key])) {
+                $index[$key] = $parent;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * Create or reuse this school's guardian and link the student.
+     * No mail, invitation, or WhatsApp record is created.
+     *
+     * @param  array<string, mixed>  $draft
+     * @param  array<string, User>  $parentsByPhone
+     */
+    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): void
+    {
+        $parentName = trim((string) ($draft['parent'] ?? $draft['parent_name'] ?? ''));
+        $rawPhone = trim((string) ($draft['parent_phone'] ?? ''));
+        if ($parentName === '' && $rawPhone === '') {
+            return;
+        }
+
+        $phone = $rawPhone === ''
+            ? ''
+            : $this->normaliseOnboardingPhone($school, $rawPhone, 'students', false, 'Parent of '.$student->name);
+
+        $parent = ($phone !== '' && isset($parentsByPhone[$phone])) ? $parentsByPhone[$phone] : null;
+
+        if ($parent === null) {
+            $password = UserProvisioning::randomPasswordAttributes();
+            $parent = User::create([
+                'school_id' => $school->id,
+                'usergroup_id' => 7,
+                'name' => $parentName !== '' ? $parentName : 'Parent',
+                'email' => $this->allocateGeneratedEmail($school, 'parent', '.local'),
+                'password' => $password['password'],
+                'is_reset' => $password['is_reset'],
+                'email_verified' => 1,
+                'mobile_no' => $phone !== '' ? $phone : null,
+            ]);
+
+            Userprofile::create([
+                'school_id' => $school->id,
+                'user_id' => $parent->id,
+                'usergroup_id' => 7,
+                'firstname' => $parentName !== '' ? $parentName : 'Parent',
+                'lastname' => '',
+            ]);
+
+            if ($phone !== '') {
+                $parentsByPhone[$phone] = $parent;
+            }
+        }
+
+        StudentParentLink::query()->firstOrCreate(
+            [
+                'school_id' => $school->id,
+                'parent_id' => $parent->id,
+                'student_id' => $student->id,
+            ],
+            ['status' => 1]
+        );
+    }
+
+    private function canonicalParentPhone(School $school, string $phone): string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $country = trim((string) $school->registration_country);
+        if ($country === '') {
+            return $phone;
+        }
+
+        return PhoneCountry::normalise($phone, $country) ?? $phone;
     }
 
     /**
@@ -2078,7 +2680,8 @@ class OnboardingEngine
     {
         if (! $skipCompletionCheck) {
             foreach (OnboardingStepsService::incompleteSteps($school->fresh(), $userId) as $step) {
-                if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)
+                    || in_array($step['key'], OnboardingStepsService::FINISH_WITHOUT, true)) {
                     continue;
                 }
                 if ($step['key'] !== 'plan_selection') {

@@ -37,17 +37,18 @@
         </dl>
         @if(! empty($release->result['reasons']))
             <p style="font-weight:600;margin:0 0 6px">Why some were skipped or failed</p>
-            <ul style="margin:0 0 12px;padding-left:18px" data-testid="release-reasons">
+            <x-fold-list tag="ul" data-testid="release-reasons" style="margin:0 0 12px;padding-left:18px">
                 @foreach($release->result['reasons'] as $reason => $count)
                     <li>{{ $reason }}: {{ $count }}</li>
                 @endforeach
-            </ul>
+            </x-fold-list>
         @endif
         <a class="mr-btn mr-btn--soft" href="{{ route($area.'.marks.releases.index') }}">All releases</a>
     </div>
 
     @if(! empty($release->result['messages']))
     <div class="mr-card mr-scroll">
+        <x-fold-list table>
         <table class="mr-table">
             <thead><tr><th>Student</th><th>Class</th><th>Number</th><th>Result</th></tr></thead>
             <tbody>
@@ -61,6 +62,7 @@
             @endforeach
             </tbody>
         </table>
+        </x-fold-list>
         @if(($release->result['failed'] ?? 0) > 0)
             <p class="mr-sub" data-testid="release-resend-hint">To try the failed numbers again, release this exam again: numbers already sent are skipped.</p>
         @endif

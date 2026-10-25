@@ -3,8 +3,8 @@
 namespace App\Onboarding\Steps\Steps;
 
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Steps\AbstractOnboardingStep;
-use App\Services\OnboardingStepsService;
 
 class EmisStep extends AbstractOnboardingStep
 {
@@ -23,25 +23,18 @@ class EmisStep extends AbstractOnboardingStep
         return 'text';
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || trim($normalized) === '') {
-            $this->reject('Enter your EMIS / ministry code.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveEmis($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveEmis($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
     {
         $preview = $this->attributePreview($school, $normalized, 'ministry_code', 'EMIS / ministry code');
 
-        if (! OnboardingStepsService::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return [
                 'action' => 'noop',
                 'summary' => 'No-op here: EMIS / ministry codes are only required for schools registered in Uganda.',

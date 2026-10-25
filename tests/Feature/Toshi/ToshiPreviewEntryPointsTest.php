@@ -34,6 +34,9 @@ class ToshiPreviewEntryPointsTest extends TestCase
             'toshi_enabled' => $enabled ? 1 : 0,
             'toshi_mode' => $mode,
         ]);
+        if ($mode === 'onboarding') {
+            $school->forceFill(['is_test' => 1])->save();
+        }
 
         // Minimal data so the dashboard renders and the empty-state demo shows
         // (year + standards exist, several steps still incomplete).

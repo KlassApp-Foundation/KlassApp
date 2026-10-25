@@ -13,7 +13,7 @@ class RouteToStudentSkillTool implements Tool
     use AuthorizesToshiAction;
     public function description(): string
     {
-        return 'Route a student-related query to the Student skill. Handles: adding/finding students, attendance, exam marks, parent management, enrollment counts. Call this when the user asks about students, learners, pupils, attendance, marks, or parents.';
+        return 'Route a student-related query to the Student skill. Handles: adding/finding students, recording attendance, summarising class attendance over a date range, exam marks, parent management, enrollment counts. Call this when the user asks about students, learners, pupils, attendance, marks, or parents.';
     }
 
     public function schema(JsonSchema $schema): array

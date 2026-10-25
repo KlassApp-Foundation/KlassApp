@@ -59,6 +59,18 @@ class WhatsAppBusinessService
             ];
         }
 
+        // Test schools stay blocked whether or not demo-only sending is on.
+        if (($testSchoolId = \App\Services\TestSchoolCommsGuard::blocksWhatsApp($phone, $userId, $flowType, $body)) !== null) {
+            Log::info('[test-school-guard] WhatsApp send blocked', ['school_id' => $testSchoolId]);
+
+            return [
+                'success' => false,
+                'blocked' => true,
+                'reason' => 'test_school',
+                'message' => 'Outbound messaging is disabled for test schools.',
+            ];
+        }
+
         // Demo-only sending (WHATSAPP_DEMO_ONLY_RECIPIENTS): only demo recipients,
         // plus the one system message DemoOnlyRecipientGuard documents.
         if (($reason = \App\Services\DemoOnlyRecipientGuard::refusal($phone, $flowType, $userId, $body)) !== null) {
@@ -74,7 +86,9 @@ class WhatsAppBusinessService
             return null;
         }
 
-        \Illuminate\Support\Facades\Log::info('[demo-guard] WhatsApp send blocked for demo school recipient', ['phone' => $phone]);
+        Log::info('[demo-guard] WhatsApp send blocked for demo school recipient', [
+            'phone' => WhatsAppPhoneHelper::mask($phone),
+        ]);
 
         return [
             'success' => false,
@@ -335,7 +349,7 @@ class WhatsAppBusinessService
         }
 
         Log::info('WhatsApp Business API: interactive buttons sent', [
-            'phone'  => $phone,
+            'phone'  => WhatsAppPhoneHelper::mask($phone),
             'body'   => $body,
             'buttons' => $preview,
         ]);
@@ -640,7 +654,7 @@ class WhatsAppBusinessService
 
         if ($fallbackTemplate) {
             Log::info('WhatsApp Business: window closed, using template fallback', [
-                'phone'     => $phone,
+                'phone'     => WhatsAppPhoneHelper::mask($phone),
                 'template'  => $fallbackTemplate,
             ]);
             return $this->sendTemplate($phone, $fallbackTemplate, $templateVariables, $flowType);
@@ -648,7 +662,7 @@ class WhatsAppBusinessService
 
         // Window closed but no fallback template — send free-form anyway
         Log::warning('WhatsApp Business: window closed, sending free-form outside window', [
-            'phone' => $phone,
+            'phone' => WhatsAppPhoneHelper::mask($phone),
         ]);
         return $this->sendText($phone, $message, $flowType, $userId);
     }

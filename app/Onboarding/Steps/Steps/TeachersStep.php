@@ -41,20 +41,6 @@ class TeachersStep extends AbstractOnboardingStep
         $this->reject('Add a teacher with a name and an email, or type skip.');
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if ($normalized === 'skip') {
-            if (! in_array('teachers', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
-
-            return;
-        }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
@@ -74,7 +60,7 @@ class TeachersStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveTeachers($school, $year, $todo);
+        $this->engineCall(fn () => $this->engine->saveTeachers($school, $year, $todo));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -137,7 +123,7 @@ class TeachersStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
 
-        $result = $this->engine->saveTeachers($school, $year, $todo);
+        $result = $this->engineCall(fn () => $this->engine->saveTeachers($school, $year, $todo));
 
         $engineSkipped = array_map(
             fn (array $row): array => [

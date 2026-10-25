@@ -7,9 +7,9 @@
 
     @if($errors->any())
         <div role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-900">
-            <ul class="list-disc pl-5">
+            <x-fold-list tag="ul" class="list-disc pl-5">
                 @foreach($errors->all() as $message) <li>{{ $message }}</li> @endforeach
-            </ul>
+            </x-fold-list>
         </div>
     @endif
 

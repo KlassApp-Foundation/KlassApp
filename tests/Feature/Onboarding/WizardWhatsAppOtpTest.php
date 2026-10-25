@@ -111,67 +111,15 @@ class WizardWhatsAppOtpTest extends TestCase
             ->assertSee('WhatsApp verification');
     }
 
-    public function test_next_blocked_until_otp_verified(): void
+    public function test_next_without_a_code_does_not_verify(): void
     {
         $component = $this->advanceToWhatsAppStep()
             ->set('whatsappPhone', '+256700111222')
             ->call('next')
-            ->assertSet('errorMessage', 'Verify the code sent to your WhatsApp before continuing.')
-            ->assertSet('whatsappVerified', false);
-
-        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
-        $this->assertStringContainsString('Verify the code', $component->get('errorMessage'));
-    }
-
-    public function test_wrong_otp_does_not_verify(): void
-    {
-        $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', '+256700111222')
-            ->call('sendWhatsAppVerificationCode')
-            ->set('whatsappOtpInput', '000000')
-            ->call('verifyWhatsAppCode')
             ->assertSet('whatsappVerified', false)
-            ->assertSet('errorMessage', "That code doesn't match. Try again or send a new code.");
-    }
-
-    public function test_correct_otp_then_next_persists_whatsapp_user(): void
-    {
-        $component = $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', '+256700111222')
-            ->call('sendWhatsAppVerificationCode');
-
-        $code = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
-
-        $component
-            ->set('whatsappOtpInput', $code)
-            ->call('verifyWhatsAppCode')
-            ->assertSet('whatsappVerified', true)
-            ->call('next')
             ->assertSet('errorMessage', '');
 
-        $wa = WhatsAppUser::where('user_id', $this->admin->id)->first();
-        $this->assertNotNull($wa);
-        $this->assertEquals('+256700111222', $wa->phone);
-        $this->assertNotNull($wa->verified_at);
-    }
-
-    public function test_phone_changed_after_a_correct_code_is_not_marked_verified(): void
-    {
-        $component = $this->advanceToWhatsAppStep()
-            ->set('whatsappPhone', '+256700111222')
-            ->call('sendWhatsAppVerificationCode');
-
-        $code = (string) $component->get('whatsappOtpDisplay');
-        $component
-            ->set('whatsappOtpInput', $code)
-            ->call('verifyWhatsAppCode')
-            ->assertSet('whatsappVerified', true)
-            ->set('whatsappPhone', '+256700999888')
-            ->call('next')
-            ->assertSet('whatsappVerified', false);
-
         $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
-        $this->assertNull(WhatsAppUser::where('phone', '+256700999888')->first());
+        $this->assertSame('plan_selection', $component->get('steps')[$component->get('stepIndex')]['key'] ?? null);
     }
 }

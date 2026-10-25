@@ -23,9 +23,12 @@ use App\Support\PhoneCountry;
 use App\Services\ToshiActionService;
 use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
+use App\Onboarding\Country\SchoolTypePreset;
+use App\Onboarding\Steps\StepIssueException;
 use App\Onboarding\Steps\StepRegistry;
+use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Services\SchoolCategorySeeder;
-use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
+use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 
 use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
@@ -130,6 +133,11 @@ class ManualOnboardingWizard extends Component
 
     public string $structureFlash = '';
 
+    /**
+     * Shown when a school-type preset filled stream fields that are not saved yet.
+     */
+    public string $structurePresetNote = '';
+
     public string $subjectName = 'Mathematics';
 
     /**
@@ -187,6 +195,21 @@ class ManualOnboardingWizard extends Component
     public array $classTeacherUploadSkips = [];
 
     /**
+     * Parsed class-teacher rows kept so "Create missing streams and retry" can
+     * run the same file again without asking for another upload.
+     *
+     * @var list<array<string, mixed>>
+     */
+    public array $classTeacherUploadRows = [];
+
+    /**
+     * Unique class + stream pairs the last class-teacher file could not place.
+     *
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $classTeacherMissingStreams = [];
+
+    /**
      * Rows from the last teacher file that were not saved.
      *
      * @var list<array{row: int, reason: string}>
@@ -199,6 +222,16 @@ class ManualOnboardingWizard extends Component
      * @var list<array{row: int, reason: string}>
      */
     public array $teacherUploadNotes = [];
+
+    /**
+     * @var list<array<string, mixed>>
+     */
+    public array $teacherUploadRows = [];
+
+    /**
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $teacherMissingStreams = [];
 
     public string $studentName = '';
 
@@ -227,6 +260,37 @@ class ManualOnboardingWizard extends Component
 
     /** @var mixed */
     public $studentUpload = null;
+
+    public string $studentUploadReport = '';
+
+    /**
+     * Progress of the roster file the queue is importing for this school.
+     *
+     * @var array{id: int, kind: string, status: string, total: int, processed: int, added: int, skipped: int, report: ?string, error: ?string}|null
+     */
+    public ?array $activeUpload = null;
+
+    /**
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $studentUploadSkips = [];
+
+    /**
+     * Rows that were saved with a note (for example an unreadable parent phone).
+     *
+     * @var list<array{row: int, reason: string}>
+     */
+    public array $studentUploadNotes = [];
+
+    /**
+     * @var list<array<string, mixed>>
+     */
+    public array $studentUploadRows = [];
+
+    /**
+     * @var list<array{class: string, stream: string}>
+     */
+    public array $studentMissingStreams = [];
 
     public string $termName = '';
 
@@ -265,11 +329,13 @@ class ManualOnboardingWizard extends Component
     public string $whatsappOtpInput = '';
 
     /**
-     * Code shown in the wizard only when WhatsAppOnboardingOtpService::mayDisplayCode()
-     * is true (local and testing). Empty in production. Not used for verification —
-     * the authoritative code lives in session.
+     * Code the admin sends from their own WhatsApp. Shown on this step only.
+     * The stored copy is a hash. Inbound verification sets verified_at.
      */
     public string $whatsappOtpDisplay = '';
+
+    /** wa.me link that opens WhatsApp with the code filled in. */
+    public string $whatsappVerifyUrl = '';
 
     public string $whatsappOtpStatus = '';
 
@@ -483,12 +549,67 @@ class ManualOnboardingWizard extends Component
 
     public function updatedTeacherUpload(): void
     {
-        $this->ingestUpload('teacher');
+        $this->queueUpload('teachers', $this->teacherUpload);
     }
 
     public function updatedClassTeacherUpload(): void
     {
-        $this->ingestClassTeacherUpload();
+        $this->queueUpload('class_teachers', $this->classTeacherUpload);
+    }
+
+    /**
+     * Create the streams named in the confirmation list, then run that upload again.
+     * Does nothing for a class that is not already a base class.
+     */
+    public function createMissingStreamsAndRetry(string $upload): void
+    {
+        if (! in_array($upload, ['class_teachers', 'students', 'teachers'], true)) {
+            return;
+        }
+
+        $this->errorMessage = '';
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            $this->errorMessage = 'Create an academic year first.';
+
+            return;
+        }
+
+        $pairs = match ($upload) {
+            'class_teachers' => $this->classTeacherMissingStreams,
+            'students' => $this->studentMissingStreams,
+            'teachers' => $this->teacherMissingStreams,
+            default => [],
+        };
+        $pendingTeacherRows = $upload === 'teachers' ? $this->teacherRowsPendingStreams() : [];
+
+        if ($pairs !== []) {
+            app(OnboardingEngine::class)->createMissingStreams($school, $year, $pairs);
+        }
+
+        if ($upload === 'class_teachers' && $this->classTeacherUploadRows !== []) {
+            $this->importClassTeacherUpload($this->classTeacherUploadRows);
+        } elseif ($upload === 'students') {
+            $this->retryStudentUpload($school);
+        } elseif ($upload === 'teachers' && $pairs !== [] && $pendingTeacherRows !== []) {
+            $this->importTeacherUpload($pendingTeacherRows, false);
+        }
+
+        $this->refreshStructureSnapshot();
+    }
+
+    /**
+     * Mark the term at this draft index as current. Keeps the term name out of
+     * the wire:click attribute, where quoting broke Blade compilation.
+     */
+    public function markTermCurrentByIndex(int $index): void
+    {
+        $name = trim((string) ($this->termDrafts[$index]['name'] ?? ''));
+        if ($name !== '') {
+            $this->markTermCurrent($name);
+        }
     }
 
     public function addStudentDraft(): void
@@ -567,7 +688,160 @@ class ManualOnboardingWizard extends Component
 
     public function updatedStudentUpload(): void
     {
-        $this->ingestUpload('student');
+        $this->queueUpload('students', $this->studentUpload);
+    }
+
+    /**
+     * Import one chunk of already-parsed rows. Called by the queue job through
+     * the same component so the behaviour matches a foreground upload.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{added: int, skipped: int, skips: array, notes: array, missing_streams: array}
+     */
+    public function runRosterImport(string $kind, array $rows): array
+    {
+        $this->errorMessage = '';
+
+        if ($kind === \App\Models\OnboardingUpload::KIND_TEACHERS) {
+            $result = $this->importTeacherUpload($rows, false);
+            $this->teacherUploadRows = array_merge($this->teacherUploadRows, $rows);
+
+            return $result;
+        }
+
+        if ($kind === \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS) {
+            return $this->importClassTeacherUpload($rows);
+        }
+
+        $this->studentDrafts = $rows;
+
+        return $this->saveStudents($this->school());
+    }
+
+    /**
+     * Store the file and hand it to the queue. The page keeps working while
+     * the import runs; refreshUpload() mirrors its progress.
+     */
+    private function queueUpload(string $kind, $file): void
+    {
+        if (! $file) {
+            return;
+        }
+
+        try {
+            $this->validate([
+                match ($kind) {
+                    \App\Models\OnboardingUpload::KIND_TEACHERS => 'teacherUpload',
+                    \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS => 'classTeacherUpload',
+                    default => 'studentUpload',
+                } => 'file|max:10240',
+            ]);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Upload failed.';
+
+            return;
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension() ?: '');
+        if (! in_array($extension, OnboardingNameListExtractor::ACCEPTED_MIMES, true)) {
+            $this->errorMessage = 'Supported files: CSV, XLSX, TXT, DOCX, PDF.';
+
+            return;
+        }
+
+        $this->errorMessage = '';
+        $result = app(\App\Services\Onboarding\OnboardingUploadService::class)
+            ->start($this->school(), (int) Auth::id(), $kind, $file);
+
+        $this->teacherUpload = null;
+        $this->classTeacherUpload = null;
+        $this->studentUpload = null;
+        $this->activeUpload = $result['upload']->progress();
+
+        if ($result['reused']) {
+            // A finished import shows its result at once; one still queued or
+            // running is left to the poller.
+            if ($result['upload']->isFinished()) {
+                $this->applyFinishedUpload($result['upload']->fresh());
+            }
+
+            return;
+        }
+
+        // Tests and sync-queue setups: run it now so callers still see the
+        // result. A test that wants the real queued path turns this off.
+        $inline = config('queue.default') === 'sync'
+            || (app()->runningUnitTests() && (config('onboarding.uploads.run_inline_in_tests') ?? true));
+
+        if ($inline) {
+            app(\App\Services\Onboarding\OnboardingUploadService::class);
+            (new \App\Jobs\ProcessOnboardingUpload((int) $result['upload']->id))
+                ->handle(app(\App\Services\Onboarding\OnboardingUploadService::class));
+            $this->applyFinishedUpload($result['upload']->fresh());
+        }
+    }
+
+    /**
+     * Polled by the page while a file is being imported.
+     */
+    public function refreshUpload(): void
+    {
+        $id = (int) ($this->activeUpload['id'] ?? 0);
+        if ($id < 1) {
+            return;
+        }
+
+        $upload = \App\Models\OnboardingUpload::query()
+            ->where('school_id', $this->school()->id)
+            ->find($id);
+        if (! $upload) {
+            $this->activeUpload = null;
+
+            return;
+        }
+
+        $this->activeUpload = $upload->progress();
+
+        if ($upload->isFinished()) {
+            $this->applyFinishedUpload($upload);
+        }
+    }
+
+    private function applyFinishedUpload(\App\Models\OnboardingUpload $upload): void
+    {
+        $this->activeUpload = $upload->progress();
+
+        if ($upload->status === \App\Models\OnboardingUpload::STATUS_FAILED) {
+            $this->errorMessage = 'Import failed: '.\Illuminate\Support\Str::limit((string) $upload->error, 200);
+
+            return;
+        }
+
+        $skips = is_array($upload->skips) ? $upload->skips : [];
+        $notes = is_array($upload->notes) ? $upload->notes : [];
+        $missing = is_array($upload->missing_streams) ? $upload->missing_streams : [];
+
+        if ($upload->kind === \App\Models\OnboardingUpload::KIND_TEACHERS) {
+            $this->teacherUploadSkips = $skips;
+            $this->teacherUploadNotes = $notes;
+            $this->teacherUploadReport = (string) $upload->report;
+            $this->teacherUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->teacherMissingStreams = $missing;
+        } elseif ($upload->kind === \App\Models\OnboardingUpload::KIND_CLASS_TEACHERS) {
+            $this->classTeacherUploadSkips = $skips;
+            $this->classTeacherUploadReport = (string) $upload->report;
+            $this->classTeacherUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->classTeacherMissingStreams = $missing;
+        } else {
+            $this->studentUploadSkips = $skips;
+            $this->studentUploadNotes = $notes;
+            $this->studentUploadReport = (string) $upload->report;
+            $this->studentUploadRows = is_array($upload->rows) ? $upload->rows : [];
+            $this->studentMissingStreams = $missing;
+            // Only a stream-blocked file keeps its rows for the retry; a
+            // finished import leaves the manual draft list alone.
+            $this->studentDrafts = $missing !== [] && is_array($upload->rows) ? $upload->rows : [];
+        }
     }
 
     /**
@@ -657,6 +931,7 @@ class ManualOnboardingWizard extends Component
 
             return;
         } else {
+            $this->studentUploadRows = $rows;
             foreach ($rows as $row) {
                 if (trim((string) ($row['name'] ?? '')) === '') {
                     continue;
@@ -678,12 +953,15 @@ class ManualOnboardingWizard extends Component
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
                     'gender' => (string) ($row['gender'] ?? ''),
                     'date_of_birth' => (string) ($row['date_of_birth'] ?? ''),
+                    'row' => (int) ($row['row'] ?? 0),
                 ];
             }
             $this->studentUpload = null;
+            $this->refreshStudentMissingStreams();
         }
 
-        $this->errorMessage = $this->unreadablePhonesMessage($unreadable);
+        $phoneMessage = $this->unreadablePhonesMessage($unreadable);
+        $this->errorMessage = $phoneMessage;
     }
 
     /**
@@ -900,7 +1178,7 @@ class ManualOnboardingWizard extends Component
             return;
         }
         // Students: never silently skip on Continue — require add or explicit Skip for now.
-        if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '') {
+        if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '' && $this->savedStudentRows() === []) {
             $this->errorMessage = 'Add at least one student, or click “Skip for now” if you’ll enrol later.';
 
             return;
@@ -913,27 +1191,34 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        try {
-            $this->persistCurrentStep($step['key']);
-        } catch (ValidationException $e) {
-            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
+        // WhatsApp verification is not required to finish setup. Continue
+        // leaves the step unverified. Parent messaging still waits on verified_at.
+        $leavingWhatsAppUnverified = ($step['key'] ?? '') === 'whatsapp_verify'
+            && ! $this->whatsappAlreadyVerified();
 
-            return;
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            report($e);
-            $this->errorMessage = app(\App\Services\OnboardingEngine::class)
-                ->describeUniqueConstraintViolation($e);
+        if (! $leavingWhatsAppUnverified) {
+            try {
+                $this->persistCurrentStep($step['key']);
+            } catch (ValidationException $e) {
+                $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
 
-            return;
-        } catch (\Throwable $e) {
-            report($e);
-            // Never surface raw SQL / connection strings to the wizard UI.
-            $this->errorMessage = 'Could not save this step. Please try again.';
+                return;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                report($e);
+                $this->errorMessage = app(\App\Services\OnboardingEngine::class)
+                    ->describeUniqueConstraintViolation($e);
 
-            return;
+                return;
+            } catch (\Throwable $e) {
+                report($e);
+                // Never surface raw SQL / connection strings to the wizard UI.
+                $this->errorMessage = 'Could not save this step. Please try again.';
+
+                return;
+            }
         }
 
-        if (! in_array($step['key'], $this->completedDuringSession, true)) {
+        if (! $leavingWhatsAppUnverified && ! in_array($step['key'], $this->completedDuringSession, true)) {
             $this->completedDuringSession[] = $step['key'];
         }
 
@@ -986,6 +1271,9 @@ class ManualOnboardingWizard extends Component
             if (($this->steps[$i]['key'] ?? '') === 'review') {
                 continue;
             }
+            if ($leavingWhatsAppUnverified && ($this->steps[$i]['key'] ?? '') === 'whatsapp_verify') {
+                continue;
+            }
             if (! $this->steps[$i]['is_complete']) {
                 $this->setStepIndex($i);
 
@@ -995,6 +1283,9 @@ class ManualOnboardingWizard extends Component
 
         foreach ($this->steps as $i => $candidate) {
             if (($candidate['key'] ?? '') === 'review') {
+                continue;
+            }
+            if ($leavingWhatsAppUnverified && ($candidate['key'] ?? '') === 'whatsapp_verify') {
                 continue;
             }
             if (! $candidate['is_complete']) {
@@ -1249,6 +1540,13 @@ class ManualOnboardingWizard extends Component
 
     public function render()
     {
+        // The structure step shows classes and the class-teacher controls that
+        // only exist once classes do. Re-read them on every render so the step
+        // updates itself instead of needing a page refresh.
+        if ($this->currentKey() === 'standards') {
+            $this->refreshStructureSnapshot();
+        }
+
         return view('livewire.manual-onboarding-wizard', [
             'countries' => Country::query()->orderBy('order')->orderBy('name')->get(['id', 'name']),
             'school' => $this->school(),
@@ -1740,12 +2038,26 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        $labels = $this->streamLabelsFromDraft($label);
+        if ($labels === []) {
+            $this->errorMessage = 'Enter a stream name (e.g. A, East, Science).';
+
+            return;
+        }
+
         try {
-            $result = app(ClassStructureService::class)->addStream($school, $year, $section, $label);
+            $created = false;
+            foreach ($labels as $one) {
+                $result = app(ClassStructureService::class)->addStream($school, $year, $section, $one);
+                $created = $created || $result['created'];
+            }
             $this->structureStreamDrafts[$key] = '';
-            $this->structureFlash = $result['created']
-                ? 'Added stream “'.$label.'” to '.$section->name.'.'
-                : 'Stream “'.$label.'” is already set up for '.$section->name.'.';
+            $shown = implode(', ', $labels);
+            $this->structureFlash = count($labels) === 1
+                ? ($created
+                    ? 'Added stream “'.$shown.'” to '.$section->name.'.'
+                    : 'Stream “'.$shown.'” is already set up for '.$section->name.'.')
+                : 'Added streams '.$shown.' to '.$section->name.'.';
             $this->refreshStructureSnapshot();
         } catch (ValidationException $e) {
             $this->errorMessage = (string) collect($e->errors())->flatten()->first();
@@ -1825,6 +2137,7 @@ class ManualOnboardingWizard extends Component
 
         $this->structureClasses = [];
         $this->schoolHasStreams = false;
+        $this->structurePresetNote = '';
         $this->structureTeachers = User::query()
             ->where('school_id', $school->id)
             ->where('usergroup_id', 5)
@@ -1845,10 +2158,20 @@ class ManualOnboardingWizard extends Component
 
         $this->structureClasses = app(ClassStructureService::class)->structureSnapshot($school, $year);
 
+        $preset = SchoolTypePreset::forSchool($school);
+        $suggested = false;
         foreach ($this->structureClasses as $row) {
             $sid = (string) $row['section_id'];
-            if (! isset($this->structureStreamDrafts[$sid])) {
-                $this->structureStreamDrafts[$sid] = '';
+            if (! array_key_exists($sid, $this->structureStreamDrafts)) {
+                $labels = array_map(
+                    fn (array $stream): string => (string) ($stream['label'] ?? ''),
+                    is_array($row['streams'] ?? null) ? $row['streams'] : []
+                );
+                $draft = $preset?->suggestedStreamDraft($school, (string) ($row['name'] ?? ''), $labels) ?? '';
+                $this->structureStreamDrafts[$sid] = $draft;
+            }
+            if (trim((string) $this->structureStreamDrafts[$sid]) !== '') {
+                $suggested = true;
             }
             if (! isset($this->structureCtDrafts[$sid])) {
                 $this->structureCtDrafts[$sid] = [
@@ -1862,6 +2185,10 @@ class ManualOnboardingWizard extends Component
                 $this->schoolHasStreams = true;
             }
         }
+
+        $this->structurePresetNote = $suggested
+            ? 'Suggested streams are filled in. Clear or change any of them. They are saved when you continue, and left out if you clear them.'
+            : '';
     }
 
     private function applyStudentStreamDefaultForClass(): void
@@ -1890,9 +2217,42 @@ class ManualOnboardingWizard extends Component
 
     private function saveClass(School $school): void
     {
-        // Structure checkpoint: when classes already exist (auto-seed), Next is a no-op.
-        // Stream/CT actions persist immediately via addStructureStream / inviteStructureClassTeacher.
+        // Classes from the category seeder are already saved. Suggested streams
+        // stay in the fields until Continue. A cleared field is left out, and
+        // confirming the step means the suggestion is not filled in again.
+        $step = app(StandardsStep::class);
         if (StandardLink::where('school_id', $school->id)->exists()) {
+            $classes = [];
+            foreach ($this->structureClasses as $row) {
+                $sid = (string) ($row['section_id'] ?? '');
+                $labels = $this->streamLabelsFromDraft((string) ($this->structureStreamDrafts[$sid] ?? ''));
+                if ($labels === [] || $sid === '') {
+                    continue;
+                }
+                $classes[] = [
+                    'name' => (string) ($row['name'] ?? ''),
+                    'streams' => $labels,
+                ];
+            }
+
+            if ($classes !== []) {
+                $year = AcademicYear::where('school_id', $school->id)->first();
+                if (! $year || (int) $year->school_id !== (int) $school->id) {
+                    throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
+                }
+            }
+
+            try {
+                $step->save($school, $classes === [] ? 'done' : $classes);
+            } catch (StepIssueException $e) {
+                throw ValidationException::withMessages(['className' => $e->getMessage()]);
+            }
+
+            foreach (array_keys($this->structureStreamDrafts) as $sid) {
+                $this->structureStreamDrafts[$sid] = '';
+            }
+            $this->refreshStructureSnapshot();
+
             return;
         }
 
@@ -1902,17 +2262,23 @@ class ManualOnboardingWizard extends Component
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
-        if (! $year) {
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
             throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
         }
 
         try {
-            app(OnboardingEngine::class)->saveStandards($school, $year, [
+            $step->save($school, [
                 ['name' => $name],
             ]);
+        } catch (StepIssueException $e) {
+            throw ValidationException::withMessages(['className' => $e->getMessage()]);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['className' => collect($e->errors())->flatten()->first()]);
         }
+
+        // The new class must appear (with its stream and class-teacher
+        // controls) without a refresh.
+        $this->refreshStructureSnapshot();
     }
 
     private function saveSubject(School $school): void
@@ -2204,8 +2570,12 @@ class ManualOnboardingWizard extends Component
      *
      * @param  list<array<string, mixed>>  $rows
      */
-    private function importTeacherUpload(array $rows): void
+    private function importTeacherUpload(array $rows, bool $storeRows = true): array
     {
+        if ($storeRows) {
+            $this->teacherUploadRows = $rows;
+        }
+        $this->teacherMissingStreams = [];
         $added = 0;
         $skipped = [];
         $notes = [];
@@ -2272,6 +2642,38 @@ class ManualOnboardingWizard extends Component
             if ($classes === []) {
                 $classes = $this->splitCsvList((string) ($row['class'] ?? ''));
             }
+
+            if ($year && (int) $year->school_id === (int) $school->id) {
+                $streamHits = app(OnboardingEngine::class)->collectMissingStreams(
+                    $school,
+                    $year,
+                    $this->teacherStreamRows($school, $year, $row, $line, $classes),
+                );
+                if ($streamHits['pairs'] !== []) {
+                    foreach ($streamHits['skips'] as $skip) {
+                        $skipped[] = ['row' => $line, 'reason' => $skip['reason']];
+                    }
+                    foreach ($streamHits['pairs'] as $pair) {
+                        $this->rememberMissingStream($this->teacherMissingStreams, $pair);
+                    }
+
+                    continue;
+                }
+            }
+
+            $rowStream = trim((string) ($row['stream'] ?? ''));
+            if ($year && $rowStream !== '') {
+                $classes = array_map(function (string $className) use ($school, $year, $rowStream) {
+                    $classified = app(OnboardingEngine::class)->classifyClassAndStream($school, $year, $className, $rowStream);
+                    $sectionName = trim((string) ($classified['link']?->section?->name ?? ''));
+                    if ($classified['status'] === 'resolved' && $sectionName !== '') {
+                        return $sectionName;
+                    }
+
+                    return OnboardingEngine::composeClassAndStream($className, $rowStream);
+                }, $classes);
+            }
+
             $draft = [
                 'name' => $name,
                 'email' => $email,
@@ -2320,6 +2722,14 @@ class ManualOnboardingWizard extends Component
         if (! $year && $added > 0 && $skipped === []) {
             $this->teacherUploadReport = '';
         }
+
+        return [
+            'added' => $added,
+            'skipped' => count($skipped),
+            'skips' => $skipped,
+            'notes' => $notes,
+            'missing_streams' => $this->teacherMissingStreams,
+        ];
     }
 
     /**
@@ -2464,8 +2874,10 @@ class ManualOnboardingWizard extends Component
     /**
      * @param  list<array<string, mixed>>  $rows
      */
-    private function importClassTeacherUpload(array $rows): void
+    private function importClassTeacherUpload(array $rows): array
     {
+        $this->classTeacherUploadRows = $rows;
+        $this->classTeacherMissingStreams = [];
         $added = 0;
         $skipped = [];
         $created = 0;
@@ -2510,6 +2922,9 @@ class ManualOnboardingWizard extends Component
             );
             if (! $resolved['link'] instanceof StandardLink) {
                 $skipped[] = ['row' => $line, 'reason' => $resolved['reason']];
+                if (is_array($resolved['missing'] ?? null)) {
+                    $this->rememberMissingStream($this->classTeacherMissingStreams, $resolved['missing']);
+                }
 
                 continue;
             }
@@ -2539,10 +2954,18 @@ class ManualOnboardingWizard extends Component
 
         $this->classTeacherUploadSkips = $skipped;
         $this->classTeacherUploadReport = $this->formatClassTeacherUploadReport($added, count($skipped));
+
+        return [
+            'added' => $added,
+            'skipped' => count($skipped),
+            'skips' => $skipped,
+            'notes' => [],
+            'missing_streams' => $this->classTeacherMissingStreams,
+        ];
     }
 
     /**
-     * @return array{link: ?StandardLink, reason: string}
+     * @return array{link: ?StandardLink, reason: string, missing?: array{class: string, stream: string}}
      */
     private function resolveClassTeacherLink(School $school, AcademicYear $year, string $className, string $stream): array
     {
@@ -2561,13 +2984,31 @@ class ManualOnboardingWizard extends Component
         }
 
         if ($stream !== '') {
-            $streamLink = $engine->resolveStandardLinkForClass($school, $year, $className, $stream);
+            $classified = $engine->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] === 'missing_stream') {
+                return [
+                    'link' => null,
+                    'reason' => $classified['reason'],
+                    'missing' => [
+                        'class' => $classified['class'],
+                        'stream' => $classified['stream'],
+                    ],
+                ];
+            }
+            $streamLink = $classified['link'];
             if (! $streamLink instanceof StandardLink || ! $this->classTeacherLinkIsAssignable($school, $streamLink)) {
-                return ['link' => null, 'reason' => 'unknown stream'];
+                return ['link' => null, 'reason' => $classified['reason'] !== '' ? $classified['reason'] : 'unknown stream'];
             }
             $belongs = $links->contains(fn (StandardLink $link) => (int) $link->id === (int) $streamLink->id);
             if (! $belongs) {
-                return ['link' => null, 'reason' => 'unknown stream'];
+                return [
+                    'link' => null,
+                    'reason' => OnboardingEngine::missingStreamMessage($classified['class'] !== '' ? $classified['class'] : $className, $classified['stream'] !== '' ? $classified['stream'] : $stream),
+                    'missing' => [
+                        'class' => $classified['class'] !== '' ? $classified['class'] : $className,
+                        'stream' => $classified['stream'] !== '' ? $classified['stream'] : $stream,
+                    ],
+                ];
             }
 
             return ['link' => $streamLink, 'reason' => ''];
@@ -2726,6 +3167,135 @@ class ManualOnboardingWizard extends Component
         $section->save();
 
         return true;
+    }
+
+    /**
+     * @param  array{class?: string, stream?: string}  $pair
+     * @param  list<array{class: string, stream: string}>  $pairs
+     */
+    private function rememberMissingStream(array &$pairs, array $pair): void
+    {
+        $class = trim((string) ($pair['class'] ?? ''));
+        $stream = trim((string) ($pair['stream'] ?? ''));
+        if ($class === '' || $stream === '') {
+            return;
+        }
+        foreach ($pairs as $existing) {
+            if (strcasecmp((string) $existing['class'], $class) === 0
+                && strcasecmp((string) $existing['stream'], $stream) === 0) {
+                return;
+            }
+        }
+        $pairs[] = ['class' => $class, 'stream' => $stream];
+    }
+
+    /**
+     * @param  list<string>  $classes
+     * @return list<array{row: int, class: string, stream: string}>
+     */
+    private function teacherStreamRows(School $school, AcademicYear $year, array $row, int $line, array $classes): array
+    {
+        $engine = app(OnboardingEngine::class);
+        $stream = trim((string) ($row['stream'] ?? ''));
+        $out = [];
+        foreach ($classes as $className) {
+            $className = trim((string) $className);
+            if ($className === '') {
+                continue;
+            }
+            if ($stream !== '') {
+                $out[] = ['row' => $line, 'class' => $className, 'stream' => $stream];
+
+                continue;
+            }
+            $split = $engine->splitStreamedClassToken($school, $year, $className);
+            if ($split['stream'] !== '') {
+                $out[] = ['row' => $line, 'class' => $split['class'], 'stream' => $split['stream']];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function teacherRowsPendingStreams(): array
+    {
+        $wanted = [];
+        foreach ($this->teacherUploadSkips as $skip) {
+            if (! str_contains((string) ($skip['reason'] ?? ''), "doesn't exist yet")) {
+                continue;
+            }
+            $wanted[(int) ($skip['row'] ?? 0)] = true;
+        }
+
+        return array_values(array_filter(
+            $this->teacherUploadRows,
+            fn (array $row): bool => isset($wanted[(int) ($row['row'] ?? 0)])
+        ));
+    }
+
+    /**
+     * Students already imported from a file (the background upload saves them
+     * before Continue), so an empty draft list is not an empty step.
+     *
+     * @return list<int>
+     */
+    private function savedStudentRows(): array
+    {
+        return User::query()
+            ->where('school_id', $this->school()->id)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->limit(1)
+            ->pluck('id')
+            ->all();
+    }
+
+    private function refreshStudentMissingStreams(): void
+    {
+        $school = $this->school();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            return;
+        }
+
+        $found = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $this->studentDrafts);
+        $this->studentMissingStreams = $found['pairs'];
+        $this->studentUploadSkips = $found['skips'];
+        if ($found['skips'] !== []) {
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($found['skips']));
+        }
+    }
+
+    private function retryStudentUpload(School $school): void
+    {
+        if ($this->studentDrafts === []) {
+            return;
+        }
+
+        $before = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->count();
+        $this->saveStudents($school);
+        $added = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->count() - $before;
+        $this->studentMissingStreams = [];
+        $this->studentUploadSkips = [];
+        $this->studentUploadReport = $this->formatStudentUploadReport($added, 0);
+    }
+
+    private function formatStudentUploadReport(int $added, int $skipped): string
+    {
+        $addedText = $added === 1 ? '1 student added' : $added.' students added';
+        $skippedText = $skipped === 1 ? '1 skipped' : $skipped.' skipped';
+
+        return $addedText.', '.$skippedText;
     }
 
     private function formatClassTeacherUploadReport(int $added, int $skipped): string
@@ -3118,17 +3688,122 @@ class ManualOnboardingWizard extends Component
 
     private function prefillDefaultTerms(): void
     {
-        if ($this->termDrafts !== []) {
+        $year = $this->termPrefillYear();
+        if ($this->termDrafts !== [] && ! $this->draftsUseDefaultDatesForAnotherYear($year)) {
             return;
         }
 
-        $year = (int) now()->format('Y');
-        $this->termDrafts = [
-            ['name' => 'Term 1', 'start' => "{$year}-02-03", 'end' => "{$year}-05-02"],
-            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-29"],
-            ['name' => 'Term 3', 'start' => "{$year}-09-22", 'end' => "{$year}-12-19"],
-        ];
-        $this->currentTermName = 'Term 1';
+        $current = trim($this->currentTermName);
+        $this->termDrafts = $this->defaultTermDrafts($year, $this->countryForTerms());
+        $names = array_column($this->termDrafts, 'name');
+        $this->currentTermName = in_array($current, $names, true) ? $current : 'Term 1';
+    }
+
+    /**
+     * Same dates the country profile gives the schema. Country is optional so a
+     * reflection call with only the year still returns the fallback calendar.
+     *
+     * @return list<array{name: string, start: string, end: string}>
+     */
+    private function defaultTermDrafts(int $year, ?string $country = null): array
+    {
+        $category = null;
+        if ($country !== null && Auth::id()) {
+            $saved = $this->school()->school_category;
+            $category = is_string($saved) ? $saved : null;
+        }
+
+        return SchoolTypePreset::termsFor($country, $category, $year);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function streamLabelsFromDraft(string $raw): array
+    {
+        $parts = preg_split('/\s*,\s*|\r?\n/', $raw) ?: [];
+        $labels = [];
+        foreach ($parts as $part) {
+            $part = trim((string) $part);
+            if ($part !== '') {
+                $labels[] = $part;
+            }
+        }
+
+        return $labels;
+    }
+
+    private function countryForTerms(): ?string
+    {
+        $saved = trim((string) ($this->school()->registration_country ?? ''));
+        if ($saved !== '') {
+            return $saved;
+        }
+
+        $typed = trim($this->countryName);
+
+        return $typed !== '' ? $typed : null;
+    }
+
+    private function termPrefillYear(): int
+    {
+        $saved = AcademicYear::query()
+            ->where('school_id', $this->school()->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($saved) {
+            return $saved->calendarYear();
+        }
+
+        if ($this->academicYearStart !== '') {
+            $parsed = strtotime($this->academicYearStart);
+            if ($parsed !== false) {
+                $year = (int) date('Y', $parsed);
+                if ($year >= 1990) {
+                    return $year;
+                }
+            }
+        }
+
+        return (int) now()->year;
+    }
+
+    private function draftsUseDefaultDatesForAnotherYear(int $year): bool
+    {
+        $shape = [];
+        foreach ($this->defaultTermDrafts(2000, $this->countryForTerms()) as $term) {
+            $shape[] = [
+                (string) $term['name'],
+                substr((string) $term['start'], 5),
+                substr((string) $term['end'], 5),
+            ];
+        }
+
+        if (count($this->termDrafts) !== count($shape)) {
+            return false;
+        }
+
+        $differentYear = false;
+        foreach ($shape as $index => [$name, $startMonthDay, $endMonthDay]) {
+            $draft = $this->termDrafts[$index] ?? null;
+            if (! is_array($draft) || strcasecmp(trim((string) ($draft['name'] ?? '')), $name) !== 0) {
+                return false;
+            }
+
+            $start = (string) ($draft['start'] ?? '');
+            $end = (string) ($draft['end'] ?? '');
+            $startPattern = '/^(\d{4})-'.preg_quote($startMonthDay, '/').'$/';
+            $endPattern = '/^(\d{4})-'.preg_quote($endMonthDay, '/').'$/';
+            if (! preg_match($startPattern, $start, $startMatch) || ! preg_match($endPattern, $end, $endMatch)) {
+                return false;
+            }
+            if ((int) $startMatch[1] !== $year || (int) $endMatch[1] !== $year) {
+                $differentYear = true;
+            }
+        }
+
+        return $differentYear;
     }
 
     private function ensureTermDraftsPrefill(): void
@@ -3186,7 +3861,7 @@ class ManualOnboardingWizard extends Component
         return 'teacher.'.Str::lower(Str::random(6)).'@'.$slug.'.test';
     }
 
-    private function saveStudents(School $school): void
+    private function saveStudents(School $school): array
     {
         if (trim($this->studentName) !== '') {
             $this->addStudentDraft();
@@ -3196,7 +3871,7 @@ class ManualOnboardingWizard extends Component
         }
 
         if ($this->studentDrafts === []) {
-            return;
+            return ['added' => 0, 'skipped' => 0, 'skips' => [], 'notes' => [], 'missing_streams' => []];
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -3214,21 +3889,57 @@ class ManualOnboardingWizard extends Component
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
-                'phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
+                'parent' => trim((string) ($draft['parent'] ?? '')),
+                'parent_phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
                 'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
                 'gender' => trim((string) ($draft['gender'] ?? '')),
                 'date_of_birth' => trim((string) ($draft['date_of_birth'] ?? '')),
+                'row' => (int) ($draft['row'] ?? 0),
             ];
         }, $this->studentDrafts);
 
-        app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
+        // A retry, or a second file with the same people, must not add them twice.
+        $deduped = app(\App\Services\Onboarding\OnboardingUploadService::class)
+            ->filterExistingStudents($school, $drafts);
+        $drafts = $deduped['rows'];
+        $alreadyThere = $deduped['skips'];
+        if ($drafts === []) {
+            $this->studentUploadSkips = $alreadyThere;
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($alreadyThere));
+            $this->studentDrafts = [];
+
+            return ['added' => 0, 'skipped' => count($alreadyThere), 'skips' => $alreadyThere, 'notes' => [], 'missing_streams' => []];
+        }
+
+        $missing = app(OnboardingEngine::class)->collectMissingStreams($school, $year, $drafts);
+        if ($missing['pairs'] !== []) {
+            $this->studentMissingStreams = $missing['pairs'];
+            $this->studentUploadSkips = $missing['skips'];
+            $this->studentUploadReport = $this->formatStudentUploadReport(0, count($missing['skips']));
+            $reason = (string) ($missing['skips'][0]['reason'] ?? "A stream doesn't exist yet.");
+            throw ValidationException::withMessages(['studentName' => $reason]);
+        }
+
+        $saved = app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
+        $this->studentMissingStreams = [];
+        $this->studentUploadSkips = [];
 
         $overLimit = ToshiActionService::enforcePlanLimit($school->id, 'students');
         $this->overLimitNotice = $overLimit['success'] ? null : $overLimit['message'];
 
         $this->studentDrafts = [];
+
+        $skips = array_merge($alreadyThere, $saved['skipped'] ?? []);
+
+        return [
+            'added' => count($saved['created'] ?? []),
+            'skipped' => count($skips),
+            'skips' => $skips,
+            'notes' => [],
+            'missing_streams' => [],
+        ];
     }
 
     private function saveTerm(School $school): void
@@ -3296,10 +4007,11 @@ class ManualOnboardingWizard extends Component
         }
 
         $payload = [];
-        foreach ($this->feeDrafts as $draft) {
+        foreach ($this->feeDrafts as $index => $draft) {
             $row = [
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'amount' => (float) ($draft['amount'] ?? 0),
+                'row' => $index + 1,
             ];
             $scope = (string) ($draft['scope'] ?? 'whole_school');
             if ($scope === 'class') {
@@ -3324,11 +4036,18 @@ class ManualOnboardingWizard extends Component
     }
 
     /**
-     * Send a 6-digit OTP via the same WhatsAppOnboardingOtpService Toshi uses.
-     * The code is a system message to the number this admin is verifying.
-     * Local and testing may show it; production never does.
+     * Older tests and callers still use this name. It does not send a message.
+     * The admin sends the code to KlassApp.
      */
     public function sendWhatsAppVerificationCode(): void
+    {
+        $this->issueWhatsAppVerificationCode();
+    }
+
+    /**
+     * Show a code and a wa.me link. Nothing is sent to the admin.
+     */
+    public function issueWhatsAppVerificationCode(): void
     {
         $this->errorMessage = '';
         $this->whatsappOtpStatus = '';
@@ -3336,74 +4055,99 @@ class ManualOnboardingWizard extends Component
         $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true);
         if ($phone === null) {
             $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->whatsappVerified = false;
 
             return;
         }
         if ($phone === '') {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->errorMessage = PhoneCountry::error($this->phoneCountryName(), true);
 
             return;
         }
         $this->whatsappPhone = $phone;
 
-        $result = app(WhatsAppOnboardingOtpService::class)->sendAdminVerificationCode((int) Auth::id(), $phone);
-
-        if ($result['reason'] === 'rate_limited') {
-            $this->whatsappOtpDisplay = '';
-            $this->whatsappSendFailed = true;
-            $this->whatsappOtpStatus = $result['message'];
-
-            return;
-        }
-
-        $this->whatsappVerified = false;
-        $this->whatsappOtpInput = '';
-
-        if (is_string($result['code']) && $result['code'] !== '') {
-            $this->whatsappOtpDisplay = $result['code'];
-            $this->whatsappOtpStatus = "Your verification code: {$result['code']}";
-            if ($result['sent']) {
-                $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
-            } else {
-                $this->whatsappSendFailed = true;
-                $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
-            }
-
-            return;
-        }
-
-        $this->whatsappOtpDisplay = '';
-        if ($result['sent']) {
-            $this->whatsappOtpStatus = $result['message'];
-
-            return;
-        }
-
-        $this->whatsappSendFailed = true;
-        $this->whatsappOtpStatus = $result['message'];
-    }
-
-    public function verifyWhatsAppCode(): void
-    {
-        $this->errorMessage = '';
-        $result = app(WhatsAppOnboardingOtpService::class)->verifyAdminCode(
+        $result = app(WhatsAppUserInitiatedVerification::class)->issue(
             (int) Auth::id(),
-            $this->whatsappOtpInput,
-            $this->whatsappPhone,
+            $phone,
+            (string) request()->ip(),
         );
 
-        if (! $result['verified']) {
-            $this->errorMessage = $result['message'];
+        if (! $result['ok']) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
             $this->whatsappVerified = false;
+            $this->whatsappSendFailed = true;
+            $this->errorMessage = $result['message'];
+            $this->whatsappOtpStatus = $result['message'];
 
             return;
         }
 
         $this->whatsappPhone = $result['phone'];
-        $this->whatsappVerified = true;
+        $this->whatsappVerified = false;
+        $this->whatsappOtpInput = '';
+        $this->whatsappOtpDisplay = (string) $result['code'];
+        $this->whatsappVerifyUrl = (string) $result['url'];
         $this->whatsappOtpStatus = $result['message'];
-        $this->whatsappOtpDisplay = '';
+    }
+
+    /**
+     * wire:poll. Moves on once the inbound message has verified this number.
+     * An expired code stays on the step with a cause and a fix.
+     */
+    public function pollWhatsAppVerification(): void
+    {
+        if ($this->currentKey() !== 'whatsapp_verify' || $this->whatsappVerified) {
+            return;
+        }
+
+        $status = app(WhatsAppUserInitiatedVerification::class)->statusFor(
+            (int) Auth::id(),
+            $this->whatsappPhone,
+        );
+
+        if ($status['verified']) {
+            $this->whatsappPhone = $status['phone'];
+            $this->whatsappVerified = true;
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
+            $this->errorMessage = '';
+            $this->whatsappOtpStatus = 'Verified. You can continue.';
+            $this->next();
+
+            return;
+        }
+
+        if ($status['expired']) {
+            $this->whatsappOtpDisplay = '';
+            $this->whatsappVerifyUrl = '';
+            $this->whatsappVerified = false;
+            $this->errorMessage = WhatsAppUserInitiatedVerification::EXPIRED_MESSAGE;
+            $this->whatsappOtpStatus = WhatsAppUserInitiatedVerification::EXPIRED_MESSAGE;
+        }
+    }
+
+    private function whatsappAlreadyVerified(): bool
+    {
+        $phone = $this->normaliseOptionalPhone($this->whatsappPhone, true, false);
+        if (! is_string($phone) || $phone === '') {
+            return false;
+        }
+
+        $verified = WhatsAppUser::query()
+            ->where('user_id', Auth::id())
+            ->where('phone', $phone)
+            ->whereNotNull('verified_at')
+            ->exists();
+
+        if ($verified) {
+            $this->whatsappVerified = true;
+        }
+
+        return $verified;
     }
 
     private function saveWhatsApp(School $school): void
@@ -3423,29 +4167,13 @@ class ManualOnboardingWizard extends Component
 
         $existing = WhatsAppUser::where('user_id', Auth::id())->whereNotNull('verified_at')->first();
         if ($existing && $existing->phone === $phone) {
+            $this->whatsappVerified = true;
+
             return;
         }
 
-        $grant = app(WhatsAppOnboardingOtpService::class)->grantPhone();
-        $grantPhone = is_string($grant) && $grant !== ''
-            ? $this->normaliseOptionalPhone($grant, true)
-            : null;
-        // The locked flag is not proof. The phone being saved must be the one
-        // whose code the server already checked.
-        if (! $this->whatsappVerified || $grantPhone === null || $grantPhone !== $phone) {
-            $this->whatsappVerified = false;
-            throw ValidationException::withMessages([
-                'whatsappOtpInput' => 'Verify the code sent to your WhatsApp before continuing.',
-            ]);
-        }
-
-        $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone, codeWasVerified: true);
-
-        if ($result['skipped'] !== null) {
-            throw ValidationException::withMessages([
-                'whatsappPhone' => $result['skipped'][0]['reason'],
-            ]);
-        }
+        // verified_at is written by the inbound webhook, not by this form.
+        $this->whatsappVerified = false;
     }
 
     private function savePlan(School $school): void

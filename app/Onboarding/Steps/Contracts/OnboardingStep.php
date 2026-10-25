@@ -3,6 +3,8 @@
 namespace App\Onboarding\Steps\Contracts;
 
 use App\Models\School;
+use App\Onboarding\Steps\StepIssue;
+use App\Onboarding\Steps\StepSchema;
 use InvalidArgumentException;
 
 interface OnboardingStep
@@ -21,10 +23,24 @@ interface OnboardingStep
      */
     public function options(School $school): array;
 
+    /**
+     * Fields, options, confirmation, actor, and defaults for this step.
+     * Read-only: the wizard and Toshi do not branch on it.
+     */
+    public function schema(School $school): StepSchema;
+
     public function normalize(mixed $raw): mixed;
 
     /**
-     * @throws InvalidArgumentException
+     * Validation problems for an already-normalized answer.
+     * Empty means the answer is accepted. Nothing is saved.
+     *
+     * @return list<StepIssue>
+     */
+    public function issues(School $school, mixed $normalized): array;
+
+    /**
+     * @throws InvalidArgumentException the message is the first issue's cause
      */
     public function validate(School $school, mixed $normalized): void;
 

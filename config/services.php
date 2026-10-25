@@ -73,6 +73,29 @@ return [
         'privacy_notice_url' => env('PRIVACY_NOTICE_URL'),
         // false stops every outbound WhatsApp message, including replies.
         'replies_enabled' => filter_var(env('WHATSAPP_REPLIES_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN),
+        // User-initiated admin verification. Defaults only — no environment variables.
+        // The wa.me link uses business_number above (default +256793844906).
+        'user_initiated_verification' => [
+            'ttl_minutes' => 10,
+            'codes_per_phone' => 5,
+            'phone_window_seconds' => 3600,
+            'max_attempts' => 5,
+            'codes_per_ip' => 10,
+            'ip_window_seconds' => 3600,
+            'code_length' => 6,
+            // The test suite issues codes as 127.0.0.1. Production always applies
+            // the limits above; this flag only lets a test opt in while APP_ENV=testing.
+            'enforce_limits_in_tests' => false,
+        ],
+        // Link codes: the page shows a code plus a QR / wa.me link and the
+        // number is linked when that code arrives from a WhatsApp number.
+        // Nothing is typed, so any international number works.
+        'link_code_ttl_minutes' => 10,
+        'link_codes_per_user_hour' => 10,
+        'link_codes_per_ip_hour' => 30,
+        // Same opt-in as above: production always applies the limits; a test
+        // has to ask for them while APP_ENV=testing.
+        'enforce_link_limits_in_tests' => false,
     ],
 
     'google' => [
@@ -123,6 +146,19 @@ return [
     'demo' => [
         'leads_email' => env('LEADS_EMAIL'),
         'booking_url' => env('DEMO_BOOKING_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Early-access ops webhook (optional n8n notify)
+    |--------------------------------------------------------------------------
+    | URL empty: nothing is queued. URL set without a secret: skip and log
+    | a warning; the body is never sent unsigned. The URL must be https.
+    | Signature and the n8n check are documented on EarlyAccessOpsWebhook.
+    */
+    'ops_webhook' => [
+        'url' => env('KLASSAPP_OPS_WEBHOOK_URL'),
+        'secret' => env('KLASSAPP_OPS_WEBHOOK_SECRET'),
     ],
 
     // OpenCode Go gateway: requests to the configured OpenAI-compatible

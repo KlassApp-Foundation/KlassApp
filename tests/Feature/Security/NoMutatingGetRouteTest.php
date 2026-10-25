@@ -79,6 +79,7 @@ class NoMutatingGetRouteTest extends TestCase
             'email' => 'no-get-mutations@test.sch.ug',
             'phone' => '+256700000333',
             'status' => 1,
+            'toshi_mode' => 'preview',
             'registration_country' => 'Uganda',
             'created_at' => now(),
             'updated_at' => now(),

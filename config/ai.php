@@ -70,11 +70,18 @@ return [
         'bedrock' => [
             'driver' => 'bedrock',
             'region' => env('AWS_BEDROCK_REGION', 'us-east-1'),
+            // No hardcoded credentials. Bearer token, static keys, or the AWS
+            // SDK default chain (use_default_credential_provider, default true).
             'key' => env('AWS_BEARER_TOKEN_BEDROCK'),
             'access_key_id' => env('AWS_ACCESS_KEY_ID'),
             'secret_access_key' => env('AWS_SECRET_ACCESS_KEY'),
             'session_token' => env('AWS_SESSION_TOKEN'),
             'use_default_credential_provider' => env('AWS_USE_DEFAULT_CREDENTIALS', true),
+            'models' => [
+                'text' => [
+                    'default' => env('TOSHI_LLM_MODEL'),
+                ],
+            ],
         ],
 
         'cohere' => [

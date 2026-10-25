@@ -41,6 +41,7 @@ class PlanLimitEnforcementTest extends TestCase
             'email'                => 'planlimit@test.sch.ug',
             'phone'                => '+256700000001',
             'status'               => 1,
+            'toshi_mode'           => 'preview',
             'registration_country' => 'Uganda',
             'created_at'           => now(),
             'updated_at'           => now(),
@@ -138,7 +139,7 @@ class PlanLimitEnforcementTest extends TestCase
         $otherSchoolId = DB::table('schools')->insertGetId([
             'name' => 'No Plan School', 'slug' => 'no-plan',
             'email' => 'noplan@test.sch.ug', 'phone' => '+256700000099',
-            'status' => 1, 'registration_country' => 'Uganda',
+            'status' => 1, 'toshi_mode' => 'preview', 'registration_country' => 'Uganda',
             'created_at' => now(), 'updated_at' => now(),
         ]);
 

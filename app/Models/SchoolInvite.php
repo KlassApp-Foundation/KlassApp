@@ -18,6 +18,8 @@ class SchoolInvite extends Model
         'revoked_at',
         'email_failed_at',
         'created_by',
+        'is_test',
+        'early_access_request_id',
     ];
 
     protected $casts = [
@@ -26,11 +28,17 @@ class SchoolInvite extends Model
         'revoked_at' => 'datetime',
         'email_failed_at' => 'datetime',
         'approx_students' => 'integer',
+        'is_test' => 'boolean',
     ];
 
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function earlyAccessRequest()
+    {
+        return $this->belongsTo(EarlyAccessRequest::class);
     }
 
     public function isExpired(): bool

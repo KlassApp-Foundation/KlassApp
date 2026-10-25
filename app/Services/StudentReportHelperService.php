@@ -6,8 +6,8 @@ use App\Helpers\SiteHelper;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
-use App\Models\FeesCategories;
 use App\Models\Section;
+use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 
@@ -58,16 +58,39 @@ public function subjects($schoolId, $section, $learner, $exam){
           return $subjects;
 }
 
-// fees
-public function fees($admin, $section){
-    return  FeesCategories::where("school_id", $admin->school_id)
-                                    ->where(function ($query) use($section){
-                                        $query->whereNull("section_id");
-                                              if(!is_null($section)){
-                                                $query->orWhere("section_id", $section);
-                                              }
-                                    }) 
-                                ->sum("amount");
+// fees — the report-card fee total for a student in this section and term.
+public function fees($admin, $section, ?int $academicTermId = null)
+{
+    $schoolId = (int) ($admin->school_id ?? 0);
+    $sectionId = $section !== null && $section !== '' ? (int) $section : 0;
+    if ($schoolId <= 0 || $sectionId <= 0) {
+        return 0.0;
+    }
+
+    $studentId = StudentAcademic::query()
+        ->where('school_id', $schoolId)
+        ->whereIn('academic_year_id', function ($query) use ($schoolId) {
+            $query->select('id')
+                ->from('academic_years')
+                ->where('school_id', $schoolId)
+                ->where('status', 1);
+        })
+        ->whereHas('standardLink', function ($query) use ($schoolId, $sectionId) {
+            $query->where('school_id', $schoolId)->where('section_id', $sectionId);
+        })
+        ->orderByDesc('id')
+        ->value('user_id');
+
+    $student = $studentId
+        ? User::query()->where('school_id', $schoolId)->find($studentId)
+        : null;
+    if (! $student) {
+        return 0.0;
+    }
+
+    return (float) app(StudentFeeResolver::class)
+        ->forStudent($student, $schoolId, $academicTermId)
+        ->sum(fn ($fee) => (float) $fee->amount);
 }
 
 public function totalStudentsInClass($schoolId, $section){

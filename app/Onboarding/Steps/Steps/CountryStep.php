@@ -22,18 +22,11 @@ class CountryStep extends AbstractOnboardingStep
         return 'text';
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || strlen(trim($normalized)) < 2) {
-            $this->reject('Enter a country.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveCountry($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveCountry($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

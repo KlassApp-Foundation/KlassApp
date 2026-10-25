@@ -2,6 +2,7 @@
 
 namespace App\Onboarding\Steps\Steps;
 
+use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
 use App\Models\School;
 use App\Models\Standard;
@@ -63,24 +64,17 @@ class FeesStep extends AbstractOnboardingStep
 
                 continue;
             }
-            $fees[] = ['name' => $line, 'amount' => 0];
+            $fees[] = ['name' => $line, 'amount' => null];
         }
 
         return $fees;
-    }
-
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_array($normalized) || $normalized === []) {
-            $this->reject('Add at least one fee structure.');
-        }
     }
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveFees($school, $normalized);
+        $this->engineCall(fn () => $this->engine->saveFees($school, $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -94,10 +88,11 @@ class FeesStep extends AbstractOnboardingStep
             $amount = (float) ($fee['amount'] ?? 0);
             $className = trim((string) ($fee['class'] ?? ''));
             $level = strtolower(trim((string) ($fee['level'] ?? '')));
+            $termName = ! empty($fee['is_yearly']) ? '' : trim((string) ($fee['term'] ?? ''));
             $label = $name.' ('.number_format($amount).')';
             $detail = $className !== '' ? "class {$className}" : ($level !== '' ? "level {$level}" : 'whole school');
 
-            [$status, $rowsDetail] = $this->wouldSaveFee($school, $name, $className, $level);
+            [$status, $rowsDetail] = $this->wouldSaveFee($school, $name, $className, $level, $termName);
             $rows[] = ['label' => $label, 'status' => $status, 'detail' => trim($detail.': '.$rowsDetail)];
         }
 
@@ -134,9 +129,13 @@ class FeesStep extends AbstractOnboardingStep
      *
      * @return array{0: string, 1: string} status + detail
      */
-    private function wouldSaveFee(School $school, string $name, string $className, string $level): array
+    private function wouldSaveFee(School $school, string $name, string $className, string $level, string $termName = ''): array
     {
         $standards = Standard::where('school_id', $school->id)->get();
+        $termId = $termName === ''
+            ? null
+            : AcademicTerm::where('school_id', $school->id)->where('name', $termName)->orderByDesc('id')->value('id');
+        $academicTermId = $termId === null ? null : (int) $termId;
 
         if ($className !== '') {
             $section = \App\Models\Section::where('school_id', $school->id)->where('name', $className)->first();
@@ -154,7 +153,8 @@ class FeesStep extends AbstractOnboardingStep
                 $school,
                 Standard::find($link->standard_id),
                 $section->id,
-                $name
+                $name,
+                $academicTermId
             );
 
             return $exists
@@ -173,7 +173,7 @@ class FeesStep extends AbstractOnboardingStep
             if ($targets->isEmpty()) {
                 return ['skip', 'no such grading tier yet — will refuse'];
             }
-            $missing = $targets->filter(fn (Standard $s) => ! $this->feeKeyExists($school, $s, null, $name))->count();
+            $missing = $targets->filter(fn (Standard $s) => ! $this->feeKeyExists($school, $s, null, $name, $academicTermId))->count();
 
             return $missing === 0
                 ? ['already_present', 'rows exist']
@@ -181,7 +181,7 @@ class FeesStep extends AbstractOnboardingStep
         }
 
         // Whole school: one row per grading-tier Standard.
-        $missing = $standards->filter(fn (Standard $s) => ! $this->feeKeyExists($school, $s, null, $name))->count();
+        $missing = $standards->filter(fn (Standard $s) => ! $this->feeKeyExists($school, $s, null, $name, $academicTermId))->count();
 
         return $missing === 0
             ? ['already_present', 'rows exist for every class']
@@ -190,8 +190,12 @@ class FeesStep extends AbstractOnboardingStep
                 : ['create', "{$missing} row(s) would be created"]);
     }
 
-    private function feeKeyExists(School $school, Standard $standard, mixed $sectionId, string $name): bool
+    private function feeKeyExists(School $school, ?Standard $standard, mixed $sectionId, string $name, ?int $academicTermId = null): bool
     {
+        if (! $standard) {
+            return false;
+        }
+
         $query = FeesCategories::where('school_id', $school->id)
             ->where('standard_id', $standard->id)
             ->where('name', $name);
@@ -199,6 +203,10 @@ class FeesStep extends AbstractOnboardingStep
         $sectionId === null
             ? $query->whereNull('section_id')
             : $query->where('section_id', $sectionId);
+
+        $academicTermId === null
+            ? $query->whereNull('academic_term_id')
+            : $query->where('academic_term_id', $academicTermId);
 
         return $query->exists();
     }

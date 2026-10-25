@@ -45,6 +45,9 @@ class ToshiEntryPillTest extends TestCase
             'toshi_enabled' => $enabled ? 1 : 0,
             'toshi_mode' => $mode,
         ]);
+        if ($mode === 'onboarding') {
+            $school->forceFill(['is_test' => 1])->save();
+        }
         AcademicYear::create([
             'school_id' => $school->id,
             'name' => '2026',

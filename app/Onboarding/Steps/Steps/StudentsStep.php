@@ -43,20 +43,6 @@ class StudentsStep extends AbstractOnboardingStep
         $this->reject('Add a student with a name and a class, or type skip.');
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if ($normalized === 'skip') {
-            if (! in_array('students', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
-
-            return;
-        }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
@@ -76,7 +62,8 @@ class StudentsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveStudents($school, $year, $todo);
+        $this->createListedMissingStreams($school, $year, $todo);
+        $this->engineCall(fn () => $this->engine->saveStudents($school, $year, $todo));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -113,7 +100,11 @@ class StudentsStep extends AbstractOnboardingStep
                 continue;
             }
 
-            $rows[] = ['label' => $label, 'status' => 'create', 'detail' => null];
+            $rows[] = [
+                'label' => $label,
+                'status' => 'create',
+                'detail' => $this->missingStreamDetail($school, $className, $stream),
+            ];
         }
 
         $createCount = count(array_filter($rows, fn ($row) => $row['status'] === 'create'));
@@ -152,7 +143,8 @@ class StudentsStep extends AbstractOnboardingStep
             $this->reject('Create an academic year before this step.');
         }
 
-        $result = $this->engine->saveStudents($school, $year, $todo);
+        $this->createListedMissingStreams($school, $year, $todo);
+        $result = $this->engineCall(fn () => $this->engine->saveStudents($school, $year, $todo));
 
         $engineSkipped = array_map(
             fn (array $row): array => [
@@ -166,6 +158,41 @@ class StudentsStep extends AbstractOnboardingStep
             'created' => $result['created'] ?? [],
             'skipped' => array_merge($skipped, $engineSkipped),
         ];
+    }
+
+    /**
+     * Streams named in the confirmation list, and only those. A class that is
+     * not already a base class is left for saveStudents to refuse.
+     *
+     * @param  list<array<string, mixed>>  $drafts
+     */
+    private function createListedMissingStreams(School $school, AcademicYear $year, array $drafts): void
+    {
+        $found = $this->engine->collectMissingStreams($school, $year, $drafts);
+        if ($found['pairs'] === []) {
+            return;
+        }
+
+        $this->engine->createMissingStreams($school, $year, $found['pairs']);
+    }
+
+    private function missingStreamDetail(School $school, string $className, string $stream): ?string
+    {
+        if (trim($className) === '' || trim($stream) === '') {
+            return null;
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
+            return null;
+        }
+
+        $classified = $this->engine->classifyClassAndStream($school, $year, $className, $stream);
+        if ($classified['status'] !== 'missing_stream') {
+            return null;
+        }
+
+        return $classified['reason'];
     }
 
     /**

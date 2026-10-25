@@ -4,8 +4,9 @@
     school-admin dashboard.
 
     One count: the setup bar and the sidebar chip read OnboardingStepsService
-    (neutral step names via displayLabel — K25). No promo carousel, no Toshi
-    slide, no Connected tools card.
+    (neutral step names via displayLabel — K25). The setup bar's "What's set up"
+    list is OnboardingProgress, one line per finished step. No promo carousel,
+    no Toshi slide, no Connected tools card.
 --}}
 @extends('layouts.admin.layout')
 
@@ -15,7 +16,7 @@
     $v2User = auth()->user();
     $school = $v2User?->school;
     $schoolLabel = $v2['schoolName'] ?? ($school?->name ?? ($greeting['name'] ?? 'KlassApp'));
-    $setup = $v2['setup'] ?? ['total' => 0, 'done' => 0, 'percent' => 100, 'next' => null, 'labels' => [], 'incomplete' => [], 'dismissed' => false, 'routes' => []];
+    $setup = $v2['setup'] ?? ['total' => 0, 'done' => 0, 'percent' => 100, 'next' => null, 'labels' => [], 'incomplete' => [], 'dismissed' => false, 'routes' => [], 'summary' => []];
     $kpis = $v2['kpis'] ?? [];
     $charts = $v2['charts'] ?? ['per_class' => [], 'attendance_weeks' => [], 'gender' => ['girls' => 0, 'boys' => 0, 'not_specified' => 0, 'total' => 0], 'fees_months' => [], 'exam' => null];
     $activity = $v2['activity'] ?? [];
@@ -38,6 +39,7 @@
 
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
+    $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -98,10 +100,27 @@
                 @endif
                 <a href="{{ $nextHref }}" class="dv2-btn" data-testid="dashboard-v2-setup-continue">Continue setup</a>
                 @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
+                    @if($toshiPathOpen)
                     <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
                             onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                         Set up with Toshi
                     </button>
+                    @else
+                    <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
+                        Set up with Toshi
+                        <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
+                    </button>
+                    @endif
+                @endif
+                @if(($setup['summary'] ?? []) !== [])
+                    <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
+                        <summary>What's set up</summary>
+                        <ul>
+                            @foreach($setup['summary'] as $line)
+                                <li>{{ $line }}</li>
+                            @endforeach
+                        </ul>
+                    </details>
                 @endif
                 <form method="POST" action="{{ $dismissUrl }}" class="inline" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
                     @csrf

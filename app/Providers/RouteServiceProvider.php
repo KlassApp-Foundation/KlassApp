@@ -110,7 +110,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapSettingsRoutes()
     {
         Route::prefix('admin')
-            ->middleware(['web','auth', 'fullschooladmin'])
+            ->middleware(['web','auth', 'fullschooladmin', \App\Http\Middleware\SendRealSchoolToshiOnboardingToWizard::class])
             ->namespace($this->adminNamespace)
             ->group(base_path('routes/setting.php'));
     }

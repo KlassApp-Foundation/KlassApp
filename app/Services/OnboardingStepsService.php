@@ -14,6 +14,8 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\UgandaOnboardingProfile;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -121,6 +123,15 @@ class OnboardingStepsService
         'students',
     ];
 
+    /**
+     * Shown during setup, and still required before parent WhatsApp messages,
+     * but a school can finish setup while this step is incomplete.
+     * isStepComplete() stays tied to whatsapp_users.verified_at.
+     */
+    public const FINISH_WITHOUT = [
+        'whatsapp_verify',
+    ];
+
     public static function isOnboardingFinished(School $school): bool
     {
         return $school->onboarding_finished_at !== null;
@@ -182,12 +193,7 @@ class OnboardingStepsService
 
     public static function isUganda(?string $country): bool
     {
-        if ($country === null || trim($country) === '') {
-            return false;
-        }
-
-        return strcasecmp(trim($country), 'Uganda') === 0
-            || strcasecmp(trim($country), 'UG') === 0;
+        return (new UgandaOnboardingProfile())->matches($country);
     }
 
     public static function isUnebCurriculum(?string $curriculum): bool
@@ -204,7 +210,7 @@ class OnboardingStepsService
     {
         $steps = self::ALL_STEPS;
 
-        if (! filled($school->registration_country) || ! self::isUganda($school->registration_country)) {
+        if (! filled($school->registration_country) || ! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             unset($steps['emis']);
         }
 
@@ -335,7 +341,7 @@ class OnboardingStepsService
             return false;
         }
 
-        if (! self::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return true;
         }
 
@@ -446,7 +452,7 @@ class OnboardingStepsService
             if ($step['is_complete']) {
                 continue;
             }
-            if (in_array($step['key'], self::OPTIONAL_STEPS, true)) {
+            if (in_array($step['key'], self::OPTIONAL_STEPS, true) || in_array($step['key'], self::FINISH_WITHOUT, true)) {
                 continue;
             }
             $blocking[] = $step;

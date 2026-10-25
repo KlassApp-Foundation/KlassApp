@@ -1,3 +1,4 @@
+@include('livewire.partials.manual-wizard-upload-progress')
 {{-- SPDX-License-Identifier: MIT --}}
 @php
     $stepKey = $stepKey ?? '';
@@ -120,9 +121,13 @@
 
 @elseif($stepKey === 'standards')
     <div class="manual-wizard-structure" data-testid="wizard-structure-step">
-        <p class="manual-wizard-structure-intro">
-            Your classes are ready from school category. Optionally add streams or invite a class teacher —
-            both are optional. Click Continue anytime to skip.
+        <p class="manual-wizard-structure-intro" @if($structurePresetNote !== '') data-testid="wizard-structure-preset" @endif>
+            @if($structurePresetNote !== '')
+                {{ $structurePresetNote }}
+            @else
+                Your classes are ready from school category. Optionally add streams or invite a class teacher —
+                both are optional. Click Continue anytime to skip.
+            @endif
         </p>
 
         @if($structureFlash ?? false)
@@ -176,7 +181,7 @@
                                            data-testid="wizard-structure-stream-input-{{ $sid }}" />
                                     <x-button type="button" variant="outline" size="sm" class="whitespace-nowrap"
                                               wire:click="addStructureStream({{ $sid }})"
-                                              data-testid="wizard-structure-add-stream-{{ $sid }}">Add</x-button>
+                                              data-testid="wizard-structure-add-stream-{{ $sid }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</x-button>
                                 </div>
                             </div>
 
@@ -265,26 +270,27 @@
             </label>
             <textarea id="wizard-subject" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="subjectName" placeholder="Mathematics, English&#10;Science" autocomplete="off" data-testid="wizard-subject-input"></textarea>
             <p class="text-xs text-gray-500 mt-1">Separate subjects with commas, or put one on each line.</p>
-            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="addSubjects" data-testid="wizard-subject-add">Add</x-button>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="addSubjects" data-testid="wizard-subject-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</x-button>
         </div>
     </div>
 
 @elseif($stepKey === 'teachers')
     <div class="manual-wizard-bulk" data-testid="wizard-teachers-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <a href="{{ asset('templates/teacher-upload-template.xlsx') }}"
-               download
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-teacher-template">Download template</a>
-            <label class="manual-wizard-bulk-upload">
+            <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-teacher-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download template
+            </a>
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
             </label>
-            <a href="{{ route('admin.class-teachers.upload-template') }}"
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-class-teacher-template">Download class teacher template</a>
-            <label class="manual-wizard-bulk-upload">
+            <a href="{{ route('admin.class-teachers.upload-template') }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-class-teacher-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download class teacher template
+            </a>
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload class teachers</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="classTeacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-class-teacher-upload" />
@@ -297,34 +303,44 @@
         @if($teacherUploadReport !== '')
             <p class="manual-wizard-bulk-help" data-testid="wizard-teacher-upload-report">{{ $teacherUploadReport }}</p>
             @if(count($teacherUploadSkips ?? []) > 0)
-                <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-skips">
+                <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-skips">
                     @foreach($teacherUploadSkips as $skip)
                         <li class="manual-wizard-bulk-item" data-testid="wizard-teacher-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
                     @endforeach
-                </ul>
+                </x-fold-list>
             @endif
             @if(count($teacherUploadNotes ?? []) > 0)
-                <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-notes">
+                <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-teacher-upload-notes">
                     @foreach($teacherUploadNotes as $note)
                         <li class="manual-wizard-bulk-item">Row {{ $note['row'] }}: {{ $note['reason'] }}</li>
                     @endforeach
-                </ul>
+                </x-fold-list>
             @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $teacherMissingStreams ?? [],
+                'upload' => 'teachers',
+                'testId' => 'wizard-teacher-missing-streams',
+            ])
         @endif
 
         @if(($classTeacherUploadReport ?? '') !== '')
             <p class="manual-wizard-bulk-help" data-testid="wizard-class-teacher-upload-report">{{ $classTeacherUploadReport }}</p>
             @if(count($classTeacherUploadSkips ?? []) > 0)
-                <ul class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-upload-skips">
+                <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-upload-skips">
                     @foreach($classTeacherUploadSkips as $skip)
                         <li class="manual-wizard-bulk-item" data-testid="wizard-class-teacher-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
                     @endforeach
-                </ul>
+                </x-fold-list>
             @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $classTeacherMissingStreams ?? [],
+                'upload' => 'class_teachers',
+                'testId' => 'wizard-class-teacher-missing-streams',
+            ])
         @endif
 
         @if(count($this->savedClassTeacherRows()) > 0)
-            <ul class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-list">
+            <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-class-teacher-list">
                 @foreach($this->savedClassTeacherRows() as $row)
                     <li class="manual-wizard-bulk-item" wire:key="class-teacher-saved-{{ $row['standard_link_id'] }}" data-testid="wizard-class-teacher-saved">
                         <span class="manual-wizard-bulk-item-main">
@@ -333,11 +349,11 @@
                         </span>
                     </li>
                 @endforeach
-            </ul>
+            </x-fold-list>
         @endif
 
         @if(count($this->savedTeacherRows()) > 0 || count($teacherDrafts ?? []) > 0)
-            <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-list">
+            <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-teacher-list">
                 @foreach($this->savedTeacherRows() as $row)
                     <li class="manual-wizard-bulk-item" wire:key="teacher-saved-{{ $row['email'] }}" data-testid="wizard-teacher-saved">
                         <span class="manual-wizard-bulk-item-main">
@@ -359,13 +375,13 @@
                         <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTeacherDraft({{ $i }})" aria-label="Remove">✕</button>
                     </li>
                 @endforeach
-            </ul>
+            </x-fold-list>
         @endif
 
         <div class="ds-form-group" data-testid="wizard-teacher-paste-block">
             <label class="ds-form-label" for="wizard-teacher-paste">Paste names (one per line)</label>
             <textarea id="wizard-teacher-paste" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="teacherPaste" placeholder="John Ssali&#10;Grace Nakamya" data-testid="wizard-teacher-paste"></textarea>
-            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn">Add from paste</x-button>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>Add from paste</x-button>
         </div>
 
         <div class="manual-wizard-bulk-divider"><span>or add one at a time</span></div>
@@ -411,7 +427,7 @@
                 @endforelse
             </div>
         </div>
-        <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</x-button>
+        <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add teacher</x-button>
         <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
         {{-- Do not put @if inside <x-button> attrs — it breaks the outer @elseif chain when Blade compiles components. --}}
         @if(count($teacherDrafts ?? []) > 0)
@@ -435,9 +451,10 @@
 @elseif($stepKey === 'students')
     <div class="manual-wizard-bulk" data-testid="wizard-students-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <a href="{{ route('admin.students.upload-template') }}"
-               class="manual-wizard-bulk-link"
-               data-testid="wizard-student-template">Download template</a>
+            <a href="{{ route('admin.students.upload-template') }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="wizard-student-template">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download template
+            </a>
             <p class="manual-wizard-bulk-help w-full" data-testid="wizard-student-stream-help">
                 @if(!empty($schoolHasStreams))
                     When a class has streams, pick a stream by default. You can still choose “Base class (no stream)” to enrol on the undivided class.
@@ -445,7 +462,7 @@
                     Leave Stream blank if your school doesn't use streams.
                 @endif
             </p>
-            <label class="manual-wizard-bulk-upload">
+            <label class="ds-btn ds-btn-primary ds-btn-md manual-wizard-bulk-upload">
                 <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Upload file</span>
                 <input type="file" class="manual-wizard-bulk-file" wire:model="studentUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-student-upload" />
@@ -453,8 +470,31 @@
         </div>
         <div wire:loading wire:target="studentUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
 
+        @if(($studentUploadReport ?? '') !== '')
+            <p class="manual-wizard-bulk-help" data-testid="wizard-student-upload-report">{{ $studentUploadReport }}</p>
+            @if(count($studentUploadNotes ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-student-upload-notes">
+                    @foreach($studentUploadNotes as $note)
+                        <li class="manual-wizard-bulk-item">Row {{ $note['row'] }}: {{ $note['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            @if(count($studentUploadSkips ?? []) > 0)
+                <ul class="manual-wizard-bulk-list" data-testid="wizard-student-upload-skips">
+                    @foreach($studentUploadSkips as $skip)
+                        <li class="manual-wizard-bulk-item" data-testid="wizard-student-upload-skip">Row {{ $skip['row'] }}: {{ $skip['reason'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            @include('livewire.partials.manual-wizard-missing-streams', [
+                'pairs' => $studentMissingStreams ?? [],
+                'upload' => 'students',
+                'testId' => 'wizard-student-missing-streams',
+            ])
+        @endif
+
         @if(count($studentDrafts ?? []) > 0)
-            <ul class="manual-wizard-bulk-list" data-testid="wizard-student-list">
+            <x-fold-list tag="ul" class="manual-wizard-bulk-list" data-testid="wizard-student-list">
                 @foreach($studentDrafts as $i => $row)
                     <li class="manual-wizard-bulk-item" wire:key="student-draft-{{ $i }}">
                         <span class="manual-wizard-bulk-item-main">
@@ -468,7 +508,7 @@
                         <button type="button" class="manual-wizard-bulk-remove" wire:click="removeStudentDraft({{ $i }})" aria-label="Remove">✕</button>
                     </li>
                 @endforeach
-            </ul>
+            </x-fold-list>
         @endif
 
         <div class="ds-form-group" data-testid="wizard-student-paste-block">
@@ -611,7 +651,7 @@
                         </span>
                         <span class="manual-wizard-bulk-item-actions">
                             @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($row['name'] ?? '')) !== 0)
-                                <button type="button" class="manual-wizard-bulk-link" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $row['name']) }}')" data-testid="wizard-term-mark-current-{{ $i }}">Mark current</button>
+                                <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="markTermCurrentByIndex({{ $i }})" data-testid="wizard-term-mark-current-{{ $i }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Mark current</button>
                             @endif
                             <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTermDraft({{ $i }})" aria-label="Remove">✕</button>
                         </span>
@@ -718,32 +758,27 @@
         <label class="ds-form-label" for="wizard-wa">Your WhatsApp number<span class="text-red-500">*</span></label>
         <input id="wizard-wa" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="{{ $phoneExample !== '' ? $phoneExample : 'Include the country code' }}" data-testid="wizard-wa-phone" aria-describedby="wizard-wa-phone-hint" />
         <p class="text-xs text-gray-500 mt-1" id="wizard-wa-phone-hint" data-testid="wizard-wa-phone-hint">{{ $whatsappHint }}</p>
-        <p class="text-xs text-gray-500 mt-1">We send a 6-digit code, then link the number only after you verify it.</p>
+        <p class="text-xs mt-1" style="color:#64748B;">Send the code below from this number. You can finish setup without it. Messages to parents stay off until this number is verified.</p>
     </div>
     <div class="flex flex-wrap gap-2 mt-2 mb-3">
-        <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-send-otp">
-            Send verification code
+        <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="issueWhatsAppVerificationCode" data-testid="wizard-wa-issue">
+            Get a code
         </button>
-        @if($whatsappSendFailed)
-            <button type="button" class="ds-btn ds-btn-sm ds-btn-primary" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-retry-otp">
-                Retry
-            </button>
-        @endif
     </div>
     @if($whatsappOtpStatus !== '')
         <p class="text-sm mb-3" style="color: {{ $whatsappSendFailed ? '#B45309' : '#0F766E' }};" @if($whatsappSendFailed) role="alert" @endif data-testid="wizard-wa-otp-status">{{ $whatsappOtpStatus }}</p>
     @endif
-    @if(! $whatsappVerified)
-        <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-wa-otp">6-digit code<span class="text-red-500">*</span></label>
-            <input id="wizard-wa-otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
-                   class="ds-form-input w-full" wire:model="whatsappOtpInput" placeholder="123456"
-                   data-testid="wizard-wa-otp-input" />
+    @if($whatsappOtpDisplay !== '' && ! $whatsappVerified)
+        <div wire:poll.5s="pollWhatsAppVerification" data-testid="wizard-wa-poll" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <p class="text-xs" style="color:#64748B;">Your code</p>
+            <p class="font-bold" style="color:#0F172A;font-size:1.5rem;letter-spacing:0.2em;margin:4px 0 8px;" data-testid="wizard-wa-code">{{ $whatsappOtpDisplay }}</p>
+            <p class="text-sm mb-3" style="color:#0F172A;">Or send this message yourself: Verify KlassApp: {{ $whatsappOtpDisplay }}</p>
+            @if($whatsappVerifyUrl !== '')
+                <a href="{{ $whatsappVerifyUrl }}" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-sm ds-btn-primary" data-testid="wizard-wa-open" style="background:#15803D;color:#FFFFFF;">Open WhatsApp</a>
+            @endif
         </div>
-        <button type="button" class="ds-btn ds-btn-sm ds-btn-primary mt-1" wire:click="verifyWhatsAppCode" data-testid="wizard-wa-verify-otp">
-            Verify code
-        </button>
-    @else
+    @endif
+    @if($whatsappVerified)
         <p class="text-sm font-medium" style="color:#15803D;" data-testid="wizard-wa-verified">Verified — you can continue.</p>
     @endif
 

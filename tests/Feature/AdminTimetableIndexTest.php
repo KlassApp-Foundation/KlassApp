@@ -35,6 +35,7 @@ class AdminTimetableIndexTest extends TestCase
             'email' => 'timetable-index@test.sch.ug',
             'phone' => '+256700000010',
             'status' => 1,
+            'toshi_mode' => 'preview',
             'curriculum' => 'uneb',
             'registration_country' => 'Uganda',
             'created_at' => now(),

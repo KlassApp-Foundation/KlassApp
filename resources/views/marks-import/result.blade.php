@@ -16,9 +16,9 @@
     @if($result->skipped > 0)
         <section class="mb-6" aria-labelledby="skipped-heading">
             <h2 id="skipped-heading" class="text-lg font-semibold text-gray-900 mb-1">Skipped rows ({{ $result->skipped }})</h2>
-            <ul class="mb-3 list-disc pl-5 text-gray-800">
+            <x-fold-list tag="ul" class="mb-3 list-disc pl-5 text-gray-800">
                 @foreach($result->skippedByReason() as $code => $n) <li>{{ $n }} &times; {{ $reasons[$code] ?? $code }}</li> @endforeach
-            </ul>
+            </x-fold-list>
             @include('marks-import._rows', ['rows' => array_values(array_filter($result->rows, fn ($r) => $r['outcome'] === 'skipped')), 'showStatus' => true])
         </section>
     @endif

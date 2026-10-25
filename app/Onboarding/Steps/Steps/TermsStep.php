@@ -5,8 +5,13 @@ namespace App\Onboarding\Steps\Steps;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\AbstractOnboardingStep;
+use App\Onboarding\Steps\OnboardingStepAwaitingInput;
+use App\Onboarding\Steps\StepIssueCatalog;
+use App\Onboarding\Steps\StepIssueException;
 use App\Services\OnboardingStepsService;
+use InvalidArgumentException;
 
 class TermsStep extends AbstractOnboardingStep
 {
@@ -27,6 +32,10 @@ class TermsStep extends AbstractOnboardingStep
 
     public function normalize(mixed $raw): mixed
     {
+        if (SchoolTypePreset::replyKind($raw) === SchoolTypePreset::ADJUST) {
+            return SchoolTypePreset::ADJUST;
+        }
+
         if (is_string($raw) && in_array(strtolower(trim($raw)), ['skip', 'later', 'none', 'n/a'], true)
             && in_array('terms', OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return 'skip';
@@ -36,36 +45,118 @@ class TermsStep extends AbstractOnboardingStep
             return $raw;
         }
 
-        if (is_string($raw) && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true)) {
-            $y = (int) date('Y');
-
-            return [
-                ['name' => 'Term 1', 'start' => "{$y}-02-02", 'end' => "{$y}-05-08", 'status' => 'current'],
-                ['name' => 'Term 2', 'start' => "{$y}-05-26", 'end' => "{$y}-08-28", 'status' => 'next'],
-                ['name' => 'Term 3', 'start' => "{$y}-09-14", 'end' => "{$y}-12-04", 'status' => 'next'],
-            ];
+        if ($this->isDefaultTermsReply($raw)) {
+            return ['__country_defaults' => true];
         }
 
         return [];
     }
 
-    public function validate(School $school, mixed $normalized): void
+    public function inputIssues(School $school, mixed $raw): array
     {
-        if ($normalized === 'skip') {
-            if (! in_array('terms', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
+        $normalized = $this->resolvedOrIssue($school, $raw);
+        if (isset($normalized['issue'])) {
+            return [$normalized['issue']];
+        }
 
-            return;
+        return $this->issues($school, $normalized['value']);
+    }
+
+    public function issues(School $school, mixed $normalized): array
+    {
+        if ($normalized === SchoolTypePreset::ADJUST) {
+            return [];
         }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
+
+        return parent::issues($school, $normalized);
+    }
+
+    public function allIssues(School $school, mixed $raw): array
+    {
+        $normalized = $this->resolvedOrIssue($school, $raw);
+        if (isset($normalized['issue'])) {
+            return [$normalized['issue']];
         }
+
+        return array_values(array_merge(
+            $this->issues($school, $normalized['value']),
+            $this->saveIssues($school, $normalized['value']),
+        ));
+    }
+
+    /**
+     * @return array{value: mixed, issue?: \App\Onboarding\Steps\StepIssue}
+     */
+    private function resolvedOrIssue(School $school, mixed $raw): array
+    {
+        try {
+            return ['value' => $this->resolveTerms($school, $raw)];
+        } catch (StepIssueException $e) {
+            return ['value' => null, 'issue' => $e->issue];
+        } catch (InvalidArgumentException $e) {
+            return ['value' => null, 'issue' => StepIssueCatalog::fromMessage($this->key(), $e->getMessage())];
+        }
+    }
+
+    private function isDefaultTermsReply(mixed $raw): bool
+    {
+        if (SchoolTypePreset::replyKind($raw) === SchoolTypePreset::ACCEPT) {
+            return true;
+        }
+
+        return is_string($raw)
+            && in_array(strtolower(trim($raw)), ['defaults', 'default', 'yes', 'y', 'standard', 'uneb'], true);
+    }
+
+    private function isCountryDefaultMarker(mixed $normalized): bool
+    {
+        return is_array($normalized)
+            && ($normalized['__country_defaults'] ?? false) === true
+            && count($normalized) === 1;
+    }
+
+    private function resolveTerms(School $school, mixed $raw): mixed
+    {
+        $normalized = $this->normalize($raw);
+
+        if ($normalized === 'skip' || ! $this->isCountryDefaultMarker($normalized)) {
+            return $normalized;
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            $this->reject('Create an academic year before this step.');
+        }
+
+        return $this->termsFromProfile($school, $year->calendarYear());
+    }
+
+    /**
+     * The country's term calendar, in the academic year's calendar year.
+     * The first term is current and the rest are next.
+     *
+     * @return list<array{name: string, start: string, end: string, status: string}>
+     */
+    private function termsFromProfile(School $school, int $year): array
+    {
+        $terms = [];
+        $category = is_string($school->school_category) ? $school->school_category : null;
+        foreach (SchoolTypePreset::termsFor($school->registration_country, $category, $year) as $index => $term) {
+            $term['status'] = $index === 0 ? 'current' : 'next';
+            $terms[] = $term;
+        }
+
+        return $terms;
     }
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
+        if ($normalized === SchoolTypePreset::ADJUST) {
+            throw new OnboardingStepAwaitingInput(
+                'Send the terms you want, or reply Use this. Nothing is saved yet.'
+            );
+        }
         $this->validate($school, $normalized);
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'terms');
@@ -76,12 +167,19 @@ class TermsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveTerms($school, $year, $normalized);
+        $this->engineCall(fn () => $this->engine->saveTerms($school, $year, $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
+        if ($normalized === SchoolTypePreset::ADJUST) {
+            return [
+                'action' => 'noop',
+                'summary' => 'Nothing will be saved until you send the terms you want.',
+                'rows' => [],
+            ];
+        }
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {
@@ -114,7 +212,7 @@ class TermsStep extends AbstractOnboardingStep
 
     public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->resolveTerms($school, $normalized);
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {

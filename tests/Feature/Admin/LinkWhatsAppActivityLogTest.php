@@ -7,16 +7,20 @@ use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Services\WhatsApp\WhatsAppLinkCodeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Tests\Support\PostsMetaWhatsApp;
 use Tests\TestCase;
 
 /**
- * Linking a WhatsApp number from the admin profile writes an activity row.
- * The call used to pass one fewer argument than doActivityLog accepts.
+ * Linking a WhatsApp number writes an activity row — linked by sending the
+ * link code from WhatsApp, unlinked from the profile page.
  */
 class LinkWhatsAppActivityLogTest extends TestCase
 {
+    use PostsMetaWhatsApp;
     use RefreshDatabase;
 
     private const PHONE = '+256700000123';
@@ -28,7 +32,17 @@ class LinkWhatsAppActivityLogTest extends TestCase
         $this->withoutMiddleware(VerifyCsrfToken::class);
 
         DB::statement('PRAGMA foreign_keys = ON');
-        config(['app.timezone' => 'Africa/Kampala']);
+        config([
+            'app.timezone' => 'Africa/Kampala',
+            'services.whatsapp.business_api_token' => 'test-token',
+            'services.whatsapp.business_phone_number_id' => '000000',
+            'services.whatsapp.replies_enabled' => true,
+            'services.whatsapp.demo_only_recipients' => false,
+            'services.whatsapp.business_number' => '+256793844906',
+        ]);
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.out']]], 200),
+        ]);
 
         DB::table('usergroups')->insert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -51,14 +65,13 @@ class LinkWhatsAppActivityLogTest extends TestCase
             'name' => 'Activity Admin',
             'email' => 'admin@activity-log.example',
             'password' => bcrypt('password'),
-            'status' => 'active',
             'email_verified' => 1,
         ]);
+        $admin->refresh();
 
-        $this->actingAs($admin)
-            ->post('/admin/whatsapp/phone', ['phone' => self::PHONE])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+        $issued = app(WhatsAppLinkCodeService::class)->issue($admin, '203.0.113.5');
+        $this->assertTrue($issued['ok']);
+        $this->postMetaWhatsAppText(self::PHONE, 'Link KlassApp: '.(string) $issued['code'])->assertOk();
 
         $waUser = WhatsAppUser::where('user_id', $admin->id)->first();
         $this->assertNotNull($waUser);
@@ -75,7 +88,7 @@ class LinkWhatsAppActivityLogTest extends TestCase
         $this->assertSame($school->id, (int) $linked->school_id);
 
         $this->actingAs($admin)
-            ->post('/admin/whatsapp/phone', ['phone' => self::PHONE, 'unlink' => true])
+            ->post('/admin/whatsapp/phone', ['unlink' => true])
             ->assertRedirect()
             ->assertSessionHas('success');
 

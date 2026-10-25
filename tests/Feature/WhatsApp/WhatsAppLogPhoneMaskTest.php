@@ -86,6 +86,92 @@ class WhatsAppLogPhoneMaskTest extends TestCase
         });
     }
 
+    public function test_the_window_closed_warning_masks_the_number(): void
+    {
+        $this->fakeGraph();
+
+        Log::spy();
+
+        config(['services.whatsapp.replies_enabled' => true]);
+        app(\App\Services\WhatsAppBusinessService::class)->sendTextSafe(self::FULL, 'Hello');
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(function ($message, $context = []) {
+                if ($message !== 'WhatsApp Business: window closed, sending free-form outside window') {
+                    return false;
+                }
+
+                $this->assertStringNotContainsString('256700000123', (string) json_encode($context));
+
+                return true;
+            })
+            ->atLeast()->once();
+    }
+
+    public function test_the_interactive_buttons_log_masks_the_number(): void
+    {
+        $this->relaxDeliveryLog();
+        $this->fakeGraph();
+
+        Log::spy();
+
+        config(['services.whatsapp.replies_enabled' => true]);
+        app(\App\Services\WhatsAppBusinessService::class)->sendInteractiveButtons(
+            self::FULL,
+            'Pick one',
+            [['id' => 'yes', 'title' => 'Yes']],
+            null,
+            1,
+        );
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(function ($message, $context = []) {
+                if ($message !== 'WhatsApp Business API: interactive buttons sent') {
+                    return false;
+                }
+
+                $this->assertStringNotContainsString('256700000123', (string) json_encode($context));
+
+                return true;
+            })
+            ->atLeast()->once();
+    }
+
+    public function test_the_template_fallback_log_masks_the_number(): void
+    {
+        $this->fakeGraph();
+
+        Log::spy();
+
+        config(['services.whatsapp.replies_enabled' => true]);
+        app(\App\Services\WhatsAppBusinessService::class)->sendTextSafe(self::FULL, 'Hello', 'hello_template');
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(function ($message, $context = []) {
+                if ($message !== 'WhatsApp Business: window closed, using template fallback') {
+                    return false;
+                }
+
+                $this->assertStringNotContainsString('256700000123', (string) json_encode($context));
+
+                return true;
+            })
+            ->atLeast()->once();
+    }
+
+    private function fakeGraph(): void
+    {
+        config([
+            'services.whatsapp.business_api_token' => 'test-token',
+            'services.whatsapp.business_phone_number_id' => '000000',
+            'services.whatsapp.demo_only_recipients' => false,
+        ]);
+        // The class-level fake rejects every send; start from a clean factory
+        // so the success path can be exercised.
+        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200)]);
+    }
+
     private function inbound(string $from, string $text): \Illuminate\Testing\TestResponse
     {
         $body = json_encode(['entry' => [['changes' => [['value' => [

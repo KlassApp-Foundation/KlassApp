@@ -18,7 +18,13 @@ class MustBePrivilege
      */
     public function handle($request, Closure $next)
     {
-        $schoolId = \Auth::user()->school_id;
+        $user = \Auth::user();
+
+        if ($redirect = app(SendRealSchoolToshiOnboardingToWizard::class)->redirect($request)) {
+            return $redirect;
+        }
+
+        $schoolId = $user->school_id;
         $academicYear = SiteHelper::getAcademicYear($schoolId);
         $standardCount = Standard::where('school_id', $schoolId)->count();
 
@@ -73,6 +79,7 @@ class MustBePrivilege
             || $request->is('admin/schooldetails')
             || $request->is('admin/schooldetails/*')
             || $request->is('admin/whatsapp/phone')
+            || $request->is('admin/whatsapp/phone/*')
             || $request->is('admin/subscriptions')
             || $request->is('admin/subscriptions/*')
             || $request->is('admin/onboarding/wizard')

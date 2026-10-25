@@ -3,6 +3,8 @@
 namespace App\Onboarding\Steps;
 
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\Contracts\OnboardingStep;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -58,6 +60,10 @@ class ToshiOnboardingV2Driver
         $savedKey = $step->key();
 
         try {
+            // The reply is the confirm. Preview only describes the write.
+            if ($step->key() === 'standards') {
+                $step->preview($school, $raw, $userId);
+            }
             $step->save($school, $raw, $userId);
         } catch (OnboardingStepAwaitingInput $e) {
             return [
@@ -70,11 +76,6 @@ class ToshiOnboardingV2Driver
                 'saved_key' => null,
             ];
         } catch (InvalidArgumentException|ValidationException $e) {
-            // Engine validation messages (e.g. a duplicate EMIS code) tell the
-            // admin what to fix; other rejections keep the generic hint.
-            $hint = $e instanceof ValidationException
-                ? (collect($e->errors())->flatten()->first() ?: self::COMING_SOON_HINT)
-                : self::COMING_SOON_HINT;
             $payload = $this->promptPayload($step, $school->fresh());
 
             return [
@@ -83,7 +84,7 @@ class ToshiOnboardingV2Driver
                 'question' => $payload['question'],
                 'options' => $payload['options'],
                 'input_type' => $payload['input_type'],
-                'hint' => $hint,
+                'hint' => $this->rejectionHint($step, $e),
                 'saved_key' => null,
             ];
         }
@@ -136,13 +137,49 @@ class ToshiOnboardingV2Driver
         return null;
     }
 
+    /**
+     * Engine validation messages (a duplicate or overlong EMIS code) and the
+     * academic-year and fee checks tell the admin what to fix. Other rejections
+     * keep the generic hint.
+     */
+    private function rejectionHint(OnboardingStep $step, InvalidArgumentException|ValidationException $e): string
+    {
+        if ($e instanceof ValidationException) {
+            $message = collect($e->errors())->flatten()->first();
+
+            return is_string($message) && trim($message) !== ''
+                ? trim($message)
+                : self::COMING_SOON_HINT;
+        }
+
+        $message = trim($e->getMessage());
+        if ($message !== '' && in_array($step->key(), ['academic_year', 'fees', 'standards'], true)) {
+            return $message;
+        }
+
+        return self::COMING_SOON_HINT;
+    }
+
     private function promptPayload(OnboardingStep $step, School $school): array
     {
+        $options = $step->options($school);
+        $question = $step->question();
+        if (in_array($step->key(), ['standards', 'subjects', 'terms'], true)) {
+            $preset = SchoolTypePreset::forSchool($school);
+            if ($preset !== null) {
+                $profile = CountryProfiles::forCountry($school->registration_country);
+                $question .= ' '.$preset->suggestion($step->key(), $profile, SchoolTypePreset::suggestionYear($school));
+                if ($options === []) {
+                    $options = SchoolTypePreset::actions();
+                }
+            }
+        }
+
         return [
             'status' => 'prompt',
             'key' => $step->key(),
-            'question' => $step->question(),
-            'options' => $step->options($school),
+            'question' => $question,
+            'options' => $options,
             'input_type' => $step->inputType(),
         ];
     }

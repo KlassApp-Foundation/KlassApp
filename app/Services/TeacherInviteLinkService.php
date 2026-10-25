@@ -56,9 +56,7 @@ class TeacherInviteLinkService
         Log::info('Teacher invite issued', [
             'invite_id'   => $invite->id,
             'school_id'   => $school->id,
-            'email'       => $invite->email,
             'expires_at'  => $invite->expires_at->toIso8601String(),
-            // token is never logged
         ]);
 
         return ['invite' => $invite, 'token' => $token];
@@ -81,9 +79,7 @@ class TeacherInviteLinkService
         Log::info('Teacher invite reissued', [
             'invite_id'  => $invite->id,
             'school_id'  => $invite->school_id,
-            'email'      => $invite->email,
             'expires_at' => $invite->expires_at->toIso8601String(),
-            // token is never logged
         ]);
 
         return ['invite' => $invite, 'token' => $token];
@@ -112,11 +108,10 @@ class TeacherInviteLinkService
                 className: $className,
                 expiresAt: $invite->expires_at,
             ));
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             Log::warning('Teacher invite: email failed', [
                 'invite_id' => $invite->id,
-                'email'     => $invite->email,
-                'error'     => $e->getMessage(),
+                'school_id' => $invite->school_id,
             ]);
         }
     }
@@ -251,7 +246,6 @@ class TeacherInviteLinkService
                 'invite_id'  => $invite->id,
                 'teacher_id' => $teacher->id,
                 'school_id'  => $invite->school_id,
-                'email'      => $invite->email,
             ]);
 
             return [
@@ -259,12 +253,11 @@ class TeacherInviteLinkService
                 'message' => 'Account created. You can now log in.',
                 'user'    => $teacher,
             ];
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             DB::rollBack();
             Log::error('Teacher invite: claim failed', [
                 'invite_id' => $invite->id,
-                'email'     => $invite->email,
-                'error'     => $e->getMessage(),
+                'school_id' => $invite->school_id,
             ]);
 
             return ['success' => false, 'message' => 'Could not create your account. Please try again.'];
