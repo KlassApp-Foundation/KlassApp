@@ -24,8 +24,9 @@ use App\Services\ToshiActionService;
 use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Country\SchoolTypePreset;
-use App\Onboarding\Steps\OnboardingStepReview;
+use App\Onboarding\Steps\StepIssueException;
 use App\Onboarding\Steps\StepRegistry;
+use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 
@@ -2047,7 +2048,7 @@ class ManualOnboardingWizard extends Component
         try {
             $created = false;
             foreach ($labels as $one) {
-                $result = app(OnboardingEngine::class)->addClassStream($school, $year, $section, $one);
+                $result = app(ClassStructureService::class)->addStream($school, $year, $section, $one);
                 $created = $created || $result['created'];
             }
             $this->structureStreamDrafts[$key] = '';
@@ -2219,9 +2220,38 @@ class ManualOnboardingWizard extends Component
         // Classes from the category seeder are already saved. Suggested streams
         // stay in the fields until Continue. A cleared field is left out, and
         // confirming the step means the suggestion is not filled in again.
+        $step = app(StandardsStep::class);
         if (StandardLink::where('school_id', $school->id)->exists()) {
-            $this->commitPrefilledStreams($school);
-            OnboardingStepReview::mark($school, 'standards');
+            $classes = [];
+            foreach ($this->structureClasses as $row) {
+                $sid = (string) ($row['section_id'] ?? '');
+                $labels = $this->streamLabelsFromDraft((string) ($this->structureStreamDrafts[$sid] ?? ''));
+                if ($labels === [] || $sid === '') {
+                    continue;
+                }
+                $classes[] = [
+                    'name' => (string) ($row['name'] ?? ''),
+                    'streams' => $labels,
+                ];
+            }
+
+            if ($classes !== []) {
+                $year = AcademicYear::where('school_id', $school->id)->first();
+                if (! $year || (int) $year->school_id !== (int) $school->id) {
+                    throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
+                }
+            }
+
+            try {
+                $step->save($school, $classes === [] ? 'done' : $classes);
+            } catch (StepIssueException $e) {
+                throw ValidationException::withMessages(['className' => $e->getMessage()]);
+            }
+
+            foreach (array_keys($this->structureStreamDrafts) as $sid) {
+                $this->structureStreamDrafts[$sid] = '';
+            }
+            $this->refreshStructureSnapshot();
 
             return;
         }
@@ -2232,14 +2262,16 @@ class ManualOnboardingWizard extends Component
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
-        if (! $year) {
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
             throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
         }
 
         try {
-            app(OnboardingEngine::class)->saveStandards($school, $year, [
+            $step->save($school, [
                 ['name' => $name],
             ]);
+        } catch (StepIssueException $e) {
+            throw ValidationException::withMessages(['className' => $e->getMessage()]);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['className' => collect($e->errors())->flatten()->first()]);
         }
@@ -3699,52 +3731,6 @@ class ManualOnboardingWizard extends Component
         }
 
         return $labels;
-    }
-
-    /**
-     * Save stream text that is still in the fields. An empty field adds nothing.
-     */
-    private function commitPrefilledStreams(School $school): void
-    {
-        $pending = false;
-        foreach ($this->structureStreamDrafts as $draft) {
-            if ($this->streamLabelsFromDraft((string) $draft) !== []) {
-                $pending = true;
-                break;
-            }
-        }
-        if (! $pending) {
-            return;
-        }
-
-        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
-            ?? AcademicYear::where('school_id', $school->id)->first();
-        if (! $year) {
-            throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
-        }
-
-        foreach ($this->structureClasses as $row) {
-            $sid = (string) ($row['section_id'] ?? '');
-            $labels = $this->streamLabelsFromDraft((string) ($this->structureStreamDrafts[$sid] ?? ''));
-            if ($labels === [] || $sid === '') {
-                continue;
-            }
-
-            $section = Section::query()
-                ->where('school_id', $school->id)
-                ->whereKey((int) $sid)
-                ->first();
-            if (! $section) {
-                continue;
-            }
-
-            foreach ($labels as $label) {
-                app(OnboardingEngine::class)->addClassStream($school, $year, $section, $label);
-            }
-            $this->structureStreamDrafts[$sid] = '';
-        }
-
-        $this->refreshStructureSnapshot();
     }
 
     private function countryForTerms(): ?string

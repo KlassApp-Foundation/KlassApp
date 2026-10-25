@@ -351,7 +351,7 @@ class OnboardingEngine
      * to 'nursery', Senior names to 'o-level' or 'a-level', and
      * everything else defaults to 'primary'.
      */
-    private function standardNameForClass(string $className): string
+    public function standardNameForClass(string $className): string
     {
         $lower = strtolower(trim($className));
 
@@ -1223,105 +1223,18 @@ class OnboardingEngine
     }
 
     /**
-     * Persist standards (grading tiers), sections (classes), and standard_links
-     * for the given academic year.
+     * Persist classes and streams for the academic year.
      *
-     * Each entry in $classes creates a Section and a StandardLink. If the school
-     * has a school_category set, SchoolCategorySeeder is run first as a baseline,
-     * and user-supplied classes supplement (not replace) the seeded defaults.
-     * When no category is set, a 'primary' standard is created as fallback.
+     * The write lives in ClassStructureService. This remains so existing callers
+     * keep the same method.
      *
-     * Streams: if 'streams' is non-empty, keeps the undivided base Section + link
-     * and adds each stream via ClassStructureService::addStream ("{Class} {Label}").
-     * If empty, one Section per class name with one StandardLink.
-     *
-     * @param  School  $school
-     * @param  AcademicYear  $year
      * @param  array  $classes  [ ['name' => 'P1', 'streams' => ['A','B']], ... ]
      *
      * @throws ValidationException
      */
     public function saveStandards(School $school, AcademicYear $year, array $classes): void
     {
-        if (empty($classes)) {
-            throw ValidationException::withMessages(['classes' => 'Add at least one class.']);
-        }
-
-        // Validate class names and check for duplicates
-        $seenNames = [];
-        foreach ($classes as $class) {
-            $name = trim((string) ($class['name'] ?? ''));
-            if ($name === '') {
-                throw ValidationException::withMessages(['classes' => 'Each class must have a name.']);
-            }
-            if (in_array($name, $seenNames, true)) {
-                throw ValidationException::withMessages(['classes' => "Duplicate class name: {$name}."]);
-            }
-            $seenNames[] = $name;
-        }
-
-        // If school has a category, run the seeder first as a baseline
-        // (SchoolCategorySeeder is idempotent — early-returns if links already exist)
-        if ($school->school_category) {
-            SchoolCategorySeeder::seed($school);
-        }
-
-        foreach ($classes as $class) {
-            $className = trim((string) ($class['name'] ?? ''));
-            $streams = $class['streams'] ?? [];
-            $subGroup = $class['sub_group'] ?? null;
-
-            $standardName = $this->standardNameForClass($className);
-
-            // Ensure the grading-tier Standard exists
-            $standard = Standard::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $standardName],
-                [
-                    'order' => match ($standardName) {
-                        'nursery' => 1,
-                        'primary' => 2,
-                        'o-level' => 3,
-                        'a-level' => 4,
-                        default => 5,
-                    },
-                    'status' => '1',
-                ]
-            );
-
-            // Always keep the undivided base section (ClassStructureService parity).
-            // Streams are additive name-encoded children ("{Class} {Label}"), never
-            // replacements for the base.
-            $baseSection = Section::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $className],
-                ['status' => '1']
-            );
-
-            StandardLink::firstOrCreate(array_filter([
-                'school_id' => $school->id,
-                'academic_year_id' => $year->id,
-                'standard_id' => $standard->id,
-                'section_id' => $baseSection->id,
-                'status' => '1',
-                'sub_group' => $subGroup,
-            ]));
-
-            if (is_array($streams) && count($streams) > 0) {
-                foreach ($streams as $stream) {
-                    $streamName = trim((string) $stream);
-                    if ($streamName === '') {
-                        continue;
-                    }
-                    $result = $this->addClassStream($school, $year, $baseSection, $streamName);
-                    if ($subGroup !== null && $subGroup !== '') {
-                        $link = $result['standard_link'];
-                        if ($link->sub_group !== $subGroup) {
-                            $link->sub_group = $subGroup;
-                            $link->save();
-                        }
-                    }
-                }
-            }
-        }
+        app(ClassStructureService::class)->saveClasses($school, $year, $classes);
     }
 
     /**

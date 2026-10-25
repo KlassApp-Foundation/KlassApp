@@ -5,8 +5,12 @@ namespace App\Services;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
+use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\StudentAcademic;
 use App\Models\Subject;
+use App\Onboarding\Steps\StepIssue;
+use App\Onboarding\Steps\StepIssueCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -217,6 +221,11 @@ class ClassStructureService
             $created = false;
             if ($existing) {
                 $section = $existing;
+                if ((int) $section->status !== 1) {
+                    $section->status = '1';
+                    $section->save();
+                    $created = true;
+                }
             } else {
                 $section = Section::create([
                     'school_id' => $school->id,
@@ -240,6 +249,10 @@ class ClassStructureService
             );
 
             if ($link->wasRecentlyCreated) {
+                $created = true;
+            } elseif ((int) $link->status !== 1) {
+                $link->status = '1';
+                $link->save();
                 $created = true;
             }
 
@@ -333,5 +346,348 @@ class ClassStructureService
                 ]
             );
         }
+    }
+
+    /**
+     * Stream problems on a classes payload. Class-name checks stay in saveClasses
+     * so they keep the messages the engine already throws.
+     *
+     * @param  list<array<string, mixed>>  $classes
+     * @return list<StepIssue>
+     */
+    public function issues(School $school, array $classes): array
+    {
+        foreach ($classes as $index => $class) {
+            if (! is_array($class)) {
+                continue;
+            }
+            $className = trim((string) ($class['name'] ?? ''));
+            if ($className === '') {
+                continue;
+            }
+            $row = is_int($index) ? $index : null;
+            $seen = [];
+            foreach ($this->streamLabels($class) as $label) {
+                $key = strtolower($label);
+                if (isset($seen[$key])) {
+                    return [$this->streamIssue($className, $label, 'is listed more than once.', $row)];
+                }
+                $seen[$key] = true;
+            }
+            foreach ($this->streamRenames($class) as $from => $to) {
+                if ($this->activeStreamSection($school, $className, $from) === null) {
+                    return [$this->streamIssue($className, $from, "doesn't exist.", $row)];
+                }
+                $target = OnboardingEngine::composeClassAndStream($className, $to);
+                $taken = Section::query()
+                    ->where('school_id', $school->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($target)])
+                    ->exists();
+                if ($taken) {
+                    return [$this->streamIssue($className, $to, 'is listed more than once.', $row)];
+                }
+            }
+            foreach ($this->namedStreams($class, 'remove_streams') as $label) {
+                $section = $this->activeStreamSection($school, $className, $label);
+                if ($section === null) {
+                    return [$this->streamIssue($className, $label, "doesn't exist.", $row)];
+                }
+                if ($this->streamHasStudents($school, $section)) {
+                    return [$this->streamIssue($className, $label, 'still has students.', $row)];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Read-only confirmation of what saveClasses would add.
+     *
+     * @param  list<array<string, mixed>>  $classes
+     * @return array{action: string, summary: string, rows: list<array{label: string, status: string, detail: ?string}>}
+     */
+    public function preview(School $school, array $classes): array
+    {
+        $year = AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->orderBy('id')
+            ->first();
+        $rows = [];
+        $newClasses = 0;
+        $newStreams = 0;
+
+        foreach ($classes as $class) {
+            if (! is_array($class)) {
+                continue;
+            }
+            $className = trim((string) ($class['name'] ?? ''));
+            $labels = $this->streamLabels($class);
+            $detail = $labels !== [] ? 'Streams: '.implode(', ', $labels) : null;
+            if ($className === '') {
+                $rows[] = ['label' => '(unnamed class)', 'status' => 'skip', 'detail' => 'needs a name'];
+
+                continue;
+            }
+            if ($year === null || (int) $year->school_id !== (int) $school->id) {
+                $rows[] = ['label' => $className, 'status' => 'skip', 'detail' => 'needs an academic year first'];
+
+                continue;
+            }
+
+            $exists = Section::query()
+                ->where('school_id', $school->id)
+                ->where('name', $className)
+                ->exists();
+            $added = 0;
+            foreach ($labels as $label) {
+                $composed = OnboardingEngine::composeClassAndStream($className, $label);
+                if ($composed === $className || $this->activeStreamSection($school, $className, $label) !== null) {
+                    continue;
+                }
+                $added++;
+            }
+            if (! $exists) {
+                $newClasses++;
+            }
+            $newStreams += $added;
+            $rows[] = [
+                'label' => $className,
+                'status' => match (true) {
+                    ! $exists => 'create',
+                    $added > 0 => 'update',
+                    default => 'already_present',
+                },
+                'detail' => $detail,
+            ];
+        }
+
+        $creating = $newClasses > 0 || $newStreams > 0;
+
+        return [
+            'action' => $creating ? 'change' : 'noop',
+            'summary' => $creating
+                ? "I'll create ".$this->countWord($newClasses, 'class', 'classes').' and '.$this->countWord($newStreams, 'stream', 'streams')
+                : 'All listed classes already exist — nothing will change.',
+            'rows' => $rows,
+        ];
+    }
+
+    /**
+     * Create and edit classes and streams for this school only.
+     *
+     * Streams are additive ("{Class} {Label}"). remove_streams flags a stream
+     * inactive when it has no students. rename renames the base class after
+     * stream edits, so existing stream names stay attached to the old prefix.
+     *
+     * @param  list<array<string, mixed>>  $classes
+     *
+     * @throws ValidationException
+     */
+    public function saveClasses(School $school, AcademicYear $year, array $classes): void
+    {
+        if ((int) $year->school_id !== (int) $school->id) {
+            throw ValidationException::withMessages([
+                'classes' => 'Academic year does not belong to this school.',
+            ]);
+        }
+
+        if ($classes === []) {
+            throw ValidationException::withMessages(['classes' => 'Add at least one class.']);
+        }
+
+        $seenNames = [];
+        foreach ($classes as $class) {
+            $name = trim((string) (is_array($class) ? ($class['name'] ?? '') : ''));
+            if ($name === '') {
+                throw ValidationException::withMessages(['classes' => 'Each class must have a name.']);
+            }
+            if (in_array($name, $seenNames, true)) {
+                throw ValidationException::withMessages(['classes' => "Duplicate class name: {$name}."]);
+            }
+            $seenNames[] = $name;
+        }
+
+        $streamIssues = $this->issues($school, $classes);
+        if ($streamIssues !== []) {
+            throw ValidationException::withMessages(['classes' => $streamIssues[0]->cause]);
+        }
+
+        if ($school->school_category) {
+            SchoolCategorySeeder::seed($school);
+        }
+
+        $engine = app(OnboardingEngine::class);
+        foreach ($classes as $class) {
+            $className = trim((string) ($class['name'] ?? ''));
+            $subGroup = $class['sub_group'] ?? null;
+            $standardName = $engine->standardNameForClass($className);
+            $standard = Standard::firstOrCreate(
+                ['school_id' => $school->id, 'name' => $standardName],
+                [
+                    'order' => match ($standardName) {
+                        'nursery' => 1,
+                        'primary' => 2,
+                        'o-level' => 3,
+                        'a-level' => 4,
+                        default => 5,
+                    },
+                    'status' => '1',
+                ]
+            );
+            $baseSection = Section::firstOrCreate(
+                ['school_id' => $school->id, 'name' => $className],
+                ['status' => '1']
+            );
+
+            StandardLink::firstOrCreate(array_filter([
+                'school_id' => $school->id,
+                'academic_year_id' => $year->id,
+                'standard_id' => $standard->id,
+                'section_id' => $baseSection->id,
+                'status' => '1',
+                'sub_group' => $subGroup,
+            ]));
+
+            foreach ($this->namedStreams($class, 'remove_streams') as $label) {
+                $section = $this->activeStreamSection($school, $className, $label);
+                if ($section === null) {
+                    continue;
+                }
+                $section->status = '0';
+                $section->save();
+                StandardLink::query()
+                    ->where('school_id', $school->id)
+                    ->where('section_id', $section->id)
+                    ->update(['status' => '0']);
+            }
+
+            foreach ($this->streamRenames($class) as $from => $to) {
+                $section = $this->activeStreamSection($school, $className, $from);
+                if ($section === null) {
+                    continue;
+                }
+                $this->renameStream(
+                    $school,
+                    $section,
+                    OnboardingEngine::composeClassAndStream($className, $to)
+                );
+            }
+
+            foreach ($this->streamLabels($class) as $label) {
+                $result = $this->addStream($school, $year, $baseSection, $label);
+                if ($subGroup !== null && $subGroup !== '') {
+                    $link = $result['standard_link'];
+                    if ($link->sub_group !== $subGroup) {
+                        $link->sub_group = $subGroup;
+                        $link->save();
+                    }
+                }
+            }
+
+            $rename = trim((string) ($class['rename'] ?? ''));
+            if ($rename !== '' && strcasecmp($rename, $className) !== 0) {
+                $this->renameStream($school, $baseSection, $rename);
+            }
+        }
+    }
+
+    private function streamIssue(string $className, string $label, string $problem, ?int $row): StepIssue
+    {
+        return StepIssueCatalog::fromMessage(
+            'standards',
+            $className.', stream '.$label.' '.$problem,
+            $row,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $class
+     * @return list<string>
+     */
+    private function streamLabels(array $class): array
+    {
+        return $this->namedStreams($class, 'streams');
+    }
+
+    /**
+     * @param  array<string, mixed>  $class
+     * @return list<string>
+     */
+    private function namedStreams(array $class, string $key): array
+    {
+        $streams = $class[$key] ?? [];
+        if (! is_array($streams)) {
+            return [];
+        }
+        $labels = [];
+        foreach ($streams as $stream) {
+            $label = trim((string) $stream);
+            if ($label !== '') {
+                $labels[] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @param  array<string, mixed>  $class
+     * @return array<string, string>
+     */
+    private function streamRenames(array $class): array
+    {
+        $map = $class['rename_streams'] ?? [];
+        if (! is_array($map)) {
+            return [];
+        }
+        $renames = [];
+        foreach ($map as $from => $to) {
+            $from = trim((string) $from);
+            $to = trim((string) $to);
+            if ($from === '' || $to === '') {
+                continue;
+            }
+            $renames[$from] = $to;
+        }
+
+        return $renames;
+    }
+
+    private function activeStreamSection(School $school, string $className, string $label): ?Section
+    {
+        $name = OnboardingEngine::composeClassAndStream($className, $label);
+        if ($name === '' || strcasecmp($name, $className) === 0) {
+            return null;
+        }
+
+        return Section::query()
+            ->where('school_id', $school->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->first();
+    }
+
+    private function streamHasStudents(School $school, Section $section): bool
+    {
+        $linkIds = StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('section_id', $section->id)
+            ->pluck('id');
+        if ($linkIds->isEmpty()) {
+            return false;
+        }
+
+        return StudentAcademic::query()
+            ->where('school_id', $school->id)
+            ->whereIn('standardLink_id', $linkIds)
+            ->exists();
+    }
+
+    private function countWord(int $count, string $one, string $many): string
+    {
+        return $count.' '.($count === 1 ? $one : $many);
     }
 }

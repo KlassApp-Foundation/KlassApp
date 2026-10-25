@@ -60,6 +60,10 @@ class ToshiOnboardingV2Driver
         $savedKey = $step->key();
 
         try {
+            // The reply is the confirm. Preview only describes the write.
+            if ($step->key() === 'standards') {
+                $step->preview($school, $raw, $userId);
+            }
             $step->save($school, $raw, $userId);
         } catch (OnboardingStepAwaitingInput $e) {
             return [
@@ -149,7 +153,7 @@ class ToshiOnboardingV2Driver
         }
 
         $message = trim($e->getMessage());
-        if ($message !== '' && in_array($step->key(), ['academic_year', 'fees'], true)) {
+        if ($message !== '' && in_array($step->key(), ['academic_year', 'fees', 'standards'], true)) {
             return $message;
         }
 
