@@ -12,8 +12,10 @@ use App\Onboarding\Steps\StepIssueException;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\Attributes\UnitTest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Onboarding\OnboardingParityHarness;
 use Tests\Support\Onboarding\OnboardingSchoolFixture;
 use Tests\Support\Onboarding\SunriseHilltopFixtures;
@@ -36,6 +38,12 @@ class OnboardingFacesParityTest extends TestCase
         parent::setUp();
 
         $this->previousTimezone = date_default_timezone_get();
+
+        // The unfinished-item tests only record a reason. They do not touch the database.
+        if ($this->name() === 'test_unfinished_item_is_marked_incomplete') {
+            return;
+        }
+
         date_default_timezone_set('Africa/Kampala');
         config(['app.timezone' => 'Africa/Kampala']);
         Carbon::setTestNow(Carbon::parse('2026-10-25 12:00:00', 'Africa/Kampala'));
@@ -95,6 +103,31 @@ class OnboardingFacesParityTest extends TestCase
     public function test_hilltop_wizard_and_toshi_save_the_same_snapshot(): void
     {
         $this->assertFacesMatch(SunriseHilltopFixtures::hilltop());
+    }
+
+    /**
+     * One PHPUnit result per gap, so a run shows these as incomplete rather than as passes.
+     */
+    #[UnitTest]
+    #[DataProvider('unfinishedItemProvider')]
+    public function test_unfinished_item_is_marked_incomplete(string $key, string $reason): void
+    {
+        $this->assertNotSame('', trim($key));
+        $this->assertNotSame('', trim($reason));
+        $this->markTestIncomplete($reason);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function unfinishedItemProvider(): array
+    {
+        $cases = [];
+        foreach (OnboardingParityHarness::incompleteSteps() as $key => $reason) {
+            $cases[$key] = [$key, $reason];
+        }
+
+        return $cases;
     }
 
     public function test_registry_steps_are_either_proved_or_incomplete(): void
@@ -226,7 +259,7 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertNotSame((string) now()->year, $sunrise->academicYearName);
     }
 
-    public function test_progress_and_completion_summaries_match_across_faces(): void
+    public function test_progress_and_completion_summaries_are_unavailable_on_both_faces(): void
     {
         $fixture = SunriseHilltopFixtures::sunrise();
         [$wizardSchool, $toshiSchool] = $this->runBothFaces($fixture);
@@ -262,6 +295,8 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertSame($fixture->emis.'-W', $wizardSnapshot->identity()['emis']);
         $this->assertSame($fixture->emis.'-T', $toshiSnapshot->identity()['emis']);
 
+        // Zero teachers because both faces skip the step. A name and email would
+        // create the users on both; only the Toshi v2 class and subject links would drop.
         $this->assertSame(0, User::query()->where('school_id', $wizardSchool->id)->where('usergroup_id', 5)->count());
         $this->assertSame(0, User::query()->where('school_id', $toshiSchool->id)->where('usergroup_id', 5)->count());
         $this->assertNotSame([], $fixture->teachers);

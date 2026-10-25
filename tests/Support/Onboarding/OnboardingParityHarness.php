@@ -59,7 +59,7 @@ final class OnboardingParityHarness
     public static function incompleteSteps(): array
     {
         return [
-            'teachers' => 'The wizard resolves class and subject names to link ids before saveTeachers. Toshi passes the draft through, and the engine stores a link only when standardLink_id and subject_id are already set. Applying the fixture teachers would not match, so both faces skip the step.',
+            'teachers' => 'Both faces would create teacher users from a valid name and email. The harness finds no teachers only because both sides skip the step. The only gap is that the new Toshi v2 teachers step (behind TOSHI_ONBOARDING_V2, off by default) passes class and subject names through without turning them into link ids, so those class and subject links would be dropped. The fix lands in the PR that moves teachers onto the engine (plan PR 10).',
             'whatsapp_verify' => 'WhatsAppOnboardingOtpService::deliver is mocked so no code is sent. The wizard may continue without a verified number. The Toshi driver cannot skip this step, so it verifies. Those rows are left out of the snapshot.',
             'class_teachers' => 'Class-teacher assignment is part of the teachers step and has not moved to one shared write. Every class_teacher in the snapshot is null.',
             'checklist_workbook' => 'The checklist-workbook ingester is not in the engine yet. Its decision on the same input is null.',
