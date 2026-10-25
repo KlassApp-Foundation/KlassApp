@@ -599,9 +599,12 @@ class EarlyAccessOpsWebhookTest extends TestCase
             }
         });
 
+        // The worker's default 128MB cap is the whole PHP process. Under paratest
+        // that process is already past it, so queue:work exits 12 before any job runs.
         $this->artisan('queue:work', [
             '--stop-when-empty' => true,
             '--sleep' => 0,
+            '--memory' => 4096,
         ])->assertExitCode(0);
     }
 
