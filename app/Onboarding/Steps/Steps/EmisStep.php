@@ -23,18 +23,11 @@ class EmisStep extends AbstractOnboardingStep
         return 'text';
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || trim($normalized) === '') {
-            $this->reject('Enter your EMIS / ministry code.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveEmis($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveEmis($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

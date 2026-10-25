@@ -3,6 +3,7 @@
 namespace App\Onboarding\Steps\Contracts;
 
 use App\Models\School;
+use App\Onboarding\Steps\StepIssue;
 use App\Onboarding\Steps\StepSchema;
 use InvalidArgumentException;
 
@@ -31,7 +32,15 @@ interface OnboardingStep
     public function normalize(mixed $raw): mixed;
 
     /**
-     * @throws InvalidArgumentException
+     * Validation problems for an already-normalized answer.
+     * Empty means the answer is accepted. Nothing is saved.
+     *
+     * @return list<StepIssue>
+     */
+    public function issues(School $school, mixed $normalized): array;
+
+    /**
+     * @throws InvalidArgumentException the message is the first issue's cause
      */
     public function validate(School $school, mixed $normalized): void;
 

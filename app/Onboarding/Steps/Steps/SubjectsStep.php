@@ -44,27 +44,6 @@ class SubjectsStep extends AbstractOnboardingStep
         return [];
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if ($normalized === 'skip') {
-            if (! in_array('subjects', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
-
-            return;
-        }
-        if ($normalized === 'confirm_seeded') {
-            if (! Subject::where('school_id', $school->id)->exists()) {
-                $this->reject('Add or confirm subjects first.');
-            }
-
-            return;
-        }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
@@ -84,7 +63,7 @@ class SubjectsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveSubjects($school, $year, $normalized);
+        $this->engineCall(fn () => $this->engine->saveSubjects($school, $year, $normalized));
         OnboardingStepReview::mark($school, 'subjects');
     }
 

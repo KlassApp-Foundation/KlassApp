@@ -70,32 +70,11 @@ class FeesStep extends AbstractOnboardingStep
         return $fees;
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_array($normalized) || $normalized === []) {
-            $this->reject('Add at least one fee structure.');
-        }
-
-        foreach ($normalized as $fee) {
-            if (! is_array($fee)) {
-                $this->reject('Add at least one fee structure.');
-            }
-            $name = trim((string) ($fee['name'] ?? ''));
-            $amount = $fee['amount'] ?? null;
-            if ($name === '') {
-                $this->reject('Enter a fee name and an amount.');
-            }
-            if (! is_numeric($amount) || (float) $amount <= 0) {
-                $this->reject("Enter an amount for {$name}. For example: {$name} 250000.");
-            }
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveFees($school, $normalized);
+        $this->engineCall(fn () => $this->engine->saveFees($school, $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

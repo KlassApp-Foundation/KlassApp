@@ -22,17 +22,10 @@ class SchoolNameStep extends AbstractOnboardingStep
         return 'text';
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || trim($normalized) === '') {
-            $this->reject('Enter your real school name.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $this->validate($school, $normalized);
-        $this->engine->saveSchoolName($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveSchoolName($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

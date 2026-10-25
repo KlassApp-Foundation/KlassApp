@@ -60,92 +60,223 @@ final class StepSchema
      */
     public function accepts(School $school, mixed $normalized): bool
     {
+        return $this->issues($school, $normalized) === [];
+    }
+
+    /**
+     * Validation problems for an already-normalized answer.
+     * A string plan id is rejected here: options are text, and validate()
+     * requires the plan's integer id.
+     *
+     * @return list<StepIssue>
+     */
+    public function issues(School $school, mixed $normalized): array
+    {
         return match ($this->validation['kind'] ?? '') {
-            'filled_string' => is_string($normalized) && trim($normalized) !== '',
-            'min_string' => is_string($normalized) && strlen(trim($normalized)) >= (int) $this->validation['min'],
-            'any_string' => is_string($normalized),
-            'one_of' => is_string($normalized) && in_array($normalized, $this->optionValues(), true),
-            'academic_year' => $this->acceptsAcademicYear($normalized),
-            'list' => $this->acceptsList($school, $normalized),
-            'fees' => $this->acceptsFees($normalized),
-            'active_plan' => $this->acceptsActivePlan($normalized),
-            default => false,
+            'filled_string' => $this->filledStringIssues($normalized),
+            'min_string' => $this->minStringIssues($normalized),
+            'any_string' => $this->anyStringIssues($normalized),
+            'one_of' => $this->oneOfIssues($normalized),
+            'academic_year' => $this->academicYearIssues($normalized),
+            'list' => $this->listIssues($school, $normalized),
+            'fees' => $this->feeIssues($normalized),
+            'active_plan' => $this->planIssues($normalized),
+            default => [StepIssueCatalog::fromMessage($this->key, 'Provide a valid list for this step.')],
         };
     }
 
-    private function acceptsAcademicYear(mixed $normalized): bool
+    /**
+     * Stricter save-time problems. These do not change accepts().
+     *
+     * @return list<StepIssue>
+     */
+    public function saveIssues(School $school, mixed $normalized): array
+    {
+        return StepIssueCatalog::saveIssues($this->key, $school, $normalized);
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    private function filledStringIssues(mixed $normalized): array
+    {
+        if (is_string($normalized) && trim($normalized) !== '') {
+            return [];
+        }
+
+        $cause = match ($this->key) {
+            'emis' => 'Enter your EMIS / ministry code.',
+            'whatsapp_verify' => 'Enter a WhatsApp phone number.',
+            default => 'Enter your real school name.',
+        };
+
+        return [StepIssueCatalog::fromMessage($this->key, $cause)];
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    private function minStringIssues(mixed $normalized): array
+    {
+        $min = (int) $this->validation['min'];
+        if (is_string($normalized) && strlen(trim($normalized)) >= $min) {
+            return [];
+        }
+
+        return [StepIssueCatalog::fromMessage($this->key, 'Enter a country.')];
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    private function anyStringIssues(mixed $normalized): array
+    {
+        if (is_string($normalized)) {
+            return [];
+        }
+
+        return [StepIssueCatalog::fromMessage($this->key, 'Enter a UNEB centre number or skip.')];
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    private function oneOfIssues(mixed $normalized): array
+    {
+        if (is_string($normalized) && in_array($normalized, $this->optionValues(), true)) {
+            return [];
+        }
+
+        $cause = match ($this->key) {
+            'curriculum' => 'Choose a curriculum option.',
+            'school_category' => 'Choose a school category.',
+            default => 'Choose one of the school size options.',
+        };
+
+        return [StepIssueCatalog::fromMessage($this->key, $cause)];
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    private function academicYearIssues(mixed $normalized): array
     {
         if (! is_array($normalized)) {
-            return false;
+            return [StepIssueCatalog::fromMessage($this->key, StepIssueCatalog::academicYearCause())];
         }
 
         $name = trim((string) ($normalized['name'] ?? ''));
         $fromChat = ! empty($normalized['free_text']);
 
-        if ($name === '') {
-            return false;
+        if ($name === '' || ($fromChat && ! $this->isYearLabel($name))) {
+            return [StepIssueCatalog::fromMessage($this->key, StepIssueCatalog::academicYearCause())];
         }
 
-        if ($fromChat && ! $this->isYearLabel($name)) {
-            return false;
-        }
-
-        return true;
+        return [];
     }
 
-    private function acceptsList(School $school, mixed $normalized): bool
+    /**
+     * @return list<StepIssue>
+     */
+    private function listIssues(School $school, mixed $normalized): array
     {
         if ($normalized === 'skip') {
-            return ($this->validation['allow_skip'] ?? false) === true
+            $allowed = ($this->validation['allow_skip'] ?? false) === true
                 && in_array($this->key, OnboardingStepsService::OPTIONAL_STEPS, true);
+
+            return $allowed ? [] : [StepIssueCatalog::fromMessage($this->key, 'This step cannot be skipped.')];
         }
 
         if ($normalized === 'confirm_seeded') {
-            return match ($this->validation['confirm_seeded'] ?? null) {
+            $ok = match ($this->validation['confirm_seeded'] ?? null) {
                 'standards_link' => StandardLink::where('school_id', $school->id)->exists(),
                 'subjects' => Subject::where('school_id', $school->id)->exists(),
                 default => false,
             };
+            if ($ok) {
+                return [];
+            }
+
+            if (($this->validation['confirm_seeded'] ?? null) === null) {
+                return [StepIssueCatalog::fromMessage($this->key, 'Provide a valid list for this step.')];
+            }
+
+            $cause = $this->key === 'subjects'
+                ? 'Add or confirm subjects first.'
+                : 'Add or confirm your classes first.';
+
+            return [StepIssueCatalog::fromMessage($this->key, $cause)];
         }
 
-        return is_array($normalized);
+        if (! is_array($normalized)) {
+            return [StepIssueCatalog::fromMessage($this->key, 'Provide a valid list for this step.')];
+        }
+
+        return [];
     }
 
-    private function acceptsFees(mixed $normalized): bool
+    /**
+     * @return list<StepIssue>
+     */
+    private function feeIssues(mixed $normalized): array
     {
         if (! is_array($normalized) || $normalized === []) {
-            return false;
+            return [StepIssueCatalog::fromMessage($this->key, 'Add at least one fee structure.')];
         }
 
         $nameRules = $this->childRules('fees', 'name');
         $amountRules = $this->childRules('fees', 'amount');
         if (! in_array('required', $nameRules, true) || ! in_array('gt:0', $amountRules, true)) {
-            return false;
+            return [StepIssueCatalog::fromMessage($this->key, 'Add at least one fee structure.')];
         }
 
-        foreach ($normalized as $fee) {
+        $issues = [];
+        foreach ($normalized as $index => $fee) {
+            $row = is_int($index) ? $index : null;
             if (! is_array($fee)) {
-                return false;
+                $issues[] = StepIssueCatalog::fromMessage($this->key, 'Add at least one fee structure.', $row);
+
+                continue;
             }
-            if (trim((string) ($fee['name'] ?? '')) === '') {
-                return false;
+            $name = trim((string) ($fee['name'] ?? ''));
+            if ($name === '') {
+                $issues[] = StepIssueCatalog::fromMessage($this->key, 'Enter a fee name and an amount.', $row);
+
+                continue;
             }
             $amount = $fee['amount'] ?? null;
             if (! is_numeric($amount) || (float) $amount <= 0) {
-                return false;
+                $issues[] = StepIssueCatalog::fromMessage($this->key, StepIssueCatalog::feeAmountCause($name), $row);
             }
         }
 
-        return true;
+        return $issues;
     }
 
-    private function acceptsActivePlan(mixed $normalized): bool
+    /**
+     * @return list<StepIssue>
+     */
+    private function planIssues(mixed $normalized): array
     {
-        if (! is_int($normalized) || $normalized < 1) {
-            return false;
+        if (is_string($normalized) && preg_match('/^\d+$/', trim($normalized)) === 1) {
+            return [StepIssueCatalog::issue(
+                'plan.id_type',
+                'plan_id',
+                null,
+                'Choose a plan.',
+                'Choose a plan from the list. The plan is saved as its number, not as text.',
+            )];
         }
 
-        return Plan::query()->where('id', $normalized)->where('is_active', 1)->exists();
+        if (! is_int($normalized) || $normalized < 1) {
+            return [StepIssueCatalog::fromMessage($this->key, 'Choose a plan.')];
+        }
+
+        if (! Plan::query()->where('id', $normalized)->where('is_active', 1)->exists()) {
+            return [StepIssueCatalog::fromMessage($this->key, 'That plan is not available.')];
+        }
+
+        return [];
     }
 
     /**
