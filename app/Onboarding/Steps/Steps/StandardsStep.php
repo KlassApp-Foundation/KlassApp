@@ -233,6 +233,20 @@ class StandardsStep extends AbstractOnboardingStep
                 : SchoolTypePreset::ACCEPT;
         }
 
-        return $preset->standardsAnswer();
+        $answer = $preset->standardsAnswerFor($school);
+        $addingStreams = false;
+        foreach ($answer as $class) {
+            if (($class['streams'] ?? []) !== []) {
+                $addingStreams = true;
+                break;
+            }
+        }
+
+        // Nothing new to add: keep the saved classes, including a cleared suggestion.
+        if (! $addingStreams && StandardLink::where('school_id', $school->id)->exists()) {
+            return 'confirm_seeded';
+        }
+
+        return $answer;
     }
 }

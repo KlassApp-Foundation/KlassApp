@@ -4,6 +4,8 @@ namespace App\Onboarding\Country;
 
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Onboarding\Steps\OnboardingStepReview;
+use App\Services\ClassStructureService;
 use App\Services\SchoolCategorySeeder;
 
 /**
@@ -139,6 +141,94 @@ final class SchoolTypePreset
     public function streamDraft(string $className): string
     {
         return implode(', ', $this->streamsFor($className));
+    }
+
+    /**
+     * Stream text for an empty class, before the school confirms this step.
+     * A class that already has a stream is left alone. Confirming the step,
+     * including a confirmation that cleared the suggestion, closes it.
+     *
+     * @param  list<string>  $existingStreamLabels
+     */
+    public function suggestedStreamDraft(School $school, string $className, array $existingStreamLabels): string
+    {
+        if (! self::maySuggestStreams($school, $existingStreamLabels)) {
+            return '';
+        }
+
+        return $this->streamDraft($className);
+    }
+
+    /**
+     * @param  list<string>  $existingStreamLabels
+     */
+    public static function maySuggestStreams(School $school, array $existingStreamLabels): bool
+    {
+        if ($existingStreamLabels !== []) {
+            return false;
+        }
+
+        return ! self::streamSuggestionsClosed($school);
+    }
+
+    /**
+     * The classes step was confirmed, or the suggestion was cleared on that confirmation.
+     */
+    public static function streamSuggestionsClosed(School $school): bool
+    {
+        return OnboardingStepReview::reviewed($school, 'standards');
+    }
+
+    /**
+     * Use this adds suggested streams only where {@see maySuggestStreams} is still true.
+     *
+     * @return list<array{name: string, streams: list<string>}>
+     */
+    public function standardsAnswerFor(School $school): array
+    {
+        $existing = self::existingStreamLabels($school);
+        $rows = [];
+        foreach ($this->classes as $class) {
+            $name = $class['name'];
+            $labels = $existing[strtolower($name)] ?? [];
+            $rows[] = [
+                'name' => $name,
+                'streams' => self::maySuggestStreams($school, $labels) ? $class['streams'] : [],
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    public static function existingStreamLabels(School $school): array
+    {
+        $year = AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->where('status', 1)
+            ->first()
+            ?? AcademicYear::query()->where('school_id', $school->id)->first();
+
+        if ($year === null) {
+            return [];
+        }
+
+        $labels = [];
+        foreach (app(ClassStructureService::class)->structureSnapshot($school, $year) as $row) {
+            $name = strtolower(trim((string) ($row['name'] ?? '')));
+            $streams = [];
+            foreach ($row['streams'] ?? [] as $stream) {
+                $label = trim((string) ($stream['label'] ?? ''));
+                if ($label !== '') {
+                    $streams[] = $label;
+                }
+            }
+            $labels[$name] = $streams;
+        }
+
+        return $labels;
     }
 
     /**

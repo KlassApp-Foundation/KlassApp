@@ -20,6 +20,7 @@ use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Onboarding\Steps\Steps\SubjectsStep;
 use App\Onboarding\Steps\Steps\TermsStep;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
+use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -273,6 +274,115 @@ class SchoolTypePresetTest extends TestCase
         $component->call('next');
         $this->assertSame($before, Section::where('school_id', $school->id)->count());
         $this->assertSame('', $component->get('subjectName'));
+    }
+
+    public function test_reopening_after_clearing_suggestions_does_not_create_classes(): void
+    {
+        $school = $this->readySchool('Uganda', 'o_a_level', 'cleared');
+        $admin = $this->adminFor($school);
+        $this->actingAs($admin);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $cleared = $component->get('structureStreamDrafts');
+        foreach ($cleared as $key => $value) {
+            $cleared[$key] = '';
+        }
+        $component->set('structureStreamDrafts', $cleared)->call('next');
+        $this->assertSame('', $component->get('errorMessage'));
+
+        $before = $this->sectionNames($school);
+        $this->assertNotContains('Senior Five PCM', $before);
+        $this->assertNotContains('Senior Six PCM', $before);
+
+        $reopened = Livewire::test(ManualOnboardingWizard::class);
+        $reopened->call('goToStep', $this->stepIndex($reopened, 'standards'));
+        foreach ($reopened->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $reopened->assertDontSee('Suggested streams are filled in');
+        $reopened->call('next');
+        $this->assertSame('', $reopened->get('errorMessage'));
+        $this->assertSame($before, $this->sectionNames($school));
+
+        app(StandardsStep::class)->save($school->fresh(), 'use_this');
+        $this->assertSame($before, $this->sectionNames($school));
+    }
+
+    public function test_reopening_after_a_custom_stream_does_not_create_classes(): void
+    {
+        $school = $this->readySchool('Uganda', 'o_a_level', 'arts');
+        $admin = $this->adminFor($school);
+        $this->actingAs($admin);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $five = $this->sectionId($component, 'Senior Five');
+        $drafts = $component->get('structureStreamDrafts');
+        foreach ($drafts as $key => $value) {
+            $drafts[$key] = (string) $key === (string) $five ? 'Arts' : '';
+        }
+        $component->set('structureStreamDrafts', $drafts)->call('next');
+        $this->assertSame('', $component->get('errorMessage'));
+
+        $before = $this->sectionNames($school);
+        $this->assertContains('Senior Five Arts', $before);
+        $this->assertNotContains('Senior Five PCM', $before);
+        $this->assertNotContains('Senior Six PCM', $before);
+
+        $reopened = Livewire::test(ManualOnboardingWizard::class);
+        $reopened->call('goToStep', $this->stepIndex($reopened, 'standards'));
+        $reopened->assertSee('Arts');
+        foreach ($reopened->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $count = count($before);
+        $reopened->call('next');
+        $this->assertSame('', $reopened->get('errorMessage'));
+        $after = $this->sectionNames($school);
+        $this->assertSame($before, $after);
+        $this->assertCount($count, $after);
+        $this->assertGreaterThan(6, $count);
+        $this->assertLessThan(15, $count);
+
+        app(StandardsStep::class)->save($school->fresh(), 'use_this');
+        $this->assertSame($before, $this->sectionNames($school));
+    }
+
+    public function test_use_this_does_not_add_streams_to_a_class_that_already_has_some(): void
+    {
+        $school = $this->readySchool('Uganda', 'o_a_level', 'partial');
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        $base = Section::where('school_id', $school->id)->where('name', 'Senior Five')->first();
+        $this->assertNotNull($year);
+        $this->assertNotNull($base);
+        app(OnboardingEngine::class)->addClassStream($school, $year, $base, 'Arts');
+
+        $before = $this->sectionNames($school);
+        app(StandardsStep::class)->save($school->fresh(), 'use_this');
+        $after = $this->sectionNames($school);
+
+        $this->assertContains('Senior Five Arts', $after);
+        $this->assertNotContains('Senior Five PCM', $after);
+        $this->assertNotContains('Senior Five BCM', $after);
+        $this->assertNotContains('Senior Five HEG', $after);
+        $this->assertNotContains('Senior Five MEG', $after);
+        $this->assertContains('Senior Six PCM', $after);
+        $this->assertContains('Senior Six BCM', $after);
+        $this->assertContains('Senior Six HEG', $after);
+        $this->assertContains('Senior Six MEG', $after);
+        $this->assertSame(
+            array_values(array_filter($before, fn (string $name): bool => ! str_starts_with($name, 'Senior Six '))),
+            array_values(array_filter($after, fn (string $name): bool => ! str_starts_with($name, 'Senior Six '))),
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sectionNames(School $school): array
+    {
+        return Section::where('school_id', $school->id)->orderBy('name')->pluck('name')->all();
     }
 
     private function school(?string $country, ?string $category): School

@@ -24,6 +24,7 @@ use App\Services\ToshiActionService;
 use App\Services\FinishSchoolOnboarding;
 use App\Services\OnboardingStepsService;
 use App\Onboarding\Country\SchoolTypePreset;
+use App\Onboarding\Steps\OnboardingStepReview;
 use App\Onboarding\Steps\StepRegistry;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
@@ -2161,7 +2162,11 @@ class ManualOnboardingWizard extends Component
         foreach ($this->structureClasses as $row) {
             $sid = (string) $row['section_id'];
             if (! array_key_exists($sid, $this->structureStreamDrafts)) {
-                $draft = $preset?->streamDraft((string) ($row['name'] ?? '')) ?? '';
+                $labels = array_map(
+                    fn (array $stream): string => (string) ($stream['label'] ?? ''),
+                    is_array($row['streams'] ?? null) ? $row['streams'] : []
+                );
+                $draft = $preset?->suggestedStreamDraft($school, (string) ($row['name'] ?? ''), $labels) ?? '';
                 $this->structureStreamDrafts[$sid] = $draft;
             }
             if (trim((string) $this->structureStreamDrafts[$sid]) !== '') {
@@ -2212,9 +2217,11 @@ class ManualOnboardingWizard extends Component
     private function saveClass(School $school): void
     {
         // Classes from the category seeder are already saved. Suggested streams
-        // stay in the fields until Continue. A cleared field is left out.
+        // stay in the fields until Continue. A cleared field is left out, and
+        // confirming the step means the suggestion is not filled in again.
         if (StandardLink::where('school_id', $school->id)->exists()) {
             $this->commitPrefilledStreams($school);
+            OnboardingStepReview::mark($school, 'standards');
 
             return;
         }
