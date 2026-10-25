@@ -6,6 +6,7 @@ use App\Models\Country;
 use App\Models\EarlyAccessRequest;
 use App\Models\User;
 use App\Notifications\EarlyAccessRequestedNotification;
+use App\Services\EarlyAccessOpsWebhook;
 use App\Support\PhoneCountry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +91,8 @@ class EarlyAccessController extends Controller
         $earlyAccess = EarlyAccessRequest::create($validated);
 
         Log::info('Early access request received', ['early_access_request_id' => $earlyAccess->id]);
+
+        app(EarlyAccessOpsWebhook::class)->queue($earlyAccess, 'created');
 
         try {
             $admins = User::where('usergroup_id', 1)->where('status', 'active')->get();

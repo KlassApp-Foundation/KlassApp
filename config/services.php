@@ -148,6 +148,19 @@ return [
         'booking_url' => env('DEMO_BOOKING_URL'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Early-access ops webhook (optional n8n notify)
+    |--------------------------------------------------------------------------
+    | URL empty: nothing is queued. URL set without a secret: skip and log
+    | a warning; the body is never sent unsigned. The URL must be https.
+    | Signature and the n8n check are documented on EarlyAccessOpsWebhook.
+    */
+    'ops_webhook' => [
+        'url' => env('KLASSAPP_OPS_WEBHOOK_URL'),
+        'secret' => env('KLASSAPP_OPS_WEBHOOK_SECRET'),
+    ],
+
     // OpenCode Go gateway: requests to the configured OpenAI-compatible
     // provider's host carry this session id (the gateway rejects
     // session-less requests with MissingSessionID). Any stable UUID works.
