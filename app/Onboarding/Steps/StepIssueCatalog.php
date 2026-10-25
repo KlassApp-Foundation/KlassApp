@@ -78,16 +78,105 @@ final class StepIssueCatalog
     public static function whatsappVerification(string $serviceMessage): StepIssue
     {
         $message = trim($serviceMessage);
-        $code = match (true) {
-            str_contains($message, "doesn't match") => 'whatsapp.code_mismatch',
-            str_contains($message, 'expired') => 'whatsapp.code_expired',
-            str_contains($message, 'no longer valid'), str_contains($message, 'Too many incorrect') => 'whatsapp.code_invalid',
-            str_contains($message, 'Phone number changed') => 'whatsapp.code_phone',
-            str_contains($message, 'Send a verification code first') => 'whatsapp.code_missing',
-            default => 'whatsapp.code',
-        };
+        $code = 'whatsapp.code';
+        foreach (self::whatsappVerificationRules() as $rule) {
+            if (self::ruleMatches($message, $rule)) {
+                $code = $rule['code'];
+                break;
+            }
+        }
 
         return self::issue($code, 'code', null, $message, self::fixFor($code, $message));
+    }
+
+    /**
+     * Issue codes a wizard step can return, keyed by the step.
+     *
+     * whatsapp.* belongs to whatsapp_verify and plan.* belongs to plan_selection.
+     * {key}.skip, {key}.list and {key}.year are expanded for the steps in
+     * genericCodeRule(). {key}.rejected and {key}.save are fallbacks: they are
+     * not listed here, and the playbook states the rule for them.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function codes(): array
+    {
+        $buckets = [];
+        $add = function (string $code) use (&$buckets): void {
+            if (str_contains($code, '{key}')) {
+                return;
+            }
+            $step = self::stepKeyForCode($code);
+            $buckets[$step][] = $code;
+        };
+
+        foreach (self::exactMessageCodes() as $template) {
+            $add($template);
+        }
+        $add('academic_year.invalid');
+        foreach (self::patternRules() as $rule) {
+            $add($rule['code']);
+        }
+        foreach (self::whatsappVerificationRules() as $rule) {
+            $add($rule['code']);
+        }
+        $add('whatsapp.code');
+        foreach (array_keys(self::fixTexts()) as $code) {
+            $add($code);
+        }
+
+        $rule = self::genericCodeRule();
+        foreach ($rule['steps'] as $step) {
+            foreach ($rule['suffixes'] as $suffix) {
+                $add($step.'.'.$suffix);
+            }
+        }
+
+        $ordered = [];
+        foreach ($buckets as $step => $codes) {
+            $ordered[$step] = array_values(array_unique($codes));
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * Step that owns an issue code. whatsapp.* and plan.* are the exceptions
+     * to "the prefix is the step key".
+     */
+    public static function stepKeyForCode(string $code): string
+    {
+        $prefix = strstr($code, '.', true);
+        if (! is_string($prefix) || $prefix === '') {
+            return $code;
+        }
+
+        return self::prefixSteps()[$prefix] ?? $prefix;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function prefixSteps(): array
+    {
+        return [
+            'whatsapp' => 'whatsapp_verify',
+            'plan' => 'plan_selection',
+        ];
+    }
+
+    /**
+     * Generated codes. suffixes apply only to steps. fallback applies to every step.
+     *
+     * @return array{steps: list<string>, suffixes: list<string>, fallback: list<string>}
+     */
+    public static function genericCodeRule(): array
+    {
+        return [
+            'steps' => ['standards', 'subjects', 'teachers', 'students', 'terms'],
+            'suffixes' => ['skip', 'list', 'year'],
+            'fallback' => ['rejected', 'save'],
+        ];
     }
 
     public static function academicYearCause(): string
@@ -366,7 +455,30 @@ final class StepIssueCatalog
 
     private static function codeForMessage(string $key, string $message): ?string
     {
-        $exact = [
+        $exact = self::exactMessageCodes();
+        if (isset($exact[$message])) {
+            return str_replace('{key}', $key, $exact[$message]);
+        }
+
+        if ($message === self::academicYearCause()) {
+            return 'academic_year.invalid';
+        }
+
+        foreach (self::patternRules() as $rule) {
+            if (self::ruleMatches($message, $rule)) {
+                return $rule['code'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function exactMessageCodes(): array
+    {
+        return [
             'Enter your real school name.' => 'school_name.required',
             'The school name must be at least 3 characters.' => 'school_name.min',
             'Choose one of the school size options.' => 'student_size.choice',
@@ -380,10 +492,10 @@ final class StepIssueCatalog
             'Provide both start and end dates.' => 'academic_year.dates',
             'The academic year end date must be after the start date.' => 'academic_year.end',
             'Enter an academic year.' => 'academic_year.required',
-            'This step cannot be skipped.' => $key.'.skip',
+            'This step cannot be skipped.' => '{key}.skip',
             'Add or confirm your classes first.' => 'standards.confirm',
             'Add or confirm subjects first.' => 'subjects.confirm',
-            'Provide a valid list for this step.' => $key.'.list',
+            'Provide a valid list for this step.' => '{key}.list',
             'Add at least one class.' => 'standards.min',
             'Each class must have a name.' => 'standards.name',
             'Add at least one subject.' => 'subjects.min',
@@ -401,52 +513,65 @@ final class StepIssueCatalog
             'That plan is not available.' => 'plan.unavailable',
             'Add a teacher with a name and an email, or type skip.' => 'teachers.line',
             'Add a student with a name and a class, or type skip.' => 'students.line',
-            'Create an academic year before this step.' => $key.'.year',
+            'Create an academic year before this step.' => '{key}.year',
             "We couldn't send the verification code. Please try again." => 'whatsapp.send_failed',
-            'Verify the code sent to your WhatsApp before continuing.' => 'whatsapp.code_mismatch',
+            'Verify the code sent to your WhatsApp before continuing.' => 'whatsapp.code_missing',
         ];
+    }
 
-        if (isset($exact[$message])) {
-            return $exact[$message];
+    /**
+     * @return list<array{code: string, starts_with?: string, contains?: string, contains_any?: list<string>}>
+     */
+    private static function patternRules(): array
+    {
+        return [
+            ['code' => 'fees.amount', 'starts_with' => 'Enter an amount for '],
+            ['code' => 'standards.duplicate', 'starts_with' => 'Duplicate class name:'],
+            ['code' => 'subjects.min_for_class', 'starts_with' => "Class '", 'contains' => 'must have at least one subject'],
+            ['code' => 'subjects.missing_class', 'contains' => 'does not exist. Add it on the classes step first.'],
+            ['code' => 'terms.dates', 'contains' => 'provide both start and end dates, or neither'],
+            ['code' => 'terms.end', 'contains' => 'end date must be after start date'],
+            ['code' => 'whatsapp.taken', 'starts_with' => 'WhatsApp number ', 'contains' => 'already registered'],
+            ['code' => 'academic_year.date', 'contains_any' => ['must be a valid date', 'is not a valid date']],
+        ];
+    }
+
+    /**
+     * @return list<array{code: string, contains?: string, contains_any?: list<string>}>
+     */
+    private static function whatsappVerificationRules(): array
+    {
+        return [
+            ['code' => 'whatsapp.code_mismatch', 'contains' => "doesn't match"],
+            ['code' => 'whatsapp.code_expired', 'contains' => 'expired'],
+            ['code' => 'whatsapp.code_invalid', 'contains_any' => ['no longer valid', 'Too many incorrect']],
+            ['code' => 'whatsapp.code_phone', 'contains' => 'Phone number changed'],
+            ['code' => 'whatsapp.code_missing', 'contains' => 'Send a verification code first'],
+        ];
+    }
+
+    /**
+     * @param  array{code?: string, starts_with?: string, contains?: string, contains_any?: list<string>}  $rule
+     */
+    private static function ruleMatches(string $message, array $rule): bool
+    {
+        if (isset($rule['starts_with']) && ! str_starts_with($message, $rule['starts_with'])) {
+            return false;
+        }
+        if (isset($rule['contains']) && ! str_contains($message, $rule['contains'])) {
+            return false;
+        }
+        if (isset($rule['contains_any'])) {
+            foreach ($rule['contains_any'] as $needle) {
+                if (str_contains($message, $needle)) {
+                    return ! isset($rule['starts_with']) || str_starts_with($message, $rule['starts_with']);
+                }
+            }
+
+            return false;
         }
 
-        if ($message === self::academicYearCause()) {
-            return 'academic_year.invalid';
-        }
-
-        if (str_starts_with($message, 'Enter an amount for ')) {
-            return 'fees.amount';
-        }
-
-        if (str_starts_with($message, 'Duplicate class name:')) {
-            return 'standards.duplicate';
-        }
-
-        if (str_starts_with($message, "Class '") && str_contains($message, 'must have at least one subject')) {
-            return 'subjects.min_for_class';
-        }
-
-        if (str_contains($message, 'does not exist. Add it on the classes step first.')) {
-            return 'subjects.missing_class';
-        }
-
-        if (str_contains($message, 'provide both start and end dates, or neither')) {
-            return 'terms.dates';
-        }
-
-        if (str_contains($message, 'end date must be after start date')) {
-            return 'terms.end';
-        }
-
-        if (str_starts_with($message, 'WhatsApp number ') && str_contains($message, 'already registered')) {
-            return 'whatsapp.taken';
-        }
-
-        if (str_contains($message, 'must be a valid date') || str_contains($message, 'is not a valid date')) {
-            return 'academic_year.date';
-        }
-
-        return null;
+        return true;
     }
 
     private static function fieldFor(string $code): ?string
@@ -480,7 +605,22 @@ final class StepIssueCatalog
 
     private static function fixFor(string $code, string $message): string
     {
-        return match ($code) {
+        return self::fixTexts()[$code] ?? self::fallbackFix($message);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function fixTexts(): array
+    {
+        $yearText = 'Enter a four-digit year, a span such as 2026/2027, or reply yes to use the suggested year.';
+        $skip = 'Enter the information for this step. It cannot be skipped.';
+        $list = 'Send the list for this step, or confirm what is already saved.';
+        $needYear = 'Set the academic year, then return to this step.';
+        $phone = 'Enter the WhatsApp number that should receive the verification code.';
+        $resend = 'Reply resend for a new code, then enter that 6-digit code.';
+
+        return [
             'school_name.required' => 'Type the school\'s real name.',
             'school_name.min' => 'Enter the full school name, at least 3 characters.',
             'school_name.placeholder' => 'Replace the placeholder with the school\'s real name.',
@@ -492,18 +632,31 @@ final class StepIssueCatalog
             'emis.max' => 'Shorten the code to 20 characters or fewer.',
             'emis.unique' => 'Enter the code that belongs to this school.',
             'uneb_center.invalid' => 'Enter the centre number, or skip this step.',
-            'academic_year.invalid', 'academic_year.required' => 'Enter a four-digit year, a span such as 2026/2027, or reply yes to use the suggested year.',
+            'academic_year.invalid' => $yearText,
+            'academic_year.required' => $yearText,
             'academic_year.dates' => 'Enter both the start date and the end date, or leave both blank.',
             'academic_year.end' => 'Move the end date to a day after the start date.',
             'academic_year.date' => 'Enter the start and end as real dates, with the end after the start.',
-            'standards.skip', 'subjects.skip', 'teachers.skip', 'students.skip', 'terms.skip' => 'Enter the information for this step. It cannot be skipped.',
+            'standards.skip' => $skip,
+            'subjects.skip' => $skip,
+            'teachers.skip' => $skip,
+            'students.skip' => $skip,
+            'terms.skip' => $skip,
             'standards.confirm' => 'Add at least one class, or confirm once classes are already on the school.',
             'subjects.confirm' => 'Add at least one subject, or confirm once subjects are already on the school.',
-            'standards.list', 'subjects.list', 'teachers.list', 'students.list', 'terms.list' => 'Send the list for this step, or confirm what is already saved.',
+            'standards.list' => $list,
+            'subjects.list' => $list,
+            'teachers.list' => $list,
+            'students.list' => $list,
+            'terms.list' => $list,
             'standards.min' => 'Add at least one class with a name.',
             'standards.name' => 'Give each class a name.',
             'standards.duplicate' => 'Use each class name only once in the list.',
-            'standards.year', 'subjects.year', 'teachers.year', 'students.year', 'terms.year' => 'Set the academic year, then return to this step.',
+            'standards.year' => $needYear,
+            'subjects.year' => $needYear,
+            'teachers.year' => $needYear,
+            'students.year' => $needYear,
+            'terms.year' => $needYear,
             'subjects.min' => 'Add at least one subject.',
             'subjects.class_name' => 'Name the class the subjects belong to.',
             'subjects.min_for_class' => 'Add at least one subject for that class.',
@@ -518,18 +671,22 @@ final class StepIssueCatalog
             'fees.required' => 'Add a fee with a name and an amount, for example Tuition 250000.',
             'fees.name' => 'Enter the fee\'s name and an amount greater than zero.',
             'fees.amount' => 'Enter a number greater than zero for that fee, for example Tuition 250000.',
-            'whatsapp.phone', 'whatsapp.phone_first', 'whatsapp.required' => 'Enter the WhatsApp number that should receive the verification code.',
+            'whatsapp.phone' => $phone,
+            'whatsapp.phone_first' => $phone,
+            'whatsapp.required' => $phone,
             'whatsapp.user' => 'Sign in, then enter the WhatsApp number.',
             'whatsapp.code_mismatch' => 'Enter the 6-digit code from the WhatsApp message, or reply resend for a new code.',
-            'whatsapp.code_expired', 'whatsapp.code_invalid', 'whatsapp.code_missing', 'whatsapp.code' => 'Reply resend for a new code, then enter that 6-digit code.',
+            'whatsapp.code_expired' => $resend,
+            'whatsapp.code_invalid' => $resend,
+            'whatsapp.code_missing' => $resend,
+            'whatsapp.code' => $resend,
             'whatsapp.code_phone' => 'Send a new code to the current number, then enter that code.',
             'whatsapp.taken' => 'Enter a different WhatsApp number that is not already registered.',
             'whatsapp.send_failed' => 'Check the number and reply retry, or resend for a new code.',
             'plan.required' => 'Choose one of the plans in the list.',
             'plan.id_type' => 'Choose a plan from the list. The plan is saved as its number, not as text.',
             'plan.unavailable' => 'Choose a plan that is currently offered.',
-            default => self::fallbackFix($message),
-        };
+        ];
     }
 
     private static function fallbackFix(string $message): string
