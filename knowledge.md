@@ -638,7 +638,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: October 25, 2026 — **Marks UI audit OPEN (docs only) [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234)**
 
 - UI walk of the marks steps on a local app with Demo Junior School, Demo Senior School, and a provisioned Sunset PS. Synthetic data only. Parent WhatsApp used the local simulator. No production school and no production data.
-- Docs only: `docs/product/marks-ui-audit.md` and `docs/product/screenshots/marks-ui/`. Open as [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234) on `cursor/marks-ui-audit-0fa1`. [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is still open, so new phase-plan gaps are in the audit, not in `marks-flow.md`. Awaiting the product owner's approval. Not merged.
+- Docs only: `docs/product/marks-ui-audit.md` and `docs/product/screenshots/marks-ui/`. Open as [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234) on `cursor/marks-ui-audit-0fa1`. [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is merged (`61516ec7`) and [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233) is merged (`ac36ca66`). The phase-plan additions sit in `docs/product/marks-flow.md`. Awaiting the product owner's approval. Not merged.
+- Merged `origin/main` `a1348c271558cbca06ec92cac841ccee9e65493e` ([#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)) with a merge commit. No rebase and no force-push. The only conflict was `knowledge.md`. Both status notes are kept.
+
+## Current Status: October 25, 2026 — **Sunset PS demo provision crash OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)**
+
+- `demo:provision` for Sunset PS used `DemoJuniorSchoolSeeder` and wrote `UG-JUN-LIN-####`. `student_academics.lin` is unique across every school, so the third learner collided with Demo Junior and the run stopped after classes and class teachers. A provisioned school now writes `UG-SCH{id}-LIN-####` on its own rows. Demo Junior's numbers are unchanged. A non-demo school of the same name is still refused before the seeder runs.
+- **Tests:** the new rebuild test failed on the unique `lin`, then passed. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3186 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+- **Status:** OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235) (`cursor/fix-sunset-demo-provision-881d`, `5180f2e7`). Review requested from Bariyo123. Do not merge from this session. Production was not touched.
+
+## Session: 2026-10-25 — Fix Sunset PS demo provisioning crash
+
+- **Work:** Smallest seeder change so a second junior-shaped demo school can finish its roster. Production Sunset PS is not overwritten: `demo:provision` still refuses a name that already exists and is not a demo.
+- **Files:** `database/seeders/DemoJuniorSchoolSeeder.php`, `tests/Feature/Demo/DemoSchoolsRebuildTest.php`.
+- **Decision:** Keep Demo Junior on `UG-JUN-LIN-####`. Only the provisioned identity gets a school-id learner number. No migration, no delete, no update of another school's rows.
+- **Edge:** A second run of `demo:provision` for a school that already exists still changes nothing. A partial Sunset left behind by the old crash is not resumed; the name is already taken.
 
 ## Current Status: October 25, 2026 — **Onboarding password and Uganda assumptions flagged OPEN [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233)**
 
@@ -652,7 +666,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
 - Merged `origin/main` `a6cf68e7` ([#1229](https://github.com/KlassApp-Foundation/KlassApp/pull/1229)) with a merge commit. No rebase and no force-push.
 - **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **3181 tests, 0 failures, 0 errors, 9 skipped**, guard OK. The new and existing pages match after the csrf token is set aside. Mail is queued only for an active non-demo account.
-- **Status:** [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) was already merged. This change is OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
+- **Status:** The early-access neutral reply is [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
