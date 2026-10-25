@@ -14318,3 +14318,9 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
 
 **Early-access neutral reply:** still [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230). This file does not cite it as #1176.
+
+## Session: 2026-10-26 — Marks n8n blueprint saved and compared with the spec (docs only)
+
+**Work:** Read the n8n workflow "KlassApp Blueprint: Marks" once, read-only (logged on #1090). Saved it as `docs/flows/marks.json` with the error workflow, workflow id, version id, instance id, webhook ids, credentials and pinned data stripped. PII check: all names synthetic, all emails `@demo.invalid`, no phones, URLs or tokens. Nothing replaced. `docs/flows/marks-comparison.md` lists 17 disagreements with `docs/product/marks-flow.md` (on `main` at `ac36ca66`), plus what is only in one of them. Redo the comparison when the blueprint changes or #1234 merges.
+
+**Status:** Docs-only PR OPEN. Not merged. No code, no production change, nothing run in n8n.
