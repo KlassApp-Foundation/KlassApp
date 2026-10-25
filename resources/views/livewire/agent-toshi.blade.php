@@ -420,6 +420,7 @@
                 <div class="toshi-spacer-8">
                     @foreach($fees as $fi => $f)
                     <div class="toshi-list-item">
+                        {{-- FLAGGED(product-decision): the onboarding fee list prints UGX. see docs/onboarding-engine-plan.md --}}
                         <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 class="toshi-remove-btn">✕</button>
@@ -430,6 +431,7 @@
                 <div class="toshi-flex-col">
                     <input type="text" wire:model="feeFormName" placeholder="Fee name *"
                            class="toshi-input" data-testid="toshi-fee-name">
+                    {{-- FLAGGED(product-decision): the onboarding fee field says UGX. see docs/onboarding-engine-plan.md --}}
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
                            class="toshi-input" data-testid="toshi-fee-amount">
                     <select wire:model="feeFormLevel"
@@ -687,6 +689,7 @@
                     <div class="toshi-banner-success">
                         <div class="toshi-green-label">Admin Login Credentials</div>
                         <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                        {{-- FLAGGED(product-decision): the review says a password was set or a set-password link was emailed. see docs/onboarding-engine-plan.md --}}
                         <div class="toshi-info-sub">@if(!empty($reviewData['adminSetPasswordEmailed']))A set-password link was emailed. It is not shown here.@elseif(!empty($reviewData['adminPasswordChosen']))A password was set during setup. It is not shown here.@else No password is shown here.@endif</div>
                         <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                     </div>
@@ -1355,6 +1358,7 @@
                                         <div class="toshi-spacer-8">
                                             @foreach($fees as $fi => $f)
                                             <div class="toshi-list-item">
+                        {{-- FLAGGED(product-decision): the onboarding fee list prints UGX. see docs/onboarding-engine-plan.md --}}
                         <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         class="toshi-remove-btn">✕</button>
@@ -1365,6 +1369,7 @@
                                         <div class="toshi-flex-col">
                                             <input type="text" wire:model="feeFormName" placeholder="Fee name *"
                                                    class="toshi-input" data-testid="toshi-fee-name-modal">
+                                            {{-- FLAGGED(product-decision): the onboarding fee field says UGX. see docs/onboarding-engine-plan.md --}}
                                             <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
                                                    class="toshi-input" data-testid="toshi-fee-amount-modal">
                                             <select wire:model="feeFormLevel"
@@ -1705,6 +1710,7 @@
                                 <div class="toshi-banner-success">
                                     <div class="toshi-green-label">Admin Login Credentials</div>
                                     <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                                    {{-- FLAGGED(product-decision): the review says a password was set or a set-password link was emailed. see docs/onboarding-engine-plan.md --}}
                                     <div class="toshi-info-sub">@if(!empty($reviewData['adminSetPasswordEmailed']))A set-password link was emailed. It is not shown here.@elseif(!empty($reviewData['adminPasswordChosen']))A password was set during setup. It is not shown here.@else No password is shown here.@endif</div>
                                     <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                                 </div>

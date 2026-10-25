@@ -505,6 +505,7 @@ class ToshiActionService
         try {
             DB::beginTransaction();
 
+            // FLAGGED(product-decision): adding a teacher stores a random password. see docs/onboarding-engine-plan.md
             $credentials = UserProvisioning::randomPasswordAttributes();
 
             $teacher = User::create([
@@ -1431,7 +1432,9 @@ class ToshiActionService
 
         try {
             DB::beginTransaction();
+            // FLAGGED(product-decision): generated parent email uses the .ug domain. see docs/onboarding-engine-plan.md
             $email = 'parent.' . Str::random(6) . '@school.ug';
+            // FLAGGED(product-decision): adding a parent stores a random password. see docs/onboarding-engine-plan.md
             $passwordAttrs = UserProvisioning::randomPasswordAttributes();
             $parent = User::create([
                 'school_id' => $schoolId, 'usergroup_id' => 7,

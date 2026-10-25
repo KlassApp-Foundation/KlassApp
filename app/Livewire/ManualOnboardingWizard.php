@@ -86,10 +86,12 @@ class ManualOnboardingWizard extends Component
 
     public string $studentSize = '';
 
+    // FLAGGED(product-decision): the wizard opens on uneb. see docs/onboarding-engine-plan.md
     public string $curriculum = 'uneb';
 
     public string $schoolCategory = '';
 
+    // FLAGGED(product-decision): the wizard opens on Uganda. see docs/onboarding-engine-plan.md
     public string $countryName = 'Uganda';
 
     public string $ministryCode = '';
@@ -102,6 +104,7 @@ class ManualOnboardingWizard extends Component
 
     public string $academicYearEnd = '';
 
+    // FLAGGED(product-decision): the class field opens on the Uganda short name P1. see docs/onboarding-engine-plan.md
     public string $className = 'P1';
 
     /**
@@ -1764,6 +1767,7 @@ class ManualOnboardingWizard extends Component
 
         $feeValue = $fees->isEmpty()
             ? '—'
+            // FLAGGED(product-decision): the review formats fee amounts as UGX. see docs/onboarding-engine-plan.md
             : $fees->map(fn ($f) => $f->labeledName().' · '.number_format((float) $f->amount).' UGX')->implode(', ');
 
         $planValue = $plan
@@ -1895,8 +1899,10 @@ class ManualOnboardingWizard extends Component
             ? ''
             : (string) $school->name;
         $this->studentSize = (string) ($school->student_size ?: '');
+        // FLAGGED(product-decision): a blank curriculum is shown as uneb. see docs/onboarding-engine-plan.md
         $this->curriculum = $school->curriculum ?: 'uneb';
         $this->schoolCategory = (string) ($school->school_category ?: '');
+        // FLAGGED(product-decision): a blank country is shown as Uganda. see docs/onboarding-engine-plan.md
         $this->countryName = $school->registration_country ?: 'Uganda';
         $this->ministryCode = (string) ($school->ministry_code ?: '');
         $this->unebCenterNumber = (string) ($school->uneb_center_number ?: '');

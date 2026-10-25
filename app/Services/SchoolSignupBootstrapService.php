@@ -135,6 +135,7 @@ class SchoolSignupBootstrapService
         return $parts[0] ?: 'Admin';
     }
 
+    // FLAGGED(product-decision): strips a leading 0 and prefixes +256 for 07xx numbers. see docs/onboarding-engine-plan.md
     public function normalizePhone(?string $phone): ?string
     {
         if ($phone === null) {
@@ -234,6 +235,7 @@ class SchoolSignupBootstrapService
             'name' => trim((string) $data['name']),
             'email' => trim((string) $data['email']),
             'mobile_no' => $phone,
+            // FLAGGED(product-decision): signup stores the typed password, or a random one, instead of an invite link. see docs/onboarding-engine-plan.md
             'password' => Hash::make($password ?: Str::random(32)),
             'email_verification_code' => Str::random(40),
             'email_verified' => 1,

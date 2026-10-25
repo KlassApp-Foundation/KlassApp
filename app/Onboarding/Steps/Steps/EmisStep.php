@@ -37,6 +37,7 @@ class EmisStep extends AbstractOnboardingStep
         if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return [
                 'action' => 'noop',
+                // FLAGGED(product-decision): the skip copy names Uganda rather than the country profile. see docs/onboarding-engine-plan.md
                 'summary' => 'No-op here: EMIS / ministry codes are only required for schools registered in Uganda.',
                 'rows' => [['label' => 'EMIS / ministry code', 'status' => 'skip', 'detail' => 'only applies to Ugandan schools']],
             ];

@@ -40,6 +40,7 @@ return new class extends Migration
         }
 
         DB::statement("UPDATE schools SET curriculum = 'uneb' WHERE curriculum IS NULL");
+        // FLAGGED(product-decision): the schools.curriculum column default is uneb. see docs/onboarding-engine-plan.md
         DB::statement("ALTER TABLE schools MODIFY curriculum VARCHAR(50) NOT NULL DEFAULT 'uneb'");
     }
 };

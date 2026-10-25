@@ -24,6 +24,7 @@ final class SchoolTypePreset
     public const ADJUST = 'adjust';
 
     /** Usual UACE combinations. Nursery, primary and O-level stay unstreamed. */
+    // FLAGGED(product-decision): A-level streams are the Uganda combinations PCM, BCM, HEG, and MEG. see docs/onboarding-engine-plan.md
     public const A_LEVEL_STREAMS = ['PCM', 'BCM', 'HEG', 'MEG'];
 
     /**
@@ -55,6 +56,7 @@ final class SchoolTypePreset
         return CountryProfiles::forCountry($school->registration_country)->preset($category);
     }
 
+    // FLAGGED(product-decision): the only preset is Uganda's nursery, P1–P7, O-level, and A-level lists. see docs/onboarding-engine-plan.md
     public static function uganda(?string $category): ?self
     {
         if (! is_string($category) || ! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
