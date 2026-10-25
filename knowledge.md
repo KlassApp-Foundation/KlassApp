@@ -14327,4 +14327,4 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 
 **Tests:** Without the fix, the new tests failed: two sections, two links, and one standard stayed behind after a forced mid-save failure; the issue code was `standards.stream_duplicate`; the rename form said `A class named "Primary One B" already exists.` With the fix they pass. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3187 tests, 0 failures, 0 errors, 9 skipped.
 
-**Status:** Pull request opening. Not merged. Production untouched.
+**Status:** [#1237](https://github.com/KlassApp-Foundation/KlassApp/pull/1237) is open on `cursor/class-save-atomicity-d848`. Not merged. Production untouched.
