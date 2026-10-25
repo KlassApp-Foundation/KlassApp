@@ -635,6 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 26, 2026 — **Marks n8n blueprint OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)**
+
+- Docs only. `docs/flows/marks.json` is the stripped n8n blueprint. `docs/flows/marks-comparison.md` compares it with `docs/product/marks-flow.md`. Phase 6 states the three WhatsApp send rules (Meta approval, opt-out, released class and sitting only). The results template is recorded as `results_released`, UTILITY, English, submitted to Meta and pending approval. Items 1, 10, and 16 are marked spec updated in this PR. The other fourteen differences are simplifications. The blueprint JSON is unchanged by that update.
+- **Status:** OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236), branch `docs/marks-n8n-blueprint`. Not merged. No code, no production change, nothing run in n8n.
+
 ## Current Status: October 25, 2026 — **Sunset PS demo provision crash OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)**
 
 - `demo:provision` for Sunset PS used `DemoJuniorSchoolSeeder` and wrote `UG-JUN-LIN-####`. `student_academics.lin` is unique across every school, so the third learner collided with Demo Junior and the run stopped after classes and class teachers. A provisioned school now writes `UG-SCH{id}-LIN-####` on its own rows. Demo Junior's numbers are unchanged. A non-demo school of the same name is still refused before the seeder runs.
@@ -14335,5 +14340,9 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 ## Session: 2026-10-26 — Marks n8n blueprint saved and compared with the spec (docs only)
 
 **Work:** Read the n8n workflow "KlassApp Blueprint: Marks" once, read-only (logged on #1090). Saved it as `docs/flows/marks.json` with the error workflow, workflow id, version id, instance id, webhook ids, credentials and pinned data stripped. PII check: all names synthetic, all emails `@demo.invalid`, no phones, URLs or tokens. Nothing replaced. `docs/flows/marks-comparison.md` lists 17 disagreements with `docs/product/marks-flow.md` (on `main` at `ac36ca66`), plus what is only in one of them. Redo the comparison when the blueprint changes or #1234 merges.
+
+**Pull request:** [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236), branch `docs/marks-n8n-blueprint`. Not merged.
+
+**Spec additions before review:** Phase 6, the release text, and the WhatsApp send descriptions state three rules. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. The results template is `results_released`, UTILITY, English, submitted to Meta and pending approval, with the "See results" quick reply handled exactly like GRADES. No real school gets the send until it is approved and the admin's per-release switch is on. Comparison items 1, 10, and 16 are marked spec updated in this PR. Items 2–9, 11–15, and 17 are simplifications. `docs/flows/marks.json` was not edited. `origin/main` was merged (`a1348c27`, #1235). #1234 was still open.
 
 **Status:** Docs-only PR OPEN. Not merged. No code, no production change, nothing run in n8n.

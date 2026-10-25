@@ -26,7 +26,7 @@ flowchart TD
   family["Portal, Toshi, and report cards"]
   switch{"WhatsApp switch on this release"}
   template{"Results template approved by Meta"}
-  wa["WhatsApp to approved, linked parents"]
+  wa["WhatsApp to approved, linked parents of this class and sitting who have not opted out"]
 
   assign --> enter
   enter --> submit
@@ -43,7 +43,7 @@ flowchart TD
   template -->|approved| wa
 ```
 
-When the school's setting allows it, the class teacher uses the same release step for their own class. The WhatsApp switch is visible on the release. It sends only after Meta has approved the results template in the section below. With the switch off, or before that approval, release still opens the portal, Toshi, and report cards, and sends nothing.
+When the school's setting allows it, the class teacher uses the same release step for their own class. The WhatsApp switch is visible on the release. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. With the switch off, or before that approval, release still opens the portal, Toshi, and report cards, and sends nothing.
 
 ```mermaid
 flowchart LR
@@ -68,7 +68,7 @@ flowchart LR
   rel --> pdf
 ```
 
-Inbound MARKS, GRADES, and REPORT stay behind the gate. The push on release is a separate send, and it uses a template when the 24-hour window is closed.
+Inbound MARKS, GRADES, and REPORT stay behind the gate. The "See results" quick reply is handled exactly like GRADES. The push on release is a separate send. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. It uses a template when the 24-hour window is closed.
 
 ## Who owns each step
 
@@ -81,9 +81,9 @@ One service owns each behaviour. Controllers and Blade views render and authoris
 | 3. Teacher submits | The teacher who entered the subject | `MarksSubmissionService::submit`. One `exam_marks_submissions` row. No parent message. `exams.status` is not the workflow. | S1, S5 |
 | 4. Admin approves, or returns with a reason | School admin | `MarksSubmissionService` owns lock, approve, reject, and reopen. A return stores the reason. The entry page shows that reason to the teacher who owns the exam and to school admins. | S3, S4, E6 |
 | 5. Combined mark sheet | School admin, and the class teacher for their class | `ResultsService::sheet` for one sitting: one exam type, one term, the whole class. The sheet has a stream column and a stream filter. Missing marks stay blank. They are not zero. A whole-term view is later. | G1–G8, C2, C3 |
-| 6. Release | School admin, for any class. A class teacher, for their own class, only when that school's setting is on. | `MarksReleaseService`. Every subject in scope is approved first. There is no override. A sitting with no release row stays hidden. "Release past sittings" is a separate action with a confirmation. | R1, R2, and the parent-visibility table in the audit |
+| 6. Release | School admin, for any class. A class teacher, for their own class, only when that school's setting is on. | `MarksReleaseService`. Every subject in scope is approved first. There is no override. A sitting with no release row stays hidden. "Release past sittings" is a separate action with a confirmation. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. | R1, R2, and the parent-visibility table in the audit |
 | 7. Report cards | School admin, class teacher for preview. Family only after release. | `StudentReportCardService` reads `ResultsService` for mid-term and end-of-term. Division thresholds and ranking stay as they are until a grading package exists. A family download calls `ReleaseGate` first. | C4–C8, C10, C12, C13 |
-| 8. WhatsApp results | School admin, by the switch on that release | `MarksReleaseService` sends to approved, linked parents. Outside the 24-hour window the send is the results template below. Inbound MARKS, GRADES, and REPORT use `ReleaseGate`, then `ResultsService` for the lines and `StudentReportCardService` for the PDF. | R3, C7 |
+| 8. WhatsApp results | School admin, by the switch on that release | `MarksReleaseService`. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. Outside the 24-hour window the send is `results_released` below. The "See results" quick reply is handled exactly like GRADES. Inbound MARKS, GRADES, and REPORT use `ReleaseGate`, then `ResultsService` for the lines and `StudentReportCardService` for the PDF. No real school gets the send until `results_released` is approved and the admin's per-release switch is on. | R3, C7 |
 
 `GradingSystemService::grade` stays the letter cache on write. The letter a person reads comes from the scale inside `ResultsService`. `Exam::changeExamStatus` goes away once nothing reads `exams.status` as "submitted".
 
@@ -102,7 +102,7 @@ Approved by the product owner on 2026-10-25. These replace the open questions.
 
 1. **Release.** By default only the school admin releases. A per-school setting can let class teachers release their own class.
 2. **Approval.** Approval is always required before release in this version. There is no override.
-3. **Real schools and WhatsApp.** On release, WhatsApp results go to approved, linked parents. A per-release switch, visible to the admin, controls that send. The send uses the templates in the repo. A template that is missing or wrong is rewritten and submitted before any real school is messaged. Nothing is sent to a real school until the template that send needs is approved. This page does not submit anything to Meta.
+3. **Real schools and WhatsApp.** A per-release switch, visible to the admin, controls the WhatsApp send. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. The send uses `results_released` (UTILITY, English, submitted to Meta, pending approval). No real school gets the send until that template is approved and the admin's per-release switch is on.
 4. **Old sittings.** A sitting with no release row stays hidden until someone releases it. The release screen has a "release past sittings" action, and that action asks for confirmation.
 5. **Sheet scope.** The combined sheet is one sitting (one exam type) by default. A whole-term view comes later.
 6. **Streams.** A class with streams shows the whole class, with a stream column and a stream filter.
@@ -124,13 +124,13 @@ Each phase is one pull request. It starts after the UI audit, and after a separa
 | 3 | `MarksSubmissionService` takes approve, return with a reason, lock, and reopen. The entry page shows the reason to that teacher and to school admins. The queue stops reading `exams.status`. | 2 |
 | 4 | The admin marks page is one sitting for the whole class, with a stream column and a stream filter, from `ResultsService`. Remove the filter action that renders without its variables, the PDF that uses the old year lookup, and the second total in the view. | 3 |
 | 5 | Report cards take mid-term rows, division, and positions from `ResultsService`, and they honour the school exam-type settings. Division thresholds and the ranking basis stay as they are. Family PDFs stay behind `ReleaseGate`. | 4 |
-| 6 | Release: school admin by default, class teacher only where the school setting allows, approval required with no override, and "release past sittings" with a confirmation. The per-release WhatsApp switch is on the release screen. A real-school send waits until the results template below is approved. | 5 |
+| 6 | Release: school admin by default, class teacher only where the school setting allows, approval required with no override, and "release past sittings" with a confirmation. The per-release WhatsApp switch is on the release screen. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. No real school gets the send until `results_released` is approved and the admin's per-release switch is on. | 5 |
 
 Later, and not a phase here: a whole-term sheet, Google Sheets through the connectors work, and a grading package for division thresholds and ranking.
 
 ## WhatsApp results templates
 
-Checked in the repo on 2026-10-25. Nothing was submitted to Meta, and Meta was not called, so this section does not claim a live approval status.
+Checked in the repo on 2026-10-25. That check found no results-released template in `scripts/submit-whatsapp-message-templates.php`. `results_released` has since been submitted to Meta. It is UTILITY, English, and pending approval. This section does not claim Meta has approved it.
 
 A message the school starts, such as results on release, can leave the 24-hour window only as an approved template. Free-form text is for a reply inside that window. `WhatsAppBusinessService::sendText` says so (`app/Services/WhatsAppBusinessService.php:109`). `sendTemplate` is the call that can leave the window (`WhatsAppBusinessService.php:177`). `isWithinServiceWindow` is true only when `last_inbound_at` is inside the last 24 hours (`WhatsAppBusinessService.php:272`).
 
@@ -149,8 +149,8 @@ The templates defined for submission live in `scripts/submit-whatsapp-message-te
 
 `knowledge.md` also names `klassapp_otp` as an authentication template. The submit script does not define it. It is not a results template.
 
-**What is missing.** A UTILITY template whose body is a release notice, with a fixed set of variables: parent name, student name, sitting label, school name. The body tells the parent that the school has released that sitting and to reply GRADES to see the marks. The mark lines stay a reply inside the window that reply opens, which is the path `ReleaseGate` already guards. `grade_entered` is not that template, and it must not be reused: it announces a recorded grade.
+**`results_released`.** UTILITY, English, submitted to Meta and pending approval. It is not a row in the table above, and `scripts/submit-whatsapp-message-templates.php` does not define it. Body: "Hello {{1}}, {{2}} has released the {{4}} results for {{3}}. Tap See results or reply GRADES to view them here." {{1}} is the parent, {{2}} is the school, {{3}} is the student, and {{4}} is the sitting. The quick-reply button is "See results", and it is handled exactly like GRADES. The mark lines stay a reply inside the window that reply opens, which is the path `ReleaseGate` already guards. `grade_entered` is not this template, and it must not be reused: it announces a recorded grade.
 
 `report_card_ready` is also not enough for a report-card PDF outside the window, because it promises the PDF in a later message. A PDF the school pushes while the window is closed needs its own approved template, with the document on the template, or it waits until the parent replies and the window opens.
 
-Until that results template is approved, the per-release switch can be on and the release can still open the portal, Toshi, and report cards. The WhatsApp send to a real school does not go out. Demo sends are unchanged until that phase is approved. This change does not submit or rewrite a template at Meta.
+No real school gets the send until `results_released` is approved and the admin's per-release switch is on. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. With the switch off, or before that approval, the release can still open the portal, Toshi, and report cards, and sends nothing. Demo sends are unchanged until that phase is approved. This page records the submission. It does not call Meta.
