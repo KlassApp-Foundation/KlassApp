@@ -363,6 +363,20 @@ class StepIssueTest extends TestCase
         }
     }
 
+    public function test_continuing_without_the_sent_code_is_code_missing(): void
+    {
+        $message = 'Verify the code sent to your WhatsApp before continuing.';
+        $issue = StepIssueCatalog::fromMessage('whatsapp_verify', $message);
+
+        $this->assertSame('whatsapp.code_missing', $issue->code);
+        $this->assertSame($message, $issue->cause);
+        $this->assertSame('code', $issue->field);
+        $this->assertSame(
+            'Reply resend for a new code, then enter that 6-digit code.',
+            $issue->fix,
+        );
+    }
+
     public function test_other_whatsapp_code_failures_have_a_cause_and_a_fix(): void
     {
         $messages = [
