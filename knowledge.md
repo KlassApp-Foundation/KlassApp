@@ -14300,4 +14300,14 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 
 **Checks:** relative links in the two docs resolve. `scripts/check-conflict-markers.sh` passed. `scripts/check-root-clutter.sh` against `origin/main` passed. test-guard was not run; no tests changed.
 
-**Status:** #1232 OPEN. Not merged. Production untouched.
+**Status:** #1232 OPEN. Not merged. Production untouched. The product owner approved the flow on 2026-10-25; the spec update is the next session on this branch.
+
+## Session: 2026-10-25 — Marks flow approved (docs only, #1232)
+
+**Work:** Rasta approved the marks flow. `docs/product/marks-flow.md` now records the twelve decisions, the adjusted flow and phase plan, and a WhatsApp results-template check. Status is **Approved by product owner 2026-10-25**. The build waits for the UI audit and a separate approval for each phase. No application code. Nothing submitted to Meta.
+
+**Template finding:** No template in `scripts/submit-whatsapp-message-templates.php` is a results-released notice that can leave the 24-hour window. `grade_entered` and `report_card_ready` are UTILITY, and their wording is a recorded grade and a report-card PDF follow-up. The release job still calls `sendText` (`MarksReleaseService.php:636`).
+
+**Pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
+
+**Early-access neutral reply:** still [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230). This file does not cite it as #1176.
