@@ -8,9 +8,11 @@
             <h1 class="admin-h1">Class setup</h1>
             <p class="ds-page-sub">Where each class is with its learners, subjects and subject teachers.</p>
         </div>
-        <form method="POST" action="{{ route('admin.class-setup.staff-link') }}">
+        <form method="POST" action="{{ route('admin.class-setup.staff-link.regenerate') }}">
             @csrf
-            <button type="submit" class="ds-btn ds-btn-primary ds-btn-md">New staff link</button>
+            <button type="submit" class="ds-btn ds-btn-primary ds-btn-md" data-testid="staff-link-regenerate">
+                {{ $hasStaffLink ? 'Revoke and regenerate' : 'New staff link' }}
+            </button>
         </form>
     </div>
 
@@ -24,7 +26,7 @@
     @if($staffUrl)
         <section class="ds-card ds-card-pad" data-testid="staff-link-card">
             <h2 class="ds-section-title">Staff link</h2>
-            <p class="ds-muted">Valid for 7 days. Share it in the staff group; only teachers already on your list get in, everyone else waits for your approval.</p>
+            <p class="ds-muted">Valid for 7 days. Share it in the staff group; only teachers already on your list get in, everyone else waits for your approval. Revoke and regenerate stops the previous link immediately.</p>
             <div class="flex items-start gap-6 flex-wrap">
                 @if($qrSvg)<div class="staff-qr">{!! $qrSvg !!}</div>@endif
                 <div class="min-w-0">

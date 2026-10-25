@@ -13,7 +13,10 @@
     ])
     <div class="ap-form-panel">
       <div class="ap-form-shell ap-card">
-        @if($sent)
+        @if(!empty($notice))
+          <h1 class="ap-title">{{ $notice }}</h1>
+          <a href="{{ url('/') }}" class="ds-btn ds-btn-outline ds-btn-md">Back to KlassApp</a>
+        @elseif($sent)
           <h1 class="ap-title">Waiting for your admin</h1>
           <p class="ap-sub">
             You’re not on the teacher list yet. Your school admin has been asked to approve you;

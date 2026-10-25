@@ -12,6 +12,7 @@ use App\Services\OnboardingEngine;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -52,6 +53,9 @@ class TeacherClassSetup extends Component
     public function selectClass(int $linkId): void
     {
         $this->selectedLinkId = $linkId;
+        if ($this->ownedLink() === null) {
+            $this->selectedLinkId = null;
+        }
         $this->loadSubjects();
         $this->loadSubjectTeachers();
     }
@@ -65,7 +69,7 @@ class TeacherClassSetup extends Component
             return;
         }
 
-        $link = $this->currentLink();
+        $link = $this->ownedLink();
         if (! $link) {
             $this->errorMessage = 'Choose your class first.';
 
@@ -109,7 +113,7 @@ class TeacherClassSetup extends Component
         }
 
         try {
-            $result = app(OnboardingEngine::class)->saveStudents($this->school(), $this->year(), $drafts);
+            $result = app(OnboardingEngine::class)->saveStudents($this->school(), $this->year(), $drafts, (int) $link->id);
             $this->report = count($result['created'] ?? []).' students added, '.count($result['skipped'] ?? []).' skipped';
         } catch (ValidationException $e) {
             $this->errorMessage = (string) (collect($e->errors())->flatten()->first() ?: 'Could not add those students.');
@@ -121,7 +125,7 @@ class TeacherClassSetup extends Component
     public function saveSubjects(): void
     {
         $this->errorMessage = '';
-        $link = $this->currentLink();
+        $link = $this->ownedLink();
         if (! $link) {
             $this->errorMessage = 'Choose your class first.';
 
@@ -132,6 +136,9 @@ class TeacherClassSetup extends Component
         $year = $this->year();
 
         foreach ($this->subjectIds as $subjectId) {
+            if ($this->subjectOnLink($link, (int) $subjectId) === null) {
+                continue;
+            }
             Teacherlink::query()->firstOrCreate([
                 'school_id' => $this->school()->id,
                 'academic_year_id' => $year->id,
@@ -148,7 +155,7 @@ class TeacherClassSetup extends Component
     {
         $this->errorMessage = '';
         $this->report = '';
-        $link = $this->currentLink();
+        $link = $this->ownedLink();
         if (! $link) {
             $this->errorMessage = 'Choose your class first.';
 
@@ -162,36 +169,45 @@ class TeacherClassSetup extends Component
         foreach ($this->subjectTeacher as $subjectId => $value) {
             $subjectId = (int) $subjectId;
             $value = trim((string) $value);
-            if ($value === '') {
+            if ($value === '' || $this->subjectOnLink($link, $subjectId) === null) {
                 continue;
             }
 
-            if (ctype_digit($value)) {
+            $colleagueId = $this->teacherIdInSchool($value);
+            if ($colleagueId !== null) {
                 Teacherlink::query()->firstOrCreate([
                     'school_id' => $this->school()->id,
                     'academic_year_id' => $year->id,
                     'standardLink_id' => $link->id,
                     'subject_id' => $subjectId,
-                    'teacher_id' => (int) $value,
+                    'teacher_id' => $colleagueId,
                 ]);
                 $saved++;
 
                 continue;
             }
 
-            if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            $email = $this->explicitEmail($value);
+            if ($email === null) {
                 continue;
             }
 
-            $subject = Subject::query()->where('school_id', $this->school()->id)->find($subjectId);
-            $issued = TeacherInviteLinkService::issue(
-                $this->school(),
-                $value,
-                $subject?->name ? 'Subject teacher' : 'Subject teacher',
-                $link,
-            );
-            TeacherInviteLinkService::sendEmail($issued['invite'], $issued['token'], $this->school(), $link->section?->name);
-            $invited++;
+            try {
+                $issued = TeacherInviteLinkService::issue(
+                    $this->school(),
+                    $email,
+                    'Subject teacher',
+                    null,
+                );
+                TeacherInviteLinkService::sendEmail($issued['invite'], $issued['token'], $this->school(), $link->section?->name);
+                $invited++;
+            } catch (\Throwable) {
+                Log::warning('Subject teacher invite could not be queued', [
+                    'school_id' => (int) $this->school()->id,
+                    'user_id' => (int) Auth::id(),
+                    'subject_id' => $subjectId,
+                ]);
+            }
         }
 
         $this->report = $saved.' subject teachers confirmed'.($invited > 0 ? ', '.$invited.' invited by email' : '');
@@ -202,7 +218,7 @@ class TeacherClassSetup extends Component
         $link = $this->currentLink();
         $subjects = $link
             ? Subject::query()->where('school_id', $this->school()->id)
-                ->where('standard_id', $link->standard_id)
+                ->where('section_id', $link->section_id)
                 ->orderBy('name')
                 ->get(['id', 'name'])
             : collect();
@@ -257,11 +273,73 @@ class TeacherClassSetup extends Component
 
     private function currentLink(): ?StandardLink
     {
-        if ($this->selectedLinkId) {
-            return $this->links()->firstWhere('id', (int) $this->selectedLinkId);
+        return $this->ownedLink();
+    }
+
+    /**
+     * The class the signed-in teacher actually holds. The id from the browser
+     * is only a lookup key; another class, stream, or school never matches.
+     */
+    private function ownedLink(): ?StandardLink
+    {
+        $id = (int) $this->selectedLinkId;
+        if ($id < 1) {
+            return null;
         }
 
-        return null;
+        return StandardLink::query()
+            ->with('section')
+            ->whereKey($id)
+            ->where('school_id', $this->school()->id)
+            ->where('academic_year_id', $this->year()->id)
+            ->where('class_teacher_id', Auth::id())
+            ->first();
+    }
+
+    private function subjectOnLink(StandardLink $link, int $subjectId): ?Subject
+    {
+        if ($subjectId < 1 || ! $link->section_id) {
+            return null;
+        }
+
+        return Subject::query()
+            ->whereKey($subjectId)
+            ->where('school_id', $this->school()->id)
+            ->where('section_id', $link->section_id)
+            ->first();
+    }
+
+    private function teacherIdInSchool(string $value): ?int
+    {
+        if (! ctype_digit($value)) {
+            return null;
+        }
+
+        $id = (int) $value;
+        $teacher = User::query()
+            ->whereKey($id)
+            ->where('school_id', $this->school()->id)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->first();
+
+        return $teacher ? (int) $teacher->id : null;
+    }
+
+    /**
+     * An address the teacher typed. A name, an id, or a fragment is not an address.
+     */
+    private function explicitEmail(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '' || ! str_contains($value, '@')) {
+            return null;
+        }
+        if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return mb_strtolower($value);
     }
 
     private function loadSubjects(): void

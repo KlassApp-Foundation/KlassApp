@@ -2016,12 +2016,27 @@ class OnboardingEngine
      *
      * @throws ValidationException
      */
-    public function saveStudents(School $school, AcademicYear $year, array $students): array
+    public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $students) {
+            return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
+
+                $pinned = null;
+                if ($onlyStandardLinkId !== null) {
+                    $pinned = StandardLink::query()
+                        ->with(['standard', 'section'])
+                        ->where('school_id', $school->id)
+                        ->where('academic_year_id', $year->id)
+                        ->whereKey($onlyStandardLinkId)
+                        ->first();
+                    if ($pinned === null) {
+                        throw ValidationException::withMessages([
+                            'students' => 'That class is not part of this school year.',
+                        ]);
+                    }
+                }
 
                 // Pass 1: refuse unmatched classes / colliding emails / LINs before creating anyone.
                 $unmatchedClasses = [];
@@ -2031,7 +2046,7 @@ class OnboardingEngine
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    if ($name !== '' && $className !== '') {
+                    if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
                             $unmatchedClasses[] = "{$name} → {$label}";
@@ -2148,9 +2163,9 @@ class OnboardingEngine
 
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    $link = null;
+                    $link = $pinned;
 
-                    if ($className !== '') {
+                    if ($pinned === null && $className !== '') {
                         $link = $this->ensureStandardLinkForClass(
                             $school,
                             $year,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Models\SchoolStaffLink;
 use App\Models\Section;
 use App\Models\StaffLinkRequest;
 use App\Models\StandardLink;
@@ -87,10 +88,20 @@ class ClassTeacherSetupController extends Controller
             'requests' => $requests,
             'classes' => $classes,
             'issued' => session('teacher_setup_url'),
+            'hasStaffLink' => SchoolStaffLink::query()
+                ->where('school_id', $school->id)
+                ->whereNull('revoked_at')
+                ->where('expires_at', '>', now())
+                ->exists(),
         ]);
     }
 
     public function createStaffLink(): RedirectResponse
+    {
+        return $this->regenerateStaffLink();
+    }
+
+    public function regenerateStaffLink(): RedirectResponse
     {
         $school = School::findOrFail(Auth::user()->school_id);
         $token = $this->links->issueStaffLink($school, Auth::user());
