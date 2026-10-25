@@ -4,8 +4,11 @@ namespace Tests\Feature\Onboarding;
 
 use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Livewire\ManualOnboardingWizard;
+use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\Plan;
+use App\Models\Section;
 use App\Models\User;
 use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Country\SchoolTypePreset;
@@ -15,6 +18,7 @@ use App\Onboarding\Steps\StepRegistry;
 use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Onboarding\Steps\Steps\SubjectsStep;
 use App\Onboarding\Steps\Steps\TermsStep;
+use App\Onboarding\Steps\ToshiOnboardingV2Driver;
 use App\Services\SchoolCategorySeeder;
 use Tests\Support\Onboarding\SchoolSnapshot;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
@@ -22,6 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\Attributes\UnitTest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Onboarding\OnboardingParityHarness;
 use Tests\Support\Onboarding\OnboardingSchoolFixture;
@@ -158,6 +163,8 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertArrayNotHasKey('onboarding_progress', $incomplete);
         $this->assertArrayNotHasKey('onboarding_completion', $incomplete);
         $this->assertArrayNotHasKey('school_type_preset', $incomplete);
+        $this->assertArrayNotHasKey('standards', $incomplete);
+        $this->assertContains('standards', $proved);
         $this->assertArrayHasKey('confirm_before_write', $incomplete);
     }
 
@@ -322,6 +329,57 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertNull($this->harness->workbookDecision($wizardSchool, 'standards', []));
     }
 
+    public function test_structure_step_classes_and_streams_match_across_faces(): void
+    {
+        $this->assertArrayNotHasKey('standards', OnboardingParityHarness::incompleteSteps());
+        $this->assertContains('standards', OnboardingParityHarness::provedSteps());
+
+        $payload = [
+            ['name' => 'Primary One', 'streams' => ['A', 'B']],
+            ['name' => 'Primary Three', 'streams' => ['A']],
+        ];
+        $wizard = $this->structureSchool('wizard');
+        $toshi = $this->structureSchool('toshi');
+
+        $this->actingAs($wizard['admin']);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->standardsIndex($component));
+        $drafts = $component->get('structureStreamDrafts');
+        $byName = [];
+        foreach ($payload as $class) {
+            $byName[$class['name']] = implode(', ', $class['streams']);
+        }
+        foreach ($component->get('structureClasses') as $row) {
+            $sid = (string) ($row['section_id'] ?? '');
+            $drafts[$sid] = $byName[$row['name'] ?? ''] ?? '';
+        }
+        $before = Section::query()->where('school_id', $wizard['school']->id)->orderBy('name')->pluck('name')->all();
+        $preview = app(StandardsStep::class)->preview($wizard['school']->fresh(), $payload);
+        $this->assertSame("I'll create 0 classes and 3 streams", $preview['summary']);
+        $this->assertSame($before, Section::query()->where('school_id', $wizard['school']->id)->orderBy('name')->pluck('name')->all());
+
+        $component->set('structureStreamDrafts', $drafts)->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+
+        $driver = app(ToshiOnboardingV2Driver::class);
+        $prompt = $driver->promptNext($toshi['school']->fresh(), $toshi['admin']->id);
+        $this->assertSame('standards', $prompt['key'] ?? null);
+        $toshiSections = Section::query()->where('school_id', $toshi['school']->id)->count();
+        $toshiPreview = app(StandardsStep::class)->preview($toshi['school']->fresh(), $payload);
+        $this->assertSame($preview['summary'], $toshiPreview['summary']);
+        $this->assertSame($toshiSections, Section::query()->where('school_id', $toshi['school']->id)->count());
+        $result = $driver->handleReply($toshi['school']->fresh(), $payload, $toshi['admin']->id);
+        $this->assertNotSame('rejected', $result['status'] ?? null, $result['hint'] ?? '');
+
+        $this->assertSame(
+            Section::query()->where('school_id', $wizard['school']->id)->orderBy('name')->pluck('name')->all(),
+            Section::query()->where('school_id', $toshi['school']->id)->orderBy('name')->pluck('name')->all(),
+        );
+        $this->assertNull($this->harness->workbookDecision($wizard['school']->fresh(), 'standards', $payload));
+        $this->assertContains('Classes: 7 classes, 3 streams', $this->harness->progressSummary($wizard['school']->fresh())['summary']);
+        $this->assertContains('Classes: 7 classes, 3 streams', $this->harness->progressSummary($toshi['school']->fresh())['summary']);
+    }
+
     public function test_school_type_preset_acceptance_matches_typing_it(): void
     {
         $this->assertArrayNotHasKey('school_type_preset', OnboardingParityHarness::incompleteSteps());
@@ -352,6 +410,52 @@ class OnboardingFacesParityTest extends TestCase
                 SchoolSnapshot::capture($accepted->fresh())->comparable(),
             );
         }
+    }
+
+    /**
+     * @return array{school: \App\Models\School, admin: User}
+     */
+    private function structureSchool(string $face): array
+    {
+        $seed = $this->harness->seedSchool(
+            'Structure '.$face,
+            'structure-'.$face.'@example.com',
+            'structure.'.$face.'@example.com',
+            'Structure Admin',
+            $face === 'wizard' ? '+256700000331' : '+256700000332',
+        );
+        $school = $seed['school'];
+        $school->forceFill([
+            'name' => 'Structure '.$face.' Primary',
+            'student_size' => 'Up to 500',
+            'registration_country' => 'Uganda',
+            'curriculum' => 'uneb',
+            'school_category' => 'primary',
+            'ministry_code' => 'STR-'.substr($face, 0, 6),
+            'uneb_center_number' => '',
+        ])->save();
+        AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2027',
+            'description' => 'Current Academic Year',
+            'start_date' => '2027-01-01 00:00:00',
+            'end_date' => '2027-12-31 23:59:59',
+            'status' => 1,
+        ]);
+        SchoolCategorySeeder::seed($school->fresh());
+
+        return ['school' => $school->fresh(), 'admin' => $seed['admin']];
+    }
+
+    private function standardsIndex(\Livewire\Features\SupportTesting\Testable $component): int
+    {
+        foreach ($component->get('steps') as $index => $step) {
+            if (($step['key'] ?? '') === 'standards') {
+                return (int) $index;
+            }
+        }
+
+        $this->fail('Wizard has no standards step');
     }
 
     private function presetSchool(string $category, string $face): \App\Models\School

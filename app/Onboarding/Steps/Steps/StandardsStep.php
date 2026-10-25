@@ -12,6 +12,7 @@ use App\Onboarding\Steps\AbstractOnboardingStep;
 use App\Onboarding\Steps\OnboardingStepAwaitingInput;
 use App\Onboarding\Steps\OnboardingStepReview;
 use App\Onboarding\Steps\StepIssueCatalog;
+use App\Services\ClassStructureService;
 use App\Services\OnboardingStepsService;
 
 class StandardsStep extends AbstractOnboardingStep
@@ -66,7 +67,12 @@ class StandardsStep extends AbstractOnboardingStep
             return [StepIssueCatalog::fromMessage($this->key(), 'Add or confirm your classes first.')];
         }
 
-        return parent::issues($school, $normalized);
+        $issues = parent::issues($school, $normalized);
+        if ($issues !== [] || ! is_array($normalized)) {
+            return $issues;
+        }
+
+        return app(ClassStructureService::class)->issues($school, $normalized);
     }
 
     public function save(School $school, mixed $normalized, ?int $userId = null): void
@@ -85,10 +91,10 @@ class StandardsStep extends AbstractOnboardingStep
             return;
         }
         $year = AcademicYear::where('school_id', $school->id)->first();
-        if (! $year) {
+        if (! $year || (int) $year->school_id !== (int) $school->id) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engineCall(fn () => $this->engine->saveStandards($school, $year, $normalized));
+        $this->engineCall(fn () => app(ClassStructureService::class)->saveClasses($school, $year, $normalized));
         OnboardingStepReview::mark($school, 'standards');
     }
 
@@ -111,57 +117,7 @@ class StandardsStep extends AbstractOnboardingStep
             ];
         }
 
-        $rows = [];
-        $year = AcademicYear::where('school_id', $school->id)->first();
-        foreach ($normalized as $class) {
-            $className = trim((string) ($class['name'] ?? ''));
-            $streams = is_array($class['streams'] ?? null)
-                ? array_values(array_filter(array_map(fn ($s) => trim((string) $s), $class['streams']), fn ($s) => $s !== ''))
-                : [];
-            $detail = $streams !== [] ? 'Streams: '.implode(', ', $streams) : null;
-
-            if ($className === '') {
-                $rows[] = ['label' => '(unnamed class)', 'status' => 'skip', 'detail' => 'needs a name'];
-                continue;
-            }
-            if (! $year) {
-                $rows[] = ['label' => $className, 'status' => 'skip', 'detail' => 'needs an academic year first'];
-                continue;
-            }
-
-            $exists = Section::where('school_id', $school->id)->where('name', $className)->exists();
-            $newStreams = 0;
-            foreach ($streams as $stream) {
-                $streamName = \App\Services\OnboardingEngine::composeClassAndStream($className, $stream);
-                if ($streamName === $className) {
-                    continue;
-                }
-                $saved = Section::where('school_id', $school->id)->where('name', $streamName)->exists();
-                if (! $saved) {
-                    $newStreams++;
-                }
-            }
-            $rows[] = [
-                'label' => $className,
-                'status' => match (true) {
-                    ! $exists => 'create',
-                    $newStreams > 0 => 'update',
-                    default => 'already_present',
-                },
-                'detail' => $detail,
-            ];
-        }
-
-        $createCount = count(array_filter($rows, fn ($r) => in_array($r['status'], ['create', 'update'], true)));
-        $skipCount = count(array_filter($rows, fn ($r) => $r['status'] === 'skip'));
-
-        return [
-            'action' => $createCount > 0 ? 'change' : ($skipCount > 0 ? 'skip' : 'noop'),
-            'summary' => $createCount > 0
-                ? "{$createCount} new class(es) will be created; existing ones stay untouched."
-                : 'All listed classes already exist — nothing will change.',
-            'rows' => $rows,
-        ];
+        return app(ClassStructureService::class)->preview($school, $normalized);
     }
 
     public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
