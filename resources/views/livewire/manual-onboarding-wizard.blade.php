@@ -9,6 +9,8 @@
         <span class="manual-wizard-brand-aside">@toshiUi Setting up without Toshi @else Setting up your school @endtoshiUi</span>
     </div>
 
+    <div class="manual-wizard-layout">
+    <div class="manual-wizard-main">
     {{-- Stable phase key: swapping finished ↔ flow without this caused Livewire morph
          TypeError: Cannot read properties of null (reading 'before') on Confirm & finish. --}}
     <div wire:key="wizard-phase-{{ $finished ? 'done' : 'flow' }}" data-testid="wizard-phase-{{ $finished ? 'done' : 'flow' }}">
@@ -187,5 +189,35 @@
                 </nav>
             @endif
         @endif
+    </div>
+    </div>
+    <aside class="manual-wizard-summary" data-testid="wizard-running-summary" aria-label="Setup summary">
+        @php
+            $runningUserId = auth()->id();
+            $running = \App\Onboarding\OnboardingProgress::for(
+                $school,
+                $runningUserId !== null ? (int) $runningUserId : null,
+            );
+            $runningNow = $running['current_key'];
+            $runningNowLabel = is_string($runningNow) && $runningNow !== ''
+                ? (\App\Services\OnboardingStepsService::ALL_STEPS[$runningNow]['label'] ?? $runningNow)
+                : null;
+        @endphp
+        <details class="manual-wizard-summary-details" open>
+            <summary>Setup {{ $running['done'] }} of {{ $running['total'] }}</summary>
+            @if($runningNowLabel)
+                <p class="manual-wizard-summary-now">Now: {{ $runningNowLabel }}</p>
+            @endif
+            @if($running['summary'] === [])
+                <p class="manual-wizard-summary-empty">Nothing saved yet.</p>
+            @else
+                <ul class="manual-wizard-summary-lines">
+                    @foreach($running['summary'] as $line)
+                        <li>{{ $line }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        </details>
+    </aside>
     </div>
 </div>

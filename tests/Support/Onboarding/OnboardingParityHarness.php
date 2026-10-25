@@ -7,10 +7,12 @@ use App\Models\Plan;
 use App\Models\School;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Onboarding\OnboardingProgress;
 use App\Onboarding\Steps\StepIssue;
 use App\Onboarding\Steps\StepRegistry;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
 use App\Services\OnboardingEngine;
+use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Support\Facades\DB;
@@ -63,37 +65,61 @@ final class OnboardingParityHarness
             'whatsapp_verify' => 'WhatsAppOnboardingOtpService::deliver is mocked so no code is sent. The wizard may continue without a verified number. The Toshi driver cannot skip this step, so it verifies. Those rows are left out of the snapshot.',
             'class_teachers' => 'Class-teacher assignment is part of the teachers step and has not moved to one shared write. Every class_teacher in the snapshot is null.',
             'checklist_workbook' => 'The checklist-workbook ingester is not in the engine yet. Its decision on the same input is null.',
-            'onboarding_progress' => 'OnboardingProgress is not in the engine yet. Both faces return the same unavailable summary.',
-            'onboarding_completion' => 'OnboardingCompletion is not in the engine yet. The wizard stamps onboarding_finished_at from confirmReview and the Toshi driver does not, so that stamp is omitted. Both faces return the same unavailable summary.',
             'school_type_preset' => 'SchoolTypePreset is not in the engine yet. Both faces type the fixture values. There is no preset object to accept.',
             'confirm_before_write' => 'A confirm card before the write is not in the driver yet. The driver saves on reply, and this harness does not invent a confirmation.',
         ];
     }
 
     /**
-     * @return array{available: false, reason: string}
+     * Running summary for the school's admin. Teachers and students count as
+     * done when skipped. WhatsApp stays open until the code matches, and the
+     * school can still finish.
+     *
+     * @return array{done: int, total: int, current_key: ?string, summary: list<string>}
      */
-    public function progressSummary(School $school): array
+    public function progressSummary(School $school, ?int $userId = null): array
     {
-        unset($school);
-
-        return [
-            'available' => false,
-            'reason' => self::incompleteSteps()['onboarding_progress'],
-        ];
+        return OnboardingProgress::for($school, $this->actingUserId($school, $userId));
     }
 
     /**
-     * @return array{available: false, reason: string}
+     * Finish state both faces can be compared on. The wizard stamps
+     * onboarding_finished_at from confirmReview. The Toshi driver does not.
+     * Blocking steps ignore optional skips and WhatsApp finish-later.
+     *
+     * @return array{finished: bool, blocking: list<string>, done: int, total: int, current_key: ?string}
      */
-    public function completionSummary(School $school): array
+    public function completionSummary(School $school, ?int $userId = null): array
     {
-        unset($school);
+        $userId = $this->actingUserId($school, $userId);
+        $progress = OnboardingProgress::for($school, $userId);
 
         return [
-            'available' => false,
-            'reason' => self::incompleteSteps()['onboarding_completion'],
+            'finished' => $school->onboarding_finished_at !== null,
+            'blocking' => array_map(
+                fn (array $step): string => (string) $step['key'],
+                OnboardingStepsService::blockingIncompleteSteps($school, $userId),
+            ),
+            'done' => $progress['done'],
+            'total' => $progress['total'],
+            'current_key' => $progress['current_key'],
         ];
+    }
+
+    private function actingUserId(School $school, ?int $userId): ?int
+    {
+        if ($userId !== null) {
+            return $userId;
+        }
+
+        $id = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 3)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     public function workbookDecision(School $school, string $key, mixed $raw): null

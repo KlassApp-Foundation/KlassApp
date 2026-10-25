@@ -6,10 +6,12 @@ use App\Models\Country;
 use App\Models\Plan;
 use App\Models\School;
 use App\Models\User;
+use App\Onboarding\OnboardingProgress;
 use App\Onboarding\Steps\StepIssueCatalog;
 use App\Onboarding\Steps\StepRegistry;
 use App\Onboarding\Steps\StepSchema;
 use App\Onboarding\Steps\StepSchemaCatalog;
+use App\Services\OnboardingStepsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +87,11 @@ class PlaybookSyncTest extends TestCase
 
         $this->assertSame($registryKeys, $headings[1]);
         $this->assertStringContainsString('Exams and SchoolPay are not part of onboarding.', $markdown);
+        $this->assertStringContainsString('That card is not in the setup driver yet.', $markdown);
+        $this->assertStringContainsString('one line per finished step', $markdown);
+        $this->assertStringNotContainsString('The school confirms before the engine writes.', $markdown);
+        $this->assertStringNotContainsString('Nothing is saved on a blank confirmation.', $markdown);
+        $this->assertSame($registryKeys, array_keys(OnboardingProgress::summaryTokens()));
         $this->assertGreaterThan(
             strrpos($markdown, '## step:'),
             strpos($markdown, '## When setup is finished'),
@@ -100,6 +107,7 @@ class PlaybookSyncTest extends TestCase
                 $markdown,
             );
             $this->assertNotContains($banned, $registryKeys);
+            $this->assertArrayNotHasKey($banned, OnboardingProgress::summaryTokens());
         }
     }
 
@@ -135,7 +143,22 @@ class PlaybookSyncTest extends TestCase
             } else {
                 $this->assertSame('none', strtolower($confirmation), $key);
             }
-            $this->assertNotSame('', $this->field($section, 'Summary'), $key);
+            $summary = $this->field($section, 'Summary');
+            $this->assertSame($summary, OnboardingProgress::template($key), $key);
+            $this->assertSame(OnboardingProgress::summaryTokens()[$key], $this->braceTokens($summary), $key);
+
+            if (in_array($key, OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                $this->assertStringContainsString(OnboardingProgress::SKIPPED_FOR_LATER, $section, $key);
+            }
+            if (in_array($key, OnboardingStepsService::FINISH_WITHOUT, true)) {
+                $this->assertStringContainsString('The summary line is left out until the code matches.', $section, $key);
+            }
+            if ($key === 'uneb_center') {
+                $this->assertStringContainsString(OnboardingProgress::LEFT_BLANK, $section, $key);
+            }
+            if ($key === 'school_category') {
+                $this->assertStringContainsString(OnboardingProgress::ALREADY_SET_UP, $section, $key);
+            }
         }
     }
 
@@ -456,6 +479,16 @@ class PlaybookSyncTest extends TestCase
         }
 
         return $rest;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function braceTokens(string $text): array
+    {
+        preg_match_all('/\{([a-z_]+)\}/', $text, $matches);
+
+        return $matches[1];
     }
 
     private function field(string $section, string $label): string

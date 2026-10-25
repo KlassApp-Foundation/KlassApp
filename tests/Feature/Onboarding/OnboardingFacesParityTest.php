@@ -148,8 +148,8 @@ class OnboardingFacesParityTest extends TestCase
         }
 
         $this->assertArrayHasKey('checklist_workbook', $incomplete);
-        $this->assertArrayHasKey('onboarding_progress', $incomplete);
-        $this->assertArrayHasKey('onboarding_completion', $incomplete);
+        $this->assertArrayNotHasKey('onboarding_progress', $incomplete);
+        $this->assertArrayNotHasKey('onboarding_completion', $incomplete);
         $this->assertArrayHasKey('school_type_preset', $incomplete);
         $this->assertArrayHasKey('confirm_before_write', $incomplete);
     }
@@ -259,25 +259,76 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertNotSame((string) now()->year, $sunrise->academicYearName);
     }
 
-    public function test_progress_and_completion_summaries_are_unavailable_on_both_faces(): void
+    public function test_progress_summaries_and_completion_state_match_across_faces(): void
     {
         $fixture = SunriseHilltopFixtures::sunrise();
         [$wizardSchool, $toshiSchool] = $this->runBothFaces($fixture);
 
-        $this->assertNotNull($wizardSchool->fresh()->onboarding_finished_at);
-        $this->assertNull($toshiSchool->fresh()->onboarding_finished_at);
+        $wizard = $this->harness->progressSummary($wizardSchool);
+        $toshi = $this->harness->progressSummary($toshiSchool);
+        $wizardDone = $this->harness->completionSummary($wizardSchool);
+        $toshiDone = $this->harness->completionSummary($toshiSchool);
+
+        $this->assertSame($wizard['total'], $toshi['total']);
+        $this->assertSame($wizard['done'] + 1, $toshi['done']);
+        $this->assertSame($wizard['total'] - 1, $wizard['done']);
+        $this->assertSame($toshi['total'], $toshi['done']);
+        $this->assertCount($wizard['done'], $wizard['summary']);
+        $this->assertCount($toshi['done'], $toshi['summary']);
+        $this->assertSame('whatsapp_verify', $wizard['current_key']);
+        $this->assertNull($toshi['current_key']);
 
         $this->assertSame(
-            $this->harness->progressSummary($wizardSchool),
-            $this->harness->progressSummary($toshiSchool),
+            $this->comparableSummary($wizard['summary']),
+            $this->comparableSummary($toshi['summary']),
         );
-        $this->assertFalse($this->harness->progressSummary($wizardSchool)['available']);
-        $this->assertSame(
-            $this->harness->completionSummary($wizardSchool),
-            $this->harness->completionSummary($toshiSchool),
-        );
-        $this->assertFalse($this->harness->completionSummary($wizardSchool)['available']);
+        $this->assertContains('School name: '.$fixture->schoolName.' Wizard', $wizard['summary']);
+        $this->assertContains('School name: '.$fixture->schoolName.' Toshi', $toshi['summary']);
+        $this->assertContains('EMIS: '.$fixture->emis.'-W', $wizard['summary']);
+        $this->assertContains('EMIS: '.$fixture->emis.'-T', $toshi['summary']);
+        $this->assertContains('Classes: 10 classes, 6 streams', $wizard['summary']);
+        $this->assertContains('Classes: 10 classes, 6 streams', $toshi['summary']);
+        $this->assertContains('Teachers: skipped for later', $wizard['summary']);
+        $this->assertContains('Teachers: skipped for later', $toshi['summary']);
+        $this->assertContains('Students: 2 students', $wizard['summary']);
+        $this->assertContains('Students: 2 students', $toshi['summary']);
+        $this->assertContains('UNEB centre: blank', $wizard['summary']);
+        $this->assertContains('Academic year: 2027, 2027-01-01 to 2027-12-31', $wizard['summary']);
+        $this->assertContains('Terms: Term 1, Term 2, Term 3, current Term 1', $wizard['summary']);
+
+        foreach ($wizard['summary'] as $line) {
+            $this->assertStringStartsNotWith('WhatsApp:', $line);
+        }
+        $toshiWhatsapp = array_values(array_filter(
+            $toshi['summary'],
+            fn (string $line): bool => str_starts_with($line, 'WhatsApp:')
+        ));
+        $this->assertCount(1, $toshiWhatsapp);
+        $this->assertStringContainsString('256700000301', preg_replace('/\D+/', '', $toshiWhatsapp[0]) ?? '');
+
+        $this->assertTrue($wizardDone['finished']);
+        $this->assertFalse($toshiDone['finished']);
+        $this->assertSame([], $wizardDone['blocking']);
+        $this->assertSame([], $toshiDone['blocking']);
+        $this->assertSame($wizard['done'], $wizardDone['done']);
+        $this->assertSame($toshi['current_key'], $toshiDone['current_key']);
         $this->assertNull($this->harness->workbookDecision($wizardSchool, 'standards', []));
+    }
+
+    /**
+     * Name, EMIS and WhatsApp are the lines the two faces are allowed to differ on.
+     *
+     * @param  list<string>  $summary
+     * @return list<string>
+     */
+    private function comparableSummary(array $summary): array
+    {
+        return array_values(array_filter(
+            $summary,
+            fn (string $line): bool => ! str_starts_with($line, 'School name:')
+                && ! str_starts_with($line, 'EMIS:')
+                && ! str_starts_with($line, 'WhatsApp:')
+        ));
     }
 
     private function assertFacesMatch(OnboardingSchoolFixture $fixture): void
