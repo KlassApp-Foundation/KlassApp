@@ -17,20 +17,20 @@
     @if(!empty($plan->warnings))
         <div role="alert" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="marks-import-warnings">
             <p class="font-semibold">Heads up</p>
-            <ul class="list-disc pl-5">@foreach($plan->warnings as $message) <li>{{ $message }}</li> @endforeach</ul>
+            <x-fold-list tag="ul" class="list-disc pl-5">@foreach($plan->warnings as $message) <li>{{ $message }}</li> @endforeach</x-fold-list>
         </div>
     @endif
 
     @if($errors->any())
         <div role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-900">
-            <ul class="list-disc pl-5">@foreach($errors->all() as $message) <li>{{ $message }}</li> @endforeach</ul>
+            <x-fold-list tag="ul" class="list-disc pl-5">@foreach($errors->all() as $message) <li>{{ $message }}</li> @endforeach</x-fold-list>
         </div>
     @endif
 
     @if($plan->isBlocked())
         <div role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-900" data-testid="marks-import-blocked">
             <p class="font-semibold">This file cannot be saved.</p>
-            <ul class="list-disc pl-5">@foreach($plan->blockers as $message) <li>{{ $message }}</li> @endforeach</ul>
+            <x-fold-list tag="ul" class="list-disc pl-5">@foreach($plan->blockers as $message) <li>{{ $message }}</li> @endforeach</x-fold-list>
         </div>
     @endif
 
@@ -47,9 +47,9 @@
         <section class="mb-6" aria-labelledby="skipped-heading">
             <h2 id="skipped-heading" class="text-lg font-semibold text-gray-900 mb-1">Skipped rows ({{ $counts['skipped'] }})</h2>
             <p class="text-gray-800 mb-2">These rows will not be saved. Fix them in the file and upload again, or enter them on the marks page.</p>
-            <ul class="mb-3 list-disc pl-5 text-gray-800">
+            <x-fold-list tag="ul" class="mb-3 list-disc pl-5 text-gray-800">
                 @foreach($plan->skippedByReason() as $code => $n) <li>{{ $n }} &times; {{ $reasons[$code] ?? $code }}</li> @endforeach
-            </ul>
+            </x-fold-list>
             @include('marks-import._rows', ['rows' => $plan->rowsWithOutcome('skipped')])
         </section>
     @endif

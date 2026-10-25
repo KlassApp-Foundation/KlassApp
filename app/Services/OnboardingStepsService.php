@@ -121,6 +121,15 @@ class OnboardingStepsService
         'students',
     ];
 
+    /**
+     * Shown during setup, and still required before parent WhatsApp messages,
+     * but a school can finish setup while this step is incomplete.
+     * isStepComplete() stays tied to whatsapp_users.verified_at.
+     */
+    public const FINISH_WITHOUT = [
+        'whatsapp_verify',
+    ];
+
     public static function isOnboardingFinished(School $school): bool
     {
         return $school->onboarding_finished_at !== null;
@@ -446,7 +455,7 @@ class OnboardingStepsService
             if ($step['is_complete']) {
                 continue;
             }
-            if (in_array($step['key'], self::OPTIONAL_STEPS, true)) {
+            if (in_array($step['key'], self::OPTIONAL_STEPS, true) || in_array($step['key'], self::FINISH_WITHOUT, true)) {
                 continue;
             }
             $blocking[] = $step;

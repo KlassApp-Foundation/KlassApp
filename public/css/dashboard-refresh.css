@@ -3550,20 +3550,7 @@ body.toshi-manual-wizard [data-toshi-root] {
     align-items: center;
     margin-bottom: 12px;
 }
-.manual-wizard-bulk-link,
 .manual-wizard-bulk-upload {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1E6FD9;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    cursor: pointer;
-}
-.manual-wizard-bulk-upload {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
     position: relative;
 }
 .manual-wizard-bulk-file {

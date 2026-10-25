@@ -243,17 +243,37 @@ class SchoolAdminReadToolsTest extends TestCase
         $this->assertStringNotContainsString('BEN KATO', $east);
         $this->assertStringNotContainsString('ZARA FOREIGN', $east);
 
-        $term = (new ListUnpaidFeeBalancesTool)->handle(new Request(['term' => 'Term 1']));
-        $this->assertStringContainsString('ADA OKELLO', $term);
-        $this->assertStringContainsString('UGX 30,000', $term);
-        $this->assertStringNotContainsString('BEN KATO', $term);
-        $this->assertStringNotContainsString('ZARA FOREIGN', $term);
+        // Term 1 is current: Tuition (no term) + Term 1 levy, never Term 2's levy.
+        // Payments count as on the payments dashboard (#1202).
+        $current = (new ListUnpaidFeeBalancesTool)->handle(new Request([]));
+        $this->assertStringContainsString('ADA OKELLO', $current);
+        $this->assertStringContainsString('UGX 105,000', $current);
+        $this->assertStringContainsString('UGX 100,000', $current);
+        $this->assertStringNotContainsString('ZARA FOREIGN', $current);
+
+        $termOneRows = (new ListUnpaidFeeBalancesTool)->handle(new Request(['term' => 'Term 1']));
+        $this->assertSame($current, $termOneRows);
+
+        $termTwoRows = (new ListUnpaidFeeBalancesTool)->handle(new Request(['term' => 'Term 2']));
+        $this->assertStringContainsString('ADA OKELLO', $termTwoRows);
+        $this->assertStringContainsString('UGX 125,000', $termTwoRows);
+        $this->assertStringContainsString('UGX 120,000', $termTwoRows);
+        $this->assertStringNotContainsString('ZARA FOREIGN', $termTwoRows);
 
         $service = app(FeePositionService::class)->studentsWithBalance($this->schoolId, [
             'academic_term_id' => $termOne,
         ]);
         $ada = collect($service)->firstWhere('name', 'ADA OKELLO');
-        $this->assertEquals(30000.0, (float) $ada['balance']);
+        $this->assertEquals(105000.0, (float) $ada['balance']);
+
+        // The unfiltered list matches what the dashboard (no filters) returns.
+        $this->assertEquals(
+            app(FeePositionService::class)->studentsWithBalance($this->schoolId),
+            $service,
+        );
+
+        $unknown = (new ListUnpaidFeeBalancesTool)->handle(new Request(['term' => 'Term 9']));
+        $this->assertStringContainsString('No term named', $unknown);
     }
 
     public function test_unpaid_fee_balances_deny_teacher_and_parent(): void

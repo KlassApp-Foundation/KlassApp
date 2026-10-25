@@ -101,25 +101,13 @@ class ManualUiWave3WizardTest extends TestCase
     }
 
     /**
-     * Complete WhatsApp OTP so wizard walks can leave the verify step.
-     * OTP became required after these Wave3 walks were written; without this they stall.
+     * WhatsApp verification does not block the rest of setup.
      *
      * @param  \Livewire\Features\SupportTesting\Testable  $component
      */
     private function verifyWhatsAppAndAdvance(object $component, string $phone): void
     {
-        $component
-            ->set('whatsappPhone', $phone)
-            ->call('sendWhatsAppVerificationCode');
-
-        $code = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
-
-        $component
-            ->set('whatsappOtpInput', $code)
-            ->call('verifyWhatsAppCode')
-            ->assertSet('whatsappVerified', true)
-            ->call('next');
+        $component->set('whatsappPhone', $phone)->call('next');
     }
 
     public function test_prev_next_and_progress_indicator_state(): void
@@ -343,7 +331,8 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH') // Subject model accessor uppercases name
             ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names
-            ->assertSee('+256700555666')
+            ->assertSee('Not linked')
+            ->assertDontSee('+256700555666')
             ->assertSee('Freemium');
 
         $planId = \App\Models\CurrentPlan::where('school_id', $this->school->id)->value('plan_id');
@@ -366,7 +355,8 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH')
             ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names
-            ->assertSee('+256700555666')
+            ->assertSee('Not linked')
+            ->assertDontSee('+256700555666')
             ->assertSee('Freemium');
         $this->assertNull($component->get('returnToStepIndex'));
 

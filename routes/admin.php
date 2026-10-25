@@ -23,8 +23,17 @@ Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
 
 // WhatsApp
+// Class-teacher self-setup: staff link, approvals and per-class progress.
+Route::get('/class-setup', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'index'])->name('admin.class-setup.index');
+Route::post('/class-setup/staff-link', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'createStaffLink'])->name('admin.class-setup.staff-link');
+Route::post('/class-setup/staff-link/regenerate', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'regenerateStaffLink'])->name('admin.class-setup.staff-link.regenerate');
+Route::post('/class-setup/requests/{request}/approve', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'approve'])->name('admin.class-setup.approve');
+Route::post('/class-setup/requests/{request}/reject', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'reject'])->name('admin.class-setup.reject');
+
 Route::get( '/whatsapp/phone', 'UserProfileController@phoneLink' )->name( 'whatsapp.phone' );
 Route::post( '/whatsapp/phone', 'UserProfileController@linkWhatsApp' );
+Route::post( '/whatsapp/phone/code', 'UserProfileController@issueWhatsAppLinkCode' )->name( 'whatsapp.phone.code' );
+Route::get( '/whatsapp/phone/status', 'UserProfileController@whatsappLinkStatus' )->name( 'whatsapp.phone.status' );
 Route::get( '/whatsapp/dashboard', 'WhatsAppDashboardController@index' )->name( 'whatsapp.dashboard' );
 Route::get( '/whatsapp/parents', 'WhatsAppParentController@index' )->name( 'whatsapp.parents' );
 Route::post( '/whatsapp/parents/unlink/{id}', 'WhatsAppParentController@unlink' );

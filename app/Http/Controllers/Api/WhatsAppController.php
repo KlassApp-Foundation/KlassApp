@@ -21,12 +21,15 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\DemoSchoolCommsGuard;
+use App\Services\StudentFeeResolver;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
 use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
+use App\Services\WhatsApp\WhatsAppLinkCodeService;
 use App\Services\WhatsApp\ParentLinkRequestService;
+use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 use App\Services\WhatsAppBusinessService;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
@@ -231,15 +234,9 @@ class WhatsAppController extends Controller
             ], 404);
         }
 
-        $feeCategories = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', function ($q) use ($student) {
-                $q->select('standard_id')
-                    ->from('student_academics')
-                    ->where('student_id', $student->id)
-                    ->latest()
-                    ->limit(1);
-            })
-            ->get();
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
 
@@ -610,19 +607,20 @@ class WhatsAppController extends Controller
                             ?? '';
                     }
 
-                    Log::info('Meta message parsed', ['phone' => WhatsAppPhoneHelper::mask($phone), 'body' => $body, 'type' => $msgType]);
+                    $loggedBody = app(WhatsAppUserInitiatedVerification::class)->redact($body);
+                    Log::info('Meta message parsed', ['phone' => WhatsAppPhoneHelper::mask($phone), 'body' => $loggedBody, 'type' => $msgType]);
 
                     if (empty($phone) || empty($body)) {
                         continue;
                     }
 
-                    // Log inbound message
+                    // Log inbound message. The preview never keeps a verification code.
                     MessageDeliveryLog::create([
                         'whatsapp_message_id' => $messageId,
                         'phone'               => $phone,
                         'direction'           => 'inbound',
                         'status'              => 'received',
-                        'content_preview'     => \Illuminate\Support\Str::limit($body, 200),
+                        'content_preview'     => \Illuminate\Support\Str::limit($loggedBody, 200),
                     ]);
 
                     // Track last inbound activity (24hr service window)
@@ -657,6 +655,19 @@ class WhatsAppController extends Controller
      */
     protected function processMetaMessage(string $phone, string $body, string $messageId, string $senderName = 'Demo User')
     {
+        // Admin setup: the message comes FROM the number they entered and
+        // contains the code the wizard showed them. A different number falls
+        // through and gets no verification reply.
+        if (app(WhatsAppUserInitiatedVerification::class)->handleInbound($phone, $body)) {
+            return;
+        }
+
+        // "Send this code to link your number": nothing was typed, so the code
+        // alone identifies who is linking. The sending number becomes theirs.
+        if (app(WhatsAppLinkCodeService::class)->handleInbound($phone, $body)) {
+            return;
+        }
+
         // Live demo follow-along: BIND <code>, and MARKS / RESULTS for a bound
         // or unbound number. Numbers linked to a real school fall through.
         if (app(\App\Services\Demo\DemoBindReplies::class)->handle($phone, $body, $senderName)) {
@@ -1443,6 +1454,12 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Parents: health details only after they ask for them.
+        if ($role === 7 && $match(['health', 'health update', 'clinic', 'sick'])) {
+            $this->sendHealthUpdate($user, $phone, $whatsAppService);
+            return;
+        }
+
         // Universal: events (any role)
         if ($match(['events', 'event', 'calendar', 'news'])) {
             $this->sendEvents($user, $phone, $whatsAppService);
@@ -1947,6 +1964,76 @@ class WhatsAppController extends Controller
         $this->sendActionButtons($phone, $user->user_id, 'report');
     }
 
+
+    /**
+     * Health details are only sent here: the parent asked, from their linked
+     * number. Unrequested notices carry no clinical detail.
+     */
+    private function sendHealthUpdate(WhatsAppUser $user, string $phone, $whatsAppService): void
+    {
+        $children = $user->user->children()
+            ->with('userStudent')
+            ->get();
+
+        if ($children->isEmpty()) {
+            $whatsAppService->sendText(
+                $phone,
+                "No children are linked to your account yet. Please contact your school office.",
+                'health_no_children',
+                $user->user_id,
+            );
+            return;
+        }
+
+        $sent = false;
+        foreach ($children as $link) {
+            $student = $link->userStudent;
+            if (! $student) {
+                continue;
+            }
+
+            $incidents = \App\Models\StudentHealthIncident::query()
+                ->where('school_id', $student->school_id)
+                ->where('user_id', $student->id)
+                ->where('incident_date', '>=', now()->subDays(30)->toDateString())
+                ->orderByDesc('incident_date')
+                ->limit(5)
+                ->get();
+
+            if ($incidents->isEmpty()) {
+                continue;
+            }
+
+            $name = $this->whatsappDisplayName($student, 'your child');
+            $message = "🏥 *Health updates — {$name}*\n\n";
+            foreach ($incidents as $incident) {
+                $severity = match ($incident->severity) {
+                    'serious' => 'Serious',
+                    'moderate' => 'Moderate',
+                    default => 'Minor',
+                };
+                $message .= '• '.$incident->incident_date->format('d M Y').' — '.$severity."\n";
+                $message .= '  '.$incident->description."\n";
+                if ($incident->action_taken) {
+                    $message .= '  Action: '.$incident->action_taken."\n";
+                }
+            }
+            $message .= "\n_Please contact the school if you have questions._";
+
+            $whatsAppService->sendText($phone, $message, 'health_details', $user->user_id);
+            $sent = true;
+        }
+
+        if (! $sent) {
+            $whatsAppService->sendText(
+                $phone,
+                "No health updates for your children in the last 30 days.",
+                'health_none',
+                $user->user_id,
+            );
+        }
+    }
+
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
@@ -2064,14 +2151,10 @@ class WhatsAppController extends Controller
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
 
-            $standardId = $academic?->standardLink?->standard_id;
-
-            $feeCategories = collect();
-            if ($standardId) {
-                $feeCategories = FeesCategories::where('school_id', $schoolId)
-                    ->where('standard_id', $standardId)
-                    ->get();
-            }
+            $resolver = app(StudentFeeResolver::class);
+            $feeCategories = ($student && $schoolId > 0)
+                ? $resolver->forStudent($student, $schoolId, $resolver->currentTermId($schoolId))
+                : collect();
 
             $totalFees = $feeCategories->sum('amount');
 
@@ -2453,15 +2536,9 @@ class WhatsAppController extends Controller
     {
         $student = $user->user;
 
-        $feeCategories = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', function ($q) use ($student) {
-                $q->select('standard_id')
-                    ->from('student_academics')
-                    ->where('student_id', $student->id)
-                    ->latest()
-                    ->limit(1);
-            })
-            ->get();
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        $feeCategories = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
 
         $totalFees = $feeCategories->sum('amount');
         $message = "💰 *My Fee Balance*\n_{$this->whatsappDisplayName($student, 'Student')}_\n\n";

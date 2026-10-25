@@ -594,3 +594,17 @@ Route::post('/csp-report', \App\Http\Controllers\Security\CspReportController::c
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
     ->middleware('throttle:30,1')
     ->name('security.csp-report');
+
+// Class-teacher self-setup: personal single-use link and the optional staff link.
+Route::get('/teacher/setup/{token}', [\App\Http\Controllers\TeacherSetup\TeacherSetupController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('teacher.setup.form');
+Route::post('/teacher/setup/{token}', [\App\Http\Controllers\TeacherSetup\TeacherSetupController::class, 'claim'])
+    ->middleware('throttle:10,1')
+    ->name('teacher.setup.claim');
+Route::get('/school/staff/{token}', [\App\Http\Controllers\TeacherSetup\StaffLinkController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('school.staff.form');
+Route::post('/school/staff/{token}', [\App\Http\Controllers\TeacherSetup\StaffLinkController::class, 'submit'])
+    ->middleware('throttle:staff-link-submit')
+    ->name('school.staff.submit');

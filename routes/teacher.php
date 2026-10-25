@@ -2,6 +2,10 @@
 
 //dashboard
 Route::get( '/dashboard', 'DashboardController@index' )->name('teacher.dashboard');
+
+// Class-teacher self-setup (entered from the personal or staff link).
+Route::get('/class-setup', [\App\Http\Controllers\TeacherSetup\TeacherClassSetupPageController::class, 'show'])
+    ->name('teacher.setup.class');
 Route::get('/timetable', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherIndex'])->name('teacher.timetable.index');
 Route::get('/timetable/create', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherCreate'])->name('teacher.timetable.create');
 Route::post('/timetable', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherStore'])->name('teacher.timetable.store');

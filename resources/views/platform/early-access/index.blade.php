@@ -54,9 +54,16 @@
               @endif
             </td>
             <td style="padding:6px;white-space:nowrap;" data-testid="early-access-invite-{{ $row->id }}">
+              @if ($invite && $invite->is_test)
+                <span data-testid="invite-test-badge" style="display:inline-block;margin-right:6px;padding:1px 8px;border:1px solid currentColor;border-radius:999px;font-size:12px;">Test</span>
+              @endif
               @if (! $invite)
                 <form method="POST" action="{{ route('platform.early-access.invite', $row) }}" style="display:inline;">
                   @csrf
+                  <label style="font-size:12px;margin-right:8px;">
+                    <input type="checkbox" name="is_test" value="1" data-testid="early-access-test-school">
+                    Test school
+                  </label>
                   <button type="submit" class="ap-link" data-testid="early-access-invite-button">Invite</button>
                 </form>
               @elseif ($invite->isClaimed())

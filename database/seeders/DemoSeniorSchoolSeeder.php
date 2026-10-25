@@ -410,7 +410,10 @@ class DemoSeniorSchoolSeeder extends Seeder
                     'name' => $def['name'],
                 ],
                 [
-                    'academic_term_id' => $termOne?->id,
+                    // Demo fees are the school's standard charge for every term,
+                    // so they are deliberately not tied to Term I. A term-tied
+                    // row is excluded from Term III balances and report cards.
+                    'academic_term_id' => null,
                     'amount' => $def['amount'],
                     'due_date' => '2026-04-30',
                     'fee_type' => $def['type'],

@@ -237,7 +237,7 @@ class WizardClassTeacherUploadTest extends TestCase
             ->assertSet('classTeacherUploadReport', '1 class teacher added, 4 skipped')
             ->assertSee('Kept Teacher')
             ->assertSee('Row 3: unknown class')
-            ->assertSee('Row 4: unknown stream')
+            ->assertSee("Row 4: Primary One, stream Nope doesn't exist yet. Create it in Classes, or use Create missing streams and retry.")
             ->assertSee('Row 5: missing name')
             ->assertSee('Row 6: bad email')
             ->assertDontSee('Skipped Teacher');

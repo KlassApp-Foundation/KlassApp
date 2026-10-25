@@ -95,11 +95,11 @@
     </div>
 
     @if(!empty($approvals))
-        <ul class="mr-card" data-testid="release-subject-approvals">
+        <x-fold-list tag="ul" class="mr-card" data-testid="release-subject-approvals">
             @foreach($approvals as $row)
                 <li data-testid="release-subject-approval" data-state="{{ $row['state'] }}">{{ $row['name'] }}@if($row['class_name'] !== '') · {{ $row['class_name'] }}@endif — {{ $row['label'] }}</li>
             @endforeach
-        </ul>
+        </x-fold-list>
     @endif
 
     <div class="mr-sheet {{ $wide ? 'mr-sheet--wide' : '' }}" data-testid="marks-release-sheet">

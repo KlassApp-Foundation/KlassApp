@@ -23,7 +23,7 @@ class ListUnpaidFeeBalancesTool implements Tool
 
     public function description(): string
     {
-        return 'List students who still owe fees. Optional filters: class (section or standard name), stream, and term name. Balances use the same category-minus-payments figures as the payments dashboard. Read only.';
+        return 'List students who still owe fees. Optional filters: class (section or standard name), stream, and term name. Balances use the same fees-due-minus-payments figures as the payments dashboard, for the current term unless a term is named. Read only.';
     }
 
     public function schema(JsonSchema $schema): array
@@ -31,7 +31,7 @@ class ListUnpaidFeeBalancesTool implements Tool
         return [
             'class' => $schema->string()->description('Optional class or section name, for example P.1')->nullable(),
             'stream' => $schema->string()->description('Optional stream name on that class')->nullable(),
-            'term' => $schema->string()->description('Optional academic term name. When that term has its own fee categories, only those categories count.')->nullable(),
+            'term' => $schema->string()->description('Optional academic term name. Fees due are that term\'s fees plus fees with no term; the current term is used when omitted.')->nullable(),
         ];
     }
 

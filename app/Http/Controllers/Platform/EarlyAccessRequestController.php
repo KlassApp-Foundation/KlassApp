@@ -90,7 +90,12 @@ class EarlyAccessRequestController extends Controller
             return back()->with('error', 'An active invite already exists for '.$email.'. Use resend instead.');
         }
 
-        ['invite' => $invite, 'token' => $token] = SchoolInviteService::issue($earlyAccessRequest, $request->user());
+        // authorizePlatformAdmin() already ran. The claim request never reaches this flag.
+        ['invite' => $invite, 'token' => $token] = SchoolInviteService::issue(
+            $earlyAccessRequest,
+            $request->user(),
+            $request->boolean('is_test'),
+        );
 
         if (! SchoolInviteService::sendEmail($invite, $token)) {
             return back()

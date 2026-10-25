@@ -75,8 +75,14 @@ trait NotifyOnStatusChange
                 return;
             }
 
-            $whatsApp = app(OutboundWhatsAppService::class);
-            $whatsApp->sendText($whatsAppUser->phone, $message, 'approval_status');
+            // Never a cold send: queue it and let the teacher's next inbound
+            // message deliver it (the same queue-on-inbound pattern as health
+            // notices). The approval itself is already visible in-app.
+            app(OutboundWhatsAppService::class)->queueNotification(
+                whatsappUserId: (int) $whatsAppUser->id,
+                flowType: 'approval_status',
+                message: $message,
+            );
         } catch (\Throwable $e) {
             Log::warning("NotifyOnStatusChange: WhatsApp send failed: {$e->getMessage()}");
         }

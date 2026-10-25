@@ -21,6 +21,7 @@ use App\Models\WhatsAppUser;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
 use App\Services\OnboardingStepsService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
+use Tests\Support\PostsMetaWhatsApp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -31,6 +32,7 @@ use Tests\TestCase;
  */
 class WizardToshiV2RegistryParityTest extends TestCase
 {
+    use PostsMetaWhatsApp;
     use RefreshDatabase;
 
     private Plan $freemium;
@@ -196,12 +198,12 @@ class WizardToshiV2RegistryParityTest extends TestCase
             ->call('sendWhatsAppVerificationCode');
 
         $otp = (string) $component->get('whatsappOtpDisplay');
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
+        $this->assertMatchesRegularExpression('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $otp);
+        $this->postMetaWhatsAppText($payload['whatsapp'], 'Verify KlassApp: '.$otp)->assertOk();
 
         $component
-            ->set('whatsappOtpInput', $otp)
-            ->call('verifyWhatsAppCode')
-            ->call('next')
+            ->call('pollWhatsAppVerification')
+            ->assertSet('whatsappVerified', true)
             ->set('selectedPlanId', (int) $this->freemium->id)
             ->call('next')
             ->call('confirmReview')

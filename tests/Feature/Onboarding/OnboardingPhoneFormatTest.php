@@ -277,6 +277,26 @@ class OnboardingPhoneFormatTest extends TestCase
     public function test_upload_keeps_a_row_when_the_phone_cannot_be_read(): void
     {
         $this->actingAs($this->admin);
+
+        // The roster importer needs a year and a class to place people in.
+        $year = AcademicYear::create([
+            'school_id' => $this->school->id,
+            'name' => '2026',
+            'description' => 'phone format',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+        $standard = \App\Models\Standard::create(['school_id' => $this->school->id, 'name' => 'primary', 'order' => 1, 'status' => 1]);
+        $section = \App\Models\Section::create(['school_id' => $this->school->id, 'name' => 'P.1', 'status' => 1]);
+        \App\Models\StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'status' => 1,
+        ]);
+
         $wizard = Livewire::test(ManualOnboardingWizard::class);
         $wizard->set('errorMessage', 'Enter your phone number with the country code, e.g. leftover from before.');
 
@@ -285,35 +305,45 @@ class OnboardingPhoneFormatTest extends TestCase
             "Name,Email,Phone\nAda Teacher,ada-upload@phone-format.sch.ug,0765274289\n",
         );
         $wizard->set('teacherUpload', $good)
-            ->assertCount('teacherDrafts', 1)
+            ->assertSet('teacherUploadReport', '1 teacher added, 0 skipped')
             ->assertSet('errorMessage', '');
-        $this->assertSame('+256765274289', $wizard->get('teacherDrafts')[0]['phone']);
+        $this->assertSame(
+            '+256765274289',
+            \App\Models\User::where('email', 'ada-upload@phone-format.sch.ug')->value('mobile_no')
+        );
 
         $mixed = UploadedFile::fake()->createWithContent(
             'teachers-mixed.csv',
             "Name,Email,Phone\nBen Teacher,ben-upload@phone-format.sch.ug,+256 765 111 222\nCara Teacher,cara-upload@phone-format.sch.ug,12345\n",
         );
         $wizard->set('teacherUpload', $mixed)
-            ->assertCount('teacherDrafts', 2)
-            ->assertSet('teacherUploadReport', '0 teachers added, 1 skipped')
+            ->assertSet('teacherUploadReport', '1 teacher added, 1 skipped')
             ->assertSet('teacherUploadSkips.0.row', 3)
             ->assertSet('teacherUploadSkips.0.reason', 'invalid phone');
-        $this->assertSame('Ben Teacher', $wizard->get('teacherDrafts')[1]['name']);
-        $this->assertSame('+256765111222', $wizard->get('teacherDrafts')[1]['phone']);
-        $this->assertFalse(
-            collect($wizard->get('teacherDrafts'))->contains(fn ($draft) => ($draft['name'] ?? '') === 'Cara Teacher')
+        $this->assertSame(
+            '+256765111222',
+            \App\Models\User::where('email', 'ben-upload@phone-format.sch.ug')->value('mobile_no')
         );
+        $this->assertNull(\App\Models\User::where('email', 'cara-upload@phone-format.sch.ug')->first());
 
+        // The row is kept when only its phone is unreadable; the learner is
+        // still added and the note names the row.
         $students = UploadedFile::fake()->createWithContent(
             'students.csv',
             "Name,Class,Parent Phone\nAmina Student,P.1,0765-274-289\nBad Student,P.1,not-a-phone\n",
         );
         $wizard->set('studentUpload', $students)
-            ->assertCount('studentDrafts', 2)
-            ->assertSet('errorMessage', 'Could not read the phone for Bad Student. The row was kept without that phone. Enter the number with the country code, e.g. +256 765 274 289.');
-        $this->assertSame('Bad Student', $wizard->get('studentDrafts')[1]['name']);
-        $this->assertSame('', $wizard->get('studentDrafts')[1]['parent_phone']);
-        $this->assertSame('+256765274289', $wizard->get('studentDrafts')[0]['parent_phone']);
+            ->assertSet('studentUploadReport', '2 students added, 0 skipped')
+            ->assertSet('studentUploadNotes.0.reason', 'Could not read the phone for Bad Student. The row was kept without that phone.');
+
+        $amina = \App\Models\User::where('school_id', $this->school->id)->where('name', 'Amina Student')->first();
+        $bad = \App\Models\User::where('school_id', $this->school->id)->where('name', 'Bad Student')->first();
+        $this->assertNotNull($amina);
+        $this->assertNotNull($bad);
+        $link = \App\Models\StudentParentLink::where('student_id', $amina->id)->where('status', 1)->first();
+        $this->assertNotNull($link);
+        $this->assertSame('+256765274289', \App\Models\User::where('id', $link->parent_id)->value('mobile_no'));
+        $this->assertNull(\App\Models\StudentParentLink::where('student_id', $bad->id)->first());
     }
 
     public function test_wizard_structure_class_teacher_phone_accepts_a_local_number(): void

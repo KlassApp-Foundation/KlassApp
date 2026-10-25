@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Academics\Exam;
-use App\Models\FeesCategories;
-use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppPendingNotification;
 use App\Models\WhatsAppUser;
@@ -356,15 +354,13 @@ class OutboundWhatsAppService
             return 0;
         }
 
-        $standardId = $student->studentAcademicLatest?->standardLink?->standard_id;
-        if (! $standardId) {
-            return 0;
+        $resolver = app(StudentFeeResolver::class);
+        $schoolId = $student->school_id ? (int) $student->school_id : null;
+        // A reminder is for the term in progress, not every term the fee name was used in.
+        $fees = $resolver->forStudent($student, $schoolId, $schoolId ? $resolver->currentTermId($schoolId) : null);
+        if ($feeId) {
+            $fees = $fees->where('id', $feeId)->values();
         }
-
-        $fees = FeesCategories::where('school_id', $student->school_id)
-            ->where('standard_id', $standardId)
-            ->when($feeId, fn ($q) => $q->where('id', $feeId))
-            ->get();
 
         if ($fees->isEmpty()) {
             return 0;
@@ -403,20 +399,14 @@ class OutboundWhatsAppService
                 continue;
             }
 
+            // Only a linked, opted-in WhatsApp number. A parent's profile phone
+            // is not a WhatsApp number until they have linked it.
             $waUser = WhatsAppUser::optedIn()
                 ->where('user_id', $parent->id)
                 ->first();
 
             if ($waUser?->phone) {
                 $phones[] = $waUser->phone;
-            }
-
-            // Fallback: if parent has a mobile_no in User but no WhatsAppUser yet
-            if (! $waUser && $parent->mobile_no) {
-                $normalised = WhatsAppPhoneHelper::normalise($parent->mobile_no);
-                if (WhatsAppPhoneHelper::validate($normalised)) {
-                    $phones[] = $normalised;
-                }
             }
         }
 
@@ -594,27 +584,16 @@ class OutboundWhatsAppService
      */
     public function notifyHealthIncident(User $student, \App\Models\StudentHealthIncident $incident): int
     {
-        $severityLabel = match ($incident->severity) {
-            'serious' => '🚨 SERIOUS',
-            'moderate' => '⚠️ Moderate',
-            default => 'Minor',
-        };
-
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $message = "🏥 *Health Incident — {$this->displayNameFor($student)}*\n";
-        $message .= "_{$className}_\n\n";
-        $message .= "• Date: {$incident->incident_date->format('d M Y')}\n";
-        $message .= "• Severity: {$severityLabel}\n";
-        $message .= "• Description: {$incident->description}\n";
-        if ($incident->action_taken) {
-            $message .= "• Action taken: {$incident->action_taken}\n";
-        }
-        $message .= "\n_Please contact the school for more information._\n";
+        // No details in an unrequested message. The parent has to reply HEALTH
+        // from their linked number; the inbound handler sends the record then.
+        $message = "🏥 There is a health update about {$this->displayNameFor($student)} from school.\n\n"
+            ."Reply *HEALTH* to see it.";
 
         $sent = 0;
         foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $student->id, $message, 'health_incident');
+            $sent += $this->queueOrSend($phone, $student->id, $message, 'health_notice');
         }
+
         return $sent;
     }
 
