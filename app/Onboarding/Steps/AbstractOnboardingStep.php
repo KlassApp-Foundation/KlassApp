@@ -24,6 +24,11 @@ abstract class AbstractOnboardingStep implements OnboardingStep
         return [];
     }
 
+    public function schema(School $school): StepSchema
+    {
+        return StepSchemaCatalog::for($this->key(), $school, $this->options($school));
+    }
+
     public function normalize(mixed $raw): mixed
     {
         if (is_string($raw)) {
