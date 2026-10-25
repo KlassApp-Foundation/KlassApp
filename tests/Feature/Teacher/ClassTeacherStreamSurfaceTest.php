@@ -247,6 +247,49 @@ class ClassTeacherStreamSurfaceTest extends TestCase
         ]);
     }
 
+    public function test_ct_rename_to_a_stream_name_taken_in_that_class_and_year_errors_on_the_name_field(): void
+    {
+        $streamA = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'Primary One A',
+            'status' => 1,
+            'class_teacher_id' => $this->classTeacher->id,
+        ]);
+        $streamB = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'Primary One B',
+            'status' => 1,
+        ]);
+        StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $this->standard->id,
+            'section_id' => $streamA->id,
+            'class_teacher_id' => $this->classTeacher->id,
+            'status' => '1',
+        ]);
+        StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $this->standard->id,
+            'section_id' => $streamB->id,
+            'status' => '1',
+        ]);
+
+        $response = $this->actingAs($this->classTeacher)
+            ->from(route('teacher.class-stream.edit', $streamA))
+            ->put(route('teacher.class-stream.update', $streamA), [
+                'name' => 'Primary One B',
+            ]);
+
+        $response->assertRedirect(route('teacher.class-stream.edit', $streamA));
+        $response->assertSessionHasErrors([
+            'name' => 'A stream with that name already exists.',
+        ]);
+        $this->assertSame('Primary One A', $streamA->fresh()->name);
+        $this->assertSame('Primary One B', $streamB->fresh()->name);
+    }
+
     public function test_subject_teacher_without_ct_assignment_sees_empty_index(): void
     {
         $subjectOnly = User::factory()->create([

@@ -5,11 +5,14 @@ namespace Tests\Feature\Onboarding;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
+use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\Subject;
 use App\Models\User;
 use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Services\ClassStructureService;
+use App\Services\OnboardingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -152,6 +155,113 @@ class ClassStructureServiceStructureTest extends TestCase
         ]]);
         $this->assertSame('standards.stream_duplicate', $duplicate[0]->code);
         $this->assertSame('Primary One, stream A is listed more than once.', $duplicate[0]->cause);
+    }
+
+    public function test_save_classes_rolls_back_when_a_later_class_fails(): void
+    {
+        $before = $this->structureRowCounts();
+
+        $dispatcher = new \Illuminate\Events\Dispatcher();
+        $dispatcher->listen('eloquent.created: '.Section::class, function (Section $section): void {
+            if ($section->name === 'Primary Two') {
+                throw new \RuntimeException('forced mid-save failure');
+            }
+        });
+        $original = Section::getEventDispatcher();
+        Section::setEventDispatcher($dispatcher);
+
+        try {
+            try {
+                $this->service->saveClasses($this->school, $this->year, [
+                    ['name' => 'Primary One', 'streams' => ['A']],
+                    ['name' => 'Primary Two', 'streams' => ['B']],
+                ]);
+                $this->fail('A failure part-way through saveClasses was ignored.');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('forced mid-save failure', $e->getMessage());
+            }
+
+            try {
+                app(OnboardingEngine::class)->saveStandards($this->school, $this->year, [
+                    ['name' => 'Primary One', 'streams' => ['A']],
+                    ['name' => 'Primary Two', 'streams' => ['B']],
+                ]);
+                $this->fail('A failure part-way through the caller was ignored.');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('forced mid-save failure', $e->getMessage());
+            }
+
+            $this->assertSame($before, $this->structureRowCounts());
+        } finally {
+            Section::setEventDispatcher($original);
+        }
+    }
+
+    public function test_renaming_a_stream_to_a_name_taken_in_that_class_and_year_errors_on_the_stream_field(): void
+    {
+        $this->service->saveClasses($this->school, $this->year, [[
+            'name' => 'Primary One',
+            'streams' => ['A', 'B'],
+        ]]);
+
+        $taken = Section::where('school_id', $this->school->id)->where('name', 'Primary One B')->firstOrFail();
+        $link = StandardLink::where('school_id', $this->school->id)->where('section_id', $taken->id)->firstOrFail();
+        $this->assertSame((int) $this->year->id, (int) $link->academic_year_id);
+
+        $payload = [[
+            'name' => 'Primary One',
+            'rename_streams' => ['A' => 'B'],
+        ]];
+
+        $issues = $this->service->issues($this->school, $payload);
+        $this->assertSame('standards.stream_exists', $issues[0]->code);
+        $this->assertSame('stream', $issues[0]->field);
+        $this->assertSame(
+            'Primary One, stream B: a stream with that name already exists.',
+            $issues[0]->cause,
+        );
+
+        $stepIssues = app(StandardsStep::class)->issues($this->school->fresh(), $payload);
+        $this->assertSame('stream', $stepIssues[0]->field);
+        $this->assertSame($issues[0]->cause, $stepIssues[0]->cause);
+
+        $names = Section::where('school_id', $this->school->id)->orderBy('name')->pluck('name')->all();
+
+        try {
+            $this->service->saveClasses($this->school, $this->year, $payload);
+            $this->fail('A stream was renamed onto a name already used in that class.');
+        } catch (ValidationException $e) {
+            $this->assertSame(
+                'Primary One, stream B: a stream with that name already exists.',
+                $e->errors()['stream'][0],
+            );
+        }
+
+        $this->assertSame($names, Section::where('school_id', $this->school->id)->orderBy('name')->pluck('name')->all());
+
+        $streamA = Section::where('school_id', $this->school->id)->where('name', 'Primary One A')->firstOrFail();
+        try {
+            $this->service->renameStream($this->school, $streamA, 'Primary One B');
+            $this->fail('renameStream accepted a name already used in that class.');
+        } catch (ValidationException $e) {
+            $this->assertSame('A stream with that name already exists.', $e->errors()['name'][0]);
+        }
+
+        $this->assertSame('Primary One A', $streamA->fresh()->name);
+        $this->assertSame('Primary One B', $taken->fresh()->name);
+    }
+
+    /**
+     * @return array{sections: int, links: int, standards: int, subjects: int}
+     */
+    private function structureRowCounts(): array
+    {
+        return [
+            'sections' => Section::where('school_id', $this->school->id)->count(),
+            'links' => StandardLink::where('school_id', $this->school->id)->count(),
+            'standards' => Standard::where('school_id', $this->school->id)->count(),
+            'subjects' => Subject::where('school_id', $this->school->id)->count(),
+        ];
     }
 
     public function test_writes_stay_inside_the_school(): void
