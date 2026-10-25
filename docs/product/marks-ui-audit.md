@@ -2,7 +2,7 @@
 
 Status: **awaiting the product owner's approval.** Docs only. Nothing here is a build.
 
-Read with [`marks-flow.md`](marks-flow.md) on `main` and with the updated flow in [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232). That pull request is still open, so the new gaps are in [Additions to the phase plan](#additions-to-the-phase-plan) below. They are not written into `marks-flow.md`.
+Read with [`marks-flow.md`](marks-flow.md). [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is merged (`61516ec7`), and the gaps from this walk are in that file's phase plan.
 
 Walked on `main` at `51d67da7` (25 October 2026), in a local app with synthetic demo data only:
 
@@ -395,17 +395,7 @@ Suggested fix: keep one import, reached from the sheet and from the teacher's ex
 
 ## Additions to the phase plan
 
-[#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is open, so these lines stay here until that spec is approved. They do not replace its open questions.
-
-| Phase in the open spec | Add |
-|---|---|
-| 1 | The control is on `/admin/classes`, including replacing a teacher who is already set. Remove the dead Edit link, the hidden invite, and the Primary One dropdown, or make them call the same service. Class setup is not a second unlisted door. |
-| 2 | The entry form shows saved marks and stays on the page after save. Submit for review is absent until there is something to submit. Upcoming exams either counts those exams or is renamed. |
-| 3 | Lock, Return, and Approve each post their own form. The word on the return is Return, with a reason, and that reason is on the teacher's entry page. The view does not say Unmarked work after a submit. The queue and the exam list use the submission row. The heading names the class, not the level band. |
-| 4 | Exams and marks opens the combined sheet. A streamed class (P.7 A/B, S.1 East/West) is one stream at a time or has a stream column. The teacher's Combined Marksheet opens that sheet. |
-| 5 | Report cards keep the stream split they already have. The sheet in phase 4 uses the same split. |
-| 6 | A release messages the linked parent, or the form says it only messages a following number. The empty MARKS reply is one line per child, not an extra "none of your children" line. The position's "of" count matches the stream or the class, and the sheet uses the same pool. |
-| Before the phone can be used for any phase | The menu button and the search button each take their own tap. [#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159). |
+Moved into the phase table in [`marks-flow.md`](marks-flow.md). Decision 6 already chooses a stream column and a stream filter, and decision 3 already sends WhatsApp to approved, linked parents, so those two lines follow that spec. The phone-menu tap is noted under the table ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
 
 ## Screenshot index
 
