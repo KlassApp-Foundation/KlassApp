@@ -58,9 +58,36 @@ class ToshiLlmStatusCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Provider       : openai-compatible', $output);
+        $this->assertStringNotContainsString('openai-compatible (unresolved)', $output);
         $this->assertStringContainsString('Model          : configured-status-model', $output);
         $this->assertStringContainsString('URL host       : llm.example.test', $output);
         $this->assertStringContainsString('API key        : missing', $output);
         $this->assertStringNotContainsString('Bearer', $output);
+    }
+
+    public function test_configured_provider_is_shown_when_the_api_key_is_missing(): void
+    {
+        config([
+            'toshi.llm_provider' => 'openai-compatible',
+            'toshi.model' => 'configured-status-model',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'configured-status-model',
+                'toshi_llm_model' => null,
+                'openai_compatible_url' => 'https://llm.example.test',
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.openai-compatible.url' => 'https://llm.example.test',
+            'ai.providers.openai-compatible.key' => null,
+        ]);
+
+        $exit = Artisan::call('toshi:llm-status');
+        $output = Artisan::output();
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Provider       : openai-compatible', $output);
+        $this->assertStringNotContainsString('(unresolved)', $output);
+        $this->assertStringContainsString('API key        : missing', $output);
+        $this->assertStringNotContainsString('sk-', $output);
     }
 }
