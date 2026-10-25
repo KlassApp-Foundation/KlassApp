@@ -635,6 +635,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 25, 2026 — **Sunset PS demo provision crash OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)**
+
+- `demo:provision` for Sunset PS used `DemoJuniorSchoolSeeder` and wrote `UG-JUN-LIN-####`. `student_academics.lin` is unique across every school, so the third learner collided with Demo Junior and the run stopped after classes and class teachers. A provisioned school now writes `UG-SCH{id}-LIN-####` on its own rows. Demo Junior's numbers are unchanged. A non-demo school of the same name is still refused before the seeder runs.
+- **Tests:** the new rebuild test failed on the unique `lin`, then passed. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3186 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+- **Status:** OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235) (`cursor/fix-sunset-demo-provision-881d`, `5180f2e7`). Review requested from Bariyo123. Do not merge from this session. Production was not touched.
+
+## Session: 2026-10-25 — Fix Sunset PS demo provisioning crash
+
+- **Work:** Smallest seeder change so a second junior-shaped demo school can finish its roster. Production Sunset PS is not overwritten: `demo:provision` still refuses a name that already exists and is not a demo.
+- **Files:** `database/seeders/DemoJuniorSchoolSeeder.php`, `tests/Feature/Demo/DemoSchoolsRebuildTest.php`.
+- **Decision:** Keep Demo Junior on `UG-JUN-LIN-####`. Only the provisioned identity gets a school-id learner number. No migration, no delete, no update of another school's rows.
+- **Edge:** A second run of `demo:provision` for a school that already exists still changes nothing. A partial Sunset left behind by the old crash is not resumed; the name is already taken.
+
 ## Current Status: October 25, 2026 — **Early access does not reveal an existing account OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230)**
 
 - Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
