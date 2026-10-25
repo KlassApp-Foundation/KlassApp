@@ -14270,3 +14270,15 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 ### Logged for later (do not build yet)
 - A slightly larger Toshi panel, as on the Super Admin page, in the established colours.
 - Super Admin area redesign with feature switches visible.
+
+## Session: 2026-10-25 — Marks workflow audit and flow spec (docs only)
+
+**Work:** Audited marks screens, routes (web, API, WhatsApp), controllers, services, jobs, notifications, and calculations on `a6cf68e7`. Wrote `docs/product/marks-audit.md` (34 working, 21 partial, 8 broken, 4 duplicate). Replaced `docs/product/marks-flow.md` with a short flow spec. The spec is awaiting the product owner's approval. No application code, and nothing in the spec is built.
+
+**Open pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
+
+**Early-access neutral reply:** that pull request is [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) ("Early access: same reply for every email"). This file has no entry that cites it as #1176, so there was no wrong citation to rewrite. #1230 is open and is not this session's work.
+
+**Checks:** relative links in the two docs resolve. `scripts/check-conflict-markers.sh` passed. `scripts/check-root-clutter.sh` against `origin/main` passed. test-guard was not run; no tests changed.
+
+**Status:** #1232 OPEN. Not merged. Production untouched.
