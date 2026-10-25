@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EarlyAccessAccountMail;
 use App\Models\Country;
 use App\Models\EarlyAccessRequest;
 use App\Models\User;
 use App\Notifications\EarlyAccessRequestedNotification;
+use App\Services\DemoSchoolCommsGuard;
 use App\Services\EarlyAccessOpsWebhook;
 use App\Support\PhoneCountry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -48,7 +51,6 @@ class EarlyAccessController extends Controller
                 'privacyUrl' => self::privacyNoticeUrl(),
                 'countries' => self::countryOptions(),
                 'submitted' => (bool) session('early_access_submitted'),
-                'existingAccount' => (bool) session('early_access_existing_account'),
             ])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
@@ -82,12 +84,6 @@ class EarlyAccessController extends Controller
         unset($validated['consent']);
         $validated['consented_at'] = now();
 
-        // Same response shape either way. The only extra fact is the sentence
-        // on this form: this email already has an account. School name and
-        // role are not included. store() is throttle:5,1 with the rest of
-        // the form, so this lookup is not a separate unthrottled check.
-        $existingAccount = EarlyAccessRequest::existingAccountEmails([$validated['email']]) !== [];
-
         $earlyAccess = EarlyAccessRequest::create($validated);
 
         Log::info('Early access request received', ['early_access_request_id' => $earlyAccess->id]);
@@ -106,9 +102,52 @@ class EarlyAccessController extends Controller
             ]);
         }
 
-        return redirect()->route('early-access.show')
-            ->with('early_access_submitted', true)
-            ->with('early_access_existing_account', $existingAccount);
+        // Same lookup on every submit. The page does not change either way.
+        // Only an active account is emailed, and the demo mail guard still applies.
+        $this->queueActiveAccountEmail($validated['email'], $earlyAccess->id);
+
+        return redirect()->route('early-access.show')->with('early_access_submitted', true);
+    }
+
+    /**
+     * Queue a sign-in email when this address is an active account.
+     * A missing account, an inactive account, and a demo-school account
+     * all leave the queue untouched. Failures stay off the HTTP response.
+     */
+    private function queueActiveAccountEmail(string $email, int $requestId): void
+    {
+        $normal = mb_strtolower(trim($email));
+        if ($normal === '') {
+            return;
+        }
+
+        // Both checks run for every submit, so a new address and an existing
+        // one do the same lookups before the queue decision.
+        $blocked = DemoSchoolCommsGuard::blocksEmail($normal);
+        $user = User::query()
+            ->where('status', 'active')
+            ->whereRaw('lower(email) = ?', [$normal])
+            ->first(['id', 'email']);
+
+        if ($user !== null && DemoSchoolCommsGuard::blocksUser((int) $user->id)) {
+            $blocked = true;
+        }
+
+        if ($blocked || $user === null || ! is_string($user->email) || trim($user->email) === '') {
+            return;
+        }
+
+        try {
+            Mail::to($user->email)->queue(new EarlyAccessAccountMail(
+                loginUrl: route('login'),
+                resetUrl: route('password.email'),
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Early access account email could not be queued', [
+                'early_access_request_id' => $requestId,
+                'exception' => $e::class,
+            ]);
+        }
     }
 
     /**

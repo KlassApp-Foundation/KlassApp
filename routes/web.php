@@ -190,8 +190,7 @@ Auth::routes();
 // Early access (shown at /register too while SIGNUP_ENABLED=false).
 Route::get('/early-access', [App\Http\Controllers\EarlyAccessController::class, 'show'])
     ->name('early-access.show');
-// The existing-account reply is decided inside store(), so it uses this
-// same limit as every other submit of the form.
+// Account mail is decided inside store(), so it uses this same limit.
 Route::post('/early-access', [App\Http\Controllers\EarlyAccessController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('early-access.store');
