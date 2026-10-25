@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Onboarding\Steps\AbstractOnboardingStep;
 use App\Onboarding\Steps\OnboardingStepAwaitingInput;
+use App\Onboarding\Steps\StepIssueCatalog;
 use App\Services\OnboardingStepsService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Illuminate\Validation\ValidationException;
@@ -28,13 +29,6 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         return 'phone_otp';
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || trim($normalized) === '') {
-            $this->reject('Enter a WhatsApp phone number.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         if (! $userId) {
@@ -47,7 +41,7 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
 
         $raw = trim((string) $normalized);
         if ($raw === '') {
-            $this->await('Enter a WhatsApp phone number.');
+            $this->failAwait('Enter a WhatsApp phone number.');
         }
 
         $existing = WhatsAppUser::where('user_id', $userId)->first();
@@ -60,7 +54,7 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         if ($this->isResend($raw)) {
             $phone = $otp->pendingPhone();
             if (! is_string($phone) || $phone === '') {
-                $this->await('Enter your WhatsApp number first. We will send a verification code.');
+                $this->failAwait('Enter your WhatsApp number first. We will send a verification code.');
             }
             $this->sendCode($userId, $phone, $otp);
         }
@@ -72,23 +66,26 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
                 return;
             }
 
-            $this->await('Enter your WhatsApp number. We send a verification code and link it only after you enter that code.');
+            $this->failAwait('Enter your WhatsApp number. We send a verification code and link it only after you enter that code.');
         }
 
         if ($this->looksLikeCode($raw)) {
             $result = $otp->verifyAdminCode($userId, $raw);
             if (! $result['verified']) {
-                $this->await($result['message'].' Reply **resend** for a new code, or **retry** if it did not arrive.');
+                $this->await(
+                    $result['message'].' Reply **resend** for a new code, or **retry** if it did not arrive.',
+                    StepIssueCatalog::whatsappVerification($result['message']),
+                );
             }
 
-            $this->engine->saveWhatsApp($school, $userId, $result['phone'], codeWasVerified: true);
+            $this->engineCall(fn () => $this->engine->saveWhatsApp($school, $userId, $result['phone'], codeWasVerified: true));
 
             return;
         }
 
         $phone = $this->canonicalPhone($school, $raw);
         if ($this->phoneTaken($phone, $userId)) {
-            $this->await("WhatsApp number {$phone} is already registered to another account. Use a different number.");
+            $this->failAwait("WhatsApp number {$phone} is already registered to another account. Use a different number.");
         }
 
         $this->sendCode($userId, $phone, $otp);
@@ -184,7 +181,11 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
             ? 'Reply **retry** to try again, or **resend** for a new code.'
             : 'Reply **resend** for a new code.';
 
-        $this->await($result['message'].' '.$offer);
+        $issue = $result['failed']
+            ? StepIssueCatalog::fromMessage($this->key(), (string) $result['message'])
+            : null;
+
+        $this->await($result['message'].' '.$offer, $issue);
     }
 
     private function canonicalPhone(School $school, string $raw): string
@@ -194,11 +195,15 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
             $phone = $this->engine->normaliseOnboardingPhoneForWhatsApp($school, $raw);
         } catch (ValidationException $e) {
             $message = collect($e->errors())->flatten()->first();
-            $this->await(is_string($message) && $message !== '' ? $message : 'Enter a WhatsApp phone number.');
+            $text = is_string($message) && $message !== '' ? $message : 'Enter a WhatsApp phone number.';
+            $issue = $e instanceof \App\Onboarding\Steps\OnboardingStepValidationException
+                ? $e->issue
+                : StepIssueCatalog::fromMessage($this->key(), $text);
+            $this->await($text, $issue);
         }
 
         if ($phone === '') {
-            $this->await('Enter a WhatsApp phone number.');
+            $this->failAwait('Enter a WhatsApp phone number.');
         }
 
         return $phone;
@@ -224,8 +229,14 @@ class WhatsAppVerifyStep extends AbstractOnboardingStep
         return in_array(strtolower($raw), ['skip', 'later', 'no', 'none'], true);
     }
 
-    private function await(string $message): never
+    private function failAwait(string $message): never
     {
-        throw new OnboardingStepAwaitingInput(trim($message));
+        $message = trim($message);
+        $this->await($message, StepIssueCatalog::fromMessage($this->key(), $message));
+    }
+
+    private function await(string $message, ?\App\Onboarding\Steps\StepIssue $issue = null): never
+    {
+        throw new OnboardingStepAwaitingInput(trim($message), $issue);
     }
 }

@@ -75,20 +75,6 @@ class TermsStep extends AbstractOnboardingStep
         return $this->defaultTerms($year->calendarYear());
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if ($normalized === 'skip') {
-            if (! in_array('terms', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
-
-            return;
-        }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->resolveTerms($school, $normalized);
@@ -102,7 +88,7 @@ class TermsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveTerms($school, $year, $normalized);
+        $this->engineCall(fn () => $this->engine->saveTerms($school, $year, $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

@@ -69,27 +69,9 @@ class AcademicYearStep extends AbstractOnboardingStep
         return ['name' => $this->suggestedYear(), 'start' => null, 'end' => null, 'free_text' => false];
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        $name = trim((string) (is_array($normalized) ? ($normalized['name'] ?? '') : ''));
-        $fromChat = is_array($normalized) && ! empty($normalized['free_text']);
-
-        if ($name === '' || ($fromChat && ! $this->isYearLabel($name))) {
-            $this->reject($this->yearError());
-        }
-    }
-
     private function suggestedYear(): string
     {
         return (string) date('Y');
-    }
-
-    private function yearError(): string
-    {
-        $suggested = $this->suggestedYear();
-        $following = (string) ((int) $suggested + 1);
-
-        return "Enter an academic year such as {$suggested} or {$suggested}/{$following}, or reply yes to use {$suggested}.";
     }
 
     private function isConfirmation(string $text): bool
@@ -135,12 +117,12 @@ class AcademicYearStep extends AbstractOnboardingStep
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveAcademicYear(
+        $this->engineCall(fn () => $this->engine->saveAcademicYear(
             $school,
             (string) $normalized['name'],
             $normalized['start'] ?? null,
             $normalized['end'] ?? null
-        );
+        ));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -175,12 +157,12 @@ class AcademicYearStep extends AbstractOnboardingStep
         $this->validate($school, $normalized);
 
         $existing = AcademicYear::where('school_id', $school->id)->first();
-        $year = $this->engine->saveAcademicYear(
+        $year = $this->engineCall(fn () => $this->engine->saveAcademicYear(
             $school,
             (string) $normalized['name'],
             $normalized['start'] ?? null,
             $normalized['end'] ?? null
-        );
+        ));
 
         if ($existing) {
             return ['created' => [], 'skipped' => [['label' => (string) $year->name, 'reason' => 'already present']]];

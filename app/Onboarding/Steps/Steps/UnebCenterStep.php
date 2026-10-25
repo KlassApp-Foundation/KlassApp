@@ -34,18 +34,11 @@ class UnebCenterStep extends AbstractOnboardingStep
         return is_string($raw) ? trim($raw) : $raw;
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized)) {
-            $this->reject('Enter a UNEB centre number or skip.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveUnebCenter($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveUnebCenter($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

@@ -46,18 +46,11 @@ class StudentSizeStep extends AbstractOnboardingStep
         return $v;
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || ! in_array($normalized, OnboardingStepsService::STUDENT_SIZE_OPTIONS, true)) {
-            $this->reject('Choose one of the school size options.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveStudentSize($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveStudentSize($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

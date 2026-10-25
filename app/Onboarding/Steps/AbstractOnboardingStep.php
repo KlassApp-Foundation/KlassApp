@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Onboarding\Steps\Contracts\OnboardingStep;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 abstract class AbstractOnboardingStep implements OnboardingStep
@@ -38,6 +39,66 @@ abstract class AbstractOnboardingStep implements OnboardingStep
         return $raw;
     }
 
+    public function issues(School $school, mixed $normalized): array
+    {
+        return $this->schema($school)->issues($school, $normalized);
+    }
+
+    public function validate(School $school, mixed $normalized): void
+    {
+        $issues = $this->issues($school, $normalized);
+        if ($issues !== []) {
+            throw new StepIssueException($issues[0]);
+        }
+    }
+
+    /**
+     * @return list<StepIssue>
+     */
+    public function saveIssues(School $school, mixed $normalized): array
+    {
+        return StepIssueCatalog::saveIssues($this->key(), $school, $normalized);
+    }
+
+    /**
+     * Normalise first, then validate. A rejection inside normalize() is an issue.
+     *
+     * @return list<StepIssue>
+     */
+    public function inputIssues(School $school, mixed $raw): array
+    {
+        try {
+            $normalized = $this->normalize($raw);
+        } catch (StepIssueException $e) {
+            return [$e->issue];
+        } catch (InvalidArgumentException $e) {
+            return [StepIssueCatalog::fromMessage($this->key(), $e->getMessage())];
+        }
+
+        return $this->issues($school, $normalized);
+    }
+
+    /**
+     * Normalise, then validation issues plus save-time issues.
+     *
+     * @return list<StepIssue>
+     */
+    public function allIssues(School $school, mixed $raw): array
+    {
+        try {
+            $normalized = $this->normalize($raw);
+        } catch (StepIssueException $e) {
+            return [$e->issue];
+        } catch (InvalidArgumentException $e) {
+            return [StepIssueCatalog::fromMessage($this->key(), $e->getMessage())];
+        }
+
+        return array_values(array_merge(
+            $this->issues($school, $normalized),
+            $this->saveIssues($school, $normalized),
+        ));
+    }
+
     public function isComplete(School $school, ?int $userId = null): bool
     {
         return OnboardingStepsService::isStepComplete($this->key(), $school, $userId);
@@ -48,9 +109,24 @@ abstract class AbstractOnboardingStep implements OnboardingStep
         return ! in_array($this->key(), OnboardingStepsService::OPTIONAL_STEPS, true);
     }
 
-    protected function reject(string $message): never
+    protected function reject(string $message, ?int $row = null): never
     {
-        throw new InvalidArgumentException($message);
+        throw new StepIssueException(StepIssueCatalog::fromMessage($this->key(), $message, $row));
+    }
+
+    /**
+     * Run an engine save and attach a StepIssue to a validation failure.
+     * The error bag stays the engine's, so the shown message does not change.
+     */
+    protected function engineCall(callable $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (OnboardingStepValidationException $e) {
+            throw $e;
+        } catch (ValidationException $e) {
+            throw OnboardingStepValidationException::wrap($this->key(), $e);
+        }
     }
 
     /**

@@ -10,4 +10,8 @@ use RuntimeException;
  */
 class OnboardingStepAwaitingInput extends RuntimeException
 {
+    public function __construct(string $message = '', public readonly ?StepIssue $issue = null)
+    {
+        parent::__construct($message);
+    }
 }

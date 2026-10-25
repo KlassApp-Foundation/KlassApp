@@ -69,21 +69,11 @@ class PlanSelectionStep extends AbstractOnboardingStep
         return 0;
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_int($normalized) || $normalized < 1) {
-            $this->reject('Choose a plan.');
-        }
-        if (! Plan::query()->where('id', $normalized)->where('is_active', 1)->exists()) {
-            $this->reject('That plan is not available.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->savePlan($school, $normalized, skipCompletionCheck: false, userId: $userId);
+        $this->engineCall(fn () => $this->engine->savePlan($school, $normalized, skipCompletionCheck: false, userId: $userId));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
@@ -126,7 +116,7 @@ class PlanSelectionStep extends AbstractOnboardingStep
             ];
         }
 
-        $this->engine->savePlan($school, $planId, skipCompletionCheck: false, userId: $userId);
+        $this->engineCall(fn () => $this->engine->savePlan($school, $planId, skipCompletionCheck: false, userId: $userId));
 
         return ['created' => [['plan_id' => $planId]], 'skipped' => []];
     }

@@ -48,18 +48,11 @@ class SchoolCategoryStep extends AbstractOnboardingStep
         return $v;
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if (! is_string($normalized) || ! array_key_exists($normalized, SchoolCategorySeeder::CATEGORIES)) {
-            $this->reject('Choose a school category.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
         $this->validate($school, $normalized);
-        $this->engine->saveSchoolCategory($school, (string) $normalized);
+        $this->engineCall(fn () => $this->engine->saveSchoolCategory($school, (string) $normalized));
     }
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array

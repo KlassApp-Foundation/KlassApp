@@ -47,27 +47,6 @@ class StandardsStep extends AbstractOnboardingStep
         return [];
     }
 
-    public function validate(School $school, mixed $normalized): void
-    {
-        if ($normalized === 'skip') {
-            if (! in_array('standards', OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                $this->reject('This step cannot be skipped.');
-            }
-
-            return;
-        }
-        if ($normalized === 'confirm_seeded') {
-            if (! StandardLink::where('school_id', $school->id)->exists()) {
-                $this->reject('Add or confirm your classes first.');
-            }
-
-            return;
-        }
-        if (! is_array($normalized)) {
-            $this->reject('Provide a valid list for this step.');
-        }
-    }
-
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
         $normalized = $this->normalize($normalized);
@@ -87,7 +66,7 @@ class StandardsStep extends AbstractOnboardingStep
         if (! $year) {
             $this->reject('Create an academic year before this step.');
         }
-        $this->engine->saveStandards($school, $year, $normalized);
+        $this->engineCall(fn () => $this->engine->saveStandards($school, $year, $normalized));
         OnboardingStepReview::mark($school, 'standards');
     }
 
