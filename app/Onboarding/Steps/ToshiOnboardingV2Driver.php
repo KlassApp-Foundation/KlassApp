@@ -60,7 +60,7 @@ class ToshiOnboardingV2Driver
         $savedKey = $step->key();
 
         try {
-            // The reply is the confirm. Preview only describes the write.
+            // Preview describes the write. Use this stops before it; Apply confirms.
             if ($step->key() === 'standards') {
                 $step->preview($school, $raw, $userId);
             }

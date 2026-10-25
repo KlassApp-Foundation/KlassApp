@@ -10,6 +10,7 @@ use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\School;
 use App\Models\Section;
+use App\Models\StandardLink;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Onboarding\Country\CountryProfiles;
@@ -20,6 +21,7 @@ use App\Onboarding\Steps\Steps\StandardsStep;
 use App\Onboarding\Steps\Steps\SubjectsStep;
 use App\Onboarding\Steps\Steps\TermsStep;
 use App\Onboarding\Steps\ToshiOnboardingV2Driver;
+use App\Services\ClassStructureService;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
@@ -30,9 +32,10 @@ use Tests\Support\Onboarding\SchoolTypePresetFixtures;
 use Tests\TestCase;
 
 /**
- * A school-type preset only fills the form. Continue / Use this saves it.
- * The school can clear or replace every filled value. A type with no preset
- * keeps the old defaults.
+ * A school-type preset is saved on the wizard's first run, when the school
+ * has no classes or streams, or after the admin confirms a preview.
+ * Continue and Use this do not put a removed class or stream back.
+ * Adjust saves nothing. A type with no preset keeps the old defaults.
  */
 class SchoolTypePresetTest extends TestCase
 {
@@ -163,7 +166,12 @@ class SchoolTypePresetTest extends TestCase
         $this->assertStringContainsString("Here's the usual setup for an O-Level + A-Level school.", $prompt['question']);
         $this->assertStringContainsString('PCM, BCM, HEG, MEG', $prompt['question']);
 
-        $this->assertNotSame('rejected', $driver->handleReply($accepted->fresh(), 'use_this', $adminId)['status'] ?? null);
+        $preview = $driver->handleReply($accepted->fresh(), 'use_this', $adminId);
+        $this->assertSame('awaiting', $preview['status'] ?? null);
+        $this->assertStringContainsString('Nothing is saved yet', (string) ($preview['question'] ?? ''));
+        $this->assertFalse(Section::where('school_id', $accepted->id)->where('name', 'like', '% PCM')->exists());
+        $applied = $driver->handleReply($accepted->fresh(), 'apply', $adminId);
+        $this->assertNotSame('rejected', $applied['status'] ?? null, (string) ($applied['hint'] ?? ''));
         $accepted->refresh();
         $this->assertSame('subjects', $driver->promptNext($accepted, $adminId)['key']);
         $this->assertNotSame('rejected', $driver->handleReply($accepted, 'Use this', $adminId)['status'] ?? null);
@@ -195,26 +203,25 @@ class SchoolTypePresetTest extends TestCase
         $this->assertFalse(Section::where('school_id', $kenya->id)->where('name', 'like', '% PCM')->exists());
     }
 
-    public function test_wizard_saves_prefilled_streams_only_when_the_school_continues(): void
+    public function test_wizard_continue_does_not_save_suggested_streams(): void
     {
         $admin = $this->adminFor($this->readySchool('Uganda', 'o_a_level', 'wizard'));
         $this->actingAs($admin);
         $component = Livewire::test(ManualOnboardingWizard::class);
         $component->call('goToStep', $this->stepIndex($component, 'standards'));
 
-        $drafts = $component->get('structureStreamDrafts');
-        $this->assertContains('PCM, BCM, HEG, MEG', array_values($drafts));
-        $this->assertNotContains('PCM, BCM, HEG, MEG', $this->draftsFor($component, 'Senior One'));
-        $component->assertSee('Suggested streams are filled in');
-        $this->assertFalse(Section::where('school_id', $admin->school_id)->where('name', 'Senior Five PCM')->exists());
-        $this->assertSame(0, AcademicTerm::where('school_id', $admin->school_id)->count());
-
-        $cleared = $component->get('structureStreamDrafts');
-        foreach ($cleared as $key => $value) {
-            $cleared[$key] = '';
+        foreach ($component->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
         }
-        $component->set('structureStreamDrafts', $cleared)->call('next');
+        $this->assertSame([''], $this->draftsFor($component, 'Senior One'));
+        $component->assertSee('Apply suggested structure');
+        $component->assertDontSee('Suggested streams are filled in');
+        $this->assertFalse(Section::where('school_id', $admin->school_id)->where('name', 'Senior Five PCM')->exists());
+        $before = Section::where('school_id', $admin->school_id)->count();
+
+        $component->call('next');
         $this->assertSame('', $component->get('errorMessage'));
+        $this->assertSame($before, Section::where('school_id', $admin->school_id)->count());
         $this->assertFalse(Section::where('school_id', $admin->school_id)->where('name', 'like', '% PCM')->exists());
     }
 
@@ -305,7 +312,12 @@ class SchoolTypePresetTest extends TestCase
         $this->assertSame('', $reopened->get('errorMessage'));
         $this->assertSame($before, $this->sectionNames($school));
 
-        app(StandardsStep::class)->save($school->fresh(), 'use_this');
+        try {
+            app(StandardsStep::class)->save($school->fresh(), 'use_this');
+            $this->fail('Use this must show the preview and save nothing.');
+        } catch (OnboardingStepAwaitingInput $e) {
+            $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+        }
         $this->assertSame($before, $this->sectionNames($school));
     }
 
@@ -345,7 +357,12 @@ class SchoolTypePresetTest extends TestCase
         $this->assertGreaterThan(6, $count);
         $this->assertLessThan(15, $count);
 
-        app(StandardsStep::class)->save($school->fresh(), 'use_this');
+        try {
+            app(StandardsStep::class)->save($school->fresh(), 'use_this');
+            $this->fail('Use this must show the preview and save nothing.');
+        } catch (OnboardingStepAwaitingInput $e) {
+            $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+        }
         $this->assertSame($before, $this->sectionNames($school));
     }
 
@@ -359,22 +376,115 @@ class SchoolTypePresetTest extends TestCase
         app(OnboardingEngine::class)->addClassStream($school, $year, $base, 'Arts');
 
         $before = $this->sectionNames($school);
-        app(StandardsStep::class)->save($school->fresh(), 'use_this');
-        $after = $this->sectionNames($school);
+        try {
+            app(StandardsStep::class)->save($school->fresh(), 'use_this');
+            $this->fail('Use this must show the preview and save nothing.');
+        } catch (OnboardingStepAwaitingInput $e) {
+            $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+            $this->assertStringContainsString('Senior Six PCM', $e->getMessage());
+        }
+        $this->assertSame($before, $this->sectionNames($school));
+        $this->assertNotContains('Senior Six PCM', $this->sectionNames($school));
+    }
 
-        $this->assertContains('Senior Five Arts', $after);
-        $this->assertNotContains('Senior Five PCM', $after);
-        $this->assertNotContains('Senior Five BCM', $after);
-        $this->assertNotContains('Senior Five HEG', $after);
-        $this->assertNotContains('Senior Five MEG', $after);
-        $this->assertContains('Senior Six PCM', $after);
-        $this->assertContains('Senior Six BCM', $after);
-        $this->assertContains('Senior Six HEG', $after);
-        $this->assertContains('Senior Six MEG', $after);
-        $this->assertSame(
-            array_values(array_filter($before, fn (string $name): bool => ! str_starts_with($name, 'Senior Six '))),
-            array_values(array_filter($after, fn (string $name): bool => ! str_starts_with($name, 'Senior Six '))),
+    public function test_sunset_ps_continue_does_not_restore_cleared_a_level_streams(): void
+    {
+        [$school] = $this->sunsetSchool();
+        $this->clearALevelStreams($school);
+        $admin = $this->adminFor($school);
+        $this->actingAs($admin);
+
+        $before = $this->sectionRows($school);
+        $this->assertNotContains('Senior Five PCM|1', $before);
+        $this->assertTrue(
+            Section::query()->where('school_id', $school->id)->where('name', 'Senior Five')->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })->exists()
         );
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        foreach ($component->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $component->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+    }
+
+    public function test_first_run_continue_applies_the_preset_when_the_school_has_no_structure(): void
+    {
+        $school = $this->school('Uganda', 'o_a_level');
+        $school->forceFill([
+            'name' => 'Sunset PS First Run',
+            'student_size' => 'Up to 500',
+            'curriculum' => 'uneb',
+            'ministry_code' => 'SUNSET1',
+        ])->save();
+        $this->year($school);
+        $this->actingAs($this->adminFor($school));
+
+        $this->assertSame(0, Section::where('school_id', $school->id)->count());
+        $plan = app(ClassStructureService::class)->suggestedStructurePlan($school);
+        $this->assertContains('Senior Five', $plan['items']);
+        $this->assertContains('Senior Five PCM', $plan['items']);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $this->assertSame(0, Section::where('school_id', $school->id)->count());
+        $component->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $this->assertEqualsCanonicalizing($plan['items'], $this->activeSectionNames($school->fresh()));
+    }
+
+    public function test_apply_suggested_structure_previews_then_adds_exactly_those_items(): void
+    {
+        [$school] = $this->sunsetSchool();
+        $this->clearALevelStreams($school);
+        $this->actingAs($this->adminFor($school));
+
+        $beforeActive = $this->activeSectionNames($school);
+        $beforeRows = $this->sectionRows($school);
+        $expected = [];
+        foreach (['Senior Five', 'Senior Six'] as $className) {
+            foreach (SchoolTypePreset::A_LEVEL_STREAMS as $label) {
+                $expected[] = $className.' '.$label;
+            }
+        }
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $component->call('previewSuggestedStructure');
+        $this->assertSame($beforeRows, $this->sectionRows($school->fresh()));
+        $this->assertSame($expected, $component->get('structurePresetPreview'));
+        $component->assertSee('Nothing has been added yet');
+
+        $component->call('confirmSuggestedStructure');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $added = array_values(array_diff($this->activeSectionNames($school->fresh()), $beforeActive));
+        sort($added);
+        $sortedPreview = $expected;
+        sort($sortedPreview);
+        $this->assertSame($sortedPreview, $added);
+
+        $toshi = $this->sunsetSchool('Sunset PS Toshi')[0];
+        $this->clearALevelStreams($toshi);
+        $toshiBefore = $this->activeSectionNames($toshi);
+        try {
+            app(StandardsStep::class)->save($toshi->fresh(), 'use_this');
+            $this->fail('Use this must show the preview and save nothing.');
+        } catch (OnboardingStepAwaitingInput $e) {
+            $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+            foreach ($expected as $item) {
+                $this->assertStringContainsString($item, $e->getMessage());
+            }
+        }
+        $this->assertSame($toshiBefore, $this->activeSectionNames($toshi->fresh()));
+
+        app(StandardsStep::class)->save($toshi->fresh(), 'apply');
+        $toshiAdded = array_values(array_diff($this->activeSectionNames($toshi->fresh()), $toshiBefore));
+        sort($toshiAdded);
+        $this->assertSame($sortedPreview, $toshiAdded);
     }
 
     /**
@@ -383,6 +493,70 @@ class SchoolTypePresetTest extends TestCase
     private function sectionNames(School $school): array
     {
         return Section::where('school_id', $school->id)->orderBy('name')->pluck('name')->all();
+    }
+
+    /**
+     * @return array{0: School, 1: AcademicYear}
+     */
+    private function sunsetSchool(string $name = 'Sunset PS'): array
+    {
+        $school = $this->readySchool('Uganda', 'o_a_level', 'sunset-'.uniqid());
+        $school->forceFill(['name' => $name])->save();
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        $this->assertNotNull($year);
+        $service = app(ClassStructureService::class);
+        foreach (['Senior Five', 'Senior Six'] as $className) {
+            $base = Section::query()->where('school_id', $school->id)->where('name', $className)->first();
+            $this->assertNotNull($base);
+            foreach (SchoolTypePreset::A_LEVEL_STREAMS as $label) {
+                $service->addStream($school, $year, $base, $label);
+            }
+        }
+
+        return [$school->fresh(), $year];
+    }
+
+    private function clearALevelStreams(School $school): void
+    {
+        $ids = Section::query()
+            ->where('school_id', $school->id)
+            ->where(function ($query) {
+                $query->where('name', 'like', 'Senior Five %')
+                    ->orWhere('name', 'like', 'Senior Six %');
+            })
+            ->pluck('id');
+
+        Section::query()->where('school_id', $school->id)->whereIn('id', $ids)->update(['status' => '0']);
+        StandardLink::query()->where('school_id', $school->id)->whereIn('section_id', $ids)->update(['status' => '0']);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sectionRows(School $school): array
+    {
+        return Section::query()
+            ->where('school_id', $school->id)
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get(['name', 'status'])
+            ->map(fn (Section $section): string => $section->name.'|'.(string) $section->status)
+            ->all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function activeSectionNames(School $school): array
+    {
+        return Section::query()
+            ->where('school_id', $school->id)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
     }
 
     private function school(?string $country, ?string $category): School

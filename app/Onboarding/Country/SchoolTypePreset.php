@@ -4,21 +4,22 @@ namespace App\Onboarding\Country;
 
 use App\Models\AcademicYear;
 use App\Models\School;
-use App\Onboarding\Steps\OnboardingStepReview;
 use App\Services\ClassStructureService;
 use App\Services\SchoolCategorySeeder;
 
 /**
  * Recommended classes, streams and subjects for one school type.
  *
- * Reading a preset does not write. The wizard fills its fields from it, and
- * Toshi offers the same lists. Nothing is stored until the school confirms
- * the step. A type this profile does not know returns null so the existing
- * P1 / Mathematics defaults stay.
+ * Reading a preset does not write. It is applied only when the school has no
+ * classes or streams yet, or when an admin confirms the preview from
+ * ClassStructureService. A type this profile does not know returns null so
+ * the existing P1 / Mathematics defaults stay.
  */
 final class SchoolTypePreset
 {
     public const ACCEPT = 'use_preset';
+
+    public const APPLY = 'apply_preset';
 
     public const ADJUST = 'adjust';
 
@@ -109,6 +110,9 @@ final class SchoolTypePreset
         if (in_array($text, ['use_this', 'use this', 'preset', 'use_preset'], true)) {
             return self::ACCEPT;
         }
+        if (in_array($text, ['apply', 'apply_suggested', 'apply suggested structure', 'apply_preset', 'add these'], true)) {
+            return self::APPLY;
+        }
         if ($text === 'adjust') {
             return self::ADJUST;
         }
@@ -144,60 +148,13 @@ final class SchoolTypePreset
     }
 
     /**
-     * Stream text for an empty class, before the school confirms this step.
-     * A class that already has a stream is left alone. Confirming the step,
-     * including a confirmation that cleared the suggestion, closes it.
-     *
-     * @param  list<string>  $existingStreamLabels
-     */
-    public function suggestedStreamDraft(School $school, string $className, array $existingStreamLabels): string
-    {
-        if (! self::maySuggestStreams($school, $existingStreamLabels)) {
-            return '';
-        }
-
-        return $this->streamDraft($className);
-    }
-
-    /**
-     * @param  list<string>  $existingStreamLabels
-     */
-    public static function maySuggestStreams(School $school, array $existingStreamLabels): bool
-    {
-        if ($existingStreamLabels !== []) {
-            return false;
-        }
-
-        return ! self::streamSuggestionsClosed($school);
-    }
-
-    /**
-     * The classes step was confirmed, or the suggestion was cleared on that confirmation.
-     */
-    public static function streamSuggestionsClosed(School $school): bool
-    {
-        return OnboardingStepReview::reviewed($school, 'standards');
-    }
-
-    /**
-     * Use this adds suggested streams only where {@see maySuggestStreams} is still true.
+     * Classes and streams the preview would add. This does not write.
      *
      * @return list<array{name: string, streams: list<string>}>
      */
     public function standardsAnswerFor(School $school): array
     {
-        $existing = self::existingStreamLabels($school);
-        $rows = [];
-        foreach ($this->classes as $class) {
-            $name = $class['name'];
-            $labels = $existing[strtolower($name)] ?? [];
-            $rows[] = [
-                'name' => $name,
-                'streams' => self::maySuggestStreams($school, $labels) ? $class['streams'] : [],
-            ];
-        }
-
-        return $rows;
+        return app(ClassStructureService::class)->suggestedStructurePlan($school)['classes'];
     }
 
     /**
