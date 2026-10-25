@@ -397,7 +397,7 @@ class DemoJuniorSchoolSeeder extends Seeder
                     [
                         'standardLink_id' => $link->id,
                         'academic_status' => 'pass',
-                        'lin' => $n % 3 === 0 ? 'UG-JUN-LIN-' . str_pad((string) $n, 4, '0', STR_PAD_LEFT) : null,
+                        'lin' => $n % 3 === 0 ? $this->learnerLin($n) : null,
                     ]
                 );
                 unset($academic);
@@ -844,6 +844,21 @@ class DemoJuniorSchoolSeeder extends Seeder
     private function provisioned(): bool
     {
         return is_array(self::$provision);
+    }
+
+    /**
+     * student_academics.lin is unique across every school. Demo Junior keeps
+     * UG-JUN-LIN-####. A provisioned school (Sunset PS, and any later one)
+     * gets its own school id in the number, and only writes its own rows.
+     */
+    private function learnerLin(int $n): string
+    {
+        $suffix = str_pad((string) $n, 4, '0', STR_PAD_LEFT);
+        if (! $this->provisioned()) {
+            return 'UG-JUN-LIN-'.$suffix;
+        }
+
+        return 'UG-SCH'.$this->school->id.'-LIN-'.$suffix;
     }
 
     private function schoolName(): string

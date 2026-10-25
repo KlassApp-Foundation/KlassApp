@@ -635,6 +635,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 25, 2026 — **Sunset PS demo provision crash OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)**
+
+- `demo:provision` for Sunset PS used `DemoJuniorSchoolSeeder` and wrote `UG-JUN-LIN-####`. `student_academics.lin` is unique across every school, so the third learner collided with Demo Junior and the run stopped after classes and class teachers. A provisioned school now writes `UG-SCH{id}-LIN-####` on its own rows. Demo Junior's numbers are unchanged. A non-demo school of the same name is still refused before the seeder runs.
+- **Tests:** the new rebuild test failed on the unique `lin`, then passed. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3186 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+- **Status:** OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235) (`cursor/fix-sunset-demo-provision-881d`, `5180f2e7`). Review requested from Bariyo123. Do not merge from this session. Production was not touched.
+
+## Session: 2026-10-25 — Fix Sunset PS demo provisioning crash
+
+- **Work:** Smallest seeder change so a second junior-shaped demo school can finish its roster. Production Sunset PS is not overwritten: `demo:provision` still refuses a name that already exists and is not a demo.
+- **Files:** `database/seeders/DemoJuniorSchoolSeeder.php`, `tests/Feature/Demo/DemoSchoolsRebuildTest.php`.
+- **Decision:** Keep Demo Junior on `UG-JUN-LIN-####`. Only the provisioned identity gets a school-id learner number. No migration, no delete, no update of another school's rows.
+- **Edge:** A second run of `demo:provision` for a school that already exists still changes nothing. A partial Sunset left behind by the old crash is not resumed; the name is already taken.
+
 ## Current Status: October 25, 2026 — **Onboarding password and Uganda assumptions flagged OPEN [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233)**
 
 - Comments only. No behaviour change. `docs/onboarding-engine-plan.md` section 9 lists each site: a password stored or offered during signup, Toshi create, the engine's teacher/student/parent create, and the production site-admin seeder; and Uganda phone, country, curriculum, class, grading, and currency constants on the onboarding paths. Proposed fixes are invite-link-only creation, E.164 via libphonenumber with the school country as the region, and country-profile preset data.
@@ -647,7 +660,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
 - Merged `origin/main` `a6cf68e7` ([#1229](https://github.com/KlassApp-Foundation/KlassApp/pull/1229)) with a merge commit. No rebase and no force-push.
 - **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **3181 tests, 0 failures, 0 errors, 9 skipped**, guard OK. The new and existing pages match after the csrf token is set aside. Mail is queued only for an active non-demo account.
-- **Status:** [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) was already merged. This change is OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
+- **Status:** The early-access neutral reply is [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
