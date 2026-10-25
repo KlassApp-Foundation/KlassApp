@@ -147,4 +147,79 @@ class ToshiLlmConfigConsistencyTest extends TestCase
 
         ToshiLlm::model();
     }
+
+    public function test_default_provider_stays_openai_compatible_when_unset(): void
+    {
+        config([
+            'toshi.llm_provider' => null,
+            'toshi.model' => 'deepseek-chat',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'deepseek-chat',
+                'toshi_llm_model' => null,
+                'openai_compatible_url' => 'https://api.deepseek.com',
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => 'sk-test',
+            'ai.providers.openai-compatible.models.text.default' => 'deepseek-chat',
+        ]);
+
+        $this->assertSame('openai-compatible', ToshiLlm::configuredProvider());
+        $this->assertSame('openai-compatible', ToshiLlm::provider());
+        $this->assertSame('deepseek-chat', ToshiLlm::model());
+    }
+
+    public function test_bedrock_provider_and_model_come_from_config_without_an_api_key(): void
+    {
+        $model = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0';
+
+        config([
+            'toshi.llm_provider' => 'bedrock',
+            'toshi.model' => 'deepseek-chat',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'deepseek-chat',
+                'toshi_llm_model' => $model,
+                'openai_compatible_url' => 'https://api.deepseek.com',
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => null,
+            'ai.providers.bedrock.region' => 'eu-central-1',
+            'ai.providers.bedrock.key' => null,
+            'ai.providers.bedrock.access_key_id' => null,
+            'ai.providers.bedrock.secret_access_key' => null,
+            'ai.providers.bedrock.use_default_credential_provider' => true,
+            'ai.providers.bedrock.models.text.default' => $model,
+        ]);
+
+        ToshiLlm::assertConfigConsistent();
+
+        $this->assertSame('bedrock', ToshiLlm::provider());
+        $this->assertSame($model, ToshiLlm::model());
+        $this->assertSame('default AWS credential chain', ToshiLlm::credentialSummary());
+        $this->assertStringNotContainsString('sk-', ToshiLlm::credentialSummary());
+    }
+
+    public function test_bedrock_without_credentials_or_the_default_chain_fails(): void
+    {
+        config([
+            'toshi.llm_provider' => 'bedrock',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => null,
+                'toshi_llm_model' => 'anthropic.claude-sonnet-4-5-20250929-v1:0',
+                'openai_compatible_url' => null,
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.bedrock.region' => 'us-east-1',
+            'ai.providers.bedrock.key' => '',
+            'ai.providers.bedrock.access_key_id' => '',
+            'ai.providers.bedrock.secret_access_key' => '',
+            'ai.providers.bedrock.use_default_credential_provider' => false,
+        ]);
+
+        $this->expectException(\App\Exceptions\MissingToshiLlmApiKeyException::class);
+        $this->expectExceptionMessage('AWS_BEARER_TOKEN_BEDROCK');
+
+        ToshiLlm::provider();
+    }
 }

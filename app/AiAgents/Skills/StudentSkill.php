@@ -11,6 +11,7 @@ use App\AiAgents\Tools\FindStudentTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\RecordAttendanceTool;
 use App\AiAgents\Tools\RecordBulkAttendanceTool;
+use App\AiAgents\Tools\SummarizeClassAttendanceTool;
 use App\AiAgents\Tools\EnterMarkTool;
 use App\AiAgents\Tools\AddParentTool;
 
@@ -21,7 +22,7 @@ class StudentSkill implements Agent, HasTools
 
     public function instructions(): string
     {
-        return 'You handle all student management tasks. You can add students, find students by name/email/ID, get enrollment counts, record attendance (single and bulk), enter exam marks, and add parents linked to students. Always ask for missing required parameters before creating records. Confirm with the user before writing data.';
+        return 'You handle all student management tasks. You can add students, find students by name/email/ID, get enrollment counts, record attendance (single and bulk), summarise class attendance over a date range, enter exam marks, and add parents linked to students. Always ask for missing required parameters before creating records. Confirm with the user before writing data.';
     }
 
     public function tools(): iterable
@@ -32,6 +33,7 @@ class StudentSkill implements Agent, HasTools
             new GetStudentCountTool,
             new RecordAttendanceTool,
             new RecordBulkAttendanceTool,
+            new SummarizeClassAttendanceTool,
             new EnterMarkTool,
             new AddParentTool,
         ];

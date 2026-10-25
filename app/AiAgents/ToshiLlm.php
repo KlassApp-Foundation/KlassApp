@@ -6,11 +6,15 @@ use App\Exceptions\AmbiguousToshiLlmConfigException;
 use App\Exceptions\MissingToshiLlmApiKeyException;
 
 /**
- * Single resolution path for Toshi's openai-compatible provider + model.
+ * Single resolution path for Toshi's LLM provider and model.
  *
  * Live agents, toshi:adversarial-live, toshi:llm-status, and toshi:llm-health
  * must call this (or UsesToshiLlm) so monthly live runs cannot silently drift
  * from production chat config.
+ *
+ * Provider is config('toshi.llm_provider') (TOSHI_LLM_PROVIDER). Unset or blank
+ * stays on the openai-compatible provider (DeepSeek by default). `bedrock`
+ * uses laravel/ai's Bedrock Converse provider. Any other value fails loudly.
  *
  * ---------------------------------------------------------------------------
  * Dual-config conflict detection (assertConfigConsistent)
@@ -22,7 +26,11 @@ use App\Exceptions\MissingToshiLlmApiKeyException;
  * fell through to the NVIDIA model name → DeepSeek HTTP 400 → empty
  * agent_conversations. Live ops fixed via OPENAI_COMPATIBLE_MODEL=deepseek-v4-flash.
  *
- * What counts as a conflict (any one fails loudly):
+ * Those checks apply only while the resolved provider is openai-compatible.
+ * When the provider is bedrock, TOSHI_LLM_MODEL is the Bedrock model or
+ * inference-profile id and is allowed to differ from OPENAI_COMPATIBLE_MODEL.
+ *
+ * What counts as a conflict on the openai-compatible provider (any one fails loudly):
  *  1. Both OPENAI_COMPATIBLE_MODEL and TOSHI_LLM_MODEL are non-empty and differ
  *     (split-brain: toshi.model prefers OPENAI_COMPATIBLE_MODEL; ai.smartest
  *     still reads TOSHI_LLM_MODEL).
@@ -34,7 +42,8 @@ use App\Exceptions\MissingToshiLlmApiKeyException;
  *
  * Not a conflict: only OPENAI_COMPATIBLE_* set; legacy TOSHI_LLM_MODEL alone
  * when family matches URL host; both model envs set to the same value;
- * unknown custom hosts (no false positive on self-hosted gateways).
+ * unknown custom hosts (no false positive on self-hosted gateways);
+ * TOSHI_LLM_PROVIDER=bedrock with its own model id.
  *
  * Failure mode: AmbiguousToshiLlmConfigException / MissingToshiLlmApiKeyException
  * on first model()/provider() resolve and from toshi:llm-health — NOT AppServiceProvider
@@ -50,7 +59,7 @@ final class ToshiLlm
         self::assertConfigConsistent();
         self::assertApiKeyConfigured();
 
-        return 'openai-compatible';
+        return self::configuredProvider();
     }
 
     public static function model(): string
@@ -59,6 +68,17 @@ final class ToshiLlm
         self::assertApiKeyConfigured();
 
         return self::resolvedModel();
+    }
+
+    /**
+     * Provider name from config, before credential checks.
+     * Blank or unset stays on the current openai-compatible provider.
+     */
+    public static function configuredProvider(): string
+    {
+        $raw = self::nonEmptyString(config('toshi.llm_provider'));
+
+        return $raw !== null ? strtolower($raw) : 'openai-compatible';
     }
 
     public static function url(): string
@@ -74,7 +94,7 @@ final class ToshiLlm
     }
 
     /**
-     * Whether an API key is present in config (never returns the key itself).
+     * Whether an API key is present in the openai-compatible config (never returns the key itself).
      */
     public static function keyConfigured(): bool
     {
@@ -82,27 +102,83 @@ final class ToshiLlm
     }
 
     /**
-     * Short fingerprint of non-secret resolution inputs (provider + model + host).
+     * Non-secret description of how the active provider authenticates.
+     */
+    public static function credentialSummary(): string
+    {
+        if (self::configuredProvider() === 'bedrock') {
+            if ((string) config('ai.providers.bedrock.key', '') !== '') {
+                return 'bearer token configured';
+            }
+
+            $access = (string) config('ai.providers.bedrock.access_key_id', '');
+            $secret = (string) config('ai.providers.bedrock.secret_access_key', '');
+            if ($access !== '' && $secret !== '') {
+                return 'static access key configured';
+            }
+
+            if (self::bedrockUsesDefaultChain()) {
+                return 'default AWS credential chain';
+            }
+
+            return 'missing';
+        }
+
+        return self::keyConfigured() ? 'api key configured' : 'api key missing';
+    }
+
+    /**
+     * Short fingerprint of non-secret resolution inputs (provider + model + host or region).
      * Safe to log / paste into ops chat — no credentials.
      */
     public static function configChecksum(): string
     {
+        $provider = self::provider();
+        $locator = $provider === 'bedrock'
+            ? (string) config('ai.providers.bedrock.region', '')
+            : self::urlHost();
+
         return substr(hash('sha256', implode("\0", [
-            self::provider(),
+            $provider,
             self::model(),
-            self::urlHost(),
+            $locator,
         ])), 0, 16);
     }
 
     /**
-     * Fail loudly when the openai-compatible API key is missing from the environment.
-     * Hardcoded keys in config are forbidden — set OPENAI_COMPATIBLE_API_KEY
-     * (preferred) or TOSHI_LLM_API_KEY (legacy).
+     * Fail loudly when the active provider has no usable credentials.
+     *
+     * openai-compatible: OPENAI_COMPATIBLE_API_KEY (preferred) or TOSHI_LLM_API_KEY.
+     * bedrock: bearer token, static access key, or the AWS SDK default credential
+     * chain (AWS_USE_DEFAULT_CREDENTIALS, default true). No API key is required
+     * when the default chain is on.
      *
      * @throws MissingToshiLlmApiKeyException
      */
     public static function assertApiKeyConfigured(): void
     {
+        if (self::configuredProvider() === 'bedrock') {
+            if (self::bedrockCredentialsConfigured()) {
+                return;
+            }
+
+            throw new MissingToshiLlmApiKeyException(
+                'Bedrock credentials are not configured. Set AWS_BEARER_TOKEN_BEDROCK, or AWS_ACCESS_KEY_ID and '
+                .'AWS_SECRET_ACCESS_KEY, or leave AWS_USE_DEFAULT_CREDENTIALS enabled for the AWS credential chain. '
+                .'Hardcoded keys in config are not allowed.',
+                [
+                    'provider' => 'bedrock',
+                    'region' => (string) config('ai.providers.bedrock.region', ''),
+                    'env_keys' => [
+                        'AWS_BEARER_TOKEN_BEDROCK',
+                        'AWS_ACCESS_KEY_ID',
+                        'AWS_SECRET_ACCESS_KEY',
+                        'AWS_USE_DEFAULT_CREDENTIALS',
+                    ],
+                ],
+            );
+        }
+
         if (self::keyConfigured()) {
             return;
         }
@@ -125,6 +201,21 @@ final class ToshiLlm
      */
     public static function assertConfigConsistent(): void
     {
+        $provider = self::configuredProvider();
+
+        if ($provider === 'bedrock') {
+            self::assertBedrockConfig();
+
+            return;
+        }
+
+        if ($provider !== 'openai-compatible') {
+            throw new AmbiguousToshiLlmConfigException(
+                "Unknown Toshi LLM provider [{$provider}]. Use openai-compatible or bedrock.",
+                ['provider' => $provider],
+            );
+        }
+
         $ocModel = self::nonEmptyString(config('toshi.llm_env.openai_compatible_model'));
         $tlModel = self::nonEmptyString(config('toshi.llm_env.toshi_llm_model'));
         $ocUrl = self::nonEmptyString(config('toshi.llm_env.openai_compatible_url'));
@@ -180,10 +271,70 @@ final class ToshiLlm
 
     private static function resolvedModel(): string
     {
+        if (self::configuredProvider() === 'bedrock') {
+            return self::bedrockModel();
+        }
+
         return (string) config(
             'toshi.model',
             config('ai.providers.openai-compatible.models.text.default', 'deepseek-chat')
         );
+    }
+
+    /**
+     * @throws AmbiguousToshiLlmConfigException
+     */
+    private static function assertBedrockConfig(): void
+    {
+        if (self::bedrockModelOrNull() === null) {
+            throw new AmbiguousToshiLlmConfigException(
+                'Bedrock is selected but no model is set. Set TOSHI_LLM_MODEL to a Claude model ID or inference profile ID.',
+                ['provider' => 'bedrock'],
+            );
+        }
+
+        if (self::nonEmptyString(config('ai.providers.bedrock.region')) === null) {
+            throw new AmbiguousToshiLlmConfigException(
+                'Bedrock region is empty. Set AWS_BEDROCK_REGION.',
+                ['provider' => 'bedrock'],
+            );
+        }
+    }
+
+    private static function bedrockModel(): string
+    {
+        return (string) self::bedrockModelOrNull();
+    }
+
+    private static function bedrockModelOrNull(): ?string
+    {
+        return self::nonEmptyString(config('toshi.llm_env.toshi_llm_model'))
+            ?? self::nonEmptyString(config('ai.providers.bedrock.models.text.default'));
+    }
+
+    private static function bedrockCredentialsConfigured(): bool
+    {
+        if ((string) config('ai.providers.bedrock.key', '') !== '') {
+            return true;
+        }
+
+        $access = (string) config('ai.providers.bedrock.access_key_id', '');
+        $secret = (string) config('ai.providers.bedrock.secret_access_key', '');
+        if ($access !== '' && $secret !== '') {
+            return true;
+        }
+
+        return self::bedrockUsesDefaultChain();
+    }
+
+    private static function bedrockUsesDefaultChain(): bool
+    {
+        $value = config('ai.providers.bedrock.use_default_credential_provider', true);
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     private static function nonEmptyString(mixed $value): ?string

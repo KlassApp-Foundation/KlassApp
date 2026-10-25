@@ -43,6 +43,7 @@
     <env name="OPENAI_COMPATIBLE_URL" value="https://api.deepseek.com" force="true"/>
     <env name="OPENAI_COMPATIBLE_MODEL" value="deepseek-chat" force="true"/>
     <env name="TOSHI_LLM_ENABLED" value="false" force="true"/>
+    <env name="TOSHI_LLM_PROVIDER" value="" force="true"/>
     <env name="TOSHI_LLM_MODEL" value="" force="true"/>
     <env name="TOSHI_LLM_BASE_URL" value="" force="true"/>
     <env name="TOSHI_SDK_V2_ENABLED" value="false" force="true"/>
@@ -72,6 +73,7 @@
     <server name="OPENAI_COMPATIBLE_URL" value="https://api.deepseek.com" force="true"/>
     <server name="OPENAI_COMPATIBLE_MODEL" value="deepseek-chat" force="true"/>
     <server name="TOSHI_LLM_ENABLED" value="false" force="true"/>
+    <server name="TOSHI_LLM_PROVIDER" value="" force="true"/>
     <server name="TOSHI_LLM_MODEL" value="" force="true"/>
     <server name="TOSHI_LLM_BASE_URL" value="" force="true"/>
     <server name="TOSHI_SDK_V2_ENABLED" value="false" force="true"/>

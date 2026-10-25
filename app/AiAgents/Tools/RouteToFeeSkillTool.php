@@ -13,7 +13,7 @@ class RouteToFeeSkillTool implements Tool
     use AuthorizesToshiAction;
     public function description(): string
     {
-        return 'Route a fee/payment query to the Fee skill. Handles: creating fee categories, recording payments, checking fee balances. Call this when the user asks about fees, payments, balances, invoices, or school fees.';
+        return 'Route a fee/payment query to the Fee skill. Handles: creating fee categories, recording payments, checking one student\'s fee balance, and listing students who still owe fees. Call this when the user asks about fees, payments, balances, arrears, invoices, or school fees.';
     }
 
     public function schema(JsonSchema $schema): array
