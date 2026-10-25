@@ -49,6 +49,7 @@
                 <option value="{{ $country->name }}">{{ $country->name }}</option>
             @endforeach
             @if($countries->isEmpty())
+                {{-- FLAGGED(product-decision): an empty country list falls back to Uganda. see docs/onboarding-engine-plan.md --}}
                 <option value="Uganda">Uganda</option>
                 <option value="Kenya">Kenya</option>
                 <option value="Tanzania">Tanzania</option>
@@ -61,6 +62,7 @@
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-curriculum">Board / Curriculum<span class="text-red-500">*</span></label>
         <select id="wizard-curriculum" class="ds-form-input ds-form-select w-full" wire:model="curriculum">
+            {{-- FLAGGED(product-decision): the curriculum select is UNEB, Cambridge, Montessori, and Other. see docs/onboarding-engine-plan.md --}}
             <option value="uneb">UNEB (Uganda National Examinations Board)</option>
             <option value="cambridge">Cambridge</option>
             <option value="montessori">Montessori</option>
@@ -98,6 +100,7 @@
 
 @elseif($stepKey === 'uneb_center')
     <div class="ds-form-group">
+        {{-- FLAGGED(product-decision): the wizard asks for a UNEB centre number. see docs/onboarding-engine-plan.md --}}
         <label class="ds-form-label" for="wizard-uneb">UNEB centre number</label>
         <input id="wizard-uneb" type="text" class="ds-form-input w-full" wire:model="unebCenterNumber" placeholder="Optional — leave blank to skip" />
         <p class="text-xs text-gray-500 mt-1">Optional for UNEB schools. Leave blank if you do not have one yet.</p>
@@ -707,6 +710,7 @@
                         <span class="manual-wizard-bulk-item-main">
                             <strong>{{ $row['name'] }}</strong>
                             <span class="manual-wizard-bulk-meta">
+                                {{-- FLAGGED(product-decision): the fee list prints UGX. see docs/onboarding-engine-plan.md --}}
                                 UGX {{ number_format((float) ($row['amount'] ?? 0)) }}
                                 · {{ ($row['scope'] ?? '') === 'class' ? ($row['class'] ?: 'Class') : 'Whole school' }}
                                 · {{ !empty($row['is_yearly']) ? 'Yearly' : ($row['term'] ?: 'No term') }}
@@ -723,6 +727,7 @@
             <input id="wizard-fee-name" type="text" class="ds-form-input w-full" wire:model="feeName" data-testid="wizard-fee-name" placeholder="e.g. Tuition" />
         </div>
         <div class="ds-form-group">
+            {{-- FLAGGED(product-decision): the fee amount label says UGX. see docs/onboarding-engine-plan.md --}}
             <label class="ds-form-label" for="wizard-fee-amount">Amount (UGX)<span class="text-red-500">*</span></label>
             <input id="wizard-fee-amount" type="number" min="1" class="ds-form-input w-full" wire:model="feeAmount" data-testid="wizard-fee-amount" />
         </div>

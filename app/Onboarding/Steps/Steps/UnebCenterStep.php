@@ -14,6 +14,7 @@ class UnebCenterStep extends AbstractOnboardingStep
 
     public function question(): string
     {
+        // FLAGGED(product-decision): the exam-centre step is the UNEB centre number. see docs/onboarding-engine-plan.md
         return 'What is your UNEB centre number? (you can skip)';
     }
 

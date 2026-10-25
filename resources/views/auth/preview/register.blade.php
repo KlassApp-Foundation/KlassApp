@@ -91,6 +91,7 @@
               <span class="ap-error" role="alert">{{ $errors->first('termsandcondn') }}</span>
             @endif
 
+            {{-- FLAGGED(product-decision): signup asks for a password instead of an invite link. see docs/onboarding-engine-plan.md --}}
             <button type="submit" class="ap-submit" data-testid="ap-primary-submit">Create account with password</button>
 
             <div class="ap-divider"><span>or</span></div>

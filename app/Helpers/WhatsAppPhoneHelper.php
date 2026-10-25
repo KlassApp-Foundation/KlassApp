@@ -3,6 +3,7 @@ namespace App\Helpers;
 
 class WhatsAppPhoneHelper
 {
+    // FLAGGED(product-decision): a leading 0 or a short number is always rewritten to +256. see docs/onboarding-engine-plan.md
     public static function normalise(string $input): string
     {
         $digits = preg_replace('/\D/', '', $input);
@@ -186,6 +187,7 @@ class WhatsAppPhoneHelper
     }
 
     /** "+256 700 000 941" for a Uganda number; other countries grouped in threes. */
+    // FLAGGED(product-decision): display grouping is special-cased for a 12-digit 256 number. see docs/onboarding-engine-plan.md
     public static function readable(string $phone): string
     {
         $digits = preg_replace('/\D/', '', $phone) ?? '';
@@ -236,6 +238,7 @@ class WhatsAppPhoneHelper
         return substr($digits, 0, max(1, min(3, strlen($digits) - 3)));
     }
 
+    // FLAGGED(product-decision): accepts only +256 numbers matching 07xx mobile prefixes. see docs/onboarding-engine-plan.md
     public static function validate(string $input): bool
     {
         $normalised = self::normalise($input);

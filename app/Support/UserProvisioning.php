@@ -27,6 +27,7 @@ final class UserProvisioning
      *
      * @return array{password: string, is_reset: int}
      */
+    // FLAGGED(product-decision): runtime user creation stores a random password. see docs/onboarding-engine-plan.md
     public static function randomPasswordAttributes(): array
     {
         return [

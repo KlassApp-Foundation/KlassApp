@@ -152,6 +152,7 @@ $templates = [
         'components' => [
             [
                 'type' => 'BODY',
+                // FLAGGED(product-decision): the teacher invite says there is a temporary login and a password to set. see docs/onboarding-engine-plan.md
                 'text' => "Hello {{1}}, you've been added as the class teacher for {{2}} at {{3}} on KlassApp. Your temporary login is {{4}}. Visit {{5}} to log in and set your password.",
                 'example' => [
                     'body_text' => [[

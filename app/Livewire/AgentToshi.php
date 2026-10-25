@@ -143,6 +143,7 @@ class AgentToshi extends Component
      * none, so an unanswered picker can commit 'uneb'. That is a behavioural question,
      * recorded rather than changed here.
      */
+    // FLAGGED(product-decision): unanswered picker commits uneb. see docs/onboarding-engine-plan.md
     public $curriculum = 'uneb';
     public $suggestedPlanId = null;
     public $schoolPayPassword = '';
@@ -638,6 +639,7 @@ class AgentToshi extends Component
         $this->schoolPhone = $data['schoolPhone'] ?? '';
         $this->ministryCode = $data['ministryCode'] ?? '';
         $this->unebCenterNumber = array_key_exists('unebCenterNumber', $data) ? $data['unebCenterNumber'] : null;
+        // FLAGGED(product-decision): restored draft curriculum falls back to uneb. see docs/onboarding-engine-plan.md
         $this->curriculum = $data['curriculum'] ?? 'uneb';
         $this->schoolPayPassword = $data['schoolPayPassword'] ?? '';
         $this->adminName = $data['adminName'] ?? '';
@@ -2454,6 +2456,7 @@ class AgentToshi extends Component
 
         $count = count($this->actionData['fees']);
         $period = $isYearly ? 'yearly' : 'term';
+        // FLAGGED(product-decision): onboarding fee copy hard-codes UGX. see docs/onboarding-engine-plan.md
         $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$period}, {$count} so far). Add another or click **Continue**.");
     }
 
@@ -4700,6 +4703,7 @@ class AgentToshi extends Component
         if ($this->substep === 5) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
+                // FLAGGED(product-decision): offers a default password and collects one. see docs/onboarding-engine-plan.md
                 $this->botSay("Phone confirmed. | Set a password for the admin account (min 6 characters), or type 'default' to use the default password.");
                 $this->substep = 6;
                 return;
@@ -4888,6 +4892,7 @@ class AgentToshi extends Component
     private function actionOnboardingCurriculum(string $text): void
     {
         $normalized = strtolower(trim($text));
+        // FLAGGED(product-decision): maps Uganda and NCDC onto the uneb constant. see docs/onboarding-engine-plan.md
         $map = [
             'uneb' => 'uneb',
             'uganda' => 'uneb',
@@ -6874,10 +6879,13 @@ class AgentToshi extends Component
             if ($this->mode === 'create') {
                 $school = School::create([
                     'name'    => $this->schoolName,
+                    // FLAGGED(product-decision): fallback school email uses the .sch.ug domain. see docs/onboarding-engine-plan.md
                     'email'   => $this->schoolEmail ?: Str::slug($this->schoolName) . '@klassapp.sch.ug',
+                    // FLAGGED(product-decision): missing phone becomes the Uganda local number 0700000000. see docs/onboarding-engine-plan.md
                     'phone'   => $this->schoolPhone ?: '0700000000',
                     'ministry_code' => $this->ministryCode ?: null,
                     'uneb_center_number' => $this->unebCenterNumber,
+                    // FLAGGED(product-decision): create mode stores uneb when no curriculum was chosen. see docs/onboarding-engine-plan.md
                     'curriculum'    => $this->curriculum ?: 'uneb',
                     'school_pay_api_password' => $this->schoolPayPassword ?: null,
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
@@ -6886,6 +6894,7 @@ class AgentToshi extends Component
                     'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
+                    // FLAGGED(product-decision): create mode stores Uganda when no country was chosen. see docs/onboarding-engine-plan.md
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
                     'student_size' => $this->studentSize ?: null,
                 ]);
@@ -6903,10 +6912,12 @@ class AgentToshi extends Component
                 $this->adminSetPasswordEmailed = false;
                 $chosenPassword = trim((string) $this->adminPassword);
                 $emailSetPasswordLink = $chosenPassword === '';
+                // FLAGGED(product-decision): create mode stores a chosen or random password instead of an invite link. see docs/onboarding-engine-plan.md
                 $password = bcrypt($emailSetPasswordLink ? Str::random(32) : $chosenPassword);
                 $adminUser = User::create([
                     'school_id' => $school->id, 'usergroup_id' => 3,
                     'name' => $this->adminName ?: 'School Admin',
+                    // FLAGGED(product-decision): fallback admin email uses the .sch.ug domain. see docs/onboarding-engine-plan.md
                     'email' => $this->adminEmail ?: 'admin@' . Str::slug($this->schoolName) . '.sch.ug',
                     'password' => $password,
                     'is_reset' => $emailSetPasswordLink ? 1 : 0,
@@ -7249,6 +7260,7 @@ class AgentToshi extends Component
     //    3. Define class names + subject lists per curriculum
     //    4. Update the setCurriculum() message in handleSchoolInfo
     // ════════════════════════════════════════════════
+    // FLAGGED(product-decision): class and subject lists are Uganda nursery, P1–P7, and S1–S6 constants. see docs/onboarding-engine-plan.md
     private function curriculumDefaults(): array
     {
         return match ($this->schoolType) {

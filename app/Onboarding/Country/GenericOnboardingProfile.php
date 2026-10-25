@@ -36,6 +36,7 @@ final class GenericOnboardingProfile implements CountryOnboardingProfile
         return null;
     }
 
+    // FLAGGED(product-decision): every country without a profile is offered uneb. see docs/onboarding-engine-plan.md
     public function defaultCurriculum(): string
     {
         return 'uneb';
@@ -43,6 +44,7 @@ final class GenericOnboardingProfile implements CountryOnboardingProfile
 
     public function defaultTerms(int $year): array
     {
+        // FLAGGED(product-decision): other countries receive Uganda's term dates. see docs/onboarding-engine-plan.md
         return (new UgandaOnboardingProfile())->defaultTerms($year);
     }
 

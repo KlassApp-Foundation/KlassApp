@@ -90,9 +90,11 @@ final class StepSchemaCatalog
 
         return self::make(
             'country',
+            // FLAGGED(product-decision): the country field defaults to Uganda. see docs/onboarding-engine-plan.md
             [self::choice('country', 'Country', true, ['required', 'string', 'min:2'], $options, 'Uganda')],
             'Choose the country and confirm it.',
             'Save the country on the school.',
+            // FLAGGED(product-decision): the country answer defaults to Uganda. see docs/onboarding-engine-plan.md
             ['country' => 'Uganda'],
             $options,
             ['kind' => 'min_string', 'min' => 2],
@@ -501,6 +503,7 @@ final class StepSchemaCatalog
     {
         $names = Country::query()->orderBy('order')->orderBy('name')->pluck('name');
         if ($names->isEmpty()) {
+            // FLAGGED(product-decision): an empty country table falls back to Uganda, Kenya, and Tanzania. see docs/onboarding-engine-plan.md
             $names = collect(['Uganda', 'Kenya', 'Tanzania']);
         }
 
