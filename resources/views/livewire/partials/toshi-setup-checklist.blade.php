@@ -5,6 +5,9 @@
   same count everywhere, and every row opens the same step via
   jumpToChecklistStep(). `variant`: 'dock' (dots + list in the panel) or
   'modal' (Progress — x/y + list in the maximized sidebar).
+
+  The dock also shows the running summary (OnboardingProgress): a slim bar
+  that opens onto one line per finished step. The modal list does not.
 --}}
 @php
     $sharedSteps = $this->onboardingChecklist;
@@ -57,6 +60,24 @@
             </div>
         </div>
     @else
+        @php
+            $runningUserId = auth()->id();
+            $running = $sharedSchool
+                ? \App\Onboarding\OnboardingProgress::for($sharedSchool, $runningUserId !== null ? (int) $runningUserId : null)
+                : ['done' => $sharedDone, 'total' => $sharedTotal, 'current_key' => null, 'summary' => []];
+        @endphp
+        <details class="toshi-running-summary" data-testid="toshi-running-summary">
+            <summary>Setup {{ $running['done'] }} of {{ $running['total'] }}</summary>
+            @if(($running['summary'] ?? []) === [])
+                <p class="toshi-running-summary-empty">Nothing saved yet.</p>
+            @else
+                <ul>
+                    @foreach($running['summary'] as $line)
+                        <li>{{ $line }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        </details>
         <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 0 10px; background: #f5f4ed; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 3px; flex: 1;">
                 @foreach($sharedSteps as $si => $s)

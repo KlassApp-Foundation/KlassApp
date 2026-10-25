@@ -3127,6 +3127,54 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     max-width: 880px;
     margin: 0 auto 48px;
 }
+.manual-wizard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.manual-wizard-summary {
+    background: #fff;
+    color: #0F172A;
+    border: 1px solid var(--d-border, #E2E8F0);
+    border-radius: 12px;
+    padding: 4px 14px 12px;
+}
+.manual-wizard-summary summary {
+    cursor: pointer;
+    font-weight: 700;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    color: #0F172A;
+}
+.manual-wizard-summary-now,
+.manual-wizard-summary-empty {
+    margin: 0;
+    color: #334155;
+    font-size: 13px;
+}
+.manual-wizard-summary-lines {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #0F172A;
+}
+.manual-wizard-summary-lines li + li {
+    margin-top: 4px;
+}
+@media (min-width: 1280px) {
+    .manual-wizard { max-width: 1120px; }
+    .manual-wizard-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: start;
+        gap: 20px;
+    }
+    .manual-wizard-summary {
+        position: sticky;
+        top: 16px;
+    }
+}
 .manual-wizard-brand {
     display: flex;
     align-items: center;
@@ -4057,6 +4105,38 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
    Tint and border colours are derived from the established AA tokens
    (--d-warning #B45309, --d-blue #1E6FD9, --d-success #15803D) with alpha.
    Red is deliberately absent: "not done yet" is not an error. */
+.toshi-running-summary {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 10px 8px;
+    background: #fff;
+    color: #0F172A;
+    border: 1px solid var(--d-border, #E2E8F0);
+    border-radius: 8px;
+}
+.toshi-running-summary summary {
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F172A;
+}
+.toshi-running-summary ul {
+    margin: 0;
+    padding: 0 12px 10px 28px;
+    font-size: 12.5px;
+    color: #0F172A;
+}
+.toshi-running-summary-empty {
+    margin: 0;
+    padding: 0 12px 10px;
+    font-size: 12.5px;
+    color: #334155;
+}
 .toshi-setup-list {
     display: flex;
     flex-direction: column;

@@ -1,10 +1,12 @@
 # Onboarding playbook
 
-This is the setup script for a school admin and for the person supporting them. It covers every step in the setup wizard, in the order the wizard asks them. Toshi follows this same script. The screens still behave as they do today: this file is the written version of that setup, so the words and the software can be checked against each other.
+This is the setup script for a school admin and for the person supporting them. It covers every step in the setup wizard, in the order the wizard asks them. Toshi follows this same script. The summary line on each step is the running summary, so the wizard, Toshi and the dashboard say the same thing.
 
 Exams and SchoolPay are not part of onboarding.
 
-Each step says what to have ready, what the school does, what the engine does, the choices, the starting values, the confirmation before anything is saved, the summary line, and every error code with its cause and the fix. The school confirms before the engine writes. Nothing is saved on a blank confirmation.
+Each step says what to have ready, what the school does, what the engine does, the choices, the starting values, the confirmation text recorded for that step, the summary line the running summary is built from, and every error code with its cause and the fix. The confirmation text is the wording for a confirm card. That card is not in the setup driver yet.
+
+A summary line uses `{tokens}`. The running summary replaces each token from the data saved on the school, one line per finished step. Teachers and students may be skipped for later. WhatsApp can be finished later, and its line is left out until the code matches.
 
 `{year}` means the calendar year. `{next}` means the following year. Those two tokens appear only in the academic-year cause, where the year changes.
 
@@ -44,7 +46,7 @@ Default: blank
 
 Confirmation: Confirm the school name, then the engine saves it.
 
-Summary: School name: the name that was saved.
+Summary: School name: {name}
 
 ### Issues
 
@@ -77,7 +79,7 @@ Default: blank
 
 Confirmation: Confirm the size, then the engine saves it on the school.
 
-Summary: School size: the size the school chose.
+Summary: School size: {size}
 
 ### Issues
 
@@ -108,7 +110,7 @@ Default: Uganda
 
 Confirmation: Confirm the country, then the engine saves it on the school.
 
-Summary: Country: the country saved on the school.
+Summary: Country: {country}
 
 ### Issues
 
@@ -138,7 +140,7 @@ Default: uneb
 
 Confirmation: Confirm the board or curriculum, then the engine saves it on the school.
 
-Summary: Curriculum: the board or curriculum saved on the school.
+Summary: Curriculum: {curriculum}
 
 ### Issues
 
@@ -169,7 +171,9 @@ Default: blank
 
 Confirmation: Confirm the kind of school, then the engine saves it and creates the classes and subjects.
 
-Summary: School category: the kind of school, and the classes and subjects created from it.
+Summary: School category: {category}
+
+When classes already exist and no category was saved, {category} is already set up.
 
 ### Issues
 
@@ -195,7 +199,7 @@ Default: blank
 
 Confirmation: Confirm the EMIS code, then the engine saves it on the school.
 
-Summary: EMIS: the ministry code saved on the school.
+Summary: EMIS: {code}
 
 ### Issues
 
@@ -223,7 +227,9 @@ Default: blank
 
 Confirmation: Confirm the centre number, or confirm that it is blank, then the engine saves it.
 
-Summary: UNEB centre: the centre number, or blank when the school left it empty.
+Summary: UNEB centre: {number}
+
+When the school leaves the number empty, {number} is blank.
 
 ### Issues
 
@@ -249,7 +255,7 @@ Default: The description is Current Academic Year. The start is the first day of
 
 Confirmation: Confirm the year and its dates, then the engine creates the academic year.
 
-Summary: Academic year: the year name and its dates.
+Summary: Academic year: {name}, {start} to {end}
 
 ### Issues
 
@@ -279,7 +285,7 @@ Default: The class name starts as P1. Streams and the class teacher are left emp
 
 Confirmation: Confirm the classes and streams, then the engine creates them.
 
-Summary: Classes: the classes and streams now on the school.
+Summary: Classes: {classes}, {streams}
 
 ### Issues
 
@@ -311,7 +317,7 @@ Default: Mathematics
 
 Confirmation: Confirm the subjects, then the engine creates them on each class.
 
-Summary: Subjects: the subjects on each class.
+Summary: Subjects: {count}
 
 ### Issues
 
@@ -345,7 +351,9 @@ Default: Nothing is filled in.
 
 Confirmation: Confirm the teacher list, or confirm the skip, then the engine creates the accounts it can.
 
-Summary: Teachers: the teachers added, or skipped for later.
+Summary: Teachers: {teachers}
+
+When the step is skipped, {teachers} is skipped for later.
 
 You can skip this step. The skip code below is only used when a skip is refused.
 
@@ -378,7 +386,9 @@ Default: Nothing is filled in.
 
 Confirmation: Confirm the student list, or confirm the skip, then the engine creates the students it can.
 
-Summary: Students: the students added, or skipped for later.
+Summary: Students: {students}
+
+When the step is skipped, {students} is skipped for later.
 
 You can skip this step. The skip code below is only used when a skip is refused.
 
@@ -409,7 +419,7 @@ Default: Term 1 from 3 February to 2 May, Term 2 from 26 May to 29 August, and T
 
 Confirmation: Confirm the terms and which one is current, then the engine creates them.
 
-Summary: Terms: the terms, and which one is current.
+Summary: Terms: {terms}, current {current}
 
 ### Issues
 
@@ -443,7 +453,7 @@ Default: The fee name is Tuition, the amount is 100000, the scope is whole_schoo
 
 Confirmation: Confirm the fee list, then the engine creates the fee structures.
 
-Summary: Fees: each fee name and amount.
+Summary: Fees: {fees}
 
 ### Issues
 
@@ -471,7 +481,9 @@ Default: The phone is blank.
 
 Confirmation: Confirm the WhatsApp number, then the engine sends the code and links the number only after the code matches.
 
-Summary: WhatsApp: the number, once the code matches.
+Summary: WhatsApp: {phone}
+
+The summary line is left out until the code matches. Setup can finish before this step is done.
 
 ### Issues
 
@@ -509,7 +521,7 @@ Default: Freemium when that plan is active, otherwise the first active plan.
 
 Confirmation: Confirm the plan, then the engine saves it on the school. The plan is saved as its number, not as its name.
 
-Summary: Plan: the plan the school is on.
+Summary: Plan: {plan}
 
 A plan typed as text, even when the text is the plan's number, is refused. Choose the plan from the list.
 
