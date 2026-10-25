@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\Plan;
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
 use App\Services\OnboardingNameListExtractor;
 use InvalidArgumentException;
 
@@ -33,9 +34,9 @@ final class StepSchemaCatalog
             'school_name' => self::schoolName(),
             'student_size' => self::studentSize($stepOptions),
             'country' => self::country(),
-            'curriculum' => self::curriculum($stepOptions),
+            'curriculum' => self::curriculum($school, $stepOptions),
             'school_category' => self::schoolCategory($stepOptions),
-            'emis' => self::emis(),
+            'emis' => self::emis($school),
             'uneb_center' => self::unebCenter(),
             'academic_year' => self::academicYear(),
             'standards' => self::standards(),
@@ -99,8 +100,10 @@ final class StepSchemaCatalog
     /**
      * @param  list<array{value: string, label: string}>  $options
      */
-    private static function curriculum(array $options): StepSchema
+    private static function curriculum(School $school, array $options): StepSchema
     {
+        $default = CountryProfiles::forCountry($school->registration_country)->defaultCurriculum();
+
         return self::choiceStep(
             'curriculum',
             'curriculum',
@@ -108,8 +111,8 @@ final class StepSchemaCatalog
             'Choose the board or curriculum and confirm it.',
             'Save the curriculum on the school.',
             $options,
-            ['curriculum' => 'uneb'],
-            'uneb',
+            ['curriculum' => $default],
+            $default,
         );
     }
 
@@ -130,11 +133,13 @@ final class StepSchemaCatalog
         );
     }
 
-    private static function emis(): StepSchema
+    private static function emis(School $school): StepSchema
     {
+        $label = CountryProfiles::forCountry($school->registration_country)->ministryCodeLabel();
+
         return self::make(
             'emis',
-            [self::text('ministry_code', 'EMIS / Ministry code', true, ['required', 'string'])],
+            [self::text('ministry_code', $label, true, ['required', 'string'])],
             'Enter the EMIS code and confirm it.',
             'Save the ministry code on the school.',
             ['ministry_code' => ''],
@@ -265,7 +270,7 @@ final class StepSchemaCatalog
 
     private static function terms(School $school): StepSchema
     {
-        $drafts = self::termDrafts(self::termYear($school));
+        $drafts = self::termDrafts($school, self::termYear($school));
 
         return self::make(
             'terms',
@@ -477,17 +482,13 @@ final class StepSchemaCatalog
     }
 
     /**
-     * Same three-term prefill the wizard shows (ManualOnboardingWizard::defaultTermDrafts).
+     * The country's term calendar for this academic year.
      *
      * @return list<array{name: string, start: string, end: string}>
      */
-    private static function termDrafts(int $year): array
+    private static function termDrafts(School $school, int $year): array
     {
-        return [
-            ['name' => 'Term 1', 'start' => "{$year}-02-03", 'end' => "{$year}-05-02"],
-            ['name' => 'Term 2', 'start' => "{$year}-05-26", 'end' => "{$year}-08-29"],
-            ['name' => 'Term 3', 'start' => "{$year}-09-22", 'end' => "{$year}-12-19"],
-        ];
+        return CountryProfiles::forCountry($school->registration_country)->defaultTerms($year);
     }
 
     private static function termYear(School $school): int

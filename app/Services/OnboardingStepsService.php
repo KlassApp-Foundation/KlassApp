@@ -14,6 +14,8 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\UgandaOnboardingProfile;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -191,12 +193,7 @@ class OnboardingStepsService
 
     public static function isUganda(?string $country): bool
     {
-        if ($country === null || trim($country) === '') {
-            return false;
-        }
-
-        return strcasecmp(trim($country), 'Uganda') === 0
-            || strcasecmp(trim($country), 'UG') === 0;
+        return (new UgandaOnboardingProfile())->matches($country);
     }
 
     public static function isUnebCurriculum(?string $curriculum): bool
@@ -213,7 +210,7 @@ class OnboardingStepsService
     {
         $steps = self::ALL_STEPS;
 
-        if (! filled($school->registration_country) || ! self::isUganda($school->registration_country)) {
+        if (! filled($school->registration_country) || ! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             unset($steps['emis']);
         }
 
@@ -344,7 +341,7 @@ class OnboardingStepsService
             return false;
         }
 
-        if (! self::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return true;
         }
 

@@ -20,6 +20,7 @@ use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
+use App\Onboarding\Country\CountryProfiles;
 use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
@@ -159,7 +160,7 @@ class OnboardingEngine
     {
         $ministryCode = trim($ministryCode);
 
-        if (! OnboardingStepsService::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return;
         }
 

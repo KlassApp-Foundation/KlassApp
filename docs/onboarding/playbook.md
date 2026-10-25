@@ -259,7 +259,7 @@ Summary: Academic year: the year name and its dates.
 | `academic_year.required` | Enter an academic year. | Enter a four-digit year, a span such as 2026/2027, or reply yes to use the suggested year. |
 | `academic_year.dates` | Provide both start and end dates. | Enter both the start date and the end date, or leave both blank. |
 | `academic_year.end` | The academic year end date must be after the start date. | Move the end date to a day after the start date. |
-| `academic_year.date` | The academic year end date must be a valid date. | Enter the start and end as real dates, with the end after the start. |
+| `academic_year.date` | The academic year end is not a valid date. | Enter the start and end as real dates, with the end after the start. |
 
 ## step: standards
 

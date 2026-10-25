@@ -3,8 +3,8 @@
 namespace App\Onboarding\Steps\Steps;
 
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Steps\AbstractOnboardingStep;
-use App\Services\OnboardingStepsService;
 
 class EmisStep extends AbstractOnboardingStep
 {
@@ -34,7 +34,7 @@ class EmisStep extends AbstractOnboardingStep
     {
         $preview = $this->attributePreview($school, $normalized, 'ministry_code', 'EMIS / ministry code');
 
-        if (! OnboardingStepsService::isUganda($school->registration_country)) {
+        if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
             return [
                 'action' => 'noop',
                 'summary' => 'No-op here: EMIS / ministry codes are only required for schools registered in Uganda.',
