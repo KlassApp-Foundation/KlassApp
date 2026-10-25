@@ -2,26 +2,28 @@
 
 namespace Tests\Feature\EarlyAccess;
 
+use App\Mail\EarlyAccessAccountMail;
 use App\Models\EarlyAccessRequest;
 use App\Models\User;
 use App\Notifications\EarlyAccessRequestedNotification;
+use App\Services\DemoSchoolCommsGuard;
 use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 /**
- * An email that already belongs to a KlassApp account still stores an early
- * access request, tells the person to sign in or reset their password, and
- * is labelled Existing user on the platform list. A new email is unchanged.
+ * The early-access page gives every address the same reply. An active
+ * account is emailed a sign-in link. The page never says which case it was.
  */
 class EarlyAccessExistingAccountTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const MESSAGE = 'This email already has a KlassApp account. Sign in, or reset your password.';
+    private const THANKS = 'Thanks, check your email for next steps';
 
     protected function setUp(): void
     {
@@ -29,6 +31,7 @@ class EarlyAccessExistingAccountTest extends TestCase
 
         DB::statement('PRAGMA foreign_keys = ON');
         Cache::flush();
+        DemoSchoolCommsGuard::flushCache();
         config(['app.timezone' => 'Africa/Kampala']);
         date_default_timezone_set('Africa/Kampala');
 
@@ -42,39 +45,78 @@ class EarlyAccessExistingAccountTest extends TestCase
 
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         config(['klassapp.signup_enabled' => false]);
+        Mail::fake();
     }
 
     protected function tearDown(): void
     {
         Cache::flush();
+        DemoSchoolCommsGuard::flushCache();
         date_default_timezone_set('UTC');
         parent::tearDown();
     }
 
-    public function test_existing_email_shows_the_account_message_and_both_links(): void
+    public function test_new_and_existing_emails_get_the_same_response_body(): void
     {
-        $this->makeUser('Taken@Example.com', 3);
+        $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
 
-        $this->get('/register')
-            ->assertOk()
-            ->assertSee('data-testid="early-access-form"', false)
-            ->assertDontSee(self::MESSAGE);
+        $new = $this->post('/early-access', $this->payload('newcomer@example.com'));
+        $new->assertRedirect(route('early-access.show'));
+        $newPage = $this->get($new->headers->get('Location'));
 
-        $response = $this->followingRedirects()->post('/early-access', $this->payload('taken@example.com'));
+        $existing = $this->post('/early-access', $this->payload('taken@example.com'));
+        $existing->assertRedirect(route('early-access.show'));
+        $existingPage = $this->get($existing->headers->get('Location'));
 
-        $response->assertOk();
-        $response->assertSeeText(self::MESSAGE);
-        $response->assertSee('data-testid="early-access-existing-account"', false);
-        $response->assertSee('href="'.route('login').'" data-testid="early-access-existing-sign-in"', false);
-        $response->assertSee('href="'.route('password.email').'" data-testid="early-access-existing-reset"', false);
+        $this->assertSame($new->status(), $existing->status());
+        $this->assertSame($new->headers->get('Location'), $existing->headers->get('Location'));
+        $this->assertSame($this->normalized($new->getContent()), $this->normalized($existing->getContent()));
 
-        $this->get(route('login'))->assertOk();
-        $this->get(route('password.email'))
-            ->assertOk()
-            ->assertSee('data-testid="preview-reset-request-form"', false);
+        $newPage->assertOk()->assertSee(self::THANKS);
+        $existingPage->assertOk()->assertSee(self::THANKS);
+        $this->assertSame($this->normalized($newPage->getContent()), $this->normalized($existingPage->getContent()));
+
+        foreach ([$newPage, $existingPage] as $page) {
+            $page->assertDontSee('already has a KlassApp account');
+            $page->assertDontSee('Existing user');
+            $page->assertDontSee('Sign in, or reset your password');
+            $page->assertDontSee('Northwind Existing School');
+            $page->assertDontSee('northwind-existing-school');
+            $page->assertDontSee('data-testid="early-access-existing-account"', false);
+        }
     }
 
-    public function test_existing_email_request_is_stored_and_flagged_existing_user(): void
+    public function test_mail_is_queued_only_for_an_active_account(): void
+    {
+        $active = $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
+        $inactive = $this->makeUser('quiet@example.com', 3);
+        $inactive->forceFill(['status' => 'inactive'])->save();
+        $demo = $this->makeUser('demo.person@demo.klassapp.test', 3);
+        $demo->school->forceFill(['is_demo' => 1])->save();
+        DemoSchoolCommsGuard::flushCache();
+
+        $this->post('/early-access', $this->payload('newcomer@example.com'))->assertRedirect();
+        $this->post('/early-access', $this->payload('quiet@example.com'))->assertRedirect();
+        $this->post('/early-access', $this->payload('demo.person@demo.klassapp.test'))->assertRedirect();
+        Mail::assertNotQueued(EarlyAccessAccountMail::class);
+
+        $this->post('/early-access', $this->payload('taken@example.com'))->assertRedirect();
+
+        Mail::assertQueued(EarlyAccessAccountMail::class, function (EarlyAccessAccountMail $mail) use ($active) {
+            $html = $mail->render();
+
+            return $mail->hasTo($active->email)
+                && str_contains($mail->loginUrl, '/login')
+                && str_contains($mail->resetUrl, '/password/reset')
+                && str_contains($html, $mail->loginUrl)
+                && str_contains($html, $mail->resetUrl)
+                && ! str_contains($html, 'Northwind Existing School')
+                && ! str_contains($html, 'Hillside Academy');
+        });
+        Mail::assertQueued(EarlyAccessAccountMail::class, 1);
+    }
+
+    public function test_existing_email_request_is_stored_and_the_admin_list_shows_the_label(): void
     {
         Notification::fake();
 
@@ -84,23 +126,18 @@ class EarlyAccessExistingAccountTest extends TestCase
         $this->post('/early-access', $this->payload('taken@example.com'))
             ->assertRedirect(route('early-access.show'));
 
-        $row = EarlyAccessRequest::sole();
-        $this->assertSame('taken@example.com', $row->email);
+        $row = EarlyAccessRequest::where('email', 'taken@example.com')->firstOrFail();
         $this->assertSame('Hillside Academy', $row->school_name);
         $this->assertNotNull($row->consented_at);
         $this->assertTrue($row->isExistingUser());
 
         Notification::assertSentTo($platform, EarlyAccessRequestedNotification::class);
-    }
 
-    public function test_admin_list_shows_existing_user_label(): void
-    {
-        $this->makeUser('Taken@Example.com', 3);
-        $platform = $this->makeUser('platform@example.com', 1);
-
-        $this->post('/early-access', $this->payload('taken@example.com'))->assertRedirect();
-
-        $row = EarlyAccessRequest::sole();
+        $this->get('/early-access')
+            ->assertOk()
+            ->assertSee(self::THANKS)
+            ->assertDontSee('already has a KlassApp account')
+            ->assertDontSee('Existing user');
 
         $this->actingAs($platform)
             ->get(route('platform.early-access.index'))
@@ -111,34 +148,31 @@ class EarlyAccessExistingAccountTest extends TestCase
             ->assertSee('Existing user');
     }
 
-    public function test_existing_account_message_does_not_reveal_school_or_role(): void
+    public function test_new_email_keeps_the_request_and_shows_no_account_label(): void
     {
-        $user = $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
-        $user->forceFill([
-            'registration_role' => 'Existing Bursar Role',
-            'teacher_designations' => ['Existing Bursar Role'],
-        ])->save();
-        $this->assertSame('Northwind Existing School', $user->school->name);
-
-        $response = $this->followingRedirects()->post('/early-access', $this->payload('taken@example.com'));
-
-        $response->assertOk();
-        $response->assertSeeText(self::MESSAGE);
-        $response->assertDontSee('Northwind Existing School');
-        $response->assertDontSee('northwind-existing-school');
-        $response->assertDontSee('Existing Bursar Role');
-        $response->assertDontSee('Hillside Academy');
-        $response->assertDontSee('Head teacher');
-
         $platform = $this->makeUser('platform@example.com', 1);
+
+        $this->post('/early-access', $this->payload('newcomer@example.com'))
+            ->assertRedirect(route('early-access.show'));
+
+        $row = EarlyAccessRequest::sole();
+        $this->assertSame('newcomer@example.com', $row->email);
+        $this->assertFalse($row->isExistingUser());
+        Mail::assertNotQueued(EarlyAccessAccountMail::class);
+
+        $this->get('/early-access')
+            ->assertOk()
+            ->assertSee('data-testid="early-access-success"', false)
+            ->assertSee(self::THANKS)
+            ->assertDontSee('already has a KlassApp account')
+            ->assertDontSee('Existing user');
+
         $this->actingAs($platform)
             ->get(route('platform.early-access.index'))
             ->assertOk()
-            ->assertSee('Existing user')
-            ->assertSee('Hillside Academy')
-            ->assertSee('Head teacher')
-            ->assertDontSee('Northwind Existing School')
-            ->assertDontSee('Existing Bursar Role');
+            ->assertSee('newcomer@example.com')
+            ->assertDontSee('Existing user')
+            ->assertDontSee('data-testid="early-access-existing-user"', false);
     }
 
     public function test_existing_account_reply_is_rate_limited_with_the_form(): void
@@ -148,8 +182,6 @@ class EarlyAccessExistingAccountTest extends TestCase
         $this->assertContains('throttle:5,1', $route->gatherMiddleware());
 
         $this->makeUser('Taken@Example.com', 3, 'Northwind Existing School');
-
-        // Own address, so this counter is the form's limit and not another test's.
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.76']);
 
         for ($i = 0; $i < 5; $i++) {
@@ -160,37 +192,17 @@ class EarlyAccessExistingAccountTest extends TestCase
         $blocked = $this->post('/early-access', $this->payload('taken@example.com'));
         $blocked->assertStatus(429);
         $blocked->assertDontSee('Northwind Existing School');
-        $blocked->assertDontSee('Existing Bursar Role');
-        $blocked->assertDontSee(self::MESSAGE);
-        $this->assertSame(5, EarlyAccessRequest::count());
+        $blocked->assertDontSee('already has a KlassApp account');
+        $blocked->assertDontSee('Existing user');
+        $this->assertSame(5, EarlyAccessRequest::where('email', 'taken@example.com')->count());
+        Mail::assertQueued(EarlyAccessAccountMail::class, 5);
     }
 
-    public function test_new_email_is_unchanged(): void
+    private function normalized(string $html): string
     {
-        $platform = $this->makeUser('platform@example.com', 1);
+        $html = preg_replace('/csrf-token" content="[^"]*"/', 'csrf-token" content="TOKEN"', $html) ?? $html;
 
-        $this->post('/early-access', $this->payload('newcomer@example.com'))
-            ->assertRedirect(route('early-access.show'));
-
-        $row = EarlyAccessRequest::sole();
-        $this->assertSame('newcomer@example.com', $row->email);
-        $this->assertFalse($row->isExistingUser());
-
-        $this->get('/early-access')
-            ->assertOk()
-            ->assertSee('data-testid="early-access-success"', false)
-            ->assertSee('Thank you. Your request is in, and we will contact you before launch.')
-            ->assertDontSee('data-testid="early-access-existing-account"', false)
-            ->assertDontSee('This email already has a KlassApp account')
-            ->assertDontSee('Existing user');
-
-        $this->actingAs($platform)
-            ->get(route('platform.early-access.index'))
-            ->assertOk()
-            ->assertSee('newcomer@example.com')
-            ->assertSee('data-testid="early-access-account-'.$row->id.'"', false)
-            ->assertDontSee('Existing user')
-            ->assertDontSee('data-testid="early-access-existing-user"', false);
+        return preg_replace('/name="_token" value="[^"]*"/', 'name="_token" value="TOKEN"', $html) ?? $html;
     }
 
     private function payload(string $email): array
@@ -210,7 +222,7 @@ class EarlyAccessExistingAccountTest extends TestCase
     private function makeUser(string $email, int $group, ?string $schoolName = null): User
     {
         $data = [
-            'name' => 'Person '.$group,
+            'name' => 'Person '.$group.' '.$email,
             'email' => $email,
             'phone' => null,
             'password' => 'secret123',
