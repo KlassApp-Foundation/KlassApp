@@ -3,6 +3,7 @@
 namespace App\Onboarding\Steps\Contracts;
 
 use App\Models\School;
+use App\Onboarding\Steps\StepSchema;
 use InvalidArgumentException;
 
 interface OnboardingStep
@@ -20,6 +21,12 @@ interface OnboardingStep
      * @return list<array{value: string, label: string}>
      */
     public function options(School $school): array;
+
+    /**
+     * Fields, options, confirmation, actor, and defaults for this step.
+     * Read-only: the wizard and Toshi do not branch on it.
+     */
+    public function schema(School $school): StepSchema;
 
     public function normalize(mixed $raw): mixed;
 
