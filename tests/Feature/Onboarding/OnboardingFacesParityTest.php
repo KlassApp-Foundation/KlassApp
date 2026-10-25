@@ -7,9 +7,16 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\Country;
 use App\Models\Plan;
 use App\Models\User;
+use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\StepIssueCatalog;
 use App\Onboarding\Steps\StepIssueException;
 use App\Onboarding\Steps\StepRegistry;
+use App\Onboarding\Steps\Steps\StandardsStep;
+use App\Onboarding\Steps\Steps\SubjectsStep;
+use App\Onboarding\Steps\Steps\TermsStep;
+use App\Services\SchoolCategorySeeder;
+use Tests\Support\Onboarding\SchoolSnapshot;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\Attributes\UnitTest;
@@ -150,7 +157,7 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertArrayHasKey('checklist_workbook', $incomplete);
         $this->assertArrayNotHasKey('onboarding_progress', $incomplete);
         $this->assertArrayNotHasKey('onboarding_completion', $incomplete);
-        $this->assertArrayHasKey('school_type_preset', $incomplete);
+        $this->assertArrayNotHasKey('school_type_preset', $incomplete);
         $this->assertArrayHasKey('confirm_before_write', $incomplete);
     }
 
@@ -313,6 +320,70 @@ class OnboardingFacesParityTest extends TestCase
         $this->assertSame($wizard['done'], $wizardDone['done']);
         $this->assertSame($toshi['current_key'], $toshiDone['current_key']);
         $this->assertNull($this->harness->workbookDecision($wizardSchool, 'standards', []));
+    }
+
+    public function test_school_type_preset_acceptance_matches_typing_it(): void
+    {
+        $this->assertArrayNotHasKey('school_type_preset', OnboardingParityHarness::incompleteSteps());
+
+        foreach (['primary', 'o_a_level'] as $category) {
+            $accepted = $this->presetSchool($category, 'accepted');
+            $typed = $this->presetSchool($category, 'typed');
+            $preset = SchoolTypePreset::forSchool($accepted);
+            $this->assertNotNull($preset);
+            $this->assertSame(
+                SchoolCategorySeeder::expectedSectionNames($category),
+                $preset->classNames(),
+            );
+
+            app(StandardsStep::class)->save($typed, $preset->standardsAnswer());
+            app(SubjectsStep::class)->save($typed->fresh(), $preset->subjectsAnswer());
+            app(TermsStep::class)->save($typed->fresh(), $preset->terms(
+                CountryProfiles::forCountry('Uganda'),
+                2027,
+            ));
+
+            app(StandardsStep::class)->save($accepted, 'use_this');
+            app(SubjectsStep::class)->save($accepted->fresh(), 'use_this');
+            app(TermsStep::class)->save($accepted->fresh(), 'use_this');
+
+            $this->assertSame(
+                SchoolSnapshot::capture($typed->fresh())->comparable(),
+                SchoolSnapshot::capture($accepted->fresh())->comparable(),
+            );
+        }
+    }
+
+    private function presetSchool(string $category, string $face): \App\Models\School
+    {
+        $seed = $this->harness->seedSchool(
+            'Preset '.$category.' '.$face.' School',
+            'preset-'.$category.'-'.$face.'@example.com',
+            'preset.'.$category.'.'.$face.'@example.com',
+            'Preset Admin',
+            '+256700000321',
+        );
+        $school = $seed['school'];
+        $school->forceFill([
+            'student_size' => 'Up to 500',
+            'registration_country' => 'Uganda',
+            'curriculum' => 'uneb',
+            'school_category' => $category,
+            'ministry_code' => strtoupper(substr($category, 0, 6)).'-'.substr($face, 0, 1),
+            'uneb_center_number' => '',
+        ])->save();
+
+        \App\Models\AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2027',
+            'description' => 'Current Academic Year',
+            'start_date' => '2027-01-01 00:00:00',
+            'end_date' => '2027-12-31 23:59:59',
+            'status' => 1,
+        ]);
+        SchoolCategorySeeder::seed($school->fresh());
+
+        return $school->fresh();
     }
 
     /**

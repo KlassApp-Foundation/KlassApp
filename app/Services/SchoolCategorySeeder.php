@@ -92,6 +92,40 @@ class SchoolCategorySeeder
     }
 
     /**
+     * Grading bands for a category, in nursery → A-level order.
+     *
+     * @return list<string>
+     */
+    public static function levelTypes(string $category): array
+    {
+        return self::CATEGORY_STANDARDS[$category] ?? [];
+    }
+
+    /**
+     * UNEB class names for one grading band.
+     *
+     * @return list<string>
+     */
+    public static function sectionNamesForLevel(string $levelType): array
+    {
+        return self::SECTIONS[$levelType] ?? [];
+    }
+
+    /**
+     * Subject names the category seeder creates for one grading band.
+     *
+     * @return list<string>
+     */
+    public static function subjectNamesForLevel(string $levelType): array
+    {
+        if (! isset(self::SUBJECTS[$levelType])) {
+            return [];
+        }
+
+        return array_keys(self::SUBJECTS[$levelType]);
+    }
+
+    /**
      * Subjects per level type, keyed by UNEB subject code where one can be
      * assigned unambiguously (NCDC curricula; see cited UNEB/NCDC docs in the
      * PR). Codes with known collisions are left null rather than guessed:

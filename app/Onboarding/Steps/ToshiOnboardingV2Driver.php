@@ -3,6 +3,8 @@
 namespace App\Onboarding\Steps;
 
 use App\Models\School;
+use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\Contracts\OnboardingStep;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -156,11 +158,24 @@ class ToshiOnboardingV2Driver
 
     private function promptPayload(OnboardingStep $step, School $school): array
     {
+        $options = $step->options($school);
+        $question = $step->question();
+        if (in_array($step->key(), ['standards', 'subjects', 'terms'], true)) {
+            $preset = SchoolTypePreset::forSchool($school);
+            if ($preset !== null) {
+                $profile = CountryProfiles::forCountry($school->registration_country);
+                $question .= ' '.$preset->suggestion($step->key(), $profile, SchoolTypePreset::suggestionYear($school));
+                if ($options === []) {
+                    $options = SchoolTypePreset::actions();
+                }
+            }
+        }
+
         return [
             'status' => 'prompt',
             'key' => $step->key(),
-            'question' => $step->question(),
-            'options' => $step->options($school),
+            'question' => $question,
+            'options' => $options,
             'input_type' => $step->inputType(),
         ];
     }

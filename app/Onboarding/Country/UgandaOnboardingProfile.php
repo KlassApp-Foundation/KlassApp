@@ -56,4 +56,9 @@ final class UgandaOnboardingProfile implements CountryOnboardingProfile
             ['name' => 'Term 3', 'start' => $year.'-09-22', 'end' => $year.'-12-19'],
         ];
     }
+
+    public function preset(?string $category): ?SchoolTypePreset
+    {
+        return SchoolTypePreset::uganda($category);
+    }
 }

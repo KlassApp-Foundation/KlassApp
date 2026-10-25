@@ -45,4 +45,9 @@ final class GenericOnboardingProfile implements CountryOnboardingProfile
     {
         return (new UgandaOnboardingProfile())->defaultTerms($year);
     }
+
+    public function preset(?string $category): ?SchoolTypePreset
+    {
+        return null;
+    }
 }

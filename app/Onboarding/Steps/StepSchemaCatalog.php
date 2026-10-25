@@ -7,14 +7,16 @@ use App\Models\Country;
 use App\Models\Plan;
 use App\Models\School;
 use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Services\OnboardingNameListExtractor;
 use InvalidArgumentException;
 
 /**
  * Step schemas for the wizard onboarding steps.
  *
- * Exams and SchoolPay are not onboarding steps. Nothing here is read by the
- * wizard or by Toshi, so saving behaviour is unchanged.
+ * Exams and SchoolPay are not onboarding steps. Class, stream, subject and
+ * term defaults come from the country profile's school-type preset when it
+ * has one. Reading a schema does not save.
  */
 final class StepSchemaCatalog
 {
@@ -39,8 +41,8 @@ final class StepSchemaCatalog
             'emis' => self::emis($school),
             'uneb_center' => self::unebCenter(),
             'academic_year' => self::academicYear(),
-            'standards' => self::standards(),
-            'subjects' => self::subjects(),
+            'standards' => self::standards($school),
+            'subjects' => self::subjects($school),
             'teachers' => self::teachers(),
             'students' => self::students(),
             'terms' => self::terms($school),
@@ -187,33 +189,53 @@ final class StepSchemaCatalog
         );
     }
 
-    private static function standards(): StepSchema
+    private static function standards(School $school): StepSchema
     {
+        $preset = self::preset($school);
+        $className = $preset?->classes[0]['name'] ?? 'P1';
+        $stream = $preset?->streamDefaultText() ?? '';
+        $recommended = self::recommendedDefault($preset);
+
         return self::make(
             'standards',
             [
-                self::text('class_name', 'Class', false, ['string'], 'P1'),
-                self::text('stream', 'Stream', false, ['string']),
+                self::text('class_name', 'Class', false, ['string'], $className),
+                self::text('stream', 'Stream', false, ['string'], $stream),
                 self::text('class_teacher_name', 'Class teacher name', false, ['string']),
                 self::text('class_teacher_email', 'Class teacher email', false, ['nullable', 'email']),
                 self::text('class_teacher_phone', 'Class teacher phone', false, ['nullable']),
+                self::presetChoice($recommended),
             ],
             'Confirm the classes, or add a class, streams, and a class teacher.',
             'Create the classes and streams.',
-            ['class_name' => 'P1'],
+            [
+                'class_name' => $className,
+                'stream' => $stream,
+                'recommended_setup' => $recommended,
+            ],
             [],
             ['kind' => 'list', 'allow_skip' => false, 'confirm_seeded' => 'standards_link'],
         );
     }
 
-    private static function subjects(): StepSchema
+    private static function subjects(School $school): StepSchema
     {
+        $preset = self::preset($school);
+        $subjectName = 'Mathematics';
+        $recommended = self::recommendedDefault($preset);
+
         return self::make(
             'subjects',
-            [self::text('subject_name', 'Subjects', false, ['string'], 'Mathematics')],
+            [
+                self::text('subject_name', 'Subjects', false, ['string'], $subjectName),
+                self::presetChoice($recommended),
+            ],
             'Confirm the subjects, or add more.',
             'Create the subjects on each class.',
-            ['subject_name' => 'Mathematics'],
+            [
+                'subject_name' => $subjectName,
+                'recommended_setup' => $recommended,
+            ],
             [],
             ['kind' => 'list', 'allow_skip' => false, 'confirm_seeded' => 'subjects'],
         );
@@ -271,6 +293,7 @@ final class StepSchemaCatalog
     private static function terms(School $school): StepSchema
     {
         $drafts = self::termDrafts($school, self::termYear($school));
+        $recommended = self::recommendedDefault(self::preset($school));
 
         return self::make(
             'terms',
@@ -281,10 +304,15 @@ final class StepSchemaCatalog
                     self::field('end', 'Ends on', 'date', true, ['required', 'date', 'after:start']),
                 ]),
                 self::text('current_term', 'Current term', true, ['required', 'string'], 'Term 1'),
+                self::presetChoice($recommended),
             ],
             'Confirm the terms and which one is current.',
             'Create the academic terms.',
-            ['terms' => $drafts, 'current_term' => 'Term 1'],
+            [
+                'terms' => $drafts,
+                'current_term' => 'Term 1',
+                'recommended_setup' => $recommended,
+            ],
             [],
             ['kind' => 'list', 'allow_skip' => false],
             ['terms' => ['min:1']],
@@ -483,12 +511,37 @@ final class StepSchemaCatalog
 
     /**
      * The country's term calendar for this academic year.
+     * A school-type preset uses that same calendar.
      *
      * @return list<array{name: string, start: string, end: string}>
      */
     private static function termDrafts(School $school, int $year): array
     {
-        return CountryProfiles::forCountry($school->registration_country)->defaultTerms($year);
+        $category = is_string($school->school_category) ? $school->school_category : null;
+
+        return SchoolTypePreset::termsFor($school->registration_country, $category, $year);
+    }
+
+    private static function preset(School $school): ?SchoolTypePreset
+    {
+        return SchoolTypePreset::forSchool($school);
+    }
+
+    private static function recommendedDefault(?SchoolTypePreset $preset): string
+    {
+        return $preset === null ? '' : 'use_this';
+    }
+
+    private static function presetChoice(string $default): StepField
+    {
+        return self::choice(
+            'recommended_setup',
+            'Recommended setup',
+            false,
+            [],
+            SchoolTypePreset::actions(),
+            $default,
+        );
     }
 
     private static function termYear(School $school): int

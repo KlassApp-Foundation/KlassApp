@@ -38,4 +38,10 @@ interface CountryOnboardingProfile
      * @return list<array{name: string, start: string, end: string}>
      */
     public function defaultTerms(int $year): array;
+
+    /**
+     * Recommended classes, streams and subjects for a school type.
+     * Null keeps today's defaults for that type.
+     */
+    public function preset(?string $category): ?SchoolTypePreset;
 }

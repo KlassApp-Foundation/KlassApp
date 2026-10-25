@@ -279,9 +279,11 @@ The engine: Create the classes and streams.
 
 Buttons: none
 
-Choices: none
+Choices:
+- `use_this` — Use this
+- `adjust` — Adjust
 
-Default: The class name starts as P1. Streams and the class teacher are left empty until the school fills them in.
+Default: The class name starts as P1 when the school type has no recommended setup. Streams and the recommended setup choice stay blank until a setup applies. Use this fills the usual classes and streams for that school type. Adjust leaves the step open so the school can clear or change every value. Nothing is saved until the school confirms the step.
 
 Confirmation: Confirm the classes and streams, then the engine creates them.
 
@@ -311,9 +313,11 @@ The engine: Create the subjects on each class.
 
 Buttons: none
 
-Choices: none
+Choices:
+- `use_this` — Use this
+- `adjust` — Adjust
 
-Default: Mathematics
+Default: Mathematics when the school type has no recommended setup. The recommended setup choice stays blank until a setup applies. Use this fills the usual subjects. Adjust leaves the step open so the school can clear or change every value. Nothing is saved until the school confirms the step.
 
 Confirmation: Confirm the subjects, then the engine creates them on each class.
 
@@ -413,9 +417,11 @@ The engine: Create the academic terms.
 
 Buttons: none
 
-Choices: none
+Choices:
+- `use_this` — Use this
+- `adjust` — Adjust
 
-Default: Term 1 from 3 February to 2 May, Term 2 from 26 May to 29 August, and Term 3 from 22 September to 19 December, in the academic year's calendar year. The current term is Term 1.
+Default: Term 1 from 3 February to 2 May, Term 2 from 26 May to 29 August, and Term 3 from 22 September to 19 December, in the academic year's calendar year. The current term is Term 1. The recommended setup choice stays blank until a setup applies. Use this fills these terms. Adjust leaves the step open so the school can clear or change every value. Nothing is saved until the school confirms the step.
 
 Confirmation: Confirm the terms and which one is current, then the engine creates them.
 

@@ -121,9 +121,13 @@
 
 @elseif($stepKey === 'standards')
     <div class="manual-wizard-structure" data-testid="wizard-structure-step">
-        <p class="manual-wizard-structure-intro">
-            Your classes are ready from school category. Optionally add streams or invite a class teacher —
-            both are optional. Click Continue anytime to skip.
+        <p class="manual-wizard-structure-intro" @if($structurePresetNote !== '') data-testid="wizard-structure-preset" @endif>
+            @if($structurePresetNote !== '')
+                {{ $structurePresetNote }}
+            @else
+                Your classes are ready from school category. Optionally add streams or invite a class teacher —
+                both are optional. Click Continue anytime to skip.
+            @endif
         </p>
 
         @if($structureFlash ?? false)

@@ -7,8 +7,11 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\AbstractOnboardingStep;
+use App\Onboarding\Steps\OnboardingStepAwaitingInput;
 use App\Onboarding\Steps\OnboardingStepReview;
+use App\Onboarding\Steps\StepIssueCatalog;
 use App\Services\OnboardingStepsService;
 
 class StandardsStep extends AbstractOnboardingStep
@@ -30,6 +33,11 @@ class StandardsStep extends AbstractOnboardingStep
 
     public function normalize(mixed $raw): mixed
     {
+        $reply = SchoolTypePreset::replyKind($raw);
+        if ($reply !== null) {
+            return $reply;
+        }
+
         if (is_string($raw) && in_array(strtolower(trim($raw)), ['skip', 'later', 'none', 'n/a'], true)
             && in_array('standards', OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return 'skip';
@@ -47,9 +55,23 @@ class StandardsStep extends AbstractOnboardingStep
         return [];
     }
 
+    public function issues(School $school, mixed $normalized): array
+    {
+        if ($normalized === SchoolTypePreset::ADJUST) {
+            return [];
+        }
+
+        $normalized = $this->expandPreset($school, $normalized);
+        if ($normalized === SchoolTypePreset::ACCEPT) {
+            return [StepIssueCatalog::fromMessage($this->key(), 'Add or confirm your classes first.')];
+        }
+
+        return parent::issues($school, $normalized);
+    }
+
     public function save(School $school, mixed $normalized, ?int $userId = null): void
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->prepare($school, $normalized);
         $this->validate($school, $normalized);
         if ($normalized === 'skip') {
             OnboardingStepsService::markStepSkipped($school, 'standards');
@@ -72,7 +94,7 @@ class StandardsStep extends AbstractOnboardingStep
 
     public function preview(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->prepare($school, $normalized);
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {
@@ -108,10 +130,29 @@ class StandardsStep extends AbstractOnboardingStep
             }
 
             $exists = Section::where('school_id', $school->id)->where('name', $className)->exists();
-            $rows[] = ['label' => $className, 'status' => $exists ? 'already_present' : 'create', 'detail' => $detail];
+            $newStreams = 0;
+            foreach ($streams as $stream) {
+                $streamName = \App\Services\OnboardingEngine::composeClassAndStream($className, $stream);
+                if ($streamName === $className) {
+                    continue;
+                }
+                $saved = Section::where('school_id', $school->id)->where('name', $streamName)->exists();
+                if (! $saved) {
+                    $newStreams++;
+                }
+            }
+            $rows[] = [
+                'label' => $className,
+                'status' => match (true) {
+                    ! $exists => 'create',
+                    $newStreams > 0 => 'update',
+                    default => 'already_present',
+                },
+                'detail' => $detail,
+            ];
         }
 
-        $createCount = count(array_filter($rows, fn ($r) => $r['status'] === 'create'));
+        $createCount = count(array_filter($rows, fn ($r) => in_array($r['status'], ['create', 'update'], true)));
         $skipCount = count(array_filter($rows, fn ($r) => $r['status'] === 'skip'));
 
         return [
@@ -125,7 +166,7 @@ class StandardsStep extends AbstractOnboardingStep
 
     public function saveAndReport(School $school, mixed $normalized, ?int $userId = null): array
     {
-        $normalized = $this->normalize($normalized);
+        $normalized = $this->prepare($school, $normalized);
         $this->validate($school, $normalized);
 
         if ($normalized === 'skip') {
@@ -161,5 +202,37 @@ class StandardsStep extends AbstractOnboardingStep
         }
 
         return ['created' => [['class_rows_created' => $diff]], 'skipped' => []];
+    }
+
+    /**
+     * Use this becomes the preset list. Adjust asks again and writes nothing.
+     * A school type with no preset keeps the existing confirm-what-is-saved path.
+     */
+    private function prepare(School $school, mixed $raw): mixed
+    {
+        $normalized = $this->normalize($raw);
+        if ($normalized === SchoolTypePreset::ADJUST) {
+            throw new OnboardingStepAwaitingInput(
+                'Send the classes and streams you want, or reply Use this. Nothing is saved yet.'
+            );
+        }
+
+        return $this->expandPreset($school, $normalized);
+    }
+
+    private function expandPreset(School $school, mixed $normalized): mixed
+    {
+        if ($normalized !== SchoolTypePreset::ACCEPT) {
+            return $normalized;
+        }
+
+        $preset = SchoolTypePreset::forSchool($school);
+        if ($preset === null) {
+            return StandardLink::where('school_id', $school->id)->exists()
+                ? 'confirm_seeded'
+                : SchoolTypePreset::ACCEPT;
+        }
+
+        return $preset->standardsAnswer();
     }
 }
