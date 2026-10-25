@@ -9,6 +9,7 @@ use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
+use App\Onboarding\Country\SchoolTypePreset;
 use App\Onboarding\Steps\StepIssue;
 use App\Onboarding\Steps\StepIssueCatalog;
 use Illuminate\Support\Facades\DB;
@@ -399,6 +400,118 @@ class ClassStructureService
         }
 
         return [];
+    }
+
+    /**
+     * The school already has a class or a stream, including one it later removed.
+     * A removed row stays in the table with status inactive, so this stays true.
+     */
+    public function hasStructure(School $school): bool
+    {
+        return Section::query()->where('school_id', $school->id)->exists()
+            || StandardLink::query()->where('school_id', $school->id)->exists();
+    }
+
+    /**
+     * Preset classes and streams that are not already active for this school.
+     * Reading this does not write.
+     *
+     * @return array{items: list<string>, classes: list<array{name: string, streams: list<string>}>, summary: string}
+     */
+    public function suggestedStructurePlan(School $school): array
+    {
+        $preset = SchoolTypePreset::forSchool($school);
+        if ($preset === null) {
+            return [
+                'items' => [],
+                'classes' => [],
+                'summary' => 'This school type has no suggested structure.',
+            ];
+        }
+
+        $active = $this->activeSectionNames($school);
+        $items = [];
+        $classes = [];
+
+        foreach ($preset->classes as $class) {
+            $name = trim((string) ($class['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $missingStreams = [];
+            $classItems = [];
+            if (! isset($active[strtolower($name)])) {
+                $classItems[] = $name;
+            }
+
+            foreach ($class['streams'] ?? [] as $label) {
+                $label = trim((string) $label);
+                if ($label === '') {
+                    continue;
+                }
+                $composed = OnboardingEngine::composeClassAndStream($name, $label);
+                if ($composed === '' || strcasecmp($composed, $name) === 0) {
+                    continue;
+                }
+                if (isset($active[strtolower($composed)])) {
+                    continue;
+                }
+                $missingStreams[] = $label;
+                $classItems[] = $composed;
+            }
+
+            if ($classItems === []) {
+                continue;
+            }
+
+            $classes[] = ['name' => $name, 'streams' => $missingStreams];
+            array_push($items, ...$classItems);
+        }
+
+        return [
+            'items' => $items,
+            'classes' => $classes,
+            'summary' => $items === []
+                ? 'Nothing new to add.'
+                : 'I will add: '.implode(', ', $items).'.',
+        ];
+    }
+
+    /**
+     * The list Use this shows. Nothing is saved.
+     */
+    public function suggestedStructurePreviewMessage(School $school): string
+    {
+        $plan = $this->suggestedStructurePlan($school);
+        if ($plan['items'] === []) {
+            return 'Nothing new to add. Reply Apply to keep the classes you have. Nothing is saved yet.';
+        }
+
+        return $plan['summary'].' Reply Apply to add them. Nothing is saved yet.';
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function activeSectionNames(School $school): array
+    {
+        $names = [];
+        $rows = Section::query()
+            ->where('school_id', $school->id)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->pluck('name');
+
+        foreach ($rows as $name) {
+            $label = strtolower(trim((string) $name));
+            if ($label !== '') {
+                $names[$label] = true;
+            }
+        }
+
+        return $names;
     }
 
     /**

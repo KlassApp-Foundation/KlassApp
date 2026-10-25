@@ -134,9 +134,19 @@ class ManualOnboardingWizard extends Component
     public string $structureFlash = '';
 
     /**
-     * Shown when a school-type preset filled stream fields that are not saved yet.
+     * Shown when a school-type preset can add classes or streams the school does not have.
      */
     public string $structurePresetNote = '';
+
+    /**
+     * Section names Apply suggested structure would add. Empty until the admin asks.
+     *
+     * @var list<string>
+     */
+    public array $structurePresetPreview = [];
+
+    /** True when the preset still has classes or streams that are not active. */
+    public bool $structurePresetOffer = false;
 
     public string $subjectName = 'Mathematics';
 
@@ -2129,6 +2139,56 @@ class ManualOnboardingWizard extends Component
         $this->refreshStructureSnapshot();
     }
 
+    /**
+     * Show the classes and streams a confirmed apply would add. Writes nothing.
+     */
+    public function previewSuggestedStructure(): void
+    {
+        $this->errorMessage = '';
+        $this->structureFlash = '';
+        $plan = app(ClassStructureService::class)->suggestedStructurePlan($this->school()->fresh());
+        $this->structurePresetPreview = $plan['items'];
+    }
+
+    /**
+     * Add the classes and streams from the preview, and nothing else.
+     */
+    public function confirmSuggestedStructure(): void
+    {
+        $this->errorMessage = '';
+        $this->structureFlash = '';
+        if ($this->structurePresetPreview === []) {
+            $this->errorMessage = 'Apply suggested structure to see what would be added.';
+
+            return;
+        }
+
+        $school = $this->school()->fresh();
+        $plan = app(ClassStructureService::class)->suggestedStructurePlan($school);
+        if ($plan['items'] !== array_values($this->structurePresetPreview)) {
+            $this->structurePresetPreview = $plan['items'];
+            $this->errorMessage = 'The suggestion changed. Review the list, then confirm.';
+
+            return;
+        }
+
+        try {
+            app(StandardsStep::class)->save($school, 'apply_suggested');
+        } catch (StepIssueException $e) {
+            $this->errorMessage = $e->getMessage();
+
+            return;
+        } catch (ValidationException $e) {
+            $this->errorMessage = (string) collect($e->errors())->flatten()->first();
+
+            return;
+        }
+
+        $this->structurePresetPreview = [];
+        $this->structureFlash = 'Added the suggested classes and streams.';
+        $this->refreshStructureSnapshot();
+    }
+
     private function refreshStructureSnapshot(): void
     {
         $school = $this->school()->fresh();
@@ -2138,6 +2198,7 @@ class ManualOnboardingWizard extends Component
         $this->structureClasses = [];
         $this->schoolHasStreams = false;
         $this->structurePresetNote = '';
+        $this->structurePresetOffer = false;
         $this->structureTeachers = User::query()
             ->where('school_id', $school->id)
             ->where('usergroup_id', 5)
@@ -2152,42 +2213,32 @@ class ManualOnboardingWizard extends Component
             ->values()
             ->all();
 
-        if (! $year) {
-            return;
-        }
+        if ($year) {
+            $this->structureClasses = app(ClassStructureService::class)->structureSnapshot($school, $year);
 
-        $this->structureClasses = app(ClassStructureService::class)->structureSnapshot($school, $year);
-
-        $preset = SchoolTypePreset::forSchool($school);
-        $suggested = false;
-        foreach ($this->structureClasses as $row) {
-            $sid = (string) $row['section_id'];
-            if (! array_key_exists($sid, $this->structureStreamDrafts)) {
-                $labels = array_map(
-                    fn (array $stream): string => (string) ($stream['label'] ?? ''),
-                    is_array($row['streams'] ?? null) ? $row['streams'] : []
-                );
-                $draft = $preset?->suggestedStreamDraft($school, (string) ($row['name'] ?? ''), $labels) ?? '';
-                $this->structureStreamDrafts[$sid] = $draft;
-            }
-            if (trim((string) $this->structureStreamDrafts[$sid]) !== '') {
-                $suggested = true;
-            }
-            if (! isset($this->structureCtDrafts[$sid])) {
-                $this->structureCtDrafts[$sid] = [
-                    'email' => '',
-                    'existing_teacher_id' => '',
-                    'name' => '',
-                    'phone' => '',
-                ];
-            }
-            if (($row['streams'] ?? []) !== []) {
-                $this->schoolHasStreams = true;
+            foreach ($this->structureClasses as $row) {
+                $sid = (string) $row['section_id'];
+                if (! array_key_exists($sid, $this->structureStreamDrafts)) {
+                    $this->structureStreamDrafts[$sid] = '';
+                }
+                if (! isset($this->structureCtDrafts[$sid])) {
+                    $this->structureCtDrafts[$sid] = [
+                        'email' => '',
+                        'existing_teacher_id' => '',
+                        'name' => '',
+                        'phone' => '',
+                    ];
+                }
+                if (($row['streams'] ?? []) !== []) {
+                    $this->schoolHasStreams = true;
+                }
             }
         }
 
-        $this->structurePresetNote = $suggested
-            ? 'Suggested streams are filled in. Clear or change any of them. They are saved when you continue, and left out if you clear them.'
+        $plan = app(ClassStructureService::class)->suggestedStructurePlan($school);
+        $this->structurePresetOffer = $plan['items'] !== [];
+        $this->structurePresetNote = $this->structurePresetOffer
+            ? 'Suggested classes and streams stay off this form. Continue does not add them. Apply suggested structure to see exactly what would be added.'
             : '';
     }
 
@@ -2217,10 +2268,27 @@ class ManualOnboardingWizard extends Component
 
     private function saveClass(School $school): void
     {
-        // Classes from the category seeder are already saved. Suggested streams
-        // stay in the fields until Continue. A cleared field is left out, and
-        // confirming the step means the suggestion is not filled in again.
+        // Continue saves stream text the admin typed. It does not apply the
+        // school-type preset once any class or stream exists. The first run,
+        // with no structure yet, applies the preset. After that, only
+        // confirmSuggestedStructure adds the previewed names.
         $step = app(StandardsStep::class);
+        $structure = app(ClassStructureService::class);
+        if (! $structure->hasStructure($school) && SchoolTypePreset::forSchool($school) !== null) {
+            try {
+                $step->save($school, 'apply_suggested');
+            } catch (StepIssueException $e) {
+                throw ValidationException::withMessages(['className' => $e->getMessage()]);
+            } catch (ValidationException $e) {
+                throw ValidationException::withMessages(['className' => collect($e->errors())->flatten()->first()]);
+            }
+
+            $this->structurePresetPreview = [];
+            $this->refreshStructureSnapshot();
+
+            return;
+        }
+
         if (StandardLink::where('school_id', $school->id)->exists()) {
             $classes = [];
             foreach ($this->structureClasses as $row) {
