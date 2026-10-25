@@ -50,6 +50,9 @@ class CountryOnboardingProfileTest extends TestCase
             ['name' => 'Term 2', 'start' => '2031-05-26', 'end' => '2031-08-29'],
             ['name' => 'Term 3', 'start' => '2031-09-22', 'end' => '2031-12-19'],
         ], $profile->defaultTerms(2031));
+        $this->assertSame('Primary One', $profile->preset('primary')?->classes[0]['name']);
+        $this->assertNull($profile->preset(null));
+        $this->assertNull($profile->preset('vocational'));
     }
 
     public function test_kenya_india_and_brazil_stay_on_the_fallback(): void
@@ -67,6 +70,8 @@ class CountryOnboardingProfileTest extends TestCase
                 $profile->defaultTerms(2031),
                 (string) $country,
             );
+            $this->assertNull($profile->preset('o_a_level'), (string) $country);
+            $this->assertNull($profile->preset('primary'), (string) $country);
         }
     }
 
@@ -141,6 +146,11 @@ class CountryOnboardingProfileTest extends TestCase
             public function defaultTerms(int $year): array
             {
                 return [];
+            }
+
+            public function preset(?string $category): ?\App\Onboarding\Country\SchoolTypePreset
+            {
+                return null;
             }
         });
 
@@ -234,5 +244,10 @@ final class KenyaPlugInProfile implements CountryOnboardingProfile
         return [
             ['name' => 'Kenya Term', 'start' => $year.'-01-08', 'end' => $year.'-04-10'],
         ];
+    }
+
+    public function preset(?string $category): ?\App\Onboarding\Country\SchoolTypePreset
+    {
+        return null;
     }
 }

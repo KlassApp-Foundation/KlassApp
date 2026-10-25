@@ -65,7 +65,6 @@ final class OnboardingParityHarness
             'whatsapp_verify' => 'WhatsAppOnboardingOtpService::deliver is mocked so no code is sent. The wizard may continue without a verified number. The Toshi driver cannot skip this step, so it verifies. Those rows are left out of the snapshot.',
             'class_teachers' => 'Class-teacher assignment is part of the teachers step and has not moved to one shared write. Every class_teacher in the snapshot is null.',
             'checklist_workbook' => 'The checklist-workbook ingester is not in the engine yet. Its decision on the same input is null.',
-            'school_type_preset' => 'SchoolTypePreset is not in the engine yet. Both faces type the fixture values. There is no preset object to accept.',
             'confirm_before_write' => 'A confirm card before the write is not in the driver yet. The driver saves on reply, and this harness does not invent a confirmation.',
         ];
     }
