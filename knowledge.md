@@ -660,7 +660,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
 - Merged `origin/main` `a6cf68e7` ([#1229](https://github.com/KlassApp-Foundation/KlassApp/pull/1229)) with a merge commit. No rebase and no force-push.
 - **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **3181 tests, 0 failures, 0 errors, 9 skipped**, guard OK. The new and existing pages match after the csrf token is set aside. Mail is queued only for an active non-demo account.
-- **Status:** [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) was already merged. This change is OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
+- **Status:** The early-access neutral reply is [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
 
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
