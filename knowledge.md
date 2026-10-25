@@ -635,10 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
-## Current Status: October 25, 2026 — **Marks UI audit OPEN (docs only)**
+## Current Status: October 25, 2026 — **Marks UI audit OPEN (docs only) [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234)**
 
 - UI walk of the marks steps on a local app with Demo Junior School, Demo Senior School, and a provisioned Sunset PS. Synthetic data only. Parent WhatsApp used the local simulator. No production school and no production data.
-- Docs only: `docs/product/marks-ui-audit.md` and `docs/product/screenshots/marks-ui/`. [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is still open, so new phase-plan gaps are in the audit, not in `marks-flow.md`. Awaiting the product owner's approval. Not merged.
+- Docs only: `docs/product/marks-ui-audit.md` and `docs/product/screenshots/marks-ui/`. Open as [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234) on `cursor/marks-ui-audit-0fa1`. [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is still open, so new phase-plan gaps are in the audit, not in `marks-flow.md`. Awaiting the product owner's approval. Not merged.
 
 ## Current Status: October 25, 2026 — **Early access does not reveal an existing account OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230)**
 
