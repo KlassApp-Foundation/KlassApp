@@ -64,14 +64,17 @@ class TeacherSetupController extends Controller
             'password.confirmed' => 'Passwords do not match.',
         ]);
 
+        if (! $this->links->consumePersonal($row)) {
+            return redirect()->route('teacher.setup.form', $token)
+                ->with('error', 'This setup link is invalid or has expired.');
+        }
+
         $teacher->forceFill([
             'password' => Hash::make($validated['password']),
             'is_reset' => 1,
             'email_verified' => 1,
             'status' => 'active',
         ])->save();
-
-        $this->links->consumePersonal($row);
 
         Auth::login($teacher);
 

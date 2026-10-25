@@ -16,6 +16,10 @@
         </form>
     </div>
 
+    @if(session('error'))
+        <div class="ds-alert ds-alert-error" role="alert" data-testid="class-setup-error">{{ session('error') }}</div>
+    @endif
+
     @if($issued)
         <div class="ds-alert ds-alert-success" data-testid="teacher-setup-link">
             <p class="mb-1"><strong>Setup link for that teacher</strong> — share it from your own WhatsApp or copy it:</p>

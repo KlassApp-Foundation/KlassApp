@@ -1986,6 +1986,26 @@ class OnboardingEngine
     }
 
     /**
+     * A locked class upload names another class when the row's class or stream
+     * is not this class. A blank class stays on the locked class.
+     */
+    private function rowNamesAnotherClass(StandardLink $pinned, string $className, string $stream): bool
+    {
+        $className = self::collapseWhitespace($className);
+        $stream = self::collapseWhitespace($stream);
+        if ($className === '' && $stream === '') {
+            return false;
+        }
+
+        $label = self::collapseWhitespace($stream === '' ? $className : self::composeClassAndStream($className, $stream));
+        $pinnedName = self::collapseWhitespace((string) ($pinned->section?->name ?? ''));
+        $namedKeys = array_map('strtolower', self::classNameCandidates($label));
+        $pinnedKeys = array_map('strtolower', self::classNameCandidates($pinnedName));
+
+        return $namedKeys === [] || array_intersect($namedKeys, $pinnedKeys) === [];
+    }
+
+    /**
      * Create student users with random passwords, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
@@ -2046,6 +2066,9 @@ class OnboardingEngine
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
+                    if ($pinned !== null && $name !== '' && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        continue;
+                    }
                     if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
@@ -2098,6 +2121,17 @@ class OnboardingEngine
 
                     if ($name === '') {
                         $skipped[] = ['name' => '', 'reason' => 'Name is required'];
+                        continue;
+                    }
+
+                    $className = trim((string) ($draft['class'] ?? ''));
+                    $stream = trim((string) ($draft['stream'] ?? ''));
+                    if ($pinned !== null && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        $skipped[] = [
+                            'name' => $name,
+                            'reason' => 'another class',
+                            'row' => (int) ($draft['row'] ?? 0),
+                        ];
                         continue;
                     }
 
@@ -2161,8 +2195,6 @@ class OnboardingEngine
                     // Generate KlassApp student ID
                     $klassappId = StudentIdGeneratorService::nextForStudent($student);
 
-                    $className = trim((string) ($draft['class'] ?? ''));
-                    $stream = trim((string) ($draft['stream'] ?? ''));
                     $link = $pinned;
 
                     if ($pinned === null && $className !== '') {

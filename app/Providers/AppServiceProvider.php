@@ -133,12 +133,14 @@ class AppServiceProvider extends ServiceProvider {
         });
         RateLimiter::for('verify-link', fn (Request $request) => Limit::perMinute(30)->by('verify-link|'.$request->ip()));
         // Staff-link guesses are counted twice: per address, and per link.
+        // A staff room often shares one network, so the address cap is 30 a minute.
+        // The per-teacher email cooldown is what stops a flood of setup mail.
         // The link key is a hash so the token itself is not stored in the cache.
         RateLimiter::for('staff-link-submit', function (Request $request) {
             $token = (string) $request->route('token');
 
             return [
-                Limit::perMinute(10)->by('staff-link-ip|'.$request->ip()),
+                Limit::perMinute(30)->by('staff-link-ip|'.$request->ip()),
                 Limit::perMinute(10)->by('staff-link|'.hash('sha256', $token)),
             ];
         });

@@ -27,19 +27,25 @@ class TeacherSetupLinkService
 
     public const STAFF_TTL_DAYS = 7;
 
+    public const RESEND_COOLDOWN_MINUTES = 10;
+
     public function issueFor(User $teacher, ?User $admin = null, ?int $ttlDays = null): string
     {
-        $token = Str::random(48);
+        return DB::transaction(function () use ($teacher, $admin, $ttlDays) {
+            $this->cancelUnusedPersonalLinks($teacher);
 
-        TeacherSetupToken::query()->create([
-            'school_id' => (int) $teacher->school_id,
-            'user_id' => (int) $teacher->id,
-            'token_hash' => $this->hash($token),
-            'expires_at' => now()->addDays($ttlDays ?? self::PERSONAL_TTL_DAYS),
-            'created_by' => $admin?->id,
-        ]);
+            $token = Str::random(48);
 
-        return $token;
+            TeacherSetupToken::query()->create([
+                'school_id' => (int) $teacher->school_id,
+                'user_id' => (int) $teacher->id,
+                'token_hash' => $this->hash($token),
+                'expires_at' => now()->addDays($ttlDays ?? self::PERSONAL_TTL_DAYS),
+                'created_by' => $admin?->id,
+            ]);
+
+            return $token;
+        });
     }
 
     public function resolvePersonal(string $token): ?TeacherSetupToken
@@ -156,7 +162,18 @@ class TeacherSetupLinkService
             return false;
         }
 
-        $token = $this->issueFor($teacher, $admin);
+        if ($this->setupMailOnCooldown($teacher)) {
+            return true;
+        }
+
+        $token = Str::random(48);
+        $row = TeacherSetupToken::query()->create([
+            'school_id' => (int) $teacher->school_id,
+            'user_id' => (int) $teacher->id,
+            'token_hash' => $this->hash($token),
+            'expires_at' => now()->addDays(self::PERSONAL_TTL_DAYS),
+            'created_by' => $admin?->id,
+        ]);
 
         try {
             $schoolName = (string) (School::query()->whereKey($teacher->school_id)->value('name') ?: 'your school');
@@ -166,13 +183,11 @@ class TeacherSetupLinkService
                 url: $this->personalUrl($token),
                 expiresAt: now()->addDays(self::PERSONAL_TTL_DAYS),
             ));
+            $this->cancelUnusedPersonalLinks($teacher, (int) $row->id);
 
             return true;
         } catch (\Throwable) {
-            TeacherSetupToken::query()
-                ->where('token_hash', $this->hash($token))
-                ->where('user_id', $teacher->id)
-                ->delete();
+            $row->delete();
             Log::warning('Teacher setup link could not be queued', [
                 'school_id' => (int) $teacher->school_id,
                 'user_id' => (int) $teacher->id,
@@ -193,9 +208,71 @@ class TeacherSetupLinkService
         ]);
     }
 
-    public function consumePersonal(TeacherSetupToken $token): void
+    /**
+     * Claim this link and cancel the teacher's other unused links.
+     * A second claim, including one that loaded the row before this one wrote, returns false.
+     */
+    public function consumePersonal(TeacherSetupToken $token): bool
     {
-        $token->forceFill(['used_at' => now()])->save();
+        return DB::transaction(function () use ($token) {
+            $locked = TeacherSetupToken::query()
+                ->whereKey($token->id)
+                ->where('school_id', $token->school_id)
+                ->where('user_id', $token->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($locked === null || ! $locked->isUsable()) {
+                return false;
+            }
+
+            $claimed = TeacherSetupToken::query()
+                ->whereKey($locked->id)
+                ->whereNull('used_at')
+                ->where('expires_at', '>', now())
+                ->update(['used_at' => now()]);
+
+            if ($claimed !== 1) {
+                return false;
+            }
+
+            TeacherSetupToken::query()
+                ->where('school_id', $locked->school_id)
+                ->where('user_id', $locked->user_id)
+                ->whereKeyNot($locked->id)
+                ->whereNull('used_at')
+                ->update(['used_at' => now()]);
+
+            $token->used_at = now();
+
+            return true;
+        });
+    }
+
+    /**
+     * Mark this teacher's unused setup links as used, so the old URL stops working.
+     */
+    private function cancelUnusedPersonalLinks(User $teacher, ?int $exceptId = null): void
+    {
+        $query = TeacherSetupToken::query()
+            ->where('school_id', (int) $teacher->school_id)
+            ->where('user_id', (int) $teacher->id)
+            ->whereNull('used_at');
+
+        if ($exceptId !== null) {
+            $query->whereKeyNot($exceptId);
+        }
+
+        $query->update(['used_at' => now()]);
+    }
+
+    private function setupMailOnCooldown(User $teacher): bool
+    {
+        return TeacherSetupToken::query()
+            ->where('school_id', (int) $teacher->school_id)
+            ->where('user_id', (int) $teacher->id)
+            ->where('created_at', '>=', now()->subMinutes(self::RESEND_COOLDOWN_MINUTES))
+            ->exists();
     }
 
     private function hash(string $token): string

@@ -16,6 +16,7 @@ use App\Models\TeacherSetupToken;
 use App\Models\User;
 use App\Services\TeacherSetup\TeacherSetupLinkService;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use Illuminate\Database\UniqueConstraintViolationException;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
@@ -64,7 +65,7 @@ class ClassTeacherSetupController extends Controller
                 $students = StudentAcademic::query()->where('school_id', $school->id)
                     ->where('standardLink_id', $link->id)->count();
                 $subjects = Subject::query()->where('school_id', $school->id)
-                    ->where('standard_id', $link->standard_id)->count();
+                    ->where('section_id', $link->section_id)->count();
                 $withTeacher = Teacherlink::query()->where('school_id', $school->id)
                     ->where('standardLink_id', $link->id)
                     ->distinct('subject_id')->count('subject_id');
@@ -118,11 +119,20 @@ class ClassTeacherSetupController extends Controller
             return back();
         }
 
-        $email = $request->email ?: 'teacher-'.Str::lower(Str::random(8)).'@'.$school->slug.'.local';
-        $teacher = User::query()->where('school_id', $school->id)->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
+        $email = trim((string) $request->email);
+        if ($email === '') {
+            $email = 'teacher-'.Str::lower(Str::random(8)).'@'.$school->slug.'.local';
+        } else {
+            $email = mb_strtolower($email);
+        }
 
-        if (! $teacher) {
-            $teacher = User::create([
+        $existing = User::query()->whereRaw('lower(email) = ?', [$email])->first();
+        if ($existing !== null && ! $this->isActiveTeacherHere($existing, $school)) {
+            return back()->with('error', 'That email is not an active teacher at this school. No setup link was issued.');
+        }
+
+        try {
+            $teacher = $existing ?? User::create([
                 'school_id' => $school->id,
                 'usergroup_id' => 5,
                 'name' => $request->name ?: 'Teacher',
@@ -132,6 +142,8 @@ class ClassTeacherSetupController extends Controller
                 'status' => 'active',
                 'is_reset' => 1,
             ]);
+        } catch (UniqueConstraintViolationException) {
+            return back()->with('error', 'That email is not an active teacher at this school. No setup link was issued.');
         }
 
         $request->forceFill([
@@ -157,6 +169,17 @@ class ClassTeacherSetupController extends Controller
         ])->save();
 
         return back();
+    }
+
+    /**
+     * A setup link may only be issued for an active teacher (usergroup 5) of this school.
+     * Any other account — admin, parent, inactive, or another school — is left untouched.
+     */
+    private function isActiveTeacherHere(User $user, School $school): bool
+    {
+        return (int) $user->school_id === (int) $school->id
+            && (int) $user->usergroup_id === 5
+            && $user->status === 'active';
     }
 
     private function year(School $school): ?AcademicYear

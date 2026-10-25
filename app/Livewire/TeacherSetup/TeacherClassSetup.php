@@ -114,7 +114,13 @@ class TeacherClassSetup extends Component
 
         try {
             $result = app(OnboardingEngine::class)->saveStudents($this->school(), $this->year(), $drafts, (int) $link->id);
-            $this->report = count($result['created'] ?? []).' students added, '.count($result['skipped'] ?? []).' skipped';
+            $createdCount = count($result['created'] ?? []);
+            $otherClass = collect($result['skipped'] ?? [])->where('reason', 'another class')->count();
+            if ($otherClass > 0) {
+                $this->report = $createdCount.' students added, '.$otherClass.' rows skipped: they belong to another class';
+            } else {
+                $this->report = $createdCount.' students added, '.count($result['skipped'] ?? []).' skipped';
+            }
         } catch (ValidationException $e) {
             $this->errorMessage = (string) (collect($e->errors())->flatten()->first() ?: 'Could not add those students.');
         }
