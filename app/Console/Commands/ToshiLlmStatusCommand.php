@@ -42,10 +42,12 @@ class ToshiLlmStatusCommand extends Command
     private function resolvedProvider(): string
     {
         try {
-            return ToshiLlm::provider();
+            ToshiLlm::assertConfigConsistent();
         } catch (\Throwable $e) {
-            return 'openai-compatible (unresolved)';
+            return ToshiLlm::configuredProvider().' (unresolved)';
         }
+
+        return ToshiLlm::configuredProvider();
     }
 
     private function resolvedModel(): string
@@ -53,10 +55,7 @@ class ToshiLlmStatusCommand extends Command
         try {
             return ToshiLlm::model();
         } catch (\Throwable $e) {
-            return (string) config(
-                'toshi.model',
-                config('ai.providers.openai-compatible.models.text.default', 'deepseek-chat')
-            );
+            return ToshiLlm::configuredModel();
         }
     }
 
