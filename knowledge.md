@@ -635,6 +635,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 25, 2026 — **Early access does not reveal an existing account OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230)**
+
+- Rasta's decision: the early-access form does not say whether an email already has an account. Every submit shows "Thanks, check your email for next steps" on the same page, with the same response. An active account is queued a sign-in email (login and the password-reset page) through the normal mailer. The demo mail guard still blocks a demo school. A new email keeps the stored request and admin notification. The platform list still shows Existing user. No migration. Password reset is unchanged.
+- Merged `origin/main` `a6cf68e7` ([#1229](https://github.com/KlassApp-Foundation/KlassApp/pull/1229)) with a merge commit. No rebase and no force-push.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — **3181 tests, 0 failures, 0 errors, 9 skipped**, guard OK. The new and existing pages match after the csrf token is set aside. Mail is queued only for an active non-demo account.
+- **Status:** [#1176](https://github.com/KlassApp-Foundation/KlassApp/pull/1176) was already merged. This change is OPEN [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230) (`cursor/early-access-existing-account-5a7b`). Review requested from Bariyo123. Do not merge from this session.
+
 ## Current Status: October 21, 2026 — **WhatsApp log phone mask OPEN [#1188](https://github.com/KlassApp-Foundation/KlassApp/pull/1188)**
 
 - Application logs that printed a full WhatsApp number now keep the country calling code and the last three digits (`WhatsAppPhoneHelper::mask`). Delivery rows and the number sent to the provider are unchanged. Admin link and unlink now pass the message `doActivityLog` requires. Not merged. Production untouched.
@@ -14270,6 +14277,18 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 ### Logged for later (do not build yet)
 - A slightly larger Toshi panel, as on the Super Admin page, in the established colours.
 - Super Admin area redesign with feature switches visible.
+
+## Session: 2026-10-25 — Preset never re-adds removed classes or streams (PR [#1231](https://github.com/KlassApp-Foundation/KlassApp/pull/1231) OPEN)
+
+**Current status:** [#1231](https://github.com/KlassApp-Foundation/KlassApp/pull/1231) is open on `cursor/preset-never-readds-fc59`. Not merged. Production not deployed.
+
+**Work:** Follow-up to #1228 (merged as `2e43e421`) after #1229 moved class setup into `ClassStructureService` (`a6cf68e7`). A school-type preset must not put a class or stream back after the school removed or changed it. The preset is applied only when the wizard's first Continue runs on a school with no classes and no streams, or when an admin confirms **Apply suggested structure** after seeing the exact list. Continue on a later visit adds nothing. Toshi v2 Use this shows that list and saves nothing; Apply adds exactly those names; Adjust saves nothing. The missing-name decision is in `ClassStructureService`.
+
+**Files:** `app/Services/ClassStructureService.php`, `app/Onboarding/Country/SchoolTypePreset.php`, `app/Onboarding/Steps/Steps/StandardsStep.php`, `app/Onboarding/Steps/ToshiOnboardingV2Driver.php`, `app/Livewire/ManualOnboardingWizard.php`, `resources/views/livewire/partials/manual-wizard-step-fields.blade.php`, `docs/onboarding/playbook.md`, `tests/Feature/Onboarding/SchoolTypePresetTest.php`, `tests/Feature/Onboarding/OnboardingFacesParityTest.php`.
+
+**Tests:** Sunset PS (Uganda O-level + A-level) with A-level streams cleared, wizard reopened, Continue: no class or stream row changed. First run with no structure: Continue creates the preset section names. Apply shows the preview and writes nothing, then confirm adds exactly those names. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3185 tests, 0 failures, 0 errors, 9 skipped.
+
+**Edge:** A removed stream stays as an inactive section, so the school still has structure and Continue will not recreate it. An explicit confirm can add a missing preset name back, and only the names in the preview. No migration or env change. @Bariyo123 asked to re-review. Not merged.
 
 ## Session: 2026-10-25 — Marks workflow audit and flow spec (docs only)
 

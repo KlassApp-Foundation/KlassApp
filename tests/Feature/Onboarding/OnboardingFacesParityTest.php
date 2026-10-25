@@ -12,6 +12,7 @@ use App\Models\Section;
 use App\Models\User;
 use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Country\SchoolTypePreset;
+use App\Onboarding\Steps\OnboardingStepAwaitingInput;
 use App\Onboarding\Steps\StepIssueCatalog;
 use App\Onboarding\Steps\StepIssueException;
 use App\Onboarding\Steps\StepRegistry;
@@ -401,7 +402,13 @@ class OnboardingFacesParityTest extends TestCase
                 2027,
             ));
 
-            app(StandardsStep::class)->save($accepted, 'use_this');
+            try {
+                app(StandardsStep::class)->save($accepted, 'use_this');
+                $this->fail('Use this previews the suggestion and saves nothing.');
+            } catch (OnboardingStepAwaitingInput $e) {
+                $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+            }
+            app(StandardsStep::class)->save($accepted->fresh(), 'apply');
             app(SubjectsStep::class)->save($accepted->fresh(), 'use_this');
             app(TermsStep::class)->save($accepted->fresh(), 'use_this');
 

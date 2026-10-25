@@ -130,6 +130,24 @@
             @endif
         </p>
 
+        @if($structurePresetPreview !== [])
+            <div class="manual-wizard-structure-preview" data-testid="wizard-structure-preset-preview">
+                <p class="manual-wizard-structure-intro">These will be added. Nothing has been added yet.</p>
+                <ul>
+                    @foreach($structurePresetPreview as $item)
+                        <li data-testid="wizard-structure-preset-item">{{ $item }}</li>
+                    @endforeach
+                </ul>
+                <x-button type="button" variant="outline" size="sm"
+                          wire:click="confirmSuggestedStructure"
+                          data-testid="wizard-confirm-suggested-structure">Add these</x-button>
+            </div>
+        @elseif($structurePresetOffer)
+            <x-button type="button" variant="outline" size="sm"
+                      wire:click="previewSuggestedStructure"
+                      data-testid="wizard-apply-suggested-structure">Apply suggested structure</x-button>
+        @endif
+
         @if($structureFlash ?? false)
             <div class="manual-wizard-structure-flash" data-testid="wizard-structure-flash">{{ $structureFlash }}</div>
         @endif

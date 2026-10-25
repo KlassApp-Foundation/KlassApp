@@ -161,8 +161,9 @@ class StandardsStep extends AbstractOnboardingStep
     }
 
     /**
-     * Use this becomes the preset list. Adjust asks again and writes nothing.
-     * A school type with no preset keeps the existing confirm-what-is-saved path.
+     * Use this shows the preview and writes nothing. Apply adds that list.
+     * Adjust asks again and writes nothing. A school type with no preset keeps
+     * the existing confirm-what-is-saved path.
      */
     private function prepare(School $school, mixed $raw): mixed
     {
@@ -172,37 +173,43 @@ class StandardsStep extends AbstractOnboardingStep
                 'Send the classes and streams you want, or reply Use this. Nothing is saved yet.'
             );
         }
+        if ($normalized === SchoolTypePreset::ACCEPT) {
+            return $this->previewPresetReply($school);
+        }
 
         return $this->expandPreset($school, $normalized);
     }
 
-    private function expandPreset(School $school, mixed $normalized): mixed
+    private function previewPresetReply(School $school): mixed
     {
-        if ($normalized !== SchoolTypePreset::ACCEPT) {
-            return $normalized;
-        }
-
-        $preset = SchoolTypePreset::forSchool($school);
-        if ($preset === null) {
+        if (SchoolTypePreset::forSchool($school) === null) {
             return StandardLink::where('school_id', $school->id)->exists()
                 ? 'confirm_seeded'
                 : SchoolTypePreset::ACCEPT;
         }
 
-        $answer = $preset->standardsAnswerFor($school);
-        $addingStreams = false;
-        foreach ($answer as $class) {
-            if (($class['streams'] ?? []) !== []) {
-                $addingStreams = true;
-                break;
-            }
+        throw new OnboardingStepAwaitingInput(
+            app(ClassStructureService::class)->suggestedStructurePreviewMessage($school)
+        );
+    }
+
+    private function expandPreset(School $school, mixed $normalized): mixed
+    {
+        if ($normalized !== SchoolTypePreset::APPLY) {
+            return $normalized;
         }
 
-        // Nothing new to add: keep the saved classes, including a cleared suggestion.
-        if (! $addingStreams && StandardLink::where('school_id', $school->id)->exists()) {
+        if (SchoolTypePreset::forSchool($school) === null) {
+            return StandardLink::where('school_id', $school->id)->exists()
+                ? 'confirm_seeded'
+                : SchoolTypePreset::ACCEPT;
+        }
+
+        $classes = app(ClassStructureService::class)->suggestedStructurePlan($school)['classes'];
+        if ($classes === []) {
             return 'confirm_seeded';
         }
 
-        return $answer;
+        return $classes;
     }
 }
