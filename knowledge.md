@@ -14337,3 +14337,13 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Pull request:** [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232), branch `cursor/marks-workflow-audit-d98d`. Not merged.
 
 **Early-access neutral reply:** still [#1230](https://github.com/KlassApp-Foundation/KlassApp/pull/1230). This file does not cite it as #1176.
+
+## Session: 2026-10-25 — Class save is all-or-nothing, and a taken stream name says so
+
+**Work:** Follow-up to #1229. `ClassStructureService::saveClasses` writes every class and stream in one database transaction. `OnboardingEngine::saveStandards` and the standards step call that method, so a failure part-way leaves no partial classes, streams, or links. Renaming a stream onto a name already used by another stream of that class in the same academic year reports `standards.stream_exists` on the stream field: "a stream with that name already exists." The class-teacher rename form shows "A stream with that name already exists." on the name field. No migration.
+
+**Files:** `app/Services/ClassStructureService.php`, `app/Onboarding/Steps/StepIssueCatalog.php`, `docs/onboarding/playbook.md`, `tests/Feature/Onboarding/ClassStructureServiceStructureTest.php`, `tests/Feature/Teacher/ClassTeacherStreamSurfaceTest.php`.
+
+**Tests:** Without the fix, the new tests failed: two sections, two links, and one standard stayed behind after a forced mid-save failure; the issue code was `standards.stream_duplicate`; the rename form said `A class named "Primary One B" already exists.` With the fix they pass. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3187 tests, 0 failures, 0 errors, 9 skipped.
+
+**Status:** [#1237](https://github.com/KlassApp-Foundation/KlassApp/pull/1237) is open on `cursor/class-save-atomicity-d848`. Not merged. Production untouched.
