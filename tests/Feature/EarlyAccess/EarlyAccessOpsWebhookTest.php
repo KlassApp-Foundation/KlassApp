@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\SchoolInvite;
 use App\Models\User;
 use App\Services\EarlyAccessOpsWebhook;
+use App\Services\OnboardingEngine;
 use App\Services\SchoolInviteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -108,12 +109,14 @@ class EarlyAccessOpsWebhookTest extends TestCase
 
         $this->freshHttp();
         auth()->logout();
-        $this->post(route('school-invite.claim', $token), [
+        $claim = $this->post(route('school-invite.claim', $token), [
             'name' => 'Grace Nakato',
             'phone' => self::PHONE,
             'password' => 'StrongPass123!',
             'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect(route('onboarding.choice'));
+        ]);
+        $claimedUser = User::where('email', self::EMAIL)->firstOrFail();
+        $claim->assertRedirect(OnboardingEngine::setupDestination($claimedUser->school, $claimedUser->id));
         Http::assertNothingSent();
         $this->assertSame(1, $this->opsJobCount());
         $this->workOps();
@@ -367,12 +370,14 @@ class EarlyAccessOpsWebhookTest extends TestCase
         });
 
         try {
-            $this->post(route('school-invite.claim', $token), [
+            $claim = $this->post(route('school-invite.claim', $token), [
                 'name' => 'Grace Nakato',
                 'phone' => self::PHONE,
                 'password' => 'StrongPass123!',
                 'password_confirmation' => 'StrongPass123!',
-            ])->assertRedirect(route('onboarding.choice'));
+            ]);
+            $claimedUser = User::where('email', self::EMAIL)->firstOrFail();
+            $claim->assertRedirect(OnboardingEngine::setupDestination($claimedUser->school, $claimedUser->id));
         } finally {
             $this->removeBrokenLookupScope();
         }

@@ -4,6 +4,7 @@ namespace App\Services\Toshi;
 
 use App\Enums\ToshiMode;
 use App\Models\School;
+use App\Services\OnboardingEngine;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -29,15 +30,20 @@ class ToshiOnboardingPath
             return false;
         }
 
-        if ($school->onboarding_finished_at !== null) {
+        if ($this->mode($school) !== ToshiMode::Onboarding) {
             return false;
         }
 
-        return $this->mode($school) === ToshiMode::Onboarding;
+        return OnboardingEngine::setupDestination($school, auth()->id()) !== null;
     }
 
     public function sendToWizard(School $school): RedirectResponse
     {
+        $destination = OnboardingEngine::setupDestination($school, auth()->id());
+        if ($destination === null) {
+            return redirect('/admin/dashboard');
+        }
+
         if ($this->mode($school) === ToshiMode::Onboarding && ! $this->openFor($school)) {
             $school->forceFill([
                 'toshi_mode' => ToshiMode::Preview,
@@ -46,7 +52,7 @@ class ToshiOnboardingPath
         }
 
         return redirect()
-            ->route('admin.onboarding.wizard')
+            ->to($destination)
             ->with('successmessage', self::WIZARD_FLASH);
     }
 
