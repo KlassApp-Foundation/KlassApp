@@ -635,6 +635,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 25, 2026 — **Marks UI audit OPEN (docs only) [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234)**
+
+- UI walk of the marks steps on a local app with Demo Junior School, Demo Senior School, and a provisioned Sunset PS. Synthetic data only. Parent WhatsApp used the local simulator. No production school and no production data.
+- Docs only: `docs/product/marks-ui-audit.md` and `docs/product/screenshots/marks-ui/`. Open as [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234) on `cursor/marks-ui-audit-0fa1`. [#1232](https://github.com/KlassApp-Foundation/KlassApp/pull/1232) is merged (`61516ec7`) and [#1233](https://github.com/KlassApp-Foundation/KlassApp/pull/1233) is merged (`ac36ca66`). The phase-plan additions sit in `docs/product/marks-flow.md`. Awaiting the product owner's approval. Not merged.
+- Merged `origin/main` `a1348c271558cbca06ec92cac841ccee9e65493e` ([#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)) with a merge commit. No rebase and no force-push. The only conflict was `knowledge.md`. Both status notes are kept.
+
 ## Current Status: October 25, 2026 — **Sunset PS demo provision crash OPEN [#1235](https://github.com/KlassApp-Foundation/KlassApp/pull/1235)**
 
 - `demo:provision` for Sunset PS used `DemoJuniorSchoolSeeder` and wrote `UG-JUN-LIN-####`. `student_academics.lin` is unique across every school, so the third learner collided with Demo Junior and the run stopped after classes and class teachers. A provisioned school now writes `UG-SCH{id}-LIN-####` on its own rows. Demo Junior's numbers are unchanged. A non-demo school of the same name is still refused before the seeder runs.
