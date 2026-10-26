@@ -193,6 +193,28 @@
                                     {{ country.name }}
                                 </option>
                             </select>
+                            <p
+                                v-if="countryChangePending"
+                                class="text-sm mt-2"
+                                style="color:#92400E;"
+                                data-testid="country-change-warning"
+                            >
+                                Changing the country affects phone formats and
+                                curriculum defaults.
+                            </p>
+                            <label
+                                v-if="countryChangePending"
+                                class="text-sm mt-2"
+                                style="display:flex;gap:8px;align-items:flex-start;color:#0F172A;"
+                            >
+                                <input
+                                    type="checkbox"
+                                    name="confirm_country_change"
+                                    value="1"
+                                    v-model="confirmCountryChange"
+                                />
+                                I confirm this country change.
+                            </label>
                         </div>
                         <span
                             v-if="errors.country_id"
@@ -393,6 +415,8 @@ export default {
             school_logo_display: "",
             about_us: "",
             country_id: "",
+            saved_country_id: null,
+            confirmCountryChange: false,
             city_id: "",
             website: "",
             ministry_code: "",
@@ -446,6 +470,12 @@ export default {
             const board = (this.board || this.curriculum || "").toLowerCase();
             return board === "uneb";
         },
+        countryChangePending() {
+            if (this.saved_country_id === null || this.saved_country_id === "") {
+                return false;
+            }
+            return String(this.country_id) !== String(this.saved_country_id);
+        },
     },
 
     methods: {
@@ -471,7 +501,12 @@ export default {
                 this.school_logo_display =
                     this.details.school_logo_display || "";
                 this.about_us = this.details.about_us || "";
-                this.country_id = this.details.country_id || 7;
+                this.saved_country_id = this.details.country_id || null;
+                this.country_id =
+                    this.details.country_id ||
+                    this.details.default_country_id ||
+                    "";
+                this.confirmCountryChange = false;
                 this.city_id = this.details.city_id || "";
                 this.website = this.details.website || "";
                 this.ministry_code = this.details.ministry_code || "";
@@ -502,6 +537,9 @@ export default {
             formData.append("school_logo", this.school_logo);
             formData.append("about_us", this.about_us);
             formData.append("country_id", this.country_id);
+            if (this.countryChangePending && this.confirmCountryChange) {
+                formData.append("confirm_country_change", "1");
+            }
             formData.append("city_id", this.city_id);
             formData.append("website", this.website);
             if (this.isUganda) {
@@ -567,7 +605,8 @@ export default {
             this.uneb_center_number = "";
             this.errors = [];
             this.success = null;
-            // Note: country_id remains default (7)
+            this.country_id = this.saved_country_id || this.details.default_country_id || "";
+            this.confirmCountryChange = false;
         },
     },
 

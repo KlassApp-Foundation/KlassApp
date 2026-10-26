@@ -194,6 +194,9 @@ class SchoolDetailsController extends Controller
         $array['details']['name'] = $school->name;
         $array['details']['address'] = $school->address;
         $array['details']['country_id'] = $school->country_id;
+        $array['details']['default_country_id'] = Country::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower(OnboardingStepsService::DEFAULT_COUNTRY)])
+            ->value('id');
         $array['details']['city_id'] = $school->city_id;
         $array['details']['registration_country'] = $school->registration_country;
         $array['details']['ministry_code'] = $school->ministry_code;

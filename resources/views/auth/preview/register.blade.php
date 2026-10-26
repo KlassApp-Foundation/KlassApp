@@ -81,6 +81,26 @@
               </div>
             </div>
 
+            <div class="ap-field">
+              <label class="ap-label" for="country">Country</label>
+              @php
+                $signupCountries = \App\Models\Country::query()->orderBy('name')->pluck('name');
+                if ($signupCountries->isEmpty() || ! $signupCountries->contains(fn ($name) => strcasecmp((string) $name, \App\Services\OnboardingStepsService::DEFAULT_COUNTRY) === 0)) {
+                    $signupCountries = collect([\App\Services\OnboardingStepsService::DEFAULT_COUNTRY, 'Kenya', 'Tanzania', 'Rwanda', 'Nigeria', 'Ghana', 'South Africa'])
+                        ->merge($signupCountries)
+                        ->unique(fn ($name) => strtolower((string) $name))
+                        ->values();
+                }
+                $signupCountry = old('country', \App\Services\OnboardingStepsService::DEFAULT_COUNTRY);
+              @endphp
+              <select id="country" name="country" class="ap-input" data-testid="register-country" required>
+                @foreach($signupCountries as $signupCountryName)
+                  <option value="{{ $signupCountryName }}" @selected(strcasecmp((string) $signupCountry, (string) $signupCountryName) === 0)>{{ $signupCountryName }}</option>
+                @endforeach
+              </select>
+              <p class="ap-meta">Uganda is selected for now. Choose another country if the school is elsewhere.</p>
+            </div>
+
             <div class="ap-field ap-checkbox-row">
               <input id="termsandcondn" type="checkbox" class="ap-checkbox" name="termsandcondn" value="1" @if(old('termsandcondn')==1) checked @endif required>
               <label for="termsandcondn" class="ap-checkbox-label">

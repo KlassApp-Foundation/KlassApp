@@ -45,6 +45,7 @@ class RegisterRequest extends FormRequest
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'termsandcondn' => ['required', 'accepted'],
+            'country' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -69,6 +70,10 @@ class RegisterRequest extends FormRequest
     {
         if ($this->has('mobile_no') && ! $this->filled('phone')) {
             $this->merge(['phone' => $this->input('mobile_no')]);
+        }
+
+        if (! $this->filled('country')) {
+            $this->merge(['country' => \App\Services\OnboardingStepsService::DEFAULT_COUNTRY]);
         }
     }
 }
