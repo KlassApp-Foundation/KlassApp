@@ -78,15 +78,15 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['override_reason']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
                 [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $linkId);
-                $this->releases->requireApproval($user, $anchor, $link, $data['override_reason']);
+                $this->releases->requireApproval($user, $anchor, $link);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['override_reason']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -136,7 +136,6 @@ class MarksReleaseController extends Controller
             'when' => ['required', 'in:now,schedule'],
             'scheduled_for' => ['nullable', 'required_if:when,schedule', 'date_format:Y-m-d\TH:i'],
             'timezone' => ['nullable', 'string', 'max:64'],
-            'override_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         return [
@@ -147,7 +146,6 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? null,
             'timezone' => $data['timezone'] ?? null,
-            'override_reason' => trim((string) ($data['override_reason'] ?? '')),
         ];
     }
 

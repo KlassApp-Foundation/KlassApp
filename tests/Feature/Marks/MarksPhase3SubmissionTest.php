@@ -436,14 +436,11 @@ class MarksPhase3SubmissionTest extends TestCase
 
         $release = app(MarksReleaseService::class);
         try {
-            $release->requireApproval($this->adminA, $this->examA, null, null);
+            $release->requireApproval($this->adminA, $this->examA, null);
             $this->fail('a pending subject must block release');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('approval', $e->errors());
         }
-
-        $override = 'Parents were promised these marks today.';
-        $this->assertSame($override, $release->requireApproval($this->adminA, $this->examA, null, $override));
 
         app(MarksSubmissionService::class)->approve(
             $this->adminA,
@@ -452,7 +449,7 @@ class MarksPhase3SubmissionTest extends TestCase
             $this->subjectA->id,
         );
 
-        $this->assertNull($release->requireApproval($this->adminA, $this->examA, null, null));
+        $this->assertNull($release->requireApproval($this->adminA, $this->examA, null));
     }
 
     public function test_approvals_inbox_points_at_the_marks_queue(): void

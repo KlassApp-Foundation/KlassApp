@@ -153,10 +153,10 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, ?string $overrideReason = null): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
-        $override = $this->requireApproval($user, $anchor, $link, $overrideReason);
+        $this->requireApproval($user, $anchor, $link);
         $timezone = $this->timezone($timezone);
         $when = $this->scheduledAt($localWhen, $timezone);
 
@@ -178,9 +178,6 @@ final class MarksReleaseService
             'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
             'timezone' => $timezone,
         ];
-        if ($override !== null) {
-            $properties['override_reason'] = $override;
-        }
 
         activity('marks_release')->performedOn($release)->causedBy($user)
             ->withProperties($properties)
@@ -203,29 +200,18 @@ final class MarksReleaseService
     }
 
     /**
-     * Refuse the release until every subject in scope is approved.
-     * A school admin may pass a reason of at least 10 characters. That
-     * reason is returned so the caller can log it. A teacher cannot override.
+     * Refuse the release until every subject in scope is approved. There is no
+     * override: a school admin and a class teacher meet the same rule. The
+     * message names every subject that is not approved yet.
      */
-    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link, ?string $overrideReason): ?string
+    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link): void
     {
         $blocked = array_values(array_filter(
             $this->approvalRows($user, $anchor, $link),
             fn (array $row) => $row['state'] !== 'approved',
         ));
         if ($blocked === []) {
-            return null;
-        }
-
-        $reason = trim((string) $overrideReason);
-        if ($this->isSchoolAdmin($user) && $reason !== '') {
-            if (mb_strlen($reason) < 10 || mb_strlen($reason) > 500) {
-                throw ValidationException::withMessages([
-                    'override_reason' => 'Give a reason of at least 10 characters to release before every subject is approved.',
-                ]);
-            }
-
-            return $reason;
+            return;
         }
 
         $names = implode(', ', array_map(fn (array $row) => $row['name'].($row['class_name'] !== '' ? ' ('.$row['class_name'].')' : ''), $blocked));

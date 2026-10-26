@@ -56,20 +56,16 @@ class ReleaseRequiresApprovalTest extends TestCase
             ->assertSee('SOCIAL STUDIES · P.7 — Not submitted');
     }
 
-    public function test_admin_override_with_a_reason_releases_and_is_logged(): void
+    public function test_a_reason_does_not_release_an_unapproved_sitting_any_more(): void
     {
-        $admin = $this->admin();
-        $reason = 'Parents were promised these marks today.';
+        $this->actingAs($this->admin())
+            ->post('/admin/marks/releases', $this->scheduled() + [
+                'override_reason' => 'Parents were promised these marks today.',
+            ])
+            ->assertSessionHasErrors('approval');
 
-        $this->actingAs($admin)
-            ->post('/admin/marks/releases', $this->scheduled() + ['override_reason' => $reason])
-            ->assertRedirect();
-
-        $this->assertSame(1, MarksRelease::count());
-        $log = DB::table('activity_log')->where('description', 'Marks release scheduled')->first();
-        $this->assertNotNull($log);
-        $this->assertStringContainsString($reason, (string) $log->properties);
-        $this->assertSame((int) $admin->id, (int) $log->causer_id);
+        $this->assertSame(0, MarksRelease::count());
+        $this->assertNull(DB::table('activity_log')->where('description', 'Marks release scheduled')->first());
     }
 
     public function test_class_teacher_cannot_override_the_approval_rule(): void
