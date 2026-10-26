@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TeacherInvite;
+use App\Services\ClassTeacherAssignmentService;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class TeacherInviteController extends Controller
@@ -15,8 +15,14 @@ class TeacherInviteController extends Controller
      * Show the password-set form for a valid invite token.
      * Expired/claimed/invalid tokens get a dedicated error page.
      */
-    public function show(string $token): View
+    public function show(Request $request, string $token): View|Response
     {
+        if (app(ClassTeacherAssignmentService::class)->tooManyAccepts($request->ip())) {
+            return response()
+                ->view('auth.invite-invalid', ['reason' => 'limited'])
+                ->setStatusCode(429);
+        }
+
         $result = TeacherInviteLinkService::validateToken($token);
 
         if ($result === null) {
@@ -25,6 +31,12 @@ class TeacherInviteController extends Controller
 
         $invite = $result['invite'];
         $error = $result['error'];
+
+        if ($error === 'revoked') {
+            return view('auth.invite-invalid', [
+                'reason' => 'revoked',
+            ]);
+        }
 
         if ($error === 'expired') {
             return view('auth.invite-invalid', [
@@ -60,6 +72,11 @@ class TeacherInviteController extends Controller
      */
     public function claim(Request $request, string $token): RedirectResponse
     {
+        if (app(ClassTeacherAssignmentService::class)->tooManyAccepts($request->ip())) {
+            return redirect()->route('login')
+                ->with('error', 'Too many attempts. Wait an hour and open the link from the email again.');
+        }
+
         $result = TeacherInviteLinkService::validateToken($token);
 
         if ($result === null) {
@@ -68,9 +85,12 @@ class TeacherInviteController extends Controller
         }
 
         if ($result['error'] !== null) {
-            $reason = $result['error'] === 'expired'
-                ? 'This invite link has expired.'
-                : 'This invite has already been used.';
+            $reason = match ($result['error']) {
+                'expired' => 'This invite link has expired.',
+                'revoked' => 'This invite has been replaced.',
+                default => 'This invite has already been used.',
+            };
+
             return redirect()->route('login')
                 ->with('error', $reason);
         }

@@ -5659,6 +5659,7 @@ class AgentToshi extends Component
             'email' => $email,
             'name' => $name,
             'phone' => '',
+            'confirmed' => true,
         ]);
 
         $this->refreshToshiStructureSnapshot();

@@ -119,7 +119,7 @@ Each phase is one pull request. It starts after the UI audit, and after a separa
 
 | Phase | What lands | Depends on |
 |---|---|---|
-| 1 | Class teacher assignment on the admin dashboard: pick an existing teacher, invite a new one, or replace the current one. Confirmation and a log entry on each. One assignment service for the dashboard, the wizard, Toshi, and the invite form. The control is on `/admin/classes`, including replacing a teacher who is already set. The dead Edit link, the hidden invite, and the Primary One dropdown go away, or they call that same service. Class setup is not a second unlisted door. | UI audit, then approval of this phase |
+| 1 | Class teacher assignment on the admin dashboard: pick an existing teacher, invite a new one, or replace the current one. Confirmation and a log entry on each. One assignment service for the dashboard, the wizard, Toshi, and the invite form. The control is on `/admin/classes`, including replacing a teacher who is already set. `/admin/sections` and `/admin/class-setup` redirect there. The class page links the invite and the stream form. Class names come from the school's own sections. The invite link is hashed, single-use, and expires in 72 hours. The flow is in [`class-teacher-flow.md`](class-teacher-flow.md). | UI audit, then approval of this phase |
 | 2 | The entry form shows saved marks and stays on the page after save. Submit for review is absent until there is something to submit. Upcoming exams either counts those exams or is renamed. File import and Toshi entry, including a class teacher, write through `ExamMarkWriter`. Nursery ratings stay on the ratings form. | 1 |
 | 3 | `MarksSubmissionService` takes approve, return with a reason, lock, and reopen. Lock, Return, and Approve each post their own form. The word on the return is Return, and that reason is on the teacher's entry page. The view does not say Unmarked work after a submit. The queue and the exam list use the submission row, and the queue stops reading `exams.status`. The heading names the class, not the level band. | 2 |
 | 4 | The admin marks page is one sitting for the whole class, with a stream column and a stream filter, from `ResultsService`. Exams and marks opens that sheet. A streamed class (P.7 A/B, S.1 East/West) uses that column and filter. The teacher's Combined Marksheet opens the same sheet. Remove the filter action that renders without its variables, the PDF that uses the old year lookup, and the second total in the view. | 3 |
@@ -127,6 +127,32 @@ Each phase is one pull request. It starts after the UI audit, and after a separa
 | 6 | Release: school admin by default, class teacher only where the school setting allows, approval required with no override, and "release past sittings" with a confirmation. The per-release WhatsApp switch is on the release screen. The release messages the approved, linked parent. The empty MARKS reply is one line per child, not an extra line that no child has results. The position's "of" count uses the same pool as the sheet. A real-school send waits until the results template below is approved. A WhatsApp results send only happens once the template it uses is approved by Meta. A parent who has opted out of WhatsApp results gets none. A release only messages approved, linked parents of the students in the released class and sitting, never the whole school. No real school gets the send until `results_released` is approved and the admin's per-release switch is on. | 5 |
 
 Later, and not a phase here: a whole-term sheet, Google Sheets through the connectors work, and a grading package for division thresholds and ranking.
+
+### Phase 1 flow
+
+The build notes, the confirmation rule, and the invite rules are in [`class-teacher-flow.md`](class-teacher-flow.md).
+
+```mermaid
+flowchart TD
+  page["Admin opens /admin/classes"]
+  choice{"Pick, invite, or replace"}
+  confirm["Confirms the change"]
+  service["ClassTeacherAssignmentService"]
+  existing["Existing teacher: both class-teacher columns, email notice, log"]
+  invite["New teacher: hashed 72-hour link by email"]
+  revoke["Pending invite for that class is revoked"]
+  claim["Teacher sets a password once"]
+
+  page --> choice
+  choice --> confirm
+  confirm --> service
+  service -->|existing teacher| existing
+  service -->|new email| revoke
+  revoke --> invite
+  invite --> claim
+  service -->|replace| revoke
+  existing --> revoke
+```
 
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
 

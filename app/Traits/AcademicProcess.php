@@ -201,7 +201,6 @@ trait AcademicProcess
 
             $standardLink->school_id        = $school_id;
             $standardLink->academic_year_id = $academic_year_id;
-            $standardLink->class_teacher_id = $data->class_teacher_id;
             $standardLink->standard_id      = $data->standard_id;
             $standardLink->no_of_students   = $data->no_of_students;
             if( ($data->standard_name == '11') || ($data->standard_name == '12') )
@@ -219,6 +218,29 @@ trait AcademicProcess
             $standardLink->status           = 1;
 
             $standardLink->save();
+
+            $actor = auth()->user();
+            $nextTeacherId = (int) ($data->class_teacher_id ?? 0);
+            $nextTeacher = ($actor instanceof User && $nextTeacherId > 0)
+                ? User::query()
+                    ->where('school_id', $school_id)
+                    ->whereKey($nextTeacherId)
+                    ->where('usergroup_id', 5)
+                    ->first()
+                : null;
+            if ($actor instanceof User && $nextTeacher instanceof User) {
+                app(\App\Services\ClassTeacherAssignmentService::class)->commit(
+                    $actor,
+                    $standardLink,
+                    $nextTeacher,
+                    true,
+                    false,
+                    'stream_form',
+                );
+            } elseif ($nextTeacherId > 0) {
+                $standardLink->class_teacher_id = $nextTeacherId;
+                $standardLink->save();
+            }
 
             if ($data->has('section_class_teacher_id')) {
                 $section = Section::where('school_id', $school_id)
@@ -306,14 +328,34 @@ trait AcademicProcess
                 }
             }
 
+            $actor = auth()->user();
+            $nextTeacherId = (int) ($data->class_teacher_id ?? 0);
+            $nextTeacher = ($actor instanceof User && $nextTeacherId > 0)
+                ? User::query()
+                    ->where('school_id', $school_id)
+                    ->whereKey($nextTeacherId)
+                    ->where('usergroup_id', 5)
+                    ->first()
+                : null;
+            if ($actor instanceof User && $nextTeacher instanceof User) {
+                app(\App\Services\ClassTeacherAssignmentService::class)->commit(
+                    $actor,
+                    $standardLink,
+                    $nextTeacher,
+                    true,
+                    false,
+                    'stream_form',
+                );
+            } else {
+                $standardLink->class_teacher_id = $data->class_teacher_id;
+            }
+
             if ($data->has('section_class_teacher_id')) {
                 $section = Section::where('school_id', $school_id)
                     ->findOrFail($standardLink->section_id);
                 $section->class_teacher_id = $data->input('section_class_teacher_id');
                 $section->save();
             }
-
-            $standardLink->class_teacher_id = $data->class_teacher_id;
             $standardLink->no_of_students   = $data->no_of_students;
             if( ($data->standard == '11') || ($data->standard == '12') )
             {

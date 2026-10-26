@@ -121,6 +121,11 @@ class TeacherInviteLinkService
      */
     public static function sendWhatsApp(TeacherInvite $invite, string $token, School $school, ?string $className = null): void
     {
+        // staff_invite is waiting on Meta. Do not send, and do not log the token.
+        if (! config('invites.staff_whatsapp_enabled')) {
+            return;
+        }
+
         $phone = $invite->phone;
         if (! $phone || trim($phone) === '') {
             return;
@@ -163,6 +168,10 @@ class TeacherInviteLinkService
             return null;
         }
 
+        if ($invite->isRevoked()) {
+            return ['invite' => $invite, 'school' => $invite->school, 'error' => 'revoked'];
+        }
+
         if ($invite->isExpired()) {
             return ['invite' => $invite, 'school' => $invite->school, 'error' => 'expired'];
         }
@@ -188,6 +197,10 @@ class TeacherInviteLinkService
     ): array {
         if ($invite->isClaimed()) {
             return ['success' => false, 'message' => 'This invite has already been used.'];
+        }
+
+        if ($invite->isRevoked()) {
+            return ['success' => false, 'message' => 'This invite has been replaced.'];
         }
 
         if ($invite->isExpired()) {
@@ -220,22 +233,27 @@ class TeacherInviteLinkService
                 'alternate_no' => $invite->phone,
             ]);
 
-            // Assign class teacher if applicable
             if ($invite->standard_link_id) {
-                $standardLink = StandardLink::find($invite->standard_link_id);
+                $standardLink = StandardLink::query()
+                    ->where('school_id', $invite->school_id)
+                    ->whereKey($invite->standard_link_id)
+                    ->first();
                 if ($standardLink) {
-                    $standardLink->class_teacher_id = $teacher->id;
-                    $standardLink->save();
-
-                    $section = $standardLink->section;
-                    if ($section) {
-                        $section->class_teacher_id = $teacher->id;
-                        $section->save();
+                    $placed = app(ClassTeacherAssignmentService::class)->commit(
+                        $teacher,
+                        $standardLink,
+                        $teacher,
+                        true,
+                        false,
+                        'claim',
+                        $invite->id,
+                    );
+                    if (! ($placed['success'] ?? false)) {
+                        throw new \RuntimeException($placed['message'] ?? 'Could not assign the class.');
                     }
                 }
             }
 
-            // Mark invite claimed
             $invite->user_id = $teacher->id;
             $invite->claimed_at = now();
             $invite->save();

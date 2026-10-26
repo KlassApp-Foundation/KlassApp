@@ -532,12 +532,16 @@ class ToshiActionService
             ]);
 
             if ($standardLink) {
-                $standardLink->class_teacher_id = $teacher->id;
-                $standardLink->save();
-
-                if ($standardLink->section) {
-                    $standardLink->section->class_teacher_id = $teacher->id;
-                    $standardLink->section->save();
+                $placed = app(ClassTeacherAssignmentService::class)->commit(
+                    $admin,
+                    $standardLink,
+                    $teacher,
+                    true,
+                    false,
+                    'toshi',
+                );
+                if (! ($placed['success'] ?? false)) {
+                    throw new \RuntimeException($placed['message'] ?? 'Could not assign the class teacher.');
                 }
             }
 

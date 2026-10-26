@@ -8,11 +8,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\SectionRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Services\ClassTeacherAssignmentService;
 use App\Traits\AcademicProcess;
 use Illuminate\Http\Request;
 use App\Traits\LogActivity;
 use App\Models\Section;
-use App\Models\Standard;
 use App\Traits\Common;
 use Exception;
 use Illuminate\Validation\Rule;
@@ -37,26 +37,10 @@ class SectionController extends Controller
      }
 
 
- public function create(){
-        $school_id = Auth::user()->school_id;
-        $levels = Standard::where("school_id", $school_id)->get();
+ public function create(ClassTeacherAssignmentService $assignments){
+        $school_id = (int) Auth::user()->school_id;
+        $classes = $assignments->namesForSchool($school_id);
 
-        $primary_nursery = [
-                'Baby Class',  'Middle Class','Top Class', 'Primary One', 'Primary Two', 
-                'Primary Three', 'Primary Four', 'Primary Five',   'Primary Six', 'Primary Seven',
-                ];
-                $secondary = ['Senior One', 'Senior Two','Senior Three', 'Senior Four', 'Senior Five', 'Senior Six'];
-        $classes=[];
-        // loop
-        foreach ($levels as $level){
-            if(in_array(strtolower($level->name), ["primary", "nursery"])){
-                $classes = array_merge($classes, $primary_nursery);
-            }elseif(in_array(strtolower($level->name), ["secondary"])){
-                $classes = array_merge($classes, $secondary);
-            }
-        }
-        // remove duplicates
-        $classes = array_unique($classes);
         return view("admin.school.sections.create", compact("classes"));
      }
 

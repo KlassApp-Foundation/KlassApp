@@ -19,4 +19,17 @@ return [
     /* Early-adopter school invites are deliberately longer-lived (7 days). */
     'school_expiry_hours' => (int) env('SCHOOL_INVITE_EXPIRY_HOURS', 168),
 
+    /*
+     * staff_invite is not approved by Meta. Email is the channel.
+     * Leave this false. Tests that need the branch use a fake, never a live send.
+     */
+    'staff_whatsapp_enabled' => (bool) env('STAFF_INVITE_WHATSAPP_ENABLED', false),
+
+    'create_attempts' => (int) env('TEACHER_INVITE_CREATE_ATTEMPTS', 30),
+    'accept_attempts' => (int) env('TEACHER_INVITE_ACCEPT_ATTEMPTS', 20),
+    'rate_decay_seconds' => (int) env('TEACHER_INVITE_RATE_DECAY_SECONDS', 3600),
+
+    /* Tests opt in. The suite must not share a file-cache counter. */
+    'force_rate_limits' => false,
+
 ];

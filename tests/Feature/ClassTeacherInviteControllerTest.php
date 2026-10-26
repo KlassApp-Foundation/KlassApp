@@ -66,10 +66,10 @@ class ClassTeacherInviteControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(
             route('admin.class-teacher-invite.store', $link),
-            ['email' => 'new@school.ug', 'name' => 'John Kato', 'phone' => '0777']
+            ['email' => 'new@school.ug', 'name' => 'John Kato', 'phone' => '0777', 'confirmed' => '1']
         );
 
-        $response->assertRedirect(route('admin.classes'));
+        $response->assertRedirect(route('admin.classes.index'));
         $response->assertSessionHas('successmessage');
 
         // New flow: a pending TeacherInvite is created, NOT a User
@@ -97,10 +97,10 @@ class ClassTeacherInviteControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(
             route('admin.class-teacher-invite.store', $link),
-            ['email' => 'teacher@school.ug', 'existing_teacher_id' => $teacher->id]
+            ['email' => 'teacher@school.ug', 'existing_teacher_id' => $teacher->id, 'confirmed' => '1']
         );
 
-        $response->assertRedirect(route('admin.classes'));
+        $response->assertRedirect(route('admin.classes.index'));
         $response->assertSessionHas('successmessage');
 
         $link->refresh();

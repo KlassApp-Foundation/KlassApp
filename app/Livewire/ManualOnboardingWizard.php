@@ -2127,6 +2127,7 @@ class ManualOnboardingWizard extends Component
             'existing_teacher_id' => $draft['existing_teacher_id'] ?? '',
             'name' => $draft['name'] ?? '',
             'phone' => $phone,
+            'confirmed' => true,
         ]);
 
         if (! ($result['success'] ?? false)) {
@@ -3235,12 +3236,21 @@ class ManualOnboardingWizard extends Component
             return false;
         }
 
-        $link->class_teacher_id = $teacher->id;
-        $link->save();
-        $section->class_teacher_id = $teacher->id;
-        $section->save();
+        $actor = Auth::user();
+        if (! $actor instanceof User) {
+            return false;
+        }
 
-        return true;
+        $result = app(\App\Services\ClassTeacherAssignmentService::class)->commit(
+            $actor,
+            $link,
+            $teacher,
+            true,
+            false,
+            'upload',
+        );
+
+        return (bool) ($result['success'] ?? false);
     }
 
     /**

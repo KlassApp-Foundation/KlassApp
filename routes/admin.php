@@ -24,7 +24,9 @@ Route::get( '/dashboard/task/count','DashboardController@listCount' );
 
 // WhatsApp
 // Class-teacher self-setup: staff link, approvals and per-class progress.
-Route::get('/class-setup', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'index'])->name('admin.class-setup.index');
+Route::get('/class-setup', function () {
+    return redirect()->route('admin.classes.index');
+})->name('admin.class-setup.index');
 Route::post('/class-setup/staff-link', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'createStaffLink'])->name('admin.class-setup.staff-link');
 Route::post('/class-setup/staff-link/regenerate', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'regenerateStaffLink'])->name('admin.class-setup.staff-link.regenerate');
 Route::post('/class-setup/requests/{request}/approve', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'approve'])->name('admin.class-setup.approve');
@@ -164,7 +166,7 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::get( '/standardLink/show/conference/{id}', 'StandardsLinkDetailsController@showConference' );
 	//edit
 	Route::get( '/standardLink/editlist/{id}', 'StandardsLinkController@editList' );
-	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' );
+	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' )->name('admin.standardLink.edit');
 	Route::post( '/standardLink/edit/{id}', 'StandardsLinkController@update' );
 	Route::post( '/standardLink/updateStatus/{id}', 'StandardsLinkController@updateStatus' );
 	//delete
@@ -190,7 +192,9 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::middleware('can:full-school-admin')->group(function () {
 	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
 	// Keep the legacy section-management URL available while /classes becomes the read-only roster portal.
-	Route::get("/sections", "SectionController@index")->name("admin.classes");
+	Route::get("/sections", function () {
+	    return redirect()->route('admin.classes.index');
+	})->name("admin.classes");
 	Route::get('/classes', function () {
 	    return view('class-roster.index');
 	})->name('admin.classes.index');
