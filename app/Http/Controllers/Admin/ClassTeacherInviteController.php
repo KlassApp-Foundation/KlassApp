@@ -7,6 +7,7 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\TeacherInvite;
 use App\Models\User;
+use App\Services\ClassTeacherAssignmentService;
 use App\Services\ClassTeacherInviteService;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Http\Request;
@@ -73,13 +74,14 @@ class ClassTeacherInviteController extends Controller
             'name'                => 'nullable|string|min:3',
             'phone'               => 'nullable|string',
             'existing_teacher_id' => 'nullable|integer|min:1',
+            'confirmed'           => 'accepted',
         ]);
 
         $result = ClassTeacherInviteService::invite($user, $standardLink, $validated);
 
         $flashKey = $result['success'] ? 'successmessage' : 'errormessage';
 
-        return redirect()->route('admin.classes')->with($flashKey, $result['message']);
+        return redirect()->route('admin.classes.index')->with($flashKey, $result['message']);
     }
 
     /**
@@ -94,9 +96,14 @@ class ClassTeacherInviteController extends Controller
             'You are not authorized for this school.'
         );
 
-        if ($invite->isClaimed()) {
-            return redirect()->route('admin.classes')
+        if ($invite->isClaimed() || $invite->isRevoked()) {
+            return redirect()->route('admin.classes.index')
                 ->with('errormessage', 'This invite has already been used.');
+        }
+
+        if (app(ClassTeacherAssignmentService::class)->tooManyCreates($user)) {
+            return redirect()->route('admin.classes.index')
+                ->with('errormessage', 'Too many class teacher changes. Wait an hour and try again.');
         }
 
         $result = TeacherInviteLinkService::reissue($invite);
@@ -107,7 +114,7 @@ class ClassTeacherInviteController extends Controller
 
         TeacherInviteLinkService::sendEmail($result['invite'], $result['token'], $school, $className);
 
-        if ($invite->phone !== null && trim((string) $invite->phone) !== '') {
+        if (config('invites.staff_whatsapp_enabled') && $invite->phone !== null && trim((string) $invite->phone) !== '') {
             TeacherInviteLinkService::sendWhatsApp($result['invite'], $result['token'], $school, $className);
         }
 

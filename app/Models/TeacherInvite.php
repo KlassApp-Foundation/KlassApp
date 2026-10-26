@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $phone
  * @property \Illuminate\Support\Carbon $expires_at
  * @property \Illuminate\Support\Carbon|null $claimed_at
+ * @property \Illuminate\Support\Carbon|null $revoked_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  */
@@ -33,11 +34,13 @@ class TeacherInvite extends Model
         'phone',
         'expires_at',
         'claimed_at',
+        'revoked_at',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
         'claimed_at' => 'datetime',
+        'revoked_at' => 'datetime',
     ];
 
     public function school(): BelongsTo
@@ -63,5 +66,10 @@ class TeacherInvite extends Model
     public function isClaimed(): bool
     {
         return $this->claimed_at !== null;
+    }
+
+    public function isRevoked(): bool
+    {
+        return $this->revoked_at !== null;
     }
 }
