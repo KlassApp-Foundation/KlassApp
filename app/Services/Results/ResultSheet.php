@@ -5,7 +5,7 @@ namespace App\Services\Results;
 final class ResultSheet
 {
     /**
-     * @param list<array{id: int, name: string, code: string}> $subjects
+     * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @param list<ResultStudent> $students
      * @param list<ResultSitting> $sittings
      */

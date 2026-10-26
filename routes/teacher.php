@@ -411,6 +411,8 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('teacher.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('teacher.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('teacher.marks.releases.show');
+Route::get('/marks/sheet', 'MarksController@combinedSheet')->name('teacher.marks.sheet');
+Route::get('/marks/sheet/download', 'MarksController@downloadCombinedSheet')->name('teacher.marks.sheet.download');
 
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 

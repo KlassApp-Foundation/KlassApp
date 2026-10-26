@@ -635,6 +635,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 26, 2026 — **Marks Phase 4 combined sheet OPEN (stacked on [#1241](https://github.com/KlassApp-Foundation/KlassApp/pull/1241))**
+
+- One combined sheet per sitting for the whole class, from `ResultsService`. A stream column and a stream filter. Each subject shows the Phase 3 submission state. Exams and marks opens that sheet, and the teacher's Combined Marksheet opens the same sheet. Totals, averages, positions, and the "of" count are not recalculated in the controller or the view. Flow: `docs/product/marks-flow.md` Phase 4.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3216 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Five new tests in `tests/Feature/Results/ResultsServiceTest.php` and `tests/Feature/Marks/MarksPhase4SheetTest.php`.
+- A learner who sat a sitting stays on that sheet after an in-place promotion. When the class had more than one stream, the old stream is blank. The download of this sheet is the same `ResultSheet`. The PDF that looked the year up by "Current Academic Year" is no longer that download.
+- **Status:** OPEN [#1242](https://github.com/KlassApp-Foundation/KlassApp/pull/1242), branch `cursor/marks-phase-4-combined-sheet`, base `cursor/marks-phase-3-submission` ([#1241](https://github.com/KlassApp-Foundation/KlassApp/pull/1241)). Not merged. No deploy. No production access.
+
 ## Current Status: October 26, 2026 — **Marks Phase 3 submission state machine OPEN (stacked on [#1240](https://github.com/KlassApp-Foundation/KlassApp/pull/1240))**
 
 - `MarksSubmissionService` owns submit, approve, return with a required reason, lock, and reopen for one class, subject, and sitting. `ExamMarkWriter` refuses submitted, approved, and locked marks until a return or a reopen. Approval is the state a later release reads. The release override stays until Phase 6. Notices are the in-app bell. Flow: `docs/product/marks-flow.md` Phase 3.
@@ -3095,6 +3102,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-10-26: Marks Phase 4 one combined sheet per sitting
+
+- **Work done**: The admin marks page and the teacher's Combined Marksheet open one sitting for the whole class. `ResultsService` supplies the roster, the stream, the submission state, the total, the average, the aggregate, the position, and the "of" count. Past sittings still list learners who sat them after an in-place promotion. The old filter action and the old-year PDF download are no longer that page.
+- **Files touched**: `app/Services/Results/ResultsService.php`, `app/Services/Results/CombinedSheetPage.php`, `app/Exports/SittingSheetExport.php`, `app/Http/Controllers/Admin/MarksController.php`, `app/Http/Controllers/Admin/DownloadMarksSheet.php`, `app/Http/Controllers/Teacher/MarksController.php`, `resources/views/admin/marks/combined-sheet.blade.php`, `resources/views/admin/marks/results-table2.blade.php`, `docs/product/marks-flow.md`, `tests/Feature/Marks/MarksPhase4SheetTest.php`, `tests/Feature/Results/ResultsServiceTest.php`, `knowledge.md`.
+- **Decision**: One sitting per sheet. The whole class is the default, with a stream column and a stream filter. A promoted learner with more than one old stream has a blank stream, because promotion does not store it.
+- **Status**: OPEN [#1242](https://github.com/KlassApp-Foundation/KlassApp/pull/1242) (`cursor/marks-phase-4-combined-sheet`). Not merged. No deploy. No production access.
+- **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3216 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Local gitleaks on the Phase 4 range found no leaks. Secret scan and MySQL 8.4 migrations are the checks on this stacked pull request. test-guard and the root check only run on pull requests into `main`.
 
 ### 2026-10-26: Marks Phase 3 submission state machine
 

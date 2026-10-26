@@ -133,7 +133,7 @@
                             "children": [
                                 {
                                     "label": "Exams and marks",
-                                    "url": "admin/exams",
+                                    "url": "admin/marks",
                                     "paths": [
                                         "admin/exams*",
                                         "admin/exam*",
