@@ -84,6 +84,25 @@
 			<p class="text-xs text-gray-500">Off by default. When off, teachers cannot create, change or delete visitor log, call log or postal record entries. Those screens belong to the receptionist role, do not appear in the teacher sidebar, and were previously reachable by any teacher with no check. Reading is unaffected either way.</p>
 		</div>
 
+		<div class="flex items-center my-5">
+			<div class="w-1/2 lg:w-2/5 md:w-2/5 flex items-center">
+				<p class="text-sm lg:text-base md:text-base">Class teachers release marks</p>
+				</div>
+				<div class="w-1/2 lg:w-3/5 md:w-3/5 flex justify-end lg:justify-start md:justify-start">
+					<label class='toggle-label'>
+						<input type='checkbox' name="teachers_may_release_marks" value="1" @if(optional(\Auth::user()->school)->detailValue('teachers_may_release_marks') == 1) checked @endif />
+						<span class='back'>
+						<span class='toggle'></span>
+						<span class='label on'>ON</span>
+						<span class='label off'>OFF</span>
+						</span>
+					</label>
+			   </div>
+			</div>
+		<div class="my-3 px-3">
+			<p class="text-xs text-gray-500">Off by default. When off, only a school admin releases marks. When on, a class teacher can release their own class once every subject in it is approved; they still cannot release another class or the whole school.</p>
+		</div>
+
 		<div class="tw-form-row mt-4 mb-16">
             <input type="submit" value="Submit" name="submit" class="btn btn-submit">
         </div>	

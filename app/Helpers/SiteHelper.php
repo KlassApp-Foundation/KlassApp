@@ -243,6 +243,41 @@ class SiteHelper
         Cache::forget('teacher_receptionist_access_'.$school_id);
     }
 
+    /** school_details meta key: whether a class teacher may release their own class's marks. */
+    public const TEACHERS_MAY_RELEASE_MARKS_KEY = 'teachers_may_release_marks';
+
+    /**
+     * Whether class teachers at this school may release marks for their own class.
+     * Off by default: a missing row, an empty value or anything other than '1'
+     * resolves to DISABLED, the same fail-safe default as the other switches.
+     * A school admin is never affected by this setting. Cached per school,
+     * forgotten on write.
+     */
+    public static function teachersMayReleaseMarks(int $school_id): bool
+    {
+        $cacheKey = 'teachers_may_release_marks_'.$school_id;
+        $cached = Cache::get($cacheKey);
+
+        if (is_string($cached) && in_array($cached, ['0', '1'], true)) {
+            return $cached === '1';
+        }
+
+        $value = SchoolDetail::query()
+            ->where('school_id', $school_id)
+            ->where('meta_key', self::TEACHERS_MAY_RELEASE_MARKS_KEY)
+            ->value('meta_value');
+
+        $enabled = trim((string) $value) === '1';
+        Cache::put($cacheKey, $enabled ? '1' : '0', env('CACHE_TIME'));
+
+        return $enabled;
+    }
+
+    public static function forgetTeachersMayReleaseMarks(int $school_id): void
+    {
+        Cache::forget('teachers_may_release_marks_'.$school_id);
+    }
+
     /** Attendance-scope meta key on school_details (same per-school pattern as the access switches). */
     public const ATTENDANCE_SCOPE_KEY = 'attendance_scope';
 

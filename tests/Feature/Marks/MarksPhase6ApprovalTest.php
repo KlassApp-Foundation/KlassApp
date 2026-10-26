@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Marks;
 
+use App\Helpers\SiteHelper;
 use App\Models\MarksRelease;
+use App\Models\SchoolDetail;
 use App\Services\DemoSchoolCommsGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +74,13 @@ class MarksPhase6ApprovalTest extends TestCase
     {
         $this->disapproveFollowAlongSittings();
         $teacher = $this->classTeacher();
+        // The setting from 6b is on, so this test reaches the approval rule.
+        SchoolDetail::create([
+            'school_id' => $teacher->school_id,
+            'meta_key' => SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY,
+            'meta_value' => '1',
+        ]);
+        SiteHelper::forgetTeachersMayReleaseMarks((int) $teacher->school_id);
 
         $this->actingAs($teacher)
             ->post('/teacher/marks/releases', $this->payload('demo', $this->fx['demo']['link']->id) + [

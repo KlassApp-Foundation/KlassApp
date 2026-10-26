@@ -4,7 +4,9 @@ namespace Tests\Feature\Marks;
 
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Helpers\SiteHelper;
 use App\Models\MarksRelease;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\Subject;
@@ -72,6 +74,13 @@ class ReleaseRequiresApprovalTest extends TestCase
     {
         $teacher = $this->fx['demo']['teacher'];
         StandardLink::where('school_id', $teacher->school_id)->update(['class_teacher_id' => $teacher->id]);
+        // Class teachers may only reach this screen when the school allows it (6b).
+        SchoolDetail::create([
+            'school_id' => $teacher->school_id,
+            'meta_key' => SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY,
+            'meta_value' => '1',
+        ]);
+        SiteHelper::forgetTeachersMayReleaseMarks((int) $teacher->school_id);
 
         $this->actingAs($teacher)
             ->post('/teacher/marks/releases', $this->payload($this->fx['demo']['link']->id) + [

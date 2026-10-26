@@ -2,6 +2,7 @@
 
 namespace App\Services\MarksRelease;
 
+use App\Helpers\SiteHelper;
 use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
@@ -36,8 +37,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 /**
  * Release an exam's marks to parents on WhatsApp (Task 9 Tier 2).
  *
- * Who may release: a school admin (any class, or the whole school) and a
- * class teacher (only their own class and stream). Nobody else.
+ * Who may release: a school admin (any class, or the whole school) always, and
+ * a class teacher only for their own class and stream, and only when the school
+ * has turned on teachers_may_release_marks. Nobody else. links() is the one
+ * list both rules read.
  *
  * Who gets a message: ONLY numbers with an ACTIVE demo binding (BIND, inside
  * the TTL) to a student in scope, in a DEMO school. Every other recipient is
@@ -93,6 +96,12 @@ final class MarksReleaseService
         }
 
         if ((int) $user->usergroup_id === self::USERGROUP_TEACHER) {
+            // Off by default. With the setting off a class teacher has no
+            // releasable classes at all, so the screens answer 403.
+            if (! SiteHelper::teachersMayReleaseMarks((int) $user->school_id)) {
+                return collect();
+            }
+
             return $query->where('class_teacher_id', $user->id)->orderBy('section_id')->orderBy('stream')->get();
         }
 
