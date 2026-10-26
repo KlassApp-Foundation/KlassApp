@@ -32,8 +32,7 @@
                         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-base font-semibold" style="color: var(--d-text);">{{ $className }}</h3>
                             @if ($stdLink)
-                                <a href="{{ route('teacher.exam.combinedMarksheet', $stdLink) }}" class="ds-btn ds-btn-warning ds-btn-sm inline-flex items-center gap-2">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <a href="{{ route('teacher.marks.sheet', ['class' => $stdLink->section_id, 'stream' => $stdLink->id, 'term' => $classExams->first()->academic_term_id]) }}" class="ds-btn ds-btn-warning ds-btn-sm inline-flex items-center gap-2" data-testid="combined-sheet-link">
                                     Combined Marksheet
                                 </a>
                             @endif

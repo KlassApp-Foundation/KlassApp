@@ -908,8 +908,8 @@ Route::post('/exams/store', 'ExamController@store')->name('admin.exams.store');
 Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.exams.archive');
 
 
-Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
-Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
+Route::get('/marks', 'MarksController@classExamOverview')->name('admin.marks');
+Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');
 // Task 9 Tier 2: release marks to parents (demo-bound numbers only for now).
 Route::get('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'index'])->name('admin.marks.releases.index');

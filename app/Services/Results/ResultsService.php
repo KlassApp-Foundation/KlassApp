@@ -6,12 +6,14 @@ use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 /**
@@ -58,7 +60,7 @@ final class ResultsService
         $typeMeta = $this->typeMeta($exams, $preferences);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
-        $roster = $this->roster($query, (int) $term->academic_year_id);
+        $roster = $this->roster($query, (int) $term->academic_year_id, $exams);
 
         $mainTypeIds = $query->examTypeId !== null
             ? (isset($typeMeta[$query->examTypeId]) ? [$query->examTypeId] : [])
@@ -67,7 +69,11 @@ final class ResultsService
                 array_filter($typeMeta, fn (array $type) => $type['contributes'])
             ));
 
-        $subjects = $this->subjectRows($query->schoolId, $this->subjectIdsFor($exams, $marks, $mainTypeIds));
+        $subjects = $this->subjectRows(
+            $query->schoolId,
+            $this->subjectIdsFor($exams, $marks, $mainTypeIds),
+            $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
+        );
         $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects);
         $summary = $this->summary($subjects, $students);
 
@@ -78,7 +84,8 @@ final class ResultsService
             $bucketChosen = $this->choose($bucketExams, $bucketMarks);
             $sittingSubjects = $this->subjectRows(
                 $query->schoolId,
-                $this->subjectIdsFor($bucketExams, $bucketMarks, [$plan['typeId']])
+                $this->subjectIdsFor($bucketExams, $bucketMarks, [$plan['typeId']]),
+                $this->submissionLabels($query->schoolId, $bucketExams, [$plan['typeId']]),
             );
             $sittingStudents = $this->buildStudents(
                 $policy,
@@ -301,9 +308,10 @@ final class ResultsService
 
     /**
      * @param list<int> $subjectIds
-     * @return list<array{id: int, name: string, code: string}>
+     * @param array<int, string> $submissionLabels
+     * @return list<array{id: int, name: string, code: string, submission: string}>
      */
-    private function subjectRows(int $schoolId, array $subjectIds): array
+    private function subjectRows(int $schoolId, array $subjectIds, array $submissionLabels = []): array
     {
         if ($subjectIds === []) {
             return [];
@@ -319,13 +327,58 @@ final class ResultsService
                 'id' => (int) $subject->id,
                 'name' => (string) $subject->name,
                 'code' => (string) ($subject->code ?? ''),
+                'submission' => $submissionLabels[(int) $subject->id] ?? 'Not started',
             ])
             ->all();
     }
 
-    private function roster(ResultsQuery $query, int $academicYearId): Collection
+    /**
+     * One label per subject from the submission row for these exams.
+     * A later row for the same subject replaces an earlier one.
+     *
+     * @param list<int> $typeIds
+     * @return array<int, string>
+     */
+    private function submissionLabels(int $schoolId, Collection $exams, array $typeIds): array
     {
-        return StudentAcademic::query()
+        if ($typeIds === []) {
+            return [];
+        }
+
+        $typeSet = array_fill_keys($typeIds, true);
+        $examIds = [];
+        foreach ($exams as $exam) {
+            if (isset($typeSet[(int) $exam->exam_type_id])) {
+                $examIds[] = (int) $exam->id;
+            }
+        }
+        if ($examIds === []) {
+            return [];
+        }
+
+        $labels = [];
+        $rows = ExamMarksSubmission::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', $examIds)
+            ->orderBy('id')
+            ->get();
+        foreach ($rows as $row) {
+            $labels[(int) $row->subject_id] = $row->reviewLabel();
+        }
+
+        return $labels;
+    }
+
+    /**
+     * Learners enrolled in this class for the term's year, plus learners
+     * who have a mark on this sitting even after an in-place promotion
+     * moved their academic row to another class.
+     *
+     * @return Collection<int, array{user: User, linkId: int, standardId: int, stream: string}>
+     */
+    private function roster(ResultsQuery $query, int $academicYearId, Collection $exams): Collection
+    {
+        $current = StudentAcademic::query()
             ->where('school_id', $query->schoolId)
             ->where('academic_year_id', $academicYearId)
             ->whereHas('standardLink', function ($builder) use ($query) {
@@ -339,27 +392,135 @@ final class ResultsService
             ->orderBy('user_id')
             ->orderBy('id')
             ->get()
-            ->unique('user_id')
-            ->values();
-    }
+            ->unique('user_id');
 
-    /**
-     * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
-     * @param list<int> $typeIds
-     * @param list<array{id: int, name: string, code: string}> $subjects
-     * @return list<ResultStudent>
-     */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects): array
-    {
-        $drafts = [];
-        foreach ($roster as $academic) {
+        $entries = [];
+        foreach ($current as $academic) {
             $user = $academic->user;
             $link = $academic->standardLink;
             if ($user === null || $link === null) {
                 continue;
             }
+            $entries[(int) $user->id] = $this->rosterEntry(
+                $user,
+                (int) $link->id,
+                (int) $link->standard_id,
+                (string) ($link->stream ?? ''),
+            );
+        }
+
+        $examIds = $exams->pluck('id')->filter()->values();
+        if ($examIds->isEmpty()) {
+            ksort($entries);
+
+            return collect(array_values($entries));
+        }
+
+        $sitterIds = Marks::query()
+            ->where('school_id', $query->schoolId)
+            ->whereIn('exam_id', $examIds)
+            ->pluck('student_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->reject(fn (int $id) => isset($entries[$id]))
+            ->values();
+
+        if ($sitterIds->isEmpty()) {
+            ksort($entries);
+
+            return collect(array_values($entries));
+        }
+
+        $users = User::query()
+            ->where('school_id', $query->schoolId)
+            ->where('status', 'active')
+            ->where('usergroup_id', 6)
+            ->whereIn('id', $sitterIds)
+            ->get()
+            ->keyBy('id');
+
+        $links = StandardLink::query()
+            ->where('school_id', $query->schoolId)
+            ->where('section_id', $query->sectionId)
+            ->orderBy('id')
+            ->get();
+
+        $academics = StudentAcademic::query()
+            ->where('school_id', $query->schoolId)
+            ->whereIn('user_id', $users->keys())
+            ->with('standardLink')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('user_id');
+
+        foreach ($users as $user) {
+            $rows = $academics->get($user->id) ?? collect();
+            $onClass = $rows->first(function ($row) use ($query) {
+                $link = $row->standardLink;
+
+                return $link !== null
+                    && (int) $link->school_id === $query->schoolId
+                    && (int) $link->section_id === $query->sectionId;
+            });
+            if ($onClass !== null && $onClass->standardLink !== null) {
+                $link = $onClass->standardLink;
+                $entries[(int) $user->id] = $this->rosterEntry(
+                    $user,
+                    (int) $link->id,
+                    (int) $link->standard_id,
+                    (string) ($link->stream ?? ''),
+                );
+                continue;
+            }
+            if ($links->count() === 1) {
+                $link = $links->first();
+                $entries[(int) $user->id] = $this->rosterEntry(
+                    $user,
+                    (int) $link->id,
+                    (int) $link->standard_id,
+                    (string) ($link->stream ?? ''),
+                );
+                continue;
+            }
+            $entries[(int) $user->id] = $this->rosterEntry(
+                $user,
+                0,
+                (int) ($links->first()?->standard_id ?? 0),
+                '',
+            );
+        }
+
+        ksort($entries);
+
+        return collect(array_values($entries));
+    }
+
+    /**
+     * @return array{user: User, linkId: int, standardId: int, stream: string}
+     */
+    private function rosterEntry(User $user, int $linkId, int $standardId, string $stream): array
+    {
+        return [
+            'user' => $user,
+            'linkId' => $linkId,
+            'standardId' => $standardId,
+            'stream' => $stream,
+        ];
+    }
+
+    /**
+     * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
+     * @param list<int> $typeIds
+     * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
+     * @return list<ResultStudent>
+     */
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects): array
+    {
+        $drafts = [];
+        foreach ($roster as $entry) {
+            $user = $entry['user'];
             $studentId = (int) $user->id;
-            $standardId = (int) $link->standard_id;
+            $standardId = (int) $entry['standardId'];
             $cells = [];
             foreach ($subjects as $subject) {
                 $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id']);
@@ -369,7 +530,8 @@ final class ResultsService
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
-                'linkId' => (int) $link->id,
+                'linkId' => (int) $entry['linkId'],
+                'stream' => (string) $entry['stream'],
                 'standardId' => $standardId,
                 'cells' => $cells,
                 'total' => $total,
@@ -391,6 +553,7 @@ final class ResultsService
                 $id,
                 $draft['name'],
                 $draft['linkId'],
+                $draft['stream'],
                 $draft['standardId'],
                 $draft['cells'],
                 $draft['total'],
@@ -578,7 +741,7 @@ final class ResultsService
     }
 
     /**
-     * @param list<array{id: int, name: string, code: string}> $subjects
+     * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @param list<ResultStudent> $students
      */
     private function summary(array $subjects, array $students): ResultSummary

@@ -19,8 +19,11 @@ class ExamsMarksKitContractTest extends TestCase
 
     public function test_marks_filter_blade_matches_kit_composition(): void
     {
-        $blade = file_get_contents(resource_path('views/admin/marks/filter.blade.php'));
+        $wrapper = file_get_contents(resource_path('views/admin/marks/filter.blade.php'));
+        $blade = file_get_contents(resource_path('views/admin/marks/combined-sheet.blade.php'));
         $grid = file_get_contents(resource_path('views/admin/marks/results-table2.blade.php'));
+
+        $this->assertStringContainsString('admin.marks.combined-sheet', $wrapper);
 
         $this->assertStringContainsString('ds-page-head', $blade);
         $this->assertStringContainsString('ds-reminder-banner', $blade);

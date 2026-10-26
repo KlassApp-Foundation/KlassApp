@@ -9,28 +9,6 @@
             <p class="text-sm ">student performance</p>
         </div>
 
-        <a href="#" class="inline-flex items-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600">
-            + Add Marks
-        </a>
-    </div>
-
-    {{-- Filters --}}
-    <div class="bg-white p-1 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-        <input 
-            type="text" 
-            placeholder="Search student..." 
-            class="w-full md:w-1/3 px-3 py-1 border border-gray-400 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-        >
-
-        <form action="" method="GET" class="flex gap-1">
-            <select class="p-1 border border-gray-300 rounded-lg text-sm">
-                <option>All Classes</option>
-            </select>
-
-            <select class="p-1 border border-gray-300 rounded-lg text-sm">
-                <option>All Exams</option>
-            </select>
-        </form>
     </div>
 
     {{-- Table --}}
