@@ -108,15 +108,6 @@
                             'classTeacherPhoneHint' => $this->phoneFormatHint(false, "Class teacher's phone number"),
                         ])
                     </div>
-
-                    {{-- Offered on every step that has a real admin route. It used to be suppressed on
-                         exactly the steps where a form helps most (EMIS, UNEB centre, academic year). --}}
-                    @if(!empty($step['route']))
-                        <p class="mt-4 text-xs text-gray-500" style="color:#64748B;">
-                            Prefer the full admin form?
-                            <a href="{{ url($step['route']) }}" class="text-blue-600 underline" style="color:#1E6FD9;">Open {{ $step['label'] }}</a>
-                        </p>
-                    @endif
                 </x-card>
             @endif
 

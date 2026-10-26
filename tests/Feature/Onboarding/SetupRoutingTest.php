@@ -74,6 +74,39 @@ class SetupRoutingTest extends TestCase
         $this->assertStringContainsString('Approximate school size', $html);
     }
 
+    public function test_dashboard_has_no_prefer_to_complete_step_and_continue_setup_is_the_only_entry(): void
+    {
+        [$school, $admin] = $this->school('Greenfield Primary', 'prefer@setup-route.test');
+        $destination = OnboardingEngine::setupDestination($school, $admin->id);
+        $this->assertNotNull($destination);
+        $this->assertStringNotContainsString('schooldetails', $destination);
+
+        $html = $this->actingAs($admin)->get('/admin/dashboard')->assertOk()->getContent();
+        $this->assertIsString($html);
+        $this->assertStringNotContainsString('Prefer the full admin form', $html);
+        $this->assertStringNotContainsString('Prefer to complete', $html);
+
+        $this->assertSame(
+            1,
+            preg_match('#data-testid="dashboard-v2-setup-bar"(.*?)data-testid="dashboard-v2-(?:actions|kpis)"#s', $html, $bar),
+            'The setup bar should be present on an unfinished school.',
+        );
+        $setupBar = $bar[1];
+        preg_match_all('#<a\b[^>]*href="([^"]*)"[^>]*>#', $setupBar, $links);
+        $this->assertSame([$destination], $links[1], 'Continue setup is the only link in the setup bar.');
+        $this->assertStringContainsString('Continue setup', $setupBar);
+        $this->assertStringNotContainsString('schooldetails', $setupBar);
+        $this->assertDoesNotMatchRegularExpression(
+            '#data-testid="dashboard-v2-setup-next"[^>]*href=|href=[^>]*data-testid="dashboard-v2-setup-next"#',
+            $setupBar,
+        );
+
+        $wizard = $this->actingAs($admin)->get($destination)->assertOk()->getContent();
+        $this->assertIsString($wizard);
+        $this->assertStringNotContainsString('Prefer the full admin form', $wizard);
+        $this->assertStringNotContainsString('Prefer to complete', $wizard);
+    }
+
     public function test_a_finished_school_is_not_sent_back_into_setup(): void
     {
         [$school, $admin] = $this->school('Finished Primary', 'finished@setup-route.test');
