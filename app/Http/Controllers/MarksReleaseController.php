@@ -78,15 +78,16 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
                 [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $linkId);
                 $this->releases->requireApproval($user, $anchor, $link);
+                $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -125,7 +126,7 @@ class MarksReleaseController extends Controller
         return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
     }
 
-    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null} */
+    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool} */
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -136,6 +137,7 @@ class MarksReleaseController extends Controller
             'when' => ['required', 'in:now,schedule'],
             'scheduled_for' => ['nullable', 'required_if:when,schedule', 'date_format:Y-m-d\TH:i'],
             'timezone' => ['nullable', 'string', 'max:64'],
+            'confirm_past' => ['nullable', 'boolean'],
         ]);
 
         return [
@@ -146,6 +148,7 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? null,
             'timezone' => $data['timezone'] ?? null,
+            'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
     }
 
@@ -195,6 +198,7 @@ class MarksReleaseController extends Controller
         $approvals = ($examId && $known)
             ? $this->approvalsFor($user, $examId, $targets)
             : [];
+        $pastSitting = $examId && $known && $this->releases->sittingIsPast((int) $user->school_id, $examId);
         $previewId = $targets === null ? null : ($targets[0] ?? null);
         $previewMessage = ($examId && $known && $targets !== [])
             ? $this->releases->preview($user, $examId, $previewId)
@@ -217,6 +221,7 @@ class MarksReleaseController extends Controller
             'whenLabel' => 'Now',
             'sheet' => $sheet,
             'approvals' => $approvals,
+            'pastSitting' => $pastSitting,
             'previewMessage' => $previewMessage,
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',

@@ -7,6 +7,7 @@ use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
+use App\Models\AcademicTerm;
 use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
@@ -162,10 +163,11 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
+        $this->requirePastConfirmation($anchor, $confirmPast);
         $timezone = $this->timezone($timezone);
         $when = $this->scheduledAt($localWhen, $timezone);
 
@@ -316,6 +318,56 @@ final class MarksReleaseService
         }
 
         return [$anchor, $link];
+    }
+
+    // ── Past sittings ────────────────────────────────────────────
+
+    /** True when the sitting belongs to a term or year earlier than the current one. */
+    public function sittingIsPast(int $schoolId, int $examId): bool
+    {
+        $anchor = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+
+        return $anchor !== null && $this->isPastSitting($anchor);
+    }
+
+    /**
+     * A sitting is past when its academic year is not the school's current one,
+     * or when the school has a current term and the sitting is in another term.
+     * The current year's current term is never past, so the ordinary release
+     * never asks. The test is a comparison against the school's own rows, not a
+     * date comparison: a school that has not rolled its terms over keeps the
+     * term it marked current.
+     */
+    public function isPastSitting(Exam $anchor): bool
+    {
+        $schoolId = (int) $anchor->school_id;
+        $currentYearId = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('status', 1)
+            ->value('id');
+        if ($currentYearId !== null && (int) $anchor->academic_year_id !== (int) $currentYearId) {
+            return true;
+        }
+
+        $currentTermId = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->value('id');
+
+        return $currentTermId !== null && (int) $anchor->academic_term_id !== (int) $currentTermId;
+    }
+
+    /** Refuse a past sitting until the form says confirm_past. */
+    public function requirePastConfirmation(Exam $anchor, bool $confirmed): void
+    {
+        if ($confirmed || ! $this->isPastSitting($anchor)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'confirm_past' => 'This sitting is from an earlier term or year (' . $this->examLabel($anchor)
+                . '). Tick the confirmation to release it anyway.',
+        ]);
     }
 
     public function timezone(?string $timezone): string
