@@ -154,6 +154,37 @@ flowchart TD
   existing --> revoke
 ```
 
+### Phase 2 flow
+
+The entry form loads marks already saved for this exam, this subject, and this school, and puts each one in that learner's box. A validation error keeps what the person just typed. Save stays on this page. Submit for review is absent until a numeric mark is saved, or until a nursery rating is saved. Nursery ratings stay on the ratings form and do not go through `ExamMarkWriter`.
+
+Every numeric entry path writes one row through `ExamMarkWriter`: the entry form, the single-mark edit, the teacher spreadsheet import, the admin spreadsheet import (the same service), and Toshi for a subject teacher, a class teacher, or a school admin. The writer checks the school, the learner, the lock, and a correction reason. It stores the letter. It does not change the exam status and it does not message parents. The import still parses and previews the file, then calls the writer, and it still moves an undone exam to done. A class teacher may enter a mark in Toshi when `ExamAuthorization` already allows that person on the form.
+
+The Upcoming Exams tile counts the open exams this person can mark (`undone` or `done` for their exams or their class). It still links to the marks list. There is no second writer for a teacher who marks more than one class: each exam on that list uses the same form and the same writer.
+
+```mermaid
+flowchart TD
+  open["Open the entry form"]
+  load["Load saved marks for this exam, subject, and school"]
+  boxes["Show each saved mark in the learner's box"]
+  save["Save"]
+  writer["ExamMarkWriter"]
+  stay["Stay on the form with the saved marks"]
+  submit{"Anything saved?"}
+  review["Submit for review"]
+  import["Spreadsheet import, teacher or admin"]
+  toshi["Toshi: subject teacher, class teacher, or admin"]
+  nursery["Nursery ratings form"]
+
+  open --> load --> boxes
+  boxes --> save --> writer --> stay
+  stay --> submit
+  submit -->|yes| review
+  import --> writer
+  toshi --> writer
+  nursery --> stay
+```
+
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
 
 ## WhatsApp results templates

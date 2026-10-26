@@ -391,7 +391,7 @@ class TeacherExamMarksAuthorizationTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect(route('teacher.exam.marks'));
+        $response->assertRedirect(route('teacher.exam.marks.enter', $this->ownedExam));
         $response->assertSessionHas('successmessage');
 
         $this->assertDatabaseHas('marks', [
@@ -473,7 +473,7 @@ class TeacherExamMarksAuthorizationTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect(route('teacher.exam.marks'));
+        $response->assertRedirect(route('teacher.exam.marks.enter', $this->ownedExam));
 
         $this->assertDatabaseHas('nursery_assessments', [
             'exam_id' => $this->ownedExam->id,

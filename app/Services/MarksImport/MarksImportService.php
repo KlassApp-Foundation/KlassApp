@@ -3,6 +3,7 @@
 namespace App\Services\MarksImport;
 
 use App\Events\MarksUpdated;
+use App\Exceptions\MarksLockedException;
 use App\Helpers\GradingHelper;
 use App\Imports\MarksSheetReader;
 use App\Models\Academics\Exam;
@@ -11,6 +12,8 @@ use App\Models\Academics\Marks;
 use App\Models\User;
 use App\Services\ExamAuthorization;
 use App\Services\GradingSystemService;
+use App\Services\Marks\ExamMarkWriter;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -78,6 +81,7 @@ class MarksImportService
     public function __construct(
         private readonly ExamAuthorization $examAuthorization,
         private readonly GradingSystemService $grading,
+        private readonly ExamMarkWriter $writer,
     ) {
     }
 
@@ -292,7 +296,7 @@ class MarksImportService
             }
 
             $reason = $this->validatedReason($exam, $reason);
-            $result = DB::transaction(fn () => $this->apply($exam, $actor, $fresh, $overwrite));
+            $result = DB::transaction(fn () => $this->apply($exam, $actor, $fresh, $overwrite, $reason));
 
             $this->audit($exam, $actor, $plan, $result, $reason, $overwrite, $requestId);
             $this->notify($exam, $actor, $result, $reason);
@@ -645,7 +649,7 @@ class MarksImportService
         return $row;
     }
 
-    private function apply(Exam $exam, User $actor, MarksImportPlan $plan, bool $overwrite): MarksImportResult
+    private function apply(Exam $exam, User $actor, MarksImportPlan $plan, bool $overwrite, ?string $reason): MarksImportResult
     {
         // Re-read the saved marks under a lock so a concurrent entry-screen save cannot slip between plan and write.
         $existing = Marks::query()->where('exam_id', $exam->id)->where('school_id', $exam->school_id)
@@ -662,7 +666,7 @@ class MarksImportService
                         $skipped++;
                         break;
                     }
-                    Marks::create($this->attributes($exam, $actor, (int) $row['student_id'], (float) $row['mark']));
+                    $this->writeImportedMark($exam, $actor, (int) $row['student_id'], $row['mark'], $reason);
                     $rows[] = ['outcome' => 'saved'] + $row;
                     $saved++;
                     break;
@@ -679,7 +683,7 @@ class MarksImportService
                         $skipped++;
                         break;
                     }
-                    $current->update($this->attributes($exam, $actor, (int) $row['student_id'], (float) $row['mark']));
+                    $this->writeImportedMark($exam, $actor, (int) $row['student_id'], $row['mark'], $reason);
                     $rows[] = ['outcome' => 'updated'] + $row;
                     $updated++;
                     break;
@@ -703,19 +707,17 @@ class MarksImportService
         return new MarksImportResult($exam->id, $saved, $updated, $unchanged, $skipped, $rows);
     }
 
-    /** @return array<string,mixed> */
-    private function attributes(Exam $exam, User $actor, int $studentId, float $mark): array
+    private function writeImportedMark(Exam $exam, User $actor, int $studentId, mixed $mark, ?string $reason): void
     {
-        return [
-            'student_id' => $studentId,
-            'exam_id' => $exam->id,
-            'school_id' => $exam->school_id,
-            'subject_id' => $exam->subject_id,
-            'teacher_id' => $exam->teacher_id ?: $actor->id,
-            'section_id' => $exam->section_id,
-            'marks' => $mark,
-            'grade' => $this->grading->grade((int) $mark, (int) $exam->school_id, $exam),
-        ];
+        try {
+            $this->writer->save($actor, $exam, $studentId, $mark, $reason);
+        } catch (ValidationException $e) {
+            throw new MarksImportBlocked('reason_required', (string) $e->validator->errors()->first());
+        } catch (MarksLockedException $e) {
+            throw new MarksImportBlocked('locked', $e->getMessage());
+        } catch (HttpException $e) {
+            throw new MarksImportBlocked('not_in_class', 'Submitted student is not authorized for this school.');
+        }
     }
 
     private function validatedReason(Exam $exam, ?string $reason): ?string
