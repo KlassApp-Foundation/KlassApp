@@ -150,17 +150,28 @@ class MarksImportHttpTest extends TestCase
         $this->assertNotNull($lock);
     }
 
-    public function test_submitted_exam_asks_for_a_reason(): void
+    public function test_submitted_exam_is_blocked_until_it_is_returned(): void
     {
         $this->exam->update(['status' => 'submitted']);
-        [$token, $html] = $this->preview('teacher.exam.marks.import', $this->owner, ['KLS0000001,,80']);
-        $this->assertStringContainsString('name="correction_reason"', $html);
-
-        $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token])
-            ->assertSessionHasErrors('correction_reason');
+        [, $html] = $this->preview('teacher.exam.marks.import', $this->owner, ['KLS0000001,,80']);
+        $this->assertStringContainsString('data-testid="marks-import-blocked"', $html);
+        $this->assertStringNotContainsString('data-testid="marks-import-confirm"', $html);
+        $this->assertStringNotContainsString('name="correction_reason"', $html);
         $this->assertSame(0, Marks::count());
 
-        $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token, 'correction_reason' => 'Re-marked after moderation'])
+        ExamMarksSubmission::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $this->exam->id,
+            'class_id' => $this->section->id,
+            'subject_id' => $this->subject->id,
+            'teacher_id' => $this->owner->id,
+            'status' => 'reopened',
+            'approval_status' => 'rejected',
+            'rejection_reason' => 'Please recheck the arithmetic.',
+        ]);
+
+        [$token] = $this->preview('teacher.exam.marks.import', $this->owner, ['KLS0000001,,80']);
+        $this->actingAs($this->owner)->post(route('teacher.exam.marks.import.confirm', $this->exam), ['token' => $token])
             ->assertRedirect();
         $this->assertSame(1, Marks::count());
     }

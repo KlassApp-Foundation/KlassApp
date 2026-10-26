@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
+use App\Services\Marks\MarksSubmissionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -15,7 +16,7 @@ class LockExpiredExamSubmissions extends Command
 
     protected $description = 'Transition exam_marks_submissions past their deadline into locked status';
 
-    public function handle(): int
+    public function handle(MarksSubmissionService $submissions): int
     {
         $dryRun = $this->option('dry-run');
         $specificExamId = $this->option('exam-id');
@@ -35,10 +36,7 @@ class LockExpiredExamSubmissions extends Command
                 $this->line("[DRY-RUN] Would lock exam_marks_submission #{$submission->id} (exam:{$submission->exam_id})");
                 continue;
             }
-            $submission->status = 'locked';
-            $submission->locked_at = now();
-            $submission->approval_status = 'pending';
-            $submission->save();
+            $submissions->lockExpired($submission);
             $locked++;
         }
 
@@ -94,16 +92,7 @@ class LockExpiredExamSubmissions extends Command
                     continue;
                 }
 
-                ExamMarksSubmission::create([
-                    'school_id'  => $exam->school_id,
-                    'exam_id'    => $exam->id,
-                    'class_id'   => $combo['class_id'],
-                    'subject_id' => $combo['subject_id'],
-                    'teacher_id' => $exam->teacher_id,
-                    'status'     => 'locked',
-                    'deadline'   => $exam->default_deadline,
-                    'locked_at'  => now(),
-                ]);
+                $submissions->lockPlaceholder($exam, (int) $combo['class_id'], (int) $combo['subject_id']);
                 $created++;
             }
         }

@@ -20,22 +20,9 @@
         <td>{{ $exam->academicTerm->name }}</td>
         <td>{{ $exam->examType->code }}</td>
         <td>
-            @if($exam->has_marks)
-                <span class="dt-badge dt-badge-active">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    Submitted
-                </span>
-            @elseif($exam->status === 'submitted' || $exam->status === 'done')
-                <span class="dt-badge dt-badge-active">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    {{ ucfirst($exam->status) }}
-                </span>
-            @else
-                <span class="dt-badge dt-badge-pending">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    {{ ucfirst($exam->status) }}
-                </span>
-            @endif
+            <span class="dt-badge {{ ($exam->submission_label ?? 'Not started') === 'Not started' ? 'dt-badge-pending' : 'dt-badge-active' }}" data-testid="exam-submission-state">
+                {{ $exam->submission_label ?? 'Not started' }}
+            </span>
         </td>
         <td>{{ $exam->standard->name ?? '-' }}</td>
         <td>{{ $exam->section->name }}</td>

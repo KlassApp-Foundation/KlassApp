@@ -535,10 +535,13 @@ class MarksImportService
         }
 
         $submission = ExamMarksSubmission::query()
+            ->where('school_id', $exam->school_id)
             ->where('exam_id', $exam->id)->where('class_id', $exam->section_id)->where('subject_id', $exam->subject_id)->first();
         if ($submission && $submission->isLocked()) {
             $deadline = $submission->deadline ? ' (deadline '.$submission->deadline->format('j M Y H:i').')' : '';
             $blockers['locked'] = 'Marks for this exam are locked'.$deadline.'. Ask a school admin to reopen them.';
+        } elseif ($this->writer->writesAreRefused($exam)) {
+            $blockers['locked'] = 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.';
         }
 
         $roster = $this->roster($exam);
@@ -573,7 +576,7 @@ class MarksImportService
 
         return new MarksImportPlan(
             $exam->id, (int) $exam->school_id, $fileName, $fileSha256, $input, $resolved, $blockers,
-            $exam->status === 'submitted', $warnings,
+            false, $warnings,
         );
     }
 
@@ -722,18 +725,13 @@ class MarksImportService
 
     private function validatedReason(Exam $exam, ?string $reason): ?string
     {
-        $reason = trim((string) $reason);
-        if ($exam->status !== 'submitted') {
-            return $reason === '' ? null : mb_substr($reason, 0, 500);
-        }
-        if (mb_strlen($reason) < 10) {
-            throw new MarksImportBlocked('reason_required', 'These marks were already submitted. Give a reason of at least 10 characters for correcting them.');
-        }
-        if (mb_strlen($reason) > 500) {
-            throw new MarksImportBlocked('reason_required', 'Keep the correction reason under 500 characters.');
+        if ($this->writer->writesAreRefused($exam)) {
+            throw new MarksImportBlocked('locked', 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.');
         }
 
-        return $reason;
+        $reason = trim((string) $reason);
+
+        return $reason === '' ? null : mb_substr($reason, 0, 500);
     }
 
     private function audit(Exam $exam, User $actor, MarksImportPlan $plan, MarksImportResult $result, ?string $reason, bool $overwrite, ?string $requestId): void

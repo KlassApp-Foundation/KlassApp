@@ -47,7 +47,7 @@
                                         <div class="min-w-0">
                                             <div class="mb-2 flex items-center gap-2 flex-wrap">
                                                 <span class="ds-badge ds-badge-sm ds-badge-info">{{ $exam->subject->name ?? 'Exam' }}</span>
-                                                <span class="ds-badge ds-badge-sm ds-badge-warning">{{ $exam->status }}</span>
+                                                <span class="ds-badge ds-badge-sm ds-badge-warning" data-testid="exam-submission-state">{{ $exam->submission_label ?? 'Not started' }}</span>
                                             </div>
 
                                             <div class="flex flex-wrap items-center gap-3 text-xs" style="color: var(--d-muted);">

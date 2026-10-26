@@ -6,12 +6,14 @@ use Exception;
 
 class MarksLockedException extends Exception
 {
-    public function __construct(?string $deadline = null)
+    public function __construct(?string $deadline = null, ?string $message = null)
     {
-        $message = 'Marks are locked and cannot be edited.';
+        if ($message === null) {
+            $message = 'Marks are locked and cannot be edited.';
 
-        if ($deadline) {
-            $message = "Marks are locked and cannot be edited. The deadline was {$deadline}. Contact the admin if you need them reopened.";
+            if ($deadline) {
+                $message = "Marks are locked and cannot be edited. The deadline was {$deadline}. Contact the admin if you need them reopened.";
+            }
         }
 
         parent::__construct($message);
