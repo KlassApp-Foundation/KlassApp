@@ -288,6 +288,20 @@ flowchart TD
   card --> scale
 ```
 
+## Phase 6 as built
+
+Decision 3 and the Phase 6 row above are what the code now does. Where the code lives:
+
+- **Who may release.** `SiteHelper::teachersMayReleaseMarks()` reads `school_details.teachers_may_release_marks`. Anything other than `'1'` is off, the read is cached per school, and the writer forgets the key. `MarksReleaseService::links()` is the single list both the screens and the service read: a school admin gets every class in the current year, a class teacher gets nothing until the school turns the setting on, then only their own classes. The switch is on the Maintenance settings page.
+- **Approval.** `MarksReleaseService::requireApproval($user, $anchor, $link)` takes no reason and returns nothing. `create()` no longer accepts one, the controller does not validate one, and the release screen does not render the box. A posted `override_reason` is ignored.
+- **Past sittings.** `sittingIsPast()` compares the sitting's academic year and term with the school's current year and term (never the other way round), and `requirePastConfirmation()` throws a `confirm_past` validation error. The controller checks every class before writing any release row, and `create()` refuses on its own too. The screen shows the checkbox only for a past sitting.
+- **The WhatsApp switch.** `marks_releases.whatsapp_send`, false by default. The release screen shows it unticked with the sentence that with it off the release still happens and nothing is sent; the release page shows On or Off.
+- **The template gate.** `App\Services\WhatsApp\TemplateGate` answers from `config/whatsapp.php`, which reads `WHATSAPP_APPROVED_TEMPLATES` and defaults to empty. The app never calls Meta: the list is the record of what Meta approved. `results_released` is not in the default list.
+- **Recipients.** For a real school: an approved `student_parent_links` row, the parent's opted-in `whatsapp_users` number, and a student in the released class and sitting. A link that is not approved, or a parent who opted out, is listed on the release page with its reason instead of being messaged. A pupil in another class never enters the list.
+- **Both delivery paths.** `deliver()` (the queue pass) and `deliverOne()` (the job) check the switch and the template, so an approval withdrawn between queueing and sending still sends nothing.
+- **The demo path is unchanged.** A demo follow-along send is not a school sending a template, and the demo-only recipient guard still runs first for a real school. With the deployment flag on, nothing leaves for a real number whatever a release says.
+- **The empty MARKS reply.** Specified and tested in `tests/Feature/Marks/MarksPhase6MarksReplyTest.php`; the one-line-per-child change in `WhatsAppController::sendGrades` is not in this branch yet.
+
 ## WhatsApp results templates
 
 Checked in the repo on 2026-10-25. That check found no results-released template in `scripts/submit-whatsapp-message-templates.php`. `results_released` has since been submitted to Meta. It is UTILITY, English, and pending approval. This section does not claim Meta has approved it.
