@@ -107,7 +107,33 @@ class ExamMarksSubmission extends Model
 
     public function isEditable(): bool
     {
-        return in_array($this->status, ['draft', 'submitted', 'reopened']);
+        return in_array($this->status, ['draft', 'reopened'], true) && ! $this->isApproved();
+    }
+
+    public function isReturned(): bool
+    {
+        return $this->status === 'reopened' && $this->approval_status === 'rejected';
+    }
+
+    public function reviewLabel(): string
+    {
+        if ($this->isApproved()) {
+            return 'Approved';
+        }
+        if ($this->isReturned()) {
+            return 'Returned';
+        }
+        if ($this->status === 'reopened') {
+            return 'Reopened';
+        }
+        if ($this->isLocked()) {
+            return 'Locked';
+        }
+        if ($this->status === 'submitted') {
+            return 'Submitted';
+        }
+
+        return 'Not started';
     }
 
     public function isApproved(): bool
@@ -127,12 +153,12 @@ class ExamMarksSubmission extends Model
 
     public function isApprovable(): bool
     {
-        return $this->isLocked() && $this->isApprovalPending();
+        return in_array($this->status, ['submitted', 'locked'], true) && $this->isApprovalPending();
     }
 
     public function scopeApprovable($query)
     {
-        return $query->where('status', 'locked')
+        return $query->whereIn('status', ['submitted', 'locked'])
             ->where(function ($q) {
                 $q->where('approval_status', 'pending')
                   ->orWhereNull('approval_status');

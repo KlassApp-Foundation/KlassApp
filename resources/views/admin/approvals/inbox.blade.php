@@ -29,7 +29,7 @@
             <div class="ds-empty-state" data-testid="approvals-empty-state">
                 <p class="ds-empty-state-title">No approval requests yet</p>
                 {{-- --d-text-secondary, not the component's --d-muted (#94A3B8, 2.56:1): AA on white. --}}
-                <p class="ds-empty-state-desc" style="color: var(--d-text-secondary, #64748B);">Staff leave, parent-link and marks requests you need to review will appear here.</p>
+                <p class="ds-empty-state-desc" style="color: var(--d-text-secondary, #64748B);">Staff leave and parent-link requests you need to review will appear here. Marks submissions are reviewed on <a href="{{ route('admin.marks.submissions') }}">Mark submissions</a>.</p>
             </div>
         @else
             <x-fold-list table>
