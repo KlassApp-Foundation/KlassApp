@@ -5,6 +5,7 @@ namespace Tests\Feature\Marks;
 use App\Logging\ScrubInviteTokensProcessor;
 use App\Mail\TeacherInviteMail;
 use App\Models\AcademicYear;
+use App\Models\Academics\Classes;
 use App\Models\ActivityLog;
 use App\Models\School;
 use App\Models\Section;
@@ -17,9 +18,13 @@ use App\Services\ClassTeacherInviteService;
 use App\Services\TeacherInviteLinkService;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Tests\TestCase;
@@ -190,7 +195,7 @@ class ClassTeacherPhase1Test extends TestCase
 
     public function test_invite_token_is_scrubbed_from_logs_and_exception_messages(): void
     {
-        $token = 'abcDEF1234567890abcDEF1234567890abcDEF1234567890abcDEF1234567890';
+        $token = Str::random(64);
         $logger = new Logger('phase1');
         $handler = new TestHandler();
         $logger->pushHandler($handler);
@@ -328,6 +333,132 @@ class ClassTeacherPhase1Test extends TestCase
             ->assertOk()
             ->assertSee('Assign class teacher')
             ->assertSee('Edit stream');
+    }
+
+    public function test_store_accepts_the_schools_class_name_and_rejects_any_other_name(): void
+    {
+        $standard = Standard::query()->where('school_id', $this->school->id)->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $standard->id,
+                'name' => 'P.1',
+            ])
+            ->assertRedirect(route('admin.classes.add'));
+
+        $this->assertDatabaseHas('classes', [
+            'school_id' => $this->school->id,
+            'standard_id' => $standard->id,
+            'name' => 'P.1',
+            'position' => 1,
+        ]);
+
+        $other = School::create([
+            'name' => 'Other Name School',
+            'slug' => 'other-name-school',
+            'email' => 'other@phase-one.test',
+            'status' => 'active',
+        ]);
+        $foreignStandard = Standard::create([
+            'school_id' => $other->id,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->from(route('admin.classes.add'))
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $standard->id,
+                'name' => 'Primary 1',
+            ])
+            ->assertRedirect(route('admin.classes.add'))
+            ->assertSessionHasErrors('name');
+
+        $this->actingAs($this->admin)
+            ->from(route('admin.classes.add'))
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $foreignStandard->id,
+                'name' => 'P.1',
+            ])
+            ->assertRedirect(route('admin.classes.add'))
+            ->assertSessionHasErrors('standard_id');
+
+        $this->assertSame(1, Classes::query()->where('school_id', $this->school->id)->count());
+    }
+
+    public function test_stream_form_rejects_a_teacher_id_that_is_not_in_the_school(): void
+    {
+        $foreignSchool = School::create([
+            'name' => 'Foreign Phase School',
+            'slug' => 'foreign-phase-school',
+            'email' => 'foreign@phase-one.test',
+            'status' => 'active',
+        ]);
+        $foreignTeacher = User::factory()->create([
+            'school_id' => $foreignSchool->id,
+            'usergroup_id' => 5,
+            'email' => 'foreign-teacher@phase-one.test',
+            'status' => 'active',
+        ]);
+        $year = AcademicYear::query()->where('school_id', $this->school->id)->firstOrFail();
+        $standard = Standard::query()->where('school_id', $this->school->id)->firstOrFail();
+        $controller = app(\App\Http\Controllers\Admin\SectionController::class);
+
+        Auth::logout();
+        $loggedOut = Request::create('/', 'POST', [
+            'class_teacher_id' => $this->teacher('signed-out@phase-one.test')->id,
+            'standard_id' => $standard->id,
+            'section_id' => $this->section->id,
+            'standard_name' => '1',
+            'no_of_students' => 10,
+            'count' => 0,
+        ]);
+
+        try {
+            $controller->createStandardLink($this->school->id, $year->id, $loggedOut);
+            $this->fail('A signed-out assignment should be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('class_teacher_id', $e->errors());
+        }
+
+        Auth::setUser($this->admin);
+        $invalid = Request::create('/', 'POST', [
+            'class_teacher_id' => $foreignTeacher->id,
+            'standard_id' => $standard->id,
+            'section_id' => $this->section->id,
+            'standard_name' => '1',
+            'no_of_students' => 10,
+            'count' => 0,
+        ]);
+
+        try {
+            $controller->createStandardLink($this->school->id, $year->id, $invalid);
+            $this->fail('A teacher from another school should be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('class_teacher_id', $e->errors());
+        }
+
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertDatabaseMissing('standards_link', [
+            'class_teacher_id' => $foreignTeacher->id,
+        ]);
+
+        $edit = Request::create('/', 'POST', [
+            'class_teacher_id' => $this->admin->id,
+            'no_of_students' => 12,
+            'standard' => '1',
+            'count' => 0,
+        ]);
+
+        try {
+            $controller->editStandardLink($this->school->id, $year->id, $this->link->id, $edit);
+            $this->fail('A non-teacher id should be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('class_teacher_id', $e->errors());
+        }
+
+        $this->assertNull($this->link->fresh()->class_teacher_id);
     }
 
     /**

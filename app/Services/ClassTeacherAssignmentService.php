@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Mail\TeacherInviteMail;
+use App\Models\Academics\Classes;
 use App\Models\School;
 use App\Models\Section;
+use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\TeacherInvite;
 use App\Models\User;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 /**
  * One assignment path for a class teacher.
@@ -185,6 +188,102 @@ class ClassTeacherAssignmentService
         }
 
         return SchoolTypePreset::forSchool($school)?->classNames() ?? [];
+    }
+
+    /**
+     * Save a class row only when the name is one this school already uses.
+     */
+    public function storeNamedClass(User $actor, int $standardId, string $name): Classes
+    {
+        $schoolId = (int) $actor->school_id;
+        $name = trim($name);
+        $allowed = $this->namesForSchool($schoolId);
+
+        if ($name === '' || ! in_array($name, $allowed, true)) {
+            throw ValidationException::withMessages([
+                'name' => 'Choose a class name this school already uses.',
+            ]);
+        }
+
+        $standard = Standard::query()
+            ->where('school_id', $schoolId)
+            ->whereKey($standardId)
+            ->first();
+
+        if (! $standard instanceof Standard) {
+            throw ValidationException::withMessages([
+                'standard_id' => 'Choose a level from this school.',
+            ]);
+        }
+
+        $position = array_search($name, $allowed, true);
+
+        return Classes::query()->create([
+            'name' => $name,
+            'standard_id' => $standard->id,
+            'school_id' => $schoolId,
+            'status' => '1',
+            'position' => $position === false ? 1 : $position + 1,
+        ]);
+    }
+
+    /**
+     * Stream-form class teacher. A blank id clears the stream column on edit.
+     * Any other id must be a teacher in this school, and the write goes through commit.
+     */
+    public function applyStreamTeacher(User|null $actor, StandardLink $standardLink, mixed $teacherId, bool $clearWhenBlank): void
+    {
+        if ($this->blankTeacherId($teacherId)) {
+            if ($clearWhenBlank) {
+                $this->clearStreamTeacher($standardLink);
+            }
+
+            return;
+        }
+
+        $teacher = $this->teacherInSchool($actor, (int) $standardLink->school_id, (int) $teacherId);
+        if (! $actor instanceof User || ! $teacher instanceof User) {
+            throw ValidationException::withMessages([
+                'class_teacher_id' => 'Choose a teacher from this school.',
+            ]);
+        }
+
+        $placed = $this->commit($actor, $standardLink, $teacher, true, false, 'stream_form');
+        if (! ($placed['success'] ?? false)) {
+            throw ValidationException::withMessages([
+                'class_teacher_id' => $placed['message'] ?? 'Could not assign the class teacher.',
+            ]);
+        }
+    }
+
+    /**
+     * Section class teacher from the stream form. Null clears it.
+     * A non-empty id that is not a teacher in the section's school is rejected.
+     */
+    public function applySectionTeacher(User|null $actor, Section $section, mixed $teacherId): void
+    {
+        if ($this->blankTeacherId($teacherId)) {
+            $section->class_teacher_id = null;
+            $section->save();
+
+            return;
+        }
+
+        $teacher = $this->teacherInSchool($actor, (int) $section->school_id, (int) $teacherId);
+        if (! $actor instanceof User || ! $teacher instanceof User) {
+            throw ValidationException::withMessages([
+                'section_class_teacher_id' => 'Choose a teacher from this school.',
+            ]);
+        }
+
+        $section->class_teacher_id = $teacher->id;
+        $section->save();
+    }
+
+    public function clearStreamTeacher(StandardLink $standardLink): void
+    {
+        $standardLink->class_teacher_id = null;
+        $standardLink->save();
     }
 
     public function tooManyCreates(User $actor): bool
@@ -400,6 +499,26 @@ class ClassTeacherAssignmentService
     private function isConfirmed(mixed $value): bool
     {
         return $value === true || $value === 1 || $value === '1';
+    }
+
+    private function blankTeacherId(mixed $teacherId): bool
+    {
+        return $teacherId === null || $teacherId === '' || (int) $teacherId === 0;
+    }
+
+    private function teacherInSchool(?User $actor, int $schoolId, int $teacherId): ?User
+    {
+        if (! $actor instanceof User || (int) $actor->school_id !== $schoolId || $teacherId <= 0) {
+            return null;
+        }
+
+        $teacher = User::query()
+            ->where('school_id', $schoolId)
+            ->whereKey($teacherId)
+            ->where('usergroup_id', 5)
+            ->first();
+
+        return $teacher instanceof User ? $teacher : null;
     }
 
     private function tooMany(string $key, int $max): bool

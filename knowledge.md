@@ -638,7 +638,8 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: October 26, 2026 — **Marks Phase 1 class teacher assignment OPEN (stacked on [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236))**
 
 - `ClassTeacherAssignmentService` is the one assignment path: pick an existing teacher, invite a new one, or replace the current one, with confirmation and a log. Invite links stay hashed, single-use, and 72 hours. Replacing a class teacher revokes a pending invite for that class. Email is the channel. WhatsApp staff invites stay off. `/admin/sections` and `/admin/class-setup` redirect to `/admin/classes`. Class names come from the school's own sections. Flow: `docs/product/class-teacher-flow.md`.
-- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3196 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Phase 1 adds 10 tests in `tests/Feature/Marks/ClassTeacherPhase1Test.php`.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3198 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Phase 1 has 12 tests in `tests/Feature/Marks/ClassTeacherPhase1Test.php`.
+- Class store uses the school's own names. The stream form rejects a teacher id that is not a teacher in the school instead of writing the column. Toshi add-teacher still stores a random password and writes the class teacher through the service.
 - **Status:** OPEN [#1238](https://github.com/KlassApp-Foundation/KlassApp/pull/1238), branch `cursor/marks-phase-1-class-teacher`, base `docs/marks-n8n-blueprint` ([#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)). Not merged. No deploy. No production access.
 
 ## Current Status: October 26, 2026 — **Marks n8n blueprint OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)**

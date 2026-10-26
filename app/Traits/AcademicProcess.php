@@ -16,8 +16,10 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\TempTimetable;
 use App\Models\User;
+use App\Services\ClassTeacherAssignmentService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Validation\ValidationException;
 
 /**
  *
@@ -219,35 +221,7 @@ trait AcademicProcess
 
             $standardLink->save();
 
-            $actor = auth()->user();
-            $nextTeacherId = (int) ($data->class_teacher_id ?? 0);
-            $nextTeacher = ($actor instanceof User && $nextTeacherId > 0)
-                ? User::query()
-                    ->where('school_id', $school_id)
-                    ->whereKey($nextTeacherId)
-                    ->where('usergroup_id', 5)
-                    ->first()
-                : null;
-            if ($actor instanceof User && $nextTeacher instanceof User) {
-                app(\App\Services\ClassTeacherAssignmentService::class)->commit(
-                    $actor,
-                    $standardLink,
-                    $nextTeacher,
-                    true,
-                    false,
-                    'stream_form',
-                );
-            } elseif ($nextTeacherId > 0) {
-                $standardLink->class_teacher_id = $nextTeacherId;
-                $standardLink->save();
-            }
-
-            if ($data->has('section_class_teacher_id')) {
-                $section = Section::where('school_id', $school_id)
-                    ->findOrFail($standardLink->section_id);
-                $section->class_teacher_id = $data->input('section_class_teacher_id');
-                $section->save();
-            }
+            $this->placeClassTeachersFromStreamForm($school_id, $standardLink, $data, false);
 
             $class_teacher = $standardLink->class_teacher_id
                 ? User::where([
@@ -278,6 +252,10 @@ trait AcademicProcess
             }
             \DB::commit();
             return $standardLink;
+        }
+        catch (ValidationException $e) {
+            \DB::rollBack();
+            throw $e;
         }
         catch(Exception $e)
         {
@@ -328,34 +306,7 @@ trait AcademicProcess
                 }
             }
 
-            $actor = auth()->user();
-            $nextTeacherId = (int) ($data->class_teacher_id ?? 0);
-            $nextTeacher = ($actor instanceof User && $nextTeacherId > 0)
-                ? User::query()
-                    ->where('school_id', $school_id)
-                    ->whereKey($nextTeacherId)
-                    ->where('usergroup_id', 5)
-                    ->first()
-                : null;
-            if ($actor instanceof User && $nextTeacher instanceof User) {
-                app(\App\Services\ClassTeacherAssignmentService::class)->commit(
-                    $actor,
-                    $standardLink,
-                    $nextTeacher,
-                    true,
-                    false,
-                    'stream_form',
-                );
-            } else {
-                $standardLink->class_teacher_id = $data->class_teacher_id;
-            }
-
-            if ($data->has('section_class_teacher_id')) {
-                $section = Section::where('school_id', $school_id)
-                    ->findOrFail($standardLink->section_id);
-                $section->class_teacher_id = $data->input('section_class_teacher_id');
-                $section->save();
-            }
+            $this->placeClassTeachersFromStreamForm($school_id, $standardLink, $data, true);
             $standardLink->no_of_students   = $data->no_of_students;
             if( ($data->standard == '11') || ($data->standard == '12') )
             {
@@ -416,11 +367,42 @@ trait AcademicProcess
             \DB::commit();
             return $standardLink;
         }
+        catch (ValidationException $e) {
+            \DB::rollBack();
+            throw $e;
+        }
         catch(Exception $e)
         {
             \DB::rollBack();
             //dd($e->getMessage());
         } 
+    }
+
+    /**
+     * Class-teacher columns are written only by ClassTeacherAssignmentService.
+     * A teacher id that is not a teacher in this school is a validation error.
+     */
+    private function placeClassTeachersFromStreamForm($schoolId, StandardLink $standardLink, $data, bool $clearWhenBlank): void
+    {
+        $assignments = app(ClassTeacherAssignmentService::class);
+        $actor = auth()->user();
+
+        $assignments->applyStreamTeacher(
+            $actor instanceof User ? $actor : null,
+            $standardLink,
+            $data->class_teacher_id ?? null,
+            $clearWhenBlank,
+        );
+
+        if ($data->has('section_class_teacher_id')) {
+            $section = Section::where('school_id', $schoolId)
+                ->findOrFail($standardLink->section_id);
+            $assignments->applySectionTeacher(
+                $actor instanceof User ? $actor : null,
+                $section,
+                $data->input('section_class_teacher_id'),
+            );
+        }
     }
 
     public function createAttendance($school_id , $academic_year_id , $admin , $data)

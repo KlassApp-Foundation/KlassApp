@@ -41,4 +41,6 @@ Email is the channel. `staff_invite` is not an approved WhatsApp template, so Wh
 
 The invite page sends `Referrer-Policy: no-referrer` and a matching meta tag. The raw token is not written to logs, exception reports, or analytics: `InviteTokenScrubber` redacts `/invite/teacher/{token}` and `/invite/co-admin/{token}` before those records are stored. Invite creation and acceptance are rate limited.
 
-The wizard's class-teacher file and Toshi's add-teacher path write the same two columns through this service. Those two paths do not send a second email: the file upload stays silent, and Toshi already sends its own set-password link.
+The wizard's class-teacher file and Toshi's add-teacher path write the same two columns through this service. Those two paths do not send a second email: the file upload stays silent, and Toshi already sends its own set-password link. Toshi's add-teacher path still stores a random password. That product decision is unchanged.
+
+`ClassesController@store` saves a class only when the name is one `namesForSchool()` already returns for that school, the same list as the create form. A name outside that list is a validation error. The stream form does not write a class-teacher column itself. An id that is not a teacher in the school, or an assignment with nobody signed in, is a validation error.
