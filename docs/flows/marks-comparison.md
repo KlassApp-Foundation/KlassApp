@@ -3,7 +3,7 @@ marks-flow.md is the source of truth; the blueprint is a simplified picture. Dif
 # Marks blueprint vs marks-flow spec
 
 Blueprint: [`marks.json`](marks.json), exported from the n8n workflow "KlassApp Blueprint: Marks" (41 nodes, inactive, read once on 2026-10-26 02:32 EAT).
-Spec: [`docs/product/marks-flow.md`](../product/marks-flow.md) in this pull request, starting from the version approved on 2026-10-25 (`main` at `ac36ca66`). Open PR #1234 still edits that file's phase table. Redo this comparison if #1234 merges or the blueprint changes.
+Spec: [`docs/product/marks-flow.md`](../product/marks-flow.md) in this pull request, starting from the version approved on 2026-10-25 (`main` at `ac36ca66`). [#1234](https://github.com/KlassApp-Foundation/KlassApp/pull/1234) is merged (`8d1f45a7`). Its audit-gap rows are in the phase table beside the Phase 6 send rules. Those rows do not change the 17 marks below. Redo this comparison if the blueprint changes.
 
 The blueprint file is unchanged. This pull request updates the spec for items 1, 10, and 16. Every other numbered difference is a simplification: the blueprint omits detail the spec already covers, and the spec stays as it is.
 
