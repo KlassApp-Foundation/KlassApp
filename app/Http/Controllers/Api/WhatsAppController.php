@@ -2051,11 +2051,9 @@ class WhatsAppController extends Controller
         }
 
         $sentAny = false;
-        $childCount = $children->count();
-        $index = 0;
+        $emptyLines = [];
 
         foreach ($children as $link) {
-            $index++;
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
@@ -2079,13 +2077,10 @@ class WhatsAppController extends Controller
             $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
-                $emptyMsg = "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.";
-                $whatsAppService->sendText(
-                    $phone,
-                    $emptyMsg,
-                    'grades_none',
-                    $user->user_id,
-                );
+                // Collected, not sent one by one: a parent gets one line per child
+                // in a single reply (Phase 6e).
+                $emptyLines[] = "• *{$studentName}* — {$className}: no results published yet.";
+
                 continue;
             }
 
@@ -2101,11 +2096,20 @@ class WhatsAppController extends Controller
             $sentAny = true;
         }
 
-        if (!$sentAny) {
+        if (! $sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📊 No results found for any of your children.\n\nResults will appear here once published by the school.",
-                'grades_none_all',
+                "📊 *No results yet for your children*\n\n" . implode("\n", $emptyLines)
+                    . "\n\nResults will appear here automatically once the school releases them.",
+                'grades_none',
+                $user->user_id,
+            );
+        } elseif ($emptyLines !== []) {
+            $whatsAppService->sendText(
+                $phone,
+                "📊 *Still to come*\n\n" . implode("\n", $emptyLines)
+                    . "\n\nThey appear here automatically once the school releases them.",
+                'grades_none',
                 $user->user_id,
             );
         }

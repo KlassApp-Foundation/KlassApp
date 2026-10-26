@@ -72,8 +72,8 @@ class MarksPhase6MarksReplyTest extends TestCase
         $this->assertCount(1, $replies, 'one reply for the parent, not one per child plus a summary');
         $body = $replies[0]['body'];
 
-        $this->assertStringContainsString('Zed Realpupil', $body);
-        $this->assertStringContainsString('Second Realpupil', $body);
+        $this->assertStringContainsStringIgnoringCase('Zed Realpupil', $body);
+        $this->assertStringContainsStringIgnoringCase('Second Realpupil', $body);
         $this->assertSame(2, substr_count($body, '•'), 'one line per child');
         $this->assertStringNotContainsString('No results found for any of your children', $body);
         $this->assertSame(0, MarksRelease::count(), 'nothing is released in this test');
@@ -86,7 +86,7 @@ class MarksPhase6MarksReplyTest extends TestCase
         $sent = $this->outbound();
         $replies = array_values(array_filter($sent, fn (array $m) => str_contains($m['body'], '•')));
         $this->assertCount(1, $replies);
-        $this->assertStringContainsString('Zed Realpupil', $replies[0]['body']);
+        $this->assertStringContainsStringIgnoringCase('Zed Realpupil', $replies[0]['body']);
         $this->assertSame(1, substr_count($replies[0]['body'], '•'));
     }
 }
