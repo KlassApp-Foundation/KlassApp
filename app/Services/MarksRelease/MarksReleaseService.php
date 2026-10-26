@@ -12,6 +12,7 @@ use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
@@ -25,6 +26,7 @@ use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Services\DemoSchoolCommsGuard;
+use App\Services\WhatsApp\TemplateGate;
 use App\Services\WhatsAppBusinessService;
 use App\Support\DemoStudentCode;
 use Carbon\CarbonImmutable;
@@ -163,7 +165,7 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
@@ -180,6 +182,7 @@ final class MarksReleaseService
             'status' => MarksRelease::STATUS_SCHEDULED,
             'created_by' => $user->id,
             'timezone' => $timezone,
+            'whatsapp_send' => $whatsappSend,
         ]);
 
         $properties = [
@@ -188,6 +191,7 @@ final class MarksReleaseService
             'standard_link_id' => $release->standard_link_id,
             'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
             'timezone' => $timezone,
+            'whatsapp_send' => $whatsappSend,
         ];
 
         activity('marks_release')->performedOn($release)->causedBy($user)
@@ -654,15 +658,31 @@ final class MarksReleaseService
             return;
         }
         if ((int) ($release->school?->is_demo ?? 0) !== 1) {
-            $skip('Not a demo school: release messages are sent only in the demo for now');
+            if ((bool) config('services.whatsapp.demo_only_recipients')) {
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
-            return;
-        }
-        $binding = $this->activeBindings((int) $release->school_id, $studentId)->firstWhere('id', $bindingId);
-        if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
-            $skip('The number stopped following this student before the message went out');
+                return;
+            }
+            // The same gates as the queue pass, re-read now: the switch can be
+            // turned off, or the template un-approved, between queueing and sending.
+            if (($blocked = $this->realSendBlocker($release)) !== null) {
+                $skip($blocked);
 
-            return;
+                return;
+            }
+            $binding = $this->parentRecipientById((int) $release->school_id, $studentId, $bindingId);
+            if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
+                $skip('The parent link was not approved, or the parent opted out, before the message went out');
+
+                return;
+            }
+        } else {
+            $binding = $this->activeBindings((int) $release->school_id, $studentId)->firstWhere('id', $bindingId);
+            if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
+                $skip('The number stopped following this student before the message went out');
+
+                return;
+            }
         }
         if (isset($this->alreadySent($release, ['sent'])[$key])) {
             $skip('Already sent to this number');
@@ -782,6 +802,7 @@ final class MarksReleaseService
         $messages = [];
         $repliesOn = (bool) config('services.whatsapp.replies_enabled');
         $isDemo = (int) ($school?->is_demo ?? 0) === 1;
+        $demoOnly = (bool) config('services.whatsapp.demo_only_recipients');
         $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
         $released = [];
         $jobs = [];
@@ -805,9 +826,17 @@ final class MarksReleaseService
 
                 continue;
             }
-            if (! $isDemo) {
-                // Task 9 sends only for demo schools; real schools are not messaged yet.
+            if (! $isDemo && $demoOnly) {
+                // Outermost policy first: while the demo-only guard is on, nothing
+                // can leave a real school, whatever the release says.
                 $skip('Not a demo school: release messages are sent only in the demo for now');
+
+                continue;
+            }
+            if (! $isDemo && ($blocked = $this->realSendBlocker($release)) !== null) {
+                // The switch and the Meta template belong to the real-school path:
+                // a demo follow-along send is not a school sending a template.
+                $skip($blocked);
 
                 continue;
             }
@@ -821,11 +850,28 @@ final class MarksReleaseService
 
             $released[] = ['code' => $code, 'class' => trim(($link->section?->name ?? '') . ' ' . ($link->stream ?? ''))];
 
-            $bindings = $this->activeBindings((int) $release->school_id, (int) $studentId);
-            if ($bindings->isEmpty()) {
-                $skip('No number is following this student');
+            if ($isDemo) {
+                $bindings = $this->activeBindings((int) $release->school_id, (int) $studentId);
+                if ($bindings->isEmpty()) {
+                    $skip('No number is following this student');
 
-                continue;
+                    continue;
+                }
+            } else {
+                // A recipient is an approved, linked parent of a student in this
+                // class and sitting, who has not opted out. Anything else is listed
+                // with its reason instead of being messaged.
+                [$bindings, $refused] = $this->parentRecipients((int) $release->school_id, (int) $studentId);
+                foreach ($refused as [$row, $reason]) {
+                    $skip($reason, $this->mask((string) $row->phone));
+                }
+                if ($bindings->isEmpty()) {
+                    if ($refused === []) {
+                        $skip('No approved, linked parent for this student');
+                    }
+
+                    continue;
+                }
             }
 
             foreach ($bindings as $binding) {
@@ -893,6 +939,67 @@ final class MarksReleaseService
 
             return 'failed: no response';
         }
+    }
+
+    /** Why a real-school release may not send right now, or null when it may. */
+    private function realSendBlocker(MarksRelease $release): ?string
+    {
+        if (! (bool) $release->whatsapp_send) {
+            return 'WhatsApp was switched off for this release';
+        }
+
+        return app(TemplateGate::class)->blocker(TemplateGate::RESULTS_RELEASED);
+    }
+
+    /**
+     * The approved, linked, opted-in parents of one student.
+     *
+     * @return array{0: Collection<int, WhatsAppUser>, 1: array<int, array{0: WhatsAppUser, 1: string}>}
+     */
+    private function parentRecipients(int $schoolId, int $studentId): array
+    {
+        $links = StudentParentLink::query()
+            ->where('school_id', $schoolId)
+            ->where('student_id', $studentId)
+            ->orderBy('id')
+            ->get();
+
+        $rows = WhatsAppUser::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('user_id', $links->pluck('parent_id')->map(fn ($id) => (int) $id)->all())
+            ->orderBy('id')
+            ->get(['id', 'phone', 'user_id', 'opted_in'])
+            ->keyBy(fn (WhatsAppUser $row) => (int) $row->user_id);
+
+        $eligible = collect();
+        $refused = [];
+        foreach ($links as $link) {
+            $row = $rows->get((int) $link->parent_id);
+            if ($row === null) {
+                continue; // no number on file: nothing to send to, and nothing to explain
+            }
+            if ((int) $link->status !== 1) {
+                $refused[] = [$row, 'This parent link is not approved'];
+
+                continue;
+            }
+            if (! (bool) $row->opted_in) {
+                $refused[] = [$row, 'This parent opted out of WhatsApp results'];
+
+                continue;
+            }
+            $eligible->push($row);
+        }
+
+        return [$eligible, $refused];
+    }
+
+    /** One parent by WhatsApp row id, still approved and still opted in. */
+    private function parentRecipientById(int $schoolId, int $studentId, int $whatsappUserId): ?WhatsAppUser
+    {
+        [$eligible] = $this->parentRecipients($schoolId, $studentId);
+
+        return $eligible->firstWhere('id', $whatsappUserId);
     }
 
     /** Numbers with an active BIND to this student (inside the TTL), in this school. */

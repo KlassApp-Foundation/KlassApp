@@ -28,6 +28,7 @@
             <dt>Scheduled</dt><dd>{{ $fmt($release->scheduled_at) }}</dd>
             <dt>Released</dt><dd>{{ $fmt($release->released_at) }}</dd>
             <dt>By</dt><dd>{{ $release->creator?->name ?? '–' }}</dd>
+            <dt>WhatsApp</dt><dd data-testid="release-whatsapp">{{ $release->whatsapp_send ? 'On' : 'Off' }}</dd>
             <dt>Sent</dt><dd data-testid="release-sent">{{ $release->result['sent'] ?? '–' }}</dd>
             <dt>Skipped</dt><dd data-testid="release-skipped">{{ $release->result['skipped'] ?? '–' }}</dd>
             @if(isset($release->result['queued']))

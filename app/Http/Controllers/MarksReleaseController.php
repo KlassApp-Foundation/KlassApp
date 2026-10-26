@@ -67,6 +67,8 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? '',
             'timezone' => $timezone,
+            'confirm_past' => $data['confirm_past'],
+            'whatsapp_send' => $data['whatsapp_send'],
         ], true));
     }
 
@@ -78,7 +80,7 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
@@ -87,7 +89,7 @@ class MarksReleaseController extends Controller
                 $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -126,7 +128,7 @@ class MarksReleaseController extends Controller
         return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
     }
 
-    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool} */
+    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -138,6 +140,7 @@ class MarksReleaseController extends Controller
             'scheduled_for' => ['nullable', 'required_if:when,schedule', 'date_format:Y-m-d\TH:i'],
             'timezone' => ['nullable', 'string', 'max:64'],
             'confirm_past' => ['nullable', 'boolean'],
+            'whatsapp_send' => ['nullable', 'boolean'],
         ]);
 
         return [
@@ -149,6 +152,7 @@ class MarksReleaseController extends Controller
             'scheduled_for' => $data['scheduled_for'] ?? null,
             'timezone' => $data['timezone'] ?? null,
             'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'whatsapp_send' => filter_var($data['whatsapp_send'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
     }
 
@@ -257,6 +261,7 @@ class MarksReleaseController extends Controller
             'when' => $request->input('when', 'now') === 'schedule' ? 'schedule' : 'now',
             'scheduled_for' => (string) $request->input('scheduled_for', ''),
             'timezone' => (string) $request->input('timezone', 'Africa/Kampala'),
+            'whatsapp_send' => $request->boolean('whatsapp_send'),
         ];
     }
 
