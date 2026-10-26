@@ -112,6 +112,8 @@ Approved by the product owner on 2026-10-25. These replace the open questions.
 10. **Division and rank.** Division thresholds and ranking stay as they are until a grading package exists.
 11. **Entry form.** The entry form shows marks already saved.
 12. **Return reason.** A returned subject shows the reason on the teacher's entry page. That reason is visible only to that teacher and to school admins.
+13. **Report composition.** Each exam type has a "show on report cards" switch and an optional weight on the exam-type settings page. A type switched off does not appear as a column on a report card and does not appear as a sitting on a whole-term sheet, but the totals still follow the contributes-to-total flags. When two or more contributing types carry weights, the term mark for a subject is the weighted mean of the marks the learner has; otherwise the latest mark wins. Weights only merge on a whole-term view, never inside one sitting.
+14. **Curriculum profile.** Each school picks a curriculum profile on the exam-type settings page. The profile decides which grading bands the school's own scale is seeded with: the current UNEB bands, or the legacy O-level bands kept for schools that still use them. Applying a profile re-seeds the school's scale. The bands live in one config file so a later grading package can take them over. The legacy bands need the owner's confirmation before any school relies on them.
 
 ## Phased build
 
@@ -257,6 +259,34 @@ flowchart TD
 ```
 
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
+
+### Phase 5 flow
+
+The school admin sets the report composition and the curriculum profile on the exam-type settings page. The composition decides which exam types a report card shows and how a whole-term view merges the marks of several sittings. The profile decides which grading bands the school's own scale is seeded with. Report cards and the combined sheet read both settings through the same results service, so a type the school hides disappears everywhere, and the grade letters stay the school's own.
+
+```mermaid
+flowchart TD
+  settings["Exam-type settings page"]
+  comp["Show on report cards and weight per exam type"]
+  profile["Curriculum profile: current UNEB bands or legacy O-level bands"]
+  apply["Apply profile: re-seed the school's grading bands"]
+  term["Whole-term sheet"]
+  card["Report card"]
+  merge{"Two or more weighted contributing types?"}
+  weighted["Term mark is the weighted mean"]
+  latest["Term mark is the latest mark"]
+  scale["Grade letters from the school's scale"]
+
+  settings --> comp
+  settings --> profile
+  profile --> apply
+  term --> merge
+  merge -->|yes| weighted
+  merge -->|no| latest
+  weighted --> scale
+  latest --> scale
+  card --> scale
+```
 
 ## WhatsApp results templates
 

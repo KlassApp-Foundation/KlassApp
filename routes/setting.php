@@ -16,6 +16,7 @@ Route::post('/settings/seodetailsettings', 'Setting\SeoDetailController@store');
 // Exam type preferences — per-school toggle for report card contribution
 Route::get('/settings/exam-types', 'Setting\ExamTypeController@index')->name('admin.settings.exam-types');
 Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('admin.settings.exam-types.update');
+Route::post('/settings/exam-types/profile', 'Setting\ExamTypeController@updateProfile')->name('admin.settings.exam-types.profile');
 
 // Integrations — MCP connector registry per school (PR3 Slack wave-1)
 Route::get('/settings/integrations', 'Setting\IntegrationsController@index')->name('admin.settings.integrations');

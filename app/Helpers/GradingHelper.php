@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Standard;
+use App\Models\School;
 use App\Models\Academics\SchoolGradingSystem;
 use Illuminate\Support\Facades\Cache;
 
@@ -54,6 +55,32 @@ class GradingHelper
     }
 
     /**
+     * The school's curriculum profile key, or the configured default when
+     * unset or unknown. See config/curricula.php.
+     */
+    public static function profileKeyForSchool(int $schoolId): string
+    {
+        $key = trim((string) (School::query()->find($schoolId)?->curriculum_profile ?? ''));
+        $profiles = config('curricula.profiles', []);
+
+        return ($key !== '' && isset($profiles[$key])) ? $key : (string) config('curricula.default_profile');
+    }
+
+    /**
+     * The band table a school's curriculum profile selects for a level type.
+     * Profiles reference keys inside config/grading_uganda.php; an unknown
+     * reference falls back to the level type itself (today's behaviour).
+     */
+    public static function scaleConfigForSchool(int $schoolId, string $levelType): array
+    {
+        $profile = config('curricula.profiles.' . self::profileKeyForSchool($schoolId), []);
+        $bandsKey = (string) ($profile['levels'][$levelType] ?? $levelType);
+        $bands = config('grading_uganda.' . $bandsKey, []);
+
+        return is_array($bands) ? $bands : [];
+    }
+
+    /**
      * A level whose configured bands have score bounds is graded from a mark.
      * A descriptive scale (no min and max) is not.
      */
@@ -77,7 +104,7 @@ class GradingHelper
      */
     public static function seedGradingForSchool(int $schoolId, string $levelType): void
     {
-        $scale = self::scaleConfig($levelType);
+        $scale = self::scaleConfigForSchool($schoolId, $levelType);
         if (empty($scale)) {
             return;
         }

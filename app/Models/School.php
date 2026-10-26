@@ -53,6 +53,8 @@ class School extends Model
         'name' , 'motto' , 'email' , 'phone' , 'address' , 'country_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'uneb_center_number', 'curriculum', 'school_category', 'status', 'registration_country', 'student_size',
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
         'exam_type_preferences',
+        'report_composition',
+        'curriculum_profile',
         'toshi_enabled',
         'toshi_mode',
         'onboarding_finished_at',
@@ -62,6 +64,7 @@ class School extends Model
 
     protected $casts = [
         'exam_type_preferences' => 'array',
+        'report_composition' => 'array',
         'toshi_mode' => \App\Enums\ToshiMode::class,
         'onboarding_finished_at' => 'datetime',
         'onboarding_skipped_steps' => 'array',
