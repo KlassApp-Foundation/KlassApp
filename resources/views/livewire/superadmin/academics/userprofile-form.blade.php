@@ -203,7 +203,7 @@ SPDX-License-Identifier: MIT
         <div class="mb-2">
         <label for="" class="tw-form-label">Registration Number <span class="text-xs text-gray-400 font-normal">(KLS ID — system-managed)</span><span class="text-red-500">*</span></label>
         </div>
-          <input name="registration_number" value="" type="text" pattern="KLS\d{7}" title="KlassApp Student ID format: KLS followed by 7 digits (e.g. KLS0010427)" placeholder="e.g. KLS0010427" class="tw-form-control w-full bg-gray-50" wire:model.live="registration_number" readonly>
+          <input name="registration_number" value="" type="text" pattern="KLS\d{7,16}" title="KlassApp Student ID format: KLS followed by 7 to 16 digits (e.g. KLS0010427)" placeholder="e.g. KLS0010427" class="tw-form-control w-full bg-gray-50" wire:model.live="registration_number" readonly>
           @error('registration_number')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>

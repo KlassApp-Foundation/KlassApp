@@ -39,8 +39,11 @@ trait RegisterUser
      * @param int $usergroup_id User group id for the student
      * @return \App\Models\User Newly created user
      */
+    public ?string $createUserFailure = null;
+
     public function CreateUser($data , $school_id , $academic_year_id , $path , $usergroup_id)
     {
+        $this->createUserFailure = null;
         \DB::beginTransaction();
         try
         {
@@ -64,7 +67,7 @@ trait RegisterUser
             // race-safe generator. A non-KLS admission number from an old file is kept
             // as the school's own student id instead of corrupting the KLS field.
             $providedRegistration = trim((string) ($data->registration_number ?? ''));
-            if ($providedRegistration !== '' && preg_match('/^KLS\d{7}$/i', $providedRegistration)) {
+            if ($providedRegistration !== '' && StudentIdGeneratorService::isValid($providedRegistration)) {
                 $klsNumber = $providedRegistration;
             } else {
                 $klsNumber = StudentIdGeneratorService::next((int) $school_id);
@@ -207,7 +210,7 @@ trait RegisterUser
         {
             \DB::rollBack();
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->createUserFailure = $e->getMessage();
         }
     }
 

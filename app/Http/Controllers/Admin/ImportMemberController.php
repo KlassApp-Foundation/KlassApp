@@ -48,6 +48,10 @@ class ImportMemberController extends Controller
         Excel::import(new UsersImport,$request->file('import_file'));
 
         $insertedcount = \Session::get('insertedcount');
+        $failures = \Session::get('import_row_failures', []);
+        if (! is_array($failures)) {
+            $failures = [];
+        }
         if($insertedcount > 0)
         {
           $message= trans('messages.import_success_msg',['module' => 'Student']);
@@ -67,6 +71,10 @@ class ImportMemberController extends Controller
           $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
         }
         \Session::forget('insertedcount');
+        \Session::forget('import_row_failures');
+        if ($failures !== []) {
+            $redirect = $redirect->with('import_row_failures', array_slice($failures, 0, 50));
+        }
 
         // ── Over plan limit is a NOTICE, never a block: every row above was saved. ──
         $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'students');

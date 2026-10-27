@@ -29,13 +29,16 @@ class UsersImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows)
     {
+        $insertedcount = 0;
+        $failures = [];
+        $rowNumber = 1;
+
         try {
             $school_id     = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            $insertedcount = 0;
-
             foreach ($rows as $row) {
+                $rowNumber++;
                 $row = collect($row)->filter(fn($value, $key) => is_string($key))->map(fn($v) => is_string($v) ? trim($v) : $v);
                 // $row = collect($row)->filter(function ($value, $key) {
                 //     return is_string($key); // removes numeric keys like 11 => 11
@@ -44,6 +47,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 // ✅ Minimal required fields
                 if (empty($row['firstname']) || empty($row['class'])) {
                     Log::warning('Skipping invalid row', $row->toArray());
+                    $failures[] = "Row {$rowNumber}: first name and class are required.";
                     continue;
                 }
 
@@ -188,7 +192,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $avatar = '';
 
-                $student = $this->CreateUser(
+                $studentUser = $this->CreateUser(
                     $student,
                     $school_id,
                     $academic_year->id ?? null,
@@ -196,18 +200,31 @@ class UsersImport implements ToCollection, WithHeadingRow
                     6
                 );
 
+                if ($studentUser === null) {
+                    $failures[] = "Row {$rowNumber}: ".($this->createUserFailure ?: 'This student was not saved.');
+                    continue;
+                }
+
                 if (!empty($row['parent_mobile_no'])) {
-                    $this->CreateParent($student->id, $parent, $school_id, 7);
+                    try {
+                        $this->CreateParent($studentUser->id, $parent, $school_id, 7);
+                    } catch (\Throwable $e) {
+                        Log::error('Import parent error: '.$e->getMessage());
+                        $failures[] = "Row {$rowNumber}: the student was saved. The parent was not. ".$e->getMessage();
+                    }
                 }
 
                 $insertedcount++;
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('import_row_failures', $failures);
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Import Error: ' . $e->getMessage());
-            dd($e->getMessage());
+            $failures[] = 'Import stopped: '.$e->getMessage();
+            Session::put('insertedcount', $insertedcount ?? 0);
+            Session::put('import_row_failures', $failures);
         }
     }
 }

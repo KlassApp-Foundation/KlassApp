@@ -6,7 +6,12 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Race-safe generator for KlassApp student IDs (KLS{school_id_3}{seq_4}).
+ * Race-safe generator for KlassApp student IDs.
+ *
+ * Historical IDs are KLS plus 7 digits (school id padded to 3, sequence padded
+ * to 4): school 1, sequence 1 is KLS0010001. Sequence 10000 no longer fits in
+ * 4 digits, so the digit run grows (KLS00110000) and stays valid. Stored IDs
+ * are never rewritten.
  *
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
@@ -22,10 +27,22 @@ use Illuminate\Support\Facades\DB;
 class StudentIdGeneratorService
 {
     /**
+     * KLS plus 7 to 16 digits. Seven digits is every ID issued before a school
+     * passed 9,999 students. Longer values are the same generator once the
+     * sequence needs another digit.
+     */
+    public const PATTERN = '/^KLS\d{7,16}$/i';
+
+    public static function isValid(?string $value): bool
+    {
+        return $value !== null && $value !== '' && preg_match(self::PATTERN, $value) === 1;
+    }
+
+    /**
      * Atomically reserve and return the next klassapp_student_id for a school.
      *
-     * Format: KLS{school_id_padded_to_3}{seq_padded_to_4}
-     * Example: school_id=1, seq=1 → "KLS0010001".
+     * Format: KLS{school_id_padded_to_3}{seq_padded_to_at_least_4}
+     * Example: school_id=1, seq=1 → "KLS0010001". seq=10000 → "KLS00110000".
      */
     public static function next(int $schoolId): string
     {
