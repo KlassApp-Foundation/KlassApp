@@ -1032,7 +1032,10 @@ class WhatsAppController extends Controller
         }
 
         // ── KlassApp Student ID: the school gets a link request ──
-        if (preg_match('/^KLS\d{7}$/i', $trimmed)) {
+        // KLS plus 7 to 16 digits: every ID the generator can issue (#1252),
+        // including the seven-digit IDs issued before a school passed 9,999.
+        // Same shape as StudentIdGeneratorService::PATTERN once #1252 merges.
+        if (preg_match('/^KLS\d{7,16}$/i', $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
                 ->with(['user.school', 'standardLink.standard', 'school'])
                 ->first();

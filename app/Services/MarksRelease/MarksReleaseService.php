@@ -41,9 +41,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * Release an exam's marks to parents on WhatsApp (Task 9 Tier 2).
  *
  * Who may release: a school admin (any class, or the whole school) always, and
- * a class teacher only for their own class and stream, and only when the school
- * has turned on teachers_may_release_marks. Nobody else. links() is the one
- * list both rules read.
+ * a class teacher for their own class — every stream of it when they are its
+ * class head — unless the school has turned teachers_may_release_marks off.
+ * Nobody else. links() is the one list both rules read.
  *
  * Who gets a message: ONLY numbers with an ACTIVE demo binding (BIND, inside
  * the TTL) to a student in scope, in a DEMO school. Every other recipient is
@@ -99,13 +99,22 @@ final class MarksReleaseService
         }
 
         if ((int) $user->usergroup_id === self::USERGROUP_TEACHER) {
-            // Off by default. With the setting off a class teacher has no
-            // releasable classes at all, so the screens answer 403.
+            // On unless the school turned it off: a class teacher could always
+            // release their own stream's marks, and that must not change for a
+            // school that never touched the switch.
             if (! SiteHelper::teachersMayReleaseMarks((int) $user->school_id)) {
                 return collect();
             }
 
-            return $query->where('class_teacher_id', $user->id)->orderBy('section_id')->orderBy('stream')->get();
+            // A class head releases the whole class, every stream. The head is
+            // recorded on one standards_link row, so take the sections they hold
+            // and return every one of that section's links for this year.
+            $sections = (clone $query)->where('class_teacher_id', $user->id)->pluck('section_id')->unique();
+            if ($sections->isEmpty()) {
+                return collect();
+            }
+
+            return $query->whereIn('section_id', $sections)->orderBy('section_id')->orderBy('stream')->get();
         }
 
         return collect();

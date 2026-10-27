@@ -248,29 +248,28 @@ class SiteHelper
 
     /**
      * Whether class teachers at this school may release marks for their own class.
-     * Off by default: a missing row, an empty value or anything other than '1'
-     * resolves to DISABLED, the same fail-safe default as the other switches.
-     * A school admin is never affected by this setting. Cached per school,
-     * forgotten on write.
+     *
+     * ON by default: before this switch existed a class teacher could release
+     * their stream's marks, and a school that has never touched the switch must
+     * not lose that. A row of '0' is the only thing that turns it off; any other
+     * stored value is read as on, and a missing row is on.
+     *
+     * A class teacher may release every stream of a class they are the class
+     * head of (see MarksReleaseService::links()). A school admin is never
+     * affected by this setting. Cached per school, forgotten on write.
      */
     public static function teachersMayReleaseMarks(int $school_id): bool
     {
-        $cacheKey = 'teachers_may_release_marks_'.$school_id;
-        $cached = Cache::get($cacheKey);
-
-        if (is_string($cached) && in_array($cached, ['0', '1'], true)) {
-            return $cached === '1';
-        }
-
         $value = SchoolDetail::query()
             ->where('school_id', $school_id)
             ->where('meta_key', self::TEACHERS_MAY_RELEASE_MARKS_KEY)
             ->value('meta_value');
 
-        $enabled = trim((string) $value) === '1';
-        Cache::put($cacheKey, $enabled ? '1' : '0', env('CACHE_TIME'));
+        if ($value === null || trim((string) $value) === '') {
+            return true; // never set: keep the behaviour the school already had
+        }
 
-        return $enabled;
+        return trim((string) $value) === '1';
     }
 
     public static function forgetTeachersMayReleaseMarks(int $school_id): void

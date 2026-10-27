@@ -100,7 +100,7 @@
 			   </div>
 			</div>
 		<div class="my-3 px-3">
-			<p class="text-xs text-gray-500">Off by default. When off, only a school admin releases marks. When on, a class teacher can release their own class once every subject in it is approved; they still cannot release another class or the whole school.</p>
+			<p class="text-xs text-gray-500">On by default, because a class teacher could already release their stream's marks before this switch existed. When on, a class teacher releases their own class — every stream of it when they are its class head — once every subject is approved. They cannot release another class or the whole school. Turn it off and only a school admin releases.</p>
 		</div>
 
 		<div class="tw-form-row mt-4 mb-16">
