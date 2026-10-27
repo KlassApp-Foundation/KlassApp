@@ -362,10 +362,17 @@ class MarksReleaseTest extends TestCase
         $teacher = $this->teacher();
         $this->releaseNow($teacher, null, 'teacher')->assertForbidden();
 
-        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        // Phase 6: a class head releases every stream of their class.
+        $streamB = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        $this->releaseNow($teacher, $streamB->id, 'teacher')->assertRedirect();
+        $this->assertSame(1, MarksRelease::count());
+
+        // Another class (another section) is still not theirs.
+        $section = \App\Models\Section::create(['school_id' => $teacher->school_id, 'name' => 'P.6', 'status' => 1]);
+        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $section->id, 'stream' => 'A', 'status' => 1]);
         $this->releaseNow($teacher, $otherLink->id, 'teacher')->assertForbidden();
 
-        $this->assertSame(0, MarksRelease::count());
+        $this->assertSame(1, MarksRelease::count());
     }
 
     public function test_task9_teacher_who_is_not_a_class_teacher_cannot_release(): void
