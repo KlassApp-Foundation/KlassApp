@@ -624,6 +624,17 @@ final class MarksReleaseService
             'result' => $result,
         ])->save();
 
+        // Verifiable records, step 1: the term record is written before anyone is
+        // messaged. A release that cannot write it did not happen.
+        try {
+            app(\App\Services\Records\SnapshotService::class)->capture($release);
+        } catch (\Throwable $e) {
+            Log::error('Record snapshot failed; the release was not sent', ['release_id' => $releaseId, 'error' => $e->getMessage()]);
+            $release->forceFill(['status' => 'failed'])->save();
+
+            return false;
+        }
+
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
             ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
             ->log('Marks released');
