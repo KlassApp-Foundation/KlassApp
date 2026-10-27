@@ -211,8 +211,8 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
       echo '<<<E2E-JSON>>>'.json_encode($out);
     `);
     expect(Array.isArray(students) && students.length === 5, 'five students must exist').toBeTruthy();
-    // StudentIdGeneratorService::PATTERN: legacy KLS plus 7-16 digits, or KLS-school-sequence.
-    for (const s of students) expect(s.kls, 'each student must have a KLS id').toMatch(/^KLS(?:\d{7,16}|-\d{1,10}-\d{1,10})$/i);
+    // StudentIdGeneratorService::PATTERN: KLS plus exactly 7 or 11 digits.
+    for (const s of students) expect(s.kls, 'each student must have a KLS id').toMatch(/^KLS(?:\d{7}|\d{11})$/i);
     const first = students[0];
     const studentLink = first.link;
     info('students: ' + students.map((s) => s.kls).join(','));

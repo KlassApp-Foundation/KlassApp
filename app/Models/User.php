@@ -87,7 +87,7 @@ class User extends Authenticatable implements HasMedia
      * Validate registration_number (dual store of KLS ID) format on save.
      * Must match StudentIdGeneratorService::PATTERN or be null/empty. This
      * mirrors the guard on StudentAcademic.klassapp_student_id since both
-     * fields hold the same value. Seven-digit IDs already stored stay valid.
+     * fields hold the same value. IDs of 7 or 11 digits stay valid.
      */
     protected static function booted(): void
     {
@@ -96,7 +96,7 @@ class User extends Authenticatable implements HasMedia
                 && $model->registration_number !== ''
                 && ! \App\Services\StudentIdGeneratorService::isValid($model->registration_number)) {
                 throw new \InvalidArgumentException(
-                    "registration_number must match format KLS plus 7 to 16 digits (e.g. KLS0010427) or KLS-school-sequence (e.g. KLS-7-1), got: {$model->registration_number}"
+                    "registration_number must match format KLS plus 7 or 11 digits (e.g. KLS0010005 or KLS00100010001), got: {$model->registration_number}"
                 );
             }
         });

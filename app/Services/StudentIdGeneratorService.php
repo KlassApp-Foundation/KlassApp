@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\DB;
 /**
  * Race-safe generator for KlassApp student IDs.
  *
- * Historical IDs are KLS plus 7 digits (school id padded to 3, sequence padded
- * to 4): school 1, sequence 1 is KLS0010001. Sequence 10000 no longer fits in
- * 4 digits, so the digit run grows (KLS00110000). That padded form collides
- * once a school id passes 999 (school 100 sequence 10001 and school 1001
- * sequence 1 are both KLS10010001). Stored IDs are never rewritten.
+ * School id up to 999 and sequence up to 9999 keep the historical form:
+ * KLS plus school padded to 3 digits plus sequence padded to 4 (KLS0010005).
+ * Anything past either limit uses KLS plus school padded to 5 digits plus
+ * sequence padded to 6 (KLS00100010001, KLS01001000001). The two lengths
+ * cannot collide. A school or sequence that does not fit in 5 and 6 digits
+ * is refused. Stored IDs are never rewritten.
  *
- * New IDs are KLS-{schoolId}-{sequence} (KLS-100-10001 and KLS-1001-1).
- * PATTERN accepts both. #1244 WhatsAppController still matches only
- * /^KLS\d{7}$/i until it adopts this constant.
+ * PATTERN accepts exactly 7 or 11 digits after KLS. #1244 WhatsAppController
+ * still matches only /^KLS\d{7}$/i until it adopts this constant.
  *
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
@@ -32,15 +32,15 @@ use Illuminate\Support\Facades\DB;
 class StudentIdGeneratorService
 {
     /**
-     * Legacy IDs are KLS plus 7 to 16 digits. New IDs are KLS-{schoolId}-{sequence}.
+     * KLS plus exactly 7 digits, or KLS plus exactly 11 digits. No hyphens.
      * #1244's WhatsApp matcher should adopt this constant after this PR merges.
      */
-    public const PATTERN = '/^KLS(?:\d{7,16}|-\d{1,10}-\d{1,10})$/i';
+    public const PATTERN = '/^KLS(?:\d{7}|\d{11})$/i';
 
     /**
      * HTML pattern attribute. Same shape as PATTERN, without the delimiters.
      */
-    public const HTML_PATTERN = 'KLS(?:\d{7,16}|-\d{1,10}-\d{1,10})';
+    public const HTML_PATTERN = 'KLS(?:\d{7}|\d{11})';
 
     public static function isValid(?string $value): bool
     {
@@ -50,9 +50,8 @@ class StudentIdGeneratorService
     /**
      * Atomically reserve and return the next klassapp_student_id for a school.
      *
-     * New format: KLS-{schoolId}-{sequence}
-     * Example: school 1, sequence 1 is KLS-1-1. School 100, sequence 10001
-     * is KLS-100-10001, which is not school 1001's KLS-1001-1.
+     * School 1, sequence 5 is KLS0010005. School 100, sequence 10001 is
+     * KLS00100010001, which is not school 1001's KLS01001000001.
      */
     public static function next(int $schoolId): string
     {
@@ -100,7 +99,23 @@ class StudentIdGeneratorService
 
     public static function format(int $schoolId, int $sequence): string
     {
-        return 'KLS-'.$schoolId.'-'.$sequence;
+        if ($schoolId < 0 || $sequence < 0) {
+            throw new \InvalidArgumentException(
+                "Student ID school and sequence must be zero or greater (school {$schoolId}, sequence {$sequence})."
+            );
+        }
+
+        if ($schoolId <= 999 && $sequence <= 9999) {
+            return sprintf('KLS%03d%04d', $schoolId, $sequence);
+        }
+
+        if ($schoolId > 99999 || $sequence > 999999) {
+            throw new \InvalidArgumentException(
+                "Student ID does not fit KLS plus 5 school digits and 6 sequence digits (school {$schoolId}, sequence {$sequence})."
+            );
+        }
+
+        return sprintf('KLS%05d%06d', $schoolId, $sequence);
     }
 
     private static function isTaken(string $id): bool
