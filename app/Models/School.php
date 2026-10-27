@@ -55,6 +55,7 @@ class School extends Model
         'exam_type_preferences',
         'report_composition',
         'curriculum_profile',
+        'legacy_o_level_bands',
         'toshi_enabled',
         'toshi_mode',
         'onboarding_finished_at',
@@ -65,6 +66,7 @@ class School extends Model
     protected $casts = [
         'exam_type_preferences' => 'array',
         'report_composition' => 'array',
+        'legacy_o_level_bands' => 'array',
         'toshi_mode' => \App\Enums\ToshiMode::class,
         'onboarding_finished_at' => 'datetime',
         'onboarding_skipped_steps' => 'array',

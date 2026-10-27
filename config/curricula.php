@@ -25,15 +25,18 @@ return [
         ],
 
         /*
-         * FLAGGED(product-decision): the old (pre-NLSC) O-level scale below
-         * follows the widely published legacy UCE letter bands (D1 best ...
-         * F9 fail), but the exact percentage boundaries still need the
-         * product owner's confirmation. Listed in the Phase 5 PR as a
-         * decision item; the A-level (UACE) scale did not change between
+         * The old (pre-NLSC) O-level scale is the SCHOOL'S OWN table.
+         *
+         * UNEB never published its legacy UCE cut-offs as one fixed national
+         * table, so the school owns the boundaries and edits them on the
+         * exam-type settings page. The D1-F9 letters and 1-9 points are fixed;
+         * the table in config/grading_uganda.php under 'o-level-legacy' is a
+         * labelled EXAMPLE shown until the school saves its own, not a
+         * national standard. The A-level (UACE) scale did not change between
          * curricula, so it reuses the current bands.
          */
         'legacy' => [
-            'label' => 'Old curricula (pre-NLSC) — bands need confirmation',
+            'label' => 'Old curricula (pre-NLSC) — this school\'s own O-level bands (example shown)',
             'levels' => [
                 'o-level' => 'o-level-legacy',
                 'a-level' => 'a-level',

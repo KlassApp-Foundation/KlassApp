@@ -69,11 +69,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | O-LEVEL LEGACY (S1-S4) — Old UCE Letter Bands (pre-NLSC)
+    | O-LEVEL LEGACY (S1-S4) — EXAMPLE of an old-UCE letter scale
     |--------------------------------------------------------------------------
-    | FLAGGED(product-decision): legacy UCE letter bands for schools still on
-    | the old curricula. Boundaries need the product owner's confirmation —
-    | referenced by the 'legacy' profile in config/curricula.php.
+    | This is an EXAMPLE, not a national standard. UNEB never published one
+    | fixed pre-NLSC cut-off table, so each school owns its boundaries and
+    | edits them on the exam-type settings page; the school's saved table is
+    | used when the 'legacy' curriculum profile is active. The D1-F9 letters
+    | and 1-9 points are fixed and are copied from this example; only the
+    | min/max marks move. A school that never saves its own table sees this
+    | one, labelled as an example.
     */
     'o-level-legacy' => [
         ['grade' => 'D1', 'points' => 1, 'min_score' => 75, 'max_score' => 100, 'remark' => 'Excellent'],
