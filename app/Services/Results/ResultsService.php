@@ -56,8 +56,10 @@ final class ResultsService
             ->with('examType')
             ->get();
 
-        $preferences = School::query()->find($query->schoolId)?->exam_type_preferences;
-        $typeMeta = $this->typeMeta($exams, $preferences);
+        $school = School::query()->find($query->schoolId);
+        $preferences = $school?->exam_type_preferences;
+        $composition = $school?->report_composition;
+        $typeMeta = $this->typeMeta($exams, $preferences, $composition);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
         $roster = $this->roster($query, (int) $term->academic_year_id, $exams);
@@ -69,16 +71,32 @@ final class ResultsService
                 array_filter($typeMeta, fn (array $type) => $type['contributes'])
             ));
 
+        // Weights only apply on the term report: a weighted mean across the
+        // contributing types that carry a weight; types without one keep the
+        // latest-mark behaviour for the merge below.
+        $weights = $query->examTypeId === null
+            ? array_filter(array_map(
+                fn (array $type) => $type['weight'],
+                array_filter($typeMeta, fn (array $type) => $type['contributes'] && $type['weight'] !== null)
+            ), fn ($weight) => $weight !== null)
+            : [];
+        if (count($weights) < 2) {
+            $weights = [];
+        }
+
         $subjects = $this->subjectRows(
             $query->schoolId,
             $this->subjectIdsFor($exams, $marks, $mainTypeIds),
             $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
         );
-        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects);
+        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights);
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
         foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
+            if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
+                continue;
+            }
             $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
             $bucketMarks = $marks->whereIn('exam_id', $plan['examIds'])->values();
             $bucketChosen = $this->choose($bucketExams, $bucketMarks);
@@ -145,7 +163,7 @@ final class ResultsService
      * @param array<int|string, mixed>|null $preferences
      * @return array<int, array{id: int, name: string, code: string, contributes: bool}>
      */
-    private function typeMeta(Collection $exams, ?array $preferences): array
+    private function typeMeta(Collection $exams, ?array $preferences, ?array $composition = null): array
     {
         $types = [];
         foreach ($exams as $exam) {
@@ -153,11 +171,16 @@ final class ResultsService
             if ($type === null) {
                 continue;
             }
+            $settings = $composition[(string) $type->id] ?? $composition[(int) $type->id] ?? [];
             $types[(int) $type->id] = [
                 'id' => (int) $type->id,
                 'name' => (string) $type->name,
                 'code' => (string) ($type->code ?? ''),
                 'contributes' => $this->examTypeContribution->contributes($type, $preferences),
+                'included' => ($settings['include'] ?? true) === false ? false : (bool) ($settings['include'] ?? true),
+                'weight' => isset($settings['weight']) && is_numeric($settings['weight']) && (float) $settings['weight'] > 0
+                    ? (float) $settings['weight']
+                    : null,
             ];
         }
         ksort($types);
@@ -514,7 +537,7 @@ final class ResultsService
      * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @return list<ResultStudent>
      */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects): array
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = []): array
     {
         $drafts = [];
         foreach ($roster as $entry) {
@@ -523,7 +546,7 @@ final class ResultsService
             $standardId = (int) $entry['standardId'];
             $cells = [];
             foreach ($subjects as $subject) {
-                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id']);
+                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
                 $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
             }
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
@@ -574,11 +597,17 @@ final class ResultsService
     }
 
     /**
+     * One merged mark per subject: the latest contributing mark, or a
+     * weighted mean when the school's report composition configures weights
+     * for at least two contributing types (types without marks are dropped
+     * from both numerator and denominator).
+     *
      * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
      * @param list<int> $typeIds
+     * @param array<int, float> $weights
      * @return array{mark: float, grade: string, scheduled: int, examId: int}|null
      */
-    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId): ?array
+    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights = []): ?array
     {
         $best = null;
         foreach ($typeIds as $typeId) {
@@ -588,7 +617,42 @@ final class ResultsService
             }
         }
 
-        return $best;
+        if ($weights === []) {
+            return $best;
+        }
+
+        if ($best === null) {
+            return null;
+        }
+
+        // Absent and descriptive (grade-only) results keep the latest
+        // behaviour; a weighted mean only makes sense for numeric marks.
+        if ($best['grade'] !== '') {
+            return $best;
+        }
+
+        $sum = 0.0;
+        $weightSum = 0.0;
+        foreach ($typeIds as $typeId) {
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $weight = (float) ($weights[$typeId] ?? 0);
+            if ($row === null || $weight <= 0 || $row['mark'] === null) {
+                continue;
+            }
+            $sum += (float) $row['mark'] * $weight;
+            $weightSum += $weight;
+        }
+
+        if ($weightSum <= 0) {
+            return $best;
+        }
+
+        return [
+            'mark' => round($sum / $weightSum, 2),
+            'grade' => '',
+            'scheduled' => $best['scheduled'],
+            'examId' => $best['examId'],
+        ];
     }
 
     /**

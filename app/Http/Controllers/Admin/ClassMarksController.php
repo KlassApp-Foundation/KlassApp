@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Section;
+use App\Models\StandardLink;
 use App\Models\User;
 use App\Services\Demo\LatestExamMarks;
 use App\Services\Results\DisplayedGrade;
@@ -37,6 +38,9 @@ class ClassMarksController extends Controller
         }
 
         $exam = $current ? LatestExamMarks::forSection($schoolId, (int) $current->id) : null;
+        $standardId = $current
+            ? (int) (StandardLink::query()->where('section_id', $current->id)->orderBy('id')->value('standard_id') ?? 0)
+            : 0;
         $students = collect();
         if ($exam) {
             $anchor = $exam['exams']->first();
@@ -55,7 +59,7 @@ class ClassMarksController extends Controller
                 ->whereIn('id', $bySubject->keys())
                 ->with('userprofile')
                 ->get()
-                ->map(function (User $student) use ($bySubject, $exam, $sheet, $grades, $schoolId) {
+                ->map(function (User $student) use ($bySubject, $exam, $sheet, $grades, $schoolId, $standardId) {
                     $marks = $bySubject->get($student->id)->keyBy('subject_id');
                     $result = $sheet?->student((int) $student->id);
                     $rows = [];
@@ -70,7 +74,11 @@ class ClassMarksController extends Controller
                                 : ($mark ? rtrim(rtrim(number_format((float) $mark->marks, 1, '.', ''), '0'), '.') : '–'),
                             'grade' => $fromSheet
                                 ? $grades->subject($schoolId, $result->standardId, $cell->mark, $mark?->grade)
-                                : ($mark ? (string) $mark->grade : ''),
+                                : ($mark
+                                    ? ($mark->marks !== null
+                                        ? $grades->subject($schoolId, $standardId, (float) $mark->marks, $mark->grade)
+                                        : (string) $mark->grade)
+                                    : ''),
                         ];
                     }
                     $first = trim((string) ($student->userprofile?->getRawOriginal('firstname') ?? '')) ?: (string) strtok((string) $student->name, ' ');
