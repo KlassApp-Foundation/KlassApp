@@ -42,7 +42,7 @@ class SchoolService
                 : \App\Enums\ToshiMode::configuredDefault();
         }
 
-        return School::create($validated);
+        return $this->keepCountryFieldsTogether(School::create($validated));
     }
 
     /**
@@ -55,6 +55,30 @@ class SchoolService
         $school = School::findOrFail($id);
         $validated = $this->validate($data, $id);
         $school->update($validated);
+
+        return $this->keepCountryFieldsTogether($school);
+    }
+
+    /**
+     * country_id and registration_country describe the same choice.
+     * A saved country id sets the name. A saved name with no id sets the id.
+     */
+    private function keepCountryFieldsTogether(School $school): School
+    {
+        $school->refresh();
+
+        if ($school->country_id) {
+            $name = Country::query()->find($school->country_id)?->name;
+            if (is_string($name) && $name !== '') {
+                OnboardingStepsService::persistCountry($school, $name);
+
+                return $school->fresh();
+            }
+        }
+
+        if (filled($school->registration_country)) {
+            OnboardingStepsService::persistCountry($school, (string) $school->registration_country);
+        }
 
         return $school->fresh();
     }
