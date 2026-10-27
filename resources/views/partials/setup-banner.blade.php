@@ -41,7 +41,13 @@
                 {{-- Green acts, blue informs: this is an action, so it takes the primary
                      treatment. It used to carry an inline --d-blue override, which made the
                      primary CTA blue while every other primary action in the app is green. --}}
-                <a href="{{ url('/admin/onboarding/wizard') }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
+                @php
+                    $setupSchool = auth()->user()?->school;
+                    $setupHref = $setupSchool
+                        ? (\App\Services\OnboardingEngine::setupDestination($setupSchool, auth()->id()) ?? url('/admin/onboarding/wizard'))
+                        : url('/admin/onboarding/wizard');
+                @endphp
+                <a href="{{ $setupHref }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
                     Set up manually
                 </a>
                 @toshiOnboarding

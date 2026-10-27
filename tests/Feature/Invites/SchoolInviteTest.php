@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\SchoolInvite;
 use App\Models\User;
 use App\Enums\ToshiMode;
+use App\Services\OnboardingEngine;
 use App\Services\SchoolInviteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -103,7 +104,7 @@ class SchoolInviteTest extends TestCase
             'password_confirmation' => 'StrongPass123!',
         ]);
 
-        $response->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup($response, 'adopter@school.test');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'adopter@school.test')->firstOrFail();
@@ -151,7 +152,10 @@ class SchoolInviteTest extends TestCase
             'password_confirmation' => 'StrongPass123!',
         ];
 
-        $this->post(route('school-invite.claim', $token), $payload)->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->post(route('school-invite.claim', $token), $payload),
+            'adopter@school.test',
+        );
         Auth::logout();
 
         $this->post(route('school-invite.claim', $token), $payload)
@@ -298,7 +302,7 @@ class SchoolInviteTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('onboarding.choice.store'), ['path' => 'wizard'])
-            ->assertRedirect(route('admin.onboarding.wizard'));
+            ->assertRedirect(OnboardingEngine::setupDestination($school->fresh(), $user->id));
 
         $this->assertSame(ToshiMode::Preview, $school->fresh()->toshi_mode);
     }
@@ -360,12 +364,15 @@ class SchoolInviteTest extends TestCase
 
         Auth::logout();
 
-        $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
-            'name' => 'Grace Nakato',
-            'phone' => '0701234567',
-            'password' => 'StrongPass123!',
-            'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
+                'name' => 'Grace Nakato',
+                'phone' => '0701234567',
+                'password' => 'StrongPass123!',
+                'password_confirmation' => 'StrongPass123!',
+            ]),
+            'ticked@school.test',
+        );
 
         $this->assertSame(1, (int) $isTestAtInsert);
         $this->assertSame(1, (int) School::where('email', 'ticked@school.test')->value('is_test'));
@@ -404,12 +411,15 @@ class SchoolInviteTest extends TestCase
 
         Auth::logout();
 
-        $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
-            'name' => 'Grace Nakato',
-            'phone' => '0701234567',
-            'password' => 'StrongPass123!',
-            'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->post(route('school-invite.claim', $this->queuedInviteToken()), [
+                'name' => 'Grace Nakato',
+                'phone' => '0701234567',
+                'password' => 'StrongPass123!',
+                'password_confirmation' => 'StrongPass123!',
+            ]),
+            'unticked@school.test',
+        );
 
         $this->assertTrue($isTestAtInsert === null || (int) $isTestAtInsert === 0);
         $this->assertSame(0, (int) School::where('email', 'unticked@school.test')->value('is_test'));
@@ -446,13 +456,16 @@ class SchoolInviteTest extends TestCase
             false,
         );
 
-        $this->post(route('school-invite.claim', $token), [
-            'name' => 'Grace Nakato',
-            'phone' => '0701234567',
-            'password' => 'StrongPass123!',
-            'password_confirmation' => 'StrongPass123!',
-            'is_test' => '1',
-        ])->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->post(route('school-invite.claim', $token), [
+                'name' => 'Grace Nakato',
+                'phone' => '0701234567',
+                'password' => 'StrongPass123!',
+                'password_confirmation' => 'StrongPass123!',
+                'is_test' => '1',
+            ]),
+            'tamper@school.test',
+        );
 
         $this->assertSame(0, (int) SchoolInvite::where('email', 'tamper@school.test')->value('is_test'));
         $this->assertSame(0, (int) School::where('email', 'tamper@school.test')->value('is_test'));
@@ -470,6 +483,16 @@ class SchoolInviteTest extends TestCase
         foreach ($matches[0] as $tag) {
             $this->assertDoesNotMatchRegularExpression('/(?:^|\s)checked(?:\s|=|>|$)/i', $tag);
         }
+    }
+
+    private function assertClaimLandsOnSetup(\Illuminate\Testing\TestResponse $response, string $email): void
+    {
+        $user = User::where('email', $email)->firstOrFail();
+        $destination = OnboardingEngine::setupDestination($user->school, $user->id);
+
+        $this->assertNotNull($destination);
+        $response->assertRedirect($destination);
+        $this->assertStringNotContainsString('schooldetails', $destination);
     }
 
     private function queuedInviteToken(): string

@@ -165,7 +165,7 @@ class GoogleAuthController extends Controller
 
         $school = Auth::user()->school;
         $paths = app(\App\Services\Toshi\ToshiOnboardingPath::class);
-        if ($school && ! $paths->openFor($school) && $school->onboarding_finished_at === null) {
+        if ($school && ! $paths->openFor($school) && \App\Services\OnboardingEngine::setupDestination($school, Auth::id()) !== null) {
             return $paths->sendToWizard($school);
         }
 
