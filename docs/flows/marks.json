@@ -1,0 +1,1653 @@
+{
+  "name": "KlassApp Blueprint: Marks",
+  "active": false,
+  "nodes": [
+    {
+      "id": "0ab01ade-5b00-4e12-a740-36722945638d",
+      "name": "Admin: assign class teacher",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        80
+      ],
+      "parameters": {
+        "formTitle": "Assign class teacher (BLUEPRINT – demo only)",
+        "formDescription": "Junior Demo School · Class P.4. Pick an existing teacher or invite a new one by email. You can replace the current class teacher. Nothing is sent – this is a design blueprint.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Class",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "P.4"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Assign how",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Pick an existing teacher"
+                  },
+                  {
+                    "option": "Invite a new teacher by email"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Existing teacher",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Demo Class Teacher"
+                  },
+                  {
+                    "option": "Demo English Teacher"
+                  },
+                  {
+                    "option": "Demo Mathematics Teacher"
+                  },
+                  {
+                    "option": "Demo Science Teacher"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "New teacher email",
+              "fieldType": "email",
+              "placeholder": "new.teacher@demo.invalid"
+            },
+            {
+              "fieldLabel": "Replace current class teacher",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Confirmation",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "I confirm this class teacher assignment"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "c574b590-67ca-4a69-8964-02587d5a5e3a",
+      "name": "Demo: sample school",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        288
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Synthetic sample data only. No real names, emails or phone numbers.\nconst streams = ['P.4 East', 'P.4 West'];\nconst students = [1, 2, 3, 4, 5, 6].map(function (n) {\n  const stream = n <= 3 ? streams[0] : streams[1];\n  const name = 'Demo Pupil ' + n;\n  return { id: 'STU-0' + n, name: name, stream: stream, label: name + ' (' + stream + ')' };\n});\nreturn [{ json: {\n  school: { id: 'SCH-DEMO-001', name: 'Junior Demo School', settings: { classTeacherCanRelease: false } },\n  class: { id: 'CLS-P4', name: 'P.4', streams: streams, currentClassTeacherId: 'TCH-01' },\n  sitting: { id: 'SIT-T3-EOT', name: 'Term 3 End of Term' },\n  teachers: [\n    { id: 'TCH-01', name: 'Demo Class Teacher', role: 'Class teacher', email: 'class.teacher@demo.invalid' },\n    { id: 'TCH-02', name: 'Demo English Teacher', role: 'Subject teacher', subject: 'English', email: 'english@demo.invalid' },\n    { id: 'TCH-03', name: 'Demo Mathematics Teacher', role: 'Subject teacher', subject: 'Mathematics', email: 'maths@demo.invalid' },\n    { id: 'TCH-04', name: 'Demo Science Teacher', role: 'Subject teacher', subject: 'Science', email: 'science@demo.invalid' }\n  ],\n  students: students,\n  parents: [\n    { id: 'PAR-01', name: 'Demo Parent A', linkedStudentIds: ['STU-01'], approved: true, whatsappOptIn: true, phone: null },\n    { id: 'PAR-02', name: 'Demo Parent B', linkedStudentIds: ['STU-04'], approved: true, whatsappOptIn: true, phone: null }\n  ],\n  subjects: [\n    { name: 'English', teacherId: 'TCH-02', state: 'Approved', marks: { 'STU-01': 72, 'STU-02': 65, 'STU-03': null, 'STU-04': 80, 'STU-05': 58, 'STU-06': 69 } },\n    { name: 'Mathematics', teacherId: 'TCH-03', state: 'Draft', marks: {} },\n    { name: 'Science', teacherId: 'TCH-04', state: 'Approved', marks: { 'STU-01': 61, 'STU-02': 74, 'STU-03': 55, 'STU-04': 0, 'STU-05': 67, 'STU-06': null } }\n  ],\n  note: 'null = mark not entered (stays blank, never zero). A real 0 is a real mark.'\n} }];"
+      }
+    },
+    {
+      "id": "308039c6-daea-4982-af0a-52182de04b3a",
+      "name": "Admin: record class teacher assignment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        288
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "assignment",
+              "type": "object",
+              "value": "={{ { classId: 'CLS-P4', mode: $('Admin: assign class teacher').first().json['Assign how'], teacher: $('Admin: assign class teacher').first().json['Assign how'] === 'Pick an existing teacher' ? $('Admin: assign class teacher').first().json['Existing teacher'] : null, invitedEmail: $('Admin: assign class teacher').first().json['Assign how'] === 'Invite a new teacher by email' ? $('Admin: assign class teacher').first().json['New teacher email'] : null, replacesTeacherId: $('Admin: assign class teacher').first().json['Replace current class teacher'] === 'Yes' ? $json.class.currentClassTeacherId : null, confirmedByPerson: true, service: 'single class-teacher assignment service' } }}"
+            },
+            {
+              "id": "a2",
+              "name": "log",
+              "type": "array",
+              "value": "={{ [{ at: $now.toISO(), schoolId: $json.school.id, actor: 'School admin', action: 'assign class teacher', classId: 'CLS-P4', replaced: $('Admin: assign class teacher').first().json['Replace current class teacher'] === 'Yes' }] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "70963b9b-a44d-41b0-b041-8b350d650d71",
+      "name": "Subject teacher: enter or upload marks",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        192
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Enter or upload marks · P.4 · Term 3 End of Term",
+        "formDescription": "={{ ($json.returnReason ? 'RETURNED by admin – reason: ' + $json.returnReason + ' (visible to you and admins only). ' : '') + ($json.marks ? 'Already saved for ' + $json.subject + ': ' + $json.marks.map(m => m.name + ' = ' + (m.mark === null ? '(blank)' : m.mark)).join(', ') : 'No marks saved yet.') + ' Leave a mark blank if missing – it stays blank, never zero.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Subject",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "English"
+                  },
+                  {
+                    "option": "Mathematics"
+                  },
+                  {
+                    "option": "Science"
+                  }
+                ]
+              },
+              "defaultValue": "={{ $json.subject || 'Mathematics' }}",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Demo Pupil 1 (P.4 East)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-01') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Demo Pupil 2 (P.4 East)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-02') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Demo Pupil 3 (P.4 East)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-03') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Demo Pupil 4 (P.4 West)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-04') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Demo Pupil 5 (P.4 West)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-05') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Demo Pupil 6 (P.4 West)",
+              "fieldType": "number",
+              "defaultValue": "={{ (($json.marks || []).find(m => m.studentId === 'STU-06') || {}).mark ?? '' }}"
+            },
+            {
+              "fieldLabel": "Or upload a marks file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".csv,.xlsx"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e3f4acce-b869-4c06-8209-c0a385c96a8b",
+      "name": "Subject teacher: save marks as draft",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        192
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1",
+              "name": "state",
+              "type": "string",
+              "value": "Draft"
+            },
+            {
+              "id": "d2",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $json.Subject }}"
+            },
+            {
+              "id": "d3",
+              "name": "marks",
+              "type": "array",
+              "value": "={{ $('Demo: sample school').first().json.students.map(s => ({ studentId: s.id, name: s.name, stream: s.stream, mark: ($json[s.label] === '' || $json[s.label] === null || $json[s.label] === undefined) ? null : Number($json[s.label]) })) }}"
+            },
+            {
+              "id": "d4",
+              "name": "markSource",
+              "type": "string",
+              "value": "={{ Object.keys($binary || {}).length > 0 ? 'Uploaded file (to be parsed)' : 'Typed in form' }}"
+            },
+            {
+              "id": "d5",
+              "name": "schoolId",
+              "type": "string",
+              "value": "={{ $('Demo: sample school').first().json.school.id }}"
+            },
+            {
+              "id": "d6",
+              "name": "note",
+              "type": "string",
+              "value": "A save is not a submit."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "80127e49-e20d-4e6d-bd3f-433b05ae3bc8",
+      "name": "Subject teacher: submit subject",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        192
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "=Submit {{ $json.subject }} for review",
+        "formDescription": "={{ 'Current draft: ' + $json.marks.map(m => m.name + ' = ' + (m.mark === null ? '(blank)' : m.mark)).join(', ') + '. Submitting sends it to the school admin. Parents are NOT notified.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Submit",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "I submit this subject for admin review"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7d397457-ba47-48f2-afeb-434d02870d33",
+      "name": "Subject teacher: mark subject submitted",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        192
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "state",
+              "type": "string",
+              "value": "Submitted"
+            },
+            {
+              "id": "s2",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Subject teacher: save marks as draft').last().json.subject }}"
+            },
+            {
+              "id": "s3",
+              "name": "marks",
+              "type": "array",
+              "value": "={{ $('Subject teacher: save marks as draft').last().json.marks }}"
+            },
+            {
+              "id": "s4",
+              "name": "parentMessage",
+              "type": "string",
+              "value": "None – a submit does not notify parents."
+            },
+            {
+              "id": "s5",
+              "name": "submittedAt",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e347335d-ff4d-4202-bd81-88d9c3ab0f08",
+      "name": "Admin: review subject",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        224
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "=Review {{ $json.subject }} · P.4 · Term 3 End of Term",
+        "formDescription": "={{ ($json.reasonRequiredMessage ? $json.reasonRequiredMessage + ' ' : '') + 'Marks: ' + $json.marks.map(m => m.name + ' (' + m.stream + ') = ' + (m.mark === null ? '(blank)' : m.mark)).join(', ') }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Decision",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Return"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reason",
+              "fieldType": "textarea",
+              "placeholder": "Required when returning"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2c87fd76-fc4d-41bf-ae95-685b3d5b09fc",
+      "name": "Admin: route review decision",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        128
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "renameOutput": true,
+              "outputKey": "Approve",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Decision }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Approve"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "Return with reason",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Decision }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Return"
+                  },
+                  {
+                    "leftValue": "={{ ($json.Reason || '').trim() }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "rightValue": ""
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Return without reason"
+        }
+      }
+    },
+    {
+      "id": "5bf581cf-27e0-42f0-8979-3c04cbab0a78",
+      "name": "Admin: approve subject",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        432
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "state",
+              "type": "string",
+              "value": "Approved"
+            },
+            {
+              "id": "p2",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.subject }}"
+            },
+            {
+              "id": "p3",
+              "name": "marks",
+              "type": "array",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.marks }}"
+            },
+            {
+              "id": "p4",
+              "name": "subjectStatuses",
+              "type": "array",
+              "value": "={{ $('Demo: sample school').first().json.subjects.map(s => ({ subject: s.name, state: s.name === $('Subject teacher: mark subject submitted').last().json.subject ? 'Approved' : s.state })) }}"
+            },
+            {
+              "id": "p5",
+              "name": "note",
+              "type": "string",
+              "value": "An approval is not a release."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a5c1dd0a-d095-4e07-a69f-7b1765e4f39c",
+      "name": "System: check all subjects approved",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        432
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.subjectStatuses.every(s => s.state === 'Approved') }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "f19f947b-deb4-4346-87aa-c6d34f4c4451",
+      "name": "Admin and class teacher: view combined mark sheet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2304,
+        336
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m1",
+              "name": "sitting",
+              "type": "string",
+              "value": "Term 3 End of Term"
+            },
+            {
+              "id": "m2",
+              "name": "class",
+              "type": "string",
+              "value": "P.4"
+            },
+            {
+              "id": "m3",
+              "name": "releaseStatus",
+              "type": "string",
+              "value": "Not released"
+            },
+            {
+              "id": "m4",
+              "name": "visibleTo",
+              "type": "array",
+              "value": "={{ ['School admin', 'Class teacher'] }}"
+            },
+            {
+              "id": "m5",
+              "name": "streamFilterOptions",
+              "type": "array",
+              "value": "={{ ['All streams', 'P.4 East', 'P.4 West'] }}"
+            },
+            {
+              "id": "m6",
+              "name": "streamFilter",
+              "type": "string",
+              "value": "All streams"
+            },
+            {
+              "id": "m7",
+              "name": "rows",
+              "type": "array",
+              "value": "={{ $('Demo: sample school').first().json.students.map(st => Object.assign({ studentId: st.id, student: st.name, stream: st.stream }, Object.fromEntries($('Demo: sample school').first().json.subjects.map(sub => [sub.name, sub.name === $json.subject ? ((($json.marks || []).find(m => m.studentId === st.id) || {}).mark ?? null) : (sub.marks[st.id] ?? null)])))) }}"
+            },
+            {
+              "id": "m8",
+              "name": "subjectStatuses",
+              "type": "array",
+              "value": "={{ $json.subjectStatuses }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0613ba07-1edb-42df-86f2-be7e3bbcfbf9",
+      "name": "Admin: release sitting",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2528,
+        336
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Release Term 3 End of Term · P.4",
+        "formDescription": "={{ 'Status: ' + $json.releaseStatus + '. All ' + $json.subjectStatuses.length + ' subjects approved. ' + $json.rows.length + ' students across P.4 East and P.4 West. Releasing makes results visible to linked parents.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Releasing as",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "School admin"
+                  },
+                  {
+                    "option": "Class teacher"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Confirm release",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "I confirm releasing Term 3 End of Term results for P.4"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Send results on WhatsApp",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "defaultValue": "No",
+              "requiredField": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b4fa3f68-2b14-4d90-89c2-a1080c277c29",
+      "name": "System: check who may release",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2752,
+        320
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "renameOutput": true,
+              "outputKey": "School admin",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Releasing as'] }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "School admin"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "Class teacher (school setting on)",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Releasing as'] }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Class teacher"
+                  },
+                  {
+                    "leftValue": "={{ $('Demo: sample school').first().json.school.settings.classTeacherCanRelease }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "rightValue": ""
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Not allowed"
+        }
+      }
+    },
+    {
+      "id": "8149cfad-dec7-4d28-9e4c-0aa5ccfb0dee",
+      "name": "System: record sitting released",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2384,
+        864
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l1",
+              "name": "state",
+              "type": "string",
+              "value": "Released"
+            },
+            {
+              "id": "l2",
+              "name": "sitting",
+              "type": "string",
+              "value": "Term 3 End of Term"
+            },
+            {
+              "id": "l3",
+              "name": "releasedBy",
+              "type": "string",
+              "value": "={{ $json['Releasing as'] }}"
+            },
+            {
+              "id": "l4",
+              "name": "releasedAt",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "l5",
+              "name": "sendWhatsApp",
+              "type": "boolean",
+              "value": "={{ $json['Send results on WhatsApp'] === 'Yes' }}"
+            },
+            {
+              "id": "l6",
+              "name": "whatsappRecipients",
+              "type": "array",
+              "value": "={{ $('Demo: sample school').first().json.parents.filter(p => p.approved && p.linkedStudentIds.length > 0).map(p => p.name) }}"
+            },
+            {
+              "id": "l7",
+              "name": "schoolId",
+              "type": "string",
+              "value": "={{ $('Demo: sample school').first().json.school.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aeb1edc0-e916-4fd6-9e55-dcb89c477e02",
+      "name": "System: refuse release (not permitted)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2496,
+        176
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "360d86db-fa06-4fb4-95cd-540c60f433c2",
+      "name": "System: block release until all approved",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2304,
+        528
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "416889b2-6323-4867-a0b8-21da29551c8b",
+      "name": "Admin: return subject with reason",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1968,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "x1",
+              "name": "state",
+              "type": "string",
+              "value": "Returned"
+            },
+            {
+              "id": "x2",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.subject }}"
+            },
+            {
+              "id": "x3",
+              "name": "marks",
+              "type": "array",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.marks }}"
+            },
+            {
+              "id": "x4",
+              "name": "returnReason",
+              "type": "string",
+              "value": "={{ $json.Reason.trim() }}"
+            },
+            {
+              "id": "x5",
+              "name": "reasonVisibleTo",
+              "type": "array",
+              "value": "={{ ['Subject teacher who owns this subject', 'School admin'] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "11f7fed3-fe24-4479-b2a4-7240c7f2b17f",
+      "name": "Admin: ask for return reason",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        224
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "state",
+              "type": "string",
+              "value": "Submitted"
+            },
+            {
+              "id": "r2",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.subject }}"
+            },
+            {
+              "id": "r3",
+              "name": "marks",
+              "type": "array",
+              "value": "={{ $('Subject teacher: mark subject submitted').last().json.marks }}"
+            },
+            {
+              "id": "r4",
+              "name": "reasonRequiredMessage",
+              "type": "string",
+              "value": "A reason is required to return a subject."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "1c22cbd7-1946-4210-bd55-5198287c5057",
+      "name": "Parent: portal shows results",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        576
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7faca4d5-6fbd-4633-947a-e78f9a32cb12",
+      "name": "System: collect release outcomes",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3280,
+        928
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 4
+      }
+    },
+    {
+      "id": "f2ad6439-b47c-4d49-a12d-4ca35cdd6a91",
+      "name": "Parent: report card available",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        768
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "bf47ad10-508f-4842-8602-6361cc30ca7e",
+      "name": "Toshi: can answer about these results",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        960
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "96682b74-a2da-44bc-91c7-75e71f4473b6",
+      "name": "System: check WhatsApp switch",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        1248
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.sendWhatsApp }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "ac361eb2-0ba7-450d-9740-1683c23ff6d1",
+      "name": "WhatsApp: send results_released template to approved, linked parents",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2832,
+        1152
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "480236fe-9052-4d5e-b42a-04acbc1bf3f7",
+      "name": "Parent: replies GRADES or taps See results, receives the marks",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        1152
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "0774c71a-8c8a-4a3c-96e5-6683139d2643",
+      "name": "WhatsApp: no message (switch off)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        1344
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e10f4095-8977-42e4-9cca-db2818fab9cb",
+      "name": "Note: one subject per run",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        336
+      ],
+      "parameters": {
+        "content": "### One subject per run (blueprint)\nIn KlassApp each subject has its own submission; release waits until all subjects in the sitting are approved.",
+        "color": 5,
+        "width": 384,
+        "height": 224
+      }
+    },
+    {
+      "id": "1e31113d-7c33-45a3-bb12-f9231397dad2",
+      "name": "Note: access rules",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        1344
+      ],
+      "parameters": {
+        "content": "## Access rules\nThis blueprint only describes who may see and do what. KlassApp enforces these rules by role and by school.",
+        "color": 3,
+        "width": 380,
+        "height": 180
+      }
+    },
+    {
+      "id": "388e3e97-3241-4e02-8969-58009ec7ce3e",
+      "name": "Note: rules",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        1088
+      ],
+      "parameters": {
+        "content": "## Rules (apply everywhere)\n- A **save** is not a **submit**.\n- A **submit** is not an **approval**.\n- An **approval** is not a **release**.\n- Nobody outside staff sees marks before release.\n- Every query is scoped to **one school**.\n- Every change is confirmed by a person.\n\nStates: Draft -> Submitted -> (Returned -> Draft) -> Approved -> Released\n\nBLUEPRINT ONLY: no credentials, no real messages, no external calls. Never activate.",
+        "color": 3,
+        "width": 520,
+        "height": 420
+      }
+    },
+    {
+      "id": "70c90788-aec0-4f38-bde2-dc27d04296f5",
+      "name": "Note: school admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        1600
+      ],
+      "parameters": {
+        "content": "## School admin\n- Assigns the class teacher (only place to do it).\n- Reviews each submitted subject: Approve, or Return with a reason.\n- Sees the combined mark sheet marked \"Not released\".\n- Releases the sitting once every subject is approved, and chooses whether to send on WhatsApp.",
+        "color": 4,
+        "width": 360,
+        "height": 260
+      }
+    },
+    {
+      "id": "d109e778-a513-4e35-9771-d75df9e38719",
+      "name": "Note: class teacher",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        1952
+      ],
+      "parameters": {
+        "content": "## Class teacher\n- Is assigned by the admin.\n- Sees the combined mark sheet for their class (stream column + filter), marked \"Not released\".\n- Can release their own class only if the school setting allows it (off by default).",
+        "color": 4,
+        "width": 360,
+        "height": 240
+      }
+    },
+    {
+      "id": "b354840a-4613-4ee8-916a-489aeb25fb6a",
+      "name": "Note: subject teacher",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        2288
+      ],
+      "parameters": {
+        "content": "## Subject teacher\n- Enters one mark per student for one subject, or uploads a file.\n- Sees marks already saved; blanks stay blank, never zero.\n- Submits the subject (no message to parents).\n- If returned, sees the admin's reason on the entry page and corrects.",
+        "color": 4,
+        "width": 360,
+        "height": 240
+      }
+    },
+    {
+      "id": "c960a485-d74a-4cad-a629-a736244d2bf8",
+      "name": "Note: parent",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        2624
+      ],
+      "parameters": {
+        "content": "## Parent\n- Sees nothing before release.\n- After release: results in the portal, report card available, can ask Toshi.\n- If WhatsApp is on and the parent is approved and linked: gets the results_released template and can reply GRADES or tap See results.\n- Can reply GRADES any time after release, with or without the WhatsApp message.\n\n**Approved, linked parent:** a parent who linked their own WhatsApp to the child (by KlassApp number or by form), and whose link request the school admin or class teacher approved.",
+        "color": 4,
+        "width": 380,
+        "height": 340
+      }
+    },
+    {
+      "id": "30ca2b9e-ecca-404f-85a2-c3202c431a3d",
+      "name": "Note: not in this version",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        2960
+      ],
+      "parameters": {
+        "content": "## Not in this version\n- Nursery ratings\n- Google Sheets import\n- Whole-term sheet\n- Release override",
+        "color": 7,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "id": "c7f92028-30e5-4576-ab67-38bab3e22ad0",
+      "name": "Note: assignment",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        272,
+        192
+      ],
+      "parameters": {
+        "content": "### Assigning a class teacher\nThis is the **only** place to assign, through one service. It asks for confirmation before saving. Replacing a current class teacher is logged.",
+        "color": 5,
+        "width": 384,
+        "height": 224
+      }
+    },
+    {
+      "id": "d8d7ecda-87c4-4384-b74e-60a4ce125c29",
+      "name": "Note: portal",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3024,
+        480
+      ],
+      "parameters": {
+        "content": "### Portal\nAfter release, linked parents see this sitting's results in the parent portal.",
+        "color": 6,
+        "width": 160,
+        "height": 224
+      }
+    },
+    {
+      "id": "9008f377-dd36-42c1-920e-9eb4b48e865e",
+      "name": "Note: report card",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3024,
+        672
+      ],
+      "parameters": {
+        "content": "### Report card\nThe report card for Term 3 End of Term becomes available to linked parents.",
+        "color": 6,
+        "width": 160,
+        "height": 224
+      }
+    },
+    {
+      "id": "76bfecb3-fdcb-4e58-945d-220fef869cee",
+      "name": "Note: Toshi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3024,
+        864
+      ],
+      "parameters": {
+        "content": "### Toshi\nToshi is KlassApp's AI assistant; after release it can answer staff, parents and students about these results, within their role.",
+        "color": 6,
+        "width": 160,
+        "height": 224
+      }
+    },
+    {
+      "id": "8d9ed88a-f66a-4337-9b0d-764f0143b151",
+      "name": "Note: WhatsApp template",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        1056
+      ],
+      "parameters": {
+        "content": "### WhatsApp template: results_released\nOnly if \"Send results on WhatsApp\" = Yes. Sent only to approved, linked parents.\n\"Hello {{1}}, {{2}} has released the {{4}} results for {{3}}. Tap See results or reply GRADES to view them here.\"\n- {{1}} parent's name\n- {{2}} school name\n- {{3}} student's name\n- {{4}} sitting (for example \"Term 3 End of Term\")",
+        "color": 6,
+        "width": 160,
+        "height": 224
+      }
+    },
+    {
+      "id": "74f7c956-efe6-47eb-984d-3e2f1fc7795a",
+      "name": "Note: GRADES reply",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3024,
+        1056
+      ],
+      "parameters": {
+        "content": "### GRADES\nParent replies GRADES or taps See results and receives the marks in the chat. Works any time after release, with or without the WhatsApp message. Before release, GRADES returns nothing.",
+        "color": 6,
+        "width": 160,
+        "height": 224
+      }
+    }
+  ],
+  "connections": {
+    "Admin: assign class teacher": {
+      "main": [
+        [
+          {
+            "node": "Demo: sample school",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demo: sample school": {
+      "main": [
+        [
+          {
+            "node": "Admin: record class teacher assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: record class teacher assignment": {
+      "main": [
+        [
+          {
+            "node": "Subject teacher: enter or upload marks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subject teacher: enter or upload marks": {
+      "main": [
+        [
+          {
+            "node": "Subject teacher: save marks as draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subject teacher: save marks as draft": {
+      "main": [
+        [
+          {
+            "node": "Subject teacher: submit subject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subject teacher: submit subject": {
+      "main": [
+        [
+          {
+            "node": "Subject teacher: mark subject submitted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subject teacher: mark subject submitted": {
+      "main": [
+        [
+          {
+            "node": "Admin: review subject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: review subject": {
+      "main": [
+        [
+          {
+            "node": "Admin: route review decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: route review decision": {
+      "main": [
+        [
+          {
+            "node": "Admin: approve subject",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Admin: return subject with reason",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Admin: ask for return reason",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: approve subject": {
+      "main": [
+        [
+          {
+            "node": "System: check all subjects approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System: check all subjects approved": {
+      "main": [
+        [
+          {
+            "node": "Admin and class teacher: view combined mark sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "System: block release until all approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin and class teacher: view combined mark sheet": {
+      "main": [
+        [
+          {
+            "node": "Admin: release sitting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: release sitting": {
+      "main": [
+        [
+          {
+            "node": "System: check who may release",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System: check who may release": {
+      "main": [
+        [
+          {
+            "node": "System: record sitting released",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "System: record sitting released",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "System: refuse release (not permitted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System: record sitting released": {
+      "main": [
+        [
+          {
+            "node": "Parent: portal shows results",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parent: report card available",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Toshi: can answer about these results",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "System: check WhatsApp switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parent: replies GRADES or taps See results, receives the marks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: return subject with reason": {
+      "main": [
+        [
+          {
+            "node": "Subject teacher: enter or upload marks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: ask for return reason": {
+      "main": [
+        [
+          {
+            "node": "Admin: review subject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parent: portal shows results": {
+      "main": [
+        [
+          {
+            "node": "System: collect release outcomes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parent: report card available": {
+      "main": [
+        [
+          {
+            "node": "System: collect release outcomes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Toshi: can answer about these results": {
+      "main": [
+        [
+          {
+            "node": "System: collect release outcomes",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "System: check WhatsApp switch": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp: send results_released template to approved, linked parents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp: no message (switch off)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp: send results_released template to approved, linked parents": {
+      "main": [
+        [
+          {
+            "node": "Parent: replies GRADES or taps See results, receives the marks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parent: replies GRADES or taps See results, receives the marks": {
+      "main": [
+        [
+          {
+            "node": "System: collect release outcomes",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "WhatsApp: no message (switch off)": {
+      "main": [
+        [
+          {
+            "node": "System: collect release outcomes",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "nodeGroups": [
+    {
+      "id": "a818f746-d0ca-4f72-b710-69cc7f3acc15",
+      "name": "Assign class teacher",
+      "nodeNames": [
+        "Demo: sample school",
+        "Admin: record class teacher assignment",
+        "Note: assignment"
+      ],
+      "description": "Loads the demo school, then records who now leads P.4 and logs it. Admin-only, confirmed, one service."
+    },
+    {
+      "id": "2b3cfa77-4099-4f54-9401-48738b0b0071",
+      "name": "Draft and submit marks",
+      "nodeNames": [
+        "Subject teacher: enter or upload marks",
+        "Subject teacher: save marks as draft",
+        "Subject teacher: submit subject",
+        "Subject teacher: mark subject submitted"
+      ],
+      "description": "Subject teacher fills one subject (blanks stay blank), saves as Draft, then submits. Returned subjects come back here."
+    },
+    {
+      "id": "76eefdfe-4302-477e-9f35-90225d51639a",
+      "name": "Review each subject",
+      "nodeNames": [
+        "Admin: review subject",
+        "Admin: route review decision",
+        "Admin: ask for return reason"
+      ],
+      "description": "Admin approves or returns the submitted subject; returning without a reason is sent back to the admin."
+    },
+    {
+      "id": "e88c62a0-0417-487f-90f0-81bc339678d7",
+      "name": "Gate and release sitting",
+      "nodeNames": [
+        "Admin: approve subject",
+        "System: check all subjects approved",
+        "System: block release until all approved",
+        "Admin and class teacher: view combined mark sheet",
+        "Admin: release sitting",
+        "System: check who may release",
+        "Note: one subject per run"
+      ],
+      "description": "Opens only when every subject is approved; staff see Not released, then admin (or allowed class teacher) confirms release."
+    },
+    {
+      "id": "7870c297-98ff-4347-acf6-a8d084ad99f2",
+      "name": "Deliver results to parents",
+      "nodeNames": [
+        "System: record sitting released",
+        "Parent: portal shows results",
+        "Parent: report card available",
+        "Toshi: can answer about these results",
+        "System: check WhatsApp switch",
+        "WhatsApp: send results_released template to approved, linked parents",
+        "Parent: replies GRADES or taps See results, receives the marks",
+        "WhatsApp: no message (switch off)",
+        "System: collect release outcomes",
+        "Note: portal",
+        "Note: report card",
+        "Note: Toshi",
+        "Note: WhatsApp template",
+        "Note: GRADES reply"
+      ],
+      "description": "Marks the sitting Released, then portal, report card, Toshi, GRADES replies and optional WhatsApp open up in parallel."
+    }
+  ],
+  "tags": []
+}
