@@ -6,7 +6,7 @@
     @include('layouts.partials.page-header', [
         'title' => 'Teachers',
         'subtitle' => $list['subtitle'],
-        'actions' => '<a href="' . url('/admin/import') . '" class="ds-btn ds-btn-ghost text-sm">Import list</a>'
+        'actions' => '<a href="' . url('/admin/import/teacher') . '" class="ds-btn ds-btn-ghost text-sm">Import list</a>'
             . '<a href="' . url('/admin/teacher/add') . '" class="ds-btn ds-btn-primary text-sm">Add teacher</a>',
     ])
 

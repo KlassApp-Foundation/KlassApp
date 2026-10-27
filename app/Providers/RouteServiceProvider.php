@@ -54,6 +54,7 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapWebRoutes();
         //$this->mapStaticRoutes(); //static routes hidden
         $this->mapAdminRoutes();
+        $this->mapSchoolImportRoutes();
         $this->mapSettingsRoutes();
         $this->mapInventoryRoutes();
         $this->mapStockRoutes();
@@ -105,6 +106,14 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware(['web','auth', 'schooladmin', 'privilegeconditions']) //, 'verifyotp'
             ->namespace($this->adminNamespace)
             ->group(base_path('routes/admin.php'));
+    }
+
+    protected function mapSchoolImportRoutes()
+    {
+        Route::prefix('admin')
+            ->middleware(['web', 'auth', 'schooladmin', 'privilegeconditions'])
+            ->namespace($this->adminNamespace)
+            ->group(base_path('routes/school-imports.php'));
     }
 
     protected function mapSettingsRoutes()
