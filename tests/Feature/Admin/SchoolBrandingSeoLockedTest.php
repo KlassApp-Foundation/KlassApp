@@ -167,4 +167,47 @@ class SchoolBrandingSeoLockedTest extends TestCase
         $this->assertSame('KlassApp', DB::table('settings')->where('key', 'sitetitle')->value('value'));
         $this->assertSame('images/logo.png', DB::table('settings')->where('key', 'sitelogo')->value('value'));
     }
+
+    public function test_platform_admin_branding_and_seo_routes_leave_global_settings_unchanged(): void
+    {
+        $platform = User::create([
+            'school_id' => null,
+            'usergroup_id' => 1,
+            'name' => 'Platform Admin',
+            'email' => 'platform@test.sch.ug',
+            'password' => Hash::make('password'),
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($platform)
+            ->get('/admin/settings/generalsettings')
+            ->assertForbidden();
+        $this->actingAs($platform)
+            ->post('/admin/settings/generalsettings', [
+                'sitetitle' => 'Hijacked title',
+                'sitename' => 'Hijacked',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($platform)
+            ->get('/admin/settings/seodetailsettings')
+            ->assertForbidden();
+        $this->actingAs($platform)
+            ->post('/admin/settings/seodetailsettings', [
+                'sitetitle' => 'Hijacked',
+                'site_description' => 'Hijacked description',
+                'site_keyword' => 'hijack',
+                'twitter_handle' => '@hijack',
+                'twitter_description' => 'Hijacked twitter',
+                'facebook_site_url' => 'https://evil.test',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('KlassApp', DB::table('settings')->where('key', 'sitetitle')->value('value'));
+        $this->assertSame('KlassApp', DB::table('settings')->where('key', 'sitename')->value('value'));
+        $this->assertSame('images/logo.png', DB::table('settings')->where('key', 'sitelogo')->value('value'));
+        $this->assertSame('images/favicon.png', DB::table('settings')->where('key', 'favicon')->value('value'));
+        $this->assertSame('Original description', DB::table('settings')->where('key', 'site_description')->value('value'));
+        $this->assertSame('@original', DB::table('settings')->where('key', 'twitter_handle')->value('value'));
+    }
 }
