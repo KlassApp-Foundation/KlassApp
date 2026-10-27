@@ -14,6 +14,7 @@ use Exception;
 
 class SeoDetailController extends Controller
 {
+    use DeniesSchoolAdminBranding;
     use SettingProcess;
     use Common;
 

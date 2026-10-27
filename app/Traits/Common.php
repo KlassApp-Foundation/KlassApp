@@ -77,7 +77,9 @@ trait Common
         return $storage->url($file);
     }
 
-    public function uploadFile($folder,$file)
+    // Older callers pass a third disk or visibility argument. It is ignored:
+    // object storage rejects per-file ACLs, and the bucket policy decides access.
+    public function uploadFile($folder, $file, $unusedDisk = null)
     {
         $path = '';
 
