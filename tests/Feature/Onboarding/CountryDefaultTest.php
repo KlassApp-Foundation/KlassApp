@@ -226,6 +226,67 @@ class CountryDefaultTest extends TestCase
         $this->assertSame($this->kenya->id, (int) $fresh->country_id);
     }
 
+    public function test_country_confirmation_has_three_cases(): void
+    {
+        [$school, $admin] = $this->school('Confirm Primary', 'confirm-country@example.com');
+        $message = 'Confirm the country change. It affects phone formats and curriculum defaults.';
+        $base = [
+            'name' => $school->name,
+            'moto' => 'Learn well',
+            'about_us' => 'A test school',
+        ];
+
+        $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, array_merge($base, [
+                'country_id' => $this->uganda->id,
+                'ministry_code' => 'EMIS-100',
+                'board' => 'uneb',
+            ]))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('Uganda', $school->fresh()->registration_country);
+        $this->assertSame($this->uganda->id, (int) $school->fresh()->country_id);
+
+        $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, array_merge($base, [
+                'country_id' => $this->kenya->id,
+                'board' => 'cambridge',
+            ]))
+            ->assertSessionHasErrors(['confirm_country_change' => $message]);
+        $this->assertSame('Uganda', $school->fresh()->registration_country);
+        $this->assertSame($this->uganda->id, (int) $school->fresh()->country_id);
+
+        $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, array_merge($base, [
+                'country_id' => $this->kenya->id,
+                'board' => 'cambridge',
+                'confirm_country_change' => '1',
+            ]))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('Kenya', $school->fresh()->registration_country);
+        $this->assertSame($this->kenya->id, (int) $school->fresh()->country_id);
+
+        [$named, $namedAdmin] = $this->school('Named Only', 'named-only@example.com');
+        $named->forceFill([
+            'registration_country' => 'Uganda',
+            'country_id' => null,
+        ])->save();
+        $this->actingAs($namedAdmin)
+            ->post('/admin/schooldetails/update/'.$named->id, array_merge($base, [
+                'name' => $named->name,
+                'country_id' => $this->kenya->id,
+                'board' => 'cambridge',
+            ]))
+            ->assertSessionHasErrors(['confirm_country_change' => $message]);
+        $this->assertNull($named->fresh()->country_id);
+        $this->assertSame('Uganda', $named->fresh()->registration_country);
+
+        $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $this->assertStringContainsString('errors.confirm_country_change', $vue);
+        $this->assertStringContainsString('data-testid="country-change-error"', $vue);
+        $this->assertStringContainsString('status < 400', $vue);
+        $this->assertStringContainsString($message, $vue);
+    }
+
     /**
      * @return array{0: School, 1: User}
      */

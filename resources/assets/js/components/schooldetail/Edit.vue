@@ -215,6 +215,12 @@
                                 />
                                 I confirm this country change.
                             </label>
+                            <span
+                                v-if="errors.confirm_country_change"
+                                class="ds-form-error"
+                                data-testid="country-change-error"
+                                >{{ errors.confirm_country_change[0] }}</span
+                            >
                         </div>
                         <span
                             v-if="errors.country_id"
@@ -384,7 +390,7 @@
                     <a
                         href="#"
                         class="ds-btn ds-btn-primary ds-btn-md submit-btn"
-                        @click="updateDetails()"
+                        @click.prevent="updateDetails()"
                         >Submit</a
                     >
                     <a
@@ -501,9 +507,10 @@ export default {
                 this.school_logo_display =
                     this.details.school_logo_display || "";
                 this.about_us = this.details.about_us || "";
-                this.saved_country_id = this.details.country_id || null;
+                this.countrylist = this.details.countrylist || [];
+                this.saved_country_id = this.savedCountryId();
                 this.country_id =
-                    this.details.country_id ||
+                    this.saved_country_id ||
                     this.details.default_country_id ||
                     "";
                 this.confirmCountryChange = false;
@@ -517,14 +524,62 @@ export default {
                     this.board = this.curriculum;
                 }
 
-                this.countrylist = this.details.countrylist || [];
                 this.citylist = this.details.citylist || [];
             }
+        },
+
+        savedCountryId() {
+            if (this.details.country_id) {
+                return this.details.country_id;
+            }
+            const registered = String(this.details.registration_country || "")
+                .trim()
+                .toLowerCase();
+            if (!registered) {
+                return null;
+            }
+            const list = Array.isArray(this.countrylist)
+                ? this.countrylist
+                : Object.values(this.countrylist || {});
+            const match = list.find(
+                (country) =>
+                    String(country.name || "")
+                        .trim()
+                        .toLowerCase() === registered
+            );
+            return match ? match.id : null;
+        },
+
+        countryChangeMessage() {
+            return "Confirm the country change. It affects phone formats and curriculum defaults.";
+        },
+
+        // axios validateStatus is null, so a 422 still resolves. Treat any
+        // non-2xx as a failed save and leave the form where the admin left it.
+        keepFailedSave(response) {
+            if (response && response.status < 400) {
+                return false;
+            }
+            const errors = response?.data?.errors || {};
+            this.errors =
+                Object.keys(errors).length > 0
+                    ? errors
+                    : {
+                          confirm_country_change: [this.countryChangeMessage()],
+                      };
+            return true;
         },
 
         updateDetails() {
             this.errors = [];
             this.success = null;
+
+            if (this.countryChangePending && !this.confirmCountryChange) {
+                this.errors = {
+                    confirm_country_change: [this.countryChangeMessage()],
+                };
+                return;
+            }
 
             let formData = new FormData();
             formData.append("name", this.name);
@@ -558,7 +613,10 @@ export default {
                         this.school_id,
                     formData
                 )
-                .then(() => {
+                .then((checked) => {
+                    if (this.keepFailedSave(checked)) {
+                        return;
+                    }
                     // Own the submission. The native form serialises the DOM, which silently
                     // dropped bound values (an empty country select posted country_id=""), so
                     // the component now posts its own state to the same endpoint instead.
@@ -567,24 +625,20 @@ export default {
                             "/admin/schooldetails/update/" + this.school_id,
                             formData
                         )
-                        .then(() => {
+                        .then((saved) => {
+                            if (this.keepFailedSave(saved)) {
+                                return;
+                            }
                             window.location.href =
                                 "/admin/schooldetails/editdetail/" +
                                 this.school_id;
                         })
                         .catch((error) => {
-                            this.errors = error.response?.data?.errors || {
-                                name: [
-                                    "Could not save (HTTP " +
-                                        (error.response?.status ??
-                                            "network error") +
-                                        "). Nothing was changed.",
-                                ],
-                            };
+                            this.keepFailedSave(error.response);
                         });
                 })
                 .catch((error) => {
-                    this.errors = error.response?.data?.errors || {};
+                    this.keepFailedSave(error.response);
                 });
         },
 

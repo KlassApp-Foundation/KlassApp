@@ -16,7 +16,9 @@ class CountryStep extends AbstractOnboardingStep
 
     public function question(): string
     {
-        return 'Which country is your school in? Uganda is selected for now. Reply with Uganda to keep it, or another country.';
+        $country = OnboardingStepsService::DEFAULT_COUNTRY;
+
+        return "Which country is your school in? {$country} is selected for now. Reply with {$country} to keep it, or another country.";
     }
 
     public function inputType(): string
