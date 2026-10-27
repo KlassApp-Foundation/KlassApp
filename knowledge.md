@@ -635,12 +635,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 26, 2026 — **Marks Phase 2 entry form and ExamMarkWriter OPEN (stacked on [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239))**
+
+- The entry form shows marks already saved and stays on the page after save. Submit for review is absent until a numeric mark or a nursery rating exists. Spreadsheet import (teacher and admin) and Toshi, including a class teacher, write through `ExamMarkWriter`. Upcoming Exams counts the open exams this person can mark. Nursery ratings stay on the ratings form. Flow: `docs/product/marks-flow.md` Phase 2.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3205 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Seven new tests, including `tests/Feature/Marks/ExamMarkWriterGuardTest.php` and `tests/Feature/Marks/MarksPhase2EntryTest.php`.
+- Historical Kabale and Kabel import commands, demo fixtures, and the letter backfill are named in the guard and still write marks outside the product writer. An in-place promotion still leaves the old class grid with no learners. Not in this phase.
+- **Status:** OPEN [#1240](https://github.com/KlassApp-Foundation/KlassApp/pull/1240), branch `cursor/marks-phase-2-entry-writer`, base `cursor/marks-phase-1-class-teacher-v2` ([#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)). Not merged. No deploy. No production access.
+
 ## Current Status: October 26, 2026 — **Marks Phase 1 class teacher assignment OPEN (stacked on [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236))**
 
 - `ClassTeacherAssignmentService` is the one assignment path: pick an existing teacher, invite a new one, or replace the current one, with confirmation and a log. Invite links stay hashed, single-use, and 72 hours. Replacing a class teacher revokes a pending invite for that class. Email is the channel. WhatsApp staff invites stay off. `/admin/sections` and `/admin/class-setup` redirect to `/admin/classes`. Class names come from the school's own sections. Flow: `docs/product/class-teacher-flow.md`.
 - **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3198 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Phase 1 has 12 tests in `tests/Feature/Marks/ClassTeacherPhase1Test.php`.
 - Class store uses the school's own names. The stream form rejects a teacher id that is not a teacher in the school instead of writing the column. Toshi add-teacher still stores a random password and writes the class teacher through the service.
-- **Status:** OPEN [#1238](https://github.com/KlassApp-Foundation/KlassApp/pull/1238), branch `cursor/marks-phase-1-class-teacher`, base `docs/marks-n8n-blueprint` ([#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)). Not merged. No deploy. No production access.
+- **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint` ([#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)). Replaces closed [#1238](https://github.com/KlassApp-Foundation/KlassApp/pull/1238); the tree is the same and the secret scan on #1239 passed. Not merged. No deploy. No production access.
 
 ## Current Status: October 26, 2026 — **Marks n8n blueprint OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)**
 

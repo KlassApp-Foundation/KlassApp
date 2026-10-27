@@ -12,8 +12,10 @@ use App\Services\GradingSystemService;
 use Illuminate\Validation\ValidationException;
 
 /**
- * One numeric mark write for the teacher form and for Toshi.
- * Parents are not notified here, and the exam status is left unchanged.
+ * The only numeric mark write. The teacher form, the single-mark edit, the
+ * spreadsheet import, and Toshi (a subject teacher, a class teacher, or a
+ * school admin) all call save(). Parents are not notified here, and the exam
+ * status is left unchanged. Nursery ratings are not marks and do not come here.
  */
 class ExamMarkWriter
 {
