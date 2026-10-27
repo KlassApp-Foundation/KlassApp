@@ -174,7 +174,7 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
@@ -192,6 +192,7 @@ final class MarksReleaseService
             'created_by' => $user->id,
             'timezone' => $timezone,
             'whatsapp_send' => $whatsappSend,
+            'release_reason' => $releaseReason,
         ]);
 
         $properties = [
@@ -618,18 +619,20 @@ final class MarksReleaseService
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
         [$result, $jobs] = $this->deliver($release);
 
-        $release->forceFill([
-            'status' => MarksRelease::STATUS_RELEASED,
-            'released_at' => CarbonImmutable::now('UTC'),
-            'result' => $result,
-        ])->save();
-
-        // Verifiable records, step 1: the term record is written before anyone is
-        // messaged. A release that cannot write it did not happen.
+        // The release row and every snapshot are one unit: all saved or none.
+        // A release that cannot write its records did not happen.
         try {
-            app(\App\Services\Records\SnapshotService::class)->capture($release);
+            DB::transaction(function () use ($release, $result): void {
+                $release->forceFill([
+                    'status' => MarksRelease::STATUS_RELEASED,
+                    'released_at' => CarbonImmutable::now('UTC'),
+                    'result' => $result,
+                ])->save();
+
+                app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
+            });
         } catch (\Throwable $e) {
-            Log::error('Record snapshot failed; the release was not sent', ['release_id' => $releaseId, 'error' => $e->getMessage()]);
+            Log::error('Release failed: ' . $e->getMessage(), ['release_id' => $releaseId]);
             $release->forceFill(['status' => 'failed'])->save();
 
             return false;

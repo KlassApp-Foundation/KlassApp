@@ -119,14 +119,19 @@ class MarksReleaseTest extends TestCase
         $this->fakeGraph();
     }
 
-    private function releaseNow(User $user, ?int $linkId, string $area = 'admin', ?int $examId = null): \Illuminate\Testing\TestResponse
+    private function releaseNow(User $user, ?int $linkId, string $area = 'admin', ?int $examId = null, ?string $reason = null): \Illuminate\Testing\TestResponse
     {
-        return $this->actingAs($user)->post('/' . $area . '/marks/releases', [
+        $payload = [
             'exam_id' => $examId ?? $this->examId(),
             'standard_link_id' => $linkId,
             'when' => 'now',
             'timezone' => 'Africa/Kampala',
-        ]);
+        ];
+        if ($reason !== null) {
+            $payload['release_reason'] = $reason;
+        }
+
+        return $this->actingAs($user)->post('/' . $area . '/marks/releases', $payload);
     }
 
     /** Phase 6b: let this school's class teachers release their own class. */
@@ -280,7 +285,7 @@ class MarksReleaseTest extends TestCase
         $this->bind(self::BOUND);
         $admin = $this->admin();
         $this->releaseNow($admin, null)->assertRedirect();
-        $this->releaseNow($admin, $this->link()->id)->assertRedirect();
+        $this->releaseNow($admin, $this->link()->id, 'admin', null, 'A mark was corrected after the first release.')->assertRedirect();
 
         $this->assertCount(1, $this->outbound());
         $second = MarksRelease::orderByDesc('id')->first();

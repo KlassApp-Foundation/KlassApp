@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
 use App\Models\User;
 use App\Services\MarksRelease\MarksReleaseService;
@@ -76,11 +77,16 @@ class MarksReleaseController extends Controller
     {
         $user = $this->user();
         $data = $this->validated($request);
+        if ($this->needsReason($user, $data['exam_id'], $data['standard_link_id']) && $data['release_reason'] === '') {
+            throw ValidationException::withMessages([
+                'release_reason' => 'This sitting has already been released. Say why it is being released again.',
+            ]);
+        }
         $targets = $this->releaseTargets($user, $data);
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
@@ -89,7 +95,7 @@ class MarksReleaseController extends Controller
                 $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -141,6 +147,7 @@ class MarksReleaseController extends Controller
             'timezone' => ['nullable', 'string', 'max:64'],
             'confirm_past' => ['nullable', 'boolean'],
             'whatsapp_send' => ['nullable', 'boolean'],
+            'release_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         return [
@@ -153,6 +160,7 @@ class MarksReleaseController extends Controller
             'timezone' => $data['timezone'] ?? null,
             'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'whatsapp_send' => filter_var($data['whatsapp_send'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'release_reason' => trim((string) ($data['release_reason'] ?? '')),
         ];
     }
 
@@ -226,6 +234,7 @@ class MarksReleaseController extends Controller
             'sheet' => $sheet,
             'approvals' => $approvals,
             'pastSitting' => $pastSitting,
+            'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId),
             'previewMessage' => $previewMessage,
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
@@ -366,6 +375,33 @@ class MarksReleaseController extends Controller
         }
 
         return ['subjects' => array_values($subjects), 'groups' => $groups];
+    }
+
+    /** Has this sitting already been released, so a re-release needs a reason? */
+    private function needsReason(User $user, int $examId, ?int $standardLinkId = null): bool
+    {
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return false;
+        }
+
+        $sectionId = $standardLinkId !== null
+            ? (int) \App\Models\StandardLink::query()->where('school_id', $user->school_id)->whereKey($standardLinkId)->value('section_id')
+            : null;
+
+        return MarksRelease::query()
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id))
+            ->where(function ($q) use ($sectionId): void {
+                $q->where('scope', 'school');
+                if ($sectionId !== null) {
+                    $q->orWhereHas('standardLink', fn ($link) => $link->where('section_id', $sectionId));
+                }
+            })
+            ->exists();
     }
 
     /** @return array{area:string, layout:string} */

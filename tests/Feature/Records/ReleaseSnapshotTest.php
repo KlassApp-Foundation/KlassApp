@@ -122,10 +122,10 @@ class ReleaseSnapshotTest extends TestCase
     }
 
     /** @param array<string, mixed> $ctx */
-    private function release(array $ctx): MarksRelease
+    private function release(array $ctx, ?string $reason = null): MarksRelease
     {
         $service = app(MarksReleaseService::class);
-        $release = $service->create($ctx['admin'], (int) $ctx['firstExam']->id, null, null, 'Africa/Kampala');
+        $release = $service->create($ctx['admin'], (int) $ctx['firstExam']->id, null, null, 'Africa/Kampala', false, false, $reason);
         $service->run((int) $release->id);
 
         return $release->fresh();
@@ -156,7 +156,7 @@ class ReleaseSnapshotTest extends TestCase
 
         $first = RecordSnapshot::where('student_id', $ctx['students'][0]['user']->id)->sole();
 
-        $second = $this->release($ctx);
+        $second = $this->release($ctx, 'A mark was corrected after the first release.');
         $this->assertSame(MarksRelease::STATUS_RELEASED, $second->status);
 
         $rows = RecordSnapshot::where('student_id', $ctx['students'][0]['user']->id)->orderBy('version')->get();
@@ -165,7 +165,38 @@ class ReleaseSnapshotTest extends TestCase
         $this->assertSame(RecordSnapshot::STATE_SUPERSEDED, $rows[0]->fresh()->state);
         $this->assertSame(RecordSnapshot::STATE_CURRENT, $rows[1]->state);
         $this->assertSame((int) $rows[0]->id, (int) $rows[1]->supersedes_id);
-        $this->assertNotEmpty($rows[1]->reason);
+        $this->assertSame('A mark was corrected after the first release.', $rows[1]->reason);
+    }
+
+    public function test_a_re_release_from_the_screen_needs_a_reason_and_stores_it(): void
+    {
+        $ctx = $this->school();
+
+        // A release now, so the sitting counts as already released.
+        $payload = [
+            'exam_id' => (int) $ctx['firstExam']->id,
+            'standard_link_id' => null,
+            'when' => 'now',
+            'timezone' => 'Africa/Kampala',
+        ];
+        $this->actingAs($ctx['admin'])->post('/admin/marks/releases', $payload)->assertRedirect();
+
+        // The screen asks for a reason now that the sitting has been released.
+        $this->actingAs($ctx['admin'])->get('/admin/marks/releases/new?exam_id=' . $ctx['firstExam']->id)
+            ->assertOk()
+            ->assertSee('data-testid="release-reason"', false);
+
+        // Releasing again without one is refused.
+        $this->actingAs($ctx['admin'])->post('/admin/marks/releases', $payload)
+            ->assertSessionHasErrors('release_reason');
+
+        // With one, it lands on the new version.
+        $this->actingAs($ctx['admin'])->post('/admin/marks/releases', $payload + [
+            'release_reason' => 'Corrected the Science mark for one learner.',
+        ])->assertSessionHasNoErrors();
+
+        $latest = RecordSnapshot::where('student_id', $ctx['students'][0]['user']->id)->orderByDesc('version')->first();
+        $this->assertSame('Corrected the Science mark for one learner.', $latest->reason);
     }
 
     public function test_a_failed_snapshot_fails_the_release_and_sends_nothing(): void

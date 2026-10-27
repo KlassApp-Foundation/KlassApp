@@ -46,6 +46,8 @@ class SnapshotService
         $yearId = (int) $exam->academic_year_id;
         $written = 0;
 
+        // The caller owns the transaction: the release row and every snapshot
+        // are written together, all or none.
         foreach ($this->links($release) as $link) {
             $studentIds = $this->learnersWithMarks($release, (int) $link->section_id, $termId);
 
@@ -178,7 +180,7 @@ class SnapshotService
      */
     private function writeVersion(MarksRelease $release, int $studentId, int $yearId, int $termId, array $payload, ?string $reason): void
     {
-        DB::transaction(function () use ($release, $studentId, $yearId, $termId, $payload, $reason): void {
+        (function () use ($release, $studentId, $yearId, $termId, $payload, $reason): void {
             $current = RecordSnapshot::query()
                 ->where('school_id', $release->school_id)
                 ->where('student_id', $studentId)
@@ -202,14 +204,14 @@ class SnapshotService
                 'academic_term_id' => $termId,
                 'version' => $version,
                 'supersedes_id' => $current?->id,
-                'reason' => $version > 1 ? ($reason ?: 'Released again from the release screen') : null,
+                'reason' => $version > 1 ? $reason : null,
                 'payload' => $payload,
                 'released_at' => now(),
                 'released_by' => $release->created_by,
                 'release_id' => $release->id,
                 'state' => RecordSnapshot::STATE_CURRENT,
             ]);
-        });
+        })();
     }
 
     /** @return list<int> */
