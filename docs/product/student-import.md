@@ -53,15 +53,45 @@ The import returned normally. The database kept 9,999 student users. The other 1
 
 `CreateUser` (`app/Traits/RegisterUser.php` lines 206–211) catches `Exception`, rolls the row back, logs the message, and returns null. `UsersImport` (`app/Imports/UsersImport.php` lines 191–203) then increments its inserted counter, including when `CreateUser` returned null. Its `dd()` (lines 208–210) runs only if an exception leaves `CreateUser`. That did not happen, so the probe’s error field stayed null. The session counter itself was not read.
 
+## Approved additions
+
+Widening the student ID format is a prerequisite (T-060). The generator and the save-time check have to accept a school past 9,999 students before this import can finish a file of that size. Existing IDs stay as they are.
+
+A row with no student ID is not saved as a second student in silence. The preview warns that it is a likely duplicate when the same name, date of birth, and class are already in the school. The admin decides whether that row is a new student.
+
+Country on a row is matched by country code (the `countries.short_name` / ISO code), not by `LIKE` on the name.
+
+The background job’s target is 20,000 students processed in under 10 minutes, with progress the admin can see.
+
 ## Proposal
 
 One import service. The wizard, the admin page, and the class teacher all call it. The class teacher’s call is rejected unless the scope is a class or stream the class-teacher rule assigns to them (`docs/product/class-teacher-capabilities.md`).
 
 - The template is generated for the chosen school, class, or stream. The class or stream name is on the sheet, not only in the admin’s head.
 - The file is read as a stream, not loaded as one collection.
-- Work runs in queued chunks. The page shows how many rows are done. A failed chunk can be resumed. A finished chunk is not imported again.
+- Work runs in queued chunks. The page shows how many rows are done. A failed chunk can be resumed. A finished chunk is not imported again. 20,000 students finish in the background in under 10 minutes.
 - Each row is checked before any write. Errors name the row and the column. If any row has an error, nothing is saved, unless the admin chooses “import valid rows only”.
+- A row without a student ID that matches an existing student on name, date of birth, and class is a likely-duplicate warning, not a silent second student.
 - A second run updates. Match the school’s student ID number, then update that student. Do not insert another user with the same ID.
+- Country is matched by country code.
 - Every query includes `school_id`.
 
 Released marks and payments are not part of this import. The import creates or updates students and their class or stream placement only.
+
+## Measurement with parent phone numbers
+
+Run on 2026-10-27 against the same `UsersImport` path, same synthetic school, same 50 streams, and the same 20,000 student rows. Every row also had a parent first name, last name, phone, and email, so the parent-create branch ran. Query counting is the same listener. The probe file was not committed. This run is the code on `main` before the student-ID widening (T-060).
+
+| | |
+| --- | --- |
+| Rows in the file | 20,000 |
+| Streams prepared | 50 |
+| Parent phone on every row | yes |
+| Time | 222.65 seconds |
+| Peak memory | 239 MB |
+| Queries | 379,985 |
+| Student users saved | 9,999 |
+| Parent users saved | 9,999 |
+| Exception from `Excel::import` | `TypeError` in `User::findByExactNameInSchool()` |
+
+The first 9,999 students saved, each with a parent. Row 10,000 is sequence 10,000. `CreateUser` built `KLS00110000`, `User::saving` rejected it, the row rolled back, and `CreateUser` returned null. `UsersImport` still called `CreateParent` with that null student. `RegisterUser` then called `findByExactNameInSchool(null, …)` (`app/Traits/RegisterUser.php` line 466) and the import aborted. The counter still treated failed rows as inserted up to that point, and the admin was not shown the failed rows. Widening the ID format, counting a row only when `CreateUser` returns a user, and reporting failed rows are the prerequisite in T-060. The background target stays 20,000 students in under 10 minutes. This synchronous run was 222.65 seconds and stopped at 9,999.

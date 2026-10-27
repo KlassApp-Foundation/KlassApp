@@ -2,7 +2,7 @@
 
 Proposal only. No code in this change. It waits for approval before anyone builds it.
 
-The school admin menu already has a Settings page (`resources/views/admin/settings/index.blade.php`). It is a set of cards that jump to older screens. This proposal replaces that card list with one hub. SEO details come off the school settings menu.
+The school admin menu already has a Settings page (`resources/views/admin/settings/index.blade.php`). It is a set of cards that jump to older screens. This proposal replaces that card list with one hub. Site branding and SEO details come off the school settings menu. Maintenance and access stays.
 
 ## What exists today
 
@@ -11,9 +11,9 @@ Routes below are under the admin prefix. Line numbers are from `main`.
 | Setting | Where it lives | Editability today |
 | --- | --- | --- |
 | Settings index | `routes/setting.php` lines 4–6, view `admin.settings.index` | Navigation only |
-| Site branding (title, favicon, theme) | `routes/setting.php` lines 9–10, `Setting\GeneralController` | Freely editable |
-| Maintenance and access (maintenance mode, registration, login) | `routes/setting.php` lines 11–12, `Setting\MaintenanceController` | Freely editable. This is a platform-style switch sitting in the school menu |
-| SEO details | `routes/setting.php` lines 13–14, card at `resources/views/admin/settings/index.blade.php` lines 94–101 | Freely editable. **Remove this card from the school settings menu** |
+| Site branding (title, logo, favicon) | `routes/setting.php` lines 9–10, `Setting\GeneralController`. Stored on the global `settings` table (`key` is unique; the table has no `school_id` — `database/migrations/2020_02_18_202003_create_settings_table.php`). The same keys are the platform display keys in `SystemSettingsService` | **Platform-wide, not per school.** A school admin saving this form writes the platform title, logo, and favicon for every school. The card mentions a theme; the form has no theme field (`resources/views/admin/settings/general_settings.blade.php`). Layouts link a static KlassApp favicon (`layouts/partials/favicon.blade.php`), not `settings.favicon`. **Remove site branding from the hub.** The school’s own name (`schools.name`) and logo (`school_details` meta `school_logo`) stay on the school profile |
+| Maintenance and access (maintenance mode, login, teacher reception, attendance scope) | `routes/setting.php` lines 11–12, `Setting\MaintenanceController` | **Stays in the hub, System section.** `store` writes only the signed-in admin’s school (`School::setDetailValue` for `maintenance`, `login_status`, teacher reception access, and attendance scope). It does not write the global `settings` table. Public registration (`register` / `register_status`) is a platform switch and this controller does not save it |
+| SEO details | `routes/setting.php` lines 13–14, `Setting\SeoDetailController`, card at `resources/views/admin/settings/index.blade.php` lines 94–101. Same global `settings` table, no `school_id` | **Platform-wide.** **Remove this card from the school settings menu.** A school admin must not change site description, keywords, or social cards for every school |
 | Exam types (which types count toward results) | `routes/setting.php` lines 16–18 | Editable with a rule: a change applies to future results. Released results are not rewritten here |
 | Integrations (WhatsApp, Drive, Slack) | `routes/setting.php` lines 20–22 | Disconnect is allowed. Connecting a channel is a separate verified flow |
 | Academic years | `routes/setting.php` lines 49–58 | Editable with a rule: the year marked current is the one the rest of the app reads. Do not delete a year that has classes, marks, or fees. Mark it inactive |
@@ -42,23 +42,23 @@ These are real school choices. Some have a page somewhere else. None of them are
 | WhatsApp | Phone link and integrations, two cards | One section: the school’s number, verification state, and whether parent messaging is on. The number is editable. Message history is not |
 | Roles | No school settings screen. Privileges are user-group checks scattered through middleware | Editable with a rule. A role can be granted or revoked. The last school admin cannot be removed. This hub does not invent new platform roles |
 | Country | School details, and the onboarding step. The settings form used to fall back to country id 7 when the school had no country | Editable. Uganda is the default while the field is empty. Saving a different country after one is stored requires confirmation, because phone formats and curriculum defaults follow the country |
-| Currency | Read from `school_details` meta `currency` (`app/Services/DashboardV2DataService.php` lines 102–115). No settings field was found | Editable. The code shown on new amounts. Amounts already recorded keep the currency they were stored with. Not a silent rewrite of old payments |
-| Timezone | No school setting. Greetings use `app/Support/DashboardGreeting.php` (`timezoneFor`, lines 55–67). A marks release stores its own timezone (`app/Services/MarksRelease/MarksReleaseService.php` `timezone()`, lines 326–330), defaulting to `Africa/Kampala` | Editable. New deadlines and greetings use the school timezone. Instants already stored stay as those instants |
+| Currency | Read from `school_details` meta `currency` (`app/Services/DashboardV2DataService.php` lines 102–115). No settings field was found | Editable. The default comes from the school’s country, not a hard-coded code. Uganda defaults to UGX. Amounts already recorded keep the currency they were stored with. Not a silent rewrite of old payments |
+| Timezone | No school setting. Greetings use `app/Support/DashboardGreeting.php` (`timezoneFor`, lines 55–67). A marks release stores its own timezone (`app/Services/MarksRelease/MarksReleaseService.php` `timezone()`, lines 326–330), which today falls back to `Africa/Kampala` | Editable. The default comes from the school’s country. Uganda defaults to `Africa/Kampala`. New deadlines and greetings use the school timezone. Instants already stored stay as those instants |
 
 ## One hub
 
 Sections, in this order:
 
-1. **School** — profile, country, currency, timezone. Country change confirms. Currency and timezone follow the rules above.
+1. **School** — profile (including the school’s own name), country, currency, timezone. Country change confirms. Currency and timezone start from the country (UGX and `Africa/Kampala` for Uganda) and can be changed.
 2. **Calendar** — academic years, terms and dates.
 3. **Classes** — classes, streams, subjects, curriculum profile.
 4. **Results** — report composition and exam types. Applies to future results. Released results reopen through the marks flow.
 5. **People** — roles. Student ID numbers are not edited on this hub. A correction is a logged change on the student, not a silent overwrite.
 6. **Money** — fee categories. Payments are reversed, not edited.
 7. **Messages** — WhatsApp number and verification.
-8. **System** — maintenance and access, site branding.
+8. **System** — Maintenance and access. This stays. It writes the signed-in school only: maintenance mode, login, teacher reception access, and attendance scope. Public registration stays a platform switch and is not a field on this form.
 
-SEO details are not in this menu.
+Site branding (title, favicon, and the theme the card names) is not in this hub. Those values are platform-wide: `GeneralController` saves them through `SettingProcess::updatesettings` into the global `settings` table, which has no `school_id`. The school’s own name and logo stay on the school profile. SEO details are not in this menu for the same reason (`SeoDetailController` writes the same global table). The school hub does not write the global `settings` row.
 
 ## What is not edited on the hub
 

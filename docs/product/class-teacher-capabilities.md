@@ -6,9 +6,9 @@ Proposal only. One place should decide what a class teacher can do. Today the sa
 
 A class teacher is a user in group 5 (`usergroup_id` 5), in the same school, assigned to a stream or to a class.
 
-- **Stream teacher.** `standards_link.class_teacher_id` is that teacher. They manage and import students in that stream, see that stream’s combined mark sheet, and release that stream’s marks only when the school allows it.
-- **Class head.** `sections.class_teacher_id` is that teacher, and the section has more than one stream. They can see the combined sheet across those streams. They do not replace the stream teacher on a stream that already has one.
-- **School setting for release.** On `main`, a teacher can release any stream where `standards_link.class_teacher_id` is their id, with no school switch (`app/Services/MarksRelease/MarksReleaseService.php` lines 95–96). Open PR #1244 (not merged) adds `teachers_may_release_marks`, off unless the school sets it. The hub should use that switch. Until it is merged, release stays as `main` has it.
+- **Stream teacher.** `standards_link.class_teacher_id` is that teacher. They manage and import students in that stream, see that stream’s combined mark sheet, and release that stream’s marks.
+- **Class head.** `sections.class_teacher_id` is that teacher, and the section has more than one stream. They can see the combined sheet across those streams, and they can release every stream of that class. They do not replace the stream teacher on a stream that already has one.
+- **School setting for release.** `teachers_may_release_marks` is **on by default**. A school can turn it off. On `main`, a class teacher can already release a stream where `standards_link.class_teacher_id` is their id (`app/Services/MarksRelease/MarksReleaseService.php` lines 95–96), with no school switch. Existing schools must not lose that. Open PR #1244 (not merged) adds the switch and currently defaults it **off**: `SiteHelper::teachersMayReleaseMarks` is true only when the school meta value is exactly `1` (absent means off). **Required change for the local agent (Grok A), on #1244, not edited here:** default the switch on when the school has no value, and treat only an explicit off as off, so a school that has never touched the setting keeps today’s release behaviour. A class head’s release covers every stream of their class.
 
 Every check below should call this one rule instead of repeating the column test.
 
