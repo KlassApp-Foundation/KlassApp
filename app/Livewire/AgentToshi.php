@@ -6895,8 +6895,8 @@ class AgentToshi extends Component
                     'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
-                    // FLAGGED(product-decision): create mode stores Uganda when no country was chosen. see docs/onboarding-engine-plan.md
-                    'registration_country' => $this->schoolCountry ?: 'Uganda',
+                    // The default for a blank answer lives in the onboarding service.
+                    'registration_country' => \App\Services\OnboardingStepsService::countryOrDefault($this->schoolCountry),
                     'student_size' => $this->studentSize ?: null,
                 ]);
                 if ($this->schoolCountry) {

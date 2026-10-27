@@ -1902,8 +1902,8 @@ class ManualOnboardingWizard extends Component
         // FLAGGED(product-decision): a blank curriculum is shown as uneb. see docs/onboarding-engine-plan.md
         $this->curriculum = $school->curriculum ?: 'uneb';
         $this->schoolCategory = (string) ($school->school_category ?: '');
-        // FLAGGED(product-decision): a blank country is shown as Uganda. see docs/onboarding-engine-plan.md
-        $this->countryName = $school->registration_country ?: 'Uganda';
+        // The default for a blank country lives in the onboarding service.
+        $this->countryName = OnboardingStepsService::countryOrDefault($school->registration_country);
         $this->ministryCode = (string) ($school->ministry_code ?: '');
         $this->unebCenterNumber = (string) ($school->uneb_center_number ?: '');
     }
