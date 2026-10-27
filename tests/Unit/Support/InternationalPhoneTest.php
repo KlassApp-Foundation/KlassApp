@@ -21,6 +21,29 @@ class InternationalPhoneTest extends TestCase
         $this->assertNull(PhoneCountry::normalise('12345', 'Uganda'));
     }
 
+    public function test_a_number_with_a_country_code_is_parsed_as_typed_whatever_the_school_country(): void
+    {
+        // The school is in Kenya, the number is American: the code wins.
+        $this->assertSame('+14155552671', PhoneCountry::normalise('+1 415 555 2671', 'Kenya'));
+        $this->assertSame('+14155552671', PhoneCountry::normalise('+1 415 555 2671', null));
+        // A wrong-looking number with a code is still not silently re-homed.
+        $this->assertStringStartsWith('+1', (string) PhoneCountry::normalise('+1 415 555 2671', 'Uganda'));
+    }
+
+    public function test_a_national_number_uses_the_schools_chosen_country(): void
+    {
+        $this->assertSame('+254712345678', PhoneCountry::normalise('0712 345 678', 'Kenya'));
+        $this->assertSame('+254712345678', PhoneCountry::normalise('712345678', 'Kenya'));
+        $this->assertSame('+256701234567', PhoneCountry::normalise('0701 234 567', 'Uganda'));
+    }
+
+    public function test_uganda_is_the_fallback_only_when_no_country_is_known(): void
+    {
+        $this->assertSame('+256701234567', PhoneCountry::normalise('0701 234 567', null));
+        $this->assertSame('+256701234567', PhoneCountry::normalise('0701 234 567', ''));
+        $this->assertSame('+256701234567', PhoneCountry::normalise('0701 234 567', 'Nowhere Land'));
+    }
+
     public function test_lookup_keys_still_match_a_stored_local_number(): void
     {
         DB::table('usergroups')->insert([

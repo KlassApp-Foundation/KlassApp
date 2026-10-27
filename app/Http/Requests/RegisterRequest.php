@@ -30,7 +30,7 @@ class RegisterRequest extends FormRequest
                 'string',
                 'max:20',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    $normalized = PhoneCountry::normalise((string) $value, 'Uganda');
+                    $normalized = PhoneCountry::normalise((string) $value, $this->countryForPhone());
                     if ($normalized === null) {
                         $fail('Enter a valid phone number. The country code is filled in for Uganda; replace it if the number is from somewhere else.');
 
@@ -68,6 +68,18 @@ class RegisterRequest extends FormRequest
         ];
     }
 
+    /**
+     * The country a national number is read in: the one this person chose, or
+     * null so PhoneCountry falls back to Uganda when none is given. A number
+     * typed with its own country code ignores this entirely.
+     */
+    private function countryForPhone(): ?string
+    {
+        $country = trim((string) $this->input('country'));
+
+        return $country !== '' ? $country : null;
+    }
+
     protected function prepareForValidation(): void
     {
         if ($this->has('mobile_no') && ! $this->filled('phone')) {
@@ -78,10 +90,9 @@ class RegisterRequest extends FormRequest
             $this->merge(['country' => \App\Services\OnboardingStepsService::DEFAULT_COUNTRY]);
         }
 
-        $normalized = PhoneCountry::normalise((string) $this->input('phone'), 'Uganda');
+        $normalized = PhoneCountry::normalise((string) $this->input('phone'), $this->countryForPhone());
         if ($normalized !== null) {
             $this->merge(['phone' => $normalized]);
-        }
         }
     }
 }
