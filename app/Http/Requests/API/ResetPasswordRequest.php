@@ -25,7 +25,7 @@ class ResetPasswordRequest extends FormRequest
      */
     public function rules()
     {
-      $this->user = User::where('mobile_no', request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
+      $this->user = User::matchingPhone((string) request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
 
         Validator::extend('check_mobile_no',function($attribute,$value,$parameters,$validator)
         {
@@ -50,7 +50,7 @@ class ResetPasswordRequest extends FormRequest
         });
 
         return [
-            'mobile_no' =>  'required|numeric|digits:10|check_mobile_no|check_active',
+            'mobile_no' =>  'required|international_phone|check_mobile_no|check_active',
             'usergroup' =>  'required',
         ];
     }

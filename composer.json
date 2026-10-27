@@ -107,6 +107,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "filament/tables": "^3.3",
         "flowframe/laravel-trend": "^0.5.0",
+        "giggsey/libphonenumber-for-php": "^9.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "iio/libmergepdf": "^4.0",
         "jantinnerezo/livewire-alert": "^3.0",

@@ -65,7 +65,7 @@ class ParentUpdateRequest extends FormRequest
             //
             'firstname'         => 'required|alpha_spaces|max:15',
             'lastname'          => 'nullable|alpha_spaces|max:15',
-            'alternate_no'      => 'nullable|numeric|digits:10',
+            'alternate_no'      => 'nullable|international_phone',
             'profession'        => 'required',
             'relation'          => 'required',
         ];

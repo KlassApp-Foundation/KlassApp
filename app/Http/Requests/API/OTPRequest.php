@@ -28,7 +28,7 @@ class OTPRequest extends FormRequest
      */
     public function rules()
     {
-    $this->user = User::where('mobile_no', request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
+    $this->user = User::matchingPhone((string) request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
         Validator::extend('checkotp', function ($attribute, $value, $parameters, $validator) 
         {
             //$user = User::where('mobile_no',request('mobile_no'))->first();

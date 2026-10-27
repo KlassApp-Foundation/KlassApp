@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\School;
 use App\Models\User;
+use App\Support\PhoneCountry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,18 +29,18 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                'regex:/^(\+?256)?0?7[0578]\d{7}$/',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    $normalized = app(\App\Services\SchoolSignupBootstrapService::class)->normalizePhone((string) $value);
+                    $normalized = PhoneCountry::normalise((string) $value, 'Uganda');
                     if ($normalized === null) {
-                        $fail('Enter a valid WhatsApp phone number.');
+                        $fail('Enter a valid phone number. The country code is filled in for Uganda; replace it if the number is from somewhere else.');
 
                         return;
                     }
-                    if (User::where('mobile_no', $normalized)->exists()) {
+                    $keys = PhoneCountry::keys((string) $value, 'Uganda');
+                    if (User::matchingPhone((string) $value, 'Uganda')->exists()) {
                         $fail('This phone number is already registered.');
                     }
-                    if (\App\Models\School::where('phone', $normalized)->exists()) {
+                    if (School::query()->whereIn('phone', $keys)->exists()) {
                         $fail('This phone number is already registered to a school.');
                     }
                 },
@@ -57,7 +59,7 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.unique' => 'This email is already registered.',
             'phone.required' => 'Phone (WhatsApp) is required.',
-            'phone.regex' => 'Enter a valid Ugandan WhatsApp number (e.g. 07XX XXX XXX or +2567XXXXXXXX).',
+            'phone.regex' => 'Enter a valid phone number, including its country code.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
@@ -74,6 +76,12 @@ class RegisterRequest extends FormRequest
 
         if (! $this->filled('country')) {
             $this->merge(['country' => \App\Services\OnboardingStepsService::DEFAULT_COUNTRY]);
+        }
+
+        $normalized = PhoneCountry::normalise((string) $this->input('phone'), 'Uganda');
+        if ($normalized !== null) {
+            $this->merge(['phone' => $normalized]);
+        }
         }
     }
 }

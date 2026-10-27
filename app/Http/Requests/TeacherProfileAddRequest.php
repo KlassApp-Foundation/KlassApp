@@ -51,7 +51,7 @@ class TeacherProfileAddRequest extends FormRequest
 
         Validator::extend('checkunique_mobile',function($attribute,$value,$parameters,$validator)
         {
-            $teacher=User::where([['mobile_no','=',request('mobile_no')],['usergroup_id',5]])->exists();
+            $teacher=User::matchingPhone((string) request('mobile_no'), \App\Support\PhoneCountry::countryFromAuth())->where('usergroup_id', 5)->exists();
             if($teacher)
             {
                 return false;
@@ -112,7 +112,11 @@ class TeacherProfileAddRequest extends FormRequest
             'firstname'             => 'required|check_firstname|max:15',
             'lastname'              => 'nullable|check_lastname|max:15',
             'date_of_birth'         => 'nullable|date|check_date_of_birth',
-            'mobile_no'             => 'required|numeric|digits:10|checkunique_mobile',
+            'mobile_no'             => ['required', 'string', 'max:20', function ($attribute, $value, $fail) {
+                if (\App\Support\PhoneCountry::normalise((string) $value, \App\Support\PhoneCountry::countryFromAuth()) === null) {
+                    $fail('Enter a valid phone number. The school country only fills in the dialling code.');
+                }
+            }, 'checkunique_mobile'],
             'email'                 => 'nullable|email|checkunique_email',
             'gender'                => 'required',
             //'avatar'                => 'required|mimes:jpg,jpeg,png',

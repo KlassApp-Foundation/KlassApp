@@ -62,7 +62,9 @@ class WhatsAppUser extends Model
      */
     public static function findByPhone(string $phone): ?self
     {
-        return self::where('phone', $phone)->first();
+        $keys = \App\Support\PhoneCountry::keys($phone, 'Uganda');
+
+        return self::whereIn('phone', $keys === [] ? [$phone] : $keys)->first();
     }
 
     /**

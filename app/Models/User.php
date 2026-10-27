@@ -99,7 +99,33 @@ class User extends Authenticatable implements HasMedia
                     "registration_number must match format KLS####### (e.g. KLS0010427), got: {$model->registration_number}"
                 );
             }
+
+            if ($model->isDirty('mobile_no') && is_string($model->mobile_no) && trim($model->mobile_no) !== '') {
+                $country = 'Uganda';
+                if ($model->school_id) {
+                    $stored = \App\Models\School::query()->whereKey($model->school_id)->value('registration_country');
+                    if (is_string($stored) && trim($stored) !== '') {
+                        $country = trim($stored);
+                    }
+                }
+                $e164 = \App\Support\PhoneCountry::normalise($model->mobile_no, $country);
+                if ($e164 !== null) {
+                    $model->mobile_no = $e164;
+                }
+            }
         });
+    }
+
+    /**
+     * Match a phone against E.164 and the older local forms still stored on users.
+     */
+    public function scopeMatchingPhone($query, ?string $raw, ?string $countryName = 'Uganda')
+    {
+        $keys = \App\Support\PhoneCountry::keys($raw, $countryName);
+
+        return $keys === []
+            ? $query->whereRaw('1 = 0')
+            : $query->whereIn('mobile_no', $keys);
     }
 
     public function school()

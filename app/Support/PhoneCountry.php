@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Country;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberUtil;
 
 /**
  * Country-aware phone normalisation for onboarding forms.
@@ -56,7 +58,11 @@ class PhoneCountry
         return ['code' => $code, 'min' => 8, 'max' => 12];
     }
 
-    // FLAGGED(product-decision): known countries come from a fixed list, not libphonenumber. see docs/onboarding-engine-plan.md
+    /**
+     * E.164 for any valid number. $countryName only supplies the region for a
+     * number typed without a country code. A number that already has a country
+     * code is accepted even when it is not that country.
+     */
     public static function normalise(?string $input, ?string $countryName): ?string
     {
         $raw = trim((string) $input);
@@ -64,12 +70,71 @@ class PhoneCountry
             return null;
         }
 
-        $spec = self::spec($countryName);
-        if ($spec === null) {
-            return WhatsAppPhoneHelper::normaliseInternational($raw);
+        return WhatsAppPhoneHelper::toE164($raw, self::region($countryName));
+    }
+
+    /**
+     * Stored values to treat as the same number: E.164, digits, and the
+     * national form with and without a leading 0.
+     *
+     * @return list<string>
+     */
+    public static function keys(?string $input, ?string $countryName = 'Uganda'): array
+    {
+        $raw = trim((string) $input);
+        if ($raw === '') {
+            return [];
         }
 
-        return WhatsAppPhoneHelper::normaliseForCountry($raw, $spec['code'], $spec['min'], $spec['max']);
+        $e164 = self::normalise($raw, $countryName);
+        if ($e164 === null) {
+            return [$raw];
+        }
+
+        $util = PhoneNumberUtil::getInstance();
+
+        try {
+            $parsed = $util->parse($e164, self::region($countryName));
+        } catch (NumberParseException) {
+            return array_values(array_unique([$e164, $raw]));
+        }
+
+        $national = $util->getNationalSignificantNumber($parsed);
+
+        return array_values(array_unique(array_filter([
+            $e164,
+            ltrim($e164, '+'),
+            $national,
+            '0'.$national,
+            $raw,
+        ])));
+    }
+
+    public static function dial(?string $countryName): string
+    {
+        $spec = self::spec($countryName);
+
+        return $spec === null ? '+256' : '+'.$spec['code'];
+    }
+
+    public static function countryFromAuth(): string
+    {
+        $name = auth()->user()?->school?->registration_country;
+
+        return is_string($name) && trim($name) !== '' ? trim($name) : 'Uganda';
+    }
+
+    public static function region(?string $countryName): string
+    {
+        $spec = self::spec($countryName);
+        if ($spec !== null) {
+            $region = PhoneNumberUtil::getInstance()->getRegionCodeForCountryCode((int) $spec['code']);
+            if (is_string($region) && $region !== '' && $region !== 'ZZ') {
+                return $region;
+            }
+        }
+
+        return 'UG';
     }
 
     public static function example(?string $countryName): ?string

@@ -147,28 +147,7 @@ class SchoolSignupBootstrapService
             return null;
         }
 
-        $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
-        if ($digits === '') {
-            return null;
-        }
-
-        if (str_starts_with($digits, '0')) {
-            $digits = substr($digits, 1);
-        }
-
-        if (str_starts_with($digits, '256') && strlen($digits) === 12) {
-            return '+'.$digits;
-        }
-
-        if (preg_match('/^7[0578]\d{7}$/', $digits)) {
-            return '+256'.$digits;
-        }
-
-        if (str_starts_with($trimmed, '+') && strlen($digits) >= 9) {
-            return '+'.$digits;
-        }
-
-        return '+'.$digits;
+        return \App\Support\PhoneCountry::normalise($trimmed, 'Uganda');
     }
 
     private function createPlaceholderSchool(

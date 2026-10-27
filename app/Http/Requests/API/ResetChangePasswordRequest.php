@@ -30,7 +30,7 @@ class ResetChangePasswordRequest extends FormRequest
         Validator::extend('checkpassword', function ($attribute, $value, $parameters, $validator) 
         {
             //$user = User::where('mobile_no',request('mobile_no'))->first();
-            $user = User::where('mobile_no', request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
+            $user = User::matchingPhone((string) request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
 
             $authentication = Authentication::where([
                 ['user_id',$user->id],

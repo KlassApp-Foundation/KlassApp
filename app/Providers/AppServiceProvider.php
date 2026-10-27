@@ -70,6 +70,17 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() {
+        \Illuminate\Support\Facades\Validator::extend('international_phone', function ($attribute, $value) {
+            if ($value === null || $value === '') {
+                return true;
+            }
+
+            return \App\Support\PhoneCountry::normalise((string) $value, \App\Support\PhoneCountry::countryFromAuth()) !== null;
+        });
+        \Illuminate\Support\Facades\Validator::replacer('international_phone', function () {
+            return 'Enter a valid phone number. The school country only fills in the dialling code.';
+        });
+
         // Laravel 13 no longer falls back to route('login') when the auth
         // middleware has no guest redirect. This app uses the classic HTTP
         // kernel, which does not register that default, so keep the same

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\PhoneCountry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,7 @@ class ParentAddRequest extends FormRequest
         });
 
         Validator::extend('checkunique_mobile', function ($attribute, $value, $parameters, $validator) {
-            $user = User::where([['mobile_no', '=', request('mobile_no')], ['usergroup_id', 7]])->exists();
+            $user = User::matchingPhone((string) request('mobile_no'), PhoneCountry::countryFromAuth())->where('usergroup_id', 7)->exists();
             return !$user;
         });
 
@@ -30,7 +31,11 @@ class ParentAddRequest extends FormRequest
             return [
                 'firstname' => 'required|check_firstname|max:255',
                 'lastname'  => 'nullable|max:255',
-                'mobile_no' => 'required|numeric|digits:10|checkunique_mobile',
+                'mobile_no' => ['required', 'string', 'max:20', function ($attribute, $value, $fail) {
+                    if (PhoneCountry::normalise((string) $value, PhoneCountry::countryFromAuth()) === null) {
+                        $fail('Enter a valid phone number. The school country only fills in the dialling code.');
+                    }
+                }, 'checkunique_mobile'],
                 'relation'  => 'nullable|max:50',
             ];
         }
