@@ -236,8 +236,8 @@ class KlsIdFormatGuardTest extends TestCase
         // nextForStudent generates and persists — must pass both model guards
         $id = \App\Services\StudentIdGeneratorService::nextForStudent($user);
 
-        $this->assertSame('KLS0070001', $id);
-        $this->assertSame('KLS0070001', $user->fresh()->registration_number);
+        $this->assertSame('KLS-7-1', $id);
+        $this->assertSame('KLS-7-1', $user->fresh()->registration_number);
     }
 
     public function test_existing_seven_digit_id_is_not_rewritten_when_the_sequence_passes_9999(): void
@@ -256,7 +256,7 @@ class KlsIdFormatGuardTest extends TestCase
         $next = \App\Services\StudentIdGeneratorService::next(1);
         $kept = \App\Services\StudentIdGeneratorService::ensureForStudent($user->fresh());
 
-        $this->assertSame('KLS00110000', $next);
+        $this->assertSame('KLS-1-10000', $next);
         $this->assertSame('KLS0010001', $kept);
         $this->assertSame('KLS0010001', $user->fresh()->registration_number);
 
@@ -265,6 +265,6 @@ class KlsIdFormatGuardTest extends TestCase
             'usergroup_id' => 6,
             'registration_number' => $next,
         ]);
-        $this->assertSame('KLS00110000', $wide->fresh()->registration_number);
+        $this->assertSame('KLS-1-10000', $wide->fresh()->registration_number);
     }
 }

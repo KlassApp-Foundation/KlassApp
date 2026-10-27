@@ -10,8 +10,13 @@ use Illuminate\Support\Facades\DB;
  *
  * Historical IDs are KLS plus 7 digits (school id padded to 3, sequence padded
  * to 4): school 1, sequence 1 is KLS0010001. Sequence 10000 no longer fits in
- * 4 digits, so the digit run grows (KLS00110000) and stays valid. Stored IDs
- * are never rewritten.
+ * 4 digits, so the digit run grows (KLS00110000). That padded form collides
+ * once a school id passes 999 (school 100 sequence 10001 and school 1001
+ * sequence 1 are both KLS10010001). Stored IDs are never rewritten.
+ *
+ * New IDs are KLS-{schoolId}-{sequence} (KLS-100-10001 and KLS-1001-1).
+ * PATTERN accepts both. #1244 WhatsAppController still matches only
+ * /^KLS\d{7}$/i until it adopts this constant.
  *
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
@@ -27,11 +32,15 @@ use Illuminate\Support\Facades\DB;
 class StudentIdGeneratorService
 {
     /**
-     * KLS plus 7 to 16 digits. Seven digits is every ID issued before a school
-     * passed 9,999 students. Longer values are the same generator once the
-     * sequence needs another digit.
+     * Legacy IDs are KLS plus 7 to 16 digits. New IDs are KLS-{schoolId}-{sequence}.
+     * #1244's WhatsApp matcher should adopt this constant after this PR merges.
      */
-    public const PATTERN = '/^KLS\d{7,16}$/i';
+    public const PATTERN = '/^KLS(?:\d{7,16}|-\d{1,10}-\d{1,10})$/i';
+
+    /**
+     * HTML pattern attribute. Same shape as PATTERN, without the delimiters.
+     */
+    public const HTML_PATTERN = 'KLS(?:\d{7,16}|-\d{1,10}-\d{1,10})';
 
     public static function isValid(?string $value): bool
     {
@@ -41,8 +50,9 @@ class StudentIdGeneratorService
     /**
      * Atomically reserve and return the next klassapp_student_id for a school.
      *
-     * Format: KLS{school_id_padded_to_3}{seq_padded_to_at_least_4}
-     * Example: school_id=1, seq=1 → "KLS0010001". seq=10000 → "KLS00110000".
+     * New format: KLS-{schoolId}-{sequence}
+     * Example: school 1, sequence 1 is KLS-1-1. School 100, sequence 10001
+     * is KLS-100-10001, which is not school 1001's KLS-1001-1.
      */
     public static function next(int $schoolId): string
     {
@@ -54,22 +64,52 @@ class StudentIdGeneratorService
                 ->lockForUpdate()
                 ->first();
 
+            $seq = $row ? (int) $row->next_seq : 1;
+            if ($seq < 1) {
+                $seq = 1;
+            }
+
+            $id = null;
+            for ($attempt = 0; $attempt < 1000; $attempt++) {
+                $candidate = self::format($schoolId, $seq);
+                if (! self::isTaken($candidate)) {
+                    $id = $candidate;
+                    break;
+                }
+                $seq++;
+            }
+
+            if ($id === null) {
+                throw new \RuntimeException('Could not reserve a unique student ID for school '.$schoolId.'.');
+            }
+
             if (! $row) {
-                // First-ever call for this school — seed at seq 1, next call gets 2.
                 DB::table('student_id_sequences')->insert([
                     'school_id' => $schoolId,
-                    'next_seq'  => 2,
+                    'next_seq' => $seq + 1,
                 ]);
-                $seq = 1;
             } else {
-                $seq = $row->next_seq;
                 DB::table('student_id_sequences')
                     ->where('school_id', $schoolId)
                     ->update(['next_seq' => $seq + 1]);
             }
 
-            return sprintf('KLS%03d%04d', $schoolId, $seq);
+            return $id;
         });
+    }
+
+    public static function format(int $schoolId, int $sequence): string
+    {
+        return 'KLS-'.$schoolId.'-'.$sequence;
+    }
+
+    private static function isTaken(string $id): bool
+    {
+        if (DB::table('users')->where('registration_number', $id)->exists()) {
+            return true;
+        }
+
+        return DB::table('student_academics')->where('klassapp_student_id', $id)->exists();
     }
 
     /**

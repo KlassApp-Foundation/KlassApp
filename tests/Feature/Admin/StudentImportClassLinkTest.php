@@ -174,6 +174,6 @@ class StudentImportClassLinkTest extends TestCase
 
         $academic = StudentAcademic::where('user_id', $student->id)->firstOrFail();
 
-        $this->assertMatchesRegularExpression('/^KLS\d{7}$/i', (string) $academic->klassapp_student_id);
+        $this->assertTrue(\App\Services\StudentIdGeneratorService::isValid((string) $academic->klassapp_student_id));
     }
 }

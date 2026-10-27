@@ -101,7 +101,7 @@ class StudentAcademic extends Model
                 && $model->klassapp_student_id !== ''
                 && ! \App\Services\StudentIdGeneratorService::isValid($model->klassapp_student_id)) {
                 throw new \InvalidArgumentException(
-                    "klassapp_student_id must match format KLS plus 7 to 16 digits (e.g. KLS0010427), got: {$model->klassapp_student_id}"
+                    "klassapp_student_id must match format KLS plus 7 to 16 digits (e.g. KLS0010427) or KLS-school-sequence (e.g. KLS-7-1), got: {$model->klassapp_student_id}"
                 );
             }
         });

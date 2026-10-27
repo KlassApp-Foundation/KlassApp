@@ -96,7 +96,7 @@ class User extends Authenticatable implements HasMedia
                 && $model->registration_number !== ''
                 && ! \App\Services\StudentIdGeneratorService::isValid($model->registration_number)) {
                 throw new \InvalidArgumentException(
-                    "registration_number must match format KLS plus 7 to 16 digits (e.g. KLS0010427), got: {$model->registration_number}"
+                    "registration_number must match format KLS plus 7 to 16 digits (e.g. KLS0010427) or KLS-school-sequence (e.g. KLS-7-1), got: {$model->registration_number}"
                 );
             }
         });
