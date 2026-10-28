@@ -681,15 +681,16 @@ final class MarksReleaseService
             return;
         }
         if ((int) ($release->school?->is_demo ?? 0) !== 1) {
-            if ((bool) config('services.whatsapp.demo_only_recipients')) {
-                $skip('Not a demo school: release messages are sent only in the demo for now');
+            // The release's own gates first: with the switch off or the template
+            // unapproved, nothing could be sent even if the demo guard were lifted.
+            if (($blocked = $this->realSendBlocker($release)) !== null) {
+                $skip($blocked);
 
                 return;
             }
-            // The same gates as the queue pass, re-read now: the switch can be
-            // turned off, or the template un-approved, between queueing and sending.
-            if (($blocked = $this->realSendBlocker($release)) !== null) {
-                $skip($blocked);
+            // The demo-only guard is the outer fallback for a real number.
+            if ((bool) config('services.whatsapp.demo_only_recipients')) {
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 return;
             }
@@ -849,17 +850,18 @@ final class MarksReleaseService
 
                 continue;
             }
-            if (! $isDemo && $demoOnly) {
-                // Outermost policy first: while the demo-only guard is on, nothing
-                // can leave a real school, whatever the release says.
-                $skip('Not a demo school: release messages are sent only in the demo for now');
-
-                continue;
-            }
             if (! $isDemo && ($blocked = $this->realSendBlocker($release)) !== null) {
                 // The switch and the Meta template belong to the real-school path:
                 // a demo follow-along send is not a school sending a template.
+                // Reported before the demo-only guard.
                 $skip($blocked);
+
+                continue;
+            }
+            if (! $isDemo && $demoOnly) {
+                // Outer fallback: while the demo-only guard is on, nothing can
+                // leave a real school, whatever the release says.
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 continue;
             }
