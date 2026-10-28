@@ -5,8 +5,10 @@
  */
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\AuthRedirectHelper;
 use App\Http\Controllers\Controller;
 //use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Models\User;
 use App\Traits\AuthenticatesUsers;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Http\Request;
@@ -27,7 +29,7 @@ class LoginController extends Controller implements ShouldQueue
     use AuthenticatesUsers;
 
     /**
-     * Where to redirect users after login.
+     * Fallback when redirectTo() is not used. Login calls redirectTo().
      *
      * @var string
      */
@@ -51,12 +53,36 @@ class LoginController extends Controller implements ShouldQueue
     }
 
     /**
-     * Where to redirect users after login.
-     * Customize based on user role.
+     * Role home after login. An unfinished school admin goes to setup.
      */
     public function redirectTo()
     {
-        return \App\Helpers\AuthRedirectHelper::dashboardPathForUser(auth()->user());
+        $user = auth()->user();
+
+        return AuthRedirectHelper::dashboardPathForUser($user instanceof User ? $user : null);
+    }
+
+    /**
+     * Unfinished setup wins over a stored intended URL. Finished school
+     * admins and every other role keep the usual intended-or-home redirect.
+     *
+     * @param  mixed  $user
+     * @return \Illuminate\Http\RedirectResponse|null
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        $destination = AuthRedirectHelper::dashboardPathForUser($user);
+        $home = AuthRedirectHelper::dashboardPathForUsergroup((int) $user->usergroup_id);
+
+        if ($destination === $home) {
+            return null;
+        }
+
+        return redirect()->to($destination);
     }
 }
 

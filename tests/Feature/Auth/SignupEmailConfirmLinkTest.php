@@ -6,6 +6,7 @@ use App\Mail\EmailVerificationCodeMail;
 use App\Models\Authentication;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
+use App\Services\OnboardingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +79,7 @@ class SignupEmailConfirmLinkTest extends TestCase
         $this->signup();
         $mail = $this->latestMail();
 
-        $this->post('/register/verify', ['code' => $mail->code])->assertRedirect('/admin/dashboard');
+        $this->post('/register/verify', ['code' => $mail->code])->assertRedirect($this->setupDestinationFor('grace@example.com'));
         $this->assertAuthenticated();
         $this->assertSame(1, (int) $this->user()->email_verified);
 
@@ -116,7 +117,7 @@ class SignupEmailConfirmLinkTest extends TestCase
 
         $response = $this->post($mail->confirmUrl);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect($this->setupDestinationFor('grace@example.com'));
         $response->assertSessionHas('open_toshi_onboarding', true);
         $this->assertStringContainsString('Email confirmed', (string) session('successmessage'));
         $this->assertAuthenticated();
@@ -411,7 +412,7 @@ class SignupEmailConfirmLinkTest extends TestCase
 
         $response = $this->post(route('register.verify.continue'));
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect($this->setupDestinationFor('grace@example.com'));
         $response->assertSessionHas('open_toshi_onboarding', true);
         $this->assertStringContainsString('Email confirmed', (string) session('successmessage'));
         $this->assertAuthenticated();
@@ -435,5 +436,14 @@ class SignupEmailConfirmLinkTest extends TestCase
         $response->assertSee('5000', false);
         $response->assertSee('Confirm email');
         $response->assertSee('continues on its own');
+    }
+
+    private function setupDestinationFor(string $email): string
+    {
+        $user = User::where('email', $email)->firstOrFail();
+        $destination = OnboardingEngine::setupDestination($user->school, $user->id);
+        $this->assertNotNull($destination);
+
+        return $destination;
     }
 }
