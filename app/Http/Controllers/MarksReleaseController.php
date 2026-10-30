@@ -77,12 +77,14 @@ class MarksReleaseController extends Controller
     {
         $user = $this->user();
         $data = $this->validated($request);
-        if ($this->needsReason($user, $data['exam_id'], $data['standard_link_id']) && $data['release_reason'] === '') {
+        // The same class list the screen used, whether it came from the
+        // class/stream picker, a standard_link_id on the URL, or both.
+        $targets = $this->releaseTargets($user, $data);
+        if ($this->needsReason($user, $data['exam_id'], $targets) && $data['release_reason'] === '') {
             throw ValidationException::withMessages([
                 'release_reason' => 'This sitting has already been released. Say why it is being released again.',
             ]);
         }
-        $targets = $this->releaseTargets($user, $data);
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
@@ -234,7 +236,7 @@ class MarksReleaseController extends Controller
             'sheet' => $sheet,
             'approvals' => $approvals,
             'pastSitting' => $pastSitting,
-            'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId),
+            'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
             'previewMessage' => $previewMessage,
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
@@ -249,10 +251,13 @@ class MarksReleaseController extends Controller
      */
     private function oldInput(Request $request, $exams, $links, bool $isAdmin): array
     {
-        $examId = (int) ($request->input('exam_id') ?: ($exams->first()['id'] ?? 0));
-        $class = trim((string) $request->input('class', ''));
-        $stream = trim((string) $request->input('stream', ''));
-        $linkId = $request->filled('standard_link_id') ? (int) $request->input('standard_link_id') : null;
+        // A failed save redirects back with the posted class. Prefer that over
+        // the URL so the reason box matches the class that was refused.
+        $examId = (int) (old('exam_id') ?: $request->input('exam_id') ?: ($exams->first()['id'] ?? 0));
+        $class = trim((string) old('class', $request->input('class', '')));
+        $stream = trim((string) old('stream', $request->input('stream', '')));
+        $postedLink = old('standard_link_id', $request->input('standard_link_id'));
+        $linkId = ($postedLink !== null && $postedLink !== '') ? (int) $postedLink : null;
         if (! $isAdmin && $class === '' && $stream === '' && ! $linkId) {
             $first = $links->first();
             if ($first) {
@@ -377,28 +382,53 @@ class MarksReleaseController extends Controller
         return ['subjects' => array_values($subjects), 'groups' => $groups];
     }
 
-    /** Has this sitting already been released, so a re-release needs a reason? */
-    private function needsReason(User $user, int $examId, ?int $standardLinkId = null): bool
+    /**
+     * Has this sitting already been released for the classes being released?
+     *
+     * $standardLinkIds null is a whole-school release: only an earlier
+     * whole-school release of this sitting asks for a reason. A list is the
+     * classes the screen resolved (picker, URL, or a change that reloaded
+     * the page). Any earlier release of one of those classes, or of the
+     * whole school, asks for a reason. An empty list is not a class.
+     *
+     * @param  array<int, int>|null  $standardLinkIds
+     */
+    private function needsReason(User $user, int $examId, ?array $standardLinkIds = null): bool
     {
+        if ($standardLinkIds === []) {
+            return false;
+        }
+
         $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
         if ($anchor === null) {
             return false;
         }
 
-        $sectionId = $standardLinkId !== null
-            ? (int) \App\Models\StandardLink::query()->where('school_id', $user->school_id)->whereKey($standardLinkId)->value('section_id')
-            : null;
+        $sectionIds = [];
+        if ($standardLinkIds !== null) {
+            $sectionIds = \App\Models\StandardLink::query()
+                ->where('school_id', $user->school_id)
+                ->whereIn('id', $standardLinkIds)
+                ->pluck('section_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+        }
 
         return MarksRelease::query()
             ->where('school_id', $user->school_id)
             ->where('status', MarksRelease::STATUS_RELEASED)
             ->whereHas('exam', fn ($q) => $q
+                ->where('school_id', $user->school_id)
                 ->where('exam_type_id', $anchor->exam_type_id)
                 ->where('academic_term_id', $anchor->academic_term_id))
-            ->where(function ($q) use ($sectionId): void {
+            ->where(function ($q) use ($sectionIds, $user): void {
                 $q->where('scope', 'school');
-                if ($sectionId !== null) {
-                    $q->orWhereHas('standardLink', fn ($link) => $link->where('section_id', $sectionId));
+                if ($sectionIds !== []) {
+                    $q->orWhereHas('standardLink', fn ($link) => $link
+                        ->where('school_id', $user->school_id)
+                        ->whereIn('section_id', $sectionIds));
                 }
             })
             ->exists();

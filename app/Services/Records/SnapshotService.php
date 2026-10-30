@@ -86,7 +86,11 @@ class SnapshotService
     private function links(MarksRelease $release): \Illuminate\Support\Collection
     {
         if ($release->standard_link_id !== null) {
-            return StandardLink::query()->with('section')->whereKey($release->standard_link_id)->get();
+            return StandardLink::query()
+                ->with('section')
+                ->where('school_id', $release->school_id)
+                ->whereKey($release->standard_link_id)
+                ->get();
         }
 
         $sectionIds = Exam::query()

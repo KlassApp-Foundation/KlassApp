@@ -39,6 +39,12 @@
 |   links             shared links shown on the page. An entry without a url
 |                     is not shown. The privacy notice link comes from
 |                     services.whatsapp.privacy_notice_url (PRIVACY_NOTICE_URL).
+|
+| records.allow_snapshot_drop: env RECORD_SNAPSHOTS_ALLOW_DROP (default
+| false). The record_snapshots migration refuses to drop that table on
+| rollback unless this is true, because a drop deletes released records.
+| A cached config must be rebuilt before a rollback sees a new value;
+| the migration also honours the env var for that one process.
 */
 
 return [
@@ -62,6 +68,12 @@ return [
             ['label' => 'n8n workflows', 'url' => null],
             ['label' => 'Project repository', 'url' => 'https://github.com/KlassApp-Foundation/KlassApp'],
         ],
+    ],
+
+    // Rollback of record_snapshots deletes released records. Refused unless
+    // RECORD_SNAPSHOTS_ALLOW_DROP=true for that process (see the migration).
+    'records' => [
+        'allow_snapshot_drop' => filter_var(env('RECORD_SNAPSHOTS_ALLOW_DROP', false), FILTER_VALIDATE_BOOLEAN),
     ],
 
     'countries' => [

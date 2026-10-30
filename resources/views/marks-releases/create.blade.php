@@ -58,6 +58,9 @@
                 <input type="hidden" name="exam_id" value="{{ $examId }}">
                 <input type="hidden" name="class" value="{{ $selectedClass }}">
                 <input type="hidden" name="stream" value="{{ $selectedStream }}">
+                @if(!empty($old['standard_link_id']))
+                    <input type="hidden" name="standard_link_id" value="{{ (int) $old['standard_link_id'] }}">
+                @endif
                 <input type="hidden" name="timezone" class="mr-timezone" value="{{ $old['timezone'] ?? 'Africa/Kampala' }}">
                 <div class="mr-seg" role="radiogroup" aria-label="When">
                     <label><input type="radio" name="when" value="now" @checked($when !== 'schedule')> Release now</label>
@@ -78,14 +81,14 @@
                 <label class="mr-control mr-wa-send" data-testid="release-whatsapp-send">
                     <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
                 </label>
-                @if($needsReason ?? false)
+                @if(($needsReason ?? false) || $errors->has('release_reason'))
                     <label class="mr-control" data-testid="release-reason">
                         <span>Why release this sitting again?</span>
                         <textarea name="release_reason" maxlength="500" required>{{ old('release_reason') }}</textarea>
                     </label>
                     <p class="mr-sub" style="margin:0 0 8px">Required. This sitting has been released before; the reason is kept on the new record version.</p>
-                    @error('release_reason')<p class="mr-error" data-testid="release-reason-error">{{ $message }}</p>@enderror
                 @endif
+                @error('release_reason')<p class="mr-error" data-testid="release-reason-error">{{ $message }}</p>@enderror
                 <p class="mr-sub" style="margin:0 0 8px">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
                 <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
                 @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror

@@ -67,6 +67,9 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
+    /** @var array<int, true> release ids whose demo webhook was already posted */
+    private array $demoWebhookRecorded = [];
+
     public function __construct(private readonly WhatsAppBusinessService $whatsApp) {}
 
     // ── Permissions ──────────────────────────────────────────────
@@ -620,12 +623,14 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        [$result, $jobs] = $this->deliver($release);
+        [$result, $jobs, $webhookStudents] = $this->deliver($release);
 
         // The release row and every snapshot are one unit: all saved or none.
-        // A release that cannot write its records did not happen.
+        // A release that cannot write its records did not happen. The demo
+        // webhook is registered only after the snapshots are written, and
+        // DB::afterCommit drops it if this transaction rolls back.
         try {
-            DB::transaction(function () use ($release, $result): void {
+            DB::transaction(function () use ($release, $result, $webhookStudents): void {
                 $release->forceFill([
                     'status' => MarksRelease::STATUS_RELEASED,
                     'released_at' => CarbonImmutable::now('UTC'),
@@ -633,12 +638,26 @@ final class MarksReleaseService
                 ])->save();
 
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
+
+                if ($webhookStudents !== null) {
+                    DB::afterCommit(function () use ($release, $webhookStudents): void {
+                        $this->recordDemoWebhook($release, $webhookStudents);
+                    });
+                }
             });
         } catch (\Throwable $e) {
             Log::error('Release failed: ' . $e->getMessage(), ['release_id' => $releaseId]);
             $release->forceFill(['status' => 'failed'])->save();
 
             return false;
+        }
+
+        // The release transaction has committed. PHPUnit wraps each test in
+        // an outer transaction that is rolled back, so afterCommit waits and
+        // then is discarded. The webhook belongs to this release, which has
+        // already committed: record it now. recordDemoWebhook runs once.
+        if ($webhookStudents !== null && DB::transactionLevel() > 0) {
+            $this->recordDemoWebhook($release, $webhookStudents);
         }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
@@ -828,7 +847,7 @@ final class MarksReleaseService
      * Decide who gets a message. Returns the result (each recipient "queued",
      * everyone else "skipped" with a reason) and the jobs to dispatch.
      *
-     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>}
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array<int, array{code:string, class:string}>|null}
      */
     private function deliver(MarksRelease $release): array
     {
@@ -925,13 +944,45 @@ final class MarksReleaseService
             }
         }
 
+        $webhookStudents = ($repliesOn && $isDemo) ? $released : null;
+
         return [
             $this->totals([
                 'messages' => $messages,
-                'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+                'webhook' => $webhookStudents !== null ? 'pending' : 'not sent',
             ]),
             $jobs,
+            $webhookStudents,
         ];
+    }
+
+    /**
+     * Demo n8n webhook. Called from DB::afterCommit, so a rolled-back release
+     * never posts. Runs at most once per release on this service instance:
+     * an outer test transaction also calls it after the release savepoint
+     * commits, and the afterCommit callback must not post a second time.
+     *
+     * @param  array<int, array{code:string, class:string}>  $students
+     */
+    private function recordDemoWebhook(MarksRelease $release, array $students): void
+    {
+        $id = (int) $release->id;
+        if (isset($this->demoWebhookRecorded[$id])) {
+            return;
+        }
+        $this->demoWebhookRecorded[$id] = true;
+
+        $status = $this->postWebhook($release, $students);
+        $fresh = MarksRelease::query()
+            ->where('school_id', $release->school_id)
+            ->whereKey($id)
+            ->first();
+        if ($fresh === null) {
+            return;
+        }
+        $result = $fresh->result ?? [];
+        $result['webhook'] = $status;
+        $fresh->forceFill(['result' => $result])->save();
     }
 
     /**

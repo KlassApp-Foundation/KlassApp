@@ -3103,6 +3103,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-30: Review fixes on #1255 (level reports and snapshots)
+
+- **Work done**: Merged `cursor/marks-phase-6-release` (`2b628415`) into `cursor/marks-level-reports`. Re-release reason follows the class however it is picked. Released snapshots use ON DELETE RESTRICT. Rollback of `record_snapshots` refuses to drop rows unless `RECORD_SNAPSHOTS_ALLOW_DROP=true`. The demo release webhook runs from `DB::afterCommit`. `bb98cd51` is still on the branch.
+- **Files touched**: `MarksReleaseController.php`, `create.blade.php`, `MarksReleaseService.php`, `SnapshotService.php`, `2026_10_27_120000_create_record_snapshots_table.php`, `config/klassapp.php`, `ReleaseSnapshotTest.php`, `knowledge.md`.
+- **Decisions**: Whole-school release after a class-only release still does not ask for a reason. `supersedes_id`, `release_id` and `released_by` still have no foreign keys. Demo exams from the seeders all have a year and a term; no seeder change.
+- **Status**: On the open PR. Not merged. Not deployed.
+- **Edge cases**: `demo:purge-schools` and `test:purge-schools` do not list `record_snapshots`, so a hard delete of a school, year or term that has a snapshot is refused and the snapshot stays.
+
 ### 2026-10-26: Marks Phase 4 one combined sheet per sitting
 
 - **Work done**: The admin marks page and the teacher's Combined Marksheet open one sitting for the whole class. `ResultsService` supplies the roster, the stream, the submission state, the total, the average, the aggregate, the position, and the "of" count. Past sittings still list learners who sat them after an in-place promotion. The old filter action and the old-year PDF download are no longer that page.
