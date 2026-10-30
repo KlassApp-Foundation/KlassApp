@@ -11,6 +11,7 @@ use App\Models\StandardLink;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Onboarding\Country\SchoolTypePreset;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -28,6 +29,19 @@ use Illuminate\Validation\ValidationException;
  */
 class ClassTeacherAssignmentService
 {
+    /**
+     * Levels a school can add even when it has not created that class yet.
+     * P.1–P.7 and S.1–S.6 are the Uganda short names. Existing names and the
+     * school's type preset are merged in as well.
+     *
+     * @var list<string>
+     */
+    public const CANONICAL_CLASS_NAMES = [
+        'Baby Class', 'Middle Class', 'Top Class',
+        'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7',
+        'S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6',
+    ];
+
     /**
      * @param  array{
      *     email?: string,
@@ -160,8 +174,10 @@ class ClassTeacherAssignmentService
     }
 
     /**
-     * Class names this school already uses. A school with no classes yet
-     * gets the names from its own type preset, not a second fixed list.
+     * Class names this school may add, in level order (P.1, P.2, … P.10),
+     * not alphabetical order. The list is the canonical levels, the school's
+     * type preset, and any name it already uses. It is not limited to names
+     * that already exist.
      *
      * @return list<string>
      */
@@ -170,28 +186,26 @@ class ClassTeacherAssignmentService
         $existing = Section::query()
             ->where('school_id', $schoolId)
             ->where('status', 1)
-            ->orderBy('name')
             ->pluck('name')
             ->map(fn ($name) => trim((string) $name))
             ->filter(fn ($name) => $name !== '')
-            ->unique()
-            ->values()
             ->all();
 
-        if ($existing !== []) {
-            return $existing;
+        $preset = [];
+        $school = School::query()->whereKey($schoolId)->first();
+        if ($school instanceof School) {
+            $preset = SchoolTypePreset::forSchool($school)?->classNames() ?? [];
         }
 
-        $school = School::query()->find($schoolId);
-        if (! $school instanceof School) {
-            return [];
-        }
-
-        return SchoolTypePreset::forSchool($school)?->classNames() ?? [];
+        return $this->sortByLevel($this->uniqueNames(array_merge(
+            self::CANONICAL_CLASS_NAMES,
+            $preset,
+            $existing,
+        )));
     }
 
     /**
-     * Save a class row only when the name is one this school already uses.
+     * Save a class when the name is one namesForSchool() offers this school.
      */
     public function storeNamedClass(User $actor, int $standardId, string $name): Classes
     {
@@ -201,7 +215,7 @@ class ClassTeacherAssignmentService
 
         if ($name === '' || ! in_array($name, $allowed, true)) {
             throw ValidationException::withMessages([
-                'name' => 'Choose a class name this school already uses.',
+                'name' => 'Choose a class name from the list for this school.',
             ]);
         }
 
@@ -248,6 +262,13 @@ class ClassTeacherAssignmentService
             ]);
         }
 
+        $currentId = $standardLink->class_teacher_id !== null
+            ? (int) $standardLink->class_teacher_id
+            : null;
+        if ($currentId !== null && $currentId === (int) $teacher->id) {
+            return;
+        }
+
         $placed = $this->commit($actor, $standardLink, $teacher, true, false, 'stream_form');
         if (! ($placed['success'] ?? false)) {
             throw ValidationException::withMessages([
@@ -286,16 +307,98 @@ class ClassTeacherAssignmentService
         $standardLink->save();
     }
 
-    public function tooManyCreates(User $actor): bool
+    /**
+     * Invite a teacher who is not tied to a class yet. No user row and no
+     * password are stored. The same invite service issues the link.
+     *
+     * @param  array{email?: string, name?: string, phone?: string}  $data
+     * @return array{success: bool, message: string}
+     */
+    public function inviteWithoutClass(User $actor, array $data): array
     {
-        return $this->tooMany('teacher-invite-create:user:'.$actor->id, $this->attempts('create_attempts'));
+        $schoolId = (int) $actor->school_id;
+        if ($schoolId === 0) {
+            return $this->result(false, 'Inviter is not assigned to a school.');
+        }
+
+        $email = mb_strtolower(trim((string) ($data['email'] ?? '')));
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->result(false, 'A valid email address is required.');
+        }
+
+        $name = trim((string) ($data['name'] ?? ''));
+        if ($name === '' || strlen($name) < 3) {
+            return $this->result(false, 'Teacher name must be at least 3 characters.');
+        }
+
+        $phone = trim((string) ($data['phone'] ?? ''));
+
+        if ($this->issuingIsLimited($schoolId, hash('sha256', $email))) {
+            return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
+        }
+
+        if (User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
+            return $this->result(false, "A user with email **{$email}** already exists.");
+        }
+
+        if (TeacherInvite::query()
+            ->where('school_id', $schoolId)
+            ->where('email', $email)
+            ->whereNull('claimed_at')
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', now())
+            ->exists()) {
+            return $this->result(false, "An invite for **{$email}** is already pending.");
+        }
+
+        $school = School::query()->whereKey($schoolId)->first();
+        if (! $school instanceof School) {
+            return $this->result(false, 'School not found.');
+        }
+
+        $issued = TeacherInviteLinkService::issue(
+            school: $school,
+            email: $email,
+            name: $name,
+            phone: $phone !== '' ? $phone : null,
+        );
+
+        TeacherInviteLinkService::sendEmail($issued['invite'], $issued['token'], $school, null);
+
+        $whatsapp = $phone !== '' && (bool) config('invites.staff_whatsapp_enabled');
+        if ($whatsapp) {
+            TeacherInviteLinkService::sendWhatsApp($issued['invite'], $issued['token'], $school, null);
+        }
+
+        $channel = $whatsapp ? 'email and WhatsApp' : 'email';
+
+        return $this->result(
+            true,
+            "An invite link has been sent to {$name} at {$email} (via {$channel}). They must set their own password to activate the account.",
+        );
     }
 
-    public function tooManyAccepts(?string $ip): bool
+    /**
+     * Named limiter teacher-invite-issue. The key is the school and the invite
+     * (email hash or invite id), never an IP address.
+     */
+    public function issuingIsLimited(int $schoolId, string $inviteKey): bool
     {
-        $key = 'teacher-invite-accept:'.hash('sha256', (string) $ip);
+        $request = Request::create('/', 'POST', [
+            'school_id' => $schoolId,
+            'invite_key' => $inviteKey,
+        ]);
 
-        return $this->tooMany($key, $this->attempts('accept_attempts'));
+        return $this->consumeNamedLimiter('teacher-invite-issue', $request);
+    }
+
+    public static function limiterCap(string $name): int
+    {
+        if (app()->runningUnitTests() && ! config('invites.force_rate_limits')) {
+            return 100000;
+        }
+
+        return max(1, (int) config('invites.'.$name, 30));
     }
 
     /**
@@ -330,7 +433,7 @@ class ClassTeacherAssignmentService
             return $this->result(false, "{$teacher->name} is already the class teacher for {$className}.");
         }
 
-        if ($this->tooManyCreates($actor)) {
+        if ($this->issuingIsLimited((int) $actor->school_id, 'existing:'.$teacher->id)) {
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
@@ -351,11 +454,16 @@ class ClassTeacherAssignmentService
         string $name,
         string $phone,
     ): array {
-        if (User::query()->where('email', $email)->exists()) {
+        if ($this->issuingIsLimited((int) $actor->school_id, hash('sha256', $email))) {
+            return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
+        }
+
+        if (User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
             return $this->result(false, "A user with email **{$email}** already exists.");
         }
 
         if (TeacherInvite::query()
+            ->where('school_id', (int) $actor->school_id)
             ->where('email', $email)
             ->whereNull('claimed_at')
             ->whereNull('revoked_at')
@@ -364,11 +472,7 @@ class ClassTeacherAssignmentService
             return $this->result(false, "An invite for **{$email}** is already pending.");
         }
 
-        if ($this->tooManyCreates($actor)) {
-            return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
-        }
-
-        $school = School::query()->find((int) $actor->school_id);
+        $school = School::query()->whereKey((int) $actor->school_id)->first();
         if (! $school instanceof School) {
             return $this->result(false, 'School not found.');
         }
@@ -521,24 +625,115 @@ class ClassTeacherAssignmentService
         return $teacher instanceof User ? $teacher : null;
     }
 
-    private function tooMany(string $key, int $max): bool
+    /**
+     * Hit the named limiter the same way the throttle middleware does:
+     * the cache key is md5(name + limit key). Returns true when limited.
+     */
+    private function consumeNamedLimiter(string $name, Request $request): bool
     {
-        if (RateLimiter::tooManyAttempts($key, $max)) {
-            return true;
+        $callback = RateLimiter::limiter($name);
+        if ($callback === null) {
+            return false;
         }
 
-        RateLimiter::hit($key, (int) config('invites.rate_decay_seconds', 3600));
+        $limits = $callback($request);
+        if (! is_array($limits)) {
+            $limits = [$limits];
+        }
+
+        $hits = [];
+        foreach ($limits as $limit) {
+            $key = md5($name.$limit->key);
+            if (RateLimiter::tooManyAttempts($key, $limit->maxAttempts)) {
+                return true;
+            }
+            $hits[] = [$key, $limit->decaySeconds];
+        }
+
+        foreach ($hits as [$key, $decay]) {
+            RateLimiter::hit($key, $decay);
+        }
 
         return false;
     }
 
-    private function attempts(string $name): int
+    /**
+     * @param  list<string>  $names
+     * @return list<string>
+     */
+    private function uniqueNames(array $names): array
     {
-        if (app()->runningUnitTests() && ! config('invites.force_rate_limits')) {
-            return 100000;
+        $seen = [];
+        $clean = [];
+        foreach ($names as $name) {
+            $name = trim((string) $name);
+            if ($name === '') {
+                continue;
+            }
+            $key = strtolower($name);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $clean[] = $name;
         }
 
-        return max(1, (int) config('invites.'.$name, 30));
+        return $clean;
+    }
+
+    /**
+     * @param  list<string>  $names
+     * @return list<string>
+     */
+    private function sortByLevel(array $names): array
+    {
+        usort($names, function (string $left, string $right): int {
+            $leftRank = $this->levelRank($left);
+            $rightRank = $this->levelRank($right);
+
+            return $leftRank <=> $rightRank ?: strcasecmp($left, $right);
+        });
+
+        return array_values($names);
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function levelRank(string $name): array
+    {
+        $key = strtolower(trim($name));
+        $nursery = ['baby class' => 1, 'middle class' => 2, 'top class' => 3];
+        if (isset($nursery[$key])) {
+            return [0, $nursery[$key]];
+        }
+
+        if (preg_match('/^p\.(\d+)$/', $key, $match)) {
+            return [1, (int) $match[1]];
+        }
+
+        $primary = [
+            'primary one' => 1, 'primary two' => 2, 'primary three' => 3, 'primary four' => 4,
+            'primary five' => 5, 'primary six' => 6, 'primary seven' => 7, 'primary eight' => 8,
+            'primary nine' => 9, 'primary ten' => 10,
+        ];
+        if (isset($primary[$key])) {
+            return [1, $primary[$key]];
+        }
+
+        if (preg_match('/^s\.(\d+)$/', $key, $match)) {
+            return [2, (int) $match[1]];
+        }
+
+        $senior = [
+            'senior one' => 1, 'senior two' => 2, 'senior three' => 3,
+            'senior four' => 4, 'senior five' => 5, 'senior six' => 6,
+        ];
+        if (isset($senior[$key])) {
+            return [2, $senior[$key]];
+        }
+
+        return [9, 0];
     }
 
     /**

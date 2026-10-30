@@ -235,30 +235,96 @@ class ClassTeacherPhase1Test extends TestCase
             ->assertSee('Set your password');
     }
 
-    public function test_invite_creation_and_acceptance_are_rate_limited(): void
+    public function test_issuing_one_invite_does_not_throttle_a_different_invite_or_school(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.create_attempts' => 100,
+            'invites.create_per_invite_attempts' => 1,
+        ]);
+        $this->clearIssueLimits((int) $this->school->id);
+
+        $email = 'one@phase-one.test';
+        $this->clearIssueLimits((int) $this->school->id, hash('sha256', $email));
+        $this->assertTrue($this->inviteNew($email, 'One Teacher')['success']);
+
+        $again = $this->inviteNew($email, 'One Teacher');
+        $this->assertFalse($again['success']);
+        $this->assertStringContainsString('Too many', $again['message']);
+        $this->assertSame(1, TeacherInvite::query()->where('school_id', $this->school->id)->where('email', $email)->count());
+
+        $otherEmail = 'two@phase-one.test';
+        $this->clearIssueLimits((int) $this->school->id, hash('sha256', $otherEmail));
+        $this->assertTrue($this->inviteNew($otherEmail, 'Two Teacher')['success']);
+
+        $other = $this->otherSchool();
+        $this->clearIssueLimits((int) $other['school']->id, hash('sha256', $email));
+        $elsewhere = ClassTeacherInviteService::invite($other['admin'], $other['link'], [
+            'confirmed' => true,
+            'email' => $email,
+            'name' => 'One Teacher',
+        ]);
+        $this->assertTrue($elsewhere['success'], $elsewhere['message'] ?? '');
+    }
+
+    public function test_issuing_is_limited_per_school_and_a_different_school_is_not(): void
     {
         config([
             'invites.force_rate_limits' => true,
             'invites.create_attempts' => 2,
-            'invites.accept_attempts' => 2,
+            'invites.create_per_invite_attempts' => 100,
         ]);
-        RateLimiter::clear('teacher-invite-create:user:'.$this->admin->id);
+        $this->clearIssueLimits((int) $this->school->id);
 
-        $this->assertTrue($this->inviteNew('one@phase-one.test', 'One Teacher')['success']);
-        $this->assertTrue($this->inviteNew('two@phase-one.test', 'Two Teacher')['success']);
-        $blocked = $this->inviteNew('three@phase-one.test', 'Three Teacher');
+        $this->assertTrue($this->inviteNew('school-a-one@phase-one.test', 'One Teacher')['success']);
+        $this->assertTrue($this->inviteNew('school-a-two@phase-one.test', 'Two Teacher')['success']);
+        $blocked = $this->inviteNew('school-a-three@phase-one.test', 'Three Teacher');
         $this->assertFalse($blocked['success']);
         $this->assertStringContainsString('Too many', $blocked['message']);
 
-        ['token' => $token] = TeacherInviteLinkService::issue(
+        $other = $this->otherSchool();
+        $this->clearIssueLimits((int) $other['school']->id);
+        $elsewhere = ClassTeacherInviteService::invite($other['admin'], $other['link'], [
+            'confirmed' => true,
+            'email' => 'school-b@phase-one.test',
+            'name' => 'Other School Teacher',
+        ]);
+        $this->assertTrue($elsewhere['success'], $elsewhere['message'] ?? '');
+    }
+
+    public function test_accepting_one_invite_does_not_throttle_a_different_invite_or_school(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.accept_attempts' => 2,
+            'invites.accept_school_attempts' => 100,
+        ]);
+
+        ['token' => $token, 'invite' => $invite] = TeacherInviteLinkService::issue(
             $this->school,
             'accept@phase-one.test',
             'Accept Teacher',
             $this->link,
         );
-        $ip = '203.0.113.50';
-        RateLimiter::clear('teacher-invite-accept:'.hash('sha256', $ip));
+        ['token' => $otherToken, 'invite' => $otherInvite] = TeacherInviteLinkService::issue(
+            $this->school,
+            'accept-other@phase-one.test',
+            'Other Accept',
+            $this->link,
+        );
+        $foreign = $this->otherSchool();
+        ['token' => $foreignToken, 'invite' => $foreignInvite] = TeacherInviteLinkService::issue(
+            $foreign['school'],
+            'accept-foreign@phase-one.test',
+            'Foreign Accept',
+            $foreign['link'],
+        );
 
+        $this->clearAcceptLimits((int) $this->school->id, (string) $invite->id);
+        $this->clearAcceptLimits((int) $this->school->id, (string) $otherInvite->id);
+        $this->clearAcceptLimits((int) $foreign['school']->id, (string) $foreignInvite->id);
+
+        $ip = '203.0.113.50';
         $this->withServerVariables(['REMOTE_ADDR' => $ip]);
         $this->get(route('teacher.invite.form', $token))->assertOk();
         $this->get(route('teacher.invite.form', $token))->assertOk();
@@ -266,6 +332,63 @@ class ClassTeacherPhase1Test extends TestCase
             ->assertStatus(429)
             ->assertSee('Too many attempts')
             ->assertDontSee($token);
+
+        $this->withServerVariables(['REMOTE_ADDR' => $ip]);
+        $this->get(route('teacher.invite.form', $otherToken))
+            ->assertOk()
+            ->assertSee('Set your password');
+        $this->get(route('teacher.invite.form', $foreignToken))
+            ->assertOk()
+            ->assertSee('Set your password');
+    }
+
+    public function test_accepting_is_limited_per_school_and_a_different_school_is_not(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.accept_attempts' => 100,
+            'invites.accept_school_attempts' => 2,
+        ]);
+
+        ['token' => $first] = TeacherInviteLinkService::issue(
+            $this->school,
+            'school-cap-one@phase-one.test',
+            'Cap One',
+            $this->link,
+        );
+        ['token' => $second] = TeacherInviteLinkService::issue(
+            $this->school,
+            'school-cap-two@phase-one.test',
+            'Cap Two',
+            $this->link,
+        );
+        ['token' => $third] = TeacherInviteLinkService::issue(
+            $this->school,
+            'school-cap-three@phase-one.test',
+            'Cap Three',
+            $this->link,
+        );
+        $foreign = $this->otherSchool();
+        ['token' => $foreignToken] = TeacherInviteLinkService::issue(
+            $foreign['school'],
+            'school-cap-foreign@phase-one.test',
+            'Cap Foreign',
+            $foreign['link'],
+        );
+
+        $this->clearAcceptLimits((int) $this->school->id);
+        $this->clearAcceptLimits((int) $foreign['school']->id);
+
+        $this->get(route('teacher.invite.form', $first))->assertOk();
+        $this->get(route('teacher.invite.form', $second))->assertOk();
+        $this->get(route('teacher.invite.form', $third))
+            ->assertStatus(429)
+            ->assertSee('Too many attempts')
+            ->assertDontSee($third);
+
+        $this->get(route('teacher.invite.form', $foreignToken))
+            ->assertOk()
+            ->assertSee('Set your password');
     }
 
     public function test_existing_teacher_notice_names_who_assigned_them_and_the_class(): void
@@ -320,7 +443,9 @@ class ClassTeacherPhase1Test extends TestCase
 
         $this->actingAs($this->admin)
             ->get('/admin/class-setup')
-            ->assertRedirect(route('admin.classes.index'));
+            ->assertOk()
+            ->assertSee('P.1')
+            ->assertSee('Class setup');
 
         $this->actingAs($this->admin)
             ->get('/admin/classes/create')
@@ -346,11 +471,14 @@ class ClassTeacherPhase1Test extends TestCase
             ])
             ->assertRedirect(route('admin.classes.add'));
 
+        $names = app(ClassTeacherAssignmentService::class)->namesForSchool((int) $this->school->id);
+        $this->assertLessThan(array_search('P.2', $names, true), array_search('P.1', $names, true));
+
         $this->assertDatabaseHas('classes', [
             'school_id' => $this->school->id,
             'standard_id' => $standard->id,
             'name' => 'P.1',
-            'position' => 1,
+            'position' => array_search('P.1', $names, true) + 1,
         ]);
 
         $other = School::create([
@@ -461,6 +589,81 @@ class ClassTeacherPhase1Test extends TestCase
         $this->assertNull($this->link->fresh()->class_teacher_id);
     }
 
+    public function test_store_accepts_a_new_level_and_sorts_by_level_not_alphabetically(): void
+    {
+        foreach (['P.2', 'P.6', 'P.10'] as $name) {
+            Section::create([
+                'school_id' => $this->school->id,
+                'name' => $name,
+                'status' => 1,
+            ]);
+        }
+
+        $names = app(ClassTeacherAssignmentService::class)->namesForSchool((int) $this->school->id);
+        $this->assertContains('P.7', $names);
+        $this->assertLessThan(array_search('P.2', $names, true), array_search('P.1', $names, true));
+        $this->assertLessThan(array_search('P.7', $names, true), array_search('P.6', $names, true));
+        $this->assertLessThan(array_search('P.10', $names, true), array_search('P.7', $names, true));
+        $this->assertLessThan(array_search('P.10', $names, true), array_search('P.2', $names, true));
+
+        $standard = Standard::query()->where('school_id', $this->school->id)->firstOrFail();
+        $this->actingAs($this->admin)
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $standard->id,
+                'name' => 'P.7',
+            ])
+            ->assertRedirect(route('admin.classes.add'));
+
+        $this->assertDatabaseHas('classes', [
+            'school_id' => $this->school->id,
+            'name' => 'P.7',
+            'position' => array_search('P.7', $names, true) + 1,
+        ]);
+    }
+
+    public function test_saving_the_stream_form_with_the_same_class_teacher_keeps_the_pending_invite(): void
+    {
+        $teacher = $this->teacher('same@phase-one.test');
+        $this->link->class_teacher_id = $teacher->id;
+        $this->link->save();
+        $this->section->class_teacher_id = $teacher->id;
+        $this->section->save();
+
+        ['token' => $token] = TeacherInviteLinkService::issue(
+            $this->school,
+            'pending-same@phase-one.test',
+            'Pending Same',
+            $this->link,
+        );
+        $invite = TeacherInvite::query()->where('email', 'pending-same@phase-one.test')->firstOrFail();
+        $hash = $invite->token_hash;
+        $logs = ActivityLog::query()->where('log_name', 'class_teacher')->count();
+        $inviteCount = TeacherInvite::query()->where('school_id', $this->school->id)->count();
+
+        $year = AcademicYear::query()->where('school_id', $this->school->id)->firstOrFail();
+        Auth::setUser($this->admin);
+        $edit = Request::create('/', 'POST', [
+            'class_teacher_id' => $teacher->id,
+            'no_of_students' => 40,
+            'standard' => '1',
+            'count' => 0,
+        ]);
+
+        app(\App\Http\Controllers\Admin\SectionController::class)
+            ->editStandardLink($this->school->id, $year->id, $this->link->id, $edit);
+
+        $fresh = $invite->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertNull($fresh->revoked_at);
+        $this->assertSame($hash, $fresh->token_hash);
+        $this->assertSame($invite->id, $fresh->id);
+        $this->assertSame($inviteCount, TeacherInvite::query()->where('school_id', $this->school->id)->count());
+        $this->assertSame($logs, ActivityLog::query()->where('log_name', 'class_teacher')->count());
+        $this->assertSame($teacher->id, (int) $this->link->fresh()->class_teacher_id);
+        $checked = TeacherInviteLinkService::validateToken($token);
+        $this->assertNull($checked['error']);
+    }
+
     /**
      * @return array{success: bool, message: string}
      */
@@ -472,6 +675,71 @@ class ClassTeacherPhase1Test extends TestCase
             'name' => $name,
             'phone' => $phone,
         ]);
+    }
+
+    /**
+     * @return array{school: School, admin: User, link: StandardLink}
+     */
+    private function otherSchool(): array
+    {
+        $suffix = Str::lower(Str::random(8));
+        $school = School::create([
+            'name' => 'Second Phase School',
+            'slug' => 'second-phase-'.$suffix,
+            'email' => 'second-'.$suffix.'@phase-one.test',
+            'status' => 'active',
+        ]);
+        $admin = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'name' => 'Second Admin',
+            'email' => 'second-admin-'.$suffix.'@phase-one.test',
+            'status' => 'active',
+        ]);
+        $year = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+        $standard = Standard::create([
+            'school_id' => $school->id,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+        $section = Section::create([
+            'school_id' => $school->id,
+            'name' => 'P.2',
+            'status' => 1,
+        ]);
+        $link = StandardLink::create([
+            'school_id' => $school->id,
+            'section_id' => $section->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $standard->id,
+            'status' => 1,
+        ]);
+
+        return ['school' => $school, 'admin' => $admin, 'link' => $link];
+    }
+
+    private function clearIssueLimits(int $schoolId, ?string $inviteKey = null): void
+    {
+        RateLimiter::clear(md5('teacher-invite-issue'.'school:'.$schoolId));
+        if ($inviteKey !== null) {
+            RateLimiter::clear(md5('teacher-invite-issue'.'school:'.$schoolId.'|invite:'.$inviteKey));
+        }
+    }
+
+    private function clearAcceptLimits(int $schoolId, ?string $inviteKey = null): void
+    {
+        RateLimiter::clear(md5('teacher-invite-accept'.'school:'.$schoolId));
+        if ($inviteKey !== null) {
+            RateLimiter::clear(md5('teacher-invite-accept'.'school:'.$schoolId.'|invite:'.$inviteKey));
+        }
     }
 
     private function teacher(string $email): User

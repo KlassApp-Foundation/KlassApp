@@ -24,9 +24,7 @@ Route::get( '/dashboard/task/count','DashboardController@listCount' );
 
 // WhatsApp
 // Class-teacher self-setup: staff link, approvals and per-class progress.
-Route::get('/class-setup', function () {
-    return redirect()->route('admin.classes.index');
-})->name('admin.class-setup.index');
+Route::get('/class-setup', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'index'])->name('admin.class-setup.index');
 Route::post('/class-setup/staff-link', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'createStaffLink'])->name('admin.class-setup.staff-link');
 Route::post('/class-setup/staff-link/regenerate', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'regenerateStaffLink'])->name('admin.class-setup.staff-link.regenerate');
 Route::post('/class-setup/requests/{request}/approve', [\App\Http\Controllers\Admin\ClassTeacherSetupController::class, 'approve'])->name('admin.class-setup.approve');

@@ -3082,6 +3082,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-30: Review fixes on Marks Phase 1 (#1239)
+
+- **Work done**: Toshi's add-teacher now issues an invite through `ClassTeacherInviteService` / `ClassTeacherAssignmentService` and stores no password. Invite issue and accept limits are named limiters keyed by invite and school. Adding a class accepts a new level such as P.7 and sorts by level. Saving the stream form with the same class teacher leaves the pending invite in place. `/admin/class-setup` renders again so the cross-school and progress assertions check the page.
+- **Files touched**: `app/Services/ToshiActionService.php`, `app/Services/ClassTeacherAssignmentService.php`, `app/AiAgents/Tools/AddTeacherTool.php`, `app/Providers/AppServiceProvider.php`, `app/Http/Controllers/TeacherInviteController.php`, `app/Http/Controllers/Admin/ClassTeacherInviteController.php`, `app/Http/Controllers/Admin/ClassTeacherSetupController.php`, `config/invites.php`, `routes/web.php`, `routes/admin.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `tests/Feature/TeacherSetup/TeacherSetupLinkSecurityTest.php`, `tests/Feature/TeacherSetup/TeacherSetupTest.php`, `knowledge.md`.
+- **Decision**: New class names are the canonical levels (nursery, P.1–P.7, S.1–S.6), the type preset, and names the school already uses. Arbitrary text is still rejected. A school-wide invite cap still applies inside that school; a different invite is isolated by the per-invite cap, and a different school is isolated by both.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. Stacked PRs #1240–#1244 and #1255 need this commit merged up. No force-push.
+- **Evidence**: With the cross-school guard removed, `test_approval_of_another_schools_email_issues_nothing_and_does_not_error` failed at the session assertion (line 578). Restored, that test passed (14 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3207 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 
 - **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ClassTeacherAssignmentService;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,12 +16,6 @@ class TeacherInviteController extends Controller
      */
     public function show(Request $request, string $token): View|Response
     {
-        if (app(ClassTeacherAssignmentService::class)->tooManyAccepts($request->ip())) {
-            return response()
-                ->view('auth.invite-invalid', ['reason' => 'limited'])
-                ->setStatusCode(429);
-        }
-
         $result = TeacherInviteLinkService::validateToken($token);
 
         if ($result === null) {
@@ -72,11 +65,6 @@ class TeacherInviteController extends Controller
      */
     public function claim(Request $request, string $token): RedirectResponse
     {
-        if (app(ClassTeacherAssignmentService::class)->tooManyAccepts($request->ip())) {
-            return redirect()->route('login')
-                ->with('error', 'Too many attempts. Wait an hour and open the link from the email again.');
-        }
-
         $result = TeacherInviteLinkService::validateToken($token);
 
         if ($result === null) {

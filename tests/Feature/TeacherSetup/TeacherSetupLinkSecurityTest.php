@@ -586,7 +586,8 @@ class TeacherSetupLinkSecurityTest extends TestCase
         $this->assertSame(1, User::query()->whereRaw('lower(email) = ?', ['hidden.teacher@other.test'])->count());
 
         $this->get('/admin/class-setup')
-            ->assertRedirect(route('admin.classes.index'))
+            ->assertOk()
+            ->assertSee('No setup link was issued')
             ->assertDontSee('Hidden Teacher')
             ->assertDontSee('Other Side School');
     }
@@ -748,7 +749,11 @@ class TeacherSetupLinkSecurityTest extends TestCase
 
         $this->actingAs($this->admin)
             ->get('/admin/class-setup')
-            ->assertRedirect(route('admin.classes.index'));
+            ->assertOk()
+            ->assertSee('P.1 A')
+            ->assertSee('P.1 B')
+            ->assertSee('0 / 1')
+            ->assertDontSee('0 / 2');
     }
 
     private function clearStaffLinkIp(string $ip): void

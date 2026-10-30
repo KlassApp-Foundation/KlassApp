@@ -101,7 +101,7 @@ class ClassTeacherInviteController extends Controller
                 ->with('errormessage', 'This invite has already been used.');
         }
 
-        if (app(ClassTeacherAssignmentService::class)->tooManyCreates($user)) {
+        if (app(ClassTeacherAssignmentService::class)->issuingIsLimited((int) $invite->school_id, (string) $invite->id)) {
             return redirect()->route('admin.classes.index')
                 ->with('errormessage', 'Too many class teacher changes. Wait an hour and try again.');
         }

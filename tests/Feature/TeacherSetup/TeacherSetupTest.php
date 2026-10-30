@@ -142,7 +142,9 @@ class TeacherSetupTest extends TestCase
         $this->actingAs($this->admin);
 
         $this->get('/admin/class-setup')
-            ->assertRedirect(route('admin.classes.index'));
+            ->assertOk()
+            ->assertSee('P.1 A')
+            ->assertSee('Class Teacher');
 
         $this->post('/admin/class-setup/staff-link')->assertRedirect();
         $this->assertNotNull(session('staff_link_url'));
