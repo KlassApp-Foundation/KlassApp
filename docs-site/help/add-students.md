@@ -23,7 +23,7 @@ Choose <Btn>Add student</Btn>. The form heading is **Add Student**. Enter the na
 
 Choose <Btn>Import list</Btn>. The import page heading is **Import**.
 
-Choose <Btn>Download Sample Format</Btn>, fill the file, and upload it. The class belongs in the file. A row with a class the school does not have is skipped. Then choose <Btn>Import</Btn>.
+Choose <Btn>Download Sample Format</Btn>, fill the file, and upload it. The class belongs in the file. A row with a class the school does not have is skipped. Then choose <Btn>Import</Btn>. KlassApp assigns the student ID: `KLS` plus 7 digits (`KLS0010005`), or `KLS` plus 11 digits (`KLS00100010001`).
 </Step>
 </Steps>
 

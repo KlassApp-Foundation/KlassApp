@@ -6,6 +6,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ImportMemberRequest;
+use App\Support\FailureLog;
 use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -16,8 +17,6 @@ use App\Traits\LogActivity;
 use App\Traits\Common;
 use League\Csv\Writer;
 use App\Models\User;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class ImportMemberController extends Controller
 {
@@ -83,9 +82,13 @@ class ImportMemberController extends Controller
             ? $redirect
             : $redirect->with('overlimit', $overLimit['message']);
       }
-      catch(Exception $e)
+      catch(\Throwable $e)
       {
-        Log::error('ImportMemberController@importUsers failed: ' . $e->getMessage());
+        FailureLog::write(
+            'ImportMemberController@importUsers failed',
+            $e,
+            (int) (Auth::user()->school_id ?? 0)
+        );
         return back()->with('failmessage', 'Import failed due to an error. Please check your file format and try again.');
       }
     }

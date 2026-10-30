@@ -13,6 +13,7 @@ use App\Models\ParentProfile;
 use App\Models\Alumniprofile;
 use App\Models\Userprofile;
 use Illuminate\Support\Str;
+use App\Support\FailureLog;
 use App\Support\UserProvisioning;
 use App\Models\Scholastic;
 use App\Models\User;
@@ -41,9 +42,14 @@ trait RegisterUser
      */
     public ?string $createUserFailure = null;
 
+    public ?\Throwable $createUserException = null;
+
+    public ?\Throwable $createParentException = null;
+
     public function CreateUser($data , $school_id , $academic_year_id , $path , $usergroup_id)
     {
         $this->createUserFailure = null;
+        $this->createUserException = null;
         \DB::beginTransaction();
         try
         {
@@ -209,8 +215,9 @@ trait RegisterUser
         catch(Exception $e)
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            $this->createUserFailure = $e->getMessage();
+            $this->createUserException = $e;
+            $this->createUserFailure = null;
+            FailureLog::write('CreateUser failed', $e, (int) $school_id);
         }
     }
 
@@ -378,6 +385,7 @@ trait RegisterUser
      */
     public function CreateParent($student_id ,$data , $school_id , $usergroup_id)
     {
+        $this->createParentException = null;
         \DB::beginTransaction();
         try
         {
@@ -489,8 +497,8 @@ trait RegisterUser
         catch(Exception $e)
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->createParentException = $e;
+            FailureLog::write('CreateParent failed', $e, (int) $school_id);
         }
     }
 

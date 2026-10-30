@@ -326,7 +326,7 @@ is a product decision, so nothing was invented here.
 - **Attendance overview:** registers taken today, then patterns by day, by class and over time.
 - **Exams:** a subject-first page, with disclosure rows per class.
 - **Person form:** one shared add and edit form for students, teachers, parents and staff, with invites for teachers and parents and no legacy fields.
-- **Also from 2026-10-08:** KLS format `KLS` + 3-digit school number + 4-digit sequence; Health and support is its own tab (admin and head teacher only, every open logged); class teacher is per stream with a class default.
+- **Also from 2026-10-08:** KLS format `KLS` plus 7 digits (`KLS0070001`: 3-digit school number + 4-digit sequence) or `KLS` plus 11 digits (`KLS00100010001`); Health and support is its own tab (admin and head teacher only, every open logged); class teacher is per stream with a class default.
 
 **Toshi on phones (2026-10-08).** Concept `concepts/toshi-mobile/index.html`; spec `guidelines/handoff-2026-10-08-toshi-mobile.md`; Design System group "08 · Toshi".
 - **Launcher:** a labelled "Toshi" button in the mobile top bar. At 761–1279 it's a sidebar row instead.

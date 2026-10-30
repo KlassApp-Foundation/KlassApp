@@ -77,8 +77,8 @@ UI import must keep:
   visibility; the entry page itself scopes students by
   `usergroup_id = 6` + `studentAcademic.standardLink` matching the exam's
   `standard_id` **and** `section_id` (`MarksController:128-145`).
-- Canonical student identifier: `users.registration_number` (KLS#######,
-  validated on save — `app/Models/User.php:80-92`, display helper at `:387`).
+- Canonical student identifier: `users.registration_number` (`KLS` plus 7 digits, e.g. `KLS0010427`, or `KLS` plus 11 digits, e.g. `KLS00100010001`,
+  validated on save against `StudentIdGeneratorService::PATTERN`).
 
 ## 3. Gaps the UI must close
 
