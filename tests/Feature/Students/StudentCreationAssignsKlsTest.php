@@ -64,7 +64,10 @@ class StudentCreationAssignsKlsTest extends TestCase
     private function assertStudentCarriesKls(User $student): string
     {
         $student->refresh();
-        $this->assertMatchesRegularExpression('/^KLS\d{7}$/i', (string) $student->registration_number, 'users.registration_number must be a KLS number');
+        $this->assertTrue(
+            \App\Services\StudentIdGeneratorService::isValid((string) $student->registration_number),
+            'users.registration_number must be a KLS number',
+        );
         $academic = StudentAcademic::where('user_id', $student->id)->firstOrFail();
         $this->assertSame($student->registration_number, $academic->klassapp_student_id, 'user and academic must hold the same KLS number');
 

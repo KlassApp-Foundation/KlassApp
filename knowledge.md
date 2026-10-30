@@ -635,6 +635,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: October 30, 2026 — **T-060 student IDs and plain import failures OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
+
+- Review fixes on `cursor/t060-widen-student-id-c495`. A KlassApp student ID is `KLS` plus 7 digits (`KLS0010005`) or `KLS` plus 11 digits (`KLS00100010001`). `StudentIdGeneratorService::PATTERN` stays `/^KLS(?:\d{7}|\d{11})$/i`.
+- A failed student-import row shown to the admin is plain text. Exception text, SQL, and the stack go to the log with the row number and school id. Bound values are not added to that log.
+- Import docs that described only a 3-digit school plus a 4-digit sequence, or only 7 digits, now state both lengths. The 2026-10-26 measurement in `docs/product/student-import.md` stays as the run from before this change. `KLS00110000` in that measurement is the rejected string, not an ID.
+- Local `bash scripts/test-guard.sh` with `TEST_GUARD_PROCESSES=4`: 3200 tests, 0 failures, 0 errors, 9 skipped. Not merged. No production deploy. Synthetic data only.
+
 ## Current Status: October 26, 2026 — **Marks n8n blueprint OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)**
 
 - Docs only. `docs/flows/marks.json` is the stripped n8n blueprint. `docs/flows/marks-comparison.md` compares it with `docs/product/marks-flow.md`. Phase 6 states the three WhatsApp send rules (Meta approval, opt-out, released class and sitting only). The results template is recorded as `results_released`, UTILITY, English, submitted to Meta and pending approval. Items 1, 10, and 16 are marked spec updated in this PR. The other fourteen differences are simplifications. The blueprint JSON is unchanged by that update.

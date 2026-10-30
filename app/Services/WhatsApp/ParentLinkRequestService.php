@@ -133,7 +133,7 @@ class ParentLinkRequestService
     }
 
     /**
-     * A parent sent their child's KlassApp student number (KLS#######).
+     * A parent sent their child's KlassApp student number (KLS plus 7 or 11 digits).
      * The school gets a pending request; the number is not linked until
      * an admin approves it. One pending request per phone and school.
      */

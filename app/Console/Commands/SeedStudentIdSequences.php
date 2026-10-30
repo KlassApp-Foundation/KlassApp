@@ -23,14 +23,16 @@ class SeedStudentIdSequences extends Command
 
         $seeded = 0;
         foreach ($schools as $schoolId) {
-            $maxSeq = DB::table('student_academics')
+            $maxSeq = 0;
+            $ids = DB::table('student_academics')
                 ->where('school_id', $schoolId)
                 ->whereNotNull('klassapp_student_id')
                 ->where('klassapp_student_id', 'like', 'KLS%')
-                ->selectRaw('MAX(CAST(SUBSTRING(klassapp_student_id, 7) AS UNSIGNED)) as max_seq')
-                ->value('max_seq');
+                ->pluck('klassapp_student_id');
 
-            $maxSeq = $maxSeq ?: 0;
+            foreach ($ids as $id) {
+                $maxSeq = max($maxSeq, $this->sequenceFromId((string) $id));
+            }
             $nextSeq = $maxSeq + 1;
 
             if ($this->option('dry-run')) {
@@ -50,5 +52,23 @@ class SeedStudentIdSequences extends Command
         }
 
         $this->info("Done. {$seeded} school(s) processed.");
+    }
+
+    /**
+     * Sequence embedded in an ID. Seven digits are school(3)+sequence(4).
+     * Eleven digits are school(5)+sequence(6). Any other length keeps the
+     * historical read, which starts at the 7th character.
+     */
+    private function sequenceFromId(string $id): int
+    {
+        if (preg_match('/^KLS(\d{11})$/i', $id, $m)) {
+            return (int) substr($m[1], 5);
+        }
+
+        if (preg_match('/^KLS(\d{7})$/i', $id, $m)) {
+            return (int) substr($m[1], 3);
+        }
+
+        return (int) substr($id, 6);
     }
 }
