@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\AuthRedirectHelper;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
@@ -101,7 +102,7 @@ class EmailVerificationCodeController extends Controller
         $request->session()->forget('pending_verification_user_id');
         Auth::login($user);
 
-        return redirect('/admin/dashboard')
+        return redirect(AuthRedirectHelper::dashboardPathForUser($user))
             ->with('open_toshi_onboarding', true)
             ->with('successmessage', "Email confirmed. Welcome to KlassApp! Let's set up your school.");
     }

@@ -6,6 +6,7 @@ use App\Mail\EmailVerificationCodeMail;
 use App\Models\Authentication;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
+use App\Services\OnboardingEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\DB;
@@ -123,7 +124,7 @@ class SignupEmailVerificationTest extends TestCase
 
         $response = $this->post('/register/verify', ['code' => $code]);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect($this->setupDestinationFor('grace@example.com'));
         $this->assertAuthenticated();
 
         $user = User::where('email', 'grace@example.com')->firstOrFail();
@@ -215,7 +216,7 @@ class SignupEmailVerificationTest extends TestCase
             ->assertSessionHasErrors('code');
 
         $this->post('/register/verify', ['code' => $newCode])
-            ->assertRedirect('/admin/dashboard');
+            ->assertRedirect($this->setupDestinationFor('grace@example.com'));
         $this->assertAuthenticated();
     }
 
@@ -228,6 +229,15 @@ class SignupEmailVerificationTest extends TestCase
         $response->assertOk();
         $response->assertSee('grace@example.com');
         $response->assertSee('Check your email');
+    }
+
+    private function setupDestinationFor(string $email): string
+    {
+        $user = User::where('email', $email)->firstOrFail();
+        $destination = OnboardingEngine::setupDestination($user->school, $user->id);
+        $this->assertNotNull($destination);
+
+        return $destination;
     }
 
     public function test_verification_redirects_to_signup_without_a_pending_session(): void
