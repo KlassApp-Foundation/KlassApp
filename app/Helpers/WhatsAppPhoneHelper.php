@@ -1,22 +1,41 @@
 <?php
 namespace App\Helpers;
 
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
+
 class WhatsAppPhoneHelper
 {
-    // FLAGGED(product-decision): a leading 0 or a short number is always rewritten to +256. see docs/onboarding-engine-plan.md
-    public static function normalise(string $input): string
+    /**
+     * E.164. A number with no country code is read as Uganda. A number that
+     * already has a country code is kept, including a US number.
+     */
+    public static function normalise(string $input): ?string
     {
-        $digits = preg_replace('/\D/', '', $input);
-
-        if (str_starts_with($digits, '0')) {
-            $digits = '256' . substr($digits, 1);
+        $trimmed = trim($input);
+        if ($trimmed === '' || strlen($trimmed) > \App\Support\PhoneCountry::MAX_INPUT_LENGTH) {
+            return null;
         }
 
-        if (!str_starts_with($digits, '256')) {
-            $digits = '256' . $digits;
+        return self::toE164($trimmed, 'UG');
+    }
+
+    public static function toE164(string $input, string $region): ?string
+    {
+        $util = PhoneNumberUtil::getInstance();
+
+        try {
+            $parsed = $util->parse($input, $region);
+        } catch (NumberParseException) {
+            return null;
         }
 
-        return '+' . $digits;
+        if (! $util->isValidNumber($parsed)) {
+            return null;
+        }
+
+        return $util->format($parsed, PhoneNumberFormat::E164);
     }
 
     /**
@@ -180,7 +199,7 @@ class WhatsAppPhoneHelper
         $digits = preg_replace('/\D/', '', $waId);
 
         if ($digits === '' || str_starts_with($digits, '0') || strlen($digits) < 11) {
-            return self::normalise($waId);
+            return self::normalise($waId) ?? '';
         }
 
         return '+' . $digits;
@@ -241,8 +260,7 @@ class WhatsAppPhoneHelper
     // FLAGGED(product-decision): accepts only +256 numbers matching 07xx mobile prefixes. see docs/onboarding-engine-plan.md
     public static function validate(string $input): bool
     {
-        $normalised = self::normalise($input);
-        return preg_match('/^\+256(7[0578]\d{7})$/', $normalised) === 1;
+        return self::toE164($input, 'UG') !== null;
     }
 
     public static function formatMessage(string $studentName, string $title, array $rows, string $footer = ''): string

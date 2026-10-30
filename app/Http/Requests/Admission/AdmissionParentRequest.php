@@ -117,7 +117,7 @@ class AdmissionParentRequest extends FormRequest
             // Primary parent or guardian - required.
             'father_name'               => 'required|string|max:120',
             'father_relationship'       => 'required|string|max:60',
-            'father_mobile_no'          => 'required|string|min:9|max:20',
+            'father_mobile_no'          => 'required|string|max:20|international_phone',
             'father_on_whatsapp'        => 'nullable|boolean',
             'father_alt_phone'          => 'nullable|string|max:20',
             'father_email'              => 'nullable|email',
@@ -127,7 +127,7 @@ class AdmissionParentRequest extends FormRequest
             // Second parent or guardian - all optional.
             'mother_name'               => 'nullable|string|max:120',
             'mother_relationship'       => 'nullable|string|max:60',
-            'mother_mobile_no'          => 'nullable|string|max:20',
+            'mother_mobile_no'          => 'nullable|string|max:20|international_phone',
             'mother_on_whatsapp'        => 'nullable|boolean',
             'mother_alt_phone'          => 'nullable|string|max:20',
             'mother_email'              => 'nullable|email',

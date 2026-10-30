@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
      */
     public function rules()
     {
-        $this->user = User::where('mobile_no', request('email'))->where('usergroup_id',7)->first();
+        $this->user = User::findBySubmittedPhone((string) $this->input('email'), 'Uganda', 7);
         
         Validator::extend('check_school', function ($attribute, $value, $parameters, $validator) 
         {

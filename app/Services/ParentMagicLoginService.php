@@ -65,7 +65,9 @@ class ParentMagicLoginService
 
     public static function rateLimitKey(string $phone): string
     {
-        return 'parent-magic-login:'.WhatsAppPhoneHelper::normalise($phone);
+        $normalised = WhatsAppPhoneHelper::normalise($phone);
+
+        return 'parent-magic-login:'.($normalised ?? 'unreadable');
     }
 
     private function hasActiveLinks(User $parent): bool

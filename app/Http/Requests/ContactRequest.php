@@ -39,7 +39,7 @@ class ContactRequest extends FormRequest
         'emailid'     => 'required|email',
         'serve_at'    => 'required',
         'role'        => 'required|check_role',
-        'contact_no'  => 'required|numeric|digits:10',
+        'contact_no'  => 'required|string|max:20|international_phone',
         // 'message'  => 'required',
         'select'      => 'required',
         //'checkbox'  => 'required',

@@ -20,12 +20,14 @@ class OutboundNotificationTest extends TestCase
         $this->assertTrue(WhatsAppPhoneHelper::validate('+256701234567'));
         $this->assertTrue(WhatsAppPhoneHelper::validate('+256781234567'));
         $this->assertTrue(WhatsAppPhoneHelper::validate('+256751234567'));
+        $this->assertTrue(WhatsAppPhoneHelper::validate('+254712345678'));
+        $this->assertSame('+14155552671', WhatsAppPhoneHelper::normalise('+14155552671'));
+        $this->assertSame('+254712345678', WhatsAppPhoneHelper::normalise('+254712345678'));
     }
 
     public function test_phone_validation_invalid(): void
     {
         $this->assertFalse(WhatsAppPhoneHelper::validate('+256601234567'));
-        $this->assertFalse(WhatsAppPhoneHelper::validate('+254701234567'));
         $this->assertFalse(WhatsAppPhoneHelper::validate('123'));
     }
 

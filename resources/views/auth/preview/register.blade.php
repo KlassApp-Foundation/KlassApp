@@ -56,7 +56,7 @@
 
             <div class="ap-field">
               <label class="ap-label" for="phone">Phone (WhatsApp)</label>
-              <input id="phone" type="tel" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone') }}" placeholder="0701234567 or +256701234567" required autocomplete="tel">
+              <input id="phone" type="tel" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone', '+256') }}" placeholder="+256 or another country code" required autocomplete="tel">
               @if ($errors->has('phone'))
                 <span class="ap-error" role="alert">{{ $errors->first('phone') }}</span>
               @endif

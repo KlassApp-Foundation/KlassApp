@@ -29,7 +29,8 @@ class CredentialsUpdateRequest extends FormRequest
         Validator::extend('check_unique_mob', function ($attribute, $value, $parameters, $validator) 
       {
         
-           $user=User::where([['school_id',Auth::user()->school_id],['name','!=',request('user_name')],['usergroup_id',request('user_group')]])->where('mobile_no','LIKE','%'.$value.'%')->exists();
+           $schoolId = Auth::user()?->school_id;
+           $user=User::matchingPhone((string) $value, \App\Support\PhoneCountry::countryFromAuth(), $schoolId ? (int) $schoolId : null)->where('name', '!=', request('user_name'))->where('usergroup_id', request('user_group'))->exists();
              if($user)
              {
                 return false;
@@ -53,17 +54,17 @@ class CredentialsUpdateRequest extends FormRequest
       
        if(request('user_group')==7)
        {
-        $rules['mobile_no']='required|numeric|digits:10|check_unique_mob';
+        $rules['mobile_no']='required|string|max:20|international_phone|check_unique_mob';
         $rules['email']='nullable|email|check_unique_email';
        }
        elseif(request('user_group')==5 || request('user_group')==8 || request('user_group')==8 || request('user_group')==10 || request('user_group')==11 || request('user_group')==12 )
        {
-        $rules['mobile_no']='required|numeric|digits:10|check_unique_mob';
+        $rules['mobile_no']='required|string|max:20|international_phone|check_unique_mob';
         $rules['email']='required|email|check_unique_email';
        }
        else
        {
-        $rules['mobile_no']='nullable|numeric|digits:10|check_unique_mob';
+        $rules['mobile_no']='nullable|string|max:20|international_phone|check_unique_mob';
         $rules['email']='nullable|email|check_unique_email';
        }
 

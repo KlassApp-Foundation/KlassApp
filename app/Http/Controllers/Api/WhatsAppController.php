@@ -69,14 +69,11 @@ class WhatsAppController extends Controller
     public function identify(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string',
+            'phone' => 'required|string|max:20',
         ]);
 
-        $phone = WhatsAppPhoneHelper::normalise($request->input('phone'));
-
-        $whatsappUser = WhatsAppUser::with(['user.userprofile', 'user.school'])
-            ->where('phone', $phone)
-            ->first();
+        $whatsappUser = WhatsAppUser::findByPhone((string) $request->input('phone'));
+        $whatsappUser?->load(['user.userprofile', 'user.school']);
 
         if (!$whatsappUser) {
             return response()->json([
@@ -583,6 +580,9 @@ class WhatsAppController extends Controller
                 $messages = $value['messages'] ?? [];
                 foreach ($messages as $msg) {
                     $phone = WhatsAppPhoneHelper::fromWaId($msg['from'] ?? '');
+                    if ($phone === '') {
+                        continue;
+                    }
                     $messageId = $msg['id'] ?? '';
                     $msgType = $msg['type'] ?? '';
                     $body = '';

@@ -24,7 +24,7 @@ class AdminForm extends Component
 	#[Rule('required|email')] 
 	public $email;
 
-	#[Rule('required|numeric|digits:10')]
+	#[Rule('required|string|max:20|international_phone')]
 	public $mobile;
 
 	public $password;

@@ -85,7 +85,7 @@ class Teacher extends Resource
 
             Text::make('Email')->sortable()->rules('required', 'email', 'max:254')->creationRules('unique:users,email')->updateRules('unique:users,email,{{resourceId}}'),
 
-            Text::make('Mobile_no')->sortable()->rules('required', 'numeric', 'digits:10')->creationRules('unique:users,mobile_no')->updateRules('unique:users,mobile_no,{{resourceId}}'),
+            Text::make('Mobile_no')->sortable()->rules('required', 'string', 'max:20')->creationRules('unique:users,mobile_no')->updateRules('unique:users,mobile_no,{{resourceId}}'),
 
             Password::make('Password')->onlyOnForms()->creationRules('required', 'string', 'min:8')->updateRules('nullable', 'string', 'min:8'),
 

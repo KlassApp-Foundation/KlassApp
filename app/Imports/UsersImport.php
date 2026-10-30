@@ -32,6 +32,8 @@ class UsersImport implements ToCollection, WithHeadingRow
         try {
             $school_id     = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
+            $country = \App\Models\School::query()->whereKey($school_id)->value('registration_country');
+            $country = is_string($country) ? $country : null;
 
             $insertedcount = 0;
 
@@ -58,8 +60,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $student->firstname     = $row['firstname'] ?? null;
                 $student->lastname      = $row['lastname'] ?? null;
-                $student->mobile_no = !empty($row['mobile_no']) ? 
-                preg_replace('/[^0-9]/', '', $row['mobile_no']) : null;
+                $student->mobile_no = \App\Support\PhoneCountry::normalise((string) ($row['mobile_no'] ?? ''), $country);
                 $student->email        = !empty($row['email']) ? strtolower($row['email']) : null;
                 $student->gender       = !empty($row['gender']) ? strtolower($row['gender']) : null;
 
@@ -155,21 +156,18 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | PARENT (SAFE + OPTIONAL)
                 |--------------------------------------------------------------------------
                 */
-                $parent_status = !empty($row['parent_mobile_no'])
-                    ? User::where([
-                        ['school_id', $school_id],
-                        ['mobile_no', $row['parent_mobile_no']],
-                        ['usergroup_id', 7]
-                    ])->first()
+                $parentPhone = \App\Support\PhoneCountry::normalise((string) ($row['parent_mobile_no'] ?? ''), $country);
+                $parent_status = $parentPhone !== null
+                    ? User::matchingPhone($parentPhone, $country, (int) $school_id)->where('usergroup_id', 7)->first()
                     : null;
 
-                if (!$parent_status && !empty($row['parent_mobile_no'])) {
+                if (!$parent_status && $parentPhone !== null) {
 
                     $parent->parent        = 'add';
                     $parent->firstname     = $row['parent_firstname'] ?? null;
                     $parent->lastname      = $row['parent_lastname'] ?? null;
-                    $parent->mobile_no     = $row['parent_mobile_no'];
-                    $parent->alternate_no  = $row['parent_alternate_no'] ?? null;
+                    $parent->mobile_no     = $parentPhone;
+                    $parent->alternate_no  = \App\Support\PhoneCountry::normalise((string) ($row['parent_alternate_no'] ?? ''), $country);
                     $parent->email         = $row['parent_email'] ?? null;
                     $parent->profession    = $row['parent_occupation'] ?? null;
                     $parent->designation   = $row['parent_designation'] ?? null;

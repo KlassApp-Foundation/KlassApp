@@ -60,9 +60,12 @@ class WhatsAppUser extends Model
     /**
      * Find a WhatsApp user by phone number (E.164).
      */
-    public static function findByPhone(string $phone): ?self
+    public static function findByPhone(string $phone, ?int $schoolId = null): ?self
     {
-        return self::where('phone', $phone)->first();
+        $query = self::query()->orderBy('id');
+        \App\Support\PhoneCountry::applyLookup($query, 'phone', $phone, 'Uganda', $schoolId);
+
+        return $query->first();
     }
 
     /**

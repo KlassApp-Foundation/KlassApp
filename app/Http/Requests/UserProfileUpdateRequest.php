@@ -143,7 +143,7 @@ class UserProfileUpdateRequest extends FormRequest
         if( (request('mode_of_transport') == 'auto') || (request('mode_of_transport') == 'rickshaw') || (request('mode_of_transport') == 'taxi') )
         {
             $rules['driver_name']           = 'required|check_driver_name';
-            $rules['driver_contact_number'] = 'required|numeric|digits:10';
+            $rules['driver_contact_number'] = 'required|string|max:20|international_phone';
         }
 
         for($i=0 ; $i<Request('count') ; $i++)

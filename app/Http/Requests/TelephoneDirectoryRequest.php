@@ -38,7 +38,7 @@ class TelephoneDirectoryRequest extends FormRequest
             //
             'name'          =>  'required|check_name',
             'designation'   =>  'required|check_designation',
-            'phone_number'  =>  'required|numeric|digits:10',
+            'phone_number'  =>  'required|string|max:20|international_phone',
         ];
     }
 

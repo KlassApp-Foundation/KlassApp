@@ -247,16 +247,8 @@ class TeacherLinkImportController extends Controller
 
         $phone = trim($phone);
         if ($phone !== '') {
-            $digits = preg_replace('/\D+/', '', $phone) ?: '';
             $candidates = (clone $base)
-                ->where(function ($q) use ($phone, $digits) {
-                    $q->where('mobile_no', $phone);
-                    if ($digits !== '') {
-                        $q->orWhere('mobile_no', $digits)
-                            ->orWhere('mobile_no', '+'.$digits)
-                            ->orWhere('mobile_no', 'like', '%'.$digits);
-                    }
-                })
+                ->matchingPhone($phone, \App\Support\PhoneCountry::countryFromAuth(), $schoolId)
                 ->get();
 
             if ($candidates->count() === 1) {

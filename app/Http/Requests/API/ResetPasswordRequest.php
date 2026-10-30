@@ -25,7 +25,7 @@ class ResetPasswordRequest extends FormRequest
      */
     public function rules()
     {
-      $this->user = User::where('mobile_no', request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
+      $this->user = User::findBySubmittedPhone((string) $this->input('mobile_no'), 'Uganda', (int) $this->input('usergroup'));
 
         Validator::extend('check_mobile_no',function($attribute,$value,$parameters,$validator)
         {
@@ -42,6 +42,9 @@ class ResetPasswordRequest extends FormRequest
         {
            // $user = User::where('mobile_no','=',request('mobile_no'))->first();
             $user=$this->user;
+            if ($user === null || $user->userprofile === null) {
+                return false;
+            }
             if( ($user->userprofile->status == 'active') && ($user->status == 'active') )
             {
                 return true;
@@ -50,7 +53,7 @@ class ResetPasswordRequest extends FormRequest
         });
 
         return [
-            'mobile_no' =>  'required|numeric|digits:10|check_mobile_no|check_active',
+            'mobile_no' =>  'bail|required|max:20|international_phone|check_mobile_no|check_active',
             'usergroup' =>  'required',
         ];
     }
@@ -59,11 +62,12 @@ class ResetPasswordRequest extends FormRequest
     {
         //$user = User::where('mobile_no','=',request('mobile_no'))->first();
         $user=$this->user;
-        if ( ($user->userprofile->status == 'inactive') && ($user->status == 'inactive') )
+        $status = 'Mobile Number Is Not Registered';
+        if ($user !== null && $user->userprofile !== null && ($user->userprofile->status == 'inactive') && ($user->status == 'inactive') )
         {
             $status = 'User Account Suspended. Please Contact School';
         }
-        elseif ( ($user->userprofile->status == 'exit') && ($user->status == 'exit') ) 
+        elseif ($user !== null && $user->userprofile !== null && ($user->userprofile->status == 'exit') && ($user->status == 'exit') ) 
         {
             $status = 'User Account Exited. Please Contact School';
         }
