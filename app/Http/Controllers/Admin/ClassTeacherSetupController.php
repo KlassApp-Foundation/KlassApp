@@ -76,7 +76,10 @@ class ClassTeacherSetupController extends Controller
                     'subjects' => $subjects,
                     'subjects_with_teacher' => $withTeacher,
                     'class_teacher' => $link->class_teacher_id
-                        ? (User::find($link->class_teacher_id)?->name ?? 'teacher removed')
+                        ? (User::query()
+                            ->where('school_id', $school->id)
+                            ->whereKey($link->class_teacher_id)
+                            ->value('name') ?? 'teacher removed')
                         : null,
                 ];
             }

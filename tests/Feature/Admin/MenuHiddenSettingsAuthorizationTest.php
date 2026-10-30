@@ -143,8 +143,8 @@ class MenuHiddenSettingsAuthorizationTest extends TestCase
 
     public function test_school_admin_and_site_admin_can_open_classes_and_streams(): void
     {
-        $this->actingAs($this->admin)->get('/admin/sections')->assertOk();
-        $this->actingAs($this->siteAdmin)->get('/admin/sections')->assertOk();
+        $this->actingAs($this->admin)->get('/admin/sections')->assertRedirect(route('admin.classes.index'));
+        $this->actingAs($this->siteAdmin)->get('/admin/sections')->assertRedirect(route('admin.classes.index'));
 
         $this->actingAs($this->admin)->get('/admin/classes/add')->assertOk();
         $this->actingAs($this->siteAdmin)->get('/admin/classes/add')->assertOk();

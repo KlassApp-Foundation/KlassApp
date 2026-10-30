@@ -35,6 +35,7 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
+            'tap' => [\App\Logging\ScrubInviteTokens::class],
             // LOG_STACK lets Laravel Cloud Nightwatch inject
             // "laravel-cloud-socket,nightwatch" without dropping local daily logs by default.
             'channels' => array_values(array_filter(array_map(
@@ -46,12 +47,14 @@ return [
 
         'single' => [
             'driver' => 'single',
+            'tap' => [\App\Logging\ScrubInviteTokens::class],
             'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
         ],
 
         'daily' => [
             'driver' => 'daily',
+            'tap' => [\App\Logging\ScrubInviteTokens::class],
             'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
             'days' => 60,
@@ -67,6 +70,7 @@ return [
 
         'stderr' => [
             'driver' => 'monolog',
+            'tap' => [\App\Logging\ScrubInviteTokens::class],
             'handler' => StreamHandler::class,
             'with' => [
                 'stream' => 'php://stderr',

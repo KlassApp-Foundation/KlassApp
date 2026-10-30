@@ -39,7 +39,9 @@ use App\Models\Setting;
 use App\Models\Events;
 use App\Models\School;
 
+use App\Models\TeacherInvite;
 use App\Models\User;
+use App\Services\ClassTeacherAssignmentService;
 use App\Models\Task;
 use Schema;
 use Config;
@@ -142,6 +144,46 @@ class AppServiceProvider extends ServiceProvider {
             return [
                 Limit::perMinute(30)->by('staff-link-ip|'.$request->ip()),
                 Limit::perMinute(10)->by('staff-link|'.hash('sha256', $token)),
+            ];
+        });
+
+        // Teacher invites are counted per invite and per school. The key is
+        // the invite id (or a hash when the token does not match a row) and
+        // the school id. An IP address is not part of the key.
+        $inviteLimited = function ($request, array $headers) {
+            return response()
+                ->view('auth.invite-invalid', ['reason' => 'limited'])
+                ->setStatusCode(429)
+                ->withHeaders($headers);
+        };
+        RateLimiter::for('teacher-invite-accept', function (Request $request) use ($inviteLimited) {
+            $token = (string) $request->route('token');
+            $invite = TeacherInvite::query()
+                ->where('token_hash', hash('sha256', $token))
+                ->first();
+            $schoolId = $invite ? (int) $invite->school_id : 0;
+            $inviteKey = $invite ? (string) $invite->id : hash('sha256', $token);
+            $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
+
+            return [
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_attempts'), $decay))
+                    ->by('school:'.$schoolId.'|invite:'.$inviteKey)
+                    ->response($inviteLimited),
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_school_attempts'), $decay))
+                    ->by('school:'.$schoolId)
+                    ->response($inviteLimited),
+            ];
+        });
+        RateLimiter::for('teacher-invite-issue', function (Request $request) {
+            $schoolId = (int) $request->input('school_id');
+            $inviteKey = (string) $request->input('invite_key');
+            $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
+
+            return [
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('create_per_invite_attempts'), $decay))
+                    ->by('school:'.$schoolId.'|invite:'.$inviteKey),
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('create_attempts'), $decay))
+                    ->by('school:'.$schoolId),
             ];
         });
 

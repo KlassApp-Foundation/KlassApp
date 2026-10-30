@@ -5,7 +5,11 @@
                 <p class="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">Class roster</p>
                 <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Classes &amp; streams</h1>
                 <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    A read-only view of the classes and teaching assignments you are authorized to see.
+                    @if(auth()->user()->can('full-school-admin'))
+                        Assign a class teacher, invite a new one, or replace the current one. Open a class to edit its stream.
+                    @else
+                        Classes and teaching assignments you are authorized to see.
+                    @endif
                 </p>
             </div>
             @if($selectedYear)
@@ -15,6 +19,12 @@
                 </div>
             @endif
         </div>
+
+        @if(session('successmessage') || session('errormessage'))
+            <div class="rounded-2xl border px-4 py-3 text-sm {{ session('errormessage') ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800' }}" data-testid="class-roster-flash">
+                {{ session('errormessage') ?: session('successmessage') }}
+            </div>
+        @endif
 
         @if($years->isEmpty())
             <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
@@ -75,7 +85,7 @@
                                 ? route('admin.classes.show', ['section' => $section->id, 'academic_year_id' => $selectedYear->id])
                                 : route('teacher.classes.show', ['section' => $section->id, 'academic_year_id' => $selectedYear->id]);
                         @endphp
-                        <a href="{{ $showRoute }}" class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg">
+                        <article class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">{{ $level ?: 'Level pending' }}</p>
@@ -93,11 +103,18 @@
                                     <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $sectionTeacher?->name ?: 'Not assigned' }}</p>
                                 </div>
                             </div>
-                            <div class="mt-5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-700">
-                                <span>Open roster</span>
-                                <span aria-hidden="true" class="text-lg transition group-hover:translate-x-1">→</span>
+                            <div class="mt-5 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-wider">
+                                <a href="{{ $showRoute }}" class="text-slate-500 hover:text-emerald-700">Open roster</a>
+                                @if(auth()->user()->can('full-school-admin'))
+                                    <a href="{{ route('admin.class-teacher-invite.create', $section) }}" class="text-emerald-700 hover:text-emerald-900" data-testid="assign-class-teacher-{{ $section->id }}">
+                                        {{ $sectionTeacher ? 'Replace class teacher' : 'Assign class teacher' }}
+                                    </a>
+                                    @foreach($streams as $stream)
+                                        <a href="{{ route('admin.standardLink.edit', $stream->id) }}" class="text-slate-500 hover:text-emerald-700" data-testid="edit-stream-{{ $stream->id }}">Edit stream</a>
+                                    @endforeach
+                                @endif
                             </div>
-                        </a>
+                        </article>
                     @endforeach
                 </div>
                 <div>{{ $sections->links() }}</div>
