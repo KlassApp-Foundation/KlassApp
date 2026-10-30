@@ -22,6 +22,16 @@ use Illuminate\Support\Facades\DB;
 class StudentIdGeneratorService
 {
     /**
+     * KLS plus exactly 7 digits, or KLS plus exactly 11 digits. No hyphens.
+     *
+     * This is the same constant as #1252 (branch cursor/t060-widen-student-id-c495),
+     * which owns the generator. It is defined here so the WhatsApp matcher can use
+     * StudentIdGeneratorService::PATTERN before that pull request merges. Do not
+     * change this pattern on this branch.
+     */
+    public const PATTERN = '/^KLS(?:\d{7}|\d{11})$/i';
+
+    /**
      * Atomically reserve and return the next klassapp_student_id for a school.
      *
      * Format: KLS{school_id_padded_to_3}{seq_padded_to_4}

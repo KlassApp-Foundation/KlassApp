@@ -12,14 +12,13 @@ use Tests\Feature\Marks\Concerns\ReleaseRulesFixtures;
 use Tests\TestCase;
 
 /**
- * The WhatsApp ID matcher accepts every KlassApp student ID the generator can
- * issue: KLS plus 7 to 16 digits. Seven digits is every ID issued before a
- * school passed sequence 9,999; longer runs are valid IDs now (#1252).
+ * The WhatsApp ID matcher uses StudentIdGeneratorService::PATTERN from #1252
+ * (branch cursor/t060-widen-student-id-c495): KLS plus exactly 7 digits, or
+ * KLS plus exactly 11 digits. Other lengths are not a KlassApp student ID.
  *
- * The matcher is a literal in WhatsAppController while #1252 is unmerged, so
- * these tests pin the same shape as StudentIdGeneratorService::PATTERN there.
- * The pupils come from the shared follow-along fixtures; only the stored ID is
- * rewritten, because the model guard still pins the old seven-digit shape.
+ * The constant is defined on this branch so the matcher compiles before #1252
+ * merges. The pupils come from the shared follow-along fixtures; an 11-digit
+ * ID is written with a query, because the model guard still pins seven digits.
  */
 class LongStudentIdMatcherTest extends TestCase
 {
@@ -69,36 +68,34 @@ class LongStudentIdMatcherTest extends TestCase
         ]]]]]]));
     }
 
-    public function test_a_ten_digit_id_still_reaches_the_link_request(): void
+    public function test_a_seven_digit_id_reaches_the_link_request(): void
     {
-        $studentId = $this->storeId('real', 0, 'KLS0011000001');
+        $studentId = $this->storeId('real', 0, 'KLS0010001');
 
-        $this->inbound('KLS0011000001')->assertOk();
+        $this->inbound('KLS0010001')->assertOk();
 
         $request = ParentLinkRequest::sole();
         $this->assertSame($studentId, (int) $request->suggested_student_id);
         $this->assertSame((int) $this->fx['real']['school']->id, (int) $request->school_id);
     }
 
-    public function test_the_old_seven_digit_id_still_works(): void
+    public function test_an_eleven_digit_id_reaches_the_link_request(): void
     {
-        $studentId = $this->storeId('real', 0, 'KLS0010001');
+        $studentId = $this->storeId('real', 0, 'KLS00100010001');
 
-        $this->inbound('KLS0010001')->assertOk();
+        $this->inbound('kls00100010001')->assertOk();
 
-        $this->assertSame($studentId, (int) ParentLinkRequest::sole()->suggested_student_id);
+        $request = ParentLinkRequest::sole();
+        $this->assertSame($studentId, (int) $request->suggested_student_id);
+        $this->assertSame((int) $this->fx['real']['school']->id, (int) $request->school_id);
     }
 
-    public function test_sixteen_digits_is_accepted_and_seventeen_is_not(): void
+    public function test_other_lengths_are_not_treated_as_a_klassapp_id(): void
     {
-        $long = 'KLS' . str_repeat('1', 16);
-        $studentId = $this->storeId('real', 0, $long);
+        foreach ([6, 8, 10, 12, 16, 17] as $length) {
+            $this->inbound('KLS'.str_repeat('1', $length))->assertOk();
+        }
 
-        $this->inbound($long)->assertOk();
-        $this->assertSame($studentId, (int) ParentLinkRequest::sole()->suggested_student_id);
-
-        // Past the limit the message is not treated as a KlassApp ID at all.
-        $this->inbound('KLS' . str_repeat('2', 17))->assertOk();
-        $this->assertSame(1, ParentLinkRequest::count());
+        $this->assertSame(0, ParentLinkRequest::count());
     }
 }
