@@ -4,7 +4,9 @@ namespace Tests\Feature\Marks;
 
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Helpers\SiteHelper;
 use App\Models\MarksRelease;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\Subject;
@@ -56,26 +58,29 @@ class ReleaseRequiresApprovalTest extends TestCase
             ->assertSee('SOCIAL STUDIES · P.7 — Not submitted');
     }
 
-    public function test_admin_override_with_a_reason_releases_and_is_logged(): void
+    public function test_a_reason_does_not_release_an_unapproved_sitting_any_more(): void
     {
-        $admin = $this->admin();
-        $reason = 'Parents were promised these marks today.';
+        $this->actingAs($this->admin())
+            ->post('/admin/marks/releases', $this->scheduled() + [
+                'override_reason' => 'Parents were promised these marks today.',
+            ])
+            ->assertSessionHasErrors('approval');
 
-        $this->actingAs($admin)
-            ->post('/admin/marks/releases', $this->scheduled() + ['override_reason' => $reason])
-            ->assertRedirect();
-
-        $this->assertSame(1, MarksRelease::count());
-        $log = DB::table('activity_log')->where('description', 'Marks release scheduled')->first();
-        $this->assertNotNull($log);
-        $this->assertStringContainsString($reason, (string) $log->properties);
-        $this->assertSame((int) $admin->id, (int) $log->causer_id);
+        $this->assertSame(0, MarksRelease::count());
+        $this->assertNull(DB::table('activity_log')->where('description', 'Marks release scheduled')->first());
     }
 
     public function test_class_teacher_cannot_override_the_approval_rule(): void
     {
         $teacher = $this->fx['demo']['teacher'];
         StandardLink::where('school_id', $teacher->school_id)->update(['class_teacher_id' => $teacher->id]);
+        // Class teachers may only reach this screen when the school allows it (6b).
+        SchoolDetail::create([
+            'school_id' => $teacher->school_id,
+            'meta_key' => SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY,
+            'meta_value' => '1',
+        ]);
+        SiteHelper::forgetTeachersMayReleaseMarks((int) $teacher->school_id);
 
         $this->actingAs($teacher)
             ->post('/teacher/marks/releases', $this->payload($this->fx['demo']['link']->id) + [

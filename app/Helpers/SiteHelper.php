@@ -243,6 +243,40 @@ class SiteHelper
         Cache::forget('teacher_receptionist_access_'.$school_id);
     }
 
+    /** school_details meta key: whether a class teacher may release their own class's marks. */
+    public const TEACHERS_MAY_RELEASE_MARKS_KEY = 'teachers_may_release_marks';
+
+    /**
+     * Whether class teachers at this school may release marks for their own class.
+     *
+     * ON when the school has never saved a value (the row is missing or blank).
+     * A stored value is on only when it is '1'. The Maintenance checkbox shows
+     * this same answer, so saving the page without turning the switch off keeps
+     * it on.
+     *
+     * A class teacher may release every stream of a class they are the class
+     * head of (see MarksReleaseService::links()). A school admin is never
+     * affected by this setting.
+     */
+    public static function teachersMayReleaseMarks(int $school_id): bool
+    {
+        $value = SchoolDetail::query()
+            ->where('school_id', $school_id)
+            ->where('meta_key', self::TEACHERS_MAY_RELEASE_MARKS_KEY)
+            ->value('meta_value');
+
+        if ($value === null || trim((string) $value) === '') {
+            return true; // never set: keep the behaviour the school already had
+        }
+
+        return trim((string) $value) === '1';
+    }
+
+    public static function forgetTeachersMayReleaseMarks(int $school_id): void
+    {
+        Cache::forget('teachers_may_release_marks_'.$school_id);
+    }
+
     /** Attendance-scope meta key on school_details (same per-school pattern as the access switches). */
     public const ATTENDANCE_SCOPE_KEY = 'attendance_scope';
 

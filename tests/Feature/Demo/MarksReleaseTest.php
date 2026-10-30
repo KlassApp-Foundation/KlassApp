@@ -129,6 +129,18 @@ class MarksReleaseTest extends TestCase
         ]);
     }
 
+    /** Phase 6b: let this school's class teachers release their own class. */
+    private function allowTeachersToRelease(string $which = 'demo'): void
+    {
+        $school = $this->fx[$which]['school'];
+        \App\Models\SchoolDetail::create([
+            'school_id' => $school->id,
+            'meta_key' => \App\Helpers\SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY,
+            'meta_value' => '1',
+        ]);
+        \App\Helpers\SiteHelper::forgetTeachersMayReleaseMarks((int) $school->id);
+    }
+
     private function amina(): string
     {
         return "📣 *Sample Demo Primary* has released marks.\n\n"
@@ -210,7 +222,8 @@ class MarksReleaseTest extends TestCase
 
     public function test_task9_a_real_schools_release_sends_nothing(): void
     {
-        // A real school's parent, opted in, with an open 24h window: still nothing.
+        // A real school's parent, opted in, with an open 24h window: still nothing,
+        // because Phase 6 leaves the per-release switch off unless the admin sets it.
         WhatsAppUser::where('school_id', $this->fx['real']['school']->id)->update(['last_inbound_at' => now()]);
 
         $this->releaseNow($this->admin('real'), null, 'admin', $this->examId('real'))->assertRedirect();
@@ -218,8 +231,9 @@ class MarksReleaseTest extends TestCase
         $this->assertSame([], $this->outbound());
         $release = MarksRelease::sole();
         $this->assertSame('released', $release->status);
+        $this->assertFalse((bool) $release->whatsapp_send);
         $this->assertSame(0, $release->result['sent']);
-        $this->assertSame(['Not a demo school: release messages are sent only in the demo for now' => 1], $release->result['reasons']);
+        $this->assertSame(['WhatsApp was switched off for this release' => 1], $release->result['reasons']);
     }
 
     public function test_task9_kill_switch_sends_nothing(): void
@@ -333,6 +347,8 @@ class MarksReleaseTest extends TestCase
     {
         $this->bind(self::BOUND);
         $teacher = $this->teacher();
+        // Phase 6b: a class teacher releases only once the school allows it.
+        $this->allowTeachersToRelease('demo');
 
         $this->actingAs($teacher)->get('/teacher/marks/releases/new')->assertOk()->assertSee('Release marks');
         $this->releaseNow($teacher, $this->link()->id, 'teacher')->assertRedirect();
@@ -346,10 +362,17 @@ class MarksReleaseTest extends TestCase
         $teacher = $this->teacher();
         $this->releaseNow($teacher, null, 'teacher')->assertForbidden();
 
-        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        // Phase 6: a class head releases every stream of their class.
+        $streamB = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        $this->releaseNow($teacher, $streamB->id, 'teacher')->assertRedirect();
+        $this->assertSame(1, MarksRelease::count());
+
+        // Another class (another section) is still not theirs.
+        $section = \App\Models\Section::create(['school_id' => $teacher->school_id, 'name' => 'P.6', 'status' => 1]);
+        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $section->id, 'stream' => 'A', 'status' => 1]);
         $this->releaseNow($teacher, $otherLink->id, 'teacher')->assertForbidden();
 
-        $this->assertSame(0, MarksRelease::count());
+        $this->assertSame(1, MarksRelease::count());
     }
 
     public function test_task9_teacher_who_is_not_a_class_teacher_cannot_release(): void
@@ -489,6 +512,8 @@ class MarksReleaseTest extends TestCase
         $this->actingAs($admin)->get('/admin/marks/classes')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $teacher = $this->teacher();
+        // Phase 6b: the button follows the same setting as the release itself.
+        $this->allowTeachersToRelease('demo');
         $this->actingAs($teacher)->get('/teacher/exam/marks')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $notClassTeacher = $this->teacher('real', false);

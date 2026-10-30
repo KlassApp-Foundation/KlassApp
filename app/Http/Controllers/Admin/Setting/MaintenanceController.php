@@ -50,6 +50,12 @@ class MaintenanceController extends Controller
         $school->setDetailValue(SiteHelper::TEACHER_RECEPTIONIST_ACCESS_KEY, $request->input('teacher_receptionist_access') == 1 ? '1' : '0');
         SiteHelper::forgetTeacherReceptionistAccess((int) $school->id);
 
+        // Class teachers releasing their own class's marks. The checkbox shows the
+        // effective value (on when the school has never saved one), so a save that
+        // leaves it ticked writes '1'. An unticked box is an explicit off and writes '0'.
+        $school->setDetailValue(SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY, $request->input('teachers_may_release_marks') == 1 ? '1' : '0');
+        SiteHelper::forgetTeachersMayReleaseMarks((int) $school->id);
+
         // Attendance scope (classes_i_teach | class_teacher_only | school_wide).
         // Fail-safe server-side: an unknown or missing value stores nothing, which leaves
         // the default in force. The scope is read from the authenticated user's school.
