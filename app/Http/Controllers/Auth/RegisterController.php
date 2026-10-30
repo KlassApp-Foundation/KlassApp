@@ -60,6 +60,7 @@ class RegisterController extends Controller
                 'name' => $request->validated('name'),
                 'email' => $request->validated('email'),
                 'phone' => $request->validated('phone'),
+                'registration_country' => $request->validated('country'),
                 // FLAGGED(product-decision): public signup stores a password instead of sending an invite link. see docs/onboarding-engine-plan.md
                 'password' => $request->validated('password'),
             ]);

@@ -2,10 +2,19 @@
 
 namespace Tests\Feature;
 
+use Tests\Concerns\CreatesSignupCountriesTable;
 use Tests\TestCase;
 
 class AuthPreviewTest extends TestCase
 {
+    use CreatesSignupCountriesTable;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSignupCountriesTable();
+    }
+
     public function test_preview_login_renders_fields_and_google_get(): void
     {
         $response = $this->get('/preview/login');

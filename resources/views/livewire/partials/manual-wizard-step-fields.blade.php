@@ -44,16 +44,21 @@
 @elseif($stepKey === 'country')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-country">Country<span class="text-red-500">*</span></label>
-        <select id="wizard-country" class="ds-form-input ds-form-select w-full" wire:model="countryName">
-            @foreach($countries as $country)
-                <option value="{{ $country->name }}">{{ $country->name }}</option>
-            @endforeach
-            @if($countries->isEmpty())
+        @php
+            $wizardCountryOptions = collect($countries)->sortBy(fn ($country) => strcasecmp((string) $country->name, \App\Services\OnboardingStepsService::DEFAULT_COUNTRY) === 0 ? '0' : '1'.strtolower((string) $country->name))->values();
+            $wizardCountrySelected = trim((string) ($countryName ?? '')) !== ''
+                ? (string) $countryName
+                : \App\Services\OnboardingStepsService::DEFAULT_COUNTRY;
+        @endphp
+        <select id="wizard-country" class="ds-form-input ds-form-select w-full" wire:model="countryName" data-testid="wizard-country">
+            @forelse($wizardCountryOptions as $country)
+                <option value="{{ $country->name }}" @selected(strcasecmp($wizardCountrySelected, (string) $country->name) === 0)>{{ $country->name }}</option>
+            @empty
                 {{-- FLAGGED(product-decision): an empty country list falls back to Uganda. see docs/onboarding-engine-plan.md --}}
-                <option value="Uganda">Uganda</option>
-                <option value="Kenya">Kenya</option>
-                <option value="Tanzania">Tanzania</option>
-            @endif
+                <option value="Uganda" @selected(strcasecmp($wizardCountrySelected, 'Uganda') === 0)>Uganda</option>
+                <option value="Kenya" @selected(strcasecmp($wizardCountrySelected, 'Kenya') === 0)>Kenya</option>
+                <option value="Tanzania" @selected(strcasecmp($wizardCountrySelected, 'Tanzania') === 0)>Tanzania</option>
+            @endforelse
         </select>
         <p class="text-xs text-gray-500 mt-1">Saves both country and registration country.</p>
     </div>

@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Country;
 use App\Models\User;
+use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
@@ -45,6 +48,10 @@ class RegisterRequest extends FormRequest
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'termsandcondn' => ['required', 'accepted'],
+            // The register select posts countries.name. Also accept a real id
+            // or short/ISO code so a value that is in the table is not rejected
+            // for using a different column. countries is a global list.
+            'country' => ['nullable', 'string', 'max:100', $this->countryMustExist()],
         ];
     }
 
@@ -62,6 +69,7 @@ class RegisterRequest extends FormRequest
             'password.confirmed' => 'Password confirmation does not match.',
             'termsandcondn.required' => 'Please agree to the Terms and Conditions.',
             'termsandcondn.accepted' => 'Please agree to the Terms and Conditions.',
+            'country.exists' => 'Choose a country from the list.',
         ];
     }
 
@@ -70,5 +78,63 @@ class RegisterRequest extends FormRequest
         if ($this->has('mobile_no') && ! $this->filled('phone')) {
             $this->merge(['phone' => $this->input('mobile_no')]);
         }
+
+        if (! $this->filled('country')) {
+            $this->merge(['country' => OnboardingStepsService::DEFAULT_COUNTRY]);
+        }
+
+        // Store the countries.name the rest of the app reads, even when the
+        // posted value was an id or a code. validated() keeps this merge.
+        $match = $this->matchingCountry(trim((string) $this->input('country')));
+        if ($match !== null) {
+            $this->merge(['country' => $match->name]);
+        }
+    }
+
+    /**
+     * Reject a country that is not in the countries table. A blank field is
+     * already the default (Uganda) before this runs. When the table has no
+     * rows, that default is still allowed so signup is not blocked before
+     * countries are seeded; any other value is rejected.
+     */
+    private function countryMustExist(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            $value = trim((string) $value);
+            if ($value === '' || ! Schema::hasTable('countries')) {
+                return;
+            }
+
+            if ($this->matchingCountry($value) !== null) {
+                return;
+            }
+
+            if (! Country::query()->exists()
+                && strcasecmp($value, OnboardingStepsService::DEFAULT_COUNTRY) === 0) {
+                return;
+            }
+
+            $fail('Choose a country from the list.');
+        };
+    }
+
+    private function matchingCountry(string $value): ?Country
+    {
+        if ($value === '' || ! Schema::hasTable('countries')) {
+            return null;
+        }
+
+        return Country::query()->where(function ($query) use ($value): void {
+            $query->whereRaw('LOWER(name) = ?', [strtolower($value)]);
+            if (Schema::hasColumn('countries', 'short_name')) {
+                $query->orWhereRaw('LOWER(short_name) = ?', [strtolower($value)]);
+            }
+            if (Schema::hasColumn('countries', 'iso_code')) {
+                $query->orWhereRaw('LOWER(iso_code) = ?', [strtolower($value)]);
+            }
+            if (ctype_digit($value)) {
+                $query->orWhere('id', (int) $value);
+            }
+        })->first();
     }
 }

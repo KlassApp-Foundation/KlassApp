@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Schema;
 class OnboardingStepsService
 {
     /**
+     * Country pre-selected during signup and setup until a school chooses another.
+     */
+    public const DEFAULT_COUNTRY = 'Uganda';
+
+    /**
      * Canonical approximate-size buckets for onboarding (wizard + Toshi).
      * Matches auth/onboarding.blade.php — not the broader superadmin CreateSchool set.
      *

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use Tests\Concerns\CreatesSignupCountriesTable;
 use Tests\TestCase;
 
 /**
@@ -15,6 +16,14 @@ use Tests\TestCase;
  */
 class RegistrationSwitchTest extends TestCase
 {
+    use CreatesSignupCountriesTable;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSignupCountriesTable();
+    }
+
     public function test_register_status_one_shows_the_real_signup_form(): void
     {
         config(['settings.register_status' => '1']);
