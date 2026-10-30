@@ -67,6 +67,9 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
+    /** @var array<int, true> release ids whose demo webhook was already posted */
+    private array $demoWebhookRecorded = [];
+
     public function __construct(private readonly WhatsAppBusinessService $whatsApp) {}
 
     // ── Permissions ──────────────────────────────────────────────
@@ -177,7 +180,7 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
@@ -195,6 +198,7 @@ final class MarksReleaseService
             'created_by' => $user->id,
             'timezone' => $timezone,
             'whatsapp_send' => $whatsappSend,
+            'release_reason' => $releaseReason,
         ]);
 
         $properties = [
@@ -619,13 +623,42 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        [$result, $jobs] = $this->deliver($release);
+        [$result, $jobs, $webhookStudents] = $this->deliver($release);
 
-        $release->forceFill([
-            'status' => MarksRelease::STATUS_RELEASED,
-            'released_at' => CarbonImmutable::now('UTC'),
-            'result' => $result,
-        ])->save();
+        // The release row and every snapshot are one unit: all saved or none.
+        // A release that cannot write its records did not happen. The demo
+        // webhook is registered only after the snapshots are written, and
+        // DB::afterCommit drops it if this transaction rolls back.
+        try {
+            DB::transaction(function () use ($release, $result, $webhookStudents): void {
+                $release->forceFill([
+                    'status' => MarksRelease::STATUS_RELEASED,
+                    'released_at' => CarbonImmutable::now('UTC'),
+                    'result' => $result,
+                ])->save();
+
+                app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
+
+                if ($webhookStudents !== null) {
+                    DB::afterCommit(function () use ($release, $webhookStudents): void {
+                        $this->recordDemoWebhook($release, $webhookStudents);
+                    });
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Release failed: ' . $e->getMessage(), ['release_id' => $releaseId]);
+            $release->forceFill(['status' => 'failed'])->save();
+
+            return false;
+        }
+
+        // The release transaction has committed. PHPUnit wraps each test in
+        // an outer transaction that is rolled back, so afterCommit waits and
+        // then is discarded. The webhook belongs to this release, which has
+        // already committed: record it now. recordDemoWebhook runs once.
+        if ($webhookStudents !== null && DB::transactionLevel() > 0) {
+            $this->recordDemoWebhook($release, $webhookStudents);
+        }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
             ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
@@ -670,15 +703,16 @@ final class MarksReleaseService
             return;
         }
         if ((int) ($release->school?->is_demo ?? 0) !== 1) {
-            if ((bool) config('services.whatsapp.demo_only_recipients')) {
-                $skip('Not a demo school: release messages are sent only in the demo for now');
+            // The release's own gates first: with the switch off or the template
+            // unapproved, nothing could be sent even if the demo guard were lifted.
+            if (($blocked = $this->realSendBlocker($release)) !== null) {
+                $skip($blocked);
 
                 return;
             }
-            // The same gates as the queue pass, re-read now: the switch can be
-            // turned off, or the template un-approved, between queueing and sending.
-            if (($blocked = $this->realSendBlocker($release)) !== null) {
-                $skip($blocked);
+            // The demo-only guard is the outer fallback for a real number.
+            if ((bool) config('services.whatsapp.demo_only_recipients')) {
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 return;
             }
@@ -813,7 +847,7 @@ final class MarksReleaseService
      * Decide who gets a message. Returns the result (each recipient "queued",
      * everyone else "skipped" with a reason) and the jobs to dispatch.
      *
-     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>}
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array<int, array{code:string, class:string}>|null}
      */
     private function deliver(MarksRelease $release): array
     {
@@ -846,17 +880,18 @@ final class MarksReleaseService
 
                 continue;
             }
-            if (! $isDemo && $demoOnly) {
-                // Outermost policy first: while the demo-only guard is on, nothing
-                // can leave a real school, whatever the release says.
-                $skip('Not a demo school: release messages are sent only in the demo for now');
-
-                continue;
-            }
             if (! $isDemo && ($blocked = $this->realSendBlocker($release)) !== null) {
                 // The switch and the Meta template belong to the real-school path:
                 // a demo follow-along send is not a school sending a template.
+                // Reported before the demo-only guard.
                 $skip($blocked);
+
+                continue;
+            }
+            if (! $isDemo && $demoOnly) {
+                // Outer fallback: while the demo-only guard is on, nothing can
+                // leave a real school, whatever the release says.
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 continue;
             }
@@ -909,13 +944,45 @@ final class MarksReleaseService
             }
         }
 
+        $webhookStudents = ($repliesOn && $isDemo) ? $released : null;
+
         return [
             $this->totals([
                 'messages' => $messages,
-                'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+                'webhook' => $webhookStudents !== null ? 'pending' : 'not sent',
             ]),
             $jobs,
+            $webhookStudents,
         ];
+    }
+
+    /**
+     * Demo n8n webhook. Called from DB::afterCommit, so a rolled-back release
+     * never posts. Runs at most once per release on this service instance:
+     * an outer test transaction also calls it after the release savepoint
+     * commits, and the afterCommit callback must not post a second time.
+     *
+     * @param  array<int, array{code:string, class:string}>  $students
+     */
+    private function recordDemoWebhook(MarksRelease $release, array $students): void
+    {
+        $id = (int) $release->id;
+        if (isset($this->demoWebhookRecorded[$id])) {
+            return;
+        }
+        $this->demoWebhookRecorded[$id] = true;
+
+        $status = $this->postWebhook($release, $students);
+        $fresh = MarksRelease::query()
+            ->where('school_id', $release->school_id)
+            ->whereKey($id)
+            ->first();
+        if ($fresh === null) {
+            return;
+        }
+        $result = $fresh->result ?? [];
+        $result['webhook'] = $status;
+        $fresh->forceFill(['result' => $result])->save();
     }
 
     /**
