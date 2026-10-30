@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Services\EmailVerificationGate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Validator;
@@ -32,9 +33,10 @@ class LoginController extends Controller implements ShouldQueue
     {
         try
         {
-            if (Auth::attempt(['mobile_no' => request('email'), 'password' => request('password')]) )
+            $auth_user = User::findBySubmittedPhone((string) request('email'), 'Uganda', 7);
+            if ($auth_user && Hash::check((string) request('password'), (string) $auth_user->password))
             {
-                $auth_user = Auth::user();
+                Auth::login($auth_user);
 
                 // Mobile-token sign-ins are gated on verified email too: no
                 // token is issued until the account's email is confirmed.

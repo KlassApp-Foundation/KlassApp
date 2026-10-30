@@ -51,7 +51,8 @@ class TeacherProfileAddRequest extends FormRequest
 
         Validator::extend('checkunique_mobile',function($attribute,$value,$parameters,$validator)
         {
-            $teacher=User::matchingPhone((string) request('mobile_no'), \App\Support\PhoneCountry::countryFromAuth())->where('usergroup_id', 5)->exists();
+            $schoolId = \Illuminate\Support\Facades\Auth::user()?->school_id;
+            $teacher=User::matchingPhone((string) request('mobile_no'), \App\Support\PhoneCountry::countryFromAuth(), $schoolId ? (int) $schoolId : null)->where('usergroup_id', 5)->exists();
             if($teacher)
             {
                 return false;

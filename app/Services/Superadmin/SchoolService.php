@@ -109,7 +109,11 @@ class SchoolService
         $rules = [
             'name' => 'required|string|max:255',
             'email' => $emailRule,
-            'phone' => 'required|numeric|digits:10',
+            'phone' => ['required', 'string', 'max:20', function ($attribute, $value, $fail) use ($data) {
+                if (\App\Support\PhoneCountry::normalise((string) $value, $data['registration_country'] ?? null) === null) {
+                    $fail('Enter a valid phone number.');
+                }
+            }],
             'address' => 'required|string|max:500',
             'city_id' => 'required|exists:cities,id',
             'country_id' => 'required|exists:countries,id',

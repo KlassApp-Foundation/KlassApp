@@ -243,15 +243,13 @@ trait AuthenticatesUsers
             return $exact;
         }
 
-        $digits = preg_replace('/\D+/', '', $login);
-
         return User::query()
-            ->where('registration_number', $login)
-            ->orWhere('name', $login)
-            ->when($digits !== '', function ($query) use ($login, $digits) {
-                $query->orWhere('mobile_no', $login)
-                    ->orWhere('mobile_no', '+' . $digits)
-                    ->orWhere('mobile_no', 'like', '%' . $digits);
+            ->where(function ($query) use ($login) {
+                $query->where('registration_number', $login)
+                    ->orWhere('name', $login)
+                    ->orWhere(function ($phone) use ($login) {
+                        $phone->matchingPhone($login);
+                    });
             })
             ->orderBy('id')
             ->first();

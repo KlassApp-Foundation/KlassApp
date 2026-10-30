@@ -36,11 +36,13 @@ class RegisterRequest extends FormRequest
 
                         return;
                     }
-                    $keys = PhoneCountry::keys((string) $value, 'Uganda');
-                    if (User::matchingPhone((string) $value, 'Uganda')->exists()) {
+                    $country = $this->countryForPhone();
+                    if (User::matchingPhone((string) $value, $country)->exists()) {
                         $fail('This phone number is already registered.');
                     }
-                    if (School::query()->whereIn('phone', $keys)->exists()) {
+                    $schools = School::query();
+                    PhoneCountry::applyLookup($schools, 'phone', (string) $value, $country, null, 'registration_country');
+                    if ($schools->exists()) {
                         $fail('This phone number is already registered to a school.');
                     }
                 },
@@ -59,7 +61,7 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.unique' => 'This email is already registered.',
             'phone.required' => 'Phone (WhatsApp) is required.',
-            'phone.regex' => 'Enter a valid phone number, including its country code.',
+            'phone.max' => 'Enter a phone number of at most 20 characters.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',

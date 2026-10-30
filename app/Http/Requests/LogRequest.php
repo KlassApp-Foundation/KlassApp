@@ -57,12 +57,12 @@ class LogRequest extends FormRequest
         if(request('call_type')== "outgoing")
         { 
            $rules['calling_purpose']='required';
-           $rules['outgoing_number']='required|international_phone';
+           $rules['outgoing_number']='required|string|max:20|international_phone';
            
         }
         else
         {
-           $rules['incoming_number']='required|international_phone'; 
+           $rules['incoming_number']='required|string|max:20|international_phone'; 
         }
 
 

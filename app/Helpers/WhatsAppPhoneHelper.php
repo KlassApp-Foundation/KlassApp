@@ -11,16 +11,14 @@ class WhatsAppPhoneHelper
      * E.164. A number with no country code is read as Uganda. A number that
      * already has a country code is kept, including a US number.
      */
-    public static function normalise(string $input): string
+    public static function normalise(string $input): ?string
     {
-        $e164 = self::toE164($input, 'UG');
-        if ($e164 !== null) {
-            return $e164;
+        $trimmed = trim($input);
+        if ($trimmed === '' || strlen($trimmed) > \App\Support\PhoneCountry::MAX_INPUT_LENGTH) {
+            return null;
         }
 
-        $digits = preg_replace('/\D/', '', $input) ?? '';
-
-        return $digits === '' ? $input : '+'.$digits;
+        return self::toE164($trimmed, 'UG');
     }
 
     public static function toE164(string $input, string $region): ?string
@@ -201,7 +199,7 @@ class WhatsAppPhoneHelper
         $digits = preg_replace('/\D/', '', $waId);
 
         if ($digits === '' || str_starts_with($digits, '0') || strlen($digits) < 11) {
-            return self::normalise($waId);
+            return self::normalise($waId) ?? '';
         }
 
         return '+' . $digits;

@@ -63,6 +63,8 @@ class WhatsAppPhoneHelperCountryTest extends TestCase
         $this->assertNull(WhatsAppPhoneHelper::normaliseForCountry('12345', '256', 9, 9));
         $this->assertNull(WhatsAppPhoneHelper::normaliseForCountry('076527428', '256', 9, 9));
         $this->assertNull(WhatsAppPhoneHelper::normaliseForCountry('+++', '256', 9, 9));
+        $this->assertNull(WhatsAppPhoneHelper::normalise('12345'));
+        $this->assertNull(WhatsAppPhoneHelper::normalise('not-a-phone'));
     }
 
     public function test_uganda_example_matches_readable(): void

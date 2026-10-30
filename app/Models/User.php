@@ -117,15 +117,25 @@ class User extends Authenticatable implements HasMedia
     }
 
     /**
-     * Match a phone against E.164 and the older local forms still stored on users.
+     * Match a phone against its full international number. Older local forms
+     * match only when the user's school is in that same country. $schoolId
+     * limits the lookup to one school when the caller already has one.
      */
-    public function scopeMatchingPhone($query, ?string $raw, ?string $countryName = 'Uganda')
+    public function scopeMatchingPhone($query, ?string $raw, ?string $countryName = 'Uganda', ?int $schoolId = null)
     {
-        $keys = \App\Support\PhoneCountry::keys($raw, $countryName);
+        \App\Support\PhoneCountry::applyLookup($query, 'mobile_no', $raw, $countryName, $schoolId);
 
-        return $keys === []
-            ? $query->whereRaw('1 = 0')
-            : $query->whereIn('mobile_no', $keys);
+        return $query;
+    }
+
+    public static function findBySubmittedPhone(?string $raw, ?string $countryName = 'Uganda', ?int $usergroupId = null, ?int $schoolId = null): ?self
+    {
+        $query = static::query()->matchingPhone($raw, $countryName, $schoolId)->orderBy('id');
+        if ($usergroupId !== null) {
+            $query->where('usergroup_id', $usergroupId);
+        }
+
+        return $query->first();
     }
 
     public function school()

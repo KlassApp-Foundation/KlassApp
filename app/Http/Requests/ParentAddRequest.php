@@ -22,7 +22,12 @@ class ParentAddRequest extends FormRequest
         });
 
         Validator::extend('checkunique_mobile', function ($attribute, $value, $parameters, $validator) {
-            $user = User::matchingPhone((string) request('mobile_no'), PhoneCountry::countryFromAuth())->where('usergroup_id', 7)->exists();
+            $schoolId = Auth::user()?->school_id;
+            $user = User::matchingPhone(
+                (string) request('mobile_no'),
+                PhoneCountry::countryFromAuth(),
+                $schoolId ? (int) $schoolId : null,
+            )->where('usergroup_id', 7)->exists();
             return !$user;
         });
 

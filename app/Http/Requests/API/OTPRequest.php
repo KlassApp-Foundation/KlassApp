@@ -28,11 +28,14 @@ class OTPRequest extends FormRequest
      */
     public function rules()
     {
-    $this->user = User::matchingPhone((string) request('mobile_no'))->where('usergroup_id', request('usergroup'))->first();
+    $this->user = User::findBySubmittedPhone((string) $this->input('mobile_no'), 'Uganda', (int) $this->input('usergroup'));
         Validator::extend('checkotp', function ($attribute, $value, $parameters, $validator) 
         {
             //$user = User::where('mobile_no',request('mobile_no'))->first();
             $user=$this->user;
+            if ($user === null) {
+                return false;
+            }
             $otp = Authentication::where([
                 ['user_id',$user->id],
                 ['status',0],
@@ -50,6 +53,9 @@ class OTPRequest extends FormRequest
         {
             //$user = User::where('mobile_no',request('mobile_no'))->first();
             $user=$this->user;
+            if ($user === null) {
+                return false;
+            }
             $otp = Authentication::where([
                 ['user_id',$user->id],
                 ['status',0],
@@ -67,6 +73,9 @@ class OTPRequest extends FormRequest
         {
            // $user = User::where('mobile_no',request('mobile_no'))->first();
             $user=$this->user;
+            if ($user === null) {
+                return false;
+            }
             $otp = Authentication::where([
                 ['user_id',$user->id],
                 ['status',0],

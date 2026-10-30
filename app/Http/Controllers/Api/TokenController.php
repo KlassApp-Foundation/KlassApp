@@ -50,9 +50,10 @@ class TokenController extends Controller
      try
         {
             
-    if(Auth::attempt(['mobile_no' => request('email'), 'password' => request('password'),'usergroup_id'=>7]) )
+    $user = User::findBySubmittedPhone((string) request('email'), 'Uganda', 7);
+            if ($user && Hash::check((string) request('password'), (string) $user->password))
             {
-                $user = Auth::user();
+                Auth::login($user);
 
                 // Mobile-token sign-ins are gated on verified email too: no
                 // token is issued until the account's email is confirmed.
