@@ -79,12 +79,14 @@ class EarlyAdopterOfferTest extends TestCase
         ]);
         ['token' => $token] = SchoolInviteService::issue($this->earlyAccess(), $admin);
 
-        $this->post(route('school-invite.claim', $token), [
+        $response = $this->post(route('school-invite.claim', $token), [
             'name' => 'Grace Nakato',
             'phone' => '0701234567',
             'password' => 'StrongPass123!',
             'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect(route('onboarding.choice'));
+        ]);
+        $user = User::where('email', 'adopter@school.test')->firstOrFail();
+        $response->assertRedirect(OnboardingEngine::setupDestination($user->school, $user->id));
 
         $user = User::where('email', 'adopter@school.test')->firstOrFail();
         $school = $user->school;
@@ -204,14 +206,14 @@ class EarlyAdopterOfferTest extends TestCase
             $admin,
         );
 
-        $this->post(route('school-invite.claim', $token), [
+        $response = $this->post(route('school-invite.claim', $token), [
             'name' => 'Grace Nakato',
             'phone' => '0701234567',
             'password' => 'StrongPass123!',
             'password_confirmation' => 'StrongPass123!',
-        ])->assertRedirect(route('onboarding.choice'));
-
+        ]);
         $user = User::where('email', 'repeat@school.test')->firstOrFail();
+        $response->assertRedirect(OnboardingEngine::setupDestination($user->school, $user->id));
         $school = $user->school;
         $offerAt = $school->detailValue(EarlyAdopterOffer::OFFER_AT_KEY);
 

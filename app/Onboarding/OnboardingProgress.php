@@ -114,10 +114,17 @@ final class OnboardingProgress
 
             if (! empty($step['is_complete'])) {
                 $done++;
+                // A missing playbook token used to drop the step, so the count
+                // said "6 done" while "What's set up" was empty. The step name
+                // is always shown.
                 $line = self::safeLine($key, $school, $userId);
-                if ($line !== null) {
-                    $summary[] = $line;
+                if (! is_string($line) || trim($line) === '') {
+                    $line = OnboardingStepsService::displayLabel($key, $step, $school);
                 }
+                if (trim($line) === '') {
+                    $line = $key;
+                }
+                $summary[] = $line;
 
                 continue;
             }
