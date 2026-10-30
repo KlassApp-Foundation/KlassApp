@@ -45,7 +45,8 @@ export const communitySidebar = [
     { text: 'Connectors and MCP', link: '/community/connectors' },
     { text: 'Reference', link: '/community/reference/' }, { text: 'Design system', link: '/community/design-system' } ] },
   { text: 'Project', items: [
-    { text: 'Roadmap', link: '/community/roadmap' }, { text: 'Changelog', link: '/community/changelog' },
+    { text: 'Roadmap', link: '/community/roadmap' }, { text: 'Early Adopters Program', link: '/community/early-adopters' },
+    { text: 'Changelog', link: '/community/changelog' },
     { text: 'Provenance', link: '/community/provenance' }, { text: 'Security', link: '/community/security' },
     { text: 'Code of conduct', link: '/community/code-of-conduct' } ] },
   { text: 'Archive', collapsed: true, items: [ { text: 'Legacy WhatsApp (Evolution API)', link: '/community/archive/' } ] },
