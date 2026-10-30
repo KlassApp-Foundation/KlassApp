@@ -22,6 +22,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\DemoSchoolCommsGuard;
 use App\Services\StudentFeeResolver;
+use App\Services\StudentIdGeneratorService;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
@@ -589,6 +590,9 @@ class WhatsAppController extends Controller
 
                     if ($msgType === 'text') {
                         $body = $msg['text']['body'] ?? '';
+                    } elseif ($msgType === 'button') {
+                        // A template quick reply. results_released uses "See results".
+                        $body = $msg['button']['payload'] ?? $msg['button']['text'] ?? '';
                     } elseif ($msgType === 'interactive') {
                         $ir = $msg['interactive'] ?? [];
                         if (($ir['type'] ?? '') === 'nfm_reply') {
@@ -1032,10 +1036,9 @@ class WhatsAppController extends Controller
         }
 
         // ── KlassApp Student ID: the school gets a link request ──
-        // KLS plus 7 to 16 digits: every ID the generator can issue (#1252),
-        // including the seven-digit IDs issued before a school passed 9,999.
-        // Same shape as StudentIdGeneratorService::PATTERN once #1252 merges.
-        if (preg_match('/^KLS\d{7,16}$/i', $trimmed)) {
+        // StudentIdGeneratorService::PATTERN from #1252
+        // (branch cursor/t060-widen-student-id-c495): KLS plus 7 or 11 digits.
+        if (preg_match(StudentIdGeneratorService::PATTERN, $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
                 ->with(['user.school', 'standardLink.standard', 'school'])
                 ->first();
@@ -1391,7 +1394,7 @@ class WhatsAppController extends Controller
         }
 
         // Parent (ug7): a KlassApp number asks the school to link another child.
-        if ($role === 7 && preg_match('/^kls\d{7}$/', $normalised)) {
+        if ($role === 7 && preg_match(StudentIdGeneratorService::PATTERN, $normalised)) {
             $kls = strtoupper($normalised);
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', $kls)
                 ->with(['user.school', 'standardLink.standard', 'school'])
@@ -1555,7 +1558,7 @@ class WhatsAppController extends Controller
 
                 return;
             }
-            if ($match(['grades', 'results', 'marks', 'exams'])) {
+            if ($match(['grades', 'results', 'marks', 'exams', 'see results'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
             }

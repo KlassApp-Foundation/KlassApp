@@ -89,4 +89,25 @@ class MarksPhase6MarksReplyTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('Zed Realpupil', $replies[0]['body']);
         $this->assertSame(1, substr_count($replies[0]['body'], '•'));
     }
+
+    public function test_see_results_on_the_release_template_is_handled_like_grades(): void
+    {
+        $from = ltrim($this->parentMobile(), '+');
+        $body = json_encode(['entry' => [['changes' => [['value' => [
+            'contacts' => [['profile' => ['name' => 'Guardian'], 'wa_id' => $from]],
+            'messages' => [['from' => $from, 'id' => 'wamid.in.see', 'type' => 'button', 'button' => [
+                'text' => 'See results',
+                'payload' => 'See results',
+            ]]],
+        ]]]]]]);
+
+        $this->call('POST', '/api/whatsapp/inbound', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], $body)->assertOk();
+
+        $replies = array_values(array_filter($this->outbound(), fn (array $m) => str_contains($m['body'], '•')));
+        $this->assertCount(1, $replies);
+        $this->assertStringContainsStringIgnoringCase('Zed Realpupil', $replies[0]['body']);
+        $this->assertSame(0, MarksRelease::count(), 'the button does not release anything');
+    }
 }

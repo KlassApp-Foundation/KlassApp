@@ -50,9 +50,9 @@ class MaintenanceController extends Controller
         $school->setDetailValue(SiteHelper::TEACHER_RECEPTIONIST_ACCESS_KEY, $request->input('teacher_receptionist_access') == 1 ? '1' : '0');
         SiteHelper::forgetTeacherReceptionistAccess((int) $school->id);
 
-        // Class teachers releasing their own class's marks. Explicit on/off, and the
-        // unticked box writes '0', which is the fail-safe default: only a school that
-        // turns this on changes who may release.
+        // Class teachers releasing their own class's marks. The checkbox shows the
+        // effective value (on when the school has never saved one), so a save that
+        // leaves it ticked writes '1'. An unticked box is an explicit off and writes '0'.
         $school->setDetailValue(SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY, $request->input('teachers_may_release_marks') == 1 ? '1' : '0');
         SiteHelper::forgetTeachersMayReleaseMarks((int) $school->id);
 

@@ -90,7 +90,7 @@
 				</div>
 				<div class="w-1/2 lg:w-3/5 md:w-3/5 flex justify-end lg:justify-start md:justify-start">
 					<label class='toggle-label'>
-						<input type='checkbox' name="teachers_may_release_marks" value="1" @if(optional(\Auth::user()->school)->detailValue('teachers_may_release_marks') == 1) checked @endif />
+						<input type='checkbox' name="teachers_may_release_marks" value="1" @if(optional(\Auth::user())->school_id && \App\Helpers\SiteHelper::teachersMayReleaseMarks((int) \Auth::user()->school_id)) checked @endif />
 						<span class='back'>
 						<span class='toggle'></span>
 						<span class='label on'>ON</span>

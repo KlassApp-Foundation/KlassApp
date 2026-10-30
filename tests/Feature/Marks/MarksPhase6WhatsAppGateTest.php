@@ -170,6 +170,7 @@ class MarksPhase6WhatsAppGateTest extends TestCase
     public function test_an_approved_release_messages_only_the_approved_opted_in_parents_of_the_released_class(): void
     {
         $this->approveTemplate();
+        config(['services.whatsapp.template_language' => 'en']);
         $real = $this->fx['real'];
         $student = $real['students'][0]['user'];
 
@@ -190,6 +191,22 @@ class MarksPhase6WhatsAppGateTest extends TestCase
             ->where('user_id', $real['students'][0]['parent']->id)
             ->value('phone');
         $this->assertSame([ltrim((string) $phone, '+')], array_column($this->outbound(), 'to'));
+
+        $sent = collect(\Illuminate\Support\Facades\Http::recorded())
+            ->filter(fn ($pair) => str_contains($pair[0]->url(), 'graph.facebook.com'))
+            ->map(fn ($pair) => $pair[0]->data())
+            ->values();
+        $this->assertCount(1, $sent);
+        $this->assertSame('template', $sent[0]['type'] ?? null);
+        $this->assertSame('results_released', $sent[0]['template']['name'] ?? null);
+        $this->assertSame('en', $sent[0]['template']['language']['code'] ?? null);
+        $this->assertSame([
+            'Parent of Zed',
+            'Hillside Real Primary',
+            'Zed Realpupil',
+            'End of Term Examination · Term III',
+        ], array_column($sent[0]['template']['components'][0]['parameters'] ?? [], 'text'));
+        $this->assertArrayNotHasKey('text', $sent[0]);
 
         $reasons = $this->reasons();
         $this->assertSame(1, $reasons['This parent opted out of WhatsApp results']);
@@ -223,7 +240,10 @@ class MarksPhase6WhatsAppGateTest extends TestCase
         $this->actingAs($this->admin())->post('/admin/marks/releases', $this->payload())->assertRedirect();
         $this->work();
 
-        $this->assertCount(1, $this->outbound(), 'the demo follow-along path is unchanged');
+        $sent = $this->outbound();
+        $this->assertCount(1, $sent, 'the demo follow-along path is unchanged');
+        $this->assertStringContainsString('released marks', $sent[0]['body']);
+        $this->assertStringNotContainsString('results_released', $sent[0]['body']);
         $this->assertFalse((bool) MarksRelease::sole()->whatsapp_send);
     }
 }

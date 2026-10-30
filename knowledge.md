@@ -14409,3 +14409,13 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Tests:** five new files under `tests/Feature/Marks`: Approval 3, WhoMayRelease 5, PastSitting 5, WhatsAppGate 5, MarksReply 2. `tests/Feature/Marks` is 60 tests green, and the two demo release suites next to them (27 and 3 tests) are green as well: 92 tests and 661 assertions together.
 
 **Status:** ready for review, not merged, nothing deployed, no production access, WhatsApp exercised only through fakes. 6a–6g are in and the branch suite is green; the run is recorded on #1244.
+
+## Session: 2026-10-30 — Review fixes on #1244
+
+**Work:** Review-fix on [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244), branch `cursor/marks-phase-6-release`, still stacked on #1243. Nothing merged, nothing deployed. WhatsApp only through fakes. Synthetic fixture pupils only.
+
+The Maintenance checkbox for `teachers_may_release_marks` now shows the effective value, on when the school has never saved one, so saving the page without turning it off keeps it on. An older sitting messages the students who have marks for that exam, not the current class. A real-school send uses the `results_released` template and still stops in `realSendBlocker()` until that template is on the approved list. The WhatsApp student-ID matcher uses `StudentIdGeneratorService::PATTERN` (`/^KLS(?:\d{7}|\d{11})$/i`), the same constant as #1252 (`cursor/t060-widen-student-id-c495`). That constant is defined on this branch so the matcher compiles before #1252 merges; the two definitions must stay identical. The class-head rule is unchanged: a teacher named on any stream can release every stream of that section. Mucu is deciding whether that should become `sections.class_teacher_id`.
+
+**Tests:** local `bash scripts/test-guard.sh` (paratest, 4 processes, PHP 8.4.27): 3250 tests, 0 failures, 0 errors, 9 skipped. `OK: 0 failing test(s), all accounted for`.
+
+**Status:** #1244 still open, not merged, production untouched.

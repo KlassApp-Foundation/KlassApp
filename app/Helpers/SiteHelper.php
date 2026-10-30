@@ -249,14 +249,14 @@ class SiteHelper
     /**
      * Whether class teachers at this school may release marks for their own class.
      *
-     * ON by default: before this switch existed a class teacher could release
-     * their stream's marks, and a school that has never touched the switch must
-     * not lose that. A row of '0' is the only thing that turns it off; any other
-     * stored value is read as on, and a missing row is on.
+     * ON when the school has never saved a value (the row is missing or blank).
+     * A stored value is on only when it is '1'. The Maintenance checkbox shows
+     * this same answer, so saving the page without turning the switch off keeps
+     * it on.
      *
      * A class teacher may release every stream of a class they are the class
      * head of (see MarksReleaseService::links()). A school admin is never
-     * affected by this setting. Cached per school, forgotten on write.
+     * affected by this setting.
      */
     public static function teachersMayReleaseMarks(int $school_id): bool
     {

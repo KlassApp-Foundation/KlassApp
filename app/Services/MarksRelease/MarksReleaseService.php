@@ -45,10 +45,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * class head — unless the school has turned teachers_may_release_marks off.
  * Nobody else. links() is the one list both rules read.
  *
- * Who gets a message: ONLY numbers with an ACTIVE demo binding (BIND, inside
- * the TTL) to a student in scope, in a DEMO school. Every other recipient is
- * skipped with a reason, and nothing at all is sent when
- * WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
+ * Who gets a message: in a demo school, numbers with an active demo binding
+ * (BIND, inside the TTL) to a student in scope. In a real school, an approved,
+ * opted-in parent of a student in scope, and only as the results_released
+ * template, and only when realSendBlocker() allows it. An older sitting
+ * messages the students who have marks for that exam, not the current class.
+ * Every other recipient is skipped with a reason, and nothing at all is sent
+ * when WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
  * (scheduled → sending) in one UPDATE, and a number never gets the same
  * student's marks for the same exam twice, even across releases.
  *
@@ -709,7 +712,15 @@ final class MarksReleaseService
         try {
             $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
                 (string) $binding->phone,
-                fn () => $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null),
+                fn () => (int) ($release->school?->is_demo ?? 0) === 1
+                    ? $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null)
+                    : $this->whatsApp->sendTemplate(
+                        (string) $binding->phone,
+                        TemplateGate::RESULTS_RELEASED,
+                        $this->resultsReleasedVariables($release, $binding, $studentId),
+                        null,
+                        'marks_release',
+                    ),
             );
         } catch (\Throwable $e) {
             $response = ['success' => false, 'error' => $e->getMessage()];
@@ -1063,12 +1074,22 @@ final class MarksReleaseService
     }
 
     /**
-     * Students in scope, current academic year, with the class they are in.
+     * Students in scope, with the class used to read their marks.
+     *
+     * The current sitting uses this year's enrolment in the released class.
+     * An older sitting uses the students who have marks for that exam. The
+     * current class list is the wrong roster once pupils have moved on.
      *
      * @return \Generator<int, array{0:int, 1:StandardLink}>
      */
     private function students(int $schoolId, Exam $anchor, ?StandardLink $link): \Generator
     {
+        if ($this->isPastSitting($anchor)) {
+            yield from $this->studentsWhoSat($schoolId, $anchor, $link);
+
+            return;
+        }
+
         $sections = Exam::query()
             ->where('school_id', $schoolId)
             ->where('exam_type_id', $anchor->exam_type_id)
@@ -1093,6 +1114,129 @@ final class MarksReleaseService
                 yield [(int) $id, $classLink];
             }
         }
+    }
+
+    /**
+     * Students with marks for this sitting, in this school. Not the current class.
+     *
+     * @return \Generator<int, array{0:int, 1:StandardLink}>
+     */
+    private function studentsWhoSat(int $schoolId, Exam $anchor, ?StandardLink $link): \Generator
+    {
+        $exams = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->when($link !== null, fn ($query) => $query->where('section_id', $link->section_id))
+            ->whereNull('deleted_at')
+            ->get(['id', 'section_id']);
+
+        if ($exams->isEmpty()) {
+            return;
+        }
+
+        $sectionByExam = [];
+        foreach ($exams as $exam) {
+            $sectionByExam[(int) $exam->id] = (int) $exam->section_id;
+        }
+
+        $rows = Marks::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', array_keys($sectionByExam))
+            ->orderBy('student_id')
+            ->get(['student_id', 'exam_id', 'section_id']);
+
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $allowed = User::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $rows->pluck('student_id')->unique()->all())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->flip();
+
+        $seen = [];
+        foreach ($rows as $mark) {
+            $studentId = (int) $mark->student_id;
+            if (! isset($allowed[$studentId])) {
+                continue;
+            }
+            $sectionId = (int) ($mark->section_id ?: ($sectionByExam[(int) $mark->exam_id] ?? 0));
+            if ($sectionId === 0) {
+                continue;
+            }
+            if ($link !== null && $sectionId !== (int) $link->section_id) {
+                continue;
+            }
+            $key = $studentId.'-'.$sectionId;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $classLink = $this->linkForSatSection($schoolId, $anchor, $sectionId, $link);
+            if ($classLink === null) {
+                continue;
+            }
+            yield [$studentId, $classLink];
+        }
+    }
+
+    /** The class whose section the exam belongs to, so the marks lookup stays on that sitting. */
+    private function linkForSatSection(int $schoolId, Exam $anchor, int $sectionId, ?StandardLink $selected): ?StandardLink
+    {
+        if ($selected !== null && (int) $selected->section_id === $sectionId) {
+            $selected->loadMissing('section');
+
+            return $selected;
+        }
+
+        $yearId = (int) $anchor->academic_year_id;
+        $historical = StandardLink::query()
+            ->with('section')
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->when($yearId > 0, fn ($query) => $query->where('academic_year_id', $yearId))
+            ->orderBy('id')
+            ->first();
+        if ($historical !== null) {
+            return $historical;
+        }
+
+        return StandardLink::query()
+            ->with('section')
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * Body variables for results_released: parent, school, student, sitting.
+     *
+     * @return array{0:string,1:string,2:string,3:string}
+     */
+    private function resultsReleasedVariables(MarksRelease $release, WhatsAppUser $parentRow, int $studentId): array
+    {
+        $schoolId = (int) $release->school_id;
+        $parent = User::query()->where('school_id', $schoolId)->whereKey($parentRow->user_id)->first();
+        $student = User::query()->where('school_id', $schoolId)->whereKey($studentId)->first();
+        $release->loadMissing(['exam.examType', 'exam.academicTerm', 'school']);
+
+        return [
+            $this->templateParameter((string) ($parent?->name ?? ''), 'Parent'),
+            $this->templateParameter((string) ($release->school?->name ?? ''), 'The school'),
+            $this->templateParameter((string) ($student?->name ?? ''), 'your child'),
+            $this->templateParameter($release->exam ? $this->examLabel($release->exam) : '', 'results'),
+        ];
+    }
+
+    private function templateParameter(string $value, string $fallback): string
+    {
+        $value = trim((string) preg_replace('/\s+/u', ' ', $value));
+
+        return $value !== '' ? $value : $fallback;
     }
 
     private function message(?School $school, Exam $anchor, int $studentId, StandardLink $link): ?string

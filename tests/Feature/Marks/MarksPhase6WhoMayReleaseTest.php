@@ -142,16 +142,33 @@ class MarksPhase6WhoMayReleaseTest extends TestCase
         $this->assertSame('school', MarksRelease::sole()->scope);
     }
 
-    public function test_the_settings_page_reads_on_until_someone_turns_it_off(): void
+    public function test_saving_the_page_without_touching_the_release_switch_keeps_it_on(): void
     {
         $admin = $this->admin();
         $schoolId = (int) $admin->school_id;
 
-        $this->actingAs($admin)->get('/admin/settings/maintenancesettings')
+        $html = $this->actingAs($admin)->get('/admin/settings/maintenancesettings')
             ->assertOk()
-            ->assertSee('name="teachers_may_release_marks"', false)
-            ->assertSee('checked', false)
-            ->assertSee('On by default');
+            ->assertSee('On by default')
+            ->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/name="teachers_may_release_marks"[^>]*\bchecked\b/',
+            $html,
+            'a school that has never saved the switch sees it on',
+        );
+
+        // The browser submits a checked box. Leaving it alone must not write '0'.
+        $this->actingAs($admin)->post('/admin/settings/maintenancesettings', [
+            'login_status' => 1,
+            'teachers_may_release_marks' => 1,
+        ])->assertRedirect();
+
+        $this->assertSame('1', (string) SchoolDetail::query()
+            ->where('school_id', $schoolId)
+            ->where('meta_key', SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY)
+            ->value('meta_value'));
+        $this->assertTrue(SiteHelper::teachersMayReleaseMarks($schoolId));
 
         // Unticking the box is an explicit off.
         $this->actingAs($admin)->post('/admin/settings/maintenancesettings', ['login_status' => 1])
@@ -162,6 +179,12 @@ class MarksPhase6WhoMayReleaseTest extends TestCase
             ->where('meta_key', SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY)
             ->value('meta_value'));
         $this->assertFalse(SiteHelper::teachersMayReleaseMarks($schoolId));
+
+        $off = $this->actingAs($admin)->get('/admin/settings/maintenancesettings')->assertOk()->getContent();
+        $this->assertDoesNotMatchRegularExpression(
+            '/name="teachers_may_release_marks"[^>]*\bchecked\b/',
+            $off,
+        );
 
         $this->actingAs($admin)->post('/admin/settings/maintenancesettings', [
             'login_status' => 1,

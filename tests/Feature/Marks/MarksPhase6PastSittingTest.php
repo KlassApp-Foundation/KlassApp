@@ -105,4 +105,46 @@ class MarksPhase6PastSittingTest extends TestCase
 
         $this->assertSame(0, MarksRelease::count());
     }
+
+    public function test_an_older_sitting_messages_the_students_who_sat_it_not_the_current_class(): void
+    {
+        $fx = $this->fx['demo'];
+        $sat = $fx['students'][0]['user'];
+        $currentClass = $fx['link'];
+        $elsewhere = $this->secondClass('demo', 'P.6');
+
+        \App\Models\StudentAcademic::query()
+            ->where('school_id', $fx['school']->id)
+            ->where('user_id', $sat->id)
+            ->update(['standardLink_id' => $elsewhere->id]);
+
+        $newcomer = $this->addChild('demo', $fx['students'][0]['parent'], 'Newcomer Pupil', true);
+
+        $this->assertSame(
+            (int) $elsewhere->id,
+            (int) \App\Models\StudentAcademic::query()
+                ->where('school_id', $fx['school']->id)
+                ->where('user_id', $sat->id)
+                ->value('standardLink_id'),
+            'the pupil who sat the exam is no longer in the current class',
+        );
+        $this->assertSame(
+            (int) $currentClass->id,
+            (int) \App\Models\StudentAcademic::query()
+                ->where('school_id', $fx['school']->id)
+                ->where('user_id', $newcomer->id)
+                ->value('standardLink_id'),
+        );
+
+        $this->actingAs($this->admin())
+            ->post('/admin/marks/releases', $this->payload('demo', $currentClass->id, $this->earlierExamId()) + ['confirm_past' => '1'])
+            ->assertRedirect();
+
+        $names = array_column(MarksRelease::sole()->result['messages'] ?? [], 'name');
+        $this->assertContains('Amina Nakato', $names);
+        $this->assertContains('Brian Okello', $names);
+        $this->assertContains('Clare Auma', $names);
+        $this->assertNotContains('Newcomer Pupil', $names);
+        $this->assertNotContains('Zed Realpupil', $names);
+    }
 }
