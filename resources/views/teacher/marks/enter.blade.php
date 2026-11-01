@@ -31,10 +31,12 @@
                 </a>
                 <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline ds-btn-md" data-testid="marks-import-button">Import from spreadsheet</a>
             @endunless
+            @if($canSubmit ?? false)
             <form method="POST" action="{{ route('teacher.exam.marks.submit', $exam) }}">
                 @csrf
                 <button type="submit" class="ds-btn ds-btn-primary ds-btn-md" style="min-height:44px;" data-testid="marks-submit-button">Submit for review</button>
             </form>
+            @endif
         </div>
     </div>
 
@@ -130,8 +132,9 @@
                                        class="tw-form-control w-24"
                                        min="0"
                                        max="100"
-                                       oninput="this.value = Math.min(100, Math.max(0, this.value))"
-                                       placeholder="0">
+                                       step="0.01"
+                                       value="{{ old('marks.'.$student->id, $savedMarks[$student->id] ?? '') }}"
+                                       data-testid="mark-input-{{ $student->id }}">
                             </td>
 
                             <td>

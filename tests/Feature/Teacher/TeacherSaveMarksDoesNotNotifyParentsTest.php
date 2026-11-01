@@ -201,7 +201,7 @@ class TeacherSaveMarksDoesNotNotifyParentsTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect(route('teacher.exam.marks'));
+        $response->assertRedirect(route('teacher.exam.marks.enter', $this->exam));
         $this->assertDatabaseHas('marks', [
             'exam_id' => $this->exam->id,
             'student_id' => $this->student->id,
