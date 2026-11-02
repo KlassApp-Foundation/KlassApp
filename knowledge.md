@@ -635,6 +635,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 2, 2026 — **Marks Phase 1 review follow-up OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
+
+- Accepting an invite is capped at 10 per hour for that link and 200 per hour for the school. A token that matches no invite is limited per IP. Issuing an invite uses the signed-in admin's school, and a `school_id` in the request body is ignored. Clearing or changing the class teacher on the stream form revokes a pending invite and writes one `class_teacher` log. The pending-invites list hides revoked invites. A missing stream redirects straight to `/admin/classes` with the error still visible. Toshi's add-teacher stores no password. Claiming an invite with no class creates the teacher and assigns no class.
+- Hard-coded Ugandan class levels offered to every school, and Toshi's exact class-name match, are unchanged pending a product decision.
+- **Tests:** the class-teacher files on PHP 8.4.27, sqlite memory: 56 tests, 310 assertions, 0 failures. Full `scripts/test-guard.sh` was not run.
+- **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
+
 ## Current Status: October 26, 2026 — **Marks Phase 1 class teacher assignment OPEN (stacked on [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236))**
 
 - `ClassTeacherAssignmentService` is the one assignment path: pick an existing teacher, invite a new one, or replace the current one, with confirmation and a log. Invite links stay hashed, single-use, and 72 hours. Replacing a class teacher revokes a pending invite for that class. Email is the channel. WhatsApp staff invites stay off. `/admin/sections` and `/admin/class-setup` redirect to `/admin/classes`. Class names come from the school's own sections. Flow: `docs/product/class-teacher-flow.md`.
@@ -3081,6 +3088,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-11-02: Second review pass on Marks Phase 1 (#1239)
+
+- **Work done**: Per-invite accept cap is 10 per hour and the school cap stays 200. Invalid invite tokens are limited per IP and no longer share `school:0`. The issue limiter uses the signed-in admin's school. `applySectionTeacher` and `clearStreamTeacher` revoke a pending invite and write a `class_teacher` log when the teacher changes; clearing the stream teacher also clears the section teacher. The pending-invites list hides revoked invites. A class with no stream redirects to `admin.classes.index` so the error flash is still on the page. The class-teacher doc no longer says Toshi stores a random password. A test claims an invite that has no class.
+- **Files touched**: `app/Services/ClassTeacherAssignmentService.php`, `app/Providers/AppServiceProvider.php`, `app/Http/Controllers/Admin/ClassTeacherInviteController.php`, `config/invites.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/ClassTeacherInviteControllerTest.php`, `knowledge.md`.
+- **Decision**: Ugandan class levels offered to every school, and Toshi requiring an exact class name, stay as they are until there is a product decision. No history rewrite.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, `php vendor/bin/phpunit` on the class-teacher files: 56 tests, 310 assertions, 0 failures. Full test-guard was not run.
 
 ### 2026-10-30: Review fixes on Marks Phase 1 (#1239)
 

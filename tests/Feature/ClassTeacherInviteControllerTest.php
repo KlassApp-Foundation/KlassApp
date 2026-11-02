@@ -84,6 +84,73 @@ class ClassTeacherInviteControllerTest extends TestCase
         Mail::assertQueued(TeacherInviteLinkMail::class);
     }
 
+    public function test_pending_invites_list_omits_a_revoked_invite(): void
+    {
+        $admin = $this->admin();
+        $link = $this->stream($admin->school_id);
+        $section = Section::query()->findOrFail($link->section_id);
+
+        TeacherInvite::create([
+            'school_id' => $admin->school_id,
+            'email' => 'revoked-invite@phase-one.test',
+            'token_hash' => hash('sha256', str_repeat('e', 64)),
+            'role' => 'class_teacher',
+            'standard_link_id' => $link->id,
+            'name' => 'Revoked Invite',
+            'expires_at' => now()->addDay(),
+            'revoked_at' => now(),
+        ]);
+        TeacherInvite::create([
+            'school_id' => $admin->school_id,
+            'email' => 'pending-invite@phase-one.test',
+            'token_hash' => hash('sha256', str_repeat('f', 64)),
+            'role' => 'class_teacher',
+            'standard_link_id' => $link->id,
+            'name' => 'Pending Invite',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.class-teacher-invite.create', $section))
+            ->assertOk()
+            ->assertSee('pending-invite@phase-one.test')
+            ->assertDontSee('revoked-invite@phase-one.test');
+    }
+
+    public function test_missing_stream_message_is_visible_on_the_classes_page(): void
+    {
+        $admin = $this->admin();
+        AcademicYear::create([
+            'school_id' => $admin->school_id,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+        Standard::create([
+            'school_id' => $admin->school_id,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+        $section = Section::create([
+            'school_id' => $admin->school_id,
+            'name' => 'P.4',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.class-teacher-invite.create', $section))
+            ->assertRedirect(route('admin.classes.index'))
+            ->assertSessionHas('errormessage', 'No active stream found for this class.');
+
+        $this->actingAs($admin)
+            ->get(route('admin.classes.index'))
+            ->assertOk()
+            ->assertSee('No active stream found for this class.');
+    }
+
     public function test_admin_can_reassign_existing_teacher_via_web_route(): void
     {
         $admin = $this->admin();

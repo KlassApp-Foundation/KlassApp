@@ -39,7 +39,7 @@ class ClassTeacherInviteController extends Controller
             ->first();
 
         if (! $standardLink) {
-            return redirect()->route('admin.classes')->with('errormessage', 'No active stream found for this class.');
+            return redirect()->route('admin.classes.index')->with('errormessage', 'No active stream found for this class.');
         }
 
         $existingTeachers = User::where('school_id', $schoolId)
@@ -50,6 +50,7 @@ class ClassTeacherInviteController extends Controller
 
         $pendingInvites = TeacherInvite::where('school_id', $schoolId)
             ->whereNull('claimed_at')
+            ->whereNull('revoked_at')
             ->orderByDesc('created_at')
             ->get();
 
@@ -90,6 +91,7 @@ class ClassTeacherInviteController extends Controller
     public function resend(TeacherInvite $invite)
     {
         $user = Auth::user();
+        abort_unless($user instanceof User, 403);
         abort_if(
             (int) $invite->school_id !== (int) $user->school_id,
             403,
@@ -101,7 +103,7 @@ class ClassTeacherInviteController extends Controller
                 ->with('errormessage', 'This invite has already been used.');
         }
 
-        if (app(ClassTeacherAssignmentService::class)->issuingIsLimited((int) $invite->school_id, (string) $invite->id)) {
+        if (app(ClassTeacherAssignmentService::class)->issuingIsLimited($user, (string) $invite->id)) {
             return redirect()->route('admin.classes.index')
                 ->with('errormessage', 'Too many class teacher changes. Wait an hour and try again.');
         }

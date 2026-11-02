@@ -43,6 +43,12 @@ class ClassTeacherAssignmentService
     ];
 
     /**
+     * Rate-limit key prefix for invite tokens that match no row.
+     * The rest of the key is the client IP. These attempts do not share a school bucket.
+     */
+    public const INVALID_ACCEPT_KEY_PREFIX = 'invalid-ip:';
+
+    /**
      * @param  array{
      *     email?: string,
      *     name?: string,
@@ -249,7 +255,7 @@ class ClassTeacherAssignmentService
     {
         if ($this->blankTeacherId($teacherId)) {
             if ($clearWhenBlank) {
-                $this->clearStreamTeacher($standardLink);
+                $this->clearStreamTeacher($actor, $standardLink);
             }
 
             return;
@@ -279,13 +285,13 @@ class ClassTeacherAssignmentService
 
     /**
      * Section class teacher from the stream form. Null clears it.
-     * A non-empty id that is not a teacher in the section's school is rejected.
+     * A change revokes pending invites for the class and writes one log.
+     * The same teacher again does neither.
      */
     public function applySectionTeacher(User|null $actor, Section $section, mixed $teacherId): void
     {
         if ($this->blankTeacherId($teacherId)) {
-            $section->class_teacher_id = null;
-            $section->save();
+            $this->clearSectionTeacher($actor, $section);
 
             return;
         }
@@ -297,14 +303,56 @@ class ClassTeacherAssignmentService
             ]);
         }
 
+        if ((int) $section->class_teacher_id === (int) $teacher->id) {
+            return;
+        }
+
+        $previous = $section->class_teacher_id !== null ? (int) $section->class_teacher_id : null;
         $section->class_teacher_id = $teacher->id;
         $section->save();
+        $this->recordColumnChange($actor, $section, $teacher, 'section_form', $previous);
     }
 
-    public function clearStreamTeacher(StandardLink $standardLink): void
+    /**
+     * Clear the stream teacher and the section teacher together.
+     * Already-empty columns do not revoke an invite or write a log.
+     */
+    public function clearStreamTeacher(User|null $actor, StandardLink $standardLink): void
     {
+        $section = $standardLink->section;
+        $streamId = $standardLink->class_teacher_id !== null ? (int) $standardLink->class_teacher_id : null;
+        $sectionId = $section instanceof Section && $section->class_teacher_id !== null
+            ? (int) $section->class_teacher_id
+            : null;
+
+        if ($streamId === null && $sectionId === null) {
+            return;
+        }
+
+        $actor = $this->actorForSchool($actor, (int) $standardLink->school_id, 'class_teacher_id');
+
         $standardLink->class_teacher_id = null;
         $standardLink->save();
+
+        if ($section instanceof Section && (int) $section->school_id === (int) $standardLink->school_id) {
+            $section->class_teacher_id = null;
+            $section->save();
+        }
+
+        $this->recordColumnChange($actor, $section instanceof Section ? $section : null, null, 'clear', $streamId ?? $sectionId, $standardLink);
+    }
+
+    private function clearSectionTeacher(User|null $actor, Section $section): void
+    {
+        if ($section->class_teacher_id === null) {
+            return;
+        }
+
+        $actor = $this->actorForSchool($actor, (int) $section->school_id, 'section_class_teacher_id');
+        $previous = (int) $section->class_teacher_id;
+        $section->class_teacher_id = null;
+        $section->save();
+        $this->recordColumnChange($actor, $section, null, 'clear', $previous);
     }
 
     /**
@@ -333,7 +381,7 @@ class ClassTeacherAssignmentService
 
         $phone = trim((string) ($data['phone'] ?? ''));
 
-        if ($this->issuingIsLimited($schoolId, hash('sha256', $email))) {
+        if ($this->issuingIsLimited($actor, hash('sha256', $email))) {
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
@@ -379,16 +427,26 @@ class ClassTeacherAssignmentService
     }
 
     /**
-     * Named limiter teacher-invite-issue. The key is the school and the invite
-     * (email hash or invite id), never an IP address.
+     * Named limiter teacher-invite-issue. The school is the actor's school.
+     * A school_id in the request body is ignored.
      */
-    public function issuingIsLimited(int $schoolId, string $inviteKey): bool
+    public function issuingIsLimited(User $actor, string $inviteKey): bool
     {
         $request = Request::create('/', 'POST', [
-            'school_id' => $schoolId,
+            'school_id' => 0,
             'invite_key' => $inviteKey,
         ]);
+        $request->setUserResolver(static fn () => $actor);
 
+        return $this->issueRequestIsLimited($request);
+    }
+
+    /**
+     * True when this request is over the issue limit. The bucket is the
+     * authenticated admin's school, never school_id from the body.
+     */
+    public function issueRequestIsLimited(Request $request): bool
+    {
         return $this->consumeNamedLimiter('teacher-invite-issue', $request);
     }
 
@@ -433,7 +491,7 @@ class ClassTeacherAssignmentService
             return $this->result(false, "{$teacher->name} is already the class teacher for {$className}.");
         }
 
-        if ($this->issuingIsLimited((int) $actor->school_id, 'existing:'.$teacher->id)) {
+        if ($this->issuingIsLimited($actor, 'existing:'.$teacher->id)) {
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
@@ -454,7 +512,7 @@ class ClassTeacherAssignmentService
         string $name,
         string $phone,
     ): array {
-        if ($this->issuingIsLimited((int) $actor->school_id, hash('sha256', $email))) {
+        if ($this->issuingIsLimited($actor, hash('sha256', $email))) {
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
@@ -554,6 +612,49 @@ class ClassTeacherAssignmentService
         }
     }
 
+    private function actorForSchool(?User $actor, int $schoolId, string $field): User
+    {
+        if (! $actor instanceof User || $schoolId === 0 || (int) $actor->school_id !== $schoolId) {
+            throw ValidationException::withMessages([
+                $field => 'Choose a teacher from this school.',
+            ]);
+        }
+
+        return $actor;
+    }
+
+    /**
+     * A direct column write still revokes pending invites and writes one log.
+     * No active stream means there is nothing to revoke and nowhere to attach the log.
+     */
+    private function recordColumnChange(
+        User $actor,
+        ?Section $section,
+        ?User $teacher,
+        string $action,
+        ?int $previousTeacherId,
+        ?StandardLink $standardLink = null,
+    ): void {
+        if (! $standardLink instanceof StandardLink && $section instanceof Section) {
+            $standardLink = StandardLink::query()
+                ->where('school_id', $section->school_id)
+                ->where('section_id', $section->id)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        if (! $standardLink instanceof StandardLink) {
+            return;
+        }
+
+        $sectionId = $section instanceof Section
+            ? (int) $section->id
+            : (int) $standardLink->section_id;
+
+        $this->revokePendingForSection((int) $standardLink->school_id, $sectionId, null);
+        $this->logAssignment($actor, $standardLink, $teacher, $action, $previousTeacherId);
+    }
+
     private function logAssignment(
         User $actor,
         StandardLink $standardLink,
@@ -570,6 +671,8 @@ class ClassTeacherAssignmentService
             'toshi' => "Assigned a class teacher for {$className} from Toshi.",
             'claim' => "A teacher claimed the class teacher invite for {$className}.",
             'stream_form' => "Saved the class teacher for {$className} on the stream form.",
+            'section_form' => "Saved the section teacher for {$className}.",
+            'clear' => "Cleared the class teacher for {$className}.",
             default => "Assigned a class teacher for {$className}.",
         };
 

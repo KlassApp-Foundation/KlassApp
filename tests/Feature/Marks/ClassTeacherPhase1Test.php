@@ -3,6 +3,7 @@
 namespace Tests\Feature\Marks;
 
 use App\Logging\ScrubInviteTokensProcessor;
+use App\Mail\TeacherInviteLinkMail;
 use App\Mail\TeacherInviteMail;
 use App\Models\AcademicYear;
 use App\Models\Academics\Classes;
@@ -664,6 +665,232 @@ class ClassTeacherPhase1Test extends TestCase
         $this->assertNull($checked['error']);
     }
 
+    public function test_hammering_one_invite_link_does_not_block_another_teacher_at_the_same_school(): void
+    {
+        config(['invites.force_rate_limits' => true]);
+
+        $perInvite = (int) config('invites.accept_attempts');
+        $perSchool = (int) config('invites.accept_school_attempts');
+        $this->assertSame(10, $perInvite);
+        $this->assertGreaterThanOrEqual($perInvite * 10, $perSchool);
+
+        ['token' => $token, 'invite' => $invite] = TeacherInviteLinkService::issue(
+            $this->school,
+            'hammer@phase-one.test',
+            'Hammer Teacher',
+            $this->link,
+        );
+        ['token' => $otherToken, 'invite' => $otherInvite] = TeacherInviteLinkService::issue(
+            $this->school,
+            'hammer-other@phase-one.test',
+            'Other Hammer',
+            $this->link,
+        );
+
+        $this->clearAcceptLimits((int) $this->school->id, (string) $invite->id);
+        $this->clearAcceptLimits((int) $this->school->id, (string) $otherInvite->id);
+
+        for ($i = 0; $i < $perInvite; $i++) {
+            $this->get(route('teacher.invite.form', $token))->assertOk();
+        }
+
+        $this->get(route('teacher.invite.form', $token))
+            ->assertStatus(429)
+            ->assertSee('Too many attempts');
+
+        $this->get(route('teacher.invite.form', $otherToken))
+            ->assertOk()
+            ->assertSee('Set your password');
+    }
+
+    public function test_invalid_invite_tokens_from_one_ip_do_not_block_another_ip(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.accept_attempts' => 100,
+            'invites.accept_school_attempts' => 100,
+            'invites.accept_invalid_attempts' => 2,
+        ]);
+
+        $firstIp = '203.0.113.10';
+        $secondIp = '203.0.113.11';
+        $this->clearInvalidAcceptLimit($firstIp);
+        $this->clearInvalidAcceptLimit($secondIp);
+
+        $this->withServerVariables(['REMOTE_ADDR' => $firstIp]);
+        $this->get(route('teacher.invite.form', str_repeat('a', 64)))
+            ->assertOk()
+            ->assertSee('This invite link');
+        $this->get(route('teacher.invite.form', str_repeat('b', 64)))
+            ->assertOk();
+        $this->get(route('teacher.invite.form', str_repeat('c', 64)))
+            ->assertStatus(429)
+            ->assertSee('Too many attempts');
+
+        $this->withServerVariables(['REMOTE_ADDR' => $secondIp]);
+        $this->get(route('teacher.invite.form', str_repeat('d', 64)))
+            ->assertOk()
+            ->assertSee('This invite link');
+
+        ['token' => $token, 'invite' => $invite] = TeacherInviteLinkService::issue(
+            $this->school,
+            'still-valid@phase-one.test',
+            'Still Valid',
+            $this->link,
+        );
+        $this->clearAcceptLimits((int) $this->school->id, (string) $invite->id);
+        $this->withServerVariables(['REMOTE_ADDR' => $firstIp]);
+        $this->get(route('teacher.invite.form', $token))
+            ->assertOk()
+            ->assertSee('Set your password');
+    }
+
+    public function test_forged_school_id_does_not_change_which_schools_issue_limit_is_used(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.create_attempts' => 1,
+            'invites.create_per_invite_attempts' => 100,
+        ]);
+
+        $other = $this->otherSchool();
+        $service = app(ClassTeacherAssignmentService::class);
+        $inviteKey = 'shared-key';
+
+        $this->clearIssueLimits((int) $this->school->id, $inviteKey);
+        $this->clearIssueLimits((int) $other['school']->id, $inviteKey);
+        $this->clearIssueLimits(0, $inviteKey);
+        $this->clearIssueLimits(987654, $inviteKey);
+
+        $forged = Request::create('/', 'POST', [
+            'school_id' => $other['school']->id,
+            'invite_key' => $inviteKey,
+        ]);
+        $forged->setUserResolver(fn () => $this->admin);
+
+        $this->assertFalse($service->issueRequestIsLimited($forged));
+        $this->assertTrue($service->issueRequestIsLimited($forged));
+
+        $differentSchoolInTheBody = Request::create('/', 'POST', [
+            'school_id' => 987654,
+            'invite_key' => $inviteKey,
+        ]);
+        $differentSchoolInTheBody->setUserResolver(fn () => $this->admin);
+        $this->assertTrue($service->issueRequestIsLimited($differentSchoolInTheBody));
+
+        $otherAdmin = Request::create('/', 'POST', [
+            'school_id' => $this->school->id,
+            'invite_key' => $inviteKey,
+        ]);
+        $otherAdmin->setUserResolver(fn () => $other['admin']);
+        $this->assertFalse($service->issueRequestIsLimited($otherAdmin));
+    }
+
+    public function test_clearing_the_stream_teacher_revokes_the_pending_invite_and_writes_a_log(): void
+    {
+        $teacher = $this->teacher('clear-stream@phase-one.test');
+        $this->link->class_teacher_id = $teacher->id;
+        $this->link->save();
+        $this->section->class_teacher_id = $teacher->id;
+        $this->section->save();
+
+        ['token' => $token] = TeacherInviteLinkService::issue(
+            $this->school,
+            'clear-pending@phase-one.test',
+            'Clear Pending',
+            $this->link,
+        );
+        $invite = TeacherInvite::query()->where('email', 'clear-pending@phase-one.test')->firstOrFail();
+
+        Auth::setUser($this->admin);
+        $edit = Request::create('/', 'POST', [
+            'class_teacher_id' => null,
+            'no_of_students' => 40,
+            'standard' => '1',
+            'count' => 0,
+        ]);
+
+        app(\App\Http\Controllers\Admin\SectionController::class)
+            ->editStandardLink($this->school->id, $this->link->academic_year_id, $this->link->id, $edit);
+
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertNull($this->section->fresh()->class_teacher_id);
+        $this->assertNotNull($invite->fresh()->revoked_at);
+        $this->assertSame('revoked', TeacherInviteLinkService::validateToken($token)['error']);
+
+        $log = ActivityLog::query()->where('log_name', 'class_teacher')->latest('id')->first();
+        $this->assertNotNull($log);
+        $this->assertSame('clear', $log->properties['action'] ?? null);
+        $this->assertSame((int) $this->school->id, (int) $log->school_id);
+        $this->assertSame((int) $this->section->id, (int) ($log->properties['section_id'] ?? 0));
+    }
+
+    public function test_changing_the_section_teacher_revokes_the_pending_invite_and_writes_a_log(): void
+    {
+        $first = $this->teacher('section-first@phase-one.test');
+        $second = $this->teacher('section-second@phase-one.test');
+        $service = app(ClassTeacherAssignmentService::class);
+
+        Auth::setUser($this->admin);
+        $service->applySectionTeacher($this->admin, $this->section, $first->id);
+        $this->assertSame($first->id, (int) $this->section->fresh()->class_teacher_id);
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertSame(1, ActivityLog::query()->where('log_name', 'class_teacher')->count());
+
+        ['token' => $token] = TeacherInviteLinkService::issue(
+            $this->school,
+            'section-pending@phase-one.test',
+            'Section Pending',
+            $this->link,
+        );
+        $invite = TeacherInvite::query()->where('email', 'section-pending@phase-one.test')->firstOrFail();
+        $logs = ActivityLog::query()->where('log_name', 'class_teacher')->count();
+
+        $service->applySectionTeacher($this->admin, $this->section->fresh(), $first->id);
+        $this->assertNull($invite->fresh()->revoked_at);
+        $this->assertSame($logs, ActivityLog::query()->where('log_name', 'class_teacher')->count());
+
+        $service->applySectionTeacher($this->admin, $this->section->fresh(), $second->id);
+        $this->assertSame($second->id, (int) $this->section->fresh()->class_teacher_id);
+        $this->assertNotNull($invite->fresh()->revoked_at);
+        $this->assertSame('revoked', TeacherInviteLinkService::validateToken($token)['error']);
+        $this->assertSame($logs + 1, ActivityLog::query()->where('log_name', 'class_teacher')->count());
+
+        $log = ActivityLog::query()->where('log_name', 'class_teacher')->latest('id')->first();
+        $this->assertSame('section_form', $log->properties['action'] ?? null);
+        $this->assertSame($second->id, (int) ($log->properties['teacher_id'] ?? 0));
+    }
+
+    public function test_claiming_an_invite_with_no_class_creates_the_teacher(): void
+    {
+        $result = app(ClassTeacherAssignmentService::class)->inviteWithoutClass($this->admin, [
+            'email' => 'noclass@phase-one.test',
+            'name' => 'No Class',
+        ]);
+        $this->assertTrue($result['success'], $result['message'] ?? '');
+
+        $mail = Mail::queued(TeacherInviteLinkMail::class)->first();
+        $this->assertNotNull($mail);
+        $this->assertNull($mail->className);
+
+        $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
+        $invite = TeacherInvite::query()->where('email', 'noclass@phase-one.test')->firstOrFail();
+        $this->assertNull($invite->standard_link_id);
+        $this->assertSame(hash('sha256', $token), $invite->token_hash);
+
+        $claim = TeacherInviteLinkService::claim($invite, 'Secret1a');
+        $this->assertTrue($claim['success'], $claim['message'] ?? '');
+
+        $teacher = User::query()->where('email', 'noclass@phase-one.test')->first();
+        $this->assertNotNull($teacher);
+        $this->assertSame(5, (int) $teacher->usergroup_id);
+        $this->assertSame((int) $this->school->id, (int) $teacher->school_id);
+        $this->assertNotNull($invite->fresh()->claimed_at);
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertNull($this->section->fresh()->class_teacher_id);
+        $this->assertSame(0, ActivityLog::query()->where('log_name', 'class_teacher')->count());
+    }
+
     /**
      * @return array{success: bool, message: string}
      */
@@ -740,6 +967,11 @@ class ClassTeacherPhase1Test extends TestCase
         if ($inviteKey !== null) {
             RateLimiter::clear(md5('teacher-invite-accept'.'school:'.$schoolId.'|invite:'.$inviteKey));
         }
+    }
+
+    private function clearInvalidAcceptLimit(string $ip): void
+    {
+        RateLimiter::clear(md5('teacher-invite-accept'.ClassTeacherAssignmentService::INVALID_ACCEPT_KEY_PREFIX.$ip));
     }
 
     private function teacher(string $email): User

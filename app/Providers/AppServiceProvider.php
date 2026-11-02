@@ -147,9 +147,9 @@ class AppServiceProvider extends ServiceProvider {
             ];
         });
 
-        // Teacher invites are counted per invite and per school. The key is
-        // the invite id (or a hash when the token does not match a row) and
-        // the school id. An IP address is not part of the key.
+        // A real invite is counted for that invite and for its school. The
+        // per-invite cap is the smaller one. A token that matches no row is
+        // counted for the IP only, never a shared school:0 bucket.
         $inviteLimited = function ($request, array $headers) {
             return response()
                 ->view('auth.invite-invalid', ['reason' => 'limited'])
@@ -161,9 +161,16 @@ class AppServiceProvider extends ServiceProvider {
             $invite = TeacherInvite::query()
                 ->where('token_hash', hash('sha256', $token))
                 ->first();
-            $schoolId = $invite ? (int) $invite->school_id : 0;
-            $inviteKey = $invite ? (string) $invite->id : hash('sha256', $token);
             $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
+
+            if (! $invite) {
+                return (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_invalid_attempts'), $decay))
+                    ->by(ClassTeacherAssignmentService::INVALID_ACCEPT_KEY_PREFIX.$request->ip())
+                    ->response($inviteLimited);
+            }
+
+            $schoolId = (int) $invite->school_id;
+            $inviteKey = (string) $invite->id;
 
             return [
                 (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_attempts'), $decay))
@@ -175,7 +182,8 @@ class AppServiceProvider extends ServiceProvider {
             ];
         });
         RateLimiter::for('teacher-invite-issue', function (Request $request) {
-            $schoolId = (int) $request->input('school_id');
+            $actor = $request->user();
+            $schoolId = $actor instanceof User ? (int) $actor->school_id : 0;
             $inviteKey = (string) $request->input('invite_key');
             $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
 

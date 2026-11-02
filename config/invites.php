@@ -27,8 +27,16 @@ return [
 
     'create_attempts' => (int) env('TEACHER_INVITE_CREATE_ATTEMPTS', 30),
     'create_per_invite_attempts' => (int) env('TEACHER_INVITE_CREATE_PER_INVITE_ATTEMPTS', 10),
-    'accept_attempts' => (int) env('TEACHER_INVITE_ACCEPT_ATTEMPTS', 20),
+
+    /*
+     * Opening an invite counts once for that invite and once for the school.
+     * The per-invite cap stays well below the school cap, so one link runs
+     * out while other teachers at the same school can still open theirs.
+     * A token that matches no invite is limited per IP, not in one shared bucket.
+     */
+    'accept_attempts' => (int) env('TEACHER_INVITE_ACCEPT_ATTEMPTS', 10),
     'accept_school_attempts' => (int) env('TEACHER_INVITE_ACCEPT_SCHOOL_ATTEMPTS', 200),
+    'accept_invalid_attempts' => (int) env('TEACHER_INVITE_ACCEPT_INVALID_ATTEMPTS', 30),
     'rate_decay_seconds' => (int) env('TEACHER_INVITE_RATE_DECAY_SECONDS', 3600),
 
     /* Tests opt in. The suite must not share a file-cache counter. */
