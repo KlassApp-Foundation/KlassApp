@@ -3069,6 +3069,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: a failed school save shows the country sentence only for a country change (#1246)
+
+- **Work done**: The school-details failure decision now lives in `countrySaveError.mjs` and is executed by a node test. A 500, a network failure, and a save that is not changing the country do not show "Confirm the country change". An unconfirmed change keeps that sentence and the typed values. A Google signup with no country is stored as Uganda. No production data and no deploy.
+- **Files touched**: `resources/assets/js/components/schooldetail/Edit.vue`, `resources/assets/js/components/schooldetail/countrySaveError.mjs`, `tests/js/countrySaveError.test.mjs`, `tests/Feature/Onboarding/CountryDefaultTest.php`, `knowledge.md`.
+- **Decision**: Toshi's country step still accepts any text of two or more characters. That remains a product decision. The commented-out `store` route was not given a second confirmation.
+- **Status**: OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. Production untouched.
+- **Evidence**: `node --test tests/js/countrySaveError.test.mjs` — 3 tests, 0 failures. `vendor/bin/phpunit tests/Feature/Onboarding/CountryDefaultTest.php tests/Feature/Admin/CountryCodeCorrectionTest.php` — 22 tests, 213 assertions, 0 failures.
+
 ### 2026-11-02: country codes can be rolled back, and the two country fields must agree (#1249)
 
 - **Work done**: The country-code migration's `down()` writes the known seed codes back inside one transaction. A soft-deleted row and a name that matches two live rows are skipped and logged, not corrected. `persistCountry` stores `countries.name` when a short code matches one live row. A superadmin save that sends a `country_id` and a different country name is rejected and leaves the school unchanged. No production data and no deploy.
