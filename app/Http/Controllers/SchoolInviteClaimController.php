@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolInvite;
 use App\Models\User;
+use App\Services\OnboardingEngine;
 use App\Services\SchoolInviteService;
 use App\Support\PhoneCountry;
 use Illuminate\Http\Request;
@@ -69,7 +70,17 @@ class SchoolInviteClaimController extends Controller
 
         Auth::login($claim['user'], true);
 
-        return redirect()->route('onboarding.choice')
-            ->with('successmessage', 'Your school is ready. Choose how you want to set it up.');
+        $user = $claim['user'];
+        $destination = $user->school
+            ? OnboardingEngine::setupDestination($user->school, $user->id)
+            : null;
+
+        if ($destination === null) {
+            return redirect('/admin/dashboard')
+                ->with('successmessage', 'Your school is ready.');
+        }
+
+        return redirect()->to($destination)
+            ->with('successmessage', 'Your school is ready. Continue setup from here.');
     }
 }

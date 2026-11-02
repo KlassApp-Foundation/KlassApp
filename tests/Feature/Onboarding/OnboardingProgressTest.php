@@ -262,7 +262,9 @@ class OnboardingProgressTest extends TestCase
         $this->listenForSummaryWarnings();
 
         $running = OnboardingProgress::for($this->school->fresh(), $this->admin->id);
-        $this->assertSame([], $running['summary']);
+        $this->assertContains('School name', $running['summary']);
+        $this->assertNotContains('School name: Kisubi Primary School', $running['summary']);
+        $this->assertCount($running['done'], $running['summary']);
         $this->assertGreaterThan(0, $running['done']);
         $count = 'Setup '.$running['done'].' of '.$running['total'];
 
@@ -271,14 +273,16 @@ class OnboardingProgressTest extends TestCase
                 ->get('/admin/dashboard')
                 ->assertOk()
                 ->assertSee($count.' done', false)
-                ->assertDontSee('data-testid="dashboard-v2-setup-summary"', false)
+                ->assertSee('data-testid="dashboard-v2-setup-summary"', false)
+                ->assertSee('School name', false)
                 ->assertDontSee('School name: Kisubi Primary School', false);
         } elseif ($surface === 'wizard') {
             $this->actingAs($this->admin);
             Livewire::test(ManualOnboardingWizard::class)
                 ->assertSeeHtml('data-testid="wizard-running-summary"')
                 ->assertSee($count)
-                ->assertSee('Nothing saved yet.')
+                ->assertSee('School name')
+                ->assertDontSee('Nothing saved yet.')
                 ->assertDontSee('School name: Kisubi Primary School');
         } else {
             $html = Livewire::actingAs($this->admin)
@@ -289,7 +293,8 @@ class OnboardingProgressTest extends TestCase
 
             $this->assertStringContainsString('data-testid="toshi-running-summary"', $html);
             $this->assertStringContainsString($count, $html);
-            $this->assertStringContainsString('Nothing saved yet.', $html);
+            $this->assertStringContainsString('School name', $html);
+            $this->assertStringNotContainsString('Nothing saved yet.', $html);
             $this->assertStringNotContainsString('School name: Kisubi Primary School', $html);
         }
 

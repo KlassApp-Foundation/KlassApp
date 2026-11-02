@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Onboarding\Steps\StepRegistry;
+use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolInviteService;
 use App\Services\Toshi\ToshiOnboardingPath;
@@ -49,9 +50,11 @@ class ToshiPathHiddenForRealSchoolsTest extends TestCase
         $choice->assertDontSee('name="path" value="toshi"', false);
         $choice->assertSee('data-testid="onboarding-choice-wizard"', false);
 
+        $destination = OnboardingEngine::setupDestination($school, $user->id);
+
         $this->actingAs($user)
             ->post(route('onboarding.choice.store'), ['path' => 'toshi'])
-            ->assertRedirect(route('admin.onboarding.wizard'))
+            ->assertRedirect($destination)
             ->assertSessionHas('successmessage', ToshiOnboardingPath::WIZARD_FLASH);
 
         $school->refresh();
@@ -60,16 +63,16 @@ class ToshiPathHiddenForRealSchoolsTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('onboarding.choice', ['path' => 'toshi']))
-            ->assertRedirect(route('admin.onboarding.wizard'))
+            ->assertRedirect($destination)
             ->assertSessionHas('successmessage', ToshiOnboardingPath::WIZARD_FLASH);
 
         $this->actingAs($user)
             ->get('/admin/dashboard?toshi_onboarding=1')
-            ->assertRedirect(route('admin.onboarding.wizard'));
+            ->assertRedirect($destination);
 
         $this->actingAs($user)
             ->get('/welcome')
-            ->assertRedirect(route('admin.onboarding.wizard'))
+            ->assertRedirect($destination)
             ->assertSessionHas('successmessage', ToshiOnboardingPath::WIZARD_FLASH);
 
         $this->assertSame($onboardingV2, config('toshi.onboarding_v2'));
@@ -147,7 +150,7 @@ class ToshiPathHiddenForRealSchoolsTest extends TestCase
 
         $this->actingAs($user)
             ->get('/admin/dashboard')
-            ->assertRedirect(route('admin.onboarding.wizard'))
+            ->assertRedirect(OnboardingEngine::setupDestination($school->fresh(), $user->id))
             ->assertSessionHas('successmessage', ToshiOnboardingPath::WIZARD_FLASH);
 
         $this->actingAs($user)
