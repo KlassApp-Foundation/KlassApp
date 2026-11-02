@@ -42,7 +42,7 @@ class SchoolInviteClaimController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:100', "regex:/^[\pL\s'\-]+$/u"],
-            'phone' => ['required', 'string', 'max:32'],
+            'phone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
         ]);
 
@@ -53,7 +53,7 @@ class SchoolInviteClaimController extends Controller
             ])->withInput();
         }
 
-        if (User::where('mobile_no', $phone)->exists()) {
+        if (User::matchingPhone($data['phone'], $invite->country)->exists()) {
             return back()->withErrors(['phone' => 'This phone number is already registered.'])->withInput();
         }
 

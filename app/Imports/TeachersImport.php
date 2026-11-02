@@ -31,6 +31,8 @@ class TeachersImport implements ToCollection, WithHeadingRow
                                 ->first();
 
             $insertedcount = 0;
+            $country = \App\Models\School::query()->whereKey($school_id)->value('registration_country');
+            $country = is_string($country) ? $country : null;
 
             foreach ($rows as $row) {
 
@@ -109,7 +111,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 $teacher = new \stdClass();
                 $teacher->firstname        = $row['firstname'];
                 $teacher->lastname         = $row['lastname'] ?? null;
-                $teacher->mobile_no        = $row['mobile_no'] ?? null;
+                $teacher->mobile_no        = \App\Support\PhoneCountry::normalise((string) ($row['mobile_no'] ?? ''), $country);
                 $teacher->email            = !empty($row['email'] ?? null) ? strtolower($row['email']) : null;
                 $teacher->gender           = $row['gender'] ?? null;
 
@@ -140,11 +142,15 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 |--------------------------------------------------------------------------
                 */
                 $exists = User::where('school_id', $school_id)
-                    ->where(function ($query) use ($teacher, $employee_id) {
-                        $query->where('mobile_no', $teacher->mobile_no)
-                              ->orWhereHas('teacherprofile', function ($q) use ($employee_id) {
-                                  $q->where('employee_id', $employee_id);
-                              });
+                    ->where(function ($query) use ($teacher, $employee_id, $country, $school_id) {
+                        $query->whereHas('teacherprofile', function ($q) use ($employee_id) {
+                            $q->where('employee_id', $employee_id);
+                        });
+                        if (! empty($teacher->mobile_no)) {
+                            $query->orWhere(function ($phone) use ($teacher, $country, $school_id) {
+                                $phone->matchingPhone((string) $teacher->mobile_no, $country, (int) $school_id);
+                            });
+                        }
                     })
                     ->exists();
 

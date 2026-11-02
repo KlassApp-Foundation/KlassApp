@@ -142,7 +142,7 @@ class ParentCrossSchoolIsolationTest extends TestCase
             '_token'           => csrf_token(),
             'firstname'        => 'Hacked',
             'lastname'         => 'Name',
-            'alternate_no'     => '7123456789',
+            'alternate_no'     => '+256700123456',
             'profession'       => 'business',
             'relation'         => 'father',
             'sub_occupation'   => 'Manager',

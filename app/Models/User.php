@@ -99,7 +99,43 @@ class User extends Authenticatable implements HasMedia
                     "registration_number must match format KLS####### (e.g. KLS0010427), got: {$model->registration_number}"
                 );
             }
+
+            if ($model->isDirty('mobile_no') && is_string($model->mobile_no) && trim($model->mobile_no) !== '') {
+                $country = 'Uganda';
+                if ($model->school_id) {
+                    $stored = \App\Models\School::query()->whereKey($model->school_id)->value('registration_country');
+                    if (is_string($stored) && trim($stored) !== '') {
+                        $country = trim($stored);
+                    }
+                }
+                $e164 = \App\Support\PhoneCountry::normalise($model->mobile_no, $country);
+                if ($e164 !== null) {
+                    $model->mobile_no = $e164;
+                }
+            }
         });
+    }
+
+    /**
+     * Match a phone against its full international number. Older local forms
+     * match only when the user's school is in that same country. $schoolId
+     * limits the lookup to one school when the caller already has one.
+     */
+    public function scopeMatchingPhone($query, ?string $raw, ?string $countryName = 'Uganda', ?int $schoolId = null)
+    {
+        \App\Support\PhoneCountry::applyLookup($query, 'mobile_no', $raw, $countryName, $schoolId);
+
+        return $query;
+    }
+
+    public static function findBySubmittedPhone(?string $raw, ?string $countryName = 'Uganda', ?int $usergroupId = null, ?int $schoolId = null): ?self
+    {
+        $query = static::query()->matchingPhone($raw, $countryName, $schoolId)->orderBy('id');
+        if ($usergroupId !== null) {
+            $query->where('usergroup_id', $usergroupId);
+        }
+
+        return $query->first();
     }
 
     public function school()

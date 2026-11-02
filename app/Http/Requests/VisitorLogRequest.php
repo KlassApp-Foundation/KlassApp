@@ -117,7 +117,7 @@ class VisitorLogRequest extends FormRequest
         else
         { 
             $rules['name']              = 'required|max:20|check_name';
-            $rules['contact_number']    = 'required|numeric|digits:10';
+            $rules['contact_number']    = 'required|string|max:20|international_phone';
             /*$rules['company_name']='required';
             $rules['address']='required';*/
         }

@@ -27,7 +27,7 @@ class TeacherLoginRequest extends FormRequest
      */
     public function rules()
     {
-        $this->user = User::where('mobile_no', request('email'))->where('usergroup_id',5)->first();
+        $this->user = User::findBySubmittedPhone((string) $this->input('email'), 'Uganda', 5);
 
         Validator::extend('check_school', function ($attribute, $value, $parameters, $validator) 
         {

@@ -70,6 +70,22 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() {
+        \Illuminate\Support\Facades\Validator::extend('international_phone', function ($attribute, $value) {
+            if ($value === null || $value === '') {
+                return true;
+            }
+
+            $raw = trim((string) $value);
+            if (strlen($raw) > \App\Support\PhoneCountry::MAX_INPUT_LENGTH) {
+                return false;
+            }
+
+            return \App\Support\PhoneCountry::normalise($raw, \App\Support\PhoneCountry::countryFromAuth()) !== null;
+        });
+        \Illuminate\Support\Facades\Validator::replacer('international_phone', function () {
+            return 'Enter a valid phone number. The school country only fills in the dialling code.';
+        });
+
         // Laravel 13 no longer falls back to route('login') when the auth
         // middleware has no guest redirect. This app uses the classic HTTP
         // kernel, which does not register that default, so keep the same
@@ -154,7 +170,7 @@ class AppServiceProvider extends ServiceProvider {
         {
             $inputs = $validator->getData();
             $email = $inputs['email'];
-            $user = User::where('mobile_no', $email)->where('usergroup_id',7)->first();
+            $user = User::findBySubmittedPhone((string) $email, 'Uganda', 7);
             
             if ($user!=null) 
             {
@@ -171,7 +187,7 @@ class AppServiceProvider extends ServiceProvider {
         {
             $inputs = $validator->getData();
             $email = $inputs['email'];
-            $user = User::where('mobile_no', $email)->where('usergroup_id',5)->first();
+            $user = User::findBySubmittedPhone((string) $email, 'Uganda', 5);
             
             if ($user!=null) 
             {

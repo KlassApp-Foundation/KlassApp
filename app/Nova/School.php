@@ -73,7 +73,7 @@ class School extends Resource
 
             Text::make('Email', 'email')->rules('required', 'email'),
 
-            Text::make('Phone', 'phone')->rules('required', 'numeric', 'digits:10'),
+            Text::make('Phone', 'phone')->rules('required', 'string', 'max:20'),
 
             Text::make('Address', 'address')->hideFromIndex()->rules('required'),
 
