@@ -61,6 +61,20 @@ class CountryDefaultTest extends TestCase
 
     private Country $kenya;
 
+    public function test_google_signup_with_no_country_is_saved_as_uganda(): void
+    {
+        $user = app(SchoolSignupBootstrapService::class)->bootstrap([
+            'name' => 'Google Admin',
+            'email' => 'google-country@example.com',
+            'phone' => null,
+            'google_id' => 'google-synthetic-1',
+            'email_verified' => true,
+        ]);
+
+        $this->assertSame('Uganda', $user->school->registration_country);
+        $this->assertSame($this->uganda->id, (int) $user->school->country_id);
+    }
+
     public function test_signup_defaults_to_uganda_and_another_country_can_be_saved(): void
     {
         Mail::fake();
@@ -282,10 +296,12 @@ class CountryDefaultTest extends TestCase
         $this->assertSame('Uganda', $named->fresh()->registration_country);
 
         $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $decision = file_get_contents(resource_path('assets/js/components/schooldetail/countrySaveError.mjs'));
         $this->assertStringContainsString('errors.confirm_country_change', $vue);
         $this->assertStringContainsString('data-testid="country-change-error"', $vue);
-        $this->assertStringContainsString('status < 400', $vue);
-        $this->assertStringContainsString($message, $vue);
+        $this->assertStringContainsString('countrySaveFailure', $vue);
+        $this->assertStringContainsString('status < 400', $decision);
+        $this->assertStringContainsString($message, $decision);
     }
 
     public function test_country_confirmation_only_when_the_country_changed(): void
@@ -325,8 +341,10 @@ class CountryDefaultTest extends TestCase
         $this->assertSame($this->uganda->id, (int) $school->fresh()->country_id);
 
         $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $decision = file_get_contents(resource_path('assets/js/components/schooldetail/countrySaveError.mjs'));
         $this->assertStringContainsString('countryChangePending && errors.confirm_country_change', $vue);
-        $this->assertStringContainsString('this.errors = { save: [text] }', $vue);
+        $this->assertStringContainsString('errors: { save: [text] }', $decision);
+        $this->assertStringContainsString('keepEnteredValues: true', $decision);
     }
 
     public function test_failed_school_details_save_shows_the_specific_error(): void
@@ -368,9 +386,13 @@ class CountryDefaultTest extends TestCase
         $this->assertSchoolDetailsFailureWasLogged($log);
 
         $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $decision = file_get_contents(resource_path('assets/js/components/schooldetail/countrySaveError.mjs'));
         $this->assertStringContainsString('data-testid="school-details-save-error"', $vue);
         $this->assertStringContainsString('errors.save[0]', $vue);
-        $this->assertStringContainsString('response?.data?.message', $vue);
+        $this->assertStringContainsString('response?.data?.message', $decision);
+        $this->assertSame(0, \Illuminate\Support\Facades\Process::path(base_path())->run([
+            'node', '--test', 'tests/js/countrySaveError.test.mjs',
+        ])->exitCode());
     }
 
     public function test_failed_school_details_save_hides_sql_and_still_logs(): void
