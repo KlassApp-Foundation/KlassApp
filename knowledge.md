@@ -3069,6 +3069,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: combine the country default with international phones (#1251)
+
+- **Work done**: Merged `cursor/school-country-default-c495` (`5264b49b`) into `cursor/t065-international-phone-c495` with a merge commit. The only conflict was `app/Http/Requests/RegisterRequest.php`. Signup still defaults a blank country to Uganda and rejects a country that is not in the `countries` table (name, short code, or id). Phone numbers are normalised with `countryForPhone()` and libphonenumber, stored as E.164. The chosen country only supplies the dialling code; a number that already has another country code is accepted. No production data, deploy, or force-push. [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246) was already an ancestor of its base and was not changed.
+- **Files touched**: `app/Http/Requests/RegisterRequest.php`, `tests/Feature/Auth/RegisterRequestPhoneCountryTest.php`, `knowledge.md`. The merge also brought in the #1246 review fixes already on that branch.
+- **Decision**: Keep both behaviours. Do not restore the Uganda-only phone pattern.
+- **Status**: OPEN [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251) (`cursor/t065-international-phone-c495`), stacked on OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. Production untouched.
+- **Evidence**: `vendor/bin/phpunit` for `RegisterRequestPhoneCountryTest`, `CountryDefaultTest`, `InternationalPhoneLookupTest`, `InternationalPhoneTest`, and `RegisterUserProvisioningTest` — 31 tests, 204 assertions, 0 failures.
+
 ### 2026-10-30: review fixes on the Uganda country default (#1246)
 
 - **Work done**: Merged `91bf33f` (the #1249 country-code fixes) into `cursor/school-country-default-c495`. A failed school-details or wizard save now shows the user-facing error and logs the exception. The country confirmation is shown only when the saved country actually changes. Signup rejects a country that is not in the `countries` table. No production data, deploy, or real school records.
