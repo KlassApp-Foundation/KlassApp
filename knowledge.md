@@ -635,6 +635,11 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 2, 2026 — **Marks Phase 6 drops its copy of the student-ID pattern OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) (`cursor/marks-phase-6-release`) merged `cursor/t060-widen-student-id-c495` ([#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)) so the WhatsApp matcher reads `StudentIdGeneratorService::PATTERN` from that branch. `app/Services/StudentIdGeneratorService.php` on this branch matches #1252. No copied constant. No force-push. Not merged to main. No deploy.
+- Local PHPUnit on the generator, the format guard, import failure rows, and `LongStudentIdMatcherTest`: 45 tests, 380 assertions, 0 failures. PHP 8.4.27.
+
 ## Current Status: October 30, 2026 — **T-060 student IDs and plain import failures OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
 
 - Review fixes on `cursor/t060-widen-student-id-c495`. A KlassApp student ID is `KLS` plus 7 digits (`KLS0010005`) or `KLS` plus 11 digits (`KLS00100010001`). `StudentIdGeneratorService::PATTERN` stays `/^KLS(?:\d{7}|\d{11})$/i`.
@@ -14426,3 +14431,13 @@ The Maintenance checkbox for `teachers_may_release_marks` now shows the effectiv
 **Tests:** local `bash scripts/test-guard.sh` (paratest, 4 processes, PHP 8.4.27): 3250 tests, 0 failures, 0 errors, 9 skipped. `OK: 0 failing test(s), all accounted for`.
 
 **Status:** #1244 still open, not merged, production untouched.
+
+## Session: 2026-11-02 — Student ID generator conflict cleanup on #1244
+
+**Work:** [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) had added its own `StudentIdGeneratorService::PATTERN` so the WhatsApp matcher compiled before [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252). That copy is gone. This branch merged `cursor/t060-widen-student-id-c495` (the #1252 head; there is no branch named `cursor/t060-widen-student-id`). `app/Services/StudentIdGeneratorService.php` is identical to that head. The matcher still calls `StudentIdGeneratorService::PATTERN`. `LongStudentIdMatcherTest` no longer says this branch defines the constant. Merge commit only; no rebase and no force-push. `knowledge.md` kept both the marks-phase notes and the #1252 status note.
+
+**Files touched:** `app/Services/StudentIdGeneratorService.php` (taken from #1252), `tests/Feature/WhatsApp/LongStudentIdMatcherTest.php`, `knowledge.md`, plus the rest of the #1252 merge.
+
+**Tests:** PHPUnit 12.5.40, PHP 8.4.27: `LongStudentIdMatcherTest`, `StudentIdGeneratorServiceTest`, `StudentIdDocExamplesTest`, `KlsIdFormatGuardTest`, `DemoStudentCodeTest`, `StudentCreationAssignsKlsTest`, `StudentImportFailureReportTest`, `RepairOrphanStudentAcademicsTest`, `StudentRegistrationNumberPathsTest`. 45 tests, 380 assertions, 0 failures.
+
+**Status:** #1244 open. Not merged to main. No deploy. No production data.
