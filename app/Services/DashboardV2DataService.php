@@ -174,6 +174,7 @@ class DashboardV2DataService
             'labels' => $labels,
             'incomplete' => $progress['incomplete'],
             'routes' => $routes,
+            'destination' => OnboardingEngine::setupDestination($school, (int) $user->id),
             'summary' => OnboardingProgress::for($school, (int) $user->id)['summary'],
             'dismissed' => UserPreference::get(
                 $user,

@@ -56,7 +56,7 @@ class DashboardController extends Controller
         if ($requestSchool
             && $request->boolean('toshi_onboarding')
             && ! $toshiPaths->openFor($requestSchool)
-            && $requestSchool->onboarding_finished_at === null) {
+            && \App\Services\OnboardingEngine::setupDestination($requestSchool, Auth::id()) !== null) {
             return $toshiPaths->sendToWizard($requestSchool);
         }
 

@@ -43,7 +43,7 @@
         body.sidebar-collapsed .dv2-chip{display:none}
         </style>
         <a class="dv2-chip" data-testid="dashboard-v2-chip"
-           href="{{ url('/admin/onboarding/wizard') }}{{ $dv2ChipProgress['next'] ? '?step='.$dv2ChipProgress['next']['key'] : '' }}"
+           href="{{ \App\Services\OnboardingEngine::setupDestination($dv2ChipSchool, $dv2ChipUser->id) ?? url('/admin/onboarding/wizard') }}"
            aria-label="Finish setup, {{ $dv2ChipProgress['done'] }} of {{ $dv2ChipProgress['total'] }} steps done">
             <span class="dv2-chip-row">
                 <b>Finish setup</b>

@@ -39,6 +39,46 @@ use Illuminate\Validation\ValidationException;
 class OnboardingEngine
 {
     /**
+     * Earliest setup step that is not finished, in playbook order.
+     * Null when every applicable step is finished.
+     *
+     * @return array{key: string, label: string, icon: string, is_complete: bool, route: ?string}|null
+     */
+    public static function earliestUnfinishedStep(School $school, int|string|null $userId = null): ?array
+    {
+        return OnboardingStepsService::nextIncompleteStep($school, self::userId($userId));
+    }
+
+    /**
+     * Wizard URL for the earliest unfinished setup step.
+     *
+     * Null when setup is finished or nothing is left to do. This is the only
+     * setup destination: Edit School Details is a settings page and is never returned.
+     */
+    public static function setupDestination(School $school, int|string|null $userId = null): ?string
+    {
+        if (OnboardingStepsService::isOnboardingFinished($school)) {
+            return null;
+        }
+
+        $step = self::earliestUnfinishedStep($school, $userId);
+        if ($step === null || ($step['key'] ?? '') === '') {
+            return null;
+        }
+
+        return route('admin.onboarding.wizard', ['step' => $step['key']]);
+    }
+
+    private static function userId(int|string|null $userId): ?int
+    {
+        if ($userId === null || $userId === '') {
+            return null;
+        }
+
+        return (int) $userId;
+    }
+
+    /**
      * Persist the real school name, rejecting placeholders and duplicate names.
      *
      * @throws ValidationException

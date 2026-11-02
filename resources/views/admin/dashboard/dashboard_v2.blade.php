@@ -16,7 +16,7 @@
     $v2User = auth()->user();
     $school = $v2User?->school;
     $schoolLabel = $v2['schoolName'] ?? ($school?->name ?? ($greeting['name'] ?? 'KlassApp'));
-    $setup = $v2['setup'] ?? ['total' => 0, 'done' => 0, 'percent' => 100, 'next' => null, 'labels' => [], 'incomplete' => [], 'dismissed' => false, 'routes' => [], 'summary' => []];
+    $setup = $v2['setup'] ?? ['total' => 0, 'done' => 0, 'percent' => 100, 'next' => null, 'labels' => [], 'incomplete' => [], 'dismissed' => false, 'routes' => [], 'summary' => [], 'destination' => null];
     $kpis = $v2['kpis'] ?? [];
     $charts = $v2['charts'] ?? ['per_class' => [], 'attendance_weeks' => [], 'gender' => ['girls' => 0, 'boys' => 0, 'not_specified' => 0, 'total' => 0], 'fees_months' => [], 'exam' => null];
     $activity = $v2['activity'] ?? [];
@@ -33,9 +33,7 @@
     $setupShown = ! $setup['dismissed'] && $setup['total'] > 0 && $setup['done'] < $setup['total'];
     // Mid-setup presentation (concept): any chart without data = quick-action tiles.
     $midSetup = count($charts['per_class'] ?? []) === 0 || count($charts['fees_months'] ?? []) === 0;
-    $nextHref = $setup['next']
-        ? (($setup['routes'][$setup['next']['key']] ?? null) ?: $wizardUrl.'?step='.$setup['next']['key'])
-        : $wizardUrl;
+    $nextHref = $setup['destination'] ?? $wizardUrl;
 
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
@@ -139,7 +137,7 @@
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
                 @foreach($quickActions as $i => $action)
                     @php $missing = $missingFor($action); @endphp
-                    <a class="dv2-qt" href="{{ $missing ? ($setup['routes'][$action['prereqs'][0]] ?? $wizardUrl) : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
+                    <a class="dv2-qt" href="{{ $missing ? (($setup['routes'][$action['prereqs'][0]] ?? null) ?: ($setup['destination'] ?? $wizardUrl)) : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
                         <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
                         <span>
                             <b>{{ $action['title'] }}</b>

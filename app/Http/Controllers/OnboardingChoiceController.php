@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Services\OnboardingEngine;
 use App\Services\Toshi\ToshiOnboardingPath;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,12 @@ class OnboardingChoiceController extends Controller
             'toshi_enabled' => 0,
         ])->save();
 
-        return redirect()->route('admin.onboarding.wizard');
+        $destination = OnboardingEngine::setupDestination($school->fresh(), auth()->id());
+
+        if ($destination === null) {
+            return redirect('/admin/dashboard');
+        }
+
+        return redirect()->to($destination);
     }
 }

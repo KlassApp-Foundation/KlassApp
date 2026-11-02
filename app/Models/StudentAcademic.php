@@ -89,18 +89,19 @@ class StudentAcademic extends Model
     /**
      * Validate klassapp_student_id format on save.
      * The KLS ID is the sole parent-to-child linking identifier for WhatsApp,
-     * so it must match the format /^KLS\d{7}$/i or be null (for students
-     * not yet assigned an ID). This guard prevents accidental corruption
-     * via admin forms, mass-assignment, or direct Eloquent updates.
+     * so it must match StudentIdGeneratorService::PATTERN or be null (for
+     * students not yet assigned an ID). IDs of 7 or 11 digits stay valid.
+     * This guard prevents accidental corruption via admin forms,
+     * mass-assignment, or direct Eloquent updates.
      */
     protected static function booted(): void
     {
         static::saving(function (self $model) {
             if ($model->klassapp_student_id !== null
                 && $model->klassapp_student_id !== ''
-                && !preg_match('/^KLS\d{7}$/i', $model->klassapp_student_id)) {
+                && ! \App\Services\StudentIdGeneratorService::isValid($model->klassapp_student_id)) {
                 throw new \InvalidArgumentException(
-                    "klassapp_student_id must match format KLS####### (e.g. KLS0010427), got: {$model->klassapp_student_id}"
+                    "klassapp_student_id must match format KLS plus 7 or 11 digits (e.g. KLS0010005 or KLS00100010001), got: {$model->klassapp_student_id}"
                 );
             }
         });

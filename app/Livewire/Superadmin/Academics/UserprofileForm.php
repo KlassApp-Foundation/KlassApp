@@ -35,7 +35,7 @@ class UserprofileForm extends Component
 	public $country;
 	#[Rule('required')]
 	public $pincode;
-	#[Rule(['required', 'regex:/^KLS\d{7}$/i'])]
+	#[Rule(['required', 'regex:'.\App\Services\StudentIdGeneratorService::PATTERN])]
 	public $registration_number;
 	#[Rule('required')]
 	public $LIN;

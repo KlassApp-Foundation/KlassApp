@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Helpers\SiteHelper;
+use App\Support\FailureLog;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -29,13 +30,16 @@ class UsersImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows)
     {
+        $insertedcount = 0;
+        $failures = [];
+        $rowNumber = 1;
+
         try {
             $school_id     = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            $insertedcount = 0;
-
             foreach ($rows as $row) {
+                $rowNumber++;
                 $row = collect($row)->filter(fn($value, $key) => is_string($key))->map(fn($v) => is_string($v) ? trim($v) : $v);
                 // $row = collect($row)->filter(function ($value, $key) {
                 //     return is_string($key); // removes numeric keys like 11 => 11
@@ -43,7 +47,11 @@ class UsersImport implements ToCollection, WithHeadingRow
             // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
                 if (empty($row['firstname']) || empty($row['class'])) {
-                    Log::warning('Skipping invalid row', $row->toArray());
+                    Log::warning('Skipping invalid student import row', [
+                        'row' => $rowNumber,
+                        'school_id' => $school_id,
+                    ]);
+                    $failures[] = "Row {$rowNumber}: first name and class are required.";
                     continue;
                 }
 
@@ -188,7 +196,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $avatar = '';
 
-                $student = $this->CreateUser(
+                $studentUser = $this->CreateUser(
                     $student,
                     $school_id,
                     $academic_year->id ?? null,
@@ -196,18 +204,56 @@ class UsersImport implements ToCollection, WithHeadingRow
                     6
                 );
 
+                if ($studentUser === null) {
+                    $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $this->createUserException);
+                    $this->createUserException = null;
+                    $this->createUserFailure = null;
+                    continue;
+                }
+
                 if (!empty($row['parent_mobile_no'])) {
-                    $this->CreateParent($student->id, $parent, $school_id, 7);
+                    $parentPlain = "Row {$rowNumber} could not be imported. The student was saved. Check the parent's details and try again.";
+                    try {
+                        $parentUser = $this->CreateParent($studentUser->id, $parent, $school_id, 7);
+                        if ($parentUser === null) {
+                            $thrown = $this->createParentException;
+                            $this->createParentException = null;
+                            $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $thrown, $parentPlain, 'Student import parent row failed');
+                        }
+                    } catch (\Throwable $e) {
+                        $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $e, $parentPlain, 'Student import parent row failed');
+                    }
                 }
 
                 $insertedcount++;
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('import_row_failures', $failures);
 
-        } catch (Exception $e) {
-            Log::error('Import Error: ' . $e->getMessage());
-            dd($e->getMessage());
+        } catch (\Throwable $e) {
+            $schoolId = (int) (Auth::user()->school_id ?? 0);
+            FailureLog::write('Student import stopped', $e, $schoolId, $rowNumber);
+            $failures[] = "Row {$rowNumber} could not be imported. Check the student's details and try again.";
+            Session::put('insertedcount', $insertedcount ?? 0);
+            Session::put('import_row_failures', $failures);
         }
+    }
+
+    /**
+     * @param  array<int, string>  $failures
+     */
+    private function recordRowFailure(array &$failures, int $rowNumber, int $schoolId, ?\Throwable $e, ?string $plain = null, string $logMessage = 'Student import row failed'): void
+    {
+        if ($e instanceof \Throwable) {
+            FailureLog::write($logMessage, $e, $schoolId, $rowNumber);
+        } else {
+            Log::warning('Student import row was not saved', [
+                'row' => $rowNumber,
+                'school_id' => $schoolId,
+            ]);
+        }
+
+        $failures[] = $plain ?? "Row {$rowNumber} could not be imported. Check the student's details and try again.";
     }
 }
