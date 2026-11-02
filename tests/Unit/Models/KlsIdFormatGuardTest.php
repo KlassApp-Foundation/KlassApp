@@ -7,7 +7,7 @@
  * Tests for the KLS ID format validation guards on both
  * StudentAcademic.klassapp_student_id and User.registration_number.
  *
- * The KLS ID (format /^KLS\d{7}$/i) is the sole parent-to-child
+ * The KLS ID (KLS plus 7 or 11 digits) is the sole parent-to-child
  * linking identifier for WhatsApp, so format integrity is critical.
  */
 
@@ -103,6 +103,19 @@ class KlsIdFormatGuardTest extends TestCase
         ]);
     }
 
+    public function test_student_academic_accepts_kls_id_past_9999_students(): void
+    {
+        $sa = StudentAcademic::create([
+            'school_id' => 1,
+            'academic_year_id' => 1,
+            'user_id' => User::factory()->create(['school_id' => 1, 'usergroup_id' => 6])->id,
+            'standardLink_id' => 1,
+            'klassapp_student_id' => 'KLS00001010000',
+        ]);
+
+        $this->assertSame('KLS00001010000', $sa->fresh()->klassapp_student_id);
+    }
+
     public function test_student_academic_rejects_malformed_kls_id_too_many_digits(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -113,7 +126,7 @@ class KlsIdFormatGuardTest extends TestCase
             'academic_year_id' => 1,
             'user_id' => User::factory()->create(['school_id' => 1, 'usergroup_id' => 6])->id,
             'standardLink_id' => 1,
-            'klassapp_student_id' => 'KLS00104278',
+            'klassapp_student_id' => 'KLS'.str_repeat('1', 17),
         ]);
     }
 
@@ -225,5 +238,33 @@ class KlsIdFormatGuardTest extends TestCase
 
         $this->assertSame('KLS0070001', $id);
         $this->assertSame('KLS0070001', $user->fresh()->registration_number);
+    }
+
+    public function test_existing_seven_digit_id_is_not_rewritten_when_the_sequence_passes_9999(): void
+    {
+        $user = User::factory()->create([
+            'school_id' => 1,
+            'usergroup_id' => 6,
+            'registration_number' => 'KLS0010001',
+        ]);
+
+        DB::table('student_id_sequences')->insert([
+            'school_id' => 1,
+            'next_seq' => 10000,
+        ]);
+
+        $next = \App\Services\StudentIdGeneratorService::next(1);
+        $kept = \App\Services\StudentIdGeneratorService::ensureForStudent($user->fresh());
+
+        $this->assertSame('KLS00001010000', $next);
+        $this->assertSame('KLS0010001', $kept);
+        $this->assertSame('KLS0010001', $user->fresh()->registration_number);
+
+        $wide = User::factory()->create([
+            'school_id' => 1,
+            'usergroup_id' => 6,
+            'registration_number' => $next,
+        ]);
+        $this->assertSame('KLS00001010000', $wide->fresh()->registration_number);
     }
 }

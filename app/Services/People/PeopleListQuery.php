@@ -177,7 +177,7 @@ class PeopleListQuery
             'placeholder' => 'Search name or email',
             'add_label' => 'Add teacher',
             'add_url' => url('/admin/teacher/add'),
-            'import_url' => url('/admin/import'),
+            'import_url' => url('/admin/import/teacher'),
             'empty_copy' => 'Add your teaching staff, then send each one an invite to join.',
             'columns' => ['Teaches', 'Class teacher of', 'Invite', 'Status'],
             'bulk' => [

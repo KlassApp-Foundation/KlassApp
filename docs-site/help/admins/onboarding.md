@@ -56,7 +56,7 @@ On **Teachers** and **Students** you can choose **Upload file**, **Paste names (
 
 When setup is done the screen says your school **is ready**. Choose <Btn>Go to dashboard</Btn>.
 
-A line on some steps says **Prefer the full admin form?** and **Open** that step. That link is the same data, on the full admin page.
+On the dashboard, <Btn>Continue setup</Btn> is the way back into the wizard. Edit School Details stays a settings page.
 
 ## After setup
 In the menu, open <UiPath to="Settings" />. You can edit:

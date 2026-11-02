@@ -543,31 +543,14 @@ class OnboardingStepsService
     }
 
     /**
-     * Where a school admin can complete each step by hand (manual path).
-     *
-     * Every route here is a real, registered admin route (verified against
-     * `php artisan route:list`). School identity / curriculum / country / EMIS /
-     * UNEB centre are all editable on the School Details page, so those steps
-     * point there. Content steps point at their dedicated add/create pages.
+     * Identity steps are answered in the Wizard. Edit School Details stays a
+     * settings page and is never a setup destination, so these steps have no
+     * settings URL. Continue setup uses OnboardingEngine::setupDestination().
      */
     private static function stepRoute(string $step, School $school): ?string
     {
-        // The identity steps all live on one form. Point the wizard's escape hatch straight at
-        // that form for the caller's own school instead of the read-only index card, which
-        // cost an extra hop. Falls back to the index when there is no authenticated school.
-        $ownSchoolId = auth()->user()?->school_id;
-        $ownSchoolEdit = $ownSchoolId
-            ? '/admin/schooldetails/editdetail/'.$ownSchoolId
-            : '/admin/schooldetails';
-
         return match ($step) {
-            'school_name' => $ownSchoolEdit,
-            'student_size' => $ownSchoolEdit,
-            'curriculum' => $ownSchoolEdit,
-            'country' => $ownSchoolEdit,
-            'school_category' => $ownSchoolEdit,
-            'emis' => $ownSchoolEdit,
-            'uneb_center' => $ownSchoolEdit,
+            'school_name', 'student_size', 'curriculum', 'country', 'school_category', 'emis', 'uneb_center' => null,
             'academic_year' => '/admin/academics',
             'standards'  => '/admin/standard/create',
             'subjects'   => '/admin/subjects',

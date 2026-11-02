@@ -5,6 +5,7 @@ namespace Tests\Feature\Invites;
 use App\Models\Country;
 use App\Models\EarlyAccessRequest;
 use App\Models\User;
+use App\Services\OnboardingEngine;
 use App\Services\SchoolInviteService;
 use App\Support\PhoneCountry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,6 +71,16 @@ class SchoolInvitePhoneFormatTest extends TestCase
         ]);
     }
 
+    private function assertClaimLandsOnSetup(\Illuminate\Testing\TestResponse $response, string $email): void
+    {
+        $user = User::where('email', $email)->firstOrFail();
+        $destination = OnboardingEngine::setupDestination($user->school, $user->id);
+
+        $this->assertNotNull($destination);
+        $response->assertRedirect($destination);
+        $this->assertStringNotContainsString('schooldetails', $destination);
+    }
+
     public function test_invite_page_shows_the_country_example_before_typing(): void
     {
         $admin = $this->platformAdmin();
@@ -86,8 +97,10 @@ class SchoolInvitePhoneFormatTest extends TestCase
 
     public function test_invite_claim_accepts_ugandan_local_0765274289(): void
     {
-        $this->claim('local076@school.test', 'Uganda', '0765274289')
-            ->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->claim('local076@school.test', 'Uganda', '0765274289'),
+            'local076@school.test',
+        );
 
         $user = User::where('email', 'local076@school.test')->firstOrFail();
         $this->assertSame('+256765274289', $user->mobile_no);
@@ -113,8 +126,10 @@ class SchoolInvitePhoneFormatTest extends TestCase
     {
         $email = 'fmt-'.md5($phone).'@school.test';
 
-        $this->claim($email, 'Uganda', $phone)
-            ->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->claim($email, 'Uganda', $phone),
+            $email,
+        );
 
         $this->assertSame('+256765274289', User::where('email', $email)->value('mobile_no'));
     }
@@ -156,8 +171,10 @@ class SchoolInvitePhoneFormatTest extends TestCase
 
         $this->assertSame('254', PhoneCountry::spec('Kenya')['code']);
 
-        $this->claim('kenya@school.test', 'Kenya', '0712 345 678')
-            ->assertRedirect(route('onboarding.choice'));
+        $this->assertClaimLandsOnSetup(
+            $this->claim('kenya@school.test', 'Kenya', '0712 345 678'),
+            'kenya@school.test',
+        );
 
         $this->assertSame('+254712345678', User::where('email', 'kenya@school.test')->value('mobile_no'));
     }
