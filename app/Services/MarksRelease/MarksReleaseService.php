@@ -658,11 +658,12 @@ final class MarksReleaseService
             return false;
         }
 
-        // The release transaction has committed. PHPUnit wraps each test in
-        // an outer transaction that is rolled back, so afterCommit waits and
-        // then is discarded. The webhook belongs to this release, which has
-        // already committed: record it now. recordDemoWebhook runs once.
-        if ($webhookStudents !== null && DB::transactionLevel() > 0) {
+        // PHPUnit wraps each test in a transaction that never commits, so
+        // afterCommit would be discarded and the test would not see the
+        // webhook. A real outer transaction must wait for that outermost
+        // commit: posting here would send a webhook for a release that can
+        // still roll back. recordDemoWebhook runs once.
+        if ($webhookStudents !== null && app()->runningUnitTests() && DB::transactionLevel() > 0) {
             $this->recordDemoWebhook($release, $webhookStudents);
         }
 

@@ -52,7 +52,7 @@ class ReleaseSnapshotTest extends TestCase
     private function school(): array
     {
         $school = School::create([
-            'name' => 'Snapshot School', 'email' => 'snapshot-' . uniqid() . '@t.sch.ug',
+            'name' => 'Snapshot School', 'email' => 'snapshot-' . uniqid() . '@example.test',
             'phone' => '07' . random_int(10000000, 99999999), 'slug' => 'snapshot-' . uniqid(),
             'status' => 1, 'registration_country' => 'Uganda',
         ]);
@@ -68,8 +68,8 @@ class ReleaseSnapshotTest extends TestCase
             'school_id' => $school->id, 'name' => 'Primary', 'order' => 1, 'status' => 1, 'grading_style' => 'aggregate',
         ]);
         $section = Section::create(['school_id' => $school->id, 'name' => 'P.4', 'status' => 1]);
-        $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $school->id, 'email' => 't.' . uniqid() . '@t.sch.ug']);
-        $admin = User::factory()->create(['usergroup_id' => 3, 'school_id' => $school->id, 'email' => 'a.' . uniqid() . '@t.sch.ug']);
+        $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $school->id, 'email' => 't.' . uniqid() . '@example.test']);
+        $admin = User::factory()->create(['usergroup_id' => 3, 'school_id' => $school->id, 'email' => 'a.' . uniqid() . '@example.test']);
         $link = StandardLink::create([
             'school_id' => $school->id, 'academic_year_id' => $year->id, 'standard_id' => $standard->id,
             'section_id' => $section->id, 'class_teacher_id' => $teacher->id, 'stream' => null, 'status' => 1,
@@ -88,7 +88,7 @@ class ReleaseSnapshotTest extends TestCase
         foreach (['First Learner' => 90, 'Second Learner' => 70] as $name => $mark) {
             $student = User::factory()->create([
                 'usergroup_id' => 6, 'school_id' => $school->id, 'name' => $name,
-                'email' => 's.' . uniqid() . '@t.sch.ug', 'status' => 'active',
+                'email' => 's.' . uniqid() . '@example.test', 'status' => 'active',
             ]);
             StudentAcademic::create([
                 'school_id' => $school->id, 'academic_year_id' => $year->id,
@@ -381,6 +381,46 @@ class ReleaseSnapshotTest extends TestCase
         foreach (['student_id', 'school_id', 'academic_year_id', 'academic_term_id'] as $column) {
             $this->assertSame('RESTRICT', $this->snapshotOnDelete($column), $column);
         }
+    }
+
+    public function test_the_demo_webhook_waits_for_the_outermost_commit(): void
+    {
+        $ctx = $this->school();
+        $ctx['school']->forceFill(['is_demo' => 1])->save();
+        config([
+            'klassapp.demo.release_webhook_url' => 'https://hooks.example.com/n8n/release',
+            'klassapp.demo.release_webhook_secret' => 'test-only-webhook-secret',
+            'services.whatsapp.replies_enabled' => true,
+        ]);
+        Http::fake([
+            'hooks.example.com/*' => Http::response(['ok' => true], 200),
+        ]);
+
+        $previous = $this->app['env'];
+        $this->app['env'] = 'production';
+        try {
+            DB::beginTransaction();
+            try {
+                $release = $this->release($ctx);
+                $this->assertSame('released', $release->status);
+                $this->assertSame([], $this->recordedWebhookCalls());
+            } finally {
+                DB::rollBack();
+            }
+
+            $this->assertSame([], $this->recordedWebhookCalls());
+        } finally {
+            $this->app['env'] = $previous;
+        }
+    }
+
+    /** @return array<int, mixed> */
+    private function recordedWebhookCalls(): array
+    {
+        return collect(Http::recorded())
+            ->filter(fn ($pair) => str_contains($pair[0]->url(), 'hooks.example.com'))
+            ->values()
+            ->all();
     }
 
     public function test_demo_webhook_is_not_called_when_the_release_transaction_rolls_back(): void

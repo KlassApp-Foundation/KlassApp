@@ -54,7 +54,7 @@ class LevelPipelineAuditTest extends TestCase
     {
         $school = School::create([
             'name' => $prefix . ' School',
-            'email' => $prefix . '-' . uniqid() . '@t.sch.ug',
+            'email' => $prefix . '-' . uniqid() . '@example.test',
             'phone' => '07' . random_int(10000000, 99999999),
             'slug' => $prefix . '-' . uniqid(),
             'status' => 1,
@@ -74,8 +74,8 @@ class LevelPipelineAuditTest extends TestCase
             'grading_style' => $gradingStyle ?: null,
         ]);
         $section = Section::create(['school_id' => $school->id, 'name' => $className, 'status' => 1]);
-        $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $school->id, 'email' => 't.' . uniqid() . '@t.sch.ug']);
-        $admin = User::factory()->create(['usergroup_id' => 3, 'school_id' => $school->id, 'email' => 'a.' . uniqid() . '@t.sch.ug']);
+        $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $school->id, 'email' => 't.' . uniqid() . '@example.test']);
+        $admin = User::factory()->create(['usergroup_id' => 3, 'school_id' => $school->id, 'email' => 'a.' . uniqid() . '@example.test']);
         $link = StandardLink::create([
             'school_id' => $school->id, 'academic_year_id' => $year->id, 'standard_id' => $standard->id,
             'section_id' => $section->id, 'class_teacher_id' => $teacher->id, 'stream' => null, 'status' => 1,
@@ -94,7 +94,7 @@ class LevelPipelineAuditTest extends TestCase
 
         $student = User::factory()->create([
             'usergroup_id' => 6, 'school_id' => $school->id, 'name' => $prefix . ' Learner',
-            'email' => 's.' . uniqid() . '@t.sch.ug', 'status' => 'active',
+            'email' => 's.' . uniqid() . '@example.test', 'status' => 'active',
         ]);
         StudentAcademic::create([
             'school_id' => $school->id, 'academic_year_id' => $year->id,
@@ -174,65 +174,50 @@ class LevelPipelineAuditTest extends TestCase
                 'remarks' => null,
             ]);
         }
-        $card = $this->card($ctx, 'formal');
-
-        $html = $card['html'];
-        fwrite(STDERR, "\n[nursery] isNursery=" . var_export($card['data']['isNursery'], true)
-            . ' showAgg=' . var_export($card['data']['showAgg'], true)
-            . ' division=' . var_export($card['data']['eotDivision'], true)
-            . ' pos=' . var_export($card['data']['myPos'], true)
-            . ' total=' . var_export($card['data']['total'], true)
-            . ' assessments=' . count($card['data']['nurseryAssessments'])
-            . " htmlBytes=" . strlen($html) . "\n");
-
-        $text = preg_replace('/\s+/', ' ', strip_tags($html));
-        $this->assertTrue($card['data']['isNursery']);
-        $this->assertStringContainsString('Literacy', $text);
-        $this->assertStringContainsString('Excellent', $text);
-        $this->assertStringNotContainsString('DIVISION:', $text);
-        $this->assertStringNotContainsString('POSITION', $text);
+        foreach (['formal', 'warm'] as $template) {
+            $card = $this->card($ctx, $template);
+            $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
+            $this->assertTrue($card['data']['isNursery'], $template);
+            $this->assertStringContainsString('Literacy', $text, $template);
+            $this->assertStringContainsString('Excellent', $text, $template);
+            $this->assertStringNotContainsString('DIVISION:', $text, $template);
+            $this->assertStringNotContainsString('POSITION', $text, $template);
+        }
     }
 
     public function test_primary_report_card(): void
     {
         $ctx = $this->level('Primary', 'aggregate', 'P.4', 'Primary');
         $this->sitAndApprove($ctx);
-        $card = $this->card($ctx, 'formal');
-
-        fwrite(STDERR, "\n[primary] total=" . $card['data']['total']
-            . ' division=' . var_export($card['data']['eotDivision'], true)
-            . ' agg=' . var_export($card['data']['eotAgg'], true) . "\n");
-
-        $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
-        $this->assertStringContainsString('DIVISION: 1', $text);
-        $this->assertSame(240.0, $card['data']['total']);
-        $this->assertSame(9, $card['data']['eotAgg']);
+        foreach (['formal', 'warm'] as $template) {
+            $card = $this->card($ctx, $template);
+            $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
+            $this->assertStringContainsString('DIVISION: 1', $text, $template);
+            $this->assertSame(240.0, $card['data']['total'], $template);
+            $this->assertSame(9, $card['data']['eotAgg'], $template);
+        }
     }
 
     public function test_o_level_report_card(): void
     {
         $ctx = $this->level('O-Level', 'aggregate', 'S.2', 'OLevel');
         $this->sitAndApprove($ctx);
-        $card = $this->card($ctx, 'formal');
-
-        fwrite(STDERR, "\n[o-level] grades=" . json_encode($card['data']['grade'])
-            . ' division=' . var_export($card['data']['eotDivision'], true) . "\n");
-
-        $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
-        $this->assertStringNotContainsString('DIVISION:', $text);
+        foreach (['formal', 'warm'] as $template) {
+            $card = $this->card($ctx, $template);
+            $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
+            $this->assertStringNotContainsString('DIVISION:', $text, $template);
+        }
     }
 
     public function test_a_level_report_card(): void
     {
         $ctx = $this->level('A-Level', 'aggregate', 'S.5', 'ALevel');
         $this->sitAndApprove($ctx);
-        $card = $this->card($ctx, 'formal');
-
-        fwrite(STDERR, "\n[a-level] agg=" . var_export($card['data']['eotAgg'], true)
-            . ' division=' . var_export($card['data']['eotDivision'], true)
-            . ' hasPointsText=' . var_export(str_contains(strtoupper($card['html']), 'POINT'), true) . "\n");
-
-        $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
-        $this->assertStringNotContainsString('DIVISION:', $text);
+        foreach (['formal', 'warm'] as $template) {
+            $card = $this->card($ctx, $template);
+            $text = preg_replace('/\s+/', ' ', strip_tags($card['html']));
+            $this->assertStringContainsString('POINTS:', $text, $template);
+            $this->assertStringNotContainsString('DIVISION:', $text, $template);
+        }
     }
 }
