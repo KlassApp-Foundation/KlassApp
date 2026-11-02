@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 2, 2026 — **Level reports wait for the outermost commit OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- A demo release webhook registered with `DB::afterCommit` is not posted while a real outer transaction is still open. PHPUnit's own transaction still records it so the existing webhook tests can see it. A-level cards on both templates show `POINTS:` and not `DIVISION:`. Not merged. No deploy.
+
 ## Current Status: November 2, 2026 — **Level reports follow the Phase 6 generator OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
 
 - [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255) (`cursor/marks-level-reports`) merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. `app/Services/StudentIdGeneratorService.php` matches both that head and [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252). This branch does not change the file. No force-push. Not merged to main. No deploy.
