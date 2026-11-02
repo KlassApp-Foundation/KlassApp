@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 3, 2026 — **Demo-only stays the outer release gate OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- `WHATSAPP_DEMO_ONLY_RECIPIENTS` is checked after the per-release switch and the template. While it is on, a real school sends nothing. A demo school is unchanged. The class head stays `sections.class_teacher_id`. #1252 must merge before this PR. Not merged. No deploy.
+
 ## Current Status: November 2, 2026 — **Phase 6 class head and results template OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
 
 - A class head is `sections.class_teacher_id` and can release every stream of that class. A stream teacher releases only the stream that names them. `teachers_may_release_marks` stays on when the school has never set it. A real-school release sends the approved `results_released` template and does not consult `WHATSAPP_DEMO_ONLY_RECIPIENTS`. Not merged. No deploy.
