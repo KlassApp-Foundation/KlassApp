@@ -25,6 +25,7 @@ use App\Services\Results\ResultCell;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Services\DemoOnlyRecipientGuard;
 use App\Services\DemoSchoolCommsGuard;
 use App\Services\WhatsApp\TemplateGate;
 use App\Services\WhatsAppBusinessService;
@@ -112,15 +113,20 @@ final class MarksReleaseService
                 return collect();
             }
 
-            // A class head releases the whole class, every stream. The head is
-            // recorded on one standards_link row, so take the sections they hold
-            // and return every one of that section's links for this year.
-            $sections = (clone $query)->where('class_teacher_id', $user->id)->pluck('section_id')->unique();
-            if ($sections->isEmpty()) {
-                return collect();
-            }
+            // A stream teacher releases only the stream that names them.
+            // A class head (sections.class_teacher_id) releases every stream
+            // of that class. Teaching one stream does not make someone the head.
+            $headedSections = Section::query()
+                ->where('school_id', $user->school_id)
+                ->where('class_teacher_id', $user->id)
+                ->pluck('id');
 
-            return $query->whereIn('section_id', $sections)->orderBy('section_id')->orderBy('stream')->get();
+            return $query->where(function ($rows) use ($user, $headedSections) {
+                $rows->where('class_teacher_id', $user->id);
+                if ($headedSections->isNotEmpty()) {
+                    $rows->orWhereIn('section_id', $headedSections);
+                }
+            })->orderBy('section_id')->orderBy('stream')->get();
         }
 
         return collect();
@@ -703,16 +709,10 @@ final class MarksReleaseService
             return;
         }
         if ((int) ($release->school?->is_demo ?? 0) !== 1) {
-            // The release's own gates first: with the switch off or the template
-            // unapproved, nothing could be sent even if the demo guard were lifted.
+            // The same gates as the queue pass, re-read now: the switch can be
+            // turned off, or the template un-approved, between queueing and sending.
             if (($blocked = $this->realSendBlocker($release)) !== null) {
                 $skip($blocked);
-
-                return;
-            }
-            // The demo-only guard is the outer fallback for a real number.
-            if ((bool) config('services.whatsapp.demo_only_recipients')) {
-                $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 return;
             }
@@ -744,7 +744,7 @@ final class MarksReleaseService
         }
 
         try {
-            $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
+            $send = fn () => DemoSchoolCommsGuard::duringBoundDemoRelease(
                 (string) $binding->phone,
                 fn () => (int) ($release->school?->is_demo ?? 0) === 1
                     ? $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null)
@@ -756,6 +756,9 @@ final class MarksReleaseService
                         'marks_release',
                     ),
             );
+            $response = (int) ($release->school?->is_demo ?? 0) === 1
+                ? $send()
+                : DemoOnlyRecipientGuard::duringApprovedResultsRelease((string) $binding->phone, $send);
         } catch (\Throwable $e) {
             $response = ['success' => false, 'error' => $e->getMessage()];
         }
@@ -856,7 +859,6 @@ final class MarksReleaseService
         $messages = [];
         $repliesOn = (bool) config('services.whatsapp.replies_enabled');
         $isDemo = (int) ($school?->is_demo ?? 0) === 1;
-        $demoOnly = (bool) config('services.whatsapp.demo_only_recipients');
         $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
         $released = [];
         $jobs = [];
