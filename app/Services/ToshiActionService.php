@@ -488,16 +488,23 @@ class ToshiActionService
                 return self::result(false, 'No academic year configured for this school.');
             }
 
-            $standardLink = StandardLink::query()
+            $needle = self::classNameKey($className);
+            $sectionIds = Section::query()
                 ->where('school_id', $schoolId)
-                ->where('academic_year_id', $academicYear->id)
-                ->where(function ($query) {
-                    $query->where('status', 1)->orWhere('status', '1');
-                })
-                ->whereHas('section', function ($query) use ($schoolId, $className) {
-                    $query->where('school_id', $schoolId)->where('name', $className);
-                })
-                ->first();
+                ->get()
+                ->filter(fn (Section $section) => self::classNameKey((string) $section->name) === $needle)
+                ->pluck('id');
+
+            $standardLink = $needle === '' || $sectionIds->isEmpty()
+                ? null
+                : StandardLink::query()
+                    ->where('school_id', $schoolId)
+                    ->where('academic_year_id', $academicYear->id)
+                    ->whereIn('section_id', $sectionIds)
+                    ->where(function ($query) {
+                        $query->where('status', 1)->orWhere('status', '1');
+                    })
+                    ->first();
 
             if (! $standardLink) {
                 return self::result(false, "No class named **{$className}** in this school.");
@@ -532,6 +539,17 @@ class ToshiActionService
             'class' => $className,
             'standardLink_id' => $standardLink?->id,
         ]);
+    }
+
+    /**
+     * Compare class names without case, spaces, or dots. "p7", "P7", "P 7"
+     * and "P.7" are the same name. This is not a partial match.
+     */
+    public static function classNameKey(string $name): string
+    {
+        $stripped = preg_replace('/[\s.]+/u', '', mb_strtolower(trim($name)));
+
+        return $stripped ?? '';
     }
 
     // ── Co-Admin ──

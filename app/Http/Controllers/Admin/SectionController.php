@@ -40,8 +40,9 @@ class SectionController extends Controller
  public function create(ClassTeacherAssignmentService $assignments){
         $school_id = (int) Auth::user()->school_id;
         $classes = $assignments->namesForSchool($school_id);
+        $typedClassName = ! $assignments->offersUgandaLevels($school_id);
 
-        return view("admin.school.sections.create", compact("classes"));
+        return view("admin.school.sections.create", compact("classes", "typedClassName"));
      }
 
      public function save(Request $request){

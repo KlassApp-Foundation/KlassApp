@@ -11,6 +11,7 @@ use App\Models\StandardLink;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Onboarding\Country\SchoolTypePreset;
+use App\Services\OnboardingStepsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,9 +31,8 @@ use Illuminate\Validation\ValidationException;
 class ClassTeacherAssignmentService
 {
     /**
-     * Levels a school can add even when it has not created that class yet.
-     * P.1–P.7 and S.1–S.6 are the Uganda short names. Existing names and the
-     * school's type preset are merged in as well.
+     * Levels offered to a school in Uganda before it has created that class.
+     * A school in any other country types its own names instead.
      *
      * @var list<string>
      */
@@ -180,10 +180,21 @@ class ClassTeacherAssignmentService
     }
 
     /**
+     * Uganda schools are offered the canonical levels. Every other country
+     * types its own level names.
+     */
+    public function offersUgandaLevels(int $schoolId): bool
+    {
+        $country = School::query()->whereKey($schoolId)->value('registration_country');
+
+        return OnboardingStepsService::isUganda(is_string($country) ? $country : null);
+    }
+
+    /**
      * Class names this school may add, in level order (P.1, P.2, … P.10),
-     * not alphabetical order. The list is the canonical levels, the school's
-     * type preset, and any name it already uses. It is not limited to names
-     * that already exist.
+     * not alphabetical order. A Uganda school sees the canonical levels, its
+     * type preset, and any name it already uses. Another country sees only
+     * the names it already uses.
      *
      * @return list<string>
      */
@@ -197,31 +208,37 @@ class ClassTeacherAssignmentService
             ->filter(fn ($name) => $name !== '')
             ->all();
 
+        $canonical = [];
         $preset = [];
         $school = School::query()->whereKey($schoolId)->first();
-        if ($school instanceof School) {
+        if ($school instanceof School && OnboardingStepsService::isUganda($school->registration_country)) {
+            $canonical = self::CANONICAL_CLASS_NAMES;
             $preset = SchoolTypePreset::forSchool($school)?->classNames() ?? [];
         }
 
         return $this->sortByLevel($this->uniqueNames(array_merge(
-            self::CANONICAL_CLASS_NAMES,
+            $canonical,
             $preset,
             $existing,
         )));
     }
 
     /**
-     * Save a class when the name is one namesForSchool() offers this school.
+     * Save a class. A Uganda school must pick a name namesForSchool() offers.
+     * Any other country saves the name the school typed.
      */
     public function storeNamedClass(User $actor, int $standardId, string $name): Classes
     {
         $schoolId = (int) $actor->school_id;
         $name = trim($name);
         $allowed = $this->namesForSchool($schoolId);
+        $uganda = $this->offersUgandaLevels($schoolId);
 
-        if ($name === '' || ! in_array($name, $allowed, true)) {
+        if ($name === '' || ($uganda && ! in_array($name, $allowed, true))) {
             throw ValidationException::withMessages([
-                'name' => 'Choose a class name from the list for this school.',
+                'name' => $uganda
+                    ? 'Choose a class name from the list for this school.'
+                    : 'Enter a class name.',
             ]);
         }
 
@@ -243,7 +260,7 @@ class ClassTeacherAssignmentService
             'standard_id' => $standard->id,
             'school_id' => $schoolId,
             'status' => '1',
-            'position' => $position === false ? 1 : $position + 1,
+            'position' => $position === false ? count($allowed) + 1 : $position + 1,
         ]);
     }
 
@@ -385,7 +402,7 @@ class ClassTeacherAssignmentService
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
-        if (User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
+        if ($this->emailIsTakenForSchool($schoolId, $email)) {
             return $this->result(false, "A user with email **{$email}** already exists.");
         }
 
@@ -516,7 +533,7 @@ class ClassTeacherAssignmentService
             return $this->result(false, 'Too many class teacher changes. Wait an hour and try again.');
         }
 
-        if (User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
+        if ($this->emailIsTakenForSchool((int) $actor->school_id, $email)) {
             return $this->result(false, "A user with email **{$email}** already exists.");
         }
 
@@ -713,9 +730,13 @@ class ClassTeacherAssignmentService
         return $teacherId === null || $teacherId === '' || (int) $teacherId === 0;
     }
 
+    /**
+     * The school lookup runs even when nobody is signed in. A missing actor
+     * cannot skip it and still accept the teacher id.
+     */
     private function teacherInSchool(?User $actor, int $schoolId, int $teacherId): ?User
     {
-        if (! $actor instanceof User || (int) $actor->school_id !== $schoolId || $teacherId <= 0) {
+        if ($schoolId <= 0 || $teacherId <= 0) {
             return null;
         }
 
@@ -725,7 +746,29 @@ class ClassTeacherAssignmentService
             ->where('usergroup_id', 5)
             ->first();
 
-        return $teacher instanceof User ? $teacher : null;
+        if (! $teacher instanceof User) {
+            return null;
+        }
+
+        if (! $actor instanceof User || (int) $actor->school_id !== $schoolId) {
+            return null;
+        }
+
+        return $teacher;
+    }
+
+    /**
+     * True when this school already has the email, or the email is on a user
+     * with no school. An email that belongs only to another school is not a match.
+     */
+    private function emailIsTakenForSchool(int $schoolId, string $email): bool
+    {
+        return User::query()
+            ->whereRaw('lower(email) = ?', [$email])
+            ->where(function ($query) use ($schoolId): void {
+                $query->where('school_id', $schoolId)->orWhereNull('school_id');
+            })
+            ->exists();
     }
 
     /**

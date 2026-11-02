@@ -635,6 +635,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 3, 2026 — **Marks Phase 1 owner decisions OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
+
+- Uganda schools are offered the Uganda class levels. A school in another country types its own level name. Toshi matches a class name with case, spaces, and dots ignored (`p7`, `P7`, `P 7`, `P.7`), and does not use a partial match. An invite for an email that belongs to another school gets the same response as an unknown email. A signed-out class-teacher change still looks up the teacher in the target school and does not save a teacher from another school.
+- **Tests:** PHP 8.4.27, sqlite memory. Class-teacher and marks files together: 75 tests, 457 assertions, 0 failures. Full test-guard was not run.
+- **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
+
 ## Current Status: November 2, 2026 — **Marks Phase 1 review follow-up OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
 
 - Accepting an invite is capped at 10 per hour for that link and 200 per hour for the school. A token that matches no invite is limited per IP. Issuing an invite uses the signed-in admin's school, and a `school_id` in the request body is ignored. Clearing or changing the class teacher on the stream form revokes a pending invite and writes one `class_teacher` log. The pending-invites list hides revoked invites. A missing stream redirects straight to `/admin/classes` with the error still visible. Toshi's add-teacher stores no password. Claiming an invite with no class creates the teacher and assigns no class.
@@ -3088,6 +3094,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-11-03: Owner decisions on Marks Phase 1 (#1239)
+
+- **Work done**: Uganda class levels are offered only when the school's country is Uganda. Other countries type a level name. Toshi matches class names by ignoring case, spaces, and dots, scoped to the admin's school. `inviteNew` and the no-class invite no longer treat an email at another school as "already exists". A signed-out class-teacher change still queries the target school before it refuses.
+- **Files touched**: `app/Services/ClassTeacherAssignmentService.php`, `app/Services/ToshiActionService.php`, `app/Http/Controllers/Admin/ClassesController.php`, `app/Http/Controllers/Admin/SectionController.php`, `resources/views/admin/classes/create.blade.php`, `resources/views/admin/school/sections/create_form.blade.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `knowledge.md`.
+- **Decision**: Boris, 3 Nov. Leave the phone-number nit, the migration rollback note, and the unsigned commit as they are.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, `php vendor/bin/phpunit` on `tests/Feature/Marks` plus the class-teacher invite files: 75 tests, 457 assertions, 0 failures. Full test-guard was not run.
 
 ### 2026-11-02: Second review pass on Marks Phase 1 (#1239)
 

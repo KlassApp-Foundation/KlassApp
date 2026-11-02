@@ -54,6 +54,7 @@ class ClassTeacherPhase1Test extends TestCase
             'slug' => 'phase-one-school',
             'email' => 'school@phase-one.test',
             'status' => 'active',
+            'registration_country' => 'Uganda',
         ]);
 
         $this->admin = User::factory()->create([
@@ -590,6 +591,52 @@ class ClassTeacherPhase1Test extends TestCase
         $this->assertNull($this->link->fresh()->class_teacher_id);
     }
 
+    public function test_signed_out_class_teacher_change_still_rejects_another_schools_teacher(): void
+    {
+        $foreignSchool = School::create([
+            'name' => 'Signed Out Foreign School',
+            'slug' => 'signed-out-foreign-school',
+            'email' => 'signed-out-foreign@phase-one.test',
+            'status' => 'active',
+            'registration_country' => 'Kenya',
+        ]);
+        $foreignTeacher = User::factory()->create([
+            'school_id' => $foreignSchool->id,
+            'usergroup_id' => 5,
+            'email' => 'foreign-signed-out@phase-one.test',
+            'status' => 'active',
+        ]);
+        $year = AcademicYear::query()->where('school_id', $this->school->id)->firstOrFail();
+        $standard = Standard::query()->where('school_id', $this->school->id)->firstOrFail();
+        $controller = app(\App\Http\Controllers\Admin\SectionController::class);
+
+        Auth::logout();
+        $request = Request::create('/', 'POST', [
+            'class_teacher_id' => $foreignTeacher->id,
+            'standard_id' => $standard->id,
+            'section_id' => $this->section->id,
+            'standard_name' => '1',
+            'no_of_students' => 10,
+            'count' => 0,
+        ]);
+
+        try {
+            $controller->createStandardLink($this->school->id, $year->id, $request);
+            $this->fail('A signed-out change must not assign a teacher from another school.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('class_teacher_id', $e->errors());
+        }
+
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertNull($this->section->fresh()->class_teacher_id);
+        $this->assertDatabaseMissing('standards_link', [
+            'class_teacher_id' => $foreignTeacher->id,
+        ]);
+        $this->assertDatabaseMissing('sections', [
+            'class_teacher_id' => $foreignTeacher->id,
+        ]);
+    }
+
     public function test_store_accepts_a_new_level_and_sorts_by_level_not_alphabetically(): void
     {
         foreach (['P.2', 'P.6', 'P.10'] as $name) {
@@ -620,6 +667,134 @@ class ClassTeacherPhase1Test extends TestCase
             'name' => 'P.7',
             'position' => array_search('P.7', $names, true) + 1,
         ]);
+    }
+
+    public function test_uganda_schools_get_uganda_levels_and_other_countries_type_their_own(): void
+    {
+        $ugandaNames = app(ClassTeacherAssignmentService::class)->namesForSchool((int) $this->school->id);
+        $this->assertContains('P.1', $ugandaNames);
+        $this->assertContains('P.7', $ugandaNames);
+        $this->assertContains('S.1', $ugandaNames);
+
+        $this->actingAs($this->admin)
+            ->get('/admin/classes/create')
+            ->assertOk()
+            ->assertSee('value="P.1"', false)
+            ->assertSee('value="P.7"', false)
+            ->assertDontSee('Type this school');
+
+        $standard = Standard::query()->where('school_id', $this->school->id)->firstOrFail();
+        $this->actingAs($this->admin)
+            ->from(route('admin.classes.add'))
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $standard->id,
+                'name' => 'Year 3',
+            ])
+            ->assertRedirect(route('admin.classes.add'))
+            ->assertSessionHasErrors('name');
+        $this->assertDatabaseMissing('classes', [
+            'school_id' => $this->school->id,
+            'name' => 'Year 3',
+        ]);
+
+        $kenya = School::create([
+            'name' => 'Kenya Level School',
+            'slug' => 'kenya-level-school',
+            'email' => 'kenya-level@phase-one.test',
+            'status' => 'active',
+            'registration_country' => 'Kenya',
+        ]);
+        $kenyaAdmin = User::factory()->create([
+            'school_id' => $kenya->id,
+            'usergroup_id' => 3,
+            'name' => 'Kenya Admin',
+            'email' => 'kenya-admin@phase-one.test',
+            'status' => 'active',
+        ]);
+        AcademicYear::create([
+            'school_id' => $kenya->id,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+        $kenyaStandard = Standard::create([
+            'school_id' => $kenya->id,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+
+        $kenyaNames = app(ClassTeacherAssignmentService::class)->namesForSchool((int) $kenya->id);
+        $this->assertNotContains('P.1', $kenyaNames);
+        $this->assertNotContains('P.7', $kenyaNames);
+        $this->assertNotContains('S.1', $kenyaNames);
+        $this->assertNotContains('Baby Class', $kenyaNames);
+
+        $this->actingAs($kenyaAdmin)
+            ->get('/admin/classes/create')
+            ->assertOk()
+            ->assertSee('Type this school')
+            ->assertDontSee('value="P.1"', false)
+            ->assertDontSee('value="P.7"', false);
+
+        $this->actingAs($kenyaAdmin)
+            ->post(route('admin.classes.store'), [
+                'standard_id' => $kenyaStandard->id,
+                'name' => 'Year 3',
+            ])
+            ->assertRedirect(route('admin.classes.add'));
+
+        $this->assertDatabaseHas('classes', [
+            'school_id' => $kenya->id,
+            'standard_id' => $kenyaStandard->id,
+            'name' => 'Year 3',
+        ]);
+        $this->assertDatabaseMissing('classes', [
+            'school_id' => $this->school->id,
+            'name' => 'Year 3',
+        ]);
+    }
+
+    public function test_an_email_at_another_school_gets_the_same_invite_response_as_an_unknown_email(): void
+    {
+        $other = $this->otherSchool();
+        User::factory()->create([
+            'school_id' => $other['school']->id,
+            'usergroup_id' => 5,
+            'name' => 'Hidden Other Teacher',
+            'email' => 'known-elsewhere@phase-one.test',
+            'status' => 'active',
+        ]);
+        $this->teacher('here@phase-one.test');
+
+        $takenHere = $this->inviteNew('here@phase-one.test', 'Nora New');
+        $this->assertFalse($takenHere['success']);
+        $this->assertStringContainsString('already exists', $takenHere['message']);
+
+        $unknown = $this->inviteNew('unknown-person@phase-one.test', 'Nora New');
+        $elsewhere = $this->inviteNew('known-elsewhere@phase-one.test', 'Nora New');
+
+        $this->assertTrue($unknown['success'], $unknown['message'] ?? '');
+        $this->assertSame($unknown['success'], $elsewhere['success']);
+        $this->assertSame(array_keys($unknown), array_keys($elsewhere));
+        $this->assertSame(
+            str_replace('unknown-person@phase-one.test', 'EMAIL', $unknown['message']),
+            str_replace('known-elsewhere@phase-one.test', 'EMAIL', $elsewhere['message']),
+        );
+
+        $encoded = (string) json_encode($elsewhere);
+        $this->assertStringNotContainsString('Hidden Other Teacher', $encoded);
+        $this->assertStringNotContainsString('Second Phase School', $encoded);
+        $this->assertStringNotContainsString('already exists', strtolower($elsewhere['message']));
+        $this->assertStringNotContainsString((string) $other['school']->id, $encoded);
+
+        $invite = TeacherInvite::query()->where('email', 'known-elsewhere@phase-one.test')->first();
+        $this->assertNotNull($invite);
+        $this->assertSame((int) $this->school->id, (int) $invite->school_id);
+        $this->assertNull($invite->user_id);
+        $this->assertNotNull(TeacherInvite::query()->where('email', 'unknown-person@phase-one.test')->first());
     }
 
     public function test_saving_the_stream_form_with_the_same_class_teacher_keeps_the_pending_invite(): void

@@ -190,4 +190,105 @@ class AddTeacherInviteEmailTest extends TestCase
         $this->assertStringContainsString('already exists', $result['message']);
         Mail::assertNothingQueued();
     }
+
+    public function test_add_teacher_matches_class_name_variants_and_not_another_school(): void
+    {
+        $yearId = AcademicYear::query()->where('school_id', $this->schoolId)->value('id');
+        $standardId = Standard::query()->where('school_id', $this->schoolId)->value('id');
+        $section = Section::create([
+            'school_id' => $this->schoolId,
+            'name' => 'P.7',
+            'status' => 1,
+        ]);
+        $link = StandardLink::create([
+            'school_id' => $this->schoolId,
+            'academic_year_id' => $yearId,
+            'standard_id' => $standardId,
+            'section_id' => $section->id,
+            'status' => 1,
+        ]);
+
+        $otherId = DB::table('schools')->insertGetId([
+            'name' => 'Other Class School',
+            'slug' => 'other-class-school',
+            'email' => 'other-class@example.test',
+            'phone' => '+254700000099',
+            'status' => 1,
+            'registration_country' => 'Kenya',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $otherYear = AcademicYear::create([
+            'school_id' => $otherId,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'start_date' => '2026-01-01 00:00:00',
+            'end_date' => '2026-12-31 23:59:59',
+            'status' => 1,
+        ]);
+        $otherStandard = Standard::create([
+            'school_id' => $otherId,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+        $otherSection = Section::create([
+            'school_id' => $otherId,
+            'name' => 'S.4',
+            'status' => 1,
+        ]);
+        $otherLink = StandardLink::create([
+            'school_id' => $otherId,
+            'academic_year_id' => $otherYear->id,
+            'standard_id' => $otherStandard->id,
+            'section_id' => $otherSection->id,
+            'status' => 1,
+        ]);
+
+        foreach (['p7', 'P7', 'P 7', 'P.7'] as $index => $typed) {
+            $email = "variant-{$index}@example.test";
+            $result = ToshiActionService::addTeacher($this->admin, [
+                'name' => 'Variant Teacher',
+                'email' => $email,
+                'class' => $typed,
+            ]);
+
+            $this->assertTrue($result['success'], $typed.': '.($result['message'] ?? ''));
+            $this->assertSame($link->id, (int) $result['standardLink_id']);
+            $invite = TeacherInvite::query()->where('email', $email)->first();
+            $this->assertNotNull($invite);
+            $this->assertSame($this->schoolId, (int) $invite->school_id);
+            $this->assertSame($link->id, (int) $invite->standard_link_id);
+            $this->assertNotSame($otherLink->id, (int) $invite->standard_link_id);
+        }
+
+        $missing = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Missing Teacher',
+            'email' => 'missing-class@example.test',
+            'class' => 'Grade 9',
+        ]);
+        $this->assertFalse($missing['success']);
+        $this->assertStringContainsString('Grade 9', $missing['message']);
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'missing-class@example.test']);
+
+        $partial = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Partial Teacher',
+            'email' => 'partial-class@example.test',
+            'class' => '7',
+        ]);
+        $this->assertFalse($partial['success']);
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'partial-class@example.test']);
+
+        $cross = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Cross Teacher',
+            'email' => 'cross-class@example.test',
+            'class' => 'S 4',
+        ]);
+        $this->assertFalse($cross['success']);
+        $encoded = (string) json_encode($cross);
+        $this->assertStringNotContainsString('Other Class School', $encoded);
+        $this->assertStringNotContainsString((string) $otherLink->id, $encoded);
+        $this->assertSame(0, TeacherInvite::query()->where('standard_link_id', $otherLink->id)->count());
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'cross-class@example.test']);
+    }
 }

@@ -19,8 +19,11 @@
             <x-form-group label="Standard" name="standard_id" type="select" :options="$standards->pluck('name', 'id')->prepend('Select standard', '')->toArray()" :error="$errors->first('standard_id') ?? null" required />
 
             {{-- Class --}}
+            @if(!empty($typedClassName))
+                <x-form-group label="Class" name="name" type="text" placeholder="Type this school's class name" :value="old('name')" :error="$errors->first('name') ?? null" required class="typed-class-name" />
+            @else
             <x-form-group label="Class" name="name" type="select" :error="$errors->first('name') ?? null" required>
-                <select name="name" id="name"
+                <select name="name" id="name" data-testid="uganda-class-levels"
                     class="ds-form-input ds-form-select {{ $errors->has('name') ? 'ds-form-input-error' : '' }}"
                     required>
                     <option value="">Select class</option>
@@ -50,6 +53,7 @@
                     @endif
                 </select>
             </x-form-group>
+            @endif
 
             {{-- Submit --}}
             <div class="flex justify-end mt-6">
