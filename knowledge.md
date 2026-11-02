@@ -3069,6 +3069,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: country codes can be rolled back, and the two country fields must agree (#1249)
+
+- **Work done**: The country-code migration's `down()` writes the known seed codes back inside one transaction. A soft-deleted row and a name that matches two live rows are skipped and logged, not corrected. `persistCountry` stores `countries.name` when a short code matches one live row. A superadmin save that sends a `country_id` and a different country name is rejected and leaves the school unchanged. No production data and no deploy.
+- **Files touched**: `database/migrations/2026_10_27_120000_correct_country_codes_by_name.php`, `app/Services/OnboardingStepsService.php`, `app/Services/Superadmin/SchoolService.php`, `tests/Feature/Admin/CountryCodeCorrectionTest.php`, `knowledge.md`.
+- **Decision**: A contradictory country id and country name is an error. The save does not pick one of them.
+- **Status**: OPEN [#1249](https://github.com/KlassApp-Foundation/KlassApp/pull/1249). Not merged. Production untouched.
+- **Evidence**: `vendor/bin/phpunit tests/Feature/Admin/CountryCodeCorrectionTest.php tests/Feature/Toshi/NoSchoolGetsAiByDefaultTest.php` — 18 tests, 148 assertions, 0 failures.
+
 ### 2026-10-30: review fixes on the Uganda country default (#1246)
 
 - **Work done**: Merged `91bf33f` (the #1249 country-code fixes) into `cursor/school-country-default-c495`. A failed school-details or wizard save now shows the user-facing error and logs the exception. The country confirmation is shown only when the saved country actually changes. Signup rejects a country that is not in the `countries` table. No production data, deploy, or real school records.

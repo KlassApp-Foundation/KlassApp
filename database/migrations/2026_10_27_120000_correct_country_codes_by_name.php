@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * The original country seed stored another country's short name and ISO code
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\Log;
  * DDL statement commits the current transaction implicitly, so any schema
  * change has to stay outside this transaction.
  *
- * down() is empty. The original codes are not recoverable and the correction
- * is not reversible.
+ * down() puts the known seed codes back. A name that was not corrected,
+ * or that matches more than one live row, is left as it is.
  */
 return new class extends Migration
 {
@@ -47,11 +48,15 @@ return new class extends Migration
     }
 
     /**
-     * Empty on purpose. The original codes are not recoverable and the
-     * correction is not reversible.
+     * Puts the known seed codes back, in one transaction. A row is restored
+     * only when it still holds the corrected code, so a skipped row is left
+     * alone. A failure rolls the whole rollback back.
      */
     public function down(): void
     {
+        DB::transaction(function (): void {
+            $this->restore();
+        });
     }
 
     /**
@@ -64,8 +69,8 @@ return new class extends Migration
         $skipped = [];
 
         foreach ($codes as $name => $spec) {
-            $row = DB::table('countries')->whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
-            if ($row === null) {
+            $rows = $this->liveRowsNamed($name);
+            if ($rows->count() === 0) {
                 $skipped[] = [
                     'id' => null,
                     'reason' => 'no countries row matched this name',
@@ -74,7 +79,17 @@ return new class extends Migration
 
                 continue;
             }
+            if ($rows->count() > 1) {
+                $skipped[] = [
+                    'id' => null,
+                    'reason' => 'more than one countries row matched this name',
+                    'name' => $name,
+                ];
 
+                continue;
+            }
+
+            $row = $rows->first();
             $targets[$name] = [
                 'id' => (int) $row->id,
                 'short_name' => $row->short_name,
@@ -120,6 +135,100 @@ return new class extends Migration
         return [
             'corrected' => $corrected,
             'skipped' => $skipped,
+        ];
+    }
+
+    /**
+     * Live rows only. A soft-deleted namesake is not the row a school points at.
+     *
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function liveRowsNamed(string $name): \Illuminate\Support\Collection
+    {
+        $query = DB::table('countries')->whereRaw('LOWER(name) = ?', [strtolower($name)]);
+        if (Schema::hasColumn('countries', 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
+        return $query->orderBy('id')->get();
+    }
+
+    private function restore(): void
+    {
+        $corrected = self::codes();
+        $previous = self::previousCodes();
+        $targets = [];
+
+        foreach ($previous as $name => $spec) {
+            $rows = $this->liveRowsNamed($name);
+            if ($rows->count() !== 1) {
+                continue;
+            }
+
+            $row = $rows->first();
+            $now = [(string) $row->short_name, (string) $row->iso_code, (string) $row->tel_prefix];
+            if ($now !== $corrected[$name]) {
+                continue;
+            }
+
+            $targets[] = [
+                'id' => (int) $row->id,
+                'short_name' => $row->short_name,
+                'iso_code' => $row->iso_code,
+                'tel_prefix' => $row->tel_prefix,
+                'restore' => $spec,
+            ];
+        }
+
+        foreach ($targets as $target) {
+            DB::table('countries')->where('id', $target['id'])->update([
+                'short_name' => 'T'.$target['id'],
+            ]);
+        }
+
+        foreach ($targets as $target) {
+            [$short, $iso, $tel] = $target['restore'];
+            $blocker = DB::table('countries')
+                ->where('short_name', $short)
+                ->where('id', '!=', $target['id'])
+                ->first();
+            if ($blocker !== null) {
+                DB::table('countries')->where('id', $target['id'])->update([
+                    'short_name' => $target['short_name'],
+                    'iso_code' => $target['iso_code'],
+                    'tel_prefix' => $target['tel_prefix'],
+                ]);
+
+                continue;
+            }
+
+            DB::table('countries')->where('id', $target['id'])->update([
+                'short_name' => $short,
+                'iso_code' => $iso,
+                'tel_prefix' => $tel,
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * The seed values this migration replaces. down() writes these back.
+     *
+     * @return array<string, array{0: string, 1: string, 2: string}>
+     */
+    public static function previousCodes(): array
+    {
+        return [
+            'Uganda' => ['AF', 'AFG', '256'],
+            'Kenya' => ['AL', 'ALB', '355'],
+            'Tanzania' => ['AR', 'ARG', '54'],
+            'Rwanda' => ['AU', 'AUS', '61'],
+            'Burundi' => ['CH', 'CHN', '86'],
+            'South Sudan' => ['IN', 'IND', '91'],
+            'DRC' => ['MA', 'MYS', '60'],
+            'Nigeria' => ['SW', 'CHE', '41'],
+            'Egypt' => ['EG', 'EGY', '20'],
+            'Other' => ['OT', 'OT', '20'],
         ];
     }
 
