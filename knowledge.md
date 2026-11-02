@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 2, 2026 — **Level reports follow the Phase 6 generator OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255) (`cursor/marks-level-reports`) merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. `app/Services/StudentIdGeneratorService.php` matches both that head and [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252). This branch does not change the file. No force-push. Not merged to main. No deploy.
+
 ## Current Status: November 2, 2026 — **Marks Phase 6 drops its copy of the student-ID pattern OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
 
 - [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) (`cursor/marks-phase-6-release`) merged `cursor/t060-widen-student-id-c495` ([#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)) so the WhatsApp matcher reads `StudentIdGeneratorService::PATTERN` from that branch. `app/Services/StudentIdGeneratorService.php` on this branch matches #1252. No copied constant. No force-push. Not merged to main. No deploy.
@@ -3122,6 +3126,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decisions**: Whole-school release after a class-only release still does not ask for a reason. `supersedes_id`, `release_id` and `released_by` still have no foreign keys. Demo exams from the seeders all have a year and a term; no seeder change.
 - **Status**: On the open PR. Not merged. Not deployed.
 - **Edge cases**: `demo:purge-schools` and `test:purge-schools` do not list `record_snapshots`, so a hard delete of a school, year or term that has a snapshot is refused and the snapshot stays.
+
+### 2026-11-02: #1255 takes the Phase 6 student-ID generator
+
+- **Work done**: Merged the new `cursor/marks-phase-6-release` head into `cursor/marks-level-reports`. That head already contains `cursor/t060-widen-student-id-c495` ([#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)). `app/Services/StudentIdGeneratorService.php` is unchanged relative to #1244 and matches #1252. No rebase and no force-push.
+- **Files touched**: the #1244 merge, including `knowledge.md`. No edit of `StudentIdGeneratorService.php` on this branch.
+- **Status**: [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255) open. Not merged to main. No deploy.
 
 ### 2026-10-26: Marks Phase 4 one combined sheet per sitting
 
