@@ -99,6 +99,36 @@ class DetailRequest extends FormRequest
         return $rules;
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $schoolId = (int) (Auth::user()->school_id ?? 0);
+            $school = $schoolId > 0 ? School::query()->find($schoolId) : null;
+            if ($school === null) {
+                return;
+            }
+
+            $newId = (int) $this->input('country_id');
+            $savedId = $school->country_id !== null ? (int) $school->country_id : null;
+            $changing = false;
+
+            if ($savedId !== null && $savedId !== $newId) {
+                $changing = true;
+            } elseif ($savedId === null && filled($school->registration_country)) {
+                $selected = Country::query()->find($newId);
+                $changing = $selected !== null
+                    && strcasecmp((string) $selected->name, (string) $school->registration_country) !== 0;
+            }
+
+            if ($changing && ! $this->boolean('confirm_country_change')) {
+                $validator->errors()->add(
+                    'confirm_country_change',
+                    'Confirm the country change. It affects phone formats and curriculum defaults.',
+                );
+            }
+        });
+    }
+
     /**
      * @return array<string, string>
      */
@@ -122,6 +152,7 @@ class DetailRequest extends FormRequest
 
             'country_id.required' => 'Country Is Required',
             'country_id.exists' => 'Select A Valid Country',
+            'confirm_country_change.accepted' => 'Confirm the country change. It affects phone formats and curriculum defaults.',
 
             'website.check_website' => 'Enter Valid Website',
 

@@ -12,6 +12,7 @@ use App\Models\Country;
 use App\Models\School;
 use App\Models\SchoolDetail;
 use App\Services\OnboardingStepsService;
+use App\Support\UserFacingException;
 use App\Traits\Common;
 use App\Traits\LogActivity;
 use Exception;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class SchoolDetailsController extends Controller
 {
@@ -152,8 +154,7 @@ class SchoolDetailsController extends Controller
 
             return redirect()->back()->with('successmessage', $message);
         } catch (Exception $e) {
-            Log::info($e->getMessage());
-            dd($e->getMessage());
+            return $this->failedSchoolDetailsSave($request, $e);
         }
     }
 
@@ -194,6 +195,9 @@ class SchoolDetailsController extends Controller
         $array['details']['name'] = $school->name;
         $array['details']['address'] = $school->address;
         $array['details']['country_id'] = $school->country_id;
+        $array['details']['default_country_id'] = Country::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower(OnboardingStepsService::DEFAULT_COUNTRY)])
+            ->value('id');
         $array['details']['city_id'] = $school->city_id;
         $array['details']['registration_country'] = $school->registration_country;
         $array['details']['ministry_code'] = $school->ministry_code;
@@ -332,16 +336,37 @@ class SchoolDetailsController extends Controller
             }
 
             return redirect()->back()->with('successmessage', $message);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Exception $e) {
-            Log::info($e->getMessage());
-
-            if ($request->expectsJson() || $request->ajax()) {
-                Log::error('Request failed', ['message' => $e->getMessage()]);
-
-                return response()->json(['message' => 'Something went wrong. Please try again.'], 500);
-            }
-
-            return redirect()->back()->with('errormessage', $e->getMessage());
+            return $this->failedSchoolDetailsSave($request, $e);
         }
+    }
+
+    /**
+     * The page reads the error bag (partials.message) and the Vue form reads
+     * errors.save. errormessage is not rendered, and a generic JSON body hid
+     * the failure behind the country-confirmation sentence.
+     */
+    private function failedSchoolDetailsSave(Request $request, Exception $e): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    {
+        Log::error('School details save failed', [
+            'school_id' => Auth::user()->school_id ?? null,
+            'exception' => $e,
+        ]);
+
+        $message = UserFacingException::message(
+            $e,
+            'Could not save the school details. Please try again.',
+        );
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'message' => $message,
+                'errors' => ['save' => [$message]],
+            ], 500);
+        }
+
+        return redirect()->back()->withErrors(['save' => $message])->withInput();
     }
 }

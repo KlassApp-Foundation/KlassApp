@@ -3,10 +3,19 @@
 namespace Tests\Feature\Auth;
 
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\CreatesSignupCountriesTable;
 use Tests\TestCase;
 
 class GoogleStartValidationTest extends TestCase
 {
+    use CreatesSignupCountriesTable;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSignupCountriesTable();
+    }
+
     #[Test]
     public function google_start_accepts_empty_registration_fields_and_redirects_to_google(): void
     {

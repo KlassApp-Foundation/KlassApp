@@ -238,8 +238,7 @@
             <div class="form-group">
                 <label class="form-label" for="country">Country</label>
                 <select name="country" id="country" class="form-select" required>
-                    <option value="" disabled {{ old('country') ? '' : 'selected' }}>Select your country</option>
-                    <option value="Uganda" {{ old('country') == 'Uganda' ? 'selected' : '' }}>Uganda</option>
+                    <option value="Uganda" {{ old('country', 'Uganda') == 'Uganda' ? 'selected' : '' }}>Uganda</option>
                     <option value="Kenya" {{ old('country') == 'Kenya' ? 'selected' : '' }}>Kenya</option>
                     <option value="Tanzania" {{ old('country') == 'Tanzania' ? 'selected' : '' }}>Tanzania</option>
                     <option value="Rwanda" {{ old('country') == 'Rwanda' ? 'selected' : '' }}>Rwanda</option>
