@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 2, 2026 — **T-060 review follow-up OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
+
+- The generator docblock no longer says the WhatsApp matcher accepts only 7 digits. Seeding an 11-digit ID (`KLS00001010001`) sets the next sequence to 10002. A parent-row failure keeps the student and shows a plain sentence. Not merged. No deploy.
+
 ## Current Status: October 30, 2026 — **T-060 student IDs and plain import failures OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
 
 - Review fixes on `cursor/t060-widen-student-id-c495`. A KlassApp student ID is `KLS` plus 7 digits (`KLS0010005`) or `KLS` plus 11 digits (`KLS00100010001`). `StudentIdGeneratorService::PATTERN` stays `/^KLS(?:\d{7}|\d{11})$/i`.
