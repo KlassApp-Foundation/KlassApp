@@ -13,12 +13,13 @@ use Tests\TestCase;
 
 /**
  * The WhatsApp ID matcher uses StudentIdGeneratorService::PATTERN from #1252
- * (branch cursor/t060-widen-student-id-c495): KLS plus exactly 7 digits, or
- * KLS plus exactly 11 digits. Other lengths are not a KlassApp student ID.
+ * (branch cursor/t060-widen-student-id-c495), which is merged into this branch.
+ * That constant is KLS plus exactly 7 digits, or KLS plus exactly 11 digits.
+ * Other lengths are not a KlassApp student ID.
  *
- * The constant is defined on this branch so the matcher compiles before #1252
- * merges. The pupils come from the shared follow-along fixtures; an 11-digit
- * ID is written with a query, because the model guard still pins seven digits.
+ * The pupils come from the shared follow-along fixtures. An 11-digit ID is
+ * written with a query so the test sets that exact value without drawing
+ * the next sequence.
  */
 class LongStudentIdMatcherTest extends TestCase
 {
