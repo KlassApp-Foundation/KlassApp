@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 3, 2026 — **Release reasons follow the sitting OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- A whole-school release asks for a reason when any class of that sitting was already released. A stream released for the first time does not, even when another stream of the same class was. A past-year whole-school release snapshots the students who sat that sitting. A failed release that saved and sent nothing can be run again with no reason. Merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. Not merged to main. No deploy.
+
 ## Current Status: November 3, 2026 — **Demo-only stays the outer release gate OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
 
 - `WHATSAPP_DEMO_ONLY_RECIPIENTS` is checked after the per-release switch and the template. While it is on, a real school sends nothing. A demo school is unchanged. The class head stays `sections.class_teacher_id`. #1252 must merge before this PR. Not merged. No deploy.
@@ -3134,6 +3138,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-11-03: Owner decisions on release reasons and past-year snapshots (#1255)
+
+- **Work done**: Merged `cursor/marks-phase-6-release` (`cc186c85`) into `cursor/marks-level-reports`. A whole-school release after any class of that sitting requires a reason. A stream or class released for the first time does not, even when another stream of the same class was already released. A past-year whole-school release snapshots the students who sat that sitting, using that year's classes. A failed release that saved and sent nothing can be run again without a reason. The skip-reason order from `bb98cd51` is already pinned by `MarksPhase6WhatsAppGateTest::test_the_switch_and_the_template_are_reported_before_the_demo_only_guard`.
+- **Files touched**: `MarksReleaseController.php`, `MarksReleaseService.php`, `SnapshotService.php`, `MarksRelease.php`, `ReleaseSnapshotTest.php`, `docs/product/marks-flow.md`, `knowledge.md`. `app/Services/StudentIdGeneratorService.php` was not edited.
+- **Decisions**: Owner, 3 November 2026. The class head stays `sections.class_teacher_id`. `WHATSAPP_DEMO_ONLY_RECIPIENTS` stays the outer gate after the switch and the template. #1252 must merge before #1244.
+- **Status**: On the open PR. Not merged to main. No deploy. No production data.
+- **Edge cases**: The scheduler still runs only scheduled rows. Running the failed row again is an explicit `run()`. An empty target list still does not ask for a reason.
 
 ### 2026-10-30: Review fixes on #1255 (level reports and snapshots)
 

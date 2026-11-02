@@ -216,6 +216,207 @@ class ReleaseSnapshotTest extends TestCase
         $this->assertSame(0, DB::table('jobs')->count(), 'nothing is queued for a failed release');
     }
 
+    public function test_a_whole_school_release_needs_a_reason_after_any_class_of_that_sitting(): void
+    {
+        $ctx = $this->school();
+        $admin = $ctx['admin'];
+        $examId = (int) $ctx['firstExam']->id;
+        $base = '/admin/marks/releases/new?exam_id='.$examId;
+
+        $this->actingAs($admin)->post('/admin/marks/releases', $this->payload($ctx, [
+            'class' => 'P.4',
+            'stream' => '',
+        ]))->assertSessionHasNoErrors();
+
+        $this->actingAs($admin)->get($base)
+            ->assertOk()
+            ->assertSee('data-testid="release-reason"', false);
+
+        $this->actingAs($admin)->post('/admin/marks/releases', $this->payload($ctx))
+            ->assertSessionHasErrors('release_reason');
+
+        $this->assertSame(1, MarksRelease::query()->where('school_id', $ctx['school']->id)->where('status', MarksRelease::STATUS_RELEASED)->count());
+    }
+
+    public function test_a_first_stream_needs_no_reason_when_another_stream_of_the_class_was_released(): void
+    {
+        $ctx = $this->school();
+        $east = $this->addStream($ctx, 'East');
+        $admin = $ctx['admin'];
+        $examId = (int) $ctx['firstExam']->id;
+        $base = '/admin/marks/releases/new?exam_id='.$examId;
+
+        $this->actingAs($admin)->post('/admin/marks/releases', $this->payload($ctx, [
+            'standard_link_id' => (int) $ctx['link']->id,
+        ]))->assertSessionHasNoErrors();
+
+        $this->actingAs($admin)->get($base.'&standard_link_id='.$east['link']->id)
+            ->assertOk()
+            ->assertDontSee('data-testid="release-reason"', false);
+        $this->actingAs($admin)->get($base.'&standard_link_id='.$ctx['link']->id)
+            ->assertOk()
+            ->assertSee('data-testid="release-reason"', false);
+
+        $this->actingAs($admin)->post('/admin/marks/releases', $this->payload($ctx, [
+            'standard_link_id' => (int) $east['link']->id,
+        ]))->assertSessionHasNoErrors();
+
+        $eastRelease = MarksRelease::query()
+            ->where('school_id', $ctx['school']->id)
+            ->where('standard_link_id', $east['link']->id)
+            ->sole();
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $eastRelease->status);
+        $this->assertSame('', (string) $eastRelease->release_reason);
+        $this->assertNotNull(RecordSnapshot::query()->where('student_id', $east['student']->id)->first());
+    }
+
+    public function test_a_past_year_whole_school_release_snapshots_who_sat_not_this_years_class(): void
+    {
+        $ctx = $this->school();
+        $pastYear = AcademicYear::create([
+            'school_id' => $ctx['school']->id,
+            'name' => '2025',
+            'description' => 'Previous Academic Year',
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-12-31',
+            'status' => 0,
+        ]);
+        $pastTerm = AcademicTerm::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $pastYear->id,
+            'name' => 'Term I',
+            'status' => 'last',
+            'starts_on' => '2025-02-01',
+            'ends_on' => '2025-04-30',
+        ]);
+        $section = Section::create(['school_id' => $ctx['school']->id, 'name' => 'P.3', 'status' => 1]);
+        $link = StandardLink::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $pastYear->id,
+            'standard_id' => $ctx['standard']->id,
+            'section_id' => $section->id,
+            'class_teacher_id' => $ctx['teacher']->id,
+            'stream' => null,
+            'status' => 1,
+        ]);
+        $subject = Subject::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $pastYear->id,
+            'standard_id' => $ctx['standard']->id,
+            'section_id' => $section->id,
+            'name' => 'History',
+            'code' => 'HIS',
+            'type' => 'core',
+            'status' => 1,
+            'report_order' => 1,
+        ]);
+        $sitter = User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $ctx['school']->id,
+            'name' => 'Past Sitter',
+            'email' => 'past.'.uniqid().'@example.test',
+            'status' => 'active',
+        ]);
+        StudentAcademic::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $pastYear->id,
+            'user_id' => $sitter->id,
+            'standardLink_id' => $link->id,
+        ]);
+        $exam = Exam::withoutEvents(fn () => Exam::create([
+            'school_id' => $ctx['school']->id,
+            'standard_id' => $ctx['standard']->id,
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'exam_type_id' => 2,
+            'academic_term_id' => $pastTerm->id,
+            'academic_year_id' => $pastYear->id,
+            'scheduled_at' => '2025-04-10 09:00:00',
+            'status' => 'done',
+        ]));
+        Marks::create([
+            'student_id' => $sitter->id,
+            'exam_id' => $exam->id,
+            'school_id' => $ctx['school']->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'section_id' => $section->id,
+            'marks' => 64,
+            'grade' => 'stored',
+        ]);
+        ExamMarksSubmission::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $exam->id,
+            'class_id' => $section->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'status' => 'locked',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+        ]);
+
+        $this->assertSame(0, StandardLink::query()
+            ->where('school_id', $ctx['school']->id)
+            ->where('section_id', $section->id)
+            ->where('academic_year_id', $ctx['year']->id)
+            ->count());
+
+        $service = app(MarksReleaseService::class);
+        $release = $service->create($ctx['admin'], (int) $exam->id, null, null, 'Africa/Kampala', true, false, null);
+        $this->assertTrue($service->run((int) $release->id));
+
+        $snapshots = RecordSnapshot::query()->where('school_id', $ctx['school']->id)->get();
+        $this->assertCount(1, $snapshots);
+        $this->assertSame((int) $sitter->id, (int) $snapshots[0]->student_id);
+        $this->assertSame((int) $pastYear->id, (int) $snapshots[0]->academic_year_id);
+        $this->assertSame('P.3', trim((string) $snapshots[0]->payload['class']));
+        foreach ($ctx['students'] as $current) {
+            $this->assertNull(
+                RecordSnapshot::query()->where('student_id', $current['user']->id)->first(),
+                'this year\'s class list is not the past sitting',
+            );
+        }
+    }
+
+    public function test_a_failed_release_that_saved_and_sent_nothing_can_run_again_without_a_reason(): void
+    {
+        $ctx = $this->school();
+        $real = $this->app->make(SnapshotService::class);
+        $attempts = 0;
+        $this->mock(SnapshotService::class, function ($mock) use ($real, &$attempts): void {
+            $mock->shouldReceive('capture')->twice()->andReturnUsing(
+                function (MarksRelease $release, ?string $reason = null) use ($real, &$attempts) {
+                    $attempts++;
+                    if ($attempts === 1) {
+                        throw new \RuntimeException('snapshot store unavailable');
+                    }
+
+                    return $real->capture($release, $reason);
+                }
+            );
+        });
+
+        $service = app(MarksReleaseService::class);
+        $release = $service->create($ctx['admin'], (int) $ctx['firstExam']->id, null, null, 'Africa/Kampala', false, false, null);
+        $this->assertNull($release->release_reason);
+
+        $this->assertFalse($service->run((int) $release->id));
+        $failed = $release->fresh();
+        $this->assertSame(MarksRelease::STATUS_FAILED, $failed->status);
+        $this->assertNull($failed->release_reason);
+        $this->assertNull($failed->released_at);
+        $this->assertSame(0, RecordSnapshot::query()->where('school_id', $ctx['school']->id)->count());
+        $this->assertSame(0, DB::table('jobs')->count());
+
+        $this->assertTrue($service->run((int) $release->id));
+        $again = $release->fresh();
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $again->status);
+        $this->assertNull($again->release_reason);
+        $this->assertSame(2, RecordSnapshot::query()->where('school_id', $ctx['school']->id)->count());
+    }
+
     public function test_re_release_reason_is_required_and_shown_for_the_class_however_it_is_picked(): void
     {
         $ctx = $this->school();
@@ -250,11 +451,12 @@ class ReleaseSnapshotTest extends TestCase
             ->assertOk()
             ->assertSee('data-testid="release-reason"', false);
 
-        // Changed after load. The class control reloads this page; all classes
-        // has no box, and choosing the released class shows it.
+        // Changed after load. The class control reloads this page. Once any
+        // class of the sitting was released, the whole school asks for a
+        // reason, and choosing the released class shows it too.
         $this->actingAs($admin)->get($base)
             ->assertOk()
-            ->assertDontSee('data-testid="release-reason"', false)
+            ->assertSee('data-testid="release-reason"', false)
             ->assertSee('name="class"', false)
             ->assertSee('onchange="this.form.submit()"', false);
         $this->actingAs($admin)->get($base.'&class=P.4')
@@ -460,6 +662,57 @@ class ReleaseSnapshotTest extends TestCase
             'when' => 'now',
             'timezone' => 'Africa/Kampala',
         ];
+    }
+
+    /**
+     * A second stream of the school's P.4, with one learner who sat the same exams.
+     *
+     * @param  array<string, mixed>  $ctx
+     * @return array{link: StandardLink, student: User}
+     */
+    private function addStream(array $ctx, string $stream): array
+    {
+        $link = StandardLink::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $ctx['year']->id,
+            'standard_id' => $ctx['standard']->id,
+            'section_id' => $ctx['section']->id,
+            'class_teacher_id' => $ctx['teacher']->id,
+            'stream' => $stream,
+            'status' => 1,
+        ]);
+        $student = User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $ctx['school']->id,
+            'name' => $stream.' Learner',
+            'email' => 'stream.'.uniqid().'@example.test',
+            'status' => 'active',
+        ]);
+        StudentAcademic::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $ctx['year']->id,
+            'user_id' => $student->id,
+            'standardLink_id' => $link->id,
+        ]);
+        foreach ($ctx['subjects'] as $subject) {
+            $exam = Exam::query()
+                ->where('school_id', $ctx['school']->id)
+                ->where('section_id', $ctx['section']->id)
+                ->where('subject_id', $subject->id)
+                ->first();
+            Marks::create([
+                'student_id' => $student->id,
+                'exam_id' => $exam->id,
+                'school_id' => $ctx['school']->id,
+                'subject_id' => $subject->id,
+                'teacher_id' => $ctx['teacher']->id,
+                'section_id' => $ctx['section']->id,
+                'marks' => 55,
+                'grade' => 'stored',
+            ]);
+        }
+
+        return compact('link', 'student');
     }
 
     /** @param array<string, mixed> $ctx

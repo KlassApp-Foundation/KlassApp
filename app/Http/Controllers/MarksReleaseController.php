@@ -383,13 +383,14 @@ class MarksReleaseController extends Controller
     }
 
     /**
-     * Has this sitting already been released for the classes being released?
+     * Has this sitting already been released for what is being released now?
      *
-     * $standardLinkIds null is a whole-school release: only an earlier
-     * whole-school release of this sitting asks for a reason. A list is the
-     * classes the screen resolved (picker, URL, or a change that reloaded
-     * the page). Any earlier release of one of those classes, or of the
-     * whole school, asks for a reason. An empty list is not a class.
+     * $standardLinkIds null is a whole-school release: any earlier release of
+     * this sitting, of any class, asks for a reason. A list is the streams the
+     * screen resolved (picker, URL, or a change that reloaded the page). A
+     * stream asks for a reason when that stream was already released, or when
+     * the whole school was. Another stream of the same class does not. An
+     * empty list is not a class. A release that failed is not a release.
      *
      * @param  array<int, int>|null  $standardLinkIds
      */
@@ -404,34 +405,22 @@ class MarksReleaseController extends Controller
             return false;
         }
 
-        $sectionIds = [];
-        if ($standardLinkIds !== null) {
-            $sectionIds = \App\Models\StandardLink::query()
-                ->where('school_id', $user->school_id)
-                ->whereIn('id', $standardLinkIds)
-                ->pluck('section_id')
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values()
-                ->all();
-        }
-
-        return MarksRelease::query()
+        $released = MarksRelease::query()
             ->where('school_id', $user->school_id)
             ->where('status', MarksRelease::STATUS_RELEASED)
             ->whereHas('exam', fn ($q) => $q
                 ->where('school_id', $user->school_id)
                 ->where('exam_type_id', $anchor->exam_type_id)
-                ->where('academic_term_id', $anchor->academic_term_id))
-            ->where(function ($q) use ($sectionIds, $user): void {
-                $q->where('scope', 'school');
-                if ($sectionIds !== []) {
-                    $q->orWhereHas('standardLink', fn ($link) => $link
-                        ->where('school_id', $user->school_id)
-                        ->whereIn('section_id', $sectionIds));
-                }
-            })
-            ->exists();
+                ->where('academic_term_id', $anchor->academic_term_id));
+
+        if ($standardLinkIds === null) {
+            return $released->exists();
+        }
+
+        return $released->where(function ($q) use ($standardLinkIds): void {
+            $q->where('scope', 'school')
+                ->orWhereIn('standard_link_id', $standardLinkIds);
+        })->exists();
     }
 
     /** @return array{area:string, layout:string} */

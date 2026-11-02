@@ -9,8 +9,6 @@ use App\Models\Records\RecordSnapshot;
 use App\Models\StandardLink;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Verifiable records, step 1: a release writes one immutable snapshot per
@@ -78,8 +76,12 @@ class SnapshotService
     }
 
     /**
-     * The class links in scope: the released class, or every class that sat
+     * The class links in scope: the released stream, or every stream that sat
      * this sitting when the release covers the school.
+     *
+     * A whole-school release uses the sitting's academic year. This year's
+     * class list is a different enrolment, and a class that no longer exists
+     * this year still has the students who sat.
      *
      * @return \Illuminate\Support\Collection<int, StandardLink>
      */
@@ -93,10 +95,13 @@ class SnapshotService
                 ->get();
         }
 
+        $yearId = (int) $release->exam->academic_year_id;
+
         $sectionIds = Exam::query()
             ->where('school_id', $release->school_id)
             ->where('exam_type_id', $release->exam->exam_type_id)
             ->where('academic_term_id', $release->exam->academic_term_id)
+            ->where('academic_year_id', $yearId)
             ->whereNull('deleted_at')
             ->pluck('section_id')
             ->unique();
@@ -104,7 +109,7 @@ class SnapshotService
         return StandardLink::query()
             ->with('section')
             ->where('school_id', $release->school_id)
-            ->whereIn('academic_year_id', $this->currentYearIds((int) $release->school_id))
+            ->where('academic_year_id', $yearId)
             ->whereIn('section_id', $sectionIds)
             ->orderBy('section_id')
             ->orderBy('stream')
@@ -119,6 +124,7 @@ class SnapshotService
             ->where('section_id', $sectionId)
             ->where('exam_type_id', $release->exam->exam_type_id)
             ->where('academic_term_id', $termId)
+            ->where('academic_year_id', (int) $release->exam->academic_year_id)
             ->whereNull('deleted_at')
             ->pluck('id');
 
@@ -216,16 +222,5 @@ class SnapshotService
                 'state' => RecordSnapshot::STATE_CURRENT,
             ]);
         })();
-    }
-
-    /** @return list<int> */
-    private function currentYearIds(int $schoolId): array
-    {
-        return DB::table('academic_years')
-            ->where('school_id', $schoolId)
-            ->where('status', 1)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
     }
 }

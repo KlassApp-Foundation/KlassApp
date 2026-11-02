@@ -18,6 +18,7 @@ class MarksRelease extends Model
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_SENDING = 'sending';
     public const STATUS_RELEASED = 'released';
+    public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $table = 'marks_releases';
