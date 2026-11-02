@@ -25,10 +25,9 @@ use Tests\TestCase;
  * parents of the students in the released class and sitting.
  *
  * The demo follow-along path is unchanged: those sends are not a school sending
- * a template (see marks-flow.md, decision 3). The demo-only recipient guard is
- * still the last line for a real number; these tests lower that deployment flag
- * to prove the release gates themselves, which is what has to hold when the
- * guard is lifted.
+ * a template (see marks-flow.md, decision 3). A real-school release does not
+ * read WHATSAPP_DEMO_ONLY_RECIPIENTS. The switch and the approved template
+ * decide it.
  */
 class MarksPhase6WhatsAppGateTest extends TestCase
 {
@@ -231,6 +230,27 @@ class MarksPhase6WhatsAppGateTest extends TestCase
         $this->assertSame([], $this->outbound());
         $entry = collect(MarksRelease::sole()->result['messages'])->firstWhere('status', 'skipped');
         $this->assertSame('results_released is not approved by Meta yet', $entry['reason']);
+    }
+
+    public function test_an_approved_release_sends_the_template_while_demo_only_recipients_is_on(): void
+    {
+        config(['services.whatsapp.demo_only_recipients' => true]);
+        config(['services.whatsapp.template_language' => 'en']);
+        $this->approveTemplate();
+
+        $this->realRelease(['whatsapp_send' => '1'])->assertRedirect();
+        $this->assertSame(1, DB::table('jobs')->count());
+        $this->work();
+
+        $sent = collect(\Illuminate\Support\Facades\Http::recorded())
+            ->filter(fn ($pair) => str_contains($pair[0]->url(), 'graph.facebook.com'))
+            ->map(fn ($pair) => $pair[0]->data())
+            ->values();
+        $this->assertCount(1, $sent);
+        $this->assertSame('template', $sent[0]['type'] ?? null);
+        $this->assertSame('results_released', $sent[0]['template']['name'] ?? null);
+        $this->assertArrayNotHasKey('text', $sent[0]);
+        $this->assertArrayNotHasKey('Not a demo school: release messages are sent only in the demo for now', $this->reasons());
     }
 
     public function test_a_demo_release_keeps_its_follow_along_sends_with_the_release_switch_off(): void

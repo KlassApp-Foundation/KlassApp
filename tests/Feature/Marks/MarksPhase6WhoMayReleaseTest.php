@@ -5,6 +5,7 @@ namespace Tests\Feature\Marks;
 use App\Helpers\SiteHelper;
 use App\Models\MarksRelease;
 use App\Models\SchoolDetail;
+use App\Models\Section;
 use App\Models\StandardLink;
 use App\Services\DemoSchoolCommsGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,11 +17,11 @@ use Tests\TestCase;
 /**
  * Phase 6b, revised: who may release.
  *
- * A school admin always may. A class teacher may release their own class —
- * every stream of it when they are its class head — and keeps that right
- * unless the school turns teachers_may_release_marks off. The switch is ON
- * when a school has never set it, because main already let a class teacher
- * release their stream's marks and an existing school must not lose that.
+ * A school admin always may. A stream teacher may release the stream that
+ * names them. A class head (sections.class_teacher_id) may release every
+ * stream of that class. Both keep that right unless the school turns
+ * teachers_may_release_marks off. The switch is ON when a school has never
+ * set it.
  */
 class MarksPhase6WhoMayReleaseTest extends TestCase
 {
@@ -96,13 +97,17 @@ class MarksPhase6WhoMayReleaseTest extends TestCase
 
     public function test_a_class_head_releases_every_stream_of_their_class(): void
     {
-        $teacher = $this->classTeacher();
+        $teacher = $this->fx['demo']['teacher'];
         $second = $this->addStream('demo', 'B');
+        $sectionId = (int) $this->fx['demo']['link']->section_id;
 
-        // Only the A stream names the teacher as class head.
+        // No stream names this teacher. The class head is the section row.
+        StandardLink::query()->where('section_id', $sectionId)->update(['class_teacher_id' => null]);
+        Section::query()->whereKey($sectionId)->where('school_id', $this->fx['demo']['school']->id)
+            ->update(['class_teacher_id' => $teacher->id]);
         $this->assertNull(StandardLink::find($second->id)->class_teacher_id);
 
-        $links = app(\App\Services\MarksRelease\MarksReleaseService::class)->links($teacher);
+        $links = app(\App\Services\MarksRelease\MarksReleaseService::class)->links($teacher->fresh());
         $this->assertEqualsCanonicalizing(
             [(int) $this->fx['demo']['link']->id, (int) $second->id],
             $links->pluck('id')->map(fn ($id) => (int) $id)->all(),
@@ -113,6 +118,27 @@ class MarksPhase6WhoMayReleaseTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame((int) $second->id, (int) MarksRelease::sole()->standard_link_id);
+    }
+
+    public function test_a_stream_teacher_releases_only_their_own_stream(): void
+    {
+        $teacher = $this->classTeacher();
+        $second = $this->addStream('demo', 'B');
+        Section::query()->whereKey($this->fx['demo']['link']->section_id)
+            ->where('school_id', $this->fx['demo']['school']->id)
+            ->update(['class_teacher_id' => null]);
+
+        $links = app(\App\Services\MarksRelease\MarksReleaseService::class)->links($teacher);
+        $this->assertSame(
+            [(int) $this->fx['demo']['link']->id],
+            $links->pluck('id')->map(fn ($id) => (int) $id)->all(),
+        );
+
+        $this->actingAs($teacher)
+            ->post('/teacher/marks/releases', $this->payload('demo', $second->id))
+            ->assertForbidden();
+
+        $this->assertSame(0, MarksRelease::count());
     }
 
     public function test_a_class_teacher_cannot_release_another_class_or_the_whole_school(): void

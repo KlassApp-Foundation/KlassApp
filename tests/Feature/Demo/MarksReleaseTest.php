@@ -362,8 +362,11 @@ class MarksReleaseTest extends TestCase
         $teacher = $this->teacher();
         $this->releaseNow($teacher, null, 'teacher')->assertForbidden();
 
-        // Phase 6: a class head releases every stream of their class.
+        // Teaching stream A does not release stream B. The class head does.
         $streamB = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        $this->releaseNow($teacher, $streamB->id, 'teacher')->assertForbidden();
+        $this->assertSame(0, MarksRelease::count());
+        \App\Models\Section::query()->whereKey($this->link()->section_id)->where('school_id', $teacher->school_id)->update(['class_teacher_id' => $teacher->id]);
         $this->releaseNow($teacher, $streamB->id, 'teacher')->assertRedirect();
         $this->assertSame(1, MarksRelease::count());
 

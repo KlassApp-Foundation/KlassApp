@@ -254,9 +254,10 @@ class SiteHelper
      * this same answer, so saving the page without turning the switch off keeps
      * it on.
      *
-     * A class teacher may release every stream of a class they are the class
-     * head of (see MarksReleaseService::links()). A school admin is never
-     * affected by this setting.
+     * A class head is sections.class_teacher_id and may release every stream
+     * of that class. A teacher named only on a stream may release that stream
+     * (see MarksReleaseService::links()). A school admin is never affected
+     * by this setting.
      */
     public static function teachersMayReleaseMarks(int $school_id): bool
     {
