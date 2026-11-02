@@ -91,6 +91,8 @@ class SchoolService
      */
     private function validate(array $data, ?int $schoolId): array
     {
+        $data = $this->alignCountryFields($data);
+
         $emailRule = ['required', 'email'];
         if ($schoolId === null) {
             $emailRule[] = Rule::unique('schools', 'email');
@@ -134,6 +136,57 @@ class SchoolService
         return Validator::make($data, $rules, [
             'ministry_code.required' => 'EMIS / Ministry code is required for Uganda schools.',
         ])->validate();
+    }
+
+    /**
+     * country_id and registration_country are one choice. When both are sent
+     * and they name different countries, the save is rejected. Otherwise the
+     * saved name is the countries row's name, not a short code.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function alignCountryFields(array $data): array
+    {
+        $id = isset($data['country_id']) && $data['country_id'] !== '' && $data['country_id'] !== null
+            ? (int) $data['country_id']
+            : null;
+        $raw = trim((string) ($data['registration_country'] ?? ''));
+
+        $byId = $id !== null ? $this->activeCountryById($id) : null;
+        $byText = $raw !== '' ? OnboardingStepsService::activeCountriesMatching($raw) : collect();
+
+        if ($byText->count() > 1) {
+            throw ValidationException::withMessages([
+                'registration_country' => 'Choose one country. More than one country row matches that name.',
+            ]);
+        }
+
+        $named = $byText->first();
+        if ($byId !== null && $named !== null && (int) $byId->id !== (int) $named->id) {
+            throw ValidationException::withMessages([
+                'country_id' => 'The country and the country name do not match.',
+                'registration_country' => 'The country and the country name do not match.',
+            ]);
+        }
+
+        $country = $byId ?? $named;
+        if ($country !== null) {
+            $data['country_id'] = $country->id;
+            $data['registration_country'] = $country->name;
+        }
+
+        return $data;
+    }
+
+    private function activeCountryById(int $id): ?Country
+    {
+        $query = Country::query()->whereKey($id);
+        if (Schema::hasColumn('countries', 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
+        return $query->first();
     }
 
     /**

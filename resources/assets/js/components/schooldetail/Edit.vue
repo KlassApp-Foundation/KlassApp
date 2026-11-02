@@ -416,6 +416,11 @@
 </template>
 
 <script>
+import {
+    COUNTRY_CHANGE_MESSAGE,
+    countrySaveFailure,
+} from "./countrySaveError.mjs";
+
 export default {
     props: ["url", "school_id"],
 
@@ -560,33 +565,18 @@ export default {
         },
 
         countryChangeMessage() {
-            return "Confirm the country change. It affects phone formats and curriculum defaults.";
+            return COUNTRY_CHANGE_MESSAGE;
         },
 
-        // axios validateStatus is null, so a 422 still resolves. Treat any
-        // non-2xx as a failed save and leave the form where the admin left it.
-        // The country sentence is only for a real country change. Every other
-        // failure shows the validation errors or the save message.
+        // axios validateStatus is null, so a 422 still resolves. A failed save
+        // keeps the values on the form. The country sentence is only kept when
+        // this save is an unconfirmed country change.
         keepFailedSave(response) {
-            if (response && response.status < 400) {
+            const failure = countrySaveFailure(response, this.countryChangePending);
+            if (!failure || !failure.keepEnteredValues) {
                 return false;
             }
-            const errors = { ...(response?.data?.errors || {}) };
-            if (!this.countryChangePending) {
-                delete errors.confirm_country_change;
-            }
-            if (Object.keys(errors).length > 0) {
-                this.errors = errors;
-                return true;
-            }
-            const message = response?.data?.message;
-            const text =
-                typeof message === "string" && message.trim() !== ""
-                    ? message.trim()
-                    : "Could not save (HTTP " +
-                      (response && response.status ? response.status : "network") +
-                      "). Nothing was changed.";
-            this.errors = { save: [text] };
+            this.errors = failure.errors;
             return true;
         },
 
