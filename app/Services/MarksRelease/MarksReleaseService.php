@@ -25,7 +25,6 @@ use App\Services\Results\ResultCell;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
-use App\Services\DemoOnlyRecipientGuard;
 use App\Services\DemoSchoolCommsGuard;
 use App\Services\WhatsApp\TemplateGate;
 use App\Services\WhatsAppBusinessService;
@@ -49,7 +48,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * Who gets a message: in a demo school, numbers with an active demo binding
  * (BIND, inside the TTL) to a student in scope. In a real school, an approved,
  * opted-in parent of a student in scope, and only as the results_released
- * template, and only when realSendBlocker() allows it. An older sitting
+ * template, and only when realSendBlocker() allows it. After that,
+ * WHATSAPP_DEMO_ONLY_RECIPIENTS still stops a real school: while it is on,
+ * the release sends nothing. An older sitting
  * messages the students who have marks for that exam, not the current class.
  * Every other recipient is skipped with a reason, and nothing at all is sent
  * when WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
@@ -717,6 +718,12 @@ final class MarksReleaseService
 
                 return;
             }
+            // The demo-only guard is the outer fallback for a real number.
+            if ((bool) config('services.whatsapp.demo_only_recipients')) {
+                $skip('Not a demo school: release messages are sent only in the demo for now');
+
+                return;
+            }
             $binding = $this->parentRecipientById((int) $release->school_id, $studentId, $bindingId);
             if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
                 $skip('The parent link was not approved, or the parent opted out, before the message went out');
@@ -745,7 +752,7 @@ final class MarksReleaseService
         }
 
         try {
-            $send = fn () => DemoSchoolCommsGuard::duringBoundDemoRelease(
+            $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
                 (string) $binding->phone,
                 fn () => (int) ($release->school?->is_demo ?? 0) === 1
                     ? $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null)
@@ -757,9 +764,6 @@ final class MarksReleaseService
                         'marks_release',
                     ),
             );
-            $response = (int) ($release->school?->is_demo ?? 0) === 1
-                ? $send()
-                : DemoOnlyRecipientGuard::duringApprovedResultsRelease((string) $binding->phone, $send);
         } catch (\Throwable $e) {
             $response = ['success' => false, 'error' => $e->getMessage()];
         }
@@ -860,6 +864,7 @@ final class MarksReleaseService
         $messages = [];
         $repliesOn = (bool) config('services.whatsapp.replies_enabled');
         $isDemo = (int) ($school?->is_demo ?? 0) === 1;
+        $demoOnly = (bool) config('services.whatsapp.demo_only_recipients');
         $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
         $released = [];
         $jobs = [];

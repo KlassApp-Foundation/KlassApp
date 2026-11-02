@@ -25,9 +25,9 @@ use Tests\TestCase;
  * parents of the students in the released class and sitting.
  *
  * The demo follow-along path is unchanged: those sends are not a school sending
- * a template (see marks-flow.md, decision 3). A real-school release does not
- * read WHATSAPP_DEMO_ONLY_RECIPIENTS. The switch and the approved template
- * decide it.
+ * a template (see marks-flow.md, decision 3). For a real school the switch and
+ * the template are reported first. WHATSAPP_DEMO_ONLY_RECIPIENTS is the outer
+ * gate after those: while it is on, a real school sends nothing.
  */
 class MarksPhase6WhatsAppGateTest extends TestCase
 {
@@ -232,10 +232,28 @@ class MarksPhase6WhatsAppGateTest extends TestCase
         $this->assertSame('results_released is not approved by Meta yet', $entry['reason']);
     }
 
-    public function test_an_approved_release_sends_the_template_while_demo_only_recipients_is_on(): void
+    public function test_a_real_school_sends_nothing_when_demo_only_recipients_is_on(): void
     {
         config(['services.whatsapp.demo_only_recipients' => true]);
-        config(['services.whatsapp.template_language' => 'en']);
+        $this->approveTemplate();
+
+        $this->realRelease(['whatsapp_send' => '1'])->assertRedirect();
+
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->work();
+        $this->assertSame([], $this->outbound());
+        $this->assertSame(
+            ['Not a demo school: release messages are sent only in the demo for now' => 1],
+            $this->reasons(),
+        );
+    }
+
+    public function test_demo_only_off_and_an_approved_template_sends_the_template(): void
+    {
+        config([
+            'services.whatsapp.demo_only_recipients' => false,
+            'services.whatsapp.template_language' => 'en',
+        ]);
         $this->approveTemplate();
 
         $this->realRelease(['whatsapp_send' => '1'])->assertRedirect();
@@ -250,7 +268,26 @@ class MarksPhase6WhatsAppGateTest extends TestCase
         $this->assertSame('template', $sent[0]['type'] ?? null);
         $this->assertSame('results_released', $sent[0]['template']['name'] ?? null);
         $this->assertArrayNotHasKey('text', $sent[0]);
-        $this->assertArrayNotHasKey('Not a demo school: release messages are sent only in the demo for now', $this->reasons());
+    }
+
+    public function test_the_switch_and_the_template_are_reported_before_the_demo_only_guard(): void
+    {
+        config(['services.whatsapp.demo_only_recipients' => true]);
+        $this->approveTemplate(false);
+
+        $this->realRelease()->assertRedirect();
+        $this->assertSame(['WhatsApp was switched off for this release' => 1], $this->reasons());
+
+        $admin = User::query()
+            ->where('school_id', $this->fx['real']['school']->id)
+            ->where('usergroup_id', 3)
+            ->first();
+        MarksRelease::query()->delete();
+        $this->actingAs($admin)->post('/admin/marks/releases', array_merge(
+            $this->payload('real', (int) $this->fx['real']['link']->id),
+            ['whatsapp_send' => '1'],
+        ))->assertRedirect();
+        $this->assertSame(['results_released is not approved by Meta yet' => 1], $this->reasons());
     }
 
     public function test_a_demo_release_keeps_its_follow_along_sends_with_the_release_switch_off(): void

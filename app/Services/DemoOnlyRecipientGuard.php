@@ -26,11 +26,9 @@ use Illuminate\Support\Facades\Log;
  *      message, to the number that admin is verifying right now.
  *
  * Item 4 is a system message. It does not open the guard for any other
- * flow, body, number, or user. Fee reminders, parent links, and every
- * other send keep the checks below. An approved real-school results
- * release is not one of those: MarksReleaseService opens a one-number
- * scope around that template send, and the per-release switch plus
- * TemplateGate decide it. With the flag off this class does nothing.
+ * flow, body, number, or user. Marks releases, fee reminders, parent
+ * links, and every other send keep the checks below. With the flag off
+ * this class does nothing.
  *
  * Every other recipient is refused and the refusal is logged with the last
  * three digits only. Numbers are compared on their full digits, never on a
@@ -60,14 +58,6 @@ final class DemoOnlyRecipientGuard
      * @var array<int, array{digits: string, user_id: int}>
      */
     private static array $adminVerifications = [];
-
-    /**
-     * Digits of an approved results_released send that is in progress.
-     * Only that number, and only the marks_release flow, may leave.
-     *
-     * @var array<int, string>
-     */
-    private static array $resultsReleasePhones = [];
 
     public static function enabled(): bool
     {
@@ -123,23 +113,6 @@ final class DemoOnlyRecipientGuard
         self::$inboundSenders = [];
         self::$replyPhones = [];
         self::$adminVerifications = [];
-        self::$resultsReleasePhones = [];
-    }
-
-    /**
-     * Let one approved results_released template reach this number.
-     * The caller has already checked the per-release switch and TemplateGate.
-     * Only this number, and only while the callback runs. A free-text
-     * marks_release send outside this scope stays refused.
-     */
-    public static function duringApprovedResultsRelease(string $phone, callable $callback): mixed
-    {
-        self::$resultsReleasePhones[] = self::digits($phone);
-        try {
-            return $callback();
-        } finally {
-            array_pop(self::$resultsReleasePhones);
-        }
     }
 
     /** Null when the send may go out, otherwise the refusal reason. */
@@ -165,10 +138,6 @@ final class DemoOnlyRecipientGuard
     {
         if ($digits === '') {
             return 'no_number';
-        }
-
-        if ($flowType === 'marks_release' && in_array($digits, self::$resultsReleasePhones, true)) {
-            return null;
         }
 
         if (self::adminVerificationAllowed($digits, $flowType, $userId, $body)) {

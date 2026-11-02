@@ -635,6 +635,10 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 3, 2026 — **Demo-only stays the outer release gate OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- `WHATSAPP_DEMO_ONLY_RECIPIENTS` is checked after the per-release switch and the template. While it is on, a real school sends nothing. A demo school is unchanged. The class head stays `sections.class_teacher_id`. #1252 must merge before this PR. Not merged. No deploy.
+
 ## Current Status: November 2, 2026 — **Level reports wait for the outermost commit OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
 
 - A demo release webhook registered with `DB::afterCommit` is not posted while a real outer transaction is still open. PHPUnit's own transaction still records it so the existing webhook tests can see it. A-level cards on both templates show `POINTS:` and not `DIVISION:`. Not merged. No deploy.
