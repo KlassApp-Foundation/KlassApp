@@ -23,6 +23,24 @@ class WhatsAppPhoneHelper
 
     public static function toE164(string $input, string $region): ?string
     {
+        $formatted = self::formatIfValid($input, $region);
+        if ($formatted !== null) {
+            return $formatted;
+        }
+
+        // A WhatsApp sender id is digits with a country code and no plus,
+        // for example 254712345678. A leading 0 is a national number and is
+        // not given a plus sign.
+        $digits = preg_replace('/\D+/', '', $input) ?? '';
+        if ($digits === '' || str_starts_with($digits, '0') || str_starts_with(trim($input), '+')) {
+            return null;
+        }
+
+        return self::formatIfValid('+'.$digits, $region);
+    }
+
+    private static function formatIfValid(string $input, string $region): ?string
+    {
         $util = PhoneNumberUtil::getInstance();
 
         try {
