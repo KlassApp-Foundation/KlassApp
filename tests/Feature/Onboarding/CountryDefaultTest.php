@@ -14,6 +14,7 @@ use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -285,6 +286,235 @@ class CountryDefaultTest extends TestCase
         $this->assertStringContainsString('data-testid="country-change-error"', $vue);
         $this->assertStringContainsString('status < 400', $vue);
         $this->assertStringContainsString($message, $vue);
+    }
+
+    public function test_country_confirmation_only_when_the_country_changed(): void
+    {
+        [$school, $admin] = $this->school('Unchanged Primary', 'unchanged-country@example.com');
+        $message = 'Confirm the country change. It affects phone formats and curriculum defaults.';
+
+        $firstLoad = $this->actingAs($admin)->getJson('/admin/schooldetails/edit/'.$school->id);
+        $firstLoad->assertOk();
+        $this->assertStringNotContainsString('Confirm the country change', json_encode($firstLoad->json()));
+
+        $base = [
+            'name' => $school->name,
+            'moto' => 'Learn well',
+            'about_us' => 'A test school',
+            'country_id' => $this->uganda->id,
+            'ministry_code' => 'EMIS-100',
+            'board' => 'uneb',
+        ];
+
+        $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, $base)
+            ->assertSessionHasNoErrors();
+        $this->assertSame($this->uganda->id, (int) $school->fresh()->country_id);
+
+        $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, $base)
+            ->assertSessionHasNoErrors();
+
+        $changed = $this->actingAs($admin)
+            ->post('/admin/schooldetails/update/'.$school->id, array_merge($base, [
+                'country_id' => $this->kenya->id,
+                'ministry_code' => null,
+                'board' => 'cambridge',
+            ]));
+        $changed->assertSessionHasErrors(['confirm_country_change' => $message]);
+        $this->assertSame($this->uganda->id, (int) $school->fresh()->country_id);
+
+        $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $this->assertStringContainsString('countryChangePending && errors.confirm_country_change', $vue);
+        $this->assertStringContainsString('this.errors = { save: [text] }', $vue);
+    }
+
+    public function test_failed_school_details_save_shows_the_specific_error(): void
+    {
+        [$school, $admin] = $this->school('Save Error Primary', 'save-error@example.com');
+        $school->forceFill([
+            'country_id' => $this->uganda->id,
+            'registration_country' => 'Uganda',
+            'ministry_code' => 'EMIS-100',
+        ])->save();
+
+        $payload = [
+            'name' => $school->name,
+            'moto' => 'Learn well',
+            'about_us' => 'A test school',
+            'country_id' => $this->uganda->id,
+            'ministry_code' => 'EMIS-100',
+            'board' => 'uneb',
+        ];
+
+        $log = $this->captureSchoolDetailsLog();
+        School::saving(function (School $saving) use ($school): void {
+            if ((int) $saving->id === (int) $school->id) {
+                throw new \RuntimeException('The motto could not be stored.');
+            }
+        });
+
+        $failed = $this->actingAs($admin)->postJson(
+            '/admin/schooldetails/update/'.$school->id,
+            $payload,
+        );
+
+        $failed->assertStatus(500);
+        $failed->assertJsonPath('message', 'The motto could not be stored.');
+        $failed->assertJsonPath('errors.save.0', 'The motto could not be stored.');
+        $this->assertStringNotContainsString('SQLSTATE', $failed->getContent());
+        $this->assertStringNotContainsString('Stack trace', $failed->getContent());
+        $this->assertStringNotContainsString('Confirm the country change', $failed->getContent());
+        $this->assertSchoolDetailsFailureWasLogged($log);
+
+        $vue = file_get_contents(resource_path('assets/js/components/schooldetail/Edit.vue'));
+        $this->assertStringContainsString('data-testid="school-details-save-error"', $vue);
+        $this->assertStringContainsString('errors.save[0]', $vue);
+        $this->assertStringContainsString('response?.data?.message', $vue);
+    }
+
+    public function test_failed_school_details_save_hides_sql_and_still_logs(): void
+    {
+        [$school, $admin] = $this->school('Sql Error Primary', 'sql-error@example.com');
+        $payload = [
+            'name' => $school->name,
+            'moto' => 'Learn well',
+            'about_us' => 'A test school',
+            'country_id' => $this->uganda->id,
+            'ministry_code' => 'EMIS-100',
+            'board' => 'uneb',
+        ];
+
+        $log = $this->captureSchoolDetailsLog();
+        School::saving(function (School $saving) use ($school): void {
+            if ((int) $saving->id === (int) $school->id) {
+                throw new \RuntimeException('SQLSTATE[23000]: Integrity constraint violation');
+            }
+        });
+
+        $failed = $this->actingAs($admin)->postJson(
+            '/admin/schooldetails/update/'.$school->id,
+            $payload,
+        );
+
+        $failed->assertStatus(500);
+        $failed->assertJsonPath('message', 'Could not save the school details. Please try again.');
+        $this->assertStringNotContainsString('SQLSTATE', $failed->getContent());
+        $this->assertSchoolDetailsFailureWasLogged($log);
+    }
+
+    public function test_wizard_country_save_shows_the_validation_error(): void
+    {
+        [$school, $admin] = $this->school('Wizard Error Primary', 'wizard-error@example.com');
+
+        $component = Livewire::actingAs($admin)->test(ManualOnboardingWizard::class);
+        $index = null;
+        foreach ($component->get('steps') as $i => $step) {
+            if (($step['key'] ?? '') === 'country') {
+                $index = $i;
+            }
+        }
+        $this->assertNotNull($index);
+
+        $component->call('goToStep', $index);
+        $component->set('countryName', '')->call('next');
+        $component->assertSet('errorMessage', 'Choose a country.');
+        $component->assertSee('Choose a country.');
+        $this->assertNull($school->fresh()->registration_country);
+    }
+
+    public function test_wizard_country_save_shows_a_thrown_save_error(): void
+    {
+        [$school, $admin] = $this->school('Wizard Throw Primary', 'wizard-throw@example.com');
+
+        $component = Livewire::actingAs($admin)->test(ManualOnboardingWizard::class);
+        $index = null;
+        foreach ($component->get('steps') as $i => $step) {
+            if (($step['key'] ?? '') === 'country') {
+                $index = $i;
+            }
+        }
+        $this->assertNotNull($index);
+
+        School::saving(function (School $saving) use ($school): void {
+            if ((int) $saving->id === (int) $school->id) {
+                throw new \RuntimeException('The country could not be stored.');
+            }
+        });
+
+        $component->call('goToStep', $index);
+        $component->set('countryName', 'Kenya')->call('next');
+        $component->assertSet('errorMessage', 'The country could not be stored.');
+        $component->assertSee('The country could not be stored.');
+        $component->assertDontSee('Could not save this step');
+        $this->assertNull($school->fresh()->registration_country);
+    }
+
+    public function test_signup_rejects_an_unknown_country_and_accepts_a_real_one(): void
+    {
+        Mail::fake();
+
+        $rejected = $this->followingRedirects()->from('/register')->post('/register', [
+            'name' => 'Nia Example',
+            'email' => 'unknown-country@example.com',
+            'phone' => '0701234570',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+            'termsandcondn' => '1',
+            'country' => 'Narnia',
+        ]);
+        $rejected->assertOk();
+        $rejected->assertSee('Choose a country from the list.', false);
+        $rejected->assertSee('data-testid="register-country-error"', false);
+        $this->assertNull(User::where('email', 'unknown-country@example.com')->first());
+
+        $this->post('/register', [
+            'name' => 'Ken Example',
+            'email' => 'known-country@example.com',
+            'phone' => '0701234571',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+            'termsandcondn' => '1',
+            'country' => 'Kenya',
+        ])->assertRedirect();
+
+        $kenyaSchool = User::where('email', 'known-country@example.com')->firstOrFail()->school;
+        $this->assertSame('Kenya', $kenyaSchool->registration_country);
+        $this->assertSame($this->kenya->id, (int) $kenyaSchool->country_id);
+
+        $this->post('/register', [
+            'name' => 'Code Example',
+            'email' => 'code-country@example.com',
+            'phone' => '0701234572',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+            'termsandcondn' => '1',
+            'country' => 'KE',
+        ])->assertRedirect();
+        $byCode = User::where('email', 'code-country@example.com')->firstOrFail()->school;
+        $this->assertSame('Kenya', $byCode->registration_country);
+        $this->assertSame($this->kenya->id, (int) $byCode->country_id);
+    }
+
+    private function captureSchoolDetailsLog(): \Monolog\Handler\TestHandler
+    {
+        $handler = new \Monolog\Handler\TestHandler();
+        Log::getLogger()->pushHandler($handler);
+
+        return $handler;
+    }
+
+    private function assertSchoolDetailsFailureWasLogged(\Monolog\Handler\TestHandler $handler): void
+    {
+        $found = false;
+        foreach ($handler->getRecords() as $record) {
+            if (! str_contains((string) ($record['message'] ?? ''), 'School details save failed')) {
+                continue;
+            }
+            $this->assertInstanceOf(\Throwable::class, $record['context']['exception'] ?? null);
+            $found = true;
+        }
+        $this->assertTrue($found, 'The save failure was not written to the log.');
     }
 
     /**

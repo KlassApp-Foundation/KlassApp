@@ -3069,6 +3069,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-10-30: review fixes on the Uganda country default (#1246)
+
+- **Work done**: Merged `91bf33f` (the #1249 country-code fixes) into `cursor/school-country-default-c495`. A failed school-details or wizard save now shows the user-facing error and logs the exception. The country confirmation is shown only when the saved country actually changes. Signup rejects a country that is not in the `countries` table. No production data, deploy, or real school records.
+- **Files touched**: `app/Support/UserFacingException.php`, `app/Http/Controllers/Admin/SchoolDetailsController.php`, `app/Http/Requests/RegisterRequest.php`, `app/Http/Requests/DetailRequest.php` (unchanged comparison, verified), `app/Livewire/ManualOnboardingWizard.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `resources/views/auth/preview/register.blade.php`, `tests/Feature/Onboarding/CountryDefaultTest.php`, `public/build`.
+- **Decision**: SQL and stack text stay in the log. A blank signup country is still Uganda, including when the countries table has no rows, so existing signup tests keep working. Toshi's country step still accepts any text of two or more characters. That is left for a product decision.
+- **Status**: OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251) is stacked on this branch and needs this commit merged up. Production untouched.
+- **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3202 tests, 0 failures, 0 errors, 9 skipped. `[test-guard] OK: 0 failing test(s)`. The specific-error tests failed when the generic fallback was forced, then passed with the fix.
+
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 
 - **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.

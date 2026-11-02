@@ -8,6 +8,15 @@
             >
                 {{ this.success }}
             </div>
+            <div
+                v-if="errors.save"
+                class="ds-form-error"
+                role="alert"
+                data-testid="school-details-save-error"
+                style="color:#b91c1c;margin-bottom:12px;"
+            >
+                {{ errors.save[0] }}
+            </div>
 
             <!-- School Logo -->
             <div class="py-3">
@@ -216,7 +225,7 @@
                                 I confirm this country change.
                             </label>
                             <span
-                                v-if="errors.confirm_country_change"
+                                v-if="countryChangePending && errors.confirm_country_change"
                                 class="ds-form-error"
                                 data-testid="country-change-error"
                                 >{{ errors.confirm_country_change[0] }}</span
@@ -556,17 +565,28 @@ export default {
 
         // axios validateStatus is null, so a 422 still resolves. Treat any
         // non-2xx as a failed save and leave the form where the admin left it.
+        // The country sentence is only for a real country change. Every other
+        // failure shows the validation errors or the save message.
         keepFailedSave(response) {
             if (response && response.status < 400) {
                 return false;
             }
-            const errors = response?.data?.errors || {};
-            this.errors =
-                Object.keys(errors).length > 0
-                    ? errors
-                    : {
-                          confirm_country_change: [this.countryChangeMessage()],
-                      };
+            const errors = { ...(response?.data?.errors || {}) };
+            if (!this.countryChangePending) {
+                delete errors.confirm_country_change;
+            }
+            if (Object.keys(errors).length > 0) {
+                this.errors = errors;
+                return true;
+            }
+            const message = response?.data?.message;
+            const text =
+                typeof message === "string" && message.trim() !== ""
+                    ? message.trim()
+                    : "Could not save (HTTP " +
+                      (response && response.status ? response.status : "network") +
+                      "). Nothing was changed.";
+            this.errors = { save: [text] };
             return true;
         },
 
