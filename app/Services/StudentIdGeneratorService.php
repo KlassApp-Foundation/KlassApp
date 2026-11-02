@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\DB;
  * cannot collide. A school or sequence that does not fit in 5 and 6 digits
  * is refused. Stored IDs are never rewritten.
  *
- * PATTERN accepts exactly 7 or 11 digits after KLS. #1244 WhatsAppController
- * still matches only /^KLS\d{7}$/i until it adopts this constant.
+ * PATTERN accepts exactly 7 or 11 digits after KLS. Callers, including the
+ * WhatsApp matcher, use this constant.
  *
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
@@ -33,7 +33,6 @@ class StudentIdGeneratorService
 {
     /**
      * KLS plus exactly 7 digits, or KLS plus exactly 11 digits. No hyphens.
-     * #1244's WhatsApp matcher should adopt this constant after this PR merges.
      */
     public const PATTERN = '/^KLS(?:\d{7}|\d{11})$/i';
 

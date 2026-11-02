@@ -126,6 +126,38 @@ class StudentImportFailureReportTest extends TestCase
         $this->assertStringNotContainsString($email, $logText);
     }
 
+    public function test_a_parent_failure_keeps_the_student_and_hides_the_exception(): void
+    {
+        $school = $this->schoolWithClass();
+        $admin = User::where('school_id', $school->id)->where('usergroup_id', 3)->first();
+        Auth::login($admin);
+
+        (new UsersImport)->collection(collect([
+            [
+                'firstname' => 'Ada',
+                'lastname' => 'Learner',
+                'email' => 'ada-parent@example.test',
+                'class' => 'Primary Two',
+                'gender' => 'female',
+                'date_of_birth' => '2014-03-02',
+                'parent_firstname' => 'Pat',
+                'parent_lastname' => 'Guardian',
+                'parent_mobile_no' => '256700111222',
+                'parent_email' => $admin->email,
+            ],
+        ]));
+
+        $this->assertSame(1, User::where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertSame(1, Session::get('insertedcount'));
+        $failures = Session::get('import_row_failures');
+        $this->assertSame([
+            'Row 2 could not be imported. The student was saved. Check the parent\'s details and try again.',
+        ], $failures);
+        $shown = implode("\n", $failures);
+        $this->assertStringNotContainsString('SQLSTATE', $shown);
+        $this->assertStringNotContainsString($admin->email, $shown);
+    }
+
     public function test_an_exception_outside_create_user_does_not_reach_the_failure_text(): void
     {
         $school = $this->schoolWithClass();

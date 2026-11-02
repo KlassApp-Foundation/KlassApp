@@ -11,6 +11,11 @@ class StudentIdDocExamplesTest extends TestCase
     {
         $this->assertSame('/^KLS(?:\d{7}|\d{11})$/i', StudentIdGeneratorService::PATTERN);
 
+        $generator = file_get_contents(dirname(__DIR__, 3).'/app/Services/StudentIdGeneratorService.php');
+        $this->assertIsString($generator);
+        $this->assertStringNotContainsString('still matches only', $generator);
+        $this->assertStringNotContainsString('should adopt this constant', $generator);
+
         $files = [
             'docs/product/student-import.md',
             'docs/proposals/2026-10-05-marks-import-ui.md',
