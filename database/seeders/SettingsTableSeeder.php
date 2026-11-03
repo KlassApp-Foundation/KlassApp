@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SettingsTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class SettingsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         $settings = [
             [
                 'key'         => 'sitetitle',
@@ -115,14 +113,9 @@ class SettingsTableSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            DB::table('settings')->updateOrInsert(
-                ['key' => $setting['key']],  // unique by key
-                [
-                    ...$setting,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            $key = $setting['key'];
+            unset($setting['key']);
+            ReferenceUpsert::sync('settings', ['key' => $key], $setting);
         }
     }
 }

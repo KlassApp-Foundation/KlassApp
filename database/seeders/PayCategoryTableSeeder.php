@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class PayCategoryTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class PayCategoryTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         // Realistic Ugandan school payment/fee categories
         $payCategories = [
             'Registration / Admission Fee',
@@ -36,13 +34,7 @@ class PayCategoryTableSeeder extends Seeder
         ];
 
         foreach ($payCategories as $name) {
-            DB::table('pay_categories')->updateOrInsert(
-                ['name' => $name],
-                [
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            ReferenceUpsert::sync('pay_categories', ['name' => $name]);
         }
     }
 }
