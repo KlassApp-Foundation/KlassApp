@@ -3095,6 +3095,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-03: Invite accept message and country-test rename (#1239)
+
+- **Work done**: Accepting a teacher invite whose email is already registered shows "This email cannot be used to create an account. Contact the school and ask them to send the invite to a different email." The inviting admin still gets the same issue response. No user is created or changed. `CountryDefaultTest` was renamed to `CountryDefaultServiceContractTest` so it does not share a path with #1246.
+- **Files touched**: `app/Services/TeacherInviteLinkService.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Onboarding/CountryDefaultServiceContractTest.php`, `knowledge.md`.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, marks, class-teacher, invite, and the renamed country test: 94 tests, 553 assertions, 0 failures. Full test-guard was not run.
+
 ### 2026-11-03: Owner decisions on Marks Phase 1 (#1239)
 
 - **Work done**: Uganda class levels are offered only when the school's country is Uganda. Other countries type a level name. Toshi matches class names by ignoring case, spaces, and dots, scoped to the admin's school. `inviteNew` and the no-class invite no longer treat an email at another school as "already exists". A signed-out class-teacher change still queries the target school before it refuses.
