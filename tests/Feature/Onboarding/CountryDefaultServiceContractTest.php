@@ -11,7 +11,7 @@ use Tests\TestCase;
  * wizard (ManualOnboardingWizard) call it and store what it returns; neither
  * keeps its own fallback, so the two cannot drift.
  */
-class CountryDefaultTest extends TestCase
+class CountryDefaultServiceContractTest extends TestCase
 {
     public function test_a_blank_answer_means_the_service_default(): void
     {

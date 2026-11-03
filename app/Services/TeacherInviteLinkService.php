@@ -27,6 +27,12 @@ class TeacherInviteLinkService
     public const TOKEN_LENGTH = 64;
 
     /**
+     * Shown on the invite page when the email is already registered.
+     * It does not name another school or another person.
+     */
+    public const EMAIL_ALREADY_REGISTERED = 'This email cannot be used to create an account. Contact the school and ask them to send the invite to a different email.';
+
+    /**
      * Issue a new invite for a new teacher.
      *
      * @return array{invite: TeacherInvite, token: string} The raw token is returned
@@ -205,6 +211,16 @@ class TeacherInviteLinkService
 
         if ($invite->isExpired()) {
             return ['success' => false, 'message' => 'This invite has expired.'];
+        }
+
+        $email = mb_strtolower(trim((string) $invite->email));
+        if ($email !== '' && User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
+            Log::info('Teacher invite claim refused because the email is already registered', [
+                'invite_id' => $invite->id,
+                'school_id' => $invite->school_id,
+            ]);
+
+            return ['success' => false, 'message' => self::EMAIL_ALREADY_REGISTERED];
         }
 
         try {

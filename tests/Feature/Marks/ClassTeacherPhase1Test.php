@@ -797,6 +797,73 @@ class ClassTeacherPhase1Test extends TestCase
         $this->assertNotNull(TeacherInvite::query()->where('email', 'unknown-person@phase-one.test')->first());
     }
 
+    public function test_accepting_an_invite_for_an_email_at_another_school_explains_the_email_cannot_be_used(): void
+    {
+        $other = $this->otherSchool();
+        $existing = User::factory()->create([
+            'school_id' => $other['school']->id,
+            'usergroup_id' => 5,
+            'name' => 'Hidden Other Teacher',
+            'email' => 'known-elsewhere@phase-one.test',
+            'status' => 'active',
+        ]);
+        $passwordHash = $existing->password;
+        $otherLinkTeacher = $other['link']->class_teacher_id;
+
+        $issued = $this->inviteNew('known-elsewhere@phase-one.test', 'Nora New');
+        $this->assertTrue($issued['success'], $issued['message'] ?? '');
+        $this->assertStringNotContainsString('already exists', strtolower($issued['message']));
+        $issuedJson = (string) json_encode($issued);
+        $this->assertStringNotContainsString('Hidden Other Teacher', $issuedJson);
+        $this->assertStringNotContainsString('Second Phase School', $issuedJson);
+
+        $takenToken = null;
+        foreach (Mail::queued(TeacherInviteLinkMail::class) as $mail) {
+            $candidate = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
+            $row = TeacherInvite::query()->where('token_hash', hash('sha256', $candidate))->first();
+            if ($row !== null && $row->email === 'known-elsewhere@phase-one.test') {
+                $takenToken = $candidate;
+                break;
+            }
+        }
+        $this->assertNotNull($takenToken);
+
+        $this->post(route('teacher.invite.claim', $takenToken), [
+            'password' => 'Secret1a',
+            'password_confirmation' => 'Secret1a',
+        ])->assertRedirect(route('teacher.invite.form', $takenToken))
+            ->assertSessionHas('error', TeacherInviteLinkService::EMAIL_ALREADY_REGISTERED);
+
+        $this->get(route('teacher.invite.form', $takenToken))
+            ->assertOk()
+            ->assertSee(TeacherInviteLinkService::EMAIL_ALREADY_REGISTERED)
+            ->assertSee('different email')
+            ->assertDontSee('Could not create your account')
+            ->assertDontSee('Hidden Other Teacher')
+            ->assertDontSee('Second Phase School');
+
+        $fresh = $existing->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertSame($passwordHash, $fresh->password);
+        $this->assertSame('Hidden Other Teacher', $fresh->name);
+        $this->assertSame((int) $other['school']->id, (int) $fresh->school_id);
+        $this->assertSame(5, (int) $fresh->usergroup_id);
+        $this->assertSame('active', $fresh->status);
+        $this->assertSame(1, User::query()->whereRaw('lower(email) = ?', ['known-elsewhere@phase-one.test'])->count());
+        $this->assertDatabaseMissing('users', [
+            'email' => 'known-elsewhere@phase-one.test',
+            'school_id' => $this->school->id,
+        ]);
+
+        $invite = TeacherInvite::query()->where('email', 'known-elsewhere@phase-one.test')->first();
+        $this->assertNotNull($invite);
+        $this->assertNull($invite->claimed_at);
+        $this->assertNull($invite->user_id);
+        $this->assertSame((int) $this->school->id, (int) $invite->school_id);
+        $this->assertNull($this->link->fresh()->class_teacher_id);
+        $this->assertSame($otherLinkTeacher, $other['link']->fresh()->class_teacher_id);
+    }
+
     public function test_saving_the_stream_form_with_the_same_class_teacher_keeps_the_pending_invite(): void
     {
         $teacher = $this->teacher('same@phase-one.test');
