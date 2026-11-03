@@ -3,6 +3,10 @@
 
 @section('title', 'Invite Link — ' . config('app.name'))
 
+@push('head')
+  <meta name="referrer" content="no-referrer">
+@endpush
+
 @section('content')
 <div class="ap-page" data-ap-paper="vintage" data-ap-layout="split" data-ap-screen="invite-link" data-testid="invite-invalid-page">
   @include('auth.preview._paper-bg')
@@ -28,6 +32,18 @@
             <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Go to sign in</a>
           </div>
           <p class="ap-meta">Ask your school admin to send a new invite. It will arrive at the same email address.</p>
+        @elseif($reason === 'revoked')
+          <h1 class="ap-title">This invite was replaced</h1>
+          <p class="ap-sub">The school assigned the class again, so this link no longer works. Ask your school admin for a new invite.</p>
+          <div class="ap-actions">
+            <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Go to sign in</a>
+          </div>
+        @elseif($reason === 'limited')
+          <h1 class="ap-title">Too many attempts</h1>
+          <p class="ap-sub">Wait an hour, then open the link from the email again.</p>
+          <div class="ap-actions">
+            <a href="{{ route('login') }}" class="ap-submit" data-testid="invite-goto-login">Go to sign in</a>
+          </div>
         @elseif($reason === 'claimed')
           <div class="err-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>

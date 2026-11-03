@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Support\InviteTokenScrubber;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -36,6 +37,8 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
+        InviteTokenScrubber::scrubThrowable($exception);
+
         parent::report($exception);
     }
 

@@ -27,6 +27,12 @@ class TeacherInviteLinkService
     public const TOKEN_LENGTH = 64;
 
     /**
+     * Shown on the invite page when the email is already registered.
+     * It does not name another school or another person.
+     */
+    public const EMAIL_ALREADY_REGISTERED = 'This email cannot be used to create an account. Contact the school and ask them to send the invite to a different email.';
+
+    /**
      * Issue a new invite for a new teacher.
      *
      * @return array{invite: TeacherInvite, token: string} The raw token is returned
@@ -121,6 +127,11 @@ class TeacherInviteLinkService
      */
     public static function sendWhatsApp(TeacherInvite $invite, string $token, School $school, ?string $className = null): void
     {
+        // staff_invite is waiting on Meta. Do not send, and do not log the token.
+        if (! config('invites.staff_whatsapp_enabled')) {
+            return;
+        }
+
         $phone = $invite->phone;
         if (! $phone || trim($phone) === '') {
             return;
@@ -163,6 +174,10 @@ class TeacherInviteLinkService
             return null;
         }
 
+        if ($invite->isRevoked()) {
+            return ['invite' => $invite, 'school' => $invite->school, 'error' => 'revoked'];
+        }
+
         if ($invite->isExpired()) {
             return ['invite' => $invite, 'school' => $invite->school, 'error' => 'expired'];
         }
@@ -190,8 +205,22 @@ class TeacherInviteLinkService
             return ['success' => false, 'message' => 'This invite has already been used.'];
         }
 
+        if ($invite->isRevoked()) {
+            return ['success' => false, 'message' => 'This invite has been replaced.'];
+        }
+
         if ($invite->isExpired()) {
             return ['success' => false, 'message' => 'This invite has expired.'];
+        }
+
+        $email = mb_strtolower(trim((string) $invite->email));
+        if ($email !== '' && User::query()->whereRaw('lower(email) = ?', [$email])->exists()) {
+            Log::info('Teacher invite claim refused because the email is already registered', [
+                'invite_id' => $invite->id,
+                'school_id' => $invite->school_id,
+            ]);
+
+            return ['success' => false, 'message' => self::EMAIL_ALREADY_REGISTERED];
         }
 
         try {
@@ -220,22 +249,27 @@ class TeacherInviteLinkService
                 'alternate_no' => $invite->phone,
             ]);
 
-            // Assign class teacher if applicable
             if ($invite->standard_link_id) {
-                $standardLink = StandardLink::find($invite->standard_link_id);
+                $standardLink = StandardLink::query()
+                    ->where('school_id', $invite->school_id)
+                    ->whereKey($invite->standard_link_id)
+                    ->first();
                 if ($standardLink) {
-                    $standardLink->class_teacher_id = $teacher->id;
-                    $standardLink->save();
-
-                    $section = $standardLink->section;
-                    if ($section) {
-                        $section->class_teacher_id = $teacher->id;
-                        $section->save();
+                    $placed = app(ClassTeacherAssignmentService::class)->commit(
+                        $teacher,
+                        $standardLink,
+                        $teacher,
+                        true,
+                        false,
+                        'claim',
+                        $invite->id,
+                    );
+                    if (! ($placed['success'] ?? false)) {
+                        throw new \RuntimeException($placed['message'] ?? 'Could not assign the class.');
                     }
                 }
             }
 
-            // Mark invite claimed
             $invite->user_id = $teacher->id;
             $invite->claimed_at = now();
             $invite->save();

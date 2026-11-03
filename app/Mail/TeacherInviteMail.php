@@ -37,6 +37,12 @@ class TeacherInviteMail extends Mailable
     /** True when the teacher already has a usable account (reassignment). */
     public bool $existingAccount;
 
+    /** School admin who assigned this class. Shown on the existing-teacher notice. */
+    public ?string $assignedBy;
+
+    /** True when this teacher takes over from someone already assigned. */
+    public bool $replacing;
+
     public function __construct(
         string $name,
         string $email,
@@ -46,12 +52,16 @@ class TeacherInviteMail extends Mailable
         bool $existingAccount = false,
         ?Carbon $expiresAt = null,
         ?int $expiresInMinutes = null,
+        ?string $assignedBy = null,
+        bool $replacing = false,
     ) {
         $this->name = $name;
         $this->email = $email;
         $this->schoolName = $schoolName;
         $this->className = $className !== null && trim($className) !== '' ? trim($className) : null;
         $this->existingAccount = $existingAccount;
+        $this->assignedBy = $assignedBy !== null && trim($assignedBy) !== '' ? trim($assignedBy) : null;
+        $this->replacing = $replacing;
         // New accounts get a signed set-password link; existing ones just sign in.
         $this->inviteUrl = $inviteUrl ?: ($existingAccount ? url('/login') : route('password.email'));
         $this->expiresAt = $expiresAt;
