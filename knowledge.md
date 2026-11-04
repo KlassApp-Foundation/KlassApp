@@ -1180,6 +1180,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Tests: signup/default/preview set 33 passed; onboarding + filtered Toshi UI 455 passed. Failing-then-passing: 10 failed before `configuredDefault()`, green after.
 - Rebased onto `origin/main` `7fbe8aef` (#953). Staging verification is post-merge: staging is branch-bound to `main`. Production not deployed.
 
+## Current Status: November 4, 2026 — **Whole-class report card PDF DRAFT [#1271](https://github.com/KlassApp-Foundation/KlassApp/pull/1271) OPEN. Not merged. Production not deployed.**
+
+- **Work:** Admins and class heads can download one PDF of every report card in a class. Each page is `StudentReportCardService::pdfForStudent()` (same view and data as the single-student download). Fee totals stay on `StudentFeeResolver::forStudent()` for that student's own class and stream, including the stream's base class fee. Classes of 12 or fewer (`CLASS_PDF_DIRECT_MAX`) download in the request. Larger classes queue `GenerateClassReportsJob`; the class page shows status and the finished file.
+- **Branch:** `cursor/whole-class-report-pdf-cd2d`. Draft PR [#1271](https://github.com/KlassApp-Foundation/KlassApp/pull/1271). Base `origin/main` `89680d39`.
+- **Files:** `routes/teacher.php`, `app/Services/ClassReportCardAuthorization.php`, `app/Services/ClassReportCardDownload.php`, `app/Services/StudentReportCardService.php`, `app/Http/Controllers/Teacher/ReportCardsController.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Jobs/GenerateClassReportsJob.php`, teacher report-card blades, `tests/Feature/Reports/WholeClassReportCardPdfTest.php`.
+- **Permissions:** school admin (and deputy admin) for any class in their school; class head only for sections from `ExamAuthorization::sectionIdsForClassTeacher`; everyone else 403; other school 404.
+- **Tests:** local PHPUnit 19 tests, 109 assertions, OK (the new class-PDF suite plus teacher report cards, term-release aggregate, and admin class-PDF download). No browser session and no staging check in this run.
+- **Open-PR overlap:** `routes/teacher.php` also edited by #1242 (marks sheet) and #1261 (exam sets), different route groups. #1269 edits the teacher report-card index query this PR replaces. #1141 rewrites the merged job loop and `generatePdf()`. #1243 and #1255 edit `generatePdf()` body. #1270 reworks `StudentFeeResolver`, which these cards call and do not modify.
+- **Status:** draft, not merged. Do not deploy.
+
 ## Current Status: October 2, 2026 (latest) — **Slack §6c re-run after #955 FAILED; wave-1 NOT done; Classroom #728 still blocked**
 
 Verified live staging agent-loop re-run after [#955](https://github.com/KlassApp-Foundation/KlassApp/pull/955) MERGED `c1baafed` + staging deploy **succeeded** at that SHA. **Production untouched.** No further app patches this pass (stop-on-fail).
