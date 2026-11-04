@@ -413,6 +413,23 @@ class ClassStructureService
     }
 
     /**
+     * The year Wizard Continue and Toshi attach new streams to.
+     * The active year wins. An older inactive year is only a fallback.
+     */
+    public function activeYear(School $school): ?AcademicYear
+    {
+        return AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->first()
+            ?? AcademicYear::query()
+                ->where('school_id', $school->id)
+                ->orderBy('id')
+                ->first();
+    }
+
+    /**
      * Preset classes and streams that are not already active for this school.
      * Reading this does not write.
      *
@@ -485,10 +502,10 @@ class ClassStructureService
     {
         $plan = $this->suggestedStructurePlan($school);
         if ($plan['items'] === []) {
-            return 'Nothing new to add. Reply Apply to keep the classes you have. Nothing is saved yet.';
+            return 'Nothing new to add. Reply Confirm to keep the classes you have. Nothing is saved yet.';
         }
 
-        return $plan['summary'].' Reply Apply to add them. Nothing is saved yet.';
+        return $plan['summary'].' Reply Confirm to add them, or Cancel to add nothing. Nothing is saved yet.';
     }
 
     /**
@@ -522,10 +539,7 @@ class ClassStructureService
      */
     public function preview(School $school, array $classes): array
     {
-        $year = AcademicYear::query()
-            ->where('school_id', $school->id)
-            ->orderBy('id')
-            ->first();
+        $year = $this->activeYear($school);
         $rows = [];
         $newClasses = 0;
         $newStreams = 0;
