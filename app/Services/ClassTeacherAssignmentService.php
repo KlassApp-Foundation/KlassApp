@@ -527,9 +527,7 @@ class ClassTeacherAssignmentService
      */
     public function assignFromUpload(User $actor, StandardLink $standardLink, User $teacher, bool $justCreated): array
     {
-        $notify = ! $justCreated && ! $this->issuingIsLimited($actor, 'upload:'.$teacher->id);
-
-        return $this->commit($actor, $standardLink, $teacher, true, $notify, 'upload');
+        return $this->commit($actor, $standardLink, $teacher, true, ! $justCreated, 'upload');
     }
 
     /**

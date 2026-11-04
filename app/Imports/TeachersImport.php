@@ -149,7 +149,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     ->exists();
 
                 if (!$exists) {
-                    $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5);
+                    $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5, true);
                     $insertedcount++;
                 }
             }

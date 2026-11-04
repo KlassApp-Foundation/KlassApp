@@ -66,6 +66,7 @@ class TeacherAccountInviteService
         ?string $className = null,
         ?StandardLink $standardLink = null,
         bool $consumeLimit = true,
+        string $context = TeacherInviteLinkService::CONTEXT_INTERACTIVE,
     ): array {
         if ($teacher->status === null || $teacher->usergroup_id === null) {
             $teacher->refresh();
@@ -84,10 +85,11 @@ class TeacherAccountInviteService
         }
 
         $actor = $this->actorForTeacher($actor, $teacher);
-        if ($consumeLimit && $actor instanceof User) {
-            $limited = app(ClassTeacherAssignmentService::class)->issuingIsLimited(
+        if ($consumeLimit) {
+            $limited = TeacherInviteLinkService::issueIsLimited(
                 $actor,
                 hash('sha256', mb_strtolower((string) $teacher->email).'|'.$teacher->id),
+                $context,
             );
             if ($limited) {
                 return ['invited' => false, 'reason' => 'limited'];

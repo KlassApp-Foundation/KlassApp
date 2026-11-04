@@ -387,6 +387,56 @@ class TeacherCreatedInviteTest extends TestCase
             ->assertOk();
     }
 
+    public function test_a_bulk_import_of_34_teachers_queues_a_link_for_every_real_email(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.create_attempts' => 2,
+            'invites.create_per_invite_attempts' => 2,
+        ]);
+
+        $this->actingAs($this->admin);
+        $drafts = [];
+        for ($i = 1; $i <= 34; $i++) {
+            $drafts[] = [
+                'name' => 'Bulk Teacher '.$i,
+                'email' => 'bulk'.$i.'.teacher@example.test',
+            ];
+        }
+        $drafts[] = [
+            'name' => 'Placeholder Only',
+            'email' => 'teacher.'.Str::lower(Str::random(8)).'@'.$this->school->slug.'.test',
+        ];
+
+        app(OnboardingEngine::class)->saveTeachers($this->school, $this->year, $drafts);
+
+        $this->assertSame(35, User::query()->where('school_id', $this->school->id)->where('usergroup_id', 5)->whereNull('password')->count());
+        Mail::assertQueued(TeacherInviteLinkMail::class, 34);
+        $this->assertSame(34, TeacherInvite::query()->where('school_id', $this->school->id)->whereNull('revoked_at')->count());
+        $this->assertSame(0, TeacherInvite::query()->where('email', 'like', 'teacher.%@'.$this->school->slug.'.test')->count());
+    }
+
+    public function test_an_unauthenticated_issue_stays_under_the_school_cap(): void
+    {
+        config([
+            'invites.force_rate_limits' => true,
+            'invites.create_attempts' => 1,
+            'invites.create_per_invite_attempts' => 1,
+        ]);
+
+        $key = 'guest-issue';
+        RateLimiter::clear(md5('teacher-invite-issue'.'school:0'));
+        RateLimiter::clear(md5('teacher-invite-issue'.'school:0|invite:'.$key));
+
+        $this->assertFalse(TeacherInviteLinkService::issueIsLimited(null, $key, TeacherInviteLinkService::CONTEXT_INTERACTIVE));
+        $this->assertTrue(TeacherInviteLinkService::issueIsLimited(null, $key, TeacherInviteLinkService::CONTEXT_INTERACTIVE));
+        $this->assertFalse(TeacherInviteLinkService::issueIsLimited(
+            $this->admin,
+            'bulk-row',
+            TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+        ));
+    }
+
     public function test_an_email_that_already_has_a_signed_in_account_is_not_reset(): void
     {
         $existing = User::factory()->create([

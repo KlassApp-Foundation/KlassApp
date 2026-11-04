@@ -587,7 +587,7 @@ trait RegisterUser
      * @param int $usergroup_id Teacher role id
      * @return \App\Models\User Newly created teacher
      */
-    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id)
+    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id, bool $adminBulk = false)
     {
         \DB::beginTransaction();
         try
@@ -765,7 +765,16 @@ trait RegisterUser
             if ((int) $usergroup_id === 5) {
                 $actor = Auth::user();
                 $actor = $actor instanceof User && (int) $actor->school_id === (int) $user->school_id ? $actor : null;
-                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, $actor);
+                app(TeacherAccountInviteService::class)->inviteIfNeeded(
+                    $user,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    $adminBulk
+                        ? \App\Services\TeacherInviteLinkService::CONTEXT_ADMIN_BULK
+                        : \App\Services\TeacherInviteLinkService::CONTEXT_INTERACTIVE,
+                );
             }
 
             return $user;

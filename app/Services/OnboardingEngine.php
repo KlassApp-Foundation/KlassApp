@@ -1925,7 +1925,14 @@ class OnboardingEngine
                 ->whereKey((int) ($row['user_id'] ?? 0))
                 ->first();
             if ($teacher instanceof User) {
-                $invites->inviteIfNeeded($teacher, $actor);
+                $invites->inviteIfNeeded(
+                    $teacher,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
             }
         }
     }
