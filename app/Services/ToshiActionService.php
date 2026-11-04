@@ -476,6 +476,9 @@ class ToshiActionService
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return self::result(false, 'Invalid email format.');
         }
+        if (! app(TeacherAccountInviteService::class)->emailIsUsable($email)) {
+            return self::result(false, 'Add a real email address. A placeholder address cannot be invited.');
+        }
 
         $phone = trim($data['phone'] ?? '');
         $classRaw = trim((string) ($data['class'] ?? $data['classes'] ?? ''));

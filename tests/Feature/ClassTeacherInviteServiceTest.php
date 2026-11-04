@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\ActivityLog;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -89,6 +90,13 @@ class ClassTeacherInviteServiceTest extends TestCase
     {
         $inviter = $this->admin();
         $existingTeacher = $this->teacher($inviter->school_id, 'existing@school.ug');
+        ActivityLog::query()->create([
+            'log_name' => 'login',
+            'description' => 'Logged In',
+            'causer_id' => $existingTeacher->id,
+            'causer_type' => User::class,
+            'school_id' => $existingTeacher->school_id,
+        ]);
         $link = $this->stream($inviter->school_id);
         $section = $link->section;
 

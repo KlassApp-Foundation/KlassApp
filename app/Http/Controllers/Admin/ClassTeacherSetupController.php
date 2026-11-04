@@ -22,7 +22,6 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -141,9 +140,9 @@ class ClassTeacherSetupController extends Controller
                 'name' => $request->name ?: 'Teacher',
                 'email' => $email,
                 'mobile_no' => $request->phone,
-                'password' => Hash::make(Str::random(24)),
+                'password' => null,
                 'status' => 'active',
-                'is_reset' => 1,
+                'is_reset' => 0,
             ]);
         } catch (UniqueConstraintViolationException) {
             return back()->with('error', 'That email is not an active teacher at this school. No setup link was issued.');
@@ -154,6 +153,18 @@ class ClassTeacherSetupController extends Controller
             'reviewed_by' => Auth::id(),
             'reviewed_at' => now(),
         ])->save();
+
+        if ($existing === null) {
+            $sent = app(\App\Services\TeacherAccountInviteService::class)->inviteIfNeeded($teacher, Auth::user());
+            if (($sent['reason'] ?? '') === 'no_email') {
+                return back()->with('error', \App\Services\TeacherAccountInviteService::NEEDS_EMAIL);
+            }
+            if (! ($sent['invited'] ?? false)) {
+                return back()->with('error', 'Could not send a setup link.');
+            }
+
+            return back()->with('successmessage', 'A setup link was sent by email.');
+        }
 
         $token = $this->links->issueFor($teacher, Auth::user());
 

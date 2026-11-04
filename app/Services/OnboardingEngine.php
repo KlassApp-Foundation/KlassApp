@@ -28,6 +28,7 @@ use App\Support\PhoneCountry;
 use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1781,7 +1782,8 @@ class OnboardingEngine
     // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
 
     /**
-     * Create teacher users with random passwords and is_reset=1.
+     * Create teacher users with no password. A real email gets a setup link.
+     * A generated placeholder is stored and is not invited.
      *
      * Each entry in $teachers must contain at least 'name' and 'email'.
      * Optional keys: 'phone', 'standardLink_id', 'subject_id',
@@ -1799,7 +1801,7 @@ class OnboardingEngine
     public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $teachers) {
+            $result = DB::transaction(function () use ($school, $year, $teachers) {
                 $created = [];
                 $skipped = [];
                 $batchEmails = [];
@@ -1840,11 +1842,10 @@ class OnboardingEngine
                         'usergroup_id'   => 5,
                         'name'            => $name,
                         'email'           => $email,
-                        // FLAGGED(product-decision): a new teacher gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-                        'password'        => bcrypt(Str::random(16)),
+                        'password'        => null,
                         'status'          => 'active',
                         'email_verified'  => 1,
-                        'is_reset'        => 1,
+                        'is_reset'        => 0,
                         'mobile_no'       => $phone ?: null,
                     ]);
 
@@ -1893,15 +1894,46 @@ class OnboardingEngine
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
                 }
 
-                $result = ['created' => $created, 'skipped' => $skipped];
                 DashboardCache::forgetRosterCounts((int) $school->id);
 
-                return $result;
+                return ['created' => $created, 'skipped' => $skipped];
             });
+
+            $this->inviteCreatedTeachers($school, $result['created'] ?? []);
+
+            return $result;
         } catch (UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([
                 'teachers' => $this->describeUniqueConstraintViolation($e),
             ]);
+        }
+    }
+
+    /**
+     * @param  list<array{user_id?: int}>  $created
+     */
+    private function inviteCreatedTeachers(School $school, array $created): void
+    {
+        $actor = Auth::user();
+        $actor = $actor instanceof User && (int) $actor->school_id === (int) $school->id ? $actor : null;
+        $invites = app(TeacherAccountInviteService::class);
+
+        foreach ($created as $row) {
+            $teacher = User::query()
+                ->where('school_id', $school->id)
+                ->where('usergroup_id', 5)
+                ->whereKey((int) ($row['user_id'] ?? 0))
+                ->first();
+            if ($teacher instanceof User) {
+                $invites->inviteIfNeeded(
+                    $teacher,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
         }
     }
 

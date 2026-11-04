@@ -10,6 +10,7 @@ use App\Models\StandardLink;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,15 @@ use Illuminate\Support\Str;
 class TeacherInviteLinkService
 {
     public const TOKEN_LENGTH = 64;
+
+    /**
+     * A signed-in admin sending setup links for a whole import or wizard list.
+     * That batch is not counted against the hourly per-school issuing cap.
+     */
+    public const CONTEXT_ADMIN_BULK = 'admin_bulk';
+
+    /** One link at a time, and every request that is not a signed-in admin. */
+    public const CONTEXT_INTERACTIVE = 'interactive';
 
     /**
      * Shown on the invite page when the email is already registered.
@@ -66,6 +76,31 @@ class TeacherInviteLinkService
         ]);
 
         return ['invite' => $invite, 'token' => $token];
+    }
+
+    /**
+     * True when this issue must consume the hourly per-school cap.
+     * A signed-in admin's bulk import does not. A guest, or a single
+     * resend, does. The cap still uses the actor's school, never a
+     * school id from the request body.
+     */
+    public static function issueIsLimited(?User $actor, string $inviteKey, string $context = self::CONTEXT_INTERACTIVE): bool
+    {
+        if ($context === self::CONTEXT_ADMIN_BULK && $actor instanceof User && (int) $actor->school_id > 0) {
+            return false;
+        }
+
+        if ($actor instanceof User) {
+            return app(ClassTeacherAssignmentService::class)->issuingIsLimited($actor, $inviteKey);
+        }
+
+        $request = Request::create('/', 'POST', [
+            'school_id' => 0,
+            'invite_key' => $inviteKey,
+        ]);
+        $request->setUserResolver(static fn () => null);
+
+        return app(ClassTeacherAssignmentService::class)->issueRequestIsLimited($request);
     }
 
     /**

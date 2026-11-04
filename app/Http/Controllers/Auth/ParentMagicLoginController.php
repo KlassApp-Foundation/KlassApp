@@ -58,6 +58,10 @@ class ParentMagicLoginController extends Controller
             abort(403, 'This login link has already been used.');
         }
 
+        if (\App\Support\PendingPassword::isUnset($user)) {
+            abort(403, 'This account has not finished setup.');
+        }
+
         Auth::login($user);
         $request->session()->regenerate();
 

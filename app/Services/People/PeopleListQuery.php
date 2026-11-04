@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\StandardLink;
 use App\Models\StudentParentLink;
 use App\Models\TeacherInvite;
+use App\Services\TeacherAccountInviteService;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
@@ -142,7 +143,8 @@ class PeopleListQuery
         $rows = [];
         foreach ($paginator as $teacher) {
             $email = strtolower((string) $teacher->email);
-            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]));
+            $accountInvites = app(TeacherAccountInviteService::class);
+            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]), $accountInvites);
             $teaches = $subjects[$teacher->id] ?? [];
             $classes = $classOf[$teacher->id] ?? [];
             $role = $this->teacherRole($teacher);
@@ -162,12 +164,14 @@ class PeopleListQuery
                     ['text' => $invite, 'badge' => $invite === 'Joined' ? 'ok' : ($invite === 'Invited' ? 'info' : 'warn')],
                     ['text' => $teacher->status === 'active' ? 'Active' : 'Inactive', 'badge' => $teacher->status === 'active' ? 'ok' : 'off'],
                 ],
-                'menu' => [
+                'menu' => array_values(array_filter([
                     ['label' => 'View profile', 'href' => url('/admin/teacher/show/'.$teacher->name)],
                     ['label' => 'Edit', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
-                    ['label' => 'Send invite', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
+                    $accountInvites->canResend($teacher)
+                        ? ['label' => 'Resend setup link', 'href' => url('/admin/teacher/show/'.$teacher->name.'/resend-setup'), 'method' => 'post']
+                        : null,
                     ['label' => 'Assign classes', 'href' => url('/admin/teacher/show/classes/'.$teacher->name)],
-                ],
+                ])),
             ];
         }
 
@@ -752,9 +756,12 @@ class PeopleListQuery
             ->all();
     }
 
-    private function inviteLabel(User $teacher, bool $pending): string
+    private function inviteLabel(User $teacher, bool $pending, TeacherAccountInviteService $invites): string
     {
-        if ((int) $teacher->email_verified === 1) {
+        if (! $invites->emailIsUsable($teacher->email)) {
+            return 'No email yet';
+        }
+        if ($invites->hasSignedIn($teacher)) {
             return 'Joined';
         }
         if ($pending) {

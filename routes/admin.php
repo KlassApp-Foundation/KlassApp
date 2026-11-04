@@ -377,6 +377,7 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get( '/teacher/show/activity/{name}', 'TeacherShowController@showActivity' );
 	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
 	Route::post( '/teacher/show/{name}/deactivate', 'TeacherProfileController@deactivate' );
+	Route::post( '/teacher/show/{name}/resend-setup', 'TeacherProfileController@resendSetup' )->name('admin.teacher.resend-setup');
 	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' );
 	//edit
 	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );

@@ -396,6 +396,13 @@ class ClassTeacherPhase1Test extends TestCase
     public function test_existing_teacher_notice_names_who_assigned_them_and_the_class(): void
     {
         $teacher = $this->teacher('notice@phase-one.test');
+        ActivityLog::query()->create([
+            'log_name' => 'login',
+            'description' => 'Logged In',
+            'causer_id' => $teacher->id,
+            'causer_type' => User::class,
+            'school_id' => $teacher->school_id,
+        ]);
         app(ClassTeacherAssignmentService::class)->assign($this->admin, $this->link, [
             'confirmed' => true,
             'email' => 'notice@phase-one.test',
