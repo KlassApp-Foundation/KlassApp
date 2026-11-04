@@ -3139,6 +3139,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-04: Exam sets page, removal guard, and base-class marks roster
+
+- **Work done**: Draft stacked on `cursor/exam-sets` (`a33c7e2b`). Creating a set now records an `exam_sets` row and redirects to `admin/exams/sets/{batch}`. The page groups that set's exams by class and exam type, shows counts and the assigned teacher, and lists the school's sets under each term. An exam can be removed only when it has no marks; the check is on the server. The admin sidebar has a separate Exam sets item. Marks entry for an exam on a base class loads students through `standards_link` for that class and every name-encoded stream. A stream subject teacher sees and saves only their stream. The class head, from `ExamAuthorization::sectionIdsForClassTeacher`, sees and saves the whole class. A stream-level exam keeps the previous roster. Term, class, and exam type on the marks filter are no longer required.
+- **Files touched**: `ExamSetController.php`, `ExamSetService.php`, `BaseClassExamRoster.php`, `ExamMarkWriter.php`, `Teacher/MarksController.php`, `filter-form.blade.php`, `config/navigation.php`, `tests/Feature/Exams/ExamSetPageAndRosterTest.php`, `knowledge.md`.
+- **Decisions**: A set is one create action. Re-running does not move exams that already belong to an earlier set. Class head means the exam's base section is in `sectionIdsForClassTeacher`. Stream subject teachers match the exam subject by id or name on a stream section of that class.
+- **Status**: Draft PR on `cursor/exam-sets-page-marks-f7b0`. Not merged. Not deployed. No production access.
+- **Edge cases**: An undivided class with no stream sections still uses the old roster. A stream teacher who is also the exam's assigned teacher stays limited to their stream. The class head is not.
+
 ### 2026-11-03: Owner decisions on release reasons and past-year snapshots (#1255)
 
 - **Work done**: Merged `cursor/marks-phase-6-release` (`cc186c85`) into `cursor/marks-level-reports`. A whole-school release after any class of that sitting requires a reason. A stream or class released for the first time does not, even when another stream of the same class was already released. A past-year whole-school release snapshots the students who sat that sitting, using that year's classes. A failed release that saved and sent nothing can be run again without a reason. The skip-reason order from `bb98cd51` is already pinned by `MarksPhase6WhatsAppGateTest::test_the_switch_and_the_template_are_reported_before_the_demo_only_guard`.

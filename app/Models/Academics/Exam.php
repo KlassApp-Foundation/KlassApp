@@ -19,7 +19,7 @@ class Exam extends Model
 {
     use HasFactory;
     protected $fillable=[
-         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at", "default_deadline"
+         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type_id", "exam_set_id", "status","scheduled_at", "default_deadline"
         ];
       protected $dates = ["deleted_at"];
 
@@ -140,6 +140,11 @@ class Exam extends Model
 
         public function examType(){
             return $this->belongsTo(ExamType::class, "exam_type_id");
+        }
+
+        public function examSet()
+        {
+            return $this->belongsTo(ExamSet::class, 'exam_set_id');
         }
 
         public function officialTeacher(){
