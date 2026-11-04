@@ -14362,6 +14362,6 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 
 **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3197 tests, 0 failures, 0 errors, 9 skipped. Known-failures list unchanged.
 
-**Status:** Draft pull request on `cursor/demo-fees-structure-a0f0`. Not merged. No deploy. Production not touched.
+**Status:** Draft pull request [#1270](https://github.com/KlassApp-Foundation/KlassApp/pull/1270), branch `cursor/demo-fees-structure-a0f0`, head `45b9acdf`. Not merged. No deploy. Production not touched.
 
 **Overlap:** Open PRs #1237–#1264 do not edit the admin fee files. The parent and student portal agent (still running, no PR at the time of this branch) edits the parent Fees page and `ParentPortalService`. It reads `StudentFeeResolver` and does not change it. This branch does not edit the parent Fees views. Not stacked.
