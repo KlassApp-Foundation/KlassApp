@@ -5033,6 +5033,7 @@ td a.btn-danger:hover {
 }
 
 /* ── Exam set form (admin + class teacher): classes as chips, streams per class ── */
+.exam-set-classes { margin-top: 20px; }
 .exam-set-types { display: flex; flex-wrap: wrap; gap: 6px 20px; }
 .exam-set-type {
     display: inline-flex; align-items: center; gap: 8px; min-height: var(--d-touch-target-min);

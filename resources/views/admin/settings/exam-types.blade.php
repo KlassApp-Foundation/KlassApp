@@ -69,7 +69,7 @@
                             <td class="py-3 px-4">
                                 <input type="number" name="weight[{{ $type->id }}]" min="1" max="100" step="any"
                                     value="{{ $weight !== null ? $weight : '' }}" placeholder="—"
-                                    class="w-20 rounded border-gray-300 text-sm focus:ring-blue-500">
+                                    class="ds-form-input" style="width: 84px;">
                             </td>
                         </tr>
                     @endforeach
@@ -77,7 +77,7 @@
             </table>
         </div>
         <div class="mt-6">
-            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button type="submit" class="ds-btn ds-btn-primary">
                 Save Preferences
             </button>
         </div>
@@ -93,22 +93,22 @@
         <div class="flex flex-wrap items-end gap-4">
             <div>
                 <label class="form-label" for="exam-type-name">Name</label>
-                <input type="text" name="name" id="exam-type-name" class="rounded border-gray-300 text-sm focus:ring-blue-500"
+                <input type="text" name="name" id="exam-type-name" class="ds-form-input" style="width: 220px;"
                        value="{{ old('name') }}" maxlength="80" required placeholder="Mock Examination" data-testid="exam-type-name">
             </div>
             <div>
                 <label class="form-label" for="exam-type-code">Short code</label>
-                <input type="text" name="code" id="exam-type-code" class="w-24 rounded border-gray-300 text-sm focus:ring-blue-500"
+                <input type="text" name="code" id="exam-type-code" class="ds-form-input" style="width: 110px;"
                        value="{{ old('code') }}" maxlength="10" required placeholder="MOCK" data-testid="exam-type-code">
             </div>
-            <div>
+            <div style="padding-bottom: 9px;">
                 <label class="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="contributes_to_report_total" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    <input type="checkbox" name="contributes_to_report_total" value="1"
                            @checked(old('contributes_to_report_total')) data-testid="exam-type-contributes">
                     <span>Counts towards the report total</span>
                 </label>
             </div>
-            <button type="submit" class="px-5 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900" data-testid="exam-type-create-submit">
+            <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-type-create-submit">
                 Add exam type
             </button>
         </div>
@@ -123,12 +123,12 @@
             Which grading scale applies to this school's O-level and A-level reports.
             Applying a profile refreshes the school's grading bands immediately.
         </p>
-        <select name="curriculum_profile" class="rounded border-gray-300 text-sm focus:ring-blue-500">
+        <select name="curriculum_profile" class="ds-form-input" style="width: 340px;">
             @foreach($profiles as $key => $profile)
                 <option value="{{ $key }}" {{ $profileKey === $key ? 'selected' : '' }}>{{ $profile['label'] }}</option>
             @endforeach
         </select>
-        <button type="submit" class="ml-3 px-5 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+        <button type="submit" class="ds-btn ds-btn-primary ml-3">
             Apply Profile
         </button>
     </form>

@@ -58,7 +58,7 @@
                 </div>
             @endunless
 
-            <fieldset class="mb-5" data-testid="exam-set-classes">
+            <fieldset class="exam-set-classes mb-5" data-testid="exam-set-classes">
                 <legend class="form-label">Classes</legend>
                 <p class="exam-set-hint">Each class creates one exam per subject, on the class itself. Open a class to pick its streams too.</p>
 
