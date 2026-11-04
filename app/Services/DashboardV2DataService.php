@@ -95,9 +95,10 @@ class DashboardV2DataService
     }
 
     /**
-     * The school's currency code from its settings, or null when unset. No
-     * hidden default: callers render amounts without a symbol and show a quiet
-     * "Set your currency" hint instead.
+     * The school's currency code. An explicit setting wins (so a school can
+     * switch to USD); otherwise the school's country decides — Uganda is UGX,
+     * not "unset", so the dashboard stops nagging about a currency the school
+     * already uses. Null only when neither is known.
      */
     public function currencyFor(int $sid): ?string
     {
@@ -106,13 +107,19 @@ class DashboardV2DataService
             ->where('meta_key', 'currency')
             ->value('meta_value');
 
-        if (! is_string($meta)) {
-            return null;
+        if (is_string($meta)) {
+            $meta = trim($meta);
+            if ($meta !== '' && $meta !== '-') {
+                return strtoupper($meta);
+            }
         }
 
-        $meta = trim($meta);
+        $country = DB::table('schools')->where('id', $sid)->value('registration_country');
+        $code = \App\Onboarding\Country\CountryProfiles::forCountry(
+            is_string($country) ? $country : null
+        )->currency();
 
-        return ($meta === '' || $meta === '-') ? null : $meta;
+        return is_string($code) && $code !== '' ? strtoupper($code) : null;
     }
 
     private function moneyLabel(?string $currency, float|int|null $amount): string

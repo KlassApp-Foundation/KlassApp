@@ -110,11 +110,12 @@
                     </button>
                     @endif
                 @endif
-                @if(($setup['summary'] ?? []) !== [])
+                @php $setupLines = array_values($setup['labels'] ?? []); @endphp
+                @if($setupLines !== [])
                     <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
                         <summary>What's set up</summary>
                         <ul>
-                            @foreach($setup['summary'] as $line)
+                            @foreach($setupLines as $line)
                                 <li>{{ $line }}</li>
                             @endforeach
                         </ul>
