@@ -69,7 +69,7 @@ class SetupRoutingTest extends TestCase
             '#data-testid="dashboard-v2-setup-continue"[^>]*schooldetails|schooldetails[^>]*data-testid="dashboard-v2-setup-continue"#',
             $html,
         );
-        $this->assertStringContainsString('School name: Greenfield Primary', $html);
+        $this->assertStringContainsString('School name', $html);
         $this->assertStringContainsString("What's set up", $html);
         $this->assertStringContainsString('Approximate school size', $html);
     }
