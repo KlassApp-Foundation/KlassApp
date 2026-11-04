@@ -1697,6 +1697,8 @@ class OnboardingEngine
         }
 
         if (! empty($fee['is_yearly'])) {
+            // Stored with no term. The resolver counts it once, in the first
+            // term of the year and in the year total, not in every term.
             return 'yearly';
         }
 

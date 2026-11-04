@@ -40,6 +40,12 @@ class UpdateFeesCategoryRequest extends FormRequest
                                     ->orWhere('name', '!=', $current->name);
                             });
                         }
+                        // A class fee may keep, or take, the same name as a whole-school fee.
+                        $savingForClasses = $this->input('applies_to') === 'classes'
+                            || ($this->input('applies_to') !== 'whole_school' && $current && ! $current->applies_school_wide && $current->section_id !== null);
+                        if ($savingForClasses) {
+                            $query->where('applies_school_wide', false);
+                        }
                     }),
             ],
             'academic_term_id' => [

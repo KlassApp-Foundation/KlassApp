@@ -79,7 +79,7 @@
                     :options="$termOptions"
                     :value="old('academic_term_id', $fee?->academic_term_id)"
                     :error="$errors?->first('academic_term_id') ?: null"
-                    help="Leave this on every term unless the fee belongs to one term only."
+                    help="Leave this on every term for a termly fee. A yearly fee with no term is due in the first term of the year, and it is counted once."
                     class="md:col-span-2"
                 />
             </div>

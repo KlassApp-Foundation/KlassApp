@@ -31,7 +31,14 @@ class FeesCategoriesRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('fees_categories')->where(fn ($query) => $query->where('school_id', $schoolId)),
+                Rule::unique('fees_categories')->where(function ($query) use ($schoolId) {
+                    $query->where('school_id', $schoolId);
+                    // A class fee may use the same name as a whole-school fee.
+                    // That amount is added on top, and the save warns the admin.
+                    if ($this->input('applies_to') === 'classes') {
+                        $query->where('applies_school_wide', false);
+                    }
+                }),
             ],
             'school_id' => 'required|exists:schools,id',
             'amount' => 'nullable|numeric|min:0|regex:/^\d*(\.\d{1,2})?$/',

@@ -10,6 +10,7 @@ use App\Models\FeesCategories;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Services\FeeStructureService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -69,7 +70,7 @@ class FeesCategoryController extends Controller
         $schoolId = (int) Auth::user()->school_id;
         $wholeSchool = ($validated['applies_to'] ?? 'whole_school') !== 'classes';
 
-        DB::transaction(function () use ($validated, $schoolId, $wholeSchool) {
+        $fee = DB::transaction(function () use ($validated, $schoolId, $wholeSchool) {
             $fee = FeesCategories::create([
                 'school_id' => $schoolId,
                 'name' => $validated['name'],
@@ -87,9 +88,11 @@ class FeesCategoryController extends Controller
                 $wholeSchool,
                 $validated['section_ids'] ?? []
             );
+
+            return $fee;
         });
 
-        return redirect()->route("admin.fees-categories")->with("successmessage", "Added Fee Category!");
+        return $this->saved('Added Fee Category!', $fee);
     }
 
     /**
@@ -154,8 +157,18 @@ class FeesCategoryController extends Controller
             );
         }
 
-        return redirect()->route("admin.fees-categories")
-                        ->with("successmessage", "Updated Fee Category with Id $fee !");
+        return $this->saved('Updated Fee Category with Id '.$fee.' !', $category);
+    }
+
+    private function saved(string $message, FeesCategories $fee): RedirectResponse
+    {
+        $redirect = redirect()->route('admin.fees-categories')->with('successmessage', $message);
+        $warning = app(FeeStructureService::class)->sameNameStackWarning($fee->fresh() ?? $fee);
+        if ($warning !== null) {
+            $redirect->with('warningmessage', $warning);
+        }
+
+        return $redirect;
     }
 
     /**

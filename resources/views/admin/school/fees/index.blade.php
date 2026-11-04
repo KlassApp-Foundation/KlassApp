@@ -15,14 +15,15 @@
     @if($fees === [])
         <div class="text-center py-12 text-gray-500">No fees yet. Add a fee to build the structure.</div>
     @else
-        <x-table :headers="['Fee', 'Amount', 'Classes', 'Type', 'Duration', 'Actions']">
+        <x-table :headers="['Fee', 'Amount', 'Classes', 'Type', 'Duration', 'Due', 'Actions']">
             @foreach($fees as $fee)
-                <tr data-testid="fee-structure-row" data-name="{{ $fee['name'] }}" data-duration="{{ $fee['duration'] }}" data-classes="{{ $fee['classes'] }}">
+                <tr data-testid="fee-structure-row" data-name="{{ $fee['name'] }}" data-duration="{{ $fee['duration'] }}" data-classes="{{ $fee['classes'] }}" data-due="{{ $fee['due'] ?? '' }}">
                     <td class="font-medium">{{ $fee['name'] }}</td>
                     <td>{{ number_format($fee['amount'], 0) }}</td>
                     <td>{{ $fee['classes'] }}</td>
                     <td>{{ $fee['type'] }}</td>
                     <td>{{ $fee['duration'] }}</td>
+                    <td>{{ $fee['due'] ?? '' }}</td>
                     <td>
                         <div class="flex items-center justify-center gap-2">
                             <a href="{{ route('admin.fees-categories.edit', $fee['id']) }}" class="dt-action-btn" title="Edit">
@@ -48,11 +49,12 @@
         @if($classTotals === [])
             <p class="text-gray-500">Add classes to see a total for each one.</p>
         @else
-            <x-table :headers="['Class', 'Total']">
+            <x-table :headers="['Class', 'Total', 'Year total']">
                 @foreach($classTotals as $row)
-                    <tr data-testid="fee-class-total" data-class="{{ $row['class'] }}" data-total="{{ number_format($row['total'], 2, '.', '') }}">
+                    <tr data-testid="fee-class-total" data-class="{{ $row['class'] }}" data-total="{{ number_format($row['total'], 2, '.', '') }}" data-year-total="{{ number_format($row['year_total'] ?? $row['total'], 2, '.', '') }}">
                         <td>{{ $row['class'] }}</td>
                         <td>{{ number_format($row['total'], 0) }}</td>
+                        <td>{{ number_format($row['year_total'] ?? $row['total'], 0) }}</td>
                     </tr>
                 @endforeach
             </x-table>

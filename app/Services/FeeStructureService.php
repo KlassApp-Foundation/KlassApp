@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Services\DashboardV2DataService;
 use Illuminate\Support\Collection;
 
 /**
@@ -18,12 +20,12 @@ use Illuminate\Support\Collection;
 class FeeStructureService
 {
     /**
-     * @return array{rows: list<array<string, mixed>>, totals: list<array{class: string, total: float}>}
+     * @return array{rows: list<array<string, mixed>>, totals: list<array{class: string, total: float, year_total: float}>}
      */
     public function structure(int $schoolId): array
     {
         $fees = FeesCategories::query()
-            ->with(['standard', 'section', 'classes'])
+            ->with(['standard', 'section', 'classes', 'term'])
             ->where('school_id', $schoolId)
             ->orderBy('name')
             ->orderBy('id')
@@ -42,6 +44,7 @@ class FeeStructureService
                 'classes' => $item['classes'],
                 'type' => $fee->typeLabel(),
                 'duration' => $fee->durationLabel(),
+                'due' => $this->dueLabel($fee, $schoolId),
             ];
         }
 
@@ -131,6 +134,7 @@ class FeeStructureService
      */
     private function present(int $schoolId, Collection $fees): array
     {
+        // TODO: follow-up — withoutHiddenLegacyCopies hides older per-tier rows. It does not delete them.
         $visible = $this->withoutHiddenLegacyCopies($fees);
         $standardIds = Standard::query()->where('school_id', $schoolId)->pluck('id')->map(fn ($id) => (int) $id)->all();
 
@@ -189,6 +193,7 @@ class FeeStructureService
             ->mapWithKeys(fn (StandardLink $link) => [(int) $link->section_id => (int) $link->standard_id]);
 
         $structure = app(ClassStructureService::class);
+        $resolver = app(StudentFeeResolver::class);
         $totals = [];
         foreach ($sections as $section) {
             $sectionId = (int) $section->id;
@@ -200,13 +205,21 @@ class FeeStructureService
             $standardId = $standardBySection->get($sectionId);
 
             $sum = 0.0;
+            $year = 0.0;
             foreach ($presented as $item) {
                 if ($this->appliesToClass($item, $matchIds, $standardId ? (int) $standardId : null)) {
-                    $sum += (float) $item['fee']->amount;
+                    $amount = (float) $item['fee']->amount;
+                    $sum += $amount;
+                    // A class fee whose name matches a whole-school fee is added on top here.
+                    $year += $amount * $resolver->timesInYear($item['fee'], $schoolId);
                 }
             }
 
-            $totals[] = ['class' => (string) $section->name, 'total' => $sum];
+            $totals[] = [
+                'class' => (string) $section->name,
+                'total' => $sum,
+                'year_total' => $year,
+            ];
         }
 
         return $totals;
@@ -232,6 +245,136 @@ class FeeStructureService
     }
 
     /**
+     * Warn when a class fee reuses a whole-school fee's name. The class amount
+     * is still saved and added on top of the whole-school amount.
+     */
+    public function sameNameStackWarning(FeesCategories $fee): ?string
+    {
+        if ($fee->applies_school_wide) {
+            return null;
+        }
+
+        $fee->load(['classes', 'section']);
+        $name = mb_strtolower(trim((string) $fee->name));
+        if ($name === '') {
+            return null;
+        }
+
+        $schoolWide = FeesCategories::query()
+            ->where('school_id', $fee->school_id)
+            ->where('applies_school_wide', true)
+            ->where('id', '!=', $fee->id)
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (FeesCategories $row) => mb_strtolower(trim((string) $row->name)) === $name)
+            ->values();
+        if ($schoolWide->isEmpty()) {
+            return null;
+        }
+
+        $termId = $fee->academic_term_id ? (int) $fee->academic_term_id : null;
+        $match = $schoolWide->first(function (FeesCategories $row) use ($termId) {
+            $rowTerm = $row->academic_term_id ? (int) $row->academic_term_id : null;
+
+            return $rowTerm === $termId;
+        });
+        if ($match === null && $termId !== null) {
+            $match = $schoolWide->first(fn (FeesCategories $row) => $row->academic_term_id === null);
+        }
+        $match ??= $schoolWide->first();
+
+        $whole = (float) $match->amount;
+        $total = $whole + (float) $fee->amount;
+        $wholeMoney = $this->money((int) $fee->school_id, $whole);
+        $totalMoney = $this->money((int) $fee->school_id, $total);
+
+        return $match->name.' already exists as a whole-school fee ('.$wholeMoney.'). This class fee will be added on top, '.$this->classPaysPhrase($this->classNames($fee)).' '.$totalMoney.' in total.';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function classNames(FeesCategories $fee): array
+    {
+        $names = $fee->classes->pluck('name')
+            ->map(fn ($name) => trim((string) $name))
+            ->filter(fn (string $name) => $name !== '')
+            ->unique()
+            ->values()
+            ->all();
+        if ($names === [] && $fee->section && trim((string) $fee->section->name) !== '') {
+            $names = [trim((string) $fee->section->name)];
+        }
+        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $names;
+    }
+
+    /**
+     * @param  list<string>  $classNames
+     */
+    private function classPaysPhrase(array $classNames): string
+    {
+        if ($classNames === []) {
+            return 'so this class pays';
+        }
+        if (count($classNames) === 1) {
+            return 'so '.$classNames[0].' pays';
+        }
+        if (count($classNames) === 2) {
+            return 'so '.$classNames[0].' and '.$classNames[1].' each pay';
+        }
+
+        $last = array_pop($classNames);
+
+        return 'so '.implode(', ', $classNames).' and '.$last.' each pay';
+    }
+
+    private function money(int $schoolId, float $amount): string
+    {
+        $currency = app(DashboardV2DataService::class)->currencyFor($schoolId);
+        $formatted = number_format($amount, 0);
+
+        return ($currency !== null && $currency !== '') ? $currency.' '.$formatted : $formatted;
+    }
+
+    private function dueLabel(FeesCategories $fee, int $schoolId): string
+    {
+        if ($fee->duration === FeesCategories::DURATION_YEARLY) {
+            $due = app(StudentFeeResolver::class)->dueTermId($fee, $schoolId);
+            if ($due) {
+                $name = AcademicTerm::query()
+                    ->where('school_id', $schoolId)
+                    ->whereKey($due)
+                    ->value('name');
+                if (is_string($name) && $name !== '') {
+                    return $name;
+                }
+            }
+
+            return 'First term';
+        }
+
+        if ($fee->academic_term_id) {
+            $name = $fee->term?->name;
+
+            return is_string($name) && $name !== '' ? $name : 'One term';
+        }
+
+        if ($fee->duration === FeesCategories::DURATION_ONE_OFF) {
+            return 'Once';
+        }
+
+        return 'Every term';
+    }
+
+    /**
+     * Older per-tier copies of a fee that now has a school-wide row.
+     *
+     * TODO: follow-up — these rows are hidden, not deleted. A later clean-up
+     * should retire or merge them once that can be done without dropping a
+     * fee a class still owes. Leaving them stored is intentional for now.
+     *
      * @param  Collection<int, FeesCategories>  $fees
      * @return Collection<int, FeesCategories>
      */
