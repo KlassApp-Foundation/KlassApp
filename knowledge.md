@@ -9,6 +9,7 @@
 - **Decision:** Do not change `TeacherInviteLinkService` or its rate limits. This branch stacks on `cursor/marks-phase-1-class-teacher-v2` (#1239). Merge that pull request first.
 - **Status:** Draft pull request. Not merged. Production untouched.
 - **Follow-up (2026-11-04):** Signed-in admin bulk imports are not under the 30-per-hour issuing cap. Guest and single resend paths still are. An account with a null password cannot sign in or set a password through forgot-password; the reset path resends the setup link. Other staff stay on random passwords (follow-up, out of scope).
+- **Follow-up:** `/teacher/setup` saves the chosen password with `is_reset=0`, so the next password login opens the teacher dashboard. Parent and student `is_reset` stay as they are (T-094).
 
 ## Verified Stack (production — July 26, 2026)
 
