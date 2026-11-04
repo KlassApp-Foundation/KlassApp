@@ -56,7 +56,7 @@ class SoftlaunchAccountCardContractTest extends TestCase
         $this->assertStringContainsString('aria-haspopup="menu"', $html);
         $this->assertStringContainsString('role="menu"', $html);
         $this->assertStringContainsString('Change password', $html);
-        $this->assertStringContainsString('Edit profile', $html);
+        $this->assertStringContainsString('Profile', $html);
         $this->assertStringContainsString('Settings', $html);
         $this->assertStringContainsString('Log out', $html);
         $this->assertStringNotContainsString('Change Password', $html);
@@ -103,8 +103,9 @@ class SoftlaunchAccountCardContractTest extends TestCase
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        // PR7 content order: identity row, Edit profile, Change password, Settings, separator, Log out.
-        $edit = strpos($html, 'Edit profile');
+        // Content order: identity row, Profile, Change password, Settings, separator, Log out.
+        // (Profile and Change password are the same for every role; Settings is a school admin extra.)
+        $edit = strpos($html, 'data-testid="account-menu-profile"');
         $pw = strpos($html, 'Change password');
         $settings = strpos($html, 'Settings');
         $logout = strpos($html, 'Log out');
@@ -112,7 +113,7 @@ class SoftlaunchAccountCardContractTest extends TestCase
         $this->assertNotFalse($pw);
         $this->assertNotFalse($settings);
         $this->assertNotFalse($logout);
-        $this->assertTrue($edit < $pw && $pw < $settings && $settings < $logout, 'menu order must be Edit profile, Change password, Settings, Log out');
+        $this->assertTrue($edit < $pw && $pw < $settings && $settings < $logout, 'menu order must be Profile, Change password, Settings, Log out');
 
         // 18px icons on the menu rows.
         $this->assertGreaterThanOrEqual(3, substr_count($html, 'width="18" height="18"'));

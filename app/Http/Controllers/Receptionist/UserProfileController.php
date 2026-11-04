@@ -43,24 +43,12 @@ class UserProfileController extends Controller
      */
     public function updateChangePassword(ChangePasswordRequest $request)
     {
-        $user = User::find(Auth::id());
-        $hashedPassword = $user->password;
+        // One implementation for every role (App\Services\AccountPasswordService): the new password
+        // is saved, this device stays signed in, every other device is signed out.
+        if (Auth::user()->password != '') {
+            app(\App\Services\AccountPasswordService::class)->change(Auth::user(), (string) $request->newpassword);
+        }
 
-        if($hashedPassword!='')
-        { 
-            $user->password = Hash::make($request->newpassword);
-            $user->save();
-
-            $ip= $this->getRequestIP();
-            $this->doActivityLog(
-                $user,
-                Auth::user(),
-                ['ip' => $ip,'details' => $_SERVER['HTTP_USER_AGENT']],
-                LOGNAME_CHANGE_PASSWORD,
-                'Changed Profile Password.'                        
-            );        
-        } 
-           
         $res['message']=__('admin_userprofile.password_update');
         return $res;
     }  

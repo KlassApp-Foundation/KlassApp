@@ -20,14 +20,7 @@
     $email = (string) Auth::user()->email;
     $roleLabel = trim((string) ($profile?->designation ?? ''));
     if ($roleLabel === '') {
-        $roleLabel = match ((int) Auth::user()->usergroup_id) {
-            3, 4 => 'School admin',
-            5 => 'Teacher',
-            8 => 'Librarian',
-            11 => 'Bursar',
-            10 => 'Receptionist',
-            default => 'Staff',
-        };
+        $roleLabel = \App\Support\RoleShell::roleLabel(Auth::user());
     }
     $accountTip = $displayName.' · '.$roleLabel;
     $menuId = 'account-menu-'.Auth::id().'-'.($variant ?? 'sidebar').'-'.substr(md5(uniqid('', true)), 0, 8);
@@ -78,20 +71,20 @@
         </div>
 
         <ul class="account-card__list list-reset">
-            @if($portalLinks['edit_profile'])
+            @if($portalLinks['profile'])
             <li role="none">
-                <a role="menuitem" href="{{ url($portalLinks['edit_profile']) }}" dusk="edit-profile-link" class="account-card__item">
+                <a role="menuitem" href="{{ url($portalLinks['profile']) }}" dusk="profile-link" data-testid="account-menu-profile" class="account-card__item">
                     <span class="dtl-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </span>
-                    Edit profile
+                    Profile
                 </a>
             </li>
             @endif
 
             @if($portalLinks['change_password'])
             <li role="none">
-                <a role="menuitem" href="{{ url($portalLinks['change_password']) }}" dusk="password-link" class="account-card__item">
+                <a role="menuitem" href="{{ url($portalLinks['change_password']) }}" dusk="password-link" data-testid="account-menu-password" class="account-card__item">
                     <span class="dtl-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </span>
@@ -142,7 +135,7 @@
             <li role="none" class="user-dtl-logout">
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="account-card__logout-form">
                     @csrf
-                    <button type="submit" role="menuitem" dusk="logout-link" class="account-card__item account-card__item--danger">
+                    <button type="submit" role="menuitem" dusk="logout-link" data-testid="account-menu-logout" class="account-card__item account-card__item--danger">
                         <span class="dtl-icon" aria-hidden="true">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                         </span>

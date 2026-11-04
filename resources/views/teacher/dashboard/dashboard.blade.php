@@ -27,12 +27,14 @@
     </div>
     @endif
 
-    <div class="dashboard-kpi-grid" data-testid="dashboard-kpi-grid">
-        <x-ds-kpi-card icon="users" value="{{ $dashboard['myStudents'] }}" label="My Students" color="green" link="{{ url('/teacher/classes') }}" />
-        <x-ds-kpi-card icon="classes" value="{{ $dashboard['myClasses'] }}" label="My Classes" color="blue" />
-        <x-ds-kpi-card icon="exam" value="{{ count($dashboard['upcomingExam']) }}" label="Upcoming Exams" color="amber" link="{{ route('teacher.exam.marks') }}" />
-        <x-ds-kpi-card icon="whatsapp" value="{{ $dashboard['whatsapp']['totalLinked'] }}" label="WhatsApp Linked" color="green" />
-        <x-ds-kpi-card icon="check" value="{{ $dashboard['marksAttention'] ?? 0 }}" label="Marks needing you" tone="{{ ($dashboard['marksAttention'] ?? 0) > 0 ? 'warning' : 'neutral' }}" link="{{ route('teacher.exam.marks') }}" />
+    {{-- Same stat tiles as the school admin dashboard (<x-dv2-kpi>, .dv2-kpi*). --}}
+    @php $marksAttention = (int) ($dashboard['marksAttention'] ?? 0); @endphp
+    <div class="dv2-kpis dv2-kpis--five" data-testid="dashboard-kpi-grid">
+        <x-dv2-kpi icon="graduation-cap" label="My Students" :value="$dashboard['myStudents']" :href="url('/teacher/classes')" data-testid="kpi-my-students" />
+        <x-dv2-kpi icon="school" label="My Classes" :value="$dashboard['myClasses']" :href="url('/teacher/classes')" data-testid="kpi-my-classes" />
+        <x-dv2-kpi icon="calendar" label="Upcoming Exams" :value="count($dashboard['upcomingExam'])" :href="route('teacher.exam.marks')" data-testid="kpi-upcoming-exams" />
+        <x-dv2-kpi icon="whatsapp" label="WhatsApp Linked" :value="$dashboard['whatsapp']['totalLinked']" data-testid="kpi-whatsapp-linked" />
+        <x-dv2-kpi icon="list-checks" label="Marks needing you" :value="$marksAttention" :sub="$marksAttention > 0 ? 'Open my exams' : 'All caught up'" :sub-tone="$marksAttention > 0 ? 'warn' : ''" :waiting="$marksAttention > 0" :href="route('teacher.exam.marks')" data-testid="kpi-marks-needing-you" />
     </div>
 
     <div class="flex flex-wrap gap-2 mt-4" data-testid="teacher-quick-actions">
