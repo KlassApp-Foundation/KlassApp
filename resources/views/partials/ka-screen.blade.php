@@ -45,6 +45,7 @@
 .ka-filter-panel{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ka-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 .ka-sk{background:#E2E8F0;border-radius:8px;height:14px}
+.ka-phone-cards{display:none}
 @keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
 .ka-sk.on{animation:ka-shimmer 1.4s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.ka-sk.on{animation:none}}
@@ -57,6 +58,8 @@
   .ka-filter-panel.is-open{display:flex;flex-direction:column;gap:14px;position:fixed;z-index:80;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 20px;max-height:85vh;overflow:auto}
   .ka-filter-backdrop.is-open{display:block;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:70}
   .ka-mark{width:100% !important;min-height:52px !important;font-size:1.1rem !important}
+  .ka-sheet-table{display:none}
+  .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
 </style>
 <script>

@@ -11,6 +11,7 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\User;
 use App\Notifications\MarksSubmissionNotification;
+use App\Services\Academics\BaseClassExamRoster;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +46,9 @@ final class MarksSubmissionService
             ->where('school_id', $exam->school_id)
             ->where('exam_id', $exam->id)
             ->where('subject_id', $exam->subject_id)
-            ->whereNotNull('marks')
+            ->where(function ($query) {
+                $query->whereNotNull('marks')->orWhere('absent', true);
+            })
             ->exists();
     }
 
@@ -58,6 +61,8 @@ final class MarksSubmissionService
                 'submission' => 'Save marks before submitting them for review.',
             ]);
         }
+
+        $this->assertCompleteAndWithinMaximum($exam, $teacher);
 
         $existing = $this->find($exam, (int) $exam->section_id, (int) $exam->subject_id);
 
@@ -135,6 +140,42 @@ final class MarksSubmissionService
         }
 
         return $affected;
+    }
+
+    /**
+     * Approve each selected submission on its own. A row outside this school,
+     * or one that is not waiting for approval, is skipped. Anyone who is not
+     * a school admin is refused before any row is written.
+     *
+     * @param  list<int>  $submissionIds
+     * @return array{approved: int, skipped: int}
+     */
+    public function approveSelected(User $actor, array $submissionIds): array
+    {
+        if (! in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
+            abort(403, 'Only a school admin can review marks.');
+        }
+
+        $approved = 0;
+        $skipped = 0;
+        foreach (array_unique(array_map('intval', $submissionIds)) as $id) {
+            $row = ExamMarksSubmission::query()->whereKey($id)->first();
+            if ($row === null || (int) $row->school_id !== (int) $actor->school_id || ! $row->isApprovable()) {
+                $skipped++;
+
+                continue;
+            }
+            $from = $row->status;
+            $row->approval_status = 'approved';
+            $row->approved_at = now();
+            $row->approved_by = $actor->id;
+            $row->save();
+            $this->log($actor, $row, 'approved', $from, $row->status);
+            $this->notifyTeacher($row, 'approved', 'Your marks were approved.');
+            $approved++;
+        }
+
+        return ['approved' => $approved, 'skipped' => $skipped];
     }
 
     public function returnToTeacher(User $actor, Exam $exam, int $classId, int $subjectId, string $reason): ExamMarksSubmission
@@ -324,6 +365,47 @@ final class MarksSubmissionService
             ->where('class_id', $classId)
             ->where('subject_id', $subjectId)
             ->first();
+    }
+
+    private function assertCompleteAndWithinMaximum(Exam $exam, User $teacher): void
+    {
+        $writer = app(ExamMarkWriter::class);
+        $maximum = $writer->maximum($exam);
+        $over = Marks::query()
+            ->where('school_id', $exam->school_id)
+            ->where('exam_id', $exam->id)
+            ->where('subject_id', $exam->subject_id)
+            ->where('absent', false)
+            ->where('marks', '>', $maximum)
+            ->exists();
+        if ($over) {
+            throw ValidationException::withMessages([
+                'submission' => 'A mark is above '.$maximum.'. Fix it before submitting for approval.',
+            ]);
+        }
+
+        $roster = app(BaseClassExamRoster::class)->students($exam, $teacher);
+        if ($roster->isEmpty()) {
+            return;
+        }
+
+        $saved = Marks::query()
+            ->where('school_id', $exam->school_id)
+            ->where('exam_id', $exam->id)
+            ->where('subject_id', $exam->subject_id)
+            ->whereIn('student_id', $roster->pluck('id'))
+            ->get()
+            ->keyBy(fn (Marks $row) => (int) $row->student_id);
+
+        foreach ($roster as $student) {
+            $row = $saved->get((int) $student->id);
+            $entered = $row !== null && ($row->isAbsent() || $row->marks !== null);
+            if (! $entered) {
+                throw ValidationException::withMessages([
+                    'submission' => 'Every student needs a mark or AB before you submit for approval.',
+                ]);
+            }
+        }
     }
 
     private function assertSameSchool(User $actor, Exam $exam): void

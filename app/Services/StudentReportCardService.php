@@ -365,7 +365,7 @@ class StudentReportCardService
 
         $midStats = [];
         foreach ($midExams as $midExam) {
-            $nonNullMarks = $learner->marks->filter(fn ($m) => $m->exam_id === $midExam->id && $m->marks !== null);
+            $nonNullMarks = $learner->marks->filter(fn ($m) => $m->exam_id === $midExam->id && ! $m->isAbsent() && $m->marks !== null);
             $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
             $points = $this->sumPoints(
                 $this->chosenMarksBySubject($learner->marks, collect([$midExam])),
@@ -381,10 +381,10 @@ class StudentReportCardService
             // of this class's 96).
             $poolExamIds = collect([$midExam->id]);
 
-            $studentIds = \App\Models\Academics\Marks::whereIn('exam_id', $poolExamIds)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
+            $studentIds = \App\Models\Academics\Marks::whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
             $ranked = [];
             foreach ($studentIds as $rankedSid) {
-                $ranked[$rankedSid] = (int) round(\App\Models\Academics\Marks::where('student_id', $rankedSid)->whereIn('exam_id', $poolExamIds)->whereNotNull('marks')->sum('marks'));
+                $ranked[$rankedSid] = (int) round(\App\Models\Academics\Marks::where('student_id', $rankedSid)->whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->sum('marks'));
             }
             arsort($ranked);
             $pos = 0;

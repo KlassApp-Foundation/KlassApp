@@ -46,6 +46,24 @@ class ExamMarkWriter
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
 
+        if ($this->isAbsent($mark)) {
+            return Marks::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'exam_id' => $exam->id,
+                    'school_id' => $exam->school_id,
+                    'subject_id' => $exam->subject_id,
+                ],
+                [
+                    'teacher_id' => $exam->teacher_id ?: $actor->id,
+                    'marks' => null,
+                    'grade' => 'AB',
+                    'absent' => true,
+                    'section_id' => $exam->section_id,
+                ]
+            );
+        }
+
         return Marks::updateOrCreate(
             [
                 'student_id' => $student->id,
@@ -57,6 +75,7 @@ class ExamMarkWriter
                 'teacher_id' => $exam->teacher_id ?: $actor->id,
                 'marks' => $mark,
                 'grade' => $this->letter($exam, $mark),
+                'absent' => false,
                 'section_id' => $exam->section_id,
             ]
         );
@@ -109,6 +128,25 @@ class ExamMarkWriter
             ->where('class_id', $exam->section_id)
             ->where('subject_id', $exam->subject_id)
             ->first();
+    }
+
+    public function maximum(Exam $exam): float
+    {
+        return 100.0;
+    }
+
+    public function isAbsent(mixed $mark): bool
+    {
+        return strcasecmp(trim((string) $mark), 'AB') === 0;
+    }
+
+    public function exceedsMaximum(Exam $exam, mixed $mark): bool
+    {
+        if ($mark === null || $this->isAbsent($mark) || trim((string) $mark) === '' || ! is_numeric($mark)) {
+            return false;
+        }
+
+        return (float) $mark > $this->maximum($exam);
     }
 
     public function requiresCorrection(Exam $exam): bool

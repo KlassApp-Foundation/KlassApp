@@ -80,6 +80,22 @@ class ExamMarksSubmissionController extends Controller
         return redirect()->back()->with('successmessage', 'Marks submission reopened. The teacher can edit marks again.');
     }
 
+    public function approveSelected(Request $request)
+    {
+        $actor = $this->actor();
+        $validated = $request->validate([
+            'submission_ids' => ['required', 'array', 'min:1'],
+            'submission_ids.*' => ['integer'],
+        ]);
+
+        $result = $this->submissions->approveSelected($actor, $validated['submission_ids']);
+
+        return redirect()->back()->with(
+            'successmessage',
+            $result['approved'].' approved, '.$result['skipped'].' skipped.',
+        );
+    }
+
     public function approve(Request $request, Exam $exam)
     {
         $actor = $this->actor();

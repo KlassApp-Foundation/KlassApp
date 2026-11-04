@@ -934,6 +934,7 @@ Route::get('/marks/submissions', 'ExamMarksSubmissionController@index')->name('a
 Route::get('/marks/submissions/{exam}', 'ExamMarksSubmissionController@show')->name('admin.marks.submissions.show');
 Route::post('/marks/submissions/{exam}/lock', 'ExamMarksSubmissionController@lock')->name('admin.marks.submissions.lock');
 Route::post('/marks/submissions/{exam}/reopen', 'ExamMarksSubmissionController@reopen')->name('admin.marks.submissions.reopen');
+Route::post('/marks/submissions/approve-selected', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'approveSelected'])->name('admin.marks.submissions.approve-selected');
 Route::post('/marks/submissions/{exam}/approve', 'ExamMarksSubmissionController@approve')->name('admin.marks.submissions.approve');
 Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@reject')->name('admin.marks.submissions.reject');
 

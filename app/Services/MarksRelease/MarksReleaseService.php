@@ -238,6 +238,71 @@ final class MarksReleaseService
     }
 
     /**
+     * Who a release would tell. Display only: nothing is sent from here.
+     *
+     * @param  list<int>|null  $linkIds  null is every class in the sitting
+     * @return array{classes: list<array{name: string, parents: int, whatsapp: int}>, parents: int, whatsapp: int}
+     */
+    public function audienceSummary(User $user, int $examId, ?array $linkIds): array
+    {
+        $schoolId = (int) $user->school_id;
+        $anchor = Exam::query()->where('school_id', $schoolId)->find($examId);
+        if ($anchor === null) {
+            return ['classes' => [], 'parents' => 0, 'whatsapp' => 0];
+        }
+
+        $links = $linkIds === null
+            ? [null]
+            : StandardLink::query()->with('section')->where('school_id', $schoolId)->whereIn('id', $linkIds)->get()->all();
+
+        $byClass = [];
+        foreach ($links as $link) {
+            foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
+                $name = trim((string) (($classLink->section?->name ?? 'Class').' '.($classLink->stream ?? '')));
+                $byClass[$name][(int) $studentId] = (int) $studentId;
+            }
+        }
+
+        $studentIds = [];
+        foreach ($byClass as $ids) {
+            foreach ($ids as $id) {
+                $studentIds[$id] = $id;
+            }
+        }
+
+        $parentLinks = $studentIds === []
+            ? collect()
+            : StudentParentLink::query()
+                ->where('school_id', $schoolId)
+                ->where('status', 1)
+                ->whereIn('student_id', array_values($studentIds))
+                ->get(['student_id', 'parent_id']);
+
+        $whatsappParents = $parentLinks->isEmpty()
+            ? []
+            : WhatsAppUser::query()
+                ->where('school_id', $schoolId)
+                ->where('opted_in', true)
+                ->whereIn('user_id', $parentLinks->pluck('parent_id')->map(fn ($id) => (int) $id)->unique()->all())
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+        $classes = [];
+        $parentTotal = 0;
+        $whatsappTotal = 0;
+        foreach ($byClass as $name => $ids) {
+            $parents = $parentLinks->whereIn('student_id', array_values($ids))->pluck('parent_id')->map(fn ($id) => (int) $id)->unique();
+            $onWhatsapp = $parents->filter(fn (int $id) => in_array($id, $whatsappParents, true))->count();
+            $classes[] = ['name' => $name, 'parents' => $parents->count(), 'whatsapp' => $onWhatsapp];
+            $parentTotal += $parents->count();
+            $whatsappTotal += $onWhatsapp;
+        }
+
+        return ['classes' => $classes, 'parents' => $parentTotal, 'whatsapp' => $whatsappTotal];
+    }
+
+    /**
      * Refuse the release until every subject in scope is approved. There is no
      * override: a school admin and a class teacher meet the same rule. The
      * message names every subject that is not approved yet.

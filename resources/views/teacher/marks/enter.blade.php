@@ -6,7 +6,11 @@
 <main class="ka-main">
 
       {{-- Flash Success Message --}}
-   @include('partials.message')
+    @include('partials.message')
+    @if($errors->any())
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="marks-submit-error">{{ $errors->first() }}</div>
+    @endif
+    <p class="ka-sub">Type AB when a student was absent. Marks are out of 100.</p>
     <!-- Page Header -->
 
 
@@ -174,14 +178,20 @@
                             @endif
 
                             <td>
-                                <input type="number"
+                                @php
+                                    $enteredMark = old('marks.'.$student->id, $savedMarks[$student->id] ?? '');
+                                    $aboveMaximum = is_numeric($enteredMark) && (float) $enteredMark > 100;
+                                @endphp
+                                <input type="text"
                                        name="marks[{{ $student->id }}]"
-                                       class="tw-form-control w-24"
-                                       min="0"
-                                       max="100"
-                                       step="0.01"
-                                       value="{{ old('marks.'.$student->id, $savedMarks[$student->id] ?? '') }}"
+                                       class="tw-form-control w-24 ka-mark"
+                                       inputmode="decimal"
+                                       value="{{ $enteredMark }}"
+                                       aria-invalid="{{ $aboveMaximum ? 'true' : 'false' }}"
                                        data-testid="mark-input-{{ $student->id }}">
+                                @if($aboveMaximum)
+                                    <div style="font-size:.72rem;color:#B91C1C;font-weight:700;margin-top:3px" data-testid="mark-above-maximum-{{ $student->id }}">Above 100. Check the mark.</div>
+                                @endif
                             </td>
 
                             <td>

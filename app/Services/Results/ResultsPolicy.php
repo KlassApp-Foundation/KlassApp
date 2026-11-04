@@ -52,8 +52,11 @@ final class ResultsPolicy
             return false;
         }
         $needle = mb_strtolower(trim($grade));
-        if ($needle === '') {
+        if ($needle === '' ) {
             return false;
+        }
+        if ($needle === 'ab') {
+            return true;
         }
         foreach ($this->absentGradeLabels as $label) {
             if (mb_strtolower(trim((string) $label)) === $needle) {
