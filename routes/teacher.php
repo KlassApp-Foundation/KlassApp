@@ -392,6 +392,14 @@ Route::get('report-cards/{stdLink}/student/{learner}/download', function (string
 Route::prefix('reports/cards')->name('teacher.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
     Route::get('/{stdLink}', 'ReportCardsController@show')->name('show');
+    // Whole-class PDF. Each page is the single-student card above.
+    // StudentReportCardService::CLASS_PDF_DIRECT_MAX (12) students download
+    // in this request. A larger class is queued; the class page shows status
+    // and the finished file.
+    Route::get('/{stdLink}/pdf', 'ReportCardsController@downloadClassPdf')->name('class.pdf');
+    Route::get('/generations/{generation}/download', 'ReportCardsController@downloadGeneration')
+        ->whereNumber('generation')
+        ->name('generation.download');
     Route::get('/{stdLink}/student/{learner}/preview', 'ReportCardsController@previewStudent')->name('student.preview');
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
