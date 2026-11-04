@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Student profile · actions</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="min-height: 100vh; background: rgba(15,23,42,0.45); padding: 32px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px; align-content: start;">
+
+  <section role="dialog" aria-labelledby="pay-t" style="background: #FFFFFF; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);">
+    <h2 id="pay-t" style="margin: 0; font: 600 1.1rem 'Sora', sans-serif;">Record a payment</h2>
+    <div style="background: #FAFAF5; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px; font-size: 0.85rem;"><strong>Amara Okoro</strong> · Primary Five E<br><span style="color: #475569;">Term 3 total UGX 1,200,000 · paid UGX 900,000 · <strong style="color: #1E293B;">owes UGX 300,000</strong></span></div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Amount (UGX)<input class="ds-input" value="300,000" inputmode="decimal" style="min-height: 48px; font-size: 1.1rem; font-weight: 700;"></label>
+    <div style="display: flex; gap: 10px;">
+      <label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Paid by<select class="ds-input" style="min-height: 44px;"><option>Mobile money</option><option>Bank</option><option>Cash</option></select></label>
+      <label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Date<input class="ds-input" type="date" value="2026-11-04" style="min-height: 44px;"></label>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Reference (optional)<input class="ds-input" placeholder="Receipt or transaction number" style="min-height: 44px;"></label>
+    <p style="margin: 0; font-size: 0.8rem; color: #475569;">Goes against the term total. After this, Amara owes UGX 0. Parents get a receipt on WhatsApp.</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;"><button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Cancel</button><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Record UGX 300,000 payment</button></div>
+  </section>
+
+  <section role="dialog" aria-labelledby="mk-t" style="background: #FFFFFF; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);">
+    <h2 id="mk-t" style="margin: 0; font: 600 1.1rem 'Sora', sans-serif;">Add marks for Amara</h2>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Exam<select class="ds-input" style="min-height: 44px;"><option>End of Term · Term 3, 2026</option></select></label>
+    <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+      <sc-for list="{{subjects}}" as="s" hint-placeholder-count="4">
+        <label style="display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid #E2E8F0; font-size: 0.88rem;"><span style="flex: 1; font-weight: 600;">{{s.n}}<span style="display: block; font-size: 0.75rem; font-weight: 400; color: #64748B;">{{s.st}}</span></span><input class="ds-input" value="{{s.v}}" inputmode="numeric" aria-label="{{s.aria}}" style="width: 84px; min-height: 40px; text-align: right; font-weight: 700;"></label>
+      </sc-for>
+    </div>
+    <p style="margin: 0; font-size: 0.8rem; color: #475569;">Saved into each subject's draft. They still go through Submit, Approve and Release.</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;"><button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Cancel</button><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Save 2 marks as draft</button></div>
+  </section>
+
+  <section role="dialog" aria-labelledby="at-t" style="background: #FFFFFF; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);">
+    <h2 id="at-t" style="margin: 0; font: 600 1.1rem 'Sora', sans-serif;">Record attendance</h2>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Day<input class="ds-input" type="date" value="2026-11-04" style="min-height: 44px;"></label>
+    <div role="radiogroup" aria-label="Amara was" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <label style="min-height: 52px; border-radius: 12px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700;"><input type="radio" name="att" style="accent-color: #15803D;"> Present</label>
+      <label style="min-height: 52px; border-radius: 12px; border: 2px solid #B91C1C; background: #FEF2F2; color: #7F1D1D; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700;"><input type="radio" name="att" checked style="accent-color: #B91C1C;"> Absent</label>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Comment (optional)<textarea class="ds-input" rows="3">Parent called: fever, back on Monday.</textarea></label>
+    <p style="margin: 0; font-size: 0.8rem; color: #475569;">Parents see absences in their weekly attendance summary.</p>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;"><button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Cancel</button><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Save attendance</button></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = (n, st, v) => ({ n, st, v, aria: n + ' mark out of 100' });
+    return { subjects: [s('English', 'In progress · Maria Santos', '88'), s('Mathematics', 'In progress · Daniel Okafor', '93'), s('Science', 'Not started', ''), s('Social Studies', 'No teacher yet', '')] };
+  }
+}
+</script>
+</body>
+</html>

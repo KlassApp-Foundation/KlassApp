@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Student profile · states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; padding: 24px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 20px; align-content: start;">
+  <section aria-label="Empty" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Empty · new student</div>
+    <p style="margin: 0; font-size: 0.86rem; color: #475569;">A student who joined this week. Each card says what's missing and offers the next step.</p>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 12px; padding: 14px;"><strong>Performance</strong><div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">No released results yet. They appear here after the school's next Marks Release.</div></div>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 12px; padding: 14px;"><strong>Attendance</strong><div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">No days recorded yet.</div><button type="button" class="ds-btn ds-btn-outline ds-btn-sm" style="min-height: 44px; margin-top: 8px;">Record attendance</button></div>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 12px; padding: 14px;"><strong>Parents</strong><div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">No parent linked, so nobody gets WhatsApp updates.</div><button type="button" class="ds-btn ds-btn-outline ds-btn-sm" style="min-height: 44px; margin-top: 8px;">Add a parent</button></div>
+  </section>
+  <section aria-label="Loading" aria-busy="true" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Loading</div>
+    <div style="display: flex; gap: 14px;"><div class="ka-sk" style="width: 110px; height: 136px; border-radius: 12px;"></div><div style="flex: 1; display: flex; flex-direction: column; gap: 10px;"><div class="ka-sk" style="height: 24px; width: 70%;"></div><div class="ka-sk" style="height: 14px;"></div><div class="ka-sk" style="height: 14px; width: 80%;"></div><div class="ka-sk" style="height: 14px; width: 60%;"></div></div></div>
+    <div class="ka-sk" style="height: 40px;"></div>
+    <div class="ka-sk" style="height: 120px; border-radius: 14px;"></div>
+  </section>
+  <section aria-label="Error" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Error</div>
+    <div role="alert" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-weight: 700; color: #7F1D1D;">The payment wasn't recorded</div>
+      <p style="margin: 0; font-size: 0.86rem; color: #7F1D1D; line-height: 1.5;">Nothing was saved and no receipt was sent. Your amount and reference are still in the form.</p>
+      <div><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Try again</button></div>
+    </div>
+    <div role="alert" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 16px; font-size: 0.86rem; color: #78350F; line-height: 1.5;"><strong>The fees card couldn't load.</strong> The rest of the profile is up to date. <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" style="min-height: 40px; margin-left: 6px; background: #FFFFFF;">Reload fees</button></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filters sheet · phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:10px 12px;font-variant-numeric:tabular-nums}
+.ka-h1{margin:0;font-family:'Sora',system-ui,sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em}
+.ka-h2{margin:0;font:600 1rem 'Sora',sans-serif}
+.ka-card{border:1px solid #E2E8F0;border-radius:14px;padding:18px 20px;background:#FFFFFF}
+.ka-lbl{font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748B}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}
+</style>
+</helmet>
+<div style="width: 375px; height: 900px; background: #FAFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; position: relative;">
+  <dc-import name="PhoneBar" title="Mark sheet" back="true" hint-size="375px,64px"></dc-import>
+  <div style="padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="height: 200px;"></div>
+    <div style="position: absolute; inset: 64px 0 0 0; background: rgba(15,23,42,0.45);"></div>
+    <section role="dialog" aria-labelledby="fs-t" style="position: absolute; left: 0; right: 0; bottom: 0; background: #FFFFFF; border-radius: 20px 20px 0 0; padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+      <span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 999px; background: #CBD5E1;"></span>
+      <div style="display: flex; justify-content: space-between; align-items: center;"><h2 id="fs-t" class="ka-h2" style="font-size: 1.1rem;">Filters</h2><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 44px;">Reset</button></div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600;">Class<select class="ds-input" style="min-height: 48px;"><option>Primary Five</option></select></label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600;">Exam<select class="ds-input" style="min-height: 48px;"><option>Mid Term · Term 3, 2026</option></select></label>
+      <div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 0.85rem; font-weight: 600;">Stream</span><div role="radiogroup" aria-label="Stream" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;"><label style="min-height: 48px; border-radius: 10px; border: 2px solid #15803D; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="fs" checked style="accent-color: #15803D;"> All</label><label style="min-height: 48px; border-radius: 10px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="fs"  style="accent-color: #15803D;"> Primary Five E</label><label style="min-height: 48px; border-radius: 10px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="fs"  style="accent-color: #15803D;"> Primary Five W</label></div></div>
+      <div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 0.85rem; font-weight: 600;">Sort by</span><div role="radiogroup" aria-label="Sort by" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;"><label style="min-height: 48px; border-radius: 10px; border: 2px solid #15803D; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="so" checked style="accent-color: #15803D;"> Position</label><label style="min-height: 48px; border-radius: 10px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="so"  style="accent-color: #15803D;"> Name</label></div></div>
+      <button type="button" class="ds-btn ds-btn-primary" style="min-height: 52px;">Show 112 students</button>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

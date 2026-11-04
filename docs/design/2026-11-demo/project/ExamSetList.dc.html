@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exam sets</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="examsets" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Exam sets" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 24px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Exam sets</h1>
+          <p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">The exams each term, set once for the whole school or for chosen classes.</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <label for="yr" style="font-size: 0.8rem; color: #64748B;">Year</label>
+          <select id="yr" class="ds-input" style="min-height: 44px; width: 120px;"><option>2026</option><option>2025</option></select>
+          <a href="Main.dc.html" class="ds-btn ds-btn-primary" style="min-height: 44px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 4v16m8-8H4"></path></svg>
+            New exam set
+          </a>
+        </div>
+      </div>
+
+      <sc-for list="{{terms}}" as="t" hint-placeholder-count="3">
+        <section style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; font-weight: 600;">{{t.name}}</h2>
+            <sc-if value="{{t.current}}" hint-placeholder-val="{{false}}">
+              <span style="padding: 3px 10px; border-radius: 999px; background: #DCFCE7; color: #14532D; font-size: 0.72rem; font-weight: 700;">Current term</span>
+            </sc-if>
+          </div>
+          <sc-for list="{{t.sets}}" as="s" hint-placeholder-count="1">
+            <a href="ExamSetDetail.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 18px 20px; border: 1px solid #E2E8F0; border-radius: 14px; text-decoration: none; color: #1E293B; background: #FFFFFF;">
+              <div style="flex: 2 1 260px; min-width: 0;">
+                <div style="font-weight: 700; font-size: 0.95rem;">{{s.name}}</div>
+                <div style="font-size: 0.82rem; color: #64748B; margin-top: 2px;">{{s.scope}}</div>
+              </div>
+              <div style="flex: 2 1 220px; display: flex; gap: 6px; flex-wrap: wrap;">
+                <sc-for list="{{s.types}}" as="ty" hint-placeholder-count="3">
+                  <span style="padding: 4px 10px; border-radius: 999px; background: #F1F5F9; color: #334155; font-size: 0.75rem; font-weight: 600;">{{ty}}</span>
+                </sc-for>
+              </div>
+              <div style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="font-size: 0.8rem; color: #475569;"><strong style="color: #1E293B;">{{s.marked}}</strong> of {{s.exams}} exams have marks</div>
+                <div style="height: 6px; border-radius: 999px; background: #E2E8F0; overflow: hidden;" aria-hidden="true"><div style="height: 100%; width: {{s.pct}}; background: #15803D;"></div></div>
+              </div>
+              <span style="{{s.pill}}">{{s.status}}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </a>
+          </sc-for>
+        </section>
+      </sc-for>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (bg, fg, bd) => 'padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: ' + bg + '; color: ' + fg + '; border: 1px solid ' + bd + ';';
+    const open = pill('#EFF6FF', '#1D4ED8', '#BFDBFE'), done = pill('#15803D', '#FFFFFF', '#15803D');
+    return {
+      terms: [
+        { name: 'Term 3, 2026', current: true, sets: [
+          { name: 'Term 3, 2026 exams', scope: 'Whole school · 10 classes', types: ['Beginning of Term', 'Mid Term', 'End of Term'], exams: 129, marked: 58, pct: '45%', status: 'Marks coming in', pill: open },
+          { name: 'Primary Seven mock exams', scope: 'Primary Seven only · streams E and W', types: ['Mock 1', 'Mock 2'], exams: 8, marked: 4, pct: '50%', status: 'Marks coming in', pill: open }
+        ] },
+        { name: 'Term 2, 2026', current: false, sets: [
+          { name: 'Term 2, 2026 exams', scope: 'Whole school · 10 classes', types: ['Beginning of Term', 'Mid Term', 'End of Term'], exams: 129, marked: 129, pct: '100%', status: 'All released', pill: done }
+        ] },
+        { name: 'Term 1, 2026', current: false, sets: [
+          { name: 'Term 1, 2026 exams', scope: 'Whole school · 10 classes', types: ['Mid Term', 'End of Term'], exams: 86, marked: 86, pct: '100%', status: 'All released', pill: done }
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

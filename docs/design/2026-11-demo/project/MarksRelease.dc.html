@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks Release</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="marks" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Marks Release" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 18px;">
+      <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Marks</h1>
+      <nav aria-label="Marks sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0;">
+        <a href="Approvals.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; color: #475569;">Approvals <span style="padding: 1px 8px; border-radius: 999px; background: #1E6FD9; color: #FFFFFF; font-size: 0.72rem;">6</span></a>
+        <a href="MarkSheet.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Mark sheets</a>
+        <a href="MarksRelease.dc.html" aria-current="page" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; margin-bottom: -1px;">Marks Release</a>
+      </nav>
+      <dc-import name="Lifecycle" current="approved" hint-size="100%,112px"></dc-import>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+        <div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+          <section style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <label for="sit" style="font: 600 1rem 'Sora', sans-serif; flex: 1 1 200px;">1. Which sitting?</label>
+            <select id="sit" class="ds-input" style="min-height: 44px; width: 260px;"><option>Mid Term · Term 3, 2026</option></select>
+          </section>
+
+          <section style="border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+            <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">2. Which classes?</h2>
+              <span style="font-size: 0.8rem; color: #64748B;">Only classes with every subject approved can be released</span>
+            </div>
+            <sc-for list="{{classes}}" as="c" hint-placeholder-count="6">
+              <label style="display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-top: 1px solid #E2E8F0; min-height: 60px; background: {{c.bg}};">
+                <input type="checkbox" checked="{{c.on}}" disabled="{{c.off}}" style="width: 20px; height: 20px; accent-color: #15803D;">
+                <span style="flex: 1 1 160px; font-weight: 700;">{{c.name}}</span>
+                <span style="flex: 2 1 220px; font-size: 0.82rem; color: #475569;">{{c.detail}}</span>
+                <span style="{{c.pill}}">{{c.status}}</span>
+              </label>
+            </sc-for>
+          </section>
+
+          <section style="border: 2px solid #B45309; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; background: #FFFBEB;">
+            <label for="why" style="font-weight: 700; color: #78350F;">Primary Four was already released on 28 Oct. Why release it again? (required)</label>
+            <textarea id="why" class="ds-input" rows="2" style="width: 100%; background: #FFFFFF;">Science marks for Primary Four W were corrected after a re-check of two papers.</textarea>
+            <p style="margin: 0; font-size: 0.8rem; color: #78350F;">Families get a short note that results were updated. Your reason is kept in the release history, not sent to families.</p>
+          </section>
+        </div>
+
+        <aside style="flex: 1 1 300px; max-width: 400px; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">3. Who will be told</h2>
+          <dl style="margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 0.86rem;">
+            <dt style="color: #475569;">Classes</dt><dd style="margin: 0; font-weight: 700;">2 · Primary Four, Primary Seven</dd>
+            <dt style="color: #475569;">Students</dt><dd style="margin: 0; font-weight: 700;">206</dd>
+            <dt style="color: #475569;">Parents on WhatsApp</dt><dd style="margin: 0; font-weight: 700;">268</dd>
+            <dt style="color: #475569;">Parents by email only</dt><dd style="margin: 0; font-weight: 700;">39</dd>
+            <dt style="color: #475569;">Students with no parent linked</dt><dd style="margin: 0; font-weight: 700; color: #92400E;">9</dd>
+          </dl>
+          <a href="#" style="font-size: 0.85rem; font-weight: 600;">See the 9 students with no parent linked</a>
+          <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px; background: #FAFAF5; font-size: 0.82rem; color: #334155; line-height: 1.5;">
+            <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #64748B; margin-bottom: 4px;">Message preview</div>
+            Mid Term results for Nia Brown (Primary Seven) are ready. Reply RESULTS to see them, or open KlassApp.
+          </div>
+          <button type="button" class="ds-btn ds-btn-primary ds-btn-lg" style="width: 100%; min-height: 48px;">Release Mid Term marks to 2 classes</button>
+          <p style="margin: 0; font-size: 0.78rem; color: #64748B;">Released marks appear on report cards and the parent and student dashboards straight away.</p>
+          <div style="border-top: 1px solid #E2E8F0; padding-top: 12px;">
+            <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #64748B; margin-bottom: 6px;">Release history</div>
+            <div style="font-size: 0.82rem; color: #334155; line-height: 1.7;">28 Oct · Mid Term · Primary Four · Grace Achieng<br>12 Oct · Beginning of Term · all 10 classes · Grace Achieng</div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (bg, fg, bd) => 'padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: ' + bg + '; color: ' + fg + '; border: 1px solid ' + bd + ';';
+    const ready = pill('#F0FDF4', '#166534', '#BBF7D0'), again = pill('#15803D', '#FFFFFF', '#15803D'), wait = pill('#F1F5F9', '#475569', '#E2E8F0');
+    const c = (name, detail, status, p, on, off) => ({ name, detail, status, pill: p, on, off, bg: off ? '#FAFAF5' : '#FFFFFF' });
+    return {
+      classes: [
+        c('Primary Four', '4 of 4 subjects approved · 108 students', 'Released 28 Oct', again, true, false),
+        c('Primary Five', '2 of 4 approved · Science submitted, Social Studies not started', 'Not ready', wait, false, true),
+        c('Primary Six', '3 of 4 approved · Mathematics returned', 'Not ready', wait, false, true),
+        c('Primary Seven', '4 of 4 subjects approved · 98 students', 'Ready', ready, true, false),
+        c('Primary One to Three', 'Waiting on 5 subjects', 'Not ready', wait, false, true),
+        c('Nursery', 'Ratings approved for Top Class only', 'Not ready', wait, false, true)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

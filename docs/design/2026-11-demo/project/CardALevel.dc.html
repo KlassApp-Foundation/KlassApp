@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Report card · A level</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="width: 794px; height: 1123px; background: #FFFFFF; padding: 48px 56px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: flex; flex-direction: column; gap: 20px;">
+  <header style="display: flex; align-items: center; gap: 18px; border-bottom: 3px solid #1E6FD9; padding-bottom: 16px;">
+    <img src="/_blob/2c32195945f22ed1b143049e8c574212" alt="" style="width: 56px; height: 56px;">
+    <div style="flex: 1;">
+      <div style="font: 700 20px 'Sora', sans-serif;">Hillview Secondary School</div>
+      <div style="font-size: 13px; color: #475569;">Report card · Term 3, 2026 · End of Term · A level</div>
+    </div>
+    <div style="text-align: right; font-size: 11px; color: #475569;">Released 4 Dec 2026</div>
+  </header>
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 24px; font-size: 13px; background: #F0F6FE; border: 1px solid #D6E6FA; border-radius: 12px; padding: 14px 16px;">
+    <div><div style="color: #475569; font-size: 11px;">Student</div><strong>Leila Ahmadi</strong></div>
+    <div><div style="color: #475569; font-size: 11px;">Student number</div><strong>HVS-1876</strong></div>
+    <div><div style="color: #475569; font-size: 11px;">Class</div><strong>Senior 6 · Sciences</strong></div>
+    <div><div style="color: #475569; font-size: 11px;">Combination</div><strong>Physics, Chemistry, Mathematics</strong></div>
+    <div><div style="color: #475569; font-size: 11px;">Class teacher</div><strong>Olu Ibrahim</strong></div>
+    <div><div style="color: #475569; font-size: 11px;">Days present</div><strong>61 of 62</strong></div>
+  </section>
+  <h2 style="margin: 0; font: 600 15px 'Sora', sans-serif;">Principal subjects</h2>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <thead><tr style="background: #F1F5F9; text-align: left;"><th scope="col" style="padding: 8px 10px;">Subject</th><th scope="col" style="padding: 8px 10px; text-align: right;">Paper 1</th><th scope="col" style="padding: 8px 10px; text-align: right;">Paper 2</th><th scope="col" style="padding: 8px 10px; text-align: right;">Paper 3</th><th scope="col" style="padding: 8px 10px; text-align: center;">Grade</th><th scope="col" style="padding: 8px 10px; text-align: right;">Points</th></tr></thead>
+    <tbody>
+      <sc-for list="{{principal}}" as="r" hint-placeholder-count="3">
+        <tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" style="padding: 10px; text-align: left;">{{r.s}}</th><td style="padding: 10px; text-align: right;">{{r.p1}}</td><td style="padding: 10px; text-align: right;">{{r.p2}}</td><td style="padding: 10px; text-align: right;">{{r.p3}}</td><td style="padding: 10px; text-align: center;"><span style="display: inline-block; width: 28px; padding: 2px 0; border-radius: 6px; background: #F1F5F9; font-weight: 700;">{{r.g}}</span></td><td style="padding: 10px; text-align: right; font-weight: 700;">{{r.pts}}</td></tr>
+      </sc-for>
+    </tbody>
+  </table>
+  <h2 style="margin: 0; font: 600 15px 'Sora', sans-serif;">Subsidiary subjects</h2>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <thead><tr style="background: #F1F5F9; text-align: left;"><th scope="col" style="padding: 8px 10px;">Subject</th><th scope="col" style="padding: 8px 10px; text-align: right;">Score %</th><th scope="col" style="padding: 8px 10px; text-align: center;">Result</th><th scope="col" style="padding: 8px 10px; text-align: right;">Points</th></tr></thead>
+    <tbody>
+      <tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" style="padding: 10px; text-align: left;">General Paper</th><td style="padding: 10px; text-align: right;">68</td><td style="padding: 10px; text-align: center;">Pass</td><td style="padding: 10px; text-align: right; font-weight: 700;">1</td></tr>
+      <tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" style="padding: 10px; text-align: left;">ICT</th><td style="padding: 10px; text-align: right;">74</td><td style="padding: 10px; text-align: center;">Pass</td><td style="padding: 10px; text-align: right; font-weight: 700;">1</td></tr>
+    </tbody>
+  </table>
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+    <div style="border: 2px solid #1E6FD9; border-radius: 10px; padding: 12px;"><div style="font-size: 11px; color: #475569;">Total points</div><div style="font: 700 22px 'Sora', sans-serif;">17 <span style="font-size: 13px; color: #475569;">of 20</span></div></div>
+    <div style="border: 1px solid #CDEBD7; background: #F0FAF3; border-radius: 10px; padding: 12px;"><div style="font-size: 11px; color: #475569;">Best principal</div><div style="font: 700 22px 'Sora', sans-serif;">Mathematics A</div></div>
+    <div style="border: 1px solid #CDEBD7; background: #F0FAF3; border-radius: 10px; padding: 12px;"><div style="font-size: 11px; color: #475569;">Position</div><div style="font: 700 22px 'Sora', sans-serif;">4 <span style="font-size: 13px; color: #475569;">of 58</span></div></div>
+  </section>
+  <p style="margin: 0; font-size: 11px; color: #475569;">Principal grades A to F with points A 6, B 5, C 4, D 3, E 2, O 1, F 0. Each subsidiary pass is 1 point. The school sets its own scale in Settings.</p>
+  <section style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: auto;">
+    <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px;"><div style="font-weight: 700; margin-bottom: 6px;">Class teacher</div><p style="margin: 0; font-size: 13px; line-height: 1.5; color: #334155;">Disciplined and well prepared. Chemistry practicals need more care.</p><div style="margin-top: 18px; border-top: 1px solid #94A3B8; padding-top: 4px; font-size: 11px; color: #475569;">Olu Ibrahim</div></div>
+    <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px;"><div style="font-weight: 700; margin-bottom: 6px;">Head teacher</div><p style="margin: 0; font-size: 13px; line-height: 1.5; color: #334155;">On course for a strong final result.</p><div style="margin-top: 18px; border-top: 1px solid #94A3B8; padding-top: 4px; font-size: 11px; color: #475569;">Jonas Weber</div></div>
+  </section>
+  <footer style="display: flex; justify-content: space-between; font-size: 11px; color: #475569; border-top: 1px solid #E2E8F0; padding-top: 10px;"><span>Next term begins 2 Feb 2027</span><span>Made with KlassApp</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { principal: [
+      { s: 'Mathematics', p1: 88, p2: 84, p3: '—', g: 'A', pts: 6 },
+      { s: 'Physics', p1: 76, p2: 71, p3: 74, g: 'B', pts: 5 },
+      { s: 'Chemistry', p1: 64, p2: 58, p3: 61, g: 'C', pts: 4 }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

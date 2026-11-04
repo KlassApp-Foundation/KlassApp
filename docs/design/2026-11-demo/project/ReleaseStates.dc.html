@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Approval and release · states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; padding: 24px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 20px; align-content: start;">
+  <section aria-label="Empty" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Empty · approvals</div>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 14px; padding: 32px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">Nothing waiting for approval</h2>
+      <p style="margin: 0; font-size: 0.86rem; color: #475569; line-height: 1.5;">58 of 129 exams have marks. 71 haven't been submitted yet.</p>
+      <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Remind 9 teachers</button>
+    </div>
+  </section>
+  <section aria-label="Loading" aria-busy="true" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Loading · releasing</div>
+    <div style="font-weight: 700;">Releasing Mid Term marks to 2 classes…</div>
+    <div style="height: 8px; border-radius: 999px; background: #E2E8F0; overflow: hidden;"><div style="width: 62%; height: 100%; background: #15803D;"></div></div>
+    <div style="font-size: 0.82rem; color: #475569;">Report cards updated for 206 students · messages sent 190 of 307</div>
+    <div class="ka-sk" style="height: 52px; border-radius: 12px;"></div>
+    <div class="ka-sk" style="height: 52px; border-radius: 12px;"></div>
+  </section>
+  <section aria-label="Error" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Error · some messages failed</div>
+    <div role="alert" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-weight: 700; color: #78350F;">Released, but 12 parents weren't told</div>
+      <p style="margin: 0; font-size: 0.86rem; color: #78350F; line-height: 1.5;">Their results are visible in KlassApp. WhatsApp didn't accept 12 messages (number not on WhatsApp or opted out).</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;"><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Try the 12 again</button><button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px; background: #FFFFFF;">See the 12 parents</button></div>
+    </div>
+    <div role="alert" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px 16px; font-size: 0.86rem; color: #7F1D1D; line-height: 1.5;"><strong>Release didn't start.</strong> Nothing was shown to families. Check your connection and press Release again.</div>
+  </section>
+  <section aria-label="Done" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Done</div>
+    <dc-import name="Lifecycle" current="released" hint-size="100%,112px"></dc-import>
+    <div role="status" style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 14px 16px; font-size: 0.88rem; color: #14532D; line-height: 1.5;"><strong>Mid Term marks released for Primary Four and Primary Seven.</strong> 307 parents told. Report cards are ready to download.</div>
+    <a href="ReportCards.dc.html" class="ds-btn ds-btn-outline" style="min-height: 44px; align-self: flex-start;">Open report cards</a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

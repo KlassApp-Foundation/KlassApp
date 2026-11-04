@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks lifecycle</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<ol aria-label="Where these marks are" style="box-sizing: border-box; width: 100%; margin: 0; padding: 12px; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; background: #FAFAF5; border: 1px solid #E2E8F0; border-radius: 14px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+    <li aria-current="{{s.current}}" style="{{s.box}}">
+      <span style="{{s.dot}}">{{s.num}}</span>
+      <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+        <span style="font-weight: 700; font-size: 0.85rem;">{{s.name}}</span>
+        <span style="font-size: 0.75rem; color: #475569; line-height: 1.35;">{{s.desc}}</span>
+      </span>
+    </li>
+  </sc-for>
+</ol>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"current":{"editor":"enum","options":["saved","submitted","approved","released"],"default":"saved"},"$preview":{"width":1032,"height":112}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const order = ['saved', 'submitted', 'approved', 'released'];
+    const cur = order.indexOf(this.props.current ?? 'saved');
+    const S = [
+      ['Saved', 'A draft. Only the teacher sees it.'],
+      ['Submitted', 'Sent for approval. Locked for editing.'],
+      ['Approved', 'Checked. Parents still see nothing.'],
+      ['Released', 'Parents and students can see it.']
+    ];
+    const steps = S.map((s, i) => {
+      const done = i < cur, now = i === cur;
+      const box = 'display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; ' +
+        (now ? 'background: #FFFFFF; border: 2px solid #1E293B;' : done ? 'background: #FFFFFF; border: 1px solid #E2E8F0;' : 'background: transparent; border: 1px dashed #CBD5E1;');
+      const dot = 'flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 700 0.75rem Sora, sans-serif; ' +
+        (done ? 'background: #15803D; color: #FFFFFF;' : now ? 'background: #1E293B; color: #FFFFFF;' : 'background: #FFFFFF; color: #475569; border: 1px solid #CBD5E1;');
+      return { name: s[0], desc: s[1], num: done ? '✓' : String(i + 1), current: now ? 'step' : 'false', box, dot };
+    });
+    return { steps };
+  }
+}
+</script>
+</body>
+</html>

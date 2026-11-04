@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fees · Fee structure</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:10px 12px;font-variant-numeric:tabular-nums}
+.ka-h1{margin:0;font-family:'Sora',system-ui,sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em}
+.ka-h2{margin:0;font:600 1rem 'Sora',sans-serif}
+.ka-card{border:1px solid #E2E8F0;border-radius:14px;padding:18px 20px;background:#FFFFFF}
+.ka-lbl{font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748B}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}
+.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="fees" role="admin" hint-size="248px,1100px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Fees" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+        <div><h1 class="ka-h1">Fees</h1><p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">Term 3, 2026 · amounts in UGX, from the school's country</p></div>
+        <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16m8-8H4"></path></svg> Add a fee</button>
+      </div>
+      <nav aria-label="Fees sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0;">
+        <a href="FeesStructure.dc.html" aria-current="page" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; margin-bottom: -1px;">Fee structure</a>
+        <a href="FeesBalances.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Balances and payments</a>
+      </nav>
+      <div class="ka-card" style="padding: 0; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; min-width: 760px;">
+          <thead><tr style="border-bottom: 2px solid #1E6FD9;"><th scope="col" class="ka-th">Fee</th><th scope="col" class="ka-th" style="text-align: right;">Amount</th><th scope="col" class="ka-th">Duration</th><th scope="col" class="ka-th">Applies to</th><th scope="col" class="ka-th"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Actions</span></th></tr></thead>
+          <tbody><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Tuition · Nursery</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 600,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">Termly</span></td><td class="ka-td">Baby, Middle and Top Class</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Tuition · Nursery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Tuition · Lower primary</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 850,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">Termly</span></td><td class="ka-td">Primary One to Three</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Tuition · Lower primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Tuition · Upper primary</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 1,020,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">Termly</span></td><td class="ka-td">Primary Four to Seven</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Tuition · Upper primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Lunch</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 180,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">Termly</span></td><td class="ka-td">All classes</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Lunch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Development fee</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 100,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">Yearly</span></td><td class="ka-td">All classes</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Development fee"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Admission fee</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 50,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">One-off</span></td><td class="ka-td">New students only</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Admission fee"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Primary Seven exam registration</th><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 70,000</td><td class="ka-td"><span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">One-off</span></td><td class="ka-td">Primary Seven</td><td class="ka-td" style="text-align: right;"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="Edit Primary Seven exam registration"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button></td></tr></tbody>
+        </table>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+        <section class="ka-card" style="flex: 2 1 480px; padding: 0; overflow-x: auto;">
+          <h2 class="ka-h2" style="padding: 16px 20px 8px;">Total per student, Term 3</h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+            <thead><tr style="border-bottom: 2px solid #1E6FD9;"><th scope="col" class="ka-th" style="padding-left: 20px;">Classes</th><th scope="col" class="ka-th">Made of</th><th scope="col" class="ka-th" style="text-align: right; padding-right: 20px;">Term total</th></tr></thead>
+            <tbody><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Baby, Middle and Top Class</th><td class="ka-td" style="color: #475569;">600,000 tuition + 180,000 lunch</td><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 780,000</td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Primary One to Three</th><td class="ka-td" style="color: #475569;">850,000 tuition + 180,000 lunch</td><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 1,030,000</td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Primary Four to Six</th><td class="ka-td" style="color: #475569;">1,020,000 tuition + 180,000 lunch</td><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 1,200,000</td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Primary Seven</th><td class="ka-td" style="color: #475569;">1,200,000 + 70,000 exam registration</td><td class="ka-td" style="text-align: right; font-weight: 700;">UGX 1,270,000</td></tr></tbody>
+          </table>
+        </section>
+        <aside style="flex: 1 1 260px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 14px; padding: 16px 18px; font-size: 0.85rem; color: #1E3A8A; line-height: 1.55;">
+          <strong>How durations count</strong><br>Termly fees count every term. Yearly fees count in Term 1 only, so the development fee isn't in these Term 3 totals. One-off fees count once, in the term they're charged.
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
