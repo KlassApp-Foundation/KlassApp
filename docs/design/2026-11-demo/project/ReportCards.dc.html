@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Report cards · Primary Seven</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:8px 12px;font-variant-numeric:tabular-nums}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="reports" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Report cards" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Report cards</h1>
+          <p style="margin: 6px 0 0; font-size: 0.9rem; color: #475569;">Built from released marks only</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <label for="rc" style="font-size: 0.8rem; color: #475569;">Class</label>
+          <select id="rc" class="ds-input" style="min-height: 44px; width: 160px;"><option>Primary Seven</option></select>
+          <label for="re" style="font-size: 0.8rem; color: #475569;">Exam</label>
+          <select id="re" class="ds-input" style="min-height: 44px; width: 220px;"><option>Mid Term · Term 3, 2026</option></select>
+          <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download all 98 cards (one PDF)
+          </button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+          <div style="border: 1px solid #D6E6FA; background: #F0F6FE; border-radius: 14px; padding: 16px; display: flex; gap: 12px; align-items: center;">
+            <span style="width: 40px; height: 40px; border-radius: 12px; background: #FFFFFF; color: {{k.fg}}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="{{k.icon}}"></path></svg></span>
+            <div><div style="font: 700 1.3rem 'Sora', sans-serif;">{{k.v}}</div><div style="font-size: 0.78rem; color: #475569;">{{k.l}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 1 1 340px; border: 1px solid #CDEBD7; background: #F0FAF3; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">Average by subject</h2>
+          <sc-for list="{{subj}}" as="s" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 120px 1fr 44px; gap: 10px; align-items: center; font-size: 0.85rem;">
+              <span>{{s.n}}</span>
+              <div style="height: 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #CDEBD7; overflow: hidden;" aria-hidden="true"><div style="height: 100%; width: {{s.w}}; background: #1E6FD9;"></div></div>
+              <strong style="text-align: right;">{{s.v}}</strong>
+            </div>
+          </sc-for>
+        </section>
+        <section style="flex: 1 1 340px; border: 1px solid #CDEBD7; background: #F0FAF3; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">Students by division</h2>
+          <div style="display: flex; align-items: flex-end; gap: 14px; height: 130px; padding-top: 8px;" role="img" aria-label="Division I 21, II 46, III 19, IV 9, U 3">
+            <sc-for list="{{divs}}" as="d" hint-placeholder-count="5">
+              <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end;">
+                <span style="font-size: 0.78rem; font-weight: 700;">{{d.n}}</span>
+                <div style="width: 100%; height: {{d.h}}; background: {{d.c}}; border-radius: 6px 6px 0 0;"></div>
+                <span style="font-size: 0.78rem; color: #475569;">{{d.l}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="border: 1px solid #E2E8F0; border-radius: 14px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 900px;">
+          <thead><tr style="border-bottom: 2px solid #1E6FD9;">
+            <th scope="col" class="ka-th">Position</th><th scope="col" class="ka-th">Student</th><th scope="col" class="ka-th">Stream</th>
+            <th scope="col" class="ka-th" style="text-align: right;">Eng</th><th scope="col" class="ka-th" style="text-align: right;">Maths</th><th scope="col" class="ka-th" style="text-align: right;">Sci</th><th scope="col" class="ka-th" style="text-align: right;">Soc St</th>
+            <th scope="col" class="ka-th" style="text-align: right;">Total</th><th scope="col" class="ka-th" style="text-align: right;">Aggregate</th><th scope="col" class="ka-th">Division</th><th scope="col" class="ka-th"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Report card</span></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+              <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td class="ka-td"><strong>{{r.pos}}</strong> <span style="color: #475569;">of 98</span></td>
+                <th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">{{r.name}}</th>
+                <td class="ka-td">{{r.st}}</td>
+                <td class="ka-td" style="text-align: right;">{{r.e}}</td><td class="ka-td" style="text-align: right;">{{r.m}}</td><td class="ka-td" style="text-align: right;">{{r.s}}</td><td class="ka-td" style="text-align: right;">{{r.ss}}</td>
+                <td class="ka-td" style="text-align: right; font-weight: 700;">{{r.t}}</td><td class="ka-td" style="text-align: right;">{{r.agg}}</td>
+                <td class="ka-td"><span style="padding: 2px 10px; border-radius: 6px; background: #F1F5F9; font-weight: 700;">{{r.div}}</span></td>
+                <td class="ka-td"><a href="CardPrimary.dc.html" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;" aria-label="{{r.dl}}">PDF</a></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const d = [['Nia Brown', 'W', 96, 92, 94, 90, 4, 'I'], ['Kwame Asante', 'E', 91, 95, 88, 86, 5, 'I'], ['Lina Haddad', 'E', 89, 84, 90, 88, 6, 'I'],
+      ['Mateo Rossi', 'W', 85, 88, 79, 83, 8, 'I'], ['Priya Nair', 'E', 82, 77, 85, 80, 10, 'I'], ['Tendai Moyo', 'W', 74, 69, 72, 70, 15, 'II'],
+      ['Sofia Petrov', 'E', 66, 58, 63, 61, 21, 'II'], ['Yusuf Bello', 'W', 52, 47, 55, 49, 27, 'III']];
+    const rows = d.map((x, i) => ({ pos: i + 1, name: x[0], st: 'Primary Seven ' + x[1], e: x[2], m: x[3], s: x[4], ss: x[5], t: x[2] + x[3] + x[4] + x[5], agg: x[6], div: x[7], dl: 'Download report card for ' + x[0] }));
+    return {
+      kpis: [
+        { v: '98', l: 'report cards ready', bg: 'rgba(30,111,217,0.10)', fg: '#1E6FD9', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+        { v: '68.4', l: 'class average', bg: 'rgba(22,163,74,0.10)', fg: '#15803D', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+        { v: '21', l: 'in Division I', bg: 'rgba(139,92,246,0.10)', fg: '#7C3AED', icon: 'M5 13l4 4L19 7' },
+        { v: '3', l: 'ungraded (U)', bg: 'rgba(217,119,6,0.10)', fg: '#B45309', icon: 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+      ],
+      subj: [['English', 72], ['Mathematics', 64], ['Science', 69], ['Social Studies', 68]].map(s => ({ n: s[0], v: s[1], w: s[1] + '%' })),
+      divs: [['I', 21, '#15803D'], ['II', 46, '#1E6FD9'], ['III', 19, '#64748B'], ['IV', 9, '#B45309'], ['U', 3, '#B91C1C']].map(x => ({ l: 'Div ' + x[0], n: x[1], c: x[2], h: Math.round(x[1] / 46 * 90) + 'px' })),
+      rows
+    };
+  }
+}
+</script>
+</body>
+</html>

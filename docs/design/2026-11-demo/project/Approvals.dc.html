@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks · Approvals</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="marks" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Marks" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Marks</h1>
+          <p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">Term 3, 2026 · check what teachers submit, then release it to families</p>
+        </div>
+      </div>
+      <nav aria-label="Marks sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0;">
+        <a href="Approvals.dc.html" aria-current="page" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; margin-bottom: -1px;">Approvals <span style="padding: 1px 8px; border-radius: 999px; background: #1E6FD9; color: #FFFFFF; font-size: 0.72rem;">6</span></a>
+        <a href="MarkSheet.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Mark sheets</a>
+        <a href="MarksRelease.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Marks Release</a>
+      </nav>
+      <dc-import name="Lifecycle" current="submitted" hint-size="100%,112px"></dc-import>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <label for="fc" style="font-size: 0.8rem; color: #64748B;">Class</label>
+        <select id="fc" class="ds-input" style="min-height: 44px; width: 180px;"><option>All classes</option></select>
+        <label for="ft" style="font-size: 0.8rem; color: #64748B;">Exam</label>
+        <select id="ft" class="ds-input" style="min-height: 44px; width: 200px;"><option>Mid Term</option></select>
+        <span style="flex: 1;"></span>
+        <span style="font-size: 0.82rem; color: #475569;">3 selected</span>
+        <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Approve 3 subjects</button>
+      </div>
+
+      <div style="border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+          <div style="border-bottom: 1px solid #E2E8F0;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 14px 18px;">
+              <input type="checkbox" checked="{{r.sel}}" aria-label="{{r.selLabel}}" style="width: 20px; height: 20px; accent-color: #15803D;">
+              <div style="flex: 2 1 220px; min-width: 0;">
+                <div style="font-weight: 700;">{{r.cls}} · {{r.subject}}</div>
+                <div style="font-size: 0.8rem; color: #64748B;">{{r.teacher}} · submitted {{r.when}}</div>
+              </div>
+              <div style="flex: 1 1 200px; font-size: 0.82rem; color: #334155; font-variant-numeric: tabular-nums;">{{r.count}} marks · average <strong>{{r.avg}}</strong> · range {{r.range}}</div>
+              <sc-if value="{{r.flag}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 0.78rem; font-weight: 700; color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 999px; padding: 3px 10px;">{{r.flag}}</span>
+              </sc-if>
+              <div style="display: flex; gap: 8px;">
+                <a href="MarkSheet.dc.html" class="ds-btn ds-btn-ghost" style="min-height: 44px;">View marks</a>
+                <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Return</button>
+                <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Approve</button>
+              </div>
+            </div>
+            <sc-if value="{{r.returning}}" hint-placeholder-val="{{false}}">
+              <div style="margin: 0 18px 16px 50px; padding: 14px; border: 1px solid #FECACA; background: #FEF2F2; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <label for="why" style="font-weight: 700; font-size: 0.85rem; color: #7F1D1D;">Why are you returning it? Ana Lima sees this note.</label>
+                <textarea id="why" class="ds-input" rows="2" style="width: 100%; background: #FFFFFF;">Primary Six W averages 12 points below Primary Six E on the same paper. Please re-check the marking of section B and resubmit.</textarea>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                  <button type="button" class="ds-btn ds-btn-ghost" style="min-height: 44px;">Cancel</button>
+                  <button type="button" class="ds-btn ds-btn-danger" style="min-height: 44px;">Return to Ana Lima</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const r = (cls, subject, teacher, when, count, avg, range, sel, flag, returning) => ({ cls, subject, teacher, when, count, avg, range, sel, flag: flag || false, returning: !!returning, selLabel: 'Select ' + cls + ' ' + subject });
+    return {
+      rows: [
+        r('Primary Five', 'English', 'Maria Santos', 'today, 08:40', '112 of 112', '68', '31 to 96', true),
+        r('Primary Five', 'Mathematics', 'Daniel Okafor', 'today, 10:05', '112 of 112', '64', '18 to 99', true),
+        r('Primary Six E', 'Mathematics', 'Daniel Okafor', 'yesterday', '53 of 53', '61', '22 to 94', true),
+        r('Primary Six W', 'Mathematics', 'Ana Lima', 'yesterday', '51 of 51', '49', '8 to 81', false, '12 below Primary Six E', true),
+        r('Primary Four', 'Science', 'Samuel Mensah', '2 Nov', '108 of 108', '71', '35 to 98', false),
+        r('Top Class', 'Language', 'Lucy Kamau', '1 Nov', '88 of 88', 'ratings', 'Developing to Excellent', false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

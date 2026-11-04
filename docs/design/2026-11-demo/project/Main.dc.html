@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exam sets · New set</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}*{box-sizing:border-box}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-switch{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:999px;background:#CBD5E1;position:relative;cursor:pointer;flex-shrink:0;margin:0;transition:background .15s ease}
+.ka-switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease}
+.ka-switch:checked{background:#15803D}.ka-switch:checked::after{left:19px}
+.ka-switch:focus-visible{outline:2px solid #1E6FD9;outline-offset:2px}
+.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="examsets" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Exam sets" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 24px;">
+      <nav aria-label="Breadcrumb" style="font-size: 0.8rem; color: #64748B; display: flex; gap: 6px; align-items: center;">
+        <a href="ExamSetList.dc.html" style="color: #1D4ED8; text-decoration: none;">Exam sets</a><span aria-hidden="true">/</span><span>New set</span>
+      </nav>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">New exam set</h1>
+          <p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">One set creates every exam for the term, class by class. Teachers then enter marks under Marks.</p>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
+        <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+
+          <section style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; font-weight: 600;">1. Term</h2>
+            <label for="term" style="font-size: 0.78rem; font-weight: 600; color: #1E293B;">Term</label>
+            <select id="term" class="ds-input" style="max-width: 320px; min-height: 44px;">
+              <option>Term 3, 2026 (current)</option>
+              <option>Term 1, 2027</option>
+            </select>
+          </section>
+
+          <section style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; font-weight: 600;">2. Exam types</h2>
+              <span style="font-size: 0.8rem; color: #64748B;">3 of 4 switched on</span>
+            </div>
+            <div style="display: flex; flex-direction: column; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+              <sc-for list="{{types}}" as="t" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; flex-wrap: wrap; min-height: 60px;">
+                  <input type="checkbox" class="ka-switch" checked="{{t.on}}" aria-label="{{t.aria}}">
+                  <div style="flex: 1 1 200px; min-width: 0;">
+                    <div style="font-weight: 600; font-size: 0.9rem;">{{t.name}}</div>
+                    <div style="font-size: 0.78rem; color: #64748B;">{{t.kind}}</div>
+                  </div>
+                  <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #1E293B; min-height: 44px;">
+                    <input type="checkbox" checked="{{t.counts}}" style="width: 18px; height: 18px; accent-color: #1E6FD9;">
+                    Counts towards report total
+                  </label>
+                  <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 44px;">Rename</button>
+                </div>
+              </sc-for>
+            </div>
+            <div>
+              <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v16m8-8H4"></path></svg>
+                Add exam type
+              </button>
+            </div>
+          </section>
+
+          <section style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; font-weight: 600;">3. Classes</h2>
+              <span style="font-size: 0.8rem; color: #64748B;">10 of 10 classes · every stream</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" aria-pressed="true" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #15803D; background: #15803D; color: #FFFFFF; font: 600 0.85rem 'DM Sans', sans-serif; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg>
+                Whole school
+              </button>
+              <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #1E293B; font: 600 0.85rem 'DM Sans', sans-serif; cursor: pointer;">Clear</button>
+            </div>
+            <sc-for list="{{levels}}" as="lv" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #64748B;">{{lv.name}}</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <sc-for list="{{lv.classes}}" as="c" hint-placeholder-count="3">
+                    <span style="display: inline-flex; align-items: stretch; border-radius: 999px; border: 1px solid #86EFAC; background: #F0FDF4; overflow: hidden;">
+                      <button type="button" aria-pressed="true" style="min-height: 44px; padding: 0 12px 0 14px; border: 0; background: transparent; color: #14532D; font: 600 0.85rem 'DM Sans', sans-serif; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg>
+                        {{c.name}}
+                      </button>
+                      <button type="button" aria-label="{{c.expandLabel}}" aria-expanded="{{c.open}}" style="min-width: 40px; min-height: 44px; border: 0; border-left: 1px solid #BBF7D0; background: transparent; color: #14532D; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="{{c.chev}}"></path></svg>
+                      </button>
+                    </span>
+                  </sc-for>
+                </div>
+                <sc-if value="{{lv.hasOpen}}" hint-placeholder-val="{{false}}">
+                  <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; background: #FAFAF5; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 0.82rem; color: #1E293B;"><strong>Primary Five</strong> · pick the whole class or one stream</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" role="radiogroup" aria-label="Primary Five streams">
+                      <label style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #15803D; background: #FFFFFF; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;"><input type="radio" name="p5" checked style="accent-color: #15803D;"> Whole class · 112 students</label>
+                      <label style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #CBD5E1; background: #FFFFFF; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem;"><input type="radio" name="p5" style="accent-color: #15803D;"> Primary Five E only · 57</label>
+                      <label style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #CBD5E1; background: #FFFFFF; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem;"><input type="radio" name="p5" style="accent-color: #15803D;"> Primary Five W only · 55</label>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+
+        <aside style="flex: 1 1 300px; max-width: 380px; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF;">
+          <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1rem; font-weight: 600;">This set will create</h2>
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-family: 'Sora', system-ui, sans-serif; font-size: 2.2rem; font-weight: 700; letter-spacing: -0.02em;">129</span>
+            <span style="font-size: 0.9rem; color: #64748B;">exams</span>
+          </div>
+          <dl style="margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 0.85rem;">
+            <dt style="color: #64748B;">Term</dt><dd style="margin: 0; font-weight: 600;">Term 3, 2026</dd>
+            <dt style="color: #64748B;">Exam types</dt><dd style="margin: 0; font-weight: 600;">3</dd>
+            <dt style="color: #64748B;">Classes</dt><dd style="margin: 0; font-weight: 600;">10 · whole school</dd>
+            <dt style="color: #64748B;">Subjects across classes</dt><dd style="margin: 0; font-weight: 600;">43</dd>
+            <dt style="color: #64748B;">Teachers who get exams</dt><dd style="margin: 0; font-weight: 600;">24</dd>
+          </dl>
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 12px 14px; font-size: 0.8rem; color: #1E3A8A; line-height: 1.5;">Each subject's teacher sees their exams under <strong>Marks › To mark</strong>. Subjects without a teacher are listed on the set's page.</div>
+          <button type="button" class="ds-btn ds-btn-primary ds-btn-lg" style="width: 100%; min-height: 48px;">Create 129 exams</button>
+          <a href="ExamSetList.dc.html" class="ds-btn ds-btn-outline" style="width: 100%; min-height: 44px;">Cancel</a>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const down = 'M19 9l-7 7-7-7', up = 'M5 15l7-7 7 7';
+    const cls = (n, open) => ({ name: n, open: open ? 'true' : 'false', chev: open ? up : down, expandLabel: 'Pick a stream in ' + n });
+    const types = [
+      { name: 'Beginning of Term', kind: 'Shared default', on: true, counts: true },
+      { name: 'Mid Term', kind: 'Shared default', on: true, counts: true },
+      { name: 'End of Term', kind: 'Shared default', on: true, counts: true },
+      { name: 'Weekly Test', kind: "Riverside's own type", on: false, counts: false }
+    ].map(t => ({ ...t, aria: (t.on ? 'Switch off ' : 'Switch on ') + t.name }));
+    return {
+      types,
+      levels: [
+        { name: 'Nursery', hasOpen: false, classes: [cls('Baby Class'), cls('Middle Class'), cls('Top Class')] },
+        { name: 'Lower primary', hasOpen: false, classes: [cls('Primary One'), cls('Primary Two'), cls('Primary Three')] },
+        { name: 'Upper primary', hasOpen: true, classes: [cls('Primary Four'), cls('Primary Five', true), cls('Primary Six'), cls('Primary Seven')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

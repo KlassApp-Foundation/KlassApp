@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Record a payment · phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:10px 12px;font-variant-numeric:tabular-nums}
+.ka-h1{margin:0;font-family:'Sora',system-ui,sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em}
+.ka-h2{margin:0;font:600 1rem 'Sora',sans-serif}
+.ka-card{border:1px solid #E2E8F0;border-radius:14px;padding:18px 20px;background:#FFFFFF}
+.ka-lbl{font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748B}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}
+</style>
+</helmet>
+<div style="width: 375px; height: 900px; background: #FAFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; position: relative;">
+  <dc-import name="PhoneBar" title="Amara Okoro" back="true" hint-size="375px,64px"></dc-import>
+  <div style="padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="height: 300px;"></div>
+    <div style="position: absolute; inset: 64px 0 0 0; background: rgba(15,23,42,0.45);"></div>
+    <section role="dialog" aria-labelledby="sp-t" style="position: absolute; left: 0; right: 0; bottom: 0; background: #FFFFFF; border-radius: 20px 20px 0 0; padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+      <span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 999px; background: #CBD5E1;"></span>
+      <h2 id="sp-t" class="ka-h2" style="font-size: 1.1rem;">Record a payment</h2>
+      <div style="background: #F0F6FE; border: 1px solid #D6E6FA; border-radius: 12px; padding: 12px; font-size: 0.85rem;">Term 3 total UGX 1,200,000 · paid UGX 900,000<br><strong>Owes UGX 300,000</strong></div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600;">Amount (UGX)<input class="ds-input" value="300,000" inputmode="decimal" style="min-height: 52px; font-size: 1.2rem; font-weight: 700;"></label>
+      <div role="radiogroup" aria-label="Paid by" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;"><label style="min-height: 48px; border-radius: 10px; border: 2px solid #15803D; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="pm" checked style="accent-color: #15803D;"> Mobile money</label><label style="min-height: 48px; border-radius: 10px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="pm"  style="accent-color: #15803D;"> Bank</label><label style="min-height: 48px; border-radius: 10px; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600;"><input type="radio" name="pm"  style="accent-color: #15803D;"> Cash</label></div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600;">Reference (optional)<input class="ds-input" placeholder="Receipt or transaction number" style="min-height: 48px;"></label>
+      <button type="button" class="ds-btn ds-btn-primary" style="min-height: 52px;">Record UGX 300,000 payment</button>
+      <button type="button" class="ds-btn ds-btn-ghost" style="min-height: 44px;">Cancel</button>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

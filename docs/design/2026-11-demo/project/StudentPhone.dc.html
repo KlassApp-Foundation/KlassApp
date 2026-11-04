@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Student profile · phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="width: 375px; height: 1560px; background: #FAFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <dc-import name="PhoneBar" title="Amara Okoro" back="true" hint-size="375px,64px"></dc-import>
+  <div style="padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px;">
+    <section style="background: #F0F6FE; border: 1px solid #D6E6FA; border-radius: 16px; padding: 16px; display: flex; gap: 14px;">
+      <div style="width: 84px; height: 104px; border-radius: 12px; background: #1E6FD9; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font: 700 1.7rem 'Sora', sans-serif; flex-shrink: 0;">AO</div>
+      <dl style="margin: 0; display: grid; grid-template-columns: 1fr; gap: 6px; font-size: 0.82rem;">
+        <div><dt style="font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: .04em; font-weight: 600;">Student number</dt><dd style="margin: 0; font-weight: 700;">RVS-0431</dd></div>
+        <div><dt style="font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: .04em; font-weight: 600;">Class</dt><dd style="margin: 0; font-weight: 700;">Primary Five E</dd></div>
+        <div><dt style="font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: .04em; font-weight: 600;">Born · joined</dt><dd style="margin: 0; font-weight: 700;">9 Jun 2016 · Feb 2022</dd></div>
+        <div><dt style="font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: .04em; font-weight: 600;">Gender</dt><dd style="margin: 0; font-weight: 700;">Female</dd></div>
+      </dl>
+    </section>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+      <a href="StudentActions.dc.html" class="ds-btn ds-btn-primary" style="min-height: 48px; padding: 0 6px; font-size: 0.8rem;">Payment</a>
+      <a href="StudentActions.dc.html" class="ds-btn ds-btn-outline" style="min-height: 48px; padding: 0 6px; font-size: 0.8rem;">Marks</a>
+      <a href="StudentActions.dc.html" class="ds-btn ds-btn-outline" style="min-height: 48px; padding: 0 6px; font-size: 0.8rem;">Attendance</a>
+    </div>
+    <nav aria-label="Profile sections" style="display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid #E2E8F0;">
+      <a href="#" aria-current="page" style="min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; white-space: nowrap;">Overview</a>
+      <a href="#" style="min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569; white-space: nowrap;">Performance</a>
+      <a href="#" style="min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569; white-space: nowrap;">Attendance</a>
+      <a href="#" style="min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569; white-space: nowrap;">Fees</a>
+    </nav>
+    <section style="background: #F0F6FE; border: 1px solid #D6E6FA; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+      <h2 style="margin: 0; font: 600 0.95rem 'Sora', sans-serif;">Performance</h2>
+      <div><span style="font: 700 1.4rem 'Sora', sans-serif;">91.0</span> <span style="font-size: 0.8rem; color: #475569;">average · Mid Term, not released yet</span></div>
+      <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Download current progress report</button>
+    </section>
+    <section style="background: #F0FAF3; border: 1px solid #CDEBD7; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+      <h2 style="margin: 0; font: 600 0.95rem 'Sora', sans-serif;">Attendance</h2>
+      <div><span style="font: 700 1.4rem 'Sora', sans-serif;">94%</span> <span style="font-size: 0.8rem; color: #475569;">58 of 62 days</span></div>
+      <div style="font-size: 0.8rem; color: #334155;">Last absent 21 Oct · "Hospital visit, note from parent."</div>
+    </section>
+    <section style="background: #F0FAF3; border: 1px solid #CDEBD7; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+      <h2 style="margin: 0; font: 600 0.95rem 'Sora', sans-serif;">Fees · Term 3</h2>
+      <div><span style="font: 700 1.4rem 'Sora', sans-serif;">UGX 300,000</span> <span style="font-size: 0.8rem; color: #475569;">still owed</span></div>
+      <div style="height: 8px; border-radius: 999px; background: #E2E8F0; overflow: hidden;" aria-hidden="true"><div style="width: 75%; height: 100%; background: #15803D;"></div></div>
+      <div style="font-size: 0.8rem; color: #475569;">UGX 900,000 paid of UGX 1,200,000</div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1560}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>
