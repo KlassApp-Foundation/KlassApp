@@ -4,6 +4,7 @@ namespace Tests\Feature\Onboarding;
 
 use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Mail\StudentParentSetupLinkMail;
 use App\Livewire\ManualOnboardingWizard;
 use App\Models\AcademicYear;
 use App\Models\Message;
@@ -13,6 +14,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentParentLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppPendingNotification;
@@ -230,6 +232,82 @@ class StudentParentImportTest extends TestCase
         $this->assertSame(0, WhatsAppPendingNotification::query()->count());
         $this->assertSame(0, WhatsAppPendingParentLink::query()->count());
         $this->assertSame(0, Message::query()->count());
+    }
+
+    public function test_uploaded_student_email_becomes_the_setup_link_address(): void
+    {
+        Queue::fake();
+        Notification::fake();
+        Http::fake();
+        Mail::fake();
+
+        $csv = implode("\n", [
+            'Name,Class,Stream,Email,Parent Name,Parent Phone,Parent Email',
+            'Moses Kato,Baby Class,,moses.kato@example.test,Daniel Kato,+256700000700,daniel.kato@example.test',
+            '',
+        ]);
+
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $studentsIndex = null;
+        foreach ($component->instance()->steps as $index => $step) {
+            if (($step['key'] ?? '') === 'students') {
+                $studentsIndex = $index;
+                break;
+            }
+        }
+        $this->assertNotNull($studentsIndex);
+
+        $component
+            ->call('goToStep', $studentsIndex)
+            ->set('studentUpload', UploadedFile::fake()->createWithContent('student-email.csv', $csv))
+            ->call('next');
+
+        $moses = User::query()
+            ->where('school_id', $this->school->id)
+            ->where('usergroup_id', 6)
+            ->where('name', 'Moses Kato')
+            ->firstOrFail();
+
+        $this->assertSame('moses.kato@example.test', $moses->email);
+        $this->assertNull($moses->password);
+
+        $invite = TeacherInvite::query()
+            ->where('school_id', $this->school->id)
+            ->where('user_id', $moses->id)
+            ->first();
+
+        $this->assertNotNull($invite);
+        $this->assertSame('student', $invite->role);
+
+        Mail::assertQueued(StudentParentSetupLinkMail::class, function (StudentParentSetupLinkMail $mail) {
+            return $mail->role === 'student'
+                && $mail->name === 'Moses Kato'
+                && str_contains($mail->inviteUrl, '/invite/account/');
+        });
+
+        $parent = User::query()
+            ->where('school_id', $this->school->id)
+            ->where('usergroup_id', 7)
+            ->where('name', 'Daniel Kato')
+            ->firstOrFail();
+
+        $this->assertSame('daniel.kato@example.test', $parent->email);
+        $this->assertNull($parent->password);
+
+        $parentInvite = TeacherInvite::query()
+            ->where('school_id', $this->school->id)
+            ->where('user_id', $parent->id)
+            ->first();
+
+        $this->assertNotNull($parentInvite);
+        $this->assertSame('parent', $parentInvite->role);
+
+        Mail::assertQueued(StudentParentSetupLinkMail::class, function (StudentParentSetupLinkMail $mail) {
+            return $mail->role === 'parent'
+                && $mail->name === 'Daniel Kato'
+                && str_contains($mail->inviteUrl, '/invite/account/');
+        });
     }
 
     private function student(string $name): User

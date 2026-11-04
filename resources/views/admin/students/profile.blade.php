@@ -32,6 +32,12 @@
         back-label="Students"
     >
         <x-slot:actions>
+            @if(!empty($page['can_resend']))
+                <form method="POST" action="{{ url('/admin/students/'.$student->id.'/resend-setup') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="ds-btn ds-btn-ghost text-sm" style="min-height:44px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#0F172A;cursor:pointer;" data-testid="resend-setup-link">Resend setup link</button>
+                </form>
+            @endif
             <a data-testid="profile-message" href="{{ $page['parents'][0]['profile_url'] ?? url('/admin/parents') }}" class="ds-btn ds-btn-ghost text-sm" style="min-height:44px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #E2E8F0;border-radius:8px;background:transparent;color:#0F172A;text-decoration:none;">Message</a>
             <a href="{{ $editUrl }}" class="ds-btn ds-btn-ghost text-sm" style="border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;color:#0F172A;background:#fff;">Edit</a>
             <div style="position:relative;">

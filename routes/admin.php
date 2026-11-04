@@ -269,6 +269,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/students', 'StudentController@index' );
 	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
 	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
+	Route::post( '/students/{student}/resend-setup', 'StudentProfileController@resendSetup' )->whereNumber('student')->name('admin.students.resend-setup');
 	Route::get( '/students/blockedstudents', 'StudentController@blockedstudents' );
 	//add
 	Route::get( '/student/add', 'StudentController@create' );
@@ -331,6 +332,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/parent/show/{name}', 'ParentController@show' );
 	Route::post( '/parent/show/{name}/deactivate', 'ParentProfileController@deactivate' );
 	Route::post( '/parent/show/{name}/reset-password', 'ParentProfileController@resetPassword' );
+	Route::post( '/parent/show/{name}/resend-setup', 'ParentProfileController@resendSetup' );
 	Route::get( '/parent/show/children/{name}', 'ParentController@showChildren' );
 	Route::get( '/parent/show/activity/{name}', 'ParentController@showActivityLog' );
 	Route::get( '/parent/show/feedback/{name}', 'ParentController@showFeedbacks' );

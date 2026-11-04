@@ -22,6 +22,7 @@ class OnboardingNameListExtractor
      *     stream: string,
      *     parent: string,
      *     parent_phone: string,
+     *     parent_email: string,
      *     email: string,
      *     phone: string,
      *     subjects: string,
@@ -161,6 +162,7 @@ class OnboardingNameListExtractor
         $streamIdx = $this->findHeaderIndex($lowerHeaders, ['stream', 'section_stream']);
         $parentIdx = $this->findHeaderIndex($lowerHeaders, ['parent name', 'parent', 'parent_name', 'guardian', 'guardian name']);
         $parentPhoneIdx = $this->findHeaderIndex($lowerHeaders, ['parent phone', 'parent_phone', 'guardian phone', 'guardian_phone']);
+        $parentEmailIdx = $this->findHeaderIndex($lowerHeaders, ['parent email', 'parent_email', 'guardian email', 'guardian_email']);
         $emailIdx = $this->findHeaderIndex($lowerHeaders, ['email', 'e-mail', 'mail']);
         $phoneIdx = $this->findHeaderIndex($lowerHeaders, ['phone', 'mobile', 'tel', 'telephone']);
         $subjectsIdx = $this->findHeaderIndex($lowerHeaders, ['subjects', 'subject']);
@@ -278,6 +280,7 @@ class OnboardingNameListExtractor
                 'stream' => ($streamIdx !== null && ! empty($row[$streamIdx] ?? '')) ? $row[$streamIdx] : '',
                 'parent' => ($parentIdx !== null && ! empty($row[$parentIdx] ?? '')) ? $row[$parentIdx] : '',
                 'parent_phone' => ($parentPhoneIdx !== null && ! empty($row[$parentPhoneIdx] ?? '')) ? $row[$parentPhoneIdx] : '',
+                'parent_email' => ($parentEmailIdx !== null && ! empty($row[$parentEmailIdx] ?? '')) ? $row[$parentEmailIdx] : '',
                 'email' => ($emailIdx !== null && ! empty($row[$emailIdx] ?? '')) ? $row[$emailIdx] : '',
                 'phone' => ($phoneIdx !== null && ! empty($row[$phoneIdx] ?? '')) ? $row[$phoneIdx] : '',
                 'subjects' => ($subjectsIdx !== null && ! empty($row[$subjectsIdx] ?? '')) ? $row[$subjectsIdx] : '',
@@ -642,6 +645,7 @@ class OnboardingNameListExtractor
      *     stream: string,
      *     parent: string,
      *     parent_phone: string,
+     *     parent_email: string,
      *     email: string,
      *     phone: string,
      *     subjects: string,
@@ -661,6 +665,7 @@ class OnboardingNameListExtractor
             'stream' => '',
             'parent' => '',
             'parent_phone' => '',
+            'parent_email' => '',
             'email' => '',
             'phone' => '',
             'subjects' => '',

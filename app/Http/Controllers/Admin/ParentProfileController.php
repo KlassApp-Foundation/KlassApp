@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\ParentProfileService;
+use App\Services\StudentParentAccountInviteService;
 use App\Support\ParentProfileTabs;
 use App\Traits\ResetPasswordProcess;
 use Illuminate\Http\Request;
@@ -39,6 +40,17 @@ class ParentProfileController extends Controller
         $key = filled($parent->name) ? $parent->name : $parent->id;
 
         return redirect('/admin/parent/show/'.$key);
+    }
+
+    public function resendSetup(string $name, ParentProfileService $profiles, StudentParentAccountInviteService $invites)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $parent = $profiles->find($schoolId, $name);
+        $result = $invites->resend(Auth::user(), $parent);
+        $key = filled($parent->name) ? $parent->name : $parent->id;
+
+        return redirect('/admin/parent/show/'.$key)
+            ->with($result['ok'] ? 'successmessage' : 'errormessage', $result['message']);
     }
 
     public function resetPassword(string $name, ParentProfileService $profiles)

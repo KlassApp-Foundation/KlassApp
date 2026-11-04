@@ -2,6 +2,16 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-04 — T-094 parent and student setup links (stacked on #1262)
+
+- **Work:** Imported students and parents are created with **no password**. Each one with a real email gets the same one-time setup link teachers get: a 64-character token hashed at rest, 72-hour expiry, single use, and the existing per-school issuing cap. The link opens `/invite/account/{token}`, sets the password on the account that already exists, clears `is_reset`, and signs nobody in automatically. Placeholder addresses (`.local`, `*.test`, `@school.edu`) send nothing. No password is generated, stored or emailed.
+- **Files:** `StudentParentAccountInviteService`, `StudentParentSetupController`, `StudentParentSetupLinkMail`, onboarding `saveStudents` / `linkImportedParent`, student and parent profile services/views, `person-profile` flash, `ManualOnboardingWizard` keeps the uploaded email column.
+- **Resend:** “Resend setup link” on the student and parent profiles. It revokes the previous link, clears a legacy random hash when the account has never finished setup, and obeys the same hourly cap. A parent or student without a real email is told to add one.
+- **Parents without email:** keep the WhatsApp magic login. `ParentMagicLoginController` now accepts a parent whose password is null; that link is possession-based, signed, single-use and rate-limited, and it is the only entry for an imported guardian with no address. WhatsApp link requests are unchanged.
+- **Decision:** This branch stacks on `cursor/t091-teacher-email-invite-6d9a` (#1262), which itself stacks on #1239. Merge #1239, then #1262, then this one. `TeacherInviteLinkService` is reused unchanged; only the `role`/`user_id` on the issued invite differ.
+- **Status:** Draft pull request. Not merged. Production untouched.
+- **Follow-up:** Existing imported rows keep their old random hash until an admin resends a setup link; there is no password backfill. Toshi's separate “add parent” path still stores a random password (out of scope).
+
 ## Session: 2026-11-04 — T-091 teacher setup invites (stacked on #1239)
 
 - **Work:** Teachers created with a real email get a setup link from the existing `TeacherInviteLinkService`. No password is stored. A placeholder address (`teacher.<random>@<slug>.test`, `*.local`, or the link-import `@school.edu` address) creates the row and sends nothing. Resend is on the teacher list and profile for teachers who have never signed in. Assigning a never-signed-in teacher as class teacher sends the setup link. A teacher who has signed in still gets the class notice.

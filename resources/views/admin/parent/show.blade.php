@@ -23,6 +23,12 @@
         back-label="Parents"
     >
         <x-slot:actions>
+            @if(!empty($page['can_resend']))
+                <form method="POST" action="{{ url('/admin/parent/show/'.$editKey.'/resend-setup') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="{{ $btn }}cursor:pointer;" data-testid="resend-setup-link">Resend setup link</button>
+                </form>
+            @endif
             <a href="{{ $editUrl }}" style="{{ $btn }}">Edit</a>
             <div style="position:relative;">
                 <button type="button" id="parent-more" aria-haspopup="menu" aria-expanded="false" aria-controls="parent-more-menu" style="{{ $btn }}">More</button>

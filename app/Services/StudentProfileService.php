@@ -91,6 +91,7 @@ class StudentProfileService
             'facts' => $this->facts($className, $kls, $profile?->date_of_birth, $profile?->gender, $profile?->joining_date),
             'status' => (string) $student->status,
             'status_label' => $this->statusLabel((string) $student->status),
+            'can_resend' => app(StudentParentAccountInviteService::class)->canResend($student),
             'attendance' => $this->attendance($schoolId, $student->id, $term),
             'exam' => $this->exam($schoolId, $student->id, $sectionId, $standardId, $term?->id),
             'fees' => $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null),
