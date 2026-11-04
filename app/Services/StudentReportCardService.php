@@ -31,6 +31,17 @@ use Illuminate\Support\Facades\Storage;
 class StudentReportCardService
 {
     /**
+     * A whole-class PDF with this many students (or fewer) is built in the
+     * request and downloaded immediately. A larger class is queued
+     * (GenerateClassReportsJob) and the class page shows the status until the
+     * file is ready.
+     *
+     * One card runs a class sheet plus a DomPDF render. Twelve stays inside a
+     * normal HTTP limit; the thirteenth is prepared in the background.
+     */
+    public const CLASS_PDF_DIRECT_MAX = 12;
+
+    /**
      * Available report-card templates: key => [label, Blade view].
      */
     public const TEMPLATES = [
@@ -237,6 +248,66 @@ class StudentReportCardService
             $myPos,
             $templateKey
         );
+    }
+
+    /**
+     * Active students with a mark on this class's contributing exam.
+     * Same set as the class report-card page. Ordered by name, then id.
+     *
+     * @return Collection<int, User>
+     */
+    public function reportLearners(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): Collection
+    {
+        $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+        if (! $exam) {
+            return collect();
+        }
+
+        $ids = $this->studentIds($exam);
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $ids)
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * One PDF, one report card per student. Each card is pdfForStudent(),
+     * the same view and data as the single-student download, including that
+     * student's own class and stream fees.
+     *
+     * @param  Collection<int, User>  $learners
+     */
+    public function mergedPdfForLearners(
+        int $schoolId,
+        StandardLink $stdLink,
+        Collection $learners,
+        ?int $academicTermId = null
+    ): string {
+        $merger = new \iio\libmergepdf\Merger;
+        foreach ($learners as $learner) {
+            $merger->addRaw($this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId));
+        }
+
+        return $merger->merge();
+    }
+
+    public function classPdfFilename(StandardLink $stdLink): string
+    {
+        $stdLink->loadMissing('section');
+        $className = trim((string) ($stdLink->section->name ?? 'class'));
+        $stream = trim((string) ($stdLink->stream ?? ''));
+        $label = $stream !== '' ? $className.'_'.$stream : $className;
+        $safe = preg_replace('/[^A-Za-z0-9._-]+/', '_', $label) ?: 'class';
+
+        return 'report_cards_'.$safe.'.pdf';
     }
 
     /**

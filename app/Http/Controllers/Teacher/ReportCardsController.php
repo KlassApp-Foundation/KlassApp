@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
+use App\Models\ReportGeneration;
 use App\Models\StandardLink;
 use App\Models\User;
+use App\Services\ClassReportCardAuthorization;
+use App\Services\ClassReportCardDownload;
+use App\Services\ExamAuthorization;
 use App\Services\StudentReportCardService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -22,9 +26,18 @@ class ReportCardsController extends Controller
     {
         $teacher = $this->actor();
         $schoolId = (int) $teacher->school_id;
+        $year = SiteHelper::getAcademicYear($schoolId);
+        $sectionIds = $year
+            ? app(ExamAuthorization::class)->sectionIdsForClassTeacher($teacher, $schoolId, (int) $year->id)
+            : [];
 
-        $stdLinks = SiteHelper::getClassTeacherStandardLinks($schoolId, (int) $teacher->id)
-            ->load(['section', 'standard']);
+        $stdLinks = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->when($year, fn ($query) => $query->where('academic_year_id', $year->id))
+            ->whereIn('section_id', $sectionIds)
+            ->with(['section', 'standard'])
+            ->orderBy('section_id')
+            ->get();
 
         $rows = $stdLinks->map(function (StandardLink $sl) use ($schoolId) {
             $exam = $this->reports->resolveExam($schoolId, $sl);
@@ -69,13 +82,35 @@ class ReportCardsController extends Controller
 
         $stdLink->load(['section', 'standard']);
 
+        $classGeneration = ReportGeneration::query()
+            ->where('school_id', $schoolId)
+            ->where('standard_link_id', $stdLink->id)
+            ->where('mode', 'merged')
+            ->latest('id')
+            ->first();
+
         return view('teacher.reports.cards.show', [
             'stdLink' => $stdLink,
             'students' => $students,
             'hasExam' => $exam !== null,
             'subjectsFilled' => $fill['filled'] ?? 0,
             'subjectsTotal' => $fill['total'] ?? 0,
+            'classGeneration' => $classGeneration,
         ]);
+    }
+
+    public function downloadClassPdf(StandardLink $stdLink): SymfonyResponse
+    {
+        return app(ClassReportCardDownload::class)->download(
+            $this->actor(),
+            $stdLink,
+            route('teacher.reports.cards.show', $stdLink)
+        );
+    }
+
+    public function downloadGeneration(ReportGeneration $generation): SymfonyResponse
+    {
+        return app(ClassReportCardDownload::class)->fileResponse($this->actor(), $generation);
     }
 
     public function previewStudent(StandardLink $stdLink, User $learner): SymfonyResponse
@@ -133,17 +168,7 @@ class ReportCardsController extends Controller
 
     private function authorizeClassTeacher(User $teacher, StandardLink $stdLink): void
     {
-        if ((int) $stdLink->school_id !== (int) $teacher->school_id) {
-            abort(403, 'You are not the class teacher for this class.');
-        }
-
-        if (! SiteHelper::isClassTeacherOfStandardLink(
-            (int) $teacher->school_id,
-            (int) $teacher->id,
-            (int) $stdLink->id
-        )) {
-            abort(403, 'You are not the class teacher for this class.');
-        }
+        app(ClassReportCardAuthorization::class)->authorize($teacher, $stdLink);
     }
 
     private function actor(): User

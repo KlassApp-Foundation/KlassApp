@@ -65,29 +65,46 @@ class GenerateClassReportsJob implements ShouldQueue
                 throw new \RuntimeException('No students with marks.');
             }
 
-            $helper = app(StudentReportHelperService::class);
-            $svc = new ReportCardCommentService;
-            $positionMap = $reports->computePositionMap($exam, $schoolId);
-
             $className = Section::find($stdLink->section_id)->name ?? 'class';
             $safeClass = str_replace(' ', '_', $className);
-            $dir = storage_path('app/reports');
-            if (!is_dir($dir)) {
-                mkdir($dir, 0775, true);
-            }
 
             if ($generation->mode === 'merged') {
-                $merger = new \iio\libmergepdf\Merger;
-                foreach ($studentIds as $sid) {
-                    $myPos = $positionMap[$sid] ?? 0;
-                    $pdf = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
-                        $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos
-                    );
-                    $merger->addRaw($pdf);
+                // The pinned exam (when the caller passed one) chooses the term.
+                // The cards themselves still come from pdfForStudent(), which
+                // resolves that term the same way as the single-student download.
+                $termId = $exam->academic_term_id ? (int) $exam->academic_term_id : null;
+                $learners = $reports->reportLearners($schoolId, $stdLink, $termId);
+                if ($learners->isEmpty()) {
+                    throw new \RuntimeException('No students with marks.');
                 }
-                $content = $merger->merge();
-                $fileName = "report_cards_{$safeClass}_merged.pdf";
+                // Same pdfForStudent() view and data as the single-student card,
+                // so each page keeps that student's own class and stream fees.
+                $content = $reports->mergedPdfForLearners($schoolId, $stdLink, $learners, $termId);
+                $fileName = 'report_cards_'.$safeClass.'_'.$generation->id.'.pdf';
+                $filePath = 'reports/'.$schoolId.'/'.$fileName;
+                $dir = storage_path('app/reports/'.$schoolId);
+                if (! is_dir($dir)) {
+                    mkdir($dir, 0775, true);
+                }
+                file_put_contents(storage_path('app/'.$filePath), $content);
+
+                $generation->update([
+                    'status' => 'completed',
+                    'file_path' => $filePath,
+                    'file_name' => $fileName,
+                    'completed_at' => now(),
+                ]);
+
+                return;
             } else {
+                $helper = app(StudentReportHelperService::class);
+                $svc = new ReportCardCommentService;
+                $positionMap = $reports->computePositionMap($exam, $schoolId);
+                $dir = storage_path('app/reports');
+                if (! is_dir($dir)) {
+                    mkdir($dir, 0775, true);
+                }
+
                 $zipPath = tempnam(sys_get_temp_dir(), 'reports_');
                 $zip = new ZipArchive;
                 if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
