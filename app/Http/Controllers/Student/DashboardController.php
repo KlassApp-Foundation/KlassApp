@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
+use App\Services\Parent\ParentPortalService;
 use App\Traits\Dashboard;
 use App\Models\User;
 use App\Models\Task;
@@ -31,14 +32,16 @@ class DashboardController extends Controller
         $student            =   User::where('id',$student_id)->first();
         $standardLink_id    =   $student->studentAcademicLatest->standardLink_id;
         
+        $exam_date = null;
         if($request->exam_date != null)
         {
             $exam_date          =   date('Y-m-d H:i:s',strtotime($request->exam_date));
         }
 
         $dashboard = $this->studentDashboard($school_id,$student,$standardLink_id,$request->subject,$request->exam,$request->mark,$exam_date);
+        $fees = app(ParentPortalService::class)->feeSummary($student, (int) $school_id);
 
-        return view('/student/dashboard/dashboard', ['dashboard' => $dashboard]);
+        return view('/student/dashboard/dashboard', ['dashboard' => $dashboard, 'fees' => $fees]);
     }
 
     public function list(Request $request,$task_flag)

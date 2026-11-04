@@ -15,7 +15,9 @@
         @endif
     </p>
 
-    <x-card title="Attendance" padding="none" class="parent-panel" data-testid="parent-attendance-panel">
+    @include('portal.partials.attendance-chart', ['chart' => $attendance['chart'] ?? []])
+
+    <x-card title="Attendance" padding="none" class="parent-panel mt-4" data-testid="parent-attendance-panel">
         @include('parent.partials.attendance-panel', ['attendance' => $attendance])
     </x-card>
 </div>

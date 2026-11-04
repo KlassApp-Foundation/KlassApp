@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
 use App\Services\Parent\ParentPortalService;
+use App\Support\DisplayName;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class ChildDataController extends Controller
 {
@@ -16,9 +18,14 @@ class ChildDataController extends Controller
         return $this->respond('fees', 'parent.child-fees', $this->portal->feeBalance(auth()->user(), null, $student));
     }
 
-    public function grades(int $student): View|RedirectResponse
+    public function grades(Request $request, int $student): View|RedirectResponse
     {
-        return $this->respond('grades', 'parent.child-grades', $this->portal->grades(auth()->user(), null, $student));
+        return $this->respond('grades', 'parent.child-grades', $this->portal->grades(
+            auth()->user(),
+            null,
+            $student,
+            $request->query('year'),
+        ));
     }
 
     public function attendance(int $student): View|RedirectResponse
@@ -46,7 +53,7 @@ class ChildDataController extends Controller
 
         return view($view, [
             'panelKey' => $panelKey,
-            'childName' => $data['student_name'] ?? 'Child',
+            'childName' => DisplayName::title($data['student_name'] ?? 'Child'),
             'studentId' => $data['student_id'] ?? null,
             'fees' => $panelKey === 'fees' ? $data : null,
             'grades' => $panelKey === 'grades' ? $data : null,

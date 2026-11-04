@@ -441,6 +441,7 @@
             "prefix": "student",
             "layout": "flat",
             "item_class": "py-3 px-3 dashboard-menu-item",
+            "active_class": "active dashboard-active",
             "items": [
                 {
                     "label": "Dashboard",
@@ -462,6 +463,14 @@
                     "url": "student/attendance",
                     "active": [
                         "attendance"
+                    ]
+                },
+                {
+                    "label": "Fees",
+                    "route": "student.fees",
+                    "paths": [
+                        "student/fees",
+                        "student/fees/*"
                     ]
                 },
                 {
@@ -533,19 +542,21 @@
             "prefix": "parent",
             "layout": "flat",
             "item_class": "py-3 px-3 dashboard-menu-item",
+            "active_class": "active dashboard-active",
             "items": [
                 {
                     "label": "Dashboard",
                     "route": "parent.dashboard",
-                    "active": [
-                        "dashboard"
+                    "paths": [
+                        "parent/dashboard",
+                        "parent/dashboard/*"
                     ]
                 },
                 {
                     "label": "Children",
                     "route": "parent.children",
-                    "active": [
-                        "children"
+                    "paths": [
+                        "parent/children"
                     ]
                 },
                 {
@@ -553,7 +564,7 @@
                     "resolver": "parent_child",
                     "child_path": "fees",
                     "paths": [
-                        "parent/*/fees"
+                        "parent/children/*/fees"
                     ]
                 },
                 {
@@ -561,7 +572,7 @@
                     "resolver": "parent_child",
                     "child_path": "grades",
                     "paths": [
-                        "parent/*/grades"
+                        "parent/children/*/grades"
                     ]
                 },
                 {
@@ -569,7 +580,7 @@
                     "resolver": "parent_child",
                     "child_path": "attendance",
                     "paths": [
-                        "parent/*/attendance"
+                        "parent/children/*/attendance"
                     ]
                 }
             ]

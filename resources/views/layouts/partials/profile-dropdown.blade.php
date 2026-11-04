@@ -23,6 +23,8 @@
         $roleLabel = match ((int) Auth::user()->usergroup_id) {
             3, 4 => 'School admin',
             5 => 'Teacher',
+            6 => 'Student',
+            7 => 'Parent',
             8 => 'Librarian',
             11 => 'Bursar',
             10 => 'Receptionist',
