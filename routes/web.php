@@ -257,6 +257,14 @@ Route::post('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteContr
     ->middleware([\App\Http\Middleware\InviteNoReferrer::class, 'throttle:teacher-invite-accept'])
     ->name('teacher.invite.claim');
 
+// Parent and student setup link — the account already exists; this only sets a password.
+Route::get('/invite/account/{token}', [\App\Http\Controllers\StudentParentSetupController::class, 'show'])
+    ->middleware([\App\Http\Middleware\InviteNoReferrer::class, 'throttle:teacher-invite-accept'])
+    ->name('account.invite.form');
+Route::post('/invite/account/{token}', [\App\Http\Controllers\StudentParentSetupController::class, 'claim'])
+    ->middleware([\App\Http\Middleware\InviteNoReferrer::class, 'throttle:teacher-invite-accept'])
+    ->name('account.invite.claim');
+
 // Co-admin invite link — one-time password-set flow (no credentials in email)
 Route::get('/invite/co-admin/{token}', [\App\Http\Controllers\CoAdminInviteController::class, 'show'])
     ->name('coadmin.invite.form');
