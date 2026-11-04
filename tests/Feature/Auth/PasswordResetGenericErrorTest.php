@@ -169,7 +169,7 @@ class PasswordResetGenericErrorTest extends TestCase
 
         $response = $this->submitReset($this->user->email, $token);
 
-        $response->assertRedirect('/home');
+        $response->assertRedirect('/teacher/dashboard');
         $response->assertSessionHasNoErrors();
         $this->assertAuthenticatedAs($this->user);
         $this->assertTrue(Hash::check('NewSecret123!x', $this->user->fresh()->password));

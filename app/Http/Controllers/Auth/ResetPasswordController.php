@@ -33,10 +33,12 @@ class ResetPasswordController extends Controller
 
     /**
      * Where to redirect users after resetting their password.
-     *
-     * @var string
+     * /home is not a registered route; send each role to its own dashboard.
      */
-    protected $redirectTo = '/home';
+    public function redirectTo(): string
+    {
+        return \App\Helpers\AuthRedirectHelper::dashboardPathForUser($this->guard()->user());
+    }
 
     /**
      * Set by resetPassword() when the user's email is not verified, so the
@@ -93,6 +95,8 @@ class ResetPasswordController extends Controller
         $this->setUserPassword($user, $password);
 
         $user->setRememberToken(Str::random(60));
+        // The reset is the password change imported accounts were waiting for.
+        $user->is_reset = 0;
 
         $user->save();
 
