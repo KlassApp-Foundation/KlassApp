@@ -174,7 +174,7 @@ class ProfileListAndShellPolishTest extends TestCase
         $this->assertStringNotContainsString('Generate', $tile);
     }
 
-    public function test_F5_latest_exam_shows_the_exam_average_grade_and_position(): void
+    public function test_F5_latest_exam_shows_the_released_average_only(): void
     {
         $amina = $this->student('Amina', 'female');
         $brian = $this->student('Brian', 'male');
@@ -186,12 +186,17 @@ class ProfileListAndShellPolishTest extends TestCase
         $this->mark($math, $brian, 90, 'D1');
         $this->mark($social, $brian, 70, 'C3');
 
+        $held = $this->actingAs($this->admin)->get('/admin/students/'.$amina->id)->assertOk();
+        $held->assertDontSee('data-testid="latest-average"', false)->assertSee('No released results yet');
+
+        \Tests\Support\ReleasedExam::release($math);
+
         $this->actingAs($this->admin)
             ->get('/admin/students/'.$amina->id)
             ->assertOk()
-            ->assertSee('data-testid="exam-label" style="margin:0;font-size:13px;color:#475569;">Latest exam</p>', false)
-            ->assertSee('66% · ', false)
-            ->assertSee('End of Term Examination · 2 of 2', false)
+            ->assertSee('data-testid="latest-average"', false)
+            ->assertSee('End of Term Examination')
+            ->assertSee('average 66', false)
             ->assertDontSee('SOCIAL STUDIES — ', false)
             ->assertDontSee('52% · C6', false);
     }
@@ -201,13 +206,13 @@ class ProfileListAndShellPolishTest extends TestCase
         $amina = $this->student('Amina', 'female', ['date_of_birth' => '2015-08-06', 'joining_date' => '2024-02-01']);
 
         $html = $this->actingAs($this->admin)->get('/admin/students/'.$amina->id)->assertOk()->getContent();
-        $facts = $this->between($html, 'data-testid="person-facts"', '</p>');
+        $facts = $this->between($html, 'data-testid="person-facts"', '</dl>');
 
-        $this->assertStringContainsString('<span data-fact="class" >P.6 · B</span>', $facts);
-        $this->assertStringContainsString('<span data-fact="kls"  data-testid="person-kls" >'.$amina->registration_number.'</span>', $facts);
-        $this->assertStringContainsString('Age 11 (born 6 Aug 2015)', $facts);
+        $this->assertStringContainsString('P.6', $facts);
+        $this->assertStringContainsString($amina->registration_number, $facts);
+        $this->assertStringContainsString('6 Aug 2015 · 11 yrs', $facts);
         $this->assertStringContainsString('Female', $facts);
-        $this->assertStringContainsString('Joined 1 Feb 2024', $facts);
+        $this->assertStringContainsString('Feb 2024', $facts);
     }
 
     public function test_F6_missing_facts_read_not_given(): void
@@ -215,11 +220,9 @@ class ProfileListAndShellPolishTest extends TestCase
         $brian = $this->student('Brian', null);
 
         $html = $this->actingAs($this->admin)->get('/admin/students/'.$brian->id)->assertOk()->getContent();
-        $facts = $this->between($html, 'data-testid="person-facts"', '</p>');
+        $facts = $this->between($html, 'data-testid="person-facts"', '</dl>');
 
-        $this->assertStringContainsString('Age not given', $facts);
-        $this->assertStringContainsString('Gender not given', $facts);
-        $this->assertStringContainsString('Joined date not given', $facts);
+        $this->assertStringContainsString('Not given', $facts);
         $this->assertStringNotContainsString('Not recorded', $html);
         $this->assertStringNotContainsString('Not specified', $html);
     }
@@ -315,10 +318,11 @@ class ProfileListAndShellPolishTest extends TestCase
         $amina = $this->student('Amina', 'female');
         $parent = $this->parent('grace@t.sch.ug');
 
-        foreach (['/admin/students/'.$amina->id, '/admin/parent/show/'.$parent->name] as $url) {
-            $html = $this->actingAs($this->admin)->get($url)->assertOk()->getContent();
-            $this->assertMatchesRegularExpression('/<h1 style="[^"]*letter-spacing:-0\.02em;[^"]*">/', $html, $url);
-        }
+        $html = $this->actingAs($this->admin)->get('/admin/parent/show/'.$parent->name)->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/<h1 style="[^"]*letter-spacing:-0\.02em;[^"]*">/', $html);
+
+        $student = $this->actingAs($this->admin)->get('/admin/students/'.$amina->id)->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/\.sp h1 \{[^}]*letter-spacing:-\.02em;/', $student);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

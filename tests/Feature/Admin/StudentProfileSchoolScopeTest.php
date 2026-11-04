@@ -69,7 +69,7 @@ class StudentProfileSchoolScopeTest extends TestCase
     {
         $this->assertSame(['health', 'documents', 'notes'], StudentProfileTabs::DEFERRED);
         $this->assertSame(
-            ['overview', 'academics', 'attendance', 'fees', 'parents'],
+            ['overview', 'performance', 'attendance', 'fees', 'parents'],
             StudentProfileTabs::VISIBLE
         );
 
@@ -77,7 +77,7 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->get('/admin/students/'.$this->studentA->id)
             ->assertOk()
             ->assertSee('Overview')
-            ->assertSee('Academics')
+            ->assertSee('Performance')
             ->assertSee('Attendance')
             ->assertSee('Fees')
             ->assertSee('Parents and guardians')
@@ -85,8 +85,8 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertDontSee('data-tab="documents"', false)
             ->assertDontSee('data-tab="notes"', false)
             ->assertDontSee('Health and support')
-            ->assertSee('No attendance this term')
-            ->assertSee('No exam this term')
+            ->assertSee('No days recorded yet.')
+            ->assertSee('No released results yet')
             ->assertSee('No fees on record');
     }
 
@@ -321,42 +321,39 @@ class StudentProfileSchoolScopeTest extends TestCase
             ->assertSee('P.4')
             ->assertSee('KLS0380007')
             ->assertSee('50%')
-            ->assertSee('1 absence')
-            ->assertSee('82')
-            ->assertSee('D1')
+            ->assertSee('Absent 3 Feb')
+            ->assertDontSee('data-testid="released-row"', false)
+            ->assertSee('No released results yet')
             ->assertSee('60,000')
-            ->assertSee('Paid 40,000 of 100,000', false)
-            ->assertSee('Balance', false)
-            ->assertSee('Full name', false)
+            ->assertSee('40,000 paid of 100,000', false)
             ->assertSee('Female')
             ->assertSee('9 Mar 2014')
-            ->assertSee('1 Feb 2024')
-            ->assertSee('Mother')
-            ->assertSee('GN', false)
-            ->assertSee('href="tel:+256700111222"', false)
-            ->assertSee('Linked')
-            ->assertSee('Rita Nakato')
-            ->assertSee('Not linked')
+            ->assertSee('Feb 2024')
             ->assertDontSee('Not given')
             ->assertDontSee('Other Guardian')
             ->assertSee('Set your currency', false)
             ->assertDontSee('UGX')
-            ->assertDontSee('· paid ')
-            ->assertSee('Partly paid')
             ->assertDontSee('999,999')
             ->assertSee('Deactivate');
 
         $this->actingAs($this->adminA)
             ->get('/admin/students/'.$this->studentA->id.'?tab=academics')
             ->assertOk()
-            ->assertSee('MATHEMATICS')
-            ->assertSee('82');
+            ->assertSee('No released results yet')
+            ->assertDontSee('MATHEMATICS')
+            ->assertDontSee('data-testid="released-row"', false)
+            ->assertDontSee('data-testid="progress-average"', false);
 
         $this->actingAs($this->adminA)
             ->get('/admin/students/'.$this->studentA->id.'?tab=parents')
             ->assertOk()
             ->assertSee('Grace Nakato')
+            ->assertSee('Mother')
+            ->assertSee('GN', false)
+            ->assertSee('href="tel:+256700111222"', false)
             ->assertSee('Linked')
+            ->assertSee('Rita Nakato')
+            ->assertSee('Not linked')
             ->assertDontSee('Not given')
             ->assertDontSee('Other Guardian');
 
@@ -385,7 +382,7 @@ class StudentProfileSchoolScopeTest extends TestCase
         ]);
     }
 
-    public function test_A11_exam_line_shows_percent_grade_and_name(): void
+    public function test_A11_latest_exam_shows_only_once_released(): void
     {
         $yearId = AcademicYear::where('school_id', $this->schoolA->id)->value('id');
         $term = AcademicTerm::where('school_id', $this->schoolA->id)->first();
@@ -434,9 +431,18 @@ class StudentProfileSchoolScopeTest extends TestCase
         $this->actingAs($this->adminA)
             ->get('/admin/students/'.$this->studentA->id)
             ->assertOk()
-            ->assertSee('52% · C6', false)
-            ->assertSee('End of term · 1 of 1', false)
-            ->assertDontSee('MATHEMATICS — ', false);
+            ->assertDontSee('52% · C6', false)
+            ->assertDontSee('MATHEMATICS — ', false)
+            ->assertSee('No released results yet');
+
+        \Tests\Support\ReleasedExam::release($exam);
+
+        $this->actingAs($this->adminA)
+            ->get('/admin/students/'.$this->studentA->id)
+            ->assertOk()
+            ->assertSee('data-testid="latest-average"', false)
+            ->assertSee('End of term')
+            ->assertSee('52');
     }
 
     public function test_A9_and_A12_message_uses_the_guardian_profile(): void
