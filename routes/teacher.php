@@ -14,6 +14,8 @@ Route::put('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotContro
 Route::delete('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherDestroy'])->name('teacher.timetable.destroy');
 Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
 Route::get( '/attendance/add', 'AttendanceController@create' )->name('teacher.attendance.create');
+Route::get( '/attendance/register', 'AttendanceController@register' )->name('teacher.attendance.register');
+Route::post( '/attendance/register', 'AttendanceController@saveRegister' )->name('teacher.attendance.register.save');
 
 Route::get('/classes', function () {
     return view('class-roster.index');

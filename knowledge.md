@@ -2,6 +2,15 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-04 — T-095 one-click attendance register
+
+- **Work:** A teacher opens `/teacher/attendance/register`, picks a class or stream, and sees every active student with **Present** selected. One tap marks Absent, an optional comment is attached to that learner, and one save writes the whole register. A second save updates the same rows instead of duplicating them.
+- **Scope:** A class head (`sections.class_teacher_id`) gets every active stream of that class. Everyone else gets the streams the school's existing `attendance_scope` already allows (their stream, or the streams they subject-teach under `classes_i_teach`); never another teacher's class. This is enforced in the controller and checked again against the roster on save.
+- **Files:** `Teacher/AttendanceController@register` / `saveRegister` and private scope/roster helpers, `routes/teacher.php`, `resources/views/teacher/attendance/register.blade.php`, the index link. The form sends one JSON field (`rows_json`) so a 1,000-learner class head does not hit PHP's `max_input_vars`; the per-row inputs remain the no-JavaScript fallback.
+- **Parent:** `ParentPortalService::attendance` now returns `weeks` (days present per Monday–Friday week out of 5, with unrecorded weeks marked), `missed_days` (date, reason, comment) and `this_week`. The dedicated parent attendance page follows the existing `ParentAttendance.dc.html` design: weekly bars, legend, and days missed with the teacher's comment. The dashboard panel adds “This week: X of 5 days present”.
+- **Status:** Draft pull request against `main`. Not merged. Production untouched.
+- **Follow-up:** The register does not send the old per-absence WhatsApp/push message; it writes the rows that the parent portal reads. The old `/teacher/attendance/add` form stays for reasons and exports.
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |

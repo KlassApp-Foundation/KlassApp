@@ -4,6 +4,7 @@ namespace App\Services\Parent;
 
 use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
+use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Attendance;
 use App\Models\FeePayment;
@@ -315,6 +316,102 @@ class ParentPortalService
             'reason' => (int) $r->status === 2 ? 'Late' : 'Absent',
         ])->values()->all();
 
+        $weeks = [];
+        $missedDays = [];
+        $thisWeek = ['present' => 0, 'total' => 5, 'recorded' => 0];
+        $termLabel = null;
+
+        if ($schoolId !== null) {
+            $currentYear = SiteHelper::getAcademicYear($schoolId);
+            $term = $currentYear
+                ? AcademicTerm::query()
+                    ->where('school_id', $schoolId)
+                    ->where('academic_year_id', $currentYear->id)
+                    ->where('status', 'current')
+                    ->orderByDesc('id')
+                    ->first()
+                : null;
+
+            $periodStart = null;
+            $periodEnd = null;
+
+            if ($term !== null) {
+                $termLabel = trim((string) $term->name.($currentYear ? ', '.$currentYear->name : ''));
+                $periodStart = $term->getRawOriginal('starts_on');
+                $periodEnd = $term->getRawOriginal('ends_on');
+            } elseif ($currentYear !== null) {
+                $periodStart = $currentYear->start_date;
+                $periodEnd = $currentYear->end_date;
+            }
+
+            if ($periodStart !== null && $periodEnd !== null) {
+                $start = Carbon::parse($periodStart)->startOfDay();
+                $end = Carbon::parse($periodEnd)->endOfDay();
+                if ($end->gt(now())) {
+                    $end = now()->endOfDay();
+                }
+
+                if ($end->gte($start)) {
+                    $termRecords = Attendance::query()
+                        ->where('school_id', $schoolId)
+                        ->where('user_id', $student->id)
+                        ->whereDate('date', '>=', $start->toDateString())
+                        ->whereDate('date', '<=', $end->toDateString())
+                        ->orderBy('date')
+                        ->get();
+
+                    $missedDays = $termRecords
+                        ->where('status', '!=', 1)
+                        ->sortByDesc(fn ($row) => Carbon::parse($row->date)->toDateString())
+                        ->take(10)
+                        ->map(fn ($row) => [
+                            'date' => Carbon::parse($row->date)->format('D j M'),
+                            'reason' => (int) $row->status === 2 ? 'Late' : 'Absent',
+                            'comment' => trim((string) ($row->remarks ?? '')) ?: null,
+                        ])
+                        ->values()
+                        ->all();
+
+                    // Weeks run Monday to Friday. A week with no register is
+                    // shown as unrecorded, never as five absences.
+                    $cursor = $start->copy()->startOfWeek(Carbon::MONDAY);
+                    $index = 1;
+                    while ($cursor->lte($end) && $index <= 20) {
+                        $weekStart = $cursor->copy()->startOfDay();
+                        $weekEnd = $cursor->copy()->addDays(4)->endOfDay();
+                        $inWeek = $termRecords->filter(fn ($row) => Carbon::parse($row->date)->between($weekStart, $weekEnd));
+
+                        $presentDates = $inWeek
+                            ->where('status', 1)
+                            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+                            ->unique();
+                        $recordedDates = $inWeek
+                            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+                            ->unique();
+
+                        $weeks[] = [
+                            'label' => 'W'.$index,
+                            'present' => $presentDates->count(),
+                            'total' => 5,
+                            'recorded' => $recordedDates->count(),
+                            'start' => $weekStart->toDateString(),
+                        ];
+
+                        if ($weekStart->lte(now()) && $weekEnd->gte(now()->startOfDay())) {
+                            $thisWeek = [
+                                'present' => $presentDates->count(),
+                                'total' => 5,
+                                'recorded' => $recordedDates->count(),
+                            ];
+                        }
+
+                        $cursor->addWeek();
+                        $index++;
+                    }
+                }
+            }
+        }
+
         return [
             'success' => true,
             'data' => [
@@ -325,6 +422,10 @@ class ParentPortalService
                 'absent' => $absent,
                 'total' => $records->count(),
                 'recent_absences' => $recentAbsences,
+                'weeks' => $weeks,
+                'missed_days' => $missedDays,
+                'this_week' => $thisWeek,
+                'term_label' => $termLabel,
             ],
         ];
     }

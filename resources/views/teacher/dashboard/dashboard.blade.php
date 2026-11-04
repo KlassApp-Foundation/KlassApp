@@ -36,7 +36,7 @@
     </div>
 
     <div class="flex flex-wrap gap-2 mt-4" data-testid="teacher-quick-actions">
-        <a href="{{ route('teacher.attendance.index') }}" class="ds-btn ds-btn-sm ds-btn-outline" data-testid="quick-action-attendance">
+        <a href="{{ route('teacher.attendance.register') }}" class="ds-btn ds-btn-sm ds-btn-outline" data-testid="quick-action-attendance">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             Take Attendance
         </a>
