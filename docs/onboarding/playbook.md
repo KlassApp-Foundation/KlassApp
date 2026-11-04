@@ -283,7 +283,7 @@ Choices:
 - `use_this` — Use this
 - `adjust` — Adjust
 
-Default: The class name starts as P1 when the school type has no recommended setup. Streams and the recommended setup choice stay blank until a setup applies. Use this lists the classes and streams that would be added and saves nothing. Apply adds exactly that list. The wizard adds that list on Continue only when the school has no classes or streams yet. Continue after that does not add a suggested class or stream. Adjust leaves the step open so the school can clear or change every value. Nothing is saved until the school confirms the step.
+Default: The class name starts as P1 when the school type has no recommended setup. Streams and the recommended setup choice stay blank until a setup applies. Use this is offered only when the school has no classes or streams, and Continue adds that structure on that first run. Apply suggested structure lists each missing class and stream, such as Senior Five PCM. Confirm adds exactly that list. Cancel adds nothing. After the school has any class or stream, the form starts from what the school saved and Continue does not add a suggested class or stream. Adjust leaves the step open and writes nothing. Nothing is saved until the school confirms the step.
 
 Confirmation: Confirm the classes and streams, then the engine creates them.
 

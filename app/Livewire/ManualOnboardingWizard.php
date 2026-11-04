@@ -151,6 +151,14 @@ class ManualOnboardingWizard extends Component
     /** True when the preset still has classes or streams that are not active. */
     public bool $structurePresetOffer = false;
 
+    /**
+     * Class and stream names shown on the first run, before anything is saved.
+     * Empty once the school has any class or stream.
+     *
+     * @var list<string>
+     */
+    public array $structureFirstRunPreview = [];
+
     public string $subjectName = 'Mathematics';
 
     /**
@@ -2195,6 +2203,16 @@ class ManualOnboardingWizard extends Component
         $this->refreshStructureSnapshot();
     }
 
+    /**
+     * Dismiss the preview. Writes nothing.
+     */
+    public function cancelSuggestedStructure(): void
+    {
+        $this->errorMessage = '';
+        $this->structureFlash = '';
+        $this->structurePresetPreview = [];
+    }
+
     private function refreshStructureSnapshot(): void
     {
         $school = $this->school()->fresh();
@@ -2205,6 +2223,7 @@ class ManualOnboardingWizard extends Component
         $this->schoolHasStreams = false;
         $this->structurePresetNote = '';
         $this->structurePresetOffer = false;
+        $this->structureFirstRunPreview = [];
         $this->structureTeachers = User::query()
             ->where('school_id', $school->id)
             ->where('usergroup_id', 5)
@@ -2242,10 +2261,14 @@ class ManualOnboardingWizard extends Component
         }
 
         $plan = app(ClassStructureService::class)->suggestedStructurePlan($school);
-        $this->structurePresetOffer = $plan['items'] !== [];
-        $this->structurePresetNote = $this->structurePresetOffer
-            ? 'Suggested classes and streams stay off this form. Continue does not add them. Apply suggested structure to see exactly what would be added.'
-            : '';
+        $hasStructure = app(ClassStructureService::class)->hasStructure($school);
+        $this->structurePresetOffer = $hasStructure && $plan['items'] !== [];
+        if (! $hasStructure && $plan['items'] !== []) {
+            $this->structureFirstRunPreview = $plan['items'];
+            $this->structurePresetNote = 'Suggested structure for this school. Continue adds these classes and streams. Nothing is saved until you continue.';
+        } elseif ($this->structurePresetOffer) {
+            $this->structurePresetNote = 'Suggested classes and streams stay off this form. Continue does not add them. Apply suggested structure to see exactly what would be added.';
+        }
     }
 
     private function applyStudentStreamDefaultForClass(): void
@@ -2310,7 +2333,7 @@ class ManualOnboardingWizard extends Component
             }
 
             if ($classes !== []) {
-                $year = AcademicYear::where('school_id', $school->id)->first();
+                $year = app(ClassStructureService::class)->activeYear($school);
                 if (! $year || (int) $year->school_id !== (int) $school->id) {
                     throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
                 }
@@ -2335,7 +2358,7 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['className' => 'Enter a class name (e.g. P1).']);
         }
 
-        $year = AcademicYear::where('school_id', $school->id)->first();
+        $year = app(ClassStructureService::class)->activeYear($school);
         if (! $year || (int) $year->school_id !== (int) $school->id) {
             throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
         }

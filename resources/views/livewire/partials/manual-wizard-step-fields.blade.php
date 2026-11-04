@@ -133,6 +133,14 @@
             @endif
         </p>
 
+        @if($structureFirstRunPreview !== [])
+            <ul class="manual-wizard-structure-preview" data-testid="wizard-structure-prefill">
+                @foreach($structureFirstRunPreview as $item)
+                    <li data-testid="wizard-structure-prefill-item">{{ $item }}</li>
+                @endforeach
+            </ul>
+        @endif
+
         @if($structurePresetPreview !== [])
             <div class="manual-wizard-structure-preview" data-testid="wizard-structure-preset-preview">
                 <p class="manual-wizard-structure-intro">These will be added. Nothing has been added yet.</p>
@@ -143,7 +151,10 @@
                 </ul>
                 <x-button type="button" variant="outline" size="sm"
                           wire:click="confirmSuggestedStructure"
-                          data-testid="wizard-confirm-suggested-structure">Add these</x-button>
+                          data-testid="wizard-confirm-suggested-structure">Confirm</x-button>
+                <x-button type="button" variant="outline" size="sm"
+                          wire:click="cancelSuggestedStructure"
+                          data-testid="wizard-cancel-suggested-structure">Cancel</x-button>
             </div>
         @elseif($structurePresetOffer)
             <x-button type="button" variant="outline" size="sm"
@@ -155,7 +166,7 @@
             <div class="manual-wizard-structure-flash" data-testid="wizard-structure-flash">{{ $structureFlash }}</div>
         @endif
 
-        @if(count($structureClasses ?? []) === 0)
+        @if(count($structureClasses ?? []) === 0 && ($structureFirstRunPreview ?? []) === [])
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-class">First class / stream<span class="text-red-500">*</span></label>
                 <input id="wizard-class" type="text" class="ds-form-input w-full" wire:model="className" placeholder="e.g. P1" />

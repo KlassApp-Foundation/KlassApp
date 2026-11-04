@@ -9,6 +9,7 @@ use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\School;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\User;
@@ -162,7 +163,8 @@ class SchoolTypePresetTest extends TestCase
         $adminId = (int) User::where('school_id', $accepted->id)->value('id');
         $prompt = $driver->promptNext($accepted->fresh(), $adminId);
         $this->assertSame('standards', $prompt['key']);
-        $this->assertSame(SchoolTypePreset::actions(), $prompt['options']);
+        $this->assertSame($this->applyOffer(), $prompt['options']);
+        $this->assertNotContains('use_this', array_column($prompt['options'], 'value'));
         $this->assertStringContainsString("Here's the usual setup for an O-Level + A-Level school.", $prompt['question']);
         $this->assertStringContainsString('PCM, BCM, HEG, MEG', $prompt['question']);
 
@@ -432,6 +434,9 @@ class SchoolTypePresetTest extends TestCase
         $component = Livewire::test(ManualOnboardingWizard::class);
         $component->call('goToStep', $this->stepIndex($component, 'standards'));
         $this->assertSame(0, Section::where('school_id', $school->id)->count());
+        $this->assertSame($plan['items'], $component->get('structureFirstRunPreview'));
+        $component->assertSee('Senior Five PCM');
+        $component->assertSee('Nothing is saved until you continue');
         $component->call('next');
         $this->assertSame('', (string) $component->get('errorMessage'));
         $this->assertEqualsCanonicalizing($plan['items'], $this->activeSectionNames($school->fresh()));
@@ -458,7 +463,17 @@ class SchoolTypePresetTest extends TestCase
         $this->assertSame($beforeRows, $this->sectionRows($school->fresh()));
         $this->assertSame($expected, $component->get('structurePresetPreview'));
         $component->assertSee('Nothing has been added yet');
+        $component->assertSee('Confirm');
+        $component->assertSee('Cancel');
+        foreach ($beforeActive as $name) {
+            $this->assertNotContains($name, $component->get('structurePresetPreview'));
+        }
 
+        $component->call('cancelSuggestedStructure');
+        $this->assertSame([], $component->get('structurePresetPreview'));
+        $this->assertSame($beforeRows, $this->sectionRows($school->fresh()));
+
+        $component->call('previewSuggestedStructure');
         $component->call('confirmSuggestedStructure');
         $this->assertSame('', (string) $component->get('errorMessage'));
         $added = array_values(array_diff($this->activeSectionNames($school->fresh()), $beforeActive));
@@ -485,6 +500,319 @@ class SchoolTypePresetTest extends TestCase
         $toshiAdded = array_values(array_diff($this->activeSectionNames($toshi->fresh()), $toshiBefore));
         sort($toshiAdded);
         $this->assertSame($sortedPreview, $toshiAdded);
+    }
+
+    public function test_manzi_cleared_a_level_streams_are_not_put_back_on_continue(): void
+    {
+        $school = $this->firstRunSchool('manzi-clear');
+        $this->actingAs($this->adminFor($school));
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $component->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $this->assertTrue(Section::where('school_id', $school->id)->where('name', 'Senior Five PCM')->exists());
+
+        $this->clearALevelStreams($school->fresh());
+        $saving = Livewire::test(ManualOnboardingWizard::class);
+        $saving->call('goToStep', $this->stepIndex($saving, 'standards'));
+        foreach ($saving->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $saving->call('next');
+        $this->assertSame('', (string) $saving->get('errorMessage'));
+
+        $before = $this->sectionRows($school->fresh());
+        $beforeCount = count($before);
+        $reopened = Livewire::test(ManualOnboardingWizard::class);
+        $reopened->call('goToStep', $this->stepIndex($reopened, 'standards'));
+        $this->assertSame([], $reopened->get('structureFirstRunPreview'));
+        foreach ($reopened->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $reopened->call('next');
+        $this->assertSame('', (string) $reopened->get('errorMessage'));
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+        $this->assertCount($beforeCount, $this->sectionRows($school->fresh()));
+        $this->assertNoActivePresetStreams($school->fresh());
+    }
+
+    public function test_manzi_custom_senior_five_arts_stream_is_not_replaced_on_continue(): void
+    {
+        $school = $this->firstRunSchool('manzi-arts');
+        $this->actingAs($this->adminFor($school));
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $component->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $this->clearALevelStreams($school->fresh());
+
+        $custom = Livewire::test(ManualOnboardingWizard::class);
+        $custom->call('goToStep', $this->stepIndex($custom, 'standards'));
+        $five = $this->sectionId($custom, 'Senior Five');
+        $drafts = $custom->get('structureStreamDrafts');
+        foreach ($drafts as $key => $value) {
+            $drafts[$key] = (string) $key === (string) $five ? 'Arts' : '';
+        }
+        $custom->set('structureStreamDrafts', $drafts)->call('next');
+        $this->assertSame('', (string) $custom->get('errorMessage'));
+        $this->assertContains('Senior Five Arts', $this->activeSectionNames($school->fresh()));
+        $this->assertNoActivePresetStreams($school->fresh());
+
+        $before = $this->sectionRows($school->fresh());
+        $reopened = Livewire::test(ManualOnboardingWizard::class);
+        $reopened->call('goToStep', $this->stepIndex($reopened, 'standards'));
+        $reopened->assertSee('Arts');
+        $this->assertSame([], $reopened->get('structureFirstRunPreview'));
+        foreach ($reopened->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $reopened->call('next');
+        $this->assertSame('', (string) $reopened->get('errorMessage'));
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+        $this->assertContains('Senior Five Arts', $this->activeSectionNames($school->fresh()));
+        $this->assertNoActivePresetStreams($school->fresh());
+    }
+
+    public function test_existing_structure_is_not_prefilled_on_first_open(): void
+    {
+        $school = $this->readySchool('Uganda', 'o_a_level', 'no-prefill');
+        $this->actingAs($this->adminFor($school));
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $this->assertSame([], $component->get('structureFirstRunPreview'));
+        $this->assertNotSame([], $component->get('structureClasses'));
+        foreach ($component->get('structureStreamDrafts') as $draft) {
+            $this->assertSame('', $draft);
+        }
+        $component->assertDontSee('wizard-structure-prefill-item');
+        $component->assertDontSee('Senior Five PCM');
+        $component->assertSee('Apply suggested structure');
+
+        $before = $this->sectionRows($school);
+        $component->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+        $this->assertNoActivePresetStreams($school->fresh());
+    }
+
+    public function test_toshi_use_this_applies_only_when_the_school_has_no_structure(): void
+    {
+        $empty = $this->firstRunSchool('toshi-empty');
+        $adminId = (int) User::where('school_id', $empty->id)->value('id');
+        $driver = app(ToshiOnboardingV2Driver::class);
+        $plan = app(ClassStructureService::class)->suggestedStructurePlan($empty);
+        $prompt = $driver->promptNext($empty->fresh(), $adminId);
+        $this->assertSame('standards', $prompt['key']);
+        $this->assertSame(SchoolTypePreset::actions(), $prompt['options']);
+
+        $before = Section::where('school_id', $empty->id)->count();
+        $this->assertSame(0, $before);
+        try {
+            app(StandardsStep::class)->save($empty->fresh(), 'adjust');
+            $this->fail('Adjust should write nothing.');
+        } catch (OnboardingStepAwaitingInput $e) {
+            $this->assertStringContainsString('Nothing is saved yet', $e->getMessage());
+        }
+        $this->assertSame(0, Section::where('school_id', $empty->id)->count());
+
+        $applied = $driver->handleReply($empty->fresh(), 'use_this', $adminId);
+        $this->assertNotSame('rejected', $applied['status'] ?? null, (string) ($applied['hint'] ?? ''));
+        $this->assertEqualsCanonicalizing($plan['items'], $this->activeSectionNames($empty->fresh()));
+
+        $existing = $this->readySchool('Uganda', 'o_a_level', 'toshi-existing');
+        $existingAdmin = (int) User::where('school_id', $existing->id)->value('id');
+        $existingPrompt = $driver->promptNext($existing->fresh(), $existingAdmin);
+        $this->assertSame('standards', $existingPrompt['key']);
+        $this->assertSame($this->applyOffer(), $existingPrompt['options']);
+        $existingBefore = $this->sectionRows($existing);
+        $kept = $driver->handleReply($existing->fresh(), 'done', $existingAdmin);
+        $this->assertNotSame('rejected', $kept['status'] ?? null, (string) ($kept['hint'] ?? ''));
+        $this->assertSame($existingBefore, $this->sectionRows($existing->fresh()));
+        $this->assertNoActivePresetStreams($existing->fresh());
+    }
+
+    public function test_toshi_apply_suggested_structure_previews_then_confirms_only_missing_items(): void
+    {
+        [$school] = $this->sunsetSchool('Sunset PS Toshi Preview');
+        $this->clearALevelStreams($school);
+        $adminId = (int) User::where('school_id', $school->id)->value('id');
+        $driver = app(ToshiOnboardingV2Driver::class);
+        $before = $this->sectionRows($school);
+        $beforeActive = $this->activeSectionNames($school);
+
+        $preview = $driver->handleReply($school->fresh(), 'apply suggested structure', $adminId);
+        $this->assertSame('awaiting', $preview['status'] ?? null);
+        $this->assertStringContainsString('Nothing is saved yet', (string) ($preview['question'] ?? ''));
+        $this->assertStringContainsString('Senior Five PCM', (string) ($preview['question'] ?? ''));
+        $this->assertStringContainsString('Senior Five BCM', (string) ($preview['question'] ?? ''));
+        $this->assertStringNotContainsString('Senior One', (string) ($preview['question'] ?? ''));
+        $stored = json_decode((string) SchoolDetail::query()
+            ->where('school_id', $school->id)
+            ->where('meta_key', 'onboarding_v2_structure_preview')
+            ->value('meta_value'), true);
+        $expected = [];
+        foreach (['Senior Five', 'Senior Six'] as $className) {
+            foreach (SchoolTypePreset::A_LEVEL_STREAMS as $label) {
+                $expected[] = $className.' '.$label;
+            }
+        }
+        $this->assertSame($expected, $stored);
+        $this->assertSame(
+            ['confirm', 'cancel'],
+            array_column($preview['options'], 'value'),
+        );
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+
+        $cancelled = $driver->handleReply($school->fresh(), 'cancel', $adminId);
+        $this->assertSame('awaiting', $cancelled['status'] ?? null);
+        $this->assertStringContainsString('Nothing was added', (string) ($cancelled['question'] ?? ''));
+        $this->assertSame($before, $this->sectionRows($school->fresh()));
+
+        $again = $driver->handleReply($school->fresh(), 'apply_suggested', $adminId);
+        $this->assertSame('awaiting', $again['status'] ?? null);
+        $confirmed = $driver->handleReply($school->fresh(), 'confirm', $adminId);
+        $this->assertNotSame('rejected', $confirmed['status'] ?? null, (string) ($confirmed['hint'] ?? ''));
+        $added = array_values(array_diff($this->activeSectionNames($school->fresh()), $beforeActive));
+        sort($added);
+        $sortedExpected = $expected;
+        sort($sortedExpected);
+        $this->assertSame($sortedExpected, $added);
+
+        $adjusted = $this->readySchool('Uganda', 'o_a_level', 'toshi-adjust');
+        $adjustBefore = Section::where('school_id', $adjusted->id)->count();
+        $adjust = $driver->handleReply(
+            $adjusted->fresh(),
+            'adjust',
+            (int) User::where('school_id', $adjusted->id)->value('id'),
+        );
+        $this->assertSame('awaiting', $adjust['status'] ?? null);
+        $this->assertStringContainsString('Nothing is saved yet', (string) ($adjust['question'] ?? ''));
+        $this->assertSame($adjustBefore, Section::where('school_id', $adjusted->id)->count());
+        $this->assertNoActivePresetStreams($adjusted->fresh());
+    }
+
+    public function test_toshi_continue_does_not_restore_cleared_or_custom_streams(): void
+    {
+        [$cleared] = $this->sunsetSchool('Sunset PS Toshi Cleared');
+        $this->clearALevelStreams($cleared);
+        $clearedAdmin = (int) User::where('school_id', $cleared->id)->value('id');
+        $driver = app(ToshiOnboardingV2Driver::class);
+        $before = $this->sectionRows($cleared);
+        $reply = $driver->handleReply($cleared->fresh(), 'done', $clearedAdmin);
+        $this->assertNotSame('rejected', $reply['status'] ?? null, (string) ($reply['hint'] ?? ''));
+        $this->assertSame($before, $this->sectionRows($cleared->fresh()));
+        $this->assertNoActivePresetStreams($cleared->fresh());
+
+        [$custom] = $this->sunsetSchool('Sunset PS Toshi Arts');
+        $this->clearALevelStreams($custom);
+        $year = AcademicYear::where('school_id', $custom->id)->where('status', 1)->first();
+        $base = Section::where('school_id', $custom->id)->where('name', 'Senior Five')->first();
+        $this->assertNotNull($year);
+        $this->assertNotNull($base);
+        app(ClassStructureService::class)->addStream($custom, $year, $base, 'Arts');
+        $customBefore = $this->sectionRows($custom);
+        $customReply = $driver->handleReply(
+            $custom->fresh(),
+            'yes',
+            (int) User::where('school_id', $custom->id)->value('id'),
+        );
+        $this->assertNotSame('rejected', $customReply['status'] ?? null, (string) ($customReply['hint'] ?? ''));
+        $this->assertSame($customBefore, $this->sectionRows($custom->fresh()));
+        $this->assertContains('Senior Five Arts', $this->activeSectionNames($custom->fresh()));
+        $this->assertNoActivePresetStreams($custom->fresh());
+    }
+
+    public function test_wizard_continue_attaches_a_stream_to_the_active_academic_year(): void
+    {
+        $school = $this->school('Uganda', 'o_a_level');
+        $school->forceFill([
+            'name' => 'Two Year School',
+            'student_size' => 'Up to 500',
+            'curriculum' => 'uneb',
+            'ministry_code' => 'TWOYEAR1',
+            'uneb_center_number' => '',
+        ])->save();
+        $earlier = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'description' => 'Old Academic Year',
+            'start_date' => '2026-01-01 00:00:00',
+            'end_date' => '2026-12-31 23:59:59',
+            'status' => 0,
+        ]);
+        $active = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => '2027',
+            'description' => 'Current Academic Year',
+            'start_date' => '2027-01-01 00:00:00',
+            'end_date' => '2027-12-31 23:59:59',
+            'status' => 1,
+        ]);
+        $this->assertLessThan($active->id, $earlier->id);
+
+        $service = app(ClassStructureService::class);
+        $service->saveClasses($school, $earlier, [['name' => 'Senior One']]);
+        $service->saveClasses($school->fresh(), $active, [['name' => 'Senior One']]);
+
+        $this->actingAs($this->adminFor($school));
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $component->call('goToStep', $this->stepIndex($component, 'standards'));
+        $id = (string) $this->sectionId($component, 'Senior One');
+        $drafts = $component->get('structureStreamDrafts');
+        $drafts[$id] = 'East';
+        $component->set('structureStreamDrafts', $drafts)->call('next');
+        $this->assertSame('', (string) $component->get('errorMessage'));
+
+        $stream = Section::where('school_id', $school->id)->where('name', 'Senior One East')->first();
+        $this->assertNotNull($stream);
+        $years = StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('section_id', $stream->id)
+            ->pluck('academic_year_id')
+            ->map(fn ($yearId): int => (int) $yearId)
+            ->all();
+        $this->assertSame([(int) $active->id], $years);
+        $this->assertNotContains((int) $earlier->id, $years);
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    private function applyOffer(): array
+    {
+        return [
+            ['value' => 'apply_suggested', 'label' => 'Apply suggested structure'],
+            ['value' => 'adjust', 'label' => 'Adjust'],
+        ];
+    }
+
+    private function firstRunSchool(string $label): School
+    {
+        $school = $this->school('Uganda', 'o_a_level');
+        $school->forceFill([
+            'name' => 'Preset '.$label.' School',
+            'student_size' => 'Up to 500',
+            'curriculum' => 'uneb',
+            'ministry_code' => strtoupper(substr(preg_replace('/[^a-z0-9]/i', '', $label) ?: 'RUN', 0, 8)).random_int(100, 999),
+            'uneb_center_number' => '',
+        ])->save();
+        $this->year($school);
+        $this->adminFor($school);
+
+        return $school->fresh();
+    }
+
+    private function assertNoActivePresetStreams(School $school): void
+    {
+        $active = $this->activeSectionNames($school);
+        foreach (['PCM', 'BCM', 'HEG', 'MEG'] as $label) {
+            foreach ($active as $name) {
+                $this->assertFalse(str_ends_with($name, ' '.$label), $name);
+            }
+        }
     }
 
     /**

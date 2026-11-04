@@ -90,7 +90,7 @@ class StandardsStep extends AbstractOnboardingStep
 
             return;
         }
-        $year = AcademicYear::where('school_id', $school->id)->first();
+        $year = app(ClassStructureService::class)->activeYear($school);
         if (! $year || (int) $year->school_id !== (int) $school->id) {
             $this->reject('Create an academic year before this step.');
         }
@@ -161,9 +161,10 @@ class StandardsStep extends AbstractOnboardingStep
     }
 
     /**
-     * Use this shows the preview and writes nothing. Apply adds that list.
-     * Adjust asks again and writes nothing. A school type with no preset keeps
-     * the existing confirm-what-is-saved path.
+     * Use this applies the preset only when the school has no classes or streams.
+     * Once any structure exists, Use this shows the preview and writes nothing.
+     * Apply adds the previewed list. Adjust asks again and writes nothing.
+     * A school type with no preset keeps the existing confirm-what-is-saved path.
      */
     private function prepare(School $school, mixed $raw): mixed
     {
@@ -174,7 +175,12 @@ class StandardsStep extends AbstractOnboardingStep
             );
         }
         if ($normalized === SchoolTypePreset::ACCEPT) {
-            return $this->previewPresetReply($school);
+            if (SchoolTypePreset::forSchool($school) !== null
+                && ! app(ClassStructureService::class)->hasStructure($school)) {
+                $normalized = SchoolTypePreset::APPLY;
+            } else {
+                return $this->previewPresetReply($school);
+            }
         }
 
         return $this->expandPreset($school, $normalized);
