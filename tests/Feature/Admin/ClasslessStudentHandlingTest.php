@@ -200,7 +200,7 @@ class ClasslessStudentHandlingTest extends TestCase
 
     public function test_report_cards_index_renders_with_classless_student_in_school(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/reports/cards');
+        $response = $this->actingAs($this->admin)->get('/admin/reports/cards/history');
 
         $response->assertOk();
     }

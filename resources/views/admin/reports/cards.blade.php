@@ -1,219 +1,209 @@
+{{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.admin.layout')
 
 @section('content')
+@php
+    $state = $data['state'] ?? null;
+    $kpis = $data['kpis'] ?? null;
+    $rows = $data['rows'] ?? [];
+    $subjects = $data['subjects'] ?? [];
+    $generations = $data['generations'] ?? [];
+    $releasedLinks = $data['released_links'] ?? [];
+    $linkCounts = $data['link_counts'] ?? [];
+    $streamsByLink = collect($links)->pluck('stream', 'id')->all();
+    $query = fn (array $extra = []) => array_filter(array_merge(['class' => $class['id'] ?? null, 'exam' => $sitting['key'] ?? null, 'stream' => $streamId, 'sort' => $sort === 'name' ? 'name' : null], $extra), fn ($v) => $v !== null && $v !== '');
+    $pending = collect($generations)->contains(fn ($g) => $g['status'] === 'pending');
+    $failedLink = collect($generations)->filter(fn ($g) => $g['status'] === 'failed')->keys()->first();
+    $total = array_sum($linkCounts);
+    $maxDivision = max(1, (int) collect($data['divisions'] ?? [])->max());
+    $maxSubject = 100;
+@endphp
+<link rel="stylesheet" href="{{ asset('css/report-cards-screen.css') }}?v={{ filemtime(public_path('css/report-cards-screen.css')) }}">
 
-<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
-<style>
-.report-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.report-card-actions .ds-btn { white-space: nowrap; padding: 8px 12px; background: #fff; } /* labels stay on one line */
-</style>
+<div class="rc" data-testid="report-cards-screen" @if($pending) data-pending="1" @endif>
+    @include('partials.message')
 
-@include('layouts.partials.page-header', [
-    'title' => 'Report Cards',
-    'subtitle' => 'Generate and download student report cards by class.',
-])
-
-<div class="relative mt-4">
-    <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-        <form method="GET" class="flex items-center gap-3">
-            <label class="text-sm font-medium text-gray-700">Term:</label>
-            <select name="term" onchange="this.form.submit()" class="border rounded px-3 py-1.5 text-sm">
-                @foreach ($terms as $term)
-                    <option value="{{ $term->id }}" {{ $selectedTerm == $term->id ? 'selected' : '' }}>
-                        {{ $term->name }}
-                    </option>
-                @endforeach
+    <div class="rc-head">
+        <div>
+            <h1>Report cards</h1>
+            <p style="margin:6px 0 0;font-size:.9rem;color:#475569;">Built from released marks only</p>
+        </div>
+        @if($class && $sitting)
+        <form method="GET" action="{{ url('/admin/reports/cards') }}" class="rc-filters" data-testid="desktop-filters">
+            <label for="rc-class">Class</label>
+            <select id="rc-class" name="class" class="ds-input" style="width:160px;" onchange="this.form.exam.value=''; this.form.stream.value=''; this.form.submit()">
+                @foreach($classes as $c)<option value="{{ $c['id'] }}" @selected($c['id'] === $class['id'])>{{ $c['label'] }}</option>@endforeach
             </select>
+            <label for="rc-exam">Exam</label>
+            <select id="rc-exam" name="exam" class="ds-input" style="width:220px;" onchange="this.form.submit()">
+                @foreach($sittings as $s)<option value="{{ $s['key'] }}" @selected($s['key'] === $sitting['key'])>{{ $s['label'] }}</option>@endforeach
+            </select>
+            @if($streamId)<input type="hidden" name="stream" value="{{ $streamId }}">@else<input type="hidden" name="stream" value="">@endif
+            <noscript><button class="ds-btn ds-btn-outline" type="submit">Show</button></noscript>
         </form>
-        <a href="{{ route('admin.reports.cards.missing') }}"
-           class="bg-white hover:bg-gray-50 text-gray-800 text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition">
-            Missing Marks Report
-        </a>
-    </div>
-</div>
-
-<div class="bg-white rounded-lg shadow p-4 mt-4">
-    <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-gray-700">Report Card Template</h3>
-        <span class="text-xs text-gray-400">Applies to all report cards generated from this point on (batch, individual, merged).</span>
-    </div>
-
-    <form method="POST" action="{{ route('admin.reports.cards.template') }}">
-        @csrf
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach (\App\Http\Controllers\Admin\ReportCardsController::TEMPLATES as $key => $tpl)
-                @php
-                    $isSaved = $reportTemplate === $key;
-                    $thumbPath = 'images/report-template-thumbnails/' . $key . '.png';
-                    $hasThumb = file_exists(public_path($thumbPath));
-                @endphp
-                <label class="group relative block border-2 border-gray-200 rounded-xl cursor-pointer transition overflow-hidden hover:border-gray-300 peer-checked:border-blue-500 has-[:checked]:border-blue-500 has-[:checked]:ring-2 has-[:checked]:ring-blue-200">
-                    <input type="radio" name="report_template" value="{{ $key }}" {{ $isSaved ? 'checked' : '' }} class="sr-only peer">
-
-                    <span class="absolute top-2 left-2 z-10 w-5 h-5 rounded-full border-2 border-white bg-white/80 shadow flex items-center justify-center peer-checked:bg-blue-600 group-has-[:checked]:bg-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-white hidden group-has-[:checked]:block"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                    </span>
-
-                    @if ($isSaved)
-                        <span class="absolute top-2 right-2 z-10 bg-gray-900/80 text-white text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full">
-                            Currently in use
-                        </span>
-                    @endif
-
-                    <div class="bg-gray-100 aspect-[3/4] overflow-hidden">
-                        @if ($hasThumb)
-                            <img src="{{ asset($thumbPath) }}" alt="{{ $tpl['label'] }} template preview" class="w-full h-full object-cover object-top">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs px-4 text-center">
-                                Preview coming soon
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="p-3 flex items-center justify-between gap-2 bg-white">
-                        <span class="text-sm font-medium text-gray-800">{{ $tpl['label'] }}</span>
-                        <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank"
-                           onclick="event.stopPropagation()"
-                           class="text-xs text-blue-600 hover:underline whitespace-nowrap">
-                            Open full preview
-                        </a>
-                    </div>
-                </label>
-            @endforeach
-        </div>
-
-        <div class="mt-4 flex items-center gap-3">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">
-                Save
-            </button>
-            <span class="text-xs text-gray-400">Click a card to select it, then Save.</span>
-        </div>
-    </form>
-
-    <div class="mt-3 pt-3 border-t text-xs text-gray-500">
-        @if((int) optional(auth()->user())->usergroup_id === 4)
-            Logo not showing correctly on the report card? A school admin manages the school logo.
-        @else
-            Logo not showing correctly on the report card? Manage your school's logo on the
-            <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
+        <button type="button" class="ds-btn ds-btn-outline rc-sheet-btn" style="min-height:44px;" data-open-filters>Filters</button>
         @endif
     </div>
-</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-    @forelse ($stdLinks as $link)
-        <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition p-5">
-            <div class="flex items-center justify-between mb-3">
-                @php $streamLabel = trim((string) ($link->stream ?? '')); @endphp
-                <h3 class="text-lg font-semibold text-gray-800">{{ $link->section->name }}{{ $streamLabel !== '' ? ' · '.$streamLabel : '' }}</h3>
-                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ $link->standard->name }}</span>
-            </div>
-
-            <div class="text-sm text-gray-600 space-y-1 mb-4">
-                <p><span class="font-medium">{{ $link->studentCount ?? 0 }}</span> students with marks</p>
-                @if ($link->eotExam)
-                    <p>Exam: {{ $link->eotExam->examType->name }} &middot; {{ $link->eotExam->academicTerm->name }}</p>
+    @if(! $class)
+        <div class="rc-empty" data-testid="rc-no-classes">
+            <h2>No classes yet</h2>
+            <p>Report cards need a class with an exam. Set up classes first, then come back.</p>
+            <a href="{{ url('/admin/classes') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Go to Classes</a>
+        </div>
+    @elseif(! $sitting)
+        <div class="rc-empty" data-testid="rc-no-exams">
+            <h2>{{ $class['label'] }} has no exams yet</h2>
+            <p>Report cards use released marks only. Once an exam is marked and released, it shows here.</p>
+            <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Go to Marks Release</a>
+        </div>
+    @elseif($state === 'unreleased' || $state === 'empty')
+        <div class="rc-empty" data-testid="rc-unreleased">
+            <h2>{{ $class['label'] }} {{ $sitting['label'] }} {{ $state === 'empty' ? 'has no marks to show yet' : "isn't released yet" }}</h2>
+            <p>Report cards use released marks only. Nothing from this exam is shown until it is released.</p>
+            <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Go to Marks Release</a>
+        </div>
+    @else
+        {{-- Class PDF: one control per released stream --}}
+        @foreach($releasedLinks as $linkId)
+            @php
+                $g = $generations[$linkId] ?? null;
+                $count = $linkCounts[$linkId] ?? 0;
+                $stream = $streamsByLink[$linkId] ?? '';
+                $suffix = count($releasedLinks) > 1 && $stream !== '' ? ' · '.$stream : '';
+                $mergedUrl = route('admin.reports.cards.merged', ['stdLink' => $linkId, 'term' => $sitting['term_id']]);
+            @endphp
+            <div data-testid="class-pdf" data-state="{{ $g['status'] ?? 'none' }}">
+                @if($g && $g['status'] === 'pending')
+                    <div class="rc-progress" role="status" aria-busy="true">
+                        <strong>Preparing {{ $count }} report cards{{ $suffix }}…</strong>
+                        <i aria-hidden="true"><b></b></i>
+                        <span style="font-size:.82rem;color:#475569;">The download appears here when it is ready. You can keep working.</span>
+                    </div>
+                @elseif($g && $g['status'] === 'failed')
+                    <div class="rc-alert" role="alert">
+                        <strong>The class PDF didn't finish{{ $suffix }}</strong>
+                        <span style="font-size:.86rem;">Nothing was lost. You can still download each card from the list below, or try the class PDF again.</span>
+                        <div><a href="{{ $mergedUrl }}" class="ds-btn ds-btn-primary" style="min-height:44px;text-decoration:none;">Try all {{ $count }} again</a></div>
+                    </div>
+                @elseif($g && $g['status'] === 'completed')
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <a href="{{ route('admin.reports.cards.generation.download', $g['id']) }}" class="ds-btn ds-btn-primary rc-all" style="min-height:44px;text-decoration:none;" data-testid="download-all">Download all {{ $count }} cards (one PDF){{ $suffix }}</a>
+                        <a href="{{ $mergedUrl }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Build again</a>
+                    </div>
+                @else
+                    <a href="{{ $mergedUrl }}" class="ds-btn ds-btn-primary rc-all" style="min-height:44px;text-decoration:none;" data-testid="build-all">Build all {{ $count }} cards (one PDF){{ $suffix }}</a>
                 @endif
             </div>
+        @endforeach
 
-            <div class="report-card-actions">
-                <a href="{{ route('admin.reports.cards.merged', ['stdLink' => $link, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">Print all</a>
-                <a href="{{ route('admin.reports.cards.download', ['stdLink' => $link, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">Generate</a>
-                @if (!empty($link->readyPdf))
-                <a href="{{ route('admin.reports.cards.generation.download', $link->readyPdf) }}" class="ds-btn ds-btn-outline">Download PDF</a>
-                @endif
-                <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}" class="ds-btn ds-btn-outline">View marks</a>
-                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}" class="ds-btn ds-btn-outline">Marksheet (Excel)</a>
-            </div>
-
-            @if (!empty($link->students) && count($link->students) > 0)
-            <details class="mt-3 border rounded-lg">
-                <summary class="cursor-pointer px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-50 rounded-lg">
-                    Students ({{ count($link->students) }}) — Preview or Download Individual Reports
-                </summary>
-                <div class="max-h-64 overflow-y-auto mt-1">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
-                            <tr><th class="text-left px-2 py-1">Name</th><th class="px-2 py-1 w-24">Actions</th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($link->students as $student)
-                            <tr class="border-t hover:bg-gray-50">
-                                <td class="px-2 py-1 text-gray-700">{{ $student->displayName ?: $student->name }}</td>
-                                <td class="px-2 py-1 flex gap-1 justify-center">
-                                    <a href="{{ route('admin.reports.cards.student.preview', ['stdLink' => $link, 'learner' => $student, 'term' => $selectedTerm]) }}"
-                                       target="_blank"
-                                       class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded transition">
-                                        Preview
-                                    </a>
-                                    <a href="{{ route('admin.reports.cards.student.download', ['stdLink' => $link, 'learner' => $student, 'term' => $selectedTerm]) }}"
-                                       class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-0.5 rounded transition">
-                                        Download
-                                    </a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </details>
-            @endif
+        <div class="rc-kpis" data-testid="rc-kpis">
+            <div class="rc-kpi"><b>{{ $kpis['ready'] }}</b><span>report cards ready</span></div>
+            <div class="rc-kpi"><b>{{ $kpis['average'] ?? '—' }}</b><span>class average</span></div>
+            <div class="rc-kpi hide-phone"><b>{{ $kpis['division_one'] }}</b><span>in Division I</span></div>
+            <div class="rc-kpi hide-phone"><b>{{ $kpis['ungraded'] }}</b><span>ungraded (U)</span></div>
         </div>
-    @empty
-        <div class="col-span-full text-center py-16 text-gray-500">
-            <p class="text-lg">No classes with EOT exams found for this term.</p>
-            <p class="text-sm mt-1">Create an End of Term exam first from the Exams page.</p>
-        </div>
-    @endforelse
-</div>
 
-    @include('admin.reports._eot-kpi-card')
-
-    @if (!empty($recentGenerations) && count($recentGenerations) > 0)
-    <div class="bg-white rounded-xl shadow-sm border mt-6 p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-3">Recent Generations</h3>
-        <table class="w-full text-sm">
-            <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
-                <tr>
-                    <th class="text-left px-3 py-2">Class</th>
-                    <th class="text-left px-3 py-2">Type</th>
-                    <th class="text-left px-3 py-2">Status</th>
-                    <th class="text-left px-3 py-2">Requested</th>
-                    <th class="px-3 py-2">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($recentGenerations as $g)
-                <tr class="border-t">
-                    <td class="px-3 py-2 font-medium text-gray-700">{{ $g->class_name }}</td>
-                    <td class="px-3 py-2 text-gray-600">{{ $g->mode === 'merged' ? 'Merged PDF' : 'Zip' }}</td>
-                    <td class="px-3 py-2">
-                        @if ($g->status === 'completed')
-                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Ready</span>
-                        @elseif ($g->status === 'failed')
-                            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full" title="{{ $g->error }}">Failed</span>
-                        @else
-                            <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Generating…</span>
-                        @endif
-                    </td>
-                    <td class="px-3 py-2 text-gray-500 text-xs">{{ $g->created_at->format('d M H:i') }}</td>
-                    <td class="px-3 py-2 text-center">
-                        @if ($g->status === 'completed')
-                            <a href="{{ route('admin.reports.cards.generation.download', $g) }}"
-                               class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition">Download</a>
-                        @elseif ($g->status === 'failed')
-                            <span class="text-xs text-red-600">{{ $g->error ?? 'Error' }}</span>
-                        @else
-                            <span class="text-xs text-gray-400">Please wait…</span>
-                        @endif
-                    </td>
-                </tr>
+        <div class="rc-charts">
+            <section class="rc-card" aria-labelledby="rc-subj">
+                <h2 id="rc-subj">Average by subject</h2>
+                @foreach($data['subject_averages'] as $s)
+                    <div class="rc-bar"><span>{{ $s['name'] }}</span><i aria-hidden="true"><b style="width:{{ min(100, max(0, $s['value'] ?? 0)) }}%"></b></i><strong class="rc-r">{{ $s['value'] !== null ? rtrim(rtrim(number_format($s['value'], 1), '0'), '.') : '—' }}</strong></div>
                 @endforeach
-            </tbody>
-        </table>
-        <p class="text-xs text-gray-400 mt-2">Refresh this page to check status. Generation runs in the background.</p>
-    </div>
+            </section>
+            <section class="rc-card" aria-labelledby="rc-div">
+                <h2 id="rc-div">Students by division</h2>
+                @php $colors = ['1' => '#15803D', '2' => '#1E6FD9', '3' => '#64748B', '4' => '#B45309', 'U' => '#B91C1C']; @endphp
+                <div class="rc-div" role="img" aria-label="{{ collect($data['divisions'])->map(fn ($n, $d) => 'Division '.$data['division_labels'][$d].' '.$n)->implode(', ') }}">
+                    @foreach($data['divisions'] as $d => $n)
+                        <div><span style="font-weight:700;">{{ $n }}</span><i style="height:{{ (int) round($n / $maxDivision * 90) }}px;background:{{ $colors[$d] }};"></i><span style="color:#475569;">Div {{ $data['division_labels'][$d] }}</span></div>
+                    @endforeach
+                </div>
+            </section>
+        </div>
+
+        <div class="rc-table">
+            <table data-testid="rc-table">
+                <thead><tr>
+                    <th scope="col">Position</th><th scope="col">Student</th><th scope="col">Stream</th>
+                    @foreach($subjects as $sub)<th scope="col" class="rc-r" title="{{ $sub['name'] }}">{{ $sub['short'] }}</th>@endforeach
+                    <th scope="col" class="rc-r">Total</th><th scope="col" class="rc-r">Aggregate</th><th scope="col">Division</th>
+                    <th scope="col"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Report card</span></th>
+                </tr></thead>
+                <tbody>
+                @foreach($rows as $r)
+                    <tr data-testid="rc-row">
+                        <td><strong>{{ $r['position'] ?? '—' }}</strong> <span style="color:#475569;">of {{ $r['out_of'] }}</span></td>
+                        <th scope="row">{{ $r['name'] }}</th>
+                        <td>{{ $r['stream'] !== '' ? $r['stream'] : '—' }}</td>
+                        @foreach($r['marks'] as $m)<td class="rc-r">{{ $m }}</td>@endforeach
+                        <td class="rc-r" style="font-weight:700;">{{ $r['total'] }}</td>
+                        <td class="rc-r">{{ $r['aggregate'] }}</td>
+                        <td><span class="rc-pill">{{ $r['division'] }}</span></td>
+                        <td><a href="{{ $r['download_url'] }}" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height:40px;text-decoration:none;" aria-label="Download report card for {{ $r['name'] }}">PDF</a></td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="rc-phone" data-testid="rc-phone-list">
+            @foreach($rows as $r)
+                <div>
+                    <span class="rc-pos">{{ $r['position'] ?? '—' }}</span>
+                    <div style="flex:1;min-width:0;"><div style="font-weight:600;">{{ $r['name'] }}</div><div style="font-size:.75rem;color:#475569;">{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div></div>
+                    <a href="{{ $r['download_url'] }}" class="rc-dl" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
+                </div>
+            @endforeach
+        </div>
+        @if($rows === [])
+            <div class="rc-empty"><h2>No students in this stream</h2><p>Choose another stream, or all streams.</p><a class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;" href="{{ url('/admin/reports/cards').'?'.http_build_query($query(['stream' => null])) }}">Show all streams</a></div>
+        @endif
+    @endif
+
+    <p style="margin:0;font-size:.82rem;color:#475569;"><a href="{{ route('admin.reports.cards.history') }}">Report card template and earlier PDFs</a> · <a href="{{ route('admin.reports.cards.missing') }}">Missing marks report</a></p>
+
+    @if($class && $sitting)
+    <dialog id="rc-filter-sheet" class="rc-dlg" aria-labelledby="fs-t">
+        <span class="rc-grip" aria-hidden="true"></span>
+        <form method="GET" action="{{ url('/admin/reports/cards') }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;"><h2 id="fs-t" style="margin:0;font:600 1.1rem 'Sora',sans-serif;">Filters</h2><a class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height:44px;text-decoration:none;" href="{{ url('/admin/reports/cards') }}">Reset</a></div>
+            <label class="f">Class<select name="class" class="ds-input">@foreach($classes as $c)<option value="{{ $c['id'] }}" @selected($c['id'] === $class['id'])>{{ $c['label'] }}</option>@endforeach</select></label>
+            <label class="f">Exam<select name="exam" class="ds-input">@foreach($sittings as $s)<option value="{{ $s['key'] }}" @selected($s['key'] === $sitting['key'])>{{ $s['label'] }}</option>@endforeach</select></label>
+            @if(count(array_filter(array_column($links, 'stream'))) > 0)
+            <div class="f" style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:.85rem;font-weight:600;">Stream</span>
+                <div class="rc-seg" role="radiogroup" aria-label="Stream" style="grid-template-columns:repeat(auto-fit,minmax(90px,1fr));">
+                    <label><input type="radio" name="stream" value="" @checked(! $streamId)> All</label>
+                    @foreach($links as $l)@if($l['stream'] !== '')<label><input type="radio" name="stream" value="{{ $l['id'] }}" @checked($streamId === $l['id'])> {{ $l['stream'] }}</label>@endif @endforeach
+                </div></div>
+            @endif
+            <div class="f" style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:.85rem;font-weight:600;">Sort by</span>
+                <div class="rc-seg" role="radiogroup" aria-label="Sort by" style="grid-template-columns:1fr 1fr;">
+                    <label><input type="radio" name="sort" value="position" @checked($sort !== 'name')> Position</label>
+                    <label><input type="radio" name="sort" value="name" @checked($sort === 'name')> Name</label>
+                </div></div>
+            <button type="submit" class="ds-btn ds-btn-primary" style="min-height:52px;">Show {{ $state === 'ready' ? ($streamId ? count($rows) : $total) : '' }} students</button>
+        </form>
+    </dialog>
     @endif
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+// The admin layout re-renders its DOM after load, so handlers are delegated from the document.
+(function () {
+    document.addEventListener('click', function (e) {
+        var open = e.target.closest('[data-open-filters]');
+        var dlg = document.getElementById('rc-filter-sheet');
+        if (open && dlg && typeof dlg.showModal === 'function') { dlg.showModal(); return; }
+        if (dlg && e.target === dlg) { dlg.close(); }
+    });
+    window.addEventListener('load', function () {
+        var root = document.querySelector('[data-testid="report-cards-screen"]');
+        if (root && root.hasAttribute('data-pending')) { setTimeout(function () { window.location.reload(); }, 5000); }
+    });
+})();
+</script>
+@endpush

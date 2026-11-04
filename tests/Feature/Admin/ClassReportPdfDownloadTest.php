@@ -83,7 +83,7 @@ class ClassReportPdfDownloadTest extends TestCase
         $response->assertOk();
         $this->assertStringStartsWith('%PDF', file_get_contents($response->baseResponse->getFile()->getPathname()));
 
-        $withFile = $this->actingAs($admin)->get('/admin/reports/cards?term='.$term->id);
+        $withFile = $this->actingAs($admin)->get('/admin/reports/cards/history?term='.$term->id);
         $withFile->assertOk();
         $withFile->assertSee('Download PDF');
         $withFile->assertSee('P.5 · Blue');
@@ -102,7 +102,7 @@ class ClassReportPdfDownloadTest extends TestCase
             'academic_term_id' => $emptyTerm->id, 'academic_year_id' => $year->id,
             'scheduled_at' => '2026-11-01', 'status' => 'submitted',
         ]));
-        $withoutFile = $this->actingAs($admin)->get('/admin/reports/cards?term='.$emptyTerm->id);
+        $withoutFile = $this->actingAs($admin)->get('/admin/reports/cards/history?term='.$emptyTerm->id);
         $withoutFile->assertOk();
         $withoutFile->assertDontSee('Download PDF');
         $withoutFile->assertSee('Generate');

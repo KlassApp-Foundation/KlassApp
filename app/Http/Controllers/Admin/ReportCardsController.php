@@ -27,7 +27,36 @@ class ReportCardsController extends Controller
      */
     public const TEMPLATES = StudentReportCardService::TEMPLATES;
 
-    public function index()
+    /** The class screen: one class, one released sitting, positions and a PDF per student. */
+    public function index(Request $request, \App\Services\ReportCards\ClassReportScreen $screen)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $classes = $screen->classes($schoolId);
+        $class = collect($classes)->firstWhere('id', (int) $request->query('class')) ?? ($classes[0] ?? null);
+        $sittings = $class ? $screen->sittings($schoolId, $class['id']) : [];
+        $sitting = collect($sittings)->firstWhere('key', (string) $request->query('exam')) ?? ($sittings[0] ?? null);
+
+        $streamId = (int) $request->query('stream') ?: null;
+        if ($class && $streamId !== null && ! in_array($streamId, array_column($class['links'], 'id'), true)) {
+            $streamId = null;
+        }
+        $sort = $request->query('sort') === 'name' ? 'name' : 'position';
+        $data = ($class && $sitting) ? $screen->build($schoolId, $class, $sitting, $streamId, $sort) : null;
+
+        return view('admin.reports.cards', [
+            'classes' => $classes,
+            'class' => $class,
+            'sittings' => $sittings,
+            'sitting' => $sitting,
+            'streamId' => $streamId,
+            'sort' => $sort,
+            'data' => $data,
+            'links' => $class['links'] ?? [],
+        ]);
+    }
+
+    /** The earlier per-term page: report template, recent PDFs, and every class at once. */
+    public function history()
     {
         $schoolId = Auth::user()->school_id;
 
@@ -80,7 +109,7 @@ class ReportCardsController extends Controller
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
 
-        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
+        return view('admin.reports.cards-history', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
     }
 
     public function updateTemplate(Request $request)
@@ -176,8 +205,8 @@ class ReportCardsController extends Controller
 
         \App\Jobs\GenerateClassReportsJob::dispatch($generation->id);
 
-        return redirect()->route('admin.reports.cards.index')
-            ->with('successmessage', "Generating {$className} " . ($mode === 'merged' ? 'merged PDF' : 'zip') . ". You'll see it in Recent Generations when ready.");
+        return redirect()->route('admin.reports.cards.index', ['class' => $stdLink->section_id])
+            ->with('successmessage', "Generating {$className} " . ($mode === 'merged' ? 'merged PDF' : 'zip') . ". It shows on this page when it is ready.");
     }
 
     public function downloadGeneration(\App\Models\ReportGeneration $generation)

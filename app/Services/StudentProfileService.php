@@ -2,16 +2,19 @@
 
 namespace App\Services;
 
+use App\Contracts\Results\ReleaseGate;
 use App\Models\AcademicTerm;
-use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
-use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\ParentProfile;
+use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Services\StudentProfile\StudentEnrollment;
 use Illuminate\Support\Carbon;
 
 class StudentProfileService
@@ -32,43 +35,27 @@ class StudentProfileService
         return $student;
     }
 
+    public function __construct(private StudentEnrollment $enrollment, private ReleaseGate $gate)
+    {
+    }
+
     /**
+     * Everything the admin student profile shows.
+     *
+     * Marks reach this page only through the release gate (performance) or as an approved
+     * progress report, labelled as not released: draft, submitted and returned marks are never
+     * listed here.
+     *
      * @return array<string, mixed>
      */
     public function page(int $schoolId, User $student): array
     {
         $student->load('userprofile');
-        $year = AcademicYear::query()
-            ->where('school_id', $schoolId)
-            ->where('status', 1)
-            ->orderByDesc('id')
-            ->first();
-
-        $academic = null;
-        if ($year) {
-            $academic = StudentAcademic::query()
-                ->where('school_id', $schoolId)
-                ->where('user_id', $student->id)
-                ->where('academic_year_id', $year->id)
-                ->whereNull('deleted_at')
-                ->orderByDesc('id')
-                ->with('standardLink.section')
-                ->first();
-        }
+        $year = $this->enrollment->year($schoolId);
+        $academic = $this->enrollment->current($student, $year);
+        $term = $this->enrollment->term($schoolId, $year);
 
         $link = $academic?->standardLink;
-        $sectionId = $link?->section_id;
-        $standardId = $link?->standard_id;
-        $term = null;
-        if ($year) {
-            $term = AcademicTerm::query()
-                ->where('school_id', $schoolId)
-                ->where('academic_year_id', $year->id)
-                ->where('status', 'current')
-                ->orderByDesc('id')
-                ->first();
-        }
-
         $name = trim((string) $student->full_name);
         if ($name === '') {
             $name = $student->display_name !== '' ? $student->display_name : 'Student';
@@ -78,27 +65,42 @@ class StudentProfileService
         $initials = $this->initials($profile?->firstname, $profile?->lastname, $name);
         $className = $this->classLabel($link?->section?->name, $link?->stream);
         $kls = $academic?->klassapp_student_id ?: $student->registration_number;
+        $parents = $this->parents($schoolId, $student);
+        $linked = count(array_filter($parents, fn (array $p) => $p['whatsapp'] === 'Linked'));
+        $currency = app(DashboardV2DataService::class)->currencyFor($schoolId);
 
         return [
             'student' => $student,
             'name' => $name,
             'initials' => $initials,
+            'photo_url' => \App\Services\StudentProfile\StudentPhotoService::hasPhoto($profile) ? ($profile->AvatarPath ?: null) : null,
             'class_name' => $className,
             'kls' => $kls,
             'gender' => $this->genderLabel($profile?->gender),
             'date_of_birth' => $this->dateLabel($profile?->date_of_birth),
-            'joined' => $this->dateLabel($profile?->joining_date),
-            'facts' => $this->facts($className, $kls, $profile?->date_of_birth, $profile?->gender, $profile?->joining_date),
+            'joined' => $this->joinedLabel($student, $schoolId),
+            'class_teacher' => $this->classTeacher($link),
+            'age_label' => $this->ageLabel($profile?->date_of_birth),
             'status' => (string) $student->status,
             'status_label' => $this->statusLabel((string) $student->status),
+            'whatsapp_line' => $linked === 0 ? 'No parent on WhatsApp yet' : 'WhatsApp linked to '.$linked.' '.($linked === 1 ? 'parent' : 'parents'),
+            'term_name' => $term?->name,
             'attendance' => $this->attendance($schoolId, $student->id, $term),
-            'exam' => $this->exam($schoolId, $student->id, $sectionId, $standardId, $term?->id),
-            'fees' => $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null),
-            'currency' => app(DashboardV2DataService::class)->currencyFor($schoolId),
-            'parents' => $this->parents($schoolId, $student),
-            'marks' => $this->marks($schoolId, $student->id, $sectionId, $term?->id),
-            'payments' => $this->payments($schoolId, $student->id),
+            'performance' => $this->performance($schoolId, $student, $academic, $term),
+            'fees' => $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null, $currency),
+            'currency' => $currency,
+            'parents' => $parents,
+            'payments' => $this->payments($schoolId, $student->id, $currency),
         ];
+    }
+
+    /** What the student still owes for the current term, 0.0 when nothing is owed or no fees exist. */
+    public function outstanding(int $schoolId, User $student): float
+    {
+        $term = $this->enrollment->term($schoolId, $this->enrollment->year($schoolId));
+        $fees = $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null, null);
+
+        return $fees['error'] || $fees['empty'] ? 0.0 : (float) $fees['owed'];
     }
 
     public function deactivate(int $schoolId, int $studentId): User
@@ -111,11 +113,14 @@ class StudentProfileService
     }
 
     /**
-     * @return array{empty: bool, percent: ?int, absences: int}
+     * This term's attendance: percent present, days counted, and the latest absences with their
+     * comments. One row is one recorded day (the register's morning session).
+     *
+     * @return array{empty: bool, percent: ?int, present: int, total: int, absences: int, recent: list<array{date: string, comment: ?string, by: ?string}>}
      */
     private function attendance(int $schoolId, int $studentId, ?AcademicTerm $term): array
     {
-        $empty = ['empty' => true, 'percent' => null, 'absences' => 0];
+        $empty = ['empty' => true, 'percent' => null, 'present' => 0, 'total' => 0, 'absences' => 0, 'recent' => []];
         if (! $term) {
             return $empty;
         }
@@ -132,113 +137,152 @@ class StudentProfileService
             ->whereNull('deleted_at')
             ->whereDate('date', '>=', Carbon::parse($start)->toDateString())
             ->whereDate('date', '<=', Carbon::parse($end)->toDateString())
-            ->get(['status']);
+            ->orderByDesc('date')
+            ->get(['id', 'date', 'status', 'remarks', 'recorded_by']);
 
         if ($rows->isEmpty()) {
             return $empty;
         }
 
         $present = $rows->where('status', 1)->count();
+        $absent = $rows->where('status', 0);
+        $recorders = User::query()
+            ->whereIn('id', $absent->take(3)->pluck('recorded_by')->filter()->unique())
+            ->get()
+            ->keyBy('id');
 
         return [
             'empty' => false,
             'percent' => (int) round($present / $rows->count() * 100),
-            'absences' => $rows->where('status', 0)->count(),
+            'present' => $present,
+            'total' => $rows->count(),
+            'absences' => $absent->count(),
+            'recent' => $absent->take(3)->map(fn ($row) => [
+                'date' => $row->date->format('j M'),
+                'comment' => filled($row->remarks) ? (string) $row->remarks : null,
+                'by' => ($u = $recorders->get($row->recorded_by)) ? $this->readableName(trim((string) ($u->full_name ?: $u->name))) : null,
+            ])->values()->all(),
         ];
     }
 
     /**
-     * The latest exam tile: the student's average across every subject of the latest
-     * exam (one exam type in the term), its grade, and the student's position in the
-     * class. When the latest marks have no exam type to group by, the tile falls back
-     * to the latest single mark with its subject.
+     * Performance: released sittings only (through the release gate), and the current progress
+     * report, built from approved marks that are not released yet.
      *
-     * @return array{empty: bool, label: string, average: ?string, grade: ?string, name?: string}
+     * @return array{released: list<array<string, mixed>>, chart: list<array{label: string, average: float}>, latest: ?array<string, mixed>, progress: ?array<string, mixed>}
      */
-    private function exam(int $schoolId, int $studentId, ?int $sectionId, ?int $standardId, ?int $termId): array
+    private function performance(int $schoolId, User $student, ?StudentAcademic $academic, ?AcademicTerm $term): array
     {
-        $empty = ['empty' => true, 'label' => 'Latest exam', 'average' => null, 'grade' => null];
-        if (! $sectionId || ! $termId) {
-            return $empty;
-        }
+        $released = [];
+        $marks = $this->gate->applyToMarks(
+            Marks::query()
+                ->where('school_id', $schoolId)
+                ->where('student_id', $student->id)
+                ->whereNotNull('marks'),
+            $student,
+        )->with(['exam.examType', 'exam.academicTerm'])->get();
 
-        $marks = $this->termMarks($schoolId, $studentId, $sectionId, $termId);
-        if ($marks->isEmpty()) {
-            return $empty;
-        }
+        $groups = $marks->filter(fn (Marks $m) => $m->exam !== null)
+            ->groupBy(fn (Marks $m) => $m->exam->academic_term_id.':'.$m->exam->exam_type_id);
 
-        $latestExamId = (int) $marks->max('exam_id');
-        $examModel = \App\Models\Academics\Exam::query()
-            ->with(['subject', 'examType'])
-            ->where('school_id', $schoolId)
-            ->where('id', $latestExamId)
-            ->first();
-
-        $examTypeId = $examModel?->examType ? (int) $examModel->exam_type_id : null;
-        if ($examTypeId === null) {
-            $latest = $marks->where('exam_id', $latestExamId)->values();
-            $average = round((float) $latest->avg('marks'), 1);
-
-            return [
-                'empty' => false,
-                'label' => 'Latest mark',
+        foreach ($groups as $key => $rows) {
+            /** @var Exam $exam */
+            $exam = $rows->first()->exam;
+            $examTerm = $exam->academicTerm;
+            $average = round((float) $rows->avg('marks'), 1);
+            $released[] = [
+                'key' => (string) $key,
+                'label' => trim(($examTerm?->name ? $examTerm->name.' · ' : '').$this->sentenceCase((string) ($exam->examType?->name ?: 'Exam'))),
                 'average' => $this->markLabel($average),
-                'grade' => $this->gradeFor($schoolId, $standardId, $average, $latest),
-                'name' => $this->sentenceCase((string) ($examModel?->subject?->name ?: 'Subject')),
+                'average_value' => $average,
+                'term_id' => (int) $exam->academic_term_id,
+                'download_url' => $this->termReportUrl($schoolId, $student, $exam),
+                'sort' => ($examTerm?->getRawOriginal('starts_on') ?? '').'-'.str_pad((string) $exam->id, 9, '0', STR_PAD_LEFT),
             ];
         }
+        usort($released, fn (array $a, array $b) => strcmp($b['sort'], $a['sort']));
 
-        $examIds = \App\Models\Academics\Exam::query()
-            ->where('school_id', $schoolId)
-            ->where('section_id', $sectionId)
-            ->where('academic_term_id', $termId)
-            ->where('exam_type_id', $examTypeId)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        $latest = $marks->whereIn('exam_id', $examIds)->values();
-        $average = round((float) $latest->avg('marks'), 1);
-
-        $classAverages = Marks::query()
-            ->where('school_id', $schoolId)
-            ->where('section_id', $sectionId)
-            ->whereIn('exam_id', $examIds)
-            ->groupBy('student_id')
-            ->selectRaw('student_id, AVG(marks) as average')
-            ->pluck('average', 'student_id')
-            ->map(fn ($value) => round((float) $value, 1));
-        $position = 1 + $classAverages->filter(fn (float $value) => $value > $average)->count();
-
-        $examName = $this->sentenceCase((string) ($examModel->examType?->name ?: 'Exam'));
+        $chart = array_map(fn (array $r) => ['label' => $r['label'], 'average' => $r['average_value']], array_reverse(array_slice($released, 0, 6)));
 
         return [
-            'empty' => false,
-            'label' => 'Latest exam',
-            'average' => $this->markLabel($average),
-            'grade' => $this->gradeFor($schoolId, $standardId, $average, $latest),
-            'name' => $examName.' · '.$position.' of '.$classAverages->count(),
+            'released' => array_map(fn (array $r) => array_diff_key($r, ['sort' => 1, 'average_value' => 1]), $released),
+            'chart' => $chart,
+            'latest' => $released === [] ? null : ['label' => $released[0]['label'], 'average' => $released[0]['average']],
+            'progress' => $this->progress($schoolId, $student, $term),
         ];
     }
 
-    private function gradeFor(int $schoolId, ?int $standardId, float $average, $latest): ?string
+    /**
+     * The current progress report: this term's APPROVED marks that no release covers yet.
+     * Draft, submitted and returned subjects are left out, so nothing unapproved shows.
+     *
+     * @return array{label: string, average: string, subjects: int, download_url: string}|null
+     */
+    private function progress(int $schoolId, User $student, ?AcademicTerm $term): ?array
     {
-        $grade = null;
-        if ($standardId) {
-            $grade = SchoolGradingSystem::query()
-                ->where('school_id', $schoolId)
-                ->where('standard_id', $standardId)
-                ->where('min_score', '<=', $average)
-                ->where('max_score', '>=', $average)
-                ->orderByDesc('min_score')
-                ->value('grade');
-        }
-        if ($grade === null) {
-            $stored = $latest->pluck('grade')->unique()->filter()->values();
-            $grade = $stored->count() === 1 ? (string) $stored->first() : null;
+        if (! $term) {
+            return null;
         }
 
-        return $grade;
+        $rows = $this->approvedUnreleasedMarks($schoolId, $student, (int) $term->id);
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $types = $rows->map(fn (Marks $m) => $this->sentenceCase((string) ($m->exam->examType?->name ?: 'Exam')))->unique()->values();
+
+        return [
+            'label' => $types->count() === 1 ? (string) $types->first() : 'Current exams',
+            'average' => $this->markLabel(round((float) $rows->avg('marks'), 1)),
+            'subjects' => $rows->count(),
+            'download_url' => url('/admin/students/'.$student->id.'/progress-report'),
+        ];
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, Marks>
+     */
+    public function approvedUnreleasedMarks(int $schoolId, User $student, int $termId)
+    {
+        return Marks::query()
+            ->where('school_id', $schoolId)
+            ->where('student_id', $student->id)
+            ->whereNotNull('marks')
+            ->whereHas('exam', fn ($q) => $q->where('school_id', $schoolId)->where('academic_term_id', $termId)->whereNull('deleted_at'))
+            ->with(['exam.examType', 'exam.subject'])
+            ->get()
+            ->filter(function (Marks $mark) use ($schoolId, $student) {
+                $exam = $mark->exam;
+                if (! $exam || $this->gate->isReleased($student, $exam)) {
+                    return false;
+                }
+
+                return ExamMarksSubmission::query()
+                    ->where('school_id', $schoolId)
+                    ->where('exam_id', $exam->id)
+                    ->where('class_id', $exam->section_id)
+                    ->where('subject_id', $exam->subject_id)
+                    ->where('approval_status', 'approved')
+                    ->exists();
+            })
+            ->values();
+    }
+
+    /** The term's report card PDF for a released sitting, through the existing admin download. */
+    private function termReportUrl(int $schoolId, User $student, Exam $exam): ?string
+    {
+        $link = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $exam->section_id)
+            ->where('standard_id', $exam->standard_id)
+            ->where('academic_year_id', $exam->academic_year_id)
+            ->orderBy('id')
+            ->get()
+            ->first(fn (StandardLink $l) => StudentAcademic::query()
+                ->where('school_id', $schoolId)->where('user_id', $student->id)->where('standardLink_id', $l->id)->exists())
+            ?? StandardLink::query()->where('school_id', $schoolId)->where('section_id', $exam->section_id)->orderBy('id')->first();
+
+        return $link ? url('/admin/reports/cards/'.$link->id.'/student/'.$student->id.'/download?term='.$exam->academic_term_id) : null;
     }
 
     /** "SOCIAL STUDIES" reads "Social studies"; names already written in mixed case stay as written. */
@@ -254,25 +298,54 @@ class StudentProfileService
         return mb_strtoupper(mb_substr($lower, 0, 1)).mb_substr($lower, 1);
     }
 
-    /**
-     * The key facts row under the student's name: class with stream, KLS number,
-     * age with the birth date, gender and joined date.
-     *
-     * @return array{class: string, kls: string, age: string, gender: string, joined: string}
-     */
-    private function facts(?string $className, ?string $kls, mixed $dateOfBirth, ?string $gender, mixed $joined): array
+    private function ageLabel(mixed $dateOfBirth): ?string
     {
         $born = \App\Support\DateOfBirth::parse($dateOfBirth);
-        $genderLabel = $this->genderLabel($gender);
-        $joinedLabel = $this->dateLabel($joined);
 
-        return [
-            'class' => $className ?: 'No class',
-            'kls' => filled($kls) ? (string) $kls : 'No KLS number',
-            'age' => $born ? 'Age '.$born->age.' (born '.$born->format('j M Y').')' : 'Age not given',
-            'gender' => $genderLabel === self::NOT_GIVEN ? 'Gender not given' : $genderLabel,
-            'joined' => $joinedLabel === self::NOT_GIVEN ? 'Joined date not given' : 'Joined '.$joinedLabel,
-        ];
+        return $born ? $born->age.' '.($born->age === 1 ? 'yr' : 'yrs') : null;
+    }
+
+    /** Joined month and the class they joined in, when known. The date defaults to the onboarding date. */
+    private function joinedLabel(User $student, int $schoolId): string
+    {
+        $joined = $student->userprofile?->joining_date;
+        $date = null;
+        if ($joined !== null && $joined !== '') {
+            $candidate = $joined instanceof Carbon ? $joined : Carbon::parse((string) $joined);
+            $date = $candidate->year > 1970 ? $candidate : null;
+        }
+        $date ??= $student->created_at;
+        if ($date === null) {
+            return self::NOT_GIVEN;
+        }
+
+        $first = StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('user_id', $student->id)
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->with('standardLink.section')
+            ->first();
+        $class = $this->classLabel($first?->standardLink?->section?->name, null);
+
+        return $date->format('M Y').($class ? ' · '.$class : '');
+    }
+
+    private function classTeacher(?StandardLink $link): ?string
+    {
+        if (! $link) {
+            return null;
+        }
+        if (! $link->section) {
+            return null;
+        }
+        $teacher = app(RosterScopeService::class)->effectiveClassTeacher($link->section, $link);
+        if (! $teacher) {
+            return null;
+        }
+        $name = $this->readableName(trim((string) ($teacher->full_name ?: $teacher->name)));
+
+        return $name !== '' ? $name : null;
     }
 
     private function classLabel(?string $section, ?string $stream): ?string
@@ -289,29 +362,39 @@ class StudentProfileService
     }
 
     /**
-     * @return array{empty: bool, balance: ?string, status: ?string, expected: ?string, paid: ?string}
+     * The term's fees: the term total, what has been paid, what is still owed. Amounts carry the
+     * school's currency ("UGX 300,000"). A fees failure is reported as `error` so the rest of the
+     * profile still renders.
+     *
+     * @return array<string, mixed>
      */
-    private function fees(int $schoolId, User $student, ?int $academicTermId): array
+    private function fees(int $schoolId, User $student, ?int $academicTermId, ?string $currency): array
     {
-        // $academicTermId is the current term already loaded for this profile.
-        // Null means the school has no current term, so only untied fees count.
-        $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId, $academicTermId)->sum('amount');
-        $paid = (float) FeePayment::query()
-            ->where('school_id', $schoolId)
-            ->where('user_id', $student->id)
-            ->sum('amount');
+        $none = [
+            'empty' => true, 'error' => false, 'expected' => 0.0, 'paid' => 0.0, 'owed' => 0.0, 'percent' => 0,
+            'status' => null, 'expected_label' => null, 'paid_label' => null, 'owed_label' => null, 'last_payment' => null,
+        ];
 
-        if ($expected <= 0 && $paid <= 0) {
-            return [
-                'empty' => true,
-                'balance' => null,
-                'status' => null,
-                'expected' => null,
-                'paid' => null,
-            ];
+        try {
+            // $academicTermId is the current term already loaded for this profile.
+            // Null means the school has no current term, so only untied fees count.
+            $expected = (float) app(StudentFeeResolver::class)->forStudent($student, $schoolId, $academicTermId)->sum('amount');
+            $payments = FeePayment::query()
+                ->where('school_id', $schoolId)
+                ->where('user_id', $student->id);
+            $paid = (float) (clone $payments)->sum('amount');
+            $last = (clone $payments)->orderByDesc('paid_on')->orderByDesc('id')->first();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ['error' => true] + $none;
         }
 
-        $balance = max(0, $expected - $paid);
+        if ($expected <= 0 && $paid <= 0) {
+            return $none;
+        }
+
+        $owed = max(0, $expected - $paid);
         $status = 'Paid';
         if ($expected > 0 && $paid <= 0) {
             $status = 'Not paid';
@@ -321,11 +404,22 @@ class StudentProfileService
 
         return [
             'empty' => false,
-            'balance' => number_format($balance),
+            'error' => false,
+            'expected' => $expected,
+            'paid' => $paid,
+            'owed' => $owed,
+            'percent' => $expected > 0 ? (int) min(100, round($paid / $expected * 100)) : 100,
             'status' => $status,
-            'expected' => $expected > 0 ? number_format($expected) : null,
-            'paid' => $expected > 0 ? number_format($paid) : null,
+            'expected_label' => $expected > 0 ? $this->money($expected, $currency) : null,
+            'paid_label' => $this->money($paid, $currency),
+            'owed_label' => $this->money($owed, $currency),
+            'last_payment' => $last?->paid_on?->format('j M'),
         ];
+    }
+
+    public function money(float $amount, ?string $currency): string
+    {
+        return ($currency !== null && $currency !== '' ? $currency.' ' : '').number_format($amount);
     }
 
     /**
@@ -417,54 +511,24 @@ class StudentProfileService
     }
 
     /**
-     * @return list<array{subject: string, marks: string, grade: string}>
+     * @return list<array{paid_on: string, amount: string, method: ?string, reference: ?string}>
      */
-    private function marks(int $schoolId, int $studentId, ?int $sectionId, ?int $termId): array
-    {
-        if (! $sectionId || ! $termId) {
-            return [];
-        }
-
-        return $this->termMarks($schoolId, $studentId, $sectionId, $termId)
-            ->load('subject')
-            ->map(fn (Marks $mark) => [
-                'subject' => $mark->subject?->name ?? 'Subject',
-                'marks' => $this->markLabel((float) $mark->marks),
-                'grade' => (string) ($mark->grade ?: '—'),
-            ])
-            ->all();
-    }
-
-    /**
-     * @return list<array{paid_on: string, amount: string}>
-     */
-    private function payments(int $schoolId, int $studentId): array
+    private function payments(int $schoolId, int $studentId, ?string $currency): array
     {
         return FeePayment::query()
             ->where('school_id', $schoolId)
             ->where('user_id', $studentId)
             ->orderByDesc('paid_on')
             ->orderByDesc('id')
+            ->limit(20)
             ->get()
             ->map(fn (FeePayment $payment) => [
-                'paid_on' => optional($payment->paid_on)->toDateString() ?? '—',
-                'amount' => number_format((float) $payment->amount),
+                'paid_on' => optional($payment->paid_on)->format('j M Y') ?? '—',
+                'amount' => $this->money((float) $payment->amount, $currency),
+                'method' => \App\Services\StudentProfile\StudentPaymentRecorder::METHODS[$payment->payment_method] ?? null,
+                'reference' => filled($payment->reference) ? (string) $payment->reference : null,
             ])
             ->all();
-    }
-
-    private function termMarks(int $schoolId, int $studentId, int $sectionId, int $termId)
-    {
-        return Marks::query()
-            ->where('school_id', $schoolId)
-            ->where('student_id', $studentId)
-            ->where('section_id', $sectionId)
-            ->whereHas('exam', function ($query) use ($schoolId, $sectionId, $termId) {
-                $query->where('school_id', $schoolId)
-                    ->where('section_id', $sectionId)
-                    ->where('academic_term_id', $termId);
-            })
-            ->get();
     }
 
     private function initials(?string $first, ?string $last, string $fallback): string
