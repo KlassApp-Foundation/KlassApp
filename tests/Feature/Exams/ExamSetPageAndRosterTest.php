@@ -160,6 +160,29 @@ class ExamSetPageAndRosterTest extends TestCase
         $this->assertStringContainsString('data-testid="exam-set-link-'.$first->id.'"', $html);
         $this->assertStringContainsString('data-testid="exam-set-term-term-3"', $html);
         $this->assertStringContainsString(route('admin.exam-sets.show', ['batch' => $set->id]), $html);
+        $this->assertStringContainsString('data-testid="exam-set-kpis"', $html);
+        $this->assertStringContainsString('Current term', $html);
+    }
+
+    public function test_exam_set_list_uses_the_empty_state_and_create_page_names_the_failure(): void
+    {
+        \App\Models\Academics\Exam::query()->where('school_id', $this->school->id)->delete();
+        \App\Models\Academics\ExamSet::query()->where('school_id', $this->school->id)->delete();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.exam-sets.index'))
+            ->assertOk()
+            ->assertSee('No exams set for', false)
+            ->assertSee('New exam set', false)
+            ->assertSee('>Filters<', false);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.exam-sets.create'))
+            ->assertOk()
+            ->assertSee('New exam set', false)
+            ->assertSee("Create this term's exam set", false)
+            ->assertSee('data-testid="exam-set-creating"', false)
+            ->assertSee('You can leave this page', false);
     }
 
     public function test_a_base_class_exam_lists_students_from_every_stream(): void
@@ -346,6 +369,9 @@ class ExamSetPageAndRosterTest extends TestCase
         $this->assertStringContainsString('<select name="term" id="term" class="ds-form-select">', $html);
         $this->assertStringContainsString('<select name="class" id="class" class="ds-form-select">', $html);
         $this->assertStringContainsString('<select name="examType" id="examType" class="ds-form-select">', $html);
+        $this->assertStringContainsString('data-testid="marks-filters-open"', $html);
+        $this->assertStringContainsString('data-ka-filters', $html);
+        $this->assertStringContainsString('>Filters<', $html);
         $this->assertStringNotContainsString('id="term" class="ds-form-select" required', $html);
         $this->assertStringNotContainsString('id="class" class="ds-form-select" required', $html);
         $this->assertStringNotContainsString('id="examType" class="ds-form-select" required', $html);

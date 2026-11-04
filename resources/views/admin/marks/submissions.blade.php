@@ -1,12 +1,13 @@
 @extends('layouts.admin.layout')
 @section('content')
 
+@include('partials.ka-screen')
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
-
-    @include('layouts.partials.page-header', [
-        'title' => 'Marks Submissions',
-        'subtitle' => 'Overview of all exam marks submissions, lock status, and approval status.',
-    ])
+<main class="ka-main">
+    <h1 class="ka-h1">Marks</h1>
+    <p class="ka-sub">Check what teachers submit, then release it to families.</p>
+    @include('partials.ka-marks-nav', ['marksNav' => 'approvals'])
+    @include('partials.ka-lifecycle', ['current' => 'submitted'])
 
     <p class="mb-4 text-sm text-gray-700" data-testid="marks-submissions-count">{{ $pendingCount }} awaiting review</p>
 
@@ -43,8 +44,11 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-gray-500 py-8">
-                            No submitted marks found.
+                        <td colspan="8">
+                            <div class="ka-empty" data-testid="approvals-empty">
+                                <h2 class="ka-h2">Nothing waiting for approval</h2>
+                                <p class="ka-sub">No submitted marks found. When teachers submit, their subjects appear here.</p>
+                            </div>
                         </td>
                     </tr>
                 @endforelse
@@ -55,6 +59,7 @@
     <div class="mt-4">
         {{ $submissions->links() }}
     </div>
+</main>
 </div>
 
 @endsection

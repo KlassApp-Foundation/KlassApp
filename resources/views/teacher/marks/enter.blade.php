@@ -1,7 +1,9 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
+@include('partials.ka-screen')
 <div class="container-fluid w-full py-3 lg:mx-2">
+<main class="ka-main">
 
       {{-- Flash Success Message --}}
    @include('partials.message')
@@ -57,22 +59,30 @@
         </div>
     @endif
 
+    @php
+        $life = 'saved';
+        $stateText = strtolower((string) ($submissionState ?? ''));
+        if (str_contains($stateText, 'approv')) { $life = 'approved'; }
+        elseif (str_contains($stateText, 'submit') || str_contains($stateText, 'return')) { $life = 'submitted'; }
+    @endphp
+    @include('partials.ka-lifecycle', ['current' => $life])
+
     @if(($showStreamColumn ?? false) && count($entryStreams ?? []) > 0)
-        <form method="GET" action="{{ route('teacher.exam.marks.enter', $exam) }}" class="mb-4 flex flex-wrap items-end gap-3" data-testid="marks-entry-stream-filter">
-            <div>
-                <label for="entry-stream" class="block text-sm font-medium text-gray-700">Stream</label>
-                <select name="stream" id="entry-stream" class="tw-form-control">
-                    <option value="">All streams</option>
-                    @foreach($entryStreams as $stream)
-                        <option value="{{ $stream['id'] }}" @selected((int) ($selectedStreamId ?? 0) === (int) $stream['id'])>{{ $stream['label'] }}</option>
-                    @endforeach
-                </select>
+        <div id="entry-stream-filters" data-ka-filters data-testid="marks-entry-stream-filter">
+            <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="entry-stream-filters">Filters</button>
+            <div class="ka-filter-backdrop" data-ka-close-filters></div>
+            <div class="ka-filter-panel" role="radiogroup" aria-label="Stream">
+                <h2 class="ka-h2 ka-filter-launch">Filters</h2>
+                <span style="font-size:.85rem;font-weight:600" class="ka-filter-launch">Stream</span>
+                <a class="ka-chip {{ empty($selectedStreamId) ? 'is-on' : '' }}" href="{{ route('teacher.exam.marks.enter', $exam) }}" role="radio" aria-checked="{{ empty($selectedStreamId) ? 'true' : 'false' }}">All streams</a>
+                @foreach($entryStreams as $stream)
+                    <a class="ka-chip {{ (int) ($selectedStreamId ?? 0) === (int) $stream['id'] ? 'is-on' : '' }}" href="{{ route('teacher.exam.marks.enter', ['exam' => $exam, 'stream' => $stream['id']]) }}" role="radio" aria-checked="{{ (int) ($selectedStreamId ?? 0) === (int) $stream['id'] ? 'true' : 'false' }}">{{ $stream['label'] }}</a>
+                @endforeach
             </div>
-            <button type="submit" class="ds-btn ds-btn-primary text-sm">Filter</button>
-        </form>
+        </div>
     @endif
 
-    <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
+    <form id="marks-save-form" action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
 
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
@@ -191,7 +201,7 @@
             </div>
 
             <!-- Submit -->
-            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+            <div class="ka-sticky">
 
                 @if($correctionReasonRequired ?? false)
                 <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
@@ -205,9 +215,8 @@
                 </div>
                 @endif
 
-                <button type="submit"
-                        class="py-2 px-5 rounded text-white bg-green-500 hover:bg-green-600">
-                    {{ $isNursery ? 'Save Assessments' : 'Save Marks' }}
+                <button type="submit" class="ds-btn ds-btn-outline" style="min-height:48px">
+                    {{ $isNursery ? 'Save Assessments' : 'Save draft' }}
                 </button>
 
             </div>
@@ -216,5 +225,6 @@
 
     </form>
 
+</main>
 </div>
 @endsection

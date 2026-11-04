@@ -118,9 +118,18 @@ public function teacherExamMarksList()
         ->get()
         ->keyBy(fn (ExamMarksSubmission $row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
 
+    $entered = Marks::query()
+        ->where('school_id', $schoolId)
+        ->whereIn('exam_id', $exams->pluck('id'))
+        ->whereNotNull('marks')
+        ->selectRaw('exam_id, count(*) as aggregate')
+        ->groupBy('exam_id')
+        ->pluck('aggregate', 'exam_id');
+
     foreach ($exams as $exam) {
         $row = $submissionLabels->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
         $exam->submission_label = $row ? $row->reviewLabel() : 'Not started';
+        $exam->marks_entered = (int) ($entered[$exam->id] ?? 0);
     }
 
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));

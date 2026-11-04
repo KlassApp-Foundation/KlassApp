@@ -1,5 +1,9 @@
-<div class="ds-card ds-card-padding-sm">
-    <form method="GET" action="{{ route($filterRoute) }}" class="flex flex-wrap items-end gap-3" data-testid="exams-filter-form">
+@include('partials.ka-screen')
+<div class="ds-card ds-card-padding-sm" id="marks-sheet-filters" data-ka-filters>
+    <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="marks-sheet-filters" data-testid="marks-filters-open">Filters</button>
+    <div class="ka-filter-backdrop" data-ka-close-filters></div>
+    <form method="GET" action="{{ route($filterRoute) }}" class="ka-filter-panel flex flex-wrap items-end gap-3" data-testid="exams-filter-form">
+        <h2 class="ka-h2 ka-filter-launch">Filters</h2>
         <div class="w-full sm:w-40">
             <label for="term" class="ds-label">Term</label>
             <select name="term" id="term" class="ds-form-select">
@@ -49,7 +53,7 @@
         </div>
 
         <div class="flex items-center gap-2 pb-px">
-            <button type="submit" class="ds-btn ds-btn-primary text-sm">Apply filter</button>
+            <button type="submit" class="ds-btn ds-btn-primary text-sm" style="min-height:44px">Apply filter</button>
             @if(request()->hasAny(['term', 'class', 'examType', 'stream']))
                 <a href="{{ route($filterRoute) }}" class="ds-btn ds-btn-ghost text-sm">Clear</a>
             @endif
