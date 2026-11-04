@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks · Your exams to mark</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="marks" role="teacher" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Marks" role="teacher" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" role="teacher" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Your exams to mark</h1>
+          <p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">Term 3, 2026 · Mathematics in Primary Five and Primary Six, and your class, Primary Five</p>
+        </div>
+        <div role="tablist" aria-label="Marks views" style="display: inline-flex; padding: 4px; border-radius: 12px; background: #F1F5F9; gap: 4px;">
+          <button type="button" role="tab" aria-selected="true" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: #FFFFFF; font: 600 0.85rem 'DM Sans', sans-serif; color: #1E293B; box-shadow: 0 0 0 1px #E2E8F0;">To mark</button>
+          <button type="button" role="tab" aria-selected="false" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font: 600 0.85rem 'DM Sans', sans-serif; color: #475569;">My class · Primary Five</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+          <button type="button" aria-pressed="{{f.on}}" style="{{f.style}}">{{f.label}} <span style="font-weight: 500; opacity: .85;">{{f.n}}</span></button>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <section style="display: flex; flex-direction: column; gap: 8px;">
+          <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">{{g.name}}</h2>
+          <div style="border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+            <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 18px; border-bottom: 1px solid #E2E8F0;">
+                <div style="flex: 2 1 240px; min-width: 0;">
+                  <div style="font-weight: 700;">{{r.subject}} · {{r.type}}</div>
+                  <div style="font-size: 0.8rem; color: #64748B;">{{r.scope}}</div>
+                  <sc-if value="{{r.reason}}" hint-placeholder-val="{{false}}">
+                    <div style="margin-top: 6px; font-size: 0.8rem; color: #7F1D1D; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 6px 10px;"><strong>Returned by Grace Achieng:</strong> {{r.reason}}</div>
+                  </sc-if>
+                </div>
+                <div style="flex: 1 1 150px; display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 0.8rem; color: #475569;"><strong style="color: #1E293B;">{{r.done}}</strong> of {{r.total}} entered</span>
+                  <div style="height: 6px; border-radius: 999px; background: #E2E8F0; overflow: hidden;" aria-hidden="true"><div style="height: 100%; width: {{r.pct}}; background: #15803D;"></div></div>
+                </div>
+                <span style="{{r.pill}}">{{r.status}}</span>
+                <a href="MarksGrid.dc.html" class="{{r.btnClass}}" style="min-height: 44px; min-width: 150px;">{{r.action}}</a>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = {
+      not: ['Not started', '#F1F5F9', '#475569', '#E2E8F0', 'Enter marks', 'ds-btn ds-btn-primary'],
+      progress: ['In progress', '#EFF6FF', '#1D4ED8', '#BFDBFE', 'Continue', 'ds-btn ds-btn-primary'],
+      submitted: ['Submitted', '#FFFBEB', '#92400E', '#FDE68A', 'View marks', 'ds-btn ds-btn-outline'],
+      returned: ['Returned', '#FEF2F2', '#B91C1C', '#FECACA', 'Fix and resubmit', 'ds-btn ds-btn-primary'],
+      approved: ['Approved', '#F0FDF4', '#166534', '#BBF7D0', 'View marks', 'ds-btn ds-btn-outline']
+    };
+    const row = (k, subject, type, scope, done, total, reason) => {
+      const s = S[k];
+      return { subject, type, scope, done, total, pct: Math.round(done / total * 100) + '%', reason: reason || false,
+        status: s[0], pill: 'padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; min-width: 96px; text-align: center; background: ' + s[1] + '; color: ' + s[2] + '; border: 1px solid ' + s[3] + ';',
+        action: s[4], btnClass: s[5] };
+    };
+    const fs = (on) => 'min-height: 44px; padding: 0 16px; border-radius: 999px; font: 600 0.85rem DM Sans, sans-serif; cursor: pointer; ' + (on ? 'background: #0F172A; color: #FFFFFF; border: 1px solid #0F172A;' : 'background: #FFFFFF; color: #1E293B; border: 1px solid #CBD5E1;');
+    return {
+      filters: [['All', 5, true], ['Not started', 1], ['In progress', 1], ['Submitted', 1], ['Returned', 1], ['Approved', 1]].map(f => ({ label: f[0], n: f[1], on: f[2] ? 'true' : 'false', style: fs(!!f[2]) })),
+      groups: [
+        { name: 'Primary Five', rows: [
+          row('returned', 'Mathematics', 'Mid Term', 'Whole class · streams E and W · out of 100', 112, 112, 'Primary Five W marks look like they are out of 50. Please check and resubmit.'),
+          row('progress', 'Mathematics', 'End of Term', 'Whole class · streams E and W · out of 100', 41, 112),
+          row('approved', 'Mathematics', 'Beginning of Term', 'Whole class · streams E and W · out of 100', 112, 112)
+        ] },
+        { name: 'Primary Six', rows: [
+          row('submitted', 'Mathematics', 'Mid Term', 'Your stream: Primary Six E · 53 students (Primary Six W is marked by Ana Lima) · out of 100', 53, 53),
+          row('not', 'Mathematics', 'End of Term', 'Your stream: Primary Six E · 53 students (Primary Six W is marked by Ana Lima) · out of 100', 0, 53)
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks · Paste or upload</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="marks" role="teacher" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Marks" role="teacher" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" role="teacher" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
+      <nav aria-label="Breadcrumb" style="font-size: 0.8rem; color: #64748B; display: flex; gap: 6px;">
+        <a href="MarksToMark.dc.html" style="text-decoration: none;">Marks</a><span aria-hidden="true">/</span><a href="MarksGrid.dc.html" style="text-decoration: none;">Primary Five · Mathematics · End of Term</a><span aria-hidden="true">/</span><span>Paste or upload</span>
+      </nav>
+      <div>
+        <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Bring in marks from a spreadsheet</h1>
+        <p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">Marks land in the grid as a draft. You check them there, then save or submit.</p>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+        <section style="flex: 1 1 380px; min-width: 0; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <div role="tablist" aria-label="How to bring marks in" style="display: inline-flex; align-self: flex-start; padding: 4px; border-radius: 12px; background: #F1F5F9; gap: 4px;">
+            <button type="button" role="tab" aria-selected="true" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: #FFFFFF; box-shadow: 0 0 0 1px #E2E8F0; font: 600 0.85rem 'DM Sans', sans-serif;">Paste</button>
+            <button type="button" role="tab" aria-selected="false" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font: 600 0.85rem 'DM Sans', sans-serif; color: #475569;">Upload a file</button>
+          </div>
+          <label for="paste" style="font-size: 0.85rem; font-weight: 600;">Copy two columns from your sheet, student number and mark, and paste them here</label>
+          <textarea id="paste" class="ds-input" rows="9" style="width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; line-height: 1.6; resize: vertical;">RVS-0412	78
+RVS-0388	64
+RVS-0431	91
+RVS-0402	AB
+RVS-0395	57
+RVS-0420	95
+RVS-0377	83
+RVS-0444	69
+…</textarea>
+          <p style="margin: 0; font-size: 0.8rem; color: #64748B;">Names work too, but student numbers never get mixed up. Use AB for absent.</p>
+          <div style="border-top: 1px solid #E2E8F0; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <span style="font-size: 0.82rem; color: #475569; flex: 1 1 200px;">Prefer a file? Start from the class list, already filled with names and numbers.</span>
+            <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" style="min-height: 44px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Download Primary Five marks template
+            </button>
+          </div>
+        </section>
+
+        <section aria-live="polite" style="flex: 1 1 420px; min-width: 0; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">What we read</h2>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+            <sc-for list="{{tally}}" as="t" hint-placeholder-count="4">
+              <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; background: {{t.bg}};">
+                <div style="font: 700 1.3rem 'Sora', sans-serif; color: {{t.fg}};">{{t.n}}</div>
+                <div style="font-size: 0.75rem; color: #334155;">{{t.label}}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+            <sc-for list="{{issues}}" as="i" hint-placeholder-count="3">
+              <div style="display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid #E2E8F0; flex-wrap: wrap;">
+                <span style="font-family: ui-monospace, monospace; font-size: 0.8rem; background: #F1F5F9; padding: 2px 6px; border-radius: 6px;">Row {{i.row}}</span>
+                <span style="flex: 1 1 200px; font-size: 0.85rem;">{{i.text}}</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: {{i.fg}};">{{i.what}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+            <a href="MarksGrid.dc.html" class="ds-btn ds-btn-outline" style="min-height: 44px;">Cancel</a>
+            <a href="MarksGrid.dc.html" class="ds-btn ds-btn-primary" style="min-height: 44px;">Put 109 marks in the grid</a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      tally: [
+        { n: 112, label: 'rows read', bg: '#FFFFFF', fg: '#1E293B' },
+        { n: 109, label: 'ready', bg: '#F0FDF4', fg: '#166534' },
+        { n: 2, label: 'student not found', bg: '#FFFBEB', fg: '#92400E' },
+        { n: 1, label: 'mark to fix', bg: '#FEF2F2', fg: '#B91C1C' }
+      ],
+      issues: [
+        { row: 17, text: 'RVS-0499 · no student with this number in Primary Five', what: 'Skipped', fg: '#92400E' },
+        { row: 58, text: '"Joy Adeyemy" · closest match Joy Adeyemi (Primary Five W)', what: 'Use Joy Adeyemi?', fg: '#1D4ED8' },
+        { row: 73, text: 'RVS-0436 · mark "8O" is not a number', what: 'Left blank', fg: '#B91C1C' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

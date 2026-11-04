@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks entry · states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; padding: 24px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 20px; align-content: start;">
+
+  <section aria-label="Empty" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Empty · nothing to mark</div>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 14px; padding: 32px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <span style="width: 48px; height: 48px; border-radius: 14px; background: rgba(22,163,74,0.10); color: #15803D; display: inline-flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></span>
+      <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">No exams waiting for your marks</h2>
+      <p style="margin: 0; font-size: 0.86rem; color: #475569; line-height: 1.5;">When the school sets this term's exams, yours appear here by class and subject.</p>
+    </div>
+  </section>
+
+  <section aria-label="Loading" aria-busy="true" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Loading · marks grid</div>
+    <div class="ka-sk" style="height: 24px; width: 60%;"></div>
+    <div class="ka-sk" style="height: 64px; border-radius: 14px;"></div>
+    <div class="ka-sk" style="height: 40px;"></div><div class="ka-sk" style="height: 40px;"></div><div class="ka-sk" style="height: 40px;"></div><div class="ka-sk" style="height: 40px;"></div>
+    <div style="font-size: 0.82rem; color: #475569;">Loading 112 students…</div>
+  </section>
+
+  <section aria-label="Error" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Error · save failed</div>
+    <div role="alert" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-weight: 700; color: #7F1D1D;">Your last 6 marks weren't saved</div>
+      <p style="margin: 0; font-size: 0.86rem; color: #7F1D1D; line-height: 1.5;">You're offline. They are kept on this device and saved as soon as you're back online. Don't close this page yet.</p>
+      <div><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Try saving now</button></div>
+    </div>
+    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #B91C1C; font-weight: 600;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Not saved · 6 changes waiting
+    </div>
+  </section>
+
+  <section aria-label="Returned" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px; grid-column: span 2;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Returned · top of the grid</div>
+    <div role="alert" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap;">
+      <span style="padding: 4px 12px; border-radius: 999px; background: #FFFFFF; color: #B91C1C; border: 1px solid #FECACA; font-size: 0.75rem; font-weight: 700;">Returned</span>
+      <div style="flex: 1 1 300px;">
+        <div style="font-weight: 700; color: #7F1D1D;">Grace Achieng returned Primary Five Mathematics, Mid Term · 3 Nov, 14:20</div>
+        <p style="margin: 6px 0 0; font-size: 0.9rem; color: #1E293B; line-height: 1.5; background: #FFFFFF; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px;">"Primary Five W marks look like they are out of 50. Please check and resubmit."</p>
+        <p style="margin: 8px 0 0; font-size: 0.82rem; color: #7F1D1D;">The grid is unlocked. Change what's needed, then submit again. Rows changed since you submitted are marked.</p>
+      </div>
+      <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Resubmit for approval</button>
+    </div>
+  </section>
+
+  <section aria-label="Submitted" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Submitted · locked</div>
+    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 16px; font-size: 0.86rem; color: #78350F; line-height: 1.5;">
+      <strong>Submitted 3 Nov, 09:12. Waiting for approval.</strong> Marks are locked. Parents see nothing until the school releases them.
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Ask to unlock</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":960}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

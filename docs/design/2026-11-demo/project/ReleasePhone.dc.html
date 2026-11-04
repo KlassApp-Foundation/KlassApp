@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Approvals and release · phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="width: 375px; height: 1500px; background: #FAFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <dc-import name="PhoneBar" title="Marks" hint-size="375px,64px"></dc-import>
+  <nav aria-label="Marks sections" style="display: flex; background: #FFFFFF; border-bottom: 1px solid #E2E8F0; padding: 0 8px;">
+    <a href="#" aria-current="page" style="flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 0.85rem; color: #14532D; text-decoration: none; border-bottom: 3px solid #15803D;">Approvals <span style="padding: 0 7px; border-radius: 999px; background: #1E6FD9; color: #fff; font-size: 0.7rem;">6</span></a>
+    <a href="#" style="flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; color: #475569; text-decoration: none;">Sheets</a>
+    <a href="#" style="flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; color: #475569; text-decoration: none;">Release</a>
+  </nav>
+  <div style="padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.82rem; color: #475569;">Submitted, waiting for you. Approving doesn't show anything to families.</div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+      <article style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start;">
+          <div>
+            <div style="font-weight: 700;">{{r.cls}} · {{r.subject}}</div>
+            <div style="font-size: 0.78rem; color: #64748B;">{{r.teacher}} · {{r.when}}</div>
+          </div>
+          <span style="padding: 3px 10px; border-radius: 999px; background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 700;">Submitted</span>
+        </div>
+        <div style="font-size: 0.82rem; color: #334155;">{{r.count}} marks · average <strong>{{r.avg}}</strong></div>
+        <sc-if value="{{r.flag}}" hint-placeholder-val="{{false}}"><div style="font-size: 0.78rem; font-weight: 700; color: #92400E;">{{r.flag}}</div></sc-if>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="ds-btn ds-btn-ghost" style="min-height: 44px; flex: 1;">View</button>
+          <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px; flex: 1;">Return</button>
+          <button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px; flex: 1.2;">Approve</button>
+        </div>
+      </article>
+    </sc-for>
+    <section style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 style="margin: 0; font: 600 0.95rem 'Sora', sans-serif;">Ready for Marks Release</h2>
+      <div style="font-size: 0.85rem; color: #334155;">Mid Term · Primary Four and Primary Seven · 206 students · 307 parents told</div>
+      <a href="#" class="ds-btn ds-btn-primary" style="min-height: 48px;">Review and release</a>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const r = (cls, subject, teacher, when, count, avg, flag) => ({ cls, subject, teacher, when, count, avg, flag: flag || false });
+    return { rows: [
+      r('Primary Five', 'English', 'Maria Santos', 'today, 08:40', '112 of 112', '68'),
+      r('Primary Five', 'Mathematics', 'Daniel Okafor', 'today, 10:05', '112 of 112', '64'),
+      r('Primary Six W', 'Mathematics', 'Ana Lima', 'yesterday', '51 of 51', '49', 'Average 12 below Primary Six E'),
+      r('Primary Four', 'Science', 'Samuel Mensah', '2 Nov', '108 of 108', '71')
+    ] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks · Mark sheet, Primary Five</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:10px 12px;font-variant-numeric:tabular-nums}.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="marks" role="admin" hint-size="248px,1000px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Marks" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 18px;">
+      <h1 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;">Marks</h1>
+      <nav aria-label="Marks sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0;">
+        <a href="Approvals.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; color: #475569;">Approvals <span style="padding: 1px 8px; border-radius: 999px; background: #1E6FD9; color: #FFFFFF; font-size: 0.72rem;">6</span></a>
+        <a href="MarkSheet.dc.html" aria-current="page" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; margin-bottom: -1px;">Mark sheets</a>
+        <a href="MarksRelease.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Marks Release</a>
+      </nav>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <label for="c" style="font-size: 0.8rem; color: #64748B;">Class</label>
+        <select id="c" class="ds-input" style="min-height: 44px; width: 170px;"><option>Primary Five</option></select>
+        <label for="e" style="font-size: 0.8rem; color: #64748B;">Exam</label>
+        <select id="e" class="ds-input" style="min-height: 44px; width: 170px;"><option>Mid Term</option></select>
+        <div role="radiogroup" aria-label="Stream" style="display: inline-flex; padding: 4px; border-radius: 12px; background: #F1F5F9; gap: 4px;">
+          <button type="button" role="radio" aria-checked="true" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; background: #FFFFFF; box-shadow: 0 0 0 1px #E2E8F0; font: 600 0.82rem 'DM Sans', sans-serif;">All</button>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; font: 600 0.82rem 'DM Sans', sans-serif; color: #475569;">Primary Five E</button>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; font: 600 0.82rem 'DM Sans', sans-serif; color: #475569;">Primary Five W</button>
+        </div>
+        <span style="flex: 1;"></span>
+        <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;">Download mark sheet</button>
+        <a href="MarksRelease.dc.html" class="ds-btn ds-btn-primary" style="min-height: 44px;">Go to Marks Release</a>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <sc-for list="{{subjects}}" as="s" hint-placeholder-count="4">
+          <span style="display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 0.82rem;"><strong>{{s.name}}</strong><span style="{{s.pill}}">{{s.status}}</span></span>
+        </sc-for>
+      </div>
+
+      <div style="border: 1px solid #E2E8F0; border-radius: 14px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 860px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #1E6FD9;">
+              <th scope="col" class="ka-th"><button type="button" style="all: unset; cursor: pointer;">Position ▲</button></th>
+              <th scope="col" class="ka-th">Student</th>
+              <th scope="col" class="ka-th">Stream</th>
+              <th scope="col" class="ka-th" style="text-align: right;">English</th>
+              <th scope="col" class="ka-th" style="text-align: right;">Maths</th>
+              <th scope="col" class="ka-th" style="text-align: right;">Science</th>
+              <th scope="col" class="ka-th" style="text-align: right;">Social St.</th>
+              <th scope="col" class="ka-th" style="text-align: right;">Total / 400</th>
+              <th scope="col" class="ka-th" style="text-align: right;">Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+              <tr style="border-bottom: 1px solid #E2E8F0;">
+                <td class="ka-td"><strong>{{r.pos}}</strong> <span style="color: #64748B;">of 112</span></td>
+                <th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">{{r.name}}</th>
+                <td class="ka-td">{{r.stream}}</td>
+                <td class="ka-td" style="text-align: right;">{{r.e}}</td>
+                <td class="ka-td" style="text-align: right;">{{r.m}}</td>
+                <td class="ka-td" style="text-align: right;">{{r.s}}</td>
+                <td class="ka-td" style="text-align: right; color: #64748B;">{{r.ss}}</td>
+                <td class="ka-td" style="text-align: right; font-weight: 700;">{{r.t}}</td>
+                <td class="ka-td" style="text-align: right;">{{r.a}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin: 0; font-size: 0.8rem; color: #64748B;">Totals and positions update as subjects are approved. A dash means the subject's marks haven't been submitted yet. Showing 12 of 112.</p>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (bg, fg, bd) => 'padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; background: ' + bg + '; color: ' + fg + '; border: 1px solid ' + bd + ';';
+    const d = [
+      ['Amara Okoro', 'E', 94, 91, 88], ['Esther Wanjiru', 'W', 90, 83, 92], ['Hana Sato', 'W', 87, 89, 84], ['Abena Mensah', 'E', 85, 78, 86],
+      ['David Kim', 'E', 79, 95, 77], ['Joy Adeyemi', 'W', 82, 74, 80], ['Gabriel Costa', 'W', 76, 72, 79], ['Aiden Walker', 'E', 74, 64, 81],
+      ['Farah Ali', 'W', 70, 69, 73], ['Chloe Nakato', 'E', 68, 57, 70], ['Isaac Mukasa', 'W', 61, 63, 58], ['Carlos Mendes', 'E', 66, 'AB', 62]
+    ];
+    const rows = d.map((x, i) => {
+      const nums = [x[2], x[3], x[4]].filter(v => typeof v === 'number');
+      const t = nums.reduce((a, b) => a + b, 0);
+      return { pos: i + 1, name: x[0], stream: 'Primary Five ' + x[1], e: x[2], m: x[3], s: x[4], ss: '—', t, a: (t / nums.length).toFixed(1) };
+    });
+    return {
+      subjects: [
+        { name: 'English', status: 'Approved', pill: pill('#F0FDF4', '#166534', '#BBF7D0') },
+        { name: 'Mathematics', status: 'Approved', pill: pill('#F0FDF4', '#166534', '#BBF7D0') },
+        { name: 'Science', status: 'Submitted', pill: pill('#FFFBEB', '#92400E', '#FDE68A') },
+        { name: 'Social Studies', status: 'Not started', pill: pill('#F1F5F9', '#475569', '#E2E8F0') }
+      ],
+      rows
+    };
+  }
+}
+</script>
+</body>
+</html>

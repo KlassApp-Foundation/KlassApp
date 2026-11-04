@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fees · Balances</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}a{color:#1D4ED8}a:hover{color:#1E3A8A}
+.ka-th{padding:10px 12px;font:600 0.72rem 'Sora',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#475569;text-align:left;white-space:nowrap}
+.ka-td{padding:10px 12px;font-variant-numeric:tabular-nums}
+.ka-h1{margin:0;font-family:'Sora',system-ui,sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em}
+.ka-h2{margin:0;font:600 1rem 'Sora',sans-serif}
+.ka-card{border:1px solid #E2E8F0;border-radius:14px;padding:18px 20px;background:#FFFFFF}
+.ka-lbl{font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748B}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}
+.ka-mbar{display:none}@media (max-width: 767px){.ka-side,.ka-top{display:none !important}.ka-mbar{display:block}.ka-content{padding:0 !important}.ka-main{border-radius:0 !important;border-left:0 !important;border-right:0 !important;padding:18px 16px 24px !important}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; display: flex; flex-wrap: wrap; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B;">
+  <div class="ka-side"><dc-import name="Sidebar" active="fees" role="admin" hint-size="248px,1100px"></dc-import></div>
+  <div class="ka-mbar" style="flex: 1 1 100%;"><dc-import name="PhoneBar" title="Fees" role="admin" hint-size="100%,64px"></dc-import></div>
+  <div class="ka-content" style="flex: 999 1 560px; min-width: 0; padding: 12px 12px 12px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="ka-top"><dc-import name="TopBar" hint-size="100%,64px"></dc-import></div>
+    <main class="ka-main" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+        <div><h1 class="ka-h1">Fees</h1><p style="margin: 6px 0 0; font-size: 0.9rem; color: #64748B;">Term 3, 2026 · amounts in UGX, from the school's country</p></div>
+        <a href="#record" class="ds-btn ds-btn-primary" style="min-height: 44px;">Record a payment</a>
+      </div>
+      <nav aria-label="Fees sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0;">
+        <a href="FeesStructure.dc.html" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 600; color: #475569;">Fee structure</a>
+        <a href="FeesBalances.dc.html" aria-current="page" style="min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; color: #14532D; border-bottom: 3px solid #15803D; margin-bottom: -1px;">Balances and payments</a>
+      </nav>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <div style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; display: flex; gap: 12px; align-items: center; text-decoration: none; color: #1E293B; background: #FFFFFF;"><span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(22,163,74,0.10); color: #15803D; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div><div style="font: 700 1.3rem 'Sora', sans-serif;">UGX 812,450,000</div><div style="font-size: 0.78rem; color: #64748B;">collected of UGX 1,218,600,000</div></div></div><div style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; display: flex; gap: 12px; align-items: center; text-decoration: none; color: #1E293B; background: #FFFFFF;"><span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(217,119,6,0.10); color: #B45309; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path></svg></span><div><div style="font: 700 1.3rem 'Sora', sans-serif;">384</div><div style="font-size: 0.78rem; color: #64748B;">students owe something</div></div></div><div style="border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; display: flex; gap: 12px; align-items: center; text-decoration: none; color: #1E293B; background: #FFFFFF;"><span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(30,111,217,0.10); color: #1E6FD9; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></span><div><div style="font: 700 1.3rem 'Sora', sans-serif;">120</div><div style="font-size: 0.78rem; color: #64748B;">reminders sent this week</div></div></div>
+      </div>
+      <div style="height: 10px; border-radius: 999px; background: #E2E8F0; overflow: hidden;" role="img" aria-label="67 percent of this term's fees collected"><div style="width: 67%; height: 100%; background: #15803D;"></div></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+        <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <label for="bc" style="font-size: 0.8rem; color: #64748B;">Class</label>
+            <select id="bc" class="ds-input" style="min-height: 44px; width: 200px;"><option>All classes</option><option>Primary Five</option><option>Primary Five E</option></select>
+            <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; min-height: 44px;"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #15803D;"> Only students who owe</label>
+            <span style="flex: 1;"></span>
+            <button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg> Send reminder to 4 parents</button>
+          </div>
+          <div class="ka-card" style="padding: 0; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 820px;">
+              <thead><tr style="border-bottom: 2px solid #1E6FD9;"><th scope="col" class="ka-th"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Select</span></th><th scope="col" class="ka-th">Student</th><th scope="col" class="ka-th">Class</th><th scope="col" class="ka-th" style="text-align: right;">Term total</th><th scope="col" class="ka-th" style="text-align: right;">Paid</th><th scope="col" class="ka-th" style="text-align: right;"><button type="button" style="all: unset; cursor: pointer;" aria-label="Sort by balance, highest first">Balance ▼</button></th><th scope="col" class="ka-th">Last paid</th><th scope="col" class="ka-th"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Actions</span></th></tr></thead>
+              <tbody><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox" checked aria-label="Select Kato Mugisha" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Kato Mugisha</th><td class="ka-td">Primary Seven W</td><td class="ka-td" style="text-align: right;">UGX 1,270,000</td><td class="ka-td" style="text-align: right;">UGX 0</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 1,270,000</td><td class="ka-td">—</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox" checked aria-label="Select Amara Okoro" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Amara Okoro</th><td class="ka-td">Primary Five E</td><td class="ka-td" style="text-align: right;">UGX 1,200,000</td><td class="ka-td" style="text-align: right;">UGX 900,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 300,000</td><td class="ka-td">3 Oct</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox" checked aria-label="Select Lina Haddad" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Lina Haddad</th><td class="ka-td">Primary Seven E</td><td class="ka-td" style="text-align: right;">UGX 1,270,000</td><td class="ka-td" style="text-align: right;">UGX 970,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 300,000</td><td class="ka-td">12 Oct</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox" checked aria-label="Select Zara Mwangi" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Zara Mwangi</th><td class="ka-td">Top Class E</td><td class="ka-td" style="text-align: right;">UGX 780,000</td><td class="ka-td" style="text-align: right;">UGX 480,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 300,000</td><td class="ka-td">20 Sep</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox"  aria-label="Select Isaac Mukasa" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Isaac Mukasa</th><td class="ka-td">Primary Five W</td><td class="ka-td" style="text-align: right;">UGX 1,200,000</td><td class="ka-td" style="text-align: right;">UGX 950,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 250,000</td><td class="ka-td">1 Nov</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox"  aria-label="Select Chloe Nakato" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Chloe Nakato</th><td class="ka-td">Primary Five E</td><td class="ka-td" style="text-align: right;">UGX 1,200,000</td><td class="ka-td" style="text-align: right;">UGX 1,000,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 200,000</td><td class="ka-td">28 Oct</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr><tr style="border-bottom: 1px solid #E2E8F0;"><td class="ka-td"><input type="checkbox"  aria-label="Select Farah Ali" style="width: 20px; height: 20px; accent-color: #15803D;"></td><th scope="row" class="ka-td" style="text-align: left; font-weight: 600;">Farah Ali</th><td class="ka-td">Primary Five W</td><td class="ka-td" style="text-align: right;">UGX 1,200,000</td><td class="ka-td" style="text-align: right;">UGX 1,100,000</td><td class="ka-td" style="text-align: right; font-weight: 700; color: #92400E;">UGX 100,000</td><td class="ka-td">2 Nov</td><td class="ka-td"><button type="button" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height: 40px;">Send reminder</button></td></tr></tbody>
+            </table>
+          </div>
+          <p style="margin: 0; font-size: 0.8rem; color: #64748B;">Showing 7 of 384 students who owe. Sorted by balance, highest first.</p>
+        </div>
+        <aside id="record" role="dialog" aria-labelledby="rp-t" style="flex: 1 1 320px; max-width: 380px; border: 2px solid #1E293B; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+          <h2 id="rp-t" class="ka-h2">Record a payment</h2>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Student<span style="position: relative;"><input class="ds-input" value="Amara" style="width: 100%; min-height: 44px; padding-left: 36px;"><span style="position: absolute; left: 11px; top: 12px; color: #64748B;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span></span></label>
+          <div role="listbox" aria-label="Matching students" style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+            <div role="option" aria-selected="true" style="padding: 10px 12px; background: #F0FDF4; font-size: 0.85rem;"><strong>Amara Okoro</strong> · Primary Five E · RVS-0431<br><span style="color: #475569;">Owes <strong style="color: #1E293B;">UGX 300,000</strong> of UGX 1,200,000</span></div>
+            <div role="option" aria-selected="false" style="padding: 10px 12px; font-size: 0.85rem; border-top: 1px solid #E2E8F0;"><strong>Amara Bello</strong> · Primary Two W · owes UGX 0</div>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Amount (UGX)<input class="ds-input" value="300,000" inputmode="decimal" style="min-height: 48px; font-size: 1.1rem; font-weight: 700;"></label>
+          <div style="display: flex; gap: 8px;"><label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Paid by<select class="ds-input" style="min-height: 44px;"><option>Mobile money</option><option>Bank</option><option>Cash</option></select></label><label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 600;">Date<input class="ds-input" type="date" value="2026-11-04" style="min-height: 44px;"></label></div>
+          <p style="margin: 0; font-size: 0.8rem; color: #475569;">Goes against the term total. Amara will owe UGX 0.</p>
+          <button type="button" class="ds-btn ds-btn-primary" style="min-height: 48px;">Record UGX 300,000 payment</button>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

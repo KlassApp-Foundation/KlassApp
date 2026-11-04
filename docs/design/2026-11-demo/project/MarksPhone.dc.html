@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marks entry · phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="width: 375px; height: 1500px; background: #FAFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; position: relative;">
+  <dc-import name="PhoneBar" title="Primary Five Mathematics" back="true" role="teacher" hint-size="375px,64px"></dc-import>
+  <div style="padding: 14px 16px 140px; display: flex; flex-direction: column; gap: 12px;">
+    <div>
+      <div style="font: 700 1.05rem 'Sora', sans-serif;">End of Term · out of 100</div>
+      <div style="font-size: 0.8rem; color: #64748B;">Draft saved 2 min ago · not submitted</div>
+    </div>
+    <div style="display: flex; gap: 6px; overflow-x: auto;" role="radiogroup" aria-label="Stream">
+      <button type="button" role="radio" aria-checked="true" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #0F172A; background: #0F172A; color: #FFFFFF; font: 600 0.82rem 'DM Sans', sans-serif; white-space: nowrap;">All · 112</button>
+      <button type="button" role="radio" aria-checked="false" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #1E293B; font: 600 0.82rem 'DM Sans', sans-serif; white-space: nowrap;">Primary Five E · 57</button>
+      <button type="button" role="radio" aria-checked="false" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #1E293B; font: 600 0.82rem 'DM Sans', sans-serif; white-space: nowrap;">Primary Five W · 55</button>
+    </div>
+    <div style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #E2E8F0; background: {{r.bg}};">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; font-size: 0.92rem;">{{r.name}}</div>
+            <div style="font-size: 0.75rem; color: #64748B;">Primary Five {{r.stream}} · {{r.no}}</div>
+            <sc-if value="{{r.err}}" hint-placeholder-val="{{false}}"><div style="font-size: 0.75rem; color: #B91C1C; font-weight: 700;">{{r.err}}</div></sc-if>
+          </div>
+          <input value="{{r.mark}}" inputmode="numeric" aria-label="{{r.aria}}" style="{{r.inputStyle}}">
+        </div>
+      </sc-for>
+    </div>
+    <button type="button" class="ds-btn ds-btn-outline" style="min-height: 48px;">Paste or upload marks</button>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 0.82rem; color: #334155;"><strong style="color: #1E293B;">41 of 112</strong> entered · 1 to fix · 71 blank</div>
+    <div style="display: flex; gap: 10px;">
+      <button type="button" class="ds-btn ds-btn-outline" style="flex: 1; min-height: 48px;">Save draft</button>
+      <button type="button" class="ds-btn ds-btn-primary" disabled="{{yes}}" style="flex: 1.4; min-height: 48px;">Submit for approval</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const d = [
+      ['Abena Mensah', 'RVS-0412', 'E', '78'], ['Aiden Walker', 'RVS-0388', 'E', '64'], ['Amara Okoro', 'RVS-0431', 'E', '91'],
+      ['Carlos Mendes', 'RVS-0402', 'E', 'AB'], ['Chloe Nakato', 'RVS-0395', 'E', '57'], ['David Kim', 'RVS-0420', 'E', '105'],
+      ['Esther Wanjiru', 'RVS-0377', 'W', '83'], ['Farah Ali', 'RVS-0444', 'W', ''], ['Gabriel Costa', 'RVS-0409', 'W', ''],
+      ['Hana Sato', 'RVS-0416', 'W', ''], ['Isaac Mukasa', 'RVS-0399', 'W', ''], ['Joy Adeyemi', 'RVS-0425', 'W', '']
+    ];
+    return {
+      yes: true,
+      rows: d.map(x => {
+        const bad = x[3] === '105';
+        return { name: x[0], no: x[1], stream: x[2], mark: x[3], aria: 'Mark for ' + x[0], err: bad ? 'Above 100' : false, bg: bad ? '#FEF2F2' : '#FFFFFF',
+          inputStyle: 'width: 76px; height: 48px; border-radius: 10px; text-align: center; font: 700 1.05rem DM Sans, sans-serif; ' +
+            (bad ? 'border: 2px solid #B91C1C;' : x[3] === '' ? 'border: 1px dashed #94A3B8; background: #FAFAF5;' : 'border: 1px solid #CBD5E1;') };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

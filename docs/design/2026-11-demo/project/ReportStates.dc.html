@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Report cards · states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/2d64299756c498eaac73eca43e345662">
+<link rel="stylesheet" href="/_blob/c24597bf56a23cc9cc50e35009507245">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}*{box-sizing:border-box}
+@keyframes ka-shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+.ka-sk{background:#E2E8F0;border-radius:8px;animation:ka-shimmer 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ka-sk{animation:none}}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAF5; padding: 24px; font-family: 'DM Sans', system-ui, sans-serif; color: #1E293B; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 20px; align-content: start;">
+  <section aria-label="Empty" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Empty · nothing released</div>
+    <div style="border: 1px dashed #CBD5E1; border-radius: 14px; padding: 32px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <h2 style="margin: 0; font: 600 1rem 'Sora', sans-serif;">Primary Six Mid Term isn't released yet</h2>
+      <p style="margin: 0; font-size: 0.86rem; color: #475569; line-height: 1.5;">Report cards use released marks only. Mathematics is waiting to be resubmitted.</p>
+      <a href="MarksRelease.dc.html" class="ds-btn ds-btn-outline" style="min-height: 44px;">Go to Marks Release</a>
+    </div>
+  </section>
+  <section aria-label="Loading" aria-busy="true" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Loading · building the class PDF</div>
+    <div style="font-weight: 700;">Preparing 98 report cards…</div>
+    <div style="height: 8px; border-radius: 999px; background: #E2E8F0; overflow: hidden;"><div style="width: 40%; height: 100%; background: #1E6FD9;"></div></div>
+    <div style="font-size: 0.82rem; color: #475569;">39 of 98 done. The download starts by itself; you can keep working.</div>
+    <div class="ka-sk" style="height: 60px; border-radius: 12px;"></div>
+  </section>
+  <section aria-label="Error" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B;">Error · download failed</div>
+    <div role="alert" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-weight: 700; color: #7F1D1D;">The class PDF didn't finish</div>
+      <p style="margin: 0; font-size: 0.86rem; color: #7F1D1D; line-height: 1.5;">One card couldn't be built: Yusuf Bello joined after the exam and has no released marks. The other 97 are ready.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;"><button type="button" class="ds-btn ds-btn-primary" style="min-height: 44px;">Download the 97 cards</button><button type="button" class="ds-btn ds-btn-outline" style="min-height: 44px; background: #FFFFFF;">Try all 98 again</button></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

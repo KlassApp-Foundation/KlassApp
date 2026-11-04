@@ -1,0 +1,831 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-04T19:05:00Z"
+ },
+ "title": "KlassApp demo screens",
+ "launch": {
+  "view": "canvas",
+  "page": "p1"
+ },
+ "pages": [
+  {
+   "id": "p1",
+   "name": "1 · Exam sets"
+  },
+  {
+   "id": "p2",
+   "name": "2 · Marks entry"
+  },
+  {
+   "id": "p3",
+   "name": "3 · Approval and release"
+  },
+  {
+   "id": "p4",
+   "name": "4 · Report cards"
+  },
+  {
+   "id": "p5",
+   "name": "5 · Student profile"
+  },
+  {
+   "id": "shell",
+   "name": "Shared parts"
+  },
+  {
+   "id": "p6",
+   "name": "6 · Fees"
+  },
+  {
+   "id": "p7",
+   "name": "7 · Classes"
+  },
+  {
+   "id": "p8",
+   "name": "8 · Teacher dashboard"
+  },
+  {
+   "id": "p9",
+   "name": "9 · Parent and student"
+  },
+  {
+   "id": "p10",
+   "name": "10 · Admin dashboard"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1100,
+   "title": "Exam sets · New set (admin, desktop)",
+   "page": "p1",
+   "expand": "fill"
+  },
+  "ExamSetDetail.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Exam sets · Set page (desktop)",
+   "page": "p1",
+   "expand": "fill"
+  },
+  "ExamSetList.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 820,
+   "title": "Exam sets · Sets by term (desktop)",
+   "page": "p1",
+   "expand": "fill"
+  },
+  "ExamSetPhone.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 375,
+   "h": 1560,
+   "title": "Exam sets · New set (phone)",
+   "page": "p1"
+  },
+  "ExamSetStates.dc.html": {
+   "x": 455,
+   "y": 1300,
+   "w": 1280,
+   "h": 900,
+   "title": "Exam sets · Empty, loading, error",
+   "page": "p1",
+   "expand": "fill"
+  },
+  "MarksToMark.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 960,
+   "title": "Marks · Your exams to mark (teacher)",
+   "page": "p2",
+   "expand": "fill"
+  },
+  "MarksGrid.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Marks · Marks grid (teacher)",
+   "page": "p2",
+   "expand": "fill"
+  },
+  "MarksUpload.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Marks · Paste or upload marks",
+   "page": "p2",
+   "expand": "fill"
+  },
+  "MarksPhone.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 375,
+   "h": 1500,
+   "title": "Marks · Marks entry (phone)",
+   "page": "p2"
+  },
+  "MarksStates.dc.html": {
+   "x": 455,
+   "y": 1300,
+   "w": 1280,
+   "h": 960,
+   "title": "Marks · Empty, loading, error, returned",
+   "page": "p2",
+   "expand": "fill"
+  },
+  "Approvals.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1000,
+   "title": "Approvals · Queue (admin, class head)",
+   "page": "p3",
+   "expand": "fill"
+  },
+  "MarkSheet.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Approvals · Combined mark sheet",
+   "page": "p3",
+   "expand": "fill"
+  },
+  "MarksRelease.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Marks Release",
+   "page": "p3",
+   "expand": "fill"
+  },
+  "ReleasePhone.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 375,
+   "h": 1500,
+   "title": "Approvals and release (phone)",
+   "page": "p3"
+  },
+  "ReleaseStates.dc.html": {
+   "x": 455,
+   "y": 1300,
+   "w": 1280,
+   "h": 900,
+   "title": "Approvals and release · Empty, loading, error",
+   "page": "p3",
+   "expand": "fill"
+  },
+  "ReportCards.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Report cards · Class (admin, class head)",
+   "page": "p4",
+   "expand": "fill"
+  },
+  "CardNursery.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "title": "Sample card · Nursery",
+   "page": "p4"
+  },
+  "CardPrimary.dc.html": {
+   "x": 2234,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "title": "Sample card · Primary",
+   "page": "p4"
+  },
+  "CardOLevel.dc.html": {
+   "x": 3108,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "title": "Sample card · O level",
+   "page": "p4"
+  },
+  "CardALevel.dc.html": {
+   "x": 3982,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "title": "Sample card · A level",
+   "page": "p4"
+  },
+  "ReportPhone.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 375,
+   "h": 1300,
+   "title": "Report cards (phone)",
+   "page": "p4"
+  },
+  "ReportStates.dc.html": {
+   "x": 455,
+   "y": 1300,
+   "w": 1280,
+   "h": 760,
+   "title": "Report cards · Empty, loading, error",
+   "page": "p4",
+   "expand": "fill"
+  },
+  "StudentProfile.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Student profile · Overview (admin)",
+   "page": "p5",
+   "expand": "fill"
+  },
+  "StudentActions.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Student profile · Actions",
+   "page": "p5",
+   "expand": "fill"
+  },
+  "StudentPhone.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 375,
+   "h": 1560,
+   "title": "Student profile (phone)",
+   "page": "p5"
+  },
+  "StudentStates.dc.html": {
+   "x": 455,
+   "y": 1300,
+   "w": 1280,
+   "h": 760,
+   "title": "Student profile · Empty, loading, error",
+   "page": "p5",
+   "expand": "fill"
+  },
+  "Sidebar.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 248,
+   "h": 1100,
+   "title": "Shared · Sidebar",
+   "page": "shell"
+  },
+  "TopBar.dc.html": {
+   "x": 328,
+   "y": 0,
+   "w": 1032,
+   "h": 72,
+   "title": "Shared · Top bar",
+   "page": "shell"
+  },
+  "PhoneBar.dc.html": {
+   "x": 328,
+   "y": 192,
+   "w": 375,
+   "h": 64,
+   "title": "Shared · Phone top bar",
+   "page": "shell"
+  },
+  "Lifecycle.dc.html": {
+   "x": 328,
+   "y": 376,
+   "w": 1032,
+   "h": 112,
+   "title": "Shared · Marks lifecycle strip",
+   "page": "shell"
+  },
+  "AccountMenu.dc.html": {
+   "x": 328,
+   "y": 600,
+   "w": 1032,
+   "h": 460,
+   "title": "Shared · Account menu (all roles)",
+   "page": "shell"
+  },
+  "FeesStructure.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1000,
+   "title": "Fees · Fee structure (admin)",
+   "page": "p6",
+   "expand": "fill"
+  },
+  "FeesBalances.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 1100,
+   "title": "Fees · Balances and record a payment",
+   "page": "p6",
+   "expand": "fill"
+  },
+  "FeesPhone.dc.html": {
+   "x": 0,
+   "y": 1220,
+   "w": 375,
+   "h": 1500,
+   "title": "Fees (phone)",
+   "page": "p6"
+  },
+  "FeesStates.dc.html": {
+   "x": 455,
+   "y": 1220,
+   "w": 1280,
+   "h": 800,
+   "title": "Fees · Empty, loading, error",
+   "page": "p6",
+   "expand": "fill"
+  },
+  "Classes.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Classes (admin)",
+   "page": "p7",
+   "expand": "fill"
+  },
+  "ClassesPhone.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 375,
+   "h": 1500,
+   "title": "Classes (phone)",
+   "page": "p7"
+  },
+  "ClassesStates.dc.html": {
+   "x": 1815,
+   "y": 0,
+   "w": 1280,
+   "h": 760,
+   "title": "Classes · Empty, loading, error",
+   "page": "p7",
+   "expand": "fill"
+  },
+  "TeacherDash.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1180,
+   "title": "Teacher dashboard",
+   "page": "p8",
+   "expand": "fill"
+  },
+  "TeacherPhone.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 375,
+   "h": 1560,
+   "title": "Teacher dashboard (phone)",
+   "page": "p8"
+  },
+  "TeacherStates.dc.html": {
+   "x": 1815,
+   "y": 0,
+   "w": 1280,
+   "h": 760,
+   "title": "Teacher dashboard · Empty, loading, error",
+   "page": "p8",
+   "expand": "fill"
+  },
+  "ParentDash.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Parent dashboard",
+   "page": "p9",
+   "expand": "fill"
+  },
+  "ParentMarks.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Parent · Marks page",
+   "page": "p9",
+   "expand": "fill"
+  },
+  "ParentAttendance.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Parent · Attendance page",
+   "page": "p9",
+   "expand": "fill"
+  },
+  "ParentFees.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Parent · Fees page",
+   "page": "p9",
+   "expand": "fill"
+  },
+  "ParentPhone.dc.html": {
+   "x": 0,
+   "y": 1020,
+   "w": 375,
+   "h": 1400,
+   "title": "Parent dashboard (phone)",
+   "page": "p9"
+  },
+  "StudentHome.dc.html": {
+   "x": 455,
+   "y": 1020,
+   "w": 375,
+   "h": 1400,
+   "title": "Student dashboard (phone)",
+   "page": "p9"
+  },
+  "FamilyStates.dc.html": {
+   "x": 910,
+   "y": 1020,
+   "w": 1280,
+   "h": 760,
+   "title": "Parent and student · Empty, loading, error",
+   "page": "p9",
+   "expand": "fill"
+  },
+  "AdminDash.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 1300,
+   "title": "Admin dashboard with additions",
+   "page": "p10",
+   "expand": "fill"
+  },
+  "AdminPhone.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 375,
+   "h": 1700,
+   "title": "Admin dashboard (phone)",
+   "page": "p10"
+  },
+  "AdminStates.dc.html": {
+   "x": 1815,
+   "y": 0,
+   "w": 1280,
+   "h": 760,
+   "title": "Admin dashboard · Empty, loading, error",
+   "page": "p10",
+   "expand": "fill"
+  },
+  "ExamSetListPhone.dc.html": {
+   "x": 0,
+   "y": 2320,
+   "w": 375,
+   "h": 900,
+   "title": "Exam sets list (phone)",
+   "page": "p1"
+  },
+  "ExamSetDetailPhone.dc.html": {
+   "x": 455,
+   "y": 2320,
+   "w": 375,
+   "h": 1500,
+   "title": "Exam set page (phone)",
+   "page": "p1"
+  },
+  "MarksToMarkPhone.dc.html": {
+   "x": 0,
+   "y": 2380,
+   "w": 375,
+   "h": 1300,
+   "title": "Your exams to mark (phone)",
+   "page": "p2"
+  },
+  "MarksUploadPhone.dc.html": {
+   "x": 455,
+   "y": 2380,
+   "w": 375,
+   "h": 1000,
+   "title": "Paste or upload marks (phone)",
+   "page": "p2"
+  },
+  "MarkSheetPhone.dc.html": {
+   "x": 0,
+   "y": 2320,
+   "w": 375,
+   "h": 1250,
+   "title": "Mark sheet as stacked cards (phone)",
+   "page": "p3"
+  },
+  "FilterSheet.dc.html": {
+   "x": 455,
+   "y": 2320,
+   "w": 375,
+   "h": 900,
+   "title": "Filters collapse into a sheet (phone)",
+   "page": "p3"
+  },
+  "MarksReleasePhone.dc.html": {
+   "x": 910,
+   "y": 2320,
+   "w": 375,
+   "h": 1200,
+   "title": "Marks Release (phone)",
+   "page": "p3"
+  },
+  "StudentActionsPhone.dc.html": {
+   "x": 0,
+   "y": 2180,
+   "w": 375,
+   "h": 900,
+   "title": "Record a payment as a bottom sheet (phone)",
+   "page": "p5"
+  },
+  "ParentMarksPhone.dc.html": {
+   "x": 2790,
+   "y": 1020,
+   "w": 375,
+   "h": 1000,
+   "title": "Parent · Marks page (phone)",
+   "page": "p9"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "ExamSetDetail.dc.html",
+  "ExamSetList.dc.html",
+  "ExamSetPhone.dc.html",
+  "ExamSetStates.dc.html",
+  "MarksToMark.dc.html",
+  "MarksGrid.dc.html",
+  "MarksUpload.dc.html",
+  "MarksPhone.dc.html",
+  "MarksStates.dc.html",
+  "Approvals.dc.html",
+  "MarkSheet.dc.html",
+  "MarksRelease.dc.html",
+  "ReleasePhone.dc.html",
+  "ReleaseStates.dc.html",
+  "ReportCards.dc.html",
+  "CardNursery.dc.html",
+  "CardPrimary.dc.html",
+  "CardOLevel.dc.html",
+  "CardALevel.dc.html",
+  "ReportPhone.dc.html",
+  "ReportStates.dc.html",
+  "StudentProfile.dc.html",
+  "StudentActions.dc.html",
+  "StudentPhone.dc.html",
+  "StudentStates.dc.html",
+  "Sidebar.dc.html",
+  "TopBar.dc.html",
+  "PhoneBar.dc.html",
+  "Lifecycle.dc.html",
+  "AccountMenu.dc.html",
+  "FeesStructure.dc.html",
+  "FeesBalances.dc.html",
+  "FeesPhone.dc.html",
+  "FeesStates.dc.html",
+  "Classes.dc.html",
+  "ClassesPhone.dc.html",
+  "ClassesStates.dc.html",
+  "TeacherDash.dc.html",
+  "TeacherPhone.dc.html",
+  "TeacherStates.dc.html",
+  "ParentDash.dc.html",
+  "ParentMarks.dc.html",
+  "ParentAttendance.dc.html",
+  "ParentFees.dc.html",
+  "ParentPhone.dc.html",
+  "StudentHome.dc.html",
+  "FamilyStates.dc.html",
+  "AdminDash.dc.html",
+  "AdminPhone.dc.html",
+  "AdminStates.dc.html",
+  "ExamSetListPhone.dc.html",
+  "ExamSetDetailPhone.dc.html",
+  "MarksToMarkPhone.dc.html",
+  "MarksUploadPhone.dc.html",
+  "MarkSheetPhone.dc.html",
+  "FilterSheet.dc.html",
+  "MarksReleasePhone.dc.html",
+  "StudentActionsPhone.dc.html",
+  "ParentMarksPhone.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "1 · Exam sets",
+   "kind": "title1",
+   "maxW": 4000,
+   "page": "p1"
+  },
+  "t2": {
+   "x": 0,
+   "y": -300,
+   "text": "2 · Marks entry",
+   "kind": "title1",
+   "maxW": 4000,
+   "page": "p2"
+  },
+  "t3": {
+   "x": 0,
+   "y": -300,
+   "text": "3 · Marks approval and release",
+   "kind": "title1",
+   "maxW": 4000,
+   "page": "p3"
+  },
+  "t4": {
+   "x": 0,
+   "y": -300,
+   "text": "4 · Report cards",
+   "kind": "title1",
+   "maxW": 4776,
+   "page": "p4"
+  },
+  "t5": {
+   "x": 0,
+   "y": -300,
+   "text": "5 · Student profile",
+   "kind": "title1",
+   "maxW": 2640,
+   "page": "p5"
+  },
+  "t0": {
+   "x": 0,
+   "y": -300,
+   "text": "Shared parts",
+   "kind": "title1",
+   "maxW": 1360,
+   "page": "shell"
+  },
+  "r1": {
+   "x": 1815,
+   "y": 1300,
+   "text": "WHO CAN DO WHAT\nAdmin: create a set for the whole school or any classes; add, rename or switch off the school's own exam types; remove an exam with no marks; change a subject's teacher.\nClass head: create a set for their own class only (class chips locked to theirs); remove exams in their class with no marks.\nSubject teacher: no access to Exam sets; their new exams appear in Marks > To mark.\n\nRULES\nClasses are the default unit. A class is expanded only to pick a single stream.\nNo streams: the expand arrow is hidden. Streams can have any names.\nAn exam with marks shows a lock in place of Remove.\nSecondary schools: chips group by S1 to S6 (or Form 1 to 6); nothing else changes.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p1"
+  },
+  "r2": {
+   "x": 1815,
+   "y": 1300,
+   "text": "WHO CAN DO WHAT\nSubject teacher: sees only exams for their subject and streams; enters marks, saves, submits; fixes and resubmits a returned subject.\nClass head: sees the whole class (every stream, every subject); can enter marks for any subject in their class.\nAdmin: can open any grid read-only from Marks, and edit only after returning it.\n\nRULES\nSave keeps a draft only the teacher sees. Submit sends the subject for approval and locks it.\nA returned subject unlocks and shows the reason at the top of the grid.\nNo streams: the Stream column and filter are hidden.\nMarks are out of the exam's maximum (default 100). Blank = not yet entered; AB = absent.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p2"
+  },
+  "r3": {
+   "x": 1815,
+   "y": 1300,
+   "text": "WHO CAN DO WHAT\nAdmin: approves or returns any submitted subject; releases any class.\nClass head: approves or returns subjects in their class; releases their own class.\nSubject teacher: none of these screens.\n\nRULES\nApproved is not released: parents and students see nothing until Marks Release.\nReleasing a sitting a second time needs a written reason, stored with the release and shown in the release history.\nPositions are \"of N\" within the class (all streams); the stream position shows on hover and in the PDF.\nNo streams: the Stream column and stream filter disappear.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p3"
+  },
+  "r4": {
+   "x": 1815,
+   "y": 1300,
+   "text": "WHO CAN DO WHAT\nAdmin: any class; download one card or the whole class as one PDF.\nClass head: their class only.\nTeachers, parents, students: parents and students get only released results (see dashboards, batch 2).\n\nRULES\nCards draw only on released marks. A class with unreleased marks shows \"Not released yet\" with a link to Marks Release.\nThe card layout follows the class level: nursery, primary, O level, A level. The school chooses which exam types appear (default: those that count towards the report).",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p4"
+  },
+  "r5": {
+   "x": 1815,
+   "y": 1300,
+   "text": "WHO CAN DO WHAT\nAdmin: all tabs and all actions.\nClass head: all tabs for students in their class; can add marks and record attendance; fees are read-only.\nAccountant (if the school has one): Fees tab and Record payment only.\n\nRULES\nOverview is the default tab. Performance lists only released exams for download; the current progress report is built from approved marks and labelled \"Progress report, not released\".\nRecord payment goes against the student's total for the term; no splitting by fee item by default.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p5"
+  },
+  "t6": {
+   "x": 0,
+   "y": -300,
+   "text": "6 · Fees",
+   "kind": "title1",
+   "maxW": 2640,
+   "page": "p6"
+  },
+  "t7": {
+   "x": 0,
+   "y": -300,
+   "text": "7 · Classes",
+   "kind": "title1",
+   "maxW": 3095,
+   "page": "p7"
+  },
+  "t8": {
+   "x": 0,
+   "y": -300,
+   "text": "8 · Teacher dashboard",
+   "kind": "title1",
+   "maxW": 3095,
+   "page": "p8"
+  },
+  "t9": {
+   "x": 0,
+   "y": -300,
+   "text": "9 · Parent and student dashboards",
+   "kind": "title1",
+   "maxW": 5360,
+   "page": "p9"
+  },
+  "t10": {
+   "x": 0,
+   "y": -300,
+   "text": "10 · Admin dashboard additions",
+   "kind": "title1",
+   "maxW": 3095,
+   "page": "p10"
+  },
+  "r6": {
+   "x": 1815,
+   "y": 1220,
+   "text": "WHO CAN DO WHAT\nAdmin and accountant: edit the fee structure, record payments, mark paid, send reminders.\nClass head: sees balances for their class, can send reminders; cannot record payments.\n\nRULES\nDuration: one-off, termly (default) or yearly. Totals per class are for one term: yearly fees count in Term 1 only, one-off fees in the term they're charged.\nA payment goes against the student's term total; no splitting across fee items by default.\nAmounts use the school's currency, set from its country (UGX here). Format with the currency code and thousands separators.\nReminders go on WhatsApp to linked parents; KlassApp never messages first, so reminders use the school's approved template.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p6"
+  },
+  "r7": {
+   "x": 1815,
+   "y": 880,
+   "text": "WHO CAN DO WHAT\nAdmin: all classes; assign or invite a class teacher; open any class page.\nTeacher: sees only their classes (\"My classes\").\n\nRULES\nCards follow level order: Baby, Middle, Top Class, then Primary One to Seven.\nThe class filter is a dropdown, never a text box.\nAssigning picks from existing teachers. Inviting sends an email setup link (no password). A stream class teacher is optional; schools with one teacher per class set it at class level.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p7"
+  },
+  "r8": {
+   "x": 1815,
+   "y": 880,
+   "text": "WHAT THE TEACHER SEES\nOnly their own classes, students and exams.\nCharts are for the class they head; a teacher with no class sees their subjects' performance instead of the class charts.\nQuick actions: Take attendance, Enter marks.\n\"Marks needing attention\" lists returned subjects first, then unfinished ones closest to their deadline.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p8"
+  },
+  "r9": {
+   "x": 2270,
+   "y": 1020,
+   "text": "RULES\nOnly released results appear anywhere for parents and students. An approved but unreleased exam is invisible to them.\nParents with several children pick the child at the top; the child's name appears once, there.\nStudents see the same cards for themselves, with no child picker.\nEach card opens one simple page with one chart: performance across released exams, attendance by week, fees paid against what's due.\nAttendance updates to parents are weekly (summary plus absences).",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p9"
+  },
+  "r10": {
+   "x": 1815,
+   "y": 880,
+   "text": "ADDITIONS ONLY\nThe rest of the admin dashboard is unchanged from the current build.\nStudents by gender: per class, and per stream when a class has streams; a toggle switches class and stream view. Classes without streams show one bar.\n\"What's set up\" is a checklist: done items link to where they live, open items carry the one action that finishes them. It hides itself once everything is done and can be reopened from Settings.",
+   "w": 440,
+   "fill": "teal",
+   "size": "s",
+   "page": "p10"
+  },
+  "m1": {
+   "x": 0,
+   "y": 3900,
+   "text": "MOBILE RULES (every screen)\nBelow 768px the sidebar and top bar give way to the phone top bar (avatar top right opens the account menu). Content goes edge to edge with 16px sides.\nTables: wide ones scroll inside their own box, never the page; lists become stacked cards (see Mark sheet).\nFilters: one Filters button opens a bottom sheet (see Filters board on page 3).\nPrimary actions sit in a sticky bottom bar within thumb reach. Every target is at least 44px; main actions 48 to 52px.\nMarks grid: below 768px only Student and Mark show, marks inputs grow to 52px, Save draft and Submit fill the bottom bar.",
+   "w": 520,
+   "fill": "teal",
+   "size": "s",
+   "page": "p3"
+  }
+ },
+ "designSystems": [
+  {
+   "title": "KlassApp Design System",
+   "namespace": "klassapp",
+   "artifact": "https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ",
+   "version": "1793818165-30cc",
+   "copiedAt": "2026-11-04T19:05:00Z"
+  }
+ ]
+}
