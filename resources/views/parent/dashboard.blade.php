@@ -6,7 +6,7 @@
     @include('layouts.partials.page-header', [
         'title' => 'Parent Portal',
         'subtitle' => $selectedChild
-            ? ($selectedChild['name'].' · '.$selectedChild['class'].' · '.($selectedChild['school_name'] ?? ''))
+            ? ($selectedChild['school_name'] ?? '')
             : 'Fees, grades, and attendance for your linked children.',
     ])
 
@@ -39,7 +39,7 @@
                                 @if($isActive) aria-current="page" @endif
                                 data-testid="child-chip-{{ $child['student_id'] }}"
                             >
-                                {{ $child['name'] }}
+                                {{ \App\Support\DisplayName::title($child['name']) }}
                                 <span class="opacity-70 font-normal"> · {{ $child['class'] }}</span>
                             </a>
                         @endforeach
@@ -66,18 +66,21 @@
                     value="{{ $balance !== null ? 'UGX '.number_format($balance, 0) : '—' }}"
                     label="Fee Balance"
                     color="{{ ($balance ?? 0) > 0 ? 'amber' : 'green' }}"
+                    :link="route('parent.children.fees', $selectedChild['student_id'])"
                 />
                 <x-ds-kpi-card
                     icon="check"
                     value="{{ $attPct !== null ? $attPct.'%' : '—' }}"
                     label="Attendance (30 days)"
                     color="blue"
+                    :link="route('parent.children.attendance', $selectedChild['student_id'])"
                 />
                 <x-ds-kpi-card
                     icon="exam"
                     value="{{ $gradeSubjects > 0 ? $gradeSubjects : '—' }}"
                     label="Recent Marks"
                     color="green"
+                    :link="route('parent.children.grades', $selectedChild['student_id'])"
                 />
             </div>
 

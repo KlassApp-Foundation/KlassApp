@@ -12,10 +12,11 @@
 
     {{-- KPI Cards --}}
     <div class="dashboard-kpi-grid">
-        <x-ds-kpi-card icon="calendar" value="{{ $dashboard['presentPercentage'] ?? 0 }}%" label="Attendance Rate" color="green" />
-        <x-ds-kpi-card icon="check" value="{{ $dashboard['presentDay'] ?? 0 }}" label="Days Present" color="blue" />
+        <x-ds-kpi-card icon="calendar" value="{{ $dashboard['presentPercentage'] ?? 0 }}%" label="Attendance Rate" color="green" :link="route('student.attendance')" />
+        <x-ds-kpi-card icon="check" value="{{ $dashboard['presentDay'] ?? 0 }}" label="Days Present" color="blue" :link="route('student.attendance')" />
         <x-ds-kpi-card icon="calendar" value="{{ $dashboard['upcomingeventCount'] ?? 0 }}" label="Upcoming Events" color="amber" />
-        <x-ds-kpi-card icon="book" value="{{ isset($dashboard['marks']) ? count($dashboard['marks']) : 0 }}" label="Recent Marks" color="purple" />
+        <x-ds-kpi-card icon="book" value="{{ isset($dashboard['marks']) ? count($dashboard['marks']) : 0 }}" label="Recent Marks" color="purple" :link="route('student.marks')" />
+        <x-ds-kpi-card icon="dollar" value="{{ isset($fees['total_balance']) ? 'UGX '.number_format($fees['total_balance'], 0) : '—' }}" label="Fee Balance" color="amber" :link="route('student.fees')" />
     </div>
 
     {{-- Main grid --}}

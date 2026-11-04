@@ -82,7 +82,7 @@ class ProfileDropdownRoleAwareTest extends TestCase
     }
 
     #[Test]
-    public function parent_layout_nav_has_logout_only_no_admin_account_links(): void
+    public function parent_layout_uses_the_shared_profile_menu(): void
     {
         // The per-role nav partials were consolidated into the shared, parameterised
         // header (cce2060e); the parent chrome is layouts/parent/layout.blade.php plus
@@ -90,7 +90,7 @@ class ProfileDropdownRoleAwareTest extends TestCase
         $layout = file_get_contents(resource_path('views/layouts/parent/layout.blade.php'));
         $this->assertNotFalse($layout);
         $this->assertStringContainsString('layouts.partials.navigation', $layout);
-        $this->assertStringContainsString("'showLogout' => true", $layout);
+        $this->assertStringNotContainsString("'showLogout' => true", $layout);
         $this->assertStringContainsString("'brandRoute' => 'parent.dashboard'", $layout);
         $this->assertStringNotContainsString('/admin/changepassword', $layout);
         $this->assertStringNotContainsString('/admin/editprofile', $layout);

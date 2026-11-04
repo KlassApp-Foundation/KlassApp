@@ -12,84 +12,48 @@
  */
 namespace App\Http\Controllers\Student;
 
-use App\Contracts\Results\ReleaseGate;
-use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Attendance;
-use App\Models\Academics\Exam;
-use Carbon\Carbon;
+use App\Services\Parent\ParentPortalService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class RecordsController extends Controller
 {
-    public function marks()
+    public function __construct(private ParentPortalService $portal) {}
+
+    public function marks(Request $request)
     {
-        $studentId = (int) Auth::id();
-        $schoolId = (int) Auth::user()->school_id;
-        $academicYear = SiteHelper::getAcademicYear($schoolId);
+        $student = Auth::user();
+        $grades = $this->portal->releasedResults($student, (int) $student->school_id, $request->query('year'));
 
-        $examQuery = Exam::query()
-            ->whereHas('marks', fn ($q) => $q->where('student_id', $studentId))
-            ->where('school_id', $schoolId)
-            ->with([
-                'marks' => fn ($q) => $q->where('student_id', $studentId)->with('subject'),
-                'examType',
-                'subject',
-            ])
-            ->latest('id');
-
-        if ($academicYear) {
-            $examQuery->where('academic_year_id', $academicYear->id);
-        }
-
-        app(ReleaseGate::class)->applyToExams($examQuery, Auth::user());
-        $exams = $examQuery->take(15)->get();
-
-        $groups = [];
-        foreach ($exams->groupBy(fn ($e) => $e->examType?->name ?? 'Exam') as $typeName => $typeExams) {
-            $subjects = [];
-            foreach ($typeExams as $exam) {
-                foreach ($exam->marks as $mark) {
-                    $subjects[] = [
-                        'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => (float) ($mark->marks ?? 0),
-                        'grade' => $mark->grade ?? '-',
-                    ];
-                }
-            }
-
-            if (! empty($subjects)) {
-                $groups[$typeName] = $subjects;
-            }
-        }
-
-        return view('student.records.marks', ['groups' => $groups]);
+        return view('student.records.marks', [
+            'grades' => $grades,
+            'message' => $grades['exam_groups'] === [] ? 'No results published yet.' : null,
+        ]);
     }
 
     public function attendance()
     {
-        $studentId = (int) Auth::id();
-        $schoolId = (int) Auth::user()->school_id;
-        $since = Carbon::now()->subMonth();
-
-        $records = Attendance::query()
-            ->where('school_id', $schoolId)
-            ->where('user_id', $studentId)
-            ->where('date', '>=', $since)
-            ->orderByDesc('date')
-            ->get();
+        $student = Auth::user();
+        $summary = $this->portal->attendanceSummary($student, (int) $student->school_id);
 
         return view('student.records.attendance', [
-            'present' => $records->where('status', 1)->count(),
-            'absent' => $records->where('status', 0)->count(),
-            'late' => $records->where('status', 2)->count(),
-            'total' => $records->count(),
-            'since' => $since->format('d M Y'),
-            'recent' => $records->take(20)->map(fn ($r) => [
-                'date' => Carbon::parse($r->date)->format('d M Y'),
-                'session' => ucfirst((string) $r->session),
-                'status' => (int) $r->status === 1 ? 'Present' : ((int) $r->status === 2 ? 'Late' : 'Absent'),
-            ])->values()->all(),
+            'present' => $summary['present'],
+            'absent' => $summary['absent'],
+            'late' => $summary['late'],
+            'total' => $summary['total'],
+            'since' => $summary['since'],
+            'recent' => $summary['recent'],
+            'chart' => $summary['chart'],
+        ]);
+    }
+
+    public function fees()
+    {
+        $student = Auth::user();
+
+        return view('student.records.fees', [
+            'fees' => $this->portal->feeSummary($student, (int) $student->school_id),
         ]);
     }
 }

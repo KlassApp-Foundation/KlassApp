@@ -156,7 +156,7 @@ class ParentPortalWebIsolationTest extends TestCase
         $this->actingAs($this->parent)
             ->get(route('parent.children'))
             ->assertOk()
-            ->assertSee('ALICE LINKED')
+            ->assertSee('Alice Linked')
             ->assertDontSee('Other Student');
     }
 }
