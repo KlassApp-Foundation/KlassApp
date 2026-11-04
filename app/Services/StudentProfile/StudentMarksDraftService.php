@@ -80,6 +80,9 @@ class StudentMarksDraftService
         return $exams->map(function (Exam $exam) use ($marks) {
             $submitted = $this->writer->requiresCorrection($exam) || $this->isLocked($exam);
             $teacher = $exam->teacher?->display_name ?: $exam->teacher?->name;
+            if ($teacher !== null && $teacher === mb_strtoupper($teacher)) {
+                $teacher = mb_convert_case($teacher, MB_CASE_TITLE);
+            }
 
             return [
                 'exam_id' => (int) $exam->id,

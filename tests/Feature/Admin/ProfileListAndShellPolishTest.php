@@ -321,8 +321,8 @@ class ProfileListAndShellPolishTest extends TestCase
         $html = $this->actingAs($this->admin)->get('/admin/parent/show/'.$parent->name)->assertOk()->getContent();
         $this->assertMatchesRegularExpression('/<h1 style="[^"]*letter-spacing:-0\.02em;[^"]*">/', $html);
 
-        $student = $this->actingAs($this->admin)->get('/admin/students/'.$amina->id)->assertOk()->getContent();
-        $this->assertMatchesRegularExpression('/\.sp h1 \{[^}]*letter-spacing:-\.02em;/', $student);
+        $this->actingAs($this->admin)->get('/admin/students/'.$amina->id)->assertOk()->assertSee('css/student-profile.css', false);
+        $this->assertMatchesRegularExpression('/\.sp h1 \{[^}]*letter-spacing:-\.02em;/', file_get_contents(public_path('css/student-profile.css')));
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

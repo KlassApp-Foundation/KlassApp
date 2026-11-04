@@ -18,72 +18,7 @@
     $maxDivision = max(1, (int) collect($data['divisions'] ?? [])->max());
     $maxSubject = 100;
 @endphp
-<style>
-    .rc { display:flex; flex-direction:column; gap:20px; font-family:'DM Sans',system-ui,sans-serif; color:#1E293B; }
-    .rc a { color:#1D4ED8; } .rc a.ds-btn-primary { color:#fff; }
-    .rc h1 { margin:0; font:700 1.4rem 'Sora',system-ui,sans-serif; letter-spacing:-.02em; }
-    .rc-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:16px; }
-    .rc-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .rc-filters label { font-size:.8rem; color:#475569; }
-    .rc-filters .ds-input { min-height:44px; }
-    .rc-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
-    .rc-kpi { border:1px solid #D6E6FA; background:#F0F6FE; border-radius:14px; padding:16px; }
-    .rc-kpi b { display:block; font:700 1.3rem 'Sora',sans-serif; }
-    .rc-kpi span { font-size:.78rem; color:#475569; }
-    .rc-charts { display:flex; flex-wrap:wrap; gap:16px; }
-    .rc-card { flex:1 1 340px; border:1px solid #CDEBD7; background:#F0FAF3; border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:12px; min-width:0; }
-    .rc-card h2 { margin:0; font:600 1rem 'Sora',sans-serif; }
-    .rc-bar { display:grid; grid-template-columns:120px 1fr 44px; gap:10px; align-items:center; font-size:.85rem; }
-    .rc-bar i { display:block; height:12px; border-radius:999px; background:#fff; box-shadow:inset 0 0 0 1px #CDEBD7; overflow:hidden; }
-    .rc-bar i b { display:block; height:100%; background:#1E6FD9; }
-    .rc-div { display:flex; align-items:flex-end; gap:14px; height:130px; padding-top:8px; }
-    .rc-div > div { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; font-size:.78rem; }
-    .rc-div i { display:block; width:100%; border-radius:6px 6px 0 0; }
-    .rc-table { border:1px solid #E2E8F0; border-radius:14px; overflow-x:auto; }
-    .rc-table table { width:100%; border-collapse:collapse; font-size:.85rem; min-width:760px; }
-    .rc-table thead tr { border-bottom:2px solid #1E6FD9; }
-    .rc-table th { padding:10px 12px; font:600 .72rem 'Sora',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#475569; text-align:left; white-space:nowrap; }
-    .rc-table td, .rc-table tbody th { padding:8px 12px; font-variant-numeric:tabular-nums; }
-    .rc-table tbody tr { border-bottom:1px solid #E2E8F0; }
-    .rc-table tbody th { text-transform:none; letter-spacing:0; font:600 .85rem 'DM Sans',sans-serif; color:#1E293B; }
-    .rc-r { text-align:right !important; }
-    .rc-pill { padding:2px 10px; border-radius:6px; background:#F1F5F9; font-weight:700; }
-    .rc-empty { border:1px dashed #CBD5E1; border-radius:14px; padding:32px 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
-    .rc-empty h2 { margin:0; font:600 1rem 'Sora',sans-serif; }
-    .rc-empty p { margin:0; font-size:.86rem; color:#475569; line-height:1.5; }
-    .rc-alert { background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; color:#7F1D1D; }
-    .rc-progress { border:1px solid #D6E6FA; background:#F0F6FE; border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
-    .rc-progress i { display:block; height:8px; border-radius:999px; background:#E2E8F0; overflow:hidden; }
-    .rc-progress i b { display:block; width:40%; height:100%; background:#1E6FD9; }
-    .rc-phone, .rc-sheet-btn { display:none; }
-    .rc-dlg { border:1px solid #E2E8F0; border-radius:16px; padding:22px; width:min(480px,calc(100vw - 32px)); font-family:'DM Sans',system-ui,sans-serif; color:#1E293B; }
-    .rc-dlg::backdrop { background:rgba(15,23,42,.45); }
-    .rc-dlg form { display:flex; flex-direction:column; gap:14px; }
-    .rc-dlg label.f { display:flex; flex-direction:column; gap:6px; font-size:.85rem; font-weight:600; }
-    .rc-dlg .ds-input { min-height:48px; width:100%; }
-    .rc-seg { display:grid; gap:6px; }
-    .rc-seg label { min-height:48px; border-radius:10px; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; gap:6px; font-size:.82rem; cursor:pointer; padding:0 6px; text-align:center; }
-    .rc-seg label:has(input:checked) { border:2px solid #15803D; font-weight:600; }
-    .rc-seg input { accent-color:#15803D; }
-    .rc-grip { display:none; }
-    @media (max-width: 767px) {
-        .rc { gap:12px; }
-        .rc-head h1 { font-size:1.2rem; }
-        .rc-filters { display:none; }
-        .rc-sheet-btn { display:inline-flex; }
-        .rc-kpis { grid-template-columns:1fr 1fr; gap:8px; }
-        .rc-kpi { padding:12px; border-radius:14px; } .rc-kpi b { font-size:1.2rem; }
-        .rc-kpi.hide-phone, .rc-charts, .rc-table { display:none; }
-        .rc-phone { display:block; background:#fff; border:1px solid #E2E8F0; border-radius:14px; overflow:hidden; }
-        .rc-phone > div { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid #E2E8F0; }
-        .rc-phone > div:last-child { border-bottom:0; }
-        .rc-pos { width:34px; font:700 .9rem 'Sora',sans-serif; color:#475569; }
-        .rc-dl { width:44px; height:44px; border:1px solid #E2E8F0; border-radius:10px; background:#fff; color:#1E293B !important; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .rc-dlg { width:100vw; max-width:100vw; margin:auto 0 0; border-radius:20px 20px 0 0; border-bottom:0; max-height:92vh; padding:10px 16px 20px; }
-        .rc-grip { display:block; width:40px; height:4px; border-radius:999px; background:#CBD5E1; margin:0 auto; }
-        .rc .ds-btn-primary.rc-all { width:100%; min-height:48px; }
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/report-cards-screen.css') }}?v={{ filemtime(public_path('css/report-cards-screen.css')) }}">
 
 <div class="rc" data-testid="report-cards-screen" @if($pending) data-pending="1" @endif>
     <div class="rc-head">
@@ -251,16 +186,22 @@
     @endif
 </div>
 
+@endsection
+
+@push('scripts')
 <script>
+// The admin layout re-renders its DOM after load, so handlers are delegated from the document.
 (function () {
-    var dlg = document.getElementById('rc-filter-sheet');
-    var open = document.querySelector('[data-open-filters]');
-    if (dlg && open) {
-        open.addEventListener('click', function () { if (typeof dlg.showModal === 'function') { dlg.showModal(); } });
-        dlg.addEventListener('click', function (e) { if (e.target === dlg) { dlg.close(); } });
-    }
-    var root = document.querySelector('[data-testid="report-cards-screen"]');
-    if (root && root.hasAttribute('data-pending')) { setTimeout(function () { window.location.reload(); }, 5000); }
+    document.addEventListener('click', function (e) {
+        var open = e.target.closest('[data-open-filters]');
+        var dlg = document.getElementById('rc-filter-sheet');
+        if (open && dlg && typeof dlg.showModal === 'function') { dlg.showModal(); return; }
+        if (dlg && e.target === dlg) { dlg.close(); }
+    });
+    window.addEventListener('load', function () {
+        var root = document.querySelector('[data-testid="report-cards-screen"]');
+        if (root && root.hasAttribute('data-pending')) { setTimeout(function () { window.location.reload(); }, 5000); }
+    });
 })();
 </script>
-@endsection
+@endpush
