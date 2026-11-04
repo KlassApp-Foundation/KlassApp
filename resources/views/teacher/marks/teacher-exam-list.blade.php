@@ -7,7 +7,10 @@
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start">
         <div>
             <h1 class="ka-h1">Your exams to mark</h1>
-            <p class="ka-sub">The exams assigned to you, by class and subject.</p>
+            @php
+                $firstTerm = $exams->first()?->academicTerm;
+            @endphp
+            <p class="ka-sub">@if($firstTerm){{ $firstTerm->name }} · @endif The exams assigned to you, by class and subject.</p>
         </div>
         @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline', 'style' => 'white-space:nowrap;min-height:44px'])
     </div>
