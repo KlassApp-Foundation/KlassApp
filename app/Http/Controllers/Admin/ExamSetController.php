@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamSet;
 use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;
-use App\Models\Section;
 use App\Models\User;
 use App\Services\Academics\ExamSetService;
 use App\Services\ExamAuthorization;
@@ -105,8 +107,144 @@ class ExamSetController extends Controller
         $message .= ' for '.$term->name.'.';
 
         return redirect()
-            ->route($isTeacher ? 'teacher.exam.marks' : 'admin.marks')
+            ->route($isTeacher ? 'teacher.exam-sets.show' : 'admin.exam-sets.show', ['batch' => $result['set_id']])
             ->with('successmessage', $message);
+    }
+
+    public function index()
+    {
+        return $this->render(null);
+    }
+
+    public function show(int $batch)
+    {
+        [$user, $school, , $isTeacher] = $this->context();
+
+        return $this->render($this->visibleSet($school, $user, $isTeacher, $batch));
+    }
+
+    public function destroyExam(int $batch, int $exam)
+    {
+        [$user, $school, , $isTeacher] = $this->context();
+        if ($isTeacher) {
+            abort(403);
+        }
+
+        $set = $this->visibleSet($school, $user, false, $batch);
+        $row = Exam::query()
+            ->where('school_id', $school->id)
+            ->where('exam_set_id', $set->id)
+            ->whereKey($exam)
+            ->firstOrFail();
+
+        $hasMarks = Marks::query()
+            ->where('exam_id', $row->id)
+            ->where('school_id', $school->id)
+            ->whereNotNull('marks')
+            ->exists();
+
+        if ($hasMarks) {
+            abort(422, 'This exam has marks and cannot be removed.');
+        }
+
+        $row->delete();
+
+        return redirect()
+            ->route('admin.exam-sets.show', ['batch' => $set->id])
+            ->with('successmessage', 'Exam removed.');
+    }
+
+    private function render(?ExamSet $set)
+    {
+        [$user, $school, $year, $isTeacher] = $this->context();
+        $sets = $this->setsFor($school, $user, $isTeacher, $year);
+
+        $groups = [];
+        $examCount = 0;
+        if ($set !== null) {
+            $exams = Exam::query()
+                ->with(['section', 'examType', 'subject', 'teacher'])
+                ->where('school_id', $school->id)
+                ->where('exam_set_id', $set->id)
+                ->orderBy('section_id')
+                ->orderBy('exam_type_id')
+                ->orderBy('subject_id')
+                ->get();
+            $examCount = $exams->count();
+            $marked = Marks::query()
+                ->where('school_id', $school->id)
+                ->whereIn('exam_id', $exams->pluck('id'))
+                ->whereNotNull('marks')
+                ->pluck('exam_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            foreach ($exams as $exam) {
+                $classId = (int) $exam->section_id;
+                $typeId = (int) $exam->exam_type_id;
+                $groups[$classId]['name'] = (string) ($exam->section->name ?? 'Class');
+                $groups[$classId]['count'] = ($groups[$classId]['count'] ?? 0) + 1;
+                $groups[$classId]['types'][$typeId]['name'] = (string) ($exam->examType->name ?? 'Exam');
+                $groups[$classId]['types'][$typeId]['count'] = ($groups[$classId]['types'][$typeId]['count'] ?? 0) + 1;
+                $groups[$classId]['types'][$typeId]['exams'][] = [
+                    'id' => (int) $exam->id,
+                    'subject' => (string) ($exam->subject->name ?? 'Subject'),
+                    'teacher' => (string) ($exam->teacher->name ?? 'Unassigned'),
+                    'has_marks' => in_array((int) $exam->id, $marked, true),
+                ];
+            }
+        }
+
+        $byTerm = $sets->groupBy(fn (ExamSet $row) => (string) ($row->term->name ?? 'Term'));
+
+        return view('admin.exams.exam-set-show', [
+            'set' => $set,
+            'groups' => $groups,
+            'examCount' => $examCount,
+            'byTerm' => $byTerm,
+            'canRemove' => ! $isTeacher,
+            'isTeacher' => $isTeacher,
+            'layout' => $isTeacher ? 'layouts.teacher.layout' : 'layouts.admin.layout',
+            'showRoute' => $isTeacher ? 'teacher.exam-sets.show' : 'admin.exam-sets.show',
+            'createRoute' => $isTeacher ? 'teacher.exam-sets.create' : 'admin.exam-sets.create',
+        ]);
+    }
+
+    private function visibleSet(School $school, User $user, bool $isTeacher, int $batch): ExamSet
+    {
+        $year = AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->where('status', 1)
+            ->first();
+        $visible = $this->setsFor($school, $user, $isTeacher, $year)->firstWhere('id', $batch);
+        if (! $visible) {
+            abort(404);
+        }
+
+        return $visible;
+    }
+
+    private function setsFor(School $school, User $user, bool $isTeacher, ?AcademicYear $year)
+    {
+        $query = ExamSet::query()
+            ->with('term')
+            ->withCount('exams')
+            ->where('school_id', $school->id)
+            ->orderByDesc('id');
+
+        if ($isTeacher) {
+            $sectionIds = $year
+                ? $this->authorization->sectionIdsForClassTeacher($user, (int) $school->id, (int) $year->id)
+                : [];
+            $query->where(function ($q) use ($user, $sectionIds) {
+                $q->where('created_by', $user->id);
+                if ($sectionIds !== []) {
+                    $q->orWhereHas('exams', fn ($exams) => $exams->where('school_id', $user->school_id)->whereIn('section_id', $sectionIds));
+                }
+            });
+        }
+
+        return $query->get();
     }
 
     /** @return array{0: User, 1: School, 2: ?AcademicYear, 3: bool} */

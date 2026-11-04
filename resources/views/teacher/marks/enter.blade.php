@@ -57,6 +57,21 @@
         </div>
     @endif
 
+    @if(($showStreamColumn ?? false) && count($entryStreams ?? []) > 0)
+        <form method="GET" action="{{ route('teacher.exam.marks.enter', $exam) }}" class="mb-4 flex flex-wrap items-end gap-3" data-testid="marks-entry-stream-filter">
+            <div>
+                <label for="entry-stream" class="block text-sm font-medium text-gray-700">Stream</label>
+                <select name="stream" id="entry-stream" class="tw-form-control">
+                    <option value="">All streams</option>
+                    @foreach($entryStreams as $stream)
+                        <option value="{{ $stream['id'] }}" @selected((int) ($selectedStreamId ?? 0) === (int) $stream['id'])>{{ $stream['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="ds-btn ds-btn-primary text-sm">Filter</button>
+        </form>
+    @endif
+
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
 
@@ -81,6 +96,9 @@
                     <thead>
                         <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
                             <th class="py-3 px-2">Student</th>
+                            @if($showStreamColumn ?? false)
+                                <th class="py-3 px-2">Stream</th>
+                            @endif
                             @foreach($domains as $domain)
                                 <th class="py-3 px-2">{{ $domain }}</th>
                             @endforeach
@@ -93,6 +111,9 @@
                                 <span>{{ $student->userprofile->firstname }}</span>
                                 <span>{{ $student->userprofile->lastname }}</span>
                             </td>
+                            @if($showStreamColumn ?? false)
+                                <td class="py-3 px-2" data-testid="mark-stream-{{ $student->id }}">{{ $student->stream_label }}</td>
+                            @endif
                             @foreach($domains as $domain)
                                 @php
                                     $existing = $existingAssessments->get($student->id)?->get($domain);
@@ -122,6 +143,9 @@
                     <thead>
                         <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
                             <th class="py-3">Student</th>
+                            @if($showStreamColumn ?? false)
+                                <th class="py-3">Stream</th>
+                            @endif
                             <th class="py-3">Marks</th>
                             <th class="py-3">Out Of</th>
                         </tr>
@@ -131,10 +155,13 @@
                         @foreach($allStudents as $student)
 
                         <tr>
-                            <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2">
+                            <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2" data-testid="mark-student-{{ $student->id }}">
                                 <span>{{ $student->userprofile->firstname }}</span>
                                 <span>{{ $student->userprofile->lastname }}</span>
                             </td>
+                            @if($showStreamColumn ?? false)
+                                <td class="py-3" data-testid="mark-stream-{{ $student->id }}">{{ $student->stream_label }}</td>
+                            @endif
 
                             <td>
                                 <input type="number"

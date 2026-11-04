@@ -8,6 +8,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\Academics\BaseClassExamRoster;
 use App\Services\GradingSystemService;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +20,10 @@ use Illuminate\Validation\ValidationException;
  */
 class ExamMarkWriter
 {
-    public function __construct(private GradingSystemService $grading) {}
+    public function __construct(
+        private GradingSystemService $grading,
+        private BaseClassExamRoster $roster,
+    ) {}
 
     public function save(User $actor, Exam $exam, int $studentId, mixed $mark, ?string $correctionReason = null): Marks
     {
@@ -36,6 +40,8 @@ class ExamMarkWriter
         if ($student === null) {
             abort(403, 'Submitted student is not authorized for this school.');
         }
+
+        $this->roster->assertStudentAllowed($actor, $exam, (int) $student->id);
 
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
