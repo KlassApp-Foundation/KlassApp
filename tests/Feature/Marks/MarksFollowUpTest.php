@@ -11,6 +11,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -114,6 +115,10 @@ class MarksFollowUpTest extends TestCase
     public function test_ab_is_entered_and_left_out_of_the_total(): void
     {
         $writer = app(ExamMarkWriter::class);
+        SchoolGradingSystem::create([
+            'school_id' => $this->school->id, 'standard_id' => $this->standard->id,
+            'grade' => 'A', 'points' => 1, 'min_score' => 0, 'max_score' => 100, 'remark' => 'Good',
+        ]);
         $writer->save($this->teacher, $this->exam, $this->amina->id, 80);
         $writer->save($this->teacher, $this->exam, $this->brian->id, 'AB');
 
@@ -130,9 +135,18 @@ class MarksFollowUpTest extends TestCase
         ));
         $rows = collect($sheet->students)->keyBy(fn ($student) => $student->studentId);
         $this->assertEquals(80.0, $rows[$this->amina->id]->total);
-        $this->assertNull($rows[$this->brian->id]->total);
-        $this->assertSame(ResultCell::ABSENT, $rows[$this->brian->id]->cell((int) $this->subject->id)->status);
+        $this->assertEquals(80.0, $rows[$this->amina->id]->average);
+        $this->assertSame('1', $rows[$this->amina->id]->division);
+        $this->assertSame(1, $rows[$this->amina->id]->classPosition);
         $this->assertSame(1, $rows[$this->amina->id]->classOutOf);
+        $this->assertNull($rows[$this->brian->id]->total);
+        $this->assertNull($rows[$this->brian->id]->average);
+        $this->assertNull($rows[$this->brian->id]->division);
+        $this->assertNull($rows[$this->brian->id]->classPosition);
+        $this->assertSame(ResultCell::ABSENT, $rows[$this->brian->id]->cell((int) $this->subject->id)->status);
+        $summary = collect($sheet->summary->subjects)->firstWhere('subjectId', (int) $this->subject->id);
+        $this->assertEquals(80.0, $summary['average']);
+        $this->assertSame(1, $summary['markedCount']);
 
         $html = $this->actingAs($this->teacher)
             ->get(route('teacher.exam.marks.enter', $this->exam))
@@ -143,6 +157,95 @@ class MarksFollowUpTest extends TestCase
 
         app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);
         $this->assertSame('submitted', ExamMarksSubmission::query()->where('exam_id', $this->exam->id)->value('status'));
+    }
+
+    public function test_the_report_card_prints_ab_and_does_not_add_it(): void
+    {
+        app(ExamMarkWriter::class)->save($this->teacher, $this->exam, $this->brian->id, 'AB');
+        $mark = Marks::query()->with('exam.academicTerm.academicYear')->where('student_id', $this->brian->id)->first();
+        $learner = User::with('school')->find($this->brian->id);
+        $learner->setRelation('marks', collect([$mark]));
+        $stdLink = StandardLink::query()->where('section_id', $this->section->id)->first();
+
+        $html = view('admin.marks.student-report', [
+            'learner' => $learner,
+            'class_name' => 'Primary Five',
+            'grade' => ['agg' => null],
+            'isNursery' => false,
+            'midExams' => collect(),
+            'eotExams' => collect([$this->exam->load('examType')]),
+            'subjects' => collect([$this->subject]),
+            'grading_system' => collect(),
+            'stdLink' => $stdLink,
+            'examinedSubjectCount' => 1,
+            'total' => null,
+            'myPos' => 0,
+            'totalLearners' => 1,
+            'nextTerm' => null,
+        ])->render();
+
+        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
+        $this->assertMatchesRegularExpression('/TOTAL<\/strong><\/td>\s*<td>[^<]*<\/td>\s*<td><strong>\s*<\/strong>/', $html);
+        $this->assertStringNotContainsString('>0<', $html);
+    }
+
+    public function test_a_null_mark_does_not_break_the_sheet_or_the_release_page(): void
+    {
+        Marks::create([
+            'student_id' => $this->amina->id,
+            'subject_id' => $this->subject->id,
+            'section_id' => $this->section->id,
+            'exam_id' => $this->exam->id,
+            'teacher_id' => $this->teacher->id,
+            'school_id' => $this->school->id,
+            'marks' => null,
+            'grade' => '',
+            'absent' => false,
+        ]);
+
+        $sheet = $this->actingAs($this->admin)->get(route('admin.marks.filter', [
+            'class' => $this->section->id,
+            'term' => $this->term->id,
+            'examType' => $this->exam->exam_type_id,
+        ]))->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="marks-phone-card"', $sheet);
+        $this->assertStringContainsString('Amina Follow', $sheet);
+        $this->assertStringContainsString('Total —', $sheet);
+
+        $release = $this->actingAs($this->admin)
+            ->get(route('admin.marks.releases.create', ['exam_id' => $this->exam->id]))
+            ->assertOk()
+            ->getContent();
+        $this->assertStringContainsString('data-testid="release-steps"', $release);
+        $this->assertStringContainsString('data-testid="release-audience"', $release);
+        $this->assertStringContainsString('Who will be told', $release);
+        $this->assertStringContainsString('No marks yet for this exam in the chosen class.', $release);
+    }
+
+    public function test_rolling_back_absent_marks_refuses_while_an_absence_exists(): void
+    {
+        app(ExamMarkWriter::class)->save($this->teacher, $this->exam, $this->brian->id, 'AB');
+        $migration = require database_path('migrations/2026_11_04_210000_add_absent_to_marks_table.php');
+
+        try {
+            $migration->down();
+            $this->fail('Rolling back must refuse while an absence is stored.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('marks.absent = true', $e->getMessage());
+            $this->assertStringContainsString('must not turn AB into 0', $e->getMessage());
+        }
+
+        $row = Marks::query()->where('student_id', $this->brian->id)->first();
+        $this->assertTrue($row->isAbsent());
+        $this->assertNull($row->marks);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('marks', 'absent'));
+
+        Marks::query()->where('absent', true)->delete();
+        $migration->down();
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('marks', 'absent'));
+
+        $migration->up();
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('marks', 'absent'));
     }
 
     public function test_a_mark_above_the_maximum_blocks_submit(): void

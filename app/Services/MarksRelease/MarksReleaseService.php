@@ -657,6 +657,11 @@ final class MarksReleaseService
         foreach ($names as $subjectId => $name) {
             $key = mb_strtolower($name);
             $cell = $row?->cell($subjectId);
+            if ($cell !== null && $cell->status === ResultCell::ABSENT) {
+                $cells[$key] = ['mark' => 'AB', 'grade' => '—'];
+
+                continue;
+            }
             if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null || $row === null) {
                 $cells[$key] = null;
 

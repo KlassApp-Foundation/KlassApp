@@ -7,8 +7,10 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * An absent student is stored as absent=1 with a null mark and grade AB.
- * The mark column has to be nullable for that. Reversible: absent rows are
- * given 0 before the column is made required again, then absent is dropped.
+ * The mark column has to be nullable for that.
+ *
+ * down() refuses while any absent row exists. Turning AB into 0 would
+ * change results. Clear those rows first, then roll back.
  */
 return new class extends Migration
 {
@@ -35,7 +37,11 @@ return new class extends Migration
             return;
         }
 
-        DB::table('marks')->where('absent', true)->whereNull('marks')->update(['marks' => 0]);
+        if (DB::table('marks')->where('absent', true)->exists()) {
+            throw new \RuntimeException(
+                'Cannot roll back absent marks while marks.absent = true rows exist. Remove or resolve those absences first. Rolling back must not turn AB into 0.'
+            );
+        }
 
         Schema::table('marks', function (Blueprint $table) {
             $table->decimal('marks', 5, 2)->nullable(false)->change();

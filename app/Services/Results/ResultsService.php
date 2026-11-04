@@ -670,6 +670,10 @@ final class ResultsService
             return new ResultCell($subjectId, null, $label, null, ResultCell::ABSENT);
         }
 
+        if ($choice['mark'] === null) {
+            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+        }
+
         $mark = $choice['mark'];
 
         return new ResultCell(
