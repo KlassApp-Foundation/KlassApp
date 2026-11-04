@@ -172,7 +172,7 @@ class SiteHelper
                 // standard's id.
                 ->select('standards_link.*')
                 ->orderBy('standards.order')
-                ->orderBy('standards_link.standard_id')
+                ->orderBy('standards_link.stream')
                 ->orderBy('standards_link.section_id')
                 ->get()
                 ->unique(function($item) {

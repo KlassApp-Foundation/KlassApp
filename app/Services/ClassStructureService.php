@@ -137,6 +137,7 @@ class ClassStructureService
             $rows[] = [
                 'section_id' => (int) $entry['base']->id,
                 'standard_link_id' => (int) $baseLink->id,
+                'level_order' => (int) ($baseLink->standard?->order ?? 999999),
                 'name' => trim((string) $entry['base']->name),
                 'class_teacher_id' => $baseLink->class_teacher_id ? (int) $baseLink->class_teacher_id : null,
                 'class_teacher_name' => $teacher?->name,
@@ -145,7 +146,14 @@ class ClassStructureService
             ];
         }
 
-        usort($rows, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+        usort($rows, function ($a, $b) {
+            $byLevel = ($a['level_order'] ?? 999999) <=> ($b['level_order'] ?? 999999);
+            if ($byLevel !== 0) {
+                return $byLevel;
+            }
+
+            return strcasecmp($a['name'], $b['name']);
+        });
 
         return array_values($rows);
     }

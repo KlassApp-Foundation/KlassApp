@@ -14,7 +14,7 @@
     $selectedStream = (string) ($old['stream'] ?? '');
 @endphp
 <div class="mr" data-testid="marks-release-create">
-    <h1>Release marks</h1>
+    <h1>Marks Release</h1>
     <p class="mr-sub">Choose the exam and who receives it. The sheet shows the marks that will be sent.</p>
 
     @if($exams->isEmpty())

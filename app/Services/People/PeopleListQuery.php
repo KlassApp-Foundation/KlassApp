@@ -10,6 +10,7 @@ use App\Models\TeacherInvite;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Support\ClassListOrder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -83,8 +84,8 @@ class PeopleListQuery
         return $this->envelope('students', 'Students', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
             'placeholder' => 'Search name or KLS number',
             'add_label' => 'Add student',
-            'add_url' => url('/admin/student/add'),
-            'import_url' => url('/admin/import'),
+            'add_url' => url('/admin/students/import'),
+            'import_url' => url('/admin/students/import'),
             'empty_copy' => 'Add students one by one, or import a spreadsheet with names and classes.',
             'columns' => ['KLS number', 'Class', 'Parent or guardian', 'Status'],
             'bulk' => [
@@ -266,7 +267,7 @@ class PeopleListQuery
             'placeholder' => 'Search name or phone',
             'add_label' => 'Add parent',
             'add_url' => url('/admin/parent/add'),
-            'import_url' => url('/admin/import'),
+            'import_url' => url('/admin/students/import'),
             'empty_copy' => 'Parents are added with their children, or you can add them here and link them.',
             'columns' => ['Children', 'Phone', 'WhatsApp', 'Last login'],
             'bulk' => [
@@ -375,14 +376,56 @@ class PeopleListQuery
         return url('/admin/student/export').'?'.http_build_query($params);
     }
 
+    /**
+     * The picker value is one standards_link id. A named stream is that
+     * stream only. A blank stream is the class itself: every stream row on
+     * that section, and name-encoded "{Class} {Label}" sections. Filtering
+     * by the level (standard_id) or by the base section alone dropped the
+     * students who sit on those streams.
+     */
     private function applyClassAndStream(Builder $query, StandardLink $link): void
     {
-        $query->where('standards_link.standard_id', $link->standard_id)
-            ->where('standards_link.section_id', $link->section_id);
-        $stream = trim((string) $link->stream);
-        if ($stream !== '') {
-            $query->where('standards_link.stream', $stream);
+        $query->whereIn('latest_sa.standardLink_id', $this->classFilterLinkIds($link));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function classFilterLinkIds(StandardLink $link): array
+    {
+        $ids = [(int) $link->id];
+        if (trim((string) $link->stream) !== '') {
+            return $ids;
         }
+
+        if ($link->section_id) {
+            $siblings = StandardLink::query()
+                ->where('school_id', $link->school_id)
+                ->where('academic_year_id', $link->academic_year_id)
+                ->where('section_id', $link->section_id)
+                ->pluck('id');
+            foreach ($siblings as $id) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        $sectionName = trim((string) ($link->section?->name ?? ''));
+        if ($sectionName !== '') {
+            $prefix = str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower($sectionName)).' %';
+            $childIds = StandardLink::query()
+                ->where('standards_link.school_id', $link->school_id)
+                ->where('standards_link.academic_year_id', $link->academic_year_id)
+                ->where('standards_link.section_id', '!=', $link->section_id)
+                ->join('sections', 'sections.id', '=', 'standards_link.section_id')
+                ->where('sections.school_id', $link->school_id)
+                ->whereRaw("LOWER(sections.name) LIKE ? ESCAPE '\\'", [$prefix])
+                ->pluck('standards_link.id');
+            foreach ($childIds as $id) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function studentQuery(int $schoolId): Builder
@@ -900,11 +943,16 @@ class PeopleListQuery
             return [];
         }
 
-        return StandardLink::query()
-            ->with(['section', 'standard'])
-            ->where('school_id', $schoolId)
-            ->where('academic_year_id', $yearId)
-            ->orderBy('id')
+        return ClassListOrder::orderLinks(
+            StandardLink::query()
+                ->with(['section', 'standard'])
+                ->where('standards_link.school_id', $schoolId)
+                ->where('standards_link.academic_year_id', $yearId)
+                ->where(function ($status): void {
+                    $status->where('standards_link.status', 1)
+                        ->orWhere('standards_link.status', '1');
+                })
+        )
             ->get()
             ->map(fn (StandardLink $link) => [
                 'id' => $link->id,

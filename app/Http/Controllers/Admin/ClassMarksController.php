@@ -10,6 +10,7 @@ use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Support\ClassListOrder;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,7 +26,9 @@ class ClassMarksController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
 
-        $sections = Section::query()->where('school_id', $schoolId)->orderBy('name')->get(['id', 'name'])
+        $sections = ClassListOrder::orderSections(
+            Section::query()->where('school_id', $schoolId)
+        )->get(['sections.id', 'sections.name'])
             ->filter(fn (Section $s) => LatestExamMarks::forSection($schoolId, (int) $s->id) !== null)
             ->values();
 
