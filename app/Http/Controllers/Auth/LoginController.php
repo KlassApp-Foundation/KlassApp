@@ -45,6 +45,13 @@ class LoginController extends Controller implements ShouldQueue
 
     public function showLoginForm()
     {
+        // Already signed in? Send the person to their own dashboard. The guest
+        // middleware normally does this, but it is configuration: if it is ever
+        // bypassed the login page must still never fall through to a 404.
+        if ($user = auth()->user()) {
+            return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser($user));
+        }
+
         return response()
             ->view('auth.preview.login')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
