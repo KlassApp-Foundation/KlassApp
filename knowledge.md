@@ -644,6 +644,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Current Status: November 4, 2026 — **Password reset code send OPEN [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267)**
+
+- A blank `MAIL_FROM_ADDRESS` left the reset email with no From header. The log mailer threw `An email must have a "From" or a "Sender" header.` and `/password/reset` showed the generic sentence. A valid from address on that same mailer already sent, including a `.local` parent address and a teacher with no school.
+- The code is saved on its own, then sent from `connect@klassapp.xyz` when the configured address is blank or not an email. Failures log the exception class and message, with the code redacted. An imported teacher, parent, and student can request a code, set a password, and sign in. A null password still gets the setup link from #1262.
+- **Tests:** PHP 8.4.27. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3247 tests, 0 failures, 0 errors, 9 skipped.
+- **Status:** DRAFT [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267), branch `cursor/password-reset-code-send-a7c1`, base `cursor/t091-teacher-email-invite-6d9a` (#1262). Not merged. No deploy. No production data.
+
 ## Current Status: November 3, 2026 — **Marks Phase 1 owner decisions OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
 
 - Uganda schools are offered the Uganda class levels. A school in another country types its own level name. Toshi matches a class name with case, spaces, and dots ignored (`p7`, `P7`, `P 7`, `P.7`), and does not use a partial match. An invite for an email that belongs to another school gets the same response as an unknown email. A signed-out class-teacher change still looks up the teacher in the target school and does not save a teacher from another school.
@@ -3103,6 +3110,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-11-04: Password reset code when the from address is blank (#1267)
+
+- **Work done**: `/password/reset` failed on the log mailer when `MAIL_FROM_ADDRESS` was blank. The code is now saved separately and sent with a default sender. The log records the exception class and message and redacts the code. Imported teacher, parent, and student accounts can set a password and sign in. Null-password accounts still get the setup link.
+- **Files touched**: `config/mail.php`, `app/Support/MailSender.php`, `app/Services/Auth/PasswordResetCodeIssuer.php`, `app/Services/Auth/PasswordResetDeliveryException.php`, `app/Mail/ResetPasswordCodeMail.php`, `app/Http/Controllers/Auth/ForgotPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Providers/AppServiceProvider.php`, `tests/Feature/Auth/PasswordResetCodeDeliveryTest.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`, `knowledge.md`.
+- **Decision**: The mail is sent in the request. The code expires in five minutes, so it is not queued. Lookup stays on email. `mobile_no` is not unique.
+- **Status**: DRAFT [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267), branch `cursor/password-reset-code-send-a7c1`, base #1262. Not merged. Production untouched. No force-push.
+- **Evidence**: Before the fix, blank from + log mailer logged `An email must have a "From" or a "Sender" header.` After the fix, `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3247 tests, 0 failures, 0 errors, 9 skipped.
+- **Edge cases**: A send failure keeps the stored code. A save failure sends nothing. An undefined mailer is shown as a configuration error. A teacher with `school_id` null can still be emailed a code. Login after reset still requires an active school.
 
 ### 2026-11-03: Invite accept message and country-test rename (#1239)
 
