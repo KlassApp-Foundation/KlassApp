@@ -1483,11 +1483,12 @@ class OnboardingEngine
      * resolves to a Standard (grading tier) and optionally a Section (class).
      * If 'term' is provided, it resolves to an AcademicTerm.
      *
-     * Whole-school fees (no 'class'): when no class is specified, the fee is
-     * genuinely school-wide — one row per Standard with section_id = NULL.
-     * StudentFeeResolver includes only the row for the student's own standard,
-     * plus that student's section and stream. A fee scoped to one arbitrary
-     * Standard would be invisible to students in other grading tiers.
+     * Whole-school fees (no 'class' and no level): one row with
+     * applies_school_wide, standard_id null and section_id null. StudentFeeResolver
+     * includes that row for every class. Older per-tier copies are left in place
+     * and are not written again when they already cover every tier. Duration
+     * defaults to termly. is_yearly stores yearly. one_off, termly and yearly
+     * may be passed as duration.
      *
      * Idempotent via firstOrCreate on
      * (school_id, standard_id, section_id, academic_term_id, name).
@@ -1527,16 +1528,17 @@ class OnboardingEngine
             $className = trim((string) ($fee['class'] ?? ''));
             $level = strtolower(trim((string) ($fee['level'] ?? '')));
             $academicTermId = $this->resolveFeeAcademicTermId($school, $fee);
+            $duration = $this->feeDuration($fee);
 
             if ($className !== '') {
                 // Class-specific fee: resolve to one Standard + Section
-                $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId);
+                $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId, $duration);
             } elseif ($level !== '' && $level !== 'all') {
                 // Level-scoped fee (nursery / primary / o-level / a-level / secondary)
-                $this->saveFeeForLevels($school, $name, $amount, $level, $academicTermId);
+                $this->saveFeeForLevels($school, $name, $amount, $level, $academicTermId, $duration);
             } else {
-                // Whole-school fee: one row per Standard, section_id = NULL
-                $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId);
+                // Whole-school fee: one row covering every class.
+                $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId, $duration);
             }
         }
     }
@@ -1544,7 +1546,7 @@ class OnboardingEngine
     /**
      * Save a class-specific fee scoped to the Standard and Section for that class.
      */
-    private function saveFeeForClass(School $school, string $name, float $amount, string $className, ?int $academicTermId): void
+    private function saveFeeForClass(School $school, string $name, float $amount, string $className, ?int $academicTermId, string $duration): void
     {
         $standardId = null;
         $sectionId = null;
@@ -1582,7 +1584,7 @@ class OnboardingEngine
             ]);
         }
 
-        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount);
+        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount, $duration);
     }
 
     /**
@@ -1596,7 +1598,8 @@ class OnboardingEngine
         string $name,
         float $amount,
         string $level,
-        ?int $academicTermId
+        ?int $academicTermId,
+        string $duration
     ): void {
         $tiers = match ($level) {
             'o-level', 'o_level', 'olevel' => ['o-level'],
@@ -1617,7 +1620,7 @@ class OnboardingEngine
             }
 
             $found = true;
-            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount, $duration);
         }
 
         if (! $found) {
@@ -1628,14 +1631,14 @@ class OnboardingEngine
     }
 
     /**
-     * Save a whole-school fee as one row per Standard (section_id = NULL).
+     * Save a whole-school fee as one row covering every class.
      *
-     * WhatsApp and some fee queries filter by standard_id, so a single null-standard
-     * row would be invisible to students in other tiers. The admin list therefore
-     * shows one row per grading tier for "All Levels" fees — that is intentional,
-     * not accidental duplication. Display uses tierDisplayLabel() / labeledName().
+     * StudentFeeResolver includes applies_school_wide rows for every student.
+     * When older per-tier copies already cover every standard, this does not
+     * add another row. Those copies stay in the database and the fee list
+     * groups them.
      */
-    private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId): void
+    private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId, string $duration): void
     {
         $standards = Standard::where('school_id', $school->id)->get();
 
@@ -1645,9 +1648,61 @@ class OnboardingEngine
             ]);
         }
 
-        foreach ($standards as $standard) {
-            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
+        $existing = FeesCategories::query()
+            ->where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', true)
+            ->whereNull('section_id');
+        $academicTermId === null
+            ? $existing->whereNull('academic_term_id')
+            : $existing->where('academic_term_id', $academicTermId);
+        if ($existing->exists()) {
+            return;
         }
+
+        $legacy = FeesCategories::query()
+            ->where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', false)
+            ->whereNull('section_id')
+            ->whereNotNull('standard_id');
+        $academicTermId === null
+            ? $legacy->whereNull('academic_term_id')
+            : $legacy->where('academic_term_id', $academicTermId);
+        $covered = $legacy->pluck('standard_id')->unique();
+        if ($covered->count() >= $standards->count()) {
+            return;
+        }
+
+        FeesCategories::create([
+            'school_id' => $school->id,
+            'standard_id' => null,
+            'section_id' => null,
+            'academic_term_id' => $academicTermId,
+            'name' => $name,
+            'amount' => $amount,
+            'duration' => $duration,
+            'applies_school_wide' => true,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeDuration(array $fee): string
+    {
+        $duration = strtolower(trim((string) ($fee['duration'] ?? '')));
+        if (in_array($duration, ['one_off', 'termly', 'yearly'], true)) {
+            return $duration;
+        }
+
+        if (! empty($fee['is_yearly'])) {
+            // Stored with no term. The resolver counts it once, in the first
+            // term of the year and in the year total, not in every term.
+            return 'yearly';
+        }
+
+        return 'termly';
     }
 
     /**
@@ -1802,7 +1857,8 @@ class OnboardingEngine
         ?int $sectionId,
         ?int $academicTermId,
         string $name,
-        float $amount
+        float $amount,
+        string $duration = 'termly'
     ): void {
         FeesCategories::firstOrCreate(
             [
@@ -1814,6 +1870,8 @@ class OnboardingEngine
             ],
             [
                 'amount' => $amount,
+                'duration' => $duration,
+                'applies_school_wide' => false,
             ],
         );
     }

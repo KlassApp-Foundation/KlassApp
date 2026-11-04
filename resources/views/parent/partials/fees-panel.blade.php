@@ -2,21 +2,28 @@
 @props(['fees'])
 
 <div class="px-4 md:px-5 py-4" data-testid="parent-fees-panel-body">
-    @if ($fees && !empty($fees['categories']))
-        <ul class="space-y-3">
-            @foreach ($fees['categories'] as $category)
-                <li class="flex items-start justify-between gap-3 text-sm">
-                    <span style="color: var(--d-text);">{{ $category['name'] }}</span>
-                    <span class="font-semibold whitespace-nowrap" style="color: var(--d-text);">
-                        UGX {{ number_format($category['amount'], 0) }}
-                    </span>
-                </li>
-            @endforeach
-        </ul>
-        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm font-semibold">
-            <span>Total outstanding</span>
-            <span data-testid="parent-fees-total">UGX {{ number_format($fees['total_balance'] ?? 0, 0) }}</span>
-        </div>
+    @if ($fees && (!empty($fees['categories']) || (float) ($fees['year_total'] ?? 0) > 0))
+        @if (!empty($fees['categories']))
+            <ul class="space-y-3">
+                @foreach ($fees['categories'] as $category)
+                    <li class="flex items-start justify-between gap-3 text-sm">
+                        <span style="color: var(--d-text);">{{ $category['name'] }}</span>
+                        <span class="font-semibold whitespace-nowrap" style="color: var(--d-text);">
+                            UGX {{ number_format($category['amount'], 0) }}
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm font-semibold">
+                <span>Total outstanding</span>
+                <span data-testid="parent-fees-total">UGX {{ number_format($fees['total_balance'] ?? 0, 0) }}</span>
+            </div>
+        @else
+            <p class="text-sm" style="color: var(--d-text);">Nothing is due this term.</p>
+        @endif
+        <p class="text-sm mt-3 font-semibold" style="color: var(--d-text);" data-testid="parent-fees-year-total">
+            Year total: UGX {{ number_format($fees['year_total'] ?? 0, 0) }}
+        </p>
         <p class="text-xs mt-3" style="color: var(--d-muted);">
             Paid to date: UGX {{ number_format($fees['total_paid'] ?? 0, 0) }}. Contact the school office for payment status.
         </p>

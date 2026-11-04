@@ -41,14 +41,17 @@
         <form method="POST" action="{{ route('admin.fee-payments.store') }}" id="fees-inline-record-form">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4">
-                <x-form-group
-                    label="Student"
-                    name="user_id"
-                    type="select"
-                    required
-                    :options="$students->mapWithKeys(fn ($s) => [$s->id => ($s->displayName ?: $s->name)])->prepend('Select student...', '')->toArray()"
-                    :error="$errors->first('user_id')"
-                />
+                <div class="ds-form-group">
+                    <label class="ds-form-label ds-form-label-required" for="fee-student-search">Student</label>
+                    <input type="search" id="fee-student-search" class="ds-form-input" data-testid="fee-student-search" placeholder="Name, admission number, or class" autocomplete="off" value="{{ old('student_label') }}">
+                    <input type="hidden" name="user_id" id="fee-student-id" value="{{ old('user_id') }}">
+                    <ul id="fee-student-results" data-testid="fee-student-results" hidden style="margin:6px 0 0; padding:0; list-style:none; border:1px solid #CBD5E1; background:#fff; color:#0F172A;"></ul>
+                    <p id="fee-student-picked" data-testid="fee-student-picked" class="ds-form-help"></p>
+                    @if($errors->first('user_id'))
+                        <p class="ds-form-error">{{ $errors->first('user_id') }}</p>
+                    @endif
+                    <p class="ds-form-help">Search by name, admission number, or class. The payment is recorded against the student's total unless you allocate it.</p>
+                </div>
                 <x-form-group
                     label="Amount (UGX)"
                     name="amount"
@@ -67,14 +70,14 @@
                 />
             </div>
             <x-form-group
-                label="Fee Category"
+                label="Allocate to a fee"
                 name="fee_category_id"
                 type="select"
-                required
-                :options="['' => 'Select fee category...'] + $feeCategories->mapWithKeys(function ($fee) {
+                :options="['' => 'Against the student\'s total'] + $feeCategories->mapWithKeys(function ($fee) {
                     return [$fee->id => $fee->labeledName().' — '.number_format((float) $fee->amount, 0).' UGX'];
                 })->toArray()"
                 :error="$errors->first('fee_category_id')"
+                help="Leave this on the student's total. Choose a fee only when the payment belongs to that fee."
             />
             <div class="flex flex-wrap gap-2 mt-1">
                 <button type="submit" class="ds-btn ds-btn-primary text-sm" id="fees-save-payment">Save payment</button>
@@ -235,6 +238,55 @@
         saving.innerHTML = '<span class="ds-save-indicator__dot" aria-hidden="true"></span>Saving…';
         btn.insertAdjacentElement('beforebegin', saving);
     });
+
+    var search = document.getElementById('fee-student-search');
+    var results = document.getElementById('fee-student-results');
+    var picked = document.getElementById('fee-student-picked');
+    var studentId = document.getElementById('fee-student-id');
+    var searchUrl = @json(route('admin.fee-payments.students'));
+    var searchTimer = null;
+    if (search && results && studentId) {
+        search.addEventListener('input', function () {
+            studentId.value = '';
+            if (picked) picked.textContent = '';
+            window.clearTimeout(searchTimer);
+            var q = search.value.trim();
+            if (q.length < 1) {
+                results.hidden = true;
+                results.innerHTML = '';
+                return;
+            }
+            searchTimer = window.setTimeout(function () {
+                fetch(searchUrl + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.json(); })
+                    .then(function (payload) {
+                        results.innerHTML = '';
+                        var students = payload.students || [];
+                        students.forEach(function (student) {
+                            var item = document.createElement('li');
+                            var button = document.createElement('button');
+                            button.type = 'button';
+                            button.className = 'ds-btn ds-btn-ghost text-sm';
+                            button.setAttribute('data-testid', 'fee-student-result');
+                            button.setAttribute('data-id', String(student.id));
+                            var label = student.name;
+                            if (student.admission_number) label += ' · ' + student.admission_number;
+                            if (student.class) label += ' · ' + student.class;
+                            button.textContent = label;
+                            button.addEventListener('click', function () {
+                                studentId.value = String(student.id);
+                                search.value = student.name;
+                                if (picked) picked.textContent = label;
+                                results.hidden = true;
+                            });
+                            item.appendChild(button);
+                            results.appendChild(item);
+                        });
+                        results.hidden = students.length === 0;
+                    });
+            }, 200);
+        });
+    }
 
     var indicator = document.getElementById('fees-save-indicator');
     if (indicator) {
