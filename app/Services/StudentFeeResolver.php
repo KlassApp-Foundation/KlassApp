@@ -13,11 +13,14 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * Fees that apply to one student.
  *
- * A whole-school fee is stored once per level (one row per standard, section_id
- * null). A student is charged that level-wide row for their own standard, the
- * fees on their own section, and — when that section is a stream such as
- * "Primary One A" — the base class section fee as well. Fees for other
- * sections and other streams at the same level are not included.
+ * A whole-school fee is one row with applies_school_wide, charged to every
+ * class. Older whole-school fees are still one row per level (section_id
+ * null); a student is charged that level-wide row for their own standard.
+ * A school-wide row of the same name replaces those level copies so the
+ * student is not charged twice. The student is also charged the fees on
+ * their own section and — when that section is a stream such as
+ * "Primary One A" — the base class section fee. Fees for other sections
+ * and other streams at the same level are not included.
  *
  * The same fee name may exist once per term. A total for one term includes
  * that term's rows and rows with no term (academic_term_id null). It does not
@@ -111,15 +114,9 @@ class StudentFeeResolver
 
         $sectionIds = $this->sectionIds($schoolId, $link->section_id ? (int) $link->section_id : null, $link->section);
 
-        return FeesCategories::query()
+        $rows = FeesCategories::query()
+            ->with('classes')
             ->where('school_id', $schoolId)
-            ->where('standard_id', $link->standard_id)
-            ->where(function ($query) use ($sectionIds) {
-                $query->whereNull('section_id');
-                if ($sectionIds !== []) {
-                    $query->orWhereIn('section_id', $sectionIds);
-                }
-            })
             ->where(function ($query) use ($academicTermId) {
                 if ($academicTermId) {
                     $query->where('academic_term_id', $academicTermId)
@@ -128,8 +125,46 @@ class StudentFeeResolver
                     $query->whereNull('academic_term_id');
                 }
             })
+            ->where(function ($query) use ($link, $sectionIds, $schoolId) {
+                $query->where('applies_school_wide', true)
+                    ->orWhere(function ($level) use ($link, $sectionIds) {
+                        $level->where('applies_school_wide', false)
+                            ->where('standard_id', $link->standard_id)
+                            ->where(function ($sections) use ($sectionIds) {
+                                $sections->whereNull('section_id');
+                                if ($sectionIds !== []) {
+                                    $sections->orWhereIn('section_id', $sectionIds);
+                                }
+                            });
+                    });
+                if ($sectionIds !== []) {
+                    $query->orWhereHas('classes', function ($classes) use ($sectionIds, $schoolId) {
+                        $classes->where('sections.school_id', $schoolId)
+                            ->whereIn('sections.id', $sectionIds);
+                    });
+                }
+            })
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values();
+
+        $wideNames = $rows
+            ->filter(fn (FeesCategories $fee) => (bool) $fee->applies_school_wide)
+            ->map(fn (FeesCategories $fee) => mb_strtolower((string) $fee->name))
+            ->unique()
+            ->all();
+
+        if ($wideNames !== []) {
+            $rows = $rows->reject(function (FeesCategories $fee) use ($wideNames) {
+                return ! $fee->applies_school_wide
+                    && $fee->section_id === null
+                    && $fee->classes->isEmpty()
+                    && in_array(mb_strtolower((string) $fee->name), $wideNames, true);
+            })->values();
+        }
+
+        return new Collection($rows->all());
     }
 
     /**

@@ -4091,7 +4091,11 @@ class ManualOnboardingWizard extends Component
             if ($scope === 'class') {
                 $row['class'] = trim((string) ($draft['class'] ?? ''));
             }
-            if (empty($draft['is_yearly'])) {
+            if (! empty($draft['is_yearly'])) {
+                $row['is_yearly'] = true;
+                $row['duration'] = 'yearly';
+            } else {
+                $row['duration'] = 'termly';
                 $term = trim((string) ($draft['term'] ?? ''));
                 if ($term !== '') {
                     $row['term'] = $term;

@@ -91,7 +91,7 @@ class FeePaymentRecordingTest extends TestCase
         ]);
     }
 
-    public function test_store_requires_fee_category_and_sets_recorded_by(): void
+    public function test_store_records_a_general_payment_and_can_still_allocate_a_category(): void
     {
         $this->actingAs($this->admin)
             ->post(route('admin.fee-payments.store'), [
@@ -99,21 +99,25 @@ class FeePaymentRecordingTest extends TestCase
                 'amount' => 10000,
                 'payment_method' => 'cash',
             ])
-            ->assertSessionHasErrors('fee_category_id');
+            ->assertRedirect(route('admin.fee-payments'));
+
+        $general = FeePayment::where('user_id', $this->student->id)->first();
+        $this->assertNotNull($general);
+        $this->assertNull($general->fee_category_id);
+        $this->assertSame($this->admin->id, (int) $general->recorded_by);
 
         $this->actingAs($this->admin)
             ->post(route('admin.fee-payments.store'), [
                 'user_id' => $this->student->id,
-                'amount' => 10000,
+                'amount' => 5000,
                 'fee_category_id' => $this->tuitionPrimary->id,
                 'payment_method' => 'cash',
             ])
             ->assertRedirect(route('admin.fee-payments'));
 
-        $payment = FeePayment::where('user_id', $this->student->id)->first();
-        $this->assertNotNull($payment);
-        $this->assertSame($this->tuitionPrimary->id, (int) $payment->fee_category_id);
-        $this->assertSame($this->admin->id, (int) $payment->recorded_by);
+        $allocated = FeePayment::where('user_id', $this->student->id)->where('amount', 5000)->first();
+        $this->assertSame($this->tuitionPrimary->id, (int) $allocated->fee_category_id);
+        $this->assertSame($this->admin->id, (int) $allocated->recorded_by);
     }
 
     public function test_payments_index_shows_kit_kpis_and_student_ledger(): void

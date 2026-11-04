@@ -4,9 +4,11 @@
 <div class="py-6 px-4">
     @php
         $fee = $fee ?? null;
-        $levelOptions = ['______' => 'Select Level'] + ($standards ?? collect())->pluck('name', 'id')->toArray();
-        $sectionOptions = ['' => 'All'] + ($sections ?? collect())->pluck('name', 'id')->toArray();
-        $termOptions = ['' => 'All'] + ($terms ?? collect())->pluck('name', 'id')->toArray();
+        $appliesTo = old('applies_to', $appliesTo ?? 'whole_school');
+        $selectedSections = array_map('intval', (array) old('section_ids', $selectedSections ?? []));
+        $durationOptions = \App\Models\FeesCategories::durations();
+        $typeOptions = \App\Models\FeesCategories::types();
+        $termOptions = ['' => 'Every term'] + ($terms ?? collect())->pluck('name', 'id')->toArray();
     @endphp
 
     <div class="ds-page-head mb-4">
@@ -34,39 +36,11 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <x-form-group
-                    label="Level"
-                    name="standard_id"
-                    type="select"
-                    required
-                    :options="$levelOptions"
-                    :value="old('standard_id', $fee?->standard_id ?? '______')"
-                    :error="$errors?->first('standard_id') ?: null"
-                />
-
-                <x-form-group
-                    label="Class"
-                    name="section_id"
-                    type="select"
-                    :options="$sectionOptions"
-                    :value="old('section_id', $fee?->section_id)"
-                    :error="$errors?->first('section_id') ?: null"
-                />
-
-                <x-form-group
-                    label="Academic Term (Optional)"
-                    name="academic_term_id"
-                    type="select"
-                    :options="$termOptions"
-                    :value="old('academic_term_id', $fee?->academic_term_id)"
-                    :error="$errors?->first('academic_term_id') ?: null"
-                />
-
-                <x-form-group
-                    label="Fee Name"
+                    label="Fee name"
                     name="name"
                     type="text"
                     required
-                    placeholder="Academics"
+                    placeholder="Tuition"
                     :value="old('name', $fee?->name)"
                     :error="$errors?->first('name') ?: null"
                 />
@@ -78,9 +52,62 @@
                     required
                     :value="old('amount', $fee?->amount)"
                     :error="$errors?->first('amount') ?: null"
+                />
+
+                <x-form-group
+                    label="Type"
+                    name="fee_type"
+                    type="select"
+                    :options="$typeOptions"
+                    :value="old('fee_type', $fee?->fee_type ?? 'tuition')"
+                    :error="$errors?->first('fee_type') ?: null"
+                />
+
+                <x-form-group
+                    label="Duration"
+                    name="duration"
+                    type="select"
+                    :options="$durationOptions"
+                    :value="old('duration', $fee?->duration ?? 'termly')"
+                    :error="$errors?->first('duration') ?: null"
+                />
+
+                <x-form-group
+                    label="Limit to one term"
+                    name="academic_term_id"
+                    type="select"
+                    :options="$termOptions"
+                    :value="old('academic_term_id', $fee?->academic_term_id)"
+                    :error="$errors?->first('academic_term_id') ?: null"
+                    help="Leave this on every term unless the fee belongs to one term only."
                     class="md:col-span-2"
                 />
             </div>
+
+            <fieldset class="ds-form-group mt-4">
+                <legend class="ds-form-label">Classes</legend>
+                <label class="flex items-center gap-2 mb-2">
+                    <input type="radio" name="applies_to" value="whole_school" @checked($appliesTo !== 'classes')>
+                    <span>All classes</span>
+                </label>
+                <label class="flex items-center gap-2 mb-2">
+                    <input type="radio" name="applies_to" value="classes" @checked($appliesTo === 'classes')>
+                    <span>Selected classes</span>
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    @forelse(($sections ?? collect()) as $section)
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="section_ids[]" value="{{ $section->id }}" @checked(in_array((int) $section->id, $selectedSections, true))>
+                            <span>{{ $section->name }}</span>
+                        </label>
+                    @empty
+                        <p class="ds-form-help">No classes yet. This fee will cover the whole school.</p>
+                    @endforelse
+                </div>
+                @if($errors?->first('section_ids'))
+                    <p class="ds-form-error">{{ $errors->first('section_ids') }}</p>
+                @endif
+            </fieldset>
 
             <div class="mt-6 flex items-center justify-end">
                 <x-button type="submit" variant="primary">

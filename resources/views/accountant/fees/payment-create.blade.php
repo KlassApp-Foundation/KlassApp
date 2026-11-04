@@ -42,10 +42,10 @@
         </div>
 
         <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Fee Category *</label>
-            <select name="fee_category_id" required
+            <label class="block text-sm font-medium mb-1">Allocate to a fee</label>
+            <select name="fee_category_id"
                     class="w-full border border-gray-400 rounded px-3 py-2">
-                <option value="">Select fee category...</option>
+                <option value="">Against the student's total</option>
                 @foreach($feeCategories as $fee)
                     <option value="{{ $fee->id }}">{{ $fee->labeledName() }} ({{ number_format($fee->amount, 0) }} UGX)</option>
                 @endforeach
