@@ -12,9 +12,8 @@ class PortalProfileLinksTest extends TestCase
 {
     #[Test]
     #[DataProvider('roleLinkMatrix')]
-    public function maps_usergroup_to_existing_portal_routes(
+    public function every_role_shares_the_profile_and_password_pages_and_keeps_its_own_extras(
         int $usergroupId,
-        ?string $changePassword,
         ?string $changeAvatar,
         ?string $editProfile,
         ?string $settings,
@@ -22,7 +21,8 @@ class PortalProfileLinksTest extends TestCase
         $user = new User(['usergroup_id' => $usergroupId]);
 
         $this->assertSame([
-            'change_password' => $changePassword,
+            'profile' => '/account/profile',
+            'change_password' => '/account/password',
             'change_avatar' => $changeAvatar,
             'edit_profile' => $editProfile,
             'settings' => $settings,
@@ -32,17 +32,17 @@ class PortalProfileLinksTest extends TestCase
     public static function roleLinkMatrix(): array
     {
         return [
-            'superadmin' => [1, '/superadmin/changepassword', '/superadmin/changeavatar', null, '/superadmin/settings'],
-            'school_admin' => [3, '/admin/changepassword', '/admin/changeavatar', '/admin/editprofile', '/admin/settings'],
-            'subadmin' => [4, null, null, null, null],
-            'teacher' => [5, '/teacher/changepassword', '/teacher/changeavatar', null, null],
-            'student' => [6, '/student/changepassword', null, null, null],
-            'parent' => [7, null, null, null, null],
-            'librarian' => [8, null, null, null, null],
-            'alumni' => [9, null, null, null, null],
-            'receptionist' => [10, '/receptionist/changepassword', '/receptionist/changeavatar', null, null],
-            'accountant' => [11, '/accountant/changepassword', '/accountant/changeavatar', null, null],
-            'stock' => [12, null, null, null, null],
+            'superadmin' => [1, '/superadmin/changeavatar', null, '/superadmin/settings'],
+            'school_admin' => [3, '/admin/changeavatar', '/admin/editprofile', '/admin/settings'],
+            'subadmin' => [4, null, null, null],
+            'teacher' => [5, '/teacher/changeavatar', null, null],
+            'student' => [6, null, null, null],
+            'parent' => [7, null, null, null],
+            'librarian' => [8, null, null, null],
+            'alumni' => [9, null, null, null],
+            'receptionist' => [10, '/receptionist/changeavatar', null, null],
+            'accountant' => [11, '/accountant/changeavatar', null, null],
+            'stock' => [12, null, null, null],
         ];
     }
 }

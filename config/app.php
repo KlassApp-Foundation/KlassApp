@@ -194,6 +194,7 @@ return [
         App\Providers\EventServiceProvider::class,
        // App\Providers\NovaServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\AccountRoutesServiceProvider::class,
 
         //   MaddHatter\LaravelFullcalendar\ServiceProvider::class,//Have to do
 
