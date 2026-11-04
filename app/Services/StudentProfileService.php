@@ -93,6 +93,15 @@ class StudentProfileService
         ];
     }
 
+    /** What the student still owes for the current term, 0.0 when nothing is owed or no fees exist. */
+    public function outstanding(int $schoolId, User $student): float
+    {
+        $term = $this->enrollment->term($schoolId, $this->enrollment->year($schoolId));
+        $fees = $this->fees($schoolId, $student, $term?->id ? (int) $term->id : null, null);
+
+        return $fees['error'] || $fees['empty'] ? 0.0 : (float) $fees['owed'];
+    }
+
     public function deactivate(int $schoolId, int $studentId): User
     {
         $student = $this->find($schoolId, $studentId);

@@ -145,7 +145,7 @@
                     @endforeach
                 </ul>
             @endif
-            <div class="sp-row"><button type="button" class="ds-btn ds-btn-primary" style="min-height:44px;" data-open-dialog="pay">Record a payment</button></div>
+            <div class="sp-row"><button type="button" class="ds-btn ds-btn-primary" style="min-height:44px;" data-open-dialog="pay">Record a payment</button>@if(! $fees['error'] && ! $fees['empty'] && $fees['owed'] > 0)<button type="button" class="ds-btn ds-btn-outline" style="min-height:44px;" data-open-dialog="paid" data-testid="mark-paid">Mark as paid</button>@endif</div>
         </section>
         @endif
 
@@ -200,6 +200,28 @@
             </div>
         </form>
     </dialog>
+
+    {{-- Mark as paid: the whole outstanding term balance --}}
+    @if(! $fees['error'] && ! $fees['empty'] && $fees['owed'] > 0)
+    <dialog id="dlg-paid" class="sp-dlg" aria-labelledby="mp-t">
+        <span class="sp-sheet-grip" aria-hidden="true"></span>
+        <h2 id="mp-t" data-testid="mark-paid-title">Record {{ $fees['owed_label'] }} as paid for {{ $page['term_name'] ?: 'this term' }}?</h2>
+        <form method="POST" action="{{ url('/admin/students/'.$student->id.'/payments/full') }}" data-busy-form>
+            @csrf
+            <input type="hidden" name="request_id" value="{{ $requestId }}-full">
+            <p class="sp-muted" style="margin:0;">This records one payment for everything {{ $page['name'] }} still owes this term.</p>
+            <label>Paid by
+                <select class="ds-input" name="payment_method" required>
+                    @foreach($paymentMethods as $value => $label)<option value="{{ $value }}" @selected($value === 'cash')>{{ $label }}</option>@endforeach
+                </select>
+            </label>
+            <div class="sp-actions-row">
+                <button type="button" class="ds-btn ds-btn-outline" data-close-dialog>Cancel</button>
+                <button type="submit" class="ds-btn ds-btn-primary">Record {{ $fees['owed_label'] }}</button>
+            </div>
+        </form>
+    </dialog>
+    @endif
 
     {{-- Add marks (saved as drafts) --}}
     <dialog id="dlg-marks" class="sp-dlg" aria-labelledby="mk-t">
@@ -283,7 +305,7 @@
 // The admin layout is a Vue root that re-renders its DOM after load, so every handler here is
 // delegated from the document and the initial state is applied on window load.
 (function () {
-    var ids = { pay: 'dlg-pay', marks: 'dlg-marks', attendance: 'dlg-attendance' };
+    var ids = { pay: 'dlg-pay', paid: 'dlg-paid', marks: 'dlg-marks', attendance: 'dlg-attendance' };
     function open(name) {
         var d = document.getElementById(ids[name]);
         if (d && typeof d.showModal === 'function' && !d.open) { d.showModal(); }

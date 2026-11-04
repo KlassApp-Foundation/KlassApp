@@ -56,6 +56,27 @@ class StudentProfileController extends Controller
             ->with('successmessage', 'Payment of '.$profiles->money((float) $payment->amount, app(\App\Services\DashboardV2DataService::class)->currencyFor((int) $record->school_id)).' recorded.');
     }
 
+    /** "Mark as paid": the same recorder as "Record a payment", for the whole outstanding term balance. */
+    public function markPaid(Request $request, int $student, StudentProfileService $profiles, StudentPaymentRecorder $payments)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $record = $profiles->find($schoolId, $student);
+        $owed = $profiles->outstanding($schoolId, $record);
+        if ($owed <= 0) {
+            return redirect('/admin/students/'.$record->id.'?tab=fees')->with('failmessage', 'Nothing is owed for this term.');
+        }
+
+        $payment = $payments->record(Auth::user(), $record, [
+            'amount' => $owed,
+            'payment_method' => $request->input('payment_method'),
+            'paid_on' => now()->toDateString(),
+            'reference' => null,
+        ], (string) $request->input('request_id'));
+
+        return redirect('/admin/students/'.$record->id.'?tab=fees')
+            ->with('successmessage', 'Marked as paid: '.$profiles->money((float) $payment->amount, app(\App\Services\DashboardV2DataService::class)->currencyFor($schoolId)).' recorded.');
+    }
+
     public function addMarks(Request $request, int $student, StudentProfileService $profiles, StudentMarksDraftService $drafts)
     {
         $record = $profiles->find((int) Auth::user()->school_id, $student);

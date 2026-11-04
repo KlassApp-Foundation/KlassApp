@@ -83,4 +83,37 @@ class StudentProfileRoutesTest extends TestCase
 
         $this->actingAs($this->admin)->get($this->url().'?tab=attendance')->assertSee('Fever');
     }
+
+    private function fee(int $amount = 1200000): void
+    {
+        \App\Models\FeesCategories::create(['school_id' => $this->school->id, 'standard_id' => $this->standard->id, 'name' => 'Tuition', 'amount' => $amount]);
+    }
+
+    public function test_mark_as_paid_records_the_full_outstanding_term_balance(): void
+    {
+        $this->fee();
+        FeePayment::create(['school_id' => $this->school->id, 'user_id' => $this->student->id, 'amount' => 200000, 'paid_on' => now()->toDateString(), 'recorded_by' => $this->admin->id, 'status' => 'paid']);
+
+        $this->actingAs($this->admin)->get($this->url())->assertSee('Record 1,000,000 as paid for Term 3?', false)->assertSee('data-testid="mark-paid"', false);
+
+        $this->actingAs($this->admin)->post($this->url('/payments/full'), ['payment_method' => 'cash', 'amount' => 5])
+            ->assertRedirect($this->url().'?tab=fees');
+
+        $latest = FeePayment::where('user_id', $this->student->id)->latest('id')->first();
+        $this->assertSame(1000000.0, (float) $latest->amount);
+        $this->assertNull($latest->fee_category_id);
+
+        $this->actingAs($this->admin)->get($this->url())->assertDontSee('data-testid="mark-paid"', false);
+    }
+
+    public function test_mark_as_paid_is_scoped_to_the_school(): void
+    {
+        $this->fee();
+        $before = FeePayment::count();
+
+        $this->actingAs($this->admin)->post('/admin/students/'.$this->otherStudent->id.'/payments/full', ['payment_method' => 'cash'])->assertNotFound();
+        $this->actingAs($this->otherAdmin)->post($this->url('/payments/full'), ['payment_method' => 'cash'])->assertNotFound();
+
+        $this->assertSame($before, FeePayment::count());
+    }
 }
