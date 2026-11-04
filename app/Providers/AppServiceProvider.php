@@ -81,6 +81,10 @@ class AppServiceProvider extends ServiceProvider {
         \Illuminate\Session\Middleware\AuthenticateSession::redirectUsing($guestLogin);
         \Illuminate\Auth\AuthenticationException::redirectUsing($guestLogin);
 
+        // A blank MAIL_FROM_ADDRESS is replaced with the default sender.
+        // Say so once per process instead of failing the first email.
+        \App\Support\MailSender::warnIfConfiguredAddressWasReplaced();
+
         // Public demo admin (users.is_public_demo): no email and no notification
         // leaves the app for anything that account starts, including queued
         // jobs (the request's Context travels with them). WhatsApp is limited

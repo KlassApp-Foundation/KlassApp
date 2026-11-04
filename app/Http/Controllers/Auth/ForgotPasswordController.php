@@ -6,17 +6,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\ResetPasswordCodeMail;
-use App\Models\Authentication;
 use App\Models\User;
+use App\Services\Auth\PasswordResetCodeIssuer;
+use App\Services\Auth\PasswordResetDeliveryException;
 use App\Services\TeacherAccountInviteService;
 use App\Support\PendingPassword;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class ForgotPasswordController extends Controller
 {
@@ -44,35 +40,11 @@ class ForgotPasswordController extends Controller
                 ->with('status', 'If that email is registered, a reset code has been sent.');
         }
 
-        // Invalidate any existing unused codes for this user
-        Authentication::where('user_id', $user->id)
-            ->where('type', 'password_reset')
-            ->where('status', 0)
-            ->update(['status' => 2]);
-
-        // Generate a 6-digit code
-        $code = random_int(100000, 999999);
-        $expiry = Carbon::now()->addMinutes(5);
-
         try {
-            Authentication::create([
-                'user_id'    => $user->id,
-                'type'       => 'password_reset',
-                'token'      => $code,
-                'ip_address' => $request->ip(),
-                'expires_on' => $expiry,
-                'status'     => 0,
-            ]);
-
-            Mail::to($user->email)->send(new ResetPasswordCodeMail($user, $code));
-        } catch (Throwable $e) {
-            Log::warning('Password reset code generation failed', [
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-            ]);
-
+            app(PasswordResetCodeIssuer::class)->issue($user, $request->ip());
+        } catch (PasswordResetDeliveryException $e) {
             throw ValidationException::withMessages([
-                'email' => ['We could not send a reset code right now. Please try again shortly.'],
+                'email' => [$e->userMessage()],
             ]);
         }
 
