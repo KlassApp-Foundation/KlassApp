@@ -31,6 +31,17 @@ use Illuminate\Support\Facades\Storage;
 class StudentReportCardService
 {
     /**
+     * A whole-class PDF with this many students (or fewer) is built in the
+     * request and downloaded immediately. A larger class is queued
+     * (GenerateClassReportsJob) and the class page shows the status until the
+     * file is ready.
+     *
+     * One card runs a class sheet plus a DomPDF render. Twelve stays inside a
+     * normal HTTP limit; the thirteenth is prepared in the background.
+     */
+    public const CLASS_PDF_DIRECT_MAX = 12;
+
+    /**
      * Available report-card templates: key => [label, Blade view].
      */
     public const TEMPLATES = [
@@ -153,10 +164,33 @@ class StudentReportCardService
      */
     private function anchorExam(int $schoolId, StandardLink $stdLink, int $academicTermId): ?Exam
     {
+        $exam = $this->examOnSection($schoolId, (int) $stdLink->section_id, (int) $stdLink->standard_id, $academicTermId);
+        if ($exam !== null) {
+            return $exam;
+        }
+
+        // Exam sets create one exam per class on the base section ("Primary
+        // Seven"), while students sit in its streams ("Primary Seven E"). A
+        // stream's report card resolves the base class's exam.
+        $section = $stdLink->section;
+        if ($section === null) {
+            return null;
+        }
+
+        $base = app(ClassStructureService::class)->resolveBaseSection($section);
+        if ((int) $base->id === (int) $section->id) {
+            return null;
+        }
+
+        return $this->examOnSection($schoolId, (int) $base->id, (int) $stdLink->standard_id, $academicTermId);
+    }
+
+    private function examOnSection(int $schoolId, int $sectionId, int $standardId, int $academicTermId): ?Exam
+    {
         return Exam::query()
             ->where('school_id', $schoolId)
-            ->where('section_id', $stdLink->section_id)
-            ->where('standard_id', $stdLink->standard_id)
+            ->where('section_id', $sectionId)
+            ->where('standard_id', $standardId)
             ->where('academic_term_id', $academicTermId)
             ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
             ->orderBy('id')
@@ -237,6 +271,76 @@ class StudentReportCardService
             $myPos,
             $templateKey
         );
+    }
+
+    /**
+     * Active students with a mark on this class's contributing exam.
+     * Same set as the class report-card page. Ordered by name, then id.
+     *
+     * @return Collection<int, User>
+     */
+    public function reportLearners(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): Collection
+    {
+        $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+        if (! $exam) {
+            return collect();
+        }
+
+        $ids = $this->studentIds($exam);
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $ids)
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            // An exam on the class (base section) holds both streams' marks; a
+            // stream's card set is the students enrolled in that stream.
+            ->when((int) $exam->section_id !== (int) $stdLink->section_id, fn ($query) => $query->whereIn(
+                'id',
+                \App\Models\StudentAcademic::query()
+                    ->where('school_id', $schoolId)
+                    ->where('standardLink_id', $stdLink->id)
+                    ->whereNull('deleted_at')
+                    ->select('user_id')
+            ))
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * One PDF, one report card per student. Each card is pdfForStudent(),
+     * the same view and data as the single-student download, including that
+     * student's own class and stream fees.
+     *
+     * @param  Collection<int, User>  $learners
+     */
+    public function mergedPdfForLearners(
+        int $schoolId,
+        StandardLink $stdLink,
+        Collection $learners,
+        ?int $academicTermId = null
+    ): string {
+        $merger = new \iio\libmergepdf\Merger;
+        foreach ($learners as $learner) {
+            $merger->addRaw($this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId));
+        }
+
+        return $merger->merge();
+    }
+
+    public function classPdfFilename(StandardLink $stdLink): string
+    {
+        $stdLink->loadMissing('section');
+        $className = trim((string) ($stdLink->section->name ?? 'class'));
+        $stream = trim((string) ($stdLink->stream ?? ''));
+        $label = $stream !== '' ? $className.'_'.$stream : $className;
+        $safe = preg_replace('/[^A-Za-z0-9._-]+/', '_', $label) ?: 'class';
+
+        return 'report_cards_'.$safe.'.pdf';
     }
 
     /**
