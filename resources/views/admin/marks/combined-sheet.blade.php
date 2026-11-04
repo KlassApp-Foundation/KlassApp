@@ -20,6 +20,13 @@
 
     @include('partials.message')
 
+    @if(($hasAnyExams ?? true) === false)
+        <div class="ds-card ds-card-padding-default mb-4" data-testid="admin-marks-empty">
+            <p class="text-sm" style="color: var(--d-muted);">No exams yet: create this term's exam set.</p>
+            <a href="{{ route('admin.exam-sets.create') }}" class="ds-btn ds-btn-primary ds-btn-sm mt-3 inline-flex" data-testid="admin-exam-set-link">Create this term's exam set</a>
+        </div>
+    @endif
+
     <div data-testid="exams-filter-card" class="mb-4">
         @include('admin.marks.filter-form')
     </div>

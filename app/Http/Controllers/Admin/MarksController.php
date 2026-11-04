@@ -20,8 +20,11 @@ class MarksController extends Controller
     public function classExamOverview(Request $request, CombinedSheetPage $sheet)
     {
         $schoolId = (int) Auth::user()->school_id;
+        $data = $sheet->viewData($schoolId, $request);
+        // Drives the empty state: without exams the grid has nothing to show.
+        $data['hasAnyExams'] = \App\Models\Academics\Exam::where('school_id', $schoolId)->exists();
 
-        return view('admin.marks.filter', $sheet->viewData($schoolId, $request));
+        return view('admin.marks.filter', $data);
     }
 
     public function promoteStudents(Request $request)

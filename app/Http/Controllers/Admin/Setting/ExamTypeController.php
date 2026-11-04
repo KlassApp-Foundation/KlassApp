@@ -14,7 +14,7 @@ class ExamTypeController extends Controller
     public function index()
     {
         $schoolId = Auth::user()->school_id;
-        $examTypes = ExamType::orderBy('id')->get();
+        $examTypes = ExamType::visibleToSchool($schoolId)->orderBy('id')->get();
 
         // Load current toggles: each school's preference is stored in a JSON column
         // on the schools table, or falls back to the exam_types default.
