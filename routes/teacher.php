@@ -427,6 +427,10 @@ Route::prefix('exam')->group(function () {
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
 
     // Class-teacher exam create/edit (PR-B) — register before /{exam}/... wildcards
+    // Exam set: a class teacher creates a whole term for the classes they head.
+    Route::get('/sets/create', [\App\Http\Controllers\Admin\ExamSetController::class, 'create'])->name('teacher.exam-sets.create');
+    Route::post('/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'store'])->name('teacher.exam-sets.store');
+
     Route::get('/create', 'ExamController@create')->name('teacher.exams.create');
     Route::post('/', 'ExamController@store')->name('teacher.exams.store');
     Route::get('/{exam}/edit', 'ExamController@edit')->name('teacher.exams.edit');

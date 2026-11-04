@@ -908,6 +908,10 @@ Route::post('/exams/store', 'ExamController@store')->name('admin.exams.store');
 Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.exams.archive');
 
 
+// Exam sets — one action creates a term's exams for every class and subject.
+Route::get('/exams/sets/create', [\App\Http\Controllers\Admin\ExamSetController::class, 'create'])->name('admin.exam-sets.create');
+Route::post('/exams/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'store'])->name('admin.exam-sets.store');
+
 Route::get('/marks', 'MarksController@classExamOverview')->name('admin.marks');
 Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');

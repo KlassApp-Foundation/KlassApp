@@ -22,7 +22,10 @@
         @if($exams->isEmpty())
             <div class="text-center py-12">
                 <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
-                <p class="text-sm" style="color: var(--d-muted);">No exams assigned to you for marking yet.</p>
+                <p class="text-sm" style="color: var(--d-muted);" data-testid="teacher-marks-empty">No exams yet: create this term's exam set.</p>
+                @if($canCreateExams)
+                    <a href="{{ route('teacher.exam-sets.create') }}" class="ds-btn ds-btn-primary ds-btn-sm mt-4 inline-flex" data-testid="teacher-exam-set-link">Create this term's exam set</a>
+                @endif
             </div>
         @else
             <div class="space-y-6">

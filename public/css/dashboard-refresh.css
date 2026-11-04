@@ -5031,3 +5031,46 @@ td a.btn-danger:hover {
     .wa-lr-actions__row { justify-content: stretch; }
     .wa-lr-actions__row .wa-lr-btn { flex: 1 1 auto; }
 }
+
+/* ── Exam set form (admin + class teacher): classes as chips, streams per class ── */
+.exam-set-classes { margin-top: 20px; }
+.exam-set-types { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.exam-set-type {
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--d-touch-target-min);
+    font-size: 1rem; color: var(--d-text);
+}
+.exam-set-hint { margin: 4px 0 0; font-size: 0.9rem; color: var(--d-text-secondary); }
+
+.exam-set-level { margin-top: 18px; }
+.exam-set-level__label {
+    margin: 0 0 8px; font-family: "Sora", sans-serif; font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--d-text-secondary);
+}
+.exam-set-chips { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+
+.exam-set-class {
+    min-width: 200px; border: 1px solid var(--d-border); border-radius: 12px;
+    background: var(--d-white);
+}
+.exam-set-class[open] { border-color: var(--d-border-strong); box-shadow: var(--d-ring); }
+.exam-set-class__summary {
+    display: flex; align-items: center; gap: 10px; min-height: var(--d-touch-target-min);
+    padding: 8px 14px; cursor: pointer; list-style: none;
+}
+.exam-set-class__summary::-webkit-details-marker { display: none; }
+.exam-set-class__summary::after {
+    content: "▾"; color: var(--d-muted); font-size: 0.85rem; transition: transform 0.15s ease;
+}
+.exam-set-class[open] .exam-set-class__summary::after { transform: rotate(180deg); }
+.exam-set-class__pick { display: inline-flex; align-items: center; gap: 10px; flex: 1 1 auto; }
+.exam-set-class__name { font-weight: 600; color: var(--d-text); }
+.exam-set-class__count {
+    flex: 0 0 auto; border-radius: 999px; padding: 2px 9px; font-size: 0.8rem; font-weight: 700;
+    color: var(--d-text-secondary); background: var(--d-disabled-bg);
+}
+.exam-set-class__body { margin-top: 2px; padding: 0 14px 12px; border-top: 1px solid var(--d-border); }
+.exam-set-streams { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; }
+.exam-set-stream {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 36px;
+    font-size: 0.95rem; color: var(--d-text);
+}
