@@ -25,7 +25,8 @@ class ExamSetService
     public function create(School $school, AcademicTerm $term, array $typeIds, ?array $standardIds, User $actor): array
     {
         $typeIds = array_values(array_unique(array_map('intval', $typeIds)));
-        $sectionIds = $this->sectionIdsForClasses($school, $standardIds);
+        // null = the whole school: base classes only, never their streams.
+        $sectionIds = $standardIds === null ? $this->baseSectionIds($school) : $standardIds;
         $subjects = $this->subjectsInScope($school, $term, $sectionIds);
 
         $created = 0;
@@ -76,32 +77,35 @@ class ExamSetService
     }
 
     /**
-     * A pick is a class (standard), never a stream: expand each class to the
-     * streams it actually has. A class with no streams keeps its one section.
+     * The school's classes: sections that are not another section's stream
+     * (Riverside: "Primary One" is a class, "Primary One E" is its stream).
+     * Exams default to these; a stream only gets its own exam when picked.
      *
-     * @param  list<int>|null  $standardIds  null = every class in the school
-     * @return list<int>|null  null = every section
+     * @return \Illuminate\Support\Collection<int, Section>
      */
-    public function sectionIdsForClasses(School $school, ?array $standardIds): ?array
+    public function baseSections(School $school)
     {
-        if ($standardIds === null) {
-            return null;
-        }
-
-        $standardIds = array_values(array_unique(array_map('intval', $standardIds)));
-
-        if ($standardIds === []) {
-            return [];
-        }
-
-        return \Illuminate\Support\Facades\DB::table('standards_link')
+        $sections = \App\Models\Section::query()
             ->where('school_id', $school->id)
-            ->whereIn('standard_id', $standardIds)
-            ->pluck('section_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return $sections->reject(function ($section) use ($sections) {
+            foreach ($sections as $other) {
+                if ($other->id !== $section->id && str_starts_with($section->name, $other->name.' ')) {
+                    return true;
+                }
+            }
+
+            return false;
+        })->values();
+    }
+
+    /** @return list<int> */
+    public function baseSectionIds(School $school): array
+    {
+        return $this->baseSections($school)->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     /**

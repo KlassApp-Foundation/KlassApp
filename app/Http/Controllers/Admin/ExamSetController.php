@@ -42,6 +42,7 @@ class ExamSetController extends Controller
             'types' => ExamType::visibleToSchool($school->id)->orderBy('id')->get(),
             'defaultTypeIds' => $this->defaultTypeIds($school),
             'classes' => $this->classes($user, $school, $year, $isTeacher),
+            'streams' => $this->streams($school),
             'isTeacher' => $isTeacher,
             'layout' => $isTeacher ? 'layouts.teacher.layout' : 'layouts.admin.layout',
             'action' => $isTeacher ? route('teacher.exam-sets.store') : route('admin.exam-sets.store'),
@@ -60,6 +61,8 @@ class ExamSetController extends Controller
             'whole_school' => ['nullable', 'boolean'],
             'standard_ids' => ['nullable', 'array'],
             'standard_ids.*' => ['integer'],
+            'stream_ids' => ['nullable', 'array'],
+            'stream_ids.*' => ['integer'],
         ]);
 
         $term = AcademicTerm::query()
@@ -78,15 +81,22 @@ class ExamSetController extends Controller
 
         $allowed = $this->classes($user, $school, $year, $isTeacher)->pluck('id')->all();
         $wholeSchool = ! $isTeacher && (bool) ($data['whole_school'] ?? false);
-        $standardIds = $wholeSchool
-            ? null
+        $classIds = $wholeSchool
+            ? $this->sets->baseSectionIds($school)
             : array_values(array_intersect(array_map('intval', $data['standard_ids'] ?? []), $allowed));
 
-        if (! $wholeSchool && $standardIds === []) {
+        if (! $wholeSchool && $classIds === []) {
             return back()->withInput()->withErrors(['standard_ids' => 'Choose at least one class, or the whole school.']);
         }
 
-        $result = $this->sets->create($school, $term, $typeIds, $standardIds, $user);
+        // A stream gets its own exam only when the admin expanded the class
+        // and picked it explicitly.
+        $streamIds = array_values(array_intersect(
+            array_map('intval', $data['stream_ids'] ?? []),
+            $this->streams($school)->pluck('id')->all(),
+        ));
+
+        $result = $this->sets->create($school, $term, $typeIds, array_values(array_unique([...$classIds, ...$streamIds])), $user);
 
         $message = $result['created'].' exam'.($result['created'] === 1 ? '' : 's').' created';
         if ($result['skipped'] > 0) {
@@ -114,23 +124,29 @@ class ExamSetController extends Controller
 
     private function classes(User $user, School $school, ?AcademicYear $year, bool $isTeacher)
     {
-        $query = \App\Models\Standard::query()
-            ->where('school_id', $school->id)
-            ->where('status', 1);
+        $base = $this->sets->baseSections($school);
 
-        if ($isTeacher) {
-            $sectionIds = $year ? $this->authorization->sectionIdsForClassTeacher($user, (int) $school->id, (int) $year->id) : [];
-            $standardIds = $sectionIds === [] ? [] : \Illuminate\Support\Facades\DB::table('standards_link')
-                ->where('school_id', $school->id)
-                ->whereIn('section_id', $sectionIds)
-                ->pluck('standard_id')
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->all();
-            $query->whereIn('id', $standardIds);
+        if (! $isTeacher) {
+            return $base;
         }
 
-        return $query->orderBy('order')->orderBy('name')->get();
+        $sectionIds = $year ? $this->authorization->sectionIdsForClassTeacher($user, (int) $school->id, (int) $year->id) : [];
+
+        return $base->filter(fn ($section) => in_array($section->id, $sectionIds, true))->values();
+    }
+
+    /** Sections that are a stream of another section, keyed by that class. */
+    private function streams(School $school)
+    {
+        $all = \App\Models\Section::query()
+            ->where('school_id', $school->id)
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $base = $this->sets->baseSections($school);
+
+        return $all->reject(fn ($section) => $base->contains('id', $section->id))->values();
     }
 
     private function currentTermId(School $school): int

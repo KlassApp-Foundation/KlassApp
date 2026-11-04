@@ -64,12 +64,27 @@
                         <option value="{{ $class->id }}" @selected(in_array($class->id, (array) old('standard_ids', [])))>{{ $class->name }}</option>
                     @endforeach
                 </select>
-                <p class="text-xs mt-1" style="color: var(--d-muted);">Each class creates exams on all of its streams. A class with no streams gets one exam.</p>
+                <p class="text-xs mt-1" style="color: var(--d-muted);">Each class creates one exam per subject, on the class itself. Streams are not included unless you pick them below.</p>
                 @if($isTeacher)
                     <p class="text-xs mt-1" style="color: var(--d-muted);">Only the classes you are class teacher of are listed.</p>
                 @endif
                 @error('standard_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
             </div>
+
+            @if($streams->isNotEmpty())
+                <details class="mb-5">
+                    <summary class="text-sm" style="cursor:pointer;">Pick specific streams instead (optional)</summary>
+                    <div class="mt-3 grid grid-cols-2 gap-2" data-testid="exam-set-streams">
+                        @foreach($streams as $stream)
+                            <label class="inline-flex items-center gap-2 text-sm">
+                                <input type="checkbox" name="stream_ids[]" value="{{ $stream->id }}" @checked(in_array($stream->id, (array) old('stream_ids', [])))>
+                                <span>{{ $stream->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <p class="text-xs mt-2" style="color: var(--d-muted);">A picked stream gets its own exam and its own teacher.</p>
+                </details>
+            @endif
 
             <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-set-submit">Create exam set</button>
         </form>

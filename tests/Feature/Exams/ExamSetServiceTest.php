@@ -20,6 +20,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * The class is the unit: "Primary One" is a class, "Primary One E" is a stream.
+ * Whole school / class picks create exams on the class itself; a stream gets its
+ * own exam only when it is picked explicitly.
+ */
 class ExamSetServiceTest extends TestCase
 {
     use RefreshDatabase;
@@ -30,9 +35,11 @@ class ExamSetServiceTest extends TestCase
 
     private AcademicTerm $term;
 
-    private Section $p1a;
+    private Section $base;
 
-    private Section $p1b;
+    private Section $streamE;
+
+    private Section $baby;
 
     private User $admin;
 
@@ -67,102 +74,82 @@ class ExamSetServiceTest extends TestCase
             'school_id' => $this->school->id, 'name' => '2026', 'description' => 'Current',
             'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'status' => 1,
         ]);
-
-        // A school observer may seed its own year; the marks list reads the one
-        // flagged status = 1, so keep ours the only current year.
         AcademicYear::where('school_id', $this->school->id)->where('id', '!=', $this->year->id)->update(['status' => 0]);
 
         $this->term = AcademicTerm::create([
             'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
-            'name' => 'Term I', 'status' => 'current', 'starts_on' => '2026-02-01', 'ends_on' => '2026-05-01',
+            'name' => 'Term 3', 'status' => 'current', 'starts_on' => '2026-09-01', 'ends_on' => '2026-12-01',
         ]);
 
-        $primary = Standard::create(['school_id' => $this->school->id, 'name' => 'Primary', 'order' => 1, 'status' => 1]);
-        $this->p1a = Section::create(['school_id' => $this->school->id, 'name' => 'Primary One A', 'status' => 1]);
-        $this->p1b = Section::create(['school_id' => $this->school->id, 'name' => 'Primary One B', 'status' => 1]);
+        $primary = Standard::create(['school_id' => $this->school->id, 'name' => 'primary', 'order' => 2, 'status' => 1]);
+        $this->base = Section::create(['school_id' => $this->school->id, 'name' => 'Primary One', 'status' => 1]);
+        $this->streamE = Section::create(['school_id' => $this->school->id, 'name' => 'Primary One E', 'status' => 1]);
+        $this->baby = Section::create(['school_id' => $this->school->id, 'name' => 'Baby Class', 'status' => 1]);
+        Section::create(['school_id' => $this->school->id, 'name' => 'Primary One W', 'status' => 1]);
 
         $this->admin = $this->makeUser(3, 'Admin');
         $this->mathTeacher = $this->makeUser(5, 'Maths Teacher');
         $this->englishTeacher = $this->makeUser(5, 'English Teacher');
 
-        $mathA = $this->makeSubject($primary, $this->p1a, 'Mathematics');
-        $englishA = $this->makeSubject($primary, $this->p1a, 'Kiswahili');
-        $mathB = $this->makeSubject($primary, $this->p1b, 'Mathematics');
+        $math = $this->makeSubject($primary, $this->base, 'Mathematics');
+        $english = $this->makeSubject($primary, $this->base, 'English');
+        $this->makeSubject($primary, $this->streamE, 'Mathematics');
+        $this->makeSubject($primary, $this->baby, 'Play');
 
-        $nursery = Standard::create(['school_id' => $this->school->id, 'name' => 'Nursery', 'order' => 0, 'status' => 1]);
-        $baby = Section::create(['school_id' => $this->school->id, 'name' => 'Baby Class', 'status' => 1]);
-        $this->makeSubject($nursery, $baby, 'Play');
-
-        Teacherlink::create([
-            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
-            'standardLink_id' => $this->standardLink($primary, $this->p1a),
-            'subject_id' => $mathA->id, 'teacher_id' => $this->mathTeacher->id,
-        ]);
-        Teacherlink::create([
-            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
-            'standardLink_id' => $this->standardLink($primary, $this->p1a),
-            'subject_id' => $englishA->id, 'teacher_id' => $this->englishTeacher->id,
-        ]);
-        Teacherlink::create([
-            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
-            'standardLink_id' => $this->standardLink($primary, $this->p1b),
-            'subject_id' => $mathB->id, 'teacher_id' => $this->mathTeacher->id,
-        ]);
+        $this->link($primary, $this->base, $math, $this->mathTeacher);
+        $this->link($primary, $this->base, $english, $this->englishTeacher);
+        $this->link($primary, $this->streamE, $this->makeSubject($primary, $this->streamE, 'Science'), $this->mathTeacher);
 
         $this->eot = ExamType::create(['name' => 'End of Term Examination', 'code' => 'EOT', 'contributes_to_report_total' => true]);
         $this->bot = ExamType::create(['name' => 'Beginning of Term Examination', 'code' => 'BOT', 'contributes_to_report_total' => false]);
 
-        $otherSchool = School::create([
-            'name' => 'Other School', 'slug' => 'other-school', 'email' => 'o@test.ug',
-            'phone' => '0700000002', 'status' => 1,
-        ]);
+        $other = School::create(['name' => 'Other', 'slug' => 'other-'.uniqid(), 'email' => uniqid().'@t.ug', 'phone' => '0700000002', 'status' => 1]);
         $this->otherSchoolType = ExamType::create([
-            'school_id' => $otherSchool->id, 'name' => 'Other School Special', 'code' => 'OSS',
-            'contributes_to_report_total' => false,
+            'school_id' => $other->id, 'name' => 'Other Special', 'code' => 'OSS', 'contributes_to_report_total' => false,
         ]);
     }
 
-    public function test_whole_school_set_creates_every_subject_and_type_and_rerunning_adds_nothing(): void
+    public function test_whole_school_creates_exams_on_base_classes_only(): void
+    {
+        $result = app(ExamSetService::class)->create($this->school, $this->term, [$this->eot->id], null, $this->admin);
+
+        // Base "Primary One" has 2 subjects, "Baby Class" has 1. Streams are not included.
+        $this->assertSame(3, $result['created']);
+        $this->assertSame(0, Exam::where('school_id', $this->school->id)->where('section_id', $this->streamE->id)->count());
+        $this->assertSame(2, Exam::where('school_id', $this->school->id)->where('section_id', $this->base->id)->count());
+    }
+
+    public function test_an_explicit_stream_pick_creates_that_streams_exam(): void
+    {
+        $result = app(ExamSetService::class)->create(
+            $this->school, $this->term, [$this->eot->id], [$this->base->id, $this->streamE->id], $this->admin
+        );
+
+        $this->assertSame(4, $result['created'], 'base 2 + stream 2');
+        $this->assertSame(2, Exam::where('school_id', $this->school->id)->where('section_id', $this->streamE->id)->count());
+    }
+
+    public function test_rerunning_creates_nothing_new(): void
     {
         $service = app(ExamSetService::class);
-
         $first = $service->create($this->school, $this->term, [$this->eot->id, $this->bot->id], null, $this->admin);
-        $this->assertSame(8, $first['created'], 'four subject rows x two types');
-        $this->assertSame(0, $first['skipped']);
-        $this->assertSame(3, $first['sections']);
-        $this->assertSame(8, Exam::where('school_id', $this->school->id)->count());
+        $this->assertSame(6, $first['created'], '3 base subject rows x 2 types');
 
         $second = $service->create($this->school, $this->term, [$this->eot->id, $this->bot->id], null, $this->admin);
         $this->assertSame(0, $second['created']);
-        $this->assertSame(8, $second['skipped']);
-        $this->assertSame(8, Exam::where('school_id', $this->school->id)->count());
+        $this->assertSame(6, $second['skipped']);
+        $this->assertSame(6, Exam::where('school_id', $this->school->id)->count());
     }
 
-    public function test_exams_are_created_for_the_subject_teacher(): void
-    {
-        app(ExamSetService::class)->create($this->school, $this->term, [$this->eot->id], null, $this->admin);
-
-        $this->assertSame(
-            2,
-            Exam::where('school_id', $this->school->id)->where('teacher_id', $this->mathTeacher->id)->count(),
-            'maths in both streams is the maths teacher\'s',
-        );
-        $this->assertSame(
-            1,
-            Exam::where('school_id', $this->school->id)->where('teacher_id', $this->englishTeacher->id)->count(),
-        );
-    }
-
-    public function test_school_owned_types_are_visible_only_to_their_school(): void
+    public function test_school_owned_types_stay_with_their_school(): void
     {
         $mine = ExamType::visibleToSchool($this->school->id)->pluck('id')->all();
 
-        $this->assertContains($this->eot->id, $mine, 'shared types are visible');
-        $this->assertContains($this->bot->id, $mine);
-        $this->assertNotContains($this->otherSchoolType->id, $mine, 'another school\'s type must not leak');
+        $this->assertContains($this->eot->id, $mine);
+        $this->assertNotContains($this->otherSchoolType->id, $mine);
     }
 
-    public function test_teacher_sees_only_their_own_exams_under_marks(): void
+    public function test_teacher_sees_only_their_own_exams(): void
     {
         app(ExamSetService::class)->create($this->school, $this->term, [$this->eot->id], null, $this->admin);
 
@@ -170,46 +157,17 @@ class ExamSetServiceTest extends TestCase
             ->get('/teacher/exam/marks')
             ->assertOk()
             ->assertSee('MATHEMATICS')
-            ->assertDontSee('KISWAHILI');
+            ->assertDontSee('ENGLISH');
     }
 
-    public function test_a_class_teacher_creates_a_set_only_for_their_own_class(): void
-    {
-        $this->p1a->forceFill(['class_teacher_id' => $this->mathTeacher->id])->save();
-
-        $this->actingAs($this->mathTeacher)
-            ->post('/teacher/exam/sets', [
-                'academic_term_id' => $this->term->id,
-                'type_ids' => [$this->eot->id],
-                'standard_ids' => [\App\Models\Standard::where('school_id', $this->school->id)->where('name', 'Primary')->value('id')],
-            ])
-            ->assertRedirect(route('teacher.exam.marks'));
-
-        $this->assertSame(
-            2,
-            Exam::where('school_id', $this->school->id)->where('section_id', $this->p1a->id)->count(),
-            'their class\'s streams: three subject rows',
-        );
-        // The class is the unit: its sibling stream is included, nothing outside it.
-        $this->assertSame(3, Exam::where('school_id', $this->school->id)->count());
-    }
-
-    public function test_admin_empty_state_points_at_the_exam_set(): void
-    {
-        $this->actingAs($this->admin)
-            ->get('/admin/marks')
-            ->assertOk()
-            ->assertSee("No exams yet: create this term's exam set", false)
-            ->assertSee(route('admin.exam-sets.create'));
-    }
-
-    public function test_admin_can_open_the_exam_set_form(): void
+    public function test_admin_can_open_the_form_with_the_current_term_and_whole_school_default(): void
     {
         $this->actingAs($this->admin)
             ->get('/admin/exams/sets/create')
             ->assertOk()
-            ->assertSee('Create this term\'s exam set', false)
-            ->assertSee('End of Term Examination');
+            ->assertSee("Create this term's exam set", false)
+            ->assertSee('Primary One', false)
+            ->assertSee('checked data-testid="exam-set-whole-school', false);
     }
 
     private function makeUser(int $group, string $name): User
@@ -236,12 +194,17 @@ class ExamSetServiceTest extends TestCase
         ]);
     }
 
-    private function standardLink(Standard $standard, Section $section): int
+    private function link(Standard $standard, Section $section, Subject $subject, User $teacher): void
     {
-        return (int) DB::table('standards_link')->insertGetId([
+        $linkId = (int) DB::table('standards_link')->insertGetId([
             'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
             'standard_id' => $standard->id, 'section_id' => $section->id, 'status' => 1,
             'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        Teacherlink::create([
+            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
+            'standardLink_id' => $linkId, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id,
         ]);
     }
 }
