@@ -267,6 +267,10 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/students', 'StudentController@index' );
 	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
 	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
+	Route::post( '/students/{student}/payments', 'StudentProfileController@recordPayment' )->whereNumber('student')->name('admin.students.payments.store');
+	Route::post( '/students/{student}/marks', 'StudentProfileController@addMarks' )->whereNumber('student')->name('admin.students.marks.store');
+	Route::post( '/students/{student}/attendance', 'StudentProfileController@recordAttendance' )->whereNumber('student')->name('admin.students.attendance.store');
+	Route::get( '/students/{student}/progress-report', 'StudentProfileController@progressReport' )->whereNumber('student')->name('admin.students.progress-report');
 	Route::get( '/students/blockedstudents', 'StudentController@blockedstudents' );
 	//add
 	Route::get( '/student/add', 'StudentController@create' );
