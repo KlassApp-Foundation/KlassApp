@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\StudentProfile\StudentAttendanceRecorder;
 use App\Services\StudentProfile\StudentMarksDraftService;
 use App\Services\StudentProfile\StudentPaymentRecorder;
+use App\Services\StudentProfile\StudentPhotoService;
 use App\Services\StudentProfileService;
 use App\Support\StudentProfileTabs;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -75,6 +76,22 @@ class StudentProfileController extends Controller
 
         return redirect('/admin/students/'.$record->id.'?tab=fees')
             ->with('successmessage', 'Marked as paid: '.$profiles->money((float) $payment->amount, app(\App\Services\DashboardV2DataService::class)->currencyFor($schoolId)).' recorded.');
+    }
+
+    public function uploadPhoto(Request $request, int $student, StudentProfileService $profiles, StudentPhotoService $photos)
+    {
+        $record = $profiles->find((int) Auth::user()->school_id, $student);
+        $photos->set(Auth::user(), $record, $request->file('photo'));
+
+        return redirect('/admin/students/'.$record->id)->with('successmessage', 'Photo saved.');
+    }
+
+    public function removePhoto(int $student, StudentProfileService $profiles, StudentPhotoService $photos)
+    {
+        $record = $profiles->find((int) Auth::user()->school_id, $student);
+        $photos->remove(Auth::user(), $record);
+
+        return redirect('/admin/students/'.$record->id)->with('successmessage', 'Photo removed.');
     }
 
     public function addMarks(Request $request, int $student, StudentProfileService $profiles, StudentMarksDraftService $drafts)

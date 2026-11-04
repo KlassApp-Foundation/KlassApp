@@ -21,6 +21,8 @@
 <link rel="stylesheet" href="{{ asset('css/report-cards-screen.css') }}?v={{ filemtime(public_path('css/report-cards-screen.css')) }}">
 
 <div class="rc" data-testid="report-cards-screen" @if($pending) data-pending="1" @endif>
+    @include('partials.message')
+
     <div class="rc-head">
         <div>
             <h1>Report cards</h1>

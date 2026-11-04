@@ -73,6 +73,7 @@ class StudentProfileService
             'student' => $student,
             'name' => $name,
             'initials' => $initials,
+            'photo_url' => \App\Services\StudentProfile\StudentPhotoService::hasPhoto($profile) ? ($profile->AvatarPath ?: null) : null,
             'class_name' => $className,
             'kls' => $kls,
             'gender' => $this->genderLabel($profile?->gender),

@@ -16,6 +16,7 @@
         if (in_array($key, ['amount', 'payment_method', 'paid_on', 'reference'], true)) { $openDialog = 'pay'; break; }
         if ($key === 'marks' || str_starts_with($key, 'marks.') || $key === 'sitting') { $openDialog = 'marks'; break; }
         if (in_array($key, ['date', 'status', 'comment'], true)) { $openDialog = 'attendance'; break; }
+        if ($key === 'photo') { $openDialog = 'photo'; break; }
     }
     $oldSitting = old('sitting', $sittings[0]['key'] ?? '');
     $defaultAmount = $fees['owed'] > 0 ? number_format($fees['owed']) : '';
@@ -30,13 +31,20 @@
         <span aria-current="page">{{ $page['name'] }}</span>
     </nav>
 
+    @include('partials.message')
+
     @if($failed && $openDialog === null)
         <div class="sp-alert" role="alert">{{ $genericError }}</div>
     @endif
 
     <div class="sp-top" data-person-profile data-testid="person-profile-header">
         <div class="sp-id">
-            <div class="sp-photo" data-testid="person-initials" aria-hidden="true">{{ $page['initials'] }}</div>
+            <div class="sp-photo-wrap">
+                <button type="button" class="sp-photo" data-open-dialog="photo" data-testid="student-photo" aria-label="{{ $page['photo_url'] ? 'Change photo' : 'Add photo' }}">
+                    @if($page['photo_url'])<img src="{{ $page['photo_url'] }}" alt="{{ $page['name'] }}" width="132" height="132">@else<span data-testid="person-initials" aria-hidden="true">{{ $page['initials'] }}</span>@endif
+                </button>
+                <button type="button" class="sp-photo-pill" data-open-dialog="photo" data-testid="photo-action">{{ $page['photo_url'] ? 'Change photo' : 'Add photo' }}</button>
+            </div>
             <div class="sp-body">
                 <div>
                     <h1>{{ $page['name'] }}</h1>
@@ -145,7 +153,7 @@
                     @endforeach
                 </ul>
             @endif
-            <div class="sp-row"><button type="button" class="ds-btn ds-btn-primary" style="min-height:44px;" data-open-dialog="pay">Record a payment</button>@if(! $fees['error'] && ! $fees['empty'] && $fees['owed'] > 0)<button type="button" class="ds-btn ds-btn-outline" style="min-height:44px;" data-open-dialog="paid" data-testid="mark-paid">Mark as paid</button>@endif</div>
+            <div class="sp-row sp-row--fill"><button type="button" class="ds-btn ds-btn-primary" style="min-height:44px;" data-open-dialog="pay">Record a payment</button>@if(! $fees['error'] && ! $fees['empty'] && $fees['owed'] > 0)<button type="button" class="ds-btn ds-btn-outline" style="min-height:44px;" data-open-dialog="paid" data-testid="mark-paid">Mark as paid</button>@endif</div>
         </section>
         @endif
 
@@ -199,6 +207,30 @@
                 <button type="submit" class="ds-btn ds-btn-primary" data-pay-submit data-currency="{{ $currency }}">Record payment</button>
             </div>
         </form>
+    </dialog>
+
+    {{-- Student photo --}}
+    <dialog id="dlg-photo" class="sp-dlg" aria-labelledby="ph-t">
+        <span class="sp-sheet-grip" aria-hidden="true"></span>
+        <h2 id="ph-t">{{ $page['photo_url'] ? 'Change photo' : 'Add photo' }}</h2>
+        <form method="POST" action="{{ url('/admin/students/'.$student->id.'/photo') }}" enctype="multipart/form-data" data-busy-form>
+            @csrf
+            <label>Photo of {{ $page['name'] }}
+                <input class="ds-input" type="file" name="photo" accept="image/jpeg,image/png" required data-photo-input style="padding:8px;">
+                <span class="sp-muted" style="font-weight:400;">JPG or PNG, up to 2 MB. It is cropped square.</span>
+                <span class="sp-err" role="alert" data-photo-error>@error('photo'){{ $message }}@enderror</span>
+            </label>
+            <div class="sp-actions-row">
+                <button type="button" class="ds-btn ds-btn-outline" data-close-dialog>Cancel</button>
+                <button type="submit" class="ds-btn ds-btn-primary">{{ $page['photo_url'] ? 'Replace photo' : 'Save photo' }}</button>
+            </div>
+        </form>
+        @if($page['photo_url'])
+        <form method="POST" action="{{ url('/admin/students/'.$student->id.'/photo') }}" style="margin-top:12px;">
+            @csrf @method('DELETE')
+            <button type="submit" class="ds-btn ds-btn-ghost" style="min-height:44px;color:#B91C1C;" data-testid="photo-remove">Remove photo</button>
+        </form>
+        @endif
     </dialog>
 
     {{-- Mark as paid: the whole outstanding term balance --}}
@@ -305,7 +337,7 @@
 // The admin layout is a Vue root that re-renders its DOM after load, so every handler here is
 // delegated from the document and the initial state is applied on window load.
 (function () {
-    var ids = { pay: 'dlg-pay', paid: 'dlg-paid', marks: 'dlg-marks', attendance: 'dlg-attendance' };
+    var ids = { pay: 'dlg-pay', paid: 'dlg-paid', photo: 'dlg-photo', marks: 'dlg-marks', attendance: 'dlg-attendance' };
     function open(name) {
         var d = document.getElementById(ids[name]);
         if (d && typeof d.showModal === 'function' && !d.open) { d.showModal(); }
@@ -339,6 +371,16 @@
     });
     document.addEventListener('input', function (e) { if (e.target.matches('[data-pay-amount]')) { payLabel(); } });
     document.addEventListener('change', function (e) { if (e.target.matches('[data-sitting]')) { syncSitting(); } });
+    document.addEventListener('change', function (e) {
+        if (!e.target.matches('[data-photo-input]')) { return; }
+        var f = e.target.files && e.target.files[0];
+        var msg = document.querySelector('[data-photo-error]');
+        var bad = '';
+        if (f && f.size > 2 * 1024 * 1024) { bad = 'That photo is larger than 2 MB. Choose a smaller one.'; }
+        else if (f && ['image/jpeg', 'image/png'].indexOf(f.type) < 0) { bad = 'Photos must be a JPG or PNG file.'; }
+        if (msg) { msg.textContent = bad; }
+        if (bad) { e.target.value = ''; }
+    });
     document.addEventListener('submit', function (e) {
         if (!e.target.matches('[data-busy-form]')) { return; }
         var b = e.target.querySelector('button[type=submit]');

@@ -269,6 +269,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
 	Route::post( '/students/{student}/payments', 'StudentProfileController@recordPayment' )->whereNumber('student')->name('admin.students.payments.store');
 	Route::post( '/students/{student}/payments/full', 'StudentProfileController@markPaid' )->whereNumber('student')->name('admin.students.payments.full');
+	Route::post( '/students/{student}/photo', 'StudentProfileController@uploadPhoto' )->whereNumber('student')->name('admin.students.photo.store');
+	Route::delete( '/students/{student}/photo', 'StudentProfileController@removePhoto' )->whereNumber('student')->name('admin.students.photo.destroy');
 	Route::post( '/students/{student}/marks', 'StudentProfileController@addMarks' )->whereNumber('student')->name('admin.students.marks.store');
 	Route::post( '/students/{student}/attendance', 'StudentProfileController@recordAttendance' )->whereNumber('student')->name('admin.students.attendance.store');
 	Route::get( '/students/{student}/progress-report', 'StudentProfileController@progressReport' )->whereNumber('student')->name('admin.students.progress-report');
