@@ -165,7 +165,7 @@ class ClassTeacherAssignmentService
         $this->logAssignment($actor, $standardLink, $teacher, $action, $previousTeacherId);
 
         if ($notify) {
-            $this->notifyExistingTeacher($actor, $teacher, $className, $replacing);
+            $this->notifyExistingTeacher($actor, $teacher, $className, $replacing, $standardLink);
         }
 
         $verb = $replacing ? 'replaced the class teacher' : 'assigned as class teacher';
@@ -519,6 +519,20 @@ class ClassTeacherAssignmentService
     }
 
     /**
+     * Wizard class-teacher upload. A teacher created on this row was already
+     * invited. An existing teacher is notified here: a setup link when they
+     * have never signed in, and the class notice when they have.
+     *
+     * @return array{success: bool, message: string, teacher_id?: int}
+     */
+    public function assignFromUpload(User $actor, StandardLink $standardLink, User $teacher, bool $justCreated): array
+    {
+        $notify = ! $justCreated && ! $this->issuingIsLimited($actor, 'upload:'.$teacher->id);
+
+        return $this->commit($actor, $standardLink, $teacher, true, $notify, 'upload');
+    }
+
+    /**
      * @return array{success: bool, message: string}
      */
     private function inviteNew(
@@ -606,8 +620,18 @@ class ClassTeacherAssignmentService
         $query->update(['revoked_at' => now()]);
     }
 
-    private function notifyExistingTeacher(User $actor, User $teacher, string $className, bool $replacing): void
+    private function notifyExistingTeacher(User $actor, User $teacher, string $className, bool $replacing, ?StandardLink $standardLink = null): void
     {
+        $invites = app(TeacherAccountInviteService::class);
+        if (! $invites->hasSignedIn($teacher)) {
+            if ($invites->emailIsUsable($teacher->email)) {
+                // assign() and assignFromUpload already consumed the issuing limiter.
+                $invites->inviteIfNeeded($teacher, $actor, $className, $standardLink, false);
+            }
+
+            return;
+        }
+
         $schoolName = School::query()->whereKey((int) $actor->school_id)->value('name') ?? 'your school';
 
         try {

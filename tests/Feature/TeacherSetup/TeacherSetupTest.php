@@ -157,15 +157,17 @@ class TeacherSetupTest extends TestCase
             'status' => 'pending',
         ]);
 
+        Mail::fake();
         $this->post('/admin/class-setup/requests/'.$request->id.'/approve')->assertRedirect();
 
         $this->assertSame('approved', $request->fresh()->status);
-        $this->assertDatabaseHas('users', [
-            'school_id' => $this->school->id,
-            'email' => 'new-teacher@schools.test',
-            'usergroup_id' => 5,
-        ]);
-        $this->assertNotNull(session('teacher_setup_url'));
+        $created = User::query()->where('email', 'new-teacher@schools.test')->first();
+        $this->assertNotNull($created);
+        $this->assertSame((int) $this->school->id, (int) $created->school_id);
+        $this->assertSame(5, (int) $created->usergroup_id);
+        $this->assertNull($created->password);
+        $this->assertNull(session('teacher_setup_url'));
+        Mail::assertQueued(\App\Mail\TeacherInviteLinkMail::class);
     }
 
     public function test_the_class_page_confirms_subjects_and_subject_teachers(): void

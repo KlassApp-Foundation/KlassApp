@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TeacherAccountInviteService;
 use App\Services\TeacherInviteLinkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -102,7 +103,7 @@ class TeacherInviteController extends Controller
             'password.confirmed' => 'Passwords do not match.',
         ]);
 
-        $claim = TeacherInviteLinkService::claim($invite, $validated['password']);
+        $claim = app(TeacherAccountInviteService::class)->completeClaim($invite, $validated['password']);
 
         if (! ($claim['success'] ?? false)) {
             return redirect()->route('teacher.invite.form', $token)

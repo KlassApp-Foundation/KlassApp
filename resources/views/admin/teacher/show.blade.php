@@ -25,6 +25,12 @@
         back-label="Teachers"
     >
         <x-slot:actions>
+            @if(!empty($page['can_resend']))
+                <form method="POST" action="{{ url('/admin/teacher/show/'.$editKey.'/resend-setup') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="{{ $btn }}" data-testid="resend-setup-link">Resend setup link</button>
+                </form>
+            @endif
             <a href="{{ $editUrl }}" style="{{ $btn }}">Edit</a>
             <div style="position:relative;">
                 <button type="button" id="teacher-more" aria-haspopup="menu" aria-expanded="false" aria-controls="teacher-more-menu" style="{{ $btn }}">More</button>
@@ -124,6 +130,10 @@
                     <dl style="margin:0;display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:14px;">
                         <dt style="color:#475569;">Phone</dt><dd style="margin:0;">{{ $page['phone'] }}</dd>
                         <dt style="color:#475569;">Email</dt><dd style="margin:0;">{{ $page['email'] }}</dd>
+                        @if(!empty($page['needs_email']))
+                            <dt style="color:#475569;">Setup</dt>
+                            <dd style="margin:0;" data-testid="teacher-needs-email">This teacher has no email yet. Add one before they can be invited.</dd>
+                        @endif
                         <dt style="color:#475569;">Last login</dt><dd style="margin:0;">{{ $page['last_login'] }}</dd>
                     </dl>
                 </section>

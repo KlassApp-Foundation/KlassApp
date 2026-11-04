@@ -2903,10 +2903,10 @@ class ManualOnboardingWizard extends Component
 
     /**
      * Save each readable class-teacher row now. One bad row does not roll the
-     * others back. Nothing here sends an invite or a message — the teacher
-     * file does not either. Assignment uses standards_link.class_teacher_id
-     * and sections.class_teacher_id, the same columns the class-teacher
-     * invite writes when it assigns someone who already has an account.
+     * others back. A real email gets a setup link from the teacher create
+     * step. Assigning someone who already exists sends that link when they
+     * have never signed in, and the class notice when they have. Assignment
+     * uses standards_link.class_teacher_id and sections.class_teacher_id.
      */
     private function ingestClassTeacherUpload(): void
     {
@@ -3011,7 +3011,7 @@ class ManualOnboardingWizard extends Component
                 continue;
             }
 
-            if (! $this->writeClassTeacherAssignment($school, $resolved['link'], $teacher['user'])) {
+            if (! $this->writeClassTeacherAssignment($school, $resolved['link'], $teacher['user'], (bool) $teacher['created'])) {
                 $skipped[] = ['row' => $line, 'reason' => 'could not save'];
 
                 continue;
@@ -3214,7 +3214,7 @@ class ManualOnboardingWizard extends Component
             ->where('status', 'active');
     }
 
-    private function writeClassTeacherAssignment(School $school, StandardLink $link, User $teacher): bool
+    private function writeClassTeacherAssignment(School $school, StandardLink $link, User $teacher, bool $justCreated = false): bool
     {
         if ((int) $teacher->school_id !== (int) $school->id || (int) $teacher->usergroup_id !== 5) {
             return false;
@@ -3241,13 +3241,11 @@ class ManualOnboardingWizard extends Component
             return false;
         }
 
-        $result = app(\App\Services\ClassTeacherAssignmentService::class)->commit(
+        $result = app(\App\Services\ClassTeacherAssignmentService::class)->assignFromUpload(
             $actor,
             $link,
             $teacher,
-            true,
-            false,
-            'upload',
+            $justCreated,
         );
 
         return (bool) ($result['success'] ?? false);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\TeacherAccountInviteService;
 use App\Services\TeacherProfileService;
 use App\Support\TeacherProfileTabs;
 use Illuminate\Http\Request;
@@ -34,5 +35,17 @@ class TeacherProfileController extends Controller
         $key = filled($teacher->name) ? $teacher->name : $teacher->id;
 
         return redirect('/admin/teacher/show/'.$key);
+    }
+
+    public function resendSetup(string $name, TeacherProfileService $profiles, TeacherAccountInviteService $invites)
+    {
+        $actor = Auth::user();
+        $schoolId = (int) $actor->school_id;
+        $teacher = $profiles->find($schoolId, $name);
+        $result = $invites->resend($actor, $teacher);
+        $key = filled($teacher->name) ? $teacher->name : $teacher->id;
+
+        return redirect('/admin/teacher/show/'.$key)
+            ->with($result['ok'] ? 'successmessage' : 'errormessage', $result['message']);
     }
 }

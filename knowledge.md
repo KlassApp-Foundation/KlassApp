@@ -2,6 +2,13 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-04 — T-091 teacher setup invites (stacked on #1239)
+
+- **Work:** Teachers created with a real email get a setup link from the existing `TeacherInviteLinkService`. No password is stored. A placeholder address (`teacher.<random>@<slug>.test`, `*.local`, or the link-import `@school.edu` address) creates the row and sends nothing. Resend is on the teacher list and profile for teachers who have never signed in. Assigning a never-signed-in teacher as class teacher sends the setup link. A teacher who has signed in still gets the class notice.
+- **Files:** `TeacherAccountInviteService`, onboarding `saveTeachers`, `CreateTeacher`, class-teacher upload, `ClassTeacherAssignmentService::notifyExistingTeacher`, teacher list and profile, `ClassTeacherSetupController` for a newly approved teacher.
+- **Decision:** Do not change `TeacherInviteLinkService` or its rate limits. This branch stacks on `cursor/marks-phase-1-class-teacher-v2` (#1239). Merge that pull request first.
+- **Status:** Draft pull request. Not merged. Production untouched.
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |
