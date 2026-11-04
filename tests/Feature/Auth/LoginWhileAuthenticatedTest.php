@@ -73,4 +73,26 @@ class LoginWhileAuthenticatedTest extends TestCase
 
         $this->assertSame($parent->id, auth()->id(), 'the first session must survive');
     }
+
+    public function test_an_intended_url_left_by_another_role_is_ignored(): void
+    {
+        $teacher = $this->makeUser(5, 'Teacher Three');
+
+        // A guest (in the story, the parent's session) asks for an admin page;
+        // the login redirect stores it as the intended URL.
+        $this->get('/admin/students')->assertRedirect(route('login'));
+
+        $this->post('/login', ['email' => $teacher->email, 'password' => 'secret'])
+            ->assertRedirect('/teacher/dashboard');
+    }
+
+    public function test_an_intended_url_inside_the_users_own_area_is_kept(): void
+    {
+        $teacher = $this->makeUser(5, 'Teacher Four');
+
+        $this->get('/teacher/dashboard')->assertRedirect(route('login'));
+
+        $this->post('/login', ['email' => $teacher->email, 'password' => 'secret'])
+            ->assertRedirect('/teacher/dashboard');
+    }
 }

@@ -58,6 +58,42 @@ class LoginController extends Controller implements ShouldQueue
     }
 
     /**
+     * redirect()->intended() replays whatever URL the *previous* visitor tried
+     * to open — a parent's page, an admin screen. A teacher signing in must not
+     * inherit that. Keep the intended URL only when it is inside the area the
+     * user just signed into; otherwise send them to their own dashboard.
+     *
+     * @param  mixed  $user
+     * @return mixed
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        $intended = $request->session()->get('url.intended');
+
+        if (! is_string($intended) || $intended === '') {
+            return null;
+        }
+
+        if ($this->intendedBelongsToUser($intended, $user)) {
+            return null;
+        }
+
+        $request->session()->forget('url.intended');
+
+        return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser($user));
+    }
+
+    private function intendedBelongsToUser(string $intended, $user): bool
+    {
+        $path = parse_url($intended, PHP_URL_PATH);
+        $path = '/'.ltrim(is_string($path) && $path !== '' ? $path : $intended, '/');
+        $home = \App\Helpers\AuthRedirectHelper::dashboardPathForUser($user);
+        $area = '/'.explode('/', trim($home, '/'))[0];
+
+        return $path === $home || str_starts_with($path, $area.'/');
+    }
+
+    /**
      * Where to redirect users after login.
      * Customize based on user role.
      */
