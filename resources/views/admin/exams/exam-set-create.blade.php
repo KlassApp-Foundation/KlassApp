@@ -51,7 +51,7 @@
             @unless($isTeacher)
                 <div class="mb-3">
                     <label class="inline-flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="whole_school" value="1" @checked(old('whole_school')) data-testid="exam-set-whole-school">
+                        <input type="checkbox" name="whole_school" value="1" @checked(old('whole_school', true)) data-testid="exam-set-whole-school">
                         <span>Whole school (every class and stream)</span>
                     </label>
                 </div>
@@ -59,15 +59,16 @@
 
             <div class="mb-5">
                 <label class="form-label" for="exam-set-classes">Classes</label>
-                <select name="section_ids[]" id="exam-set-classes" class="ds-form-input w-full" multiple size="10" data-testid="exam-set-classes">
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}" @selected(in_array($section->id, (array) old('section_ids', [])))>{{ $section->name }}</option>
+                <select name="standard_ids[]" id="exam-set-classes" class="ds-form-input w-full" multiple size="10" data-testid="exam-set-classes">
+                    @foreach($classes as $class)
+                        <option value="{{ $class->id }}" @selected(in_array($class->id, (array) old('standard_ids', [])))>{{ $class->name }}</option>
                     @endforeach
                 </select>
+                <p class="text-xs mt-1" style="color: var(--d-muted);">Each class creates exams on all of its streams. A class with no streams gets one exam.</p>
                 @if($isTeacher)
                     <p class="text-xs mt-1" style="color: var(--d-muted);">Only the classes you are class teacher of are listed.</p>
                 @endif
-                @error('section_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                @error('standard_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
             </div>
 
             <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-set-submit">Create exam set</button>

@@ -89,6 +89,10 @@ class ExamSetServiceTest extends TestCase
         $englishA = $this->makeSubject($primary, $this->p1a, 'Kiswahili');
         $mathB = $this->makeSubject($primary, $this->p1b, 'Mathematics');
 
+        $nursery = Standard::create(['school_id' => $this->school->id, 'name' => 'Nursery', 'order' => 0, 'status' => 1]);
+        $baby = Section::create(['school_id' => $this->school->id, 'name' => 'Baby Class', 'status' => 1]);
+        $this->makeSubject($nursery, $baby, 'Play');
+
         Teacherlink::create([
             'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
             'standardLink_id' => $this->standardLink($primary, $this->p1a),
@@ -123,15 +127,15 @@ class ExamSetServiceTest extends TestCase
         $service = app(ExamSetService::class);
 
         $first = $service->create($this->school, $this->term, [$this->eot->id, $this->bot->id], null, $this->admin);
-        $this->assertSame(6, $first['created'], 'three subjects x two types');
+        $this->assertSame(8, $first['created'], 'four subject rows x two types');
         $this->assertSame(0, $first['skipped']);
-        $this->assertSame(2, $first['sections']);
-        $this->assertSame(6, Exam::where('school_id', $this->school->id)->count());
+        $this->assertSame(3, $first['sections']);
+        $this->assertSame(8, Exam::where('school_id', $this->school->id)->count());
 
         $second = $service->create($this->school, $this->term, [$this->eot->id, $this->bot->id], null, $this->admin);
         $this->assertSame(0, $second['created']);
-        $this->assertSame(6, $second['skipped']);
-        $this->assertSame(6, Exam::where('school_id', $this->school->id)->count());
+        $this->assertSame(8, $second['skipped']);
+        $this->assertSame(8, Exam::where('school_id', $this->school->id)->count());
     }
 
     public function test_exams_are_created_for_the_subject_teacher(): void
@@ -177,20 +181,17 @@ class ExamSetServiceTest extends TestCase
             ->post('/teacher/exam/sets', [
                 'academic_term_id' => $this->term->id,
                 'type_ids' => [$this->eot->id],
-                'section_ids' => [$this->p1a->id, $this->p1b->id],
+                'standard_ids' => [\App\Models\Standard::where('school_id', $this->school->id)->where('name', 'Primary')->value('id')],
             ])
             ->assertRedirect(route('teacher.exam.marks'));
 
         $this->assertSame(
             2,
             Exam::where('school_id', $this->school->id)->where('section_id', $this->p1a->id)->count(),
-            'their own class: two subjects',
+            'their class\'s streams: three subject rows',
         );
-        $this->assertSame(
-            0,
-            Exam::where('school_id', $this->school->id)->where('section_id', $this->p1b->id)->count(),
-            'a class they do not head is ignored',
-        );
+        // The class is the unit: its sibling stream is included, nothing outside it.
+        $this->assertSame(3, Exam::where('school_id', $this->school->id)->count());
     }
 
     public function test_admin_empty_state_points_at_the_exam_set(): void

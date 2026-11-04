@@ -41,11 +41,11 @@ class ExamSetController extends Controller
                 ->get(),
             'types' => ExamType::visibleToSchool($school->id)->orderBy('id')->get(),
             'defaultTypeIds' => $this->defaultTypeIds($school),
-            'sections' => $this->sections($user, $school, $year, $isTeacher),
+            'classes' => $this->classes($user, $school, $year, $isTeacher),
             'isTeacher' => $isTeacher,
             'layout' => $isTeacher ? 'layouts.teacher.layout' : 'layouts.admin.layout',
             'action' => $isTeacher ? route('teacher.exam-sets.store') : route('admin.exam-sets.store'),
-            'selectedTermId' => (int) $request->get('term', 0),
+            'selectedTermId' => (int) $request->get('term', $this->currentTermId($school)),
         ]);
     }
 
@@ -58,8 +58,8 @@ class ExamSetController extends Controller
             'type_ids' => ['required', 'array', 'min:1'],
             'type_ids.*' => ['integer'],
             'whole_school' => ['nullable', 'boolean'],
-            'section_ids' => ['nullable', 'array'],
-            'section_ids.*' => ['integer'],
+            'standard_ids' => ['nullable', 'array'],
+            'standard_ids.*' => ['integer'],
         ]);
 
         $term = AcademicTerm::query()
@@ -76,17 +76,17 @@ class ExamSetController extends Controller
             return back()->withInput()->withErrors(['type_ids' => 'Choose at least one exam type.']);
         }
 
-        $allowed = $this->sections($user, $school, $year, $isTeacher)->pluck('id')->all();
+        $allowed = $this->classes($user, $school, $year, $isTeacher)->pluck('id')->all();
         $wholeSchool = ! $isTeacher && (bool) ($data['whole_school'] ?? false);
-        $sectionIds = $wholeSchool
+        $standardIds = $wholeSchool
             ? null
-            : array_values(array_intersect(array_map('intval', $data['section_ids'] ?? []), $allowed));
+            : array_values(array_intersect(array_map('intval', $data['standard_ids'] ?? []), $allowed));
 
-        if (! $wholeSchool && $sectionIds === []) {
-            return back()->withInput()->withErrors(['section_ids' => 'Choose at least one class, or the whole school.']);
+        if (! $wholeSchool && $standardIds === []) {
+            return back()->withInput()->withErrors(['standard_ids' => 'Choose at least one class, or the whole school.']);
         }
 
-        $result = $this->sets->create($school, $term, $typeIds, $sectionIds, $user);
+        $result = $this->sets->create($school, $term, $typeIds, $standardIds, $user);
 
         $message = $result['created'].' exam'.($result['created'] === 1 ? '' : 's').' created';
         if ($result['skipped'] > 0) {
@@ -112,18 +112,36 @@ class ExamSetController extends Controller
         return [$user, $school, $year, (int) $user->usergroup_id === 5];
     }
 
-    private function sections(User $user, School $school, ?AcademicYear $year, bool $isTeacher)
+    private function classes(User $user, School $school, ?AcademicYear $year, bool $isTeacher)
     {
-        $query = Section::query()
+        $query = \App\Models\Standard::query()
             ->where('school_id', $school->id)
             ->where('status', 1);
 
         if ($isTeacher) {
-            $ids = $year ? $this->authorization->sectionIdsForClassTeacher($user, (int) $school->id, (int) $year->id) : [];
-            $query->whereIn('id', $ids);
+            $sectionIds = $year ? $this->authorization->sectionIdsForClassTeacher($user, (int) $school->id, (int) $year->id) : [];
+            $standardIds = $sectionIds === [] ? [] : \Illuminate\Support\Facades\DB::table('standards_link')
+                ->where('school_id', $school->id)
+                ->whereIn('section_id', $sectionIds)
+                ->pluck('standard_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->all();
+            $query->whereIn('id', $standardIds);
         }
 
-        return $query->orderBy('name')->get();
+        return $query->orderBy('order')->orderBy('name')->get();
+    }
+
+    private function currentTermId(School $school): int
+    {
+        $current = AcademicTerm::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'current')
+            ->orderBy('starts_on')
+            ->value('id');
+
+        return (int) ($current ?? AcademicTerm::query()->where('school_id', $school->id)->orderBy('starts_on')->value('id'));
     }
 
     /** @return list<int> */

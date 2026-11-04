@@ -19,12 +19,13 @@ class ExamSetService
 {
     /**
      * @param  list<int>  $typeIds
-     * @param  list<int>|null  $sectionIds  null = the whole school
+     * @param  list<int>|null  $standardIds  classes; null = the whole school
      * @return array{created:int, skipped:int, sections:int, subjects:int}
      */
-    public function create(School $school, AcademicTerm $term, array $typeIds, ?array $sectionIds, User $actor): array
+    public function create(School $school, AcademicTerm $term, array $typeIds, ?array $standardIds, User $actor): array
     {
         $typeIds = array_values(array_unique(array_map('intval', $typeIds)));
+        $sectionIds = $this->sectionIdsForClasses($school, $standardIds);
         $subjects = $this->subjectsInScope($school, $term, $sectionIds);
 
         $created = 0;
@@ -72,6 +73,35 @@ class ExamSetService
             'sections' => $subjects->pluck('section_id')->unique()->count(),
             'subjects' => $subjects->count(),
         ];
+    }
+
+    /**
+     * A pick is a class (standard), never a stream: expand each class to the
+     * streams it actually has. A class with no streams keeps its one section.
+     *
+     * @param  list<int>|null  $standardIds  null = every class in the school
+     * @return list<int>|null  null = every section
+     */
+    public function sectionIdsForClasses(School $school, ?array $standardIds): ?array
+    {
+        if ($standardIds === null) {
+            return null;
+        }
+
+        $standardIds = array_values(array_unique(array_map('intval', $standardIds)));
+
+        if ($standardIds === []) {
+            return [];
+        }
+
+        return \Illuminate\Support\Facades\DB::table('standards_link')
+            ->where('school_id', $school->id)
+            ->whereIn('standard_id', $standardIds)
+            ->pluck('section_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
