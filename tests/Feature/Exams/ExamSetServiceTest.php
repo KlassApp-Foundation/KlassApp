@@ -170,6 +170,67 @@ class ExamSetServiceTest extends TestCase
             ->assertSee('checked data-testid="exam-set-whole-school', false);
     }
 
+    public function test_classes_are_chipped_in_level_order_with_streams_behind_details(): void
+    {
+        // Baby Class sits in the nursery level (order 1), Primary One in primary (order 2).
+        $nursery = Standard::create(['school_id' => $this->school->id, 'name' => 'nursery', 'order' => 1, 'status' => 1]);
+        DB::table('standards_link')->insert([
+            'school_id' => $this->school->id, 'academic_year_id' => $this->year->id,
+            'standard_id' => $nursery->id, 'section_id' => $this->baby->id,
+            'status' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $html = $this->actingAs($this->admin)
+            ->get('/admin/exams/sets/create')
+            ->assertOk()
+            ->getContent();
+
+        // One <details> chip per class; the old flat stream list is gone.
+        $this->assertSame(2, substr_count($html, 'class="exam-set-class"'), 'Primary One + Baby Class');
+        $this->assertStringNotContainsString('<select name="standard_ids[]"', $html);
+
+        $nurseryAt = strpos($html, '>Nursery<');
+        $primaryAt = strpos($html, '>Primary<');
+        $this->assertNotFalse($nurseryAt);
+        $this->assertNotFalse($primaryAt);
+        $this->assertLessThan($primaryAt, $nurseryAt, 'levels render in standards.order');
+        $this->assertLessThan(strpos($html, 'Primary One'), strpos($html, 'Baby Class'));
+
+        // Primary One's streams live inside its own disclosure, closed by default.
+        $this->assertMatchesRegularExpression(
+            '/<details[^>]*data-testid="exam-set-class-'.$this->base->id.'"[^>]*>.*?data-testid="exam-set-streams-'.$this->base->id.'".*?<span>E<\/span>.*?<span>W<\/span>.*?<\/details>/s',
+            $html
+        );
+        $this->assertStringNotContainsString('data-testid="exam-set-class-'.$this->base->id.'" open', $html);
+    }
+
+    public function test_a_class_teacher_only_sees_and_picks_streams_of_their_own_class(): void
+    {
+        $this->base->forceFill(['class_teacher_id' => $this->mathTeacher->id])->save();
+        $babyStream = Section::create(['school_id' => $this->school->id, 'name' => 'Baby Class E', 'status' => 1]);
+
+        $this->actingAs($this->mathTeacher)
+            ->get('/teacher/exam/sets/create')
+            ->assertOk()
+            ->assertSee('2 streams')
+            ->assertSee('data-testid="exam-set-stream-pick-'.$this->streamE->id.'"', false)
+            ->assertDontSee('Baby Class E');
+
+        $this->actingAs($this->mathTeacher)
+            ->post('/teacher/exam/sets', [
+                'academic_term_id' => $this->term->id,
+                'type_ids' => [$this->eot->id],
+                'standard_ids' => [$this->base->id],
+                'stream_ids' => [$this->streamE->id, $babyStream->id],
+            ])
+            ->assertRedirect(route('teacher.exam.marks'));
+
+        $exams = fn (Section $section) => Exam::where('school_id', $this->school->id)->where('section_id', $section->id)->count();
+        $this->assertSame(2, $exams($this->base), 'their class: 2 subjects');
+        $this->assertSame(2, $exams($this->streamE), 'their class stream: 2 subjects');
+        $this->assertSame(0, $exams($babyStream), 'another class stream is refused');
+    }
+
     private function makeUser(int $group, string $name): User
     {
         $user = User::create([

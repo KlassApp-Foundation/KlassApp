@@ -36,12 +36,12 @@
 
             <fieldset class="mb-5">
                 <legend class="form-label">Exam types</legend>
-                <div class="flex flex-wrap gap-4" data-testid="exam-set-types">
+                <div class="exam-set-types" data-testid="exam-set-types">
                     @foreach($types as $type)
-                        <label class="inline-flex items-center gap-2 text-sm">
+                        <label class="exam-set-type">
                             <input type="checkbox" name="type_ids[]" value="{{ $type->id }}"
                                    @checked(in_array($type->id, old('type_ids', $defaultTypeIds)))>
-                            <span>{{ $type->name }}@if($type->isShared()) <span class="text-xs" style="color: var(--d-muted);">(shared)</span>@endif</span>
+                            <span>{{ $type->name }}@if($type->isShared()) <span class="exam-set-hint">(shared)</span>@endif</span>
                         </label>
                     @endforeach
                 </div>
@@ -50,41 +50,69 @@
 
             @unless($isTeacher)
                 <div class="mb-3">
-                    <label class="inline-flex items-center gap-2 text-sm">
+                    <label class="exam-set-type">
                         <input type="checkbox" name="whole_school" value="1" @checked(old('whole_school', true)) data-testid="exam-set-whole-school">
-                        <span>Whole school (every class and stream)</span>
+                        <span>Whole school (every class)</span>
                     </label>
+                    <p class="exam-set-hint mt-1">Class picks below are used only when this is unticked. Streams are never included unless you open a class and pick them.</p>
                 </div>
             @endunless
 
-            <div class="mb-5">
-                <label class="form-label" for="exam-set-classes">Classes</label>
-                <select name="standard_ids[]" id="exam-set-classes" class="ds-form-input w-full" multiple size="10" data-testid="exam-set-classes">
-                    @foreach($classes as $class)
-                        <option value="{{ $class->id }}" @selected(in_array($class->id, (array) old('standard_ids', [])))>{{ $class->name }}</option>
-                    @endforeach
-                </select>
-                <p class="text-xs mt-1" style="color: var(--d-muted);">Each class creates one exam per subject, on the class itself. Streams are not included unless you pick them below.</p>
+            <fieldset class="mb-5" data-testid="exam-set-classes">
+                <legend class="form-label">Classes</legend>
+                <p class="exam-set-hint">Each class creates one exam per subject, on the class itself. Open a class to pick its streams too.</p>
+
+                @forelse($classGroups as $group)
+                    <div class="exam-set-level" data-testid="exam-set-level-{{ $group['key'] }}">
+                        <p class="exam-set-level__label">{{ $group['label'] }}</p>
+                        <div class="exam-set-chips">
+                            @foreach($group['classes'] as $class)
+                                @php
+                                    $oldStreams = array_map('intval', (array) old('stream_ids', []));
+                                    $openForOldPicks = collect($class['streams'])->pluck('id')->intersect($oldStreams)->isNotEmpty();
+                                @endphp
+                                <details class="exam-set-class" data-testid="exam-set-class-{{ $class['id'] }}" @if($openForOldPicks) open @endif>
+                                    <summary class="exam-set-class__summary">
+                                        <span class="exam-set-class__pick">
+                                            <input type="checkbox" name="standard_ids[]" value="{{ $class['id'] }}"
+                                                   @checked(in_array($class['id'], (array) old('standard_ids', [])))
+                                                   data-testid="exam-set-class-pick-{{ $class['id'] }}">
+                                            <span class="exam-set-class__name">{{ $class['name'] }}</span>
+                                        </span>
+                                        @if($class['streams'] !== [])
+                                            <span class="exam-set-class__count">{{ count($class['streams']) }} streams</span>
+                                        @endif
+                                    </summary>
+                                    <div class="exam-set-class__body">
+                                        @if($class['streams'] === [])
+                                            <p class="exam-set-hint">This class has no streams.</p>
+                                        @else
+                                            <div class="exam-set-streams" data-testid="exam-set-streams-{{ $class['id'] }}">
+                                                @foreach($class['streams'] as $stream)
+                                                    <label class="exam-set-stream">
+                                                        <input type="checkbox" name="stream_ids[]" value="{{ $stream['id'] }}"
+                                                               @checked(in_array($stream['id'], $oldStreams))
+                                                               data-testid="exam-set-stream-pick-{{ $stream['id'] }}">
+                                                        <span>{{ $stream['label'] }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                            <p class="exam-set-hint">A picked stream gets its own exam and its own teacher.</p>
+                                        @endif
+                                    </div>
+                                </details>
+                            @endforeach
+                        </div>
+                    </div>
+                @empty
+                    <p class="exam-set-hint" data-testid="exam-set-no-classes">No classes yet. Add a class first, then come back.</p>
+                @endforelse
+
                 @if($isTeacher)
-                    <p class="text-xs mt-1" style="color: var(--d-muted);">Only the classes you are class teacher of are listed.</p>
+                    <p class="exam-set-hint">Only the classes you are class teacher of are listed.</p>
                 @endif
                 @error('standard_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-            </div>
-
-            @if($streams->isNotEmpty())
-                <details class="mb-5">
-                    <summary class="text-sm" style="cursor:pointer;">Pick specific streams instead (optional)</summary>
-                    <div class="mt-3 grid grid-cols-2 gap-2" data-testid="exam-set-streams">
-                        @foreach($streams as $stream)
-                            <label class="inline-flex items-center gap-2 text-sm">
-                                <input type="checkbox" name="stream_ids[]" value="{{ $stream->id }}" @checked(in_array($stream->id, (array) old('stream_ids', [])))>
-                                <span>{{ $stream->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                    <p class="text-xs mt-2" style="color: var(--d-muted);">A picked stream gets its own exam and its own teacher.</p>
-                </details>
-            @endif
+            </fieldset>
 
             <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-set-submit">Create exam set</button>
         </form>

@@ -9,6 +9,11 @@ use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Exam types are shared-or-owned: the catalog rows (school_id NULL) every school
+ * sees, plus the rows a school adds for itself. The page lists both, toggles a
+ * type's report-total contribution per school, and creates the school's own.
+ */
 class ExamTypeController extends Controller
 {
     public function index()
@@ -33,16 +38,32 @@ class ExamTypeController extends Controller
     {
         $schoolId = Auth::user()->school_id;
         $school = School::findOrFail($schoolId);
+        $visibleIds = $this->visibleTypeIds((int) $schoolId);
 
-        $prefs = $request->input('contributes', []);
-        $school->exam_type_preferences = $prefs;
+        // Only this school's types are toggles it may set: posting another
+        // school's id leaves no trace in this school's preferences.
+        $prefs = [];
+        foreach ((array) $request->input('contributes', []) as $typeId => $on) {
+            $typeId = (int) $typeId;
+            if (in_array($typeId, $visibleIds, true)) {
+                $prefs[(string) $typeId] = filter_var($on, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+            }
+        }
+        $school->exam_type_preferences = $prefs ?: null;
 
         $composition = [];
         foreach ((array) $request->input('include', []) as $typeId => $on) {
-            $composition[(string) (int) $typeId] = ['include' => (string) $on === '1', 'weight' => null];
+            $typeId = (int) $typeId;
+            if (! in_array($typeId, $visibleIds, true)) {
+                continue;
+            }
+            $composition[(string) $typeId] = ['include' => (string) $on === '1', 'weight' => null];
         }
         foreach ((array) $request->input('weight', []) as $typeId => $weight) {
-            $key = (string) (int) $typeId;
+            $typeId = (int) $typeId;
+            if (! in_array($typeId, $visibleIds, true)) {
+                continue;
+            }
             $weight = trim((string) $weight);
             if ($weight === '') {
                 continue;
@@ -50,10 +71,13 @@ class ExamTypeController extends Controller
             if (! is_numeric($weight) || (float) $weight <= 0 || (float) $weight > 100) {
                 continue;
             }
-            $composition[$key] = ($composition[$key] ?? ['include' => true, 'weight' => null]) + ['weight' => (float) $weight];
+            $key = (string) $typeId;
+            $composition[$key] = ($composition[$key] ?? ['include' => true, 'weight' => null]);
+            $composition[$key]['weight'] = (float) $weight;
         }
         foreach ($composition as $key => $settings) {
-            $composition[$key] = ['include' => true, 'weight' => null] + $settings;
+            // Right-hand side fills gaps only: `+` keeps include/weight already set.
+            $composition[$key] = $settings + ['include' => true, 'weight' => null];
         }
         $school->report_composition = $composition ?: null;
 
@@ -61,6 +85,54 @@ class ExamTypeController extends Controller
 
         return redirect()->route('admin.settings.exam-types')
             ->with('successmessage', 'Exam type preferences updated.');
+    }
+
+    /**
+     * Add an exam type that belongs to this school only: shared rows stay
+     * untouched and no other school sees the new row.
+     */
+    public function store(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $school = School::findOrFail($schoolId);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            'code' => ['required', 'string', 'max:10'],
+            'contributes_to_report_total' => ['nullable', 'boolean'],
+        ]);
+
+        $name = trim($data['name']);
+        $code = strtoupper(trim($data['code']));
+
+        $taken = ExamType::visibleToSchool($schoolId)
+            ->where(function ($query) use ($name, $code) {
+                $query->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                    ->orWhereRaw('UPPER(code) = ?', [$code]);
+            })
+            ->exists();
+
+        if ($taken) {
+            return back()->withInput()->withErrors([
+                'name' => 'An exam type called "'.$name.'" or coded '.$code.' already exists for your school.',
+            ]);
+        }
+
+        ExamType::create([
+            'school_id' => $school->id,
+            'name' => $name,
+            'code' => $code,
+            'contributes_to_report_total' => $request->boolean('contributes_to_report_total'),
+        ]);
+
+        return redirect()->route('admin.settings.exam-types')
+            ->with('successmessage', $name.' added to your exam types. Only your school sees it.');
+    }
+
+    /** @return list<int> */
+    private function visibleTypeIds(int $schoolId): array
+    {
+        return ExamType::visibleToSchool($schoolId)->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     public function updateProfile(Request $request)
