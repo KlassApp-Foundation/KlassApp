@@ -9,7 +9,8 @@ use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
 use App\Models\Section;
 use App\Models\Standard;
-use Illuminate\Http\Request;
+use App\Services\FeeStructureService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -36,9 +37,13 @@ class FeesCategoryController extends Controller
         //            ->get();
         //            dd($region);
         $school_id = Auth::user()->school_id;
-        $fees = FeesCategories::where("school_id", $school_id)->get();
+        $structure = app(FeeStructureService::class)->structure((int) $school_id);
+        $fees = $structure['rows'];
+        $classTotals = $structure['totals'];
+
         return view("admin.school.fees.index", compact(
-            "fees"
+            "fees",
+            "classTotals"
         ));
     }
 
@@ -48,7 +53,10 @@ class FeesCategoryController extends Controller
     public function create()
     {
         //
-        return view("admin.school.fees.create", $this->formatData());
+        return view("admin.school.fees.create", array_merge($this->formatData(), [
+            'appliesTo' => 'whole_school',
+            'selectedSections' => [],
+        ]));
     }
 
     /**
@@ -59,9 +67,32 @@ class FeesCategoryController extends Controller
         //
         
         $validated = $request->validated();
-        // dd($validated);
-        FeesCategories::create($validated);
-        return redirect()->route("admin.fees-categories")->with("successmessage", "Added Fee Category!");
+        $schoolId = (int) Auth::user()->school_id;
+        $wholeSchool = ($validated['applies_to'] ?? 'whole_school') !== 'classes';
+
+        $fee = DB::transaction(function () use ($validated, $schoolId, $wholeSchool) {
+            $fee = FeesCategories::create([
+                'school_id' => $schoolId,
+                'name' => $validated['name'],
+                'amount' => $validated['amount'] ?? 0,
+                'fee_type' => $validated['fee_type'] ?? 'tuition',
+                'duration' => $validated['duration'] ?? FeesCategories::DURATION_TERMLY,
+                'academic_term_id' => $validated['academic_term_id'] ?? null,
+                'standard_id' => null,
+                'section_id' => null,
+                'applies_school_wide' => $wholeSchool,
+            ]);
+
+            app(FeeStructureService::class)->assignClasses(
+                $fee,
+                $wholeSchool,
+                $validated['section_ids'] ?? []
+            );
+
+            return $fee;
+        });
+
+        return $this->saved('Added Fee Category!', $fee);
     }
 
     /**
@@ -84,9 +115,15 @@ class FeesCategoryController extends Controller
 
         //
         // dd($fee);
+        $state = app(FeeStructureService::class)->editState($fee);
+
         return view("admin.school.fees.create", array_merge(
             $this->formatData(),
-            ["fee" => $fee]
+            [
+                "fee" => $fee,
+                'appliesTo' => $state['applies_to'],
+                'selectedSections' => $state['section_ids'],
+            ]
             ));
 
     }
@@ -102,10 +139,36 @@ class FeesCategoryController extends Controller
             ->where("id", $fee)
             ->firstOrFail();
 
-        $category->update($validated);
+        $attributes = [];
+        foreach (['name', 'amount', 'fee_type', 'duration', 'academic_term_id'] as $key) {
+            if (array_key_exists($key, $validated)) {
+                $attributes[$key] = $validated[$key];
+            }
+        }
+        if ($attributes !== []) {
+            $category->update($attributes);
+        }
 
-        return redirect()->route("admin.fees-categories")
-                        ->with("successmessage", "Updated Fee Category with Id $fee !");
+        if (array_key_exists('applies_to', $validated)) {
+            app(FeeStructureService::class)->assignClasses(
+                $category,
+                $validated['applies_to'] !== 'classes',
+                $validated['section_ids'] ?? []
+            );
+        }
+
+        return $this->saved('Updated Fee Category with Id '.$fee.' !', $category);
+    }
+
+    private function saved(string $message, FeesCategories $fee): RedirectResponse
+    {
+        $redirect = redirect()->route('admin.fees-categories')->with('successmessage', $message);
+        $warning = app(FeeStructureService::class)->sameNameStackWarning($fee->fresh() ?? $fee);
+        if ($warning !== null) {
+            $redirect->with('warningmessage', $warning);
+        }
+
+        return $redirect;
     }
 
     /**

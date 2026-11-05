@@ -180,14 +180,33 @@ class FeesStep extends AbstractOnboardingStep
                 : ['create', "{$missing} row(s) would be created"];
         }
 
-        // Whole school: one row per grading-tier Standard.
-        $missing = $standards->filter(fn (Standard $s) => ! $this->feeKeyExists($school, $s, null, $name, $academicTermId))->count();
+        if ($standards->isEmpty()) {
+            return ['skip', 'no classes yet — will refuse'];
+        }
 
-        return $missing === 0
-            ? ['already_present', 'rows exist for every class']
-            : ($standards->isEmpty()
-                ? ['skip', 'no classes yet — will refuse']
-                : ['create', "{$missing} row(s) would be created"]);
+        $wide = FeesCategories::where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', true)
+            ->whereNull('section_id');
+        $academicTermId === null
+            ? $wide->whereNull('academic_term_id')
+            : $wide->where('academic_term_id', $academicTermId);
+
+        $legacy = FeesCategories::where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', false)
+            ->whereNull('section_id')
+            ->whereNotNull('standard_id');
+        $academicTermId === null
+            ? $legacy->whereNull('academic_term_id')
+            : $legacy->where('academic_term_id', $academicTermId);
+
+        $covered = $legacy->pluck('standard_id')->unique()->count();
+        if ($wide->exists() || $covered >= $standards->count()) {
+            return ['already_present', 'one fee covers every class'];
+        }
+
+        return ['create', '1 row would be created'];
     }
 
     private function feeKeyExists(School $school, ?Standard $standard, mixed $sectionId, string $name, ?int $academicTermId = null): bool

@@ -276,8 +276,11 @@ class ParentPortalService
     public function feeSummary(User $student, int $schoolId): array
     {
         $fees = app(StudentFeeResolver::class);
-        // One balance for the term in progress. A fee with no term still counts.
+        // One balance for the term in progress. A fee with no term still counts,
+        // except a yearly fee, which counts only in its due term.
         $categories = $fees->forStudent($student, $schoolId, $fees->currentTermId($schoolId));
+        // The year total includes that yearly fee once, not once per term.
+        $yearTotal = (float) $fees->forYear($student, $schoolId)->sum(fn ($fee) => (float) $fee->amount);
 
         $totalFees = (float) $categories->sum('amount');
         // fee_payments.user_id is the student user id (see FeePayment::student()).
@@ -314,6 +317,7 @@ class ParentPortalService
             'total_fees' => $totalFees,
             'total_paid' => $totalPaid,
             'total_balance' => $totalBalance,
+            'year_total' => $yearTotal,
             'categories' => $categoryRows,
             'terms' => $terms,
             'payments' => $payments,
