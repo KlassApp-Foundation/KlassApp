@@ -4,6 +4,8 @@
  */
 namespace App\Traits;
 
+use App\Services\TeacherAccountInviteService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
@@ -596,7 +598,7 @@ trait RegisterUser
      * @param int $usergroup_id Teacher role id
      * @return \App\Models\User Newly created teacher
      */
-    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id)
+    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id, bool $adminBulk = false)
     {
         \DB::beginTransaction();
         try
@@ -610,9 +612,15 @@ trait RegisterUser
                 $user->name = $data->name;
             }
 // dd($data);
-            $provisioning = UserProvisioning::randomPasswordAttributes();
-            $user->password                 = $provisioning['password'];
-            $user->is_reset                 = $provisioning['is_reset'];
+            if ((int) $usergroup_id === 5) {
+                $user->password = null;
+                $user->is_reset = 0;
+                $user->status = 'active';
+            } else {
+                $provisioning = UserProvisioning::randomPasswordAttributes();
+                $user->password = $provisioning['password'];
+                $user->is_reset = $provisioning['is_reset'];
+            }
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
@@ -764,6 +772,22 @@ trait RegisterUser
             }
 
             \DB::commit();
+
+            if ((int) $usergroup_id === 5) {
+                $actor = Auth::user();
+                $actor = $actor instanceof User && (int) $actor->school_id === (int) $user->school_id ? $actor : null;
+                app(TeacherAccountInviteService::class)->inviteIfNeeded(
+                    $user,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    $adminBulk
+                        ? \App\Services\TeacherInviteLinkService::CONTEXT_ADMIN_BULK
+                        : \App\Services\TeacherInviteLinkService::CONTEXT_INTERACTIVE,
+                );
+            }
+
             return $user;
         }
         catch(Exception $e)

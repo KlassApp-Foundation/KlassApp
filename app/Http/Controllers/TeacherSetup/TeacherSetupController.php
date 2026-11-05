@@ -71,7 +71,7 @@ class TeacherSetupController extends Controller
 
         $teacher->forceFill([
             'password' => Hash::make($validated['password']),
-            'is_reset' => 1,
+            'is_reset' => 0,
             'email_verified' => 1,
             'status' => 'active',
         ])->save();

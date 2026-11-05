@@ -13,7 +13,9 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\OnboardingEngine;
 use App\Services\SchoolCategorySeeder;
+use App\Mail\TeacherInviteLinkMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -86,9 +88,11 @@ class SaveTeachersTest extends TestCase
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
         ]);
+
+        Mail::fake();
     }
 
-    public function test_creates_teacher_user_with_random_password(): void
+    public function test_creates_teacher_without_a_password_and_sends_a_setup_link(): void
     {
         $engine = app(OnboardingEngine::class);
 
@@ -103,13 +107,12 @@ class SaveTeachersTest extends TestCase
         // users.name stays the human name from create — observer must not inject digits
         $this->assertSame('John Teacher', $teacher->name);
         $this->assertDoesNotMatchRegularExpression('/\d/', $teacher->name);
-        // Random password — NOT 'password'
-        $this->assertFalse(\Hash::check('password', $teacher->password));
-        // Password is a real bcrypt hash (60 chars)
-        $this->assertEquals(60, strlen($teacher->password));
+        $this->assertNull($teacher->password);
+        $this->assertFalse(\Auth::attempt(['email' => 'john@test.sch.ug', 'password' => 'password']));
+        Mail::assertQueued(TeacherInviteLinkMail::class);
     }
 
-    public function test_sets_is_reset_on_created_teacher(): void
+    public function test_created_teacher_is_not_flagged_for_a_password_reset(): void
     {
         $engine = app(OnboardingEngine::class);
 
@@ -118,7 +121,7 @@ class SaveTeachersTest extends TestCase
         ]);
 
         $teacher = User::where('email', 'reset@test.sch.ug')->first();
-        $this->assertEquals(1, $teacher->is_reset);
+        $this->assertSame(0, (int) $teacher->is_reset);
     }
 
     public function test_creates_userprofile_for_teacher(): void

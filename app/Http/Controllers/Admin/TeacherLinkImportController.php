@@ -10,12 +10,11 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
-use App\Support\UserProvisioning;
+use App\Services\TeacherAccountInviteService;
 use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class TeacherLinkImportController extends Controller
@@ -94,19 +93,19 @@ class TeacherLinkImportController extends Controller
                 $teacher = $this->findExistingTeacher($schoolId, $teacherName, $phone);
 
                 if (!$teacher) {
-                    $provisioning = UserProvisioning::randomPasswordAttributes();
                     $teacher = User::create([
                         'school_id' => $schoolId,
                         'usergroup_id' => 5,
                         'name' => $teacherName,
                         'email' => Str::slug($teacherName) . '.' . $schoolId . '@school.edu',
-                        // 'password' => Hash::make('password'), // For testing locally
-                        'password' => $provisioning['password'],
-                        'is_reset' => $provisioning['is_reset'],
+                        'password' => null,
+                        'is_reset' => 0,
                         'status' => 'active',
                         'email_verified' => 1,
                         'mobile_no' => $phone ?: null,
                     ]);
+
+                    app(TeacherAccountInviteService::class)->inviteIfNeeded($teacher, Auth::user());
 
                     Userprofile::create([
                         'school_id'    => $schoolId,

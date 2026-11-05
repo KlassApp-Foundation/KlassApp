@@ -99,6 +99,12 @@ class EmailVerificationCodeController extends Controller
 
     private function continueIntoOnboarding(Request $request, User $user)
     {
+        if (\App\Support\PendingPassword::isUnset($user)) {
+            $request->session()->forget('pending_verification_user_id');
+
+            return redirect('/login')->with('failmessage', 'This account has not finished setup. Use the link in your email to set a password.');
+        }
+
         $request->session()->forget('pending_verification_user_id');
         Auth::login($user);
 

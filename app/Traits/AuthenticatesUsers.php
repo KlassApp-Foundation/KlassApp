@@ -202,7 +202,12 @@ trait AuthenticatesUsers
             return false;
         }
 
-        if (!Hash::check((string) $request->input('password'), (string) $user->password)) {
+        $plain = (string) $request->input('password');
+        if ($plain === '' || \App\Support\PendingPassword::isUnset($user)) {
+            return false;
+        }
+
+        if (!Hash::check($plain, (string) $user->password)) {
             return false;
         }
 

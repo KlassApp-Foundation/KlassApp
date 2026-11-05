@@ -15,6 +15,15 @@ Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `curs
 - **Status:** Draft pull request against `main`. Not merged. Production untouched.
 - **Follow-up:** The register does not send the old per-absence WhatsApp/push message; it writes the rows that the parent portal reads. The old `/teacher/attendance/add` form stays for reasons and exports.
 
+## Session: 2026-11-04 — T-091 teacher setup invites (stacked on #1239)
+
+- **Work:** Teachers created with a real email get a setup link from the existing `TeacherInviteLinkService`. No password is stored. A placeholder address (`teacher.<random>@<slug>.test`, `*.local`, or the link-import `@school.edu` address) creates the row and sends nothing. Resend is on the teacher list and profile for teachers who have never signed in. Assigning a never-signed-in teacher as class teacher sends the setup link. A teacher who has signed in still gets the class notice.
+- **Files:** `TeacherAccountInviteService`, onboarding `saveTeachers`, `CreateTeacher`, class-teacher upload, `ClassTeacherAssignmentService::notifyExistingTeacher`, teacher list and profile, `ClassTeacherSetupController` for a newly approved teacher.
+- **Decision:** Do not change `TeacherInviteLinkService` or its rate limits. This branch stacks on `cursor/marks-phase-1-class-teacher-v2` (#1239). Merge that pull request first.
+- **Status:** Draft pull request. Not merged. Production untouched.
+- **Follow-up (2026-11-04):** Signed-in admin bulk imports are not under the 30-per-hour issuing cap. Guest and single resend paths still are. An account with a null password cannot sign in or set a password through forgot-password; the reset path resends the setup link. Other staff stay on random passwords (follow-up, out of scope).
+- **Follow-up:** `/teacher/setup` saves the chosen password with `is_reset=0`, so the next password login opens the teacher dashboard. Parent and student `is_reset` stay as they are (T-094).
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |
@@ -658,6 +667,33 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - A failed student-import row shown to the admin is plain text. Exception text, SQL, and the stack go to the log with the row number and school id. Bound values are not added to that log.
 - Import docs that described only a 3-digit school plus a 4-digit sequence, or only 7 digits, now state both lengths. The 2026-10-26 measurement in `docs/product/student-import.md` stays as the run from before this change. `KLS00110000` in that measurement is the rejected string, not an ID.
 - Local `bash scripts/test-guard.sh` with `TEST_GUARD_PROCESSES=4`: 3200 tests, 0 failures, 0 errors, 9 skipped. Not merged. No production deploy. Synthetic data only.
+
+## Current Status: November 4, 2026 — **Password reset code send OPEN [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267)**
+
+- A blank `MAIL_FROM_ADDRESS` left the reset email with no From header. The log mailer threw `An email must have a "From" or a "Sender" header.` and `/password/reset` showed the generic sentence. A valid from address on that same mailer already sent, including a `.local` parent address and a teacher with no school.
+- The code is saved on its own, then sent from `connect@klassapp.xyz` when the configured address is blank or not an email. Failures log the exception class and message, with the code redacted. An imported teacher, parent, and student can request a code, set a password, and sign in. A null password still gets the setup link from #1262.
+- **Tests:** PHP 8.4.27. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3247 tests, 0 failures, 0 errors, 9 skipped.
+- **Status:** DRAFT [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267), branch `cursor/password-reset-code-send-a7c1`, base `cursor/t091-teacher-email-invite-6d9a` (#1262). Not merged. No deploy. No production data.
+
+## Current Status: November 3, 2026 — **Marks Phase 1 owner decisions OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
+
+- Uganda schools are offered the Uganda class levels. A school in another country types its own level name. Toshi matches a class name with case, spaces, and dots ignored (`p7`, `P7`, `P 7`, `P.7`), and does not use a partial match. An invite for an email that belongs to another school gets the same response as an unknown email. A signed-out class-teacher change still looks up the teacher in the target school and does not save a teacher from another school.
+- **Tests:** PHP 8.4.27, sqlite memory. Class-teacher and marks files together: 75 tests, 457 assertions, 0 failures. Full test-guard was not run.
+- **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
+
+## Current Status: November 2, 2026 — **Marks Phase 1 review follow-up OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
+
+- Accepting an invite is capped at 10 per hour for that link and 200 per hour for the school. A token that matches no invite is limited per IP. Issuing an invite uses the signed-in admin's school, and a `school_id` in the request body is ignored. Clearing or changing the class teacher on the stream form revokes a pending invite and writes one `class_teacher` log. The pending-invites list hides revoked invites. A missing stream redirects straight to `/admin/classes` with the error still visible. Toshi's add-teacher stores no password. Claiming an invite with no class creates the teacher and assigns no class.
+- Hard-coded Ugandan class levels offered to every school, and Toshi's exact class-name match, are unchanged pending a product decision.
+- **Tests:** the class-teacher files on PHP 8.4.27, sqlite memory: 56 tests, 310 assertions, 0 failures. Full `scripts/test-guard.sh` was not run.
+- **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
+
+## Current Status: October 26, 2026 — **Marks Phase 1 class teacher assignment OPEN (stacked on [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236))**
+
+- `ClassTeacherAssignmentService` is the one assignment path: pick an existing teacher, invite a new one, or replace the current one, with confirmation and a log. Invite links stay hashed, single-use, and 72 hours. Replacing a class teacher revokes a pending invite for that class. Email is the channel. WhatsApp staff invites stay off. `/admin/sections` and `/admin/class-setup` redirect to `/admin/classes`. Class names come from the school's own sections. Flow: `docs/product/class-teacher-flow.md`.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3198 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Phase 1 has 12 tests in `tests/Feature/Marks/ClassTeacherPhase1Test.php`.
+- Class store uses the school's own names. The stream form rejects a teacher id that is not a teacher in the school instead of writing the column. Toshi add-teacher still stores a random password and writes the class teacher through the service.
+- **Status:** OPEN [#1238](https://github.com/KlassApp-Foundation/KlassApp/pull/1238), branch `cursor/marks-phase-1-class-teacher`, base `docs/marks-n8n-blueprint` ([#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)). Not merged. No deploy. No production access.
 
 ## Current Status: October 26, 2026 — **Marks n8n blueprint OPEN [#1236](https://github.com/KlassApp-Foundation/KlassApp/pull/1236)**
 
@@ -3138,6 +3174,46 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decision**: SQL and stack text stay in the log. A blank signup country is still Uganda, including when the countries table has no rows, so existing signup tests keep working. Toshi's country step still accepts any text of two or more characters. That is left for a product decision.
 - **Status**: OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251) is stacked on this branch and needs this commit merged up. Production untouched.
 - **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3202 tests, 0 failures, 0 errors, 9 skipped. `[test-guard] OK: 0 failing test(s)`. The specific-error tests failed when the generic fallback was forced, then passed with the fix.
+
+### 2026-11-04: Password reset code when the from address is blank (#1267)
+
+- **Work done**: `/password/reset` failed on the log mailer when `MAIL_FROM_ADDRESS` was blank. The code is now saved separately and sent with a default sender. The log records the exception class and message and redacts the code. Imported teacher, parent, and student accounts can set a password and sign in. Null-password accounts still get the setup link.
+- **Files touched**: `config/mail.php`, `app/Support/MailSender.php`, `app/Services/Auth/PasswordResetCodeIssuer.php`, `app/Services/Auth/PasswordResetDeliveryException.php`, `app/Mail/ResetPasswordCodeMail.php`, `app/Http/Controllers/Auth/ForgotPasswordController.php`, `app/Http/Controllers/Auth/PasswordResetCodeController.php`, `app/Http/Controllers/Auth/ResetPasswordController.php`, `app/Providers/AppServiceProvider.php`, `tests/Feature/Auth/PasswordResetCodeDeliveryTest.php`, `tests/Feature/Auth/PasswordResetGenericErrorTest.php`, `knowledge.md`.
+- **Decision**: The mail is sent in the request. The code expires in five minutes, so it is not queued. Lookup stays on email. `mobile_no` is not unique.
+- **Status**: DRAFT [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267), branch `cursor/password-reset-code-send-a7c1`, base #1262. Not merged. Production untouched. No force-push.
+- **Evidence**: Before the fix, blank from + log mailer logged `An email must have a "From" or a "Sender" header.` After the fix, `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3247 tests, 0 failures, 0 errors, 9 skipped.
+- **Edge cases**: A send failure keeps the stored code. A save failure sends nothing. An undefined mailer is shown as a configuration error. A teacher with `school_id` null can still be emailed a code. Login after reset still requires an active school.
+
+### 2026-11-03: Invite accept message and country-test rename (#1239)
+
+- **Work done**: Accepting a teacher invite whose email is already registered shows "This email cannot be used to create an account. Contact the school and ask them to send the invite to a different email." The inviting admin still gets the same issue response. No user is created or changed. `CountryDefaultTest` was renamed to `CountryDefaultServiceContractTest` so it does not share a path with #1246.
+- **Files touched**: `app/Services/TeacherInviteLinkService.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Onboarding/CountryDefaultServiceContractTest.php`, `knowledge.md`.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, marks, class-teacher, invite, and the renamed country test: 94 tests, 553 assertions, 0 failures. Full test-guard was not run.
+
+### 2026-11-03: Owner decisions on Marks Phase 1 (#1239)
+
+- **Work done**: Uganda class levels are offered only when the school's country is Uganda. Other countries type a level name. Toshi matches class names by ignoring case, spaces, and dots, scoped to the admin's school. `inviteNew` and the no-class invite no longer treat an email at another school as "already exists". A signed-out class-teacher change still queries the target school before it refuses.
+- **Files touched**: `app/Services/ClassTeacherAssignmentService.php`, `app/Services/ToshiActionService.php`, `app/Http/Controllers/Admin/ClassesController.php`, `app/Http/Controllers/Admin/SectionController.php`, `resources/views/admin/classes/create.blade.php`, `resources/views/admin/school/sections/create_form.blade.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `knowledge.md`.
+- **Decision**: Boris, 3 Nov. Leave the phone-number nit, the migration rollback note, and the unsigned commit as they are.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, `php vendor/bin/phpunit` on `tests/Feature/Marks` plus the class-teacher invite files: 75 tests, 457 assertions, 0 failures. Full test-guard was not run.
+
+### 2026-11-02: Second review pass on Marks Phase 1 (#1239)
+
+- **Work done**: Per-invite accept cap is 10 per hour and the school cap stays 200. Invalid invite tokens are limited per IP and no longer share `school:0`. The issue limiter uses the signed-in admin's school. `applySectionTeacher` and `clearStreamTeacher` revoke a pending invite and write a `class_teacher` log when the teacher changes; clearing the stream teacher also clears the section teacher. The pending-invites list hides revoked invites. A class with no stream redirects to `admin.classes.index` so the error flash is still on the page. The class-teacher doc no longer says Toshi stores a random password. A test claims an invite that has no class.
+- **Files touched**: `app/Services/ClassTeacherAssignmentService.php`, `app/Providers/AppServiceProvider.php`, `app/Http/Controllers/Admin/ClassTeacherInviteController.php`, `config/invites.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/ClassTeacherInviteControllerTest.php`, `knowledge.md`.
+- **Decision**: Ugandan class levels offered to every school, and Toshi requiring an exact class name, stay as they are until there is a product decision. No history rewrite.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. No force-push.
+- **Evidence**: PHP 8.4.27, `php vendor/bin/phpunit` on the class-teacher files: 56 tests, 310 assertions, 0 failures. Full test-guard was not run.
+
+### 2026-10-30: Review fixes on Marks Phase 1 (#1239)
+
+- **Work done**: Toshi's add-teacher now issues an invite through `ClassTeacherInviteService` / `ClassTeacherAssignmentService` and stores no password. Invite issue and accept limits are named limiters keyed by invite and school. Adding a class accepts a new level such as P.7 and sorts by level. Saving the stream form with the same class teacher leaves the pending invite in place. `/admin/class-setup` renders again so the cross-school and progress assertions check the page.
+- **Files touched**: `app/Services/ToshiActionService.php`, `app/Services/ClassTeacherAssignmentService.php`, `app/AiAgents/Tools/AddTeacherTool.php`, `app/Providers/AppServiceProvider.php`, `app/Http/Controllers/TeacherInviteController.php`, `app/Http/Controllers/Admin/ClassTeacherInviteController.php`, `app/Http/Controllers/Admin/ClassTeacherSetupController.php`, `config/invites.php`, `routes/web.php`, `routes/admin.php`, `docs/product/class-teacher-flow.md`, `tests/Feature/Marks/ClassTeacherPhase1Test.php`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `tests/Feature/TeacherSetup/TeacherSetupLinkSecurityTest.php`, `tests/Feature/TeacherSetup/TeacherSetupTest.php`, `knowledge.md`.
+- **Decision**: New class names are the canonical levels (nursery, P.1–P.7, S.1–S.6), the type preset, and names the school already uses. Arbitrary text is still rejected. A school-wide invite cap still applies inside that school; a different invite is isolated by the per-invite cap, and a different school is isolated by both.
+- **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. Stacked PRs #1240–#1244 and #1255 need this commit merged up. No force-push.
+- **Evidence**: With the cross-school guard removed, `test_approval_of_another_schools_email_issues_nothing_and_does_not_error` failed at the session assertion (line 578). Restored, that test passed (14 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3207 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
 
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 
@@ -14429,3 +14505,4 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Status:** Draft pull request [#1270](https://github.com/KlassApp-Foundation/KlassApp/pull/1270), branch `cursor/demo-fees-structure-a0f0`, head `45b9acdf`. Not merged. No deploy. Production not touched.
 
 **Overlap:** Open PRs #1237–#1264 do not edit the admin fee files. The parent and student portal agent (still running, no PR at the time of this branch) edits the parent Fees page and `ParentPortalService`. It reads `StudentFeeResolver` and does not change it. This branch does not edit the parent Fees views. Not stacked.
+

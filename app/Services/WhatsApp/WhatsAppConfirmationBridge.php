@@ -376,6 +376,10 @@ class WhatsAppConfirmationBridge
 
     protected function resume(WhatsAppPendingConfirmation $pending, User $user, bool $approved): string
     {
+        if (\App\Support\PendingPassword::isUnset($user)) {
+            return 'This account has not finished setup.';
+        }
+
         Auth::login($user);
 
         try {

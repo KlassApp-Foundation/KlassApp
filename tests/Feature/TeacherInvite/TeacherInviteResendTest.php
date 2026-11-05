@@ -153,7 +153,7 @@ class TeacherInviteResendTest extends TestCase
         $oldHash = $invite->token_hash;
 
         $this->actingAs($admin)->post(route('admin.class-teacher-invite.resend', $invite))
-            ->assertRedirect(route('admin.classes'))
+            ->assertRedirect(route('admin.classes.index'))
             ->assertSessionHas('errormessage');
 
         $invite->refresh();

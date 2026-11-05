@@ -108,7 +108,14 @@ class UserController extends Controller
     {
         try
         {
-    $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
+            $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
+
+            if ($user && \App\Support\PendingPassword::isUnset($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
 
             $user->tokens()->delete();
 
@@ -219,6 +226,13 @@ $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int)
             ])->orderBy('id','DESC')->get();
 
             $admin = User::where([['school_id',$user->school_id],['usergroup_id',3]])->first();
+
+            if (\App\Support\PendingPassword::isUnset($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
 
             if($authentication[0]['token'] == $request->oldpassword)
             {

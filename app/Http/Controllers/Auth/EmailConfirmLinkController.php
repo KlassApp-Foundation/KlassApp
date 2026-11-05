@@ -53,6 +53,9 @@ class EmailConfirmLinkController extends Controller
         if ($tokenUserId !== null
             && (int) $request->session()->get('pending_verification_user_id', 0) === $tokenUserId) {
             $request->session()->forget('pending_verification_user_id');
+            if (\App\Support\PendingPassword::isUnset($user)) {
+                return redirect('/login')->with('failmessage', 'This account has not finished setup. Use the link in your email to set a password.');
+            }
             Auth::login($user);
             $request->session()->regenerate();
 

@@ -5177,6 +5177,7 @@ td a.btn-danger:hover {
     }
     .family-filters-sheet__bar { display: flex; justify-content: space-between; align-items: center; }
     .family-filters-close { display: inline-flex; min-height: 44px; background: none; border: 0; font-weight: 600; color: #1D4ED8; }
+}
 
 .family-page { padding: 12px 16px 24px; }
 .family-main { background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px; color: #1E293B; }

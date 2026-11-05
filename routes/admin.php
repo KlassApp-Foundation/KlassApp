@@ -164,7 +164,7 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::get( '/standardLink/show/conference/{id}', 'StandardsLinkDetailsController@showConference' );
 	//edit
 	Route::get( '/standardLink/editlist/{id}', 'StandardsLinkController@editList' );
-	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' );
+	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' )->name('admin.standardLink.edit');
 	Route::post( '/standardLink/edit/{id}', 'StandardsLinkController@update' );
 	Route::post( '/standardLink/updateStatus/{id}', 'StandardsLinkController@updateStatus' );
 	//delete
@@ -190,7 +190,9 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::middleware('can:full-school-admin')->group(function () {
 	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
 	// Keep the legacy section-management URL available while /classes becomes the read-only roster portal.
-	Route::get("/sections", "SectionController@index")->name("admin.classes");
+	Route::get("/sections", function () {
+	    return redirect()->route('admin.classes.index');
+	})->name("admin.classes");
 	Route::get('/classes', function () {
 	    return view('class-roster.index');
 	})->name('admin.classes.index');
@@ -378,6 +380,7 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get( '/teacher/show/activity/{name}', 'TeacherShowController@showActivity' );
 	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
 	Route::post( '/teacher/show/{name}/deactivate', 'TeacherProfileController@deactivate' );
+	Route::post( '/teacher/show/{name}/resend-setup', 'TeacherProfileController@resendSetup' )->name('admin.teacher.resend-setup');
 	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' );
 	//edit
 	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );

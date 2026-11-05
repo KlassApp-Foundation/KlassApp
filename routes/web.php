@@ -251,8 +251,10 @@ Route::post('/register/verify/link/{token}', [\App\Http\Controllers\Auth\EmailCo
 
 // Teacher invite link — one-time password-set flow (no credentials in email)
 Route::get('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'show'])
+    ->middleware([\App\Http\Middleware\InviteNoReferrer::class, 'throttle:teacher-invite-accept'])
     ->name('teacher.invite.form');
 Route::post('/invite/teacher/{token}', [\App\Http\Controllers\TeacherInviteController::class, 'claim'])
+    ->middleware([\App\Http\Middleware\InviteNoReferrer::class, 'throttle:teacher-invite-accept'])
     ->name('teacher.invite.claim');
 
 // Co-admin invite link — one-time password-set flow (no credentials in email)
