@@ -218,6 +218,11 @@ class SchoolSignupBootstrapService
             $school->refresh();
         }
 
+        if (filled($school->registration_country)) {
+            OnboardingStepsService::persistCountry($school, (string) $school->registration_country);
+            $school = $school->fresh();
+        }
+
         return $school;
     }
 

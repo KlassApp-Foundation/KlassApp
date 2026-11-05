@@ -97,10 +97,17 @@ class SchoolDetailsController extends Controller
 
             $school->name = $request->name;
             $school->address = $request->address;
-            $school->country_id = $request->country_id;
             $school->city_id = $request->city_id;
 
-            $school->save();
+            $country = $request->country_id
+                ? \App\Models\Country::query()->find($request->country_id)
+                : null;
+            if ($country) {
+                \App\Services\OnboardingStepsService::persistCountry($school, $country->name);
+            } else {
+                $school->country_id = $request->country_id;
+                $school->save();
+            }
 
             $file = $request->file('school_logo');
             if ($file > 0) {

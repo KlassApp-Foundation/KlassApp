@@ -3075,6 +3075,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: country codes can be rolled back, and the two country fields must agree (#1249)
+
+- **Work done**: The country-code migration's `down()` writes the known seed codes back inside one transaction. A soft-deleted row and a name that matches two live rows are skipped and logged, not corrected. `persistCountry` stores `countries.name` when a short code matches one live row. A superadmin save that sends a `country_id` and a different country name is rejected and leaves the school unchanged. No production data and no deploy.
+- **Files touched**: `database/migrations/2026_10_27_120000_correct_country_codes_by_name.php`, `app/Services/OnboardingStepsService.php`, `app/Services/Superadmin/SchoolService.php`, `tests/Feature/Admin/CountryCodeCorrectionTest.php`, `knowledge.md`.
+- **Decision**: A contradictory country id and country name is an error. The save does not pick one of them.
+- **Status**: OPEN [#1249](https://github.com/KlassApp-Foundation/KlassApp/pull/1249). Not merged. Production untouched.
+- **Evidence**: `vendor/bin/phpunit tests/Feature/Admin/CountryCodeCorrectionTest.php tests/Feature/Toshi/NoSchoolGetsAiByDefaultTest.php` — 18 tests, 148 assertions, 0 failures.
+
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 
 - **Work done**: Added `WhatsAppPhoneHelper::mask()` and used it on the WhatsApp log lines that wrote a full number (inbound parse, demo, flow, flush, delivery failure, and send-failure logs). `Admin\UserProfileController` link and unlink now pass five arguments to `doActivityLog`.
