@@ -2,27 +2,21 @@
 
 namespace Database\Seeders;
 
-use DB;
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
 
+/**
+ * Keyed on title. The attendance migration inserts the same four
+ * reasons; this seeder must not insert a second copy.
+ */
 class AbsentReasonsTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $absentReasons = ['Health Issue', 'Family Functions', 'Personal Work', 'Others'];
-
-        foreach ($absentReasons as $reason) 
-        {
-            DB::table('absent_reasons')->Insert([
-                'title'         =>  $reason,
-                'status'        =>  '1',
-                'created_at'    =>   date("Y-m-d H:i:s"),
-                'updated_at'    =>   date("Y-m-d H:i:s"),
+        foreach (['Health Issue', 'Family Functions', 'Personal Work', 'Others'] as $reason) {
+            ReferenceUpsert::sync('absent_reasons', ['title' => $reason], [
+                'status' => 1,
+                'deleted_at' => null,
             ]);
         }
     }

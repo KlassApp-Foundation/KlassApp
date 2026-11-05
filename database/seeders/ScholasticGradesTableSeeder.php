@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use App\Models\School;
+use App\Database\ReferenceUpsert;
 use App\Models\AcademicYear;
+use App\Models\School;
+use Illuminate\Database\Seeder;
 
 class ScholasticGradesTableSeeder extends Seeder
 {
@@ -14,9 +14,9 @@ class ScholasticGradesTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
-        // Modern Uganda scholastic grading configs (competence-based curriculum)
+        // The sc_grade.grading_method column is still the fork enum
+        // cbse|passfail. Descriptive labels are kept on grade_name and
+        // mapped onto those two stored values so MySQL accepts the row.
         // Lower Secondary uses letter grades A-E with descriptors
         // A-Level transitioning to simplified A-E
         $scholasticConfigs = [
@@ -58,18 +58,14 @@ class ScholasticGradesTableSeeder extends Seeder
             }
 
             foreach ($scholasticConfigs as $config) {
-                DB::table('sc_grade')->updateOrInsert(
-                    [
-                        'school_id'        => $school->id,
-                        'academic_year_id' => $academicYear->id,
-                        'grade_name'       => $config['grade_name'],
-                        'grading_method'   => $config['grading_method'],
-                    ],
-                    [
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]
-                );
+                $method = $config['grading_method'] === 'Pass/Fail' ? 'passfail' : 'cbse';
+                ReferenceUpsert::sync('sc_grade', [
+                    'school_id' => $school->id,
+                    'academic_year_id' => $academicYear->id,
+                    'grade_name' => $config['grade_name'],
+                ], [
+                    'grading_method' => $method,
+                ]);
             }
         }
     }

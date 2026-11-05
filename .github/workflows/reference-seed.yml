@@ -1,0 +1,76 @@
+name: Reference seed
+
+# Fresh migrate + reference seed on MySQL 8.4 and on SQLite.
+# Asserts country codes, state and city links, then seeds again
+# and checks that counts and the reference checksum did not change.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  reference-seed:
+    name: reference-seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: klassapp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, zip, bcmath, intl, sqlite, mysql, gd
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Migrate, seed, and re-seed on MySQL 8.4
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: klassapp
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: |
+          php artisan migrate:fresh --seed --force --no-interaction
+          php artisan db:reference-audit --fail --snapshot=/tmp/reference-audit-mysql.json
+          php artisan db:health --fail
+          php artisan db:seed --force --no-interaction
+          php artisan db:reference-audit --fail --expect=/tmp/reference-audit-mysql.json
+
+      - name: Migrate, seed, and re-seed on SQLite
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/klassapp-reference.sqlite
+        run: |
+          rm -f /tmp/klassapp-reference.sqlite
+          php artisan migrate:fresh --seed --force --no-interaction
+          php artisan db:reference-audit --fail --snapshot=/tmp/reference-audit-sqlite.json
+          php artisan db:health --fail
+          php artisan db:seed --force --no-interaction
+          php artisan db:reference-audit --fail --expect=/tmp/reference-audit-sqlite.json

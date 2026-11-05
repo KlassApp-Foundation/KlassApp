@@ -2,15 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Plan;
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
 
 class PlansTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $now = now();
-
         $plans = [
             [
                 'name'            => 'freemium',
@@ -67,13 +65,9 @@ class PlansTableSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
-            Plan::updateOrCreate(
-                ['name' => $plan['name']],
-                array_merge($plan, [
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ])
-            );
+            $name = $plan['name'];
+            unset($plan['name']);
+            ReferenceUpsert::sync('plans', ['name' => $name], $plan);
         }
 
         $this->command->info('Plans seeded: Freemium, Growth, Premium (USD)');

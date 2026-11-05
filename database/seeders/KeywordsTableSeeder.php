@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class KeywordsTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class KeywordsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         $keywords = [
             // PHP reserved keywords (mostly correct)
             ['id' => 1,  'name' => 'break'],
@@ -98,14 +96,9 @@ class KeywordsTableSeeder extends Seeder
         ];
 
         foreach ($keywords as $keyword) {
-            DB::table('keywords')->updateOrInsert(
-                ['id' => $keyword['id']],
-                [
-                    'name'       => $keyword['name'],
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            ReferenceUpsert::sync('keywords', ['id' => $keyword['id']], [
+                'name' => $keyword['name'],
+            ]);
         }
     }
 }

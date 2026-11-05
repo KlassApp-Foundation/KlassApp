@@ -113,6 +113,10 @@ class HolidaySeeder extends Seeder
                         'select_type'      => 'school',
                         'category'         => 'holidays',
                         'end_date'         => $holiday['end_date'],
+                        'batch'            => '',
+                        'color'            => 'green',
+                        'allDay'           => 1,
+                        'status'           => 'active',
                         'created_at'       => $now,
                         'updated_at'       => $now,
                     ]

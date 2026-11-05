@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SchoolsTableSeeder extends Seeder
 {
@@ -13,9 +12,7 @@ class SchoolsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
-        // Super safe, generic demo schools — no real names or emails
+        // Synthetic demo schools. AI stays off. They are marked demo and test.
         $fakeSchools = [
             [
                 'name'    => 'Test School One',
@@ -55,18 +52,14 @@ class SchoolsTableSeeder extends Seeder
         ];
 
         foreach ($fakeSchools as $school) {
-            
-            DB::table('schools')->updateOrInsert(
-                ['slug' => $school['slug']],
-                [
-                    'name'       => $school['name'],
-                    'email'      => $school['email'],
-                    'phone'      => $school['phone'],
-                    'status'     => $school['status'],
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            $slug = $school['slug'];
+            unset($school['slug']);
+            ReferenceUpsert::sync('schools', ['slug' => $slug], $school + [
+                'toshi_enabled' => 0,
+                'toshi_mode' => 'preview',
+                'is_demo' => 1,
+                'is_test' => 1,
+            ]);
         }
 
         $this->command->info('Seeded ' . count($fakeSchools) . ' safe demo Ugandan schools.');

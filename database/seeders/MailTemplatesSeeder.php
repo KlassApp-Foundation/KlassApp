@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class MailTemplatesSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class MailTemplatesSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now()->format('Y-m-d H:i:s'); // or use Carbon\Carbon::now()
-
         $templates = [
             [
                 'id'           => 1,
@@ -231,14 +229,9 @@ class MailTemplatesSeeder extends Seeder
         ];
 
         foreach ($templates as $template) {
-            DB::table('mailtemplates')->updateOrInsert(
-                ['id' => $template['id']],
-                [
-                    ...$template,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            $id = $template['id'];
+            unset($template['id']);
+            ReferenceUpsert::sync('mailtemplates', ['id' => $id], $template);
         }
     }
 }

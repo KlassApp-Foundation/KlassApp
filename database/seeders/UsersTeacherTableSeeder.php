@@ -31,7 +31,8 @@ class UsersTeacherTableSeeder extends Seeder
             }
             
             // Create one teacher user per school
-            $teacher_email = 'teacher_' . strtolower(str_replace(' ', '_', $school->name)) . '@' . strtolower(str_replace(' ', '', $school->name)) . '.edu';
+            $host = preg_replace('/[^a-z0-9]/', '', strtolower($school->name));
+            $teacher_email = 'teacher_'.$host.'@'.$host.'.edu';
             
             $user = \App\Models\User::where('email', $teacher_email)->first();
             if (!$user) {
@@ -40,7 +41,7 @@ class UsersTeacherTableSeeder extends Seeder
                     'school_id' => $school->id,
                     'name' => 'Teacher ' . $school->name,
                     'email' => $teacher_email,
-                    'mobile_no' => '+256' . rand(700000000, 799999999),
+                    'mobile_no' => '+256771'.str_pad((string) $school->id, 6, '0', STR_PAD_LEFT),
                     'password' => bcrypt('password'),
                     'status' => 'active',
                     'email_verified' => 1,
