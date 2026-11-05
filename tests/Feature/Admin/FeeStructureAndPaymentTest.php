@@ -475,7 +475,7 @@ class FeeStructureAndPaymentTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.fee-payments', ['state' => 'error']))
             ->assertOk()
-            ->assertSee("The payment wasn't recorded");
+            ->assertSee("The payment wasn't recorded", false);
     }
 
     private function balance(int $studentId): float
