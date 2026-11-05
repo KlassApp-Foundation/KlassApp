@@ -81,9 +81,17 @@ public function sections(){
             ->get()
             ->groupBy('exam_id');
 
+        $submissionLabels = \App\Models\Academics\ExamMarksSubmission::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get()
+            ->keyBy(fn ($row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
+
         foreach ($exams as $exam) {
             $examMarks = $marksByExam->get($exam->id) ?? collect();
             $exam->has_marks = $examMarks->isNotEmpty();
+            $submission = $submissionLabels->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
+            $exam->submission_label = $submission ? $submission->reviewLabel() : 'Not started';
 
             // Always display the exam record's own subject/teacher — marks rows and
             // class teacherlinks are the wrong source (blank until marks exist, or

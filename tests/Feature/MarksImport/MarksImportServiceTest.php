@@ -220,21 +220,36 @@ class MarksImportServiceTest extends TestCase
         }
     }
 
-    public function test_submitted_exam_needs_a_correction_reason(): void
+    public function test_submitted_exam_is_blocked_until_it_is_returned(): void
     {
         $this->exam->update(['status' => 'submitted']);
         $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([['KLS0000001', '', '80']]));
-        $this->assertTrue($plan->requiresReason);
+        $this->assertFalse($plan->requiresReason);
+        $this->assertTrue($plan->isBlocked());
+        $this->assertArrayHasKey('locked', $plan->blockers);
 
         try {
-            $this->service->commit($plan, $this->owner, reason: 'too short');
-            $this->fail('a short reason must be refused');
+            $this->service->commit($plan, $this->owner, reason: 'Scores re-marked after review');
+            $this->fail('a reason must not unlock a submitted exam');
         } catch (MarksImportBlocked $e) {
-            $this->assertSame('reason_required', $e->reasonCode);
+            $this->assertSame('locked', $e->reasonCode);
         }
         $this->assertSame(0, Marks::count());
 
-        $result = $this->service->commit($plan, $this->owner, reason: 'Scores re-marked after review');
+        ExamMarksSubmission::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $this->exam->id,
+            'class_id' => $this->section->id,
+            'subject_id' => $this->subject->id,
+            'teacher_id' => $this->owner->id,
+            'status' => 'reopened',
+            'approval_status' => 'rejected',
+            'rejection_reason' => 'Please recheck the arithmetic.',
+        ]);
+
+        $open = $this->service->preview($this->exam, $this->owner, $this->sheet([['KLS0000001', '', '80']]));
+        $this->assertFalse($open->isBlocked());
+        $result = $this->service->commit($open, $this->owner);
         $this->assertSame(1, $result->saved);
         $this->assertSame('submitted', $this->exam->fresh()->status, 'an import never moves status forward from submitted');
     }

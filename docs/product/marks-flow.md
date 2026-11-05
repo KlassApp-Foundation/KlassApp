@@ -158,7 +158,7 @@ flowchart TD
 
 The entry form loads marks already saved for this exam, this subject, and this school, and puts each one in that learner's box. A validation error keeps what the person just typed. Save stays on this page. Submit for review is absent until a numeric mark is saved, or until a nursery rating is saved. Nursery ratings stay on the ratings form and do not go through `ExamMarkWriter`.
 
-Every numeric entry path writes one row through `ExamMarkWriter`: the entry form, the single-mark edit, the teacher spreadsheet import, the admin spreadsheet import (the same service), and Toshi for a subject teacher, a class teacher, or a school admin. The writer checks the school, the learner, the lock, and a correction reason. It stores the letter. It does not change the exam status and it does not message parents. The import still parses and previews the file, then calls the writer, and it still moves an undone exam to done. A class teacher may enter a mark in Toshi when `ExamAuthorization` already allows that person on the form.
+Every numeric entry path writes one row through `ExamMarkWriter`: the entry form, the single-mark edit, the teacher spreadsheet import, the admin spreadsheet import (the same service), and Toshi for a subject teacher, a class teacher, or a school admin. The writer checks the school, the learner, and whether this subject is open. A submitted, approved, or locked subject stays closed until a school admin returns or reopens it. It stores the letter. It does not change the exam status and it does not message parents. The import still parses and previews the file, then calls the writer, and it still moves an undone exam to done. A class teacher may enter a mark in Toshi when `ExamAuthorization` already allows that person on the form.
 
 The Upcoming Exams tile counts the open exams this person can mark (`undone` or `done` for their exams or their class). It still links to the marks list. There is no second writer for a teacher who marks more than one class: each exam on that list uses the same form and the same writer.
 
@@ -184,6 +184,45 @@ flowchart TD
   toshi --> writer
   nursery --> stay
 ```
+
+### Phase 3 flow
+
+`MarksSubmissionService` owns one class, one subject, and one sitting. `exams.status` is not this workflow. Submit, approve, return, lock, and reopen all go through the service. Each one checks the school, checks that a school admin is reviewing (or that `ExamAuthorization` already allowed the teacher to submit), and writes a log with the actor and the time.
+
+Submit refuses an empty subject. It is allowed when there is no row, and again after a return or a reopen. It sets the row to submitted and the approval to pending. It does not change `exams.status`. School admins get an in-app notice.
+
+Approve is a school admin action on a submitted or locked row that is still pending. It does not wait for a lock. The approved state is what a later release reads. The release screen still has an admin override until phase 6.
+
+Return is a school admin action on a submitted, locked, or approved row. The reason is required, from 10 to 500 characters. The stored values are `reopened` and `rejected`, because those are the existing status values. The screen says Returned. The reason is on the entry page for the exam's teacher and for a school admin of that school.
+
+Lock is a school admin action on a draft, submitted, or reopened row that is not already approved. An approved row is not locked again. A passed deadline uses the same lock.
+
+Reopen is a school admin action on a locked or approved row. It records who and why, sets the row to reopened, and sets approval back to pending. The marks can be edited, and a release waits for a new approval.
+
+`ExamMarkWriter` refuses a save while the row is submitted, approved, or locked, including a legacy exam whose `exams.status` is submitted and whose submission row is not open. A return or a reopen is what opens the marks. A correction reason does not.
+
+Notices use the in-app bell. They do not send WhatsApp.
+
+On the review page, Lock, Return, and Approve each post their own form. Approve is on a submitted row. An approved row does not offer Lock. The heading names the class (the section), not the level band. The queue lists submitted or locked rows that are still pending. Both exam lists show the same label: Not started, Submitted, Returned, Approved, Locked, or Reopened.
+
+```mermaid
+stateDiagram-v2
+  [*] --> NotStarted
+  NotStarted --> Submitted: submit, refuses empty
+  Submitted --> Approved: approve
+  Submitted --> Returned: return with reason
+  Submitted --> Locked: lock
+  Locked --> Approved: approve
+  Locked --> Returned: return with reason
+  Locked --> Reopened: reopen, school admin, who and why
+  Approved --> Returned: return with reason
+  Approved --> Reopened: reopen, school admin, who and why
+  Returned --> Submitted: submit
+  Reopened --> Submitted: submit
+  Reopened --> Locked: lock
+```
+
+The writer allows Not started, Returned, and Reopened. The writer refuses Submitted, Approved, and Locked.
 
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
 
