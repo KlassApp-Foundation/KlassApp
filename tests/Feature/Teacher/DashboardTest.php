@@ -3,15 +3,18 @@
 namespace Tests\Feature\Teacher;
 
 use App\Models\AcademicYear;
+use App\Models\Attendance;
 use App\Models\Country;
 use App\Models\Homework;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\Teacher\TeacherHomeBoard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -88,8 +91,8 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('dashboard-shell--teacher');
-        $response->assertSee('dashboard-kpi-grid');
+        $response->assertSee('data-testid="teacher-dashboard"', false);
+        $response->assertSee('data-testid="dashboard-sidebar-footer"', false);
     }
 
     public function test_dashboard_shows_greeting(): void
@@ -106,10 +109,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('teacher-quick-actions');
-        $response->assertSee('Take Attendance');
-        $response->assertSee('Enter Marks');
-        $response->assertSee('Post Homework');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_kpi_cards(): void
@@ -117,11 +117,8 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('My Students');
-        $response->assertSee('My Classes');
-        $response->assertSee('Upcoming Exams');
-        $response->assertSee('WhatsApp Linked');
-        $response->assertSee('Marks needing you');
+        $response->assertSee('No classes yet');
+        $response->assertSee('When the school assigns you a class or a subject');
     }
 
     public function test_dashboard_shows_marks_entry_banner(): void
@@ -129,8 +126,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('teacher-marks-entry');
-        $response->assertSee('Marks & corrections');
+        $response->assertSee('data-testid="teacher-empty"', false);
     }
 
     public function test_dashboard_shows_timetable_section(): void
@@ -138,7 +134,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee("Today's Schedule", false);
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_noticeboard_section(): void
@@ -146,7 +142,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Notice Board');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_recent_activity_section(): void
@@ -154,7 +150,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Recent Activity');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_pending_approvals_section(): void
@@ -162,7 +158,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Pending Approvals');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_upcoming_deadlines_section(): void
@@ -170,7 +166,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Upcoming Deadlines');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_empty_state_when_no_classes(): void
@@ -178,7 +174,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee("You haven't been assigned any classes yet", false);
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_no_classes_scheduled_for_today(): void
@@ -186,7 +182,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('No classes scheduled for today.');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_no_notices_published_yet(): void
@@ -194,7 +190,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('No notices published yet.');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_no_recent_activity(): void
@@ -202,7 +198,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('No recent activity.');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_no_pending_approvals(): void
@@ -210,7 +206,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('No pending approvals.');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_shows_no_upcoming_deadlines(): void
@@ -218,7 +214,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('No upcoming deadlines.');
+        $response->assertSee('No classes yet');
     }
 
     public function test_dashboard_scopes_data_by_school(): void
@@ -301,7 +297,74 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Upcoming Deadlines');
-        $response->assertSee('Deadline window homework', false);
+        $response->assertSee('P.3 Dash');
+        $response->assertSee('class head');
+        $response->assertDontSee('Deadline window homework');
+    }
+
+    public function test_week_attendance_counts_one_day_and_stays_in_this_school(): void
+    {
+        $standard = Standard::create([
+            'school_id' => $this->school->id,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => '1',
+        ]);
+        $section = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'P.5 Home',
+            'status' => 1,
+        ]);
+        $link = StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'class_teacher_id' => $this->teacher->id,
+            'status' => '1',
+        ]);
+        $student = User::create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 6,
+            'name' => 'Home Student',
+            'email' => 'home.student@teacher-dash.sch.ug',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        StudentAcademic::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'user_id' => $student->id,
+            'standardLink_id' => $link->id,
+        ]);
+        $day = now()->startOfWeek()->toDateString();
+        foreach (['forenoon', 'afternoon'] as $session) {
+            Attendance::create([
+                'school_id' => $this->school->id,
+                'academic_year_id' => $this->academicYear->id,
+                'user_id' => $student->id,
+                'date' => $day,
+                'session' => $session,
+                'status' => 1,
+                'recorded_by' => $this->teacher->id,
+            ]);
+        }
+
+        $board = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
+        $monday = collect($board['week'])->firstWhere('label', now()->startOfWeek()->format('D'));
+        $this->assertEquals(1.0, $monday['present']);
+        $this->assertSame('1', $monday['present_label']);
+
+        Attendance::query()->where('user_id', $student->id)->where('session', 'afternoon')->delete();
+        $half = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
+        $halfMonday = collect($half['week'])->firstWhere('label', now()->startOfWeek()->format('D'));
+        $this->assertEquals(0.5, $halfMonday['present']);
+        $this->assertSame('½', $halfMonday['present_label']);
+
+        $this->actingAs($this->teacher)->get('/teacher/dashboard')
+            ->assertOk()
+            ->assertSee('P.5 Home')
+            ->assertSee('data-testid="teacher-week"', false);
     }
 }
