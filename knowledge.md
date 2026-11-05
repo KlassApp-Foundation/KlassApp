@@ -637,7 +637,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Session: 2026-11-05 — Base-class views, release layout, student portal (draft, stacked on #1272)
 
-- Branch `cursor/base-class-fixes-1cb2` from `f44c7298` (`cursor/exam-sets-page-marks-f7b0`). Draft PR only. No merge, no deploy, no production access. Synthetic data only.
+- Branch `cursor/base-class-fixes-1cb2` from `f44c7298` (`cursor/exam-sets-page-marks-f7b0`). Draft [#1281](https://github.com/KlassApp-Foundation/KlassApp/pull/1281), base `cursor/exam-sets-page-marks-f7b0`. No merge, no deploy, no production access. Synthetic data only. Head `39af253e`.
 - Base class views now include students who live on the class's streams: dashboard gender per class, marks upload template (and a filled sheet saves), legacy attendance roster and the day's register.
 - Performance by class and Class marks list every base class in level order (nursery, P.1–P.7, S.1–S.6) and say "No marks yet" where there are none.
 - Release page: filters stay in the content column; the release button sits in the "Who will be told" column. Below 768 px the filters open in the Filters sheet. "Why release this sitting again?" shows only when the selection includes a class already released, and names those classes.
