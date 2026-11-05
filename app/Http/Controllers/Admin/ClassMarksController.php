@@ -11,6 +11,7 @@ use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Support\ClassLevelOrder;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,9 +27,22 @@ class ClassMarksController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
 
-        $sections = Section::query()->where('school_id', $schoolId)->orderBy('name')->get(['id', 'name'])
-            ->filter(fn (Section $s) => LatestExamMarks::forSection($schoolId, (int) $s->id) !== null)
-            ->values();
+        $all = Section::query()
+            ->where('school_id', $schoolId)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name', 'school_id']);
+        $sections = ClassLevelOrder::sort($all->reject(function (Section $section) use ($all) {
+            foreach ($all as $other) {
+                if ((int) $other->id !== (int) $section->id
+                    && str_starts_with((string) $section->name, $other->name.' ')) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
 
         if ($section !== null) {
             $current = Section::query()->where('school_id', $schoolId)->whereKey($section)->first();

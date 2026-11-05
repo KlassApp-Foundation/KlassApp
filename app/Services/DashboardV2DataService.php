@@ -20,6 +20,7 @@ use App\Models\UserPreference;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Support\ClassLevelOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -348,12 +349,39 @@ class DashboardV2DataService
 
     private function charts(int $sid, int $students, ?AcademicTerm $term, array $feeMonths = []): array
     {
-        // One bar per class: that class's latest end-of-term exam that has marks.
+        // One row per base class, in level order. Streams' students belong to
+        // the base class. A class with no marks stays on the list.
         $eotTypeId = ExamType::query()->where('code', 'EOT')->value('id');
-        $sections = Section::query()->where('school_id', $sid)->orderBy('name')->get(['id', 'name']);
+        $sections = Section::query()
+            ->where('school_id', $sid)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name', 'school_id']);
+        $bases = ClassLevelOrder::sort($sections->reject(function (Section $section) use ($sections) {
+            foreach ($sections as $other) {
+                if ((int) $other->id !== (int) $section->id
+                    && str_starts_with((string) $section->name, $other->name.' ')) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+        $sectionIdsFor = [];
+        foreach ($bases as $base) {
+            $prefix = trim((string) $base->name).' ';
+            $ids = [(int) $base->id];
+            foreach ($sections as $row) {
+                if ((int) $row->id !== (int) $base->id && $prefix !== ' ' && str_starts_with((string) $row->name, $prefix)) {
+                    $ids[] = (int) $row->id;
+                }
+            }
+            $sectionIdsFor[(int) $base->id] = $ids;
+        }
         $perClass = [];
         $examLabel = null;
-        foreach ($sections as $section) {
+        foreach ($bases as $section) {
             $latest = ExamModel::query()
                 ->where('school_id', $sid)
                 ->where('section_id', $section->id)
@@ -362,11 +390,8 @@ class DashboardV2DataService
                 ->orderByDesc('scheduled_at')
                 ->orderByDesc('id')
                 ->first();
-            if ($latest === null) {
-                continue;
-            }
             $values = [];
-            if ($latest->academic_term_id && $latest->exam_type_id) {
+            if ($latest && $latest->academic_term_id && $latest->exam_type_id) {
                 $sitting = app(ResultsService::class)->sheet(new ResultsQuery(
                     schoolId: $sid,
                     sectionId: (int) $section->id,
@@ -381,15 +406,14 @@ class DashboardV2DataService
                     }
                 }
             }
-            if ($values === []) {
-                continue;
-            }
             $perClass[] = [
                 'label' => (string) $section->name,
                 'section_id' => (int) $section->id,
-                'value' => round(array_sum($values) / count($values), 1),
+                'value' => $values === [] ? null : round(array_sum($values) / count($values), 1),
             ];
-            $examLabel ??= (string) ($latest->name ?: 'End of term');
+            if ($values !== [] && $latest) {
+                $examLabel ??= (string) ($latest->name ?: 'End of term');
+            }
         }
 
         // Attendance trend: weeks since the current term started, not a fixed 8.
@@ -453,12 +477,18 @@ class DashboardV2DataService
         }
         $genderClasses = [];
         foreach ($perClass as $row) {
-            $counts = $genderCounts->get($row['section_id']);
+            $girls = $boys = $notSpecified = 0;
+            foreach ($sectionIdsFor[$row['section_id']] ?? [$row['section_id']] as $sectionId) {
+                $counts = $genderCounts->get($sectionId);
+                $girls += (int) ($counts->girls ?? 0);
+                $boys += (int) ($counts->boys ?? 0);
+                $notSpecified += (int) ($counts->not_specified ?? 0);
+            }
             $genderClasses[] = [
                 'label' => $row['label'],
-                'girls' => (int) ($counts->girls ?? 0),
-                'boys' => (int) ($counts->boys ?? 0),
-                'not_specified' => (int) ($counts->not_specified ?? 0),
+                'girls' => $girls,
+                'boys' => $boys,
+                'not_specified' => $notSpecified,
             ];
         }
 

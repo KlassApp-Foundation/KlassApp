@@ -635,6 +635,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+## Session: 2026-11-05 — Base-class views, release layout, student portal (draft, stacked on #1272)
+
+- Branch `cursor/base-class-fixes-1cb2` from `f44c7298` (`cursor/exam-sets-page-marks-f7b0`). Draft [#1281](https://github.com/KlassApp-Foundation/KlassApp/pull/1281), base `cursor/exam-sets-page-marks-f7b0`. No merge, no deploy, no production access. Synthetic data only. Head `39af253e`.
+- Base class views now include students who live on the class's streams: dashboard gender per class, marks upload template (and a filled sheet saves), legacy attendance roster and the day's register.
+- Performance by class and Class marks list every base class in level order (nursery, P.1–P.7, S.1–S.6) and say "No marks yet" where there are none.
+- Release page: filters stay in the content column; the release button sits in the "Who will be told" column. Below 768 px the filters open in the Filters sheet. "Why release this sitting again?" shows only when the selection includes a class already released, and names those classes.
+- The notification panel opens beside the sidebar bell (bottom left on desktop) and stays inside the viewport on a phone.
+- Student dashboard recent marks use the same release gate as the parent portal. Days present count calendar dates. A half day is stored as one present session (`status` 1); there is no fraction column, so one session on a date is "1 day" and a second session the same date stays "1 day".
+- Status: draft, not merged.
+
 ## Current Status: November 3, 2026 — **Release reasons follow the sitting OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
 
 - A whole-school release asks for a reason when any class of that sitting was already released. A stream released for the first time does not, even when another stream of the same class was. A past-year whole-school release snapshots the students who sat that sitting. A failed release that saved and sent nothing can be run again with no reason. Merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. Not merged to main. No deploy.

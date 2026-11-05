@@ -20,6 +20,7 @@ use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\Attendance;
 use App\Models\Section;
+use App\Services\ClassStructureService;
 use League\Csv\Writer;
 use App\Traits\Common;
 use Carbon\Carbon;
@@ -48,11 +49,11 @@ class AttendanceController extends Controller
         $standardLinklist = SiteHelper::getStandardLinkList($school_id);
 
         //$studentAcademic = StudentAcademic::with('user')->where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->get();
-        $studentAcademic = StudentAcademic::with('user')->where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->whereHas('user', function($q){
+        $studentAcademic = StudentAcademic::with('user.userprofile')->where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->whereHas('user', function($q){
                         $q->where([['status','active'],['deleted_at',null]]);
                     })->get();
 
-        $studentlist = AttendanceStudentListResource::collection($studentAcademic)->groupBy('standardLink_id');
+        $studentlist = $this->studentsByClass($studentAcademic, (int) $school_id, (int) $academic_year->id);
 
         $absentReasonlist   = AbsentReason::where('status',1)->get();
 
@@ -281,18 +282,19 @@ class AttendanceController extends Controller
     // Get Standards for dropdown
     $standardlist = SiteHelper::getStandardLinkList($school_id);
 
+    $sectionIds = $this->sectionIdsForFilter((int) $school_id, $section);
+
     // Get Attendance Records
     $attendances = Attendance::with(['user', 'absentReason', 'standardLink'])
         ->where('school_id', $school_id)
         ->whereHas("user", function($q){
             $q->where("usergroup_id", 6);
         })
-        ->where('date', $date)
-        ->whereHas("standardLink", function($q) use ($section) {
-            $q->whereHas("section", function ($q2) use($section){
-                $q2->where("id", $section);
+        ->whereDate('date', $date)
+        ->when($sectionIds !== null, function ($q) use ($sectionIds, $school_id) {
+            $q->whereHas('standardLink', function ($link) use ($sectionIds, $school_id) {
+                $link->where('school_id', $school_id)->whereIn('section_id', $sectionIds);
             });
-                // ->where("section_id", $section);
         })
         ->when($session, function($q) use ($session) {
             return $q->where('session', $session);
@@ -300,7 +302,7 @@ class AttendanceController extends Controller
         ->orderBy('id')
         ->get();
         // dd($attendances);
-    return view('admin.attendance.index', compact(
+        return view('admin.attendance.index', compact(
         'attendances', 
         'standardlist', 
         'date', 
@@ -309,4 +311,82 @@ class AttendanceController extends Controller
         'section'
     ));
 }
+
+    /**
+     * Students keyed by standard-link id. A base class includes every stream's
+     * students, because learners are enrolled on the stream sections.
+     *
+     * @param  \Illuminate\Support\Collection<int, StudentAcademic>  $studentAcademic
+     * @return array<int, list<array<string, mixed>>>
+     */
+    private function studentsByClass($studentAcademic, int $schoolId, int $yearId): array
+    {
+        $grouped = [];
+        foreach ($studentAcademic as $academic) {
+            $grouped[(int) $academic->standardLink_id][] = (new AttendanceStudentListResource($academic))->resolve(request());
+        }
+
+        $links = StandardLink::with('section')
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $yearId)
+            ->get();
+        $bySection = $links->groupBy(fn (StandardLink $link) => (int) $link->section_id);
+        $classes = app(ClassStructureService::class);
+
+        foreach ($links as $link) {
+            $section = $link->section;
+            if (! $section || (int) $section->school_id !== $schoolId || ! $classes->isBaseSection($section)) {
+                continue;
+            }
+
+            $seen = array_map(
+                fn (array $row) => (int) ($row['user_id'] ?? 0),
+                $grouped[(int) $link->id] ?? []
+            );
+            foreach ($classes->classSectionIds($section) as $sectionId) {
+                if ($sectionId === (int) $section->id) {
+                    continue;
+                }
+                foreach ($bySection->get($sectionId, collect()) as $streamLink) {
+                    foreach ($grouped[(int) $streamLink->id] ?? [] as $row) {
+                        $userId = (int) ($row['user_id'] ?? 0);
+                        if ($userId === 0 || in_array($userId, $seen, true)) {
+                            continue;
+                        }
+                        $copy = $row;
+                        $copy['standardLink_id'] = (int) $link->id;
+                        $grouped[(int) $link->id][] = $copy;
+                        $seen[] = $userId;
+                    }
+                }
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * A base class filter covers its streams. An empty filter stays unscoped
+     * so "All Classes" lists the school's records. A stream stays that stream.
+     *
+     * @return list<int>|null
+     */
+    private function sectionIdsForFilter(int $schoolId, mixed $section): ?array
+    {
+        if ($section === null || $section === '') {
+            return null;
+        }
+
+        $chosen = Section::query()->where('school_id', $schoolId)->whereKey($section)->first();
+        if ($chosen === null) {
+            return [(int) $section];
+        }
+
+        $classes = app(ClassStructureService::class);
+        if ($classes->isBaseSection($chosen)) {
+            return $classes->classSectionIds($chosen);
+        }
+
+        return [(int) $chosen->id];
+    }
 }

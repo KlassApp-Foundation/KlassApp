@@ -1,16 +1,25 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <style>
-    .mr { max-width: 100%; padding: 16px 48px 40px 16px; color: var(--d-text, #1E293B); }
+    .mr { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; padding: 0 0 32px; color: var(--d-text, #1E293B); }
+    .mr-page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 340px); grid-template-areas: "filters aside" "reason aside" "approvals aside" "sheet aside"; gap: 16px; align-items: start; width: 100%; min-width: 0; }
+    .mr-filters { grid-area: filters; min-width: 0; }
+    .mr-reason { grid-area: reason; min-width: 0; }
+    .mr-approvals { grid-area: approvals; min-width: 0; }
+    .mr-aside { grid-area: aside; min-width: 0; background: #fff; border: 1px solid var(--d-border, #E2E8F0); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .mr-head { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
-    .mr-bar { display: flex; flex-wrap: nowrap; gap: 8px; align-items: flex-end; min-width: 0; background: #fff; border: 1px solid var(--d-border, #E2E8F0); border-radius: 12px; padding: 10px 12px; }
+    .mr-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; min-width: 0; background: #fff; border: 1px solid var(--d-border, #E2E8F0); border-radius: 12px; padding: 10px 12px; }
     .mr-seg, .mr-btn { flex: 0 0 auto; }
-    .mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }
-    .mr-scope, .mr-go { display: contents; }
-    .mr-control { display: flex; flex: 1 1 6.5rem; flex-direction: column; gap: 4px; margin: 0; min-width: 5.5rem; max-width: 8.5rem; }
-    /* Exam is the widest label; it takes leftover width once Schedule is off. */
-    .mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }
+    .mr-when-at { flex: 1 1 12.5rem; min-width: 0; max-width: 100%; }
+    @media (min-width: 768px) {
+        .mr-scope.ka-filter-panel { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; width: 100%; }
+    }
+    .mr-control { display: flex; flex: 1 1 8rem; flex-direction: column; gap: 4px; margin: 0; min-width: 0; max-width: none; }
+    .mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 0; max-width: none; }
+    .mr-reason-box { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 16px; background: #FFFBEB; border: 2px solid #B45309; border-radius: 14px; }
+    .mr-reason-box span { color: #78350F; }
+    .mr-reason-box textarea { width: 100%; min-height: 72px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px; background: #fff; color: #0F172A; font: inherit; }
     .mr-control span, .mr-wa h2 { font-size: 12px; font-weight: 700; color: #475569; }
-    .mr-control select, .mr-when-at input { width: 100%; min-width: 0; min-height: 40px; max-width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; padding: 0 8px; color: #0F172A; font-size: 14px; }
+    .mr-control select, .mr-when-at input { width: 100%; min-width: 0; min-height: 44px; max-width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; padding: 0 8px; color: #0F172A; font-size: 14px; box-sizing: border-box; }
     .mr-when-at input { font-size: 12px; }
     .mr-seg { display: inline-flex; align-items: stretch; min-height: 40px; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; background: #F8FAFC; }
     .mr-seg label { position: relative; display: flex; align-items: center; padding: 0 10px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; }
@@ -20,11 +29,14 @@
     .mr-wa { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 8px 10px; }
     .mr-wa summary { cursor: pointer; font-size: 13px; font-weight: 700; color: #14532D; }
     .mr-wa-body { font-size: 12px; line-height: 1.35; color: #0F172A; margin-top: 6px; max-height: 96px; overflow: auto; }
-    @media (max-width: 1100px) { .mr-bar { flex-wrap: wrap; } }
+    @media (max-width: 767px) {
+        .mr-page { grid-template-columns: minmax(0, 1fr); grid-template-areas: "filters" "reason" "approvals" "sheet" "aside"; }
+        .mr-aside .mr-btn { width: 100%; min-height: 52px; }
+    }
     .mr-wa-pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre; margin: 8px 0 0; overflow-x: auto; }
     .mr-when-label { margin: 0; font-size: 13px; font-weight: 600; }
     .mr-sheet-tools { display: flex; gap: 12px; align-items: center; margin: 0 0 8px; font-size: 14px; font-weight: 600; }
-    .mr-sheet { overflow: auto; max-height: 70vh; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff; }
+    .mr-sheet { grid-area: sheet; overflow: auto; max-height: 70vh; max-width: 100%; min-width: 0; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff; }
     .mr-sheet--wide .mr-grid { min-width: 1100px; }
     .mr-grid { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15px; color: #0F172A; }
     .mr-grid th, .mr-grid td { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; text-align: left; background: #fff; }
