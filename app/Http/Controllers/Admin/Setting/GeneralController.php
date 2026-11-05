@@ -15,7 +15,7 @@ use Exception;
 
 class GeneralController extends Controller
 {
-
+    use DeniesSchoolAdminBranding;
     use SettingProcess;
     use Common;
 

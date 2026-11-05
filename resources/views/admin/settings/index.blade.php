@@ -12,13 +12,7 @@
         <div class="settings-hub-grid">
             <a href="{{ url('/admin/school-profile') }}" class="ds-card ds-card-hover settings-hub-card">
                 <span class="settings-hub-icon bg-blue-50 text-blue-600"><x-icons.sidebar name="classes"/></span>
-                {{-- Boundary made explicit: this card owns the school's identity as data. How it is
-                     displayed and themed belongs to Site branding below, so the two cannot drift. --}}
                 <span><strong>School profile</strong><small>The school's own details: name, motto, address, website, logo</small></span>
-            </a>
-            <a href="{{ url('/admin/settings/generalsettings') }}" class="ds-card ds-card-hover settings-hub-card">
-                <span class="settings-hub-icon bg-green-50 text-green-600"><x-icons.sidebar name="settings"/></span>
-                <span><strong>Site branding</strong><small>How it is presented: site title, favicon, theme</small></span>
             </a>
         </div>
     </section>
@@ -87,16 +81,6 @@
             <a href="{{ url('/admin/whatsapp/phone') }}" class="ds-card ds-card-hover settings-hub-card">
                 <span class="settings-hub-icon bg-amber-50 text-amber-600"><x-icons.sidebar name="messages"/></span>
                 <span><strong>WhatsApp number</strong><small>The number parents message, and its verification</small></span>
-            </a>
-        </div>
-    </section>
-
-    <section class="mt-6">
-        <h2 class="settings-hub-group">Public presence</h2>
-        <div class="settings-hub-grid">
-            <a href="{{ url('/admin/settings/seodetailsettings') }}" class="ds-card ds-card-hover settings-hub-card">
-                <span class="settings-hub-icon bg-rose-50 text-rose-600"><x-icons.sidebar name="reports"/></span>
-                <span><strong>SEO details</strong><small>Site description, keywords, social links</small></span>
             </a>
         </div>
     </section>
