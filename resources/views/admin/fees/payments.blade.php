@@ -131,7 +131,7 @@ document.addEventListener('click', function (event) {
 document.addEventListener('change', function (event) {
     if (event.target.id !== 'fee-class-select' && event.target.id !== 'fee-only-owe') return;
     var wanted = document.getElementById('fee-class-select').value;
-    document.querySelectorAll('[data-testid="fee-balance-row"]').forEach(function (row) {
+    document.querySelectorAll('.fee-balance-row').forEach(function (row) {
         var show = wanted === '' || row.getAttribute('data-class') === wanted;
         row.hidden = !show;
     });
@@ -153,7 +153,7 @@ document.addEventListener('change', function (event) {
             <div style="padding: 12px 16px; font-weight: 700; color: #0F172A;">Students with a balance</div>
             <x-table :headers="['', 'Student', 'Balance', '']" striped>
                 @foreach($balances as $row)
-                    <tr data-testid="fee-balance-row" data-class="{{ $row['class_label'] ?? '' }}">
+                    <tr class="fee-balance-row" data-testid="fee-balance-row" data-class="{{ $row['class_label'] ?? '' }}">
                         <td>
                             <input form="fee-reminder-bulk" type="checkbox" name="student_ids[]" value="{{ $row['id'] }}" data-parents="{{ $row['parents'] }}" aria-label="Select {{ $row['name'] }}">
                         </td>
